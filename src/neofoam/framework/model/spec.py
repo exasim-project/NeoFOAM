@@ -122,6 +122,18 @@ class ModelSpec(BaseSpec):
         self._detect_func = func
         return func
 
+    def run_build(self) -> list[Any]:
+        """Call build func with self=spec (for direct use without ModelRuntime)."""
+        if self._build_func is None:
+            return []
+        from neofoam.framework.operation_wrapper import inject_and_call
+
+        return inject_and_call(
+            self._build_func,
+            self,
+            self._build_call_meta,
+        )
+
     def run_detect(self, case_dir: Path) -> DetectResult:
         """Run the detect predicate and return a DetectResult."""
         if self._detect_func is None:

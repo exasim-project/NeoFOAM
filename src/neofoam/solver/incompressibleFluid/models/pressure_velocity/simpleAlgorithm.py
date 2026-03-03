@@ -27,6 +27,7 @@ from neofoam.framework.operations import (
     Operations,
     SequentialOp,
 )
+from neofoam.framework.operation_wrapper import wrap_operation
 from neofoam.framework.types import OperationMetadata
 from .control_factory import create_simple_control
 
@@ -202,10 +203,16 @@ def collected_operations(self: Any) -> Operations:
             metadata=OperationMetadata(op_name="inner_loop"),
         )
     )
-    model_ops.add(_alias_operation(momentum, operation_name="momentum", depends_on=[]))
+
+    wrapped_momentum = wrap_operation(momentum, self, simple._dependency_resolver)
+    wrapped_continuity = wrap_operation(continuity, self, simple._dependency_resolver)
+
+    model_ops.add(
+        _alias_operation(wrapped_momentum, operation_name="momentum", depends_on=[])
+    )
     model_ops.add(
         _alias_operation(
-            continuity, operation_name="continuity", depends_on=["momentum"]
+            wrapped_continuity, operation_name="continuity", depends_on=["momentum"]
         )
     )
     return model_ops

@@ -94,34 +94,56 @@ def execution_graph(
     return builder, model_ops
 
 
-def run(argv: Optional[list[str]] = None) -> Context:
+def run(
+    argv: Optional[list[str]] = None,
+    log_file: Optional[Any] = None,
+) -> Context:
     """
     Run the complete simulation.
 
     Args:
         argv: Command-line arguments
+        log_file: Optional path to redirect C++ stdout to a log file
 
     Returns:
         Final context after solving
     """
+    import os
+    import sys
+    from pathlib import Path
 
-    # Initialize
-    solver = incompressibleFluid.instantiate(argv=argv or [])
-    ctx = solver.initialize()
+    redirect = log_file is not None
+    if redirect:
+        log_path = Path(log_file)
+        sys.stdout.flush()
+        saved_fd = os.dup(1)
+        log_fd = os.open(str(log_path), os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o644)
+        os.dup2(log_fd, 1)
+        os.close(log_fd)
 
-    Info("Starting time loop")
+    try:
+        # Initialize
+        solver = incompressibleFluid.instantiate(argv=argv or [])
+        ctx = solver.initialize()
 
-    # Build and resolve execution graph
-    builder, model_ops = solver.execution_graph()
-    resolver = DAGResolver()
-    resolved = resolver.resolve(builder, model_ops)
+        Info("Starting time loop")
 
-    # Execute the resolved operations
-    resolved.operations.run(ctx)
+        # Build and resolve execution graph
+        builder, model_ops = solver.execution_graph()
+        resolver = DAGResolver()
+        resolved = resolver.resolve(builder, model_ops)
 
-    Info("End")
+        # Execute the resolved operations
+        resolved.operations.run(ctx)
 
-    return ctx
+        Info("End")
+
+        return ctx
+    finally:
+        if redirect:
+            sys.stdout.flush()
+            os.dup2(saved_fd, 1)
+            os.close(saved_fd)
 
 
 @incompressibleFluid.operation()

@@ -24,6 +24,7 @@ from neofoam.framework.operations import (
     Operations,
     SequentialOp,
 )
+from neofoam.framework.operation_wrapper import wrap_operation
 from neofoam.framework.types import OperationMetadata
 from .control_factory import create_pimple_control
 
@@ -287,12 +288,17 @@ def collected_operations(self: Any) -> Operations:
         momentum_op = momentum
         continuity_op = continuity
 
+    wrapped_momentum = wrap_operation(momentum_op, self, pimple._dependency_resolver)
+    wrapped_continuity = wrap_operation(
+        continuity_op, self, pimple._dependency_resolver
+    )
+
     model_ops.add(
-        _alias_operation(momentum_op, operation_name="momentum", depends_on=[])
+        _alias_operation(wrapped_momentum, operation_name="momentum", depends_on=[])
     )
     model_ops.add(
         _alias_operation(
-            continuity_op, operation_name="continuity", depends_on=["momentum"]
+            wrapped_continuity, operation_name="continuity", depends_on=["momentum"]
         )
     )
     return model_ops

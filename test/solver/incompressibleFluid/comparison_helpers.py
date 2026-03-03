@@ -315,22 +315,26 @@ def compare_solver_fields(
         field_path_custom = final_time_custom / field_name
         field_path_native = final_time_native / field_name
 
-        if field_path_custom.exists() and field_path_native.exists():
-            print(f"\nComparing {field_name} ({field_type})...")
-            field_match, max_abs_diff, max_rel_diff = compare_fields_numerically(
-                test_case_custom,
-                test_case_native,
-                final_time_custom,
-                final_time_native,
-                field_name,
-                rtol=rtol,
-                atol=atol,
-            )
-            if not field_match:
-                all_match = False
-                failed_fields.append(field_name)
-                failed_details[field_name] = (max_abs_diff, max_rel_diff)
-        else:
-            print(f"  {field_name}: Skipped (field not found in both cases)")
+        assert field_path_custom.exists(), (
+            f"Field '{field_name}' not found in custom solver output: {field_path_custom}"
+        )
+        assert field_path_native.exists(), (
+            f"Field '{field_name}' not found in native solver output: {field_path_native}"
+        )
+
+        print(f"\nComparing {field_name} ({field_type})...")
+        field_match, max_abs_diff, max_rel_diff = compare_fields_numerically(
+            test_case_custom,
+            test_case_native,
+            final_time_custom,
+            final_time_native,
+            field_name,
+            rtol=rtol,
+            atol=atol,
+        )
+        if not field_match:
+            all_match = False
+            failed_fields.append(field_name)
+            failed_details[field_name] = (max_abs_diff, max_rel_diff)
 
     return all_match, failed_fields, failed_details

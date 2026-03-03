@@ -208,9 +208,7 @@ class PimpleControl(BaseModel):
 
     model_config = {"arbitrary_types_allowed": True}
 
-    nCorrectors: int = Field(
-        default=1, ge=1, description="Number of PIMPLE corrector iterations"
-    )
+    nCorrectors: int = Field(ge=2, description="Number of PIMPLE corrector iterations")
     nOuterCorrectors: int = Field(
         default=1, ge=1, description="Number of PIMPLE outer corrector iterations"
     )
@@ -218,10 +216,10 @@ class PimpleControl(BaseModel):
         default=0, ge=0, description="Number of non-orthogonal corrections"
     )
     momentumPredictor_enabled: bool = Field(
-        default=True, description="Enable momentum predictor", alias="momentumPredictor"
+        description="Enable momentum predictor", alias="momentumPredictor"
     )
     turbCorr_enabled: bool = Field(
-        default=True, description="Enable turbulence correction", alias="turbCorr"
+        default=False, description="Enable turbulence correction", alias="turbCorr"
     )
 
     _loop: Optional[IterationCountCondition] = None
@@ -257,10 +255,15 @@ class PimpleControl(BaseModel):
         PIMPLE outer loop.
 
         Returns:
-            True while outer iterations remain, False otherwise
+            True while outer iterations remain, False otherwise.
+            Automatically resets all counters when the loop finishes
+            so the control is ready for the next time step.
         """
         assert self._loop is not None
-        return self._loop(ctx)
+        result = self._loop(ctx)
+        if not result:
+            self.reset()
+        return result
 
     def correct(self, ctx: Any = None) -> bool:
         """

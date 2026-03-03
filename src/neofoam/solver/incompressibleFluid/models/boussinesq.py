@@ -33,15 +33,14 @@ class BoussinesqConfig(BaseConfig):
 def _read_boussinesq_config() -> BoussinesqConfig:
     config = BoussinesqConfig()
     props = pyf.dictionary.read("constant/transportProperties")
-    toc = set(props.toc())
 
-    if "beta" in toc:
+    if props.found("beta"):
         config.beta = props.get_scalar("beta")
-    if "TRef" in toc:
+    if props.found("TRef"):
         config.TRef = props.get_scalar("TRef")
-    if "Pr" in toc:
+    if props.found("Pr"):
         config.Pr = props.get_scalar("Pr")
-    if "Prt" in toc:
+    if props.found("Prt"):
         config.Prt = props.get_scalar("Prt")
 
     return config
@@ -59,8 +58,7 @@ def load(_case_dir: Path, _entry: Any) -> BoussinesqConfig:
 def detect_model(_case_dir: Path) -> bool:
     try:
         props = pyf.dictionary.read("constant/transportProperties")
-        toc = set(props.toc())
-        return "beta" in toc and "TRef" in toc
+        return props.found("beta") and props.found("TRef")
     except Exception:
         return False
 
@@ -68,11 +66,11 @@ def detect_model(_case_dir: Path) -> bool:
 @boussinesq.resolve
 def resolve(self: Any, ctx: ConfigContext) -> None:
     """Set use_boussinesq flag on the pressure-velocity algorithm model."""
-    from ..create_fields import init
-
-    if init.core_models and len(init.core_models) > 0:
-        pressure_model = init.core_models[0]
-        pressure_model.use_boussinesq = True
+    for algo_name in ("Pimple", "Simple", "Piso"):
+        pressure_model = ctx.get(algo_name)
+        if pressure_model is not None:
+            pressure_model.use_boussinesq = True  # type: ignore[attr-defined]
+            return
 
 
 @boussinesq.build

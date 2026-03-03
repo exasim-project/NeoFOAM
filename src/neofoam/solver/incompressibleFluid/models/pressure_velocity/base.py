@@ -29,16 +29,15 @@ class PressureVelocityAlgorithm:
         """
         # Read fvSolution to detect the algorithm
         fv_solution = pyf.dictionary.read("system/fvSolution")
-        toc = set(fv_solution.toc())
 
         # Check which algorithm is specified in fvSolution
-        if "PIMPLE" in toc:
+        if fv_solution.found("PIMPLE"):
             algorithm_model = pimple
             algorithm_type = "PIMPLE"
-        elif "SIMPLE" in toc:
+        elif fv_solution.found("SIMPLE"):
             algorithm_model = simple
             algorithm_type = "SIMPLE"
-        elif "PISO" in toc:
+        elif fv_solution.found("PISO"):
             algorithm_model = piso
             algorithm_type = "PISO"
         else:
