@@ -19,6 +19,7 @@ Table of Contents
    gettingStarted
    goals_features
    ci
+   debugProfileTools
 
 .. toctree::
    :maxdepth: 2
