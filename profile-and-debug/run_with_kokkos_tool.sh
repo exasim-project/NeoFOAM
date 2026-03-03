@@ -11,14 +11,14 @@ BUILD_DIR="${NEOFOAM_SRC_DIR}/build"
 
 if [ $# -lt 3 ]; then
   echo "Usage:"
-  echo "  $0 <debug|profile> <tool-name> [--log <logfile>] <application> [args...]"
+  echo "  $0 <debug|profile> <tool-name> [--log <filename>] <application> [args...]"
     echo "---------------------------------------------------------------------------"
     echo "Enter debug or profile to select the mode, then the name of the tool to use."
     echo ""
-    echo "Available tools for debug mode (used for the CMake preset "develop"):"
+    echo "Available tools for debug mode (used with the CMake preset "develop"):"
     echo "  kernel-logger"
     echo ""
-    echo "Available tools for profile mode (used for the CMake preset "profiling"):"
+    echo "Available tools for profile mode (used with the CMake preset "profiling"):"
     echo "  simple-kernel-timer"
     echo "  space-time-stack"
     echo "  memory-high-water-mark"
@@ -87,7 +87,6 @@ esac
 
 echo "Mode: $MODE"
 echo "Using tool: $TOOL_NAME"
-echo "KOKKOS_TOOLS_LIBS=$KOKKOS_TOOLS_LIBS"
 echo "Running: $@"
 echo ""
 
