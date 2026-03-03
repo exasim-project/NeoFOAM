@@ -1,6 +1,6 @@
 Using Kokkos Tools
 ======================
-Kokkos provides a powerful tools interface for debugging and profiling applications. 
+Kokkos provides a powerful tools interface for debugging and profiling applications.
 This section outlines how to use Kokkos tools effectively in the context of NeoFOAM development.
 
 ----------------------------------
@@ -12,7 +12,7 @@ NeoFOAM integrates several Kokkos tools to assist developers in optimizing perfo
 * simple-kernel-timer
 * space-time-stack
 * memory-high-water-mark
- 
+
 **Kokkos Debugging Tools**: For identifying bugs in Kokkos-based code.
 * kernel-logger
 
