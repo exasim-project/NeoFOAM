@@ -18,6 +18,7 @@ Table of Contents
    gettingStarted
    testcases
    ci
+   debugProfileTools
 
 .. toctree::
    :maxdepth: 2
