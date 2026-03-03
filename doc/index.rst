@@ -34,6 +34,7 @@ Table of Contents
 
    development/architecture
    development/components
+   development/initialization
    development/config_file
    development/pluginsystem
    development/solver

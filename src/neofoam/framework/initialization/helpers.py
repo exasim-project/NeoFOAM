@@ -1,0 +1,275 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# SPDX-FileCopyrightText: 2023 NeoFOAM authors
+
+"""
+Helper Functions for Lazy Initialization
+
+Provides convenience functions for creating InitStep objects with common patterns.
+"""
+
+from typing import Callable, Any, List, Optional, Union
+from .init_step import InitStep, InitCategory
+
+
+def _make_init(
+    prefix: Optional[str],
+    category: InitCategory,
+    name: str,
+    create: Callable[[dict[str, Any]], Any],
+    depends_on: Optional[List[str]] = None,
+) -> InitStep:
+    """Internal factory shared by field / operator / model / lazy."""
+    full_name = f"{prefix}.{name}" if prefix else name
+    return InitStep(
+        name=full_name,
+        depends_on=depends_on or [],
+        initializer=create,
+        category=category,
+    )
+
+
+def field(
+    name: str,
+    create: Callable[[dict[str, Any]], Any],
+    depends_on: Optional[List[str]] = None,
+) -> InitStep:
+    """
+    Helper for creating field lazy initializers.
+
+    Automatically prefixes name with "fields." and sets category.
+
+    Args:
+        name: Field name (e.g., "U", "p", "nu")
+        create: Function that creates the field
+        depends_on: List of dependencies (default: [])
+
+    Returns:
+        InitStep for the field
+
+    Example:
+        field("U", create=lambda ctx: create_vector_field(ctx["mesh"], U0), depends_on=["mesh"])
+    """
+    return _make_init("fields", "fields", name, create, depends_on)
+
+
+def init(
+    name: str,
+    create: Callable[[dict[str, Any]], Any],
+    depends_on: Optional[List[str]] = None,
+) -> InitStep:
+    """
+    General-purpose helper for creating lazy initializers.
+
+    Use this for objects that don't fit the field/operator/model categories
+    (e.g., mesh, runtime, solver loops).
+
+    Args:
+        name: Object name (e.g., "mesh", "runtime", "piso_loop")
+        create: Function that creates the object
+        depends_on: List of dependencies (default: [])
+
+    Returns:
+        InitStep for the object
+
+    Example:
+        lazy("mesh", create=lambda ctx: mesh)
+    """
+    return _make_init(None, "resource", name, create, depends_on)
+
+
+def model(
+    name: str,
+    create: Callable[[dict[str, Any]], Any],
+    depends_on: Optional[List[str]] = None,
+) -> InitStep:
+    """
+    Helper for creating model instance lazy initializers.
+
+    Automatically prefixes name with "models." and sets category.
+
+    Args:
+        name: Model name (e.g., "transport", "turbulence", "algorithm")
+        create: Function that creates the model
+        depends_on: List of dependencies
+
+    Returns:
+        InitStep for the model
+
+    Example:
+        model("transport", depends_on=["fields.U"], create=lambda ctx: ...)
+    """
+    return _make_init("models", "models", name, create, depends_on)
+
+
+class InitializerBuilder:
+    """
+    Fluent builder for constructing lazy initializers.
+
+    Provides a chainable API for building lists of InitStep objects,
+    making initialization code more readable and maintainable.
+
+    Example:
+        builder = InitializerBuilder()
+        initializers = (
+            builder
+            .add_resource("mesh", mesh_config)
+            .add_model("algorithm", algorithm)
+            .add_field("U", depends_on=["mesh"], value=initial_velocity)
+            .add_field("p", depends_on=["mesh"], value=lambda ctx: compute_pressure(ctx))
+            .build()
+        )
+    """
+
+    def __init__(self) -> None:
+        self.initializers: List[InitStep] = []
+
+    # ---- private helper: collapses add_field / add_model / add_operator ----
+
+    def _add_typed(
+        self,
+        factory: Callable[..., InitStep],
+        name: str,
+        value: Any,
+        depends_on: Optional[List[str]] = None,
+    ) -> "InitializerBuilder":
+        """Shared logic for add_field / add_model / add_operator."""
+        if callable(value):
+            self.initializers.append(factory(name, create=value, depends_on=depends_on))
+        else:
+            # Capture by closure — each _add_typed call has its own scope
+            self.initializers.append(
+                factory(name, create=lambda _ctx: value, depends_on=depends_on)
+            )
+        return self
+
+    def add_initializer(self, name: str, value: Any) -> "InitializerBuilder":
+        """
+        Add a initializer for mesh, domain, config, etc.).
+
+        Args:
+            name: Initializer name
+            value: The initializer value (will be captured in lambda)
+
+        Returns:
+            Self for chaining
+        """
+        # Wrap in a zero-arg closure; default-arg capture avoids late-binding (P-2.5)
+        self.initializers.append(init(name, create=lambda _ctx: value))
+        return self
+
+    def add_model(self, name: str, value: Any) -> "InitializerBuilder":
+        """
+        Add a model with 'models.' prefix.
+
+        Args:
+            name: Model name (without 'models.' prefix)
+            value: The model instance or callable to create it
+
+        Returns:
+            Self for chaining
+        """
+        return self._add_typed(model, name, value)
+
+    def add_core_models(self, core_models: List[Any]) -> "InitializerBuilder":
+        """
+        Add core models with their build() InitStep objects.
+
+        For each core model:
+        1. Adds the model instance to the models registry
+        2. Calls build() if available and adds normalized InitStep objects
+
+        Args:
+            core_models: List of core model instances with optional names
+
+        Returns:
+            Self for chaining
+
+        Example:
+            builder.add_core_models([("algorithm", algorithm), ("core2", core_model2)])
+        """
+        for item in core_models:
+            if isinstance(item, tuple):
+                name, model_instance = item
+            else:
+                # Use class name as default
+                name = type(item).__name__.lower()
+                model_instance = item
+
+            # Add the model itself
+            self.add_model(name, model_instance)
+
+            # Add InitStep objects from run_build() if available
+            if hasattr(model_instance, "run_build"):
+                self.extend(model_instance.run_build())
+
+        return self
+
+    def add_field(
+        self,
+        name: str,
+        depends_on: List[str],
+        value: Union[Any, Callable[[dict[str, Any]], Any]],
+    ) -> "InitializerBuilder":
+        """
+        Add a field with 'fields.' prefix.
+
+        Args:
+            name: Field name (without 'fields.' prefix)
+            depends_on: List of dependency names
+            value: Constant value or callable that computes the value
+
+        Returns:
+            Self for chaining
+        """
+        return self._add_typed(field, name, value, depends_on)
+
+    def add(self, initializer: InitStep) -> "InitializerBuilder":
+        """
+        Add a pre-constructed InitStep object.
+
+        Args:
+            initializer: InitStep object to add
+
+        Returns:
+            Self for chaining
+        """
+        self.initializers.append(initializer)
+        return self
+
+    def extend(self, initializers: List[InitStep]) -> "InitializerBuilder":
+        """
+        Add multiple InitStep objects at once.
+
+        Args:
+            initializers: List of InitStep objects
+
+        Returns:
+            Self for chaining
+        """
+        self.initializers.extend(initializers)
+        return self
+
+    def add_optional_models(self, optional_models: List[Any]) -> "InitializerBuilder":
+        """
+        Add optional models by calling their run_build() methods.
+
+        Args:
+            optional_models: List of optional model instances
+
+        Returns:
+            Self for chaining
+        """
+        for m in optional_models:
+            if hasattr(m, "run_build"):
+                self.extend(m.run_build())
+        return self
+
+    def build(self) -> List[InitStep]:
+        """
+        Return the constructed list of initializers.
+
+        Returns:
+            List of InitStep objects
+        """
+        return self.initializers

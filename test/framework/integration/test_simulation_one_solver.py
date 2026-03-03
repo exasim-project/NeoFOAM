@@ -7,7 +7,7 @@ from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.decorator import decorated_member_functions
 from neofoam.framework.model import Model
 from neofoam.framework.operations import Operation, OperationCollection, Operations
-from neofoam.framework.pyvis_utils import digraph_to_pyvis_html
+from neofoam.framework.graph.visualization import digraph_to_pyvis_html
 from neofoam.framework.simulation import Domain, Simulation
 from neofoam.framework.solver import Solver
 

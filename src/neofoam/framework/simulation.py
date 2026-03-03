@@ -6,10 +6,10 @@ from typing import Any
 from pydantic import BaseModel
 
 from neofoam.framework.operations import Operations
+from neofoam.framework.graph import build_global_dag
 
 from .context import Context
 from .couplingInterface import CouplingInterface
-from .dag import build_global_dag
 from .domain import Domain
 
 
