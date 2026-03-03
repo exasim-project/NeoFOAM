@@ -103,12 +103,10 @@ testpaths = [
 
 [tool.mypy]
 plugins = ["pydantic.mypy"]
-files = ["src"]          # your two roots
-mypy_path = ["src"]              # so imports from src resolve
-strict = true                    # optional but recommended
+files = ["src", "test"]
+mypy_path = ["src", "test"]
+strict = true
 
-# Exclude src/Neon and everything beneath it
-# (mypy applies this regex to the normalized file path)
 exclude = [
   "src/NeoN",
 ]

@@ -1,11 +1,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
+
+"""Core types: OperationDef, OperationMetadata, OpType, OperationNumber."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
 from functools import total_ordering
+from typing import Any, Callable
 
 
 @total_ordering
@@ -54,6 +58,20 @@ class OperationNumber:
         a, b = self._as_tuple(other)
         return a < b
 
+    def __str__(self) -> str:
+        return ".".join(str(p) for p in self.parts)
+
+
+@dataclass
+class OperationDef:
+    """Typed definition of a registered operation — replaces raw (func, dict) tuples."""
+
+    func: Callable[..., Any]
+    operation_number: str | None = None
+    depends_on: list[str] | None = None
+    before: list[str] | None = None
+    name: str = ""
+
 
 class OpType(Enum):
     CONDITION = "condition"
@@ -64,13 +82,14 @@ class OpType(Enum):
 class OperationMetadata:
     """collection of the metadata for operations - describes both decorated functions and DAG nodes."""
 
-    op_name: str
+    op_name: str | None = None
 
     # Optional metadata
     op_type: OpType | None = None
     description: str = ""
     operation_number: OperationNumber | None = None
     depends_on: list[str] | None = None
+    before: list[str] | None = None
     domain_name: str | None = None
 
     # DAG visualization properties
@@ -91,7 +110,9 @@ class OperationMetadata:
         return self.op_type == OpType.CONDITION
 
     @property
-    def name(self) -> str:
+    def name(self) -> str | None:
+        if self.op_name is None:
+            return None
         if self.domain_name:
             return f"{self.domain_name}.{self.op_name}"
         return self.op_name

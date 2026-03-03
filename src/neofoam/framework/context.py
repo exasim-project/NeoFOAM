@@ -1,15 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
+
+"""Simulation context: shared field/model state passed through operations."""
+
 from __future__ import annotations
 
-from typing import Annotated, Any, TypeVar
+from typing import Any
 
 from pydantic import BaseModel
-
-T = TypeVar("T")
-Model = Annotated[T, "models"]
-Field = Annotated[T, "fields"]
 
 
 class FieldUpdates(dict[str, Any]):
@@ -32,4 +31,4 @@ class Context(BaseModel):
     fields: dict[str, Any]
     models: dict[str, Any]
     mesh: Any = None
-    runTime: Any = None
+    runtime: Any = None

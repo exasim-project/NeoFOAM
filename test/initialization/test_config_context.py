@@ -8,6 +8,7 @@ import pytest
 from pydantic.fields import FieldInfo
 
 from neofoam.framework.initialization.config_context import (
+    ConfigContext,
     is_configurable_field,
 )
 
@@ -15,30 +16,30 @@ from neofoam.framework.initialization.config_context import (
 # --- ConfigContext: register / get ---
 
 
-def test_register_and_get(config):
+def test_register_and_get(config: ConfigContext) -> None:
     """Round-trip: register a model and retrieve it."""
     obj = {"viscosity": 0.01}
     config.register("transport", obj)
     assert config.get("transport") is obj
 
 
-def test_get_unknown_returns_none(config):
+def test_get_unknown_returns_none(config: ConfigContext) -> None:
     """Getting an unregistered name returns None."""
     assert config.get("nonexistent") is None
 
 
-def test_contains_true(config):
+def test_contains_true(config: ConfigContext) -> None:
     """contains() returns True for registered names."""
     config.register("algo", "alg")
     assert config.contains("algo") is True
 
 
-def test_contains_false(config):
+def test_contains_false(config: ConfigContext) -> None:
     """contains() returns False for unknown names."""
     assert config.contains("unknown") is False
 
 
-def test_all_returns_copy(config):
+def test_all_returns_copy(config: ConfigContext) -> None:
     """all() returns a copy of the current region's models."""
     config.register("a", 1)
     config.register("b", 2)
@@ -52,7 +53,7 @@ def test_all_returns_copy(config):
 # --- Multi-region ---
 
 
-def test_multi_region_register_and_get(config):
+def test_multi_region_register_and_get(config: ConfigContext) -> None:
     """Register in different regions and access via dot notation."""
     config.register("temperature", 300.0, region="fluid")
     config.register("temperature", 400.0, region="solid")
@@ -61,21 +62,21 @@ def test_multi_region_register_and_get(config):
     assert config.get("solid.temperature") == 400.0
 
 
-def test_contains_cross_region(config):
+def test_contains_cross_region(config: ConfigContext) -> None:
     """contains() works with region.name paths."""
     config.register("temp", 1, region="fluid")
     assert config.contains("fluid.temp") is True
     assert config.contains("solid.temp") is False
 
 
-def test_regions_property(config):
+def test_regions_property(config: ConfigContext) -> None:
     """regions lists all registered region names."""
     config.register("a", 1, region="fluid")
     config.register("b", 2, region="solid")
     assert set(config.regions) == {"default", "fluid", "solid"}
 
 
-def test_all_specific_region(config):
+def test_all_specific_region(config: ConfigContext) -> None:
     """all(region) returns models from that region only."""
     config.register("x", 10, region="other")
     config.register("y", 20, region="other")
@@ -94,7 +95,7 @@ class TurbulenceModel:
     pass
 
 
-def test_get_by_type(config):
+def test_get_by_type(config: ConfigContext) -> None:
     """get_by_type filters registered models by class."""
     t1 = TransportModel()
     t2 = TurbulenceModel()
@@ -105,13 +106,13 @@ def test_get_by_type(config):
     assert result == [t1]
 
 
-def test_get_by_type_empty(config):
+def test_get_by_type_empty(config: ConfigContext) -> None:
     """get_by_type returns empty list when no match."""
     config.register("something", "not_a_transport")
     assert config.get_by_type(TransportModel) == []
 
 
-def test_get_by_prefix(config):
+def test_get_by_prefix(config: ConfigContext) -> None:
     """get_by_prefix returns models whose names start with a prefix."""
     config.register("heat_source_1", "hs1")
     config.register("heat_source_2", "hs2")
@@ -121,7 +122,7 @@ def test_get_by_prefix(config):
     assert result == {"heat_source_1": "hs1", "heat_source_2": "hs2"}
 
 
-def test_get_by_prefix_empty(config):
+def test_get_by_prefix_empty(config: ConfigContext) -> None:
     """get_by_prefix returns empty dict when no match."""
     config.register("pressure", "p")
     assert config.get_by_prefix("heat_") == {}
@@ -130,31 +131,31 @@ def test_get_by_prefix_empty(config):
 # --- __getattr__ ---
 
 
-def test_getattr_access(config):
+def test_getattr_access(config: ConfigContext) -> None:
     """Attribute-style access works like get()."""
     config.register("algorithm", "PIMPLE")
     assert config.algorithm == "PIMPLE"
 
 
-def test_getattr_missing_raises(config):
+def test_getattr_missing_raises(config: ConfigContext) -> None:
     """Accessing unregistered name via attribute raises AttributeError."""
     with pytest.raises(AttributeError, match="No model registered"):
         _ = config.nonexistent
 
 
-def test_getattr_private_raises(config):
+def test_getattr_private_raises(config: ConfigContext) -> None:
     """Accessing _-prefixed names raises AttributeError (avoids recursion)."""
     with pytest.raises(AttributeError):
         _ = config._something
 
 
-def test_hasattr_registered(config):
+def test_hasattr_registered(config: ConfigContext) -> None:
     """hasattr() returns True for registered models (via __getattr__)."""
     config.register("algo", "x")
     assert hasattr(config, "algo") is True
 
 
-def test_hasattr_unregistered(config):
+def test_hasattr_unregistered(config: ConfigContext) -> None:
     """hasattr() returns False for unregistered names."""
     assert hasattr(config, "nope") is False
 
@@ -163,7 +164,7 @@ def test_hasattr_unregistered(config):
 
 
 def _configurable_field_info() -> FieldInfo:
-    field_info = FieldInfo(annotation=str, required=False)
+    field_info = FieldInfo(annotation=str)
     field_info.metadata = ["configurable"]
     return field_info
 
@@ -176,11 +177,11 @@ def _configurable_field_info() -> FieldInfo:
             True,
             id="with-configurable-metadata",
         ),
-        pytest.param(FieldInfo(metadata=[]), False, id="regular-field"),
+        pytest.param(FieldInfo(), False, id="regular-field"),
         pytest.param(type("NoMeta", (), {})(), False, id="no-metadata"),
     ],
 )
-def test_is_configurable_field(field_info, expected):
+def test_is_configurable_field(field_info: object, expected: bool) -> None:
     """is_configurable_field handles configurable, regular, and no-metadata cases."""
     assert is_configurable_field(field_info) is expected
 
@@ -188,12 +189,12 @@ def test_is_configurable_field(field_info, expected):
 # --- get_configurable_fields ---
 
 
-def test_get_configurable_fields_no_model(config):
+def test_get_configurable_fields_no_model(config: ConfigContext) -> None:
     """Returns empty dict when model not found."""
     assert config.get_configurable_fields("missing") == {}
 
 
-def test_get_configurable_fields_non_pydantic(config):
+def test_get_configurable_fields_non_pydantic(config: ConfigContext) -> None:
     """Returns empty dict for non-Pydantic models."""
     config.register("plain", {"key": "value"})
     assert config.get_configurable_fields("plain") == {}
@@ -202,7 +203,7 @@ def test_get_configurable_fields_non_pydantic(config):
 # --- _parse_path disambiguation ---
 
 
-def test_dotted_name_without_region(config):
+def test_dotted_name_without_region(config: ConfigContext) -> None:
     """Dotted names where the prefix is NOT a region are treated as literals."""
     config.register("models.transport", "transport_obj")
     # 'models' is not a registered region, so the whole string is the key
@@ -210,7 +211,7 @@ def test_dotted_name_without_region(config):
     assert config.contains("models.transport") is True
 
 
-def test_dotted_name_with_known_region(config):
+def test_dotted_name_with_known_region(config: ConfigContext) -> None:
     """Dotted names where the prefix IS a region are split on the dot."""
     config.register("temperature", 300.0, region="fluid")
     # 'fluid' IS a registered region
