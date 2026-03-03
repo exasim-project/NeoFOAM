@@ -245,29 +245,39 @@ This section outlines how to use Kokkos tools effectively in the context of NeoF
 <h2>Kokkos Tools available in NeoFOAM<a class="headerlink" href="#kokkos-tools-available-in-neofoam" title="Link to this heading">¶</a></h2>
 <p>NeoFOAM integrates several Kokkos tools to assist developers in optimizing performance and diagnosing issues.</p>
 <p><strong>Kokkos Profiling Tools</strong>: For performance analysis and optimization.
-* simple-kernel-timer
-* space-time-stack
-* memory-high-water-mark</p>
+- simple-kernel-timer
+- space-time-stack
+- memory-high-water-mark</p>
 <p><strong>Kokkos Debugging Tools</strong>: For identifying bugs in Kokkos-based code.
-* kernel-logger</p>
+- kernel-logger</p>
 </section>
 <section id="setting-up-and-using-kokkos-tools">
 <h2>Setting Up and Using Kokkos Tools<a class="headerlink" href="#setting-up-and-using-kokkos-tools" title="Link to this heading">¶</a></h2>
 <p><strong>For debugging:</strong></p>
-<ol class="arabic simple">
+<ol class="arabic">
 <li><p>Configure and build NeoFOAM with the <code class="docutils literal notranslate"><span class="pre">develop</span></code> preset.</p></li>
+<li><p>Run your application with the kernel logger enabled:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="p">..</span><span class="w"> </span><span class="n">code</span><span class="o">-</span><span class="n">block</span><span class="o">::</span><span class="w"> </span><span class="n">bash</span>
+</pre></div>
+</div>
+<blockquote>
+<div><p>./run_with_kokkos_tool.sh debug kernel-logger [–log filename] ./your_neofoam_application</p>
+</div></blockquote>
+</li>
 </ol>
-<p>#. Run your application with the kernel logger enabled:
-<code class="docutils literal notranslate"><span class="pre">`bash</span>
-<span class="pre">./run_with_kokkos_tool.sh</span> <span class="pre">debug</span> <span class="pre">kernel-logger</span> <span class="pre">[--log</span> <span class="pre">filename]</span> <span class="pre">./your_neofoam_application</span>
-<span class="pre">`</span></code>
-<strong>For profiling:</strong>
-#. Configure and build NeoFOAM with the <code class="docutils literal notranslate"><span class="pre">profiling</span></code> preset.
-#. Run your application with the desired profiling tool:
-<code class="docutils literal notranslate"><span class="pre">`bash</span>
-<span class="pre">./run_with_kokkos_tool.sh</span> <span class="pre">profile</span> <span class="pre">&lt;available</span> <span class="pre">Kokkos</span> <span class="pre">profiling</span> <span class="pre">tool&gt;</span> <span class="pre">[--log</span> <span class="pre">filename]</span> <span class="pre">./your_neofoam_application</span>
-<span class="pre">`</span></code>
-<strong>Note</strong>: The <code class="docutils literal notranslate"><span class="pre">--log</span></code> option allows you to specify a file to save the tool’s output for later analysis.</p>
+<p><strong>For profiling:</strong></p>
+<ol class="arabic">
+<li><p>Configure and build NeoFOAM with the <code class="docutils literal notranslate"><span class="pre">profiling</span></code> preset.</p></li>
+<li><p>Run your application with the desired profiling tool:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="p">..</span><span class="w"> </span><span class="n">code</span><span class="o">-</span><span class="n">block</span><span class="o">::</span><span class="w"> </span><span class="n">bash</span>
+</pre></div>
+</div>
+<blockquote>
+<div><p>./run_with_kokkos_tool.sh profile &lt;available Kokkos profiling tool&gt; [–log filename] ./your_neofoam_application</p>
+</div></blockquote>
+</li>
+</ol>
+<p><strong>Note</strong>: The <code class="docutils literal notranslate"><span class="pre">--log</span></code> option allows you to specify a file to save the tool’s output for later analysis.</p>
 </section>
 </section>
 
