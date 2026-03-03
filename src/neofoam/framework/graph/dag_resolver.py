@@ -187,7 +187,7 @@ def sort_global(
 
     try:
         sorter = NetworkxTopologicalSorter(key=_sort_key)
-        sorted_names = sorter.sort(graph)
+        sorted_names = sorter.solve(graph)
     except nx.NetworkXUnfeasible:
         raise CyclicDependencyError("Cyclic dependency detected in operation graph")
 

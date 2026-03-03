@@ -39,7 +39,7 @@ def test_helper_naming(
     assert result.depends_on == []
 
 
-@pytest.mark.parametrize("helper", [field, operator, model, lazy])
+@pytest.mark.parametrize("helper", [field, model, init])
 def test_helper_with_deps(helper: Callable[..., InitStep]) -> None:
     """All helpers pass through custom depends_on."""
     result = helper("X", create=lambda _ctx: 1, depends_on=["a", "b"])

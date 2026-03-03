@@ -108,8 +108,8 @@ def build_lazy(core_models: list[Any], optional_models: list[Any]) -> list[InitS
     mesh_cfg = next(m for m in core_models if isinstance(m, MeshConfig))
 
     builder = InitializerBuilder()
-    builder.add_resource("mesh", mesh_cfg.model_dump())
-    builder.add_resource("domain", mesh_cfg.model_dump())
+    builder.add_initializer("mesh", mesh_cfg.model_dump())
+    builder.add_initializer("domain", mesh_cfg.model_dump())
     builder.add_core_models([("algorithm", algorithm), ("core2", core_model2)])
     builder.add_model("config", solver_cfg.model_dump())
     builder.add_field("field1", depends_on=["mesh"], value=1.0)

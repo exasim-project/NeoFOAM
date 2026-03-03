@@ -10,7 +10,7 @@ import pytest
 
 from neofoam.framework.context import Context
 from neofoam.framework.initialization.config_context import ConfigContext
-from neofoam.framework.initialization.helpers import field, lazy, model
+from neofoam.framework.initialization.helpers import field, init, model
 from neofoam.framework.initialization.init_step import InitStep
 from neofoam.framework.initialization.staged_init import (
     LoadResult,
@@ -78,54 +78,54 @@ def test_load_result_configs_collects() -> None:
 
 def test_creation() -> None:
     """StagedInit stores name and defaults."""
-    init = StagedInit("TestSolver")
-    assert init.name == "TestSolver"
-    assert init.argv == []
-    assert init._hooks.load is None
-    assert init._hooks.resolve is None
-    assert init._hooks.build is None
-    assert init.core_models == []
-    assert init.optional_models == []
+    staged_init = StagedInit("TestSolver")
+    assert staged_init.name == "TestSolver"
+    assert staged_init.argv == []
+    assert staged_init._hooks.load is None
+    assert staged_init._hooks.resolve is None
+    assert staged_init._hooks.build is None
+    assert staged_init.core_models == []
+    assert staged_init.optional_models == []
 
 
 def test_creation_with_argv() -> None:
     """StagedInit accepts argv."""
-    init = StagedInit("S", argv=["--case", "/tmp"])
-    assert init.argv == ["--case", "/tmp"]
+    staged_init = StagedInit("S", argv=["--case", "/tmp"])
+    assert staged_init.argv == ["--case", "/tmp"]
 
 
 def test_load_decorator_registers() -> None:
     """@init.load registers the function."""
-    init = StagedInit("X")
+    staged_init = StagedInit("X")
 
-    @init.load
+    @staged_init.load
     def my_load() -> LoadResult:
         return LoadResult(core_models=[], optional_models=[])
 
-    assert init._hooks.load is my_load
+    assert staged_init._hooks.load is my_load
 
 
 def test_resolve_decorator_registers() -> None:
     """@init.resolve registers the function."""
-    init = StagedInit("X")
+    staged_init = StagedInit("X")
 
-    @init.resolve
+    @staged_init.resolve
     def my_resolve(cfg: Any) -> None:
         _ = cfg
 
-    assert init._hooks.resolve is my_resolve
+    assert staged_init._hooks.resolve is my_resolve
 
 
 def test_build_decorator_registers() -> None:
     """@init.build registers the function."""
-    init = StagedInit("X")
+    staged_init = StagedInit("X")
 
-    @init.build
+    @staged_init.build
     def my_build(core: list[Any], opt: list[Any]) -> list[InitStep]:
         _ = (core, opt)
         return []
 
-    assert init._hooks.build is my_build
+    assert staged_init._hooks.build is my_build
 
 
 # --- run() error cases ---
@@ -133,27 +133,27 @@ def test_build_decorator_registers() -> None:
 
 def test_run_no_load_raises() -> None:
     """run() raises if no @init.load is defined."""
-    init = StagedInit("X")
+    staged_init = StagedInit("X")
 
-    @init.build
+    @staged_init.build
     def build(core: list[Any], opt: list[Any]) -> list[InitStep]:
         _ = (core, opt)
         return []
 
     with pytest.raises(RuntimeError, match="No @X.load defined"):
-        init.run()
+        staged_init.run()
 
 
 def test_run_no_build_raises() -> None:
     """run() raises if no @init.build is defined."""
-    init = StagedInit("X")
+    staged_init = StagedInit("X")
 
-    @init.load
+    @staged_init.load
     def load() -> LoadResult:
         return LoadResult(core_models=[], optional_models=[])
 
     with pytest.raises(RuntimeError, match="No @X.build defined"):
-        init.run()
+        staged_init.run()
 
 
 # --- run() full pipeline ---
@@ -161,7 +161,7 @@ def test_run_no_build_raises() -> None:
 
 def _make_full_init() -> tuple[StagedInit, dict[str, Any]]:
     """Helper: create a StagedInit with all 3 stages wired up."""
-    init = StagedInit("Test")
+    staged_init = StagedInit("Test")
     observed: dict[str, Any] = {"order": [], "resolve_cfg": None}
 
     class CoreModel:
@@ -170,17 +170,17 @@ def _make_full_init() -> tuple[StagedInit, dict[str, Any]]:
     class OptionalModel:
         name = "opt1"
 
-    @init.load
+    @staged_init.load
     def load_stage() -> LoadResult:
         observed["order"].append("load")
         return LoadResult(core_models=[CoreModel()], optional_models=[OptionalModel()])
 
-    @init.resolve
+    @staged_init.resolve
     def resolve_stage(cfg: Any) -> None:
         observed["order"].append("resolve")
         observed["resolve_cfg"] = cfg
 
-    @init.build
+    @staged_init.build
     def build_stage(core: list[Any], opt: list[Any]) -> list[InitStep]:
         observed["order"].append("build")
         assert len(core) == 1
@@ -215,11 +215,11 @@ def test_run_without_resolve() -> None:
     """run() works without @init.resolve (resolve is optional)."""
     staged_init = StagedInit("X")
 
-    @init.load
+    @staged_init.load
     def load() -> LoadResult:
         return LoadResult(core_models=[], optional_models=[])
 
-    @init.build
+    @staged_init.build
     def build(core: list[Any], opt: list[Any]) -> list[InitStep]:
         _ = (core, opt)
         return [init("mesh", create=lambda _ctx: "m")]
@@ -241,15 +241,15 @@ def test_run_wires_models_into_config(models: list[Any], expected_key: str) -> N
     staged_init = StagedInit("X")
     captured_cfg = {}
 
-    @init.load
+    @staged_init.load
     def load() -> LoadResult:
         return LoadResult(core_models=models, optional_models=[])
 
-    @init.resolve
+    @staged_init.resolve
     def resolve(cfg: Any) -> None:
         captured_cfg["registered"] = cfg.get(expected_key)
 
-    @init.build
+    @staged_init.build
     def build(core: list[Any], opt: list[Any]) -> list[InitStep]:
         _ = (core, opt)
         return [init("mesh", create=lambda _ctx: "m")]
@@ -268,11 +268,11 @@ def test_run_duplicate_model_registration_key_raises() -> None:
     class M2:
         name = "dup"
 
-    @init.load
+    @staged_init.load
     def load() -> LoadResult:
         return LoadResult(core_models=[M1(), M2()], optional_models=[])
 
-    @init.build
+    @staged_init.build
     def build(core: list[Any], opt: list[Any]) -> list[InitStep]:
         _ = (core, opt)
         return [init("mesh", create=lambda _ctx: "m")]
@@ -288,7 +288,7 @@ def test_run_load_returns_load_result() -> None:
     """run_load() returns LoadResult and populates state."""
     staged_init = StagedInit("X")
 
-    @init.load
+    @staged_init.load
     def load() -> LoadResult:
         return LoadResult(core_models=["c"], optional_models=["o"])
 
@@ -301,7 +301,7 @@ def test_run_load_returns_load_result() -> None:
 
 def test_run_load_no_func_raises() -> None:
     """run_load() raises if no @init.load is defined."""
-    init = StagedInit("X")
+    staged_init = StagedInit("X")
     with pytest.raises(RuntimeError, match="No @X.load defined"):
         staged_init.run_load()
 
@@ -313,7 +313,7 @@ def test_run_build_returns_lazy_inits_and_passes_models() -> None:
     staged_init.optional_models = ["o1"]
     captured = {}
 
-    @init.build
+    @staged_init.build
     def build(core: list[Any], opt: list[Any]) -> list[InitStep]:
         captured["core"] = core
         captured["opt"] = opt
@@ -328,7 +328,7 @@ def test_run_build_returns_lazy_inits_and_passes_models() -> None:
 
 def test_run_build_no_func_raises() -> None:
     """run_build() raises if no @init.build is defined."""
-    init = StagedInit("X")
+    staged_init = StagedInit("X")
     with pytest.raises(RuntimeError, match="No @X.build defined"):
         staged_init.run_build()
 
@@ -339,7 +339,7 @@ def test_run_resolve_passes_config_and_is_optional_noop() -> None:
     config = ConfigContext()
     captured = {}
 
-    @init.resolve
+    @staged_init.resolve
     def resolve(cfg: Any) -> None:
         captured["cfg"] = cfg
 
