@@ -45,6 +45,20 @@ def pimplefoam(ctx: typer.Context) -> None:
 @solver_app.command(
     context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
 )
+def incompressiblefluid(ctx: typer.Context) -> None:
+    """incompressibleFluid - General incompressible fluid solver with turbulence models."""
+
+    from neofoam.solver.incompressibleFluid import run
+
+    # Only pass the extra args (not the Typer command path)
+    argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
+
+    run(argv)
+
+
+@solver_app.command(
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
+)
 def neoicofoam(ctx: typer.Context) -> None:
     """Transient solver for incompressible, laminar flow using NeoN bindings."""
     from neofoam.solver.neoIcoFoam import NeoIcoFoam
