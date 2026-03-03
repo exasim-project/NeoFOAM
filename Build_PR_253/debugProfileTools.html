@@ -239,45 +239,68 @@
         <article role="main" id="furo-main-content">
           <section id="using-kokkos-tools">
 <h1>Using Kokkos Tools<a class="headerlink" href="#using-kokkos-tools" title="Link to this heading">¶</a></h1>
-<p>Kokkos provides a powerful tools interface for debugging and profiling applications.
-This section outlines how to use Kokkos tools effectively in the context of NeoFOAM development.</p>
+<p>Kokkos provides a powerful tools interface for debugging and profiling
+applications. This section explains how to use Kokkos tools effectively
+in NeoFOAM development.</p>
 <section id="kokkos-tools-available-in-neofoam">
-<h2>Kokkos Tools available in NeoFOAM<a class="headerlink" href="#kokkos-tools-available-in-neofoam" title="Link to this heading">¶</a></h2>
-<p>NeoFOAM integrates several Kokkos tools to assist developers in optimizing performance and diagnosing issues.</p>
-<p><strong>Kokkos Profiling Tools</strong>: For performance analysis and optimization.
-- simple-kernel-timer
-- space-time-stack
-- memory-high-water-mark</p>
-<p><strong>Kokkos Debugging Tools</strong>: For identifying bugs in Kokkos-based code.
-- kernel-logger</p>
+<h2>Kokkos Tools Available in NeoFOAM<a class="headerlink" href="#kokkos-tools-available-in-neofoam" title="Link to this heading">¶</a></h2>
+<p>NeoFOAM integrates several Kokkos tools to assist developers in
+optimizing performance and diagnosing issues.</p>
+<p><strong>Profiling tools</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">simple-kernel-timer</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">space-time-stack</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">memory-high-water-mark</span></code></p></li>
+</ul>
+<p><strong>Debugging tools</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">kernel-logger</span></code></p></li>
+</ul>
 </section>
 <section id="setting-up-and-using-kokkos-tools">
 <h2>Setting Up and Using Kokkos Tools<a class="headerlink" href="#setting-up-and-using-kokkos-tools" title="Link to this heading">¶</a></h2>
-<p><strong>For debugging:</strong></p>
+<section id="for-debugging">
+<h3>For debugging<a class="headerlink" href="#for-debugging" title="Link to this heading">¶</a></h3>
 <ol class="arabic">
-<li><p>Configure and build NeoFOAM with the <code class="docutils literal notranslate"><span class="pre">develop</span></code> preset.</p></li>
+<li><p>Configure and build NeoFOAM using the <code class="docutils literal notranslate"><span class="pre">develop</span></code> preset:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">cmake</span><span class="w"> </span><span class="o">--</span><span class="n">preset</span><span class="w"> </span><span class="n">develop</span>
+<span class="n">cmake</span><span class="w"> </span><span class="o">--</span><span class="n">build</span><span class="w"> </span><span class="o">--</span><span class="n">preset</span><span class="w"> </span><span class="n">develop</span>
+</pre></div>
+</div>
+</li>
 <li><p>Run your application with the kernel logger enabled:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="p">..</span><span class="w"> </span><span class="n">code</span><span class="o">-</span><span class="n">block</span><span class="o">::</span><span class="w"> </span><span class="n">bash</span>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="p">.</span><span class="o">/</span><span class="n">run_with_kokkos_tool</span><span class="p">.</span><span class="n">sh</span><span class="w"> </span><span class="n">debug</span><span class="w"> </span><span class="n">kernel</span><span class="o">-</span><span class="n">logger</span><span class="w"> </span><span class="p">[</span><span class="o">--</span><span class="n">log</span><span class="w"> </span><span class="n">filename</span><span class="p">]</span><span class="w"> </span><span class="p">.</span><span class="o">/</span><span class="n">your_neofoam_application</span>
 </pre></div>
 </div>
-<blockquote>
-<div><p>./run_with_kokkos_tool.sh debug kernel-logger [–log filename] ./your_neofoam_application</p>
-</div></blockquote>
 </li>
 </ol>
-<p><strong>For profiling:</strong></p>
+</section>
+<section id="for-profiling">
+<h3>For profiling<a class="headerlink" href="#for-profiling" title="Link to this heading">¶</a></h3>
 <ol class="arabic">
-<li><p>Configure and build NeoFOAM with the <code class="docutils literal notranslate"><span class="pre">profiling</span></code> preset.</p></li>
-<li><p>Run your application with the desired profiling tool:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="p">..</span><span class="w"> </span><span class="n">code</span><span class="o">-</span><span class="n">block</span><span class="o">::</span><span class="w"> </span><span class="n">bash</span>
+<li><p>Configure and build NeoFOAM using the <code class="docutils literal notranslate"><span class="pre">profiling</span></code> preset:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">cmake</span><span class="w"> </span><span class="o">--</span><span class="n">preset</span><span class="w"> </span><span class="n">profiling</span>
+<span class="n">cmake</span><span class="w"> </span><span class="o">--</span><span class="n">build</span><span class="w"> </span><span class="o">--</span><span class="n">preset</span><span class="w"> </span><span class="n">profiling</span>
 </pre></div>
 </div>
-<blockquote>
-<div><p>./run_with_kokkos_tool.sh profile &lt;available Kokkos profiling tool&gt; [–log filename] ./your_neofoam_application</p>
-</div></blockquote>
+</li>
+<li><p>Run your application with the desired profiling tool:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="p">.</span><span class="o">/</span><span class="n">run_with_kokkos_tool</span><span class="p">.</span><span class="n">sh</span><span class="w"> </span><span class="n">profile</span><span class="w"> </span><span class="o">&lt;</span><span class="n">tool</span><span class="o">-</span><span class="n">name</span><span class="o">&gt;</span><span class="w"> </span><span class="p">[</span><span class="o">--</span><span class="n">log</span><span class="w"> </span><span class="n">filename</span><span class="p">]</span><span class="w"> </span><span class="p">.</span><span class="o">/</span><span class="n">your_neofoam_application</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">&lt;tool-name&gt;</span></code> is one of:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">simple-kernel-timer</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">space-time-stack</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">memory-high-water-mark</span></code></p></li>
+</ul>
 </li>
 </ol>
-<p><strong>Note</strong>: The <code class="docutils literal notranslate"><span class="pre">--log</span></code> option allows you to specify a file to save the tool’s output for later analysis.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">--log</span></code> option writes the tool output to a file for later analysis.</p>
+</div>
+</section>
 </section>
 </section>
 
@@ -329,8 +352,12 @@ This section outlines how to use Kokkos tools effectively in the context of NeoF
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Using Kokkos Tools</a><ul>
-<li><a class="reference internal" href="#kokkos-tools-available-in-neofoam">Kokkos Tools available in NeoFOAM</a></li>
-<li><a class="reference internal" href="#setting-up-and-using-kokkos-tools">Setting Up and Using Kokkos Tools</a></li>
+<li><a class="reference internal" href="#kokkos-tools-available-in-neofoam">Kokkos Tools Available in NeoFOAM</a></li>
+<li><a class="reference internal" href="#setting-up-and-using-kokkos-tools">Setting Up and Using Kokkos Tools</a><ul>
+<li><a class="reference internal" href="#for-debugging">For debugging</a></li>
+<li><a class="reference internal" href="#for-profiling">For profiling</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
