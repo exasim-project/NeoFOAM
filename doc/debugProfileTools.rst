@@ -34,7 +34,7 @@ For debugging
 
 2. Run your application with the kernel logger enabled::
 
-      ./<path to the script run_with_kokkos_tool.sh> debug kernel-logger [--log filename] ./your_neofoam_application
+      ./<path to run_with_kokkos_tool.sh> debug kernel-logger [--log filename] ./your_neofoam_application
 
 For profiling
 ^^^^^^^^^^^^^
@@ -46,7 +46,7 @@ For profiling
 
 2. Run your application with the desired profiling tool::
 
-      ./<path to the script run_with_kokkos_tool.sh> <tool-name> [--log filename] ./your_neofoam_application
+      ./<path to run_with_kokkos_tool.sh> profile <tool-name> [--log filename] ./your_neofoam_application
 
    where ``<tool-name>`` is one of:
 
