@@ -10,12 +10,18 @@ import pybFoam as pyf
 from neofoam.framework.initialization import InitStep, field, init
 
 
-def create_runtime(argv: list[str]) -> InitStep:
+def create_arg_list(argv: list[str]) -> InitStep:
     def create(_context: dict[str, Any]) -> Any:
-        arg_list = pyf.argList(argv)
-        return pyf.Time(arg_list)
+        return pyf.argList(argv)
 
-    return init("runtime", create=create)
+    return init("arg_list", create=create)
+
+
+def create_runtime() -> InitStep:
+    def create(context: dict[str, Any]) -> Any:
+        return pyf.Time(context["arg_list"])
+
+    return init("runtime", create=create, depends_on=["arg_list"])
 
 
 def create_mesh() -> InitStep:
@@ -26,7 +32,7 @@ def create_mesh() -> InitStep:
 
 
 def create_time_mesh(argv: list[str]) -> list[InitStep]:
-    return [create_runtime(argv), create_mesh()]
+    return [create_arg_list(argv), create_runtime(), create_mesh()]
 
 
 def read_vol_field(field_type: Type[Any], name: str) -> InitStep:

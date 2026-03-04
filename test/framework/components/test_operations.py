@@ -208,3 +208,111 @@ def test_step_builder_context_manager_runs_correctly() -> None:
 
     builder.operations.run(Context(fields={}, models={}, mesh={}))
     assert count[0] == 1 + 3  # 1 pre + 3 loop iterations
+
+
+# ---------------------------------------------------------------------------
+# StepBuilder implicit chaining tests
+# ---------------------------------------------------------------------------
+
+
+def test_step_builder_chains_unnumbered_ops() -> None:
+    """Unnumbered ops without explicit deps get chained by insertion order."""
+    builder = StepBuilder()
+    builder.step(make_seq_op("A"))
+    builder.step(make_seq_op("B"))
+    builder.step(make_seq_op("C"))
+
+    ops = list(builder.operations)
+    assert ops[0].depends_on == []
+    assert ops[1].depends_on == ["A"]
+    assert ops[2].depends_on == ["B"]
+
+
+def test_step_builder_chains_numbered_ops() -> None:
+    """Numbered ops also get chained by insertion order."""
+    builder = StepBuilder()
+    builder.step(make_seq_op("C", number="3"))
+    builder.step(make_seq_op("A", number="1"))
+    builder.step(make_seq_op("B", number="2"))
+
+    ops = list(builder.operations)
+    assert ops[0].depends_on == []
+    assert ops[1].depends_on == ["C"]
+    assert ops[2].depends_on == ["A"]
+
+
+def test_step_builder_appends_to_explicit_deps() -> None:
+    """Ops with explicit depends_on get the previous step appended."""
+    builder = StepBuilder()
+    builder.step(make_seq_op("A"))
+    builder.step(make_seq_op("B", depends_on=["X"]))
+
+    ops = list(builder.operations)
+    assert ops[1].depends_on == ["X", "A"]
+
+
+def test_step_builder_chains_loop() -> None:
+    """Loops participate in the chain like any other op."""
+    from framework.components.conftest import make_loop_op
+
+    builder = StepBuilder()
+    builder.step(make_seq_op("A"))
+    builder.step(make_seq_op("B"))
+    with builder.loop(make_loop_op("my_loop")) as inner:
+        inner.step(make_seq_op("C"))
+    builder.step(make_seq_op("D"))
+
+    ops = list(builder.operations)
+    assert ops[0].depends_on == []  # A
+    assert ops[1].depends_on == ["A"]  # B
+    assert ops[2].depends_on == ["B"]  # my_loop
+    assert ops[3].depends_on == ["B"]  # D depends on B (last seq op before loop)
+
+
+def test_step_builder_chains_nested_loops() -> None:
+    """Nested loops set correct dependency chains at each nesting level.
+
+    Mirrors the solver pattern:
+        with builder.loop(time_loop) as time_builder:
+            time_builder.step(set_time_step)
+            time_builder.step(increment_time)
+            with time_builder.loop(inner_loop) as inner_builder:
+                inner_builder.step(momentum)
+                inner_builder.step(continuity)
+            time_builder.step(write_output)
+    """
+    from framework.components.conftest import make_loop_op
+
+    builder = StepBuilder()
+    builder.step(make_seq_op("init"))
+
+    with builder.loop(make_loop_op("time_loop")) as time_builder:
+        time_builder.step(make_seq_op("set_time_step"))
+        time_builder.step(make_seq_op("increment_time"))
+
+        with time_builder.loop(make_loop_op("inner_loop")) as inner_builder:
+            inner_builder.step(make_seq_op("momentum"))
+            inner_builder.step(make_seq_op("continuity"))
+
+        time_builder.step(make_seq_op("write_output"))
+
+    # -- root level: init -> time_loop
+    root_ops = list(builder.operations)
+    assert root_ops[0].depends_on == []  # init
+    assert root_ops[1].depends_on == ["init"]  # time_loop
+
+    # -- time_loop level: set_time_step -> increment_time -> inner_loop -> write_output
+    time_ops = root_ops[1].sub_operations
+    assert len(time_ops) == 4
+    assert time_ops[0].depends_on == []  # set_time_step
+    assert time_ops[1].depends_on == ["set_time_step"]  # increment_time
+    assert time_ops[2].depends_on == ["increment_time"]  # inner_loop
+    assert time_ops[3].depends_on == [
+        "increment_time"
+    ]  # write_output depends on last seq op before loop
+
+    # -- inner_loop level: momentum -> continuity
+    inner_ops = time_ops[2].sub_operations
+    assert len(inner_ops) == 2
+    assert inner_ops[0].depends_on == []  # momentum
+    assert inner_ops[1].depends_on == ["momentum"]  # continuity

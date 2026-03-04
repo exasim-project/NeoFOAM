@@ -82,7 +82,13 @@ def execute_lazy_inits(
     context: dict[str, Any] = {}
     results: list[InitResult] = []
 
+    print("Initialization order:")
+    for i, step in enumerate(sorted_inits, 1):
+        deps = f" (depends_on: {step.depends_on})" if step.depends_on else ""
+        print(f"  {i}. {step.name} [{step.category}]{deps}")
+
     for lazy_init in sorted_inits:
+        print(f"  Executing: {lazy_init.name}")
         obj = lazy_init.execute(context=context)
         context[lazy_init.name] = obj
         results.append(

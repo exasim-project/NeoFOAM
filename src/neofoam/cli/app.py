@@ -69,5 +69,17 @@ def neoicofoam(ctx: typer.Context) -> None:
     solver.run()
 
 
+@solver_app.command(
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
+)
+def incompressiblefluidneon(ctx: typer.Context) -> None:
+    """NeoN-backed incompressible fluid solver (PISO, laminar)."""
+    from neofoam.solver.incompressibleFluidNeon import run
+
+    argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
+
+    run(argv)
+
+
 if __name__ == "__main__":
     app()

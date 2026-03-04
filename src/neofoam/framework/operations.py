@@ -100,6 +100,15 @@ class Operation:
     def dependency_names(self) -> list[str]:
         return self.metadata.dependencies
 
+    def print_tree(self, indent: int = 0) -> None:
+        """Print the operation tree structure."""
+        prefix = "  " * indent
+        name = self.operation_name or "unnamed"
+        op_type = self.operation_type
+        print(f"{prefix}- {name} [{op_type}]")
+        for sub in self.sub_operations:
+            sub.print_tree(indent + 1)
+
     def run(self, ctx: Context) -> Any:
         op_type = self.operation_type
         if op_type == "conditional":
@@ -164,7 +173,14 @@ class Operations:
     def __iter__(self) -> Iterator[Operation]:
         return iter(self.ops)
 
+    def print_tree(self) -> None:
+        """Print the full operation tree structure."""
+        print("Operation tree:")
+        for op in self.ops:
+            op.print_tree(indent=2)
+
     def run(self, ctx: Context) -> None:
+        self.print_tree()
         for operation in self.ops:
             operation.run(ctx)
 
@@ -185,12 +201,28 @@ class StepBuilder:
         self.operations = (
             Operations(operations) if operations is not None else Operations()
         )
+        self._last_name: str | None = None
+
+    def _chain(self, operation: Operation) -> None:
+        """Always append the previous step to depends_on if not already present."""
+        if self._last_name and operation.operation_name:
+            deps = operation.metadata.depends_on
+            if deps is None:
+                operation.metadata.depends_on = [self._last_name]
+            elif self._last_name not in deps:
+                deps.append(self._last_name)
+        # Only non-loop ops become the chain target; loops are structural
+        # containers whose ordering is handled by rebuild_builder().
+        if operation.operation_name and not isinstance(operation.func, IterativeOp):
+            self._last_name = operation.operation_name
 
     def step(self, operation: Operation) -> StepBuilder:
+        self._chain(operation)
         self.operations.add(operation)
         return self
 
     def loop(self, operation: Operation) -> StepBuilder:
+        self._chain(operation)
         self.operations.add(operation)
         return StepBuilder(operations=self.operations[-1].sub_operations)
 

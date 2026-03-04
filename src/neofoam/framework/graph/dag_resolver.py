@@ -191,19 +191,41 @@ def sort_global(
     except nx.NetworkXUnfeasible:
         raise CyclicDependencyError("Cyclic dependency detected in operation graph")
 
-    by_scope: dict[str, list[Operation]] = defaultdict(list)
-
-    # First: collect loop ops per parent scope (they are structural, not sorted)
+    # Collect loop ops and sorted sequential ops per scope
+    loop_ops_by_scope: dict[str, list[Operation]] = defaultdict(list)
     for scope, op in tagged:
         if isinstance(op.func, IterativeOp):
-            by_scope[scope].append(op)
+            loop_ops_by_scope[scope].append(op)
 
-    # Then: append sorted sequential ops per scope
+    seq_by_scope: dict[str, list[Operation]] = defaultdict(list)
     for name in sorted_names:
         scope, op = op_map[name]
-        by_scope[scope].append(op)
+        seq_by_scope[scope].append(op)
 
-    return dict(by_scope)
+    # Merge: interleave loop ops after their last dependency
+    by_scope: dict[str, list[Operation]] = {}
+    all_scopes = set(list(loop_ops_by_scope.keys()) + list(seq_by_scope.keys()))
+    for scope in all_scopes:
+        seq_ops = list(seq_by_scope.get(scope, []))
+        loop_ops = loop_ops_by_scope.get(scope, [])
+
+        if not loop_ops:
+            by_scope[scope] = seq_ops
+            continue
+
+        result = list(seq_ops)
+        for loop_op in loop_ops:
+            insert_pos = 0
+            for dep in loop_op.depends_on or []:
+                for i, op in enumerate(result):
+                    if op.operation_name == dep:
+                        insert_pos = max(insert_pos, i + 1)
+                        break
+            result.insert(insert_pos, loop_op)
+
+        by_scope[scope] = result
+
+    return by_scope
 
 
 def rebuild_builder(
@@ -212,37 +234,23 @@ def rebuild_builder(
 ) -> StepBuilder:
     """Reconstruct a ``StepBuilder`` from sorted scope data.
 
-    Walks the original builder tree to preserve nesting structure but
-    replaces each scope's operations with the sorted versions.
+    Walks the sorted scope lists directly, recursing into loop scopes.
+    Ops are added directly (bypassing ``_chain()``) because dependencies
+    have already been resolved by the sort phase.
     """
     new_builder = StepBuilder()
 
-    def _rebuild(
-        original_ops: list[Operation],
-        target_builder: StepBuilder,
-    ) -> None:
-        for op in original_ops:
+    def _process_scope(scope_name: str, target_ops: list[Operation]) -> None:
+        for op in sorted_scopes.get(scope_name, []):
             if isinstance(op.func, IterativeOp):
                 loop_name = op.operation_name or "loop"
-                sorted_ops = sorted_scopes.get(loop_name, [])
-
                 new_op = dataclasses.replace(op, sub_operations=[])
+                target_ops.append(new_op)
+                _process_scope(loop_name, new_op.sub_operations)
+            else:
+                target_ops.append(op)
 
-                loop_builder = target_builder.loop(new_op)
-                for sub_op in sorted_ops:
-                    if isinstance(sub_op.func, IterativeOp):
-                        _rebuild([sub_op], loop_builder)
-                    else:
-                        loop_builder.step(sub_op)
-
-    has_loops = any(isinstance(op.func, IterativeOp) for op in original.operations.ops)
-
-    if has_loops:
-        _rebuild(original.operations.ops, new_builder)
-    elif "root" in sorted_scopes:
-        for op in sorted_scopes["root"]:
-            new_builder.step(op)
-
+    _process_scope("root", new_builder.operations.ops)
     return new_builder
 
 

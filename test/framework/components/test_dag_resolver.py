@@ -605,9 +605,9 @@ def test_resolve_flat_single_op() -> None:
 def test_resolve_flat_sorted_by_number() -> None:
     """Independent ops ordered by OperationNumber."""
     builder = StepBuilder()
-    builder.step(make_seq_op("C", number="3"))
-    builder.step(make_seq_op("A", number="1"))
-    builder.step(make_seq_op("B", number="2"))
+    builder.operations.add(make_seq_op("C", number="3"))
+    builder.operations.add(make_seq_op("A", number="1"))
+    builder.operations.add(make_seq_op("B", number="2"))
 
     result = DAGResolver().resolve(builder, Operations())
     assert _names_in(result) == ["A", "B", "C"]
@@ -616,8 +616,8 @@ def test_resolve_flat_sorted_by_number() -> None:
 def test_resolve_flat_deps_override_number() -> None:
     """Dependencies override OperationNumber ordering."""
     builder = StepBuilder()
-    builder.step(make_seq_op("A", number="1", depends_on=["B"]))
-    builder.step(make_seq_op("B", number="2"))
+    builder.operations.add(make_seq_op("A", number="1", depends_on=["B"]))
+    builder.operations.add(make_seq_op("B", number="2"))
 
     result = DAGResolver().resolve(builder, Operations())
     names = _names_in(result)
@@ -636,10 +636,10 @@ def test_resolve_flat_before_constraint() -> None:
 
 def test_resolve_flat_diamond() -> None:
     builder = StepBuilder()
-    builder.step(make_seq_op("D", number="4", depends_on=["B", "C"]))
-    builder.step(make_seq_op("B", number="2", depends_on=["A"]))
-    builder.step(make_seq_op("C", number="3", depends_on=["A"]))
-    builder.step(make_seq_op("A", number="1"))
+    builder.operations.add(make_seq_op("D", number="4", depends_on=["B", "C"]))
+    builder.operations.add(make_seq_op("B", number="2", depends_on=["A"]))
+    builder.operations.add(make_seq_op("C", number="3", depends_on=["A"]))
+    builder.operations.add(make_seq_op("A", number="1"))
 
     result = DAGResolver().resolve(builder, Operations())
     names = _names_in(result)
@@ -765,7 +765,7 @@ def test_runnable_flat_execution_order() -> None:
         return fn
 
     builder = StepBuilder()
-    builder.step(
+    builder.operations.add(
         Operation(
             func=SequentialOp(make_logger("B")),
             metadata=OperationMetadata(
@@ -773,7 +773,7 @@ def test_runnable_flat_execution_order() -> None:
             ),
         )
     )
-    builder.step(
+    builder.operations.add(
         Operation(
             func=SequentialOp(make_logger("A")),
             metadata=OperationMetadata(
@@ -841,3 +841,63 @@ def test_runnable_loop_execution_order_with_model_ops() -> None:
 
     # 2 iterations × (S1, M1, S2) = [S1, M1, S2, S1, M1, S2]
     assert log == ["S1", "M1", "S2", "S1", "M1", "S2"]
+
+
+def test_resolve_nested_context_manager_with_model_ops() -> None:
+    """DAGResolver resolves a builder built with nested context-manager API.
+
+    Mirrors the solver pattern:
+        with builder.loop(time_loop) as time_builder:
+            time_builder.step(set_time_step)
+            time_builder.step(increment_time)
+            with time_builder.loop(inner_loop) as inner_builder:
+                inner_builder.step(momentum)
+                inner_builder.step(continuity)
+            time_builder.step(write_output)
+
+    Model ops are injected into the correct scopes based on dependencies.
+    """
+    builder = StepBuilder()
+    builder.step(make_seq_op("init"))
+
+    with builder.loop(make_loop_op("time_loop")) as time_builder:
+        time_builder.step(make_seq_op("set_time_step"))
+        time_builder.step(make_seq_op("increment_time"))
+
+        with time_builder.loop(make_loop_op("inner_loop")) as inner_builder:
+            inner_builder.step(make_seq_op("momentum"))
+            inner_builder.step(make_seq_op("continuity"))
+
+        time_builder.step(make_seq_op("write_output"))
+
+    # Model ops: one depends on momentum (inner), one on set_time_step (outer)
+    model_ops = Operations(
+        [
+            make_seq_op("turbulence", depends_on=["momentum"]),
+            make_seq_op("update_props", depends_on=["set_time_step"]),
+        ]
+    )
+
+    result = DAGResolver().resolve(builder, model_ops)
+
+    # -- root level: init, time_loop preserved
+    root_names = _names_in(result)
+    assert root_names == ["init", "time_loop"]
+
+    # -- time_loop level: update_props placed here (depends on set_time_step)
+    time_names = _names_in(result, path=[1])
+    assert "set_time_step" in time_names
+    assert "increment_time" in time_names
+    assert "inner_loop" in time_names
+    assert "write_output" in time_names
+    assert "update_props" in time_names
+    assert time_names.index("set_time_step") < time_names.index("update_props")
+    assert time_names.index("update_props") < time_names.index("write_output")
+
+    # -- inner_loop level: turbulence placed here (depends on momentum)
+    inner_names = _names_in(result, path=[1, time_names.index("inner_loop")])
+    assert "momentum" in inner_names
+    assert "continuity" in inner_names
+    assert "turbulence" in inner_names
+    assert inner_names.index("momentum") < inner_names.index("turbulence")
+    assert inner_names.index("momentum") < inner_names.index("continuity")
