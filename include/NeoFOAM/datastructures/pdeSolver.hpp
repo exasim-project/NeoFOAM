@@ -180,6 +180,7 @@ private:
     {
         Kokkos::Profiling::pushRegion("Solver setup and solve");
         // Only if ValueType is scalar
+        Kokkos::Profiling::pushRegion("Set up post-assembly functors");
         auto functs = std::vector<NeoN::dsl::PostAssemblyBase<ValueType, IndexType>> {};
 
         if constexpr (std::is_same_v<ValueType, NeoN::scalar>)
@@ -190,6 +191,7 @@ private:
                         ValueType>(pRefCell_, pRefValue_)}
                     : std::vector<NeoN::dsl::PostAssemblyBase<ValueType, IndexType>> {};
         }
+        Kokkos::Profiling::popRegion(); // Set up post-assembly functors
 
         auto solverDict = runTime_.fvSolutionDict.subDict("solvers");
         auto fieldSolverDict = solverDict.subDict(psi_.name);
@@ -228,6 +230,7 @@ private:
             );
         }
 
+        Kokkos::Profiling::pushRegion("Print solver stats");
         for (auto stat : stats.entries)
         {
             NeoN::Logging::info(
@@ -238,6 +241,7 @@ private:
                 stat.numIter
             );
         }
+        Kokkos::Profiling::popRegion(); // Print solver stats
         Kokkos::Profiling::popRegion(); // Solver setup and solve
         return stats;
     }
