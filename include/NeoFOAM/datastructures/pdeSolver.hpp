@@ -161,7 +161,9 @@ public:
     NeoN::la::SolverStats solve(dsl::SpatialOperator<NeoN::Vec3>&& rhs)
     {
         // assemble wo rhs first
+        Kokkos::Profiling::pushRegion("Assemble linear system for solve without rhs");
         auto ls = assemble(std::move(rhs));
+        Kokkos::Profiling::popRegion(); // Assemble linear system for solve without rhs
 
         auto solverDict = runTime_.fvSolutionDict.subDict("solvers");
         auto fvSolution = solverDict.subDict(psi_.name);
@@ -176,6 +178,7 @@ private:
 
     NeoN::la::SolverStats solveImpl(dsl::Expression<ValueType>& expr, LinearSystem& ls)
     {
+        Kokkos::Profiling::pushRegion("Solver setup and solve");
         // Only if ValueType is scalar
         auto functs = std::vector<NeoN::dsl::PostAssemblyBase<ValueType, IndexType>> {};
 
@@ -235,7 +238,7 @@ private:
                 stat.numIter
             );
         }
-
+        Kokkos::Profiling::popRegion(); // Solver setup and solve
         return stats;
     }
 

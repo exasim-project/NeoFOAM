@@ -67,9 +67,9 @@ int main(int argc, char* argv[])
 
         Kokkos::Profiling::popRegion(); // Preprocessing
         NeoN::Logging::info("Starting time loop");
+        Kokkos::Profiling::pushRegion("Time loop");
         while (runTime.loop())
         {
-            Kokkos::Profiling::pushRegion("Time loop");
             // Logging supports string formatting
             NeoN::Logging::info("Time = {}", rt.t);
 
@@ -107,10 +107,10 @@ int main(int argc, char* argv[])
             }
 
             // --- PISO loop
+            Kokkos::Profiling::pushRegion("PISO loop");
             while (piso.correct())
             {
                 NeoN::Logging::info("PISO loop");
-                Kokkos::Profiling::pushRegion("PISO loop");
                 Kokkos::Profiling::pushRegion("Compute rAU, HbyA and phiHbyA");
                 auto [crAU, hByA] = nf::computeRAUandHByA(UEqn);
                 nf::constrainHbyA(U, p, hByA);
@@ -133,9 +133,9 @@ int main(int argc, char* argv[])
                 // Foam::constrainPressure(p, U, phiHbyA, rAU);
 
                 // Non-orthogonal pressure corrector loop
+                Kokkos::Profiling::pushRegion("PISO non-orthogonal corrector loop");
                 while (piso.correctNonOrthogonal())
                 {
-                    Kokkos::Profiling::pushRegion("PISO non-orthogonal corrector loop");
                     // Pressure corrector
                     nf::PDESolver<NeoN::scalar> pEqn(
                         NeoN::dsl::imp::laplacian(rAU, p) - NeoN::dsl::exp::div(phiHbyA),
@@ -158,15 +158,17 @@ int main(int argc, char* argv[])
                     {
                         nf::updateFaceVelocity(phiHbyA, pEqn, phi);
                     }
-                    Kokkos::Profiling::popRegion(); // PISO non-orthogonal corrector loop
                 }
+                Kokkos::Profiling::popRegion(); // PISO non-orthogonal corrector loop
                 // TODO: missing
                 // #include "continuityErrs.H"
 
+                Kokkos::Profiling::pushRegion("Update velocity");
                 nf::updateVelocity(hByA, crAU, p, U);
+                Kokkos::Profiling::popRegion(); // Update velocity
                 U.correctBoundaryConditions();
-                Kokkos::Profiling::popRegion(); // PISO loop
             }
+            Kokkos::Profiling::popRegion(); // PISO loop
 
             Kokkos::Profiling::pushRegion("Write results");
             runTime.write();
@@ -180,8 +182,8 @@ int main(int argc, char* argv[])
 
             runTime.printExecutionTime(Info);
             Kokkos::Profiling::popRegion(); // Write results
-            Kokkos::Profiling::popRegion(); // Time loop
         }
+        Kokkos::Profiling::popRegion(); // Time loop
         Kokkos::Profiling::popRegion(); // Total execution
     }
     NeoN::finalize();
