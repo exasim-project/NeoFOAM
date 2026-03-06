@@ -30,7 +30,6 @@ TEST_CASE("matrix multiplication")
 
     auto meshPtr = NeoFOAM::createMesh(exec, runTime);
     NeoFOAM::MeshAdapter& mesh = *meshPtr;
-    // sparsity is now managed inside LinearSystem
 
     runTime.setDeltaT(1);
 
@@ -53,6 +52,8 @@ TEST_CASE("matrix multiplication")
 
         Foam::fvScalarMatrix matrix(Foam::fvm::ddt(ofT));
         Foam::volScalarField ddt("ddt", matrix & ofT);
+
+        // we should get a uniform field with a value of 1
         fvcc::DdtOperator ddtOp(dsl::Operator::Type::Implicit, nfT);
 
         NeoN::Dictionary ddtSchemes;
@@ -67,7 +68,7 @@ TEST_CASE("matrix multiplication")
         nf::compare(ls.rhs(), matrix.source(), ApproxScalar(epsilon));
 
         // check diag
-        auto diag = NeoFOAM::diag(ls);
+        auto diag = ls.matrix().diag();
         nf::compare(diag, matrix.diag(), ApproxScalar(epsilon));
 
         auto result = NeoFOAM::applyOperator(ls, nfT);
@@ -105,7 +106,7 @@ TEST_CASE("matrix multiplication")
         sourceTerm.implicitOperation(ls);
 
         // check diag
-        auto diag = NeoFOAM::diag(ls);
+        auto diag = ls.matrix().diag();
         auto diagHost = diag.copyToHost();
 
         for (size_t celli = 0; celli < diagHost.size(); celli++)

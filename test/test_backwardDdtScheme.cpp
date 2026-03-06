@@ -32,7 +32,6 @@ TEST_CASE("(backward) ddt implicit matches OpenFOAM", "[ddt][backward]")
     auto meshPtr = NeoFOAM::createMesh(exec, runTime);
     NeoFOAM::MeshAdapter& mesh = *meshPtr;
     auto nfMesh = mesh.nfMesh();
-    // sparsity is now managed inside LinearSystem
 
     runTime.setDeltaT(1);
     runTime.setTime(0.0, 0);
@@ -84,21 +83,22 @@ TEST_CASE("(backward) ddt implicit matches OpenFOAM", "[ddt][backward]")
 
         // --- diag ---
         {
-            auto diag = NeoFOAM::diag(ls1).copyToHost();
+            auto diag = NeoFOAM::diag(ls1, sparsityPattern).copyToHost();
             forAll(diag.view(), celli)
             {
-                REQUIRE(diag.view()[celli] == Catch::Approx(matrix1.diag()[celli]).margin(1e-16));
+                REQUIRE(diagH.view()[celli] == Catch::Approx(matrix1.diag()[celli]).margin(1e-16));
             }
         }
 
         // --- operator application ---
         {
             auto result = NeoFOAM::applyOperator(ls1, nfT).internalVector().copyToHost();
+            auto resultH = result.copyToHost();
 
             forAll(result.view(), celli)
             {
                 REQUIRE(
-                    result.view()[celli]
+                    resultH.view()[celli]
                     == Catch::Approx(ddt1[celli] * mesh.V()[celli]).margin(1e-16)
                 );
             }
@@ -132,21 +132,23 @@ TEST_CASE("(backward) ddt implicit matches OpenFOAM", "[ddt][backward]")
 
         // --- diag ---
         {
-            auto diag = NeoFOAM::diag(ls2).copyToHost();
+            auto diag = ls2.matrix().diag();
+            auto diagH = diag.copyToHost();
             forAll(diag.view(), celli)
             {
-                REQUIRE(diag.view()[celli] == Catch::Approx(matrix2.diag()[celli]).margin(1e-16));
+                REQUIRE(diagH.view()[celli] == Catch::Approx(matrix2.diag()[celli]).margin(1e-16));
             }
         }
 
         // --- operator application ---
         {
             auto result = NeoFOAM::applyOperator(ls2, nfT).internalVector().copyToHost();
+            auto resultH = result.copyToHost();
 
             forAll(result.view(), celli)
             {
                 REQUIRE(
-                    result.view()[celli]
+                    resultH.view()[celli]
                     == Catch::Approx(ddt2[celli] * mesh.V()[celli]).margin(1e-16)
                 );
             }
