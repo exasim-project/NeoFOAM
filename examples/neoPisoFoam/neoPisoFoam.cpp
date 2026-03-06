@@ -46,6 +46,7 @@ int main(int argc, char* argv[])
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
         solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
         solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
+        solverDict.subDict("nuTilda") = nf::mapFvSolution(solverDict.subDict("nuTilda"));
         auto& schemesDict = rt.fvSchemesDict;
         schemesDict = nf::mapFvSchemes(rt.fvSchemesDict);
 
@@ -102,7 +103,7 @@ int main(int argc, char* argv[])
         surfInterpol.interpolate(nu, surfNu);
         auto nut = nf::constructFrom(rt.exec, rt.nfMesh, ofNut);
         saBase.calcNuTildaDiffusionCoeff(nuTilda, surfNu, surfNuTilda, nuTildaEff);
-        saBase.correctNut(nut, surfNut, nuEff, nuTilda, nu, surfNu);
+        saBase.correctNut(nut, surfNut, nuEff, nuTilda, nu, surfNu, U, wallDist);
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -215,7 +216,7 @@ int main(int argc, char* argv[])
             );
             nuTildaEqn.solve();
             saBase.calcNuTildaDiffusionCoeff(nuTilda, surfNu, surfNuTilda, nuTildaEff);
-            saBase.correctNut(nut, surfNut, nuEff, nuTilda, nu, surfNu);
+            saBase.correctNut(nut, surfNut, nuEff, nuTilda, nu, surfNu, U, wallDist);
 
             runTime.write();
             if (runTime.outputTime())

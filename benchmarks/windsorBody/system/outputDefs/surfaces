@@ -1,0 +1,109 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Version:  v2206
+    \\  /    A nd           | Website:  www.openfoam.com
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+Description
+    Writes out surface files with interpolated field data in VTK format, e.g.
+    cutting planes, iso-surfaces and patch boundary surfaces.
+
+    This file includes a selection of example surfaces, each of which the user
+    should configure and/or remove.
+
+\*---------------------------------------------------------------------------*/
+
+#include        "include/caseDefinition"
+
+#includeEtc     "caseDicts/postProcessing/visualization/surfaces.cfg"
+
+line
+{
+    type        midPoint;
+    axis        xyz;
+    start       (0 0 0);
+    end         (0 0 1);
+}
+
+setFormat           csv;
+surfaceFormat       vtk;
+
+fields       
+(
+    p
+    U
+    vorticity
+    nut
+    k
+    wallShearStress
+    yPlus
+);
+
+sets
+(
+    line_1
+    {
+        $line;
+        start       (-1.0 0.0 0.0);
+        start       (-1.0 0.0 0.2);
+    }
+);
+
+surfaces
+(
+    xNormal_1
+    {
+        $cuttingPlane;
+        pointAndNormalDict
+        {
+            point       (0 0 0.630);    // Overrides default basePoint (0 0 0)
+            normal      $x;             // $y: macro for (0 0 1)
+        }
+    }
+
+    xNormal_2
+    {
+        $cuttingPlane;
+        pointAndNormalDict
+        {
+            point       (0 0 0.922);    // Overrides default basePoint (0 0 0)
+            normal      $x;             // $y: macro for (0 0 1)
+        }
+    }
+
+    yNormal_1
+    {
+        $cuttingPlane;
+        pointAndNormalDict
+        {
+            point       (0 0 0);        // Overrides default basePoint (0 0 0)
+            normal      $y;             // Overrides default normalVector (1 0 0)
+        }                               // $y: macro for (0 1 0)
+    }
+
+    zNormal_1
+    {
+        $cuttingPlane;
+        pointAndNormalDict
+        {
+            point       (0 0 0.194);    // Overrides default basePoint (0 0 0)
+            normal      $z;             // $y: macro for (0 0 1)
+        }
+    }
+
+    Windsor_Complete
+    {
+        $patchSurface;
+        //patches         ($forcesWallPatches);
+        patches         (Windsor_Body Windsor_Pins Windsor_Base);
+    }
+
+    Windsor_Base
+    {
+        $patchSurface;
+        patches         (Windsor_Base);
+    }
+);
+
+// ************************************************************************* //

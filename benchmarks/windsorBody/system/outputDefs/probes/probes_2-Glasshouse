@@ -1,0 +1,64 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Version:  v2206
+    \\  /    A nd           | Website:  www.openfoam.com
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+Description
+    Writes out values of fields from cells nearest to specified locations.
+
+\*---------------------------------------------------------------------------*/
+
+probes_2-Glasshouse
+{
+    type            patchProbes;
+    libs            ("libsampling.so");
+
+    // Name of the directory for probe data
+    name            probes_2-Glasshouse;
+    
+    patches         ($forcesWallPatches);
+    // Write at same frequency as fields
+    writeControl    timeStep;
+    writeInterval   1;
+
+    // Fields to be probed
+    fields          ($probeField);
+
+    // Optional: do not recalculate cells if mesh moves
+    fixedLocations  true;
+
+    // Optional: interpolation scheme to use (default is cell)
+    //interpolationScheme $interpScheme; //cell
+
+    probeLocations
+    (
+        ( 0.41734 -0.21341  0.25940)
+        ( 0.43435  0.17622  0.25940)
+        ( 0.23751 -0.20556  0.25940)
+        ( 0.25452  0.18407  0.25940)
+        ( 0.05768 -0.19770  0.25940)
+        ( 0.07469  0.19192  0.25940)
+        (-0.10494  0.19977  0.25940)
+        (-0.12215 -0.18985  0.25940)
+        (-0.21206 -0.18593  0.25940)
+        (-0.19505  0.20370  0.25940)
+        (-0.29637 -0.17974  0.25940)
+        (-0.27958  0.20489  0.25940)
+        (-0.33205 -0.17168  0.25940)
+        (-0.31583  0.19997  0.25940)
+        (-0.36593 -0.15669  0.25940)
+        (-0.35088  0.18798  0.25940)
+        (-0.38669 -0.12775  0.25940)
+        (-0.38354 -0.05562  0.25940)
+        (-0.38039  0.01661  0.25940)
+        (-0.37723  0.08884  0.25940)
+        (-0.37408  0.16097  0.25940)
+    );
+
+    // Optional: filter out points that haven't been found. Default
+    //           is to include them (with value -VGREAT)
+    includeOutOfBounds  true;
+}
+// ************************************************************************* //

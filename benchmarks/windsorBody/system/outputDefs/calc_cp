@@ -1,0 +1,29 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2206                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+
+calc_cp
+{
+    // Mandatory entries (unmodifiable)
+    type            pressure;
+    libs            (fieldFunctionObjects);
+
+    // Mandatory entries (runtime modifiable)
+    mode            staticCoeff;
+    result          cp;
+
+    // Optional entries (runtime modifiable)
+    p               p;
+    U               U;
+    pInf            $pref;
+    UInf            $Uinf;
+    rho             rhoInf; 
+    rhoInf          1;
+    writeControl    writeTime;
+}
+
+// ************************************************************************* //

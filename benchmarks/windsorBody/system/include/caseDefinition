@@ -1,0 +1,43 @@
+// Geometric parameters
+lref                0.6375;         // Reference length/wheelbase (in m)
+Aref                0.1124;         // Reference area (in m^2) - frontal area
+yawAngle           -2.5;            // yaw angle of windsor body in global coordinate system
+
+// domain paramaters
+lDomain             11.0208;        // Length of domain in x-direction (in m)
+bDomain             1.92;           // Width of domain in y-direction (in m)
+hDomain             1.32;           // Height of domain in z-direction (in m)
+xCenter             0.5104;         // x coordinate of center point of domain (in m)
+yCenter             0.0;            // y coordinate of center point of domain (in m)
+zCenter             0.66;           // z coordinate of center point of domain (in m)
+
+// Patch assignment:
+inletPatch                  "CFDWT_In.*";
+outletPatch                 "CFDWT_Out.*";
+wallPatches                 "(Windsor_Body.*|Windsor_Pins.*|Windsor_Base.*|CFDWT_Floor.*)";
+forcesWallPatches           "(Windsor_Body|Windsor_Pins|Windsor_Base)";
+symmPatches                 "(CFDWT_Left|CFDWT_Right|CFDWT_Roof.*)";
+
+// Inlet and boundary conditions:
+Uinf                (40.0 0 0);     // Reference velocity vector at inlet (in m/s)
+UinfMag             40.0;           // Reference velocity magnitude at inlet (in m/s)
+nu                  1.44e-05;       // Reference kinematic viscosity (in m^2/s) -> Re = 2.9e6 (based on the lengh of the body)
+pref                0.0;            // Reference pressure at outlet (in m^2/s^2)
+viscRatio           5.0;            // Turbulent viscosity ratio in domain
+Tu                  0.0026;         // Turbulence intensity in domain
+
+// Turbulence model:
+LESturbModel        SpalartAllmarasDDES;  // Model for LES if used
+RASturbModel        SpalartAllmaras;      // Model for RANS simulations if used
+deltaTurb           maxDeltaxyz;    // Selected delta formulation
+
+// Simulation parameters:
+dt                  5.0e-5;         // Timestep
+tAvg                0.5;            // Time when to start averaging (in s) - 0.05s approx. equal to 3 CTU
+tEnd                1.5;            // End time of simulation (in s)
+writeInterval_      100;            // Restart write interval
+nCores              16;             // Number of cores used for simulation
+
+// Probe settings:
+interpScheme        cellPatchConstrained;
+probeField          cp;

@@ -1,0 +1,40 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2206                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      decomposeParDict;
+}
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#include       "include/caseDefinition"
+
+numberOfSubdomains  16;
+
+// note: kahip decomposition can not be used in conjunction with new wall
+//       distance method "exactDistance" use hierachical instead
+method              kahip; //hierarchical;
+
+hierarchicalCoeffs
+{
+    n               (1 1 $numberOfSubdomains);
+    delta           0.001;
+    order           xyz;
+}
+
+kahipCoeffs
+{
+    config          fast; // fast | eco | strong
+    imbalance       0.01;
+}
+
+
+// ************************************************************************* //

@@ -1,0 +1,53 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2206                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    location    "0";
+    object      omega;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#include        "${FOAM_CASE}/system/include/caseDefinition"
+
+// calculate omega value at inlet
+kref           #eval{ 1.5*sqr($UinfMag*$Tu) };
+nutref         #eval{ $viscRatio * $nu };
+omegaref       #eval{ $kref/$nutref };
+
+dimensions      [ 0 0 -1 0 0 0 0 ];
+internalField   uniform $omegaref;
+
+boundaryField
+{
+    #includeEtc "caseDicts/setConstraintTypes"
+    $inletPatch		//Inlet
+    {
+        type            fixedValue;
+        value           $internalField;
+    }
+
+    $outletPatch		//Outlet
+    {
+        type            zeroGradient;
+    }
+    $wallPatches
+    {
+        type            omegaWallFunction;
+        blending        binomial;
+        value           $internalField;
+    }
+    $symmPatches
+    {
+        type            symmetry;
+    }
+}
+
+// ************************************************************************* //

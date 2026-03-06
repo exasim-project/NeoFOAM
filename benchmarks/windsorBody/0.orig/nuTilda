@@ -1,0 +1,50 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2206                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    location    "0";
+    object      nuTilda;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#include        "${FOAM_CASE}/system/include/caseDefinition"
+
+// calculate nut value at inlet
+nutref          #eval{ $viscRatio * $nu };
+
+dimensions      [ 0 2 -1 0 0 0 0 ];
+internalField   uniform $nutref;
+
+boundaryField
+{
+    #includeEtc "caseDicts/setConstraintTypes"
+    $inletPatch		//Inlet
+    {
+        type            fixedValue;
+        value           $internalField;
+    }
+
+    $outletPatch		//Outlet
+    {
+        type            zeroGradient;
+    }
+    $wallPatches
+    {
+        type            fixedValue;
+        value           uniform 0;
+    }
+    $symmPatches
+    {
+        type            symmetry;
+    }
+}
+
+// ************************************************************************* //

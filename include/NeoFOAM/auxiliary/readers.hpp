@@ -102,6 +102,8 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
         {"calculated", [](auto& dict) { dict.insert("type", std::string("calculated")); }},
         {"extrapolatedCalculated",
          [](auto& dict) { dict.insert("type", std::string("calculated")); }},
+        {"nutUSpaldingWallFunction",
+         [](auto& dict) { dict.insert("type", std::string("calculated")); }},
         {"empty", [](auto& dict) { dict.insert("type", std::string("empty")); }},
         {"symmetryPlane", [](auto& dict) { dict.insert("type", std::string("symmetry")); }},
         {"symmetry", [](auto& dict) { dict.insert("type", std::string("symmetry")); }}
@@ -113,7 +115,16 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
     {
         Foam::dictionary patchDict = bDict.subDict(bName);
         NeoN::Dictionary neoPatchDict = convert(patchDict);
-        patchInserter[patchDict.get<Foam::word>("type")](neoPatchDict);
+        auto bcType = patchDict.get<Foam::word>("type");
+        auto it = patchInserter.find(bcType);
+        if (it == patchInserter.end())
+        {
+            throw std::runtime_error(
+                "Unsupported volume boundary condition type: '" + std::string(bcType)
+                + "' for patch '" + std::string(bName) + "'"
+            );
+        }
+        it->second(neoPatchDict);
         bcs.emplace_back(nfMesh, neoPatchDict, patchi);
         patchi++;
     }
@@ -162,7 +173,16 @@ auto readSurfaceBoundaryConditions(
     {
         Foam::dictionary patchDict = bDict.subDict(bName);
         NeoN::Dictionary neoPatchDict;
-        patchInserter[patchDict.get<Foam::word>("type")](neoPatchDict);
+        auto bcType = patchDict.get<Foam::word>("type");
+        auto it = patchInserter.find(bcType);
+        if (it == patchInserter.end())
+        {
+            throw std::runtime_error(
+                "Unsupported surface boundary condition type: '" + std::string(bcType)
+                + "' for patch '" + std::string(bName) + "'"
+            );
+        }
+        it->second(neoPatchDict);
         bcs.push_back(fvcc::SurfaceBoundary<type_primitive_t>(uMesh, neoPatchDict, patchi));
         patchi++;
     }

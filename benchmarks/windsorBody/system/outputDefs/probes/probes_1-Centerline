@@ -1,0 +1,61 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Version:  v2206
+    \\  /    A nd           | Website:  www.openfoam.com
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+Description
+    Writes out values of fields from cells nearest to specified locations.
+
+\*---------------------------------------------------------------------------*/
+
+probes_1-Centerline
+{
+    type            patchProbes;
+    libs            ("libsampling.so");
+
+    // Name of the directory for probe data
+    name            probes_1-Centerline;
+    
+    patches         ($forcesWallPatches);
+    // Write at same frequency as fields
+    writeControl    timeStep;
+    writeInterval   1;
+
+    // Fields to be probed
+    fields          ($probeField);
+
+    // Optional: do not recalculate cells if mesh moves
+    fixedLocations  true;
+
+    // Optional: interpolation scheme to use (default is cell)
+    //interpolationScheme $interpScheme; //cell
+
+    probeLocations
+    (
+        ( 0.42584 -0.01859  0.33900)
+        ( 0.42584 -0.01859  0.05000)
+        ( 0.24602 -0.01074  0.33900)
+        ( 0.24602 -0.01074  0.05000)
+        ( 0.06619 -0.00289  0.33900)
+        ( 0.06619 -0.00289  0.05000)
+        (-0.11364  0.00496  0.33900)
+        (-0.11364  0.00496  0.05000)
+        (-0.18647  0.00814  0.33600)
+        (-0.29347  0.01281  0.05000)
+        (-0.38039  0.01661  0.25940)
+        (-0.47500  0.02074  0.05000)
+        (-0.49808  0.02175  0.20940)
+        (-0.53454  0.02334  0.19360)
+        (-0.53594  0.02340  0.05700)
+        (-0.55312  0.02415  0.17560)
+        (-0.55392  0.02418  0.07562)
+        (-0.56022  0.02446  0.12492)
+    );
+
+    // Optional: filter out points that haven't been found. Default
+    //           is to include them (with value -VGREAT)
+    includeOutOfBounds  true;
+}
+// ************************************************************************* //

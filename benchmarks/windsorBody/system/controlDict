@@ -1,0 +1,69 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2206                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#include          "include/caseDefinition"
+
+application       icoFoam;
+
+executor          GPU;
+
+startFrom         latestTime;
+startTime         0;
+stopAt            endTime;
+endTime           0.005;
+
+deltaT            5e-5;
+
+writeControl      timeStep; 
+writeInterval     10000;
+
+purgeWrite        2;
+
+writeFormat       binary;
+writePrecision    16;
+writeCompression  off;
+
+timeFormat        general;
+timePrecision     7;
+
+runTimeModifiable yes;
+adjustableRunTime no;
+
+libs 
+(
+ //   "libOpenFOAM.so"
+ //   "libdistributed.so"
+ //   "libturbulenceModelSchemes.so"
+ //   "libfieldFunctionObjects.so"
+);
+
+functions
+{
+//    #include "outputDefs/wallFields"
+//    #include "outputDefs/volFields"
+//    #include "outputDefs/calc_cp"
+//    #include "outputDefs/fieldMinMax"
+//    #include "outputDefs/solverInfo"
+//    #include "outputDefs/forceCoeffs"
+//    #include "outputDefs/probes/probes_1-Centerline"
+//    #include "outputDefs/probes/probes_2-Glasshouse"
+//    #include "outputDefs/probes/probes_3-Bumper"
+//    #include "outputDefs/probes/probes_4-Base"
+//    #include "outputDefs/probes/probes_reference"
+//    #include "outputDefs/blendingFactor"
+}
+
+// ************************************************************************* //

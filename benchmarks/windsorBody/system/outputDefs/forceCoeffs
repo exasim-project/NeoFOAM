@@ -1,0 +1,62 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2206                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+
+#include        "${FOAM_CASE}/system/include/caseDefinition"
+
+forceCoeffsAll
+{
+    type                forceCoeffs;
+    libs                ("libforces.so");
+    writeControl        timeStep;
+    writeInterval       1;
+    log                 false;
+
+    patches
+    (
+        $forcesWallPatches
+    );
+
+    magUInf             $UinfMag;
+    lRef                $lref;
+    Aref                $Aref;
+    rhoInf              1.0;
+    rho                 rhoInf;
+
+    CofR                (0 0 0);
+    dragDir             (#eval{  cos(degToRad($yawAngle)) }  #eval{ sin(degToRad($yawAngle)) }  0);
+    liftDir             (0 0 1);
+    pitchAxis           (#eval{ -sin(degToRad($yawAngle)) }  #eval{ cos(degToRad($yawAngle)) }  0);
+}
+
+dragCoeffBase
+{
+    type                forceCoeffs;
+    libs                ("libforces.so");
+    writeControl        timeStep;
+    writeInterval       1;
+    log                 false;
+
+    coefficients        (Cd);
+
+    patches
+    (
+        Windsor_Base
+    );
+
+    magUInf             $UinfMag;
+    lRef                $lref;
+    Aref                $Aref;
+    rhoInf              1.0;
+    rho                 rhoInf;
+
+    CofR                (0 0 0);
+    dragDir             (#eval{  cos(degToRad($yawAngle)) }  #eval{ sin(degToRad($yawAngle)) }  0);
+    liftDir             (0 0 1);
+    pitchAxis           (#eval{ -sin(degToRad($yawAngle)) }  #eval{ cos(degToRad($yawAngle)) }  0);
+}
+// ************************************************************************* //

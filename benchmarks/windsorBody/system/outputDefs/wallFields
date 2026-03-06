@@ -1,0 +1,29 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2206                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+
+#include        "${FOAM_CASE}/system/include/caseDefinition"
+
+wallShearStress
+{
+    type            wallShearStress;
+    libs            ("libfieldFunctionObjects.so");
+    enabled         true;
+    writeControl    writeTime;
+    patches         ($wallPatches );
+}
+/*
+yPlus
+{
+    type            yPlus;
+    libs            ("libfieldFunctionObjects.so");
+    enabled         true;
+    writeControl    writeTime;
+    patches         ( $wallPatches );
+}
+*/
+// ************************************************************************* //

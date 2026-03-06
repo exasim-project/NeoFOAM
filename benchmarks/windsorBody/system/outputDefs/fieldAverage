@@ -1,0 +1,46 @@
+fieldAverage
+{
+    // Type of functionObject
+    type fieldAverage;
+
+    // Where to load it from (if not already in solver)
+    libs ("libfieldFunctionObjects.so");
+
+    writeControl    writeTime;
+    enabled         true;
+    // cleanRestart    false; //true;
+    // Fields to be  averaged - runTime modifiable
+    fields
+    (
+        U
+        {
+            mean            on;
+            prime2Mean      on;
+            base            time;
+        }
+        p
+        {
+            mean            on;
+            prime2Mean      on;
+            base            time;
+        }
+        nut
+        {
+            mean            on;
+            prime2Mean      off;
+            base            time;
+        }
+        k
+        {
+            mean            on;
+            prime2Mean      off;
+            base            time;
+        }
+        wallShearStress
+        {
+            mean            on;
+            prime2Mean      off;
+            base            time;
+        }
+    );
+}

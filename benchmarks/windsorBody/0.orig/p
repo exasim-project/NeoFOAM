@@ -1,0 +1,48 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2206                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    location    "0";
+    object      p;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#include        "${FOAM_CASE}/system/include/caseDefinition"
+
+dimensions      [ 0 2 -2 0 0 0 0 ];
+internalField   uniform 0.0;
+
+boundaryField
+{
+    #includeEtc "caseDicts/setConstraintTypes"
+    $inletPatch
+    {
+        type            zeroGradient;
+    }
+
+    $outletPatch
+    {
+        type            fixedValue;
+        // uniformValue    constant $pref;
+        value           $internalField;
+    }
+    $wallPatches
+    {
+        type            zeroGradient;
+    }
+    $symmPatches
+    {
+        type            symmetry;
+    }
+
+}
+
+// ************************************************************************* //
