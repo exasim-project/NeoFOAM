@@ -32,7 +32,7 @@ TEST_CASE("(backward) ddt implicit matches OpenFOAM", "[ddt][backward]")
     auto meshPtr = NeoFOAM::createMesh(exec, runTime);
     NeoFOAM::MeshAdapter& mesh = *meshPtr;
     auto nfMesh = mesh.nfMesh();
-    const auto sparsityPattern = NeoN::la::createSparsity(nfMesh);
+    // sparsity is now managed inside LinearSystem
 
     runTime.setDeltaT(1);
     runTime.setTime(0.0, 0);
@@ -69,10 +69,7 @@ TEST_CASE("(backward) ddt implicit matches OpenFOAM", "[ddt][backward]")
         Foam::fvScalarMatrix matrix1(Foam::fvm::ddt(ofT));
         Foam::volScalarField ddt1("ddt1", matrix1 & ofT);
 
-        auto ls1 = NeoN::la::createEmptyLinearSystem<NeoN::scalar, NeoN::localIdx>(
-            nfMesh,
-            sparsityPattern
-        );
+        auto ls1 = NeoN::la::createEmptyLinearSystem<NeoN::scalar>(nfMesh);
 
         ddtOp.implicitOperation(ls1, runTime.value(), runTime.deltaTValue());
 
@@ -87,7 +84,7 @@ TEST_CASE("(backward) ddt implicit matches OpenFOAM", "[ddt][backward]")
 
         // --- diag ---
         {
-            auto diag = NeoFOAM::diag(ls1, sparsityPattern).copyToHost();
+            auto diag = NeoFOAM::diag(ls1).copyToHost();
             forAll(diag.view(), celli)
             {
                 REQUIRE(diag.view()[celli] == Catch::Approx(matrix1.diag()[celli]).margin(1e-16));
@@ -120,10 +117,7 @@ TEST_CASE("(backward) ddt implicit matches OpenFOAM", "[ddt][backward]")
         Foam::fvScalarMatrix matrix2(Foam::fvm::ddt(ofT));
         Foam::volScalarField ddt2("ddt2", matrix2 & ofT);
 
-        auto ls2 = NeoN::la::createEmptyLinearSystem<NeoN::scalar, NeoN::localIdx>(
-            nfMesh,
-            sparsityPattern
-        );
+        auto ls2 = NeoN::la::createEmptyLinearSystem<NeoN::scalar>(nfMesh);
 
         ddtOp.implicitOperation(ls2, runTime.value(), runTime.deltaTValue());
 
@@ -138,7 +132,7 @@ TEST_CASE("(backward) ddt implicit matches OpenFOAM", "[ddt][backward]")
 
         // --- diag ---
         {
-            auto diag = NeoFOAM::diag(ls2, sparsityPattern).copyToHost();
+            auto diag = NeoFOAM::diag(ls2).copyToHost();
             forAll(diag.view(), celli)
             {
                 REQUIRE(diag.view()[celli] == Catch::Approx(matrix2.diag()[celli]).margin(1e-16));

@@ -575,7 +575,7 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
     );
     surfInterpol.interpolate(nfNu, nfSurfNu);
 
-    saBase.correctNut(nut, nfSurfNut, nfSurfNuEff, nfNuTilda, nfNu, nfSurfNu);
+    saBase.correctNut(nut, nfSurfNut, nfSurfNuEff, nfNuTilda, nfNu, nfSurfNu, nfU, nfWallDist);
     nf::compare(nut, ofNut, ApproxScalar(1e-12));
     nf::compare(nfNuTilda, nuTilda, ApproxScalar(1e-12));
     saBase.calcNuTildaDiffusionCoeff(nfNuTilda, nfSurfNu, nfSurfNuTilda, nuTildaEff);
@@ -645,7 +645,7 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
     nuTildaEqn.solve();
     // nut.correctBoundaryConditions(nfU,nfNu);
     saBase.calcNuTildaDiffusionCoeff(nfNuTilda, nfSurfNu, nfSurfNuTilda, nuTildaEff);
-    saBase.correctNut(nut, nfSurfNut, nfSurfNuEff, nfNuTilda, nfNu, nfSurfNu);
+    saBase.correctNut(nut, nfSurfNut, nfSurfNuEff, nfNuTilda, nfNu, nfSurfNu, nfU, nfWallDist);
 
     Foam::fvVectorMatrix ofUEqn(
         Foam::fvm::ddt(U) + Foam::fvm::div(phi, U) + foamTurb->divDevReff(U)
