@@ -28,7 +28,7 @@ NeoFOAM uses CMake for building. The standard CMake procedure works, but we reco
 Build NeoFOAM Against NeoN
 --------------------------
 
-There are three ways to link NeoFOAM with NeoN:
+There are four ways to build NeoN in NeoFOAM, the checks follows the list order:
 
 1. **Using the NeoN repository directory**
 
@@ -38,7 +38,16 @@ There are three ways to link NeoFOAM with NeoN:
 
       -DNEOFOAM_NEON_DIR=/path/to/NeoN/
 
-2. **Using the NeoN submodule**
+2. **Specifying version of NeoN to download**
+
+   Specify the version to the NeoN repository during CMake configuration and CMake will download the corresponding version:
+   .. code-block:: bash
+
+      -DNEOFOAM_NEON_VERSION=<desired_version>
+
+   `<desired_version>` can be a branch name, tag, or commit hash.
+
+3. **Using the NeoN submodule**
 
    Initialize and update the NeoN submodule in the NeoFOAM repository:
 
@@ -48,15 +57,10 @@ There are three ways to link NeoFOAM with NeoN:
 
    During CMake configuration, the submodule will be automatically detected.
 
-3. **Using automatically downloaded NeoN**
+4. **Using predefined version of NeoN**
 
-   If neither of the above options is provided, CMake will download a predefined version of NeoN. By default, this is the `main` branch. To specify a different version:
-
-   .. code-block:: bash
-
-      -DNEOFOAM_NEON_VERSION=<desired_version>
-
-   `<desired_version>` can be a branch name, tag, or commit hash.
+   If neither of the above options is provided, we will try to grab the version from submodule (without initialization).
+   If auto grabbing does not work due to environment, we will use the predefined version, which is `main` branch for NeoN currently.
 
 Building for GPUs
 -----------------
