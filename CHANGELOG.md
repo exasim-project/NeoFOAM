@@ -1,4 +1,7 @@
-# Version 0.3.0 ()
+# Version 0.3.0 (unreleased)
+- Enable mempool via controlDict [#246](https://github.com/exasim-project/NeoFOAM/pull/246)
+
+## Development
 - Update submodule regularly by dependabot [#209](https://github.com/exasim-project/NeoFOAM/pull/209)
 - Allow auto grabbing version from submodule without initialization and update the documentation [#210](https://github.com/exasim-project/NeoFOAM/pull/210)
 
