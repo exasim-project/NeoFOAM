@@ -58,12 +58,6 @@ public:
 
     [[nodiscard]] const LinearSystem& linearSystem() const { return ls_; }
 
-    LinearSystem& assemble()
-    {
-        expr_.assemble(runTime_.t, runTime_.dt, ls_);
-        return ls_;
-    }
-
     NeoN::dsl::Expression<ValueType>& expression() { return expr_; }
 
     const NeoN::Executor& exec() const { return ls_.exec(); }
@@ -124,15 +118,58 @@ public:
         pRefValue_ = pRefValue;
     }
 
+    /** @brief assemble the linear system owned by the solver based on the current expression */
+    LinearSystem& assemble()
+    {
+        expr_.assemble(runTime_.t, runTime_.dt, ls_);
+        return ls_;
+    }
+
+    /** @brief assemble the linear system with an additional rhs term
+     *
+     * the following assembly logic is applied
+     * 1. the "owned" linear system gets assembled
+     * 2. a copy of the assembled linear system is made and the rhs is assembled
+     * 3. the new linear system with rhs is returned
+     */
+    NeoN::la::LinearSystem<ValueType> assemble(dsl::SpatialOperator<NeoN::Vec3>&& rhs)
+    {
+        auto rhsExpr = dsl::Expression<ValueType>(-1.0 * rhs);
+        rhsExpr.read(runTime_.fvSchemesDict);
+        auto ls = NeoN::la::LinearSystem<ValueType>(assemble());
+
+        auto expTmp = rhsExpr.explicitOperation(psi_.mesh().nCells());
+
+        auto [vol, expSource, rhsV] = NeoN::views(psi_.mesh().cellVolumes(), expTmp, ls.rhs());
+        NeoN::parallelFor(
+            psi_.exec(),
+            {0, rhsV.size()},
+            NEON_LAMBDA(const NeoN::localIdx i) { rhsV[i] -= expSource[i] * vol[i]; }
+        );
+
+        return ls;
+    }
+
     NeoN::la::SolverStats solve() { return solveImpl(expr_, ls_); }
 
+    /** @brief solve expression with additional rhs
+     *
+     * This function will create two versions of the linear system corresponding to the expression
+     * 1. the owned linear system without rhs is assembled and stored
+     * 2. a temporary linear system with rhs assembled and solved
+     */
     NeoN::la::SolverStats solve(dsl::SpatialOperator<NeoN::Vec3>&& rhs)
     {
-        auto expr = dsl::Expression<ValueType>(expr_);
-        auto ls = LinearSystem(ls_);
-        expr.addOperator(-1.0 * rhs);
-        assemble();
-        return solveImpl(expr, ls);
+        // assemble wo rhs first
+        auto ls = assemble(std::move(rhs));
+
+        auto solverDict = runTime_.fvSolutionDict.subDict("solvers");
+        auto fvSolution = solverDict.subDict(psi_.name);
+        auto solver = NeoN::la::Solver(psi_.exec(), fvSolution);
+
+        // Do some sanity checks before trying to solve
+        // NF_ASSERT(ls.exec() == solution.exec(), "Executors are not the same");
+        return solver.solve(ls, psi_.internalVector());
     }
 
 private:
