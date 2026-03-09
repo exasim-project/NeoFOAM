@@ -26,8 +26,6 @@ Linear\+System \& \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_ae157132adbb86472bb
 \item 
 const Linear\+System \& \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a663d27bbda1f87fcc55f09f73d9a88ce}{linear\+System}} () const
 \item 
-Linear\+System \& \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a8aef9ec9ddbd7e1dcb0f283cb6ad2dba}{assemble}} ()
-\item 
 Neo\+N\+::dsl\+::\+Expression$<$ Value\+Type $>$ \& \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a84bccc8b1ecb7bea2e60d4d9e4904879}{expression}} ()
 \item 
 const Neo\+N\+::\+Executor \& \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_aabc63169ccc777c668a09248650af9e4}{exec}} () const
@@ -36,10 +34,14 @@ Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Ddt\+Scheme \mbox{\hyperlink{clas
 \item 
 void \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_aa632d298feb601ef802ba3b85b2dc8ed}{set\+Reference}} (Neo\+N\+::local\+Idx p\+Ref\+Cell, Neo\+N\+::scalar p\+Ref\+Value)
 \item 
+Linear\+System \& \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a8aef9ec9ddbd7e1dcb0f283cb6ad2dba}{assemble}} ()
+\begin{DoxyCompactList}\small\item\em assemble the linear system owned by the solver based on the current expression \end{DoxyCompactList}\item 
+Neo\+N\+::la\+::\+Linear\+System$<$ Value\+Type $>$ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a94ed687e58cbf43e4cd8154b2344182b}{assemble}} (dsl\+::\+Spatial\+Operator$<$ Neo\+N\+::\+Vec3 $>$ \&\&rhs)
+\begin{DoxyCompactList}\small\item\em assemble the linear system with an additional rhs term \end{DoxyCompactList}\item 
 Neo\+N\+::la\+::\+Solver\+Stats \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a0464b266cbae77cbfa7f4ffec79e6acb}{solve}} ()
 \item 
 Neo\+N\+::la\+::\+Solver\+Stats \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a7f4464b4305040de5ace88df987c05df}{solve}} (dsl\+::\+Spatial\+Operator$<$ Neo\+N\+::\+Vec3 $>$ \&\&rhs)
-\end{DoxyCompactItemize}
+\begin{DoxyCompactList}\small\item\em solve expression with additional rhs \end{DoxyCompactList}\end{DoxyCompactItemize}
 
 
 \doxysubsection{Detailed Description}
@@ -87,13 +89,37 @@ Definition at line \mbox{\hyperlink{pdeSolver_8hpp_source_l00045}{45}} of file \
 \Hypertarget{classNeoFOAM_1_1PDESolver_a8aef9ec9ddbd7e1dcb0f283cb6ad2dba}\label{classNeoFOAM_1_1PDESolver_a8aef9ec9ddbd7e1dcb0f283cb6ad2dba} 
 \index{NeoFOAM::PDESolver$<$ ValueType, IndexType $>$@{NeoFOAM::PDESolver$<$ ValueType, IndexType $>$}!assemble@{assemble}}
 \index{assemble@{assemble}!NeoFOAM::PDESolver$<$ ValueType, IndexType $>$@{NeoFOAM::PDESolver$<$ ValueType, IndexType $>$}}
-\doxysubsubsection{\texorpdfstring{assemble()}{assemble()}}
+\doxysubsubsection{\texorpdfstring{assemble()}{assemble()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
 {\footnotesize\ttfamily template$<$typename Value\+Type , typename Index\+Type  = Neo\+N\+::local\+Idx$>$ \\
 Linear\+System \& \mbox{\hyperlink{classNeoFOAM_1_1PDESolver}{Neo\+FOAM\+::\+PDESolver}}$<$ Value\+Type, Index\+Type $>$\+::assemble (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
 
 
 
-Definition at line \mbox{\hyperlink{pdeSolver_8hpp_source_l00061}{61}} of file \mbox{\hyperlink{pdeSolver_8hpp_source}{pde\+Solver.\+hpp}}.
+assemble the linear system owned by the solver based on the current expression 
+
+
+
+Definition at line \mbox{\hyperlink{pdeSolver_8hpp_source_l00122}{122}} of file \mbox{\hyperlink{pdeSolver_8hpp_source}{pde\+Solver.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1PDESolver_a94ed687e58cbf43e4cd8154b2344182b}\label{classNeoFOAM_1_1PDESolver_a94ed687e58cbf43e4cd8154b2344182b} 
+\index{NeoFOAM::PDESolver$<$ ValueType, IndexType $>$@{NeoFOAM::PDESolver$<$ ValueType, IndexType $>$}!assemble@{assemble}}
+\index{assemble@{assemble}!NeoFOAM::PDESolver$<$ ValueType, IndexType $>$@{NeoFOAM::PDESolver$<$ ValueType, IndexType $>$}}
+\doxysubsubsection{\texorpdfstring{assemble()}{assemble()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Index\+Type  = Neo\+N\+::local\+Idx$>$ \\
+Neo\+N\+::la\+::\+Linear\+System$<$ Value\+Type $>$ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver}{Neo\+FOAM\+::\+PDESolver}}$<$ Value\+Type, Index\+Type $>$\+::assemble (\begin{DoxyParamCaption}\item[{dsl\+::\+Spatial\+Operator$<$ Neo\+N\+::\+Vec3 $>$ \&\&}]{rhs }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+assemble the linear system with an additional rhs term 
+
+the following assembly logic is applied
+\begin{DoxyEnumerate}
+\item the "{}owned"{} linear system gets assembled
+\item a copy of the assembled linear system is made and the rhs is assembled
+\item the new linear system with rhs is returned 
+\end{DoxyEnumerate}
+
+Definition at line \mbox{\hyperlink{pdeSolver_8hpp_source_l00135}{135}} of file \mbox{\hyperlink{pdeSolver_8hpp_source}{pde\+Solver.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1PDESolver_a86cbd7e62f99eb30d6e6466ebc6b7be2}\label{classNeoFOAM_1_1PDESolver_a86cbd7e62f99eb30d6e6466ebc6b7be2} 
 \index{NeoFOAM::PDESolver$<$ ValueType, IndexType $>$@{NeoFOAM::PDESolver$<$ ValueType, IndexType $>$}!ddtScheme@{ddtScheme}}
@@ -104,7 +130,7 @@ Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Ddt\+Scheme \mbox{\hyperlink{clas
 
 
 
-Definition at line \mbox{\hyperlink{pdeSolver_8hpp_source_l00107}{107}} of file \mbox{\hyperlink{pdeSolver_8hpp_source}{pde\+Solver.\+hpp}}.
+Definition at line \mbox{\hyperlink{pdeSolver_8hpp_source_l00101}{101}} of file \mbox{\hyperlink{pdeSolver_8hpp_source}{pde\+Solver.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1PDESolver_aabc63169ccc777c668a09248650af9e4}\label{classNeoFOAM_1_1PDESolver_aabc63169ccc777c668a09248650af9e4} 
 \index{NeoFOAM::PDESolver$<$ ValueType, IndexType $>$@{NeoFOAM::PDESolver$<$ ValueType, IndexType $>$}!exec@{exec}}
@@ -115,7 +141,7 @@ const Neo\+N\+::\+Executor \& \mbox{\hyperlink{classNeoFOAM_1_1PDESolver}{Neo\+F
 
 
 
-Definition at line \mbox{\hyperlink{pdeSolver_8hpp_source_l00069}{69}} of file \mbox{\hyperlink{pdeSolver_8hpp_source}{pde\+Solver.\+hpp}}.
+Definition at line \mbox{\hyperlink{pdeSolver_8hpp_source_l00063}{63}} of file \mbox{\hyperlink{pdeSolver_8hpp_source}{pde\+Solver.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1PDESolver_a84bccc8b1ecb7bea2e60d4d9e4904879}\label{classNeoFOAM_1_1PDESolver_a84bccc8b1ecb7bea2e60d4d9e4904879} 
 \index{NeoFOAM::PDESolver$<$ ValueType, IndexType $>$@{NeoFOAM::PDESolver$<$ ValueType, IndexType $>$}!expression@{expression}}
@@ -126,7 +152,7 @@ Neo\+N\+::dsl\+::\+Expression$<$ Value\+Type $>$ \& \mbox{\hyperlink{classNeoFOA
 
 
 
-Definition at line \mbox{\hyperlink{pdeSolver_8hpp_source_l00067}{67}} of file \mbox{\hyperlink{pdeSolver_8hpp_source}{pde\+Solver.\+hpp}}.
+Definition at line \mbox{\hyperlink{pdeSolver_8hpp_source_l00061}{61}} of file \mbox{\hyperlink{pdeSolver_8hpp_source}{pde\+Solver.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1PDESolver_a5a9cf36364742d71a1ccd8a4cdf4f9bb}\label{classNeoFOAM_1_1PDESolver_a5a9cf36364742d71a1ccd8a4cdf4f9bb} 
 \index{NeoFOAM::PDESolver$<$ ValueType, IndexType $>$@{NeoFOAM::PDESolver$<$ ValueType, IndexType $>$}!getField@{getField}}
@@ -181,7 +207,7 @@ void \mbox{\hyperlink{classNeoFOAM_1_1PDESolver}{Neo\+FOAM\+::\+PDESolver}}$<$ V
 
 
 
-Definition at line \mbox{\hyperlink{pdeSolver_8hpp_source_l00120}{120}} of file \mbox{\hyperlink{pdeSolver_8hpp_source}{pde\+Solver.\+hpp}}.
+Definition at line \mbox{\hyperlink{pdeSolver_8hpp_source_l00114}{114}} of file \mbox{\hyperlink{pdeSolver_8hpp_source}{pde\+Solver.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1PDESolver_a0464b266cbae77cbfa7f4ffec79e6acb}\label{classNeoFOAM_1_1PDESolver_a0464b266cbae77cbfa7f4ffec79e6acb} 
 \index{NeoFOAM::PDESolver$<$ ValueType, IndexType $>$@{NeoFOAM::PDESolver$<$ ValueType, IndexType $>$}!solve@{solve}}
@@ -192,7 +218,7 @@ Neo\+N\+::la\+::\+Solver\+Stats \mbox{\hyperlink{classNeoFOAM_1_1PDESolver}{Neo\
 
 
 
-Definition at line \mbox{\hyperlink{pdeSolver_8hpp_source_l00127}{127}} of file \mbox{\hyperlink{pdeSolver_8hpp_source}{pde\+Solver.\+hpp}}.
+Definition at line \mbox{\hyperlink{pdeSolver_8hpp_source_l00153}{153}} of file \mbox{\hyperlink{pdeSolver_8hpp_source}{pde\+Solver.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1PDESolver_a7f4464b4305040de5ace88df987c05df}\label{classNeoFOAM_1_1PDESolver_a7f4464b4305040de5ace88df987c05df} 
 \index{NeoFOAM::PDESolver$<$ ValueType, IndexType $>$@{NeoFOAM::PDESolver$<$ ValueType, IndexType $>$}!solve@{solve}}
@@ -203,7 +229,15 @@ Neo\+N\+::la\+::\+Solver\+Stats \mbox{\hyperlink{classNeoFOAM_1_1PDESolver}{Neo\
 
 
 
-Definition at line \mbox{\hyperlink{pdeSolver_8hpp_source_l00129}{129}} of file \mbox{\hyperlink{pdeSolver_8hpp_source}{pde\+Solver.\+hpp}}.
+solve expression with additional rhs 
+
+This function will create two versions of the linear system corresponding to the expression
+\begin{DoxyEnumerate}
+\item the owned linear system without rhs is assembled and stored
+\item a temporary linear system with rhs assembled and solved 
+\end{DoxyEnumerate}
+
+Definition at line \mbox{\hyperlink{pdeSolver_8hpp_source_l00161}{161}} of file \mbox{\hyperlink{pdeSolver_8hpp_source}{pde\+Solver.\+hpp}}.
 
 
 
