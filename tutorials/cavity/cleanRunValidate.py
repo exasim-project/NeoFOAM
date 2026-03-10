@@ -88,7 +88,7 @@ def restore0_dir(case_path: Path) -> None:
     shutil.copytree(zero_orig, zero)
     logger.info("Restored 0/ from 0.orig/")
 
-def run_case(case_path: Path) -> None:
+def run_case(case_path: Path, preset: str = "develop") -> None:
     logger.info("Starting Allrun workflow...")
 
     foamfile = case_path / "cavity.foam"
@@ -106,7 +106,7 @@ def run_case(case_path: Path) -> None:
     finally:
         blockmesh_log.close()
 
-    solver = case_path / "../../build/develop/bin/neoIcoFoam"
+    solver = case_path / f"../../build/{preset}/bin/neoIcoFoam"
     if not solver.exists():
         logger.error(f"Solver binary not found: {solver}")
         sys.exit(1)
@@ -204,6 +204,7 @@ def main() -> None:
         parser.add_argument("--clean", action="store_true", help="Clean case only")
         parser.add_argument("--run", action="store_true", help="Run solver only")
         parser.add_argument("--case", type=str, default=".", help="Case directory")
+        parser.add_argument("--preset", type=str, default="develop", help="CMake preset name (used in build/<preset>/bin/)")
         parser.add_argument("--tol-u", type=float, default=5e-2)
         parser.add_argument("--tol-v", type=float, default=5e-2)
         args = parser.parse_args()
@@ -216,12 +217,12 @@ def main() -> None:
             return
 
         if args.run and not args.clean:
-            run_case(case_path)
+            run_case(case_path, args.preset)
             return
 
         # Default: clean + run + validate
         clean_case(case_path)
-        run_case(case_path)
+        run_case(case_path, args.preset)
 
         case = FoamCase(case_path)
         nu, Re = computeRe(case)

@@ -106,5 +106,5 @@ ctest --preset $PRESET -R neofoam --output-on-failure
 # Step 4: Validate neoIcoFoam
 # -----------------------------
 pushd tutorials/cavity >/dev/null
-python3 cleanRunValidate.py
+python3 cleanRunValidate.py --preset "$PRESET"
 popd >/dev/null

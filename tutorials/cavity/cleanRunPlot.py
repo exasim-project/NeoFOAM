@@ -96,7 +96,7 @@ def restore0_dir(case_path: Path) -> None:
     shutil.copytree(zero_orig, zero)
     logger.info("Restored 0/ from 0.orig/")
 
-def run_case(case_path: Path) -> None:
+def run_case(case_path: Path, preset: str = "develop") -> None:
     """Run solver workflow (mesh, solve) with logs."""
     logger.info("Starting Allrun workflow...")
 
@@ -125,7 +125,7 @@ def run_case(case_path: Path) -> None:
     # -----------------------------------------
     # Run neoIcoFoam -> log.neoIcoFoam
     # -----------------------------------------
-    solver = case_path / "../../build/develop/bin/neoIcoFoam"
+    solver = case_path / f"../../build/{preset}/bin/neoIcoFoam"
     if not solver.exists():
         logger.error(f"Solver binary not found: {solver}")
         sys.exit(1)
@@ -274,6 +274,7 @@ def main() -> None:
     parser.add_argument("--run", action="store_true", help="Run solver only")
     parser.add_argument("--plot", action="store_true", help="Plot only")
     parser.add_argument("--case", type=str, default=".", help="Directory of the case (default: current)")
+    parser.add_argument("--preset", type=str, default="develop", help="CMake preset name (used in build/<preset>/bin/)")
     args = parser.parse_args()
 
     case_path = Path(args.case).resolve()
@@ -290,7 +291,7 @@ def main() -> None:
 
     # Run only
     if args.run and not args.clean and not args.plot:
-        run_case(case_path)
+        run_case(case_path, args.preset)
         return
 
     # Plot only
@@ -300,7 +301,7 @@ def main() -> None:
     # DEFAULT: clean -> Run -> Plot
     if not args.plot:
         clean_case(case_path)
-        run_case(case_path)
+        run_case(case_path, args.preset)
 
     # Load case and fields
     case = FoamCase(case_path)
