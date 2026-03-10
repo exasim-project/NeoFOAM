@@ -85,6 +85,7 @@ elif [[ "$GPU_VENDOR" == "intel" ]]; then
         -DCMAKE_CXX_COMPILER=icpx \
         -DCMAKE_CXX_FLAGS="-Wno-deprecated-declarations -Wno-sycl-2020-compat -ffp-model=precise" \
         -DKokkos_ENABLE_SYCL=ON \
+        -DKokkos_ARCH_INTEL_PVC=ON \
         -DNeoN_WITH_THREADS=OFF \
         -DNEOFOAM_BUILD_BENCHMARKS=ON
 fi
