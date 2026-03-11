@@ -1,8 +1,9 @@
+#!/usr/bin/env bash
+
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 #
 # SPDX-License-Identifier: Unlicense
 
-#!/usr/bin/env bash
 set -e
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
