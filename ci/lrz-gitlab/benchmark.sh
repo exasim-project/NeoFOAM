@@ -116,9 +116,6 @@ build_and_benchmark() {
     cmake --build --preset $PRESET
     echo ">>> Running benchmarks..."
     export PATH=$PATH:$PWD/build/$PRESET/bin/benchmarks
-    if [[ "$GPU_VENDOR" == "intel" ]]; then
-        export ONEAPI_DEVICE_SELECTOR=level_zero:gpu
-    fi
     ctest --preset profiling
     echo ">>> Benchmarks completed"
 

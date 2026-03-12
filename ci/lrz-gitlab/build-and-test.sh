@@ -37,10 +37,7 @@ elif [[ "$GPU_VENDOR" == "amd" ]]; then
     hipcc --version
 
 elif [[ "$GPU_VENDOR" == "intel" ]]; then
-
-    if ! sycl-ls --ignore-device-selectors 2>/dev/null | grep -qi intel; then
-        echo "No Intel GPU found or Level Zero runtime not available"
-    fi
+    SYCL_UR_TRACE=1 sycl-ls
     # Compiler info (non-fatal)
     icpx --version 2>/dev/null | head -1 || echo "icpx not found"
 
@@ -97,9 +94,6 @@ cmake --build --preset $PRESET
 # Step 3: Run Tests
 # -------------------------
 echo "=== Running NeoFOAM tests ==="
-if [[ "$GPU_VENDOR" == "intel" ]]; then
-    export ONEAPI_DEVICE_SELECTOR=level_zero:gpu
-fi
 ctest --preset $PRESET -R neofoam --output-on-failure
 
 # -----------------------------
