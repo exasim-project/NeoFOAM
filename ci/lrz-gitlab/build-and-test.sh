@@ -102,9 +102,8 @@ ctest --preset $PRESET -R neofoam --output-on-failure
 # -----------------------------
 SKIP_VALIDATION=${SKIP_VALIDATION:-false}
 if [[ "$SKIP_VALIDATION" != "true" ]]; then
-    pushd tutorials/cavity >/dev/null
-    python3 cleanRunValidate.py --preset "$PRESET"
-    popd >/dev/null
+    pip install -e .
+    clean-run-validate --case tutorials/cavity --preset "$PRESET"
 else
     echo "=== Skipping validation (skip-validation label set) ==="
 fi

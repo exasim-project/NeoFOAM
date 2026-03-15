@@ -1,0 +1,32 @@
+# SPDX-License-Identifier: Unlicense
+# SPDX-FileCopyrightText: 2026 NeoFOAM authors
+
+[project]
+name = "neofoam"
+version = "0.2.0"
+description = "Python tooling for running, validating, and post-processing NeoFOAM CFD simulations"
+readme = "README.md"
+authors = [
+    { name = "Henning Scheufler", email = "henning.scheufler@web.de" },
+    { name = "Gregor Olenik", email = "gregor.olenik@tum.de" },
+    { name = "Chih-Ta Wang", email = "chihta.wang@tum.de" },
+    { name = "Dheeraj Raghunathan", email = "dheeraj.raghunathan@tum.de" }
+]
+requires-python = ">=3.9"
+
+dependencies = [
+    "numpy",
+    "matplotlib",
+    "foamlib",
+]   
+
+[project.scripts]
+clean-run-validate = "tutorials.cavity.cleanRunValidate:main"
+clean-run-plot = "tutorials.cavity.cleanRunPlot:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
