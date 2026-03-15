@@ -37,7 +37,7 @@ elif [[ "$GPU_VENDOR" == "amd" ]]; then
     hipcc --version
 
 elif [[ "$GPU_VENDOR" == "intel" ]]; then
-    SYCL_PI_TRACE=1 
+    SYCL_PI_TRACE=1
     sycl-ls 2>/dev/null | grep '^\[level_zero:gpu\]'
     # Compiler info (non-fatal)
     icpx --version 2>/dev/null | head -1 || echo "icpx not found"
@@ -100,6 +100,11 @@ ctest --preset $PRESET -R neofoam --output-on-failure
 # -----------------------------
 # Step 4: Validate neoIcoFoam
 # -----------------------------
-pushd tutorials/cavity >/dev/null
-python3 cleanRunValidate.py --preset "$PRESET"
-popd >/dev/null
+SKIP_VALIDATION=${SKIP_VALIDATION:-false}
+if [[ "$SKIP_VALIDATION" != "true" ]]; then
+    pushd tutorials/cavity >/dev/null
+    python3 cleanRunValidate.py --preset "$PRESET"
+    popd >/dev/null
+else
+    echo "=== Skipping validation (skip-validation label set) ==="
+fi
