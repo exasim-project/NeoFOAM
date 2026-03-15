@@ -26,7 +26,10 @@ if [[ "$GPU_VENDOR" == "nvidia" ]]; then
 
 elif [[ "$GPU_VENDOR" == "amd" ]]; then
     # Set up environment
-    export PATH=/opt/rocm/bin:$PATH
+    export CXX_COMPILER_PATH="$(which g++)"
+    export CXX_SOURCE="${CXX_COMPILER_PATH%/*/*}"
+    export CXX_LIBDIR="${CXX_SOURCE}/lib64"
+    export LD_LIBRARY_PATH=${CXX_LIBDIR}:${LD_LIBRARY_PATH}
 
     echo "=== AMD GPU info ==="
     rocminfo | grep "Marketing Name.*AMD"
@@ -67,10 +70,15 @@ if [[ "$GPU_VENDOR" == "nvidia" ]]; then
 elif [[ "$GPU_VENDOR" == "amd" ]]; then
     cmake --preset $PRESET \
         -DNEOFOAM_NEON_DIR=../NeoN \
-        -DCMAKE_CXX_COMPILER=hipcc \
+        -DCMAKE_PREFIX_PATH=/opt/rocm \
+        -DCMAKE_C_COMPILER=/opt/rocm/llvm/bin/clang \
+        -DCMAKE_CXX_COMPILER=/opt/rocm/llvm/bin/clang++ \
+        -DCMAKE_CXX_FLAGS="--gcc-toolchain=${CXX_SOURCE}" \
+        -DCMAKE_EXE_LINKER_FLAGS="-L${CXX_LIBDIR}" \
         -DCMAKE_HIP_ARCHITECTURES=gfx90a \
         -DKokkos_ARCH_AMD_GFX90A=ON \
-        -DNeoN_WITH_THREADS=OFF
+        -DNeoN_WITH_THREADS=OFF \
+        -DNEOFOAM_BUILD_BENCHMARKS=ON
 elif [[ "$GPU_VENDOR" == "intel" ]]; then
     cmake --preset $PRESET \
         -DNEOFOAM_NEON_DIR=../NeoN \
