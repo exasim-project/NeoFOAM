@@ -38,7 +38,7 @@ elif [[ "$GPU_VENDOR" == "amd" ]]; then
 
 elif [[ "$GPU_VENDOR" == "intel" ]]; then
     SYCL_PI_TRACE=1 
-    sycl-ls
+    sycl-ls 2>/dev/null | grep '^\[level_zero:gpu\]'
     # Compiler info (non-fatal)
     icpx --version 2>/dev/null | head -1 || echo "icpx not found"
 

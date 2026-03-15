@@ -37,7 +37,7 @@ collect_system_info() {
             rocm-smi --showproductname --showvbios
         elif [[ "$GPU_VENDOR" == "intel" ]]; then
             SYCL_PI_TRACE=1 
-            sycl-ls
+            sycl-ls 2>/dev/null | grep '^\[level_zero:gpu\]'
         else
             echo "No GPU selected"
         fi
