@@ -37,7 +37,8 @@ elif [[ "$GPU_VENDOR" == "amd" ]]; then
     hipcc --version
 
 elif [[ "$GPU_VENDOR" == "intel" ]]; then
-    SYCL_UR_TRACE=1 sycl-ls
+    SYCL_PI_TRACE=1 
+    sycl-ls
     # Compiler info (non-fatal)
     icpx --version 2>/dev/null | head -1 || echo "icpx not found"
 
