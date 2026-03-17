@@ -36,9 +36,8 @@ collect_system_info() {
         elif [[ "$GPU_VENDOR" == "amd" ]]; then
             rocm-smi --showproductname --showvbios
         elif [[ "$GPU_VENDOR" == "intel" ]]; then
-            if ! sycl-ls --ignore-device-selectors 2>/dev/null | grep -qi intel; then
-                echo "No Intel GPU found or Level Zero runtime not available"
-            fi
+            SYCL_PI_TRACE=1
+            sycl-ls 2>/dev/null | grep '^\[level_zero:gpu\]'
         else
             echo "No GPU selected"
         fi
@@ -104,6 +103,7 @@ build_and_benchmark() {
             -DCMAKE_CXX_COMPILER=icpx \
             -DCMAKE_CXX_FLAGS="-Wno-deprecated-declarations -Wno-sycl-2020-compat -ffp-model=precise" \
             -DKokkos_ENABLE_SYCL=ON \
+            -DKokkos_ARCH_INTEL_PVC=ON \
             -DNeoN_WITH_THREADS=ON \
             -DNEOFOAM_BENCHMARK_MODE="fast" \
             -DCMAKE_BUILD_TYPE="release"
@@ -115,9 +115,6 @@ build_and_benchmark() {
     cmake --build --preset $PRESET
     echo ">>> Running benchmarks..."
     export PATH=$PATH:$PWD/build/$PRESET/bin/benchmarks
-    if [[ "$GPU_VENDOR" == "intel" ]]; then
-        export ONEAPI_DEVICE_SELECTOR=level_zero:gpu
-    fi
     ctest --preset profiling
     echo ">>> Benchmarks completed"
 
