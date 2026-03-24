@@ -111,6 +111,21 @@ NeoFOAM::RunTime createAdapterRunTime(const Foam::Time& in)
 RunTime createAdapterRunTime(const Foam::Time& in, const NeoN::Executor exec)
 {
     NeoN::Logging::info("Creating NeoFOAM runTime");
+
+    // If a plain fvMesh is already registered under the default region name (e.g. from
+    // test harness), check it out so the MeshAdapter can register itself in its place.
+    // The original object remains alive via its owning unique_ptr; only the registry
+    // entry is removed.
+    if (in.foundObject<Foam::fvMesh>(Foam::polyMesh::defaultRegion))
+    {
+        Foam::fvMesh& existing = const_cast<Foam::fvMesh&>(
+            in.lookupObject<Foam::fvMesh>(Foam::polyMesh::defaultRegion));
+        if (!dynamic_cast<MeshAdapter*>(&existing))
+        {
+            in.objectRegistry::checkOut(Foam::polyMesh::defaultRegion);
+        }
+    }
+
     std::unique_ptr<MeshAdapter> meshPtr = createMesh(exec, in);
     MeshAdapter& mesh = *meshPtr;
     auto mpiEnvironment = NeoN::mpi::Environment {};
