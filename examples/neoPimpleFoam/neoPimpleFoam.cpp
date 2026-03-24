@@ -6,7 +6,7 @@
 #include "NeoFOAM/NeoFOAM.hpp"
 
 #include "fvCFD.H"
-#include "pisoControl.H"
+#include "pimpleControl.H"
 
 #include <memory>
 
@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
         auto rt = nf::createAdapterRunTime(runTime);
         auto& mesh = rt.mesh;
 
-        Foam::pisoControl piso(mesh);
+        Foam::pimpleControl pimple(mesh);
 
 #include "createFields.H"
 
@@ -96,8 +96,8 @@ int main(int argc, char* argv[])
             NeoN::Logging::info("Courant Number mean: {} max: {}", meanCoNum, maxCoNum);
             nf::syncRunTimes(runTime, rt, maxCoNum);
 
-	    for (int i = 0; i < 10; i++) {
-            NeoN::Logging::info("PIMPLE iteration = {}", i+1);
+	    while (pimple.loop()) {
+            NeoN::Logging::info("PIMPLE iteration = {}", pimple.corr());
             // Momentum predictor
             nf::PDESolver<NeoN::Vec3> UEqn(
                 dsl::imp::ddt(U) + dsl::imp::div(phi, U) - dsl::imp::laplacian(nu, U),
@@ -107,7 +107,7 @@ int main(int argc, char* argv[])
 
             const auto ddtScheme = UEqn.ddtScheme();
 
-            if (piso.momentumPredictor())
+            if (pimple.momentumPredictor())
             {
                 // NOTE solve on a temporary clone of UEqn
                 // TODO use a free function here
@@ -121,13 +121,13 @@ int main(int argc, char* argv[])
             }
 
             // --- PISO loop
-            while (piso.correct())
+            while (pimple.correct())
             {
                 NeoN::Logging::info("PISO loop");
                 auto [crAU, hByA] = nf::computeRAUandHByA(UEqn);
                 nf::constrainHbyA(U, p, hByA);
 
-                nnfvcc::SurfaceField<NeoN::scalar> rAU =
+                fvcc::SurfaceField<NeoN::scalar> rAU =
                     fvcc::SurfaceInterpolation<NeoN::scalar>(
                         rt.exec,
                         rt.nfMesh,
@@ -144,7 +144,7 @@ int main(int argc, char* argv[])
                 // Foam::constrainPressure(p, U, phiHbyA, rAU);
 
                 // Non-orthogonal pressure corrector loop
-                while (piso.correctNonOrthogonal())
+                while (pimple.correctNonOrthogonal())
                 {
                     // Pressure corrector
                     nf::PDESolver<NeoN::scalar> pEqn(
@@ -161,7 +161,7 @@ int main(int argc, char* argv[])
                     auto stats = pEqn.solve();
                     p.correctBoundaryConditions();
 
-                    if (piso.finalNonOrthogonalIter())
+                    if (pimple.finalNonOrthogonalIter())
                     {
                         nf::updateFaceVelocity(phiHbyA, pEqn, phi);
                     }
