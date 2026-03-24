@@ -85,6 +85,7 @@ neofoam_unit_test(snGrad setup_snGrad)
 neofoam_unit_test(residual setup_pressureVelocityCoupling)
 neofoam_unit_test(spalartAllmarasDDES setup_pressureVelocityCoupling)
 neofoam_unit_test(continuityError setup_pressureVelocityCoupling)
+neofoam_unit_test(forceCoeffs setup_pressureVelocityCoupling)
 
 if(${NEOFOAM_WITH_MPI})
   neofoam_unit_test(distributedUnstructuredMesh setup_pressureVelocityCoupling MPI_SIZE 3)

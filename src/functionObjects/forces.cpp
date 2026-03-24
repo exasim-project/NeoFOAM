@@ -1,0 +1,235 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-FileCopyrightText: 2025 NeoFOAM authors
+
+#include "NeoFOAM/functionObjects/forces.hpp"
+#include "NeoFOAM/auxiliary/readers.hpp"
+
+#include "addToRunTimeSelectionTable.H"
+#include "volFields.H"
+#include "polyMesh.H"
+
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * //
+
+// Manual RTST registration: TypeName macro cannot be used in namespace NeoFOAM
+// because it generates `virtual const word& type()` with unqualified `word`.
+const Foam::word NeoFOAM::Forces::typeName("neoForces");
+int NeoFOAM::Forces::debug(0);
+
+namespace
+{
+// Register Forces in Foam::functionObject's RTST at library load time
+Foam::functionObject::adddictionaryConstructorToTable<NeoFOAM::Forces>
+    addNeoFOAMForcesToRunTimeSelectionTable("neoForces");
+}
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+namespace NeoFOAM
+{
+
+namespace
+{
+// Helper: look up the MeshAdapter from the OpenFOAM object registry.
+// Throws FatalError if the registered fvMesh is not a NeoFOAM::MeshAdapter.
+const MeshAdapter& lookupMeshAdapter(const Foam::Time& runTime)
+{
+    const Foam::fvMesh& foamMesh =
+        runTime.lookupObject<Foam::fvMesh>(Foam::polyMesh::defaultRegion);
+    const MeshAdapter* adapter = dynamic_cast<const MeshAdapter*>(&foamMesh);
+    if (!adapter)
+    {
+        Foam::FatalError
+            << "NeoFOAM::Forces requires the registered fvMesh to be a "
+               "NeoFOAM::MeshAdapter, but a plain Foam::fvMesh was found.\n"
+               "Make sure to call NeoFOAM::createAdapterRunTime() before "
+               "instantiating NeoFOAM functionObjects."
+            << Foam::abort(Foam::FatalError);
+    }
+    return *adapter;
+}
+} // anonymous namespace
+
+
+// ---- Constructor ----
+
+Forces::Forces(
+    const Foam::word& name,
+    const Foam::Time& runTime,
+    const Foam::dictionary& dict
+)
+    : FunctionObjectIO(name, runTime, dict)
+{
+    read(dict);
+}
+
+
+// ---- resolveMesh (lazy) ----
+
+void Forces::resolveMesh()
+{
+    if (meshAdapter_) return;
+    meshAdapter_ = &lookupMeshAdapter(time_);
+
+    // Resolve patch names to indices now that the mesh is available
+    patchIndices_.clear();
+    const Foam::polyBoundaryMesh& pbm = meshAdapter_->boundaryMesh();
+    for (const Foam::word& patchName : patchNames_)
+    {
+        const Foam::label idx = pbm.findPatchID(patchName);
+        if (idx < 0)
+        {
+            Foam::FatalError
+                << "Patch '" << patchName << "' not found in mesh boundary.\n"
+                << "Available patches: " << pbm.names()
+                << Foam::abort(Foam::FatalError);
+        }
+        patchIndices_.push_back(static_cast<int>(idx));
+    }
+}
+
+
+// ---- read ----
+
+bool Forces::read(const Foam::dictionary& dict)
+{
+    pName_ = dict.getOrDefault<Foam::word>("pName", "p");
+    rhoRef_ = dict.getOrDefault<Foam::scalar>("rhoInf", 1.0);
+    pRef_ = dict.getOrDefault<Foam::scalar>("pRef", 0.0);
+
+    Foam::vector cofRFoam = dict.getOrDefault<Foam::vector>("CofR", Foam::vector::zero);
+    cofR_ = NeoN::Vec3(cofRFoam[0], cofRFoam[1], cofRFoam[2]);
+
+    // Store patch names; index resolution is deferred to first execute()
+    // (the MeshAdapter may not be registered yet at construction time)
+    patchNames_ = dict.get<Foam::wordList>("patches");
+    meshAdapter_ = nullptr;  // force re-resolve if dict changes
+    patchIndices_.clear();
+
+    return true;
+}
+
+
+// ---- GPU kernel ----
+
+void Forces::computePatchForces(
+    int patchi,
+    const NeoN::finiteVolume::cellCentred::VolumeField<NeoN::scalar>& nfP,
+    NeoN::scalar rhoRef,
+    NeoN::scalar pRef,
+    const NeoN::Vec3& cofR,
+    ForceResult& result
+) const
+{
+    // Range of boundary-face indices for this patch
+    auto [start, end] = nfP.boundaryData().range(patchi);
+
+    const NeoN::UnstructuredMesh& nfMesh = meshAdapter_->nfMesh();
+    const NeoN::Executor exec = meshAdapter_->exec();
+
+    // Device views — no host copy of the full field
+    auto sfView = nfMesh.boundaryMesh().sf().view();
+    auto cfView = nfMesh.boundaryMesh().cf().view();
+    auto pBcView = nfP.boundaryData().value().view();
+
+    // 6-element device accumulator initialised to zero
+    // Layout: [fp.x, fp.y, fp.z, mp.x, mp.y, mp.z]
+    NeoN::Vector<NeoN::scalar> acc(exec, 6, NeoN::scalar {0});
+    auto accView = acc.view();
+
+    // GPU-portable kernel: compute pressure force/moment per face
+    NeoN::parallelFor(
+        exec,
+        {static_cast<NeoN::localIdx>(start), static_cast<NeoN::localIdx>(end)},
+        NEON_LAMBDA(const NeoN::localIdx bfacei)
+        {
+            // Pressure force on this face: F = rho * (p - pRef) * Sf
+            NeoN::Vec3 fp = rhoRef * (pBcView[bfacei] - pRef) * sfView[bfacei];
+
+            // Lever arm from centre of rotation to face centre
+            NeoN::Vec3 lv = cfView[bfacei] - cofR;
+
+            // Moment: lv × fp (inline cross product — no NeoN::cross yet)
+            NeoN::Vec3 mp(
+                lv[1] * fp[2] - lv[2] * fp[1],
+                lv[2] * fp[0] - lv[0] * fp[2],
+                lv[0] * fp[1] - lv[1] * fp[0]
+            );
+
+            // Atomic accumulation into device buffer
+            NeoN::atomic_add(&accView[0], fp[0]);
+            NeoN::atomic_add(&accView[1], fp[1]);
+            NeoN::atomic_add(&accView[2], fp[2]);
+            NeoN::atomic_add(&accView[3], mp[0]);
+            NeoN::atomic_add(&accView[4], mp[1]);
+            NeoN::atomic_add(&accView[5], mp[2]);
+        },
+        "Forces::computePatchForces"
+    );
+
+    // Transfer only 6 scalars (96 bytes) to host — O(1) regardless of mesh size
+    NeoN::Vector<NeoN::scalar> hostAcc = acc.copyToHost();
+    auto hv = hostAcc.view();
+
+    result.pressureForce += NeoN::Vec3 {hv[0], hv[1], hv[2]};
+    result.pressureMoment += NeoN::Vec3 {hv[3], hv[4], hv[5]};
+}
+
+
+// ---- execute ----
+
+bool Forces::execute()
+{
+    resolveMesh();
+
+    result_ = ForceResult {};
+
+    const Foam::fvMesh& foamMesh = *meshAdapter_;
+    const NeoN::UnstructuredMesh& nfMesh = meshAdapter_->nfMesh();
+    const NeoN::Executor exec = meshAdapter_->exec();
+
+    // Look up the pressure field from the OpenFOAM object registry (stays on device)
+    if (!foamMesh.foundObject<Foam::volScalarField>(pName_))
+    {
+        WarningInFunction
+            << "Pressure field '" << pName_ << "' not found — skipping Forces::execute()"
+            << Foam::endl;
+        return false;
+    }
+    const Foam::volScalarField& ofP =
+        foamMesh.lookupObject<Foam::volScalarField>(pName_);
+
+    // Convert OF field to NeoN field on the active executor
+    auto nfP = NeoFOAM::constructFrom(exec, nfMesh, ofP);
+
+    for (int patchi : patchIndices_)
+    {
+        computePatchForces(patchi, nfP, rhoRef_, pRef_, cofR_, result_);
+    }
+
+    return true;
+}
+
+
+// ---- write ----
+
+bool Forces::write()
+{
+    auto& os = getOrCreateFile(
+        "force.dat",
+        "# Time\tFp.x\tFp.y\tFp.z\tMp.x\tMp.y\tMp.z"
+    );
+
+    os << time_.value()
+       << "\t" << result_.pressureForce[0]
+       << "\t" << result_.pressureForce[1]
+       << "\t" << result_.pressureForce[2]
+       << "\t" << result_.pressureMoment[0]
+       << "\t" << result_.pressureMoment[1]
+       << "\t" << result_.pressureMoment[2]
+       << "\n";
+
+    os.flush();
+    return true;
+}
+
+} // namespace NeoFOAM
