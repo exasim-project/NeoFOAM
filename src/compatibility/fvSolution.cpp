@@ -162,6 +162,13 @@ NeoN::Dictionary mapFvSolution(const NeoN::Dictionary& solverDict)
     NeoN::Logging::warn("Mapping OpenFOAM solver settings to NeoN settings.\n"
                         "Currently, it is advisable to specify a configFile\n"
                         "for fine grained Ginkgo solver control\n");
+    if (solverDict.contains("relaxationFactors"))
+    {
+        modSolverDict.insert(
+            "relaxationFactors",
+            solverDict.subDict("relaxationFactors")
+        );
+    }
     updateSolver(modSolverDict);
     updatePreconditioner(modSolverDict);
     updateCriteria(modSolverDict);
