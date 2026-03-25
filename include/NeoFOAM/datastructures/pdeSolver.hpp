@@ -36,7 +36,9 @@ public:
         , ls_(readOrCreate<LinearSystem>(
               runTime,
               "linearSystem" + psi.name,
-              [&psi]() { return NeoN::la::createEmptyLinearSystem<ValueType>(psi.mesh()); }
+              // FIXME find a proper place
+              [&psi, &runTime]()
+              { return NeoN::la::createEmptyLinearSystem<ValueType>(psi.mesh()); }
           ))
     {
         expr_.read(runTime_.fvSchemesDict);
@@ -203,38 +205,59 @@ private:
         auto fieldSolverDict = solverDict.subDict(psi_.name);
 
         auto stats = NeoN::la::SolverStats();
+        // FIXME
         // TODO NOTE: This is a temporary solution to avoid negative values on the diagonal
         // when IC is selected as preconditioner by scaling the system matrix with -1.0.
         // NOTE: This will produce -p as a result.
-        if (psi_.name == "p" && fieldSolverDict.contains("preconditioner")
-            && fieldSolverDict.subDict("preconditioner").template get<std::string>("type")
-                   == "preconditioner::Ic")
+        //   if (psi_.name == "p" && fieldSolverDict.contains("preconditioner")
+        //       && fieldSolverDict.subDict("preconditioner").template get<std::string>("type")
+        //              == "preconditioner::Ic")
+        //   {
+        // NF_PING();
+        //       auto exprIn = -1.0 * expr;
+        //       stats = NeoN::dsl::detail::iterativeSolveImpl(
+        //           exprIn,
+        //           ls,
+        //           psi_,
+        //           runTime_.t,
+        //           runTime_.dt,
+        //           runTime_.fvSchemesDict,
+        //           fieldSolverDict,
+        //           functs
+        //       );
+        //   }
+        //   else
+        //   {
+        if constexpr (std::is_same_v<ValueType, NeoN::scalar>)
         {
-            auto exprIn = -1.0 * expr;
-            stats = NeoN::dsl::detail::iterativeSolveImpl(
-                exprIn,
-                ls,
-                psi_,
-                runTime_.t,
-                runTime_.dt,
-                runTime_.fvSchemesDict,
-                fieldSolverDict,
-                functs
-            );
+            if (Foam::Pstream::parRun())
+            {
+                stats = NeoN::dsl::detail::iterativeSolveDistImpl(
+                    expr,
+                    ls,
+                    psi_,
+                    runTime_.t,
+                    runTime_.dt,
+                    runTime_.fvSchemesDict,
+                    fieldSolverDict,
+                    functs
+                );
+            }
+            else
+            {
+                stats = NeoN::dsl::detail::iterativeSolveImpl(
+                    expr,
+                    ls,
+                    psi_,
+                    runTime_.t,
+                    runTime_.dt,
+                    runTime_.fvSchemesDict,
+                    fieldSolverDict,
+                    functs
+                );
+            }
         }
-        else
-        {
-            stats = NeoN::dsl::detail::iterativeSolveImpl(
-                expr,
-                ls,
-                psi_,
-                runTime_.t,
-                runTime_.dt,
-                runTime_.fvSchemesDict,
-                fieldSolverDict,
-                functs
-            );
-        }
+        // }
 
         for (auto stat : stats.entries)
         {

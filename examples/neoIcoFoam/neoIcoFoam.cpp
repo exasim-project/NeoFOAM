@@ -59,6 +59,8 @@ int main(int argc, char* argv[])
         NeoN::Logging::info("Creating phi");
         auto& phi = nf::constructAndRegister(vectorCollection, rt, ofPhi, false);
 
+        auto commPattern = createCommunicationPattern(rt);
+
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
         NeoN::Logging::info("Starting time loop");

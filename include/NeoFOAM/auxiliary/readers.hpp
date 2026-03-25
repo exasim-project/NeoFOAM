@@ -114,7 +114,7 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
     {
         Foam::dictionary patchDict = bDict.subDict(bName);
         NeoN::Dictionary neoPatchDict = convert(patchDict);
-        //patchInserter[patchDict.get<Foam::word>("type")](neoPatchDict);
+        // patchInserter[patchDict.get<Foam::word>("type")](neoPatchDict);
         patchInserter["empty"](neoPatchDict);
         bcs.emplace_back(nfMesh, neoPatchDict, patchi);
         patchi++;
@@ -278,7 +278,9 @@ public:
     fvcc::VectorDocument operator()(NeoN::Database& db)
     {
         using type_container_t = typename TypeMap<FieldType>::container_type;
+
         type_container_t convertedField = constructFrom(exec, nfMesh, foamField);
+
         if (name != "")
         {
             convertedField.name = name;
