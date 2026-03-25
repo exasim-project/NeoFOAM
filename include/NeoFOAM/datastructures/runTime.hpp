@@ -9,7 +9,6 @@
 #include "fvMesh.H"
 
 #include "NeoFOAM/datastructures/meshAdapter.hpp"
-#include "NeoFOAM/auxiliary/readers.hpp"
 
 namespace NeoFOAM
 {
@@ -30,5 +29,19 @@ struct RunTime
     NeoN::Dictionary controlDict;
     NeoN::Dictionary fvSolutionDict;
     NeoN::Dictionary fvSchemesDict;
+    NeoN::mpi::Environment mpiEnvironment;
 };
+
+
+/**@brief convenience function to avoid recreating objects by storing them in the runtime db*/
+template<typename RegisteredType, typename InitializerType>
+RegisteredType& readOrCreate(RunTime& runTime, std::string name, InitializerType init)
+{
+    if (!runTime.controlDict.contains(name))
+    {
+        runTime.controlDict.insert(std::string(name), init());
+    }
+    return runTime.controlDict.get<RegisteredType>(name);
+}
+
 } // End namespace NeoFOAM

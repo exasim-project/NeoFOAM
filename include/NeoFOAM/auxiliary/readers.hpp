@@ -6,6 +6,7 @@
 
 #include "NeoN/NeoN.hpp"
 
+#include "NeoFOAM/datastructures/runTime.hpp"
 #include "NeoFOAM/auxiliary/convert.hpp"
 #include "NeoFOAM/auxiliary/typeConversion.hpp"
 #include "NeoFOAM/auxiliary/fieldTraits.hpp"
@@ -54,7 +55,7 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
          [&](auto& dict)
          {
              dict.insert("type", std::string("fixedGradient"));
-             dict.insert("fixedGradient", type_primitive_t {});
+             dict.insert("fixedGradient", NeoN::zero<type_primitive_t>());
          }},
         {"fixedValue",
          [](auto& dict)
@@ -77,9 +78,9 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
                  }
                  else
                  {
-                     tmpFixedValue[0] = NeoN::scalar(tokenList.get<int>(1));
-                     tmpFixedValue[1] = NeoN::scalar(tokenList.get<int>(2));
-                     tmpFixedValue[2] = NeoN::scalar(tokenList.get<int>(3));
+                     tmpFixedValue[0] = NeoN::scalar(tokenList.get<Foam::label>(1));
+                     tmpFixedValue[1] = NeoN::scalar(tokenList.get<Foam::label>(2));
+                     tmpFixedValue[2] = NeoN::scalar(tokenList.get<Foam::label>(3));
                  }
                  dict.insert("fixedValue", tmpFixedValue);
              }
@@ -87,7 +88,8 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
              {
                  auto& token = tokenList.tokens()[1];
                  NeoN::scalar* ret = std::any_cast<NeoN::scalar>(&token);
-                 fixedValue = ret ? NeoN::scalar(*ret) : NeoN::scalar(std::any_cast<int>(token));
+                 fixedValue =
+                     ret ? NeoN::scalar(*ret) : NeoN::scalar(std::any_cast<Foam::label>(token));
                  dict.insert("fixedValue", fixedValue);
              }
          }},
@@ -187,8 +189,11 @@ auto constructFrom(
     using ContainerType = typename TypeMap<FoamFieldType>::container_type;
     using MappedType = typename TypeMap<FoamFieldType>::mapped_type;
 
+    std::cout << __FILE__ << ":" << __LINE__ << "\n";
+
     if constexpr (NeoFOAM::detail::isVolumeField<ContainerType>)
     {
+        std::cout << __FILE__ << ":" << __LINE__ << "\n";
         ContainerType out(exec, in.name(), nfMesh, readVolBoundaryConditions(nfMesh, in));
         out.internalVector() = fromFoamField(exec, in.primitiveField());
         out.correctBoundaryConditions();
@@ -196,6 +201,7 @@ auto constructFrom(
     }
     else if constexpr (NeoFOAM::detail::isSurfaceField<ContainerType>)
     {
+        std::cout << __FILE__ << ":" << __LINE__ << "\n";
         using FoamComponentType = typename FoamFieldType::cmptType;
 
         ContainerType out(exec, in.name(), nfMesh, readSurfaceBoundaryConditions(nfMesh, in));
@@ -276,7 +282,11 @@ public:
     fvcc::VectorDocument operator()(NeoN::Database& db)
     {
         using type_container_t = typename TypeMap<FieldType>::container_type;
+
+        std::cout << __FILE__ << ":" << __LINE__ << "\n";
         type_container_t convertedField = constructFrom(exec, nfMesh, foamField);
+        std::cout << __FILE__ << ":" << __LINE__ << "\n";
+
         if (name != "")
         {
             convertedField.name = name;
@@ -312,5 +322,43 @@ public:
         );
     }
 };
+
+/**
+ * @brief Constructs a set of NN fields from OF fields
+ * @tparam Types Types of the classes
+ * @return Tuple containing the fields
+ */
+template<typename... Types>
+auto constFromMany(const NeoN::Executor& exec, const NeoN::UnstructuredMesh& uMesh, Types&... args)
+{
+    return std::tuple(constructFrom(exec, uMesh, args)...);
+}
+
+/**@brief construct an NF field from a given OF field and register*/
+template<typename FoamFieldType>
+auto& constructAndRegister(
+    fvcc::VectorCollection& fieldCollection,
+    RunTime& rt,
+    const FoamFieldType& of,
+    bool storeOldTime = true
+)
+{
+    using ContainerType = typename TypeMap<FoamFieldType>::container_type;
+    ContainerType& ret = fieldCollection.template registerVector<ContainerType>(
+        NeoFOAM::CreateFromFoamField<FoamFieldType> {
+            .exec = rt.exec,
+            .nfMesh = rt.nfMesh,
+            .foamField = of,
+            .name = of.name()
+        }
+    );
+    if (storeOldTime)
+    {
+        fvcc::rotateOldTimes(ret);
+    }
+    ret.correctBoundaryConditions();
+    return ret;
+}
+
 
 }; // namespace Foam

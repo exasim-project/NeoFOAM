@@ -6,9 +6,7 @@
 
 #include "common.hpp"
 
-using Foam::Info;
-using Foam::endl;
-using Foam::nl;
+namespace nf = NeoFOAM;
 namespace fvc = Foam::fvc;
 namespace fvm = Foam::fvm;
 
@@ -55,6 +53,7 @@ TEST_CASE("Advection Equation")
         fvcc::VectorCollection::instance(db, "VectorCollection");
 
     auto [execName, exec] = GENERATE(allAvailableExecutor());
+    auto rt = nf::createAdapterRunTime(runTime, exec);
 
     Foam::scalar startTime = 0.0;
     Foam::label startTimeIndex = 0;
@@ -95,27 +94,19 @@ TEST_CASE("Advection Equation")
     Foam::surfaceScalarField phi0 = phi;
     Foam::volVectorField U0 = U;
 
-    fvcc::VolumeField<NeoN::scalar>& nfT =
-        vectorCollection.registerVector<fvcc::VolumeField<NeoN::scalar>>(
-            NeoFOAM::CreateFromFoamField<Foam::volScalarField> {
-                .exec = exec,
-                .nfMesh = nfMesh,
-                .foamField = T,
-                .name = "nfT"
-            }
-        );
-    auto nfPhi0 = NeoFOAM::constructFrom(exec, nfMesh, phi0);
-    auto nfPhi = NeoFOAM::constructFrom(exec, nfMesh, phi);
+    auto& nfT = NeoFOAM::constructAndRegister(vectorCollection, rt, T);
+    auto [nfPhi0, nfPhi] = NeoFOAM::constFromMany(exec, nfMesh, phi0, phi);
 
     NeoN::Dictionary controlDict = NeoFOAM::convert(runTime.controlDict());
     NeoN::Dictionary fvSchemesDict = NeoFOAM::convert(mesh.schemesDict());
+    fvSchemesDict = NeoFOAM::mapFvSchemes(fvSchemesDict);
     Foam::scalar endTime = controlDict.get<Foam::scalar>("endTime");
 
-
+#if NF_WITH_SUNDIALS
     SECTION("Scalar advection with " + execName + " and " + "forwardEuler")
     {
         std::string timeIntegration = "forwardEuler";
-        fvSchemesDict.subDict("ddtSchemes").insert("type", timeIntegration);
+        fvSchemesDict.subDict("timeIntegration").insert("type", timeIntegration);
 
         while (runTime.run())
         {
@@ -150,7 +141,7 @@ TEST_CASE("Advection Equation")
             // advance NeoFOAM fields in time
             {
                 NeoN::dsl::Expression eqnSys(
-                    NeoN::dsl::imp::ddt(nfT) + NeoN::dsl::exp::div(nfPhi, nfT)
+                    NeoN::dsl::exp::ddt(nfT) + NeoN::dsl::exp::div(nfPhi, nfT)
                 );
                 NeoN::dsl::solve(eqnSys, nfT, t, dt, fvSchemesDict, fvSolutionDict);
             }
@@ -161,12 +152,10 @@ TEST_CASE("Advection Equation")
                 write(nfT.internalVector(), mesh, "nfTExp_" + execName);
                 T.write(); // for some reason T was not written
             }
-
-            // runTime.write();
-            // runTime.printExecutionTime(Info);
         }
         NeoFOAM::compare(nfT, T, ApproxScalar(1e-10), false);
     }
+#endif
 
     std::string timeIntegration = "backwardEuler";
     NeoN::Dictionary fvSolutionDict {
@@ -179,7 +168,7 @@ TEST_CASE("Advection Equation")
 
     SECTION("Scalar advection with " + execName + " and " + timeIntegration)
     {
-        fvSchemesDict.subDict("ddtSchemes").insert("type", timeIntegration);
+        fvSchemesDict.subDict("timeIntegration").insert("type", timeIntegration);
 
         while (runTime.run())
         {
@@ -219,9 +208,6 @@ TEST_CASE("Advection Equation")
                 write(nfT.internalVector(), mesh, "nfTImp_" + execName);
                 T.write(); // for some reason T was not written
             }
-
-            // runTime.write();
-            // runTime.printExecutionTime(Info);
         }
 
         NeoFOAM::compare(nfT, T, ApproxScalar(1e-8), false);

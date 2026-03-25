@@ -15,13 +15,21 @@ env:
   OMPI_MCA_rmaps_base_oversubscribe: 1
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: >
+    ${{ github.workflow }}-
+    ${{ github.event_name }}-
+    ${{ github.event.pull_request.number || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
   build-neofoam:
-    if: "!contains(toJson(github.event.pull_request.labels.*.name), 'Skip-build')"
-    name: Build NeoFOAM
+    name: >
+      Build and test ${{ github.event.repository.name }}
+      on CPU (${{ matrix.compiler.CC }})
+    runs-on: ubuntu-24.04
+    if: >
+      github.event_name != 'pull_request' ||
+      !contains(github.event.pull_request.labels.*.name, 'skip-build')
     strategy:
       fail-fast: false
       matrix:
@@ -30,7 +38,6 @@ jobs:
             CXX: clang++
           - CC: gcc
             CXX: g++
-    runs-on: ubuntu-24.04
     steps:
       - name: Determine branch
         run: |
@@ -86,6 +93,9 @@ jobs:
           ninja --version
           cmake --version
 
+      - name: Install python dependencies
+        run:  pip install foamlib pandas pydantic defusedxml
+
       - name: Build NeoFOAM
         run: |
           source /usr/lib/openfoam/openfoam2406/etc/bashrc || true
@@ -95,10 +105,11 @@ jobs:
             -DNeoN_DEVEL_TOOLS=OFF \
             -DNeoN_BUILD_TESTS=OFF \
             -DNeoN_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF \
-            -DNEOFOAM_NEON_VERSION=${{ env.NEON_BRANCH }}
+            -DNEOFOAM_NEON_VERSION=${{ env.NEON_BRANCH }} \
+            -DNEOFOAM_BUILD_BENCHMARKS=ON
           cmake --build --preset develop
 
       - name: Execute unit tests of NeoFOAM
         run: |
           source /usr/lib/openfoam/openfoam2406/etc/bashrc || true
-          ctest --preset develop
+          ctest --preset develop -E bench --output-on-failure

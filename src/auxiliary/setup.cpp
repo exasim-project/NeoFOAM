@@ -55,23 +55,30 @@ std::unique_ptr<Foam::fvMesh> createMesh(const Foam::Time& runTime)
 /* @brief create a NeoN executor from a name
  * @return the Neon::Executor
  */
-NeoN::Executor createExecutor(const std::string execName)
+NeoN::Executor
+createExecutor(const std::string execName, std::unique_ptr<NeoN::AllocatorStrategy> strategy)
 {
     NeoN::Logging::info("Creating Executor {}", execName);
     if (execName == "Serial")
     {
-        return NeoN::SerialExecutor();
+        return NeoN::SerialExecutor(std::move(strategy));
     }
     if (execName == "CPU")
     {
-        return NeoN::CPUExecutor();
+        return NeoN::CPUExecutor(std::move(strategy));
     }
     if (execName == "GPU")
     {
-        return NeoN::GPUExecutor();
+        return NeoN::GPUExecutor(std::move(strategy));
     }
+    if (execName == "default")
+    {
+        return NeoN::createDefaultExecutor(std::move(strategy));
+    }
+
+
     Foam::FatalError << "unknown Executor: " << execName << Foam::nl
-                     << "Available executors: Serial, CPU, GPU" << Foam::nl
+                     << "Available executors: Serial, CPU, GPU, default" << Foam::nl
                      << Foam::abort(Foam::FatalError);
 
     return NeoN::SerialExecutor();
@@ -80,7 +87,19 @@ NeoN::Executor createExecutor(const std::string execName)
 NeoN::Executor createExecutor(const Foam::dictionary& dict)
 {
     auto execName = std::string(dict.get<Foam::word>("executor"));
-    return createExecutor(execName);
+    auto allocator = std::string(dict.get<Foam::word>("allocator"));
+    if (allocator == "Umpire")
+    {
+        return createExecutor(execName, std::make_unique<NeoN::UmpireAllocator>());
+    }
+    if (allocator == "UmpirePool")
+    {
+        // TODO allow percentual pool size
+        auto poolSizeGB = Foam::scalar(dict.get<Foam::scalar>("memPoolSize"));
+        NeoN::UmpireMempoolHandler::setupUmpirePool(NeoN::MemorySpace::GPU, poolSizeGB * 1e9);
+        return createExecutor(execName, std::make_unique<NeoN::UmpirePoolAllocator>());
+    }
+    return createExecutor(execName, std::make_unique<NeoN::DefaultAllocator>());
 }
 
 NeoFOAM::RunTime createAdapterRunTime(const Foam::Time& in)
@@ -94,6 +113,10 @@ RunTime createAdapterRunTime(const Foam::Time& in, const NeoN::Executor exec)
     NeoN::Logging::info("Creating NeoFOAM runTime");
     std::unique_ptr<MeshAdapter> meshPtr = createMesh(exec, in);
     MeshAdapter& mesh = *meshPtr;
+    auto mpiEnvironment = NeoN::mpi::Environment {};
+
+    std::cout << __FILE__ << ":" << __LINE__ << " create mpi environment with "
+              << mpiEnvironment.sizeRank() << " ranks \n";
 
     auto& nfMesh = mesh.nfMesh();
     return NeoFOAM::RunTime {
@@ -109,7 +132,8 @@ RunTime createAdapterRunTime(const Foam::Time& in, const NeoN::Executor exec)
         .maxDeltaT = in.controlDict().getOrDefault<Foam::scalar>("maxDeltaT", Foam::GREAT),
         .controlDict = convert(in.controlDict()),
         .fvSolutionDict = convert(mesh.solutionDict()),
-        .fvSchemesDict = convert(mesh.schemesDict())
+        .fvSchemesDict = convert(mesh.schemesDict()),
+        .mpiEnvironment = mpiEnvironment
     };
 }
 

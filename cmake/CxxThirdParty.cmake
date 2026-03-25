@@ -9,9 +9,27 @@ endif()
 
 if(NEOFOAM_NEON_VIA_CPM)
   if(NOT DEFINED NEOFOAM_NEON_VERSION)
-    set(NEOFOAM_NEON_VERSION
-        "main"
-        CACHE INTERNAL "")
+    # grab the SHA from submodule automatically
+    find_package(Git QUIET)
+    if(EXISTS "${NeoFOAM_SOURCE_DIR}/.git" AND GIT_FOUND)
+      # Note: it will not initialize the submodule and does not require initialization
+      execute_process(
+        COMMAND ${GIT_EXECUTABLE} submodule status "src/NeoN"
+        WORKING_DIRECTORY ${NeoFOAM_SOURCE_DIR}
+        OUTPUT_VARIABLE GIT_SUBMODULE_STRING
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+      # the output format is -<SHA> src/NEON when the submodule uninitialization
+      string(SUBSTRING "${GIT_SUBMODULE_STRING}" 0 1 SUBMODULE_PREFIX)
+      string(SUBSTRING "${GIT_SUBMODULE_STRING}" 1 40 SUBMODULE_HASH)
+      set(NEOFOAM_NEON_VERSION
+          "${SUBMODULE_HASH}"
+          CACHE INTERNAL "")
+    else()
+      # if is is not from git or user does not have git, it fallback to predefined value.
+      set(NEOFOAM_NEON_VERSION
+          "main"
+          CACHE INTERNAL "")
+    endif()
   endif()
 
   cpmaddpackage(

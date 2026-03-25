@@ -12,6 +12,7 @@
 
 namespace fvcc = NeoN::finiteVolume::cellCentred;
 namespace dsl = NeoN::dsl;
+namespace nf = NeoFOAM;
 
 extern Foam::Time* timePtr;    // A single time object
 extern Foam::argList* argsPtr; // Some forks want argList access at createMesh.H
@@ -19,18 +20,17 @@ extern Foam::fvMesh* meshPtr;  // A single mesh object
 
 TEST_CASE("matrix multiplication")
 {
+    NeoN::mpi::Environment mpiEnviron;
+    float epsilon = 1e-32;
     Foam::Time& runTime = *timePtr;
     Foam::argList& args = *argsPtr;
 
-    NeoN::Database db;
-    fvcc::VectorCollection& fieldCol = fvcc::VectorCollection::instance(db, "VectorCollection");
-
     auto [execName, exec] = GENERATE(allAvailableExecutor());
+    auto rt = nf::createAdapterRunTime(runTime, exec);
+    fvcc::VectorCollection& fieldCol = fvcc::VectorCollection::instance(rt.db, "VectorCollection");
 
     auto meshPtr = NeoFOAM::createMesh(exec, runTime);
     NeoFOAM::MeshAdapter& mesh = *meshPtr;
-    auto nfMesh = mesh.nfMesh();
-    const auto sparsityPattern = NeoN::la::createSparsity(nfMesh);
 
     runTime.setDeltaT(1);
 
@@ -39,76 +39,53 @@ TEST_CASE("matrix multiplication")
         auto ofT = NeoFOAM::randomScalarField(runTime, mesh, "T");
         ofT.correctBoundaryConditions();
 
-        fvcc::VolumeField<NeoN::scalar>& nfT =
-            fieldCol.registerVector<fvcc::VolumeField<NeoN::scalar>>(
-                NeoFOAM::CreateFromFoamField<Foam::volScalarField> {
-                    .exec = exec,
-                    .nfMesh = nfMesh,
-                    .foamField = ofT,
-                    .name = "nfT"
-                }
-            );
+        auto& nfT = NeoFOAM::constructAndRegister(fieldCol, rt, ofT);
         auto& nfTOld = fvcc::oldTime(nfT);
         const auto nfTOldView = nfTOld.internalVector().view();
+
         NeoN::map(
             nfTOld.internalVector(),
-            KOKKOS_LAMBDA(const std::size_t celli) { return nfTOldView[celli] - 1.0; }
+            NEON_LAMBDA(const std::size_t celli) { return nfTOldView[celli] - 1.0; }
         );
 
         ofT.oldTime() -= Foam::dimensionedScalar("value", Foam::dimTemperature, 1);
         ofT.oldTime().correctBoundaryConditions();
 
         Foam::fvScalarMatrix matrix(Foam::fvm::ddt(ofT));
-        Foam::volScalarField ddt(
-            "ddt",
-            matrix & ofT
-        ); // we should get a uniform field with a value of 1
-        // ddt.write();
+        Foam::volScalarField ddt("ddt", matrix & ofT);
+
+        // we should get a uniform field with a value of 1
         fvcc::DdtOperator ddtOp(dsl::Operator::Type::Implicit, nfT);
 
-        auto ls = NeoN::la::createEmptyLinearSystem<NeoN::scalar, NeoN::localIdx>(
-            nfMesh,
-            sparsityPattern
-        );
+        NeoN::Dictionary ddtSchemes;
+        ddtSchemes.insert("ddt(T)", std::string("BDF1"));
+        rt.fvSchemesDict.insert("ddtSchemes", ddtSchemes);
+        ddtOp.read(rt.fvSchemesDict);
+
+        auto ls = NeoN::la::createEmptyLinearSystem<NeoN::scalar>(rt.nfMesh, mpiEnviron);
         ddtOp.implicitOperation(ls, runTime.value(), runTime.deltaTValue());
 
         // check rhs
-        auto rhs = ls.rhs().copyToHost();
-        auto rhsView = rhs.view();
-        for (size_t celli = 0; celli < rhsView.size(); celli++)
-        {
-            REQUIRE(rhsView[celli] == Catch::Approx(matrix.source()[celli]).margin(1e-16));
-        }
+        nf::compare(ls.rhs(), matrix.source(), ApproxScalar(epsilon));
 
         // check diag
-        auto diag = NeoFOAM::diag(ls, sparsityPattern);
-        auto diagHost = diag.copyToHost();
-
-        for (size_t celli = 0; celli < diagHost.size(); celli++)
-        {
-            REQUIRE(diagHost.view()[celli] == Catch::Approx(matrix.diag()[celli]).margin(1e-16));
-        }
+        auto diag = ls.matrix().diag();
+        nf::compare(diag, matrix.diag(), ApproxScalar(epsilon));
 
         auto result = NeoFOAM::applyOperator(ls, nfT);
-        auto resultHost = result.internalVector().copyToHost();
-        for (size_t celli = 0; celli < resultHost.size(); celli++)
-        {
-            REQUIRE(
-                resultHost.view()[celli]
-                == Catch::Approx(ddt[celli] * mesh.V()[celli]).margin(1e-16)
-            );
-        }
+        auto ddtV = ddt * mesh.V();
+        nf::compare(result.internalVector(), ddtV(), ApproxScalar(epsilon));
     }
 
     SECTION("sourceterm_" + execName)
     {
         NeoN::scalar coeff = 2.0;
         auto ofT = NeoFOAM::randomScalarField(runTime, mesh, "T");
-        fvcc::VolumeField<NeoN::scalar> nfT = NeoFOAM::constructFrom(exec, nfMesh, ofT);
+        auto nfT = NeoFOAM::constructFrom(exec, rt.nfMesh, ofT);
 
         NeoN::map(
             nfT.internalVector(),
-            KOKKOS_LAMBDA(const std::size_t celli) { return celli; }
+            NEON_LAMBDA(const std::size_t celli) { return celli; }
         );
         auto coefficients = nfT;
         NeoN::fill(coefficients.internalVector(), coeff);
@@ -117,7 +94,7 @@ TEST_CASE("matrix multiplication")
         sourceTerm.explicitOperation(source);
 
         auto sourceHost = source.copyToHost();
-        ;
+
         auto nftHost = nfT.internalVector().copyToHost();
         for (size_t i = 0; i < sourceHost.size(); i++)
         {
@@ -125,15 +102,12 @@ TEST_CASE("matrix multiplication")
         }
 
         // the sourceterm operator implicit
-        auto ls = NeoN::la::createEmptyLinearSystem<NeoN::scalar, NeoN::localIdx>(
-            nfMesh,
-            sparsityPattern
-        );
-        auto cellVolumes = nfMesh.cellVolumes().copyToHost();
+        auto ls = NeoN::la::createEmptyLinearSystem<NeoN::scalar>(rt.nfMesh, mpiEnviron);
+        auto cellVolumes = rt.nfMesh.cellVolumes().copyToHost();
         sourceTerm.implicitOperation(ls);
 
         // check diag
-        auto diag = NeoFOAM::diag(ls, sparsityPattern);
+        auto diag = ls.matrix().diag();
         auto diagHost = diag.copyToHost();
 
         for (size_t celli = 0; celli < diagHost.size(); celli++)
@@ -155,110 +129,57 @@ TEST_CASE("matrix multiplication")
     SECTION("div_" + execName)
     {
         auto ofT = NeoFOAM::randomScalarField(runTime, mesh, "T");
-        forAll(ofT, celli)
-        {
-            ofT[celli] = celli;
-        }
-        ofT.correctBoundaryConditions();
-
-        auto nfT = NeoFOAM::constructFrom(exec, nfMesh, ofT);
-        nfT.correctBoundaryConditions();
-
-        Foam::surfaceScalarField ofPhi(
-            Foam::IOobject(
-                "phi",
-                runTime.timeName(),
-                mesh,
-                Foam::IOobject::NO_READ,
-                Foam::IOobject::AUTO_WRITE
-            ),
-            mesh,
-            Foam::dimensionedScalar("phi", Foam::dimless, 0.1)
-        );
-        forAll(ofPhi, facei)
-        {
-            ofPhi[facei] = 1;
-        }
-
-        auto nfPhi = NeoFOAM::constructFrom(exec, nfMesh, ofPhi);
-
+        auto ofPhi = NeoFOAM::randDimField<Foam::surfaceScalarField>(mesh, Foam::dimless, "phi");
         Foam::fvScalarMatrix matrix(Foam::fvm::div(ofPhi, ofT));
         Foam::volScalarField divT("divT", matrix & ofT);
+        auto divV = divT * mesh.V();
 
-        NeoN::TokenList input = {std::string("Gauss"), std::string("linear")};
-        fvcc::DivOperator<NeoN::scalar> divOp(dsl::Operator::Type::Implicit, nfPhi, nfT, input);
-
-        auto ls = NeoN::la::createEmptyLinearSystem<NeoN::scalar, NeoN::localIdx>(
-            nfMesh,
-            sparsityPattern
+        auto [nfT, nfPhi] = NeoFOAM::constFromMany(exec, rt.nfMesh, ofT, ofPhi);
+        auto nfPDE = NeoFOAM::PDESolver<NeoN::scalar>(
+            NeoN::dsl::Expression<NeoN::scalar>(NeoN::dsl::imp::div(nfPhi, nfT)),
+            nfT,
+            rt
         );
-        divOp.implicitOperation(ls);
+        nfPDE.assemble();
 
         // diag and rhs differ from the foam matrix as openfoam does not added the boundary values
         // to the matrix therefore we only check the operator results
+        auto result = NeoFOAM::applyOperator(nfPDE.linearSystem(), nfT);
+        nf::compare(result.internalVector(), divV(), ApproxScalar(epsilon));
 
-        auto result = NeoFOAM::applyOperator(ls, nfT);
-        auto resultHost = result.internalVector().copyToHost();
-        for (size_t celli = 0; celli < resultHost.size(); celli++)
-        {
-            REQUIRE(
-                resultHost.view()[celli]
-                == Catch::Approx(divT[celli] * mesh.V()[celli]).margin(1e-14)
-            );
-        }
+        nf::compare(nfPDE.linearSystem().matrix().diag(), matrix.diag(), ApproxScalar(epsilon));
+        nf::compare(
+            NeoN::la::upper(nfPDE.linearSystem().matrix()),
+            matrix.upper(),
+            ApproxScalar(epsilon)
+        );
     }
 
     SECTION("laplacian_" + execName)
     {
         auto ofT = NeoFOAM::randomScalarField(runTime, mesh, "T");
-        forAll(ofT, celli)
-        {
-            ofT[celli] = celli;
-        }
-        ofT.correctBoundaryConditions();
-
-        auto nfT = NeoFOAM::constructFrom(exec, nfMesh, ofT);
-        nfT.correctBoundaryConditions();
-
-        Foam::surfaceScalarField ofNuf(
-            Foam::IOobject(
-                "ofNuf",
-                runTime.timeName(),
-                mesh,
-                Foam::IOobject::NO_READ,
-                Foam::IOobject::AUTO_WRITE
-            ),
-            mesh,
-            Foam::dimensionedScalar("phi", Foam::dimless, 0.1)
-        );
-
-        auto nfNuf = NeoFOAM::constructFrom(exec, nfMesh, ofNuf);
-
+        auto ofNuf = NeoFOAM::randDimField<Foam::surfaceScalarField>(mesh, Foam::dimless, "Gamma");
         Foam::fvScalarMatrix matrix(Foam::fvm::laplacian(ofNuf, ofT));
         Foam::volScalarField laplacian("laplacian", matrix & ofT);
+        auto lapV = laplacian * mesh.V();
 
-        NeoN::TokenList input =
-            {std::string("Gauss"), std::string("linear"), std::string("uncorrected")};
-        fvcc::LaplacianOperator<NeoN::scalar>
-            laplacianOp(dsl::Operator::Type::Implicit, nfNuf, nfT, input);
-
-        auto ls = NeoN::la::createEmptyLinearSystem<NeoN::scalar, NeoN::localIdx>(
-            nfMesh,
-            sparsityPattern
+        auto [nfT, nfNuf] = NeoFOAM::constFromMany(exec, rt.nfMesh, ofT, ofNuf);
+        auto nfPDE = NeoFOAM::PDESolver<NeoN::scalar>(
+            NeoN::dsl::Expression<NeoN::scalar>(NeoN::dsl::imp::laplacian(nfNuf, nfT)),
+            nfT,
+            rt
         );
-        laplacianOp.implicitOperation(ls);
+        nfPDE.assemble();
 
         // diag and rhs differ from the foam matrix as openfoam does not added the boundary values
         // to the matrix therefore we only check the operator results
-
-        auto result = NeoFOAM::applyOperator(ls, nfT);
-        auto resultHost = result.internalVector().copyToHost();
-        for (size_t celli = 0; celli < resultHost.size(); celli++)
-        {
-            REQUIRE(
-                resultHost.view()[celli]
-                == Catch::Approx(laplacian[celli] * mesh.V()[celli]).margin(1e-14)
-            );
-        }
+        auto result = NeoFOAM::applyOperator(nfPDE.linearSystem(), nfT);
+        nf::compare(result.internalVector(), lapV(), ApproxScalar(epsilon));
+        nf::compare(nfPDE.linearSystem().matrix().diag(), matrix.diag(), ApproxScalar(epsilon));
+        nf::compare(
+            NeoN::la::upper(nfPDE.linearSystem().matrix()),
+            matrix.upper(),
+            ApproxScalar(epsilon)
+        );
     }
 }

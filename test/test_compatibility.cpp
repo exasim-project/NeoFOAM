@@ -4,13 +4,10 @@
 #include <cstddef>
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
-#include <unordered_set>
-#include <set>
 
 #include "common.hpp"
 
 #include "gaussConvectionScheme.H"
-
 
 namespace fvcc = NeoN::finiteVolume::cellCentred;
 namespace dsl = NeoN::dsl;
@@ -33,7 +30,7 @@ TEST_CASE("fvSolution")
 
     NeoN::Dictionary fvSolutionDict = NeoFOAM::convert(mesh.solutionDict());
     NeoN::Dictionary& solverDict = fvSolutionDict.subDict("solvers");
-    NeoN::Dictionary& solver1 = solverDict.subDict("solver1");
+    NeoN::Dictionary& solver1 = solverDict.subDict("T");
 
     SECTION("updateSolver")
     {
@@ -64,11 +61,18 @@ TEST_CASE("fvSolution")
     {
         SECTION("DIC")
         {
-            solver1.insert("preconditioner", std::string("DIC"));
+            solver1.insert("preconditioner", std::string("diagonal"));
             NeoFOAM::updatePreconditioner(solver1);
             auto& preconditionerDict = solver1.subDict("preconditioner");
             REQUIRE(preconditionerDict.get<std::string>("type") == "preconditioner::Jacobi");
             REQUIRE(preconditionerDict.get<int>("max_block_size") == 1);
+        }
+        SECTION("DIC")
+        {
+            solver1.insert("preconditioner", std::string("DIC"));
+            NeoFOAM::updatePreconditioner(solver1);
+            auto& preconditionerDict = solver1.subDict("preconditioner");
+            REQUIRE(preconditionerDict.get<std::string>("type") == "preconditioner::Ic");
         }
         SECTION("DILU")
         {
@@ -76,7 +80,6 @@ TEST_CASE("fvSolution")
             NeoFOAM::updatePreconditioner(solver1);
             auto& preconditionerDict = solver1.subDict("preconditioner");
             REQUIRE(preconditionerDict.get<std::string>("type") == "preconditioner::Ilu");
-            REQUIRE(preconditionerDict.get<bool>("reverse_apply") == false);
             REQUIRE(
                 preconditionerDict.subDict("factorization").get<std::string>("type")
                 == "factorization::ParIlu"
