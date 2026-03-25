@@ -109,273 +109,309 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00024" name="l00024"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PDESolver.html">   24</a></span><span class="keyword">class </span><a class="code hl_class" href="classNeoFOAM_1_1PDESolver.html">PDESolver</a></div>
 <div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>{</div>
 <div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>    <span class="keyword">using </span>VolumeField = NeoN::finiteVolume::cellCentred::VolumeField&lt;ValueType&gt;;</div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span> </div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>    <span class="keyword">using </span>LinearSystem =</div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>        NeoN::la::LinearSystem&lt;ValueType, NeoN::la::CSRMatrix&lt;ValueType, NeoN::localIdx&gt;&gt;;</div>
 <div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span> </div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span> </div>
-<div class="foldopen" id="foldopen00031" data-start="{" data-end="}">
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PDESolver.html#afe835ed8d94d48b6cc9f115abafce6da">   31</a></span>    <a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#afe835ed8d94d48b6cc9f115abafce6da">PDESolver</a>(dsl::Expression&lt;ValueType&gt; expr, VolumeField&amp; psi, <span class="keyword">const</span> <a class="code hl_struct" href="structNeoFOAM_1_1RunTime.html">RunTime</a>&amp; runTime)</div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>        : psi_(psi)</div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>        , expr_(expr)</div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>        , runTime_(runTime)</div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>        , sparsityPattern_(NeoN::la::SparsityPattern::readOrCreate(psi.mesh()))</div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>        , ls_(NeoN::la::createEmptyLinearSystem&lt;ValueType, NeoN::localIdx&gt;(</div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>              psi.mesh(),</div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>              sparsityPattern_</div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>          ))</div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>    {</div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>        expr_.read(runTime_.<a class="code hl_variable" href="structNeoFOAM_1_1RunTime.html#a3e0ee1aef295de02e8758811e0099923">fvSchemesDict</a>);</div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>    };</div>
-</div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span> </div>
-<div class="foldopen" id="foldopen00044" data-start="{" data-end="}">
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PDESolver.html#aadc56e8e1c8d0adb8d792fbcfcb844e1">   44</a></span>    <a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#aadc56e8e1c8d0adb8d792fbcfcb844e1">PDESolver</a>(<span class="keyword">const</span> <a class="code hl_class" href="classNeoFOAM_1_1PDESolver.html">PDESolver</a>&amp; expr)</div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>        : psi_(expr.psi_)</div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>        , expr_(expr.expr_)</div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>        , runTime_(expr.runTime_)</div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>        , ls_(expr.ls_)</div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>        , sparsityPattern_(expr.sparsityPattern_) {};</div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span> </div>
+<div class="foldopen" id="foldopen00032" data-start="{" data-end="}">
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PDESolver.html#ace256b5f26d8077c69f0e2990fc88dac">   32</a></span>    <a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#ace256b5f26d8077c69f0e2990fc88dac">PDESolver</a>(dsl::Expression&lt;ValueType&gt; expr, VolumeField&amp; psi, <a class="code hl_struct" href="structNeoFOAM_1_1RunTime.html">RunTime</a>&amp; runTime)</div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>        : psi_(psi)</div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>        , expr_(expr)</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>        , runTime_(runTime)</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>        , ls_(<a class="code hl_function" href="namespaceNeoFOAM.html#ae3448b9356abfd01a14f812c7acffc7c">readOrCreate</a>&lt;LinearSystem&gt;(</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>              runTime,</div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>              <span class="stringliteral">&quot;linearSystem&quot;</span> + psi.name,</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>              <span class="comment">// FIXME find a proper place</span></div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>              [&amp;psi, &amp;runTime]() {</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>                  <span class="keywordflow">return</span> NeoN::la::createEmptyLinearSystem&lt;ValueType&gt;(</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>                      psi.mesh(),</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>                      runTime.mpiEnvironment</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>                  );</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>              }</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>          ))</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    {</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>        expr_.read(runTime_.<a class="code hl_variable" href="structNeoFOAM_1_1RunTime.html#a3e0ee1aef295de02e8758811e0099923">fvSchemesDict</a>);</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    };</div>
 </div>
 <div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span> </div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PDESolver.html#a25556a10c54c223f4cafef62444b3538">   51</a></span>    <a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#a25556a10c54c223f4cafef62444b3538">~PDESolver</a>() = <span class="keywordflow">default</span>;</div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span> </div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PDESolver.html#a5a9cf36364742d71a1ccd8a4cdf4f9bb">   53</a></span>    VolumeField&amp; <a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#a5a9cf36364742d71a1ccd8a4cdf4f9bb">getField</a>() { <span class="keywordflow">return</span> this-&gt;psi_; }</div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span> </div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PDESolver.html#aab52918a151a51e3fc85dd84ff39b8e7">   55</a></span>    <span class="keyword">const</span> VolumeField&amp; <a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#aab52918a151a51e3fc85dd84ff39b8e7">getField</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> this-&gt;psi_; }</div>
+<div class="foldopen" id="foldopen00051" data-start="{" data-end="}">
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PDESolver.html#aadc56e8e1c8d0adb8d792fbcfcb844e1">   51</a></span>    <a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#aadc56e8e1c8d0adb8d792fbcfcb844e1">PDESolver</a>(<span class="keyword">const</span> <a class="code hl_class" href="classNeoFOAM_1_1PDESolver.html">PDESolver</a>&amp; expr)</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>        : psi_(expr.psi_)</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>        , expr_(expr.expr_)</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>        , runTime_(expr.runTime_)</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>        , ls_(expr.ls_) {};</div>
+</div>
 <div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span> </div>
-<div class="foldopen" id="foldopen00057" data-start="{" data-end="}">
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PDESolver.html#a8e5fb73b6f8356252df9d57badb62f66">   57</a></span>    [[nodiscard]] <span class="keyword">const</span> NeoN::la::SparsityPattern&amp; <a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#a8e5fb73b6f8356252df9d57badb62f66">sparsityPattern</a>()<span class="keyword"> const</span></div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span><span class="keyword">    </span>{</div>
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>        <span class="keywordflow">return</span> sparsityPattern_;</div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>    }</div>
-</div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span> </div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PDESolver.html#a0b3c75a1830571b477f95604a603b6a9">   62</a></span>    [[nodiscard]] NeoN::la::LinearSystem&lt;ValueType, IndexType&gt;&amp; <a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#a0b3c75a1830571b477f95604a603b6a9">linearSystem</a>() { <span class="keywordflow">return</span> ls_; }</div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span> </div>
-<div class="foldopen" id="foldopen00064" data-start="{" data-end="}">
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PDESolver.html#a2c0e3ff2aee001b75bd3dd060d8b14ab">   64</a></span>    [[nodiscard]] <span class="keyword">const</span> NeoN::la::LinearSystem&lt;ValueType, IndexType&gt;&amp; <a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#a2c0e3ff2aee001b75bd3dd060d8b14ab">linearSystem</a>()<span class="keyword"> const</span></div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span><span class="keyword">    </span>{</div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>        <span class="keywordflow">return</span> ls_;</div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>    }</div>
-</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PDESolver.html#a25556a10c54c223f4cafef62444b3538">   57</a></span>    <a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#a25556a10c54c223f4cafef62444b3538">~PDESolver</a>() = <span class="keywordflow">default</span>;</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span> </div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PDESolver.html#a5a9cf36364742d71a1ccd8a4cdf4f9bb">   59</a></span>    VolumeField&amp; <a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#a5a9cf36364742d71a1ccd8a4cdf4f9bb">getField</a>() { <span class="keywordflow">return</span> this-&gt;psi_; }</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span> </div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PDESolver.html#aab52918a151a51e3fc85dd84ff39b8e7">   61</a></span>    <span class="keyword">const</span> VolumeField&amp; <a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#aab52918a151a51e3fc85dd84ff39b8e7">getField</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> this-&gt;psi_; }</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span> </div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PDESolver.html#ae157132adbb86472bbe3709709f71098">   63</a></span>    [[nodiscard]] LinearSystem&amp; <a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#ae157132adbb86472bbe3709709f71098">linearSystem</a>() { <span class="keywordflow">return</span> ls_; }</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span> </div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PDESolver.html#a663d27bbda1f87fcc55f09f73d9a88ce">   65</a></span>    [[nodiscard]] <span class="keyword">const</span> LinearSystem&amp; <a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#a663d27bbda1f87fcc55f09f73d9a88ce">linearSystem</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> ls_; }</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span> </div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PDESolver.html#a84bccc8b1ecb7bea2e60d4d9e4904879">   67</a></span>    NeoN::dsl::Expression&lt;ValueType&gt;&amp; <a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#a84bccc8b1ecb7bea2e60d4d9e4904879">expression</a>() { <span class="keywordflow">return</span> expr_; }</div>
 <div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span> </div>
-<div class="foldopen" id="foldopen00069" data-start="{" data-end="}">
-<div class="line"><a id="l00069" name="l00069"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PDESolver.html#a700cffec996ac77c98b3be7f91f38219">   69</a></span>    NeoN::la::LinearSystem&lt;ValueType, IndexType&gt;&amp; <a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#a700cffec996ac77c98b3be7f91f38219">assemble</a>()</div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>    {</div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>        expr_.assemble(runTime_.<a class="code hl_variable" href="structNeoFOAM_1_1RunTime.html#a43ea3a95d27b0e78910e30e6cd8796c7">t</a>, runTime_.<a class="code hl_variable" href="structNeoFOAM_1_1RunTime.html#a6a3e375c6054e387635ba04bdfe76c6d">dt</a>, sparsityPattern_, ls_);</div>
-<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>        <span class="keywordflow">return</span> ls_;</div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>    }</div>
-</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PDESolver.html#aabc63169ccc777c668a09248650af9e4">   69</a></span>    <span class="keyword">const</span> NeoN::Executor&amp; <a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#aabc63169ccc777c668a09248650af9e4">exec</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> ls_.exec(); }</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span> </div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>    <span class="keyword">template</span>&lt;<span class="keyword">typename</span> FunctorValueType&gt;</div>
+<div class="foldopen" id="foldopen00072" data-start="{" data-end="};">
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno"><a class="line" href="structNeoFOAM_1_1PDESolver_1_1SetReference.html">   72</a></span>    <span class="keyword">struct </span><a class="code hl_struct" href="structNeoFOAM_1_1PDESolver_1_1SetReference.html">SetReference</a> : <span class="keyword">public</span> NeoN::dsl::PostAssemblyBase&lt;ValueType, IndexType&gt;</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>    {</div>
 <div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span> </div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PDESolver.html#aabc63169ccc777c668a09248650af9e4">   75</a></span>    <span class="keyword">const</span> NeoN::Executor&amp; <a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#aabc63169ccc777c668a09248650af9e4">exec</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> ls_.exec(); }</div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span> </div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno"><a class="line" href="structNeoFOAM_1_1PDESolver_1_1SetReference.html#a312bf19b6c97dcb123a125e2be3c9bc4">   75</a></span>        NeoN::localIdx <a class="code hl_variable" href="structNeoFOAM_1_1PDESolver_1_1SetReference.html#a312bf19b6c97dcb123a125e2be3c9bc4">pRefCell_</a>;</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno"><a class="line" href="structNeoFOAM_1_1PDESolver_1_1SetReference.html#a3c95dcddaa8f9c91c6a660df2f75312b">   76</a></span>        NeoN::scalar <a class="code hl_variable" href="structNeoFOAM_1_1PDESolver_1_1SetReference.html#a3c95dcddaa8f9c91c6a660df2f75312b">pRefValue_</a>;</div>
 <div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span> </div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>    <span class="keyword">template</span>&lt;<span class="keyword">typename</span> FunctorValueType&gt;</div>
-<div class="foldopen" id="foldopen00079" data-start="{" data-end="};">
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno"><a class="line" href="structNeoFOAM_1_1PDESolver_1_1SetReference.html">   79</a></span>    <span class="keyword">struct </span><a class="code hl_struct" href="structNeoFOAM_1_1PDESolver_1_1SetReference.html">SetReference</a> : <span class="keyword">public</span> NeoN::dsl::PostAssemblyBase&lt;ValueType&gt;</div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>    {</div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span> </div>
-<div class="line"><a id="l00082" name="l00082"></a><span class="lineno"><a class="line" href="structNeoFOAM_1_1PDESolver_1_1SetReference.html#a312bf19b6c97dcb123a125e2be3c9bc4">   82</a></span>        NeoN::localIdx <a class="code hl_variable" href="structNeoFOAM_1_1PDESolver_1_1SetReference.html#a312bf19b6c97dcb123a125e2be3c9bc4">pRefCell_</a>;</div>
-<div class="line"><a id="l00083" name="l00083"></a><span class="lineno"><a class="line" href="structNeoFOAM_1_1PDESolver_1_1SetReference.html#a3c95dcddaa8f9c91c6a660df2f75312b">   83</a></span>        NeoN::scalar <a class="code hl_variable" href="structNeoFOAM_1_1PDESolver_1_1SetReference.html#a3c95dcddaa8f9c91c6a660df2f75312b">pRefValue_</a>;</div>
-<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span> </div>
-<div class="foldopen" id="foldopen00085" data-start="{" data-end="}">
-<div class="line"><a id="l00085" name="l00085"></a><span class="lineno"><a class="line" href="structNeoFOAM_1_1PDESolver_1_1SetReference.html#a8871e71d55b49e4309d2acc9207825dd">   85</a></span>        <a class="code hl_function" href="structNeoFOAM_1_1PDESolver_1_1SetReference.html#a8871e71d55b49e4309d2acc9207825dd">SetReference</a>(NeoN::localIdx pRefCell, NeoN::scalar pRefValue)</div>
-<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>            : <a class="code hl_variable" href="structNeoFOAM_1_1PDESolver_1_1SetReference.html#a312bf19b6c97dcb123a125e2be3c9bc4">pRefCell_</a>(pRefCell)</div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>            , <a class="code hl_variable" href="structNeoFOAM_1_1PDESolver_1_1SetReference.html#a3c95dcddaa8f9c91c6a660df2f75312b">pRefValue_</a>(pRefValue)</div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>        {}</div>
+<div class="foldopen" id="foldopen00078" data-start="{" data-end="}">
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno"><a class="line" href="structNeoFOAM_1_1PDESolver_1_1SetReference.html#a8871e71d55b49e4309d2acc9207825dd">   78</a></span>        <a class="code hl_function" href="structNeoFOAM_1_1PDESolver_1_1SetReference.html#a8871e71d55b49e4309d2acc9207825dd">SetReference</a>(NeoN::localIdx pRefCell, NeoN::scalar pRefValue)</div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>            : <a class="code hl_variable" href="structNeoFOAM_1_1PDESolver_1_1SetReference.html#a312bf19b6c97dcb123a125e2be3c9bc4">pRefCell_</a>(pRefCell)</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>            , <a class="code hl_variable" href="structNeoFOAM_1_1PDESolver_1_1SetReference.html#a3c95dcddaa8f9c91c6a660df2f75312b">pRefValue_</a>(pRefValue)</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>        {}</div>
 </div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span> </div>
-<div class="foldopen" id="foldopen00090" data-start="{" data-end="}">
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno"><a class="line" href="structNeoFOAM_1_1PDESolver_1_1SetReference.html#a47ab1991c1a3be26016c83df5c0d2283">   90</a></span>        <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code hl_function" href="structNeoFOAM_1_1PDESolver_1_1SetReference.html#a47ab1991c1a3be26016c83df5c0d2283">operator()</a>(</div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>            <span class="keyword">const</span> NeoN::la::SparsityPattern&amp; sp,</div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>            NeoN::la::LinearSystem&lt;FunctorValueType, NeoN::localIdx&gt;&amp; ls</div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>        )</div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>        {</div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>            <span class="keyword">const</span> <span class="keyword">auto</span> diagOffset = sp.diagOffset().view();</div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>            <span class="keyword">const</span> <span class="keyword">auto</span> rowOffs = ls.matrix().rowOffs().view();</div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>            <span class="keyword">auto</span> rhs = ls.rhs().view();</div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>            <span class="keyword">auto</span> values = ls.matrix().values().view();</div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>            <span class="comment">// make an explicit copy to avoid capture this warning in kokkos lambda</span></div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>            <span class="keyword">auto</span> pRefValue = <a class="code hl_variable" href="structNeoFOAM_1_1PDESolver_1_1SetReference.html#a3c95dcddaa8f9c91c6a660df2f75312b">pRefValue_</a>;</div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span> </div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>            NeoN::parallelFor(</div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>                ls.exec(),</div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>                {pRefCell_, pRefCell_ + 1},</div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>                KOKKOS_LAMBDA(<span class="keyword">const</span> std::size_t refCelli) {</div>
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>                    <span class="keyword">auto</span> diagIdx = rowOffs[refCelli] + diagOffset[refCelli];</div>
-<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>                    <span class="keyword">auto</span> diagValue = values[diagIdx];</div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>                    rhs[refCelli] += diagValue * pRefValue;</div>
-<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>                    values[diagIdx] += diagValue;</div>
-<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>                }</div>
-<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>            );</div>
-<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>        }</div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span> </div>
+<div class="foldopen" id="foldopen00083" data-start="{" data-end="}">
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno"><a class="line" href="structNeoFOAM_1_1PDESolver_1_1SetReference.html#a5ed1764236a6a29be4bc5235ae7058e1">   83</a></span>        <span class="keyword">virtual</span> <span class="keywordtype">void</span> <a class="code hl_function" href="structNeoFOAM_1_1PDESolver_1_1SetReference.html#a5ed1764236a6a29be4bc5235ae7058e1">operator()</a>(NeoN::la::LinearSystem&lt;</div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>                                FunctorValueType,</div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>                                NeoN::la::CSRMatrix&lt;FunctorValueType, IndexType&gt;&gt;&amp; ls)</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>        {</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>            <span class="keyword">const</span> <span class="keyword">auto</span> rowOffs = ls.matrix().sparsity()-&gt;rowOffs().view();</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>            <span class="keyword">const</span> <span class="keyword">auto</span> diagOffset = ls.faceToMatrixAddress()-&gt;diagOffset().view();</div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>            <span class="keyword">auto</span> rhs = ls.rhs().view();</div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>            <span class="keyword">auto</span> values = ls.matrix().values().view();</div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>            <span class="comment">// make an explicit copy to avoid capture this warning in kokkos lambda</span></div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>            <span class="keyword">auto</span> pRefValue = <a class="code hl_variable" href="structNeoFOAM_1_1PDESolver_1_1SetReference.html#a3c95dcddaa8f9c91c6a660df2f75312b">pRefValue_</a>;</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span> </div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>            NeoN::parallelFor(</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>                ls.exec(),</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>                {pRefCell_, pRefCell_ + 1},</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>                NEON_LAMBDA(<span class="keyword">const</span> std::size_t refCelli) {</div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>                    <span class="keyword">auto</span> diagIdx = rowOffs[refCelli] + diagOffset[refCelli];</div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>                    <span class="keyword">auto</span> diagValue = values[diagIdx];</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>                    rhs[refCelli] += diagValue * pRefValue;</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>                    values[diagIdx] += diagValue;</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>                }</div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>            );</div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>        }</div>
 </div>
-<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>    };</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>    };</div>
 </div>
-<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span> </div>
-<div class="foldopen" id="foldopen00115" data-start="{" data-end="}">
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PDESolver.html#aa632d298feb601ef802ba3b85b2dc8ed">  115</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#aa632d298feb601ef802ba3b85b2dc8ed">setReference</a>(NeoN::localIdx pRefCell, NeoN::scalar pRefValue)</div>
-<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>    {</div>
-<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>        needReference_ = <span class="keyword">true</span>;</div>
-<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>        pRefCell_ = pRefCell;</div>
-<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>        pRefValue_ = pRefValue;</div>
-<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>    }</div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span> </div>
+<div class="foldopen" id="foldopen00107" data-start="{" data-end="}">
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PDESolver.html#a86cbd7e62f99eb30d6e6466ebc6b7be2">  107</a></span>    NeoN::finiteVolume::cellCentred::DdtScheme <a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#a86cbd7e62f99eb30d6e6466ebc6b7be2">ddtScheme</a>()<span class="keyword"> const</span></div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span><span class="keyword">    </span>{</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>        <span class="keywordflow">for</span> (<span class="keyword">const</span> <span class="keyword">auto</span>&amp; op : expr_.temporalOperators())</div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>        {</div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>            <span class="keyword">const</span> <span class="keyword">auto</span> s = op.ddtScheme();</div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>            <span class="keywordflow">if</span> (s != NeoN::finiteVolume::cellCentred::DdtScheme::None)</div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>            {</div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>                <span class="keywordflow">return</span> s;</div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>            }</div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>        }</div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>        <span class="keywordflow">return</span> NeoN::finiteVolume::cellCentred::DdtScheme::None;</div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>    }</div>
 </div>
-<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span> </div>
-<div class="line"><a id="l00122" name="l00122"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PDESolver.html#a0464b266cbae77cbfa7f4ffec79e6acb">  122</a></span>    NeoN::la::SolverStats <a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#a0464b266cbae77cbfa7f4ffec79e6acb">solve</a>() { <span class="keywordflow">return</span> solveImpl(expr_, ls_); }</div>
-<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span> </div>
-<div class="foldopen" id="foldopen00124" data-start="{" data-end="}">
-<div class="line"><a id="l00124" name="l00124"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PDESolver.html#a7f4464b4305040de5ace88df987c05df">  124</a></span>    NeoN::la::SolverStats <a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#a7f4464b4305040de5ace88df987c05df">solve</a>(dsl::SpatialOperator&lt;NeoN::Vec3&gt;&amp;&amp; rhs)</div>
-<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>    {</div>
-<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>        <span class="keyword">auto</span> expr = dsl::Expression&lt;ValueType&gt;(expr_);</div>
-<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>        <span class="keyword">auto</span> ls = NeoN::la::LinearSystem&lt;ValueType, IndexType&gt;(ls_);</div>
-<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span>        expr.addOperator(-1.0 * rhs);</div>
-<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>        <a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#a700cffec996ac77c98b3be7f91f38219">assemble</a>();</div>
-<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>        <span class="keywordflow">return</span> solveImpl(expr, ls);</div>
-<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>    }</div>
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span> </div>
+<div class="foldopen" id="foldopen00120" data-start="{" data-end="}">
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PDESolver.html#aa632d298feb601ef802ba3b85b2dc8ed">  120</a></span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#aa632d298feb601ef802ba3b85b2dc8ed">setReference</a>(NeoN::localIdx pRefCell, NeoN::scalar pRefValue)</div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>    {</div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span>        needReference_ = <span class="keyword">true</span>;</div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>        pRefCell_ = pRefCell;</div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>        pRefValue_ = pRefValue;</div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span>    }</div>
 </div>
-<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span> </div>
-<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span><span class="keyword">private</span>:</div>
-<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span> </div>
-<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>    NeoN::la::SolverStats</div>
-<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span>    solveImpl(dsl::Expression&lt;ValueType&gt;&amp; expr, NeoN::la::LinearSystem&lt;ValueType, IndexType&gt;&amp; ls)</div>
-<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span>    {</div>
-<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span>        <span class="comment">// Only if ValueType is scalar</span></div>
-<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span>        <span class="keyword">auto</span> functs = std::vector&lt;NeoN::dsl::PostAssemblyBase&lt;ValueType&gt;&gt; {};</div>
-<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span> </div>
-<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::is_same_v&lt;ValueType, NeoN::scalar&gt;)</div>
-<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span>        {</div>
-<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>            functs =</div>
-<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>                needReference_</div>
-<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>                    ? std::vector&lt;NeoN::dsl::PostAssemblyBase&lt;ValueType&gt;&gt; {SetReference&lt;ValueType&gt;(</div>
-<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span>                        pRefCell_,</div>
-<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>                        pRefValue_</div>
-<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span>                    )}</div>
-<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>                    : std::vector&lt;NeoN::dsl::PostAssemblyBase&lt;ValueType&gt;&gt; {};</div>
-<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>        }</div>
-<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span> </div>
-<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>        <span class="keyword">auto</span> solverDict = runTime_.<a class="code hl_variable" href="structNeoFOAM_1_1RunTime.html#aa1b497275ede724281d9a6a8540e5080">fvSolutionDict</a>.subDict(<span class="stringliteral">&quot;solvers&quot;</span>);</div>
-<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>        <span class="keyword">auto</span> fieldSolverDict = solverDict.subDict(psi_.name);</div>
-<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span> </div>
-<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span>        <span class="keyword">auto</span> stats = NeoN::dsl::detail::iterativeSolveImpl(</div>
-<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>            expr,</div>
-<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>            sparsityPattern_,</div>
-<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span>            ls,</div>
-<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span>            psi_,</div>
-<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span>            runTime_.<a class="code hl_variable" href="structNeoFOAM_1_1RunTime.html#a43ea3a95d27b0e78910e30e6cd8796c7">t</a>,</div>
-<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span>            runTime_.<a class="code hl_variable" href="structNeoFOAM_1_1RunTime.html#a6a3e375c6054e387635ba04bdfe76c6d">dt</a>,</div>
-<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span>            runTime_.<a class="code hl_variable" href="structNeoFOAM_1_1RunTime.html#a3e0ee1aef295de02e8758811e0099923">fvSchemesDict</a>,</div>
-<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span>            fieldSolverDict,</div>
-<div class="line"><a id="l00164" name="l00164"></a><span class="lineno">  164</span>            functs</div>
-<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span>        );</div>
-<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span> </div>
-<div class="line"><a id="l00167" name="l00167"></a><span class="lineno">  167</span>        NeoN::Logging::info(</div>
-<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>            <span class="stringliteral">&quot;Solving for {} Initial residual: {} Final residual: {} No Iterations: {}&quot;</span>,</div>
-<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>                psi_.name, stats.initResNorm, stats.finalResNorm, stats.numIter);</div>
-<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span>        <span class="keywordflow">return</span> stats;</div>
-<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span>    }</div>
-<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span> </div>
-<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span> </div>
-<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>    VolumeField&amp; psi_;</div>
-<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>    dsl::Expression&lt;ValueType&gt; expr_;</div>
-<div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span>    <span class="keyword">const</span> RunTime&amp; runTime_;</div>
-<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>    <span class="keyword">const</span> NeoN::la::SparsityPattern&amp; sparsityPattern_;</div>
-<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>    NeoN::la::LinearSystem&lt;ValueType, IndexType&gt; ls_;</div>
-<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span> </div>
-<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span>    <span class="keywordtype">bool</span> needReference_;</div>
-<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>    NeoN::localIdx pRefCell_;</div>
-<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>    NeoN::scalar pRefValue_;</div>
-<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>};</div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span> </div>
+<div class="foldopen" id="foldopen00128" data-start="{" data-end="}">
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PDESolver.html#a8aef9ec9ddbd7e1dcb0f283cb6ad2dba">  128</a></span>    LinearSystem&amp; <a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#a8aef9ec9ddbd7e1dcb0f283cb6ad2dba">assemble</a>()</div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span>    {</div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>        expr_.assemble(runTime_.<a class="code hl_variable" href="structNeoFOAM_1_1RunTime.html#a43ea3a95d27b0e78910e30e6cd8796c7">t</a>, runTime_.<a class="code hl_variable" href="structNeoFOAM_1_1RunTime.html#a6a3e375c6054e387635ba04bdfe76c6d">dt</a>, ls_);</div>
+<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>        <span class="keywordflow">return</span> ls_;</div>
+<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>    }</div>
 </div>
-<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span> </div>
-<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> ValueType, <span class="keyword">typename</span> IndexType = NeoN::localIdx&gt;</div>
-<div class="foldopen" id="foldopen00186" data-start="{" data-end="}">
-<div class="line"><a id="l00186" name="l00186"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#aa275ecb871028c14e2d9dae4c78686e2">  186</a></span>NeoN::Vector&lt;ValueType&gt; <a class="code hl_function" href="namespaceNeoFOAM.html#aa275ecb871028c14e2d9dae4c78686e2">diag</a>(</div>
-<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>    <span class="keyword">const</span> la::LinearSystem&lt;ValueType, IndexType&gt;&amp; ls,</div>
-<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>    <span class="keyword">const</span> NeoN::la::SparsityPattern&amp; sparsityPattern</div>
-<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>)</div>
-<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>{</div>
-<div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span>    NeoN::Vector&lt;ValueType&gt; diagonal(ls.exec(), sparsityPattern.diagOffset().size(), 0.0);</div>
-<div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span>    <span class="keyword">auto</span> diagView = diagonal.view();</div>
-<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span> </div>
-<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span>    <span class="keyword">const</span> <span class="keyword">auto</span> diagOffset = sparsityPattern.diagOffset().view();</div>
-<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span>    <span class="keyword">const</span> <span class="keyword">auto</span> [matrix, b] = ls.view();</div>
-<div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>    NeoN::parallelFor(</div>
-<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span>        ls.exec(),</div>
-<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span>        {0, diagOffset.size()},</div>
-<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>        KOKKOS_LAMBDA(<span class="keyword">const</span> std::size_t celli) {</div>
-<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span>            <span class="keyword">auto</span> diagOffsetCelli = diagOffset[celli];</div>
-<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>            diagView[celli] = matrix.values[matrix.rowOffs[celli] + diagOffsetCelli];</div>
-<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>        }</div>
-<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>    );</div>
-<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span>    <span class="keywordflow">return</span> diagonal;</div>
-<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span>}</div>
+<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span> </div>
+<div class="foldopen" id="foldopen00141" data-start="{" data-end="}">
+<div class="line"><a id="l00141" name="l00141"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PDESolver.html#a94ed687e58cbf43e4cd8154b2344182b">  141</a></span>    NeoN::la::LinearSystem&lt;ValueType&gt; <a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#a94ed687e58cbf43e4cd8154b2344182b">assemble</a>(dsl::SpatialOperator&lt;NeoN::Vec3&gt;&amp;&amp; rhs)</div>
+<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span>    {</div>
+<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span>        <span class="keyword">auto</span> rhsExpr = dsl::Expression&lt;ValueType&gt;(-1.0 * rhs);</div>
+<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span>        rhsExpr.read(runTime_.<a class="code hl_variable" href="structNeoFOAM_1_1RunTime.html#a3e0ee1aef295de02e8758811e0099923">fvSchemesDict</a>);</div>
+<div class="line"><a id="l00145" name="l00145"></a><span class="lineno">  145</span>        <span class="keyword">auto</span> ls = NeoN::la::LinearSystem&lt;ValueType&gt;(<a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#a8aef9ec9ddbd7e1dcb0f283cb6ad2dba">assemble</a>());</div>
+<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span> </div>
+<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span>        <span class="keyword">auto</span> expTmp = rhsExpr.explicitOperation(psi_.mesh().nCells());</div>
+<div class="line"><a id="l00148" name="l00148"></a><span class="lineno">  148</span> </div>
+<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>        <span class="keyword">auto</span> [vol, expSource, rhsV] = NeoN::views(psi_.mesh().cellVolumes(), expTmp, ls.rhs());</div>
+<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span>        NeoN::parallelFor(</div>
+<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span>            psi_.exec(),</div>
+<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span>            {0, rhsV.size()},</div>
+<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>            NEON_LAMBDA(<span class="keyword">const</span> NeoN::localIdx i) { rhsV[i] -= expSource[i] * vol[i]; }</div>
+<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>        );</div>
+<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span> </div>
+<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span>        <span class="keywordflow">return</span> ls;</div>
+<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span>    }</div>
 </div>
-<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span> </div>
-<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span> </div>
-<div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> ValueType, <span class="keyword">typename</span> IndexType = NeoN::localIdx&gt;</div>
-<div class="foldopen" id="foldopen00209" data-start="{" data-end="}">
-<div class="line"><a id="l00209" name="l00209"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#a98b7e8d5816cba45d64261cbf66378a7">  209</a></span>NeoN::finiteVolume::cellCentred::VolumeField&lt;ValueType&gt; <a class="code hl_function" href="namespaceNeoFOAM.html#a98b7e8d5816cba45d64261cbf66378a7">applyOperator</a>(</div>
-<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span>    <span class="keyword">const</span> la::LinearSystem&lt;ValueType, IndexType&gt;&amp; ls,</div>
-<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span>    <span class="keyword">const</span> NeoN::finiteVolume::cellCentred::VolumeField&lt;ValueType&gt;&amp; psi</div>
-<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>)</div>
-<div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span>{</div>
-<div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span>    NeoN::finiteVolume::cellCentred::VolumeField&lt;ValueType&gt; res(</div>
-<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span>        psi.exec(),</div>
-<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span>        <span class="stringliteral">&quot;ls_&quot;</span> + psi.name,</div>
-<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span>        psi.mesh(),</div>
-<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span>        psi.internalVector(),</div>
-<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span>        psi.boundaryData(),</div>
-<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span>        psi.boundaryConditions()</div>
-<div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span>    );</div>
-<div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span>    NeoN::la::computeResidual(ls.matrix(), ls.rhs(), psi.internalVector(), res.internalVector());</div>
-<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span>    <span class="keywordflow">return</span> res;</div>
-<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span>}</div>
+<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span> </div>
+<div class="line"><a id="l00159" name="l00159"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PDESolver.html#a0464b266cbae77cbfa7f4ffec79e6acb">  159</a></span>    NeoN::la::SolverStats <a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#a0464b266cbae77cbfa7f4ffec79e6acb">solve</a>() { <span class="keywordflow">return</span> solveImpl(expr_, ls_); }</div>
+<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span> </div>
+<div class="foldopen" id="foldopen00167" data-start="{" data-end="}">
+<div class="line"><a id="l00167" name="l00167"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PDESolver.html#a7f4464b4305040de5ace88df987c05df">  167</a></span>    NeoN::la::SolverStats <a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#a7f4464b4305040de5ace88df987c05df">solve</a>(dsl::SpatialOperator&lt;NeoN::Vec3&gt;&amp;&amp; rhs)</div>
+<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>    {</div>
+<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span>        <span class="comment">// assemble wo rhs first</span></div>
+<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span>        <span class="keyword">auto</span> ls = <a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#a8aef9ec9ddbd7e1dcb0f283cb6ad2dba">assemble</a>(std::move(rhs));</div>
+<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span> </div>
+<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span>        <span class="keyword">auto</span> solverDict = runTime_.<a class="code hl_variable" href="structNeoFOAM_1_1RunTime.html#aa1b497275ede724281d9a6a8540e5080">fvSolutionDict</a>.subDict(<span class="stringliteral">&quot;solvers&quot;</span>);</div>
+<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span>        <span class="keyword">auto</span> fvSolution = solverDict.subDict(psi_.name);</div>
+<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>        <span class="keyword">auto</span> solver = NeoN::la::Solver(psi_.exec(), fvSolution);</div>
+<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span> </div>
+<div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span>        <span class="comment">// Do some sanity checks before trying to solve</span></div>
+<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>        <span class="comment">// NF_ASSERT(ls.exec() == solution.exec(), &quot;Executors are not the same&quot;);</span></div>
+<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>        <span class="keywordflow">return</span> solver.solve(ls, psi_.internalVector());</div>
+<div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>    }</div>
 </div>
-<div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span> </div>
-<div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span> </div>
-<div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> ValueType, <span class="keyword">typename</span> IndexType = NeoN::localIdx&gt;</div>
-<div class="foldopen" id="foldopen00228" data-start="{" data-end="}">
-<div class="line"><a id="l00228" name="l00228"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#a9de226ba9098594fc8b6b867a35adccc">  228</a></span>NeoN::finiteVolume::cellCentred::VolumeField&lt;ValueType&gt; <a class="code hl_function" href="namespaceNeoFOAM.html#a9de226ba9098594fc8b6b867a35adccc">operator&amp;</a>(</div>
-<div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span>    <span class="keyword">const</span> <a class="code hl_class" href="classNeoFOAM_1_1PDESolver.html">PDESolver&lt;ValueType, IndexType&gt;</a> expr,</div>
-<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span>    <span class="keyword">const</span> NeoN::finiteVolume::cellCentred::VolumeField&lt;ValueType&gt;&amp; psi</div>
-<div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span>)</div>
-<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span>{</div>
-<div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="namespaceNeoFOAM.html#a98b7e8d5816cba45d64261cbf66378a7">applyOperator</a>(expr.<a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#a0b3c75a1830571b477f95604a603b6a9">linearSystem</a>(), psi);</div>
-<div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span>}</div>
+<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span> </div>
+<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span> </div>
+<div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>    NeoN::la::SolverStats solveImpl(dsl::Expression&lt;ValueType&gt;&amp; expr, LinearSystem&amp; ls)</div>
+<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>    {</div>
+<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>        <span class="comment">// Only if ValueType is scalar</span></div>
+<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>        <span class="keyword">auto</span> functs = std::vector&lt;NeoN::dsl::PostAssemblyBase&lt;ValueType, IndexType&gt;&gt; {};</div>
+<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span> </div>
+<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::is_same_v&lt;ValueType, NeoN::scalar&gt;)</div>
+<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>        {</div>
+<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>            functs =</div>
+<div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span>                needReference_</div>
+<div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span>                    ? std::vector&lt;NeoN::dsl::PostAssemblyBase&lt;ValueType, IndexType&gt;&gt; {SetReference&lt;</div>
+<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>                        ValueType&gt;(pRefCell_, pRefValue_)}</div>
+<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span>                    : std::vector&lt;NeoN::dsl::PostAssemblyBase&lt;ValueType, IndexType&gt;&gt; {};</div>
+<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span>        }</div>
+<div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span> </div>
+<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span>        <span class="keyword">auto</span> solverDict = runTime_.<a class="code hl_variable" href="structNeoFOAM_1_1RunTime.html#aa1b497275ede724281d9a6a8540e5080">fvSolutionDict</a>.subDict(<span class="stringliteral">&quot;solvers&quot;</span>);</div>
+<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span>        <span class="keyword">auto</span> fieldSolverDict = solverDict.subDict(psi_.name);</div>
+<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span> </div>
+<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span>        <span class="keyword">auto</span> stats = NeoN::la::SolverStats();</div>
+<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>        <span class="comment">// TODO NOTE: This is a temporary solution to avoid negative values on the diagonal</span></div>
+<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>        <span class="comment">// when IC is selected as preconditioner by scaling the system matrix with -1.0.</span></div>
+<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>        <span class="comment">// NOTE: This will produce -p as a result.</span></div>
+<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span>        <span class="keywordflow">if</span> (psi_.name == <span class="stringliteral">&quot;p&quot;</span> &amp;&amp; fieldSolverDict.contains(<span class="stringliteral">&quot;preconditioner&quot;</span>)</div>
+<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span>            &amp;&amp; fieldSolverDict.subDict(<span class="stringliteral">&quot;preconditioner&quot;</span>).template get&lt;std::string&gt;(<span class="stringliteral">&quot;type&quot;</span>)</div>
+<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span>                   == <span class="stringliteral">&quot;preconditioner::Ic&quot;</span>)</div>
+<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span>        {</div>
+<div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span>            <span class="keyword">auto</span> exprIn = -1.0 * expr;</div>
+<div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span>            stats = NeoN::dsl::detail::iterativeSolveImpl(</div>
+<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span>                exprIn,</div>
+<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span>                ls,</div>
+<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>                psi_,</div>
+<div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span>                runTime_.<a class="code hl_variable" href="structNeoFOAM_1_1RunTime.html#a43ea3a95d27b0e78910e30e6cd8796c7">t</a>,</div>
+<div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span>                runTime_.<a class="code hl_variable" href="structNeoFOAM_1_1RunTime.html#a6a3e375c6054e387635ba04bdfe76c6d">dt</a>,</div>
+<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span>                runTime_.<a class="code hl_variable" href="structNeoFOAM_1_1RunTime.html#a3e0ee1aef295de02e8758811e0099923">fvSchemesDict</a>,</div>
+<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span>                fieldSolverDict,</div>
+<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span>                functs</div>
+<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span>            );</div>
+<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span>        }</div>
+<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span>        <span class="keywordflow">else</span></div>
+<div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span>        {</div>
+<div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span>            stats = NeoN::dsl::detail::iterativeSolveImpl(</div>
+<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span>                expr,</div>
+<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span>                ls,</div>
+<div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span>                psi_,</div>
+<div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span>                runTime_.<a class="code hl_variable" href="structNeoFOAM_1_1RunTime.html#a43ea3a95d27b0e78910e30e6cd8796c7">t</a>,</div>
+<div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span>                runTime_.<a class="code hl_variable" href="structNeoFOAM_1_1RunTime.html#a6a3e375c6054e387635ba04bdfe76c6d">dt</a>,</div>
+<div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span>                runTime_.<a class="code hl_variable" href="structNeoFOAM_1_1RunTime.html#a3e0ee1aef295de02e8758811e0099923">fvSchemesDict</a>,</div>
+<div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span>                fieldSolverDict,</div>
+<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span>                functs</div>
+<div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span>            );</div>
+<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span>        }</div>
+<div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span> </div>
+<div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span>        <span class="keywordflow">for</span> (<span class="keyword">auto</span> stat : stats.entries)</div>
+<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span>        {</div>
+<div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span>            NeoN::Logging::info(</div>
+<div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span>                <span class="stringliteral">&quot;Solving for {} Initial residual: {} Final residual: {} No Iterations: {}&quot;</span>,</div>
+<div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span>                psi_.name,</div>
+<div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span>                stat.initResNorm,</div>
+<div class="line"><a id="l00240" name="l00240"></a><span class="lineno">  240</span>                stat.finalResNorm,</div>
+<div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span>                stat.numIter</div>
+<div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span>            );</div>
+<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span>        }</div>
+<div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span> </div>
+<div class="line"><a id="l00245" name="l00245"></a><span class="lineno">  245</span>        <span class="keywordflow">return</span> stats;</div>
+<div class="line"><a id="l00246" name="l00246"></a><span class="lineno">  246</span>    }</div>
+<div class="line"><a id="l00247" name="l00247"></a><span class="lineno">  247</span> </div>
+<div class="line"><a id="l00248" name="l00248"></a><span class="lineno">  248</span>    VolumeField&amp; psi_;</div>
+<div class="line"><a id="l00249" name="l00249"></a><span class="lineno">  249</span>    dsl::Expression&lt;ValueType&gt; expr_;</div>
+<div class="line"><a id="l00250" name="l00250"></a><span class="lineno">  250</span>    <span class="keyword">const</span> RunTime&amp; runTime_;</div>
+<div class="line"><a id="l00251" name="l00251"></a><span class="lineno">  251</span>    LinearSystem ls_;</div>
+<div class="line"><a id="l00252" name="l00252"></a><span class="lineno">  252</span>    <span class="keywordtype">bool</span> needReference_;</div>
+<div class="line"><a id="l00253" name="l00253"></a><span class="lineno">  253</span>    NeoN::localIdx pRefCell_;</div>
+<div class="line"><a id="l00254" name="l00254"></a><span class="lineno">  254</span>    NeoN::scalar pRefValue_;</div>
+<div class="line"><a id="l00255" name="l00255"></a><span class="lineno">  255</span>};</div>
 </div>
-<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span> </div>
-<div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span>}</div>
+<div class="line"><a id="l00256" name="l00256"></a><span class="lineno">  256</span> </div>
+<div class="line"><a id="l00257" name="l00257"></a><span class="lineno">  257</span> </div>
+<div class="line"><a id="l00258" name="l00258"></a><span class="lineno">  258</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> ValueType, <span class="keyword">typename</span> IndexType = NeoN::localIdx&gt;</div>
+<div class="foldopen" id="foldopen00259" data-start="{" data-end="}">
+<div class="line"><a id="l00259" name="l00259"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#ac5f785f34f3c207b2c484ad3a70c0694">  259</a></span>NeoN::finiteVolume::cellCentred::VolumeField&lt;ValueType&gt; <a class="code hl_function" href="namespaceNeoFOAM.html#ac5f785f34f3c207b2c484ad3a70c0694">applyOperator</a>(</div>
+<div class="line"><a id="l00260" name="l00260"></a><span class="lineno">  260</span>    <span class="keyword">const</span> la::LinearSystem&lt;ValueType, NeoN::la::CSRMatrix&lt;ValueType, IndexType&gt;&gt;&amp; ls,</div>
+<div class="line"><a id="l00261" name="l00261"></a><span class="lineno">  261</span>    <span class="keyword">const</span> NeoN::finiteVolume::cellCentred::VolumeField&lt;ValueType&gt;&amp; psi</div>
+<div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span>)</div>
+<div class="line"><a id="l00263" name="l00263"></a><span class="lineno">  263</span>{</div>
+<div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span>    NeoN::finiteVolume::cellCentred::VolumeField&lt;ValueType&gt; res(</div>
+<div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span>        psi.exec(),</div>
+<div class="line"><a id="l00266" name="l00266"></a><span class="lineno">  266</span>        <span class="stringliteral">&quot;ls_&quot;</span> + psi.name,</div>
+<div class="line"><a id="l00267" name="l00267"></a><span class="lineno">  267</span>        psi.mesh(),</div>
+<div class="line"><a id="l00268" name="l00268"></a><span class="lineno">  268</span>        psi.internalVector(),</div>
+<div class="line"><a id="l00269" name="l00269"></a><span class="lineno">  269</span>        psi.boundaryData(),</div>
+<div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span>        psi.boundaryConditions()</div>
+<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span>    );</div>
+<div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span>    NeoN::la::computeResidual(ls.matrix(), ls.rhs(), psi.internalVector(), res.internalVector());</div>
+<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>    <span class="keywordflow">return</span> res;</div>
+<div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span>}</div>
+</div>
+<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span> </div>
+<div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span> </div>
+<div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> ValueType, <span class="keyword">typename</span> IndexType = NeoN::localIdx&gt;</div>
+<div class="foldopen" id="foldopen00278" data-start="{" data-end="}">
+<div class="line"><a id="l00278" name="l00278"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#a9de226ba9098594fc8b6b867a35adccc">  278</a></span>NeoN::finiteVolume::cellCentred::VolumeField&lt;ValueType&gt; <a class="code hl_function" href="namespaceNeoFOAM.html#a9de226ba9098594fc8b6b867a35adccc">operator&amp;</a>(</div>
+<div class="line"><a id="l00279" name="l00279"></a><span class="lineno">  279</span>    <span class="keyword">const</span> <a class="code hl_class" href="classNeoFOAM_1_1PDESolver.html">PDESolver&lt;ValueType, IndexType&gt;</a> expr,</div>
+<div class="line"><a id="l00280" name="l00280"></a><span class="lineno">  280</span>    <span class="keyword">const</span> NeoN::finiteVolume::cellCentred::VolumeField&lt;ValueType&gt;&amp; psi</div>
+<div class="line"><a id="l00281" name="l00281"></a><span class="lineno">  281</span>)</div>
+<div class="line"><a id="l00282" name="l00282"></a><span class="lineno">  282</span>{</div>
+<div class="line"><a id="l00283" name="l00283"></a><span class="lineno">  283</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="namespaceNeoFOAM.html#ac5f785f34f3c207b2c484ad3a70c0694">applyOperator</a>(expr.<a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#ae157132adbb86472bbe3709709f71098">linearSystem</a>(), psi);</div>
+<div class="line"><a id="l00284" name="l00284"></a><span class="lineno">  284</span>}</div>
+</div>
+<div class="line"><a id="l00285" name="l00285"></a><span class="lineno">  285</span> </div>
+<div class="line"><a id="l00286" name="l00286"></a><span class="lineno">  286</span>}</div>
 <div class="ttc" id="aclassNeoFOAM_1_1PDESolver_html"><div class="ttname"><a href="classNeoFOAM_1_1PDESolver.html">NeoFOAM::PDESolver</a></div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00024">pdeSolver.hpp:25</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1PDESolver_html_a0464b266cbae77cbfa7f4ffec79e6acb"><div class="ttname"><a href="classNeoFOAM_1_1PDESolver.html#a0464b266cbae77cbfa7f4ffec79e6acb">NeoFOAM::PDESolver::solve</a></div><div class="ttdeci">NeoN::la::SolverStats solve()</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00122">pdeSolver.hpp:122</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1PDESolver_html_a0b3c75a1830571b477f95604a603b6a9"><div class="ttname"><a href="classNeoFOAM_1_1PDESolver.html#a0b3c75a1830571b477f95604a603b6a9">NeoFOAM::PDESolver::linearSystem</a></div><div class="ttdeci">NeoN::la::LinearSystem&lt; ValueType, IndexType &gt; &amp; linearSystem()</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00062">pdeSolver.hpp:62</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1PDESolver_html_a0464b266cbae77cbfa7f4ffec79e6acb"><div class="ttname"><a href="classNeoFOAM_1_1PDESolver.html#a0464b266cbae77cbfa7f4ffec79e6acb">NeoFOAM::PDESolver::solve</a></div><div class="ttdeci">NeoN::la::SolverStats solve()</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00159">pdeSolver.hpp:159</a></div></div>
 <div class="ttc" id="aclassNeoFOAM_1_1PDESolver_html_a25556a10c54c223f4cafef62444b3538"><div class="ttname"><a href="classNeoFOAM_1_1PDESolver.html#a25556a10c54c223f4cafef62444b3538">NeoFOAM::PDESolver::~PDESolver</a></div><div class="ttdeci">~PDESolver()=default</div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1PDESolver_html_a2c0e3ff2aee001b75bd3dd060d8b14ab"><div class="ttname"><a href="classNeoFOAM_1_1PDESolver.html#a2c0e3ff2aee001b75bd3dd060d8b14ab">NeoFOAM::PDESolver::linearSystem</a></div><div class="ttdeci">const NeoN::la::LinearSystem&lt; ValueType, IndexType &gt; &amp; linearSystem() const</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00064">pdeSolver.hpp:64</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1PDESolver_html_a5a9cf36364742d71a1ccd8a4cdf4f9bb"><div class="ttname"><a href="classNeoFOAM_1_1PDESolver.html#a5a9cf36364742d71a1ccd8a4cdf4f9bb">NeoFOAM::PDESolver::getField</a></div><div class="ttdeci">VolumeField &amp; getField()</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00053">pdeSolver.hpp:53</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1PDESolver_html_a700cffec996ac77c98b3be7f91f38219"><div class="ttname"><a href="classNeoFOAM_1_1PDESolver.html#a700cffec996ac77c98b3be7f91f38219">NeoFOAM::PDESolver::assemble</a></div><div class="ttdeci">NeoN::la::LinearSystem&lt; ValueType, IndexType &gt; &amp; assemble()</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00069">pdeSolver.hpp:69</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1PDESolver_html_a7f4464b4305040de5ace88df987c05df"><div class="ttname"><a href="classNeoFOAM_1_1PDESolver.html#a7f4464b4305040de5ace88df987c05df">NeoFOAM::PDESolver::solve</a></div><div class="ttdeci">NeoN::la::SolverStats solve(dsl::SpatialOperator&lt; NeoN::Vec3 &gt; &amp;&amp;rhs)</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00124">pdeSolver.hpp:124</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1PDESolver_html_a8e5fb73b6f8356252df9d57badb62f66"><div class="ttname"><a href="classNeoFOAM_1_1PDESolver.html#a8e5fb73b6f8356252df9d57badb62f66">NeoFOAM::PDESolver::sparsityPattern</a></div><div class="ttdeci">const NeoN::la::SparsityPattern &amp; sparsityPattern() const</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00057">pdeSolver.hpp:57</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1PDESolver_html_aa632d298feb601ef802ba3b85b2dc8ed"><div class="ttname"><a href="classNeoFOAM_1_1PDESolver.html#aa632d298feb601ef802ba3b85b2dc8ed">NeoFOAM::PDESolver::setReference</a></div><div class="ttdeci">void setReference(NeoN::localIdx pRefCell, NeoN::scalar pRefValue)</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00115">pdeSolver.hpp:115</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1PDESolver_html_aab52918a151a51e3fc85dd84ff39b8e7"><div class="ttname"><a href="classNeoFOAM_1_1PDESolver.html#aab52918a151a51e3fc85dd84ff39b8e7">NeoFOAM::PDESolver::getField</a></div><div class="ttdeci">const VolumeField &amp; getField() const</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00055">pdeSolver.hpp:55</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1PDESolver_html_aabc63169ccc777c668a09248650af9e4"><div class="ttname"><a href="classNeoFOAM_1_1PDESolver.html#aabc63169ccc777c668a09248650af9e4">NeoFOAM::PDESolver::exec</a></div><div class="ttdeci">const NeoN::Executor &amp; exec() const</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00075">pdeSolver.hpp:75</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1PDESolver_html_aadc56e8e1c8d0adb8d792fbcfcb844e1"><div class="ttname"><a href="classNeoFOAM_1_1PDESolver.html#aadc56e8e1c8d0adb8d792fbcfcb844e1">NeoFOAM::PDESolver::PDESolver</a></div><div class="ttdeci">PDESolver(const PDESolver &amp;expr)</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00044">pdeSolver.hpp:44</a></div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1PDESolver_html_afe835ed8d94d48b6cc9f115abafce6da"><div class="ttname"><a href="classNeoFOAM_1_1PDESolver.html#afe835ed8d94d48b6cc9f115abafce6da">NeoFOAM::PDESolver::PDESolver</a></div><div class="ttdeci">PDESolver(dsl::Expression&lt; ValueType &gt; expr, VolumeField &amp;psi, const RunTime &amp;runTime)</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00031">pdeSolver.hpp:31</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1PDESolver_html_a5a9cf36364742d71a1ccd8a4cdf4f9bb"><div class="ttname"><a href="classNeoFOAM_1_1PDESolver.html#a5a9cf36364742d71a1ccd8a4cdf4f9bb">NeoFOAM::PDESolver::getField</a></div><div class="ttdeci">VolumeField &amp; getField()</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00059">pdeSolver.hpp:59</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1PDESolver_html_a663d27bbda1f87fcc55f09f73d9a88ce"><div class="ttname"><a href="classNeoFOAM_1_1PDESolver.html#a663d27bbda1f87fcc55f09f73d9a88ce">NeoFOAM::PDESolver::linearSystem</a></div><div class="ttdeci">const LinearSystem &amp; linearSystem() const</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00065">pdeSolver.hpp:65</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1PDESolver_html_a7f4464b4305040de5ace88df987c05df"><div class="ttname"><a href="classNeoFOAM_1_1PDESolver.html#a7f4464b4305040de5ace88df987c05df">NeoFOAM::PDESolver::solve</a></div><div class="ttdeci">NeoN::la::SolverStats solve(dsl::SpatialOperator&lt; NeoN::Vec3 &gt; &amp;&amp;rhs)</div><div class="ttdoc">solve expression with additional rhs</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00167">pdeSolver.hpp:167</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1PDESolver_html_a84bccc8b1ecb7bea2e60d4d9e4904879"><div class="ttname"><a href="classNeoFOAM_1_1PDESolver.html#a84bccc8b1ecb7bea2e60d4d9e4904879">NeoFOAM::PDESolver::expression</a></div><div class="ttdeci">NeoN::dsl::Expression&lt; ValueType &gt; &amp; expression()</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00067">pdeSolver.hpp:67</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1PDESolver_html_a86cbd7e62f99eb30d6e6466ebc6b7be2"><div class="ttname"><a href="classNeoFOAM_1_1PDESolver.html#a86cbd7e62f99eb30d6e6466ebc6b7be2">NeoFOAM::PDESolver::ddtScheme</a></div><div class="ttdeci">NeoN::finiteVolume::cellCentred::DdtScheme ddtScheme() const</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00107">pdeSolver.hpp:107</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1PDESolver_html_a8aef9ec9ddbd7e1dcb0f283cb6ad2dba"><div class="ttname"><a href="classNeoFOAM_1_1PDESolver.html#a8aef9ec9ddbd7e1dcb0f283cb6ad2dba">NeoFOAM::PDESolver::assemble</a></div><div class="ttdeci">LinearSystem &amp; assemble()</div><div class="ttdoc">assemble the linear system owned by the solver based on the current expression</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00128">pdeSolver.hpp:128</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1PDESolver_html_a94ed687e58cbf43e4cd8154b2344182b"><div class="ttname"><a href="classNeoFOAM_1_1PDESolver.html#a94ed687e58cbf43e4cd8154b2344182b">NeoFOAM::PDESolver::assemble</a></div><div class="ttdeci">NeoN::la::LinearSystem&lt; ValueType &gt; assemble(dsl::SpatialOperator&lt; NeoN::Vec3 &gt; &amp;&amp;rhs)</div><div class="ttdoc">assemble the linear system with an additional rhs term</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00141">pdeSolver.hpp:141</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1PDESolver_html_aa632d298feb601ef802ba3b85b2dc8ed"><div class="ttname"><a href="classNeoFOAM_1_1PDESolver.html#aa632d298feb601ef802ba3b85b2dc8ed">NeoFOAM::PDESolver::setReference</a></div><div class="ttdeci">void setReference(NeoN::localIdx pRefCell, NeoN::scalar pRefValue)</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00120">pdeSolver.hpp:120</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1PDESolver_html_aab52918a151a51e3fc85dd84ff39b8e7"><div class="ttname"><a href="classNeoFOAM_1_1PDESolver.html#aab52918a151a51e3fc85dd84ff39b8e7">NeoFOAM::PDESolver::getField</a></div><div class="ttdeci">const VolumeField &amp; getField() const</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00061">pdeSolver.hpp:61</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1PDESolver_html_aabc63169ccc777c668a09248650af9e4"><div class="ttname"><a href="classNeoFOAM_1_1PDESolver.html#aabc63169ccc777c668a09248650af9e4">NeoFOAM::PDESolver::exec</a></div><div class="ttdeci">const NeoN::Executor &amp; exec() const</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00069">pdeSolver.hpp:69</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1PDESolver_html_aadc56e8e1c8d0adb8d792fbcfcb844e1"><div class="ttname"><a href="classNeoFOAM_1_1PDESolver.html#aadc56e8e1c8d0adb8d792fbcfcb844e1">NeoFOAM::PDESolver::PDESolver</a></div><div class="ttdeci">PDESolver(const PDESolver &amp;expr)</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00051">pdeSolver.hpp:51</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1PDESolver_html_ace256b5f26d8077c69f0e2990fc88dac"><div class="ttname"><a href="classNeoFOAM_1_1PDESolver.html#ace256b5f26d8077c69f0e2990fc88dac">NeoFOAM::PDESolver::PDESolver</a></div><div class="ttdeci">PDESolver(dsl::Expression&lt; ValueType &gt; expr, VolumeField &amp;psi, RunTime &amp;runTime)</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00032">pdeSolver.hpp:32</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1PDESolver_html_ae157132adbb86472bbe3709709f71098"><div class="ttname"><a href="classNeoFOAM_1_1PDESolver.html#ae157132adbb86472bbe3709709f71098">NeoFOAM::PDESolver::linearSystem</a></div><div class="ttdeci">LinearSystem &amp; linearSystem()</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00063">pdeSolver.hpp:63</a></div></div>
 <div class="ttc" id="afvSolution_8hpp_html"><div class="ttname"><a href="fvSolution_8hpp.html">fvSolution.hpp</a></div></div>
 <div class="ttc" id="anamespaceNeoFOAM_html"><div class="ttname"><a href="namespaceNeoFOAM.html">NeoFOAM</a></div><div class="ttdef"><b>Definition</b> <a href="pressureVelocityCoupling_8hpp_source.html#l00014">pressureVelocityCoupling.hpp:15</a></div></div>
-<div class="ttc" id="anamespaceNeoFOAM_html_a98b7e8d5816cba45d64261cbf66378a7"><div class="ttname"><a href="namespaceNeoFOAM.html#a98b7e8d5816cba45d64261cbf66378a7">NeoFOAM::applyOperator</a></div><div class="ttdeci">NeoN::finiteVolume::cellCentred::VolumeField&lt; ValueType &gt; applyOperator(const la::LinearSystem&lt; ValueType, IndexType &gt; &amp;ls, const NeoN::finiteVolume::cellCentred::VolumeField&lt; ValueType &gt; &amp;psi)</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00209">pdeSolver.hpp:209</a></div></div>
-<div class="ttc" id="anamespaceNeoFOAM_html_a9de226ba9098594fc8b6b867a35adccc"><div class="ttname"><a href="namespaceNeoFOAM.html#a9de226ba9098594fc8b6b867a35adccc">NeoFOAM::operator&amp;</a></div><div class="ttdeci">NeoN::finiteVolume::cellCentred::VolumeField&lt; ValueType &gt; operator&amp;(const PDESolver&lt; ValueType, IndexType &gt; expr, const NeoN::finiteVolume::cellCentred::VolumeField&lt; ValueType &gt; &amp;psi)</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00228">pdeSolver.hpp:228</a></div></div>
-<div class="ttc" id="anamespaceNeoFOAM_html_aa275ecb871028c14e2d9dae4c78686e2"><div class="ttname"><a href="namespaceNeoFOAM.html#aa275ecb871028c14e2d9dae4c78686e2">NeoFOAM::diag</a></div><div class="ttdeci">NeoN::Vector&lt; ValueType &gt; diag(const la::LinearSystem&lt; ValueType, IndexType &gt; &amp;ls, const NeoN::la::SparsityPattern &amp;sparsityPattern)</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00186">pdeSolver.hpp:186</a></div></div>
+<div class="ttc" id="anamespaceNeoFOAM_html_a9de226ba9098594fc8b6b867a35adccc"><div class="ttname"><a href="namespaceNeoFOAM.html#a9de226ba9098594fc8b6b867a35adccc">NeoFOAM::operator&amp;</a></div><div class="ttdeci">NeoN::finiteVolume::cellCentred::VolumeField&lt; ValueType &gt; operator&amp;(const PDESolver&lt; ValueType, IndexType &gt; expr, const NeoN::finiteVolume::cellCentred::VolumeField&lt; ValueType &gt; &amp;psi)</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00278">pdeSolver.hpp:278</a></div></div>
+<div class="ttc" id="anamespaceNeoFOAM_html_ac5f785f34f3c207b2c484ad3a70c0694"><div class="ttname"><a href="namespaceNeoFOAM.html#ac5f785f34f3c207b2c484ad3a70c0694">NeoFOAM::applyOperator</a></div><div class="ttdeci">NeoN::finiteVolume::cellCentred::VolumeField&lt; ValueType &gt; applyOperator(const la::LinearSystem&lt; ValueType, NeoN::la::CSRMatrix&lt; ValueType, IndexType &gt; &gt; &amp;ls, const NeoN::finiteVolume::cellCentred::VolumeField&lt; ValueType &gt; &amp;psi)</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00259">pdeSolver.hpp:259</a></div></div>
+<div class="ttc" id="anamespaceNeoFOAM_html_ae3448b9356abfd01a14f812c7acffc7c"><div class="ttname"><a href="namespaceNeoFOAM.html#ae3448b9356abfd01a14f812c7acffc7c">NeoFOAM::readOrCreate</a></div><div class="ttdeci">RegisteredType &amp; readOrCreate(RunTime &amp;runTime, std::string name, InitializerType init)</div><div class="ttdoc">convenience function to avoid recreating objects by storing them in the runtime db</div><div class="ttdef"><b>Definition</b> <a href="runTime_8hpp_source.html#l00038">runTime.hpp:38</a></div></div>
 <div class="ttc" id="arunTime_8hpp_html"><div class="ttname"><a href="runTime_8hpp.html">runTime.hpp</a></div></div>
-<div class="ttc" id="astructNeoFOAM_1_1PDESolver_1_1SetReference_html"><div class="ttname"><a href="structNeoFOAM_1_1PDESolver_1_1SetReference.html">NeoFOAM::PDESolver::SetReference</a></div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00079">pdeSolver.hpp:80</a></div></div>
-<div class="ttc" id="astructNeoFOAM_1_1PDESolver_1_1SetReference_html_a312bf19b6c97dcb123a125e2be3c9bc4"><div class="ttname"><a href="structNeoFOAM_1_1PDESolver_1_1SetReference.html#a312bf19b6c97dcb123a125e2be3c9bc4">NeoFOAM::PDESolver::SetReference::pRefCell_</a></div><div class="ttdeci">NeoN::localIdx pRefCell_</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00082">pdeSolver.hpp:82</a></div></div>
-<div class="ttc" id="astructNeoFOAM_1_1PDESolver_1_1SetReference_html_a3c95dcddaa8f9c91c6a660df2f75312b"><div class="ttname"><a href="structNeoFOAM_1_1PDESolver_1_1SetReference.html#a3c95dcddaa8f9c91c6a660df2f75312b">NeoFOAM::PDESolver::SetReference::pRefValue_</a></div><div class="ttdeci">NeoN::scalar pRefValue_</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00083">pdeSolver.hpp:83</a></div></div>
-<div class="ttc" id="astructNeoFOAM_1_1PDESolver_1_1SetReference_html_a47ab1991c1a3be26016c83df5c0d2283"><div class="ttname"><a href="structNeoFOAM_1_1PDESolver_1_1SetReference.html#a47ab1991c1a3be26016c83df5c0d2283">NeoFOAM::PDESolver::SetReference::operator()</a></div><div class="ttdeci">virtual void operator()(const NeoN::la::SparsityPattern &amp;sp, NeoN::la::LinearSystem&lt; FunctorValueType, NeoN::localIdx &gt; &amp;ls)</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00090">pdeSolver.hpp:90</a></div></div>
-<div class="ttc" id="astructNeoFOAM_1_1PDESolver_1_1SetReference_html_a8871e71d55b49e4309d2acc9207825dd"><div class="ttname"><a href="structNeoFOAM_1_1PDESolver_1_1SetReference.html#a8871e71d55b49e4309d2acc9207825dd">NeoFOAM::PDESolver::SetReference::SetReference</a></div><div class="ttdeci">SetReference(NeoN::localIdx pRefCell, NeoN::scalar pRefValue)</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00085">pdeSolver.hpp:85</a></div></div>
-<div class="ttc" id="astructNeoFOAM_1_1RunTime_html"><div class="ttname"><a href="structNeoFOAM_1_1RunTime.html">NeoFOAM::RunTime</a></div><div class="ttdef"><b>Definition</b> <a href="runTime_8hpp_source.html#l00018">runTime.hpp:19</a></div></div>
-<div class="ttc" id="astructNeoFOAM_1_1RunTime_html_a3e0ee1aef295de02e8758811e0099923"><div class="ttname"><a href="structNeoFOAM_1_1RunTime.html#a3e0ee1aef295de02e8758811e0099923">NeoFOAM::RunTime::fvSchemesDict</a></div><div class="ttdeci">NeoN::Dictionary fvSchemesDict</div><div class="ttdef"><b>Definition</b> <a href="runTime_8hpp_source.html#l00032">runTime.hpp:32</a></div></div>
-<div class="ttc" id="astructNeoFOAM_1_1RunTime_html_a43ea3a95d27b0e78910e30e6cd8796c7"><div class="ttname"><a href="structNeoFOAM_1_1RunTime.html#a43ea3a95d27b0e78910e30e6cd8796c7">NeoFOAM::RunTime::t</a></div><div class="ttdeci">Foam::scalar t</div><div class="ttdef"><b>Definition</b> <a href="runTime_8hpp_source.html#l00025">runTime.hpp:25</a></div></div>
-<div class="ttc" id="astructNeoFOAM_1_1RunTime_html_a6a3e375c6054e387635ba04bdfe76c6d"><div class="ttname"><a href="structNeoFOAM_1_1RunTime.html#a6a3e375c6054e387635ba04bdfe76c6d">NeoFOAM::RunTime::dt</a></div><div class="ttdeci">Foam::scalar dt</div><div class="ttdef"><b>Definition</b> <a href="runTime_8hpp_source.html#l00026">runTime.hpp:26</a></div></div>
-<div class="ttc" id="astructNeoFOAM_1_1RunTime_html_aa1b497275ede724281d9a6a8540e5080"><div class="ttname"><a href="structNeoFOAM_1_1RunTime.html#aa1b497275ede724281d9a6a8540e5080">NeoFOAM::RunTime::fvSolutionDict</a></div><div class="ttdeci">NeoN::Dictionary fvSolutionDict</div><div class="ttdef"><b>Definition</b> <a href="runTime_8hpp_source.html#l00031">runTime.hpp:31</a></div></div>
+<div class="ttc" id="astructNeoFOAM_1_1PDESolver_1_1SetReference_html"><div class="ttname"><a href="structNeoFOAM_1_1PDESolver_1_1SetReference.html">NeoFOAM::PDESolver::SetReference</a></div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00072">pdeSolver.hpp:73</a></div></div>
+<div class="ttc" id="astructNeoFOAM_1_1PDESolver_1_1SetReference_html_a312bf19b6c97dcb123a125e2be3c9bc4"><div class="ttname"><a href="structNeoFOAM_1_1PDESolver_1_1SetReference.html#a312bf19b6c97dcb123a125e2be3c9bc4">NeoFOAM::PDESolver::SetReference::pRefCell_</a></div><div class="ttdeci">NeoN::localIdx pRefCell_</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00075">pdeSolver.hpp:75</a></div></div>
+<div class="ttc" id="astructNeoFOAM_1_1PDESolver_1_1SetReference_html_a3c95dcddaa8f9c91c6a660df2f75312b"><div class="ttname"><a href="structNeoFOAM_1_1PDESolver_1_1SetReference.html#a3c95dcddaa8f9c91c6a660df2f75312b">NeoFOAM::PDESolver::SetReference::pRefValue_</a></div><div class="ttdeci">NeoN::scalar pRefValue_</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00076">pdeSolver.hpp:76</a></div></div>
+<div class="ttc" id="astructNeoFOAM_1_1PDESolver_1_1SetReference_html_a5ed1764236a6a29be4bc5235ae7058e1"><div class="ttname"><a href="structNeoFOAM_1_1PDESolver_1_1SetReference.html#a5ed1764236a6a29be4bc5235ae7058e1">NeoFOAM::PDESolver::SetReference::operator()</a></div><div class="ttdeci">virtual void operator()(NeoN::la::LinearSystem&lt; FunctorValueType, NeoN::la::CSRMatrix&lt; FunctorValueType, IndexType &gt; &gt; &amp;ls)</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00083">pdeSolver.hpp:83</a></div></div>
+<div class="ttc" id="astructNeoFOAM_1_1PDESolver_1_1SetReference_html_a8871e71d55b49e4309d2acc9207825dd"><div class="ttname"><a href="structNeoFOAM_1_1PDESolver_1_1SetReference.html#a8871e71d55b49e4309d2acc9207825dd">NeoFOAM::PDESolver::SetReference::SetReference</a></div><div class="ttdeci">SetReference(NeoN::localIdx pRefCell, NeoN::scalar pRefValue)</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00078">pdeSolver.hpp:78</a></div></div>
+<div class="ttc" id="astructNeoFOAM_1_1RunTime_html"><div class="ttname"><a href="structNeoFOAM_1_1RunTime.html">NeoFOAM::RunTime</a></div><div class="ttdef"><b>Definition</b> <a href="runTime_8hpp_source.html#l00017">runTime.hpp:18</a></div></div>
+<div class="ttc" id="astructNeoFOAM_1_1RunTime_html_a3e0ee1aef295de02e8758811e0099923"><div class="ttname"><a href="structNeoFOAM_1_1RunTime.html#a3e0ee1aef295de02e8758811e0099923">NeoFOAM::RunTime::fvSchemesDict</a></div><div class="ttdeci">NeoN::Dictionary fvSchemesDict</div><div class="ttdef"><b>Definition</b> <a href="runTime_8hpp_source.html#l00031">runTime.hpp:31</a></div></div>
+<div class="ttc" id="astructNeoFOAM_1_1RunTime_html_a43ea3a95d27b0e78910e30e6cd8796c7"><div class="ttname"><a href="structNeoFOAM_1_1RunTime.html#a43ea3a95d27b0e78910e30e6cd8796c7">NeoFOAM::RunTime::t</a></div><div class="ttdeci">Foam::scalar t</div><div class="ttdef"><b>Definition</b> <a href="runTime_8hpp_source.html#l00024">runTime.hpp:24</a></div></div>
+<div class="ttc" id="astructNeoFOAM_1_1RunTime_html_a6a3e375c6054e387635ba04bdfe76c6d"><div class="ttname"><a href="structNeoFOAM_1_1RunTime.html#a6a3e375c6054e387635ba04bdfe76c6d">NeoFOAM::RunTime::dt</a></div><div class="ttdeci">Foam::scalar dt</div><div class="ttdef"><b>Definition</b> <a href="runTime_8hpp_source.html#l00025">runTime.hpp:25</a></div></div>
+<div class="ttc" id="astructNeoFOAM_1_1RunTime_html_aa1b497275ede724281d9a6a8540e5080"><div class="ttname"><a href="structNeoFOAM_1_1RunTime.html#aa1b497275ede724281d9a6a8540e5080">NeoFOAM::RunTime::fvSolutionDict</a></div><div class="ttdeci">NeoN::Dictionary fvSolutionDict</div><div class="ttdef"><b>Definition</b> <a href="runTime_8hpp_source.html#l00030">runTime.hpp:30</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
