@@ -26,7 +26,7 @@ TEST_CASE("MatrixRelaxation_div_laplacian")
     Foam::Time& runTime = *timePtr;
     const NeoN::scalar t  = runTime.value();
     const NeoN::scalar dt = runTime.deltaTValue();
-    
+
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 
     INFO("Executor = " << execName);
@@ -101,13 +101,10 @@ TEST_CASE("MatrixRelaxation_div_laplacian")
 //    Foam::scalarField ofRhs  = ofEqn.source();
 
     // ------------------------------------------------------------------
-    // NeoN assembly
+    // NeoN assembly - use new API
     // ------------------------------------------------------------------
-    auto pattern = NeoN::la::createSparsity(nfMesh);
-
-    auto ls = NeoN::la::createEmptyLinearSystem<NeoN::scalar, localIdx>(
-        nfMesh, pattern
-    );
+    auto ls = NeoN::la::createEmptyLinearSystem<NeoN::scalar>(nfMesh);
+    const auto matIt = ls.faceToMatrixAddress();
 
     // implicit div
     dsl::Expression<NeoN::scalar> expr(exec);
@@ -124,23 +121,23 @@ TEST_CASE("MatrixRelaxation_div_laplacian")
     lapOp.read(lapSchemeTokens);
     //expr.addOperator(-1.0 * std::move(lapOp));
 
-    expr.assemble(t, dt, pattern, ls);
+    expr.assemble(t, dt, ls);
 
     auto& matrix = ls.matrix();
     auto& rhs    = ls.rhs();
 
-    // Snapshot diagonal before relaxation
-    auto diagIdx = pattern.diagOffset().copyToHost();
-    auto rowOffs = pattern.rowOffs().copyToHost();
-    auto ownOffs  = pattern.ownerOffset().copyToHost();
-    auto neiOffs  = pattern.neighbourOffset().copyToHost();
+    // Snapshot diagonal before relaxation using new API
+    auto diagIdxArr = matIt->diagOffset().copyToHost();
+    auto rowOffsArr = matrix.rowOffs().copyToHost();
+    auto ownOffsArr = matIt->ownerOffset().copyToHost();
+    auto neiOffsArr = matIt->neighbourOffset().copyToHost();
     auto matVals = matrix.values().copyToHost();
 
     auto matValsV  = matVals.view();
-    auto rowOffsV  = rowOffs.view();
-    auto diagIdxV  = diagIdx.view();
-    auto ownOffsV  = ownOffs.view();
-    auto neiOffsV  = neiOffs.view();
+    auto rowOffsV  = rowOffsArr.view();
+    auto diagIdxV  = diagIdxArr.view();
+    auto ownOffsV  = ownOffsArr.view();
+    auto neiOffsV  = neiOffsArr.view();
 
     for (label facei = 0; facei < mesh.nInternalFaces(); ++facei)
 {
@@ -211,10 +208,9 @@ TEST_CASE("MatrixRelaxation_div_laplacian")
     Foam::scalarField ofDiag = ofEqn.diag();
     Foam::scalarField ofRhs  = ofEqn.source();
     // ------------------------------------------------------------------
-    // Apply NeoN relaxation
+    // Apply NeoN relaxation - use new API (no SparsityPattern param)
     // ------------------------------------------------------------------
     NeoN::dsl::detail::applyMatrixRelaxation<fvcc::VolumeField<NeoN::scalar>>(
-        pattern,
         ls,
         nfT,
         scalar(0.7)
