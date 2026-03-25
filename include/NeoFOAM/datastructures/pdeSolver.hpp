@@ -161,9 +161,9 @@ public:
     NeoN::la::SolverStats solve(dsl::SpatialOperator<NeoN::Vec3>&& rhs)
     {
         // assemble wo rhs first
-        Kokkos::Profiling::pushRegion("Assemble linear system for solve without rhs");
+        Kokkos::Profiling::pushRegion("Assemble linear systems");
         auto ls = assemble(std::move(rhs));
-        Kokkos::Profiling::popRegion(); // Assemble linear system for solve without rhs
+        Kokkos::Profiling::popRegion(); // Assemble linear systems
 
         auto solverDict = runTime_.fvSolutionDict.subDict("solvers");
         auto fvSolution = solverDict.subDict(psi_.name);
