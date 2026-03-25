@@ -179,8 +179,11 @@ auto constructFrom(
     using ContainerType = typename TypeMap<FoamFieldType>::container_type;
     using MappedType = typename TypeMap<FoamFieldType>::mapped_type;
 
+    std::cout << __FILE__ << ":" << __LINE__ << "\n";
+
     if constexpr (NeoFOAM::detail::isVolumeField<ContainerType>)
     {
+        std::cout << __FILE__ << ":" << __LINE__ << "\n";
         ContainerType out(exec, in.name(), nfMesh, readVolBoundaryConditions(nfMesh, in));
         out.internalVector() = fromFoamField(exec, in.primitiveField());
         out.correctBoundaryConditions();
@@ -188,6 +191,7 @@ auto constructFrom(
     }
     else if constexpr (NeoFOAM::detail::isSurfaceField<ContainerType>)
     {
+        std::cout << __FILE__ << ":" << __LINE__ << "\n";
         using FoamComponentType = typename FoamFieldType::cmptType;
 
         ContainerType out(exec, in.name(), nfMesh, readSurfaceBoundaryConditions(nfMesh, in));
@@ -268,7 +272,11 @@ public:
     fvcc::VectorDocument operator()(NeoN::Database& db)
     {
         using type_container_t = typename TypeMap<FieldType>::container_type;
+
+        std::cout << __FILE__ << ":" << __LINE__ << "\n";
         type_container_t convertedField = constructFrom(exec, nfMesh, foamField);
+        std::cout << __FILE__ << ":" << __LINE__ << "\n";
+
         if (name != "")
         {
             convertedField.name = name;

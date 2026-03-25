@@ -23,6 +23,7 @@ TEST_CASE("(backward) ddt implicit matches OpenFOAM", "[ddt][backward]")
 {
     Foam::Time& runTime = *timePtr;
     Foam::argList& args = *argsPtr;
+    NeoN::mpi::Environment mpiEnviron;
 
     NeoN::Database db;
     fvcc::VectorCollection& fieldCol = fvcc::VectorCollection::instance(db, "VectorCollection");
@@ -68,7 +69,7 @@ TEST_CASE("(backward) ddt implicit matches OpenFOAM", "[ddt][backward]")
         Foam::fvScalarMatrix matrix1(Foam::fvm::ddt(ofT));
         Foam::volScalarField ddt1("ddt1", matrix1 & ofT);
 
-        auto ls1 = NeoN::la::createEmptyLinearSystem<NeoN::scalar>(nfMesh);
+        auto ls1 = NeoN::la::createEmptyLinearSystem<NeoN::scalar>(nfMesh, mpiEnviron);
 
         ddtOp.implicitOperation(ls1, runTime.value(), runTime.deltaTValue());
 
@@ -118,7 +119,7 @@ TEST_CASE("(backward) ddt implicit matches OpenFOAM", "[ddt][backward]")
         Foam::fvScalarMatrix matrix2(Foam::fvm::ddt(ofT));
         Foam::volScalarField ddt2("ddt2", matrix2 & ofT);
 
-        auto ls2 = NeoN::la::createEmptyLinearSystem<NeoN::scalar>(nfMesh);
+        auto ls2 = NeoN::la::createEmptyLinearSystem<NeoN::scalar>(nfMesh, mpiEnviron);
 
         ddtOp.implicitOperation(ls2, runTime.value(), runTime.deltaTValue());
 

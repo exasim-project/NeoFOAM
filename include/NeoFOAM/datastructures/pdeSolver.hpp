@@ -36,7 +36,13 @@ public:
         , ls_(readOrCreate<LinearSystem>(
               runTime,
               "linearSystem" + psi.name,
-              [&psi]() { return NeoN::la::createEmptyLinearSystem<ValueType>(psi.mesh()); }
+              // FIXME find a proper place
+              [&psi, &runTime]() {
+                  return NeoN::la::createEmptyLinearSystem<ValueType>(
+                      psi.mesh(),
+                      runTime.mpiEnvironment
+                  );
+              }
           ))
     {
         expr_.read(runTime_.fvSchemesDict);

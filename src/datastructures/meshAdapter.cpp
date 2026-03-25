@@ -106,6 +106,10 @@ readOpenFOAMMesh(const NeoN::Executor exec, const Foam::fvMesh& mesh, bool fullM
     );
     std::vector<NeoN::localIdx> offset = computeOffset(mesh);
 
+    // FIXME
+    auto isProc = fromFoamField(exec, faceCells);
+    std::vector<NeoN::localIdx> neighbourRank {};
+
 
     NeoN::BoundaryMesh bMesh(
         exec,
@@ -118,7 +122,9 @@ readOpenFOAMMesh(const NeoN::Executor exec, const Foam::fvMesh& mesh, bool fullM
         fromFoamField(exec, delta),
         fromFoamField(exec, weights),
         fromFoamField(exec, deltaCoeffs),
-        offset
+        isProc,
+        offset,
+        neighbourRank
     );
 
     NeoN::UnstructuredMesh uMesh(

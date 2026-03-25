@@ -20,6 +20,7 @@ extern Foam::fvMesh* meshPtr;  // A single mesh object
 
 TEST_CASE("matrix multiplication")
 {
+    NeoN::mpi::Environment mpiEnviron;
     float epsilon = 1e-32;
     Foam::Time& runTime = *timePtr;
     Foam::argList& args = *argsPtr;
@@ -61,7 +62,7 @@ TEST_CASE("matrix multiplication")
         rt.fvSchemesDict.insert("ddtSchemes", ddtSchemes);
         ddtOp.read(rt.fvSchemesDict);
 
-        auto ls = NeoN::la::createEmptyLinearSystem<NeoN::scalar>(rt.nfMesh);
+        auto ls = NeoN::la::createEmptyLinearSystem<NeoN::scalar>(rt.nfMesh, mpiEnviron);
         ddtOp.implicitOperation(ls, runTime.value(), runTime.deltaTValue());
 
         // check rhs
@@ -101,7 +102,7 @@ TEST_CASE("matrix multiplication")
         }
 
         // the sourceterm operator implicit
-        auto ls = NeoN::la::createEmptyLinearSystem<NeoN::scalar>(rt.nfMesh);
+        auto ls = NeoN::la::createEmptyLinearSystem<NeoN::scalar>(rt.nfMesh, mpiEnviron);
         auto cellVolumes = rt.nfMesh.cellVolumes().copyToHost();
         sourceTerm.implicitOperation(ls);
 
