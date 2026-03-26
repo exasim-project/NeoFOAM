@@ -56,7 +56,9 @@ public:
 
     LinearSystem& assemble()
     {
+        ls_.reset();
         expr_.assemble(runTime_.t, runTime_.dt, ls_);
+        NeoN::dsl::detail::addBoundaryContributions(ls_);
         return ls_;
     }
 
