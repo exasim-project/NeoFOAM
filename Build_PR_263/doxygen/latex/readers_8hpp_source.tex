@@ -118,7 +118,7 @@
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00114}00114\ \ \ \ \ \{}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00115}00115\ \ \ \ \ \ \ \ \ Foam::dictionary\ patchDict\ =\ bDict.subDict(bName);}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00116}00116\ \ \ \ \ \ \ \ \ NeoN::Dictionary\ neoPatchDict\ =\ \mbox{\hyperlink{namespaceNeoFOAM_af69b228bd9e492814da093da0a51d1ac}{convert}}(patchDict);}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00117}00117\ \ \ \ \ \ \ \ \ \textcolor{comment}{//patchInserter[patchDict.get<Foam::word>("{}type"{})](neoPatchDict);}}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00117}00117\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ patchInserter[patchDict.get<Foam::word>("{}type"{})](neoPatchDict);}}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00118}00118\ \ \ \ \ \ \ \ \ patchInserter[\textcolor{stringliteral}{"{}empty"{}}](neoPatchDict);}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00119}00119\ \ \ \ \ \ \ \ \ bcs.emplace\_back(nfMesh,\ neoPatchDict,\ patchi);}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00120}00120\ \ \ \ \ \ \ \ \ patchi++;}
@@ -193,166 +193,160 @@
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00189}00189\ \ \ \ \ \textcolor{keyword}{using\ }ContainerType\ =\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structNeoFOAM_1_1TypeMap}{TypeMap<FoamFieldType>::container\_type}};}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00190}00190\ \ \ \ \ \textcolor{keyword}{using\ }MappedType\ =\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structNeoFOAM_1_1TypeMap}{TypeMap<FoamFieldType>::mapped\_type}};}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00191}00191\ }
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00192}00192\ \ \ \ \ std::cout\ <<\ \_\_FILE\_\_\ <<\ \textcolor{stringliteral}{"{}:"{}}\ <<\ \_\_LINE\_\_\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00193}00193\ }
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00194}00194\ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (NeoFOAM::detail::isVolumeField<ContainerType>)}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00195}00195\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00196}00196\ \ \ \ \ \ \ \ \ std::cout\ <<\ \_\_FILE\_\_\ <<\ \textcolor{stringliteral}{"{}:"{}}\ <<\ \_\_LINE\_\_\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00197}00197\ \ \ \ \ \ \ \ \ ContainerType\ out(exec,\ in.name(),\ nfMesh,\ \mbox{\hyperlink{namespaceNeoFOAM_a6cb4d89d1e44667e5a66f5119bad9206}{readVolBoundaryConditions}}(nfMesh,\ in));}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00198}00198\ \ \ \ \ \ \ \ \ out.internalVector()\ =\ \mbox{\hyperlink{namespaceNeoFOAM_a1dfe753898e56c3e2e7b5c6f00bd2a4f}{fromFoamField}}(exec,\ in.primitiveField());}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00199}00199\ \ \ \ \ \ \ \ \ out.correctBoundaryConditions();}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00200}00200\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ out;}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00201}00201\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00202}00202\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (NeoFOAM::detail::isSurfaceField<ContainerType>)}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00203}00203\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00204}00204\ \ \ \ \ \ \ \ \ std::cout\ <<\ \_\_FILE\_\_\ <<\ \textcolor{stringliteral}{"{}:"{}}\ <<\ \_\_LINE\_\_\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00205}00205\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }FoamComponentType\ =\ \textcolor{keyword}{typename}\ FoamFieldType::cmptType;}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00206}00206\ }
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00207}00207\ \ \ \ \ \ \ \ \ ContainerType\ out(exec,\ in.name(),\ nfMesh,\ \mbox{\hyperlink{namespaceNeoFOAM_adb365cf8e725db6dbfc0a758c392e2b1}{readSurfaceBoundaryConditions}}(nfMesh,\ in));}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00192}00192\ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (NeoFOAM::detail::isVolumeField<ContainerType>)}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00193}00193\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00194}00194\ \ \ \ \ \ \ \ \ ContainerType\ out(exec,\ in.name(),\ nfMesh,\ \mbox{\hyperlink{namespaceNeoFOAM_a6cb4d89d1e44667e5a66f5119bad9206}{readVolBoundaryConditions}}(nfMesh,\ in));}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00195}00195\ \ \ \ \ \ \ \ \ out.internalVector()\ =\ \mbox{\hyperlink{namespaceNeoFOAM_a1dfe753898e56c3e2e7b5c6f00bd2a4f}{fromFoamField}}(exec,\ in.primitiveField());}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00196}00196\ \ \ \ \ \ \ \ \ out.correctBoundaryConditions();}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00197}00197\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ out;}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00198}00198\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00199}00199\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (NeoFOAM::detail::isSurfaceField<ContainerType>)}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00200}00200\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00201}00201\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }FoamComponentType\ =\ \textcolor{keyword}{typename}\ FoamFieldType::cmptType;}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00202}00202\ }
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00203}00203\ \ \ \ \ \ \ \ \ ContainerType\ out(exec,\ in.name(),\ nfMesh,\ \mbox{\hyperlink{namespaceNeoFOAM_adb365cf8e725db6dbfc0a758c392e2b1}{readSurfaceBoundaryConditions}}(nfMesh,\ in));}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00204}00204\ }
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00205}00205\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::size\_t\ nInt\ =\ nfMesh.nInternalFaces();}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00206}00206\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::size\_t\ nBnd\ =\ nfMesh.boundaryMesh().offset().back();}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00207}00207\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::size\_t\ nFaces\ =\ nInt\ +\ nBnd;}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00208}00208\ }
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00209}00209\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::size\_t\ nInt\ =\ nfMesh.nInternalFaces();}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00210}00210\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::size\_t\ nBnd\ =\ nfMesh.boundaryMesh().offset().back();}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00211}00211\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::size\_t\ nFaces\ =\ nInt\ +\ nBnd;}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00212}00212\ }
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00213}00213\ \ \ \ \ \ \ \ \ NF\_DINFO(}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00214}00214\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Internal:\ "{}}\ +\ std::to\_string(nInt)\ +\ \textcolor{stringliteral}{"{},\ Boundary:\ "{}}\ +\ std::to\_string(nBnd)}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00215}00215\ \ \ \ \ \ \ \ \ \ \ \ \ +\ \textcolor{stringliteral}{"{},\ nFaces:\ "{}}\ +\ std::to\_string(nFaces)}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00216}00216\ \ \ \ \ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00217}00217\ }
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00218}00218\ \ \ \ \ \ \ \ \ Foam::Field<FoamComponentType>\ flat(nFaces);}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00219}00219\ \ \ \ \ \ \ \ \ Foam::Field<FoamComponentType>\ bval(nBnd);}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00220}00220\ }
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00221}00221\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Internal\ faces\ first:\ [0,\ nInt)}}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00222}00222\ \ \ \ \ \ \ \ \ forAll(in,\ facei)}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00223}00223\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00224}00224\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\textcolor{keyword}{static\_cast<}std::size\_t\textcolor{keyword}{>}(facei)\ <\ nInt)}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00225}00225\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00226}00226\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ flat[facei]\ =\ \mbox{\hyperlink{namespaceNeoFOAM_af69b228bd9e492814da093da0a51d1ac}{convert}}(in[facei]);}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00227}00227\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00228}00228\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00229}00229\ }
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00230}00230\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Boundary\ faces\ appended\ in\ patch\ order:\ [nInt,\ nFaces)}}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00231}00231\ \ \ \ \ \ \ \ \ Foam::label\ idx\ =\ \textcolor{keyword}{static\_cast<}Foam::label\textcolor{keyword}{>}(nInt);}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00232}00232\ \ \ \ \ \ \ \ \ Foam::label\ bi\ =\ 0;}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00233}00233\ \ \ \ \ \ \ \ \ forAll(in.boundaryField(),\ patchi)}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00234}00234\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00235}00235\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ pin\ =\ in.boundaryField()[patchi];}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00236}00236\ \ \ \ \ \ \ \ \ \ \ \ \ forAll(pin,\ facei)}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00237}00237\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00238}00238\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ flat[idx]\ =\ \mbox{\hyperlink{namespaceNeoFOAM_af69b228bd9e492814da093da0a51d1ac}{convert}}(pin[facei]);}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00239}00239\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ bval[bi]\ =\ \mbox{\hyperlink{namespaceNeoFOAM_af69b228bd9e492814da093da0a51d1ac}{convert}}(pin[facei]);}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00240}00240\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++idx;}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00241}00241\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++bi;}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00242}00242\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00243}00243\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00209}00209\ \ \ \ \ \ \ \ \ NF\_DINFO(}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00210}00210\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Internal:\ "{}}\ +\ std::to\_string(nInt)\ +\ \textcolor{stringliteral}{"{},\ Boundary:\ "{}}\ +\ std::to\_string(nBnd)}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00211}00211\ \ \ \ \ \ \ \ \ \ \ \ \ +\ \textcolor{stringliteral}{"{},\ nFaces:\ "{}}\ +\ std::to\_string(nFaces)}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00212}00212\ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00213}00213\ }
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00214}00214\ \ \ \ \ \ \ \ \ Foam::Field<FoamComponentType>\ flat(nFaces);}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00215}00215\ \ \ \ \ \ \ \ \ Foam::Field<FoamComponentType>\ bval(nBnd);}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00216}00216\ }
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00217}00217\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Internal\ faces\ first:\ [0,\ nInt)}}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00218}00218\ \ \ \ \ \ \ \ \ forAll(in,\ facei)}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00219}00219\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00220}00220\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\textcolor{keyword}{static\_cast<}std::size\_t\textcolor{keyword}{>}(facei)\ <\ nInt)}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00221}00221\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00222}00222\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ flat[facei]\ =\ \mbox{\hyperlink{namespaceNeoFOAM_af69b228bd9e492814da093da0a51d1ac}{convert}}(in[facei]);}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00223}00223\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00224}00224\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00225}00225\ }
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00226}00226\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Boundary\ faces\ appended\ in\ patch\ order:\ [nInt,\ nFaces)}}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00227}00227\ \ \ \ \ \ \ \ \ Foam::label\ idx\ =\ \textcolor{keyword}{static\_cast<}Foam::label\textcolor{keyword}{>}(nInt);}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00228}00228\ \ \ \ \ \ \ \ \ Foam::label\ bi\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00229}00229\ \ \ \ \ \ \ \ \ forAll(in.boundaryField(),\ patchi)}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00230}00230\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00231}00231\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ pin\ =\ in.boundaryField()[patchi];}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00232}00232\ \ \ \ \ \ \ \ \ \ \ \ \ forAll(pin,\ facei)}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00233}00233\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00234}00234\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ flat[idx]\ =\ \mbox{\hyperlink{namespaceNeoFOAM_af69b228bd9e492814da093da0a51d1ac}{convert}}(pin[facei]);}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00235}00235\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ bval[bi]\ =\ \mbox{\hyperlink{namespaceNeoFOAM_af69b228bd9e492814da093da0a51d1ac}{convert}}(pin[facei]);}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00236}00236\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++idx;}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00237}00237\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ++bi;}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00238}00238\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00239}00239\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00240}00240\ }
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00241}00241\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ (Optional)\ asserts\ in\ debug:}}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00242}00242\ \ \ \ \ \ \ \ \ NF\_ASSERT\_EQUAL(\textcolor{keyword}{static\_cast<}std::size\_t\textcolor{keyword}{>}(idx),\ nFaces);}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00243}00243\ \ \ \ \ \ \ \ \ NF\_ASSERT\_EQUAL(\textcolor{keyword}{static\_cast<}std::size\_t\textcolor{keyword}{>}(bi),\ nBnd);}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00244}00244\ }
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00245}00245\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ (Optional)\ asserts\ in\ debug:}}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00246}00246\ \ \ \ \ \ \ \ \ NF\_ASSERT\_EQUAL(\textcolor{keyword}{static\_cast<}std::size\_t\textcolor{keyword}{>}(idx),\ nFaces);}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00247}00247\ \ \ \ \ \ \ \ \ NF\_ASSERT\_EQUAL(\textcolor{keyword}{static\_cast<}std::size\_t\textcolor{keyword}{>}(bi),\ nBnd);}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00248}00248\ }
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00249}00249\ \ \ \ \ \ \ \ \ out.internalVector()\ =\ \mbox{\hyperlink{namespaceNeoFOAM_a1dfe753898e56c3e2e7b5c6f00bd2a4f}{fromFoamField}}(exec,\ flat);}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00250}00250\ \ \ \ \ \ \ \ \ out.boundaryData().value()\ =\ \mbox{\hyperlink{namespaceNeoFOAM_a1dfe753898e56c3e2e7b5c6f00bd2a4f}{fromFoamField}}(exec,\ bval);}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00251}00251\ \ \ \ \ \ \ \ \ out.correctBoundaryConditions();}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00252}00252\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ out;}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00253}00253\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00254}00254\ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00255}00255\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00256}00256\ \ \ \ \ \ \ \ \ NF\_ASSERT(}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00257}00257\ \ \ \ \ \ \ \ \ \ \ \ \ (!std::is\_same\_v<ContainerType,\ ContainerType>),}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00258}00258\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}TypeMap<FoamFieldType>::container\_type\ must\ be\ VolumeField<ValueType>\ or\ "{}}}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00259}00259\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}SurfaceField<ValueType>."{}}}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00260}00260\ \ \ \ \ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00261}00261\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00262}00262\ \}}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00263}00263\ }
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00270}00270\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ FieldType>}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00271}\mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField}{00271}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField}{CreateFromFoamField}}}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00272}00272\ \{}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00273}00273\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00274}00274\ }
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00275}\mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_a67c825247791986116ce46a30ecd66a3}{00275}}\ \ \ \ \ \textcolor{keyword}{const}\ NeoN::Executor\ \mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_a67c825247791986116ce46a30ecd66a3}{exec}};}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00276}\mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_a6e3d71162913f61365a2373c2396feed}{00276}}\ \ \ \ \ \textcolor{keyword}{const}\ NeoN::UnstructuredMesh\&\ \mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_a6e3d71162913f61365a2373c2396feed}{nfMesh}};}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00277}\mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_a62ab45d4ea5e6815e38d82ecfda3f169}{00277}}\ \ \ \ \ \textcolor{keyword}{const}\ FieldType\&\ \mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_a62ab45d4ea5e6815e38d82ecfda3f169}{foamField}};}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00278}\mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_ac5497af5c8e233a15d3ef9f3c622bb49}{00278}}\ \ \ \ \ std::string\ \mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_ac5497af5c8e233a15d3ef9f3c622bb49}{name}}\ =\ \textcolor{stringliteral}{"{}"{}};}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00279}\mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_ae2f5cd13138970d78a2462ae06a4b68f}{00279}}\ \ \ \ \ std::int64\_t\ \mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_ae2f5cd13138970d78a2462ae06a4b68f}{iterationIndex}}\ =\ 0;}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00280}\mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_a0b659c2eb72285147dd9d0622203c9c7}{00280}}\ \ \ \ \ std::int64\_t\ \mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_a0b659c2eb72285147dd9d0622203c9c7}{subCycleIndex}}\ =\ -\/1;}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00245}00245\ \ \ \ \ \ \ \ \ out.internalVector()\ =\ \mbox{\hyperlink{namespaceNeoFOAM_a1dfe753898e56c3e2e7b5c6f00bd2a4f}{fromFoamField}}(exec,\ flat);}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00246}00246\ \ \ \ \ \ \ \ \ out.boundaryData().value()\ =\ \mbox{\hyperlink{namespaceNeoFOAM_a1dfe753898e56c3e2e7b5c6f00bd2a4f}{fromFoamField}}(exec,\ bval);}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00247}00247\ \ \ \ \ \ \ \ \ out.correctBoundaryConditions();}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00248}00248\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ out;}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00249}00249\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00250}00250\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00251}00251\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00252}00252\ \ \ \ \ \ \ \ \ NF\_ASSERT(}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00253}00253\ \ \ \ \ \ \ \ \ \ \ \ \ (!std::is\_same\_v<ContainerType,\ ContainerType>),}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00254}00254\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}TypeMap<FoamFieldType>::container\_type\ must\ be\ VolumeField<ValueType>\ or\ "{}}}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00255}00255\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}SurfaceField<ValueType>."{}}}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00256}00256\ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00257}00257\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00258}00258\ \}}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00259}00259\ }
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00266}00266\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ FieldType>}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00267}\mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField}{00267}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField}{CreateFromFoamField}}}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00268}00268\ \{}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00269}00269\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00270}00270\ }
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00271}\mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_a67c825247791986116ce46a30ecd66a3}{00271}}\ \ \ \ \ \textcolor{keyword}{const}\ NeoN::Executor\ \mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_a67c825247791986116ce46a30ecd66a3}{exec}};}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00272}\mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_a6e3d71162913f61365a2373c2396feed}{00272}}\ \ \ \ \ \textcolor{keyword}{const}\ NeoN::UnstructuredMesh\&\ \mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_a6e3d71162913f61365a2373c2396feed}{nfMesh}};}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00273}\mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_a62ab45d4ea5e6815e38d82ecfda3f169}{00273}}\ \ \ \ \ \textcolor{keyword}{const}\ FieldType\&\ \mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_a62ab45d4ea5e6815e38d82ecfda3f169}{foamField}};}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00274}\mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_ac5497af5c8e233a15d3ef9f3c622bb49}{00274}}\ \ \ \ \ std::string\ \mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_ac5497af5c8e233a15d3ef9f3c622bb49}{name}}\ =\ \textcolor{stringliteral}{"{}"{}};}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00275}\mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_ae2f5cd13138970d78a2462ae06a4b68f}{00275}}\ \ \ \ \ std::int64\_t\ \mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_ae2f5cd13138970d78a2462ae06a4b68f}{iterationIndex}}\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00276}\mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_a0b659c2eb72285147dd9d0622203c9c7}{00276}}\ \ \ \ \ std::int64\_t\ \mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_a0b659c2eb72285147dd9d0622203c9c7}{subCycleIndex}}\ =\ -\/1;}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00277}00277\ }
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00278}\mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_a2ea39ed09f09772fece69da08f93c00f}{00278}}\ \ \ \ \ fvcc::VectorDocument\ \mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_a2ea39ed09f09772fece69da08f93c00f}{operator()}}(NeoN::Database\&\ db)}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00279}00279\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00280}00280\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }type\_container\_t\ =\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structNeoFOAM_1_1TypeMap}{TypeMap<FieldType>::container\_type}};}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00281}00281\ }
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00282}\mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_a2ea39ed09f09772fece69da08f93c00f}{00282}}\ \ \ \ \ fvcc::VectorDocument\ \mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_a2ea39ed09f09772fece69da08f93c00f}{operator()}}(NeoN::Database\&\ db)}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00283}00283\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00284}00284\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }type\_container\_t\ =\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structNeoFOAM_1_1TypeMap}{TypeMap<FieldType>::container\_type}};}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00285}00285\ }
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00286}00286\ \ \ \ \ \ \ \ \ std::cout\ <<\ \_\_FILE\_\_\ <<\ \textcolor{stringliteral}{"{}:"{}}\ <<\ \_\_LINE\_\_\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00287}00287\ \ \ \ \ \ \ \ \ type\_container\_t\ convertedField\ =\ \mbox{\hyperlink{namespaceNeoFOAM_ab7276ff683225b6140acfa56618926b5}{constructFrom}}(\mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_a67c825247791986116ce46a30ecd66a3}{exec}},\ \mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_a6e3d71162913f61365a2373c2396feed}{nfMesh}},\ \mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_a62ab45d4ea5e6815e38d82ecfda3f169}{foamField}});}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00288}00288\ \ \ \ \ \ \ \ \ std::cout\ <<\ \_\_FILE\_\_\ <<\ \textcolor{stringliteral}{"{}:"{}}\ <<\ \_\_LINE\_\_\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00289}00289\ }
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00290}00290\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_ac5497af5c8e233a15d3ef9f3c622bb49}{name}}\ !=\ \textcolor{stringliteral}{"{}"{}})}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00291}00291\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00292}00292\ \ \ \ \ \ \ \ \ \ \ \ \ convertedField.name\ =\ \mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_ac5497af5c8e233a15d3ef9f3c622bb49}{name}};}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00293}00293\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00294}00294\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Foam::fvMesh\&\ mesh\ =\ \mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_a62ab45d4ea5e6815e38d82ecfda3f169}{foamField}}.mesh();}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00295}00295\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Foam::Time\&\ runTime\ =\ mesh.time();}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00296}00296\ \ \ \ \ \ \ \ \ std::int64\_t\ timeIndex\ =\ runTime.timeIndex();}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00282}00282\ \ \ \ \ \ \ \ \ type\_container\_t\ convertedField\ =\ \mbox{\hyperlink{namespaceNeoFOAM_ab7276ff683225b6140acfa56618926b5}{constructFrom}}(\mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_a67c825247791986116ce46a30ecd66a3}{exec}},\ \mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_a6e3d71162913f61365a2373c2396feed}{nfMesh}},\ \mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_a62ab45d4ea5e6815e38d82ecfda3f169}{foamField}});}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00283}00283\ }
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00284}00284\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_ac5497af5c8e233a15d3ef9f3c622bb49}{name}}\ !=\ \textcolor{stringliteral}{"{}"{}})}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00285}00285\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00286}00286\ \ \ \ \ \ \ \ \ \ \ \ \ convertedField.name\ =\ \mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_ac5497af5c8e233a15d3ef9f3c622bb49}{name}};}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00287}00287\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00288}00288\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Foam::fvMesh\&\ mesh\ =\ \mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_a62ab45d4ea5e6815e38d82ecfda3f169}{foamField}}.mesh();}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00289}00289\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Foam::Time\&\ runTime\ =\ mesh.time();}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00290}00290\ \ \ \ \ \ \ \ \ std::int64\_t\ timeIndex\ =\ runTime.timeIndex();}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00291}00291\ }
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00292}00292\ \ \ \ \ \ \ \ \ NeoN::Field<typename\ type\_container\_t::VectorValueType>\ field(}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00293}00293\ \ \ \ \ \ \ \ \ \ \ \ \ convertedField.exec(),}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00294}00294\ \ \ \ \ \ \ \ \ \ \ \ \ convertedField.internalVector(),}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00295}00295\ \ \ \ \ \ \ \ \ \ \ \ \ convertedField.boundaryData()}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00296}00296\ \ \ \ \ \ \ \ \ );}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00297}00297\ }
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00298}00298\ \ \ \ \ \ \ \ \ NeoN::Field<typename\ type\_container\_t::VectorValueType>\ field(}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00298}00298\ \ \ \ \ \ \ \ \ type\_container\_t\ registeredField(}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00299}00299\ \ \ \ \ \ \ \ \ \ \ \ \ convertedField.exec(),}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00300}00300\ \ \ \ \ \ \ \ \ \ \ \ \ convertedField.internalVector(),}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00301}00301\ \ \ \ \ \ \ \ \ \ \ \ \ convertedField.boundaryData()}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00302}00302\ \ \ \ \ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00303}00303\ }
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00304}00304\ \ \ \ \ \ \ \ \ type\_container\_t\ registeredField(}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00305}00305\ \ \ \ \ \ \ \ \ \ \ \ \ convertedField.exec(),}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00306}00306\ \ \ \ \ \ \ \ \ \ \ \ \ convertedField.name,}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00307}00307\ \ \ \ \ \ \ \ \ \ \ \ \ convertedField.mesh(),}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00308}00308\ \ \ \ \ \ \ \ \ \ \ \ \ field,}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00309}00309\ \ \ \ \ \ \ \ \ \ \ \ \ convertedField.boundaryConditions(),}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00310}00310\ \ \ \ \ \ \ \ \ \ \ \ \ db,}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00311}00311\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}"{}},}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00312}00312\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}"{}}}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00313}00313\ \ \ \ \ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00314}00314\ }
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00315}00315\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NeoN::Document(}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00316}00316\ \ \ \ \ \ \ \ \ \ \ \ \ \{\{\textcolor{stringliteral}{"{}name"{}},\ convertedField.name\},}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00317}00317\ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}timeIndex"{}},\ timeIndex\},}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00318}00318\ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}iterationIndex"{}},\ \mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_ae2f5cd13138970d78a2462ae06a4b68f}{iterationIndex}}\},}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00319}00319\ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}subCycleIndex"{}},\ \mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_a0b659c2eb72285147dd9d0622203c9c7}{subCycleIndex}}\},}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00320}00320\ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}field"{}},\ registeredField\}\},}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00321}00321\ \ \ \ \ \ \ \ \ \ \ \ \ fvcc::validateVectorDoc}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00322}00322\ \ \ \ \ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00323}00323\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00324}00324\ \};}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00325}00325\ }
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00331}00331\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}...\ Types>}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00332}\mbox{\hyperlink{namespaceNeoFOAM_a999cf2f9840de1da0b4265f93d4a6006}{00332}}\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{namespaceNeoFOAM_a999cf2f9840de1da0b4265f93d4a6006}{constFromMany}}(\textcolor{keyword}{const}\ NeoN::Executor\&\ exec,\ \textcolor{keyword}{const}\ NeoN::UnstructuredMesh\&\ uMesh,\ Types\&...\ args)}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00333}00333\ \{}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00334}00334\ \ \ \ \ \textcolor{keywordflow}{return}\ std::tuple(\mbox{\hyperlink{namespaceNeoFOAM_ab7276ff683225b6140acfa56618926b5}{constructFrom}}(exec,\ uMesh,\ args)...);}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00335}00335\ \}}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00336}00336\ }
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00338}00338\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ FoamFieldType>}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00339}\mbox{\hyperlink{namespaceNeoFOAM_a48fbbbb3755e34d928cf0d189532d93c}{00339}}\ \textcolor{keyword}{auto}\&\ \mbox{\hyperlink{namespaceNeoFOAM_a48fbbbb3755e34d928cf0d189532d93c}{constructAndRegister}}(}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00340}00340\ \ \ \ \ fvcc::VectorCollection\&\ fieldCollection,}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00341}00341\ \ \ \ \ \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{RunTime}}\&\ rt,}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00342}00342\ \ \ \ \ \textcolor{keyword}{const}\ FoamFieldType\&\ of,}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00343}00343\ \ \ \ \ \textcolor{keywordtype}{bool}\ storeOldTime\ =\ \textcolor{keyword}{true}}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00344}00344\ )}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00345}00345\ \{}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00346}00346\ \ \ \ \ \textcolor{keyword}{using\ }ContainerType\ =\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structNeoFOAM_1_1TypeMap}{TypeMap<FoamFieldType>::container\_type}};}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00347}00347\ \ \ \ \ ContainerType\&\ ret\ =\ fieldCollection.template\ registerVector<ContainerType>(}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00348}00348\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField}{NeoFOAM::CreateFromFoamField<FoamFieldType>}}\ \{}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00349}00349\ \ \ \ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_a67c825247791986116ce46a30ecd66a3}{exec}}\ =\ rt.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_a8dcd260a0853c8590add966729198cb1}{exec}},}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00350}00350\ \ \ \ \ \ \ \ \ \ \ \ \ .nfMesh\ =\ rt.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_a810936522333c8fdaf8ffdacefa3909d}{nfMesh}},}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00351}00351\ \ \ \ \ \ \ \ \ \ \ \ \ .foamField\ =\ of,}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00352}00352\ \ \ \ \ \ \ \ \ \ \ \ \ .name\ =\ of.name()}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00353}00353\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00354}00354\ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00355}00355\ \ \ \ \ \textcolor{keywordflow}{if}\ (storeOldTime)}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00356}00356\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00357}00357\ \ \ \ \ \ \ \ \ fvcc::rotateOldTimes(ret);}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00358}00358\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00359}00359\ \ \ \ \ ret.correctBoundaryConditions();}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00360}00360\ \ \ \ \ \textcolor{keywordflow}{return}\ ret;}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00361}00361\ \}}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00362}00362\ }
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00363}00363\ }
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00364}00364\ \};\ \textcolor{comment}{//\ namespace\ Foam}}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00300}00300\ \ \ \ \ \ \ \ \ \ \ \ \ convertedField.name,}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00301}00301\ \ \ \ \ \ \ \ \ \ \ \ \ convertedField.mesh(),}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00302}00302\ \ \ \ \ \ \ \ \ \ \ \ \ field,}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00303}00303\ \ \ \ \ \ \ \ \ \ \ \ \ convertedField.boundaryConditions(),}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00304}00304\ \ \ \ \ \ \ \ \ \ \ \ \ db,}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00305}00305\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}"{}},}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00306}00306\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}"{}}}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00307}00307\ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00308}00308\ }
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00309}00309\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NeoN::Document(}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00310}00310\ \ \ \ \ \ \ \ \ \ \ \ \ \{\{\textcolor{stringliteral}{"{}name"{}},\ convertedField.name\},}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00311}00311\ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}timeIndex"{}},\ timeIndex\},}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00312}00312\ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}iterationIndex"{}},\ \mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_ae2f5cd13138970d78a2462ae06a4b68f}{iterationIndex}}\},}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00313}00313\ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}subCycleIndex"{}},\ \mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_a0b659c2eb72285147dd9d0622203c9c7}{subCycleIndex}}\},}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00314}00314\ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\textcolor{stringliteral}{"{}field"{}},\ registeredField\}\},}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00315}00315\ \ \ \ \ \ \ \ \ \ \ \ \ fvcc::validateVectorDoc}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00316}00316\ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00317}00317\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00318}00318\ \};}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00319}00319\ }
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00325}00325\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}...\ Types>}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00326}\mbox{\hyperlink{namespaceNeoFOAM_a999cf2f9840de1da0b4265f93d4a6006}{00326}}\ \textcolor{keyword}{auto}\ \mbox{\hyperlink{namespaceNeoFOAM_a999cf2f9840de1da0b4265f93d4a6006}{constFromMany}}(\textcolor{keyword}{const}\ NeoN::Executor\&\ exec,\ \textcolor{keyword}{const}\ NeoN::UnstructuredMesh\&\ uMesh,\ Types\&...\ args)}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00327}00327\ \{}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00328}00328\ \ \ \ \ \textcolor{keywordflow}{return}\ std::tuple(\mbox{\hyperlink{namespaceNeoFOAM_ab7276ff683225b6140acfa56618926b5}{constructFrom}}(exec,\ uMesh,\ args)...);}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00329}00329\ \}}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00330}00330\ }
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00332}00332\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ FoamFieldType>}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00333}\mbox{\hyperlink{namespaceNeoFOAM_a48fbbbb3755e34d928cf0d189532d93c}{00333}}\ \textcolor{keyword}{auto}\&\ \mbox{\hyperlink{namespaceNeoFOAM_a48fbbbb3755e34d928cf0d189532d93c}{constructAndRegister}}(}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00334}00334\ \ \ \ \ fvcc::VectorCollection\&\ fieldCollection,}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00335}00335\ \ \ \ \ \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{RunTime}}\&\ rt,}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00336}00336\ \ \ \ \ \textcolor{keyword}{const}\ FoamFieldType\&\ of,}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00337}00337\ \ \ \ \ \textcolor{keywordtype}{bool}\ storeOldTime\ =\ \textcolor{keyword}{true}}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00338}00338\ )}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00339}00339\ \{}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00340}00340\ \ \ \ \ \textcolor{keyword}{using\ }ContainerType\ =\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structNeoFOAM_1_1TypeMap}{TypeMap<FoamFieldType>::container\_type}};}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00341}00341\ \ \ \ \ ContainerType\&\ ret\ =\ fieldCollection.template\ registerVector<ContainerType>(}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00342}00342\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField}{NeoFOAM::CreateFromFoamField<FoamFieldType>}}\ \{}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00343}00343\ \ \ \ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField_a67c825247791986116ce46a30ecd66a3}{exec}}\ =\ rt.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_a8dcd260a0853c8590add966729198cb1}{exec}},}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00344}00344\ \ \ \ \ \ \ \ \ \ \ \ \ .nfMesh\ =\ rt.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_a810936522333c8fdaf8ffdacefa3909d}{nfMesh}},}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00345}00345\ \ \ \ \ \ \ \ \ \ \ \ \ .foamField\ =\ of,}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00346}00346\ \ \ \ \ \ \ \ \ \ \ \ \ .name\ =\ of.name()}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00347}00347\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00348}00348\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00349}00349\ \ \ \ \ \textcolor{keywordflow}{if}\ (storeOldTime)}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00350}00350\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00351}00351\ \ \ \ \ \ \ \ \ fvcc::rotateOldTimes(ret);}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00352}00352\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00353}00353\ \ \ \ \ ret.correctBoundaryConditions();}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00354}00354\ \ \ \ \ \textcolor{keywordflow}{return}\ ret;}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00355}00355\ \}}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00356}00356\ }
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00357}00357\ }
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00358}00358\ \};\ \textcolor{comment}{//\ namespace\ Foam}}
 
 \end{DoxyCode}
