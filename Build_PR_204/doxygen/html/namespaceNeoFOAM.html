@@ -168,6 +168,14 @@ Functions</h2></td></tr>
 <tr class="memitem:ab7276ff683225b6140acfa56618926b5" id="r_ab7276ff683225b6140acfa56618926b5"><td class="memTemplParams" colspan="2">template&lt;class FoamFieldType &gt; </td></tr>
 <tr class="memitem:ab7276ff683225b6140acfa56618926b5"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#ab7276ff683225b6140acfa56618926b5">constructFrom</a> (const NeoN::Executor exec, const NeoN::UnstructuredMesh &amp;nfMesh, const FoamFieldType &amp;in)</td></tr>
 <tr class="separator:ab7276ff683225b6140acfa56618926b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a999cf2f9840de1da0b4265f93d4a6006" id="r_a999cf2f9840de1da0b4265f93d4a6006"><td class="memTemplParams" colspan="2">template&lt;typename... Types&gt; </td></tr>
+<tr class="memitem:a999cf2f9840de1da0b4265f93d4a6006"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#a999cf2f9840de1da0b4265f93d4a6006">constFromMany</a> (const NeoN::Executor &amp;exec, const NeoN::UnstructuredMesh &amp;uMesh, Types &amp;... args)</td></tr>
+<tr class="memdesc:a999cf2f9840de1da0b4265f93d4a6006"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a set of NN fields from OF fields.  <br /></td></tr>
+<tr class="separator:a999cf2f9840de1da0b4265f93d4a6006"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a48fbbbb3755e34d928cf0d189532d93c" id="r_a48fbbbb3755e34d928cf0d189532d93c"><td class="memTemplParams" colspan="2">template&lt;typename FoamFieldType &gt; </td></tr>
+<tr class="memitem:a48fbbbb3755e34d928cf0d189532d93c"><td class="memTemplItemLeft" align="right" valign="top">auto &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#a48fbbbb3755e34d928cf0d189532d93c">constructAndRegister</a> (fvcc::VectorCollection &amp;fieldCollection, <a class="el" href="structNeoFOAM_1_1RunTime.html">RunTime</a> &amp;rt, const FoamFieldType &amp;of, bool storeOldTime=true)</td></tr>
+<tr class="memdesc:a48fbbbb3755e34d928cf0d189532d93c"><td class="mdescLeft">&#160;</td><td class="mdescRight">construct an NF field from a given OF field and register  <br /></td></tr>
+<tr class="separator:a48fbbbb3755e34d928cf0d189532d93c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a39bc76acefb5a1dd3074b0feba5864eb" id="r_a39bc76acefb5a1dd3074b0feba5864eb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#a39bc76acefb5a1dd3074b0feba5864eb">setDeltaT</a> (Foam::Time &amp;ofRunTime, <a class="el" href="structNeoFOAM_1_1RunTime.html">RunTime</a> &amp;nfRunTime, Foam::scalar coNum)</td></tr>
 <tr class="separator:a39bc76acefb5a1dd3074b0feba5864eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aff116721405a6ad86fee9675a3cc3156" id="r_aff116721405a6ad86fee9675a3cc3156"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#aff116721405a6ad86fee9675a3cc3156">syncRunTimes</a> (Foam::Time &amp;ofRunTime, <a class="el" href="structNeoFOAM_1_1RunTime.html">RunTime</a> &amp;nfRunTime, Foam::scalar coNum)</td></tr>
@@ -205,35 +213,40 @@ Functions</h2></td></tr>
 <tr class="memitem:a01c08e9d79fe780ebcdbc7f82a70b1e1" id="r_a01c08e9d79fe780ebcdbc7f82a70b1e1"><td class="memTemplParams" colspan="2">template&lt;typename FieldT &gt; </td></tr>
 <tr class="memitem:a01c08e9d79fe780ebcdbc7f82a70b1e1"><td class="memTemplItemLeft" align="right" valign="top">FieldT&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#a01c08e9d79fe780ebcdbc7f82a70b1e1">flatBCField</a> (const Foam::fvMesh &amp;mesh, std::function&lt; FieldT(const Foam::fvPatch &amp;)&gt; f)</td></tr>
 <tr class="separator:a01c08e9d79fe780ebcdbc7f82a70b1e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7fa41e32ba62c41cffee5cb4c3793877" id="r_a7fa41e32ba62c41cffee5cb4c3793877"><td class="memItemLeft" align="right" valign="top">NeoN::UnstructuredMesh&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#a7fa41e32ba62c41cffee5cb4c3793877">readOpenFOAMMesh</a> (const NeoN::Executor exec, const Foam::fvMesh &amp;mesh)</td></tr>
-<tr class="separator:a7fa41e32ba62c41cffee5cb4c3793877"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afb828727f0f7b23418e94e1c464d9dae" id="r_afb828727f0f7b23418e94e1c464d9dae"><td class="memItemLeft" align="right" valign="top">NeoN::UnstructuredMesh&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#afb828727f0f7b23418e94e1c464d9dae">readOpenFOAMMesh</a> (const NeoN::Executor exec, const Foam::fvMesh &amp;mesh, bool fullMeshOnGPU=false)</td></tr>
+<tr class="memdesc:afb828727f0f7b23418e94e1c464d9dae"><td class="mdescLeft">&#160;</td><td class="mdescRight">read OpenFOAM mesh and construct NeoN mesh  <br /></td></tr>
+<tr class="separator:afb828727f0f7b23418e94e1c464d9dae"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac60b005cd9f9140205f676b9953615e4" id="r_ac60b005cd9f9140205f676b9953615e4"><td class="memItemLeft" align="right" valign="top">std::unique_ptr&lt; <a class="el" href="classNeoFOAM_1_1MeshAdapter.html">MeshAdapter</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#ac60b005cd9f9140205f676b9953615e4">createMesh</a> (const NeoN::Executor &amp;exec, const Foam::Time &amp;runTime)</td></tr>
 <tr class="separator:ac60b005cd9f9140205f676b9953615e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a70f3fbdfd753d2672cd8c017f759e7f8" id="r_a70f3fbdfd753d2672cd8c017f759e7f8"><td class="memItemLeft" align="right" valign="top">std::unique_ptr&lt; Foam::fvMesh &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#a70f3fbdfd753d2672cd8c017f759e7f8">createMesh</a> (const Foam::Time &amp;runTime)</td></tr>
 <tr class="separator:a70f3fbdfd753d2672cd8c017f759e7f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa275ecb871028c14e2d9dae4c78686e2" id="r_aa275ecb871028c14e2d9dae4c78686e2"><td class="memTemplParams" colspan="2">template&lt;typename ValueType , typename IndexType  = NeoN::localIdx&gt; </td></tr>
-<tr class="memitem:aa275ecb871028c14e2d9dae4c78686e2"><td class="memTemplItemLeft" align="right" valign="top">NeoN::Vector&lt; ValueType &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#aa275ecb871028c14e2d9dae4c78686e2">diag</a> (const la::LinearSystem&lt; ValueType, IndexType &gt; &amp;ls, const NeoN::la::SparsityPattern &amp;sparsityPattern)</td></tr>
-<tr class="separator:aa275ecb871028c14e2d9dae4c78686e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a98b7e8d5816cba45d64261cbf66378a7" id="r_a98b7e8d5816cba45d64261cbf66378a7"><td class="memTemplParams" colspan="2">template&lt;typename ValueType , typename IndexType  = NeoN::localIdx&gt; </td></tr>
-<tr class="memitem:a98b7e8d5816cba45d64261cbf66378a7"><td class="memTemplItemLeft" align="right" valign="top">NeoN::finiteVolume::cellCentred::VolumeField&lt; ValueType &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#a98b7e8d5816cba45d64261cbf66378a7">applyOperator</a> (const la::LinearSystem&lt; ValueType, IndexType &gt; &amp;ls, const NeoN::finiteVolume::cellCentred::VolumeField&lt; ValueType &gt; &amp;psi)</td></tr>
-<tr class="separator:a98b7e8d5816cba45d64261cbf66378a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9de226ba9098594fc8b6b867a35adccc" id="r_a9de226ba9098594fc8b6b867a35adccc"><td class="memTemplParams" colspan="2">template&lt;typename ValueType , typename IndexType  = NeoN::localIdx&gt; </td></tr>
-<tr class="memitem:a9de226ba9098594fc8b6b867a35adccc"><td class="memTemplItemLeft" align="right" valign="top">NeoN::finiteVolume::cellCentred::VolumeField&lt; ValueType &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#a9de226ba9098594fc8b6b867a35adccc">operator&amp;</a> (const <a class="el" href="classNeoFOAM_1_1PDESolver.html">PDESolver</a>&lt; ValueType, IndexType &gt; expr, const NeoN::finiteVolume::cellCentred::VolumeField&lt; ValueType &gt; &amp;psi)</td></tr>
-<tr class="separator:a9de226ba9098594fc8b6b867a35adccc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac62cbb214c96c8b760a39eb90d01bf4a" id="r_ac62cbb214c96c8b760a39eb90d01bf4a"><td class="memTemplParams" colspan="2">template&lt;typename ValueType &gt; </td></tr>
+<tr class="memitem:ac62cbb214c96c8b760a39eb90d01bf4a"><td class="memTemplItemLeft" align="right" valign="top">NeoN::Vector&lt; ValueType &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#ac62cbb214c96c8b760a39eb90d01bf4a">diag</a> (const NeoN::la::LinearSystem&lt; ValueType &gt; &amp;ls)</td></tr>
+<tr class="separator:ac62cbb214c96c8b760a39eb90d01bf4a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5543b2935e87819cfaf760443f4e19ee" id="r_a5543b2935e87819cfaf760443f4e19ee"><td class="memTemplParams" colspan="2">template&lt;typename ValueType &gt; </td></tr>
+<tr class="memitem:a5543b2935e87819cfaf760443f4e19ee"><td class="memTemplItemLeft" align="right" valign="top">NeoN::finiteVolume::cellCentred::VolumeField&lt; ValueType &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#a5543b2935e87819cfaf760443f4e19ee">applyOperator</a> (const NeoN::la::LinearSystem&lt; ValueType &gt; &amp;ls, const NeoN::finiteVolume::cellCentred::VolumeField&lt; ValueType &gt; &amp;psi)</td></tr>
+<tr class="separator:a5543b2935e87819cfaf760443f4e19ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af7f11122de5c14567600db38f3e8e484" id="r_af7f11122de5c14567600db38f3e8e484"><td class="memTemplParams" colspan="2">template&lt;typename ValueType &gt; </td></tr>
+<tr class="memitem:af7f11122de5c14567600db38f3e8e484"><td class="memTemplItemLeft" align="right" valign="top">NeoN::finiteVolume::cellCentred::VolumeField&lt; ValueType &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#af7f11122de5c14567600db38f3e8e484">operator&amp;</a> (const <a class="el" href="classNeoFOAM_1_1PDESolver.html">PDESolver</a>&lt; ValueType &gt; expr, const NeoN::finiteVolume::cellCentred::VolumeField&lt; ValueType &gt; &amp;psi)</td></tr>
+<tr class="separator:af7f11122de5c14567600db38f3e8e484"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae3448b9356abfd01a14f812c7acffc7c" id="r_ae3448b9356abfd01a14f812c7acffc7c"><td class="memTemplParams" colspan="2">template&lt;typename RegisteredType , typename InitializerType &gt; </td></tr>
+<tr class="memitem:ae3448b9356abfd01a14f812c7acffc7c"><td class="memTemplItemLeft" align="right" valign="top">RegisteredType &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#ae3448b9356abfd01a14f812c7acffc7c">readOrCreate</a> (<a class="el" href="structNeoFOAM_1_1RunTime.html">RunTime</a> &amp;runTime, std::string name, InitializerType init)</td></tr>
+<tr class="memdesc:ae3448b9356abfd01a14f812c7acffc7c"><td class="mdescLeft">&#160;</td><td class="mdescRight">convenience function to avoid recreating objects by storing them in the runtime db  <br /></td></tr>
+<tr class="separator:ae3448b9356abfd01a14f812c7acffc7c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
-<a id="a98b7e8d5816cba45d64261cbf66378a7" name="a98b7e8d5816cba45d64261cbf66378a7"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a98b7e8d5816cba45d64261cbf66378a7">&#9670;&#160;</a></span>applyOperator()</h2>
+<a id="a5543b2935e87819cfaf760443f4e19ee" name="a5543b2935e87819cfaf760443f4e19ee"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5543b2935e87819cfaf760443f4e19ee">&#9670;&#160;</a></span>applyOperator()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename ValueType , typename IndexType  = NeoN::localIdx&gt; </div>
+template&lt;typename ValueType &gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">NeoN::finiteVolume::cellCentred::VolumeField&lt; ValueType &gt; NeoFOAM::applyOperator </td>
           <td>(</td>
-          <td class="paramtype">const la::LinearSystem&lt; ValueType, IndexType &gt; &amp;&#160;</td>
+          <td class="paramtype">const NeoN::la::LinearSystem&lt; ValueType &gt; &amp;&#160;</td>
           <td class="paramname"><em>ls</em>, </td>
         </tr>
         <tr>
@@ -250,7 +263,7 @@ template&lt;typename ValueType , typename IndexType  = NeoN::localIdx&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pdeSolver_8hpp_source.html#l00221">221</a> of file <a class="el" href="pdeSolver_8hpp_source.html">pdeSolver.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pdeSolver_8hpp_source.html#l00228">228</a> of file <a class="el" href="pdeSolver_8hpp_source.html">pdeSolver.hpp</a>.</p>
 
 </div>
 </div>
@@ -348,6 +361,53 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
+<a id="a999cf2f9840de1da0b4265f93d4a6006" name="a999cf2f9840de1da0b4265f93d4a6006"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a999cf2f9840de1da0b4265f93d4a6006">&#9670;&#160;</a></span>constFromMany()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename... Types&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">auto NeoFOAM::constFromMany </td>
+          <td>(</td>
+          <td class="paramtype">const NeoN::Executor &amp;&#160;</td>
+          <td class="paramname"><em>exec</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const NeoN::UnstructuredMesh &amp;&#160;</td>
+          <td class="paramname"><em>uMesh</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Types &amp;...&#160;</td>
+          <td class="paramname"><em>args</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Constructs a set of NN fields from OF fields. </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">Types</td><td>Types of the classes </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Tuple containing the fields </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="readers_8hpp_source.html#l00314">314</a> of file <a class="el" href="readers_8hpp_source.html">readers.hpp</a>.</p>
+
+</div>
+</div>
 <a id="a386425b9e39dc89773b9248909cf4139" name="a386425b9e39dc89773b9248909cf4139"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a386425b9e39dc89773b9248909cf4139">&#9670;&#160;</a></span>constrainHbyA()</h2>
 
@@ -379,6 +439,52 @@ template&lt;typename T &gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="a48fbbbb3755e34d928cf0d189532d93c" name="a48fbbbb3755e34d928cf0d189532d93c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a48fbbbb3755e34d928cf0d189532d93c">&#9670;&#160;</a></span>constructAndRegister()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename FoamFieldType &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">auto &amp; NeoFOAM::constructAndRegister </td>
+          <td>(</td>
+          <td class="paramtype">fvcc::VectorCollection &amp;&#160;</td>
+          <td class="paramname"><em>fieldCollection</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structNeoFOAM_1_1RunTime.html">RunTime</a> &amp;&#160;</td>
+          <td class="paramname"><em>rt</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const FoamFieldType &amp;&#160;</td>
+          <td class="paramname"><em>of</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>storeOldTime</em> = <code>true</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>construct an NF field from a given OF field and register </p>
+
+<p class="definition">Definition at line <a class="el" href="readers_8hpp_source.html#l00321">321</a> of file <a class="el" href="readers_8hpp_source.html">readers.hpp</a>.</p>
 
 </div>
 </div>
@@ -416,7 +522,7 @@ template&lt;class FoamFieldType &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="readers_8hpp_source.html#l00171">171</a> of file <a class="el" href="readers_8hpp_source.html">readers.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="readers_8hpp_source.html#l00173">173</a> of file <a class="el" href="readers_8hpp_source.html">readers.hpp</a>.</p>
 
 </div>
 </div>
@@ -674,35 +780,25 @@ template&lt;class FoamFieldType &gt; </div>
 
 </div>
 </div>
-<a id="aa275ecb871028c14e2d9dae4c78686e2" name="aa275ecb871028c14e2d9dae4c78686e2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa275ecb871028c14e2d9dae4c78686e2">&#9670;&#160;</a></span>diag()</h2>
+<a id="ac62cbb214c96c8b760a39eb90d01bf4a" name="ac62cbb214c96c8b760a39eb90d01bf4a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac62cbb214c96c8b760a39eb90d01bf4a">&#9670;&#160;</a></span>diag()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename ValueType , typename IndexType  = NeoN::localIdx&gt; </div>
+template&lt;typename ValueType &gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">NeoN::Vector&lt; ValueType &gt; NeoFOAM::diag </td>
           <td>(</td>
-          <td class="paramtype">const la::LinearSystem&lt; ValueType, IndexType &gt; &amp;&#160;</td>
-          <td class="paramname"><em>ls</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
+          <td class="paramtype">const NeoN::la::LinearSystem&lt; ValueType &gt; &amp;&#160;</td>
+          <td class="paramname"><em>ls</em></td><td>)</td>
           <td></td>
-          <td class="paramtype">const NeoN::la::SparsityPattern &amp;&#160;</td>
-          <td class="paramname"><em>sparsityPattern</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pdeSolver_8hpp_source.html#l00198">198</a> of file <a class="el" href="pdeSolver_8hpp_source.html">pdeSolver.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pdeSolver_8hpp_source.html#l00207">207</a> of file <a class="el" href="pdeSolver_8hpp_source.html">pdeSolver.hpp</a>.</p>
 
 </div>
 </div>
@@ -782,7 +878,7 @@ template&lt;typename FoamType &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="readers_8hpp_source.html#l00019">19</a> of file <a class="el" href="readers_8hpp_source.html">readers.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="readers_8hpp_source.html#l00020">20</a> of file <a class="el" href="readers_8hpp_source.html">readers.hpp</a>.</p>
 
 </div>
 </div>
@@ -854,18 +950,18 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a id="a9de226ba9098594fc8b6b867a35adccc" name="a9de226ba9098594fc8b6b867a35adccc"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9de226ba9098594fc8b6b867a35adccc">&#9670;&#160;</a></span>operator&amp;()</h2>
+<a id="af7f11122de5c14567600db38f3e8e484" name="af7f11122de5c14567600db38f3e8e484"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af7f11122de5c14567600db38f3e8e484">&#9670;&#160;</a></span>operator&amp;()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename ValueType , typename IndexType  = NeoN::localIdx&gt; </div>
+template&lt;typename ValueType &gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">NeoN::finiteVolume::cellCentred::VolumeField&lt; ValueType &gt; NeoFOAM::operator&amp; </td>
           <td>(</td>
-          <td class="paramtype">const <a class="el" href="classNeoFOAM_1_1PDESolver.html">PDESolver</a>&lt; ValueType, IndexType &gt;&#160;</td>
+          <td class="paramtype">const <a class="el" href="classNeoFOAM_1_1PDESolver.html">PDESolver</a>&lt; ValueType &gt;&#160;</td>
           <td class="paramname"><em>expr</em>, </td>
         </tr>
         <tr>
@@ -882,7 +978,7 @@ template&lt;typename ValueType , typename IndexType  = NeoN::localIdx&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pdeSolver_8hpp_source.html#l00240">240</a> of file <a class="el" href="pdeSolver_8hpp_source.html">pdeSolver.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pdeSolver_8hpp_source.html#l00247">247</a> of file <a class="el" href="pdeSolver_8hpp_source.html">pdeSolver.hpp</a>.</p>
 
 </div>
 </div>
@@ -976,8 +1072,8 @@ template&lt;typename NT , typename OT &gt; </div>
 
 </div>
 </div>
-<a id="a7fa41e32ba62c41cffee5cb4c3793877" name="a7fa41e32ba62c41cffee5cb4c3793877"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7fa41e32ba62c41cffee5cb4c3793877">&#9670;&#160;</a></span>readOpenFOAMMesh()</h2>
+<a id="afb828727f0f7b23418e94e1c464d9dae" name="afb828727f0f7b23418e94e1c464d9dae"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afb828727f0f7b23418e94e1c464d9dae">&#9670;&#160;</a></span>readOpenFOAMMesh()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -992,7 +1088,13 @@ template&lt;typename NT , typename OT &gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const Foam::fvMesh &amp;&#160;</td>
-          <td class="paramname"><em>mesh</em>&#160;</td>
+          <td class="paramname"><em>mesh</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>fullMeshOnGPU</em> = <code>false</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1001,6 +1103,56 @@ template&lt;typename NT , typename OT &gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>read OpenFOAM mesh and construct NeoN mesh </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">exec</td><td>the executor where to store mesh data </td></tr>
+    <tr><td class="paramname">mesh</td><td>the OpenFOAM mesh </td></tr>
+    <tr><td class="paramname">fullMeshOnGPU</td><td>- if false only owner,neighbour,faceAreas and cellVolumes are placed on GPU </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="ae3448b9356abfd01a14f812c7acffc7c" name="ae3448b9356abfd01a14f812c7acffc7c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae3448b9356abfd01a14f812c7acffc7c">&#9670;&#160;</a></span>readOrCreate()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename RegisteredType , typename InitializerType &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">RegisteredType &amp; NeoFOAM::readOrCreate </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structNeoFOAM_1_1RunTime.html">RunTime</a> &amp;&#160;</td>
+          <td class="paramname"><em>runTime</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::string&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">InitializerType&#160;</td>
+          <td class="paramname"><em>init</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>convenience function to avoid recreating objects by storing them in the runtime db </p>
+
+<p class="definition">Definition at line <a class="el" href="runTime_8hpp_source.html#l00037">37</a> of file <a class="el" href="runTime_8hpp_source.html">runTime.hpp</a>.</p>
 
 </div>
 </div>
@@ -1032,7 +1184,7 @@ template&lt;typename FoamType &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="readers_8hpp_source.html#l00122">122</a> of file <a class="el" href="readers_8hpp_source.html">readers.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="readers_8hpp_source.html#l00124">124</a> of file <a class="el" href="readers_8hpp_source.html">readers.hpp</a>.</p>
 
 </div>
 </div>
@@ -1064,7 +1216,7 @@ template&lt;typename FoamType &gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="readers_8hpp_source.html#l00033">33</a> of file <a class="el" href="readers_8hpp_source.html">readers.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="readers_8hpp_source.html#l00034">34</a> of file <a class="el" href="readers_8hpp_source.html">readers.hpp</a>.</p>
 
 </div>
 </div>

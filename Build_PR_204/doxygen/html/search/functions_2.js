@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['ddtscheme_0',['ddtScheme',['../classNeoFOAM_1_1PDESolver.html#a86cbd7e62f99eb30d6e6466ebc6b7be2',1,'NeoFOAM::PDESolver']]],
-  ['diag_1',['diag',['../namespaceNeoFOAM.html#aa275ecb871028c14e2d9dae4c78686e2',1,'NeoFOAM']]]
+  ['ddtscheme_0',['ddtScheme',['../classNeoFOAM_1_1PDESolver.html#a58bd608fe699e0b9b80926e32f7eaf5b',1,'NeoFOAM::PDESolver']]],
+  ['diag_1',['diag',['../namespaceNeoFOAM.html#ac62cbb214c96c8b760a39eb90d01bf4a',1,'NeoFOAM']]]
 ];
