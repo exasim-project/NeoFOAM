@@ -1,0 +1,174 @@
+\doxysection{Neo\+FOAM\+::Function\+Object\+IO Class Reference}
+\hypertarget{classNeoFOAM_1_1FunctionObjectIO}{}\label{classNeoFOAM_1_1FunctionObjectIO}\index{NeoFOAM::FunctionObjectIO@{NeoFOAM::FunctionObjectIO}}
+
+
+Base class for \doxylink{namespaceNeoFOAM}{Neo\+FOAM} function\+Objects that produce scalar time-\/series output.  
+
+
+
+
+{\ttfamily \#include $<$function\+Object\+IO.\+hpp$>$}
+
+Inheritance diagram for Neo\+FOAM\+::Function\+Object\+IO\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=4.000000cm]{classNeoFOAM_1_1FunctionObjectIO}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classNeoFOAM_1_1FunctionObjectIO_a7899bbbcbae3550e2ed0ab9e2c5b0a8c}{Function\+Object\+IO}} (const Foam\+::word \&name, const Foam\+::\+Time \&run\+Time, const Foam\+::dictionary \&dict)
+\item 
+virtual \mbox{\hyperlink{classNeoFOAM_1_1FunctionObjectIO_a33ef6f45707b6066e5ae5f665dd4e225}{\texorpdfstring{$\sim$}{\string~}\+Function\+Object\+IO}} ()=default
+\item 
+virtual bool \mbox{\hyperlink{classNeoFOAM_1_1FunctionObjectIO_a0ac7b890d28e6afcf30c37c052a499a8}{read}} (const Foam\+::dictionary \&dict) override
+\item 
+virtual bool \mbox{\hyperlink{classNeoFOAM_1_1FunctionObjectIO_a2a135997dc8957415c3077e11b22557c}{execute}} () override=0
+\item 
+virtual bool \mbox{\hyperlink{classNeoFOAM_1_1FunctionObjectIO_aa9637f114abb9f1fbf8badbab17d2771}{write}} () override=0
+\item 
+virtual bool \mbox{\hyperlink{classNeoFOAM_1_1FunctionObjectIO_ae8010846a247a5d82ed9c9725906fd82}{end}} () override
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+std\+::filesystem\+::path \mbox{\hyperlink{classNeoFOAM_1_1FunctionObjectIO_a598af1cff8c3269503ff0d2cc5c483b9}{output\+Dir}} () const
+\item 
+std\+::ofstream \& \mbox{\hyperlink{classNeoFOAM_1_1FunctionObjectIO_a4649e2065c57cfa7125dc1b2b7527829}{get\+Or\+Create\+File}} (const std\+::string \&filename, const std\+::string \&header)
+\begin{DoxyCompactList}\small\item\em Get or create a persistent output file. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+const Foam\+::\+Time \& \mbox{\hyperlink{classNeoFOAM_1_1FunctionObjectIO_af8fcc2e816a770217694f59bd565dabb}{time\+\_\+}}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Base class for \doxylink{namespaceNeoFOAM}{Neo\+FOAM} function\+Objects that produce scalar time-\/series output. 
+
+Inherits Foam\+::function\+Object so that Open\+FOAM\textquotesingle{}s runtime selection table (RTST) can instantiate derived classes directly from control\+Dict\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{functions}
+\DoxyCodeLine{\{}
+\DoxyCodeLine{\ \ \ \ myForces}
+\DoxyCodeLine{\ \ \ \ \{}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ type\ \ \ neoForces;}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ libs\ \ \ (\mbox{\hyperlink{namespaceNeoFOAM}{NeoFOAM}});}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ ...}
+\DoxyCodeLine{\ \ \ \ \}}
+\DoxyCodeLine{\}}
+
+\end{DoxyCode}
+
+
+Derived classes implement\+:
+\begin{DoxyItemize}
+\item \doxylink{classNeoFOAM_1_1FunctionObjectIO_a2a135997dc8957415c3077e11b22557c}{execute()} — runs GPU computation each time-\/step
+\item \doxylink{classNeoFOAM_1_1FunctionObjectIO_aa9637f114abb9f1fbf8badbab17d2771}{write()} — writes the scalar result to post\+Processing/ at write intervals
+\end{DoxyItemize}
+
+\begin{DoxyParagraph}{GPU-\/aware I/O strategy}
+The intent is that GPU computation in \doxylink{classNeoFOAM_1_1FunctionObjectIO_a2a135997dc8957415c3077e11b22557c}{execute()} reduces an entire field to O(1) scalars, which are then transferred to host and written to disk by \doxylink{classNeoFOAM_1_1FunctionObjectIO_aa9637f114abb9f1fbf8badbab17d2771}{write()}. Full field copies to host are never performed inside \doxylink{classNeoFOAM_1_1FunctionObjectIO_a2a135997dc8957415c3077e11b22557c}{execute()}. 
+\end{DoxyParagraph}
+
+
+Definition at line \mbox{\hyperlink{functionObjectIO_8hpp_source_l00044}{44}} of file \mbox{\hyperlink{functionObjectIO_8hpp_source}{function\+Object\+IO.\+hpp}}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{classNeoFOAM_1_1FunctionObjectIO_a7899bbbcbae3550e2ed0ab9e2c5b0a8c}\label{classNeoFOAM_1_1FunctionObjectIO_a7899bbbcbae3550e2ed0ab9e2c5b0a8c} 
+\index{NeoFOAM::FunctionObjectIO@{NeoFOAM::FunctionObjectIO}!FunctionObjectIO@{FunctionObjectIO}}
+\index{FunctionObjectIO@{FunctionObjectIO}!NeoFOAM::FunctionObjectIO@{NeoFOAM::FunctionObjectIO}}
+\doxysubsubsection{\texorpdfstring{FunctionObjectIO()}{FunctionObjectIO()}}
+{\footnotesize\ttfamily Neo\+FOAM\+::\+Function\+Object\+IO\+::\+Function\+Object\+IO (\begin{DoxyParamCaption}\item[{const Foam\+::word \&}]{name,  }\item[{const Foam\+::\+Time \&}]{run\+Time,  }\item[{const Foam\+::dictionary \&}]{dict }\end{DoxyParamCaption})}
+
+\Hypertarget{classNeoFOAM_1_1FunctionObjectIO_a33ef6f45707b6066e5ae5f665dd4e225}\label{classNeoFOAM_1_1FunctionObjectIO_a33ef6f45707b6066e5ae5f665dd4e225} 
+\index{NeoFOAM::FunctionObjectIO@{NeoFOAM::FunctionObjectIO}!````~FunctionObjectIO@{\texorpdfstring{$\sim$}{\string~}FunctionObjectIO}}
+\index{````~FunctionObjectIO@{\texorpdfstring{$\sim$}{\string~}FunctionObjectIO}!NeoFOAM::FunctionObjectIO@{NeoFOAM::FunctionObjectIO}}
+\doxysubsubsection{\texorpdfstring{\texorpdfstring{$\sim$}{\string~}FunctionObjectIO()}{\string~FunctionObjectIO()}}
+{\footnotesize\ttfamily virtual Neo\+FOAM\+::\+Function\+Object\+IO\+::\texorpdfstring{$\sim$}{\string~}\+Function\+Object\+IO (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}, {\ttfamily [default]}}
+
+
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{classNeoFOAM_1_1FunctionObjectIO_ae8010846a247a5d82ed9c9725906fd82}\label{classNeoFOAM_1_1FunctionObjectIO_ae8010846a247a5d82ed9c9725906fd82} 
+\index{NeoFOAM::FunctionObjectIO@{NeoFOAM::FunctionObjectIO}!end@{end}}
+\index{end@{end}!NeoFOAM::FunctionObjectIO@{NeoFOAM::FunctionObjectIO}}
+\doxysubsubsection{\texorpdfstring{end()}{end()}}
+{\footnotesize\ttfamily virtual bool Neo\+FOAM\+::\+Function\+Object\+IO\+::end (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}, {\ttfamily [virtual]}}
+
+\Hypertarget{classNeoFOAM_1_1FunctionObjectIO_a2a135997dc8957415c3077e11b22557c}\label{classNeoFOAM_1_1FunctionObjectIO_a2a135997dc8957415c3077e11b22557c} 
+\index{NeoFOAM::FunctionObjectIO@{NeoFOAM::FunctionObjectIO}!execute@{execute}}
+\index{execute@{execute}!NeoFOAM::FunctionObjectIO@{NeoFOAM::FunctionObjectIO}}
+\doxysubsubsection{\texorpdfstring{execute()}{execute()}}
+{\footnotesize\ttfamily virtual bool Neo\+FOAM\+::\+Function\+Object\+IO\+::execute (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}, {\ttfamily [pure virtual]}}
+
+
+
+Implemented in \mbox{\hyperlink{classNeoFOAM_1_1ForceCoeffs_ae7a9c66f7f457bfb2fd3c775877fa5d9}{Neo\+FOAM\+::\+Force\+Coeffs}}, and \mbox{\hyperlink{classNeoFOAM_1_1Forces_ad9ae38e7170e3b4a121fb1a0a46d5e2e}{Neo\+FOAM\+::\+Forces}}.
+
+\Hypertarget{classNeoFOAM_1_1FunctionObjectIO_a4649e2065c57cfa7125dc1b2b7527829}\label{classNeoFOAM_1_1FunctionObjectIO_a4649e2065c57cfa7125dc1b2b7527829} 
+\index{NeoFOAM::FunctionObjectIO@{NeoFOAM::FunctionObjectIO}!getOrCreateFile@{getOrCreateFile}}
+\index{getOrCreateFile@{getOrCreateFile}!NeoFOAM::FunctionObjectIO@{NeoFOAM::FunctionObjectIO}}
+\doxysubsubsection{\texorpdfstring{getOrCreateFile()}{getOrCreateFile()}}
+{\footnotesize\ttfamily std\+::ofstream \& Neo\+FOAM\+::\+Function\+Object\+IO\+::get\+Or\+Create\+File (\begin{DoxyParamCaption}\item[{const std\+::string \&}]{filename,  }\item[{const std\+::string \&}]{header }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Get or create a persistent output file. 
+
+On the first call the directory is created, the file is opened and {\ttfamily header} is written as the first line. On subsequent calls the existing open stream is returned for appending.
+
+
+\begin{DoxyParams}{Parameters}
+{\em filename} & File name inside \doxylink{classNeoFOAM_1_1FunctionObjectIO_a598af1cff8c3269503ff0d2cc5c483b9}{output\+Dir()} \\
+\hline
+{\em header} & Column-\/header line written once at file creation \\
+\hline
+\end{DoxyParams}
+\Hypertarget{classNeoFOAM_1_1FunctionObjectIO_a598af1cff8c3269503ff0d2cc5c483b9}\label{classNeoFOAM_1_1FunctionObjectIO_a598af1cff8c3269503ff0d2cc5c483b9} 
+\index{NeoFOAM::FunctionObjectIO@{NeoFOAM::FunctionObjectIO}!outputDir@{outputDir}}
+\index{outputDir@{outputDir}!NeoFOAM::FunctionObjectIO@{NeoFOAM::FunctionObjectIO}}
+\doxysubsubsection{\texorpdfstring{outputDir()}{outputDir()}}
+{\footnotesize\ttfamily std\+::filesystem\+::path Neo\+FOAM\+::\+Function\+Object\+IO\+::output\+Dir (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [protected]}}
+
+\Hypertarget{classNeoFOAM_1_1FunctionObjectIO_a0ac7b890d28e6afcf30c37c052a499a8}\label{classNeoFOAM_1_1FunctionObjectIO_a0ac7b890d28e6afcf30c37c052a499a8} 
+\index{NeoFOAM::FunctionObjectIO@{NeoFOAM::FunctionObjectIO}!read@{read}}
+\index{read@{read}!NeoFOAM::FunctionObjectIO@{NeoFOAM::FunctionObjectIO}}
+\doxysubsubsection{\texorpdfstring{read()}{read()}}
+{\footnotesize\ttfamily virtual bool Neo\+FOAM\+::\+Function\+Object\+IO\+::read (\begin{DoxyParamCaption}\item[{const Foam\+::dictionary \&}]{dict }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Reimplemented in \mbox{\hyperlink{classNeoFOAM_1_1ForceCoeffs_abbba342c427c240bd52734b9e59dbeff}{Neo\+FOAM\+::\+Force\+Coeffs}}, and \mbox{\hyperlink{classNeoFOAM_1_1Forces_ac695a2319f5af5b5708707bbff6f02b0}{Neo\+FOAM\+::\+Forces}}.
+
+\Hypertarget{classNeoFOAM_1_1FunctionObjectIO_aa9637f114abb9f1fbf8badbab17d2771}\label{classNeoFOAM_1_1FunctionObjectIO_aa9637f114abb9f1fbf8badbab17d2771} 
+\index{NeoFOAM::FunctionObjectIO@{NeoFOAM::FunctionObjectIO}!write@{write}}
+\index{write@{write}!NeoFOAM::FunctionObjectIO@{NeoFOAM::FunctionObjectIO}}
+\doxysubsubsection{\texorpdfstring{write()}{write()}}
+{\footnotesize\ttfamily virtual bool Neo\+FOAM\+::\+Function\+Object\+IO\+::write (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}, {\ttfamily [pure virtual]}}
+
+
+
+Implemented in \mbox{\hyperlink{classNeoFOAM_1_1ForceCoeffs_a2a0cd7640588acb26c8f92c67862bb95}{Neo\+FOAM\+::\+Force\+Coeffs}}, and \mbox{\hyperlink{classNeoFOAM_1_1Forces_ab2664062354c5f34078252d7f22dc4ca}{Neo\+FOAM\+::\+Forces}}.
+
+
+
+\doxysubsection{Member Data Documentation}
+\Hypertarget{classNeoFOAM_1_1FunctionObjectIO_af8fcc2e816a770217694f59bd565dabb}\label{classNeoFOAM_1_1FunctionObjectIO_af8fcc2e816a770217694f59bd565dabb} 
+\index{NeoFOAM::FunctionObjectIO@{NeoFOAM::FunctionObjectIO}!time\_@{time\_}}
+\index{time\_@{time\_}!NeoFOAM::FunctionObjectIO@{NeoFOAM::FunctionObjectIO}}
+\doxysubsubsection{\texorpdfstring{time\_}{time\_}}
+{\footnotesize\ttfamily const Foam\+::\+Time\& Neo\+FOAM\+::\+Function\+Object\+IO\+::time\+\_\+\hspace{0.3cm}{\ttfamily [protected]}}
+
+
+
+Definition at line \mbox{\hyperlink{functionObjectIO_8hpp_source_l00073}{73}} of file \mbox{\hyperlink{functionObjectIO_8hpp_source}{function\+Object\+IO.\+hpp}}.
+
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/runner/work/\+Neo\+FOAM/\+Neo\+FOAM/include/\+Neo\+FOAM/function\+Objects/\mbox{\hyperlink{functionObjectIO_8hpp}{function\+Object\+IO.\+hpp}}\end{DoxyCompactItemize}

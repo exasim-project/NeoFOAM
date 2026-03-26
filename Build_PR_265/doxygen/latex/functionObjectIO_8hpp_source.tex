@@ -1,0 +1,68 @@
+\doxysection{function\+Object\+IO.\+hpp}
+\hypertarget{functionObjectIO_8hpp_source}{}\label{functionObjectIO_8hpp_source}\index{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/functionObjects/functionObjectIO.hpp@{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/functionObjects/functionObjectIO.hpp}}
+\mbox{\hyperlink{functionObjectIO_8hpp}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00001}00001\ \textcolor{comment}{//\ SPDX-\/License-\/Identifier:\ GPL-\/3.0-\/or-\/later}}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00002}00002\ \textcolor{comment}{//\ SPDX-\/FileCopyrightText:\ 2025\ NeoFOAM\ authors}}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00003}00003\ }
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00004}00004\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00005}00005\ }
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00006}00006\ \textcolor{preprocessor}{\#include\ <filesystem>}}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00007}00007\ \textcolor{preprocessor}{\#include\ <fstream>}}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00008}00008\ \textcolor{preprocessor}{\#include\ <map>}}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00009}00009\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00010}00010\ }
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00011}00011\ \textcolor{preprocessor}{\#include\ "{}functionObject.H"{}}}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00012}00012\ \textcolor{preprocessor}{\#include\ "{}Time.H"{}}}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00013}00013\ }
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00014}00014\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceNeoFOAM}{NeoFOAM}}}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00015}00015\ \{}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00016}00016\ }
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00044}\mbox{\hyperlink{classNeoFOAM_1_1FunctionObjectIO}{00044}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classNeoFOAM_1_1FunctionObjectIO}{FunctionObjectIO}}\ :\ \textcolor{keyword}{public}\ Foam::functionObject}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00045}00045\ \{}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00046}00046\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00047}00047\ }
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00048}00048\ \ \ \ \ \textcolor{comment}{//-\/\ Construct\ from\ name,\ Time\ and\ dictionary.}}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00049}00049\ \ \ \ \ \textcolor{comment}{//\ \ Matches\ the\ signature\ expected\ by\ Foam::functionObject::New\ (RTST).}}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00050}\mbox{\hyperlink{classNeoFOAM_1_1FunctionObjectIO_a7899bbbcbae3550e2ed0ab9e2c5b0a8c}{00050}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1FunctionObjectIO_a7899bbbcbae3550e2ed0ab9e2c5b0a8c}{FunctionObjectIO}}(}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00051}00051\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Foam::word\&\ name,}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00052}00052\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Foam::Time\&\ runTime,}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00053}00053\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Foam::dictionary\&\ dict}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00054}00054\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00055}00055\ }
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00056}00056\ \ \ \ \ \textcolor{comment}{//-\/\ Destructor}}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00057}\mbox{\hyperlink{classNeoFOAM_1_1FunctionObjectIO_a33ef6f45707b6066e5ae5f665dd4e225}{00057}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \mbox{\hyperlink{classNeoFOAM_1_1FunctionObjectIO_a33ef6f45707b6066e5ae5f665dd4e225}{\string~FunctionObjectIO}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00058}00058\ }
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00059}00059\ \ \ \ \ \textcolor{comment}{//\ -\/-\/-\/-\/\ Foam::functionObject\ interface\ -\/-\/-\/-\/}}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00060}00060\ }
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00061}\mbox{\hyperlink{classNeoFOAM_1_1FunctionObjectIO_a0ac7b890d28e6afcf30c37c052a499a8}{00061}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classNeoFOAM_1_1FunctionObjectIO_a0ac7b890d28e6afcf30c37c052a499a8}{read}}(\textcolor{keyword}{const}\ Foam::dictionary\&\ dict)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00062}00062\ }
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00063}00063\ \ \ \ \ \textcolor{comment}{//-\/\ GPU\ computation\ —\ implemented\ by\ derived\ classes}}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00064}\mbox{\hyperlink{classNeoFOAM_1_1FunctionObjectIO_a2a135997dc8957415c3077e11b22557c}{00064}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classNeoFOAM_1_1FunctionObjectIO_a2a135997dc8957415c3077e11b22557c}{execute}}()\ \textcolor{keyword}{override}\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00065}00065\ }
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00066}00066\ \ \ \ \ \textcolor{comment}{//-\/\ Write\ scalar\ results\ —\ implemented\ by\ derived\ classes}}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00067}\mbox{\hyperlink{classNeoFOAM_1_1FunctionObjectIO_aa9637f114abb9f1fbf8badbab17d2771}{00067}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classNeoFOAM_1_1FunctionObjectIO_aa9637f114abb9f1fbf8badbab17d2771}{write}}()\ \textcolor{keyword}{override}\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00068}00068\ }
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00069}\mbox{\hyperlink{classNeoFOAM_1_1FunctionObjectIO_ae8010846a247a5d82ed9c9725906fd82}{00069}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classNeoFOAM_1_1FunctionObjectIO_ae8010846a247a5d82ed9c9725906fd82}{end}}()\ \textcolor{keyword}{override};}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00070}00070\ }
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00071}00071\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00072}00072\ }
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00073}\mbox{\hyperlink{classNeoFOAM_1_1FunctionObjectIO_af8fcc2e816a770217694f59bd565dabb}{00073}}\ \ \ \ \ \textcolor{keyword}{const}\ Foam::Time\&\ \mbox{\hyperlink{classNeoFOAM_1_1FunctionObjectIO_af8fcc2e816a770217694f59bd565dabb}{time\_}};}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00074}00074\ }
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00075}00075\ \ \ \ \ \textcolor{comment}{//-\/\ Return\ (and\ create\ if\ needed)\ postProcessing/<name()>/<startTime>/\ path}}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00076}\mbox{\hyperlink{classNeoFOAM_1_1FunctionObjectIO_a598af1cff8c3269503ff0d2cc5c483b9}{00076}}\ \ \ \ \ std::filesystem::path\ \mbox{\hyperlink{classNeoFOAM_1_1FunctionObjectIO_a598af1cff8c3269503ff0d2cc5c483b9}{outputDir}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00077}00077\ }
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00088}\mbox{\hyperlink{classNeoFOAM_1_1FunctionObjectIO_a4649e2065c57cfa7125dc1b2b7527829}{00088}}\ \ \ \ \ std::ofstream\&\ \mbox{\hyperlink{classNeoFOAM_1_1FunctionObjectIO_a4649e2065c57cfa7125dc1b2b7527829}{getOrCreateFile}}(}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00089}00089\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ filename,}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00090}00090\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ header}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00091}00091\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00092}00092\ }
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00093}00093\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00094}00094\ }
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00095}00095\ \ \ \ \ std::string\ startTime\_;}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00096}00096\ \ \ \ \ std::map<std::string,\ std::ofstream>\ files\_;}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00097}00097\ \};}
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00098}00098\ }
+\DoxyCodeLine{\Hypertarget{functionObjectIO_8hpp_source_l00099}00099\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
+
+\end{DoxyCode}
