@@ -5,12 +5,15 @@
 #pragma once
 
 #include "NeoN/core/dictionary.hpp"
+#include "NeoN/core/tokenList.hpp"
 
 
 namespace NeoFOAM
 {
 
 void updateDdtSchemes(NeoN::Dictionary& solverDict);
+
+void updateSnGradSchemes(NeoN::Dictionary& schemeDict);
 
 NeoN::Dictionary mapFvSchemes(const NeoN::Dictionary& schemesDict);
 
