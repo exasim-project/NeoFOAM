@@ -92,10 +92,11 @@ public:
     /**
      * @brief Run the GPU force-integral computation.
      *
-     * Looks up the pressure field @c pName_ from the OpenFOAM object registry,
-     * converts it to a NeoN field on the active executor, then accumulates
-     * pressure forces and moments for each registered patch via a
-     * GPU-parallel kernel.  Results are stored in lastResult().
+     * Looks up the pressure field @c pName_ from the @c VectorCollection registered in
+     * the @c NeoN::Database linked to the @c MeshAdapter.  The field must have been
+     * registered by the solver (e.g. via @c NeoFOAM::constructAndRegister) before the
+     * first @c execute() call.  Accumulates pressure forces and moments for each
+     * registered patch via a GPU-parallel kernel; results are stored in lastResult().
      */
     virtual bool execute() override;
 
