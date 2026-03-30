@@ -1,7 +1,7 @@
 var searchData=
 [
-  ['operator_26_0',['operator&amp;',['../namespaceNeoFOAM.html#a9de226ba9098594fc8b6b867a35adccc',1,'NeoFOAM']]],
-  ['operator_28_29_1',['operator()',['../classNeoFOAM_1_1CreateFromFoamField.html#a2ea39ed09f09772fece69da08f93c00f',1,'NeoFOAM::CreateFromFoamField::operator()()'],['../structNeoFOAM_1_1PDESolver_1_1SetReference.html#a5ed1764236a6a29be4bc5235ae7058e1',1,'NeoFOAM::PDESolver::SetReference::operator()()']]],
-  ['operator_3d_3d_2',['operator==',['../namespaceNeoFOAM.html#adb3f301260a65dd30182893f75665a8a',1,'NeoFOAM::operator==(const NeoN::Vector&lt; NT &gt; &amp;nf, const Foam::Field&lt; OT &gt; &amp;of)'],['../namespaceNeoFOAM.html#ab57ab173a9df89dbffffcf9a42aa673d',1,'NeoFOAM::operator==(fvcc::VolumeField&lt; NT &gt; &amp;nf, const Foam::GeometricField&lt; OT, Foam::fvPatchField, Foam::volMesh &gt; &amp;of)'],['../namespaceNeoFOAM.html#aa63d77fd599301dc114f8358d866b805',1,'NeoFOAM::operator==(const fvcc::SurfaceField&lt; NT &gt; &amp;nf, const Foam::GeometricField&lt; OT, Foam::fvsPatchField, Foam::surfaceMesh &gt; &amp;of)']]],
-  ['outputdir_3',['outputDir',['../classNeoFOAM_1_1FunctionObjectIO.html#a598af1cff8c3269503ff0d2cc5c483b9',1,'NeoFOAM::FunctionObjectIO']]]
+  ['name_0',['name',['../classNeoFOAM_1_1CreateFromFoamField.html#ac5497af5c8e233a15d3ef9f3c622bb49',1,'NeoFOAM::CreateFromFoamField']]],
+  ['neofoam_1',['NeoFOAM',['../namespaceNeoFOAM.html',1,'']]],
+  ['neofoam_3a_3adetail_2',['detail',['../namespaceNeoFOAM_1_1detail.html',1,'NeoFOAM']]],
+  ['nfmesh_3',['nfmesh',['../classNeoFOAM_1_1CreateFromFoamField.html#a6e3d71162913f61365a2373c2396feed',1,'NeoFOAM::CreateFromFoamField::nfMesh'],['../structNeoFOAM_1_1RunTime.html#a810936522333c8fdaf8ffdacefa3909d',1,'NeoFOAM::RunTime::nfMesh'],['../classNeoFOAM_1_1MeshAdapter.html#aaf0eda0aca98dfa489c063fa878d9c09',1,'NeoFOAM::MeshAdapter::nfMesh()'],['../classNeoFOAM_1_1MeshAdapter.html#aa4f497b00faecd79140b4b9d32a29db8',1,'NeoFOAM::MeshAdapter::nfMesh() const']]]
 ];

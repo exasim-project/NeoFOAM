@@ -354,7 +354,7 @@ MPI parallel execution is not yet supported (v1 limitation). </dd></dl>
 </div><div class="memdoc">
 
 <p>Run the GPU force-integral computation. </p>
-<p>Looks up the pressure field <code>pName_</code> from the OpenFOAM object registry, converts it to a NeoN field on the active executor, then accumulates pressure forces and moments for each registered patch via a GPU-parallel kernel. Results are stored in <a class="el" href="classNeoFOAM_1_1Forces.html#a51ad0e649eabe29078bf8ff6e20324a7">lastResult()</a>. </p>
+<p>Looks up the pressure field <code>pName_</code> from the <code>VectorCollection</code> registered in the <code>NeoN::Database</code> linked to the <code><a class="el" href="classNeoFOAM_1_1MeshAdapter.html">MeshAdapter</a></code>. The field must have been registered by the solver (e.g. via <code><a class="el" href="namespaceNeoFOAM.html#a48fbbbb3755e34d928cf0d189532d93c" title="construct an NF field from a given OF field and register">NeoFOAM::constructAndRegister</a></code>) before the first <code><a class="el" href="classNeoFOAM_1_1Forces.html#ad9ae38e7170e3b4a121fb1a0a46d5e2e" title="Run the GPU force-integral computation.">execute()</a></code> call. Accumulates pressure forces and moments for each registered patch via a GPU-parallel kernel; results are stored in <a class="el" href="classNeoFOAM_1_1Forces.html#a51ad0e649eabe29078bf8ff6e20324a7">lastResult()</a>. </p>
 
 <p>Implements <a class="el" href="classNeoFOAM_1_1FunctionObjectIO.html#a2a135997dc8957415c3077e11b22557c">NeoFOAM::FunctionObjectIO</a>.</p>
 
@@ -385,7 +385,7 @@ MPI parallel execution is not yet supported (v1 limitation). </dd></dl>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00111">111</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00112">112</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
@@ -528,7 +528,7 @@ MPI parallel execution is not yet supported (v1 limitation). </dd></dl>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00150">150</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00151">151</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
@@ -578,7 +578,7 @@ MPI parallel execution is not yet supported (v1 limitation). </dd></dl>
 
 <p>Lazily resolved on first <a class="el" href="classNeoFOAM_1_1Forces.html#ad9ae38e7170e3b4a121fb1a0a46d5e2e" title="Run the GPU force-integral computation.">execute()</a> — null until <a class="el" href="classNeoFOAM_1_1MeshAdapter.html">MeshAdapter</a> is registered. </p>
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00142">142</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00143">143</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
@@ -604,7 +604,7 @@ MPI parallel execution is not yet supported (v1 limitation). </dd></dl>
 
 <p>Resolved from patchNames_ on first <a class="el" href="classNeoFOAM_1_1Forces.html#ad9ae38e7170e3b4a121fb1a0a46d5e2e" title="Run the GPU force-integral computation.">execute()</a> </p>
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00145">145</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00146">146</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
@@ -630,7 +630,7 @@ MPI parallel execution is not yet supported (v1 limitation). </dd></dl>
 
 <p>Stored from dict; resolved to indices lazily. </p>
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00144">144</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00145">145</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
@@ -654,7 +654,7 @@ MPI parallel execution is not yet supported (v1 limitation). </dd></dl>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00147">147</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00148">148</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
@@ -678,7 +678,7 @@ MPI parallel execution is not yet supported (v1 limitation). </dd></dl>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00149">149</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00150">150</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
@@ -702,7 +702,7 @@ MPI parallel execution is not yet supported (v1 limitation). </dd></dl>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00152">152</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00153">153</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
@@ -726,7 +726,7 @@ MPI parallel execution is not yet supported (v1 limitation). </dd></dl>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00148">148</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00149">149</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
