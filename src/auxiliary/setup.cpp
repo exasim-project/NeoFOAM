@@ -131,7 +131,7 @@ RunTime createAdapterRunTime(const Foam::Time& in, const NeoN::Executor exec)
     auto mpiEnvironment = NeoN::mpi::Environment {};
 
     auto& nfMesh = mesh.nfMesh();
-    return NeoFOAM::RunTime {
+    RunTime rt {
         .db = NeoN::Database(),
         .meshPtr = std::move(meshPtr),
         .mesh = mesh,
@@ -147,6 +147,8 @@ RunTime createAdapterRunTime(const Foam::Time& in, const NeoN::Executor exec)
         .fvSchemesDict = convert(mesh.schemesDict()),
         .mpiEnvironment = mpiEnvironment
     };
+    rt.mesh.setDB(rt.db);
+    return rt;
 }
 
 }

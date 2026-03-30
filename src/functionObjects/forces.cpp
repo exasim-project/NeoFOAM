@@ -2,10 +2,8 @@
 // SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
 #include "NeoFOAM/functionObjects/forces.hpp"
-#include "NeoFOAM/auxiliary/readers.hpp"
 
 #include "addToRunTimeSelectionTable.H"
-#include "volFields.H"
 #include "polyMesh.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * //
@@ -183,23 +181,43 @@ bool Forces::execute()
 
     result_ = ForceResult {};
 
-    const Foam::fvMesh& foamMesh = *meshAdapter_;
-    const NeoN::UnstructuredMesh& nfMesh = meshAdapter_->nfMesh();
-    const NeoN::Executor exec = meshAdapter_->exec();
+    namespace fvcc = NeoN::finiteVolume::cellCentred;
+    using ScalarField = fvcc::VolumeField<NeoN::scalar>;
 
-    // Look up the pressure field from the OpenFOAM object registry (stays on device)
-    if (!foamMesh.foundObject<Foam::volScalarField>(pName_))
+    if (!meshAdapter_->hasDB())
     {
         WarningInFunction
-            << "Pressure field '" << pName_ << "' not found — skipping Forces::execute()"
+            << "No NeoN::Database linked to MeshAdapter — skipping Forces::execute()\n"
+            << "Ensure createAdapterRunTime() was called before using neoForces."
             << Foam::endl;
         return false;
     }
-    const Foam::volScalarField& ofP =
-        foamMesh.lookupObject<Foam::volScalarField>(pName_);
 
-    // Convert OF field to NeoN field on the active executor
-    auto nfP = NeoFOAM::constructFrom(exec, nfMesh, ofP);
+    NeoN::Database& db = meshAdapter_->db();
+    if (!db.contains("VectorCollection"))
+    {
+        WarningInFunction
+            << "VectorCollection not found in database — skipping Forces::execute()"
+            << Foam::endl;
+        return false;
+    }
+
+    fvcc::VectorCollection& vc = fvcc::VectorCollection::instance(db, "VectorCollection");
+    auto ids = vc.find(
+        [&](const NeoN::Document& doc)
+        { return doc.get<std::string>("name") == pName_; }
+    );
+
+    if (ids.empty())
+    {
+        WarningInFunction
+            << "Pressure field '" << pName_
+            << "' not found in VectorCollection — skipping Forces::execute()"
+            << Foam::endl;
+        return false;
+    }
+
+    const ScalarField& nfP = vc.fieldDoc(ids[0]).field<ScalarField>();
 
     for (int patchi : patchIndices_)
     {

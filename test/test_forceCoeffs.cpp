@@ -7,8 +7,10 @@
 
 #include "NeoFOAM/functionObjects/forces.hpp"
 #include "NeoFOAM/functionObjects/forceCoeffs.hpp"
+#include "NeoFOAM/auxiliary/readers.hpp"
 
 namespace nf = NeoFOAM;
+namespace fvcc = NeoN::finiteVolume::cellCentred;
 namespace nnfvcc = NeoN::finiteVolume::cellCentred;
 
 extern Foam::Time* timePtr;
@@ -102,6 +104,11 @@ TEST_CASE("Forces - pressure force matches OpenFOAM reference")
         ofP.primitiveFieldRef() = Foam::scalar {1.0};
         ofP.correctBoundaryConditions();
 
+        // Register the NeoN pressure field in the VectorCollection
+        fvcc::VectorCollection& vc =
+            fvcc::VectorCollection::instance(rt.db, "VectorCollection");
+        nf::constructAndRegister(vc, rt, ofP, false);
+
         // Build a dictionary that matches the Forces constructor expectations
         Foam::dictionary dict;
         dict.add("patches", Foam::wordList {"fixedWalls"});
@@ -143,6 +150,11 @@ TEST_CASE("Forces - pressure force matches OpenFOAM reference")
         auto ofP = randomScalarField(runTime, mesh, "p");
         ofP.correctBoundaryConditions();
 
+        // Register the NeoN pressure field in the VectorCollection
+        fvcc::VectorCollection& vc =
+            fvcc::VectorCollection::instance(rt.db, "VectorCollection");
+        nf::constructAndRegister(vc, rt, ofP, false);
+
         Foam::dictionary dict;
         dict.add("patches", Foam::wordList {"fixedWalls"});
         dict.add("pName", Foam::word {"p"});
@@ -178,6 +190,11 @@ TEST_CASE("Forces - pressure force matches OpenFOAM reference")
 
         auto ofP = randomScalarField(runTime, mesh, "p");
         ofP.correctBoundaryConditions();
+
+        // Register the NeoN pressure field in the VectorCollection
+        fvcc::VectorCollection& vc =
+            fvcc::VectorCollection::instance(rt.db, "VectorCollection");
+        nf::constructAndRegister(vc, rt, ofP, false);
 
         Foam::dictionary dict;
         dict.add("patches", Foam::wordList {"fixedWalls", "inlet", "outlet"});
@@ -220,6 +237,11 @@ TEST_CASE("ForceCoeffs - normalised coefficients match manual computation")
 
         auto ofP = randomScalarField(runTime, mesh, "p");
         ofP.correctBoundaryConditions();
+
+        // Register the NeoN pressure field in the VectorCollection
+        fvcc::VectorCollection& vc =
+            fvcc::VectorCollection::instance(rt.db, "VectorCollection");
+        nf::constructAndRegister(vc, rt, ofP, false);
 
         const Foam::scalar rhoRef = 1.225;
         const Foam::scalar magUInf = 10.0;
