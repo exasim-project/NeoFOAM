@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
 #include "NeoFOAM/datastructures/databaseWrapper.hpp"
+#include "Time.H"
 
 namespace NeoFOAM
 {

@@ -112,8 +112,6 @@ public:
     //- Access the result from the most recent execute() call
     const ForceResult& lastResult() const { return result_; }
 
-protected:
-
     /**
      * @brief GPU kernel: accumulate pressure force/moment for one boundary patch.
      *
@@ -136,6 +134,8 @@ protected:
         const NeoN::Vec3& cofR,
         ForceResult& result
     ) const;
+
+protected:
 
     /// Resolve MeshAdapter from the object registry on first execute().
     void resolveMesh();
