@@ -3,6 +3,7 @@
 
 #include "NeoFOAM/auxiliary/setup.hpp"
 #include "NeoFOAM/datastructures/meshAdapter.hpp"
+#include "NeoFOAM/datastructures/databaseWrapper.hpp"
 #include "NeoFOAM/auxiliary/readers.hpp"
 
 #include "fvc.H"
@@ -147,7 +148,7 @@ RunTime createAdapterRunTime(const Foam::Time& in, const NeoN::Executor exec)
         .fvSchemesDict = convert(mesh.schemesDict()),
         .mpiEnvironment = mpiEnvironment
     };
-    rt.mesh.setDB(rt.db);
+    rt.dbWrapper = std::make_unique<DatabaseWrapper>(in, rt.db);
     return rt;
 }
 
