@@ -31,7 +31,9 @@ virtual bool \mbox{\hyperlink{classNeoFOAM_1_1Forces_ad9ae38e7170e3b4a121fb1a0a4
 virtual bool \mbox{\hyperlink{classNeoFOAM_1_1Forces_ab2664062354c5f34078252d7f22dc4ca}{write}} () override
 \begin{DoxyCompactList}\small\item\em Write the last computed result to post\+Processing/. \end{DoxyCompactList}\item 
 const \mbox{\hyperlink{structNeoFOAM_1_1ForceResult}{Force\+Result}} \& \mbox{\hyperlink{classNeoFOAM_1_1Forces_a51ad0e649eabe29078bf8ff6e20324a7}{last\+Result}} () const
-\end{DoxyCompactItemize}
+\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1Forces_adcf83787e76dfd6baa1a71bb8e2b51d9}{compute\+Patch\+Forces}} (int patchi, const Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Neo\+N\+::scalar $>$ \&nfP, Neo\+N\+::scalar rho\+Ref, Neo\+N\+::scalar p\+Ref, const Neo\+N\+::\+Vec3 \&cofR, \mbox{\hyperlink{structNeoFOAM_1_1ForceResult}{Force\+Result}} \&result) const
+\begin{DoxyCompactList}\small\item\em GPU kernel\+: accumulate pressure force/moment for one boundary patch. \end{DoxyCompactList}\end{DoxyCompactItemize}
 \doxysubsection*{Public Member Functions inherited from \mbox{\hyperlink{classNeoFOAM_1_1FunctionObjectIO}{Neo\+FOAM\+::\+Function\+Object\+IO}}}
 \begin{DoxyCompactItemize}
 \item 
@@ -51,8 +53,6 @@ static int \mbox{\hyperlink{classNeoFOAM_1_1Forces_a0559e57691e8179339cca27035d8
 \doxysubsubsection*{Protected Member Functions}
 \begin{DoxyCompactItemize}
 \item 
-void \mbox{\hyperlink{classNeoFOAM_1_1Forces_adcf83787e76dfd6baa1a71bb8e2b51d9}{compute\+Patch\+Forces}} (int patchi, const Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Neo\+N\+::scalar $>$ \&nfP, Neo\+N\+::scalar rho\+Ref, Neo\+N\+::scalar p\+Ref, const Neo\+N\+::\+Vec3 \&cofR, \mbox{\hyperlink{structNeoFOAM_1_1ForceResult}{Force\+Result}} \&result) const
-\begin{DoxyCompactList}\small\item\em GPU kernel\+: accumulate pressure force/moment for one boundary patch. \end{DoxyCompactList}\item 
 void \mbox{\hyperlink{classNeoFOAM_1_1Forces_af835251b826a633fce525e08d8716535}{resolve\+Mesh}} ()
 \begin{DoxyCompactList}\small\item\em Resolve \doxylink{classNeoFOAM_1_1MeshAdapter}{Mesh\+Adapter} from the object registry on first \doxylink{classNeoFOAM_1_1Forces_ad9ae38e7170e3b4a121fb1a0a46d5e2e}{execute()}. \end{DoxyCompactList}\end{DoxyCompactItemize}
 \doxysubsection*{Protected Member Functions inherited from \mbox{\hyperlink{classNeoFOAM_1_1FunctionObjectIO}{Neo\+FOAM\+::\+Function\+Object\+IO}}}
@@ -144,7 +144,7 @@ Definition at line \mbox{\hyperlink{forces_8hpp_source_l00066}{66}} of file \mbo
 \index{NeoFOAM::Forces@{NeoFOAM::Forces}!computePatchForces@{computePatchForces}}
 \index{computePatchForces@{computePatchForces}!NeoFOAM::Forces@{NeoFOAM::Forces}}
 \doxysubsubsection{\texorpdfstring{computePatchForces()}{computePatchForces()}}
-{\footnotesize\ttfamily void Neo\+FOAM\+::\+Forces\+::compute\+Patch\+Forces (\begin{DoxyParamCaption}\item[{int}]{patchi,  }\item[{const Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Neo\+N\+::scalar $>$ \&}]{nfP,  }\item[{Neo\+N\+::scalar}]{rho\+Ref,  }\item[{Neo\+N\+::scalar}]{p\+Ref,  }\item[{const Neo\+N\+::\+Vec3 \&}]{cofR,  }\item[{\mbox{\hyperlink{structNeoFOAM_1_1ForceResult}{Force\+Result}} \&}]{result }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [protected]}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::\+Forces\+::compute\+Patch\+Forces (\begin{DoxyParamCaption}\item[{int}]{patchi,  }\item[{const Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Neo\+N\+::scalar $>$ \&}]{nfP,  }\item[{Neo\+N\+::scalar}]{rho\+Ref,  }\item[{Neo\+N\+::scalar}]{p\+Ref,  }\item[{const Neo\+N\+::\+Vec3 \&}]{cofR,  }\item[{\mbox{\hyperlink{structNeoFOAM_1_1ForceResult}{Force\+Result}} \&}]{result }\end{DoxyParamCaption}) const}
 
 
 

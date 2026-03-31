@@ -117,6 +117,9 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ab2664062354c5f34078252d7f22dc4ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a51ad0e649eabe29078bf8ff6e20324a7" id="r_a51ad0e649eabe29078bf8ff6e20324a7"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="structNeoFOAM_1_1ForceResult.html">ForceResult</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1Forces.html#a51ad0e649eabe29078bf8ff6e20324a7">lastResult</a> () const</td></tr>
 <tr class="separator:a51ad0e649eabe29078bf8ff6e20324a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adcf83787e76dfd6baa1a71bb8e2b51d9" id="r_adcf83787e76dfd6baa1a71bb8e2b51d9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1Forces.html#adcf83787e76dfd6baa1a71bb8e2b51d9">computePatchForces</a> (int patchi, const NeoN::finiteVolume::cellCentred::VolumeField&lt; NeoN::scalar &gt; &amp;nfP, NeoN::scalar rhoRef, NeoN::scalar pRef, const NeoN::Vec3 &amp;cofR, <a class="el" href="structNeoFOAM_1_1ForceResult.html">ForceResult</a> &amp;result) const</td></tr>
+<tr class="memdesc:adcf83787e76dfd6baa1a71bb8e2b51d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">GPU kernel: accumulate pressure force/moment for one boundary patch.  <br /></td></tr>
+<tr class="separator:adcf83787e76dfd6baa1a71bb8e2b51d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classNeoFOAM_1_1FunctionObjectIO"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classNeoFOAM_1_1FunctionObjectIO')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classNeoFOAM_1_1FunctionObjectIO.html">NeoFOAM::FunctionObjectIO</a></td></tr>
 <tr class="memitem:a7899bbbcbae3550e2ed0ab9e2c5b0a8c inherit pub_methods_classNeoFOAM_1_1FunctionObjectIO" id="r_a7899bbbcbae3550e2ed0ab9e2c5b0a8c"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1FunctionObjectIO.html#a7899bbbcbae3550e2ed0ab9e2c5b0a8c">FunctionObjectIO</a> (const Foam::word &amp;name, const Foam::Time &amp;runTime, const Foam::dictionary &amp;dict)</td></tr>
 <tr class="separator:a7899bbbcbae3550e2ed0ab9e2c5b0a8c inherit pub_methods_classNeoFOAM_1_1FunctionObjectIO"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -134,9 +137,6 @@ Static Public Attributes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pro-methods" name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
-<tr class="memitem:adcf83787e76dfd6baa1a71bb8e2b51d9" id="r_adcf83787e76dfd6baa1a71bb8e2b51d9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1Forces.html#adcf83787e76dfd6baa1a71bb8e2b51d9">computePatchForces</a> (int patchi, const NeoN::finiteVolume::cellCentred::VolumeField&lt; NeoN::scalar &gt; &amp;nfP, NeoN::scalar rhoRef, NeoN::scalar pRef, const NeoN::Vec3 &amp;cofR, <a class="el" href="structNeoFOAM_1_1ForceResult.html">ForceResult</a> &amp;result) const</td></tr>
-<tr class="memdesc:adcf83787e76dfd6baa1a71bb8e2b51d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">GPU kernel: accumulate pressure force/moment for one boundary patch.  <br /></td></tr>
-<tr class="separator:adcf83787e76dfd6baa1a71bb8e2b51d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af835251b826a633fce525e08d8716535" id="r_af835251b826a633fce525e08d8716535"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1Forces.html#af835251b826a633fce525e08d8716535">resolveMesh</a> ()</td></tr>
 <tr class="memdesc:af835251b826a633fce525e08d8716535"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resolve <a class="el" href="classNeoFOAM_1_1MeshAdapter.html">MeshAdapter</a> from the object registry on first <a class="el" href="classNeoFOAM_1_1Forces.html#ad9ae38e7170e3b4a121fb1a0a46d5e2e" title="Run the GPU force-integral computation.">execute()</a>.  <br /></td></tr>
 <tr class="separator:af835251b826a633fce525e08d8716535"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -261,9 +261,6 @@ MPI parallel execution is not yet supported (v1 limitation). </dd></dl>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">void NeoFOAM::Forces::computePatchForces </td>
@@ -307,11 +304,6 @@ MPI parallel execution is not yet supported (v1 limitation). </dd></dl>
           <td></td><td> const</td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
 
 <p>GPU kernel: accumulate pressure force/moment for one boundary patch. </p>
