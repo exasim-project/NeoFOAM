@@ -16,6 +16,7 @@ target_sources(
           "auxiliary/writers.cpp"
           "auxiliary/comparison.cpp"
           "datastructures/meshAdapter.cpp"
+          "datastructures/databaseWrapper.cpp"
           "compatibility/fvSchemes.cpp"
           "compatibility/fvSolution.cpp"
           "turbulenceModels/spalartAllmarasDDES.cpp"

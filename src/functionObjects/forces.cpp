@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
 #include "NeoFOAM/functionObjects/forces.hpp"
+#include "NeoFOAM/datastructures/databaseWrapper.hpp"
 
 #include "addToRunTimeSelectionTable.H"
 #include "polyMesh.H"
@@ -184,16 +185,18 @@ bool Forces::execute()
     namespace fvcc = NeoN::finiteVolume::cellCentred;
     using ScalarField = fvcc::VolumeField<NeoN::scalar>;
 
-    if (!meshAdapter_->hasDB())
+    if (!time_.foundObject<DatabaseWrapper>(DatabaseWrapper::registryName))
     {
         WarningInFunction
-            << "No NeoN::Database linked to MeshAdapter — skipping Forces::execute()\n"
+            << "NeoFOAM database not registered in Foam::Time — skipping Forces::execute()\n"
             << "Ensure createAdapterRunTime() was called before using neoForces."
             << Foam::endl;
         return false;
     }
 
-    NeoN::Database& db = meshAdapter_->db();
+    const NeoN::Database& db =
+        time_.lookupObject<DatabaseWrapper>(DatabaseWrapper::registryName).db();
+
     if (!db.contains("VectorCollection"))
     {
         WarningInFunction
@@ -202,7 +205,9 @@ bool Forces::execute()
         return false;
     }
 
-    fvcc::VectorCollection& vc = fvcc::VectorCollection::instance(db, "VectorCollection");
+    const fvcc::VectorCollection& vc =
+        fvcc::VectorCollection::instance(db, "VectorCollection");
+
     auto ids = vc.find(
         [&](const NeoN::Document& doc)
         { return doc.get<std::string>("name") == pName_; }

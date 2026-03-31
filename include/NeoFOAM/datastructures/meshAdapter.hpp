@@ -103,23 +103,6 @@ public:
     const NeoN::UnstructuredMesh& nfMesh() const { return nfMesh_; }
 
     const NeoN::Executor exec() const { return nfMesh().exec(); }
-
-    //- Link the NeoN database (called by createAdapterRunTime after RunTime is constructed)
-    void setDB(NeoN::Database& db) { db_ = &db; }
-
-    //- Returns true if a NeoN database has been linked via setDB()
-    bool hasDB() const { return db_ != nullptr; }
-
-    //- Access the linked NeoN database. Aborts if setDB() was never called.
-    NeoN::Database& db()
-    {
-        NF_ASSERT(db_ != nullptr, "No NeoN::Database linked to this MeshAdapter");
-        return *db_;
-    }
-
-private:
-
-    NeoN::Database* db_ {nullptr};  ///< Non-owning pointer; set by createAdapterRunTime()
 };
 
 std::unique_ptr<MeshAdapter> createMesh(const NeoN::Executor& exec, const Foam::Time& runTime);
