@@ -177,7 +177,7 @@ Runs {\ttfamily parallel\+For} over faces in the patch range and uses {\ttfamily
 
 Run the GPU force-\/integral computation. 
 
-Looks up the pressure field {\ttfamily p\+Name\+\_\+} from the {\ttfamily Vector\+Collection} registered in the {\ttfamily Neo\+N\+::\+Database} linked to the {\ttfamily \doxylink{classNeoFOAM_1_1MeshAdapter}{Mesh\+Adapter}}. The field must have been registered by the solver (e.\+g. via {\ttfamily \doxylink{namespaceNeoFOAM_a48fbbbb3755e34d928cf0d189532d93c}{Neo\+FOAM\+::construct\+And\+Register}}) before the first {\ttfamily \doxylink{classNeoFOAM_1_1Forces_ad9ae38e7170e3b4a121fb1a0a46d5e2e}{execute()}} call. Accumulates pressure forces and moments for each registered patch via a GPU-\/parallel kernel; results are stored in \doxylink{classNeoFOAM_1_1Forces_a51ad0e649eabe29078bf8ff6e20324a7}{last\+Result()}. 
+Looks up the {\ttfamily Neo\+N\+::\+Database} via the {\ttfamily \doxylink{classNeoFOAM_1_1DatabaseWrapper}{Database\+Wrapper}} registered in the {\ttfamily Foam\+::\+Time} object\+Registry, then finds the pressure field {\ttfamily p\+Name\+\_\+} in the {\ttfamily Vector\+Collection}. The field must have been registered by the solver (e.\+g. via {\ttfamily \doxylink{namespaceNeoFOAM_a48fbbbb3755e34d928cf0d189532d93c}{Neo\+FOAM\+::construct\+And\+Register}}) before the first {\ttfamily \doxylink{classNeoFOAM_1_1Forces_ad9ae38e7170e3b4a121fb1a0a46d5e2e}{execute()}} call. Accumulates pressure forces and moments for each registered patch via a GPU-\/parallel kernel; results are stored in \doxylink{classNeoFOAM_1_1Forces_a51ad0e649eabe29078bf8ff6e20324a7}{last\+Result()}. 
 
 Implements \mbox{\hyperlink{classNeoFOAM_1_1FunctionObjectIO_a2a135997dc8957415c3077e11b22557c}{Neo\+FOAM\+::\+Function\+Object\+IO}}.
 
@@ -193,7 +193,7 @@ Reimplemented in \mbox{\hyperlink{classNeoFOAM_1_1ForceCoeffs_ae7a9c66f7f457bfb2
 
 
 
-Definition at line \mbox{\hyperlink{forces_8hpp_source_l00112}{112}} of file \mbox{\hyperlink{forces_8hpp_source}{forces.\+hpp}}.
+Definition at line \mbox{\hyperlink{forces_8hpp_source_l00113}{113}} of file \mbox{\hyperlink{forces_8hpp_source}{forces.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1Forces_ac695a2319f5af5b5708707bbff6f02b0}\label{classNeoFOAM_1_1Forces_ac695a2319f5af5b5708707bbff6f02b0} 
 \index{NeoFOAM::Forces@{NeoFOAM::Forces}!read@{read}}
@@ -262,7 +262,7 @@ Reimplemented in \mbox{\hyperlink{classNeoFOAM_1_1ForceCoeffs_a2a0cd7640588acb26
 
 
 
-Definition at line \mbox{\hyperlink{forces_8hpp_source_l00151}{151}} of file \mbox{\hyperlink{forces_8hpp_source}{forces.\+hpp}}.
+Definition at line \mbox{\hyperlink{forces_8hpp_source_l00152}{152}} of file \mbox{\hyperlink{forces_8hpp_source}{forces.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1Forces_a0559e57691e8179339cca27035d82661}\label{classNeoFOAM_1_1Forces_a0559e57691e8179339cca27035d82661} 
 \index{NeoFOAM::Forces@{NeoFOAM::Forces}!debug@{debug}}
@@ -286,7 +286,7 @@ Lazily resolved on first \doxylink{classNeoFOAM_1_1Forces_ad9ae38e7170e3b4a121fb
 
 
 
-Definition at line \mbox{\hyperlink{forces_8hpp_source_l00143}{143}} of file \mbox{\hyperlink{forces_8hpp_source}{forces.\+hpp}}.
+Definition at line \mbox{\hyperlink{forces_8hpp_source_l00144}{144}} of file \mbox{\hyperlink{forces_8hpp_source}{forces.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1Forces_a94d7f3013ae6b22c5ace473c0711a273}\label{classNeoFOAM_1_1Forces_a94d7f3013ae6b22c5ace473c0711a273} 
 \index{NeoFOAM::Forces@{NeoFOAM::Forces}!patchIndices\_@{patchIndices\_}}
@@ -300,7 +300,7 @@ Resolved from patch\+Names\+\_\+ on first \doxylink{classNeoFOAM_1_1Forces_ad9ae
 
 
 
-Definition at line \mbox{\hyperlink{forces_8hpp_source_l00146}{146}} of file \mbox{\hyperlink{forces_8hpp_source}{forces.\+hpp}}.
+Definition at line \mbox{\hyperlink{forces_8hpp_source_l00147}{147}} of file \mbox{\hyperlink{forces_8hpp_source}{forces.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1Forces_aa9bc2a0ad5d0d9b689ed644a03abe2c8}\label{classNeoFOAM_1_1Forces_aa9bc2a0ad5d0d9b689ed644a03abe2c8} 
 \index{NeoFOAM::Forces@{NeoFOAM::Forces}!patchNames\_@{patchNames\_}}
@@ -314,7 +314,7 @@ Stored from dict; resolved to indices lazily.
 
 
 
-Definition at line \mbox{\hyperlink{forces_8hpp_source_l00145}{145}} of file \mbox{\hyperlink{forces_8hpp_source}{forces.\+hpp}}.
+Definition at line \mbox{\hyperlink{forces_8hpp_source_l00146}{146}} of file \mbox{\hyperlink{forces_8hpp_source}{forces.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1Forces_aa9f46c8adb157e16c05dda009b12a9e5}\label{classNeoFOAM_1_1Forces_aa9f46c8adb157e16c05dda009b12a9e5} 
 \index{NeoFOAM::Forces@{NeoFOAM::Forces}!pName\_@{pName\_}}
@@ -324,7 +324,7 @@ Definition at line \mbox{\hyperlink{forces_8hpp_source_l00145}{145}} of file \mb
 
 
 
-Definition at line \mbox{\hyperlink{forces_8hpp_source_l00148}{148}} of file \mbox{\hyperlink{forces_8hpp_source}{forces.\+hpp}}.
+Definition at line \mbox{\hyperlink{forces_8hpp_source_l00149}{149}} of file \mbox{\hyperlink{forces_8hpp_source}{forces.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1Forces_a5e4a1da57cca4dccd6b38bf956c6630c}\label{classNeoFOAM_1_1Forces_a5e4a1da57cca4dccd6b38bf956c6630c} 
 \index{NeoFOAM::Forces@{NeoFOAM::Forces}!pRef\_@{pRef\_}}
@@ -334,7 +334,7 @@ Definition at line \mbox{\hyperlink{forces_8hpp_source_l00148}{148}} of file \mb
 
 
 
-Definition at line \mbox{\hyperlink{forces_8hpp_source_l00150}{150}} of file \mbox{\hyperlink{forces_8hpp_source}{forces.\+hpp}}.
+Definition at line \mbox{\hyperlink{forces_8hpp_source_l00151}{151}} of file \mbox{\hyperlink{forces_8hpp_source}{forces.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1Forces_a91834387ab747d791018d412341b3e98}\label{classNeoFOAM_1_1Forces_a91834387ab747d791018d412341b3e98} 
 \index{NeoFOAM::Forces@{NeoFOAM::Forces}!result\_@{result\_}}
@@ -344,7 +344,7 @@ Definition at line \mbox{\hyperlink{forces_8hpp_source_l00150}{150}} of file \mb
 
 
 
-Definition at line \mbox{\hyperlink{forces_8hpp_source_l00153}{153}} of file \mbox{\hyperlink{forces_8hpp_source}{forces.\+hpp}}.
+Definition at line \mbox{\hyperlink{forces_8hpp_source_l00154}{154}} of file \mbox{\hyperlink{forces_8hpp_source}{forces.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1Forces_a05985b1ca791ec6a86dd589f708a3233}\label{classNeoFOAM_1_1Forces_a05985b1ca791ec6a86dd589f708a3233} 
 \index{NeoFOAM::Forces@{NeoFOAM::Forces}!rhoRef\_@{rhoRef\_}}
@@ -354,7 +354,7 @@ Definition at line \mbox{\hyperlink{forces_8hpp_source_l00153}{153}} of file \mb
 
 
 
-Definition at line \mbox{\hyperlink{forces_8hpp_source_l00149}{149}} of file \mbox{\hyperlink{forces_8hpp_source}{forces.\+hpp}}.
+Definition at line \mbox{\hyperlink{forces_8hpp_source_l00150}{150}} of file \mbox{\hyperlink{forces_8hpp_source}{forces.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1Forces_ad616c9baa2b70f07e83f2ffc1d173ddb}\label{classNeoFOAM_1_1Forces_ad616c9baa2b70f07e83f2ffc1d173ddb} 
 \index{NeoFOAM::Forces@{NeoFOAM::Forces}!typeName@{typeName}}

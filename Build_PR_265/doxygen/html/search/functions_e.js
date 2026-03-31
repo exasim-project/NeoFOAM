@@ -1,8 +1,5 @@
 var searchData=
 [
-  ['setdb_0',['setDB',['../classNeoFOAM_1_1MeshAdapter.html#a0088d127284420d73c16691285e90327',1,'NeoFOAM::MeshAdapter']]],
-  ['setdeltat_1',['setDeltaT',['../namespaceNeoFOAM.html#a39bc76acefb5a1dd3074b0feba5864eb',1,'NeoFOAM']]],
-  ['setreference_2',['setreference',['../structNeoFOAM_1_1PDESolver_1_1SetReference.html#a8871e71d55b49e4309d2acc9207825dd',1,'NeoFOAM::PDESolver::SetReference::SetReference()'],['../classNeoFOAM_1_1PDESolver.html#aa632d298feb601ef802ba3b85b2dc8ed',1,'NeoFOAM::PDESolver::setReference(NeoN::localIdx pRefCell, NeoN::scalar pRefValue)']]],
-  ['solve_3',['solve',['../classNeoFOAM_1_1PDESolver.html#a0464b266cbae77cbfa7f4ffec79e6acb',1,'NeoFOAM::PDESolver::solve()'],['../classNeoFOAM_1_1PDESolver.html#a7f4464b4305040de5ace88df987c05df',1,'NeoFOAM::PDESolver::solve(dsl::SpatialOperator&lt; NeoN::Vec3 &gt; &amp;&amp;rhs)']]],
-  ['syncruntimes_4',['syncRunTimes',['../namespaceNeoFOAM.html#aff116721405a6ad86fee9675a3cc3156',1,'NeoFOAM']]]
+  ['type_0',['type',['../classNeoFOAM_1_1ForceCoeffs.html#a8fdde200ae77b634953cf6ffe11f14bf',1,'NeoFOAM::ForceCoeffs::type()'],['../classNeoFOAM_1_1Forces.html#a304be0e6fcd89e0dcdb722b003d78f5c',1,'NeoFOAM::Forces::type()']]],
+  ['typename_1',['TypeName',['../classNeoFOAM_1_1MeshAdapter.html#a691a24bcf22a1e249311741b6ec85ab2',1,'NeoFOAM::MeshAdapter']]]
 ];

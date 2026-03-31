@@ -1,0 +1,129 @@
+\doxysection{Neo\+FOAM\+::Database\+Wrapper Class Reference}
+\hypertarget{classNeoFOAM_1_1DatabaseWrapper}{}\label{classNeoFOAM_1_1DatabaseWrapper}\index{NeoFOAM::DatabaseWrapper@{NeoFOAM::DatabaseWrapper}}
+
+
+Registers a {\ttfamily Neo\+N\+::\+Database} in the {\ttfamily Foam\+::\+Time} object\+Registry.  
+
+
+
+
+{\ttfamily \#include $<$database\+Wrapper.\+hpp$>$}
+
+Inheritance diagram for Neo\+FOAM\+::Database\+Wrapper\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classNeoFOAM_1_1DatabaseWrapper}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classNeoFOAM_1_1DatabaseWrapper_a02cdc14e7b624372b9cf39ca0ba45667}{Database\+Wrapper}} (const Foam\+::object\+Registry \&obr, Neo\+N\+::\+Database \&\mbox{\hyperlink{classNeoFOAM_1_1DatabaseWrapper_a972ffb40a536ddf575fb0561e4c8c475}{db}})
+\begin{DoxyCompactList}\small\item\em Construct and register in {\ttfamily obr}. \end{DoxyCompactList}\item 
+Neo\+N\+::\+Database \& \mbox{\hyperlink{classNeoFOAM_1_1DatabaseWrapper_a972ffb40a536ddf575fb0561e4c8c475}{db}} ()
+\item 
+const Neo\+N\+::\+Database \& \mbox{\hyperlink{classNeoFOAM_1_1DatabaseWrapper_a042af60270233d51c61f6ff83bc4616c}{db}} () const
+\item 
+bool \mbox{\hyperlink{classNeoFOAM_1_1DatabaseWrapper_ab6a74456449cc54f86a56a653c0075a1}{write\+Data}} (Foam\+::\+Ostream \&) const override
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+static const Foam\+::word \mbox{\hyperlink{classNeoFOAM_1_1DatabaseWrapper_a294a3f7e57e3700663a52e4ef2afe71f}{registry\+Name}}
+\begin{DoxyCompactList}\small\item\em Key under which the wrapper is registered in Foam\+::\+Time. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Registers a {\ttfamily Neo\+N\+::\+Database} in the {\ttfamily Foam\+::\+Time} object\+Registry. 
+
+Allows \doxylink{namespaceNeoFOAM}{Neo\+FOAM} function\+Objects (which only have {\ttfamily const} Foam\+::\+Time\&) to access the NeoN field database via the standard Open\+FOAM lookup\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{time\_.lookupObject<\mbox{\hyperlink{classNeoFOAM_1_1DatabaseWrapper_a02cdc14e7b624372b9cf39ca0ba45667}{DatabaseWrapper}}>(\mbox{\hyperlink{classNeoFOAM_1_1DatabaseWrapper_a294a3f7e57e3700663a52e4ef2afe71f}{DatabaseWrapper::registryName}}).\mbox{\hyperlink{classNeoFOAM_1_1DatabaseWrapper_a972ffb40a536ddf575fb0561e4c8c475}{db}}()}
+
+\end{DoxyCode}
+
+
+\begin{DoxyParagraph}{Lifetime}
+The wrapper holds a non-\/owning pointer to its associated {\ttfamily Neo\+N\+::\+Database}, which must outlive the wrapper. In practice the wrapper is stored as a {\ttfamily std\+::unique\+\_\+ptr} inside {\ttfamily \doxylink{structNeoFOAM_1_1RunTime}{Run\+Time}} so that its destructor (which calls {\ttfamily reg\+IOobject\+::check\+Out}) fires before {\ttfamily Foam\+::\+Time} is destroyed. 
+\end{DoxyParagraph}
+
+
+Definition at line \mbox{\hyperlink{databaseWrapper_8hpp_source_l00029}{29}} of file \mbox{\hyperlink{databaseWrapper_8hpp_source}{database\+Wrapper.\+hpp}}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{classNeoFOAM_1_1DatabaseWrapper_a02cdc14e7b624372b9cf39ca0ba45667}\label{classNeoFOAM_1_1DatabaseWrapper_a02cdc14e7b624372b9cf39ca0ba45667} 
+\index{NeoFOAM::DatabaseWrapper@{NeoFOAM::DatabaseWrapper}!DatabaseWrapper@{DatabaseWrapper}}
+\index{DatabaseWrapper@{DatabaseWrapper}!NeoFOAM::DatabaseWrapper@{NeoFOAM::DatabaseWrapper}}
+\doxysubsubsection{\texorpdfstring{DatabaseWrapper()}{DatabaseWrapper()}}
+{\footnotesize\ttfamily Neo\+FOAM\+::\+Database\+Wrapper\+::\+Database\+Wrapper (\begin{DoxyParamCaption}\item[{const Foam\+::object\+Registry \&}]{obr,  }\item[{Neo\+N\+::\+Database \&}]{db }\end{DoxyParamCaption})}
+
+
+
+Construct and register in {\ttfamily obr}. 
+
+The {\ttfamily reg\+IOobject} base class calls {\ttfamily check\+In()} during construction, which inserts this object into {\ttfamily obr} under {\ttfamily registry\+Name}.
+
+
+\begin{DoxyParams}{Parameters}
+{\em obr} & The object\+Registry to register in (typically Foam\+::\+Time). \\
+\hline
+{\em db} & The NeoN database to wrap (must outlive this object). \\
+\hline
+\end{DoxyParams}
+
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{classNeoFOAM_1_1DatabaseWrapper_a972ffb40a536ddf575fb0561e4c8c475}\label{classNeoFOAM_1_1DatabaseWrapper_a972ffb40a536ddf575fb0561e4c8c475} 
+\index{NeoFOAM::DatabaseWrapper@{NeoFOAM::DatabaseWrapper}!db@{db}}
+\index{db@{db}!NeoFOAM::DatabaseWrapper@{NeoFOAM::DatabaseWrapper}}
+\doxysubsubsection{\texorpdfstring{db()}{db()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily Neo\+N\+::\+Database \& Neo\+FOAM\+::\+Database\+Wrapper\+::db (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \mbox{\hyperlink{databaseWrapper_8hpp_source_l00049}{49}} of file \mbox{\hyperlink{databaseWrapper_8hpp_source}{database\+Wrapper.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1DatabaseWrapper_a042af60270233d51c61f6ff83bc4616c}\label{classNeoFOAM_1_1DatabaseWrapper_a042af60270233d51c61f6ff83bc4616c} 
+\index{NeoFOAM::DatabaseWrapper@{NeoFOAM::DatabaseWrapper}!db@{db}}
+\index{db@{db}!NeoFOAM::DatabaseWrapper@{NeoFOAM::DatabaseWrapper}}
+\doxysubsubsection{\texorpdfstring{db()}{db()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily const Neo\+N\+::\+Database \& Neo\+FOAM\+::\+Database\+Wrapper\+::db (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \mbox{\hyperlink{databaseWrapper_8hpp_source_l00051}{51}} of file \mbox{\hyperlink{databaseWrapper_8hpp_source}{database\+Wrapper.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1DatabaseWrapper_ab6a74456449cc54f86a56a653c0075a1}\label{classNeoFOAM_1_1DatabaseWrapper_ab6a74456449cc54f86a56a653c0075a1} 
+\index{NeoFOAM::DatabaseWrapper@{NeoFOAM::DatabaseWrapper}!writeData@{writeData}}
+\index{writeData@{writeData}!NeoFOAM::DatabaseWrapper@{NeoFOAM::DatabaseWrapper}}
+\doxysubsubsection{\texorpdfstring{writeData()}{writeData()}}
+{\footnotesize\ttfamily bool Neo\+FOAM\+::\+Database\+Wrapper\+::write\+Data (\begin{DoxyParamCaption}\item[{Foam\+::\+Ostream \&}]{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}}
+
+
+
+Definition at line \mbox{\hyperlink{databaseWrapper_8hpp_source_l00053}{53}} of file \mbox{\hyperlink{databaseWrapper_8hpp_source}{database\+Wrapper.\+hpp}}.
+
+
+
+\doxysubsection{Member Data Documentation}
+\Hypertarget{classNeoFOAM_1_1DatabaseWrapper_a294a3f7e57e3700663a52e4ef2afe71f}\label{classNeoFOAM_1_1DatabaseWrapper_a294a3f7e57e3700663a52e4ef2afe71f} 
+\index{NeoFOAM::DatabaseWrapper@{NeoFOAM::DatabaseWrapper}!registryName@{registryName}}
+\index{registryName@{registryName}!NeoFOAM::DatabaseWrapper@{NeoFOAM::DatabaseWrapper}}
+\doxysubsubsection{\texorpdfstring{registryName}{registryName}}
+{\footnotesize\ttfamily const Foam\+::word Neo\+FOAM\+::\+Database\+Wrapper\+::registry\+Name\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Key under which the wrapper is registered in Foam\+::\+Time. 
+
+
+
+Definition at line \mbox{\hyperlink{databaseWrapper_8hpp_source_l00036}{36}} of file \mbox{\hyperlink{databaseWrapper_8hpp_source}{database\+Wrapper.\+hpp}}.
+
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/runner/work/\+Neo\+FOAM/\+Neo\+FOAM/include/\+Neo\+FOAM/datastructures/\mbox{\hyperlink{databaseWrapper_8hpp}{database\+Wrapper.\+hpp}}\end{DoxyCompactItemize}

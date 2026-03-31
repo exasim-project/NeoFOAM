@@ -1,9 +1,5 @@
 var searchData=
 [
-  ['insert_0',['insert',['../namespaceNeoFOAM.html#af3b37c9dbbd37df8a0849a0f383f06d9',1,'NeoFOAM']]],
-  ['issurfacefield_1',['issurfacefield',['../structNeoFOAM_1_1detail_1_1IsSurfaceField.html',1,'NeoFOAM::detail::IsSurfaceField&lt; ContainerType &gt;'],['../namespaceNeoFOAM_1_1detail.html#ab279b37af86eb68b39242b6bf49e208d',1,'NeoFOAM::detail::isSurfaceField']]],
-  ['issurfacefield_3c_20fvcc_3a_3asurfacefield_3c_20valuetype_20_3e_20_3e_2',['IsSurfaceField&lt; fvcc::SurfaceField&lt; ValueType &gt; &gt;',['../structNeoFOAM_1_1detail_1_1IsSurfaceField_3_01fvcc_1_1SurfaceField_3_01ValueType_01_4_01_4.html',1,'NeoFOAM::detail']]],
-  ['isvolumefield_3',['isvolumefield',['../structNeoFOAM_1_1detail_1_1IsVolumeField.html',1,'NeoFOAM::detail::IsVolumeField&lt; ContainerType &gt;'],['../namespaceNeoFOAM_1_1detail.html#a5376cc046ea43727dbdeedf0f7b2614c',1,'NeoFOAM::detail::isVolumeField']]],
-  ['isvolumefield_3c_20fvcc_3a_3avolumefield_3c_20valuetype_20_3e_20_3e_4',['IsVolumeField&lt; fvcc::VolumeField&lt; ValueType &gt; &gt;',['../structNeoFOAM_1_1detail_1_1IsVolumeField_3_01fvcc_1_1VolumeField_3_01ValueType_01_4_01_4.html',1,'NeoFOAM::detail']]],
-  ['iterationindex_5',['iterationIndex',['../classNeoFOAM_1_1CreateFromFoamField.html#ae2f5cd13138970d78a2462ae06a4b68f',1,'NeoFOAM::CreateFromFoamField']]]
+  ['lastresult_0',['lastResult',['../classNeoFOAM_1_1Forces.html#a51ad0e649eabe29078bf8ff6e20324a7',1,'NeoFOAM::Forces']]],
+  ['linearsystem_1',['linearsystem',['../classNeoFOAM_1_1PDESolver.html#ae157132adbb86472bbe3709709f71098',1,'NeoFOAM::PDESolver::linearSystem()'],['../classNeoFOAM_1_1PDESolver.html#a663d27bbda1f87fcc55f09f73d9a88ce',1,'NeoFOAM::PDESolver::linearSystem() const']]]
 ];
