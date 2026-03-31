@@ -166,6 +166,8 @@ public:
         auto solverDict = runTime_.fvSolutionDict.subDict("solvers");
         auto fvSolution = solverDict.subDict(psi_.name);
         auto solver = NeoN::la::Solver(psi_.exec(), fvSolution);
+        // Do some sanity checks before trying to solve
+        // NF_ASSERT(ls.exec() == solution.exec(), "Executors are not the same");
         auto stats = solver.solve(ls, psi_.internalVector());
 
         for (auto& stat : stats.entries)
