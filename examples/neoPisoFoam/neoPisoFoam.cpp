@@ -46,6 +46,7 @@ int main(int argc, char* argv[])
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
         solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
         solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
+        solverDict.subDict("nuTilda") = nf::mapFvSolution(solverDict.subDict("nuTilda"));
         auto& schemesDict = rt.fvSchemesDict;
         schemesDict = nf::mapFvSchemes(rt.fvSchemesDict);
 
@@ -54,55 +55,26 @@ int main(int argc, char* argv[])
 
         auto& p = nf::constructAndRegister(vectorCollection, rt, ofP, false);
         auto& U = nf::constructAndRegister(vectorCollection, rt, ofU, false);
-
         auto& nuTilda = nf::constructAndRegister(vectorCollection, rt, ofNuTilda, false);
-
-        auto surfCalcBCs =
-            fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<NeoN::scalar>>(rt.nfMesh);
-        auto volCalcBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<NeoN::scalar>>(rt.nfMesh);
-        auto volCalcVecBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<NeoN::Vec3>>(rt.nfMesh);
 
         NeoN::Logging::info("Creating phi");
         auto& phi = nf::constructAndRegister(vectorCollection, rt, ofPhi, false);
 
-        // Turbulence model logic
-        auto tnu = laminarTransport.nu();
+        // Turbulence model setup
         auto nu = nf::constructFrom(rt.exec, rt.nfMesh, tnu());
-        Foam::wallDist y(mesh);
         auto wallDist = nf::constructFrom(rt.exec, rt.nfMesh, y.y());
-
-        const Foam::incompressible::LESModel& lesModel =
-            Foam::refCast<const Foam::incompressible::LESModel>(turbulence());
+        auto nearWallDist = nf::constructFrom(rt.exec, rt.nfMesh, ofNearWallDist);
         auto delta = nf::constructFrom(rt.exec, rt.nfMesh, lesModel.delta());
-        NeoN::turbulenceModels::SpalartAllmarasDDES saBase(rt.exec, rt.nfMesh);
+        auto nut = nf::constructFrom(rt.exec, rt.nfMesh, ofNut);
+        nf::SpalartAllmarasDDES turb(rt.exec, rt.nfMesh, nu, wallDist, nearWallDist, delta);
+        turb.validate(U, nuTilda, nut);
 
-        auto gradOp = nnfvcc::GaussGreenGrad(rt.exec, rt.nfMesh);
-        fvcc::TensorVecField G {
-            fvcc::VolumeField<NeoN::Vec3>(rt.exec, "gradUx", rt.nfMesh, volCalcVecBCs),
-            fvcc::VolumeField<NeoN::Vec3>(rt.exec, "gradUy", rt.nfMesh, volCalcVecBCs),
-            fvcc::VolumeField<NeoN::Vec3>(rt.exec, "gradUz", rt.nfMesh, volCalcVecBCs)
-        };
-        gradOp.grad(U, G);
-        fvcc::VolumeField<NeoN::scalar>
-            magSqrGradNuTilda(rt.exec, "magSqrGradNuTilda", rt.nfMesh, volCalcBCs);
-        fvcc::VolumeField<NeoN::Vec3> gradNuTilda(rt.exec, "gradNuTilda", rt.nfMesh, volCalcVecBCs);
-        fvcc::VolumeField<NeoN::scalar> production(rt.exec, "production", rt.nfMesh, volCalcBCs);
-        fvcc::VolumeField<NeoN::scalar> spCoeff(rt.exec, "spCoeff", rt.nfMesh, volCalcBCs);
-        fvcc::SurfaceField<NeoN::scalar> nuTildaEff(rt.exec, "nuTildaEff", rt.nfMesh, surfCalcBCs);
-        fvcc::SurfaceField<NeoN::scalar> nuEff(rt.exec, "nuEff", rt.nfMesh, surfCalcBCs);
-        fvcc::SurfaceField<NeoN::scalar> surfNu(rt.exec, "surfNu", rt.nfMesh, surfCalcBCs);
-        fvcc::SurfaceField<NeoN::scalar> surfNut(rt.exec, "surfNut", rt.nfMesh, surfCalcBCs);
-        fvcc::SurfaceField<NeoN::scalar>
-            surfNuTilda(rt.exec, "surfNuTilda", rt.nfMesh, surfCalcBCs);
+        // TODO: surface interpolation also instatiated in turbulence model -> doubled?!
         auto surfInterpol = fvcc::SurfaceInterpolation<NeoN::scalar>(
             rt.exec,
             rt.nfMesh,
             NeoN::TokenList({std::string("linear")})
         );
-        surfInterpol.interpolate(nu, surfNu);
-        auto nut = nf::constructFrom(rt.exec, rt.nfMesh, ofNut);
-        saBase.calcNuTildaDiffusionCoeff(nuTilda, surfNu, surfNuTilda, nuTildaEff);
-        saBase.correctNut(nut, surfNut, nuEff, nuTilda, nu, surfNu);
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -122,8 +94,9 @@ int main(int argc, char* argv[])
 
             // Momentum predictor
             nf::PDESolver<NeoN::Vec3> UEqn(
-                dsl::imp::ddt(U) + dsl::imp::div(phi, U) - dsl::imp::laplacian(nuEff, U)
-                    + dsl::exp::viscousStress(nu, nut, G),
+                dsl::imp::ddt(U) + dsl::imp::div(phi, U)
+                    - dsl::imp::laplacian(turb.nuEff(), U)
+                    + dsl::exp::viscousStress(nu, nut, turb.gradU()),
                 U,
                 rt
             );
@@ -189,33 +162,8 @@ int main(int argc, char* argv[])
                 nf::updateVelocity(hByA, crAU, p, U);
                 U.correctBoundaryConditions();
             }
-            // Turbulence calculations
-            gradOp.grad(U, G);
-            gradOp.grad(nuTilda, gradNuTilda);
-            saBase.calcMagSqrVec(magSqrGradNuTilda, gradNuTilda);
-            saBase.computeProdSpDDES(
-                production,
-                spCoeff,
-                nuTilda,
-                nu,
-                G.Tx,
-                G.Ty,
-                G.Tz,
-                wallDist,
-                delta,
-                magSqrGradNuTilda
-            );
-
-            nf::PDESolver<NeoN::scalar> nuTildaEqn(
-                dsl::imp::ddt(nuTilda) + dsl::imp::div(phi, nuTilda)
-                    - NeoN::dsl::imp::laplacian(nuTildaEff, nuTilda)
-                    + dsl::imp::source(spCoeff, nuTilda) - dsl::exp::sourceU(production),
-                nuTilda,
-                rt
-            );
-            nuTildaEqn.solve();
-            saBase.calcNuTildaDiffusionCoeff(nuTilda, surfNu, surfNuTilda, nuTildaEff);
-            saBase.correctNut(nut, surfNut, nuEff, nuTilda, nu, surfNu);
+            // Turbulence update
+            turb.correct(U, phi, nuTilda, nut, rt);
 
             runTime.write();
             if (runTime.outputTime())

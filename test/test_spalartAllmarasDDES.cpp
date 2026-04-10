@@ -467,6 +467,30 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
         }
     }
 
+    Foam::volScalarField nearWallDist(
+        Foam::IOobject(
+            "nearWallDist",
+            runTime.timeName(),
+            mesh,
+            Foam::IOobject::NO_READ,
+            Foam::IOobject::NO_WRITE
+        ),
+        mesh,
+        Foam::dimensionedScalar("zero", Foam::dimLength, scalar(0.0))
+    );
+    for (Foam::label patchi = 0; patchi < nPatches; ++patchi)
+    {
+        const Foam::scalarField& ofY = turb.y()[patchi];
+        Foam::fvPatchScalarField& yPatch = nearWallDist.boundaryFieldRef()[patchi];
+
+        const Foam::label nFaces = yPatch.size();
+
+        for (Foam::label facei = 0; facei < nFaces; ++facei)
+        {
+            yPatch[facei] = ofY[facei];
+        }
+    }
+
     auto tmagSqrGradNuTilde = Foam::magSqr(ofgradNutilda);
     Foam::volScalarField ofmagSqrGradNutilda(
         Foam::IOobject(
@@ -520,8 +544,8 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
     auto& nfPhi = NeoFOAM::constructAndRegister(fieldCollection, rt, phi, false);
     auto& nfNuTilda = NeoFOAM::constructAndRegister(fieldCollection, rt, nuTilda, false);
 
-    auto [nfWallDist, nfDelta, nut] =
-        NeoFOAM::constFromMany(rt.exec, rt.nfMesh, wallDist, delta, ofNut);
+     auto [nfWallDist, nfDelta, nut, nfNearWallDist] =
+        NeoFOAM::constFromMany(rt.exec, rt.nfMesh, wallDist, delta, ofNut, nearWallDist);
 
     auto volCalcBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<Scalar>>(rt.nfMesh);
     auto volCalcVecBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<Vec3>>(rt.nfMesh);
@@ -575,7 +599,7 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
     );
     surfInterpol.interpolate(nfNu, nfSurfNu);
 
-    saBase.correctNut(nut, nfSurfNut, nfSurfNuEff, nfNuTilda, nfNu, nfSurfNu);
+    saBase.correctNut(nut, nfSurfNut, nfSurfNuEff, nfNuTilda, nfNu, nfSurfNu, nfU, nfNearWallDist);
     nf::compare(nut, ofNut, ApproxScalar(1e-12));
     nf::compare(nfNuTilda, nuTilda, ApproxScalar(1e-12));
     saBase.calcNuTildaDiffusionCoeff(nfNuTilda, nfSurfNu, nfSurfNuTilda, nuTildaEff);
@@ -643,9 +667,8 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
         rt
     );
     nuTildaEqn.solve();
-    // nut.correctBoundaryConditions(nfU,nfNu);
     saBase.calcNuTildaDiffusionCoeff(nfNuTilda, nfSurfNu, nfSurfNuTilda, nuTildaEff);
-    saBase.correctNut(nut, nfSurfNut, nfSurfNuEff, nfNuTilda, nfNu, nfSurfNu);
+    saBase.correctNut(nut, nfSurfNut, nfSurfNuEff, nfNuTilda, nfNu, nfSurfNu, nfU, nfNearWallDist);
 
     Foam::fvVectorMatrix ofUEqn(
         Foam::fvm::ddt(U) + Foam::fvm::div(phi, U) + foamTurb->divDevReff(U)
@@ -660,4 +683,152 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
     const Foam::volScalarField& nuTildaFoam = mesh.lookupObject<Foam::volScalarField>("nuTilda");
     nf::compare(nfNuTilda, nuTildaFoam, ApproxScalar(1e-12));
     nf::compare(nut, nutFoam, ApproxScalar(1e-12));
+}
+
+TEST_CASE("SA-DDES: NeoFOAM wrapper validate() + correct() matches OpenFOAM")
+{
+    Foam::Time& runTime = *timePtr;
+
+    NeoN::Database db;
+    auto& fieldCollection = fvcc::VectorCollection::instance(db, "fieldCollection");
+
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
+
+    auto rt = nf::createAdapterRunTime(runTime, exec);
+    auto meshPtr = NeoFOAM::createMesh(exec, runTime);
+    NeoFOAM::MeshAdapter& mesh = *meshPtr;
+
+    auto& solverDict = rt.fvSolutionDict.subDict("solvers");
+    solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
+    solverDict.subDict("nuTilda") = nf::mapFvSolution(solverDict.subDict("nuTilda"));
+    auto& schemesDict = rt.fvSchemesDict;
+    schemesDict = nf::mapFvSchemes(rt.fvSchemesDict);
+    const NeoN::Dictionary controlDict = nf::convert(runTime.controlDict());
+    const Foam::scalar dt = controlDict.get<Foam::scalar>("deltaT");
+    runTime.setDeltaT(dt);
+
+    // --- OpenFOAM fields ---
+    Foam::volVectorField U(
+        Foam::IOobject(
+            "U",
+            runTime.timeName(),
+            mesh,
+            Foam::IOobject::MUST_READ,
+            Foam::IOobject::NO_WRITE
+        ),
+        mesh
+    );
+    Foam::volScalarField p(
+        Foam::IOobject(
+            "p",
+            runTime.timeName(),
+            mesh,
+            Foam::IOobject::MUST_READ,
+            Foam::IOobject::NO_WRITE
+        ),
+        mesh
+    );
+    Foam::surfaceScalarField phi(
+        Foam::IOobject(
+            "phi",
+            runTime.timeName(),
+            mesh,
+            Foam::IOobject::MUST_READ,
+            Foam::IOobject::NO_WRITE
+        ),
+        fvc::flux(U)
+    );
+
+    Foam::singlePhaseTransportModel transport(U, phi);
+    Foam::autoPtr<Foam::incompressible::turbulenceModel> foamTurb(
+        Foam::incompressible::turbulenceModel::New(U, phi, transport)
+    );
+    const Foam::incompressible::turbulenceModel& turb = foamTurb();
+    foamTurb->validate();
+
+    const Foam::volScalarField& ofNut = mesh.lookupObject<Foam::volScalarField>("nut");
+    const Foam::volScalarField& nuTilda = mesh.lookupObject<Foam::volScalarField>("nuTilda");
+
+    const Foam::incompressible::LESModel& lesModel =
+        Foam::refCast<const Foam::incompressible::LESModel>(turb);
+    const Foam::volScalarField& delta = lesModel.delta();
+    Foam::wallDist y(mesh);
+    const Foam::volScalarField& wallDist = y.y();
+
+    const Foam::label nPatches = mesh.boundary().size();
+    Foam::volScalarField nearWallDist(
+        Foam::IOobject(
+            "nearWallDist",
+            runTime.timeName(),
+            mesh,
+            Foam::IOobject::NO_READ,
+            Foam::IOobject::NO_WRITE
+        ),
+        mesh,
+        Foam::dimensionedScalar("zero", Foam::dimLength, Foam::scalar(0.0))
+    );
+    for (Foam::label patchi = 0; patchi < nPatches; ++patchi)
+    {
+        const Foam::scalarField& ofY = turb.y()[patchi];
+        Foam::fvPatchScalarField& yPatch = nearWallDist.boundaryFieldRef()[patchi];
+        for (Foam::label facei = 0; facei < yPatch.size(); ++facei)
+            yPatch[facei] = ofY[facei];
+    }
+
+    // --- NeoFOAM fields ---
+    auto& nfU       = NeoFOAM::constructAndRegister(fieldCollection, rt, U, false);
+    auto& nfP       = NeoFOAM::constructAndRegister(fieldCollection, rt, p, false);
+    auto& nfPhi     = NeoFOAM::constructAndRegister(fieldCollection, rt, phi, false);
+    auto& nfNuTilda = NeoFOAM::constructAndRegister(fieldCollection, rt, nuTilda, false);
+
+    auto [nfWallDist, nfDelta, nut, nfNearWallDist] =
+        NeoFOAM::constFromMany(rt.exec, rt.nfMesh, wallDist, delta, ofNut, nearWallDist);
+
+    auto volCalcBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<Scalar>>(rt.nfMesh);
+    Foam::IOdictionary transportProperties(Foam::IOobject(
+        "transportProperties",
+        runTime.constant(),
+        mesh,
+        Foam::IOobject::MUST_READ_IF_MODIFIED,
+        Foam::IOobject::NO_WRITE
+    ));
+    Foam::dimensionedScalar viscosity("nu", Foam::dimViscosity, transportProperties);
+    VolScalar nfNu(exec, "nu", rt.nfMesh, volCalcBCs);
+    NeoN::fill(nfNu.internalVector(), viscosity.value());
+    NeoN::fill(nfNu.boundaryData().value(), viscosity.value());
+
+    // --- Wrapper: validate then one time step ---
+    nf::SpalartAllmarasDDES turbNF(rt.exec, rt.nfMesh, nfNu, nfWallDist, nfNearWallDist, nfDelta);
+    turbNF.validate(nfU, nfNuTilda, nut);
+
+    fvcc::rotateOldTimes(nfU);
+    fvcc::rotateOldTimes(nfPhi);
+    fvcc::rotateOldTimes(nfNuTilda);
+
+    nf::PDESolver<NeoN::Vec3> UEqn(
+        dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU)
+            - dsl::imp::laplacian(turbNF.nuEff(), nfU)
+            + dsl::exp::viscousStress(nfNu, nut, turbNF.gradU()),
+        nfU,
+        rt
+    );
+    UEqn.solve(-1.0 * dsl::exp::grad(nfP));
+    nfU.correctBoundaryConditions();
+
+    turbNF.correct(nfU, nfPhi, nfNuTilda, nut, rt);
+
+    // --- OpenFOAM reference ---
+    Foam::fvVectorMatrix ofUEqn(
+        Foam::fvm::ddt(U) + Foam::fvm::div(phi, U) + foamTurb->divDevReff(U)
+    );
+    Foam::solve(ofUEqn == -fvc::grad(p));
+    U.correctBoundaryConditions();
+    foamTurb->correct();
+
+    // --- Comparisons ---
+    nf::compare(nfU, U, ApproxVector(1e-10));
+    const Foam::volScalarField& nuTildaFoam2 = mesh.lookupObject<Foam::volScalarField>("nuTilda");
+    const Foam::volScalarField& nutFoam2 = mesh.lookupObject<Foam::volScalarField>("nut");
+    nf::compare(nfNuTilda, nuTildaFoam2, ApproxScalar(1e-12));
+    nf::compare(nut, nutFoam2, ApproxScalar(1e-12));
 }
