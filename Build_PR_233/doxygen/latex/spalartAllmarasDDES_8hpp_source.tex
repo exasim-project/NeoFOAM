@@ -1,0 +1,88 @@
+\doxysection{spalart\+Allmaras\+DDES.\+hpp}
+\hypertarget{spalartAllmarasDDES_8hpp_source}{}\label{spalartAllmarasDDES_8hpp_source}\index{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/turbulenceModels/spalartAllmarasDDES.hpp@{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/turbulenceModels/spalartAllmarasDDES.hpp}}
+\mbox{\hyperlink{spalartAllmarasDDES_8hpp}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00001}00001\ \textcolor{comment}{//\ SPDX-\/License-\/Identifier:\ GPL-\/3.0-\/or-\/later}}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00002}00002\ \textcolor{comment}{//\ SPDX-\/FileCopyrightText:\ 2025\ NeoFOAM\ authors}}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00003}00003\ }
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00004}00004\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00005}00005\ }
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00006}00006\ \textcolor{preprocessor}{\#include\ "{}NeoN/NeoN.hpp"{}}}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00007}00007\ }
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00008}00008\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{pdeSolver_8hpp}{NeoFOAM/datastructures/pdeSolver.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00009}00009\ }
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00010}00010\ \textcolor{keyword}{namespace\ }nnfvcc\ =\ NeoN::finiteVolume::cellCentred;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00011}\mbox{\hyperlink{spalartAllmarasDDES_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{00011}}\ \textcolor{keyword}{using\ }\mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ =\ NeoN::scalar;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00012}\mbox{\hyperlink{spalartAllmarasDDES_8hpp_ae261b7f2859c508a432e8a334ad179d2}{00012}}\ \textcolor{keyword}{using\ }\mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}}\ =\ NeoN::Vec3;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00013}00013\ }
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00014}00014\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceNeoFOAM}{NeoFOAM}}}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00015}00015\ \{}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00016}00016\ }
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00030}\mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES}{00030}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES}{SpalartAllmarasDDES}}}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00031}00031\ \{}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00032}00032\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00033}00033\ }
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00044}\mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_aeb3ae19e8acb36b656d547de8837c33f}{00044}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_aeb3ae19e8acb36b656d547de8837c33f}{SpalartAllmarasDDES}}(}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00045}00045\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ NeoN::Executor\&\ exec,}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00046}00046\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ NeoN::UnstructuredMesh\&\ mesh,}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00047}00047\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<scalar>\&\ nu,}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00048}00048\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<scalar>\&\ wallDist,}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00049}00049\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<scalar>\&\ nearWallDist,}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00050}00050\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<scalar>\&\ delta}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00051}00051\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00052}00052\ }
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00062}\mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_a3c0ce97c52d3cc20099747f4728acda0}{00062}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_a3c0ce97c52d3cc20099747f4728acda0}{validate}}(}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00063}00063\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<Vec3>\&\ U,}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00064}00064\ \ \ \ \ \ \ \ \ nnfvcc::VolumeField<scalar>\&\ nuTilda,}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00065}00065\ \ \ \ \ \ \ \ \ nnfvcc::VolumeField<scalar>\&\ nut}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00066}00066\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00067}00067\ }
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00080}\mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_a17ab835e02aad16cbe7ddd1d7cf05f4c}{00080}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_a17ab835e02aad16cbe7ddd1d7cf05f4c}{correct}}(}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00081}00081\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<Vec3>\&\ U,}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00082}00082\ \ \ \ \ \ \ \ \ nnfvcc::SurfaceField<scalar>\&\ phi,}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00083}00083\ \ \ \ \ \ \ \ \ nnfvcc::VolumeField<scalar>\&\ nuTilda,}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00084}00084\ \ \ \ \ \ \ \ \ nnfvcc::VolumeField<scalar>\&\ nut,}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00085}00085\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{RunTime}}\&\ rt}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00086}00086\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00087}00087\ }
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00089}\mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_a24a105c7a86880b8eb9f922f2c2e0d02}{00089}}\ \ \ \ \ nnfvcc::SurfaceField<scalar>\&\ \mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_a24a105c7a86880b8eb9f922f2c2e0d02}{nuEff}}();}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00090}00090\ }
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00092}\mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_ad5a1f9bf960776f9d3d8591241588558}{00092}}\ \ \ \ \ nnfvcc::SurfaceField<scalar>\&\ \mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_ad5a1f9bf960776f9d3d8591241588558}{nuTildaEff}}();}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00093}00093\ }
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00095}\mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_a1b0658a909855a488fa6a145e4b7d2f9}{00095}}\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::TensorVecField\&\ \mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_a1b0658a909855a488fa6a145e4b7d2f9}{gradU}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00096}00096\ }
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00097}00097\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00098}00098\ }
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00099}00099\ \ \ \ \ NeoN::Executor\ exec\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00100}00100\ \ \ \ \ \textcolor{keyword}{const}\ NeoN::UnstructuredMesh\&\ mesh\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00101}00101\ }
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00102}00102\ \ \ \ \ \textcolor{comment}{//\ Constant\ physics\ inputs\ (held\ by\ reference\ —\ must\ outlive\ this\ object)}}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00103}00103\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<scalar>\&\ nu\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00104}00104\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<scalar>\&\ wallDist\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00105}00105\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<scalar>\&\ nearWallDist\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00106}00106\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<scalar>\&\ delta\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00107}00107\ }
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00108}00108\ \ \ \ \ \textcolor{comment}{//\ Cached\ face-\/interpolated\ nu\ (computed\ once\ in\ constructor)}}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00109}00109\ \ \ \ \ nnfvcc::SurfaceField<scalar>\ surfNu\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00110}00110\ }
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00111}00111\ \ \ \ \ \textcolor{comment}{//\ Owned\ intermediate\ fields}}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00112}00112\ \ \ \ \ nnfvcc::TensorVecField\ gradU\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00113}00113\ \ \ \ \ nnfvcc::VolumeField<Vec3>\ gradNuTilda\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00114}00114\ \ \ \ \ nnfvcc::VolumeField<scalar>\ magSqrGradNuTilda\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00115}00115\ \ \ \ \ nnfvcc::VolumeField<scalar>\ production\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00116}00116\ \ \ \ \ nnfvcc::VolumeField<scalar>\ spCoeff\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00117}00117\ \ \ \ \ nnfvcc::SurfaceField<scalar>\ surfNut\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00118}00118\ \ \ \ \ nnfvcc::SurfaceField<scalar>\ surfNuTilda\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00119}00119\ \ \ \ \ nnfvcc::SurfaceField<scalar>\ nuEff\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00120}00120\ \ \ \ \ nnfvcc::SurfaceField<scalar>\ nuTildaEff\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00121}00121\ }
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00122}00122\ \ \ \ \ \textcolor{comment}{//\ Cached\ operators\ (constructed\ once)}}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00123}00123\ \ \ \ \ nnfvcc::GaussGreenGrad\ gradOp\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00124}00124\ }
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00125}00125\ \ \ \ \ \textcolor{comment}{//\ Low-\/level\ NeoN\ physics\ model}}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00126}00126\ \ \ \ \ NeoN::turbulenceModels::SpalartAllmarasDDES\ physicsModel\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00127}00127\ \};}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00128}00128\ }
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00129}00129\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
+
+\end{DoxyCode}
