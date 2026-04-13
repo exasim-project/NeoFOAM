@@ -69,7 +69,7 @@ int main(int argc, char* argv[])
         nf::SpalartAllmarasDDES turb(rt.exec, rt.nfMesh, nu, wallDist, nearWallDist, delta);
         turb.validate(U, nuTilda, nut);
 
-        // TODO: surface interpolation also instatiated in turbulence model -> doubled?!
+        // TODO: surface interpolation also instantiated in turbulence model -> doubled?!
         auto surfInterpol = fvcc::SurfaceInterpolation<NeoN::scalar>(
             rt.exec,
             rt.nfMesh,
@@ -94,8 +94,7 @@ int main(int argc, char* argv[])
 
             // Momentum predictor
             nf::PDESolver<NeoN::Vec3> UEqn(
-                dsl::imp::ddt(U) + dsl::imp::div(phi, U)
-                    - dsl::imp::laplacian(turb.nuEff(), U)
+                dsl::imp::ddt(U) + dsl::imp::div(phi, U) - dsl::imp::laplacian(turb.nuEff(), U)
                     + dsl::exp::viscousStress(nu, nut, turb.gradU()),
                 U,
                 rt

@@ -19,60 +19,89 @@ SpalartAllmarasDDES::SpalartAllmarasDDES(
     const nnfvcc::VolumeField<scalar>& nearWallDist,
     const nnfvcc::VolumeField<scalar>& delta
 )
-    : exec_(exec),
-      mesh_(mesh),
-      nu_(nu),
-      wallDist_(wallDist),
-      nearWallDist_(nearWallDist),
-      delta_(delta),
-      surfNu_(exec, "surfNu", mesh, fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh)),
-      gradU_({
-          nnfvcc::VolumeField<Vec3>(
-              exec, "gradUx", mesh, fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<Vec3>>(mesh)
-          ),
-          nnfvcc::VolumeField<Vec3>(
-              exec, "gradUy", mesh, fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<Vec3>>(mesh)
-          ),
-          nnfvcc::VolumeField<Vec3>(
-              exec, "gradUz", mesh, fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<Vec3>>(mesh)
-          )
-      }),
-      gradNuTilda_(
-          exec, "gradNuTilda", mesh, fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<Vec3>>(mesh)
-      ),
-      magSqrGradNuTilda_(
+    : exec_(exec)
+    , mesh_(mesh)
+    , nu_(nu)
+    , wallDist_(wallDist)
+    , nearWallDist_(nearWallDist)
+    , delta_(delta)
+    , surfNu_(
+          exec,
+          "surfNu",
+          mesh,
+          fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh)
+      )
+    , gradU_(
+          {nnfvcc::VolumeField<Vec3>(
+               exec,
+               "gradUx",
+               mesh,
+               fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<Vec3>>(mesh)
+           ),
+           nnfvcc::VolumeField<Vec3>(
+               exec,
+               "gradUy",
+               mesh,
+               fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<Vec3>>(mesh)
+           ),
+           nnfvcc::VolumeField<Vec3>(
+               exec,
+               "gradUz",
+               mesh,
+               fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<Vec3>>(mesh)
+           )}
+      )
+    , gradNuTilda_(
+          exec,
+          "gradNuTilda",
+          mesh,
+          fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<Vec3>>(mesh)
+      )
+    , magSqrGradNuTilda_(
           exec,
           "magSqrGradNuTilda",
           mesh,
           fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh)
-      ),
-      production_(
-          exec, "production", mesh, fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh)
-      ),
-      spCoeff_(
-          exec, "spCoeff", mesh, fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh)
-      ),
-      surfNut_(
-          exec, "surfNut", mesh, fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh)
-      ),
-      surfNuTilda_(
+      )
+    , production_(
+          exec,
+          "production",
+          mesh,
+          fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh)
+      )
+    , spCoeff_(
+          exec,
+          "spCoeff",
+          mesh,
+          fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh)
+      )
+    , surfNut_(
+          exec,
+          "surfNut",
+          mesh,
+          fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh)
+      )
+    , surfNuTilda_(
           exec,
           "surfNuTilda",
           mesh,
           fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh)
-      ),
-      nuEff_(
-          exec, "nuEff", mesh, fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh)
-      ),
-      nuTildaEff_(
-          exec, "nuTildaEff", mesh, fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh)
-      ),
-      gradOp_(exec, mesh),
-      physicsModel_(exec, mesh)
+      )
+    , nuEff_(exec, "nuEff", mesh, fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh))
+    , nuTildaEff_(
+          exec,
+          "nuTildaEff",
+          mesh,
+          fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh)
+      )
+    , gradOp_(exec, mesh)
+    , physicsModel_(exec, mesh)
 {
     // Pre-compute face-interpolated nu (constant in time for single-phase incompressible flows)
     fvcc::SurfaceInterpolation<scalar> surfInterp(
-        exec_, mesh_, NeoN::TokenList({std::string("linear")})
+        exec_,
+        mesh_,
+        NeoN::TokenList({std::string("linear")})
     );
     surfInterp.interpolate(nu_, surfNu_);
 }
@@ -83,6 +112,7 @@ void SpalartAllmarasDDES::validate(
     nnfvcc::VolumeField<scalar>& nut
 )
 {
+    gradOp_.grad(U, gradU_);
     physicsModel_.calcNuTildaDiffusionCoeff(nuTilda, surfNu_, surfNuTilda_, nuTildaEff_);
     physicsModel_.correctNut(nut, surfNut_, nuEff_, nuTilda, nu_, surfNu_, U, nearWallDist_);
 }
@@ -117,8 +147,7 @@ void SpalartAllmarasDDES::correct(
     // 3. Solve nuTilda transport equation
     PDESolver<scalar> nuTildaEqn(
         dsl::imp::ddt(nuTilda) + dsl::imp::div(phi, nuTilda)
-            - dsl::imp::laplacian(nuTildaEff_, nuTilda)
-            + dsl::imp::source(spCoeff_, nuTilda)
+            - dsl::imp::laplacian(nuTildaEff_, nuTilda) + dsl::imp::source(spCoeff_, nuTilda)
             - dsl::exp::sourceU(production_),
         nuTilda,
         rt
