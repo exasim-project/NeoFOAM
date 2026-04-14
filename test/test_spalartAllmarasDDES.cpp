@@ -634,7 +634,7 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
     auto nfViscousStress = opVisc.viscousStress(nfNu, nut, G, dsl::Coeff(1.0));
     // Used to meet 1e-12 target but after nutWallFunction update now only 1e-9
     nf::compare(nfViscousStress, ofViscousStress, ApproxVector(1e-9), false);
-    // nf::compare(nfU, U, ApproxVector(1e-12));
+    nf::compare(nfU, U, ApproxVector(1e-12));
     nf::PDESolver<NeoN::Vec3> UEqn(
         dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(nfSurfNuEff, nfU)
             + dsl::exp::viscousStress(nfNu, nut, G),
@@ -677,7 +677,7 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
     Foam::solve(ofUEqn == -fvc::grad(p));
     U.correctBoundaryConditions();
     nf::compare(nfU, U, ApproxVector(1e-10));
-
+    
     foamTurb->correct();
 
     const Foam::volScalarField& nutFoam = mesh.lookupObject<Foam::volScalarField>("nut");
