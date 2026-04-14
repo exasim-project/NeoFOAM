@@ -663,7 +663,7 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
     nf::PDESolver<NeoN::scalar> nuTildaEqn(
         dsl::imp::ddt(nfNuTilda) + dsl::imp::div(nfPhi, nfNuTilda)
             - dsl::imp::laplacian(nuTildaEff, nfNuTilda)
-            + dsl::imp::source(nfFusedSpCoeff, nfNuTilda) - dsl::exp::sourceU(nfFusedProduction),
+            + dsl::imp::source(nfFusedSpCoeff, nfNuTilda) - dsl::exp::source(nfFusedProduction),
         nfNuTilda,
         rt
     );
@@ -677,7 +677,7 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
     Foam::solve(ofUEqn == -fvc::grad(p));
     U.correctBoundaryConditions();
     nf::compare(nfU, U, ApproxVector(1e-10));
-    
+
     foamTurb->correct();
 
     const Foam::volScalarField& nutFoam = mesh.lookupObject<Foam::volScalarField>("nut");

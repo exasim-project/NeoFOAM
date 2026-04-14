@@ -56,6 +56,7 @@ int main(int argc, char* argv[])
         auto& p = nf::constructAndRegister(vectorCollection, rt, ofP, false);
         auto& U = nf::constructAndRegister(vectorCollection, rt, ofU, false);
         auto& nuTilda = nf::constructAndRegister(vectorCollection, rt, ofNuTilda, false);
+        auto nut = nf::constructAndRegister(vectorCollection, rt, ofNut, false);
 
         NeoN::Logging::info("Creating phi");
         auto& phi = nf::constructAndRegister(vectorCollection, rt, ofPhi, false);
@@ -65,7 +66,6 @@ int main(int argc, char* argv[])
         auto wallDist = nf::constructFrom(rt.exec, rt.nfMesh, y.y());
         auto nearWallDist = nf::constructFrom(rt.exec, rt.nfMesh, ofNearWallDist);
         auto delta = nf::constructFrom(rt.exec, rt.nfMesh, lesModel.delta());
-        auto nut = nf::constructFrom(rt.exec, rt.nfMesh, ofNut);
         nf::SpalartAllmarasDDES turb(rt.exec, rt.nfMesh, nu, wallDist, nearWallDist, delta);
         turb.validate(U, nuTilda, nut);
 
@@ -171,8 +171,9 @@ int main(int argc, char* argv[])
                 write(p, mesh);
                 NeoN::Logging::info("Writing U");
                 write(U, mesh);
-                NeoN::Logging::info("Writing nuTilda");
+                NeoN::Logging::info("Writing turbulence variables");
                 write(nuTilda, mesh);
+                write(nut, mesh);
             }
 
             runTime.printExecutionTime(Info);

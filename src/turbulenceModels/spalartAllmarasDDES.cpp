@@ -148,7 +148,7 @@ void SpalartAllmarasDDES::correct(
     PDESolver<scalar> nuTildaEqn(
         dsl::imp::ddt(nuTilda) + dsl::imp::div(phi, nuTilda)
             - dsl::imp::laplacian(nuTildaEff_, nuTilda) + dsl::imp::source(spCoeff_, nuTilda)
-            - dsl::exp::sourceU(production_),
+            - dsl::exp::source(production_),
         nuTilda,
         rt
     );
