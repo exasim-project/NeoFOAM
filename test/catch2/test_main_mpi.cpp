@@ -28,11 +28,6 @@ CATCH_REGISTER_REPORTER("mpi", MpiReporter);
 
 int main(int argc, char* argv[])
 {
-    // NeoN::mpi::MPIInit mpi(argc, argv);
-    // MPI_Comm_rank(COMM, &RANK);
-    // MPI_Comm_size(COMM, &COMM_SIZE);
-    // IS_ROOT = RANK == ROOT;
-
     // create a thread (on the root process) that serializes the IO
     bool threadShutdown = false;
     std::thread sequalizeIOThread {serializeIO, &threadShutdown};
@@ -42,7 +37,6 @@ int main(int argc, char* argv[])
     // ensure any kokkos initialization output will appear first
     std::cout << std::flush;
     std::cerr << std::flush;
-    // MPI_Barrier(COMM);
 
     int sepIdx = argc - 1;
 
