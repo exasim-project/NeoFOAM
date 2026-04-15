@@ -35,8 +35,8 @@ bool ForceCoeffs::read(const Foam::dictionary& dict)
 {
     Forces::read(dict);
     magUInf_ = dict.getOrDefault<Foam::scalar>("magUInf", 1.0);
-    lRef_    = dict.getOrDefault<Foam::scalar>("lRef", 1.0);
-    Aref_    = dict.getOrDefault<Foam::scalar>("Aref", 1.0);
+    lRef_ = dict.getOrDefault<Foam::scalar>("lRef", 1.0);
+    Aref_ = dict.getOrDefault<Foam::scalar>("Aref", 1.0);
 
     Foam::vector dragFoam = dict.getOrDefault<Foam::vector>("dragDir", Foam::vector(1, 0, 0));
     Foam::vector liftFoam = dict.getOrDefault<Foam::vector>("liftDir", Foam::vector(0, 0, 1));
@@ -61,24 +61,22 @@ bool ForceCoeffs::execute()
     }
 
     const ForceResult& raw = lastResult();
-    const NeoN::Vec3 totalForce  = raw.pressureForce  + raw.viscousForce;
+    const NeoN::Vec3 totalForce = raw.pressureForce + raw.viscousForce;
     const NeoN::Vec3 totalMoment = raw.pressureMoment + raw.viscousMoment;
 
-    const double pDyn        = 0.5 * rhoRef_ * magUInf_ * magUInf_;
-    const double forceScale  = pDyn * Aref_;
+    const double pDyn = 0.5 * rhoRef_ * magUInf_ * magUInf_;
+    const double forceScale = pDyn * Aref_;
     const double momentScale = pDyn * Aref_ * lRef_;
 
     auto dot = [](const NeoN::Vec3& a, const NeoN::Vec3& b)
-    {
-        return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-    };
+    { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; };
 
-    Cd_      = dot(totalForce,  dragDir_) / forceScale;
-    Cl_      = dot(totalForce,  liftDir_) / forceScale;
-    Cs_      = dot(totalForce,  sideDir_) / forceScale;
-    CmRoll_  = dot(totalMoment, dragDir_)  / momentScale;
-    CmPitch_ = dot(totalMoment, sideDir_)  / momentScale;
-    CmYaw_   = dot(totalMoment, liftDir_)  / momentScale;
+    Cd_ = dot(totalForce, dragDir_) / forceScale;
+    Cl_ = dot(totalForce, liftDir_) / forceScale;
+    Cs_ = dot(totalForce, sideDir_) / forceScale;
+    CmRoll_ = dot(totalMoment, dragDir_) / momentScale;
+    CmPitch_ = dot(totalMoment, sideDir_) / momentScale;
+    CmYaw_ = dot(totalMoment, liftDir_) / momentScale;
 
     return true;
 }
@@ -92,22 +90,32 @@ bool ForceCoeffs::write()
         [&](std::ostream& s)
         {
             writeHeader(s, "Force and moment coefficients");
-            writeHeaderValue(s, "dragDir",   fmtVec3(dragDir_));
-            writeHeaderValue(s, "sideDir",   fmtVec3(sideDir_));
-            writeHeaderValue(s, "liftDir",   fmtVec3(liftDir_));
-            writeHeaderValue(s, "rollAxis",  fmtVec3(dragDir_));
+            writeHeaderValue(s, "dragDir", fmtVec3(dragDir_));
+            writeHeaderValue(s, "sideDir", fmtVec3(sideDir_));
+            writeHeaderValue(s, "liftDir", fmtVec3(liftDir_));
+            writeHeaderValue(s, "rollAxis", fmtVec3(dragDir_));
             writeHeaderValue(s, "pitchAxis", fmtVec3(sideDir_));
-            writeHeaderValue(s, "yawAxis",   fmtVec3(liftDir_));
-            writeHeaderValue(s, "magUInf",   fmtScalar(magUInf_));
-            writeHeaderValue(s, "lRef",      fmtScalar(lRef_));
-            writeHeaderValue(s, "Aref",      fmtScalar(Aref_));
-            writeHeaderValue(s, "CofR",      fmtVec3(cofR_));
+            writeHeaderValue(s, "yawAxis", fmtVec3(liftDir_));
+            writeHeaderValue(s, "magUInf", fmtScalar(magUInf_));
+            writeHeaderValue(s, "lRef", fmtScalar(lRef_));
+            writeHeaderValue(s, "Aref", fmtScalar(Aref_));
+            writeHeaderValue(s, "CofR", fmtVec3(cofR_));
             writeHeader(s, "");
             writeCommented(s, "Time");
             // Alphabetical order — matches OpenFOAM's sorted coefficient map
             for (const auto* col :
-                 {"Cd", "Cd(f)", "Cd(r)", "Cl", "Cl(f)", "Cl(r)",
-                  "CmPitch", "CmRoll", "CmYaw", "Cs", "Cs(f)", "Cs(r)"})
+                 {"Cd",
+                  "Cd(f)",
+                  "Cd(r)",
+                  "Cl",
+                  "Cl(f)",
+                  "Cl(r)",
+                  "CmPitch",
+                  "CmRoll",
+                  "CmYaw",
+                  "Cs",
+                  "Cs(f)",
+                  "Cs(r)"})
             {
                 writeTabbed(s, col);
             }
