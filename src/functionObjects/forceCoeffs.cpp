@@ -35,21 +35,22 @@ bool ForceCoeffs::read(const Foam::dictionary& dict)
 {
     Forces::read(dict);
     magUInf_ = dict.getOrDefault<Foam::scalar>("magUInf", 1.0);
-    lRef_ = dict.getOrDefault<Foam::scalar>("lRef", 1.0);
-    Aref_ = dict.getOrDefault<Foam::scalar>("Aref", 1.0);
+    lRef_    = dict.getOrDefault<Foam::scalar>("lRef", 1.0);
+    Aref_    = dict.getOrDefault<Foam::scalar>("Aref", 1.0);
+
+    Foam::vector dragFoam = dict.getOrDefault<Foam::vector>("dragDir", Foam::vector(1, 0, 0));
+    Foam::vector liftFoam = dict.getOrDefault<Foam::vector>("liftDir", Foam::vector(0, 0, 1));
+    dragDir_ = NeoN::Vec3(dragFoam[0], dragFoam[1], dragFoam[2]);
+    liftDir_ = NeoN::Vec3(liftFoam[0], liftFoam[1], liftFoam[2]);
+
+    // sideDir = liftDir × dragDir  (right-hand system, mirrors OF e2 = e3 × e1)
+    sideDir_ = NeoN::Vec3(
+        liftDir_[1] * dragDir_[2] - liftDir_[2] * dragDir_[1],
+        liftDir_[2] * dragDir_[0] - liftDir_[0] * dragDir_[2],
+        liftDir_[0] * dragDir_[1] - liftDir_[1] * dragDir_[0]
+    );
+
     return true;
-}
-
-NeoN::Vec3 ForceCoeffs::normalizeForce(const NeoN::Vec3& f) const
-{
-    const NeoN::scalar dyn = 0.5 * rhoRef_ * magUInf_ * magUInf_ * Aref_;
-    return f / (dyn + NeoN::scalar {1e-300});
-}
-
-NeoN::Vec3 ForceCoeffs::normalizeMoment(const NeoN::Vec3& m) const
-{
-    const NeoN::scalar dyn = 0.5 * rhoRef_ * magUInf_ * magUInf_ * Aref_ * lRef_;
-    return m / (dyn + NeoN::scalar {1e-300});
 }
 
 bool ForceCoeffs::execute()
@@ -60,31 +61,53 @@ bool ForceCoeffs::execute()
     }
 
     const ForceResult& raw = lastResult();
-    coeffResult_.pressureForce = normalizeForce(raw.pressureForce);
-    coeffResult_.viscousForce = normalizeForce(raw.viscousForce);
-    coeffResult_.pressureMoment = normalizeMoment(raw.pressureMoment);
-    coeffResult_.viscousMoment = normalizeMoment(raw.viscousMoment);
+    const NeoN::Vec3 totalForce  = raw.pressureForce  + raw.viscousForce;
+    const NeoN::Vec3 totalMoment = raw.pressureMoment + raw.viscousMoment;
+
+    const double pDyn        = 0.5 * rhoRef_ * magUInf_ * magUInf_;
+    const double forceScale  = pDyn * Aref_;
+    const double momentScale = pDyn * Aref_ * lRef_;
+
+    auto dot = [](const NeoN::Vec3& a, const NeoN::Vec3& b)
+    {
+        return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+    };
+
+    Cd_      = dot(totalForce,  dragDir_) / forceScale;
+    Cl_      = dot(totalForce,  liftDir_) / forceScale;
+    Cs_      = dot(totalForce,  sideDir_) / forceScale;
+    CmRoll_  = dot(totalMoment, dragDir_)  / momentScale;
+    CmPitch_ = dot(totalMoment, sideDir_)  / momentScale;
+    CmYaw_   = dot(totalMoment, liftDir_)  / momentScale;
 
     return true;
 }
 
 bool ForceCoeffs::write()
 {
-    // Also write raw forces via base class
-    Forces::write();
-
+    // neoForceCoeffs writes coefficient.dat only.
+    // force.dat and moment.dat are written exclusively by neoForces.
     auto& os = getOrCreateFile(
         "coefficient.dat",
         [&](std::ostream& s)
         {
             writeHeader(s, "Force and moment coefficients");
-            writeHeaderValue(s, "magUInf", fmtScalar(magUInf_));
-            writeHeaderValue(s, "lRef", fmtScalar(lRef_));
-            writeHeaderValue(s, "Aref", fmtScalar(Aref_));
-            writeHeaderValue(s, "CofR", fmtVec3(cofR_));
+            writeHeaderValue(s, "dragDir",   fmtVec3(dragDir_));
+            writeHeaderValue(s, "sideDir",   fmtVec3(sideDir_));
+            writeHeaderValue(s, "liftDir",   fmtVec3(liftDir_));
+            writeHeaderValue(s, "rollAxis",  fmtVec3(dragDir_));
+            writeHeaderValue(s, "pitchAxis", fmtVec3(sideDir_));
+            writeHeaderValue(s, "yawAxis",   fmtVec3(liftDir_));
+            writeHeaderValue(s, "magUInf",   fmtScalar(magUInf_));
+            writeHeaderValue(s, "lRef",      fmtScalar(lRef_));
+            writeHeaderValue(s, "Aref",      fmtScalar(Aref_));
+            writeHeaderValue(s, "CofR",      fmtVec3(cofR_));
             writeHeader(s, "");
             writeCommented(s, "Time");
-            for (const auto* col : {"Cx", "Cy", "Cz", "CmX", "CmY", "CmZ"})
+            // Alphabetical order — matches OpenFOAM's sorted coefficient map
+            for (const auto* col :
+                 {"Cd", "Cd(f)", "Cd(r)", "Cl", "Cl(f)", "Cl(r)",
+                  "CmPitch", "CmRoll", "CmYaw", "Cs", "Cs(f)", "Cs(r)"})
             {
                 writeTabbed(s, col);
             }
@@ -92,15 +115,18 @@ bool ForceCoeffs::write()
         }
     );
 
+    const double CdF = 0.5 * Cd_ + CmRoll_;
+    const double CdR = 0.5 * Cd_ - CmRoll_;
+    const double ClF = 0.5 * Cl_ + CmPitch_;
+    const double ClR = 0.5 * Cl_ - CmPitch_;
+    const double CsF = 0.5 * Cs_ + CmYaw_;
+    const double CsR = 0.5 * Cs_ - CmYaw_;
+
     writeCurrentTime(os);
     os << std::scientific << std::setprecision(writePrecision);
-    for (int i = 0; i < 3; ++i)
+    for (double v : {Cd_, CdF, CdR, Cl_, ClF, ClR, CmPitch_, CmRoll_, CmYaw_, Cs_, CsF, CsR})
     {
-        os << std::setw(charWidth) << coeffResult_.pressureForce[i];
-    }
-    for (int i = 0; i < 3; ++i)
-    {
-        os << std::setw(charWidth) << coeffResult_.pressureMoment[i];
+        os << std::setw(charWidth) << v;
     }
     os << '\n';
     os.flush();
