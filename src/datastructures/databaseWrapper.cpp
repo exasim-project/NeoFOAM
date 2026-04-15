@@ -10,15 +10,13 @@ namespace NeoFOAM
 const Foam::word DatabaseWrapper::registryName("NeoFOAMDatabase");
 
 DatabaseWrapper::DatabaseWrapper(const Foam::objectRegistry& obr, NeoN::Database& db)
-    : Foam::regIOobject(
-          Foam::IOobject(
-              registryName,
-              obr.time().timeName(),
-              obr,
-              Foam::IOobject::NO_READ,
-              Foam::IOobject::NO_WRITE
-          )
-      )
+    : Foam::regIOobject(Foam::IOobject(
+        registryName,
+        obr.time().timeName(),
+        obr,
+        Foam::IOobject::NO_READ,
+        Foam::IOobject::NO_WRITE
+    ))
     , db_(&db)
 {}
 

@@ -68,7 +68,7 @@ Foam::vector ofPressureMoment(
     {
         Foam::vector fp = rhoRef * (pBc[facei] - pRef) * Sf[facei];
         Foam::vector lv = Cf[facei] - cofR;
-        mp += lv ^ fp;  // cross product
+        mp += lv ^ fp; // cross product
     }
     return mp;
 }
@@ -105,8 +105,7 @@ TEST_CASE("Forces - pressure force matches OpenFOAM reference")
         ofP.correctBoundaryConditions();
 
         // Register the NeoN pressure field in the VectorCollection
-        fvcc::VectorCollection& vc =
-            fvcc::VectorCollection::instance(rt.db, "VectorCollection");
+        fvcc::VectorCollection& vc = fvcc::VectorCollection::instance(rt.db, "VectorCollection");
         nf::constructAndRegister(vc, rt, ofP, false);
 
         // Build a dictionary that matches the Forces constructor expectations
@@ -151,8 +150,7 @@ TEST_CASE("Forces - pressure force matches OpenFOAM reference")
         ofP.correctBoundaryConditions();
 
         // Register the NeoN pressure field in the VectorCollection
-        fvcc::VectorCollection& vc =
-            fvcc::VectorCollection::instance(rt.db, "VectorCollection");
+        fvcc::VectorCollection& vc = fvcc::VectorCollection::instance(rt.db, "VectorCollection");
         nf::constructAndRegister(vc, rt, ofP, false);
 
         Foam::dictionary dict;
@@ -192,8 +190,7 @@ TEST_CASE("Forces - pressure force matches OpenFOAM reference")
         ofP.correctBoundaryConditions();
 
         // Register the NeoN pressure field in the VectorCollection
-        fvcc::VectorCollection& vc =
-            fvcc::VectorCollection::instance(rt.db, "VectorCollection");
+        fvcc::VectorCollection& vc = fvcc::VectorCollection::instance(rt.db, "VectorCollection");
         nf::constructAndRegister(vc, rt, ofP, false);
 
         Foam::dictionary dict;
@@ -239,8 +236,7 @@ TEST_CASE("ForceCoeffs - normalised coefficients match manual computation")
         ofP.correctBoundaryConditions();
 
         // Register the NeoN pressure field in the VectorCollection
-        fvcc::VectorCollection& vc =
-            fvcc::VectorCollection::instance(rt.db, "VectorCollection");
+        fvcc::VectorCollection& vc = fvcc::VectorCollection::instance(rt.db, "VectorCollection");
         nf::constructAndRegister(vc, rt, ofP, false);
 
         const Foam::scalar rhoRef = 1.225;

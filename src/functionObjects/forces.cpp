@@ -37,12 +37,11 @@ const MeshAdapter& lookupMeshAdapter(const Foam::Time& runTime)
     const MeshAdapter* adapter = dynamic_cast<const MeshAdapter*>(&foamMesh);
     if (!adapter)
     {
-        Foam::FatalError
-            << "NeoFOAM::Forces requires the registered fvMesh to be a "
-               "NeoFOAM::MeshAdapter, but a plain Foam::fvMesh was found.\n"
-               "Make sure to call NeoFOAM::createAdapterRunTime() before "
-               "instantiating NeoFOAM functionObjects."
-            << Foam::abort(Foam::FatalError);
+        Foam::FatalError << "NeoFOAM::Forces requires the registered fvMesh to be a "
+                            "NeoFOAM::MeshAdapter, but a plain Foam::fvMesh was found.\n"
+                            "Make sure to call NeoFOAM::createAdapterRunTime() before "
+                            "instantiating NeoFOAM functionObjects."
+                         << Foam::abort(Foam::FatalError);
     }
     return *adapter;
 }
@@ -51,11 +50,7 @@ const MeshAdapter& lookupMeshAdapter(const Foam::Time& runTime)
 
 // ---- Constructor ----
 
-Forces::Forces(
-    const Foam::word& name,
-    const Foam::Time& runTime,
-    const Foam::dictionary& dict
-)
+Forces::Forces(const Foam::word& name, const Foam::Time& runTime, const Foam::dictionary& dict)
     : FunctionObjectIO(name, runTime, dict)
 {
     read(dict);
@@ -77,10 +72,9 @@ void Forces::resolveMesh()
         const Foam::label idx = pbm.findPatchID(patchName);
         if (idx < 0)
         {
-            Foam::FatalError
-                << "Patch '" << patchName << "' not found in mesh boundary.\n"
-                << "Available patches: " << pbm.names()
-                << Foam::abort(Foam::FatalError);
+            Foam::FatalError << "Patch '" << patchName << "' not found in mesh boundary.\n"
+                             << "Available patches: " << pbm.names()
+                             << Foam::abort(Foam::FatalError);
         }
         patchIndices_.push_back(static_cast<int>(idx));
     }
@@ -101,7 +95,7 @@ bool Forces::read(const Foam::dictionary& dict)
     // Store patch names; index resolution is deferred to first execute()
     // (the MeshAdapter may not be registered yet at construction time)
     patchNames_ = dict.get<Foam::wordList>("patches");
-    meshAdapter_ = nullptr;  // force re-resolve if dict changes
+    meshAdapter_ = nullptr; // force re-resolve if dict changes
     patchIndices_.clear();
 
     return true;
@@ -139,8 +133,7 @@ void Forces::computePatchForces(
     NeoN::parallelFor(
         exec,
         {static_cast<NeoN::localIdx>(start), static_cast<NeoN::localIdx>(end)},
-        NEON_LAMBDA(const NeoN::localIdx bfacei)
-        {
+        NEON_LAMBDA(const NeoN::localIdx bfacei) {
             // Pressure force on this face: F = rho * (p - pRef) * Sf
             NeoN::Vec3 fp = rhoRef * (pBcView[bfacei] - pRef) * sfView[bfacei];
 
@@ -189,8 +182,7 @@ bool Forces::execute()
     {
         WarningInFunction
             << "NeoFOAM database not registered in Foam::Time — skipping Forces::execute()\n"
-            << "Ensure createAdapterRunTime() was called before using neoForces."
-            << Foam::endl;
+            << "Ensure createAdapterRunTime() was called before using neoForces." << Foam::endl;
         return false;
     }
 
@@ -199,26 +191,21 @@ bool Forces::execute()
 
     if (!db.contains("VectorCollection"))
     {
-        WarningInFunction
-            << "VectorCollection not found in database — skipping Forces::execute()"
-            << Foam::endl;
+        WarningInFunction << "VectorCollection not found in database — skipping Forces::execute()"
+                          << Foam::endl;
         return false;
     }
 
-    const fvcc::VectorCollection& vc =
-        fvcc::VectorCollection::instance(db, "VectorCollection");
+    const fvcc::VectorCollection& vc = fvcc::VectorCollection::instance(db, "VectorCollection");
 
-    auto ids = vc.find(
-        [&](const NeoN::Document& doc)
-        { return doc.get<std::string>("name") == pName_; }
-    );
+    auto ids =
+        vc.find([&](const NeoN::Document& doc) { return doc.get<std::string>("name") == pName_; });
 
     if (ids.empty())
     {
-        WarningInFunction
-            << "Pressure field '" << pName_
-            << "' not found in VectorCollection — skipping Forces::execute()"
-            << Foam::endl;
+        WarningInFunction << "Pressure field '" << pName_
+                          << "' not found in VectorCollection — skipping Forces::execute()"
+                          << Foam::endl;
         return false;
     }
 
@@ -237,21 +224,80 @@ bool Forces::execute()
 
 bool Forces::write()
 {
-    auto& os = getOrCreateFile(
-        "force.dat",
-        "# Time\tFp.x\tFp.y\tFp.z\tMp.x\tMp.y\tMp.z"
-    );
+    const NeoN::Vec3 zero {0, 0, 0};
+    const NeoN::Vec3 totalForce = result_.pressureForce + result_.viscousForce;
+    const NeoN::Vec3 totalMoment = result_.pressureMoment + result_.viscousMoment;
 
-    os << time_.value()
-       << "\t" << result_.pressureForce[0]
-       << "\t" << result_.pressureForce[1]
-       << "\t" << result_.pressureForce[2]
-       << "\t" << result_.pressureMoment[0]
-       << "\t" << result_.pressureMoment[1]
-       << "\t" << result_.pressureMoment[2]
-       << "\n";
+    // ---- force.dat ----
+    {
+        auto& fos = getOrCreateFile(
+            "force.dat",
+            [&](std::ostream& os)
+            {
+                writeHeader(os, "Force");
+                writeHeaderValue(os, "CofR", fmtVec3(cofR_));
+                writeHeader(os, "");
+                writeCommented(os, "Time");
+                for (const auto* col :
+                     {"total_x",
+                      "total_y",
+                      "total_z",
+                      "pressure_x",
+                      "pressure_y",
+                      "pressure_z",
+                      "viscous_x",
+                      "viscous_y",
+                      "viscous_z"})
+                {
+                    writeTabbed(os, col);
+                }
+                os << '\n';
+            }
+        );
 
-    os.flush();
+        writeCurrentTime(fos);
+        writeVec3(fos, totalForce);
+        writeVec3(fos, result_.pressureForce);
+        writeVec3(fos, result_.viscousForce);
+        fos << '\n';
+        fos.flush();
+    }
+
+    // ---- moment.dat ----
+    {
+        auto& mos = getOrCreateFile(
+            "moment.dat",
+            [&](std::ostream& os)
+            {
+                writeHeader(os, "Moment");
+                writeHeaderValue(os, "CofR", fmtVec3(cofR_));
+                writeHeader(os, "");
+                writeCommented(os, "Time");
+                for (const auto* col :
+                     {"total_x",
+                      "total_y",
+                      "total_z",
+                      "pressure_x",
+                      "pressure_y",
+                      "pressure_z",
+                      "viscous_x",
+                      "viscous_y",
+                      "viscous_z"})
+                {
+                    writeTabbed(os, col);
+                }
+                os << '\n';
+            }
+        );
+
+        writeCurrentTime(mos);
+        writeVec3(mos, totalMoment);
+        writeVec3(mos, result_.pressureMoment);
+        writeVec3(mos, result_.viscousMoment);
+        mos << '\n';
+        mos.flush();
+    }
+
     return true;
 }
 
