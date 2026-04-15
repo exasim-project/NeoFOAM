@@ -108,10 +108,10 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:abbba342c427c240bd52734b9e59dbeff" id="r_abbba342c427c240bd52734b9e59dbeff"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1ForceCoeffs.html#abbba342c427c240bd52734b9e59dbeff">read</a> (const Foam::dictionary &amp;dict) override</td></tr>
 <tr class="separator:abbba342c427c240bd52734b9e59dbeff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae7a9c66f7f457bfb2fd3c775877fa5d9" id="r_ae7a9c66f7f457bfb2fd3c775877fa5d9"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1ForceCoeffs.html#ae7a9c66f7f457bfb2fd3c775877fa5d9">execute</a> () override</td></tr>
-<tr class="memdesc:ae7a9c66f7f457bfb2fd3c775877fa5d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run <a class="el" href="classNeoFOAM_1_1Forces.html#ad9ae38e7170e3b4a121fb1a0a46d5e2e" title="Run the GPU force-integral computation.">Forces::execute()</a> then normalise the result.  <br /></td></tr>
+<tr class="memdesc:ae7a9c66f7f457bfb2fd3c775877fa5d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Run <a class="el" href="classNeoFOAM_1_1Forces.html#ad9ae38e7170e3b4a121fb1a0a46d5e2e" title="Run the GPU force-integral computation.">Forces::execute()</a> then project forces/moments onto direction vectors.  <br /></td></tr>
 <tr class="separator:ae7a9c66f7f457bfb2fd3c775877fa5d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2a0cd7640588acb26c8f92c67862bb95" id="r_a2a0cd7640588acb26c8f92c67862bb95"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1ForceCoeffs.html#a2a0cd7640588acb26c8f92c67862bb95">write</a> () override</td></tr>
-<tr class="memdesc:a2a0cd7640588acb26c8f92c67862bb95"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write normalised coefficients to forceCoeffs.dat.  <br /></td></tr>
+<tr class="memdesc:a2a0cd7640588acb26c8f92c67862bb95"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write normalised coefficients to coefficient.dat.  <br /></td></tr>
 <tr class="separator:a2a0cd7640588acb26c8f92c67862bb95"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classNeoFOAM_1_1Forces"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classNeoFOAM_1_1Forces')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classNeoFOAM_1_1Forces.html">NeoFOAM::Forces</a></td></tr>
 <tr class="memitem:abc9349c436f25c5dfd37556dfc21a54d inherit pub_methods_classNeoFOAM_1_1Forces" id="r_abc9349c436f25c5dfd37556dfc21a54d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1Forces.html#abc9349c436f25c5dfd37556dfc21a54d">Forces</a> (const Foam::word &amp;name, const Foam::Time &amp;runTime, const Foam::dictionary &amp;dict)</td></tr>
@@ -203,7 +203,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Normalised aerodynamic force coefficients derived from GPU force integrals. </p>
-<p>Extends <a class="el" href="classNeoFOAM_1_1Forces.html" title="GPU-accelerated boundary-patch force and moment calculator.">Forces</a> by dividing the raw pressure forces and moments by the dynamic pressure reference quantities to produce dimensionless coefficients.</p>
+<p>Extends <a class="el" href="classNeoFOAM_1_1Forces.html" title="GPU-accelerated boundary-patch force and moment calculator.">Forces</a> by projecting raw forces/moments onto user-defined drag, lift and side direction vectors and dividing by the dynamic pressure reference quantities to produce dimensionless coefficients. The output exactly matches OpenFOAM's built-in forceCoeffs function object.</p>
 <p>Registered as <code>neoForceCoeffs</code> in OpenFOAM's runtime selection table: </p><div class="fragment"><div class="line">functions</div>
 <div class="line">{</div>
 <div class="line">    aeroCoeffs</div>
@@ -218,17 +218,22 @@ Additional Inherited Members</h2></td></tr>
 <div class="line">        lRef      1.0;</div>
 <div class="line">        Aref      0.5;</div>
 <div class="line">        CofR      (0 0 0);</div>
+<div class="line">        dragDir   (1 0 0);</div>
+<div class="line">        liftDir   (0 0 1);</div>
 <div class="line">    }</div>
 <div class="line">}</div>
-<div class="ttc" id="aclassNeoFOAM_1_1ForceCoeffs_html_a8fdde200ae77b634953cf6ffe11f14bf"><div class="ttname"><a href="classNeoFOAM_1_1ForceCoeffs.html#a8fdde200ae77b634953cf6ffe11f14bf">NeoFOAM::ForceCoeffs::type</a></div><div class="ttdeci">virtual const Foam::word &amp; type() const override</div><div class="ttdef"><b>Definition</b> <a href="forceCoeffs_8hpp_source.html#l00055">forceCoeffs.hpp:55</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1ForceCoeffs_html_a8fdde200ae77b634953cf6ffe11f14bf"><div class="ttname"><a href="classNeoFOAM_1_1ForceCoeffs.html#a8fdde200ae77b634953cf6ffe11f14bf">NeoFOAM::ForceCoeffs::type</a></div><div class="ttdeci">virtual const Foam::word &amp; type() const override</div><div class="ttdef"><b>Definition</b> <a href="forceCoeffs_8hpp_source.html#l00065">forceCoeffs.hpp:65</a></div></div>
 <div class="ttc" id="anamespaceNeoFOAM_html"><div class="ttname"><a href="namespaceNeoFOAM.html">NeoFOAM</a></div><div class="ttdef"><b>Definition</b> <a href="pressureVelocityCoupling_8hpp_source.html#l00014">pressureVelocityCoupling.hpp:15</a></div></div>
-</div><!-- fragment --><dl class="section user"><dt>Output columns (forceCoeffs.dat)</dt><dd><div class="fragment"><div class="line"><span class="preprocessor"># Time  Cd.x  Cd.y  Cd.z  Cm.x  Cm.y  Cm.z</span></div>
-</div><!-- fragment --> where <code>Cd</code> = pressureForce / (0.5 * rhoInf * magUInf² * Aref) and <code>Cm</code> = pressureMoment / (0.5 * rhoInf * magUInf² * Aref * lRef).</dd></dl>
+</div><!-- fragment --><dl class="section user"><dt>Output file: coefficient.dat</dt><dd>12 scalar columns in alphabetical order (matches OpenFOAM): <div class="fragment"><div class="line"><span class="preprocessor"># Time  Cd  Cd(f)  Cd(r)  Cl  Cl(f)  Cl(r)  CmPitch  CmRoll  CmYaw  Cs  Cs(f)  Cs(r)</span></div>
+</div><!-- fragment --></dd></dl>
+<p>The front/rear axle split follows OpenFOAM's convention: Cd(f) = 0.5*Cd + CmRoll; Cd(r) = 0.5*Cd - CmRoll Cl(f) = 0.5*Cl + CmPitch; Cl(r) = 0.5*Cl - CmPitch Cs(f) = 0.5*Cs + CmYaw; Cs(r) = 0.5*Cs - CmYaw</p>
 <dl class="section note"><dt>Note</dt><dd>Viscous force contributions are zero in v1. </dd>
 <dd>
-MPI parallel execution is not yet supported. </dd></dl>
+MPI parallel execution is not yet supported. </dd>
+<dd>
+<a class="el" href="classNeoFOAM_1_1ForceCoeffs.html#a2a0cd7640588acb26c8f92c67862bb95" title="Write normalised coefficients to coefficient.dat.">write()</a> produces coefficient.dat only — force.dat and moment.dat are written exclusively by the neoForces function object. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="forceCoeffs_8hpp_source.html#l00048">48</a> of file <a class="el" href="forceCoeffs_8hpp_source.html">forceCoeffs.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forceCoeffs_8hpp_source.html#l00058">58</a> of file <a class="el" href="forceCoeffs_8hpp_source.html">forceCoeffs.hpp</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a6df7bfa2d4d0c2c9be0542b07c7e7a4d" name="a6df7bfa2d4d0c2c9be0542b07c7e7a4d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a6df7bfa2d4d0c2c9be0542b07c7e7a4d">&#9670;&#160;</a></span>ForceCoeffs()</h2>
@@ -313,8 +318,8 @@ MPI parallel execution is not yet supported. </dd></dl>
 </table>
 </div><div class="memdoc">
 
-<p>Run <a class="el" href="classNeoFOAM_1_1Forces.html#ad9ae38e7170e3b4a121fb1a0a46d5e2e" title="Run the GPU force-integral computation.">Forces::execute()</a> then normalise the result. </p>
-<p>The <a class="el" href="structNeoFOAM_1_1ForceResult.html" title="Accumulated force and moment vectors from a Forces execution.">ForceResult</a> from the base class is stored unchanged; normalised coefficients are kept in coeffResult_ for <a class="el" href="classNeoFOAM_1_1ForceCoeffs.html#a2a0cd7640588acb26c8f92c67862bb95" title="Write normalised coefficients to forceCoeffs.dat.">write()</a>. </p>
+<p>Run <a class="el" href="classNeoFOAM_1_1Forces.html#ad9ae38e7170e3b4a121fb1a0a46d5e2e" title="Run the GPU force-integral computation.">Forces::execute()</a> then project forces/moments onto direction vectors. </p>
+<p>Computes Cd, Cl, Cs, CmRoll, CmPitch, CmYaw as scalars ready for <a class="el" href="classNeoFOAM_1_1ForceCoeffs.html#a2a0cd7640588acb26c8f92c67862bb95" title="Write normalised coefficients to coefficient.dat.">write()</a>. </p>
 
 <p>Reimplemented from <a class="el" href="classNeoFOAM_1_1Forces.html#ad9ae38e7170e3b4a121fb1a0a46d5e2e">NeoFOAM::Forces</a>.</p>
 
@@ -373,7 +378,7 @@ MPI parallel execution is not yet supported. </dd></dl>
 
 <p>Reimplemented from <a class="el" href="classNeoFOAM_1_1Forces.html#a304be0e6fcd89e0dcdb722b003d78f5c">NeoFOAM::Forces</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="forceCoeffs_8hpp_source.html#l00055">55</a> of file <a class="el" href="forceCoeffs_8hpp_source.html">forceCoeffs.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forceCoeffs_8hpp_source.html#l00065">65</a> of file <a class="el" href="forceCoeffs_8hpp_source.html">forceCoeffs.hpp</a>.</p>
 
 </div>
 </div>
@@ -400,7 +405,8 @@ MPI parallel execution is not yet supported. </dd></dl>
 </table>
 </div><div class="memdoc">
 
-<p>Write normalised coefficients to forceCoeffs.dat. </p>
+<p>Write normalised coefficients to coefficient.dat. </p>
+<p>Does NOT write force.dat or moment.dat — those are only written by neoForces. </p>
 
 <p>Reimplemented from <a class="el" href="classNeoFOAM_1_1Forces.html#ab2664062354c5f34078252d7f22dc4ca">NeoFOAM::Forces</a>.</p>
 
@@ -427,7 +433,7 @@ MPI parallel execution is not yet supported. </dd></dl>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="forceCoeffs_8hpp_source.html#l00054">54</a> of file <a class="el" href="forceCoeffs_8hpp_source.html">forceCoeffs.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forceCoeffs_8hpp_source.html#l00064">64</a> of file <a class="el" href="forceCoeffs_8hpp_source.html">forceCoeffs.hpp</a>.</p>
 
 </div>
 </div>
@@ -451,7 +457,7 @@ MPI parallel execution is not yet supported. </dd></dl>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="forceCoeffs_8hpp_source.html#l00053">53</a> of file <a class="el" href="forceCoeffs_8hpp_source.html">forceCoeffs.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forceCoeffs_8hpp_source.html#l00063">63</a> of file <a class="el" href="forceCoeffs_8hpp_source.html">forceCoeffs.hpp</a>.</p>
 
 </div>
 </div>
