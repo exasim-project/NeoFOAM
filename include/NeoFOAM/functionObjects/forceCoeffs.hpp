@@ -102,9 +102,9 @@ private:
     double Cd_ {0};
     double Cl_ {0};
     double Cs_ {0};
-    double CmRoll_  {0};
+    double CmRoll_ {0};
     double CmPitch_ {0};
-    double CmYaw_   {0};
+    double CmYaw_ {0};
 };
 
 } // namespace NeoFOAM
