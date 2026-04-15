@@ -55,11 +55,7 @@ public:
     virtual const Foam::word& type() const override { return typeName; }
 
     //- Construct from name, Time and dictionary (RTST constructor signature)
-    ForceCoeffs(
-        const Foam::word& name,
-        const Foam::Time& runTime,
-        const Foam::dictionary& dict
-    );
+    ForceCoeffs(const Foam::word& name, const Foam::Time& runTime, const Foam::dictionary& dict);
 
     //- Destructor
     virtual ~ForceCoeffs() = default;

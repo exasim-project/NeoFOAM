@@ -27,9 +27,9 @@ namespace NeoFOAM
 struct ForceResult
 {
     NeoN::Vec3 pressureForce {0, 0, 0};
-    NeoN::Vec3 viscousForce {0, 0, 0};   ///< v1: always zero
+    NeoN::Vec3 viscousForce {0, 0, 0}; ///< v1: always zero
     NeoN::Vec3 pressureMoment {0, 0, 0};
-    NeoN::Vec3 viscousMoment {0, 0, 0};  ///< v1: always zero
+    NeoN::Vec3 viscousMoment {0, 0, 0}; ///< v1: always zero
 };
 
 /**
@@ -76,11 +76,7 @@ public:
     virtual const Foam::word& type() const override { return typeName; }
 
     //- Construct from name, Time and dictionary (RTST constructor signature)
-    Forces(
-        const Foam::word& name,
-        const Foam::Time& runTime,
-        const Foam::dictionary& dict
-    );
+    Forces(const Foam::word& name, const Foam::Time& runTime, const Foam::dictionary& dict);
 
     //- Destructor
     virtual ~Forces() = default;
@@ -143,8 +139,8 @@ protected:
     /// Lazily resolved on first execute() — null until MeshAdapter is registered.
     const MeshAdapter* meshAdapter_ {nullptr};
 
-    Foam::wordList patchNames_;  ///< Stored from dict; resolved to indices lazily
-    std::vector<int> patchIndices_;       ///< Resolved from patchNames_ on first execute()
+    Foam::wordList patchNames_;     ///< Stored from dict; resolved to indices lazily
+    std::vector<int> patchIndices_; ///< Resolved from patchNames_ on first execute()
 
     std::string pName_ {"p"};
     NeoN::scalar rhoRef_ {1.0};

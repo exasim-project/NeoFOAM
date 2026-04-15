@@ -119,8 +119,8 @@ RunTime createAdapterRunTime(const Foam::Time& in, const NeoN::Executor exec)
     // entry is removed.
     if (in.foundObject<Foam::fvMesh>(Foam::polyMesh::defaultRegion))
     {
-        Foam::fvMesh& existing = const_cast<Foam::fvMesh&>(
-            in.lookupObject<Foam::fvMesh>(Foam::polyMesh::defaultRegion));
+        Foam::fvMesh& existing =
+            const_cast<Foam::fvMesh&>(in.lookupObject<Foam::fvMesh>(Foam::polyMesh::defaultRegion));
         if (!dynamic_cast<MeshAdapter*>(&existing))
         {
             in.objectRegistry::checkOut(Foam::polyMesh::defaultRegion);

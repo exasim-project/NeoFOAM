@@ -74,19 +74,35 @@ bool ForceCoeffs::write()
     Forces::write();
 
     auto& os = getOrCreateFile(
-        "forceCoeffs.dat",
-        "# Time\tCd.x\tCd.y\tCd.z\tCm.x\tCm.y\tCm.z"
+        "coefficient.dat",
+        [&](std::ostream& s)
+        {
+            writeHeader(s, "Force and moment coefficients");
+            writeHeaderValue(s, "magUInf", fmtScalar(magUInf_));
+            writeHeaderValue(s, "lRef", fmtScalar(lRef_));
+            writeHeaderValue(s, "Aref", fmtScalar(Aref_));
+            writeHeaderValue(s, "CofR", fmtVec3(cofR_));
+            writeHeader(s, "");
+            writeCommented(s, "Time");
+            for (const auto* col : {"Cx", "Cy", "Cz", "CmX", "CmY", "CmZ"})
+            {
+                writeTabbed(s, col);
+            }
+            s << '\n';
+        }
     );
 
-    os << time_.value()
-       << "\t" << coeffResult_.pressureForce[0]
-       << "\t" << coeffResult_.pressureForce[1]
-       << "\t" << coeffResult_.pressureForce[2]
-       << "\t" << coeffResult_.pressureMoment[0]
-       << "\t" << coeffResult_.pressureMoment[1]
-       << "\t" << coeffResult_.pressureMoment[2]
-       << "\n";
-
+    writeCurrentTime(os);
+    os << std::scientific << std::setprecision(writePrecision);
+    for (int i = 0; i < 3; ++i)
+    {
+        os << std::setw(charWidth) << coeffResult_.pressureForce[i];
+    }
+    for (int i = 0; i < 3; ++i)
+    {
+        os << std::setw(charWidth) << coeffResult_.pressureMoment[i];
+    }
+    os << '\n';
     os.flush();
     return true;
 }
