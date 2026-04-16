@@ -26,7 +26,6 @@ auto fromFoamField(const NeoN::Executor& exec, const FoamType& field)
         reinterpret_cast<const mapped_t*>(field.cdata()),
         static_cast<size_t>(field.size())
     );
-
     return nfField;
 };
 
@@ -114,8 +113,7 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
     {
         Foam::dictionary patchDict = bDict.subDict(bName);
         NeoN::Dictionary neoPatchDict = convert(patchDict);
-        // patchInserter[patchDict.get<Foam::word>("type")](neoPatchDict);
-        patchInserter["empty"](neoPatchDict);
+        patchInserter[patchDict.get<Foam::word>("type")](neoPatchDict);
         bcs.emplace_back(nfMesh, neoPatchDict, patchi);
         patchi++;
     }
