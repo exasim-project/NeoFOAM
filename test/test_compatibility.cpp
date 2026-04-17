@@ -59,7 +59,7 @@ TEST_CASE("fvSolution")
 
     SECTION("updatePreconditioner")
     {
-        SECTION("DIC")
+        SECTION("diagonal")
         {
             solver1.insert("preconditioner", std::string("diagonal"));
             NeoFOAM::updatePreconditioner(solver1);
