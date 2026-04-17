@@ -40,11 +40,24 @@ std::vector<NeoN::localIdx> computeOffset(const Foam::fvMesh& mesh)
     std::vector<NeoN::localIdx> result;
     const Foam::fvBoundaryMesh& bMesh = mesh.boundary();
     result.push_back(0);
+    // first all regular boundaries are collected
     forAll(bMesh, patchI)
     {
         NeoN::localIdx curOffset = result.back();
         const Foam::fvPatch& patch = bMesh[patchI];
-        result.push_back(curOffset + patch.size());
+        if (!Foam::isA<Foam::processorFvPatch>(patch))
+        {
+            result.push_back(curOffset + patch.size());
+        }
+    }
+    forAll(bMesh, patchI)
+    {
+        NeoN::localIdx curOffset = result.back();
+        const Foam::fvPatch& patch = bMesh[patchI];
+        if (Foam::isA<Foam::processorFvPatch>(patch))
+        {
+            result.push_back(curOffset + patch.size());
+        }
     }
     return result;
 }
@@ -54,8 +67,7 @@ std::vector<NeoN::localIdx> computeNeighbRank(const Foam::fvMesh& mesh)
     const Foam::fvBoundaryMesh& bMesh = mesh.boundary();
     const Foam::lduInterfacePtrsList interfaces = bMesh.interfaces();
 
-
-    auto result = std::vector<NeoN::localIdx>(bMesh.size(), -1);
+    auto result = std::vector<NeoN::localIdx>(); // bMesh.size(), -1);
 
     for (auto i = 0; i < interfaces.size(); i++)
     {
@@ -67,7 +79,7 @@ std::vector<NeoN::localIdx> computeNeighbRank(const Foam::fvMesh& mesh)
         {
             const Foam::processorFvPatch& patch =
                 Foam::refCast<const Foam::processorFvPatch>(interfaces[i]);
-            result[i] = patch.neighbProcNo();
+            result.push_back(patch.neighbProcNo());
         }
     }
     return result;
@@ -189,8 +201,8 @@ readOpenFOAMMesh(const NeoN::Executor exec, const Foam::fvMesh& mesh, bool fullM
     std::vector<NeoN::localIdx> offset = computeOffset(mesh);
 
     std::vector<NeoN::localIdx> neighbRank = computeNeighbRank(mesh);
-    // FIXME
-    NeoN::localIdx nProcPatches = 0;
+
+    NeoN::localIdx nProcPatches = neighbRank.size();
     // auto isProc = computeIsProc(exec, mesh);
     std::vector<NeoN::localIdx> neighbourRank = computeNeighbRank(mesh);
     NeoN::BoundaryMesh bMesh(
