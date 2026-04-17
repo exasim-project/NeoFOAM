@@ -53,7 +53,7 @@ function(neofoam_unit_test TEST SETUP_DIRECTORY)
 
   if(NOT NEOFOAM_MPI_SIZE)
     add_test(
-      NAME ${TEST}
+      NAME neofoam_test_${TEST}
       COMMAND ${NEOFOAM_COMMAND}
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test/${SETUP_DIRECTORY})
   else()
