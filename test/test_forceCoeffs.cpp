@@ -11,7 +11,6 @@
 
 namespace nf = NeoFOAM;
 namespace fvcc = NeoN::finiteVolume::cellCentred;
-namespace nnfvcc = NeoN::finiteVolume::cellCentred;
 
 extern Foam::Time* timePtr;
 
@@ -261,10 +260,6 @@ TEST_CASE("ForceCoeffs - normalised coefficients match manual computation")
 
         // Raw force from OpenFOAM reference
         Foam::vector ofFp = ofPressureForce(ofP, mesh, "fixedWalls", rhoRef, pRef);
-
-        // Expected coefficient
-        const Foam::scalar dyn = 0.5 * rhoRef * magUInf * magUInf * Aref;
-        Foam::vector expectedCd = ofFp / dyn;
 
         // NeoFOAM raw force must match
         const nf::ForceResult& raw = fc.lastResult();

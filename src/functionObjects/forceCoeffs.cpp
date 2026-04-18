@@ -5,6 +5,8 @@
 
 #include "addToRunTimeSelectionTable.H"
 
+using scalar = NeoN::scalar;
+
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * //
 
 const Foam::word NeoFOAM::ForceCoeffs::typeName("neoForceCoeffs");
@@ -40,15 +42,27 @@ bool ForceCoeffs::read(const Foam::dictionary& dict)
 
     Foam::vector dragFoam = dict.getOrDefault<Foam::vector>("dragDir", Foam::vector(1, 0, 0));
     Foam::vector liftFoam = dict.getOrDefault<Foam::vector>("liftDir", Foam::vector(0, 0, 1));
+
+    if (Foam::mag(dragFoam) < Foam::SMALL)
+        Foam::FatalError << "neoForceCoeffs: dragDir has zero magnitude."
+                         << Foam::abort(Foam::FatalError);
+    if (Foam::mag(liftFoam) < Foam::SMALL)
+        Foam::FatalError << "neoForceCoeffs: liftDir has zero magnitude."
+                         << Foam::abort(Foam::FatalError);
+
+    dragFoam /= Foam::mag(dragFoam);
+    liftFoam /= Foam::mag(liftFoam);
+
+    Foam::vector sideFoam = liftFoam ^ dragFoam;
+    if (Foam::mag(sideFoam) < Foam::SMALL)
+        Foam::FatalError << "neoForceCoeffs: dragDir and liftDir are parallel — cannot form a "
+                            "right-hand coordinate system."
+                         << Foam::abort(Foam::FatalError);
+    sideFoam /= Foam::mag(sideFoam);
+
     dragDir_ = NeoN::Vec3(dragFoam[0], dragFoam[1], dragFoam[2]);
     liftDir_ = NeoN::Vec3(liftFoam[0], liftFoam[1], liftFoam[2]);
-
-    // sideDir = liftDir × dragDir  (right-hand system, mirrors OF e2 = e3 × e1)
-    sideDir_ = NeoN::Vec3(
-        liftDir_[1] * dragDir_[2] - liftDir_[2] * dragDir_[1],
-        liftDir_[2] * dragDir_[0] - liftDir_[0] * dragDir_[2],
-        liftDir_[0] * dragDir_[1] - liftDir_[1] * dragDir_[0]
-    );
+    sideDir_ = NeoN::Vec3(sideFoam[0], sideFoam[1], sideFoam[2]);
 
     return true;
 }
@@ -64,9 +78,17 @@ bool ForceCoeffs::execute()
     const NeoN::Vec3 totalForce = raw.pressureForce + raw.viscousForce;
     const NeoN::Vec3 totalMoment = raw.pressureMoment + raw.viscousMoment;
 
-    const double pDyn = 0.5 * rhoRef_ * magUInf_ * magUInf_;
-    const double forceScale = pDyn * Aref_;
-    const double momentScale = pDyn * Aref_ * lRef_;
+    const scalar pDyn = 0.5 * rhoRef_ * magUInf_ * magUInf_;
+    const scalar forceScale = pDyn * Aref_;
+    const scalar momentScale = pDyn * Aref_ * lRef_;
+
+    if (forceScale == 0 || momentScale == 0)
+    {
+        Foam::FatalError << "neoForceCoeffs: scaling factor is zero "
+                         << "(rhoRef=" << rhoRef_ << ", magUInf=" << magUInf_ << ", Aref=" << Aref_
+                         << ", lRef=" << lRef_ << "). "
+                         << "Cannot compute force coefficients." << Foam::abort(Foam::FatalError);
+    }
 
     auto dot = [](const NeoN::Vec3& a, const NeoN::Vec3& b)
     { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; };
@@ -123,16 +145,16 @@ bool ForceCoeffs::write()
         }
     );
 
-    const double CdF = 0.5 * Cd_ + CmRoll_;
-    const double CdR = 0.5 * Cd_ - CmRoll_;
-    const double ClF = 0.5 * Cl_ + CmPitch_;
-    const double ClR = 0.5 * Cl_ - CmPitch_;
-    const double CsF = 0.5 * Cs_ + CmYaw_;
-    const double CsR = 0.5 * Cs_ - CmYaw_;
+    const scalar cdF = 0.5 * Cd_ + CmRoll_;
+    const scalar cdR = 0.5 * Cd_ - CmRoll_;
+    const scalar clF = 0.5 * Cl_ + CmPitch_;
+    const scalar clR = 0.5 * Cl_ - CmPitch_;
+    const scalar csF = 0.5 * Cs_ + CmYaw_;
+    const scalar csR = 0.5 * Cs_ - CmYaw_;
 
     writeCurrentTime(os);
     os << std::scientific << std::setprecision(writePrecision);
-    for (double v : {Cd_, CdF, CdR, Cl_, ClF, ClR, CmPitch_, CmRoll_, CmYaw_, Cs_, CsF, CsR})
+    for (scalar v : {Cd_, cdF, cdR, Cl_, clF, clR, CmPitch_, CmRoll_, CmYaw_, Cs_, csF, csR})
     {
         os << std::setw(charWidth) << v;
     }

@@ -3,7 +3,7 @@
 - Add SpalartAllmarasDDES turbulence model and integration test [#233](https://github.com/exasim-project/NeoFOAM/pull/233)
 - Added continuity error calculation [#306](https://github.com/exasim-project/NeoFOAM/pull/306)
 - Add distributed (processor-boundary) support for neoIcoFoam: processor-face geometry, non-orthogonal snGrad and viscous-stress correction with halo exchange, split-storage SurfaceField read/write with BC-preserving restart, and a tiltedCube distributed test case [#310](https://github.com/exasim-project/NeoFOAM/pull/310)
-- Added forceCoeffs functionObject and required infrastructure e.g. IO helpers  [#265](https://github.com/exasim-project/NeoFOAM/pull/265)
+- Added forceCoeffs functionObject and required infrastructure e.g. IO helpers [#265](https://github.com/exasim-project/NeoFOAM/pull/265)
 
 ## Development
 - Update submodule regularly by dependabot [#209](https://github.com/exasim-project/NeoFOAM/pull/209)

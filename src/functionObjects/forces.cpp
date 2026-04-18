@@ -6,6 +6,7 @@
 
 #include "addToRunTimeSelectionTable.H"
 #include "polyMesh.H"
+#include "Pstream.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * //
 
@@ -171,6 +172,13 @@ void Forces::computePatchForces(
 
 bool Forces::execute()
 {
+    if (Foam::Pstream::parRun())
+    {
+        Foam::FatalError << "NeoFOAM::Forces does not support MPI parallel execution.\n"
+                         << "Run in serial or with a single MPI rank."
+                         << Foam::abort(Foam::FatalError);
+    }
+
     resolveMesh();
 
     result_ = ForceResult {};
@@ -224,7 +232,6 @@ bool Forces::execute()
 
 bool Forces::write()
 {
-    const NeoN::Vec3 zero {0, 0, 0};
     const NeoN::Vec3 totalForce = result_.pressureForce + result_.viscousForce;
     const NeoN::Vec3 totalMoment = result_.pressureMoment + result_.viscousMoment;
 
