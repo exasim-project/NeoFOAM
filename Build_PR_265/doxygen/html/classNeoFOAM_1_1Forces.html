@@ -212,14 +212,14 @@ Additional Inherited Members</h2></td></tr>
 <div class="line">        CofR      (0 0 0);</div>
 <div class="line">    }</div>
 <div class="line">}</div>
-<div class="ttc" id="aclassNeoFOAM_1_1Forces_html_a304be0e6fcd89e0dcdb722b003d78f5c"><div class="ttname"><a href="classNeoFOAM_1_1Forces.html#a304be0e6fcd89e0dcdb722b003d78f5c">NeoFOAM::Forces::type</a></div><div class="ttdeci">virtual const Foam::word &amp; type() const override</div><div class="ttdef"><b>Definition</b> <a href="forces_8hpp_source.html#l00076">forces.hpp:76</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1Forces_html_a304be0e6fcd89e0dcdb722b003d78f5c"><div class="ttname"><a href="classNeoFOAM_1_1Forces.html#a304be0e6fcd89e0dcdb722b003d78f5c">NeoFOAM::Forces::type</a></div><div class="ttdeci">virtual const Foam::word &amp; type() const override</div><div class="ttdef"><b>Definition</b> <a href="forces_8hpp_source.html#l00079">forces.hpp:79</a></div></div>
 <div class="ttc" id="anamespaceNeoFOAM_html"><div class="ttname"><a href="namespaceNeoFOAM.html">NeoFOAM</a></div><div class="ttdef"><b>Definition</b> <a href="pressureVelocityCoupling_8hpp_source.html#l00014">pressureVelocityCoupling.hpp:15</a></div></div>
-</div><!-- fragment --><dl class="section user"><dt>GPU I/O strategy</dt><dd><a class="el" href="classNeoFOAM_1_1Forces.html#ad9ae38e7170e3b4a121fb1a0a46d5e2e" title="Run the GPU force-integral computation.">execute()</a> runs a <code>parallelFor</code> kernel over the boundary patch faces using <code>Kokkos::atomic_add</code> into a 6-element device buffer. Only those 6 scalars (96 bytes) are copied to host — the full pressure field is never transferred. <a class="el" href="classNeoFOAM_1_1Forces.html#ab2664062354c5f34078252d7f22dc4ca" title="Write the last computed result to postProcessing/.">write()</a> appends one row to <code>postProcessing/</code> &lt;name&gt;/0/force.dat.</dd></dl>
-<dl class="section note"><dt>Note</dt><dd>Viscous forces are not yet implemented (v1 limitation). </dd>
+</div><!-- fragment --><dl class="section user"><dt>GPU I/O strategy</dt><dd><a class="el" href="classNeoFOAM_1_1Forces.html#ad9ae38e7170e3b4a121fb1a0a46d5e2e" title="Run the GPU force-integral computation.">execute()</a> runs a <code>parallelFor</code> kernel over the boundary patch faces using <code>NeoN::atomic_add</code> into a 6-element device buffer. Only those 6 scalars (96 bytes) are copied to host — the full pressure field is never transferred. <a class="el" href="classNeoFOAM_1_1Forces.html#ab2664062354c5f34078252d7f22dc4ca" title="Write the last computed result to postProcessing/.">write()</a> appends one row each to <code>postProcessing/</code> &lt;name&gt;/&lt;startTime&gt;/force.dat and <code>postProcessing/</code> &lt;name&gt;/&lt;startTime&gt;/moment.dat.</dd></dl>
+<dl class="section note"><dt>Note</dt><dd>Viscous forces are not yet implemented; only pressure contributions are computed. OpenFOAM's forces object includes viscous contributions — these will be zero here. </dd>
 <dd>
-MPI parallel execution is not yet supported (v1 limitation). </dd></dl>
+MPI parallel execution is not supported; a FatalError is raised in <a class="el" href="classNeoFOAM_1_1Forces.html#ad9ae38e7170e3b4a121fb1a0a46d5e2e" title="Run the GPU force-integral computation.">execute()</a> if Pstream::parRun() is true. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00066">66</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00069">69</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="abc9349c436f25c5dfd37556dfc21a54d" name="abc9349c436f25c5dfd37556dfc21a54d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#abc9349c436f25c5dfd37556dfc21a54d">&#9670;&#160;</a></span>Forces()</h2>
@@ -332,7 +332,7 @@ MPI parallel execution is not yet supported (v1 limitation). </dd></dl>
 </div><div class="memdoc">
 
 <p>GPU kernel: accumulate pressure force/moment for one boundary patch. </p>
-<p>Runs <code>parallelFor</code> over faces in the patch range and uses <code>Kokkos::atomic_add</code> into a 6-element device accumulator. Transfers 6 scalars to host on completion.</p>
+<p>Runs <code>parallelFor</code> over faces in the patch range and uses <code>NeoN::atomic_add</code> into a 6-element device accumulator. Transfers 6 scalars to host on completion.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">patchi</td><td>Patch index (positionally consistent with NeoN boundary offset) </td></tr>
@@ -402,7 +402,7 @@ MPI parallel execution is not yet supported (v1 limitation). </dd></dl>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00109">109</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00114">114</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
@@ -488,7 +488,7 @@ MPI parallel execution is not yet supported (v1 limitation). </dd></dl>
 
 <p>Reimplemented in <a class="el" href="classNeoFOAM_1_1ForceCoeffs.html#a8fdde200ae77b634953cf6ffe11f14bf">NeoFOAM::ForceCoeffs</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00076">76</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00079">79</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
@@ -516,7 +516,7 @@ MPI parallel execution is not yet supported (v1 limitation). </dd></dl>
 </div><div class="memdoc">
 
 <p>Write the last computed result to postProcessing/. </p>
-<p>Appends one row to <code>force.dat</code> with columns: <code>time</code> Fp.x Fp.y Fp.z Mp.x Mp.y Mp.z </p>
+<p>Appends one row to <code>force.dat</code> with columns: <code>time</code> F.x F.y F.z Fp.x Fp.y Fp.z Fv.x Fv.y Fv.z and one row to <code>moment.dat</code> with columns: <code>time</code> M.x M.y M.z Mp.x Mp.y Mp.z Mv.x Mv.y Mv.z </p>
 
 <p>Implements <a class="el" href="classNeoFOAM_1_1FunctionObjectIO.html#aa9637f114abb9f1fbf8badbab17d2771">NeoFOAM::FunctionObjectIO</a>.</p>
 
@@ -545,7 +545,7 @@ MPI parallel execution is not yet supported (v1 limitation). </dd></dl>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00148">148</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00153">153</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
@@ -569,7 +569,7 @@ MPI parallel execution is not yet supported (v1 limitation). </dd></dl>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00075">75</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00078">78</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
@@ -595,7 +595,7 @@ MPI parallel execution is not yet supported (v1 limitation). </dd></dl>
 
 <p>Lazily resolved on first <a class="el" href="classNeoFOAM_1_1Forces.html#ad9ae38e7170e3b4a121fb1a0a46d5e2e" title="Run the GPU force-integral computation.">execute()</a> — null until <a class="el" href="classNeoFOAM_1_1MeshAdapter.html">MeshAdapter</a> is registered. </p>
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00140">140</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00145">145</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
@@ -621,7 +621,7 @@ MPI parallel execution is not yet supported (v1 limitation). </dd></dl>
 
 <p>Resolved from patchNames_ on first <a class="el" href="classNeoFOAM_1_1Forces.html#ad9ae38e7170e3b4a121fb1a0a46d5e2e" title="Run the GPU force-integral computation.">execute()</a> </p>
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00143">143</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00148">148</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
@@ -647,7 +647,7 @@ MPI parallel execution is not yet supported (v1 limitation). </dd></dl>
 
 <p>Stored from dict; resolved to indices lazily. </p>
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00142">142</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00147">147</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
@@ -671,7 +671,7 @@ MPI parallel execution is not yet supported (v1 limitation). </dd></dl>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00145">145</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00150">150</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
@@ -695,7 +695,7 @@ MPI parallel execution is not yet supported (v1 limitation). </dd></dl>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00147">147</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00152">152</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
@@ -719,7 +719,7 @@ MPI parallel execution is not yet supported (v1 limitation). </dd></dl>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00150">150</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00155">155</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
@@ -743,7 +743,7 @@ MPI parallel execution is not yet supported (v1 limitation). </dd></dl>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00146">146</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00151">151</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
@@ -767,7 +767,7 @@ MPI parallel execution is not yet supported (v1 limitation). </dd></dl>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00074">74</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00077">77</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>

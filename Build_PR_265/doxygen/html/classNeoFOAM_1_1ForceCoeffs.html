@@ -222,18 +222,18 @@ Additional Inherited Members</h2></td></tr>
 <div class="line">        liftDir   (0 0 1);</div>
 <div class="line">    }</div>
 <div class="line">}</div>
-<div class="ttc" id="aclassNeoFOAM_1_1ForceCoeffs_html_a8fdde200ae77b634953cf6ffe11f14bf"><div class="ttname"><a href="classNeoFOAM_1_1ForceCoeffs.html#a8fdde200ae77b634953cf6ffe11f14bf">NeoFOAM::ForceCoeffs::type</a></div><div class="ttdeci">virtual const Foam::word &amp; type() const override</div><div class="ttdef"><b>Definition</b> <a href="forceCoeffs_8hpp_source.html#l00065">forceCoeffs.hpp:65</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1ForceCoeffs_html_a8fdde200ae77b634953cf6ffe11f14bf"><div class="ttname"><a href="classNeoFOAM_1_1ForceCoeffs.html#a8fdde200ae77b634953cf6ffe11f14bf">NeoFOAM::ForceCoeffs::type</a></div><div class="ttdeci">virtual const Foam::word &amp; type() const override</div><div class="ttdef"><b>Definition</b> <a href="forceCoeffs_8hpp_source.html#l00067">forceCoeffs.hpp:67</a></div></div>
 <div class="ttc" id="anamespaceNeoFOAM_html"><div class="ttname"><a href="namespaceNeoFOAM.html">NeoFOAM</a></div><div class="ttdef"><b>Definition</b> <a href="pressureVelocityCoupling_8hpp_source.html#l00014">pressureVelocityCoupling.hpp:15</a></div></div>
 </div><!-- fragment --><dl class="section user"><dt>Output file: coefficient.dat</dt><dd>12 scalar columns in alphabetical order (matches OpenFOAM): <div class="fragment"><div class="line"><span class="preprocessor"># Time  Cd  Cd(f)  Cd(r)  Cl  Cl(f)  Cl(r)  CmPitch  CmRoll  CmYaw  Cs  Cs(f)  Cs(r)</span></div>
 </div><!-- fragment --></dd></dl>
 <p>The front/rear axle split follows OpenFOAM's convention: Cd(f) = 0.5*Cd + CmRoll; Cd(r) = 0.5*Cd - CmRoll Cl(f) = 0.5*Cl + CmPitch; Cl(r) = 0.5*Cl - CmPitch Cs(f) = 0.5*Cs + CmYaw; Cs(r) = 0.5*Cs - CmYaw</p>
-<dl class="section note"><dt>Note</dt><dd>Viscous force contributions are zero in v1. </dd>
+<dl class="section note"><dt>Note</dt><dd>Viscous force contributions are not yet implemented; only pressure forces are used. OpenFOAM's forces object includes viscous contributions — these will be zero here. </dd>
 <dd>
-MPI parallel execution is not yet supported. </dd>
+MPI parallel execution is not supported; a FatalError is raised in <a class="el" href="classNeoFOAM_1_1ForceCoeffs.html#ae7a9c66f7f457bfb2fd3c775877fa5d9" title="Run Forces::execute() then project forces/moments onto direction vectors.">execute()</a> if Pstream::parRun() is true. </dd>
 <dd>
 <a class="el" href="classNeoFOAM_1_1ForceCoeffs.html#a2a0cd7640588acb26c8f92c67862bb95" title="Write normalised coefficients to coefficient.dat.">write()</a> produces coefficient.dat only — force.dat and moment.dat are written exclusively by the neoForces function object. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="forceCoeffs_8hpp_source.html#l00058">58</a> of file <a class="el" href="forceCoeffs_8hpp_source.html">forceCoeffs.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forceCoeffs_8hpp_source.html#l00060">60</a> of file <a class="el" href="forceCoeffs_8hpp_source.html">forceCoeffs.hpp</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a6df7bfa2d4d0c2c9be0542b07c7e7a4d" name="a6df7bfa2d4d0c2c9be0542b07c7e7a4d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a6df7bfa2d4d0c2c9be0542b07c7e7a4d">&#9670;&#160;</a></span>ForceCoeffs()</h2>
@@ -378,7 +378,7 @@ MPI parallel execution is not yet supported. </dd>
 
 <p>Reimplemented from <a class="el" href="classNeoFOAM_1_1Forces.html#a304be0e6fcd89e0dcdb722b003d78f5c">NeoFOAM::Forces</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="forceCoeffs_8hpp_source.html#l00065">65</a> of file <a class="el" href="forceCoeffs_8hpp_source.html">forceCoeffs.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forceCoeffs_8hpp_source.html#l00067">67</a> of file <a class="el" href="forceCoeffs_8hpp_source.html">forceCoeffs.hpp</a>.</p>
 
 </div>
 </div>
@@ -433,7 +433,7 @@ MPI parallel execution is not yet supported. </dd>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="forceCoeffs_8hpp_source.html#l00064">64</a> of file <a class="el" href="forceCoeffs_8hpp_source.html">forceCoeffs.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forceCoeffs_8hpp_source.html#l00066">66</a> of file <a class="el" href="forceCoeffs_8hpp_source.html">forceCoeffs.hpp</a>.</p>
 
 </div>
 </div>
@@ -457,7 +457,7 @@ MPI parallel execution is not yet supported. </dd>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="forceCoeffs_8hpp_source.html#l00063">63</a> of file <a class="el" href="forceCoeffs_8hpp_source.html">forceCoeffs.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forceCoeffs_8hpp_source.html#l00065">65</a> of file <a class="el" href="forceCoeffs_8hpp_source.html">forceCoeffs.hpp</a>.</p>
 
 </div>
 </div>
