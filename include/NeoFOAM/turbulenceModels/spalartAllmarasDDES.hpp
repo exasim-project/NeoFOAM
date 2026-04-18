@@ -31,6 +31,23 @@ class SpalartAllmarasDDES
 {
 public:
 
+    struct Coefficients
+    {
+        scalar sigmaNut = 0.66666;
+        scalar kappa = 0.41;
+        scalar Cb1 = 0.1355;
+        scalar Cb2 = 0.622;
+        scalar Cw2 = 0.3;
+        scalar Cw3 = 2.0;
+        scalar Cv1 = 7.1;
+        scalar Ct3 = 1.2;
+        scalar Ct4 = 0.5;
+        scalar Cs = 0.3;
+        scalar Cdes = 0.65;
+        scalar fdCoef = 8.0;
+        scalar fwStar = 0.424;
+    };
+
     /**
      * @brief Construct the turbulence model wrapper.
      *
@@ -94,6 +111,54 @@ public:
     /// @brief Velocity gradient tensor (updated each correct() call, for viscousStress term)
     const nnfvcc::VolumeField<NeoN::Tensor>& gradU() const;
 
+    /**
+     * @brief Returns the deviatoric stress at all boundary faces as Vector<SymmTensor>.
+     *
+     * Computes -nuEff * symm(twoSymm(gradU)).dev2() at each boundary face.
+     * Slice per-patch using mesh_.boundaryMesh().patchRange(patchi).
+     * Used by forces functionObject to integrate viscous forces over patches.
+     */
+    NeoN::Vector<NeoN::SymmTensor> devRhoReff() const;
+
+    /// @brief Read-only access to model coefficients (for testing/inspection)
+    const Coefficients& coeffs() const { return coeffs_; }
+
+    /// @brief Computed cw1 coefficient (for testing/inspection)
+    scalar cw1() const { return cw1_; }
+
+    // Physics kernels — public to allow unit-testing of individual steps
+    void correctNut(
+        nnfvcc::VolumeField<scalar>& nutField,
+        nnfvcc::SurfaceField<scalar>& nutF,
+        nnfvcc::SurfaceField<scalar>& nuEffF,
+        const nnfvcc::VolumeField<scalar>& nuTilde,
+        const nnfvcc::VolumeField<scalar>& nu,
+        const nnfvcc::SurfaceField<scalar>& nuF,
+        const nnfvcc::VolumeField<Vec3>& u,
+        const nnfvcc::VolumeField<scalar>& nearWallDist
+    ) const;
+
+    void calcNuTildaDiffusionCoeff(
+        nnfvcc::VolumeField<scalar>& nuTilde,
+        const nnfvcc::SurfaceField<scalar>& nuF,
+        nnfvcc::SurfaceField<scalar>& surfNuTilde,
+        nnfvcc::SurfaceField<scalar>& nuTildeEffF
+    ) const;
+
+    void
+    calcMagSqrVec(nnfvcc::VolumeField<scalar>& magSqr, const nnfvcc::VolumeField<Vec3>& in) const;
+
+    void computeProdSpDDES(
+        nnfvcc::VolumeField<scalar>& productionField,
+        nnfvcc::VolumeField<scalar>& spCoeffField,
+        const nnfvcc::VolumeField<scalar>& nuTildeField,
+        const nnfvcc::VolumeField<scalar>& nuField,
+        const nnfvcc::VolumeField<NeoN::Tensor>& gradUField,
+        const nnfvcc::VolumeField<scalar>& wallDistanceField,
+        const nnfvcc::VolumeField<scalar>& deltaField,
+        const nnfvcc::VolumeField<scalar>& gradNuTildeMagSqrField
+    ) const;
+
 private:
 
     NeoN::Executor exec_;
@@ -121,9 +186,11 @@ private:
 
     // Cached operators (constructed once)
     nnfvcc::GaussGreenGrad gradOp_;
+    nnfvcc::SurfaceInterpolation<scalar> surfInterp_;
 
-    // Low-level NeoN physics model
-    NeoN::turbulenceModels::SpalartAllmarasDDES physicsModel_;
+    // SA-DDES model coefficients
+    Coefficients coeffs_;
+    scalar cw1_;
 };
 
 } // namespace NeoFOAM

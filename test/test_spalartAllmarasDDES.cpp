@@ -566,7 +566,8 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
     NeoN::fill(nfNu.internalVector(), viscosity.value());
     NeoN::fill(nfNu.boundaryData().value(), viscosity.value());
 
-    NeoN::turbulenceModels::SpalartAllmarasDDES saBase(rt.exec, rt.nfMesh);
+    NeoFOAM::SpalartAllmarasDDES
+        saBase(rt.exec, rt.nfMesh, nfNu, nfWallDist, nfNearWallDist, nfDelta);
 
     auto gradOp = nnfvcc::GaussGreenGrad(exec, rt.nfMesh);
     VolTensor G(
@@ -600,17 +601,20 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
     surfInterpol.interpolate(nfNu, nfSurfNu);
 
     saBase.correctNut(nut, nfSurfNut, nfSurfNuEff, nfNuTilda, nfNu, nfSurfNu, nfU, nfNearWallDist);
-    nf::compare(nut, ofNut, ApproxScalar(1e-12));
-    nf::compare(nfNuTilda, nuTilda, ApproxScalar(1e-12));
+    REQUIRE_THAT(nut, EqualsInternal(ofNut, ApproxScalar(1e-12)));
+    REQUIRE_THAT(nut.boundaryData(), EqualsBoundary(ofNut, ApproxScalar(1e-12)));
+    REQUIRE_THAT(nfNuTilda, EqualsInternal(nuTilda, ApproxScalar(1e-12)));
+    REQUIRE_THAT(nfNuTilda.boundaryData(), EqualsBoundary(nuTilda, ApproxScalar(1e-12)));
     saBase.calcNuTildaDiffusionCoeff(nfNuTilda, nfSurfNu, nfSurfNuTilda, nuTildaEff);
 
     fvcc::rotateOldTimes(nfU);
     fvcc::rotateOldTimes(nfPhi);
     fvcc::rotateOldTimes(nfNuTilda);
     gradOp.grad(nfNuTilda, gradNuTilda);
-    nf::compare(gradNuTilda, ofgradNutilda, ApproxVector(1e-12));
+    REQUIRE_THAT(gradNuTilda, EqualsInternal(ofgradNutilda, ApproxVector(1e-12)));
+    REQUIRE_THAT(gradNuTilda.boundaryData(), EqualsBoundary(ofgradNutilda, ApproxVector(1e-12)));
     saBase.calcMagSqrVec(magSqrGradNuTilda, gradNuTilda);
-    nf::compare(magSqrGradNuTilda, ofmagSqrGradNutilda, ApproxScalar(1e-12), false);
+    REQUIRE_THAT(magSqrGradNuTilda, EqualsInternal(ofmagSqrGradNutilda, ApproxScalar(1e-12)));
 
     saBase.computeProdSpDDES(
         nfFusedProduction,
@@ -622,8 +626,8 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
         nfDelta,
         magSqrGradNuTilda
     );
-    nf::compare(nfFusedProduction, ofProduction, ApproxScalar(1e-12), false);
-    nf::compare(nfFusedSpCoeff, ofspCoeff, ApproxScalar(1e-12), false);
+    REQUIRE_THAT(nfFusedProduction, EqualsInternal(ofProduction, ApproxScalar(1e-12)));
+    REQUIRE_THAT(nfFusedSpCoeff, EqualsInternal(ofspCoeff, ApproxScalar(1e-12)));
 
     NeoN::TokenList interpolationScheme;
     interpolationScheme.insert(std::string("linear"));
@@ -631,8 +635,9 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
     fvcc::GaussViscousStress opVisc(exec, rt.nfMesh, interpolationScheme);
     auto nfViscousStress = opVisc.viscousStress(nfNu, nut, G, dsl::Coeff(1.0));
     // Used to meet 1e-12 target but after nutWallFunction update now only 1e-9
-    nf::compare(nfViscousStress, ofViscousStress, ApproxVector(1e-9), false);
-    nf::compare(nfU, U, ApproxVector(1e-12));
+    REQUIRE_THAT(nfViscousStress, EqualsInternal(ofViscousStress, ApproxVector(1e-9)));
+    REQUIRE_THAT(nfU, EqualsInternal(U, ApproxVector(1e-12)));
+    REQUIRE_THAT(nfU.boundaryData(), EqualsBoundary(U, ApproxVector(1e-12)));
     nf::PDESolver<NeoN::Vec3> UEqn(
         dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(nfSurfNuEff, nfU)
             + dsl::exp::viscousStress(nfNu, nut, G),
@@ -672,14 +677,17 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
     );
     Foam::solve(ofUEqn == -fvc::grad(p));
     U.correctBoundaryConditions();
-    nf::compare(nfU, U, ApproxVector(1e-10));
+    REQUIRE_THAT(nfU, EqualsInternal(U, ApproxVector(1e-10)));
+    REQUIRE_THAT(nfU.boundaryData(), EqualsBoundary(U, ApproxVector(1e-10)));
 
     foamTurb->correct();
 
     const Foam::volScalarField& nutFoam = mesh.lookupObject<Foam::volScalarField>("nut");
     const Foam::volScalarField& nuTildaFoam = mesh.lookupObject<Foam::volScalarField>("nuTilda");
-    nf::compare(nfNuTilda, nuTildaFoam, ApproxScalar(1e-12));
-    nf::compare(nut, nutFoam, ApproxScalar(1e-12));
+    REQUIRE_THAT(nfNuTilda, EqualsInternal(nuTildaFoam, ApproxScalar(1e-12)));
+    REQUIRE_THAT(nfNuTilda.boundaryData(), EqualsBoundary(nuTildaFoam, ApproxScalar(1e-12)));
+    REQUIRE_THAT(nut, EqualsInternal(nutFoam, ApproxScalar(1e-12)));
+    REQUIRE_THAT(nut.boundaryData(), EqualsBoundary(nutFoam, ApproxScalar(1e-12)));
 }
 
 TEST_CASE("SA-DDES: NeoFOAM wrapper validate() + correct() matches OpenFOAM")
@@ -812,9 +820,12 @@ TEST_CASE("SA-DDES: NeoFOAM wrapper validate() + correct() matches OpenFOAM")
     foamTurb->correct();
 
     // --- Comparisons ---
-    nf::compare(nfU, U, ApproxVector(1e-10));
+    REQUIRE_THAT(nfU, EqualsInternal(U, ApproxVector(1e-10)));
+    REQUIRE_THAT(nfU.boundaryData(), EqualsBoundary(U, ApproxVector(1e-10)));
     const Foam::volScalarField& nuTildaFoam2 = mesh.lookupObject<Foam::volScalarField>("nuTilda");
     const Foam::volScalarField& nutFoam2 = mesh.lookupObject<Foam::volScalarField>("nut");
-    nf::compare(nfNuTilda, nuTildaFoam2, ApproxScalar(1e-12));
-    nf::compare(nut, nutFoam2, ApproxScalar(1e-12));
+    REQUIRE_THAT(nfNuTilda, EqualsInternal(nuTildaFoam2, ApproxScalar(1e-12)));
+    REQUIRE_THAT(nfNuTilda.boundaryData(), EqualsBoundary(nuTildaFoam2, ApproxScalar(1e-12)));
+    REQUIRE_THAT(nut, EqualsInternal(nutFoam2, ApproxScalar(1e-12)));
+    REQUIRE_THAT(nut.boundaryData(), EqualsBoundary(nutFoam2, ApproxScalar(1e-12)));
 }

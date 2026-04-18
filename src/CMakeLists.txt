@@ -19,6 +19,7 @@ target_sources(
           "datastructures/meshAdapter.cpp"
           "compatibility/fvSchemes.cpp"
           "compatibility/fvSolution.cpp"
-          "turbulenceModels/spalartAllmarasDDES.cpp")
+          "turbulenceModels/spalartAllmarasDDES.cpp"
+          "fvcc/operators/viscousStressOperator.cpp")
 
 install(TARGETS NeoFOAM)

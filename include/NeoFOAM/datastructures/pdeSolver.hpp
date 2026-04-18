@@ -138,7 +138,11 @@ public:
         rhsExpr.read(runTime_.fvSchemesDict);
         auto ls = NeoN::la::LinearSystem<ValueType>(assemble());
 
-        auto expTmp = rhsExpr.explicitOperation(psi_.mesh().nCells());
+        // Collect explicit contributions from the main expression first, then from the extra rhs.
+        // The main expression's explicit ops are subtracted from rhs (DSL convention), so they
+        // must be included here just as iterativeSolveImpl does for the no-rhs overload.
+        auto expTmp = expr_.explicitOperation(psi_.mesh().nCells());
+        rhsExpr.explicitOperation(expTmp);
 
         auto [vol, expSource, rhsV] = NeoN::views(psi_.mesh().cellVolumes(), expTmp, ls.rhs());
         NeoN::parallelFor(
