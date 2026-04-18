@@ -92,7 +92,7 @@ public:
     nnfvcc::SurfaceField<scalar>& nuTildaEff();
 
     /// @brief Velocity gradient tensor (updated each correct() call, for viscousStress term)
-    const nnfvcc::TensorVecField& gradU() const;
+    const nnfvcc::VolumeField<NeoN::Tensor>& gradU() const;
 
 private:
 
@@ -109,7 +109,7 @@ private:
     nnfvcc::SurfaceField<scalar> surfNu_;
 
     // Owned intermediate fields
-    nnfvcc::TensorVecField gradU_;
+    nnfvcc::VolumeField<NeoN::Tensor> gradU_;
     nnfvcc::VolumeField<Vec3> gradNuTilda_;
     nnfvcc::VolumeField<scalar> magSqrGradNuTilda_;
     nnfvcc::VolumeField<scalar> production_;

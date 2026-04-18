@@ -32,24 +32,10 @@ SpalartAllmarasDDES::SpalartAllmarasDDES(
           fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh)
       )
     , gradU_(
-          {nnfvcc::VolumeField<Vec3>(
-               exec,
-               "gradUx",
-               mesh,
-               fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<Vec3>>(mesh)
-           ),
-           nnfvcc::VolumeField<Vec3>(
-               exec,
-               "gradUy",
-               mesh,
-               fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<Vec3>>(mesh)
-           ),
-           nnfvcc::VolumeField<Vec3>(
-               exec,
-               "gradUz",
-               mesh,
-               fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<Vec3>>(mesh)
-           )}
+          exec,
+          "gradU",
+          mesh,
+          fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<NeoN::Tensor>>(mesh)
       )
     , gradNuTilda_(
           exec,
@@ -112,7 +98,7 @@ void SpalartAllmarasDDES::validate(
     nnfvcc::VolumeField<scalar>& nut
 )
 {
-    gradOp_.grad(U, gradU_);
+    gradOp_.gradTensor(U, gradU_);
     physicsModel_.calcNuTildaDiffusionCoeff(nuTilda, surfNu_, surfNuTilda_, nuTildaEff_);
     physicsModel_.correctNut(nut, surfNut_, nuEff_, nuTilda, nu_, surfNu_, U, nearWallDist_);
 }
@@ -126,7 +112,7 @@ void SpalartAllmarasDDES::correct(
 )
 {
     // 1. Recompute velocity and nuTilda gradients
-    gradOp_.grad(U, gradU_);
+    gradOp_.gradTensor(U, gradU_);
     gradOp_.grad(nuTilda, gradNuTilda_);
     physicsModel_.calcMagSqrVec(magSqrGradNuTilda_, gradNuTilda_);
 
@@ -136,9 +122,7 @@ void SpalartAllmarasDDES::correct(
         spCoeff_,
         nuTilda,
         nu_,
-        gradU_.Tx,
-        gradU_.Ty,
-        gradU_.Tz,
+        gradU_,
         wallDist_,
         delta_,
         magSqrGradNuTilda_
@@ -163,6 +147,6 @@ nnfvcc::SurfaceField<scalar>& SpalartAllmarasDDES::nuEff() { return nuEff_; }
 
 nnfvcc::SurfaceField<scalar>& SpalartAllmarasDDES::nuTildaEff() { return nuTildaEff_; }
 
-const nnfvcc::TensorVecField& SpalartAllmarasDDES::gradU() const { return gradU_; }
+const nnfvcc::VolumeField<NeoN::Tensor>& SpalartAllmarasDDES::gradU() const { return gradU_; }
 
 } // namespace NeoFOAM

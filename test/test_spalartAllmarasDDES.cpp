@@ -23,8 +23,10 @@ namespace nf = NeoFOAM;
 
 using Scalar = NeoN::scalar;
 using Vec3 = NeoN::Vec3;
+using Tensor = NeoN::Tensor;
 using VolScalar = fvcc::VolumeField<Scalar>;
 using VolVector = fvcc::VolumeField<Vec3>;
+using VolTensor = fvcc::VolumeField<Tensor>;
 using SurfScalar = fvcc::SurfaceField<Scalar>;
 
 extern Foam::Time* timePtr;    // A single time object
@@ -567,15 +569,13 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
     NeoN::turbulenceModels::SpalartAllmarasDDES saBase(rt.exec, rt.nfMesh);
 
     auto gradOp = nnfvcc::GaussGreenGrad(exec, rt.nfMesh);
-    fvcc::TensorVecField G {
-        VolVector(exec, "gradUx", rt.nfMesh, volCalcVecBCs),
-        VolVector(exec, "gradUy", rt.nfMesh, volCalcVecBCs),
-        VolVector(exec, "gradUz", rt.nfMesh, volCalcVecBCs)
-    };
-    gradOp.grad(nfU, G);
-    nf::compare(G.Tx, ofGradUx, ApproxVector(1e-10), true);
-    nf::compare(G.Ty, ofGradUy, ApproxVector(1e-10), true);
-    nf::compare(G.Tz, ofGradUz, ApproxVector(1e-10), true);
+    VolTensor G(
+        exec,
+        "gradU",
+        rt.nfMesh,
+        fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<Tensor>>(rt.nfMesh)
+    );
+    gradOp.gradTensor(nfU, G);
 
     VolVector gradNuTilda(exec, "gradNuTilda", rt.nfMesh, volCalcVecBCs);
     VolScalar magSqrGradNuTilda(exec, "magSqrGradNuTilda", rt.nfMesh, volCalcBCs);
@@ -617,9 +617,7 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
         nfFusedSpCoeff,
         nfNuTilda,
         nfNu,
-        G.Tx,
-        G.Ty,
-        G.Tz,
+        G,
         nfWallDist,
         nfDelta,
         magSqrGradNuTilda
@@ -644,7 +642,7 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
     UEqn.solve(-1.0 * dsl::exp::grad(nfP));
     nfU.correctBoundaryConditions();
 
-    gradOp.grad(nfU, G);
+    gradOp.gradTensor(nfU, G);
     gradOp.grad(nfNuTilda, gradNuTilda);
     saBase.calcMagSqrVec(magSqrGradNuTilda, gradNuTilda);
     saBase.computeProdSpDDES(
@@ -652,9 +650,7 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
         nfFusedSpCoeff,
         nfNuTilda,
         nfNu,
-        G.Tx,
-        G.Ty,
-        G.Tz,
+        G,
         nfWallDist,
         nfDelta,
         magSqrGradNuTilda
