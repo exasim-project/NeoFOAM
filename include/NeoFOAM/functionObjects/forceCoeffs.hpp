@@ -50,8 +50,10 @@ namespace NeoFOAM
  *   Cl(f) = 0.5*Cl + CmPitch;  Cl(r) = 0.5*Cl - CmPitch
  *   Cs(f) = 0.5*Cs + CmYaw;    Cs(r) = 0.5*Cs - CmYaw
  *
- * @note Viscous force contributions are zero in v1.
- * @note MPI parallel execution is not yet supported.
+ * @note Viscous force contributions are not yet implemented; only pressure forces are used.
+ *       OpenFOAM's forces object includes viscous contributions — these will be zero here.
+ * @note MPI parallel execution is not supported; a FatalError is raised in execute() if
+ *       Pstream::parRun() is true.
  * @note write() produces coefficient.dat only — force.dat and moment.dat are written
  *       exclusively by the neoForces function object.
  */
@@ -99,12 +101,12 @@ private:
     NeoN::Vec3 sideDir_ {0, 1, 0}; // derived in read()
 
     // Last computed scalar coefficients (set by execute(), consumed by write())
-    double Cd_ {0};
-    double Cl_ {0};
-    double Cs_ {0};
-    double CmRoll_ {0};
-    double CmPitch_ {0};
-    double CmYaw_ {0};
+    NeoN::scalar Cd_ {0};
+    NeoN::scalar Cl_ {0};
+    NeoN::scalar Cs_ {0};
+    NeoN::scalar CmRoll_ {0};
+    NeoN::scalar CmPitch_ {0};
+    NeoN::scalar CmYaw_ {0};
 };
 
 } // namespace NeoFOAM

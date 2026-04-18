@@ -21,15 +21,15 @@ namespace NeoFOAM
  * @struct ForceResult
  * @brief Accumulated force and moment vectors from a Forces execution.
  *
- * In v1 only pressure forces/moments are populated; viscous slots are reserved
+ * Currently only pressure forces/moments are populated; viscous slots are reserved
  * for future implementation.
  */
 struct ForceResult
 {
     NeoN::Vec3 pressureForce {0, 0, 0};
-    NeoN::Vec3 viscousForce {0, 0, 0}; ///< v1: always zero
+    NeoN::Vec3 viscousForce {0, 0, 0}; ///< Not yet implemented; always zero.
     NeoN::Vec3 pressureMoment {0, 0, 0};
-    NeoN::Vec3 viscousMoment {0, 0, 0}; ///< v1: always zero
+    NeoN::Vec3 viscousMoment {0, 0, 0}; ///< Not yet implemented; always zero.
 };
 
 /**
@@ -56,12 +56,15 @@ struct ForceResult
  *
  * @par GPU I/O strategy
  * execute() runs a @c parallelFor kernel over the boundary patch faces using
- * @c Kokkos::atomic_add into a 6-element device buffer.  Only those 6 scalars
+ * @c NeoN::atomic_add into a 6-element device buffer.  Only those 6 scalars
  * (96 bytes) are copied to host — the full pressure field is never transferred.
- * write() appends one row to @c postProcessing/<name>/0/force.dat.
+ * write() appends one row each to @c postProcessing/<name>/<startTime>/force.dat
+ * and @c postProcessing/<name>/<startTime>/moment.dat.
  *
- * @note Viscous forces are not yet implemented (v1 limitation).
- * @note MPI parallel execution is not yet supported (v1 limitation).
+ * @note Viscous forces are not yet implemented; only pressure contributions are computed.
+ *       OpenFOAM's forces object includes viscous contributions — these will be zero here.
+ * @note MPI parallel execution is not supported; a FatalError is raised in execute() if
+ *       Pstream::parRun() is true.
  */
 class Forces : public FunctionObjectIO
 {
@@ -101,7 +104,9 @@ public:
      * @brief Write the last computed result to postProcessing/.
      *
      * Appends one row to @c force.dat with columns:
-     * @c time Fp.x Fp.y Fp.z Mp.x Mp.y Mp.z
+     * @c time F.x F.y F.z Fp.x Fp.y Fp.z Fv.x Fv.y Fv.z
+     * and one row to @c moment.dat with columns:
+     * @c time M.x M.y M.z Mp.x Mp.y Mp.z Mv.x Mv.y Mv.z
      */
     virtual bool write() override;
 
@@ -112,7 +117,7 @@ public:
      * @brief GPU kernel: accumulate pressure force/moment for one boundary patch.
      *
      * Runs @c parallelFor over faces in the patch range and uses
-     * @c Kokkos::atomic_add into a 6-element device accumulator.
+     * @c NeoN::atomic_add into a 6-element device accumulator.
      * Transfers 6 scalars to host on completion.
      *
      * @param patchi   Patch index (positionally consistent with NeoN boundary offset)
