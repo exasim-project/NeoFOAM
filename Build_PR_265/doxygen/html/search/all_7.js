@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['lastresult_0',['lastResult',['../classNeoFOAM_1_1Forces.html#a51ad0e649eabe29078bf8ff6e20324a7',1,'NeoFOAM::Forces']]],
-  ['linearsystem_1',['linearsystem',['../classNeoFOAM_1_1PDESolver.html#ae157132adbb86472bbe3709709f71098',1,'NeoFOAM::PDESolver::linearSystem()'],['../classNeoFOAM_1_1PDESolver.html#a663d27bbda1f87fcc55f09f73d9a88ce',1,'NeoFOAM::PDESolver::linearSystem() const']]]
+  ['kappa_0',['kappa',['../structNeoFOAM_1_1SpalartAllmarasDDES_1_1Coefficients.html#abe91604675cf9f21567d124937c483ad',1,'NeoFOAM::SpalartAllmarasDDES::Coefficients']]]
 ];

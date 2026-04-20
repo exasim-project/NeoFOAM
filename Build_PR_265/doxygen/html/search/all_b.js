@@ -1,14 +1,7 @@
 var searchData=
 [
-  ['patchindices_5f_0',['patchIndices_',['../classNeoFOAM_1_1Forces.html#a94d7f3013ae6b22c5ace473c0711a273',1,'NeoFOAM::Forces']]],
-  ['patchnames_5f_1',['patchNames_',['../classNeoFOAM_1_1Forces.html#aa9bc2a0ad5d0d9b689ed644a03abe2c8',1,'NeoFOAM::Forces']]],
-  ['pdesolver_2',['pdesolver',['../classNeoFOAM_1_1PDESolver.html',1,'NeoFOAM::PDESolver&lt; ValueType, IndexType &gt;'],['../classNeoFOAM_1_1PDESolver.html#ace256b5f26d8077c69f0e2990fc88dac',1,'NeoFOAM::PDESolver::PDESolver(dsl::Expression&lt; ValueType &gt; expr, VolumeField &amp;psi, RunTime &amp;runTime)'],['../classNeoFOAM_1_1PDESolver.html#aadc56e8e1c8d0adb8d792fbcfcb844e1',1,'NeoFOAM::PDESolver::PDESolver(const PDESolver &amp;expr)']]],
-  ['pdesolver_2ehpp_3',['pdeSolver.hpp',['../pdeSolver_8hpp.html',1,'']]],
-  ['pname_5f_4',['pName_',['../classNeoFOAM_1_1Forces.html#aa9f46c8adb157e16c05dda009b12a9e5',1,'NeoFOAM::Forces']]],
-  ['pref_5f_5',['pRef_',['../classNeoFOAM_1_1Forces.html#a5e4a1da57cca4dccd6b38bf956c6630c',1,'NeoFOAM::Forces']]],
-  ['prefcell_5f_6',['pRefCell_',['../structNeoFOAM_1_1PDESolver_1_1SetReference.html#a312bf19b6c97dcb123a125e2be3c9bc4',1,'NeoFOAM::PDESolver::SetReference']]],
-  ['prefvalue_5f_7',['pRefValue_',['../structNeoFOAM_1_1PDESolver_1_1SetReference.html#a3c95dcddaa8f9c91c6a660df2f75312b',1,'NeoFOAM::PDESolver::SetReference']]],
-  ['pressureforce_8',['pressureForce',['../structNeoFOAM_1_1ForceResult.html#a6af32dd16d16d1c8b93b66b9ed736018',1,'NeoFOAM::ForceResult']]],
-  ['pressuremoment_9',['pressureMoment',['../structNeoFOAM_1_1ForceResult.html#a1c34a1ca43886bcae820eb5f5ec03797',1,'NeoFOAM::ForceResult']]],
-  ['pressurevelocitycoupling_2ehpp_10',['pressureVelocityCoupling.hpp',['../pressureVelocityCoupling_8hpp.html',1,'']]]
+  ['operator_26_0',['operator&amp;',['../namespaceNeoFOAM.html#a9de226ba9098594fc8b6b867a35adccc',1,'NeoFOAM']]],
+  ['operator_28_29_1',['operator()',['../classNeoFOAM_1_1CreateFromFoamField.html#a2ea39ed09f09772fece69da08f93c00f',1,'NeoFOAM::CreateFromFoamField::operator()()'],['../structNeoFOAM_1_1PDESolver_1_1SetReference.html#a5ed1764236a6a29be4bc5235ae7058e1',1,'NeoFOAM::PDESolver::SetReference::operator()()']]],
+  ['operator_3d_3d_2',['operator==',['../namespaceNeoFOAM.html#adb3f301260a65dd30182893f75665a8a',1,'NeoFOAM::operator==(const NeoN::Vector&lt; NT &gt; &amp;nf, const Foam::Field&lt; OT &gt; &amp;of)'],['../namespaceNeoFOAM.html#ab57ab173a9df89dbffffcf9a42aa673d',1,'NeoFOAM::operator==(fvcc::VolumeField&lt; NT &gt; &amp;nf, const Foam::GeometricField&lt; OT, Foam::fvPatchField, Foam::volMesh &gt; &amp;of)'],['../namespaceNeoFOAM.html#aa63d77fd599301dc114f8358d866b805',1,'NeoFOAM::operator==(const fvcc::SurfaceField&lt; NT &gt; &amp;nf, const Foam::GeometricField&lt; OT, Foam::fvsPatchField, Foam::surfaceMesh &gt; &amp;of)']]],
+  ['outputdir_3',['outputDir',['../classNeoFOAM_1_1FunctionObjectIO.html#a598af1cff8c3269503ff0d2cc5c483b9',1,'NeoFOAM::FunctionObjectIO']]]
 ];

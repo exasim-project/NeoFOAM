@@ -70,7 +70,7 @@
 <parametername>db</parametername>
 </parameternamelist>
 <parameterdescription>
-<para>The NeoN database to wrap (must outlive this object). </para>
+<para>The <ref refid="namespaceNeoN" kindref="compound">NeoN</ref> database to wrap (must outlive this object). </para>
 </parameterdescription>
 </parameteritem>
 </parameterlist>
@@ -130,7 +130,7 @@
 <para>Registers a <computeroutput>NeoN::Database</computeroutput> in the <computeroutput>Foam::Time</computeroutput> objectRegistry. </para>
     </briefdescription>
     <detaileddescription>
-<para>Allows <ref refid="namespaceNeoFOAM" kindref="compound">NeoFOAM</ref> functionObjects (which only have <computeroutput>const</computeroutput> Foam::Time&amp;) to access the NeoN field database via the standard OpenFOAM lookup: <programlisting><codeline><highlight class="normal">time_.lookupObject&lt;<ref refid="classNeoFOAM_1_1DatabaseWrapper_1a02cdc14e7b624372b9cf39ca0ba45667" kindref="member">DatabaseWrapper</ref>&gt;(<ref refid="classNeoFOAM_1_1DatabaseWrapper_1a294a3f7e57e3700663a52e4ef2afe71f" kindref="member">DatabaseWrapper::registryName</ref>).<ref refid="classNeoFOAM_1_1DatabaseWrapper_1a972ffb40a536ddf575fb0561e4c8c475" kindref="member">db</ref>()</highlight></codeline>
+<para>Allows <ref refid="namespaceNeoFOAM" kindref="compound">NeoFOAM</ref> functionObjects (which only have <computeroutput>const</computeroutput> Foam::Time&amp;) to access the <ref refid="namespaceNeoN" kindref="compound">NeoN</ref> field database via the standard OpenFOAM lookup: <programlisting><codeline><highlight class="normal">time_.lookupObject&lt;<ref refid="classNeoFOAM_1_1DatabaseWrapper_1a02cdc14e7b624372b9cf39ca0ba45667" kindref="member">DatabaseWrapper</ref>&gt;(<ref refid="classNeoFOAM_1_1DatabaseWrapper_1a294a3f7e57e3700663a52e4ef2afe71f" kindref="member">DatabaseWrapper::registryName</ref>).<ref refid="classNeoFOAM_1_1DatabaseWrapper_1a972ffb40a536ddf575fb0561e4c8c475" kindref="member">db</ref>()</highlight></codeline>
 </programlisting></para>
 <para><simplesect kind="par"><title>Lifetime</title><para>The wrapper holds a non-owning pointer to its associated <computeroutput>NeoN::Database</computeroutput>, which must outlive the wrapper. In practice the wrapper is stored as a <computeroutput>std::unique_ptr</computeroutput> inside <computeroutput><ref refid="structNeoFOAM_1_1RunTime" kindref="compound">RunTime</ref></computeroutput> so that its destructor (which calls <computeroutput>regIOobject::checkOut</computeroutput>) fires before <computeroutput>Foam::Time</computeroutput> is destroyed. </para>
 </simplesect>
