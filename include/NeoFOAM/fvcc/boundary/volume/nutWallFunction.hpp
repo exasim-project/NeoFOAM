@@ -130,18 +130,14 @@ public:
 
     void correctBoundaryCondition(Field<scalar>& domainVector) final {}
 
-    void correctBoundaryCondition(
-        Field<scalar>& domainVector,
-        const VolumeField<Vec3>& u,
-        const VolumeField<scalar>& nu,
-        const VolumeField<scalar>& nearWallDist
-    ) final
+    void
+    correctBoundaryCondition(Field<scalar>& domainVector, const fvcc::BoundaryContext& ctx) final
     {
         detail::setNutUSpaldingWallFunction(
             domainVector,
-            u,
-            nu,
-            nearWallDist,
+            ctx.vector("U"),
+            ctx.scalar("nu"),
+            ctx.scalar("nearWallDist"),
             mesh_,
             this->range()
         );

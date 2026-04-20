@@ -392,7 +392,11 @@ void SpalartAllmarasDDES::correctNut(
         cv1Cubed
     );
 
-    nutField.correctBoundaryConditions(u, nu, nearWallDist);
+    fvcc::BoundaryContext ctx;
+    ctx.insert("U", u);
+    ctx.insert("nu", nu);
+    ctx.insert("nearWallDist", nearWallDist);
+    nutField.correctBoundaryConditions(ctx);
     surfInterp_.interpolate(nutField, nutF);
 
     kernelAddViscosity(
