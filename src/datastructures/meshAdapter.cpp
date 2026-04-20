@@ -7,6 +7,8 @@
 
 #include "processorFvPatch.H"
 #include "lduInterfaceField.H"
+#include "Pstream.H"
+#include <mpi.h>
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -135,8 +137,82 @@ NeoN::Vector<NeoN::localIdx> computeIsProc(const NeoN::Executor& exec, const Foa
     return NeoN::Vector<NeoN::localIdx>(exec, result);
 }
 
+// Compute the CommunicationPattern from OpenFOAM mesh data.
+// Uses MPI_Sendrecv to exchange local face-cell indices with each processor neighbor,
+// then computes global indices from the rank offsets gathered via MPI_Allgather.
+NeoN::CommunicationPattern computeOpenFOAMCommunicationPattern(const Foam::fvMesh& mesh)
+{
+    if (!Foam::Pstream::parRun())
+        return {};
+
+    NeoN::mpi::Environment mpiEnviron;
+    const int nRanks = static_cast<int>(mpiEnviron.sizeRank());
+    const int myRank = static_cast<int>(mpiEnviron.rank());
+
+    // 1. Gather cell counts from all ranks to compute global offsets.
+    const int localNCells = mesh.nCells();
+    std::vector<int> allNCells(nRanks);
+    MPI_Allgather(&localNCells, 1, MPI_INT, allNCells.data(), 1, MPI_INT, mpiEnviron.comm());
+
+    std::vector<int> globalOffset(nRanks + 1, 0);
+    for (int i = 0; i < nRanks; i++)
+        globalOffset[i + 1] = globalOffset[i] + allNCells[i];
+
+    // 2. For each processor boundary patch, exchange face-cell global indices with the neighbor.
+    const Foam::fvBoundaryMesh& bMesh = mesh.boundary();
+    const Foam::lduInterfacePtrsList interfaces = bMesh.interfaces();
+
+    auto sendCounts = std::vector<int>(nRanks + 1, 0);
+    auto recvIdx = std::vector<int>();
+
+    for (auto i = 0; i < interfaces.size(); i++)
+    {
+        if (interfaces.get(i) == nullptr)
+            continue;
+        if (!Foam::isA<Foam::processorFvPatch>(interfaces[i]))
+            continue;
+
+        const Foam::processorFvPatch& patch =
+            Foam::refCast<const Foam::processorFvPatch>(interfaces[i]);
+        const int neighbRank = patch.neighbProcNo();
+        const int nFaces = patch.size();
+
+        sendCounts[neighbRank] += nFaces;
+        sendCounts[nRanks] += nFaces;
+
+        // Build global indices of my face cells, then exchange with neighbor.
+        const Foam::labelList& myFaceCells = patch.faceCells();
+        std::vector<int> myGlobalCells(nFaces);
+        for (int j = 0; j < nFaces; j++)
+            myGlobalCells[j] = static_cast<int>(myFaceCells[j]) + globalOffset[myRank];
+
+        std::vector<int> neighGlobalCells(nFaces);
+        MPI_Sendrecv(
+            myGlobalCells.data(),
+            nFaces,
+            MPI_INT,
+            neighbRank,
+            0,
+            neighGlobalCells.data(),
+            nFaces,
+            MPI_INT,
+            neighbRank,
+            0,
+            mpiEnviron.comm(),
+            MPI_STATUS_IGNORE
+        );
+
+        recvIdx.insert(recvIdx.end(), neighGlobalCells.begin(), neighGlobalCells.end());
+    }
+
+    std::vector<NeoN::localIdx> boundaryMapVector;
+    return {sendCounts, recvIdx, boundaryMapVector, mpiEnviron};
+}
+
 NeoN::CommunicationPattern createCommunicationPattern(const RunTime& runTime)
 {
+    if (runTime.nfMesh.stencilDB().contains("communicationPattern"))
+        return runTime.nfMesh.stencilDB().get<NeoN::CommunicationPattern>("communicationPattern");
     return NeoN::computeCommunicationPattern(runTime.nfMesh);
 }
 
@@ -188,11 +264,11 @@ readOpenFOAMMesh(const NeoN::Executor exec, const Foam::fvMesh& mesh, bool fullM
     );
     std::vector<NeoN::localIdx> offset = computeOffset(mesh);
 
-    std::vector<NeoN::localIdx> neighbRank = computeNeighbRank(mesh);
-    // FIXME
-    NeoN::localIdx nProcPatches = 0;
-    // auto isProc = computeIsProc(exec, mesh);
     std::vector<NeoN::localIdx> neighbourRank = computeNeighbRank(mesh);
+    auto procPatches = computeNeighbRankAndSize(mesh);
+    NeoN::localIdx nProcFaces = 0;
+    for (const auto& [rank, size] : procPatches)
+        nProcFaces += size;
     NeoN::BoundaryMesh bMesh(
         exec,
         fromFoamField(exec, faceCells),
@@ -205,7 +281,7 @@ readOpenFOAMMesh(const NeoN::Executor exec, const Foam::fvMesh& mesh, bool fullM
         fromFoamField(exec, weights),
         fromFoamField(exec, deltaCoeffs),
         offset,
-        nProcPatches,
+        nProcFaces,
         neighbourRank
     );
 
@@ -220,6 +296,13 @@ readOpenFOAMMesh(const NeoN::Executor exec, const Foam::fvMesh& mesh, bool fullM
         fromFoamField(exec, mesh.faceNeighbour()),
         bMesh
     );
+
+    if (Foam::Pstream::parRun())
+    {
+        uMesh.stencilDB().insert(
+            "communicationPattern", computeOpenFOAMCommunicationPattern(mesh)
+        );
+    }
 
     return uMesh;
 }
