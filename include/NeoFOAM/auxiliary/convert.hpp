@@ -19,7 +19,7 @@ NeoN::TokenList convert(const Foam::ITstream& in);
 
 NeoN::label convert(const Foam::label& in);
 
-NeoN::Dictionary convert(const Foam::dictionary& dict);
+NeoN::Dictionary convert(const Foam::dictionary dict);
 
 template<typename T>
 bool checkEntryType(const Foam::entry& entry)

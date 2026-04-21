@@ -228,36 +228,32 @@ private:
         //   }
         //   else
         //   {
-        if constexpr (std::is_same_v<ValueType, NeoN::scalar>)
+        if (Foam::Pstream::parRun())
         {
-            if (Foam::Pstream::parRun())
-            {
-                stats = NeoN::dsl::detail::iterativeSolveDistImpl(
-                    expr,
-                    ls,
-                    psi_,
-                    runTime_.t,
-                    runTime_.dt,
-                    runTime_.fvSchemesDict,
-                    fieldSolverDict,
-                    functs
-                );
-            }
-            else
-            {
-                stats = NeoN::dsl::detail::iterativeSolveImpl(
-                    expr,
-                    ls,
-                    psi_,
-                    runTime_.t,
-                    runTime_.dt,
-                    runTime_.fvSchemesDict,
-                    fieldSolverDict,
-                    functs
-                );
-            }
+            stats = NeoN::dsl::detail::iterativeSolveDistImpl(
+                expr,
+                ls,
+                psi_,
+                runTime_.t,
+                runTime_.dt,
+                runTime_.fvSchemesDict,
+                fieldSolverDict,
+                functs
+            );
         }
-        // }
+        else
+        {
+            stats = NeoN::dsl::detail::iterativeSolveImpl(
+                expr,
+                ls,
+                psi_,
+                runTime_.t,
+                runTime_.dt,
+                runTime_.fvSchemesDict,
+                fieldSolverDict,
+                functs
+            );
+        }
 
         for (auto stat : stats.entries)
         {

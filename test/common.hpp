@@ -24,6 +24,14 @@
 namespace NeoFOAM
 {
 
+/**
+ * @brief Conditionally enters a Catch2 SECTION if the given condition is true.
+ * @param COND The boolean condition to evaluate.
+ * @param ... The section name and optional description forwarded to SECTION.
+ */
+#define SECTION_IF(COND, ...)                                                                      \
+    if (COND) SECTION(__VA_ARGS__)
+
 void randomizeField(auto& field)
 {
     std::random_device rd;  // Will be used to obtain a seed for the random number engine
