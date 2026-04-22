@@ -74,7 +74,7 @@ struct OfForcesSetup
     Foam::volVectorField zeroU;
     Foam::IOdictionary transportProps;
 
-    explicit OfForcesSetup(Foam::fvMesh& mesh, const Foam::Time& runTime)
+    explicit OfForcesSetup(Foam::fvMesh& mesh, const Foam::Time& runTime, Foam::scalar nu = 0.0)
         : zeroU(
             Foam::IOobject(
                 "U",
@@ -94,8 +94,7 @@ struct OfForcesSetup
               Foam::IOobject::NO_WRITE
           ))
     {
-        // nu = 0 → zero gradient on uniform U → zero viscous forces
-        transportProps.add("nu", Foam::scalar {0.0});
+        transportProps.add("nu", nu);
     }
 };
 
@@ -281,6 +280,73 @@ TEST_CASE("Forces - pressure force and moment match OpenFOAM reference")
         fs::remove_all("postProcessing/neoForces");
         fs::remove_all("postProcessing/ofForces");
     }
+
+    SECTION("random U + non-zero viscous forces, fixedWalls" + execName)
+    {
+        fs::remove_all("postProcessing/neoForces");
+        fs::remove_all("postProcessing/ofForces");
+
+        auto rt = nf::createAdapterRunTime(runTime, exec);
+        auto& mesh = rt.mesh;
+
+        auto ofP = randomScalarField(runTime, mesh, "p");
+        ofP.correctBoundaryConditions();
+        auto ofU = randomVectorField(runTime, mesh, "U");
+        ofU.correctBoundaryConditions();
+
+        fvcc::VectorCollection& vc = fvcc::VectorCollection::instance(rt.db, "VectorCollection");
+        nf::constructAndRegister(vc, rt, ofP, false);
+        nf::constructAndRegister(vc, rt, ofU, false);
+
+        // transportProperties with non-zero nu registered in Foam::Time registry
+        Foam::IOdictionary transportProps(Foam::IOobject(
+            "transportProperties",
+            runTime.constant(),
+            mesh,
+            Foam::IOobject::NO_READ,
+            Foam::IOobject::NO_WRITE
+        ));
+        const Foam::scalar nu = 1e-5;
+        transportProps.add("nu", nu);
+
+        Foam::dictionary dict;
+        dict.add("patches", Foam::wordList {"fixedWalls"});
+        dict.add("pName", Foam::word {"p"});
+        dict.add("rhoInf", Foam::scalar {1.225});
+        dict.add("pRef", Foam::scalar {0.0});
+        dict.add("CofR", Foam::vector(0, 0, 0));
+
+        nf::Forces forces("neoForces", runTime, dict);
+        REQUIRE(forces.execute());
+        REQUIRE(forces.write());
+
+        // OF reference — U is already registered (ofU), pass nu to transportProperties
+        Foam::dictionary ofDict;
+        ofDict.add("patches", Foam::wordList {"fixedWalls"});
+        ofDict.add("rho", Foam::word("rhoInf"));
+        ofDict.add("rhoInf", Foam::scalar {1.225});
+        ofDict.add("pRef", Foam::scalar {0.0});
+        ofDict.add("CofR", Foam::vector(0, 0, 0));
+
+        Foam::functionObjects::forces ofForces("ofForces", runTime, ofDict);
+        REQUIRE(ofForces.execute());
+        REQUIRE(ofForces.write());
+
+        const double tol = 1e-8;
+        compareDataFiles(
+            "postProcessing/neoForces/0/force.dat",
+            "postProcessing/ofForces/0/force.dat",
+            tol
+        );
+        compareDataFiles(
+            "postProcessing/neoForces/0/moment.dat",
+            "postProcessing/ofForces/0/moment.dat",
+            tol
+        );
+
+        fs::remove_all("postProcessing/neoForces");
+        fs::remove_all("postProcessing/ofForces");
+    }
 }
 
 
@@ -355,6 +421,85 @@ TEST_CASE("ForceCoeffs - normalised coefficients match OpenFOAM reference")
         // Both NeoFOAM and OF write 12 coefficient columns in alphabetical order:
         // Cd Cd(f) Cd(r) Cl Cl(f) Cl(r) CmPitch CmRoll CmYaw Cs Cs(f) Cs(r)
         const double tol = 1e-10;
+        compareDataFiles(
+            "postProcessing/neoForceCoeffs/0/coefficient.dat",
+            "postProcessing/ofForceCoeffs/0/coefficient.dat",
+            tol
+        );
+
+        fs::remove_all("postProcessing/neoForceCoeffs");
+        fs::remove_all("postProcessing/ofForceCoeffs");
+    }
+
+    SECTION("random U + non-zero viscous forces, all coefficients" + execName)
+    {
+        fs::remove_all("postProcessing/neoForceCoeffs");
+        fs::remove_all("postProcessing/ofForceCoeffs");
+
+        auto rt = nf::createAdapterRunTime(runTime, exec);
+        auto& mesh = rt.mesh;
+
+        auto ofP = randomScalarField(runTime, mesh, "p");
+        ofP.correctBoundaryConditions();
+        auto ofU = randomVectorField(runTime, mesh, "U");
+        ofU.correctBoundaryConditions();
+
+        fvcc::VectorCollection& vc = fvcc::VectorCollection::instance(rt.db, "VectorCollection");
+        nf::constructAndRegister(vc, rt, ofP, false);
+        nf::constructAndRegister(vc, rt, ofU, false);
+
+        Foam::IOdictionary transportProps(Foam::IOobject(
+            "transportProperties",
+            runTime.constant(),
+            mesh,
+            Foam::IOobject::NO_READ,
+            Foam::IOobject::NO_WRITE
+        ));
+        const Foam::scalar nu = 1e-5;
+        transportProps.add("nu", nu);
+
+        const Foam::scalar rhoRef = 1.225;
+        const Foam::scalar magUInf = 10.0;
+        const Foam::scalar lRef = 0.5;
+        const Foam::scalar Aref = 0.25;
+        const Foam::scalar pRef = 0.0;
+        const Foam::vector cofR = Foam::vector::zero;
+
+        Foam::dictionary dict;
+        dict.add("patches", Foam::wordList {"fixedWalls"});
+        dict.add("pName", Foam::word {"p"});
+        dict.add("rhoInf", rhoRef);
+        dict.add("pRef", pRef);
+        dict.add("magUInf", magUInf);
+        dict.add("lRef", lRef);
+        dict.add("Aref", Aref);
+        dict.add("CofR", cofR);
+        dict.add("dragDir", Foam::vector(1, 0, 0));
+        dict.add("liftDir", Foam::vector(0, 0, 1));
+        dict.add("pitchAxis", Foam::vector(0, 1, 0));
+
+        nf::ForceCoeffs fc("neoForceCoeffs", runTime, dict);
+        REQUIRE(fc.execute());
+        REQUIRE(fc.write());
+
+        Foam::dictionary ofDict;
+        ofDict.add("patches", Foam::wordList {"fixedWalls"});
+        ofDict.add("rho", Foam::word("rhoInf"));
+        ofDict.add("rhoInf", rhoRef);
+        ofDict.add("pRef", pRef);
+        ofDict.add("magUInf", magUInf);
+        ofDict.add("lRef", lRef);
+        ofDict.add("Aref", Aref);
+        ofDict.add("CofR", cofR);
+        ofDict.add("dragDir", Foam::vector(1, 0, 0));
+        ofDict.add("liftDir", Foam::vector(0, 0, 1));
+        ofDict.add("pitchAxis", Foam::vector(0, 1, 0));
+
+        Foam::functionObjects::forceCoeffs ofFc("ofForceCoeffs", runTime, ofDict);
+        REQUIRE(ofFc.execute());
+        REQUIRE(ofFc.write());
+
+        const double tol = 1e-8;
         compareDataFiles(
             "postProcessing/neoForceCoeffs/0/coefficient.dat",
             "postProcessing/ofForceCoeffs/0/coefficient.dat",

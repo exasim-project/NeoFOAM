@@ -27,9 +27,9 @@ namespace NeoFOAM
 struct ForceResult
 {
     NeoN::Vec3 pressureForce {0, 0, 0};
-    NeoN::Vec3 viscousForce {0, 0, 0}; ///< Not yet implemented; always zero.
+    NeoN::Vec3 viscousForce {0, 0, 0};
     NeoN::Vec3 pressureMoment {0, 0, 0};
-    NeoN::Vec3 viscousMoment {0, 0, 0}; ///< Not yet implemented; always zero.
+    NeoN::Vec3 viscousMoment {0, 0, 0};
 };
 
 /**
@@ -47,6 +47,7 @@ struct ForceResult
  *         libs      (NeoFOAM);
  *         patches   (fixedWalls);
  *         pName     p;
+ *         uName     U;
  *         rhoInf    1.0;
  *         pRef      0.0;
  *         CofR      (0 0 0);
@@ -61,8 +62,6 @@ struct ForceResult
  * write() appends one row each to @c postProcessing/<name>/<startTime>/force.dat
  * and @c postProcessing/<name>/<startTime>/moment.dat.
  *
- * @note Viscous forces are not yet implemented; only pressure contributions are computed.
- *       OpenFOAM's forces object includes viscous contributions — these will be zero here.
  * @note MPI parallel execution is not supported; a FatalError is raised in execute() if
  *       Pstream::parRun() is true.
  */
@@ -136,6 +135,14 @@ public:
         ForceResult& result
     ) const;
 
+    void computePatchViscousForces(
+        int patchi,
+        const NeoN::finiteVolume::cellCentred::VolumeField<NeoN::Tensor>& gradU,
+        NeoN::scalar nuRho,
+        const NeoN::Vec3& cofR,
+        ForceResult& result
+    ) const;
+
 protected:
 
     /// Resolve MeshAdapter from the object registry on first execute().
@@ -148,9 +155,14 @@ protected:
     std::vector<int> patchIndices_; ///< Resolved from patchNames_ on first execute()
 
     std::string pName_ {"p"};
+    std::string uName_ {"U"};
     NeoN::scalar rhoRef_ {1.0};
     NeoN::scalar pRef_ {0.0};
     NeoN::Vec3 cofR_ {0, 0, 0};
+    NeoN::scalar nu_ {0.0};
+
+    std::unique_ptr<NeoN::finiteVolume::cellCentred::GaussGreenGrad> gradOp_;
+    std::unique_ptr<NeoN::finiteVolume::cellCentred::VolumeField<NeoN::Tensor>> gradU_;
 
     ForceResult result_;
 };

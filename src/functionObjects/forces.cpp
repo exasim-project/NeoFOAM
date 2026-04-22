@@ -79,6 +79,27 @@ void Forces::resolveMesh()
         }
         patchIndices_.push_back(static_cast<int>(idx));
     }
+
+    // Read nu once — resolveMesh() is re-entered only when meshAdapter_ is reset (dict change).
+    // transportProperties is registered in the mesh's objectRegistry, not in Time.
+    nu_ = 0.0;
+    if (meshAdapter_->foundObject<Foam::IOdictionary>("transportProperties"))
+    {
+        const auto& props = meshAdapter_->lookupObject<Foam::IOdictionary>("transportProperties");
+        nu_ = props.get<Foam::scalar>("nu");
+    }
+
+    namespace fvcc = NeoN::finiteVolume::cellCentred;
+    const NeoN::Executor& exec = meshAdapter_->exec();
+    const NeoN::UnstructuredMesh& nfMesh = meshAdapter_->nfMesh();
+
+    gradOp_ = std::make_unique<fvcc::GaussGreenGrad>(exec, nfMesh);
+    gradU_ = std::make_unique<fvcc::VolumeField<NeoN::Tensor>>(
+        exec,
+        "gradU",
+        nfMesh,
+        fvcc::createCalculatedBCs<fvcc::VolumeBoundary<NeoN::Tensor>>(nfMesh)
+    );
 }
 
 
@@ -87,6 +108,7 @@ void Forces::resolveMesh()
 bool Forces::read(const Foam::dictionary& dict)
 {
     pName_ = dict.getOrDefault<Foam::word>("pName", "p");
+    uName_ = dict.getOrDefault<Foam::word>("uName", "U");
     rhoRef_ = dict.getOrDefault<Foam::scalar>("rhoInf", 1.0);
     pRef_ = dict.getOrDefault<Foam::scalar>("pRef", 0.0);
 
@@ -98,6 +120,8 @@ bool Forces::read(const Foam::dictionary& dict)
     patchNames_ = dict.get<Foam::wordList>("patches");
     meshAdapter_ = nullptr; // force re-resolve if dict changes
     patchIndices_.clear();
+    gradOp_.reset();
+    gradU_.reset();
 
     return true;
 }
@@ -168,6 +192,60 @@ void Forces::computePatchForces(
 }
 
 
+// ---- GPU kernel: viscous forces ----
+
+void Forces::computePatchViscousForces(
+    int patchi,
+    const NeoN::finiteVolume::cellCentred::VolumeField<NeoN::Tensor>& gradU,
+    NeoN::scalar nuRho,
+    const NeoN::Vec3& cofR,
+    ForceResult& result
+) const
+{
+    auto [start, end] = gradU.boundaryData().range(patchi);
+
+    const NeoN::UnstructuredMesh& nfMesh = meshAdapter_->nfMesh();
+    const NeoN::Executor exec = meshAdapter_->exec();
+
+    auto sfView = nfMesh.boundaryMesh().sf().view();
+    auto cfView = nfMesh.boundaryMesh().cf().view();
+    auto gradUBView = gradU.boundaryData().value().view();
+
+    NeoN::Vector<NeoN::scalar> acc(exec, 6, NeoN::scalar {0});
+    auto accView = acc.view();
+
+    NeoN::parallelFor(
+        exec,
+        {static_cast<NeoN::localIdx>(start), static_cast<NeoN::localIdx>(end)},
+        NEON_LAMBDA(const NeoN::localIdx bfacei) {
+            NeoN::SymmTensor tau = NeoN::devTwoSymm(gradUBView[bfacei]) * (-nuRho);
+
+            NeoN::Vec3 fv = tau & sfView[bfacei];
+
+            NeoN::Vec3 lv = cfView[bfacei] - cofR;
+            NeoN::Vec3 mv(
+                lv[1] * fv[2] - lv[2] * fv[1],
+                lv[2] * fv[0] - lv[0] * fv[2],
+                lv[0] * fv[1] - lv[1] * fv[0]
+            );
+
+            NeoN::atomic_add(&accView[0], fv[0]);
+            NeoN::atomic_add(&accView[1], fv[1]);
+            NeoN::atomic_add(&accView[2], fv[2]);
+            NeoN::atomic_add(&accView[3], mv[0]);
+            NeoN::atomic_add(&accView[4], mv[1]);
+            NeoN::atomic_add(&accView[5], mv[2]);
+        },
+        "Forces::computePatchViscousForces"
+    );
+
+    NeoN::Vector<NeoN::scalar> hostAcc = acc.copyToHost();
+    auto hv = hostAcc.view();
+    result.viscousForce += NeoN::Vec3 {hv[0], hv[1], hv[2]};
+    result.viscousMoment += NeoN::Vec3 {hv[3], hv[4], hv[5]};
+}
+
+
 // ---- execute ----
 
 bool Forces::execute()
@@ -222,6 +300,19 @@ bool Forces::execute()
     for (int patchi : patchIndices_)
     {
         computePatchForces(patchi, nfP, rhoRef_, pRef_, cofR_, result_);
+    }
+
+    using VecVolumeField = fvcc::VolumeField<NeoN::Vec3>;
+    auto uIds =
+        vc.find([&](const NeoN::Document& doc) { return doc.get<std::string>("name") == uName_; });
+
+    if (!uIds.empty())
+    {
+        const VecVolumeField& nfU = vc.fieldDoc(uIds[0]).field<VecVolumeField>();
+        gradOp_->gradTensor(nfU, *gradU_);
+        const NeoN::scalar nuRho = nu_ * rhoRef_;
+        for (int patchi : patchIndices_)
+            computePatchViscousForces(patchi, *gradU_, nuRho, cofR_, result_);
     }
 
     return true;
