@@ -138,7 +138,7 @@ public:
     void computePatchViscousForces(
         int patchi,
         const NeoN::finiteVolume::cellCentred::VolumeField<NeoN::Tensor>& gradU,
-        NeoN::scalar nuRho,
+        const NeoN::Vector<NeoN::scalar>& nuRhoB,
         const NeoN::Vec3& cofR,
         ForceResult& result
     ) const;
@@ -156,6 +156,7 @@ protected:
 
     std::string pName_ {"p"};
     std::string uName_ {"U"};
+    std::string nutName_ {"nut"};
     NeoN::scalar rhoRef_ {1.0};
     NeoN::scalar pRef_ {0.0};
     NeoN::Vec3 cofR_ {0, 0, 0};

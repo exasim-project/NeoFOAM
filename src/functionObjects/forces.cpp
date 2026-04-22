@@ -109,6 +109,7 @@ bool Forces::read(const Foam::dictionary& dict)
 {
     pName_ = dict.getOrDefault<Foam::word>("pName", "p");
     uName_ = dict.getOrDefault<Foam::word>("uName", "U");
+    nutName_ = dict.getOrDefault<Foam::word>("nutName", "nut");
     rhoRef_ = dict.getOrDefault<Foam::scalar>("rhoInf", 1.0);
     pRef_ = dict.getOrDefault<Foam::scalar>("pRef", 0.0);
 
@@ -197,7 +198,7 @@ void Forces::computePatchForces(
 void Forces::computePatchViscousForces(
     int patchi,
     const NeoN::finiteVolume::cellCentred::VolumeField<NeoN::Tensor>& gradU,
-    NeoN::scalar nuRho,
+    const NeoN::Vector<NeoN::scalar>& nuRhoB,
     const NeoN::Vec3& cofR,
     ForceResult& result
 ) const
@@ -210,6 +211,7 @@ void Forces::computePatchViscousForces(
     auto sfView = nfMesh.boundaryMesh().sf().view();
     auto cfView = nfMesh.boundaryMesh().cf().view();
     auto gradUBView = gradU.boundaryData().value().view();
+    auto nuRhoBView = nuRhoB.view();
 
     NeoN::Vector<NeoN::scalar> acc(exec, 6, NeoN::scalar {0});
     auto accView = acc.view();
@@ -218,7 +220,7 @@ void Forces::computePatchViscousForces(
         exec,
         {static_cast<NeoN::localIdx>(start), static_cast<NeoN::localIdx>(end)},
         NEON_LAMBDA(const NeoN::localIdx bfacei) {
-            NeoN::SymmTensor tau = NeoN::devTwoSymm(gradUBView[bfacei]) * (-nuRho);
+            NeoN::SymmTensor tau = NeoN::devTwoSymm(gradUBView[bfacei]) * (-nuRhoBView[bfacei]);
 
             NeoN::Vec3 fv = tau & sfView[bfacei];
 
@@ -310,9 +312,36 @@ bool Forces::execute()
     {
         const VecVolumeField& nfU = vc.fieldDoc(uIds[0]).field<VecVolumeField>();
         gradOp_->gradTensor(nfU, *gradU_);
-        const NeoN::scalar nuRho = nu_ * rhoRef_;
+
+        const NeoN::Executor exec = meshAdapter_->exec();
+        const NeoN::UnstructuredMesh& nfMesh = meshAdapter_->nfMesh();
+        const NeoN::localIdx nBF =
+            static_cast<NeoN::localIdx>(nfMesh.boundaryMesh().offset().back());
+
+        // Build per-face nuRho — laminar only by default, turbulent if nut is present
+        NeoN::Vector<NeoN::scalar> nuRhoB(exec, nBF, nu_ * rhoRef_);
+
+        auto nutIds = vc.find([&](const NeoN::Document& doc)
+                              { return doc.get<std::string>("name") == nutName_; });
+        if (!nutIds.empty())
+        {
+            const ScalarField& nutField = vc.fieldDoc(nutIds[0]).field<ScalarField>();
+            auto nutBView = nutField.boundaryData().value().view();
+            auto nuRhoBView = nuRhoB.view();
+            const NeoN::scalar nu = nu_;
+            const NeoN::scalar rhoRef = rhoRef_;
+            NeoN::parallelFor(
+                exec,
+                {NeoN::localIdx {0}, nBF},
+                NEON_LAMBDA(const NeoN::localIdx bf) {
+                    nuRhoBView[bf] = (nu + nutBView[bf]) * rhoRef;
+                },
+                "Forces::buildNuRhoB"
+            );
+        }
+
         for (int patchi : patchIndices_)
-            computePatchViscousForces(patchi, *gradU_, nuRho, cofR_, result_);
+            computePatchViscousForces(patchi, *gradU_, nuRhoB, cofR_, result_);
     }
 
     return true;

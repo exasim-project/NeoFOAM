@@ -347,6 +347,107 @@ TEST_CASE("Forces - pressure force and moment match OpenFOAM reference")
         fs::remove_all("postProcessing/neoForces");
         fs::remove_all("postProcessing/ofForces");
     }
+
+    SECTION("random U + turbulent nuEff (nu + nut), fixedWalls" + execName)
+    {
+        // TODO: This test assumes nuEff in OpenFOAM is calculated as nu + nut on each patch face,
+        // we never test if the NeoFOAM nuEff is actually equalt to OpenFOAMs nuEff
+        fs::remove_all("postProcessing/neoForces");
+        fs::remove_all("postProcessing/ofForces");
+
+        const Foam::scalar nu = 1e-5;
+        const Foam::scalar nutConst = 5e-4;
+
+        auto rt = nf::createAdapterRunTime(runTime, exec);
+        auto& mesh = rt.mesh;
+
+        auto ofP = randomScalarField(runTime, mesh, "p");
+        ofP.correctBoundaryConditions();
+        auto ofU = randomVectorField(runTime, mesh, "U");
+        ofU.correctBoundaryConditions();
+
+        // Constant nut field — uniform value on all faces including boundary
+        Foam::volScalarField ofNut(
+            Foam::IOobject(
+                "nut",
+                runTime.timeName(),
+                mesh,
+                Foam::IOobject::NO_READ,
+                Foam::IOobject::NO_WRITE
+            ),
+            mesh,
+            Foam::dimensionedScalar("nut", Foam::dimViscosity, nutConst)
+        );
+        ofNut.correctBoundaryConditions();
+
+        fvcc::VectorCollection& vc = fvcc::VectorCollection::instance(rt.db, "VectorCollection");
+        nf::constructAndRegister(vc, rt, ofP, false);
+        nf::constructAndRegister(vc, rt, ofU, false);
+        nf::constructAndRegister(vc, rt, ofNut, false);
+
+        Foam::dictionary dict;
+        dict.add("patches", Foam::wordList {"fixedWalls"});
+        dict.add("pName", Foam::word {"p"});
+        dict.add("rhoInf", Foam::scalar {1.225});
+        dict.add("pRef", Foam::scalar {0.0});
+        dict.add("CofR", Foam::vector(0, 0, 0));
+
+        // NeoFOAM scope: transportProperties with laminar nu only.
+        // Forces reads nu here; adds nut per boundary face from VectorCollection.
+        {
+            Foam::IOdictionary transportProps(Foam::IOobject(
+                "transportProperties",
+                runTime.constant(),
+                mesh,
+                Foam::IOobject::NO_READ,
+                Foam::IOobject::NO_WRITE
+            ));
+            transportProps.add("nu", nu);
+
+            nf::Forces forces("neoForces", runTime, dict);
+            REQUIRE(forces.execute());
+            REQUIRE(forces.write());
+        } // transportProps deregisters here
+
+        // OF scope: transportProperties with nuEff = nu + nut.
+        // OF forces has no turbulence model, so effective viscosity must be set directly.
+        {
+            Foam::IOdictionary ofTransportProps(Foam::IOobject(
+                "transportProperties",
+                runTime.constant(),
+                mesh,
+                Foam::IOobject::NO_READ,
+                Foam::IOobject::NO_WRITE
+            ));
+            ofTransportProps.add("nu", nu + nutConst);
+
+            Foam::dictionary ofDict;
+            ofDict.add("patches", Foam::wordList {"fixedWalls"});
+            ofDict.add("rho", Foam::word("rhoInf"));
+            ofDict.add("rhoInf", Foam::scalar {1.225});
+            ofDict.add("pRef", Foam::scalar {0.0});
+            ofDict.add("CofR", Foam::vector(0, 0, 0));
+
+            Foam::functionObjects::forces ofForces("ofForces", runTime, ofDict);
+            REQUIRE(ofForces.execute());
+            REQUIRE(ofForces.write());
+        } // ofTransportProps deregisters here
+
+        const double tol = 1e-8;
+        compareDataFiles(
+            "postProcessing/neoForces/0/force.dat",
+            "postProcessing/ofForces/0/force.dat",
+            tol
+        );
+        compareDataFiles(
+            "postProcessing/neoForces/0/moment.dat",
+            "postProcessing/ofForces/0/moment.dat",
+            tol
+        );
+
+        fs::remove_all("postProcessing/neoForces");
+        fs::remove_all("postProcessing/ofForces");
+    }
 }
 
 
