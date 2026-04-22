@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['sigmanut_0',['sigmaNut',['../structNeoFOAM_1_1SpalartAllmarasDDES_1_1Coefficients.html#a9dc275051b5337f7ed4339990154d567',1,'NeoFOAM::SpalartAllmarasDDES::Coefficients']]],
-  ['subcycleindex_1',['subCycleIndex',['../classNeoFOAM_1_1CreateFromFoamField.html#a0b659c2eb72285147dd9d0622203c9c7',1,'NeoFOAM::CreateFromFoamField']]]
+  ['registryname_0',['registryName',['../classNeoFOAM_1_1DatabaseWrapper.html#a294a3f7e57e3700663a52e4ef2afe71f',1,'NeoFOAM::DatabaseWrapper']]],
+  ['result_5f_1',['result_',['../classNeoFOAM_1_1Forces.html#a91834387ab747d791018d412341b3e98',1,'NeoFOAM::Forces']]],
+  ['rhoref_5f_2',['rhoRef_',['../classNeoFOAM_1_1Forces.html#a05985b1ca791ec6a86dd589f708a3233',1,'NeoFOAM::Forces']]]
 ];
