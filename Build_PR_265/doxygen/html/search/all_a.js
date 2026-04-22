@@ -14,6 +14,7 @@ var searchData=
   ['nu_5f_11',['nu_',['../classNeoFOAM_1_1Forces.html#a8077b25bd66341169bd01db105b826b7',1,'NeoFOAM::Forces']]],
   ['nueff_12',['nuEff',['../classNeoFOAM_1_1SpalartAllmarasDDES.html#a24a105c7a86880b8eb9f922f2c2e0d02',1,'NeoFOAM::SpalartAllmarasDDES']]],
   ['nutildaeff_13',['nuTildaEff',['../classNeoFOAM_1_1SpalartAllmarasDDES.html#ad5a1f9bf960776f9d3d8591241588558',1,'NeoFOAM::SpalartAllmarasDDES']]],
-  ['nutuspaldingwallfunction_14',['nutuspaldingwallfunction',['../classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutUSpaldingWallFunction.html#a32394a51181400315298dcc5bfa3b036',1,'NeoN::finiteVolume::cellCentred::volumeBoundary::NutUSpaldingWallFunction::NutUSpaldingWallFunction()'],['../classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutUSpaldingWallFunction.html',1,'NeoN::finiteVolume::cellCentred::volumeBoundary::NutUSpaldingWallFunction']]],
-  ['nutwallfunction_2ehpp_15',['nutWallFunction.hpp',['../nutWallFunction_8hpp.html',1,'']]]
+  ['nutname_5f_14',['nutName_',['../classNeoFOAM_1_1Forces.html#af6d66dd92dd3dc2aefd748f806354063',1,'NeoFOAM::Forces']]],
+  ['nutuspaldingwallfunction_15',['nutuspaldingwallfunction',['../classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutUSpaldingWallFunction.html#a32394a51181400315298dcc5bfa3b036',1,'NeoN::finiteVolume::cellCentred::volumeBoundary::NutUSpaldingWallFunction::NutUSpaldingWallFunction()'],['../classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutUSpaldingWallFunction.html',1,'NeoN::finiteVolume::cellCentred::volumeBoundary::NutUSpaldingWallFunction']]],
+  ['nutwallfunction_2ehpp_16',['nutWallFunction.hpp',['../nutWallFunction_8hpp.html',1,'']]]
 ];
