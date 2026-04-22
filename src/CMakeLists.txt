@@ -20,7 +20,7 @@ target_sources(
           "compatibility/fvSchemes.cpp"
           "compatibility/fvSolution.cpp"
           "turbulenceModels/spalartAllmarasDDES.cpp"
-          "fvcc/operators/viscousStressOperator.cpp")
+          "fvcc/operators/viscousStressOperator.cpp"
           "functionObjects/functionObjectIO.cpp"
           "functionObjects/forces.cpp"
           "functionObjects/forceCoeffs.cpp")

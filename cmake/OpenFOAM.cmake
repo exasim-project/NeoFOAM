@@ -78,4 +78,4 @@ importoflibrary(
   $ENV{FOAM_LIBBIN}/$ENV{FOAM_MPI}
   EXTRA_LINK_TARGET
   MPI::MPI_CXX)
-importoflibrary(forces INCLUDE functionObjects/forces)
+importoflibrary(forces INCLUDE_LN functionObjects/forces)
