@@ -28,6 +28,21 @@ bool checkEntryType(const Foam::entry& entry)
     Foam::FatalIOError.throwExceptions(true);
     try
     {
+        // NOTE since get<T> this can cast int -> float or float -> int
+        // we need to check whether the underlying token type actually matches
+        if constexpr (std::is_same_v<T, NeoN::scalar>)
+        {
+            if (entry.stream().tokens().size() == 1)
+            {
+                bool isLabel = entry.stream().tokens()[0].type() == Foam::token::tokenType::LABEL;
+                // we are testing whether the entryType is a scalar but the underlying token is
+                // a label
+                if (isLabel)
+                {
+                    return false;
+                }
+            }
+        }
         entry.get<T>();
     }
     catch (const Foam::IOerror& ioErr)
