@@ -86,5 +86,7 @@ neofoam_unit_test(compatibility setup_compatibility)
 neofoam_unit_test(momentum setup_pressureVelocityCoupling)
 
 if(NEOFOAM_WITH_MPI)
+  neofoam_unit_test(distributedUnstructuredMesh setup_pressureVelocityCoupling MPI_SIZE 3)
+  neofoam_unit_test(distributedPressureVelocityCoupling setup_pressureVelocityCoupling MPI_SIZE 3)
   neofoam_unit_test(distributedMomentum setup_pressureVelocityCoupling MPI_SIZE 3)
 endif()

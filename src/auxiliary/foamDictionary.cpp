@@ -20,11 +20,8 @@ static bool insertStream(NeoN::Dictionary& neoDict, const Foam::entry& entry)
 
 static bool insertScalar(NeoN::Dictionary& neoDict, const Foam::entry& entry)
 {
-    std::cout << __FILE__ << ":" << __LINE__ << " entry: " << entry.stream().toString() << "\n";
     if (!checkEntryType<Foam::scalar>(entry))
     {
-        std::cout << __FILE__ << ":" << __LINE__
-                  << "is not a scalar entry: " << entry.stream().toString() << "\n";
         return false;
     }
     std::any insert = convert(entry.get<Foam::scalar>());

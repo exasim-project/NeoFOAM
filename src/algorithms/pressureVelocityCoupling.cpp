@@ -92,6 +92,7 @@ void updateFaceVelocity(
     const auto& mesh = phi.mesh();
     const auto& p = expr.getField();
     const auto nInternalFaces = mesh.nInternalFaces();
+    const auto nBoundaryFaces = mesh.nBoundaryFaces();
     const auto exec = phi.exec();
     const auto [owner, neighbour, internalP] =
         views(mesh.faceOwner(), mesh.faceNeighbour(), p.internalVector());
@@ -131,7 +132,7 @@ void updateFaceVelocity(
 
     NeoN::parallelFor(
         exec,
-        {nInternalFaces, iPhi.size()},
+        {nInternalFaces, nInternalFaces + nBoundaryFaces},
         NEON_LAMBDA(const size_t facei) {
             auto bfacei = facei - nInternalFaces;
             scalar bflux =
