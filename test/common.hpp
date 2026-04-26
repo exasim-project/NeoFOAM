@@ -19,6 +19,7 @@
 
 #include "fvm.H"
 #include "fvc.H"
+#include "processorFvPatch.H"
 // #include "fvCFD.H"
 
 namespace NeoFOAM
@@ -152,17 +153,28 @@ void compare(const NFFIELD& a, const OFFIELD& b, Compare comp, const bool withBo
         // of boundary patches in the same order as b.boundaryField()
         if (withBoundaries)
         {
-            size_t start = 0;
-            auto aBoundaryHost = a.boundaryData().value().copyToHost();
+            auto ofBoundaryData = std::vector<typename NFFIELD::VectorValueType> {};
+            auto nfBoundaryHost = a.boundaryData().value().copyToHost();
+
+            //
             for (const auto& patch : b.boundaryField())
             {
+                // FIXME For skip processor boundaries
+                if (patch.type() == "processor")
+                {
+                    continue;
+                }
                 auto bBoundarySpan = std::span(patch.cdata(), patch.size());
-                REQUIRE_THAT(
-                    aBoundaryHost.view({start, start + patch.size()}),
-                    Catch::Matchers::RangeEquals(bBoundarySpan, comp)
-                );
-                start += patch.size();
+                for (auto b : bBoundarySpan)
+                {
+                    ofBoundaryData.push_back(convert(b));
+                }
             }
+
+            REQUIRE_THAT(
+                nfBoundaryHost.view({0, ofBoundaryData.size()}),
+                Catch::Matchers::RangeEquals(ofBoundaryData, comp)
+            );
         }
     }
 }

@@ -83,9 +83,23 @@ TEST_CASE("PressureVelocityCoupling")
     SECTION("rAU" + execName)
     {
         nf::compare(nfU, ofU, ApproxVector(epsilon));
+        nf::compare(nfNu, ofNu, ApproxScalar(epsilon));
+        nf::compare(nfPhi, ofPhi, ApproxScalar(epsilon));
 
         Foam::volScalarField forAU("rAU", 1.0 / ofUEqn.A());
         nfUEqn.assemble();
+
+        nf::compare(
+            NeoN::la::upper(nfUEqn.linearSystem().matrix()),
+            ofUEqn.upper(),
+            ApproxVector(1e-15)
+        );
+        nf::compare(
+            NeoN::la::removeBoundaryContributions(nfUEqn.linearSystem()).matrix().diag(),
+            ofUEqn.diag(),
+            ApproxVector(1e-15)
+        );
+
         auto nfrAU = nf::computeRAU(nfUEqn);
 
         NeoFOAM::compare(nfrAU, forAU, ApproxScalar(1e-15), true);

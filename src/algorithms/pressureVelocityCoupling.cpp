@@ -69,10 +69,10 @@ computeRAUandHByA(const PDESolver<Vec3>& expr)
     auto hByA = nnfvcc::VolumeField<Vec3>(expr.exec(), "HbyA", mesh, hByABCs);
 
     NeoN::la::scaledInvDiagNegLUx(
-        ls.matrix(),
+        ls,
         u.internalVector(),
-        ls.rhs(),
-        mesh.cellVolumes(),
+        u.boundaryData().value(),
+        mesh,
         rAU.internalVector(),
         hByA.internalVector()
     );
@@ -165,6 +165,7 @@ nnfvcc::SurfaceField<scalar> flux(const nnfvcc::VolumeField<Vec3>& volField)
 
     const auto& mesh = volField.mesh();
     const auto nInternalFaces = mesh.nInternalFaces();
+    const auto nBoundaryFaces = mesh.boundaryMesh().nBoundaryFaces();
     NeoN::Input input = NeoN::TokenList({std::string("linear")});
     auto linear = nnfvcc::SurfaceInterpolation<Vec3>(exec, mesh, input);
     const auto weight = linear.weight(volField);
@@ -201,7 +202,7 @@ nnfvcc::SurfaceField<scalar> flux(const nnfvcc::VolumeField<Vec3>& volField)
 
     NeoN::parallelFor(
         exec,
-        {nInternalFaces, faceFluxIn.size()},
+        {nInternalFaces, nInternalFaces + nBoundaryFaces},
         NEON_LAMBDA(const size_t facei) {
             auto faceBCI = facei - nInternalFaces;
 
