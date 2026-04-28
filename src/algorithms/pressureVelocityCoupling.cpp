@@ -141,6 +141,44 @@ void updateFaceVelocity(
             bvalue[bfacei] = bPredValue[bfacei] - bflux;
         }
     );
+
+    // Processor-boundary faces.
+    //
+    // Indexing convention (matches scaledInvDiagNegLUx and the assembly):
+    //   facei in [nInternalFaces + nBoundaryFaces, nTotalFaces)
+    //   bcfaceii = facei - (nInternalFaces + nBoundaryFaces)  -> index into nonLocalMatrix
+    //   bfacei   = facei -  nInternalFaces                    -> index into boundaryData
+    //                                                            (proc tail starts at
+    //                                                            nBoundaryFaces;
+    //                                                             bcfaceii + nBoundaryFaces ==
+    //                                                             bfacei)
+    //
+    // OpenFOAM's lduMatrix interface contribution to fvm::laplacian's flux is the
+    // matrix-vector product across the processor patch:
+    //   flux_proc = M[own, ghost] * p_ghost - M[ghost, own] * p_own
+    // For the symmetric Laplacian M[own, ghost] == M[ghost, own] == nonLocalCoeff,
+    // so this reduces to nonLocalCoeff * (p_ghost - p_own). p_ghost lives in
+    // p.boundaryData().value() at the proc tail and is populated by the prior
+    // p.correctBoundaryConditions()/constructAndRegister exchange.
+    const auto nTotalFaces = phi.internalVector().size();
+    const auto nlValues = ls.nonLocalMatrix().values().view();
+    const auto nlRows = ls.nonLocalMatrix().rowOffs().view();
+    const auto pBoundV = p.boundaryData().value().view();
+
+    NeoN::parallelFor(
+        exec,
+        {nInternalFaces + nBoundaryFaces, nTotalFaces},
+        NEON_LAMBDA(const size_t facei) {
+            auto bcfaceii = facei - (nInternalFaces + nBoundaryFaces);
+            auto bfacei = facei - nInternalFaces;
+            auto own = static_cast<std::size_t>(nlRows[bcfaceii]);
+            auto coupling = nlValues[bcfaceii];
+            auto pGhost = pBoundV[bfacei];
+            scalar pflux = coupling * (pGhost - internalP[own]);
+            iPhi[facei] = iPredPhi[facei] - pflux;
+            bvalue[bfacei] = bPredValue[bfacei] - pflux;
+        }
+    );
 }
 
 void updateVelocity(
@@ -208,6 +246,37 @@ nnfvcc::SurfaceField<scalar> flux(const nnfvcc::VolumeField<Vec3>& volField)
 
             faceFluxIn[facei] = bSf[faceBCI] & volFieldBc[faceBCI];
             bvalue[faceBCI] = bSf[faceBCI] & volFieldBc[faceBCI];
+        }
+    );
+
+    // Processor-boundary faces.
+    //
+    // Indexing convention (matches updateFaceVelocity and the assembly):
+    //   facei  in [nInternalFaces + nBoundaryFaces, nTotalFaces)
+    //   faceBCI = facei - nInternalFaces  -> proc tail of boundaryMesh().sf() and of
+    //                                        volField.boundaryData().value()
+    //
+    // For OpenFOAM's fvc::flux(HbyA) on processor patches, the face value is the
+    // linear interpolation between the local owner cell and the ghost cell:
+    //     phi_f = w * volField[own] + (1 - w) * volField[ghost]
+    // matching the internal-face formula above. After volField.correctBoundaryConditions()
+    // the ghost cell value is stored at volField.boundaryData().value()[faceBCI] (the
+    // proc tail), and the cell-to-face weight is in weight.internalVector()[facei].
+    const auto nTotalFaces = mesh.nTotalFaces();
+    const auto procFaceCells = mesh.boundaryMesh().faceCells().view();
+
+    NeoN::parallelFor(
+        exec,
+        {nInternalFaces + nBoundaryFaces, nTotalFaces},
+        NEON_LAMBDA(const size_t facei) {
+            auto faceBCI = facei - nInternalFaces;
+            auto own = static_cast<std::size_t>(procFaceCells[faceBCI]);
+            // Same form as the internal-face line: w*(own - ghost) + ghost
+            //   = w * volFieldIn[own] + (1 - w) * volFieldBc[faceBCI]
+            auto faceVal =
+                weightIn[facei] * (volFieldIn[own] - volFieldBc[faceBCI]) + volFieldBc[faceBCI];
+            faceFluxIn[facei] = bSf[faceBCI] & faceVal;
+            bvalue[faceBCI] = bSf[faceBCI] & faceVal;
         }
     );
 

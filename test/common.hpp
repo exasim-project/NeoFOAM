@@ -170,6 +170,19 @@ void compare(const NFFIELD& a, const OFFIELD& b, Compare comp, const bool withBo
                     ofBoundaryData.push_back(convert(b));
                 }
             }
+            for (const auto& patch : b.boundaryField())
+            {
+                // FIXME For skip processor boundaries
+                if (patch.type() != "processor")
+                {
+                    continue;
+                }
+                auto bBoundarySpan = std::span(patch.cdata(), patch.size());
+                for (auto b : bBoundarySpan)
+                {
+                    ofBoundaryData.push_back(convert(b));
+                }
+            }
 
             REQUIRE_THAT(
                 nfBoundaryHost.view({0, ofBoundaryData.size()}),

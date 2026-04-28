@@ -123,6 +123,7 @@ public:
     /** @brief assemble the linear system owned by the solver based on the current expression */
     LinearSystem& assemble()
     {
+        ls_.reset();
         expr_.assemble(runTime_.t, runTime_.dt, ls_);
         return ls_;
     }
@@ -228,32 +229,16 @@ private:
         //   }
         //   else
         //   {
-        if (Foam::Pstream::parRun())
-        {
-            stats = NeoN::dsl::detail::iterativeSolveDistImpl(
-                expr,
-                ls,
-                psi_,
-                runTime_.t,
-                runTime_.dt,
-                runTime_.fvSchemesDict,
-                fieldSolverDict,
-                functs
-            );
-        }
-        else
-        {
-            stats = NeoN::dsl::detail::iterativeSolveImpl(
-                expr,
-                ls,
-                psi_,
-                runTime_.t,
-                runTime_.dt,
-                runTime_.fvSchemesDict,
-                fieldSolverDict,
-                functs
-            );
-        }
+        stats = NeoN::dsl::detail::iterativeSolveImpl(
+            expr,
+            ls,
+            psi_,
+            runTime_.t,
+            runTime_.dt,
+            runTime_.fvSchemesDict,
+            fieldSolverDict,
+            functs
+        );
 
         for (auto stat : stats.entries)
         {

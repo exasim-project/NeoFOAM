@@ -94,21 +94,8 @@ TEST_CASE("DistributedMomentum")
         // require fields to be initially the same
         // NOTE we skip comparing boundary values for now, since in distributed they have
         // different order
-        SECTION_IF(rt.mpiEnvironment.rank() == 0, "Correct fields on rank 0")
-        {
-            nf::compare(nfP, ofp, ApproxScalar(epsilon), true);
-            nf::compare(nfU, ofU, ApproxVector(epsilon), false);
-        }
-        SECTION_IF(rt.mpiEnvironment.rank() == 1, "Correct fields on rank 1")
-        {
-            nf::compare(nfP, ofp, ApproxScalar(epsilon), true);
-            nf::compare(nfU, ofU, ApproxVector(epsilon), false);
-        }
-        SECTION_IF(rt.mpiEnvironment.rank() == 2, "Correct fields on rank 2")
-        {
-            nf::compare(nfP, ofp, ApproxScalar(epsilon), true);
-            nf::compare(nfU, ofU, ApproxVector(epsilon), false);
-        }
+        nf::compare(nfP, ofp, ApproxScalar(epsilon), true);
+        nf::compare(nfU, ofU, ApproxVector(epsilon), true);
 
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
         solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
@@ -121,7 +108,7 @@ TEST_CASE("DistributedMomentum")
 
         REQUIRE(numIterDist != 0);
         REQUIRE(initResNormDist != 0);
-        // nfU.correctBoundaryConditions();
-        nf::compare(nfU, ofU, ApproxVector({1e-08, 1e-08, 1e-08}));
+        // // nfU.correctBoundaryConditions();
+        nf::compare(nfU, ofU, ApproxVector({1e-08, 1e-08, 1e-08}), false);
     }
 }
