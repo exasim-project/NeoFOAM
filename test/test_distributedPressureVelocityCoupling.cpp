@@ -176,12 +176,16 @@ TEST_CASE("Distributed PressureVelocityCoupling")
 
         Foam::fvScalarMatrix ofpEqn(fvm::laplacian(forAUf, ofp) == fvc::div(ofPhi));
         ofPhi0 = ofPhi - ofpEqn.flux();
+        solve(ofpEqn);
 
         nf::PDESolver<NeoN::scalar> pEqn(
             dsl::imp::laplacian(nfrAUf, nfP) - dsl::exp::div(nfPhi),
             nfP,
             rt
         );
+
+        auto& solverDict = rt.fvSolutionDict.subDict("solvers");
+        solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
 
         pEqn.assemble();
 
@@ -202,5 +206,60 @@ TEST_CASE("Distributed PressureVelocityCoupling")
 
         nf::updateFaceVelocity(nfPhi, pEqn, nfPhi0);
         nf::compare(nfPhi0, ofPhi0, ApproxScalar(1e-12), true);
+    }
+
+    SECTION("solve pEqn")
+    {
+        nf::compare(nfPhi, ofPhi, ApproxScalar(epsilon), false);
+        nf::compare(nfP, ofp, ApproxScalar(1e-12), false);
+
+        auto& solverDict = rt.fvSolutionDict.subDict("solvers");
+        solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
+
+        auto forAUf =
+            NeoFOAM::randDimField<Foam::surfaceScalarField>(mesh, {0, 0, 1, 0, 0}, "rAUf");
+        auto nfrAUf = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, forAUf);
+
+        Foam::surfaceScalarField ofPhi0("phi0", ofPhi * 0.0);
+        auto nfPhi0 = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofPhi0);
+
+        Foam::fvScalarMatrix ofpEqn(fvm::laplacian(forAUf, ofp) == fvc::div(ofPhi));
+        ofPhi0 = ofPhi - ofpEqn.flux();
+        solve(ofpEqn);
+
+        nf::PDESolver<NeoN::scalar> pEqn(
+            dsl::imp::laplacian(nfrAUf, nfP) - dsl::exp::div(nfPhi),
+            nfP,
+            rt
+        );
+
+        auto stats = pEqn.solve();
+
+        // NOTE removeBoundaryContributions is not working in distributed case
+        // nf::compare(
+        //     NeoN::la::removeBoundaryContributions(pEqn.linearSystem()).matrix().diag(),
+        //     ofpEqn.diag(),
+        //     ApproxScalar(1e-15),
+        //     false
+        // );
+
+        nf::compare(
+            NeoN::la::upper(pEqn.linearSystem().matrix()),
+            ofpEqn.upper(),
+            ApproxScalar(1e-15),
+            false
+        );
+        nf::compare(pEqn.linearSystem().rhs(), ofpEqn.source(), ApproxScalar(1e-15), false);
+
+        ofp.correctBoundaryConditions();
+        nfP.correctBoundaryConditions();
+
+        auto [numIter, initResNorm, finalResNorm, solveTime] = stats.entries[0];
+
+        REQUIRE(numIter != 0);
+        REQUIRE(initResNorm != 0);
+        REQUIRE(finalResNorm < initResNorm);
+
+        nf::compare(nfP, ofp, ApproxScalar(1e-12), false);
     }
 }

@@ -155,6 +155,9 @@ TEST_CASE("PressureVelocityCoupling")
             rt
         );
 
+        auto& solverDict = rt.fvSolutionDict.subDict("solvers");
+        solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
+
         pEqn.assemble();
 
         nf::compare(pEqn.linearSystem().matrix().diag(), ofpEqn.diag(), ApproxScalar(1e-15));
@@ -166,5 +169,58 @@ TEST_CASE("PressureVelocityCoupling")
 
         nf::updateFaceVelocity(nfPhi, pEqn, nfPhi0);
         nf::compare(nfPhi0, ofPhi0, ApproxScalar(1e-15));
+    }
+
+    SECTION("solve pEqn")
+    {
+        nf::compare(nfPhi, ofPhi, ApproxScalar(epsilon), false);
+        nf::compare(nfP, ofp, ApproxScalar(1e-12), false);
+
+        auto& solverDict = rt.fvSolutionDict.subDict("solvers");
+        solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
+
+        auto forAUf =
+            NeoFOAM::randDimField<Foam::surfaceScalarField>(mesh, {0, 0, 1, 0, 0}, "rAUf");
+        auto nfrAUf = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, forAUf);
+
+        Foam::fvScalarMatrix ofpEqn(fvm::laplacian(forAUf, ofp) == fvc::div(ofPhi));
+        solve(ofpEqn);
+
+
+        nf::PDESolver<NeoN::scalar> pEqn(
+            dsl::imp::laplacian(nfrAUf, nfP) - dsl::exp::div(nfPhi),
+            nfP,
+            rt
+        );
+
+        pEqn.setReference(0, 0.0);
+        auto stats = pEqn.solve();
+
+        // NOTE removeBoundaryContributions is not working in distributed case
+        // nf::compare(
+        //     NeoN::la::removeBoundaryContributions(pEqn.linearSystem()).matrix().diag(),
+        //     ofpEqn.diag(),
+        //     ApproxScalar(1e-15),
+        //     false
+        // );
+
+        nf::compare(
+            NeoN::la::upper(pEqn.linearSystem().matrix()),
+            ofpEqn.upper(),
+            ApproxScalar(1e-15),
+            false
+        );
+        nf::compare(pEqn.linearSystem().rhs(), ofpEqn.source(), ApproxScalar(1e-15), false);
+
+        ofp.correctBoundaryConditions();
+        nfP.correctBoundaryConditions();
+
+        auto [numIter, initResNorm, finalResNorm, solveTime] = stats.entries[0];
+
+        REQUIRE(numIter != 0);
+        REQUIRE(initResNorm != 0);
+        REQUIRE(finalResNorm < initResNorm);
+
+        nf::compare(nfP, ofp, ApproxScalar(1e-32), true);
     }
 }
