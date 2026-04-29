@@ -135,9 +135,9 @@ public:
     {
         detail::setNutUSpaldingWallFunction(
             domainVector,
-            ctx.vector("U"),
-            ctx.scalar("nu"),
-            ctx.scalar("nearWallDist"),
+            ctx.vectorFieldPtr("U"),
+            ctx.scalarFieldPtr("nu"),
+            ctx.scalarFieldPtr("nearWallDist"),
             mesh_,
             this->range()
         );
