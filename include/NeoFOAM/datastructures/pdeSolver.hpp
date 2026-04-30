@@ -80,6 +80,26 @@ public:
                                 FunctorValueType,
                                 NeoN::la::CSRMatrix<FunctorValueType, IndexType>>& ls)
         {
+            // Only the rank that owns the reference cell may pin it. `pRefCell_`
+            // is interpreted as a local index on that one rank; on every other
+            // rank we leave the matrix untouched. Without this guard a 3-rank
+            // distributed cavity ends up pinning three *different* physical
+            // cells (each rank's local index `pRefCell_`) to the same value, the
+            // global system becomes over-constrained, and the converged pressure
+            // shows step discontinuities at processor boundaries because each
+            // rank's local solve settles on a different absolute level.
+            //
+            // FIXME: assume rank 0 owns the reference. For arbitrary global
+            // pRefCell a global→(rank, local) mapping via the mesh partition is
+            // needed; the rank-0 convention is the only one neoIcoFoam currently
+            // uses, and this matches what OpenFOAM's processorPolyPatch /
+            // fvMatrix::setReference do internally.
+            NeoN::mpi::Environment mpiEnv;
+            if (mpiEnv.isInitialized() && mpiEnv.rank() != 0)
+            {
+                return;
+            }
+
             const auto rowOffs = ls.matrix().sparsity()->rowOffs().view();
             const auto diagOffset = ls.faceToMatrixAddress()->diagOffset().view();
             auto rhs = ls.rhs().view();
