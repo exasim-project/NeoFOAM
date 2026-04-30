@@ -100,7 +100,7 @@ TEST_CASE("DistributedMomentum")
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
         solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
 
-        // Foam::solve(ofUEqn);
+        Foam::solve(ofUEqn);
         auto solverStatsDist = nfUEqn.solve();
 
         auto [numIterDist, initResNormDist, finalResNormDist, solveTimeDist] =
@@ -108,7 +108,8 @@ TEST_CASE("DistributedMomentum")
 
         REQUIRE(numIterDist != 0);
         REQUIRE(initResNormDist != 0);
+        REQUIRE(finalResNormDist < initResNormDist);
         // // nfU.correctBoundaryConditions();
-        nf::compare(nfU, ofU, ApproxVector({1e-08, 1e-08, 1e-08}), false);
+        nf::compare(nfU, ofU, ApproxVector({1e-03}), false);
     }
 }

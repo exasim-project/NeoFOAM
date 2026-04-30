@@ -7,6 +7,7 @@
 
 #include "common.hpp"
 #include "constrainHbyA.H"
+#include "findRefCell.H"
 
 namespace fvc = Foam::fvc;
 namespace fvm = Foam::fvm;
@@ -101,6 +102,49 @@ TEST_CASE("Distributed PressureVelocityCoupling")
         NeoFOAM::compare(nfrAU, forAU, ApproxScalar(1e-15), true);
     }
 
+    SECTION("interpolate rAU" + execName)
+    {
+        // Tests the same interpolation call neoIcoFoam uses to build rAUf:
+        //   SurfaceField rAU =
+        //       SurfaceInterpolation<scalar>(exec, mesh, TokenList{"linear"})
+        //           .interpolate(crAU);
+        // The reference is OF's Foam::linearInterpolate(forAU).
+        //
+        // Both internal AND boundary values are compared (withBoundaries=true).
+        // For processor patches the comparison verifies that the proc-face
+        // value computed locally on each rank from
+        //   w * crAU[own] + (1-w) * crAU[ghost]
+        // matches OF's per-rank value, where the ghost cell value comes from
+        // the prior crAU.correctBoundaryConditions() exchange done inside
+        // computeRAU.
+        nf::compare(nfU, ofU, ApproxVector(epsilon), true);
+
+        Foam::volScalarField forAU("rAU", 1.0 / ofUEqn.A());
+        forAU.correctBoundaryConditions();
+
+        // OF reference: linear face interpolation of forAU.
+        // Use linearInterpolate directly to avoid relying on a `default`
+        // entry in interpolationSchemes (the test setup only registers
+        // flux(U)/flux(HbyA) entries).
+        Foam::surfaceScalarField ofRAUf("rAUf", Foam::linearInterpolate(forAU));
+
+        nfUEqn.assemble();
+        auto nfrAU = nf::computeRAU(nfUEqn);
+        // Sanity: input to the interpolation must already match OF, otherwise
+        // any disagreement we see at the surface field is not the
+        // interpolation's fault.
+        nf::compare(nfrAU, forAU, ApproxScalar(1e-15), true);
+
+        nnfvcc::SurfaceField<NeoN::scalar> nfRAUf = fvcc::SurfaceInterpolation<NeoN::scalar>(
+                                                        rt.exec,
+                                                        rt.nfMesh,
+                                                        NeoN::TokenList({std::string("linear")})
+        )
+                                                        .interpolate(nfrAU);
+
+        nf::compare(nfRAUf, ofRAUf, ApproxScalar(1e-12), true);
+    }
+
     SECTION("HbyA" + execName)
     {
         nf::compare(nfU, ofU, ApproxVector(epsilon), true);
@@ -166,6 +210,7 @@ TEST_CASE("Distributed PressureVelocityCoupling")
 
     SECTION("compute flux")
     {
+        nfPhi.correctBoundaryConditions();
         nf::compare(nfPhi, ofPhi, ApproxScalar(epsilon), false);
         auto forAUf =
             NeoFOAM::randDimField<Foam::surfaceScalarField>(mesh, {0, 0, 1, 0, 0}, "rAUf");
@@ -260,6 +305,73 @@ TEST_CASE("Distributed PressureVelocityCoupling")
         REQUIRE(initResNorm != 0);
         REQUIRE(finalResNorm < initResNorm);
 
+        nf::compare(nfP, ofp, ApproxScalar(1e-12), true);
+    }
+
+    SECTION("solve pEqn and update faceVelocity")
+    {
+        nf::compare(nfPhi, ofPhi, ApproxScalar(epsilon), false);
         nf::compare(nfP, ofp, ApproxScalar(1e-12), false);
+
+        auto& solverDict = rt.fvSolutionDict.subDict("solvers");
+        solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
+
+        auto forAUf =
+            NeoFOAM::randDimField<Foam::surfaceScalarField>(mesh, {0, 0, 1, 0, 0}, "rAUf");
+        auto nfrAUf = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, forAUf);
+
+        Foam::surfaceScalarField ofPhi0("phi0", ofPhi * 0.0);
+        auto nfPhi0 = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofPhi0);
+
+        Foam::fvScalarMatrix ofpEqn(fvm::laplacian(forAUf, ofp) == fvc::div(ofPhi));
+        Foam::label pRefCell = 0;
+        Foam::scalar pRefValue = 0.0;
+        Foam::setRefCell(ofp, rt.mesh.solutionDict().subDict("PISO"), pRefCell, pRefValue);
+        solve(ofpEqn);
+        ofPhi0 = ofPhi - ofpEqn.flux();
+
+        nf::PDESolver<NeoN::scalar> pEqn(
+            dsl::imp::laplacian(nfrAUf, nfP) - dsl::exp::div(nfPhi),
+            nfP,
+            rt
+        );
+
+        if (rt.mpiEnvironment.rank() == 0)
+        {
+            pEqn.setReference(0, 0.0);
+        }
+        auto stats = pEqn.solve();
+
+        // NOTE removeBoundaryContributions is not working in distributed case
+        // nf::compare(
+        //     NeoN::la::removeBoundaryContributions(pEqn.linearSystem()).matrix().diag(),
+        //     ofpEqn.diag(),
+        //     ApproxScalar(1e-15),
+        //     false
+        // );
+
+        nf::compare(
+            NeoN::la::upper(pEqn.linearSystem().matrix()),
+            ofpEqn.upper(),
+            ApproxScalar(1e-15),
+            false
+        );
+        nf::compare(pEqn.linearSystem().rhs(), ofpEqn.source(), ApproxScalar(1e-15), false);
+
+        ofp.correctBoundaryConditions();
+        nfP.correctBoundaryConditions();
+
+        auto [numIter, initResNorm, finalResNorm, solveTime] = stats.entries[0];
+
+        REQUIRE(numIter != 0);
+        REQUIRE(initResNorm != 0);
+        REQUIRE(finalResNorm < initResNorm);
+
+        nf::compare(nfP, ofp, ApproxScalar(1e-12), true);
+        // nf::compare(nfPhi, ofPhi, ApproxScalar(1e-12), true);
+
+        nf::updateFaceVelocity(nfPhi, pEqn, nfPhi0);
+        // TODO this neneds to be relatively loose
+        nf::compare(nfPhi0, ofPhi0, ApproxScalar(1e-05), false);
     }
 }

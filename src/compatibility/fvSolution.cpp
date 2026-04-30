@@ -12,6 +12,7 @@
 #include <map>
 
 #include <NeoN/core/logging.hpp>
+#include <NeoN/core/mpi/environment.hpp>
 #include <NeoN/core/primitives/scalar.hpp>
 #include <NeoN/core/primitives/label.hpp>
 
@@ -47,8 +48,8 @@ void updateSolver(NeoN::Dictionary& solverDict)
 
 void updatePreconditioner(NeoN::Dictionary& solverDict)
 {
-    // Map OpenFOAM preconditioner types to NeoN/Ginkgo preconditioner types
-    static std::map<std::string, NeoN::Dictionary> preconditionerMap = {
+    // Map OpenFOAM preconditioner types to NeoN/Ginkgo preconditioner types (single rank).
+    static const std::map<std::string, NeoN::Dictionary> preconditionerMap = {
         {"DIC",
          NeoN::Dictionary(
              {{std::string("type"), std::string("preconditioner::Ic")},
@@ -68,10 +69,58 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
          )}
     };
 
+    // Map OpenFOAM preconditioner types to a Ginkgo additive Schwarz wrapper whose
+    // local_solver is the per-rank preconditioner. Required in distributed runs because
+    // factorisation-based preconditioners (Ic/Ilu) and Jacobi cannot span ranks; Schwarz
+    // applies the local_solver to each rank's local block.
+    static const std::map<std::string, NeoN::Dictionary> distributedPreconditionerMap = {
+        {"DIC",
+         NeoN::Dictionary(
+             {{std::string("type"), std::string("preconditioner::Schwarz")},
+              {std::string("local_solver"),
+               NeoN::Dictionary(
+                   {{std::string("type"), std::string("preconditioner::Ic")},
+                    {std::string("factorization"),
+                     NeoN::Dictionary({{std::string("type"), std::string("factorization::ParIc")}})}
+                   }
+               )}}
+         )},
+        {"diagonal",
+         NeoN::Dictionary(
+             {{std::string("type"), std::string("preconditioner::Schwarz")},
+              {std::string("local_solver"),
+               NeoN::Dictionary(
+                   {{std::string("type"), std::string("preconditioner::Jacobi")},
+                    {std::string("max_block_size"), 1}}
+               )}}
+         )},
+        {"DILU",
+         NeoN::Dictionary(
+             {{std::string("type"), std::string("preconditioner::Schwarz")},
+              {std::string("local_solver"),
+               NeoN::Dictionary(
+                   {{std::string("type"), std::string("preconditioner::Ilu")},
+                    {std::string("factorization"),
+                     NeoN::Dictionary({{std::string("type"), std::string("factorization::ParIlu")}})
+                    }}
+               )}}
+         )}
+    };
+
+    // Distributed-mode detection: `Environment::sizeRank()` returns
+    // static_cast<size_t>(-1) when MPI hasn't been initialised (a serial run, or
+    // a parallel binary that hasn't called MPI_Init yet). Comparing > 1 alone
+    // would be true in those cases too, so we'd wrap the preconditioner in
+    // Schwarz for a serial solve and SIGILL inside Ginkgo. Gate the wrap on
+    // MPI being initialised AND sizeRank > 1.
+    NeoN::mpi::Environment mpiEnv;
+    const bool distributed = mpiEnv.isInitialized() && mpiEnv.sizeRank() > 1;
+    const auto& activeMap = distributed ? distributedPreconditionerMap : preconditionerMap;
+
     // if no preconditioner is set but smoother switch to BiCGStab with BJ
     if (!solverDict.contains("preconditioner") && solverDict.contains("smoother"))
     {
-        solverDict.insert("preconditioner", preconditionerMap["DIC"]);
+        solverDict.insert("preconditioner", activeMap.at("DIC"));
     }
 
     if (solverDict.contains("smoother"))
@@ -96,13 +145,14 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
                                      "dictionary entry, use a configFile instead\n");
         }
 
-        auto mapEntry = preconditionerMap.find(preconditionerName);
-        if (mapEntry != preconditionerMap.end())
+        auto mapEntry = activeMap.find(preconditionerName);
+        if (mapEntry != activeMap.end())
         {
             NeoN::Logging::warn(
-                "Replacing preconditioner {} by {}",
+                "Replacing preconditioner {} by {}{}",
                 preconditionerName,
-                mapEntry->second.get<std::string>("type")
+                mapEntry->second.get<std::string>("type"),
+                distributed ? " (Schwarz-wrapped for distributed run)" : ""
             );
             solverDict.insert("preconditioner", mapEntry->second);
         }

@@ -11,6 +11,8 @@
 #include "NeoFOAM/auxiliary/typeConversion.hpp"
 #include "NeoFOAM/auxiliary/fieldTraits.hpp"
 
+#include "processorFvPatch.H"
+
 namespace fvcc = NeoN::finiteVolume::cellCentred;
 
 namespace NeoFOAM
@@ -198,10 +200,24 @@ auto readSurfaceBoundaryConditions(
     for (const auto& bName : bDict.toc())
     {
         Foam::dictionary patchDict = bDict.subDict(bName);
-        NeoN::Dictionary neoPatchDict;
-        patchInserter[patchDict.get<Foam::word>("type")](neoPatchDict);
-        bcs.push_back(fvcc::SurfaceBoundary<type_primitive_t>(uMesh, neoPatchDict, patchi));
-        patchi++;
+        if (patchDict.get<Foam::word>("type") != "processor")
+        {
+            NeoN::Dictionary neoPatchDict;
+            patchInserter[patchDict.get<Foam::word>("type")](neoPatchDict);
+            bcs.push_back(fvcc::SurfaceBoundary<type_primitive_t>(uMesh, neoPatchDict, patchi));
+            patchi++;
+        }
+    }
+    for (const auto& bName : bDict.toc())
+    {
+        Foam::dictionary patchDict = bDict.subDict(bName);
+        if (patchDict.get<Foam::word>("type") == "processor")
+        {
+            NeoN::Dictionary neoPatchDict;
+            patchInserter[patchDict.get<Foam::word>("type")](neoPatchDict);
+            bcs.push_back(fvcc::SurfaceBoundary<type_primitive_t>(uMesh, neoPatchDict, patchi));
+            patchi++;
+        }
     }
     return bcs;
 }
@@ -251,12 +267,36 @@ auto constructFrom(
             }
         }
 
-        // Boundary faces appended in patch order: [nInt, nFaces)
+        // Boundary faces appended in patch order: [nInt, nFaces).
+        // Match the NeoN convention where non-processor patches come first and
+        // processor patches are appended at the tail (createCalculatedBCs /
+        // createExtrapolatedBCs lay the boundary range out the same way).
         Foam::label idx = static_cast<Foam::label>(nInt);
         Foam::label bi = 0;
+        // Pass 1 — non-processor patches.
         forAll(in.boundaryField(), patchi)
         {
             const auto& pin = in.boundaryField()[patchi];
+            if (pin.patch().type() == "processor")
+            {
+                continue;
+            }
+            forAll(pin, facei)
+            {
+                flat[idx] = convert(pin[facei]);
+                bval[bi] = convert(pin[facei]);
+                ++idx;
+                ++bi;
+            }
+        }
+        // Pass 2 — processor patches (proc tail of the boundary range).
+        forAll(in.boundaryField(), patchi)
+        {
+            const auto& pin = in.boundaryField()[patchi];
+            if (pin.patch().type() != "processor")
+            {
+                continue;
+            }
             forAll(pin, facei)
             {
                 flat[idx] = convert(pin[facei]);
@@ -271,6 +311,7 @@ auto constructFrom(
         NF_ASSERT_EQUAL(static_cast<std::size_t>(bi), nBnd);
 
         out.internalVector() = fromFoamField(exec, flat);
+        // FIXME this assume consistent order of the patches
         out.boundaryData().value() = fromFoamField(exec, bval);
         out.correctBoundaryConditions();
         return out;

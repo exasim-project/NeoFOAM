@@ -11,6 +11,7 @@ std::vector<NeoN::localIdx> computeOffset(const Foam::fvMesh& mesh)
     std::vector<NeoN::localIdx> result;
     const Foam::fvBoundaryMesh& bMesh = mesh.boundary();
     result.push_back(0);
+    // FIXME
     forAll(bMesh, patchI)
     {
         NeoN::localIdx curOffset = result.back();

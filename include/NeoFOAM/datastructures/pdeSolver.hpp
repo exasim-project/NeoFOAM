@@ -115,9 +115,12 @@ public:
 
     void setReference(NeoN::localIdx pRefCell, NeoN::scalar pRefValue)
     {
-        needReference_ = true;
-        pRefCell_ = pRefCell;
-        pRefValue_ = pRefValue;
+        if (runTime_.mpiEnvironment.rank() == 0)
+        {
+            needReference_ = true;
+            pRefCell_ = pRefCell;
+            pRefValue_ = pRefValue;
+        }
     }
 
     /** @brief assemble the linear system owned by the solver based on the current expression */
