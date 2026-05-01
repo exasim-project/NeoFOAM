@@ -171,7 +171,9 @@ def _simplify_schemes_for_neon(test_case: Path) -> None:
     # laplacian: corrected -> uncorrected
     content = content.replace("Gauss linear corrected", "Gauss linear uncorrected")
     # snGrad: corrected -> uncorrected
-    content = content.replace("default         corrected", "default         uncorrected")
+    content = content.replace(
+        "default         corrected", "default         uncorrected"
+    )
     fv_schemes.write_text(content)
 
 
@@ -351,14 +353,20 @@ def test_pitzDaily_SA_neon_vs_pimpleFoam() -> None:
         # Debug: list time directories
         for label, tc in [("NeoN", test_case_neon), ("OF", test_case_of)]:
             dirs = sorted(
-                [d.name for d in tc.iterdir() if d.is_dir()
-                 and d.name.replace(".", "").replace("-", "").isdigit()
-                 and float(d.name) > 0]
+                [
+                    d.name
+                    for d in tc.iterdir()
+                    if d.is_dir()
+                    and d.name.replace(".", "").replace("-", "").isdigit()
+                    and float(d.name) > 0
+                ]
             )
             print(f"  {label} time dirs: {dirs}")
             if dirs:
                 final_dir = tc / dirs[-1]
-                print(f"  {label} files in {dirs[-1]}: {[f.name for f in final_dir.iterdir()]}")
+                print(
+                    f"  {label} files in {dirs[-1]}: {[f.name for f in final_dir.iterdir()]}"
+                )
 
         # Compare final output fields
         final_neon = _get_final_time(test_case_neon)
@@ -381,9 +389,7 @@ def test_pitzDaily_SA_neon_vs_pimpleFoam() -> None:
 
             max_abs_diff = float(np.max(np.abs(vals_neon - vals_of)))
             max_val = float(np.max(np.abs(vals_of)))
-            rel_diff = (
-                max_abs_diff / (max_val + 1e-15) if max_val > 0 else max_abs_diff
-            )
+            rel_diff = max_abs_diff / (max_val + 1e-15) if max_val > 0 else max_abs_diff
 
             match = bool(np.allclose(vals_neon, vals_of, rtol=rtol, atol=atol))
             status = "OK" if match else "MISMATCH"

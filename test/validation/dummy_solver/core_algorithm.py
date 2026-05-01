@@ -34,7 +34,9 @@ def load(_case_dir: Path, _entry: Any) -> CoreAlgorithmConfig:
 
 
 @core_algorithm.operation(operation_number="2.1")
-@fvSchemes.add(ddt="ddt(U)", div="div(phi,U)", grad="grad(U)", laplacian="laplacian(nuEff,U)")
+@fvSchemes.add(
+    ddt="ddt(U)", div="div(phi,U)", grad="grad(U)", laplacian="laplacian(nuEff,U)"
+)
 @fvSolution.add("U")
 def momentum(self: Any) -> FieldUpdates:
     return FieldUpdates({})

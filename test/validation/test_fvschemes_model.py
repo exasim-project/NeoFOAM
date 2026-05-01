@@ -28,7 +28,6 @@ from neofoam.foam.schemes import (
     LaplacianScheme,
     Linear,
     SnGradScheme,
-    Upwind,
 )
 
 FIXTURE = Path(__file__).parent / "fvSchemes.of"
@@ -94,7 +93,15 @@ def test_load_concrete_entries(case_dir: Path) -> None:
         ("corrected", SnGradScheme, Corrected),
         ("linear", InterpolationScheme, Linear),
     ],
-    ids=["ddt-Euler", "grad-Gauss", "div-linearUpwind", "div-upwind", "laplacian", "snGrad", "interp"],
+    ids=[
+        "ddt-Euler",
+        "grad-Gauss",
+        "div-linearUpwind",
+        "div-upwind",
+        "laplacian",
+        "snGrad",
+        "interp",
+    ],
 )
 def test_scheme_values_parse(raw: str, scheme_type: type, expected_cls: type) -> None:
     parsed = TypeAdapter(scheme_type).validate_python(raw)
@@ -117,7 +124,15 @@ def test_scheme_values_parse(raw: str, scheme_type: type, expected_cls: type) ->
         (SnGradScheme, "corrected"),
         (InterpolationScheme, "linear"),
     ],
-    ids=["ddt", "grad", "div-linearUpwind", "div-upwind", "laplacian", "snGrad", "interp"],
+    ids=[
+        "ddt",
+        "grad",
+        "div-linearUpwind",
+        "div-upwind",
+        "laplacian",
+        "snGrad",
+        "interp",
+    ],
 )
 def test_scheme_roundtrip_serialization(scheme_type: type, raw_string: str) -> None:
     parsed = TypeAdapter(scheme_type).validate_python(raw_string)

@@ -30,10 +30,8 @@ from neofoam.solver.incompressibleFluid.models.pressure_velocity.pimpleAlgorithm
 from neofoam.solver.incompressibleFluid.models.pressure_velocity.simpleAlgorithm import (
     continuity as simple_continuity,
     momentum as simple_momentum,
-    simple,
 )
 from neofoam.solver.incompressibleFluid.models.boussinesq import (
-    boussinesq,
     solve_energy,
 )
 from neofoam.solver.incompressibleFluid.models.spalartAllmaras import (
@@ -133,7 +131,9 @@ def test_sa_has_wallDist_and_nuTilda() -> None:
     reqs = getattr(turbulence_correction, "_scheme_requirements", [])
     assert SchemeRequirement("divSchemes", "div(phi,nuTilda)") in reqs
     assert SchemeRequirement("wallDist", "method") in reqs
-    assert getattr(turbulence_correction, "_solver_requirements", []) == [SolverRequirement("nuTilda")]
+    assert getattr(turbulence_correction, "_solver_requirements", []) == [
+        SolverRequirement("nuTilda")
+    ]
 
 
 def test_boussinesq_has_div_phi_T() -> None:
@@ -150,11 +150,15 @@ def test_boussinesq_continuity_solves_p_rgh() -> None:
 def test_requirements_stored_on_operation_def() -> None:
     """BaseSpec.operation() copies decorator metadata to OperationDef."""
     pimple_ops = {op.name: op for op in pimple._operations}
-    assert len(pimple_ops["momentum"].scheme_requirements) == 4  # ddt, div, grad, laplacian
+    assert (
+        len(pimple_ops["momentum"].scheme_requirements) == 4
+    )  # ddt, div, grad, laplacian
     assert len(pimple_ops["momentum"].solver_requirements) == 1
 
     sa_ops = {op.name: op for op in spalart_allmaras._operations}
-    assert len(sa_ops["turbulence_correction"].scheme_requirements) == 5  # ddt, div, grad, laplacian, wallDist
+    assert (
+        len(sa_ops["turbulence_correction"].scheme_requirements) == 5
+    )  # ddt, div, grad, laplacian, wallDist
     assert len(sa_ops["turbulence_correction"].solver_requirements) == 1
 
 
@@ -205,7 +209,9 @@ def test_pitzDaily_SA_invalid_ddt_value() -> None:
     schemes, _ = collect_requirements(_pitzDaily_SA_ops())
     fv_bad_ddt = dict(PITZ_DAILY_SA_SCHEMES)
     fv_bad_ddt["ddtSchemes"] = {"ddt(U)": "invalidScheme"}
-    errors = verify_fvschemes(fv_bad_ddt, schemes, scheme_type_map={"ddtSchemes": DdtScheme})
+    errors = verify_fvschemes(
+        fv_bad_ddt, schemes, scheme_type_map={"ddtSchemes": DdtScheme}
+    )
     assert any(e.error_type == "invalid_scheme" for e in errors)
 
 
@@ -296,7 +302,10 @@ def test_pitzDaily_steady_no_ddt() -> None:
 def test_pitzDaily_steady_valid() -> None:
     schemes, solvers = collect_requirements(_pitzDaily_steady_ops())
     fv_schemes = {
-        "divSchemes": {"div(phi,U)": "Gauss linearUpwind grad(U)", "div(phiHbyA)": "Gauss linear"},
+        "divSchemes": {
+            "div(phi,U)": "Gauss linearUpwind grad(U)",
+            "div(phiHbyA)": "Gauss linear",
+        },
         "gradSchemes": {"default": "Gauss linear"},
         "laplacianSchemes": {"default": "Gauss linear corrected"},
         "snGradSchemes": {"default": "corrected"},
@@ -340,7 +349,9 @@ def test_verify_solver_setup_valid() -> None:
     (both standard and buoyant variants). The fvSolution must cover all of them."""
     full_solution = {
         "solvers": {
-            "p": {}, "U": {}, "nuTilda": {},
+            "p": {},
+            "U": {},
+            "nuTilda": {},
             "p_rgh": {},  # needed by continuity_boussinesq variant
         },
     }
@@ -376,7 +387,9 @@ def test_verify_solver_setup_with_invalid_config() -> None:
     """Layer 3: model config constraints caught alongside scheme errors."""
     from neofoam.solver.incompressibleFluid.models.boussinesq import BoussinesqConfig
 
-    bad_config = BoussinesqConfig.model_construct(Pr=-1.0, Prt=0.85, beta=3e-3, TRef=300.0, hRef=0.0)
+    bad_config = BoussinesqConfig.model_construct(
+        Pr=-1.0, Prt=0.85, beta=3e-3, TRef=300.0, hRef=0.0
+    )
     errors = verify_solver_setup(
         fv_schemes=PITZ_DAILY_SA_SCHEMES,
         fv_solution=PITZ_DAILY_SA_SOLUTION,

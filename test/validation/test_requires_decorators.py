@@ -32,7 +32,10 @@ def test_fvSolution_add() -> None:
     def my_op() -> None:
         pass
 
-    assert my_op._solver_requirements == [SolverRequirement("p"), SolverRequirement("U")]  # type: ignore[attr-defined]
+    assert my_op._solver_requirements == [
+        SolverRequirement("p"),
+        SolverRequirement("U"),
+    ]  # type: ignore[attr-defined]
 
 
 def test_decorators_stack() -> None:

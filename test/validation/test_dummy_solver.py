@@ -13,7 +13,11 @@ import pytest
 from pydantic import ValidationError
 
 from neofoam.foam.requirements import SchemeRequirement, SolverRequirement
-from neofoam.foam.verification import collect_requirements, verify_fvschemes, verify_fvsolution
+from neofoam.foam.verification import (
+    collect_requirements,
+    verify_fvschemes,
+    verify_fvsolution,
+)
 from neofoam.framework.model import ModelSpec
 from neofoam.framework.types import OperationDef
 
@@ -60,7 +64,10 @@ def test_optional_models_have_detect_and_resolve() -> None:
 
 
 def test_operations_registered() -> None:
-    assert {op.name for op in core_algorithm._operations} == {"momentum", "pressure_correction"}
+    assert {op.name for op in core_algorithm._operations} == {
+        "momentum",
+        "pressure_correction",
+    }
     assert {op.name for op in wall_model._operations} == {"wall_solve"}
     assert {op.name for op in scalar_transport._operations} == {"energy_equation"}
 
@@ -151,9 +158,15 @@ def test_scalar_transport_schemes() -> None:
 
 def test_solver_requirements() -> None:
     assert getattr(momentum, "_solver_requirements", []) == [SolverRequirement("U")]
-    assert getattr(pressure_correction, "_solver_requirements", []) == [SolverRequirement("p")]
-    assert getattr(wall_solve, "_solver_requirements", []) == [SolverRequirement("nuTilda")]
-    assert getattr(energy_equation, "_solver_requirements", []) == [SolverRequirement("T")]
+    assert getattr(pressure_correction, "_solver_requirements", []) == [
+        SolverRequirement("p")
+    ]
+    assert getattr(wall_solve, "_solver_requirements", []) == [
+        SolverRequirement("nuTilda")
+    ]
+    assert getattr(energy_equation, "_solver_requirements", []) == [
+        SolverRequirement("T")
+    ]
 
 
 # ============================================================================
@@ -167,7 +180,11 @@ VALID_FV_SCHEMES = {
         "div(phi,nuTilda)": "Gauss upwind",
         "div(phi,T)": "Gauss upwind",
     },
-    "gradSchemes": {"grad(U)": "Gauss linear", "grad(p)": "Gauss linear", "grad(nuTilda)": "Gauss linear"},
+    "gradSchemes": {
+        "grad(U)": "Gauss linear",
+        "grad(p)": "Gauss linear",
+        "grad(nuTilda)": "Gauss linear",
+    },
     "laplacianSchemes": {
         "laplacian(nuEff,U)": "Gauss linear corrected",
         "laplacian(rAU,p)": "Gauss linear corrected",
@@ -214,7 +231,10 @@ def test_missing_wall_entries() -> None:
 
 
 def test_core_only_fewer_requirements() -> None:
-    core_only = [_make_op(momentum, "momentum"), _make_op(pressure_correction, "pressure_correction")]
+    core_only = [
+        _make_op(momentum, "momentum"),
+        _make_op(pressure_correction, "pressure_correction"),
+    ]
     schemes, solvers = collect_requirements(core_only)
     scheme_keys = {(r.section, r.key) for r in schemes}
     assert ("divSchemes", "div(phi,nuTilda)") not in scheme_keys

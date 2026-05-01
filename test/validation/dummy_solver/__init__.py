@@ -14,7 +14,12 @@ Structure:
 """
 
 from .configs import FluidPropertiesConfig, TimeConfig
-from .core_algorithm import CoreAlgorithmConfig, core_algorithm, momentum, pressure_correction
+from .core_algorithm import (
+    CoreAlgorithmConfig,
+    core_algorithm,
+    momentum,
+    pressure_correction,
+)
 from .wall_model import WallModelConfig, wall_model, wall_solve
 from .scalar_transport import ScalarTransportConfig, scalar_transport, energy_equation
 

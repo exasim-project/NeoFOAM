@@ -103,7 +103,9 @@ def _convert_to_piso(test_case: Path) -> None:
             nuTilda_entry + "    UFinal",
         )
         # Also rename UFinal references
-        fv_solution_content = fv_solution_content.replace('"(U|nuTilda)Final"', "UFinal")
+        fv_solution_content = fv_solution_content.replace(
+            '"(U|nuTilda)Final"', "UFinal"
+        )
         fv_solution.write_text(fv_solution_content)
 
     # Disable adjustTimeStep (use fixed deltaT for PISO)

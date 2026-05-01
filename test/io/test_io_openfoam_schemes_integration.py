@@ -14,7 +14,6 @@ or collect_errors()), matching how the incompressibleFluid solver uses configs.
 """
 
 import pybFoam as pyf
-import pytest
 
 from neofoam.io import BaseConfig, OF, IOStrategy
 from neofoam.schemes import (
