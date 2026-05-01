@@ -126,7 +126,7 @@ public:
 
     NeoN::la::SolverStats solve() { return solveImpl(expr_, ls_); }
 
-    NeoN::la::SolverStats solve(dsl::SpatialOperator<NeoN::Vec3>&& rhs)
+    NeoN::la::SolverStats solve(dsl::SpatialOperator<ValueType>&& rhs)
     {
         auto expr = dsl::Expression<ValueType>(expr_);
         auto ls = LinearSystem(ls_);

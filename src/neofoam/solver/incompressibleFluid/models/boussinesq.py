@@ -11,6 +11,9 @@ from pybFoam import fvm, surfaceScalarField, volScalarField
 
 from neofoam.framework.context import FieldUpdates
 from neofoam.framework.initialization import ConfigContext, field
+from pydantic import Field
+
+from neofoam.foam import fvSchemes, fvSolution
 from neofoam.io import BaseConfig
 
 from .incompressibleFluidModel import Model, incompressibleFluidModel
@@ -25,8 +28,8 @@ class ThermalTurbulenceModel(Protocol):
 class BoussinesqConfig(BaseConfig):
     beta: float = 3e-3
     TRef: float = 300.0
-    Pr: float = 0.7
-    Prt: float = 0.85
+    Pr: float = Field(default=0.7, gt=0)
+    Prt: float = Field(default=0.85, gt=0)
     hRef: float = 0.0
 
 
@@ -126,6 +129,8 @@ def build(self: Any, configs: BoussinesqConfig) -> list[object]:
 
 
 @boussinesq.operation(operation_number="2.5", depends_on=["momentum"])
+@fvSchemes.add(ddt="default", div="div(phi,T)", laplacian="default")
+@fvSolution.add("T")
 def solve_energy(
     self: Any,
     T: volScalarField,

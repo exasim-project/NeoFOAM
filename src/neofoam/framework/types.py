@@ -71,6 +71,8 @@ class OperationDef:
     depends_on: list[str] | None = None
     before: list[str] | None = None
     name: str = ""
+    scheme_requirements: list[Any] = field(default_factory=list)
+    solver_requirements: list[Any] = field(default_factory=list)
 
 
 class OpType(Enum):

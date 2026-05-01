@@ -19,6 +19,7 @@ from neofoam.models.stability_criteria import CFLCondition
 from neofoam.solver.incompressibleFluidNeon.models.pressure_velocity.base import (
     PressureVelocityAlgorithm,
 )
+from neofoam.turbulenceModels import NeonTurbulenceModel
 
 
 init = StagedInit("incompressibleFluidNeon")
@@ -33,15 +34,14 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInit:
 def load_config() -> LoadResult:
     pressure_model = PressureVelocityAlgorithm.detect_and_create()
     cfl_condition = CFLCondition()
+    turb_model = NeonTurbulenceModel.detect()
 
-    core_models: list[Any] = [pressure_model, cfl_condition]
-
+    core_models: list[Any] = [pressure_model, cfl_condition, turb_model]
     return LoadResult(core_models=core_models, optional_models=[])
 
 
 @init.resolve
 def resolve_models(config: ConfigContext) -> None:
-    # No optional models to resolve
     pass
 
 
@@ -52,6 +52,9 @@ def build_lazy(core_models: list[Any], optional_models: list[Any]) -> list[InitS
         (m for m in core_models if isinstance(m, CFLCondition)),
         None,
     )
+    turb_model = next(
+        m for m in core_models if hasattr(m, "build_steps")
+    )
 
     builder = InitializerBuilder()
 
@@ -60,5 +63,8 @@ def build_lazy(core_models: list[Any], optional_models: list[Any]) -> list[InitS
 
     if cfl_condition is not None:
         builder.add(init_model("cfl_condition", create=lambda _ctx: cfl_condition))
+
+    builder.add(init_model("turbulence", create=lambda _ctx: turb_model))
+    builder.extend(turb_model.build_steps())
 
     return builder.build()

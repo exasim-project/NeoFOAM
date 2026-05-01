@@ -6,6 +6,7 @@
 from pathlib import Path
 from typing import Any, Optional
 
+from neofoam.foam.fv_configs import FvSchemesConfig, FvSolutionConfig
 from neofoam.foam.initialization import create_time_mesh
 from neofoam.framework.initialization import (
     ConfigContext,
@@ -25,9 +26,13 @@ from neofoam.solver.incompressibleFluid.models.incompressibleFluidModel import (
 from neofoam.solver.incompressibleFluid.models.pressure_velocity.base import (
     PressureVelocityAlgorithm,
 )
+from neofoam.solver.incompressibleFluid.models.pressure_velocity.pimpleAlgorithm import pimple
+from neofoam.solver.incompressibleFluid.models.pressure_velocity.simpleAlgorithm import simple
+from neofoam.solver.incompressibleFluid.models.pressure_velocity.pisoAlgorithm import piso
 
 
-init = StagedInit("incompressibleFluid")
+init = StagedInit("incompressibleFluid", plugin_interface=incompressibleFluidModel)
+init.register_core_models([pimple, simple, piso])
 
 
 def create_init(case_dir: Optional[Path] = None) -> StagedInit:
@@ -51,7 +56,17 @@ def load_config() -> LoadResult:
     if cfl_condition is not None:
         core_models.append(cfl_condition)
 
-    return LoadResult(core_models=core_models, optional_models=optional_models)
+    # Load fvSchemes / fvSolution via IOStrategy for validation
+    case_dir = Path(getattr(init, "_case_dir", None) or ".")
+    fv_schemes = FvSchemesConfig.load(case_dir=case_dir, validate=False)
+    fv_solution = FvSolutionConfig.load(case_dir=case_dir, validate=False)
+
+    return LoadResult(
+        core_models=core_models,
+        optional_models=optional_models,
+        fv_schemes_config=fv_schemes,
+        fv_solution_config=fv_solution,
+    )
 
 
 @init.resolve

@@ -300,7 +300,14 @@ class BaseConfig(BaseModel):
             List of ``ValidationErrors`` (empty if valid)
         """
         try:
-            type(self).model_validate(self.model_dump())
+            try:
+                data = self.model_dump()
+            except Exception:
+                # model_dump() may fail on model_construct()-ed instances
+                # when fields with custom serializers hold raw values.
+                # Fall back to raw field values from __dict__.
+                data = dict(self)
+            type(self).model_validate(data)
             return []
         except ValidationError as exc:
             return type(self)._wrap_errors(exc)

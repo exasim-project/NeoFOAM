@@ -183,11 +183,17 @@ class OpenFOAMStrategy(SubdictMixin):
         * Otherwise, use ``READ_DISPATCH`` for type-aware extraction; fall back
           to a plain string when the typed getter raises (e.g. the file
           contains ``count not_an_integer;`` but the model expects ``int``).
+
+        When the model has ``extra="allow"``, all remaining dictionary entries
+        not covered by declared fields are also read (subdicts become nested
+        dicts, scalars become strings).
         """
         result: dict[str, Any] = {}
 
+        declared_keys: set[str] = set()
         for name, field_info in model_cls.model_fields.items():
             key = str(field_info.validation_alias or field_info.alias or name)
+            declared_keys.add(key)
             typ = _unwrap_type(field_info.annotation)
 
             # Nested BaseModel → recurse into sub-dictionary
@@ -204,6 +210,14 @@ class OpenFOAMStrategy(SubdictMixin):
             if not foam_dict.found(key):
                 continue
 
+            # BaseModel subclass but NOT a subdict in the foam dict:
+            # Value is a plain string (e.g. "Euler", "Gauss linear corrected").
+            # Read as str — pydantic's BeforeValidator on the original Annotated
+            # type will parse it into the correct variant during model_validate().
+            if isinstance(typ, type) and issubclass(typ, BaseModel):
+                result[key] = str(foam_dict.get[str](key))
+                continue
+
             # Typed dispatch
             reader = READ_DISPATCH.get(typ)
             if reader is None:
@@ -213,6 +227,38 @@ class OpenFOAMStrategy(SubdictMixin):
                 )
             result[key] = reader(foam_dict, key)
 
+        # For models with extra="allow": read all undeclared entries too
+        model_config = getattr(model_cls, "model_config", {})
+        if model_config.get("extra") == "allow":
+            for key_word in foam_dict.toc():
+                key = str(key_word)
+                if key in declared_keys or key in result or key == "FoamFile":
+                    continue
+                if foam_dict.isDict(key):
+                    result[key] = self._read_all_entries(foam_dict.subDict(key))
+                else:
+                    try:
+                        result[key] = foam_dict.get[str](key)
+                    except Exception:
+                        pass
+
+        return result
+
+    def _read_all_entries(self, foam_dict: Any) -> dict[str, Any]:
+        """Read all entries from a pybFoam dict into a plain Python dict.
+
+        Subdicts are recursed; scalars are read as strings.
+        """
+        result: dict[str, Any] = {}
+        for key_word in foam_dict.toc():
+            key = str(key_word)
+            if foam_dict.isDict(key):
+                result[key] = self._read_all_entries(foam_dict.subDict(key))
+            else:
+                try:
+                    result[key] = foam_dict.get[str](key)
+                except Exception:
+                    pass
         return result
 
     def _write_fields(
@@ -234,13 +280,12 @@ class OpenFOAMStrategy(SubdictMixin):
             value = data[key]
             typ = _unwrap_type(field_info.annotation)
 
-            # Nested BaseModel → recurse
-            if isinstance(typ, type) and issubclass(typ, BaseModel):
-                if not isinstance(value, dict):
-                    raise TypeError(
-                        f"Expected dict for nested model field '{key}', "
-                        f"got {type(value).__name__}"
-                    )
+            # Nested BaseModel with a dict value → recurse into sub-dictionary
+            if (
+                isinstance(typ, type)
+                and issubclass(typ, BaseModel)
+                and isinstance(value, dict)
+            ):
                 if not foam_dict.found(key) or not foam_dict.isDict(key):
                     raise KeyError(
                         f"Cannot create nested dictionary '{key}' via pybFoam "
@@ -251,6 +296,9 @@ class OpenFOAMStrategy(SubdictMixin):
                 sub.clear()
                 self._write_fields(sub, value, typ)
                 continue
+            # BaseModel-typed fields whose @model_serializer returns a scalar
+            # (e.g. scheme strings "Euler", "Gauss linear corrected") fall through
+            # to WRITE_DISPATCH below.
 
             # Scalar dispatch
             writer = WRITE_DISPATCH.get(type(value))

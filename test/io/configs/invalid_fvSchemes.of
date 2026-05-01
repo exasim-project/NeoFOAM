@@ -1,0 +1,20 @@
+FoamFile
+{
+    version 2.0;
+    format ascii;
+    class dictionary;
+    object invalidFvSchemes;
+}
+
+U
+{
+    ddt         InvalidScheme;
+    grad        Gauss linear;
+    div         Gauss linearUpwind grad(U);
+    laplacian   Gauss linear corrected;
+}
+
+p
+{
+    laplacian   Gauss linear corrected;
+}

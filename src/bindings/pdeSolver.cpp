@@ -54,6 +54,13 @@ void registerPDESolver(nb::module_& m)
             "Solve the linear system"
         )
         .def(
+            "solve_with_source",
+            [](nf::PDESolver<NeoN::scalar>& self, dsl::SpatialOperator<NeoN::scalar> rhs)
+            { return self.solve(std::move(rhs)); },
+            "rhs"_a,
+            "Solve with an explicit source term"
+        )
+        .def(
             "assemble",
             [](nf::PDESolver<NeoN::scalar>& self) -> void { self.assemble(); },
             "Assemble the linear system"

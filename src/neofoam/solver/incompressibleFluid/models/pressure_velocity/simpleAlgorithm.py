@@ -17,6 +17,8 @@ from pybFoam import (
     volVectorField,
 )
 
+from pydantic import Field
+
 from neofoam.foam.initialization import read_vol_field
 from neofoam.algorithms.control import SimpleControl
 from neofoam.framework.context import Context, FieldUpdates
@@ -29,9 +31,21 @@ from neofoam.framework.operations import (
 )
 from neofoam.framework.operation_wrapper import wrap_operation
 from neofoam.framework.types import OperationMetadata
+from neofoam.foam import fvSchemes, fvSolution
+from neofoam.io import BaseConfig, IOStrategy, OF
 from .control_factory import create_simple_control
 
 from ..incompressibleFluidModel import Model
+
+
+@IOStrategy(OF("system/fvSolution", subdict="SIMPLE"))
+class SimpleConfig(BaseConfig):
+    """SIMPLE pressure-velocity coupling controls."""
+
+    nNonOrthogonalCorrectors: int = Field(default=0, ge=0)
+    momentumPredictor: bool = True
+    consistent: bool = False
+
 
 simple = Model("Simple")
 
@@ -121,6 +135,8 @@ def _alias_operation(
 
 
 @simple.operation(operation_number="2.1")
+@fvSchemes.add(div="div(phi,U)", grad="grad(U)", laplacian="laplacian(nuEff,U)")
+@fvSolution.add("U")
 def momentum(
     U: volVectorField,
     phi: surfaceScalarField,
@@ -141,6 +157,13 @@ def momentum(
 
 
 @simple.operation(operation_number="2.2", depends_on=["momentum"])
+@fvSchemes.add(
+    grad="grad(p)",
+    laplacian="laplacian(rAtU,p)",
+    interpolation="flux(U)",
+    snGrad="snGrad(p)",
+)
+@fvSolution.add("p")
 def continuity(
     U: volVectorField,
     p: volScalarField,

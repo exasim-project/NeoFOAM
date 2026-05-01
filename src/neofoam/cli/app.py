@@ -78,7 +78,7 @@ def incompressiblefluidneon(ctx: typer.Context) -> None:
 
     argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
 
-    run(argv)
+    run(argv, disable_fpe=True)
 
 
 if __name__ == "__main__":

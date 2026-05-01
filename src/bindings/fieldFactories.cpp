@@ -14,6 +14,7 @@
 
 // OpenFOAM headers
 #include "fvCFD.H"
+#include "wallDist.H"
 
 #include "bindings.hpp"
 
@@ -152,6 +153,27 @@ void registerFieldFactories(nb::module_& m)
         "name"_a,
         "value"_a,
         "Create a uniform scalar surface field (e.g. viscosity)"
+    );
+
+    m.def(
+        "compute_wall_distance",
+        [](nf::RunTime& rt) -> fvcc::VolumeField<NeoN::scalar>&
+        {
+            Foam::volScalarField yWall = Foam::wallDist::New(rt.mesh).y();
+            fvcc::VectorCollection& vc =
+                fvcc::VectorCollection::instance(rt.db, "VectorCollection");
+            return vc.registerVector<fvcc::VolumeField<NeoN::scalar>>(
+                nf::CreateFromFoamField<Foam::volScalarField> {
+                    .exec = rt.exec,
+                    .nfMesh = rt.nfMesh,
+                    .foamField = yWall,
+                    .name = std::string("d")
+                }
+            );
+        },
+        "runtime"_a,
+        nb::rv_policy::reference,
+        "Compute wall distance and register as NeoN VolumeField"
     );
 
     m.def(

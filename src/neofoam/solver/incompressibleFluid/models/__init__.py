@@ -6,9 +6,11 @@
 from .incompressibleFluidModel import incompressibleFluidModel
 from .pressure_velocity import PressureVelocityAlgorithm
 from .boussinesq import boussinesq
+from .spalartAllmaras import spalart_allmaras
 
 __all__ = [
     "incompressibleFluidModel",
     "PressureVelocityAlgorithm",
     "boussinesq",
+    "spalart_allmaras",
 ]

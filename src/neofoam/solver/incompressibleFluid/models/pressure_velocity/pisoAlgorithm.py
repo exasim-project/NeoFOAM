@@ -5,9 +5,22 @@
 
 from typing import Any
 
+from pydantic import Field
+
 from neofoam.framework.context import FieldUpdates
+from neofoam.io import BaseConfig, IOStrategy, OF
 
 from ..incompressibleFluidModel import Model
+
+
+@IOStrategy(OF("system/fvSolution", subdict="PISO"))
+class PisoConfig(BaseConfig):
+    """PISO pressure-velocity coupling controls."""
+
+    nCorrectors: int = Field(default=2, ge=1)
+    nNonOrthogonalCorrectors: int = Field(default=0, ge=0)
+    momentumPredictor: bool = True
+
 
 piso = Model("Piso")
 

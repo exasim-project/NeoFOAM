@@ -57,6 +57,8 @@ class BaseSpec:
                     depends_on=depends_on,
                     before=before,
                     name=name or func.__name__,
+                    scheme_requirements=getattr(func, "_scheme_requirements", []),
+                    solver_requirements=getattr(func, "_solver_requirements", []),
                 )
             )
             return func

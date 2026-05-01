@@ -32,8 +32,9 @@ def _create_neon_runtime(context: dict[str, Any]) -> Any:
 
     # Map OpenFOAM dictionaries to NeoN equivalents
     solvers = rt.fv_solution_dict.subDict("solvers")
-    solvers.insert_dict("p", nfb.map_fv_solution(solvers.subDict("p")))
-    solvers.insert_dict("U", nfb.map_fv_solution(solvers.subDict("U")))
+    for name in ["p", "U", "nuTilda", "k", "epsilon"]:
+        if solvers.contains(name):
+            solvers.insert_dict(name, nfb.map_fv_solution(solvers.subDict(name)))
     rt.fv_schemes_dict = nfb.map_fv_schemes(rt.fv_schemes_dict)
 
     return rt
@@ -51,11 +52,10 @@ def _create_piso_control(context: dict[str, Any]) -> PisoControl:
     )
 
 
-def _create_viscosity(context: dict[str, Any]) -> Any:
-    """Read transport viscosity and create uniform surface field."""
+def _create_nu_laminar_value(context: dict[str, Any]) -> float:
+    """Read laminar viscosity scalar value from transportProperties."""
     rt: Any = context["models.neon_runtime"]
-    nu_value = nfb.read_transport_viscosity(rt)
-    return nfb.create_uniform_surface_field(rt, "nu", nu_value)
+    return float(nfb.read_transport_viscosity(rt))
 
 
 def _create_p(context: dict[str, Any]) -> Any:
@@ -88,8 +88,8 @@ def build(self: Any) -> list[Any]:
         model("neon_runtime", _create_neon_runtime, depends_on=["runtime"]),
         model("piso_control", _create_piso_control, depends_on=["models.neon_runtime"]),
         model(
-            "viscosity",
-            _create_viscosity,
+            "nu_laminar_value",
+            _create_nu_laminar_value,
             depends_on=["models.neon_runtime"],
         ),
         field("p", _create_p, depends_on=["models.neon_runtime"]),
@@ -139,19 +139,24 @@ def momentum(
     U: Any,
     phi: Any,
     p: Any,
-    viscosity: Annotated[Any, "models"],
+    nuEff_surface: Any,
     neon_runtime: Annotated[Any, "models"],
     piso_control: Annotated[PisoControl, "models"],
+    div_dev_reff_correction: Any = None,
 ) -> FieldUpdates:
     """Build and optionally solve the momentum equation."""
-    nu = viscosity
+    nu = nuEff_surface
     rt = neon_runtime
 
-    UEqn = nfb.PDESolverVec3(
-        nn.imp.ddt(U) + nn.imp.div(phi, U) - nn.imp.laplacian(nu, U),
-        U,
-        rt,
-    )
+    expr = nn.imp.ddt(U) + nn.imp.div(phi, U) - nn.imp.laplacian(nu, U)
+
+    # divDevReff correction: -div(nuEff * dev2(T(grad(U))))
+    # Disabled: the explicit source treatment of this term is unstable.
+    # The simplified -laplacian(nuEff, U) formulation is used instead.
+    # TODO: Implement as part of the implicit laplacian for stability.
+    _ = div_dev_reff_correction
+
+    UEqn = nfb.PDESolverVec3(expr, U, rt)
     ddt_scheme = UEqn.ddt_scheme()
 
     if piso_control.momentum_predictor():
