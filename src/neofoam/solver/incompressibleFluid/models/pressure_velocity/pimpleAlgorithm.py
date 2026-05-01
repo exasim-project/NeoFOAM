@@ -142,7 +142,9 @@ def _alias_operation(
 
 
 @pimple.operation(operation_number="2.1")
-@fvSchemes.add(ddt="ddt(U)", div="div(phi,U)", grad="grad(U)", laplacian="laplacian(nuEff,U)")
+@fvSchemes.add(
+    ddt="ddt(U)", div="div(phi,U)", grad="grad(U)", laplacian="laplacian(nuEff,U)"
+)
 @fvSolution.add("U")
 def momentum(
     U: volVectorField,
@@ -214,7 +216,13 @@ def continuity(
 
 
 @pimple.operation(operation_number="2.1")
-@fvSchemes.add(ddt="ddt(U)", div="div(phi,U)", grad="grad(U)", laplacian="laplacian(nuEff,U)", snGrad="snGrad(rhok)")
+@fvSchemes.add(
+    ddt="ddt(U)",
+    div="div(phi,U)",
+    grad="grad(U)",
+    laplacian="laplacian(nuEff,U)",
+    snGrad="snGrad(rhok)",
+)
 @fvSolution.add("U")
 def momentum_boussinesq(
     U: volVectorField,

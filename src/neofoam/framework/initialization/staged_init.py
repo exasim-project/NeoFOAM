@@ -326,12 +326,20 @@ class StagedInit:
 
         if load_result.fv_schemes_config is not None and scheme_reqs:
             fv_schemes = load_result.fv_schemes_config
-            data = fv_schemes.model_dump() if hasattr(fv_schemes, "model_dump") else fv_schemes
+            data = (
+                fv_schemes.model_dump()
+                if hasattr(fv_schemes, "model_dump")
+                else fv_schemes
+            )
             errors.extend(verify_fvschemes(data, scheme_reqs))
 
         if load_result.fv_solution_config is not None and solver_reqs:
             fv_solution = load_result.fv_solution_config
-            data = fv_solution.model_dump() if hasattr(fv_solution, "model_dump") else fv_solution
+            data = (
+                fv_solution.model_dump()
+                if hasattr(fv_solution, "model_dump")
+                else fv_solution
+            )
             errors.extend(verify_fvsolution(data, solver_reqs))
 
         config_errors = load_result.validate()
@@ -380,9 +388,14 @@ class StagedInit:
         (DdtScheme, DivScheme, etc.). Call ``model_json_schema()`` on the
         result for AI introspection.
         """
-        from neofoam.foam.verification import build_scheme_model, collect_requirements_from_models
+        from neofoam.foam.verification import (
+            build_scheme_model,
+            collect_requirements_from_models,
+        )
 
-        specs = self._get_all_specs() or (list(self.core_models) + list(self.optional_models))
+        specs = self._get_all_specs() or (
+            list(self.core_models) + list(self.optional_models)
+        )
         scheme_reqs, _ = collect_requirements_from_models(specs)
         return build_scheme_model(scheme_reqs)
 
@@ -407,7 +420,11 @@ class StagedInit:
             try:
                 hints = get_type_hints(load_func)
                 ret = hints.get("return")
-                if ret is not None and isinstance(ret, type) and issubclass(ret, BaseConfig):
+                if (
+                    ret is not None
+                    and isinstance(ret, type)
+                    and issubclass(ret, BaseConfig)
+                ):
                     return ret
             except Exception:
                 pass
@@ -417,7 +434,10 @@ class StagedInit:
             return type(config)
 
         # Fallback: scan the module of the first operation or build func
-        funcs = [getattr(model, "_build_func", None), getattr(model, "_load_func", None)]
+        funcs = [
+            getattr(model, "_build_func", None),
+            getattr(model, "_load_func", None),
+        ]
         ops = getattr(model, "_operations", [])
         if ops:
             funcs.append(ops[0].func)
@@ -428,7 +448,11 @@ class StagedInit:
             if module is None:
                 continue
             for attr in vars(module).values():
-                if isinstance(attr, type) and issubclass(attr, BaseConfig) and attr is not BaseConfig:
+                if (
+                    isinstance(attr, type)
+                    and issubclass(attr, BaseConfig)
+                    and attr is not BaseConfig
+                ):
                     return attr
 
         return None

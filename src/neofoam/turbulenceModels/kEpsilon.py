@@ -197,9 +197,11 @@ class NeonKEpsilon(BaseModel):
         nut_f = interp.interpolate(nut)
         nuEff_surf = nut_f + nu_value
 
-        return FieldUpdates({
-            "k": k,
-            "epsilon": epsilon,
-            "nut": nut,
-            "nuEff_surface": nuEff_surf,
-        })
+        return FieldUpdates(
+            {
+                "k": k,
+                "epsilon": epsilon,
+                "nut": nut,
+                "nuEff_surface": nuEff_surf,
+            }
+        )

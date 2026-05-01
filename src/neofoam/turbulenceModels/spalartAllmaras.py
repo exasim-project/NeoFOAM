@@ -169,8 +169,7 @@ class NeonSpalartAllmaras(BaseModel):
                 return False
             ras = props.subDict("RAS")
             return bool(
-                ras.found("RASModel")
-                and ras.get_word("RASModel") == "SpalartAllmaras"
+                ras.found("RASModel") and ras.get_word("RASModel") == "SpalartAllmaras"
             )
         except Exception:
             return False
@@ -207,8 +206,10 @@ class NeonSpalartAllmaras(BaseModel):
         correct(cfg, rt, nuTilda, nut, U, phi, d, nu_value)
         nuEff_surf = compute_nuEff_surface(rt, nut, nu_value)
 
-        return FieldUpdates({
-            "nuTilda": nuTilda,
-            "nut": nut,
-            "nuEff_surface": nuEff_surf,
-        })
+        return FieldUpdates(
+            {
+                "nuTilda": nuTilda,
+                "nut": nut,
+                "nuEff_surface": nuEff_surf,
+            }
+        )

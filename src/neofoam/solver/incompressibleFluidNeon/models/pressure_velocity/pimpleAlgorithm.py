@@ -24,7 +24,6 @@ from neofoam.framework.operations import (
 from neofoam.framework.operation_wrapper import wrap_operation
 from neofoam.framework.types import OperationMetadata
 from neofoam.framework.model import Model
-from pybFoam import Info
 
 
 pimple = Model("Pimple")
@@ -245,9 +244,7 @@ def continuity(
         rAUf = interp.interpolate(rAU)
         rAUf.name = "rAUf"
 
-        phiHbyA = nfb.flux(hByA) + rAUf * nfb.ddt_flux_corr(
-            U, phi, rt.dt, ddt_scheme
-        )
+        phiHbyA = nfb.flux(hByA) + rAUf * nfb.ddt_flux_corr(U, phi, rt.dt, ddt_scheme)
 
         while piso_control.correct_non_orthogonal():
             pEqn = nfb.PDESolverScalar(

@@ -244,11 +244,13 @@ def turbulence_correction(
     # -laplacian(nuEff, U) formulation is used in momentum instead.
     # TODO: Implement as part of the implicit laplacian for stability.
 
-    return FieldUpdates({
-        "nuTilda": nuTilda,
-        "nut": nut,
-        "nuEff_surface": nuEff_surf,
-    })
+    return FieldUpdates(
+        {
+            "nuTilda": nuTilda,
+            "nut": nut,
+            "nuEff_surface": nuEff_surf,
+        }
+    )
 
 
 # --- Operation collection (returns ops for execution graph) ---

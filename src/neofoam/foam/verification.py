@@ -213,7 +213,10 @@ def collect_requirements_from_models(
 def _get_active_operations(model: Any) -> list[Any]:
     """Get the active operations for a model, respecting operation_collection."""
     # ModelSpec with operation_collection — call it to get active ops
-    if hasattr(model, "_operation_collection_func") and model._operation_collection_func is not None:
+    if (
+        hasattr(model, "_operation_collection_func")
+        and model._operation_collection_func is not None
+    ):
         try:
             result = model._operation_collection_func(model)
             # result is an Operations object — extract OperationDef-like objects
@@ -223,11 +226,17 @@ def _get_active_operations(model: Any) -> list[Any]:
             # Fall back to matching by name against _operations.
             active_names = set()
             for op in result:
-                name = getattr(op, "operation_name", None) or getattr(getattr(op, "metadata", None), "op_name", None)
+                name = getattr(op, "operation_name", None) or getattr(
+                    getattr(op, "metadata", None), "op_name", None
+                )
                 if name:
                     active_names.add(name)
             if active_names:
-                return [op for op in getattr(model, "_operations", []) if op.name in active_names]
+                return [
+                    op
+                    for op in getattr(model, "_operations", [])
+                    if op.name in active_names
+                ]
         except Exception:
             pass
 

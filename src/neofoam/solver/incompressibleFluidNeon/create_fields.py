@@ -52,9 +52,7 @@ def build_lazy(core_models: list[Any], optional_models: list[Any]) -> list[InitS
         (m for m in core_models if isinstance(m, CFLCondition)),
         None,
     )
-    turb_model = next(
-        m for m in core_models if hasattr(m, "build_steps")
-    )
+    turb_model = next(m for m in core_models if hasattr(m, "build_steps"))
 
     builder = InitializerBuilder()
 

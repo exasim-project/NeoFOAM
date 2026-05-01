@@ -26,9 +26,15 @@ from neofoam.solver.incompressibleFluid.models.incompressibleFluidModel import (
 from neofoam.solver.incompressibleFluid.models.pressure_velocity.base import (
     PressureVelocityAlgorithm,
 )
-from neofoam.solver.incompressibleFluid.models.pressure_velocity.pimpleAlgorithm import pimple
-from neofoam.solver.incompressibleFluid.models.pressure_velocity.simpleAlgorithm import simple
-from neofoam.solver.incompressibleFluid.models.pressure_velocity.pisoAlgorithm import piso
+from neofoam.solver.incompressibleFluid.models.pressure_velocity.pimpleAlgorithm import (
+    pimple,
+)
+from neofoam.solver.incompressibleFluid.models.pressure_velocity.simpleAlgorithm import (
+    simple,
+)
+from neofoam.solver.incompressibleFluid.models.pressure_velocity.pisoAlgorithm import (
+    piso,
+)
 
 
 init = StagedInit("incompressibleFluid", plugin_interface=incompressibleFluidModel)
