@@ -28,6 +28,22 @@ function(neofoam_unit_test TEST SETUP_DIRECTORY)
   set_target_properties(${NEOFOAM_COMMAND} PROPERTIES OUTPUT_NAME neofoam_test_${TEST})
   target_compile_definitions(${NEOFOAM_COMMAND} PUBLIC OMPI_SKIP_MPICXX)
 
+  if(NeoN_WITH_JULIA)
+    execute_process(
+        COMMAND julia -e "print(rsplit(Sys.BINDIR, '/', limit=2)[1])"
+        OUTPUT_VARIABLE JULIA_DIR
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    execute_process(
+      COMMAND echo "JULIA_DIR: --------> '${JULIA_DIR}'"
+    )
+    target_include_directories(${NEOFOAM_COMMAND} PRIVATE "${JULIA_DIR}/include/julia")
+    target_link_libraries(${NEOFOAM_COMMAND} PRIVATE
+        "${JULIA_DIR}/lib/libjulia.so"
+    )
+    target_link_options(${NEOFOAM_COMMAND} PRIVATE "-Wl,-rpath,${JULIA_DIR}/lib")
+  endif()
+
   target_link_libraries(
     ${NEOFOAM_COMMAND}
     PUBLIC NeoFOAM_public_api OpenFOAM Catch2::Catch2
@@ -84,6 +100,7 @@ neofoam_unit_test(pressureVelocityCoupling setup_pressureVelocityCoupling)
 neofoam_unit_test(advection setup_advection)
 neofoam_unit_test(compatibility setup_compatibility)
 neofoam_unit_test(momentum setup_pressureVelocityCoupling)
+neofoam_unit_test(julia setup_pressureVelocityCoupling)
 
 if(NEOFOAM_WITH_MPI)
   neofoam_unit_test(distributedMomentum setup_pressureVelocityCoupling MPI_SIZE 3)

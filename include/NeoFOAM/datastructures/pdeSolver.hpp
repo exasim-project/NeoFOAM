@@ -117,11 +117,25 @@ public:
         pRefCell_ = pRefCell;
         pRefValue_ = pRefValue;
     }
+    jl_array_t* coeffMatrixJuliaPtr() {
+        return ls_.juliaPtr();
+    }
+    
+    jl_array_t* RHSJuliaPtr() {
+        return ls_.RhsjuliaPtr();
+    }
 
     /** @brief assemble the linear system owned by the solver based on the current expression */
     LinearSystem& assemble()
     {
         expr_.assemble(runTime_.t, runTime_.dt, ls_);
+        return ls_;
+    }
+
+    /** @brief assemble the linear system owned by the solver based on the current expression */
+    LinearSystem& assembleWithJulia()
+    {
+        expr_.assembleWithJulia(runTime_.t, runTime_.dt, ls_);
         return ls_;
     }
 
