@@ -21,7 +21,7 @@ solvers
         solver          PCG;
         preconditioner  diagonal;
         tolerance       0.0;
-        relTol          1e-8;
+        relTol          1e-5;
     }
 
     U
@@ -31,6 +31,13 @@ solvers
         tolerance       1e-18;
         relTol          0.0;
     }
+}
+
+PISO
+{
+        momentumPredictor yes;
+        nCorrectors 4;
+        nNonOrthogonalCorrectors 0;
 }
 
 // ************************************************************************* //

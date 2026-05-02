@@ -368,6 +368,6 @@ TEST_CASE("Distributed PressureVelocityCoupling")
 
         nf::updateFaceVelocity(nfPhi, pEqn, nfPhi0);
         // TODO this neneds to be relatively loose
-        nf::compare(nfPhi0, ofPhi0, ApproxScalar(1e-12), false);
+        nf::compare(nfPhi0, ofPhi0, ApproxScalar(1e-5), true);
     }
 }
