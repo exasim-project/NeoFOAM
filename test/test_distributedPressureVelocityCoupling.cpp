@@ -336,10 +336,6 @@ TEST_CASE("Distributed PressureVelocityCoupling")
             rt
         );
 
-        if (rt.mpiEnvironment.rank() == 0)
-        {
-            pEqn.setReference(0, 0.0);
-        }
         auto stats = pEqn.solve();
 
         // NOTE removeBoundaryContributions is not working in distributed case
@@ -368,10 +364,10 @@ TEST_CASE("Distributed PressureVelocityCoupling")
         REQUIRE(finalResNorm < initResNorm);
 
         nf::compare(nfP, ofp, ApproxScalar(1e-12), true);
-        // nf::compare(nfPhi, ofPhi, ApproxScalar(1e-12), true);
+        nf::compare(nfPhi, ofPhi, ApproxScalar(1e-12), true);
 
         nf::updateFaceVelocity(nfPhi, pEqn, nfPhi0);
         // TODO this neneds to be relatively loose
-        nf::compare(nfPhi0, ofPhi0, ApproxScalar(1e-05), false);
+        nf::compare(nfPhi0, ofPhi0, ApproxScalar(1e-12), false);
     }
 }

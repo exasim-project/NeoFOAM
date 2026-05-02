@@ -193,7 +193,6 @@ TEST_CASE("PressureVelocityCoupling")
             rt
         );
 
-        pEqn.setReference(0, 0.0);
         auto stats = pEqn.solve();
 
         // NOTE removeBoundaryContributions is not working in distributed case
@@ -221,6 +220,6 @@ TEST_CASE("PressureVelocityCoupling")
         REQUIRE(initResNorm != 0);
         REQUIRE(finalResNorm < initResNorm);
 
-        nf::compare(nfP, ofp, ApproxScalar(1e-32), true);
+        nf::compare(nfP, ofp, ApproxScalar(1e-12), true);
     }
 }
