@@ -10,6 +10,7 @@
 #include "NeoFOAM/compatibility/fvSolution.hpp"
 
 namespace dsl = NeoN::dsl;
+namespace nfvcc = NeoN::finiteVolume::cellCentred;
 
 namespace NeoFOAM
 {
@@ -117,13 +118,6 @@ public:
         pRefCell_ = pRefCell;
         pRefValue_ = pRefValue;
     }
-    jl_array_t* coeffMatrixJuliaPtr() {
-        return ls_.juliaPtr();
-    }
-    
-    jl_array_t* RHSJuliaPtr() {
-        return ls_.RhsjuliaPtr();
-    }
 
     /** @brief assemble the linear system owned by the solver based on the current expression */
     LinearSystem& assemble()
@@ -132,12 +126,6 @@ public:
         return ls_;
     }
 
-    /** @brief assemble the linear system owned by the solver based on the current expression */
-    LinearSystem& assembleWithJulia()
-    {
-        expr_.assembleWithJulia(runTime_.t, runTime_.dt, ls_);
-        return ls_;
-    }
 
     /** @brief assemble the linear system with an additional rhs term
      *
@@ -197,6 +185,101 @@ public:
         return stats;
     }
 
+    std::string juliaOP() { return expr_.juliaOP(); }
+
+
+    void juliaAssemble(
+        const nfvcc::SurfaceField<double>& faceFlux,
+        const nfvcc::VolumeField<ValueType>& phi,
+        const nfvcc::SurfaceField<double>& gamma
+    )
+    {
+        const auto matIt = ls_.faceToMatrixAddress();
+        const NeoN::UnstructuredMesh& mesh = phi.mesh();
+        const auto nInternalFaces = mesh.nInternalFaces();
+        const auto nCells = mesh.nCells();
+        auto fusedOPString = juliaOP();
+        jl_module_t* mod = (jl_module_t*)jl_eval_string("MinimalFVM");
+        auto deltaCoeffs = NeoN::Vector<double>(ls_.exec(), nInternalFaces, 3.0);
+
+        jl_function_t* func = jl_get_function(mod, "faceBased");
+        const auto
+            [JUfaceFluxV,
+             JUowner,
+             JUneighbour,
+             JUsurfFaceCells,
+             JUdiagOffs,
+             JUownOffs,
+             JUneiOffs,
+             JUrowOffs,
+             phiJuliaPtr] =
+                NeoN::juliaPtrs(
+                    faceFlux.internalVector(),
+                    mesh.faceOwner(),
+                    mesh.faceNeighbour(),
+                    mesh.boundaryMesh().faceCells(),
+                    matIt->diagOffset(),
+                    matIt->ownerOffset(),
+                    matIt->neighbourOffset(),
+                    matIt->sparsityPattern()->rowOffs(),
+                    phi.internalVector()
+                );
+
+        const auto JUGamma = gamma.internalVector().juliaPtr();     // scalar
+        const auto JUdeltaCoeffs = deltaCoeffs.juliaPtr();          // scalar
+        const auto JUmagFaceAreas = mesh.magFaceAreas().juliaPtr(); // scalar
+        auto jval = NeoN::Vector<double>(ls_.exec(), nInternalFaces * 2 + nCells, 0.0);
+        auto valPtr = jval.juliaPtr();
+
+        /*
+            numInteriorFaces::Int32,
+            numCells::Int32,
+            owner::Vector{Int32},
+            neighbour::Vector{Int32},
+            diagOffs::Vector{UInt8},
+            ownOffs::Vector{UInt8},
+            neiOffs::Vector{UInt8},
+            rowOffs::Vector{Int32},
+            vals::Vector{Float64},
+            phi_::Matrix{Float64},
+            opString::String,
+            faceFlux::Vector{Float64},
+            gamma::Vector{Float64},
+            deltaCoeffs::Vector{Float64},
+            magFaceArea::Vector{Float64}
+            )
+        */
+        size_t nInputs = 15;
+        jl_value_t* args[nInputs];
+        args[0] = jl_box_int32(nInternalFaces);
+        args[1] = jl_box_int32(nCells);
+        args[2] = (jl_value_t*)JUowner;
+        args[3] = (jl_value_t*)JUneighbour;
+        args[4] = (jl_value_t*)JUdiagOffs;
+        args[5] = (jl_value_t*)JUownOffs;
+        args[6] = (jl_value_t*)JUneiOffs;
+        args[7] = (jl_value_t*)JUrowOffs;
+        args[8] = (jl_value_t*)valPtr;
+        args[9] = (jl_value_t*)phiJuliaPtr;
+        args[10] = jl_cstr_to_string(fusedOPString.c_str());
+        args[11] = (jl_value_t*)JUfaceFluxV;
+        args[12] = (jl_value_t*)JUGamma;
+        args[13] = (jl_value_t*)JUdeltaCoeffs;
+        args[14] = (jl_value_t*)JUmagFaceAreas;
+
+        std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+        jl_call(func, args, nInputs);
+        std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+        std::cout << "Function call alone: (Julia) = "
+                  << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()
+                  << "[µs]" << std::endl;
+        jl_value_t* exc = jl_exception_occurred();
+        if (exc)
+        {
+            std::cerr << ": Julia exception: " << jl_typeof_str(exc) << std::endl;
+        }
+    }
+
 private:
 
     NeoN::la::SolverStats solveImpl(dsl::Expression<ValueType>& expr, LinearSystem& ls)
@@ -209,7 +292,7 @@ private:
             functs =
                 needReference_
                     ? std::vector<NeoN::dsl::PostAssemblyBase<ValueType, IndexType>> {SetReference<
-                        ValueType>(pRefCell_, pRefValue_)}
+                          ValueType>(pRefCell_, pRefValue_)}
                     : std::vector<NeoN::dsl::PostAssemblyBase<ValueType, IndexType>> {};
         }
 

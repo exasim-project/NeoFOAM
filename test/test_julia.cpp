@@ -21,9 +21,9 @@ extern Foam::Time* timePtr; // A single time object
 static bool check_julia_exception(const char* where)
 {
     jl_value_t* exc = jl_exception_occurred();
-    if (exc) {
-        std::cerr << where << ": Julia exception: "
-                  << jl_typeof_str(exc) << std::endl;
+    if (exc)
+    {
+        std::cerr << where << ": Julia exception: " << jl_typeof_str(exc) << std::endl;
         return true;
     }
     return false;
@@ -33,63 +33,29 @@ TEST_CASE("Julia Momentum")
 {
     jl_init();
 
-    jl_eval_string(R"(
-        function get_operator(tokens::Vector{String})
-            if tokens[1] == "DivOperator"
-            else # only Laplacian for now
-                return Laplace{Float64}(1.0)
-            end
-            operator = ifelse(tokens[1] == "DivOperator", CentralDiffScheme{Float64},UpwindScheme{Float64}) 
-            divscheme = ifelse(tokens[2] == "linear", CentralDiffScheme{Float64},UpwindScheme{Float64}) 
-            div = Div{Float64,divscheme}(divscheme(), 1.0) 
-            return String(Symbol(div))
-        end
-        function SOAFusedFaceBasedAssembly(numInteriorFaces::Int32, owner::Ptr{Cvoid}, neighbor::Ptr{Cvoid},  ) where {P<:AbstractFloat}
-        #function SOAFusedFaceBasedAssembly(input::SOAMatrixAssemblyInput{P}, vals::Vector{P}, RHS::Vector{P}, fused_pde::DiffEq) where {P<:AbstractFloat}
-            nu = input.nu
-            faces = input.faces
-            U_b = input.U_boundary
-            U = input.U_internal
-            nCells = length(input.cells.index)
-            @inbounds for iFace in 1:input.numInteriorFaces
-                @inbounds iOwner = faces.iOwner[iFace]
-                @inbounds iNeighbor = faces.iNeighbor[iFace]
-                @inbounds valueUpper, valueLower = fused_pde(U[iOwner], U[iNeighbor], faces.Sf[iFace], nu[iOwner], faces.gDiff[iFace], zero(P), zero(P))
-
-                @inbounds vals[faces.ownerIdx[iFace]] += valueUpper
-                @inbounds vals[faces.neighborIdx[iFace]] += valueLower
-                @inbounds vals[faces.neighborRelNeighborIdx[iFace]] += valueUpper
-                @inbounds vals[faces.ownerRelOwnerIdx[iFace]] += valueLower
-            end
-            @inbounds for bFace in numInteriorFaces:length(owner)
-            @inbounds for iBoundary in eachindex(input.boundaries)
-                if U_b[iBoundary].type != "fixedValue"
-                    continue
-                end
-                @inbounds theBoundary = input.boundaries[iBoundary]
-                startFace = theBoundary.startFace + 1
-                endFace = startFace + theBoundary.nFaces
-                for iFace in startFace:endFace-1
-                    @inbounds relativeFaceIndex = iFace - input.boundaries[iBoundary].startFace
-                    diag, rhsx, rhsy, rhsz = fused_pde(U_b[iBoundary].values[relativeFaceIndex], faces.Sf[iFace], nu[faces.iOwner[iFace]], faces.gDiff[iFace], zero(P), zero(P), zero(P), zero(P))
-
-                    @inbounds vals[faces.ownerIdx[iFace]] += diag
-                    # RHS/Source
-                    @inbounds RHS[faces.iOwner[iFace]] += rhsx
-                    @inbounds RHS[faces.iOwner[iFace]+nCells] += rhsy
-                    @inbounds RHS[faces.iOwner[iFace]+nCells+nCells] += rhsz
-                end
-            end
-            return vals, RHS
-        end # function batchedFaceBasedAssembly
-    )");
-
     float epsilon = 1e-32;
     Foam::Time& runTime = *timePtr;
-
     // auto [execName, exec] = GENERATE(allAvailableExecutor());
     auto exec = NeoN::Executor(NeoN::SerialExecutor {});
+    
+    // std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
+    std::string path = std::format("include(\"{}\")", JULIA_MODULE_INIT);
+
+    jl_eval_string(path.c_str());
+
+    // std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    // std::cout << "Init and precompilation took = "
+    //           << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()
+    //           << "[ns]" << std::endl;
+    if (jl_exception_occurred())
+    {
+        const char* p = jl_string_ptr(
+            jl_eval_string("sprint(showerror, ccall(:jl_exception_occurred, Any, ()))")
+        );
+
+        fprintf(stderr, "%s%s\n", "error: ", p);
+    }
     auto rt = nf::createAdapterRunTime(runTime, exec);
     auto& mesh = rt.mesh;
     auto& schemesDict = rt.fvSchemesDict;
@@ -131,15 +97,15 @@ TEST_CASE("Julia Momentum")
         Foam::dimensionedScalar("nu", Foam::dimensionSet(0, 2, -1, 0, 0), 0.01)
     );
 
-    auto nfPhi = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofPhi);
-    auto nfNu = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofNu);
+    auto faceFlux = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofPhi);
+    auto gamma = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofNu);
 
-    auto& nfU = NeoFOAM::constructAndRegister(vectorCollection, rt, ofU);
-    auto& nfOldU = fvcc::oldTime(nfU);
-    NeoN::fill(nfOldU.internalVector(), NeoN::Vec3(0.0, 0.0, 0.0));
-    nfOldU.correctBoundaryConditions();
+    auto& phi = NeoFOAM::constructAndRegister(vectorCollection, rt, ofU);
+    auto& nfOldPhi = fvcc::oldTime(phi);
+    NeoN::fill(nfOldPhi.internalVector(), NeoN::Vec3(0.0, 0.0, 0.0));
+    nfOldPhi.correctBoundaryConditions();
 
-    SECTION("Solve transient momentum without grad(p) on " )
+    SECTION("Solve transient momentum without grad(p) on ")
     {
 
         Foam::fvVectorMatrix ofUEqn(
@@ -147,44 +113,57 @@ TEST_CASE("Julia Momentum")
         );
 
         nf::PDESolver<NeoN::Vec3> nfUEqn(
-            // dsl::imp::ddt(nfU) + 
-            dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(nfNu, nfU),
-            nfU,
-            rt
+            // dsl::imp::ddt(nfU) +
+            dsl::imp::div(faceFlux, phi) - dsl::imp::laplacian(gamma, phi), // expr
+            phi,                                                            // volumefield
+            rt                                                              // runtime
         );
-
-        NeoN::fill(nfUEqn.linearSystem().rhs(), NeoN::Vec3(0.0, 0.0, 0.0));
-
-        auto& solverDict = rt.fvSolutionDict.subDict("solvers");
-        solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
-
-        // Foam::solve(ofUEqn);
-        nfUEqn.assembleWithJulia();
-        auto operators = "DivOperator:Gauss,Linear;LaplacianOperator";
+        std::cout << "Julia Expression: " << nfUEqn.juliaOP() << std::endl;
         jl_eval_string(R"(
-            function use_pointer(p::Vector{Float64})
-                # arr = unsafe_wrap(Array, Ptr{Float64}(p), 135)
-                p[1] = 42.0
-                return nothing
+            function pass_string(p::String)
+                divlap = eval(Meta.parse(p))
             end
         )");
 
-        jl_value_t* array_type = jl_apply_array_type((jl_value_t*)jl_float64_type, 1);
-        jl_array_t* ptr = nfUEqn.coeffMatrixJuliaPtr();
-        jl_value_t* julia_ptr = (jl_value_t*)ptr;
+        jl_function_t* func = jl_get_function(jl_main_module, "pass_string");
+        jl_value_t* argument = jl_cstr_to_string(nfUEqn.juliaOP().c_str());
+        jl_call1(func, argument);
+        REQUIRE(!jl_exception_occurred());
+        // NeoN::fill(nfUEqn.linearSystem().rhs(), NeoN::Vec3(0.0, 0.0, 0.0));
+        auto& solverDict = rt.fvSolutionDict.subDict("solvers");
+        solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
 
-        double *xData = jl_array_data(ptr, double);
-        jl_function_t* func = jl_get_function(jl_main_module, "use_pointer");
-        std::cout << "size : " << nfUEqn.linearSystem().matrix().nNonZeros() << std::endl;
+        std::chrono::steady_clock::time_point beginnf = std::chrono::steady_clock::now();
+        nfUEqn.assemble();
 
-        jl_value_t* args[2];
-        args[0] = julia_ptr;
-        args[1] = jl_box_int32(nfUEqn.linearSystem().matrix().nNonZeros());
-        jl_call1(func, julia_ptr);
-        check_julia_exception("use_ptr");
-        REQUIRE(nfUEqn.linearSystem().view().matrix.values[0][0] == 42.0);
+        std::chrono::steady_clock::time_point endnf = std::chrono::steady_clock::now();
+        std::cout << "Assembly time (NEON) = "
+                  << std::chrono::duration_cast<std::chrono::microseconds>(endnf - beginnf).count()
+                  << "[ns]" << std::endl;
+
+        std::chrono::steady_clock::time_point beginj = std::chrono::steady_clock::now();
+        nfUEqn.juliaAssemble(faceFlux, phi, gamma);
+
+        std::chrono::steady_clock::time_point endj = std::chrono::steady_clock::now();
+        std::cout << "Assembly time (JULIA) = "
+                  << std::chrono::duration_cast<std::chrono::microseconds>(endj - beginj).count()
+                  << "[ns]" << std::endl;
+        nfUEqn.juliaAssemble(faceFlux, phi, gamma);
+
+        if (jl_exception_occurred())
+        {
+            const char* p = jl_string_ptr(
+                jl_eval_string("sprint(showerror, ccall(:jl_exception_occurred, Any, ()))")
+            );
+
+            fprintf(stderr, "%s%s\n", "error: ", p);
+        }
+        REQUIRE(!jl_exception_occurred());
     }
 
+    // SECTION("Send ") {
+
+    // }
     // SECTION("Solve transient momentum with grad(p) on " + execName)
     // {
     //     Foam::fvVectorMatrix ofUEqn(

@@ -68,6 +68,19 @@ Building for GPUs
 NeoFOAM supports GPUs from multiple vendors via NeoN, which uses Kokkos for performance portability.
 For detailed instructions, see the `Building NeoN for GPUs <https://exasim-project.com/NeoN/latest/installation.html#building-for-gpus>`_.
 
+Building for Julia
+------------------
+
+The following Cmake variables need to be set:
+
+.. code-block:: bash
+   
+   -DNeoN_WITH_JULIA=<ON/OFF> 
+   -DJULIA_MODULE_INIT=<path/to/moduleInit.jl>
+
+The latter denotes the path to a file that loads a given module which exposes the necessary functions for the NeoX - Julia Interface.
+A preliminary example can be found at `<https://github.com/lupeterm/FVM-Prototyping/blob/main/MinimalFVM/init.jl>`
+
 Building with CMake Presets
 ---------------------------
 
