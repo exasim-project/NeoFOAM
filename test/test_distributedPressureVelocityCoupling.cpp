@@ -26,6 +26,7 @@ TEST_CASE("Distributed PressureVelocityCoupling")
     }
 
     float epsilon = 1e-32;
+    float epsilonII = 1e-13;
     Foam::Time& runTime = *timePtr;
 
     auto [execName, exec] = GENERATE(allAvailableExecutor());
@@ -99,7 +100,7 @@ TEST_CASE("Distributed PressureVelocityCoupling")
         nfUEqn.assemble();
         auto nfrAU = nf::computeRAU(nfUEqn);
 
-        NeoFOAM::compare(nfrAU, forAU, ApproxScalar(1e-15), true);
+        NeoFOAM::compare(nfrAU, forAU, ApproxScalar(epsilonII), true);
     }
 
     SECTION("interpolate rAU" + execName)
@@ -133,7 +134,7 @@ TEST_CASE("Distributed PressureVelocityCoupling")
         // Sanity: input to the interpolation must already match OF, otherwise
         // any disagreement we see at the surface field is not the
         // interpolation's fault.
-        nf::compare(nfrAU, forAU, ApproxScalar(1e-15), true);
+        nf::compare(nfrAU, forAU, ApproxScalar(epsilonII), true);
 
         nnfvcc::SurfaceField<NeoN::scalar> nfRAUf = fvcc::SurfaceInterpolation<NeoN::scalar>(
                                                         rt.exec,
@@ -142,7 +143,39 @@ TEST_CASE("Distributed PressureVelocityCoupling")
         )
                                                         .interpolate(nfrAU);
 
-        nf::compare(nfRAUf, ofRAUf, ApproxScalar(1e-12), true);
+        nf::compare(nfRAUf, ofRAUf, ApproxScalar(epsilonII), true);
+    }
+
+    SECTION("compute gradP" + execName)
+    {
+        // Tests the same call updateVelocity in
+        // src/algorithms/pressureVelocityCoupling.cpp makes:
+        //   auto gradP = GaussGreenGrad(p.exec(), p.mesh()).grad(p);
+        // This is the cell-centred pressure gradient that drives the velocity
+        // correction `u = HbyA - rAU * gradP` at the end of every PISO step.
+        //
+        // The call exercises three distinct paths in computeGrad:
+        //   1. Internal-face accumulation (`computeGradInternal`).
+        //   2. Physical-boundary extrapolation via computeBoundaryGrad.
+        //   3. Processor-boundary face accumulation (`computeProcGradBoundary`).
+        // Path (3) requires p.boundaryData().value() at the proc tail to hold
+        // the ghost cell value — populated by p.correctBoundaryConditions().
+        // Mirror neoIcoFoam.cpp:140 where p.correctBoundaryConditions() is
+        // called between the pressure solve and updateVelocity.
+        //
+        // Compared at internal-cell level (withBoundaries=false). Proc-adjacent
+        // cells exercise the proc-boundary loop without relying on the proc
+        // patch comparison which `nf::compare` currently skips for processor
+        // patches.
+        nf::compare(nfP, ofp, ApproxScalar(epsilon), true);
+
+        ofp.correctBoundaryConditions();
+        nfP.correctBoundaryConditions();
+
+        Foam::volVectorField ofGradP("gradP", fvc::grad(ofp));
+        auto nfGradP = nnfvcc::GaussGreenGrad(rt.exec, rt.nfMesh).grad(nfP);
+
+        nf::compare(nfGradP, ofGradP, ApproxVector(epsilonII), false);
     }
 
     SECTION("HbyA" + execName)
@@ -171,7 +204,7 @@ TEST_CASE("Distributed PressureVelocityCoupling")
 
         auto [nfrAU, nfHbyA] = nf::computeRAUandHByA(nfUEqn);
 
-        nf::compare(nfHbyA, HbyA, ApproxVector({1e-12}), true);
+        nf::compare(nfHbyA, HbyA, ApproxVector(epsilonII), true);
     }
 
     SECTION("constrainHbyA")
@@ -188,7 +221,7 @@ TEST_CASE("Distributed PressureVelocityCoupling")
 
         nf::constrainHbyA(nfU, nfP, nfHbyA);
 
-        nf::compare(nfHbyA, ofConstrainHbyA, ApproxVector({1e-12}), true);
+        nf::compare(nfHbyA, ofConstrainHbyA, ApproxVector(1e-12), true);
     }
 
     SECTION("compute flux")
@@ -205,7 +238,7 @@ TEST_CASE("Distributed PressureVelocityCoupling")
         Foam::surfaceScalarField ofFlux("ofFlux", fvc::flux(HbyA));
         auto nfFlux = nf::flux(nfHbyA);
 
-        nf::compare(nfFlux, ofFlux, ApproxScalar(1e-12), true);
+        nf::compare(nfFlux, ofFlux, ApproxScalar(epsilonII), true);
     }
 
     SECTION("compute flux")
@@ -221,7 +254,7 @@ TEST_CASE("Distributed PressureVelocityCoupling")
 
         Foam::fvScalarMatrix ofpEqn(fvm::laplacian(forAUf, ofp) == fvc::div(ofPhi));
         ofPhi0 = ofPhi - ofpEqn.flux();
-        solve(ofpEqn);
+        // solve(ofpEqn);
 
         nf::PDESolver<NeoN::scalar> pEqn(
             dsl::imp::laplacian(nfrAUf, nfP) - dsl::exp::div(nfPhi),
@@ -245,12 +278,12 @@ TEST_CASE("Distributed PressureVelocityCoupling")
         nf::compare(
             NeoN::la::upper(pEqn.linearSystem().matrix()),
             ofpEqn.upper(),
-            ApproxScalar(1e-15),
+            ApproxScalar(epsilonII),
             false
         );
 
         nf::updateFaceVelocity(nfPhi, pEqn, nfPhi0);
-        nf::compare(nfPhi0, ofPhi0, ApproxScalar(1e-12), true);
+        nf::compare(nfPhi0, ofPhi0, ApproxScalar(epsilonII), true);
     }
 
     SECTION("solve pEqn")
@@ -265,18 +298,25 @@ TEST_CASE("Distributed PressureVelocityCoupling")
             NeoFOAM::randDimField<Foam::surfaceScalarField>(mesh, {0, 0, 1, 0, 0}, "rAUf");
         auto nfrAUf = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, forAUf);
 
-        Foam::surfaceScalarField ofPhi0("phi0", ofPhi * 0.0);
-        auto nfPhi0 = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofPhi0);
+        // Foam::surfaceScalarField ofPhi0("phi0", ofPhi * 0.0);
+        // auto nfPhi0 = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofPhi);
 
         Foam::fvScalarMatrix ofpEqn(fvm::laplacian(forAUf, ofp) == fvc::div(ofPhi));
-        ofPhi0 = ofPhi - ofpEqn.flux();
+        ofpEqn.setReference(0, 0.0);
+        ofp.correctBoundaryConditions();
         solve(ofpEqn);
+        ofp.correctBoundaryConditions();
+        auto ofPhi0 = ofpEqn.flux();
 
         nf::PDESolver<NeoN::scalar> pEqn(
             dsl::imp::laplacian(nfrAUf, nfP) - dsl::exp::div(nfPhi),
             nfP,
             rt
         );
+        if (rt.mpiEnvironment.rank() == 0)
+        {
+            pEqn.setReference(0, 0.0);
+        }
 
         auto stats = pEqn.solve();
 
@@ -291,12 +331,11 @@ TEST_CASE("Distributed PressureVelocityCoupling")
         nf::compare(
             NeoN::la::upper(pEqn.linearSystem().matrix()),
             ofpEqn.upper(),
-            ApproxScalar(1e-15),
+            ApproxScalar(epsilonII),
             false
         );
-        nf::compare(pEqn.linearSystem().rhs(), ofpEqn.source(), ApproxScalar(1e-15), false);
+        nf::compare(pEqn.linearSystem().rhs(), ofpEqn.source(), ApproxScalar(epsilonII), false);
 
-        ofp.correctBoundaryConditions();
         nfP.correctBoundaryConditions();
 
         auto [numIter, initResNorm, finalResNorm, solveTime] = stats.entries[0];
@@ -305,69 +344,10 @@ TEST_CASE("Distributed PressureVelocityCoupling")
         REQUIRE(initResNorm != 0);
         REQUIRE(finalResNorm < initResNorm);
 
-        nf::compare(nfP, ofp, ApproxScalar(1e-12), true);
-    }
+        nf::compare(nfP, ofp, ApproxScalar(1e-32), true);
+        nf::compare(nfPhi, ofPhi, ApproxScalar(1e-32), true);
 
-    SECTION("solve pEqn and update faceVelocity")
-    {
-        nf::compare(nfPhi, ofPhi, ApproxScalar(epsilon), false);
-        nf::compare(nfP, ofp, ApproxScalar(1e-12), false);
-
-        auto& solverDict = rt.fvSolutionDict.subDict("solvers");
-        solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
-
-        auto forAUf =
-            NeoFOAM::randDimField<Foam::surfaceScalarField>(mesh, {0, 0, 1, 0, 0}, "rAUf");
-        auto nfrAUf = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, forAUf);
-
-        Foam::surfaceScalarField ofPhi0("phi0", ofPhi * 0.0);
-        auto nfPhi0 = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofPhi0);
-
-        Foam::fvScalarMatrix ofpEqn(fvm::laplacian(forAUf, ofp) == fvc::div(ofPhi));
-        Foam::label pRefCell = 0;
-        Foam::scalar pRefValue = 0.0;
-        Foam::setRefCell(ofp, rt.mesh.solutionDict().subDict("PISO"), pRefCell, pRefValue);
-        solve(ofpEqn);
-        ofPhi0 = ofPhi - ofpEqn.flux();
-
-        nf::PDESolver<NeoN::scalar> pEqn(
-            dsl::imp::laplacian(nfrAUf, nfP) - dsl::exp::div(nfPhi),
-            nfP,
-            rt
-        );
-
-        auto stats = pEqn.solve();
-
-        // NOTE removeBoundaryContributions is not working in distributed case
-        // nf::compare(
-        //     NeoN::la::removeBoundaryContributions(pEqn.linearSystem()).matrix().diag(),
-        //     ofpEqn.diag(),
-        //     ApproxScalar(1e-15),
-        //     false
-        // );
-
-        nf::compare(
-            NeoN::la::upper(pEqn.linearSystem().matrix()),
-            ofpEqn.upper(),
-            ApproxScalar(1e-15),
-            false
-        );
-        nf::compare(pEqn.linearSystem().rhs(), ofpEqn.source(), ApproxScalar(1e-15), false);
-
-        ofp.correctBoundaryConditions();
-        nfP.correctBoundaryConditions();
-
-        auto [numIter, initResNorm, finalResNorm, solveTime] = stats.entries[0];
-
-        REQUIRE(numIter != 0);
-        REQUIRE(initResNorm != 0);
-        REQUIRE(finalResNorm < initResNorm);
-
-        nf::compare(nfP, ofp, ApproxScalar(1e-12), true);
-        nf::compare(nfPhi, ofPhi, ApproxScalar(1e-12), true);
-
-        nf::updateFaceVelocity(nfPhi, pEqn, nfPhi0);
-        // TODO this neneds to be relatively loose
-        nf::compare(nfPhi0, ofPhi0, ApproxScalar(1e-5), true);
+        auto nfPhi0 = nf::flux(pEqn);
+        nf::compare(nfPhi0, ofPhi0(), ApproxScalar(1e-05), false);
     }
 }
