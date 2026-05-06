@@ -267,12 +267,7 @@ public:
         args[13] = (jl_value_t*)JUdeltaCoeffs;
         args[14] = (jl_value_t*)JUmagFaceAreas;
 
-        std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
         jl_call(func, args, nInputs);
-        std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-        std::cout << "Function call alone: (Julia) = "
-                  << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()
-                  << "[µs]" << std::endl;
         jl_value_t* exc = jl_exception_occurred();
         if (exc)
         {
