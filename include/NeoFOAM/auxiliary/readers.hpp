@@ -61,7 +61,6 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
         {"fixedValue",
          [](auto& dict)
          {
-             dict.insert("type", std::string("fixedValue"));
              NeoN::TokenList tokenList = dict.template get<NeoN::TokenList>("value");
              auto fixedValue = NeoN::zero<type_primitive_t>();
 
@@ -70,6 +69,7 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
              // parsing the foam dictionary aborts early and omits 0();
              if (tokenList.size() > 1)
              {
+                 dict.insert("type", std::string("fixedValue"));
                  // test if things can be read as scalar first, if it doesn't work
                  // read as int and convert to scalar
                  if constexpr (std::is_same<type_primitive_t, NeoN::Vec3>::value)
@@ -100,12 +100,14 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
                      fixedValue =
                          ret ? NeoN::scalar(*ret) : NeoN::scalar(tokenList.get<Foam::label>(1));
                  }
+                 dict.insert("fixedValue", fixedValue);
              }
              else
              {
+                 // FIXME is this an empty boundary?
+                 dict.insert("type", std::string("empty"));
                  // left blank
              }
-             dict.insert("fixedValue", fixedValue);
          }},
         {"noSlip", // TODO specialize for vector
          [](auto& dict)
