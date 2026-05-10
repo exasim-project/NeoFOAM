@@ -37,17 +37,13 @@ TEST_CASE("Julia Momentum")
     Foam::Time& runTime = *timePtr;
     // auto [execName, exec] = GENERATE(allAvailableExecutor());
     auto exec = NeoN::Executor(NeoN::SerialExecutor {});
-    
+
     // std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
     std::string path = std::format("include(\"{}\")", JULIA_MODULE_INIT);
 
     jl_eval_string(path.c_str());
 
-    // std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-    // std::cout << "Init and precompilation took = "
-    //           << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()
-    //           << "[ns]" << std::endl;
     if (jl_exception_occurred())
     {
         const char* p = jl_string_ptr(
@@ -114,9 +110,7 @@ TEST_CASE("Julia Momentum")
 
         nf::PDESolver<NeoN::Vec3> nfUEqn(
             // dsl::imp::ddt(nfU) +
-            dsl::imp::div(faceFlux, phi),
-            // - 
-            // dsl::imp::laplacian(gamma, phi), // expr
+            dsl::imp::div(faceFlux, phi) - 5* dsl::imp::laplacian(gamma, phi), // expr
             phi,                                                            // volumefield
             rt                                                              // runtime
         );
@@ -131,8 +125,6 @@ TEST_CASE("Julia Momentum")
         jl_value_t* argument = jl_cstr_to_string(nfUEqn.juliaOP().c_str());
         jl_call1(func, argument);
         REQUIRE(!jl_exception_occurred());
-        // nfUEqn.warmupB();
-        // NeoN::fill(nfUEqn.linearSystem().rhs(), NeoN::Vec3(0.0, 0.0, 0.0));
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
         solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
 
@@ -140,19 +132,19 @@ TEST_CASE("Julia Momentum")
         nfUEqn.assemble();
 
         std::chrono::steady_clock::time_point endnf = std::chrono::steady_clock::now();
-        
-        std::cout << "Assembly time (NEON) = "
-        << std::chrono::duration_cast<std::chrono::microseconds>(endnf - beginnf).count()
-        << "[ns]" << std::endl;
-        
-        nfUEqn.juliaAssemble(faceFlux, phi, gamma);
-        std::chrono::steady_clock::time_point beginj = std::chrono::steady_clock::now();
-        nfUEqn.juliaAssemble(faceFlux, phi, gamma);
 
+        std::cout << "Assembly time (NEON) = "
+                  << std::chrono::duration_cast<std::chrono::microseconds>(endnf - beginnf).count()
+                  << "[ns]" << std::endl;
+
+        std::chrono::steady_clock::time_point beginj = std::chrono::steady_clock::now();
+        nfUEqn.juliaFaceBased(faceFlux, phi, gamma);
+        
         std::chrono::steady_clock::time_point endj = std::chrono::steady_clock::now();
         std::cout << "Assembly time (JULIA) = "
-                  << std::chrono::duration_cast<std::chrono::microseconds>(endj - beginj).count()
-                  << "[ns]" << std::endl;
+        << std::chrono::duration_cast<std::chrono::microseconds>(endj - beginj).count()
+        << "[ns]" << std::endl;
+        
         if (jl_exception_occurred())
         {
             const char* p = jl_string_ptr(
@@ -161,6 +153,7 @@ TEST_CASE("Julia Momentum")
 
             fprintf(stderr, "%s%s\n", "error: ", p);
         }
+
         REQUIRE(!jl_exception_occurred());
     }
 

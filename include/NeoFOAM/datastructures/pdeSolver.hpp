@@ -123,6 +123,13 @@ public:
     LinearSystem& assemble()
     {
         expr_.assemble(runTime_.t, runTime_.dt, ls_);
+        auto values = ls_.matrix().values().view();
+        
+        for (size_t i = 0; i < 4; i++)
+        {
+            std::cout << "value "<< i << ": " << values[i]<< std::endl;    
+        }
+        
         return ls_;
     }
 
@@ -187,8 +194,7 @@ public:
 
     std::string juliaOP() { return expr_.juliaOP(); }
 
-
-    void juliaAssemble(
+    void juliaFaceBased(
         const nfvcc::SurfaceField<double>& faceFlux,
         const nfvcc::VolumeField<ValueType>& phi,
         const nfvcc::SurfaceField<double>& gamma
@@ -199,10 +205,7 @@ public:
         const auto nInternalFaces = mesh.nInternalFaces();
         const auto nCells = mesh.nCells();
         auto fusedOPString = juliaOP();
-        jl_module_t* mod = (jl_module_t*)jl_eval_string("MinimalFVM");
         auto deltaCoeffs = NeoN::Vector<double>(ls_.exec(), nInternalFaces, 3.0);
-        std::cout << "internal\n";
-        jl_function_t* func = jl_get_function(mod, "faceBased");
 
         // double
         const auto JUfaceFluxV = faceFlux.internalVector().juliaPtr();
@@ -230,34 +233,24 @@ public:
         // double
         const auto JUmagFaceAreas = mesh.magFaceAreas().juliaPtr();
 
+        // vec3<double>
+        auto refGrad = phi.boundaryData().refGrad().juliaPtr();
+        // double
+        auto valueFraction = phi.boundaryData().valueFraction().juliaPtr();
+        // vec3<double>
+        auto refValue = phi.boundaryData().refValue().juliaPtr();
+        auto bdeltaCoeffs = NeoN::Vector<double>(ls_.exec(), nInternalFaces, 3.0);
+        // double
+        const auto bJUdeltaCoeffs = deltaCoeffs.juliaPtr();
+
         auto jval = NeoN::Vector<double>(ls_.exec(), nInternalFaces * 2 + nCells, 0.0);
         auto jRHS = NeoN::Vector<double>(ls_.exec(), nCells * 3, 0.0);
         // double
         auto valPtr = jval.juliaPtr();
         // double
         auto rhsPtr = jRHS.juliaPtr();
-
-        /*
-            numInteriorFaces::Int32,
-            numCells::Int32,
-            owner::Vector{Int32},
-            neighbour::Vector{Int32},
-            diagOffs::Vector{UInt8},
-            ownOffs::Vector{UInt8},
-            neiOffs::Vector{UInt8},
-            rowOffs::Vector{Int32},
-            vals::Vector{Float64},
-            phi_::Matrix{Float64},
-            opString::String,
-            faceFlux::Vector{Float64},
-            gamma::Vector{Float64},
-            deltaCoeffs::Vector{Float64},
-            magFaceArea::Vector{Float64}
-            )
-        */
-
-        size_t nInputs = 13;
-        jl_value_t* args[nInputs];
+        size_t nbinputs = 18;
+        jl_value_t* args[nbinputs];
         args[0] = jl_box_int32(nInternalFaces);
         args[1] = (jl_value_t*)JUowner;
         args[2] = (jl_value_t*)JUneighbour;
@@ -271,48 +264,20 @@ public:
         args[10] = (jl_value_t*)JUGamma;
         args[11] = (jl_value_t*)JUdeltaCoeffs;
         args[12] = (jl_value_t*)JUmagFaceAreas;
+        args[13] = (jl_value_t*)valueFraction;
+        args[14] = (jl_value_t*)refValue;
+        args[15] = (jl_value_t*)refGrad;
+        args[16] = (jl_value_t*)rhsPtr;
+        args[17] = (jl_value_t*)JUsurfFaceCells;
+        jl_module_t* mod = (jl_module_t*)jl_eval_string("MinimalFVM");
 
-        jl_call(func, args, nInputs);
-        jl_value_t* exc = jl_exception_occurred();
-        if (exc)
-        {
-            std::cerr << ": Julia exception: " << jl_typeof_str(exc) << std::endl;
-        }
-        std::cout << "boundary\n";
+        jl_function_t* func = jl_get_function(mod, "faceBasedAll");
 
-        jl_function_t* bfunc = jl_get_function(mod, "faceBasedBoundary");
-        // auto [refGradient, valueFraction, refValue] = juliaPtrs(
-        // vec3<double>
-        auto refGrad = phi.boundaryData().refGrad().juliaPtr();
-        // double
-        auto valueFraction = phi.boundaryData().valueFraction().juliaPtr();
-        // vec3<double>
-        auto refValue = phi.boundaryData().refValue().juliaPtr();
-        auto bdeltaCoeffs = NeoN::Vector<double>(ls_.exec(), nInternalFaces, 3.0);
-        // double
-        const auto bJUdeltaCoeffs = deltaCoeffs.juliaPtr(); // scalar
-
-        size_t nbinputs = 14;
-        jl_value_t* bargs[nbinputs];
-        bargs[0] = jl_box_int32(nInternalFaces);
-        bargs[1] = (jl_value_t*)JUsurfFaceCells;
-        bargs[2] = (jl_value_t*)JUdiagOffs;
-        bargs[3] = (jl_value_t*)JUrowOffs;
-        bargs[4] = (jl_value_t*)valPtr;
-        bargs[5] = jl_cstr_to_string(fusedOPString.c_str());
-        bargs[6] = (jl_value_t*)JUfaceFluxV;
-        bargs[7] = (jl_value_t*)JUGamma;
-        bargs[8] = (jl_value_t*)bJUdeltaCoeffs;
-        bargs[9] = (jl_value_t*)JUmagFaceAreas;
-        bargs[10] = (jl_value_t*)valueFraction;
-        bargs[11] = (jl_value_t*)refValue;
-        bargs[12] = (jl_value_t*)refGrad;
-        bargs[13] = (jl_value_t*)rhsPtr;
-        std::chrono::steady_clock::time_point begin3j = std::chrono::steady_clock::now();
-        jl_call(bfunc, bargs, nbinputs);
-        std::chrono::steady_clock::time_point endj3 = std::chrono::steady_clock::now();
-        std::cout << "Assembly time (JULIA) boundary: = "
-                  << std::chrono::duration_cast<std::chrono::microseconds>(endj3 - begin3j).count()
+        std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+        jl_call(func, args, nbinputs);
+        std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+        std::cout << "Assembly time (JULIA, All): = "
+                  << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()
                   << "[ns]" << std::endl;
         jl_value_t* bexc = jl_exception_occurred();
         if (bexc)
@@ -321,46 +286,218 @@ public:
         }
     }
 
-    // void warmupB()
+    [[deprecated]] void cFunctionAssembly(
+        const nfvcc::SurfaceField<double>& faceFlux,
+        const nfvcc::VolumeField<ValueType>& phi,
+        const nfvcc::SurfaceField<double>& gamma
+    )
+    {
+        const auto matIt = ls_.faceToMatrixAddress();
+        const NeoN::UnstructuredMesh& mesh = phi.mesh();
+        const auto nInternalFaces = mesh.nInternalFaces();
+        const auto nCells = mesh.nCells();
+        auto fusedOPString = juliaOP();
+        auto deltaCoeffs = NeoN::Vector<double>(ls_.exec(), nInternalFaces, 3.0);
+
+        // double
+        const auto JUfaceFluxV = faceFlux.internalVector().juliaPtr();
+        // int32
+        const auto JUowner = mesh.faceOwner().juliaPtr();
+        // int32
+        const auto JUneighbour = mesh.faceNeighbour().juliaPtr();
+        // int32
+        const auto JUsurfFaceCells = mesh.boundaryMesh().faceCells().juliaPtr();
+        // uint8
+        const auto JUdiagOffs = matIt->diagOffset().juliaPtr();
+        // uint8
+        const auto JUownOffs = matIt->ownerOffset().juliaPtr();
+        // uint8
+        const auto JUneiOffs = matIt->neighbourOffset().juliaPtr();
+        // int32
+        const auto JUrowOffs = matIt->sparsityPattern()->rowOffs().juliaPtr();
+        // vec3<double>
+        const auto phiJuliaPtr = phi.internalVector().juliaPtr();
+
+        // double
+        const auto JUGamma = gamma.internalVector().juliaPtr();
+        // double
+        const auto JUdeltaCoeffs = deltaCoeffs.juliaPtr();
+        // double
+        const auto JUmagFaceAreas = mesh.magFaceAreas().juliaPtr();
+
+        // vec3<double>
+        auto refGrad = phi.boundaryData().refGrad().juliaPtr();
+        // double
+        auto valueFraction = phi.boundaryData().valueFraction().juliaPtr();
+        // vec3<double>
+        auto refValue = phi.boundaryData().refValue().juliaPtr();
+        auto bdeltaCoeffs = NeoN::Vector<double>(ls_.exec(), nInternalFaces, 3.0);
+        // double
+        const auto bJUdeltaCoeffs = deltaCoeffs.juliaPtr();
+
+        auto jval = NeoN::Vector<double>(ls_.exec(), nInternalFaces * 2 + nCells, 0.0);
+        auto jRHS = NeoN::Vector<double>(ls_.exec(), nCells * 3, 0.0);
+        // double
+        auto valPtr = jval.juliaPtr();
+        // double
+        auto rhsPtr = jRHS.juliaPtr();
+
+        jl_value_t* cfunc = jl_eval_string(R"(
+            @cfunction(
+                test, 
+                Cvoid, 
+                (
+                    Cint,
+                    Array{Cint,1}, 
+                    Array{Cint,1},
+                    Array{Cuchar,1},
+                    Array{Cuchar,1},
+                    Array{Cuchar,1},
+                    Array{Cint,1},
+                    Array{Cdouble,1},
+                    Cstring,
+                    Array{Cdouble,1},
+                    Array{Cdouble,1},
+                    Array{Cdouble,1},
+                    Array{Cdouble,1},
+                    Array{Cdouble,1},
+                    Array{Cdouble,2},
+                    Array{Cdouble,2},
+                    Array{Cdouble,1},
+                )
+            )
+        )");
+        void* fptr = jl_unbox_voidpointer(cfunc);
+        using TestFn = void (*)(
+            int32_t,
+            jl_array_t*,
+            jl_array_t*,
+            jl_array_t*,
+            jl_array_t*,
+            jl_array_t*,
+            jl_array_t*,
+            jl_array_t*,
+            const char*,
+            jl_array_t*,
+            jl_array_t*,
+            jl_array_t*,
+            jl_array_t*,
+            jl_array_t*,
+            jl_array_t*,
+            jl_array_t*,
+            jl_array_t*
+        );
+        TestFn fn = reinterpret_cast<TestFn>(fptr);
+        fn(nInternalFaces,
+           JUowner,
+           JUneighbour,
+           JUdiagOffs,
+           JUownOffs,
+           JUneiOffs,
+           JUrowOffs,
+           valPtr,
+           fusedOPString.c_str(),
+           JUfaceFluxV,
+           JUGamma,
+           JUdeltaCoeffs,
+           JUmagFaceAreas,
+           valueFraction,
+           refValue,
+           refGrad,
+           rhsPtr);
+    }
+    // template<typename ValueType>
+    // void computeDdtDivLapImplCell(
+    //     // scalar dt,
+    //     const VolumeField<ValueType>& U,
+    //     const SurfaceField<scalar>& phi,
+    //     const SurfaceField<scalar>& gamma,
+    //     const SurfaceInterpolation<ValueType>& divSurfInterp,
+    //     //    const SurfaceInterpolation<ValueType>& lapSurfInterp,
+    //     const FaceNormalGradient<ValueType>& faceNormalGradient,
+    //     const dsl::Coeff coeffA,
+    //     const dsl::Coeff coeffB,
+    // )
     // {
-    //     jl_module_t* mod = (jl_module_t*)jl_eval_string("MinimalFVM");
-    //     jl_function_t* bfunc = jl_get_function(mod, "faceBasedBoundary");
-    //     size_t nbinputs = 14;
-    //     jl_value_t* bargs[nbinputs];
-    //     int32_t nInt = 1;
-    //     auto tmpdouble = NeoN::Vector<double>(ls_.exec(), 1, 0.0);
-    //     auto tmpInt = NeoN::Vector<int32_t>(ls_.exec(), 1, 0.0);
-    //     // auto tmpuInt = NeoN::Vector<uint8_t>(ls_.exec(), 1, 0.0);
-    //     auto tmpuInt = NeoN::Array<uint8_t>(ls_.exec(), 1, 0.0);
-    //     auto tmpumat = NeoN::Vector<NeoN::Vec3>(ls_.exec(), 1, NeoN::zero<NeoN::Vec3>());
+    //     auto iterator =
+    //         std::dynamic_pointer_cast<la::CellBasedIterator>(ls.getMeshIterator()->get());
 
-    //     const auto JUtmpdouble = tmpdouble.juliaPtr();
-    //     const auto JUtmpInt = tmpInt.juliaPtr();
-    //     const auto JUtmpuInt = tmpuInt.juliaPtr();
-    //     const auto JUtmpumat = tmpumat.juliaPtr();
+    //     auto exec = ls.exec();
+    //     const auto& mesh = phi.mesh();
+    //     const auto vol = mesh.cellVolumes().view();
+    //     auto matrix = ls.matrix().view();
+    //     const auto sp = ls.faceToMatrixAddress();
+    //     auto cellBasedData = iterator->getCellBasedData();
+    //     auto [cellFacesValues, cellFacesSegments] = cellBasedData->cellFaces.views();
+    //     auto faceNeighbourV = cellBasedData->faceNeighbour.view();
+    //     auto faceSignV = cellBasedData->faceSign.view();
+    //     auto matrixColumnIdxV = cellBasedData->matrixColumnIdx.view();
 
+    //     // const auto operatorScaling = this->getCoefficient();
+    //     const auto diagOffs = ls.faceToMatrixAddress()->diagOffset().view();
+    //     const auto oldVector = oldTime(U).internalVector().view();
+    //     auto [rhs, values] = views(ls.rhs(), ls.matrix().values());
+    //     auto [colIdx, rowOffs] = ls.matrix().sparsity()->view();
 
-    //     bargs[0] = jl_box_int32(nInt);
-    //     bargs[1] = (jl_value_t*)JUtmpuInt;
-    //     bargs[2] = (jl_value_t*)JUtmpuInt;
-    //     bargs[3] = (jl_value_t*)JUtmpInt;
-    //     bargs[4] = (jl_value_t*)JUtmpdouble;
-    //     bargs[5] = jl_cstr_to_string("Div{Float64, upwind{Float64}}(upwind{Float64}(), 1.0)");
-    //     bargs[6] = (jl_value_t*)JUtmpdouble;
-    //     bargs[7] = (jl_value_t*)JUtmpdouble;
-    //     bargs[8] = (jl_value_t*)JUtmpdouble;
-    //     bargs[9] = (jl_value_t*)JUtmpdouble;
-    //     bargs[10] = (jl_value_t*)JUtmpdouble;
-    //     bargs[11] = (jl_value_t*)JUtmpumat;
-    //     bargs[12] = (jl_value_t*)JUtmpumat;
-    //     bargs[13] = (jl_value_t*)JUtmpdouble;
-    //     std::chrono::steady_clock::time_point begin3j = std::chrono::steady_clock::now();
-    //     jl_call(bfunc, bargs, nbinputs);
-    //     std::chrono::steady_clock::time_point endj3 = std::chrono::steady_clock::now();
-    //     std::cout << "Assembly time (JULIA) warumup = "
-    //               << std::chrono::duration_cast<std::chrono::microseconds>(endj3 - begin3j).count()
-    //               << "[ns]" << std::endl;
+    //     // const scalar a0a1 = 1.0 / dt;
+
+    //     const auto [diaOffV, ownOffV, neiOffV] =
+    //         views(sp->diagOffset(), sp->ownerOffset(), sp->neighbourOffset());
+    //     const auto [gammaV, deltaV] =
+    //         views(gamma.internalVector(), faceNormalGradient.deltaCoeffs().internalVector());
+
+    //     const auto [phiV, /* weightsV,*/ magFaceAreaV] = views(
+    //         phi.internalVector(),
+    //         // weights.internalVector(),
+    //         mesh.magFaceAreas()
+    //     );
+
+    //     parallelFor(
+    //         exec,
+    //         {0, iterator->size()},
+    //         NEON_LAMBDA(const localIdx celli) {
+    //             // DDT contribution to diagonal
+    //             const auto diagIdx = rowOffs[celli] + diaOffV[celli];
+    //             // const auto coeff = a0 * vol[celli];
+    //             // auto diagValue = coeff * one<ValueType>();
+    //             // auto rhsValue = coeff * oldVector[celli];
+
+    //             // Loop over faces of this cell
+    //             auto diagValue = zero<ValueType>();
+    //             const auto numFaces = cellFacesSegments[celli + 1] - cellFacesSegments[celli];
+    //             const auto startIdx = cellFacesSegments[celli];
+
+    //             for (localIdx i = 0; i < numFaces; ++i)
+    //             {
+    //                 const auto faceIdx = cellFacesValues[startIdx + i];
+    //                 const auto neiCell = faceNeighbourV[startIdx + i];
+    //                 const auto sign = faceSignV[startIdx + i];
+
+    //                 // Compute flux on-the-fly
+    //                 const auto fluxDiv = phiV[faceIdx]; // faceFluxV[faceIdx];
+    //                 // FIXME;
+    //                 const auto weight = (phiV[faceIdx] >= 0) ? 0.0 : 1.0; // weightsV[faceIdx];
+    //                 const auto lapFlux = deltaV[faceIdx] * gammaV[faceIdx] *
+    //                 magFaceAreaV[faceIdx]; const auto combinedFlux = (-weight * fluxDiv +
+    //                 lapFlux) * one<ValueType>();
+
+    //                 const auto offDiagValue = sign * combinedFlux;
+    //                 matrix.values[matrixColumnIdxV[startIdx + i]] += offDiagValue;
+
+    //                 // Contribution to diagonal (subtract off-diagonal)
+    //                 diagValue -= offDiagValue;
+    //             }
+
+    //             // Write diagonal and RHS
+    //             matrix.values[diagIdx] += diagValue;// + a0a1 * one<ValueType>();
+    //             // FIXME
+    //             // const auto commonCoef = operatorScaling[celli] * vol[celli];
+    //             // rhs[celli] += a0a1 * oldVector[celli];
+    //         },
+    //         "fusedKernelCellBased::cellLoop"
+    //     );
     // }
+
 
 private:
 
