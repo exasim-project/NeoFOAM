@@ -104,9 +104,24 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
              }
              else
              {
-                 // FIXME is this an empty boundary?
-                 dict.insert("type", std::string("empty"));
-                 // left blank
+                 // size == 1: single-token uniform value (parallel fixedValue serialisation).
+                 dict.insert("type", std::string("fixedValue"));
+                 if constexpr (std::is_same<type_primitive_t, NeoN::Vec3>::value)
+                 {
+                     auto tokens = tokenList.tokens();
+                     NeoN::scalar* ret = std::any_cast<NeoN::scalar>(&tokens[0]);
+                     NeoN::scalar val = ret ? NeoN::scalar(*ret)
+                                            : NeoN::scalar(tokenList.get<Foam::label>(0));
+                     dict.insert("fixedValue", NeoN::Vec3(val, val, val));
+                 }
+                 else
+                 {
+                     auto tokens = tokenList.tokens();
+                     NeoN::scalar* ret = std::any_cast<NeoN::scalar>(&tokens[0]);
+                     fixedValue = ret ? NeoN::scalar(*ret)
+                                     : NeoN::scalar(tokenList.get<Foam::label>(0));
+                     dict.insert("fixedValue", fixedValue);
+                 }
              }
          }},
         {"noSlip", // TODO specialize for vector
@@ -117,6 +132,7 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
          }},
         {"calculated", [](auto& dict) { dict.insert("type", std::string("calculated")); }},
         {"processor", [](auto& dict) { dict.insert("type", std::string("processor")); }},
+        {"processorCyclic", [](auto& dict) { dict.insert("type", std::string("processor")); }},
         {"extrapolatedCalculated",
          [](auto& dict) { dict.insert("type", std::string("calculated")); }},
         {"empty", [](auto& dict) { dict.insert("type", std::string("empty")); }},
@@ -131,7 +147,8 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
     for (const auto bName : bDict.toc())
     {
         Foam::dictionary patchDict = bDict.subDict(bName);
-        if (patchDict.get<Foam::word>("type") != "processor")
+        if (patchDict.get<Foam::word>("type") != "processor"
+            && patchDict.get<Foam::word>("type") != "processorCyclic")
         {
             NeoN::Dictionary neoPatchDict = convert(patchDict);
             patchInserter[patchDict.get<Foam::word>("type")](neoPatchDict);
@@ -142,7 +159,8 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
     for (const auto bName : bDict.toc())
     {
         Foam::dictionary patchDict = bDict.subDict(bName);
-        if (patchDict.get<Foam::word>("type") == "processor")
+        if (patchDict.get<Foam::word>("type") == "processor"
+            || patchDict.get<Foam::word>("type") == "processorCyclic")
         {
             NeoN::Dictionary neoPatchDict = convert(patchDict);
             patchInserter[patchDict.get<Foam::word>("type")](neoPatchDict);
@@ -194,6 +212,7 @@ auto readSurfaceBoundaryConditions(
          }},
         {"calculated", [](auto& dict) { dict.insert("type", std::string("calculated")); }},
         {"processor", [](auto& dict) { dict.insert("type", std::string("processor")); }},
+        {"processorCyclic", [](auto& dict) { dict.insert("type", std::string("processor")); }},
         {"empty", [](auto& dict) { dict.insert("type", std::string("empty")); }},
         {"symmetryPlane", [](auto& dict) { dict.insert("type", std::string("symmetry")); }},
         {"symmetry", [](auto& dict) { dict.insert("type", std::string("symmetry")); }}
@@ -202,7 +221,8 @@ auto readSurfaceBoundaryConditions(
     for (const auto& bName : bDict.toc())
     {
         Foam::dictionary patchDict = bDict.subDict(bName);
-        if (patchDict.get<Foam::word>("type") != "processor")
+        if (patchDict.get<Foam::word>("type") != "processor"
+            && patchDict.get<Foam::word>("type") != "processorCyclic")
         {
             NeoN::Dictionary neoPatchDict;
             patchInserter[patchDict.get<Foam::word>("type")](neoPatchDict);
@@ -213,7 +233,8 @@ auto readSurfaceBoundaryConditions(
     for (const auto& bName : bDict.toc())
     {
         Foam::dictionary patchDict = bDict.subDict(bName);
-        if (patchDict.get<Foam::word>("type") == "processor")
+        if (patchDict.get<Foam::word>("type") == "processor"
+            || patchDict.get<Foam::word>("type") == "processorCyclic")
         {
             NeoN::Dictionary neoPatchDict;
             patchInserter[patchDict.get<Foam::word>("type")](neoPatchDict);

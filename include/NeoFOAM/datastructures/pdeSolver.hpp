@@ -40,6 +40,9 @@ public:
               [&psi, &runTime]()
               { return NeoN::la::createEmptyLinearSystem<ValueType>(psi.mesh()); }
           ))
+        , needReference_(false)
+        , pRefCell_(0)
+        , pRefValue_(static_cast<NeoN::scalar>(0.0))
     {
         expr_.read(runTime_.fvSchemesDict);
     };
@@ -48,7 +51,10 @@ public:
         : psi_(expr.psi_)
         , expr_(expr.expr_)
         , runTime_(expr.runTime_)
-        , ls_(expr.ls_) {};
+        , ls_(expr.ls_)
+        , needReference_(expr.needReference_)
+        , pRefCell_(expr.pRefCell_)
+        , pRefValue_(expr.pRefValue_) {};
 
     ~PDESolver() = default;
 

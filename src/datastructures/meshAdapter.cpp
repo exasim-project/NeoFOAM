@@ -191,10 +191,8 @@ readOpenFOAMMesh(const NeoN::Executor exec, const Foam::fvMesh& mesh, bool fullM
     );
     std::vector<NeoN::localIdx> offset = computeOffset(mesh);
 
-    std::vector<NeoN::localIdx> neighbRank = computeNeighbRank(mesh);
-
-    NeoN::localIdx nProcPatches = neighbRank.size();
     std::vector<NeoN::localIdx> neighbourRank = computeNeighbRank(mesh);
+    NeoN::localIdx nProcPatches = neighbourRank.size();
     NeoN::BoundaryMesh bMesh(
         exec,
         fromFoamField(exec, faceCells),
