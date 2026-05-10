@@ -110,21 +110,11 @@ TEST_CASE("Julia Momentum")
 
         nf::PDESolver<NeoN::Vec3> nfUEqn(
             // dsl::imp::ddt(nfU) +
-            dsl::imp::div(faceFlux, phi) - 5* dsl::imp::laplacian(gamma, phi), // expr
-            phi,                                                            // volumefield
-            rt                                                              // runtime
+            dsl::imp::div(faceFlux, phi) - 5 * dsl::imp::laplacian(gamma, phi), // expr
+            phi,                                                                // volumefield
+            rt                                                                  // runtime
         );
         std::cout << "Julia Expression: " << nfUEqn.juliaOP() << std::endl;
-        jl_eval_string(R"(
-            function pass_string(p::String)
-                divlap = eval(Meta.parse(p))
-            end
-        )");
-
-        jl_function_t* func = jl_get_function(jl_main_module, "pass_string");
-        jl_value_t* argument = jl_cstr_to_string(nfUEqn.juliaOP().c_str());
-        jl_call1(func, argument);
-        REQUIRE(!jl_exception_occurred());
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
         solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
 
@@ -138,13 +128,13 @@ TEST_CASE("Julia Momentum")
                   << "[ns]" << std::endl;
 
         std::chrono::steady_clock::time_point beginj = std::chrono::steady_clock::now();
+        nfUEqn.warmupFaceBased();
         nfUEqn.juliaFaceBased(faceFlux, phi, gamma);
-        
         std::chrono::steady_clock::time_point endj = std::chrono::steady_clock::now();
         std::cout << "Assembly time (JULIA) = "
-        << std::chrono::duration_cast<std::chrono::microseconds>(endj - beginj).count()
-        << "[ns]" << std::endl;
-        
+                  << std::chrono::duration_cast<std::chrono::microseconds>(endj - beginj).count()
+                  << "[ns]" << std::endl;
+
         if (jl_exception_occurred())
         {
             const char* p = jl_string_ptr(

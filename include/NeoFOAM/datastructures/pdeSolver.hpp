@@ -286,6 +286,17 @@ public:
         }
     }
 
+    void warmupFaceBased(){
+        
+        jl_module_t* mod = (jl_module_t*)jl_eval_string("MinimalFVM");
+        
+        jl_function_t* func = jl_get_function(mod, "warmup");
+        auto fusedOPString = juliaOP();
+        std::cout << "warming up facebased with " << fusedOPString << std::endl; 
+
+        jl_call1(func, jl_cstr_to_string(fusedOPString.c_str()));
+    }
+
     [[deprecated]] void cFunctionAssembly(
         const nfvcc::SurfaceField<double>& faceFlux,
         const nfvcc::VolumeField<ValueType>& phi,
