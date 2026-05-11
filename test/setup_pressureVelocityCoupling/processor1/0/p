@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  2412                                  |
+|  \\    /   O peration     | Version:  2406                                  |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -33,9 +33,14 @@ boundaryField
     outlet
     {
         type            fixedValue;
-        value           nonuniform List<scalar> 0();
+        value           uniform 0.1;
     }
     procBoundary1to0
+    {
+        type            processor;
+        value           uniform 0.1;
+    }
+    procBoundary1to2
     {
         type            processor;
         value           uniform 0.1;
