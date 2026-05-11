@@ -21,6 +21,10 @@ if(NEOFOAM_WITH_MPI)
   target_compile_definitions(NeoN_public_api INTERFACE NF_WITH_MPI_SUPPORT=1)
 endif()
 
+if(NeoN_WITH_JULIA)
+  target_compile_definitions(NeoN_public_api INTERFACE NeoN_WITH_JULIA=1)
+endif()
+
 add_library(neofoam_catch_main test_main.cpp)
 target_link_libraries(neofoam_catch_main PUBLIC OpenFOAM Catch2::Catch2 NeoFOAM)
 install(TARGETS neofoam_catch_main Catch2)

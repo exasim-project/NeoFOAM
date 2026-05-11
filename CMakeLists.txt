@@ -21,6 +21,7 @@ option(NEOFOAM_BUILD_TESTS "Build the unit tests" OFF)
 option(NEOFOAM_BUILD_BENCHMARKS "Build benchmarks" OFF)
 option(NEOFOAM_WITH_MPI "Enable MPI support" ON)
 option(NEOFOAM_ENABLE_KOKKOS_TOOLS "Enable Kokkos Tools" OFF)
+option(NeoN_WITH_JULIA "Enable Julia Matrix Assembly" ON)
 
 set(NEOFOAM_BENCHMARK_MODE
     "all"
@@ -71,5 +72,4 @@ if(NEOFOAM_BUILD_BENCHMARKS)
   enable_testing()
   add_subdirectory(benchmarks)
 endif()
-
 include(cmake/banner.cmake)

@@ -123,13 +123,19 @@ public:
     LinearSystem& assemble()
     {
         expr_.assemble(runTime_.t, runTime_.dt, ls_);
-        auto values = ls_.matrix().values().view();
-        
-        for (size_t i = 0; i < 4; i++)
-        {
-            std::cout << "value "<< i << ": " << values[i]<< std::endl;    
-        }
-        
+        // auto values = ls_.matrix().values().view();
+        // auto rhs = ls_.rhs().view();
+        // auto bRhs = ls_.boundaryRhs().view();
+        // auto bValues = ls_.boundaryMatrix().values().view();
+
+        // for (size_t i = 0; i < 4; i++)
+        // {
+        //     std::cout << "[NeoN] value " << i << ": " << values[i] << std::endl;
+        //     std::cout << "[NeoN] bValue " << i << ": " << bValues[i] << std::endl;
+        //     std::cout << "[NeoN] RHS " << i << ": " << rhs[i] << std::endl;
+        //     std::cout << "[NeoN] bRhs " << i << ": " << bRhs[i] << std::endl;
+        // }
+
         return ls_;
     }
 
@@ -191,8 +197,7 @@ public:
         }
         return stats;
     }
-
-    std::string juliaOP() { return expr_.juliaOP(); }
+#ifdef NeoN_WITH_JULIA
 
     void juliaFaceBased(
         const nfvcc::SurfaceField<double>& faceFlux,
@@ -202,9 +207,15 @@ public:
     {
         const auto matIt = ls_.faceToMatrixAddress();
         const NeoN::UnstructuredMesh& mesh = phi.mesh();
+        auto deltas = nfvcc::SurfaceField<NeoN::scalar>(
+            mesh.exec(),
+            "deltaCoeffs",
+            mesh,
+            nfvcc::createCalculatedBCs<nfvcc::SurfaceBoundary<NeoN::scalar>>(mesh)
+        );
         const auto nInternalFaces = mesh.nInternalFaces();
         const auto nCells = mesh.nCells();
-        auto fusedOPString = juliaOP();
+        auto fusedOPString = expr_.juliaOP();
         auto deltaCoeffs = NeoN::Vector<double>(ls_.exec(), nInternalFaces, 3.0);
 
         // double
@@ -239,17 +250,16 @@ public:
         auto valueFraction = phi.boundaryData().valueFraction().juliaPtr();
         // vec3<double>
         auto refValue = phi.boundaryData().refValue().juliaPtr();
-        auto bdeltaCoeffs = NeoN::Vector<double>(ls_.exec(), nInternalFaces, 3.0);
+        // auto bdeltaCoeffs = NeoN::Vector<double>(ls_.exec(), nInternalFaces, 3.0);
         // double
-        const auto bJUdeltaCoeffs = deltaCoeffs.juliaPtr();
+        const auto bJUdeltaCoeffs = deltas.internalVector().juliaPtr();
 
-        auto jval = NeoN::Vector<double>(ls_.exec(), nInternalFaces * 2 + nCells, 0.0);
-        auto jRHS = NeoN::Vector<double>(ls_.exec(), nCells * 3, 0.0);
+        auto valPtr = ls_.matrix().juliaPtr();
         // double
-        auto valPtr = jval.juliaPtr();
-        // double
-        auto rhsPtr = jRHS.juliaPtr();
-        size_t nbinputs = 18;
+        auto rhsPtr = ls_.rhs().juliaPtr();
+        auto bRhs = ls_.boundaryRhs().juliaPtr();
+        auto bValues = ls_.boundaryMatrix().juliaPtr();
+        size_t nbinputs = 20;
         jl_value_t* args[nbinputs];
         args[0] = jl_box_int32(nInternalFaces);
         args[1] = (jl_value_t*)JUowner;
@@ -269,6 +279,8 @@ public:
         args[15] = (jl_value_t*)refGrad;
         args[16] = (jl_value_t*)rhsPtr;
         args[17] = (jl_value_t*)JUsurfFaceCells;
+        args[18] = (jl_value_t*)bValues;
+        args[19] = (jl_value_t*)bRhs;
         jl_module_t* mod = (jl_module_t*)jl_eval_string("MinimalFVM");
 
         jl_function_t* func = jl_get_function(mod, "faceBasedAll");
@@ -284,15 +296,29 @@ public:
         {
             std::cerr << ": Julia exception: " << jl_typeof_str(bexc) << std::endl;
         }
+        auto values = ls_.matrix().values().view();
+        auto rhs = ls_.rhs().view();
+        auto bRhs2 = ls_.boundaryRhs().view();
+        auto bValues2 = ls_.boundaryMatrix().values().view();
+
+        for (size_t i = 0; i < 4; i++)
+        {
+            std::cout << "[Julia] value " << i << ": " << values[i] << std::endl;
+            std::cout << "[Julia] bValue " << i << ": " << bValues2[i] << std::endl;
+            std::cout << "[Julia] RHS " << i << ": " << rhs[i] << std::endl;
+            std::cout << "[Julia] bRhs " << i << ": " << bRhs2[i] << std::endl;
+        }
     }
 
-    void warmupFaceBased(){
-        
+    void warmupFaceBased()
+    {
+        std::cout << "Julia Expression: " << expr_.juliaOP() << std::endl;
+
         jl_module_t* mod = (jl_module_t*)jl_eval_string("MinimalFVM");
-        
+
         jl_function_t* func = jl_get_function(mod, "warmup");
-        auto fusedOPString = juliaOP();
-        std::cout << "warming up facebased with " << fusedOPString << std::endl; 
+        auto fusedOPString = expr_.juliaOP();
+        std::cout << "warming up facebased with " << fusedOPString << std::endl;
 
         jl_call1(func, jl_cstr_to_string(fusedOPString.c_str()));
     }
@@ -307,7 +333,7 @@ public:
         const NeoN::UnstructuredMesh& mesh = phi.mesh();
         const auto nInternalFaces = mesh.nInternalFaces();
         const auto nCells = mesh.nCells();
-        auto fusedOPString = juliaOP();
+        auto fusedOPString = expr_.juliaOP();
         auto deltaCoeffs = NeoN::Vector<double>(ls_.exec(), nInternalFaces, 3.0);
 
         // double
@@ -346,13 +372,12 @@ public:
         // double
         const auto bJUdeltaCoeffs = deltaCoeffs.juliaPtr();
 
-        auto jval = NeoN::Vector<double>(ls_.exec(), nInternalFaces * 2 + nCells, 0.0);
-        auto jRHS = NeoN::Vector<double>(ls_.exec(), nCells * 3, 0.0);
         // double
-        auto valPtr = jval.juliaPtr();
+        auto valPtr = ls_.matrix().juliaPtr();
         // double
-        auto rhsPtr = jRHS.juliaPtr();
-
+        auto rhsPtr = ls_.rhs().juliaPtr();
+        auto bRhs = ls_.boundaryRhs().juliaPtr();
+        auto bValues = ls_.boundaryMatrix().juliaPtr();
         jl_value_t* cfunc = jl_eval_string(R"(
             @cfunction(
                 test, 
@@ -417,97 +442,8 @@ public:
            refGrad,
            rhsPtr);
     }
-    // template<typename ValueType>
-    // void computeDdtDivLapImplCell(
-    //     // scalar dt,
-    //     const VolumeField<ValueType>& U,
-    //     const SurfaceField<scalar>& phi,
-    //     const SurfaceField<scalar>& gamma,
-    //     const SurfaceInterpolation<ValueType>& divSurfInterp,
-    //     //    const SurfaceInterpolation<ValueType>& lapSurfInterp,
-    //     const FaceNormalGradient<ValueType>& faceNormalGradient,
-    //     const dsl::Coeff coeffA,
-    //     const dsl::Coeff coeffB,
-    // )
-    // {
-    //     auto iterator =
-    //         std::dynamic_pointer_cast<la::CellBasedIterator>(ls.getMeshIterator()->get());
 
-    //     auto exec = ls.exec();
-    //     const auto& mesh = phi.mesh();
-    //     const auto vol = mesh.cellVolumes().view();
-    //     auto matrix = ls.matrix().view();
-    //     const auto sp = ls.faceToMatrixAddress();
-    //     auto cellBasedData = iterator->getCellBasedData();
-    //     auto [cellFacesValues, cellFacesSegments] = cellBasedData->cellFaces.views();
-    //     auto faceNeighbourV = cellBasedData->faceNeighbour.view();
-    //     auto faceSignV = cellBasedData->faceSign.view();
-    //     auto matrixColumnIdxV = cellBasedData->matrixColumnIdx.view();
-
-    //     // const auto operatorScaling = this->getCoefficient();
-    //     const auto diagOffs = ls.faceToMatrixAddress()->diagOffset().view();
-    //     const auto oldVector = oldTime(U).internalVector().view();
-    //     auto [rhs, values] = views(ls.rhs(), ls.matrix().values());
-    //     auto [colIdx, rowOffs] = ls.matrix().sparsity()->view();
-
-    //     // const scalar a0a1 = 1.0 / dt;
-
-    //     const auto [diaOffV, ownOffV, neiOffV] =
-    //         views(sp->diagOffset(), sp->ownerOffset(), sp->neighbourOffset());
-    //     const auto [gammaV, deltaV] =
-    //         views(gamma.internalVector(), faceNormalGradient.deltaCoeffs().internalVector());
-
-    //     const auto [phiV, /* weightsV,*/ magFaceAreaV] = views(
-    //         phi.internalVector(),
-    //         // weights.internalVector(),
-    //         mesh.magFaceAreas()
-    //     );
-
-    //     parallelFor(
-    //         exec,
-    //         {0, iterator->size()},
-    //         NEON_LAMBDA(const localIdx celli) {
-    //             // DDT contribution to diagonal
-    //             const auto diagIdx = rowOffs[celli] + diaOffV[celli];
-    //             // const auto coeff = a0 * vol[celli];
-    //             // auto diagValue = coeff * one<ValueType>();
-    //             // auto rhsValue = coeff * oldVector[celli];
-
-    //             // Loop over faces of this cell
-    //             auto diagValue = zero<ValueType>();
-    //             const auto numFaces = cellFacesSegments[celli + 1] - cellFacesSegments[celli];
-    //             const auto startIdx = cellFacesSegments[celli];
-
-    //             for (localIdx i = 0; i < numFaces; ++i)
-    //             {
-    //                 const auto faceIdx = cellFacesValues[startIdx + i];
-    //                 const auto neiCell = faceNeighbourV[startIdx + i];
-    //                 const auto sign = faceSignV[startIdx + i];
-
-    //                 // Compute flux on-the-fly
-    //                 const auto fluxDiv = phiV[faceIdx]; // faceFluxV[faceIdx];
-    //                 // FIXME;
-    //                 const auto weight = (phiV[faceIdx] >= 0) ? 0.0 : 1.0; // weightsV[faceIdx];
-    //                 const auto lapFlux = deltaV[faceIdx] * gammaV[faceIdx] *
-    //                 magFaceAreaV[faceIdx]; const auto combinedFlux = (-weight * fluxDiv +
-    //                 lapFlux) * one<ValueType>();
-
-    //                 const auto offDiagValue = sign * combinedFlux;
-    //                 matrix.values[matrixColumnIdxV[startIdx + i]] += offDiagValue;
-
-    //                 // Contribution to diagonal (subtract off-diagonal)
-    //                 diagValue -= offDiagValue;
-    //             }
-
-    //             // Write diagonal and RHS
-    //             matrix.values[diagIdx] += diagValue;// + a0a1 * one<ValueType>();
-    //             // FIXME
-    //             // const auto commonCoef = operatorScaling[celli] * vol[celli];
-    //             // rhs[celli] += a0a1 * oldVector[celli];
-    //         },
-    //         "fusedKernelCellBased::cellLoop"
-    //     );
-    // }
+#endif
 
 
 private:

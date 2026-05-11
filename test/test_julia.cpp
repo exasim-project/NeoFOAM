@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
-
+#ifdef NeoN_WITH_JULIA
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
 
@@ -56,6 +56,7 @@ TEST_CASE("Julia Momentum")
     auto& mesh = rt.mesh;
     auto& schemesDict = rt.fvSchemesDict;
     schemesDict = nf::mapFvSchemes(schemesDict);
+    std::cout << schemesDict << std::endl;
     auto divs = schemesDict.subDict("divSchemes");
     auto phiu = divs.get<NeoN::TokenList>("div(phi,U)");
 
@@ -66,7 +67,6 @@ TEST_CASE("Julia Momentum")
     auto& oldOfU = ofU.oldTime();
     oldOfU.primitiveFieldRef() = Foam::vector(0.0, 0.0, 0.0);
     oldOfU.correctBoundaryConditions();
-
     auto& vectorCollection = nnfvcc::VectorCollection::instance(rt.db, "VectorCollection");
     auto& nfP = NeoFOAM::constructAndRegister(vectorCollection, rt, ofp);
 
@@ -114,7 +114,13 @@ TEST_CASE("Julia Momentum")
             phi,                                                                // volumefield
             rt                                                                  // runtime
         );
-        std::cout << "Julia Expression: " << nfUEqn.juliaOP() << std::endl;
+
+        nf::PDESolver<NeoN::Vec3> juliaUEqn(
+            // dsl::imp::ddt(nfU) +
+            dsl::imp::div(faceFlux, phi) - 5 * dsl::imp::laplacian(gamma, phi), // expr
+            phi,                                                                // volumefield
+            rt                                                                  // runtime
+        );
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
         solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
 
@@ -128,8 +134,8 @@ TEST_CASE("Julia Momentum")
                   << "[ns]" << std::endl;
 
         std::chrono::steady_clock::time_point beginj = std::chrono::steady_clock::now();
-        nfUEqn.warmupFaceBased();
-        nfUEqn.juliaFaceBased(faceFlux, phi, gamma);
+        juliaUEqn.warmupFaceBased();
+        juliaUEqn.juliaFaceBased(faceFlux, phi, gamma);
         std::chrono::steady_clock::time_point endj = std::chrono::steady_clock::now();
         std::cout << "Assembly time (JULIA) = "
                   << std::chrono::duration_cast<std::chrono::microseconds>(endj - beginj).count()
@@ -146,36 +152,7 @@ TEST_CASE("Julia Momentum")
 
         REQUIRE(!jl_exception_occurred());
     }
-
-    // SECTION("Send ") {
-
-    // }
-    // SECTION("Solve transient momentum with grad(p) on " + execName)
-    // {
-    //     Foam::fvVectorMatrix ofUEqn(
-    //         fvm::ddt(ofU) + fvm::div(ofPhi, ofU) - fvm::laplacian(ofNu, ofU)
-    //     );
-
-    //     nf::PDESolver<NeoN::Vec3> nfUEqn(
-    //         dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(nfNu, nfU),
-    //         nfU,
-    //         rt
-    //     );
-
-    //     NeoN::fill(nfUEqn.linearSystem().rhs(), NeoN::Vec3(0.0, 0.0, 0.0));
-
-    //     // require fields to be initially the same
-    //     nf::compare(nfU, ofU, ApproxVector(epsilon));
-    //     nf::compare(nfP, ofp, ApproxScalar(epsilon));
-
-    //     auto& solverDict = rt.fvSolutionDict.subDict("solvers");
-    //     solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
-
-    //     Foam::solve(ofUEqn == -fvc::grad(ofp));
-
-    //     nfUEqn.solve(-1.0 * dsl::exp::grad(nfP));
-    //     nfU.correctBoundaryConditions();
-    //     nf::compare(nfU, ofU, ApproxVector({1e-08, 1e-08, 1e-08}));
-    // }
     jl_atexit_hook(0);
 }
+
+#endif
