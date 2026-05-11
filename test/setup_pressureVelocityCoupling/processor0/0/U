@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  2406                                  |
+|  \\    /   O peration     | Version:  2412                                  |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -18,7 +18,7 @@ FoamFile
 
 dimensions      [0 1 -1 0 0 0 0];
 
-internalField   uniform (1.0 1.0 1.0);
+internalField   uniform (1 1 1);
 
 boundaryField
 {
@@ -29,7 +29,7 @@ boundaryField
     inlet
     {
         type            fixedValue;
-        value           uniform (0.0 0.0 0.0);
+        value           nonuniform List<vector> 0();
     }
     outlet
     {
@@ -38,7 +38,7 @@ boundaryField
     procBoundary0to1
     {
         type            processor;
-        value           uniform (1.0 1.0 1.0);
+        value           uniform (1 1 1);
     }
 }
 

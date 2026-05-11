@@ -14,12 +14,16 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-numberOfSubdomains 3;
+// Replaced for Phase 2 LSA-01 spike (D-01: 2-rank mesh required).
+// The 3-rank form is preserved in .decomp-backups/3rank/decomposeParDict.original
+// and must be restored before running other distributed tests (which assume 3 ranks).
+// See .decomp-backups/3rank/RESTORE.md for restore instructions.
+numberOfSubdomains 2;
 
 method          simple;
 
 simpleCoeffs {
-	n           (3 1 1);
+    n           (2 1 1);
 }
 
 
