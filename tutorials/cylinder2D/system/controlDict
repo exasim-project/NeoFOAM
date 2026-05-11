@@ -16,9 +16,9 @@ FoamFile
 
 application     icoFoam;
 
-executor        GPU;
+executor        CPU;
 
-allocator       UmpirePool;
+allocator       default;
 
 memPoolSize     1.0; // requested pool size in GB
 
@@ -28,13 +28,13 @@ startTime       0;
 
 stopAt          endTime;
 
-endTime         1.0;
+endTime         0.00015; //1.0;
 
 deltaT          0.5e-4;
 
-writeControl    adjustable;
+writeControl    timeStep; //adjustable;
 
-writeInterval   0.005;
+writeInterval   1;
 
 purgeWrite      0;
 
