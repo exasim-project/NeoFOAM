@@ -22,7 +22,6 @@ TEST_CASE("DistributedMomentum")
     SECTION("Parallel sanity check")
     {
         REQUIRE(Foam::Pstream::parRun());
-        REQUIRE(Foam::Pstream::nProcs() == 3);
     }
 
     float epsilon = 1e-32;

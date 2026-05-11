@@ -23,7 +23,6 @@ TEST_CASE("Distributed UnstructuredMesh")
     SECTION("Parallel sanity check")
     {
         REQUIRE(Foam::Pstream::parRun());
-        REQUIRE(Foam::Pstream::nProcs() == 3);
     }
 
     float epsilon = 1e-32;
@@ -38,7 +37,10 @@ TEST_CASE("Distributed UnstructuredMesh")
 
     SECTION("Parallel mesh sanity check")
     {
-        REQUIRE(rt.nfMesh.nCells() == 9);
+        if (Foam::Pstream::nProcs() == 3)
+        {
+            REQUIRE(rt.nfMesh.nCells() == 9);
+        }
         REQUIRE(rt.nfMesh.boundaryMesh().isDistributed() == true);
     }
     SECTION_IF(rt.mpiEnvironment.rank() == 1, "Correct boundary Mesh on rank 1")

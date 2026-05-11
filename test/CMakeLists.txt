@@ -86,7 +86,28 @@ neofoam_unit_test(compatibility setup_compatibility)
 neofoam_unit_test(momentum setup_pressureVelocityCoupling)
 
 if(NEOFOAM_WITH_MPI)
+  # Build executables and register the 3-rank CTest entries (default names without suffix).
   neofoam_unit_test(distributedUnstructuredMesh setup_pressureVelocityCoupling MPI_SIZE 3)
   neofoam_unit_test(distributedPressureVelocityCoupling setup_pressureVelocityCoupling MPI_SIZE 3)
   neofoam_unit_test(distributedMomentum setup_pressureVelocityCoupling MPI_SIZE 3)
+
+  # 2-rank entries (ENABLED): use the 2-rank decomposition in setup_pressureVelocityCoupling_mpi2.
+  foreach(TEST distributedUnstructuredMesh distributedPressureVelocityCoupling distributedMomentum)
+    add_test(
+      NAME ${TEST}_mpi2
+      COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+              ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tests/neofoam_test_${TEST} -parallel
+      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test/setup_pressureVelocityCoupling_mpi2)
+    set_tests_properties(${TEST}_mpi2 PROPERTIES TIMEOUT 10 PROCESSORS 2)
+  endforeach()
+
+  # 4-rank entries (DISABLED): no 4-rank decomposition in Phase 2; enabled in Phase 5.
+  foreach(TEST distributedUnstructuredMesh distributedPressureVelocityCoupling distributedMomentum)
+    add_test(
+      NAME ${TEST}_mpi4
+      COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4
+              ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tests/neofoam_test_${TEST} -parallel
+      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test/setup_pressureVelocityCoupling)
+    set_tests_properties(${TEST}_mpi4 PROPERTIES TIMEOUT 10 PROCESSORS 4 DISABLED TRUE)
+  endforeach()
 endif()

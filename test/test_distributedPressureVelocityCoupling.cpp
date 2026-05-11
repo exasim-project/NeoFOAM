@@ -22,7 +22,6 @@ TEST_CASE("Distributed PressureVelocityCoupling")
     SECTION("Parallel sanity check")
     {
         REQUIRE(Foam::Pstream::parRun());
-        REQUIRE(Foam::Pstream::nProcs() == 3);
     }
 
     float epsilon = 1e-32;
@@ -518,7 +517,6 @@ TEST_CASE("BC-01: fixedValue size-1 token not downgraded to empty")
     SECTION("Parallel sanity check")
     {
         REQUIRE(Foam::Pstream::parRun());
-        REQUIRE(Foam::Pstream::nProcs() == 3);
     }
 
     Foam::Time& runTime = *timePtr;
@@ -553,7 +551,6 @@ TEST_CASE("BC-02: processorCyclic patch in surface reader does not crash")
     SECTION("Parallel sanity check")
     {
         REQUIRE(Foam::Pstream::parRun());
-        REQUIRE(Foam::Pstream::nProcs() == 3);
     }
 
     Foam::Time& runTime = *timePtr;
@@ -592,7 +589,6 @@ TEST_CASE("BC-03: PDESolver constructed without setReference does not trigger UB
     SECTION("Parallel sanity check")
     {
         REQUIRE(Foam::Pstream::parRun());
-        REQUIRE(Foam::Pstream::nProcs() == 3);
     }
 
     Foam::Time& runTime = *timePtr;
@@ -661,7 +657,6 @@ TEST_CASE("MPI-02: SurfaceField internalVector proc-face slots updated after exc
     SECTION("Parallel sanity check")
     {
         REQUIRE(Foam::Pstream::parRun());
-        REQUIRE(Foam::Pstream::nProcs() == 3);
     }
 
     Foam::Time& runTime = *timePtr;
