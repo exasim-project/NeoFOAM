@@ -740,7 +740,7 @@ TEST_CASE("LSA-01: faceToMatrixAddress distributed spike -- Laplacian residual",
     {
 #if NF_WITH_GINKGO
         // Construct a scalar pressure field from the OF mesh.
-        auto ofp = randomScalarField(runTime, mesh, "p_lsa01");
+        auto ofp = randomScalarField(runTime, mesh, "p");
         ofp.correctBoundaryConditions();
 
         auto& vectorCollection = nnfvcc::VectorCollection::instance(rt.db, "VectorCollection");
@@ -777,10 +777,11 @@ TEST_CASE("LSA-01: faceToMatrixAddress distributed spike -- Laplacian residual",
                    << " numIter=" << numIter << " initResNorm=" << initResNorm
                    << " finalResNorm=" << finalResNorm << Foam::endl;
 
-        // Assertions are diagnostic only -- spike is allowed to FAIL.
+        // Assertions: residuals are not normalized, so check relative convergence.
         REQUIRE(numIter >= 0);  // sanity: solver did not segfault
-        CHECK(finalResNorm < 1e-3);  // CHECK not REQUIRE so we see the value if it fails
-        CHECK(!std::isnan(static_cast<double>(finalResNorm)));
+        REQUIRE(!std::isnan(static_cast<double>(finalResNorm)));
+        REQUIRE(initResNorm > 0);
+        CHECK(finalResNorm / initResNorm < 1e-4);  // relative residual: 4 orders of magnitude
 #else
         WARN("Ginkgo not available -- LSA-01 spike skipped");
 #endif
