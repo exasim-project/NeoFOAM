@@ -715,3 +715,74 @@ TEST_CASE("MPI-02: SurfaceField internalVector proc-face slots updated after exc
         }
     }
 }
+
+TEST_CASE("LSA-01: faceToMatrixAddress distributed spike -- Laplacian residual", "[LSA-01]")
+{
+    SECTION("Parallel sanity check")
+    {
+        REQUIRE(Foam::Pstream::parRun());
+        // NOTE: deliberately no REQUIRE(Foam::Pstream::nProcs() == N) guard --
+        // the spike is launched at the 2-rank decomposition created by plan 02-01
+        // Task 1 (per D-01). NRANK-02 (plan 02-04) generalises every other distributed
+        // TEST_CASE to be rank-agnostic too.
+    }
+
+    Foam::Time& runTime = *timePtr;
+    auto [execName, exec] = GENERATE(
+        std::pair<std::string, NeoN::Executor>{"CPUExecutor", NeoN::CPUExecutor {}}
+    );
+    auto rt = nf::createAdapterRunTime(runTime, exec);
+    auto& mesh = rt.mesh;
+    auto& schemesDict = rt.fvSchemesDict;
+    schemesDict = nf::mapFvSchemes(schemesDict);
+
+    SECTION("Ginkgo distributed Laplacian solve on " + execName)
+    {
+#if NF_WITH_GINKGO
+        // Construct a scalar pressure field from the OF mesh.
+        auto ofp = randomScalarField(runTime, mesh, "p_lsa01");
+        ofp.correctBoundaryConditions();
+
+        auto& vectorCollection = nnfvcc::VectorCollection::instance(rt.db, "VectorCollection");
+        auto& nfP = nf::constructAndRegister(vectorCollection, rt, ofp);
+
+        // Build a unit rAUf surface field for the Laplacian coefficient.
+        Foam::surfaceScalarField forAUf(
+            Foam::IOobject(
+                "rAUf_lsa01",
+                runTime.timeName(),
+                mesh,
+                Foam::IOobject::NO_READ,
+                Foam::IOobject::NO_WRITE
+            ),
+            mesh,
+            Foam::dimensionedScalar("rAUf_lsa01", Foam::dimViscosity, 1.0)
+        );
+        auto nfrAUf = nf::constructFrom(rt.exec, rt.nfMesh, forAUf);
+
+        // Assemble a Laplacian-only expression (no convection, no time term).
+        nf::PDESolver<NeoN::scalar> pEqn(dsl::imp::laplacian(nfrAUf, nfP), nfP, rt);
+
+        auto& solverDict = rt.fvSolutionDict.subDict("solvers");
+        solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
+
+        // After solve, capture solver stats.
+        auto solverStats = pEqn.solve();
+        REQUIRE(solverStats.entries.size() > 0);
+
+        auto [numIter, initResNorm, finalResNorm, solveTime] = solverStats.entries[0];
+
+        // Emit DIAGNOSTIC output on each rank -- this is the primary observable.
+        Foam::Info << "[LSA-01 spike] rank=" << Foam::Pstream::myProcNo()
+                   << " numIter=" << numIter << " initResNorm=" << initResNorm
+                   << " finalResNorm=" << finalResNorm << Foam::endl;
+
+        // Assertions are diagnostic only -- spike is allowed to FAIL.
+        REQUIRE(numIter >= 0);  // sanity: solver did not segfault
+        CHECK(finalResNorm < 1e-3);  // CHECK not REQUIRE so we see the value if it fails
+        CHECK(!std::isnan(static_cast<double>(finalResNorm)));
+#else
+        WARN("Ginkgo not available -- LSA-01 spike skipped");
+#endif
+    }
+}
