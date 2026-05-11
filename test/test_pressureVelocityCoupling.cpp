@@ -95,7 +95,10 @@ TEST_CASE("PressureVelocityCoupling")
             ApproxVector(1e-15)
         );
         nf::compare(
-            NeoN::la::removeBoundaryContributions(nfUEqn.linearSystem()).matrix().diag(),
+            NeoN::la::removeBoundaryContributions(
+                nfUEqn.linearSystem(),
+                NeoN::Vector<NeoN::Vec3>(exec, 0)  // serial: no proc-faces
+            ).matrix().diag(),
             ofUEqn.diag(),
             ApproxVector(1e-15)
         );

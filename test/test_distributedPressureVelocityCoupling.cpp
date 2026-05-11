@@ -435,7 +435,11 @@ TEST_CASE("Distributed PressureVelocityCoupling")
         // Laplacian the restoration is exact (nonLocal = exact negative of what was
         // subtracted from diag).
         {
-            auto lsStripped = NeoN::la::removeBoundaryContributions(lsH);
+            // Two-arg overload: ghost values for the diagonal check don't affect the
+            // diagonal itself (they only enter the RHS); zeros are valid here.
+            auto nProcFaces = static_cast<NeoN::localIdx>(lsH.nonLocalMatrix().values().size());
+            NeoN::Vector<NeoN::scalar> procGhost(lsH.exec(), nProcFaces, NeoN::scalar(0));
+            auto lsStripped = NeoN::la::removeBoundaryContributions(lsH, procGhost);
             auto diagStripped = lsStripped.matrix().diag();
             auto diagStrippedView = diagStripped.view();
             for (Foam::label celli = 0; celli < mesh.nCells(); ++celli)
@@ -747,16 +751,17 @@ TEST_CASE("LSA-01: faceToMatrixAddress distributed spike -- Laplacian residual",
         auto& nfP = nf::constructAndRegister(vectorCollection, rt, ofp);
 
         // Build a unit rAUf surface field for the Laplacian coefficient.
+        // Name must match fvSchemes entry "laplacian(rAUf,p)".
         Foam::surfaceScalarField forAUf(
             Foam::IOobject(
-                "rAUf_lsa01",
+                "rAUf",
                 runTime.timeName(),
                 mesh,
                 Foam::IOobject::NO_READ,
                 Foam::IOobject::NO_WRITE
             ),
             mesh,
-            Foam::dimensionedScalar("rAUf_lsa01", Foam::dimViscosity, 1.0)
+            Foam::dimensionedScalar("rAUf", Foam::dimViscosity, 1.0)
         );
         auto nfrAUf = nf::constructFrom(rt.exec, rt.nfMesh, forAUf);
 
