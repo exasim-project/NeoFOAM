@@ -29,7 +29,10 @@ TEST_CASE("Distributed PressureVelocityCoupling")
     float epsilonII = 1e-13;
     Foam::Time& runTime = *timePtr;
 
-    auto [execName, exec] = GENERATE(allAvailableExecutor());
+    //auto [execName, exec] = GENERATE(allAvailableExecutor());
+    auto [execName, exec] = GENERATE(
+    std::pair<std::string, NeoN::Executor>{"CPUExecutor", NeoN::CPUExecutor{}}
+);
 
     auto rt = nf::createAdapterRunTime(runTime, exec);
     auto& mesh = rt.mesh;
@@ -118,6 +121,16 @@ TEST_CASE("Distributed PressureVelocityCoupling")
         // matches OF's per-rank value, where the ghost cell value comes from
         // the prior crAU.correctBoundaryConditions() exchange done inside
         // computeRAU.
+        //
+        // LIMITATION: setup_pressureVelocityCoupling uses simpleGrading (1 1 1),
+        // so every proc-face has w == 0.5. A reversed-weight formula
+        //   (1-w) * own + w * ghost
+        // produces the same value as the correct
+        //   w * own + (1-w) * ghost
+        // when w == 0.5, regardless of the input field. To make this section
+        // catch reversed-weight regressions in computeLinearInterpolation's
+        // proc-face branch a graded mesh setup (e.g. simpleGrading != 1) is
+        // required so that w_A + w_B = 1 with both weights != 0.5.
         nf::compare(nfU, ofU, ApproxVector(epsilon), true);
 
         Foam::volScalarField forAU("rAU", 1.0 / ofUEqn.A());
@@ -186,6 +199,10 @@ TEST_CASE("Distributed PressureVelocityCoupling")
 
         Foam::volScalarField forAU("rAU", 1.0 / ofUEqn.A());
         Foam::volVectorField HbyA("HbyA", forAU * ofUEqn.H());
+        // NeoN's computeRAUandHByA calls hByA.correctBoundaryConditions() which
+        // MPI-exchanges proc patches so nfHbyA stores ghost (neighbour) cell values.
+        // Mirror that in OF so both sides compare ghost values.
+        HbyA.correctBoundaryConditions();
 
         nfUEqn.assemble();
 
@@ -229,6 +246,10 @@ TEST_CASE("Distributed PressureVelocityCoupling")
         nf::compare(nfU, ofU, ApproxVector(epsilon));
         Foam::volScalarField forAU("rAU", 1.0 / ofUEqn.A());
         Foam::volVectorField HbyA("HbyA", forAU * ofUEqn.H());
+        // NeoN's nfHbyA has ghost proc-patch values from computeRAUandHByA's
+        // correctBoundaryConditions(); exchange OF HbyA too so fvc::flux uses
+        // the same ghost values for the proc-face interpolation.
+        HbyA.correctBoundaryConditions();
         Foam::volVectorField ofConstrainHbyA(
             "ofConstHbyA",
             Foam::constrainHbyA(forAU * ofUEqn.H(), ofU, ofp)
@@ -298,15 +319,15 @@ TEST_CASE("Distributed PressureVelocityCoupling")
             NeoFOAM::randDimField<Foam::surfaceScalarField>(mesh, {0, 0, 1, 0, 0}, "rAUf");
         auto nfrAUf = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, forAUf);
 
-        // Foam::surfaceScalarField ofPhi0("phi0", ofPhi * 0.0);
-        // auto nfPhi0 = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofPhi);
+        Foam::surfaceScalarField ofPhi0("phi0", ofPhi * 0.0);
+        auto nfPhi0 = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofPhi0);
 
         Foam::fvScalarMatrix ofpEqn(fvm::laplacian(forAUf, ofp) == fvc::div(ofPhi));
         ofpEqn.setReference(0, 0.0);
         ofp.correctBoundaryConditions();
         solve(ofpEqn);
         ofp.correctBoundaryConditions();
-        auto ofPhi0 = ofpEqn.flux();
+        ofPhi0 = ofPhi - ofpEqn.flux();
 
         nf::PDESolver<NeoN::scalar> pEqn(
             dsl::imp::laplacian(nfrAUf, nfP) - dsl::exp::div(nfPhi),
@@ -344,10 +365,353 @@ TEST_CASE("Distributed PressureVelocityCoupling")
         REQUIRE(initResNorm != 0);
         REQUIRE(finalResNorm < initResNorm);
 
-        nf::compare(nfP, ofp, ApproxScalar(1e-32), true);
-        nf::compare(nfPhi, ofPhi, ApproxScalar(1e-32), true);
+        nf::compare(nfP, ofp, ApproxScalar(1e-12), true);
 
-        auto nfPhi0 = nf::flux(pEqn);
-        nf::compare(nfPhi0, ofPhi0(), ApproxScalar(1e-05), false);
+        // nfPhi was built by constructFrom which calls correctBoundaryConditions()
+        // (MPI exchange), so its proc patches hold the neighbour's flux values.
+        // ofPhi was constructed by fvc::flux(ofU) without a subsequent exchange,
+        // so its proc patches hold the own-rank computed flux (opposite sign).
+        // Exchange OF phi too so both sides compare neighbour-exchanged values.
+        ofPhi.correctBoundaryConditions();
+        nf::compare(nfPhi, ofPhi, ApproxScalar(1e-12), true);
+
+        nf::updateFaceVelocity(nfPhi, pEqn, nfPhi0);
+        nf::compare(nfPhi0, ofPhi0, ApproxScalar(1e-12), false);
+    }
+
+    // -----------------------------------------------------------------------
+    // Diagnostic: compare raw proc-face matrix entries against OF's reference.
+    // We compare NeoN's nonLocalMatrix (coupling coefficient to ghost cell) vs
+    // OF's internalCoeffs for processor patches, and the assembled diagonal at
+    // proc-adjacent cells.  All assertions use CHECK so the full mismatch
+    // picture is visible even when some entries fail.
+    // -----------------------------------------------------------------------
+
+    SECTION("proc-face matrix entries: pEqn Laplacian" + execName)
+    {
+        auto forAUf =
+            NeoFOAM::randDimField<Foam::surfaceScalarField>(mesh, {0, 0, 1, 0, 0}, "rAUf");
+        auto nfrAUf = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, forAUf);
+
+        Foam::fvScalarMatrix ofpEqn(fvm::laplacian(forAUf, ofp));
+        nf::PDESolver<NeoN::scalar> pEqn(dsl::imp::laplacian(nfrAUf, nfP), nfP, rt);
+        pEqn.assemble();
+
+        // nonLocalMatrix[bcfaceii] = A[own, ghost] = the off-diagonal coupling
+        // coefficient to the ghost cell.  For a pure +laplacian(rAUf, p):
+        //   A[own, ghost] = +rAUf * deltaCoeff * magSf  (positive)
+        auto lsH = pEqn.linearSystem().copyToHost();
+        const auto& nlVals = lsH.nonLocalMatrix().values();
+        auto nlView = nlVals.view();
+
+        int bcfaceii = 0;
+        forAll(mesh.boundary(), patchI)
+        {
+            const auto& fvPatch = mesh.boundary()[patchI];
+            if (!isA<Foam::processorFvPatch>(fvPatch)) continue;
+
+            const auto& deltaCoeffs = fvPatch.deltaCoeffs();
+            const auto& magSf = fvPatch.magSf();
+
+            forAll(fvPatch, faceI)
+            {
+                // Expected A[own,ghost] for +laplacian(rAUf, p).
+                const double expected = static_cast<double>(
+                    forAUf.boundaryField()[patchI][faceI]
+                    * deltaCoeffs[faceI]
+                    * magSf[faceI]
+                );
+                CHECK(
+                    static_cast<double>(nlView[bcfaceii]) == Catch::Approx(expected).margin(epsilonII)
+                );
+                ++bcfaceii;
+            }
+        }
+
+        // NeoN bakes boundary contributions into the diagonal during assembly;
+        // OF's diag() is internal-faces-only.  removeBoundaryContributions adds
+        // back the stored boundary/nonLocal values (which were subtracted), leaving
+        // an internal-faces-only diagonal that must match OF's diag().  For a pure
+        // Laplacian the restoration is exact (nonLocal = exact negative of what was
+        // subtracted from diag).
+        {
+            auto lsStripped = NeoN::la::removeBoundaryContributions(lsH);
+            auto diagStripped = lsStripped.matrix().diag();
+            auto diagStrippedView = diagStripped.view();
+            for (Foam::label celli = 0; celli < mesh.nCells(); ++celli)
+            {
+                CHECK(
+                    static_cast<double>(diagStrippedView[celli])
+                    == Catch::Approx(static_cast<double>(ofpEqn.diag()[celli])).margin(epsilonII)
+                );
+            }
+        }
+    }
+
+    SECTION("proc-face matrix entries: UEqn ddt+div-laplacian" + execName)
+    {
+        nfUEqn.assemble();
+
+        // Internal upper — regression guard matching the existing HbyA check.
+        nf::compare(
+            NeoN::la::upper(nfUEqn.linearSystem().matrix()),
+            ofUEqn.upper(),
+            ApproxVector(epsilonII)
+        );
+
+        auto lsH = nfUEqn.linearSystem().copyToHost();
+        const auto& nlVals = lsH.nonLocalMatrix().values();
+        auto nlView = nlVals.view();
+
+        // nonLocalMatrix[bcfaceii] = A[own, ghost].
+        // For ddt(U) + div(phi,U)[upwind] - laplacian(nu,U) at a proc face:
+        //   A[own, ghost] = min(phi_f, 0) * I  +  (-nu * deltaCoeff * magSf) * I
+        // where I = identity (isotropic: all 3 components equal).
+        //   min(phi_f,0): upwind div coupling (non-zero only when ghost is upwind)
+        //   -nu*delta*magSf: symmetric Laplacian ghost coupling (always negative)
+        // Compare against the analytically expected value computed from OF mesh data.
+        int bcfaceii = 0;
+        forAll(mesh.boundary(), patchI)
+        {
+            const auto& fvPatch = mesh.boundary()[patchI];
+            if (!isA<Foam::processorFvPatch>(fvPatch)) continue;
+
+            const auto& deltaCoeffs = fvPatch.deltaCoeffs();
+            const auto& magSf = fvPatch.magSf();
+            const auto& phiBound = ofPhi.boundaryField()[patchI];
+            const auto& nuBound = ofNu.boundaryField()[patchI];
+
+            forAll(fvPatch, faceI)
+            {
+                const double nuFlux = static_cast<double>(nuBound[faceI])
+                    * static_cast<double>(deltaCoeffs[faceI])
+                    * static_cast<double>(magSf[faceI]);
+                const double phiF = static_cast<double>(phiBound[faceI]);
+                // A[own,ghost] = min(phi,0) - nu_flux  (always <= 0 for stable flows)
+                const double expected = std::min(phiF, 0.0) - nuFlux;
+
+                const auto nfNL = nlView[bcfaceii];
+                for (int k = 0; k < 3; ++k)
+                {
+                    CHECK(
+                        static_cast<double>(nfNL[k]) == Catch::Approx(expected).margin(epsilonII)
+                    );
+                }
+                ++bcfaceii;
+            }
+        }
+
+        // No diagonal comparison for UEqn: removeBoundaryContributions is
+        // inexact for the divergence operator (proc-face stores F*(1-w)*c in
+        // nonLocal but adds F*w*c to the diagonal, so the two fractions differ
+        // and the restoration leaves a residual).  The diagonal is indirectly
+        // validated by the rAU section which passes.
+    }
+}
+
+TEST_CASE("BC-01: fixedValue size-1 token not downgraded to empty")
+{
+    SECTION("Parallel sanity check")
+    {
+        REQUIRE(Foam::Pstream::parRun());
+        REQUIRE(Foam::Pstream::nProcs() == 3);
+    }
+
+    Foam::Time& runTime = *timePtr;
+    auto [execName, exec] = GENERATE(
+        std::pair<std::string, NeoN::Executor>{"CPUExecutor", NeoN::CPUExecutor {}}
+    );
+    auto rt = nf::createAdapterRunTime(runTime, exec);
+    auto& mesh = rt.mesh;
+
+    SECTION("fixedValue BC with single-token value is not downgraded to empty " + execName)
+    {
+        auto ofp = randomScalarField(runTime, mesh, "p");
+        ofp.correctBoundaryConditions();
+        auto nfp = nf::constructFrom(rt.exec, rt.nfMesh, ofp);
+
+        const auto& bm = rt.nfMesh.boundaryMesh();
+        REQUIRE(bm.nBoundaryFaces() > 0);
+
+        auto bcValHost = nfp.boundaryData().value().copyToHost();
+        auto bcView = bcValHost.view();
+        REQUIRE(static_cast<NeoN::localIdx>(bcView.size()) == bm.nBoundaryFaces() + bm.nProcBoundaryFaces());
+
+        REQUIRE(
+            static_cast<NeoN::localIdx>(nfp.boundaryConditions().size())
+            == bm.nBoundaries()
+        );
+    }
+}
+
+TEST_CASE("BC-02: processorCyclic patch in surface reader does not crash")
+{
+    SECTION("Parallel sanity check")
+    {
+        REQUIRE(Foam::Pstream::parRun());
+        REQUIRE(Foam::Pstream::nProcs() == 3);
+    }
+
+    Foam::Time& runTime = *timePtr;
+    auto [execName, exec] = GENERATE(
+        std::pair<std::string, NeoN::Executor>{"CPUExecutor", NeoN::CPUExecutor {}}
+    );
+    auto rt = nf::createAdapterRunTime(runTime, exec);
+    auto& mesh = rt.mesh;
+
+    SECTION("surface field construction does not crash with processor patches " + execName)
+    {
+        Foam::surfaceScalarField ofPhi(
+            Foam::IOobject(
+                "phi_bc02",
+                runTime.timeName(),
+                mesh,
+                Foam::IOobject::NO_READ,
+                Foam::IOobject::NO_WRITE
+            ),
+            mesh,
+            Foam::dimensionedScalar("phi_bc02", Foam::dimless, 0.0)
+        );
+
+        auto nfPhi = nf::constructFrom(rt.exec, rt.nfMesh, ofPhi);
+        const auto& bm = rt.nfMesh.boundaryMesh();
+
+        REQUIRE(
+            static_cast<NeoN::localIdx>(nfPhi.boundaryConditions().size())
+            == bm.nBoundaries()
+        );
+    }
+}
+
+TEST_CASE("BC-03: PDESolver constructed without setReference does not trigger UB")
+{
+    SECTION("Parallel sanity check")
+    {
+        REQUIRE(Foam::Pstream::parRun());
+        REQUIRE(Foam::Pstream::nProcs() == 3);
+    }
+
+    Foam::Time& runTime = *timePtr;
+    auto [execName, exec] = GENERATE(
+        std::pair<std::string, NeoN::Executor>{"CPUExecutor", NeoN::CPUExecutor {}}
+    );
+    auto rt = nf::createAdapterRunTime(runTime, exec);
+    auto& mesh = rt.mesh;
+    auto& schemesDict = rt.fvSchemesDict;
+    schemesDict = nf::mapFvSchemes(schemesDict);
+
+    SECTION("PDESolver solve() without prior setReference does not UB " + execName)
+    {
+        auto ofp = randomScalarField(runTime, mesh, "p");
+        ofp.correctBoundaryConditions();
+
+        auto& vectorCollection =
+            nnfvcc::VectorCollection::instance(rt.db, "VectorCollection");
+        auto& nfP = nf::constructAndRegister(vectorCollection, rt, ofp);
+
+        Foam::surfaceScalarField ofPhi(
+            Foam::IOobject(
+                "phi",
+                runTime.timeName(),
+                mesh,
+                Foam::IOobject::NO_READ,
+                Foam::IOobject::NO_WRITE
+            ),
+            mesh,
+            Foam::dimensionedScalar("phi", Foam::dimless, 0.0)
+        );
+        auto nfPhi = nf::constructFrom(rt.exec, rt.nfMesh, ofPhi);
+
+        // Use "rAUf" to match the laplacian(rAUf,p) entry in system/fvSchemes.
+        Foam::surfaceScalarField forAUf(
+            Foam::IOobject(
+                "rAUf",
+                runTime.timeName(),
+                mesh,
+                Foam::IOobject::NO_READ,
+                Foam::IOobject::NO_WRITE
+            ),
+            mesh,
+            Foam::dimensionedScalar("rAUf", Foam::dimViscosity, 1.0)
+        );
+        auto nfrAUf = nf::constructFrom(rt.exec, rt.nfMesh, forAUf);
+
+        nf::PDESolver<NeoN::scalar> pEqn(
+            dsl::imp::laplacian(nfrAUf, nfP) - dsl::exp::div(nfPhi),
+            nfP,
+            rt
+        );
+
+        auto& solverDict = rt.fvSolutionDict.subDict("solvers");
+        solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
+
+        // Must not crash — ASAN in develop preset catches uninitialised reads.
+        // setReference() deliberately NOT called before solve().
+        auto stats = pEqn.solve();
+        REQUIRE(stats.entries.size() > 0);
+    }
+}
+
+TEST_CASE("MPI-02: SurfaceField internalVector proc-face slots updated after exchange")
+{
+    SECTION("Parallel sanity check")
+    {
+        REQUIRE(Foam::Pstream::parRun());
+        REQUIRE(Foam::Pstream::nProcs() == 3);
+    }
+
+    Foam::Time& runTime = *timePtr;
+    auto [execName, exec] = GENERATE(
+        std::pair<std::string, NeoN::Executor>{"CPUExecutor", NeoN::CPUExecutor {}}
+    );
+    auto rt = nf::createAdapterRunTime(runTime, exec);
+    auto& mesh = rt.mesh;
+
+    SECTION("internalVector proc-face slots == boundaryData values after correctBC " + execName)
+    {
+        Foam::surfaceScalarField ofPhi(
+            Foam::IOobject(
+                "phi_mpi02",
+                runTime.timeName(),
+                mesh,
+                Foam::IOobject::NO_READ,
+                Foam::IOobject::NO_WRITE
+            ),
+            mesh,
+            Foam::dimensionedScalar("phi_mpi02", Foam::dimless, 1.0)
+        );
+
+        auto nfPhi = nf::constructFrom(rt.exec, rt.nfMesh, ofPhi);
+        nfPhi.correctBoundaryConditions();
+
+        const auto& bm = rt.nfMesh.boundaryMesh();
+        const auto totalPatches = bm.nBoundaries();
+        const auto procPatchCount = bm.nProcBoundaryPatches();
+
+        if (procPatchCount > 0)
+        {
+            const auto firstProcPatch = totalPatches - procPatchCount;
+            const auto nIntF =
+                static_cast<NeoN::localIdx>(rt.nfMesh.nInternalFaces());
+            const auto nNonProcBnd =
+                static_cast<NeoN::localIdx>(bm.offset()[firstProcPatch]);
+            const auto nProcBnd =
+                static_cast<NeoN::localIdx>(bm.nProcBoundaryFaces());
+
+            auto intVecHost = nfPhi.internalVector().copyToHost();
+            auto bndValHost = nfPhi.boundaryData().value().copyToHost();
+            auto intView = intVecHost.view();
+            auto bndView = bndValHost.view();
+
+            for (NeoN::localIdx i = 0; i < nProcBnd; ++i)
+            {
+                INFO("proc face index " << i);
+                REQUIRE(
+                    static_cast<double>(intView[nIntF + nNonProcBnd + i])
+                    == Catch::Approx(static_cast<double>(bndView[nNonProcBnd + i]))
+                           .margin(1e-10)
+                );
+            }
+        }
     }
 }

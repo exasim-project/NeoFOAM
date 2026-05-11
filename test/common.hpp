@@ -156,10 +156,11 @@ void compare(const NFFIELD& a, const OFFIELD& b, Compare comp, const bool withBo
             auto ofBoundaryData = std::vector<typename NFFIELD::VectorValueType> {};
             auto nfBoundaryHost = a.boundaryData().value().copyToHost();
 
-            //
+            // Build the OF reference in the same order NeoN stores
+            // boundaryData().value(): non-processor patches first, processor
+            // patches in the trailing tail. Both kinds are compared.
             for (const auto& patch : b.boundaryField())
             {
-                // FIXME For skip processor boundaries
                 if (patch.type() == "processor")
                 {
                     continue;
@@ -172,7 +173,6 @@ void compare(const NFFIELD& a, const OFFIELD& b, Compare comp, const bool withBo
             }
             for (const auto& patch : b.boundaryField())
             {
-                // FIXME For skip processor boundaries
                 if (patch.type() != "processor")
                 {
                     continue;
