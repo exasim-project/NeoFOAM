@@ -67,28 +67,34 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
              // NOTE FIXME in parallel cases we end up with token.size ==1
              // leading to nonuniform as first token. This  means probably that
              // parsing the foam dictionary aborts early and omits 0();
+             dict.insert("type", std::string("fixedValue"));
              if (tokenList.size() > 1)
              {
-                 dict.insert("type", std::string("fixedValue"));
                  // test if things can be read as scalar first, if it doesn't work
-                 // read as int and convert to scalar
+                 // read as int and convert to scalar.
+                 // If token[1] is a string (e.g. "nonuniform" followed by "List<scalar>"),
+                 // the field is a per-face nonuniform list; default to zero — the actual
+                 // boundary values are populated later by constructFrom's boundary copy.
                  if constexpr (std::is_same<type_primitive_t, NeoN::Vec3>::value)
                  {
                      NeoN::Vec3 tmpFixedValue {};
                      auto tokens = tokenList.tokens();
                      NeoN::scalar* ret = std::any_cast<NeoN::scalar>(&tokens[1]);
+                     std::string* isStr = std::any_cast<std::string>(&tokens[1]);
                      if (ret)
                      {
                          tmpFixedValue[0] = tokenList.get<NeoN::scalar>(1);
                          tmpFixedValue[1] = tokenList.get<NeoN::scalar>(2);
                          tmpFixedValue[2] = tokenList.get<NeoN::scalar>(3);
                      }
-                     else
+                     else if (!isStr)
                      {
+                         // label tokens (integer value)
                          tmpFixedValue[0] = NeoN::scalar(tokenList.get<Foam::label>(1));
                          tmpFixedValue[1] = NeoN::scalar(tokenList.get<Foam::label>(2));
                          tmpFixedValue[2] = NeoN::scalar(tokenList.get<Foam::label>(3));
                      }
+                     // else: nonuniform list — leave tmpFixedValue as zero
                      dict.insert("fixedValue", tmpFixedValue);
                      return;
                  }
@@ -97,31 +103,60 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
                      auto tokens = tokenList.tokens();
                      fixedValue = 0.0;
                      NeoN::scalar* ret = std::any_cast<NeoN::scalar>(&tokens[1]);
-                     fixedValue =
-                         ret ? NeoN::scalar(*ret) : NeoN::scalar(tokenList.get<Foam::label>(1));
+                     std::string* isStr = std::any_cast<std::string>(&tokens[1]);
+                     if (ret)
+                     {
+                         fixedValue = NeoN::scalar(*ret);
+                     }
+                     else if (!isStr)
+                     {
+                         fixedValue = NeoN::scalar(tokenList.get<Foam::label>(1));
+                     }
+                     // else: nonuniform list — leave fixedValue as 0.0
                  }
                  dict.insert("fixedValue", fixedValue);
              }
-             else
+             else if (tokenList.size() == 1)
              {
-                 // size == 1: single-token uniform value (parallel fixedValue serialisation).
-                 dict.insert("type", std::string("fixedValue"));
+                 // size == 1: single-token uniform value (parallel fixedValue serialisation),
+                 // OR a lone string token (degenerate case) — default to zero for strings.
                  if constexpr (std::is_same<type_primitive_t, NeoN::Vec3>::value)
                  {
                      auto tokens = tokenList.tokens();
                      NeoN::scalar* ret = std::any_cast<NeoN::scalar>(&tokens[0]);
-                     NeoN::scalar val = ret ? NeoN::scalar(*ret)
-                                            : NeoN::scalar(tokenList.get<Foam::label>(0));
-                     dict.insert("fixedValue", NeoN::Vec3(val, val, val));
+                     std::string* isStr = std::any_cast<std::string>(&tokens[0]);
+                     NeoN::scalar val = 0.0;
+                     if (ret)
+                     {
+                         val = NeoN::scalar(*ret);
+                     }
+                     else if (!isStr)
+                     {
+                         val = NeoN::scalar(tokenList.get<Foam::label>(0));
+                     }
+                     dict.insert("fixedValue", NeoN::Vec3 {val, val, val});
                  }
                  else
                  {
                      auto tokens = tokenList.tokens();
                      NeoN::scalar* ret = std::any_cast<NeoN::scalar>(&tokens[0]);
-                     fixedValue = ret ? NeoN::scalar(*ret)
-                                     : NeoN::scalar(tokenList.get<Foam::label>(0));
+                     std::string* isStr = std::any_cast<std::string>(&tokens[0]);
+                     if (ret)
+                     {
+                         fixedValue = NeoN::scalar(*ret);
+                     }
+                     else if (!isStr)
+                     {
+                         fixedValue = NeoN::scalar(tokenList.get<Foam::label>(0));
+                     }
+                     // else: string token — leave fixedValue as zero
                      dict.insert("fixedValue", fixedValue);
                  }
+             }
+             else
+             {
+                 // empty token list — leave fixedValue as zero
+                 dict.insert("fixedValue", fixedValue);
              }
          }},
         {"noSlip", // TODO specialize for vector
