@@ -146,8 +146,40 @@ int main(int argc, char* argv[])
                         nf::updateFaceVelocity(phiHbyA, pEqn, phi);
                     }
                 }
-                // TODO: missing
-                // #include "continuityErrs.H"
+                // [PISO-03] Continuity error — NeoN-native, computed from live phi
+                // (ofPhi is stale inside the PISO loop; use NeoN div instead)
+                {
+                    const auto nCells = static_cast<NeoN::localIdx>(rt.nfMesh.nCells());
+                    // Wrap div(phi) in Expression to use the returning explicitOperation overload
+                    NeoN::dsl::Expression<NeoN::scalar> divExpr(rt.exec);
+                    divExpr.addOperator(NeoN::dsl::exp::div(phi));
+                    NeoN::Vector<NeoN::scalar> divPhi = divExpr.explicitOperation(nCells);
+                    auto divPhiView = divPhi.view();
+
+                    NeoN::scalar sumLocal = 0.0;
+                    NeoN::parallelReduce(
+                        rt.exec,
+                        {0, static_cast<size_t>(nCells)},
+                        NEON_LAMBDA(const size_t i, NeoN::scalar& sum) {
+                            sum += Kokkos::abs(divPhiView[i]);
+                        },
+                        sumLocal
+                    );
+
+                    NeoN::scalar globalErr = sumLocal;
+                    NeoN::mpi::allReduce(
+                        globalErr, NeoN::mpi::ReduceOp::Sum, rt.mpiEnvironment.comm()
+                    );
+
+                    cumulativeContErr += globalErr;
+
+                    NeoN::Logging::info(
+                        "time step continuity errors : sum local = {} global = {} cumulative = {}",
+                        sumLocal,
+                        globalErr,
+                        cumulativeContErr
+                    );
+                }
 
                 nf::updateVelocity(hByA, crAU, p, U);
                 U.correctBoundaryConditions();
