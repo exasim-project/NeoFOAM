@@ -1,0 +1,15 @@
+#!/bin/sh
+cd "${0%/*}" || exit                                # tutorials/cylinder3D/
+. ${WM_PROJECT_DIR:?}/bin/tools/RunFunctions
+
+# Override to short diagnostic run
+foamDictionary -entry endTime       -set 5e-3 system/controlDict
+foamDictionary -entry writeInterval -set 20   system/controlDict
+
+NEOICOFOAM="../../build/develop/bin/neoIcoFoam"    # adjust for HPC (profiling preset)
+mpirun -np 4 "$NEOICOFOAM" -parallel > log.neoIcoFoam 2>&1
+echo "neoIcoFoam parallel run complete. Log: log.neoIcoFoam"
+
+# Restore original endTime
+foamDictionary -entry endTime       -set 1.0  system/controlDict
+foamDictionary -entry writeInterval -set 100  system/controlDict
