@@ -63,6 +63,8 @@ int main(int argc, char* argv[])
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+        NeoN::scalar cumulativeContErr = 0.0;
+
         NeoN::Logging::info("Starting time loop");
         while (runTime.loop())
         {
