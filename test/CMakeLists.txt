@@ -110,4 +110,16 @@ if(NEOFOAM_WITH_MPI)
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test/setup_pressureVelocityCoupling)
     set_tests_properties(${TEST}_mpi4 PROPERTIES TIMEOUT 10 PROCESSORS 4 DISABLED TRUE)
   endforeach()
+
+  # Graded-mesh entries (ENABLED): geometry correctness tests on non-uniform 2-rank mesh.
+  # Only distributedUnstructuredMesh -- [GEO-01] and [GEO-02] are mesh-level tests
+  # (no full pressure-velocity solve, per D-04 in 03-CONTEXT.md).
+  foreach(TEST distributedUnstructuredMesh)
+    add_test(
+      NAME ${TEST}_graded
+      COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+              ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tests/neofoam_test_${TEST} -parallel
+      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test/setup_pressureVelocityCoupling_graded)
+    set_tests_properties(${TEST}_graded PROPERTIES TIMEOUT 10 PROCESSORS 2)
+  endforeach()
 endif()
