@@ -715,6 +715,94 @@ TEST_CASE("MPI-02: SurfaceField internalVector proc-face slots updated after exc
     }
 }
 
+TEST_CASE("Distributed PressureVelocityCoupling reference cell on non-zero rank", "[PISO-02]")
+{
+    // Regression guard for D-01/D-02 fix: the pressure reference cell must be
+    // pinnable on any rank, not just rank 0. OpenFOAM's setRefCell() returns
+    // pRefCell = -1 on non-owning ranks; the pRefCell >= 0 gate at the call site
+    // is the only rank filter needed.
+    //
+    // Test setup: rank 1 owns the reference cell (last local cell on rank 1).
+    // rank 0 has pRefCell = -1 and skips setReference(). After solve, the pressure
+    // value at pRefCell on rank 1 must equal pRefValue within tolerance.
+    REQUIRE(Foam::Pstream::parRun());
+
+    Foam::Time& runTime = *timePtr;
+
+    auto [execName, exec] = GENERATE(
+        std::pair<std::string, NeoN::Executor>{"CPUExecutor", NeoN::CPUExecutor{}}
+    );
+
+    auto rt = nf::createAdapterRunTime(runTime, exec);
+    auto& mesh = rt.mesh;
+    auto& schemesDict = rt.fvSchemesDict;
+    schemesDict = nf::mapFvSchemes(schemesDict);
+
+    auto& solverDict = rt.fvSolutionDict.subDict("solvers");
+    solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
+
+    // Random rAUf for the Laplacian coefficient
+    auto forAUf =
+        NeoFOAM::randDimField<Foam::surfaceScalarField>(mesh, {0, 0, 1, 0, 0}, "rAUf");
+    auto nfrAUf = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, forAUf);
+
+    auto ofp = randomScalarField(runTime, mesh, "p");
+    ofp.correctBoundaryConditions();
+
+    auto& vectorCollection = nnfvcc::VectorCollection::instance(rt.db, "VectorCollection");
+    auto& nfP = NeoFOAM::constructAndRegister(vectorCollection, rt, ofp);
+
+    Foam::surfaceScalarField ofPhi(
+        Foam::IOobject(
+            "phi",
+            runTime.timeName(),
+            mesh,
+            Foam::IOobject::NO_READ,
+            Foam::IOobject::NO_WRITE
+        ),
+        mesh,
+        Foam::dimensionedScalar("phi", Foam::dimensionSet(0, 3, -1, 0, 0), 0.0)
+    );
+    auto nfPhi = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofPhi);
+
+    nf::PDESolver<NeoN::scalar> pEqn(
+        dsl::imp::laplacian(nfrAUf, nfP) - dsl::exp::div(nfPhi),
+        nfP,
+        rt
+    );
+
+    // Reference cell: rank 1 pins its last cell; rank 0 leaves pRefCell = -1.
+    Foam::label pRefCell = -1;
+    const NeoN::scalar pRefValue = 1.0;
+    if (rt.mpiEnvironment.rank() == 1)
+    {
+        pRefCell = static_cast<Foam::label>(mesh.nCells()) - 1;
+    }
+
+    pEqn.assemble();
+
+    // Gate matches neoIcoFoam.cpp call site (line 134-137): only the owning rank calls setReference.
+    if (pRefCell >= 0)
+    {
+        pEqn.setReference(static_cast<NeoN::localIdx>(pRefCell), pRefValue);
+    }
+
+    auto stats = pEqn.solve();
+    REQUIRE(stats.entries[0].numIter > 0);
+
+    // On rank 1: assert that pressure at pRefCell equals pRefValue within tolerance.
+    // The pressure solve pins that cell's value; after solve it must match.
+    if (rt.mpiEnvironment.rank() == 1)
+    {
+        auto nfPHost = nfP.internalVector().copyToHost();
+        auto nfPView = nfPHost.view();
+        const NeoN::scalar pAtRef = nfPView[static_cast<std::size_t>(pRefCell)];
+        REQUIRE(
+            static_cast<double>(pAtRef) == Catch::Approx(static_cast<double>(pRefValue)).margin(1e-8)
+        );
+    }
+}
+
 TEST_CASE("LSA-01: faceToMatrixAddress distributed spike -- Laplacian residual", "[LSA-01]")
 {
     SECTION("Parallel sanity check")
