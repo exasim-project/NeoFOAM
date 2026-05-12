@@ -170,6 +170,12 @@ void updateFaceVelocity(
     // so this reduces to nonLocalCoeff * (p_ghost - p_own). p_ghost lives in
     // p.boundaryData().value() at the proc tail and is populated by the prior
     // p.correctBoundaryConditions()/constructAndRegister exchange.
+    //
+    // boundaryData().value() proc-tail must mirror internalVector() proc-face slots —
+    // both store the LOCAL (own-rank) flux value after correction. iPredPhi[facei]
+    // carries the LOCAL predicted flux; bPredValue[bfacei] carries the RECEIVED ghost
+    // flux (set by correctBoundaryConditions() on predictedPhi). Using bPredValue
+    // here would mix sign conventions, so we derive bvalue directly from iPhi.
     const auto nTotalFaces = phi.internalVector().size();
     const auto nlValues = ls.nonLocalMatrix().values().view();
     const auto nlRows = ls.nonLocalMatrix().rowOffs().view();
@@ -186,7 +192,10 @@ void updateFaceVelocity(
             auto pGhost = pBoundV[bfacei];
             scalar pflux = coupling * (pGhost - internalP[own]);
             iPhi[facei] = iPredPhi[facei] - pflux;
-            bvalue[bfacei] = bPredValue[bfacei] - pflux;
+            // Mirror internalVector: boundaryData().value() proc-tail stores LOCAL flux.
+            // bPredValue[bfacei] holds RECEIVED ghost flux (from correctBoundaryConditions),
+            // which has the wrong sign convention for local storage.
+            bvalue[bfacei] = iPhi[facei];
         }
     );
 }
