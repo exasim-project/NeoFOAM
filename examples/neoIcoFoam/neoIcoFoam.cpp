@@ -4,6 +4,7 @@
 #include "NeoN/NeoN.hpp"
 
 #include "NeoFOAM/NeoFOAM.hpp"
+#include "NeoFOAM/auxiliary/procFaceCheck.hpp"
 
 #include "fvCFD.H"
 #include "pisoControl.H"
@@ -73,6 +74,10 @@ int main(int argc, char* argv[])
 
             fvcc::rotateOldTimes(U);
             fvcc::rotateOldTimes(phi);
+            nf::checkProcFaceConsistency(U, "U after rotateOldTimes");
+            nf::checkProcFaceConsistency(
+                phi, "phi after rotateOldTimes", 1e-12, nf::SignConvention::FlipExpected
+            );
 
             auto [maxCoNum, meanCoNum] = fvcc::computeCoNum(phi, rt.dt);
             NeoN::Logging::info("Courant Number mean: {} max: {}", meanCoNum, maxCoNum);
@@ -92,6 +97,7 @@ int main(int argc, char* argv[])
                 // NOTE solve on a temporary clone of UEqn
                 // TODO use a free function here
                 UEqn.solve(-1.0 * dsl::exp::grad(p));
+                nf::checkProcFaceConsistency(U, "U after momentumPredictor solve");
             }
             else
             {
@@ -140,10 +146,17 @@ int main(int argc, char* argv[])
 
                     auto stats = pEqn.solve();
                     p.correctBoundaryConditions();
+                    nf::checkProcFaceConsistency(p, "p after correctBC");
 
                     if (piso.finalNonOrthogonalIter())
                     {
                         nf::updateFaceVelocity(phiHbyA, pEqn, phi);
+                        nf::checkProcFaceConsistency(
+                            phi,
+                            "phi after updateFaceVelocity",
+                            1e-12,
+                            nf::SignConvention::FlipExpected
+                        );
                     }
                 }
                 // [PISO-03] Continuity error — NeoN-native, computed from live phi.
@@ -215,6 +228,7 @@ int main(int argc, char* argv[])
 
                 nf::updateVelocity(hByA, crAU, p, U);
                 U.correctBoundaryConditions();
+                nf::checkProcFaceConsistency(U, "U after updateVelocity");
             }
 
             runTime.write();
