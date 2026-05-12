@@ -37,8 +37,12 @@ void constrainHbyA(
 
 nnfvcc::VolumeField<scalar> computeRAU(const PDESolver<Vec3>& expr)
 {
-    // TODO this assumes an assembled matrix
-    // force assembly if not assembled
+    if (!expr.isAssembled())
+    {
+        throw std::runtime_error(
+            "PDESolver::computeRAU called on unassembled system — call assemble() first"
+        );
+    }
     const auto& ls = expr.linearSystem();
     const auto& mesh = expr.getField().mesh();
 
@@ -58,6 +62,12 @@ nnfvcc::VolumeField<scalar> computeRAU(const PDESolver<Vec3>& expr)
 std::tuple<nnfvcc::VolumeField<scalar>, nnfvcc::VolumeField<Vec3>>
 computeRAUandHByA(const PDESolver<Vec3>& expr)
 {
+    if (!expr.isAssembled())
+    {
+        throw std::runtime_error(
+            "PDESolver::computeRAU called on unassembled system — call assemble() first"
+        );
+    }
     const auto& u = expr.getField();
     const auto& mesh = u.mesh();
     const auto& ls = expr.linearSystem();

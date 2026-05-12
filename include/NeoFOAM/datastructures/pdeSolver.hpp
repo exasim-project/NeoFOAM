@@ -43,6 +43,7 @@ public:
         , needReference_(false)
         , pRefCell_(0)
         , pRefValue_(static_cast<NeoN::scalar>(0.0))
+        , isAssembled_(false)
     {
         expr_.read(runTime_.fvSchemesDict);
     };
@@ -54,7 +55,8 @@ public:
         , ls_(expr.ls_)
         , needReference_(expr.needReference_)
         , pRefCell_(expr.pRefCell_)
-        , pRefValue_(expr.pRefValue_) {};
+        , pRefValue_(expr.pRefValue_)
+        , isAssembled_(expr.isAssembled_) {};
 
     ~PDESolver() = default;
 
@@ -69,6 +71,8 @@ public:
     NeoN::dsl::Expression<ValueType>& expression() { return expr_; }
 
     const NeoN::Executor& exec() const { return ls_.exec(); }
+
+    bool isAssembled() const { return isAssembled_; }
 
     template<typename FunctorValueType>
     struct SetReference : public NeoN::dsl::PostAssemblyBase<ValueType, IndexType>
@@ -86,25 +90,11 @@ public:
                                 FunctorValueType,
                                 NeoN::la::CSRMatrix<FunctorValueType, IndexType>>& ls)
         {
-            // Only the rank that owns the reference cell may pin it. `pRefCell_`
-            // is interpreted as a local index on that one rank; on every other
-            // rank we leave the matrix untouched. Without this guard a 3-rank
-            // distributed cavity ends up pinning three *different* physical
-            // cells (each rank's local index `pRefCell_`) to the same value, the
-            // global system becomes over-constrained, and the converged pressure
-            // shows step discontinuities at processor boundaries because each
-            // rank's local solve settles on a different absolute level.
-            //
-            // FIXME: assume rank 0 owns the reference. For arbitrary global
-            // pRefCell a global→(rank, local) mapping via the mesh partition is
-            // needed; the rank-0 convention is the only one neoIcoFoam currently
-            // uses, and this matches what OpenFOAM's processorPolyPatch /
-            // fvMatrix::setReference do internally.
-            NeoN::mpi::Environment mpiEnv;
-            if (mpiEnv.isInitialized() && mpiEnv.rank() != 0)
-            {
-                return;
-            }
+            // `pRefCell_` is a local cell index on the rank that owns the
+            // reference cell. All other ranks receive pRefCell = -1 from
+            // OpenFOAM's setRefCell() and the `pRefCell >= 0` gate at the
+            // neoIcoFoam call site ensures setReference() is only called on
+            // the owning rank. No MPI rank guard is needed here.
 
             const auto rowOffs = ls.matrix().sparsity()->rowOffs().view();
             const auto diagOffset = ls.faceToMatrixAddress()->diagOffset().view();
@@ -141,12 +131,9 @@ public:
 
     void setReference(NeoN::localIdx pRefCell, NeoN::scalar pRefValue)
     {
-        if (runTime_.mpiEnvironment.rank() == 0)
-        {
-            needReference_ = true;
-            pRefCell_ = pRefCell;
-            pRefValue_ = pRefValue;
-        }
+        needReference_ = true;
+        pRefCell_ = pRefCell;
+        pRefValue_ = pRefValue;
     }
 
     /** @brief assemble the linear system owned by the solver based on the current expression */
@@ -154,6 +141,7 @@ public:
     {
         ls_.reset();
         expr_.assemble(runTime_.t, runTime_.dt, ls_);
+        isAssembled_ = true;
         return ls_;
     }
 
@@ -290,6 +278,7 @@ private:
     bool needReference_;
     NeoN::localIdx pRefCell_;
     NeoN::scalar pRefValue_;
+    bool isAssembled_;
 };
 
 
