@@ -256,6 +256,7 @@ private:
             fieldSolverDict,
             functs
         );
+        isAssembled_ = true;
 
         for (auto stat : stats.entries)
         {

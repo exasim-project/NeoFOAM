@@ -65,7 +65,7 @@ computeRAUandHByA(const PDESolver<Vec3>& expr)
     if (!expr.isAssembled())
     {
         throw std::runtime_error(
-            "PDESolver::computeRAU called on unassembled system — call assemble() first"
+            "PDESolver::computeRAUandHByA called on unassembled system — call assemble() first"
         );
     }
     const auto& u = expr.getField();

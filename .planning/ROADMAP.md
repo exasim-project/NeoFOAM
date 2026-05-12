@@ -18,7 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: MPI & BC Infrastructure** - Fix BC parsing and MPI halo exchange so the solver can start without UB or data corruption (completed 2026-05-11)
 - [ ] **Phase 2: Linear System Correctness** - Correct CSR sparsity pattern, RHS assembly, and N-rank generalisation so the distributed linear system is well-formed
 - [x] **Phase 3: Geometry & Operator Correctness** - Fix deltaCoeffs and proc-face weights, add graded-mesh tests to expose geometry bugs (completed 2026-05-12)
-- [ ] **Phase 4: PISO Loop Completeness** - Wire reference cell, continuity monitoring, and matrix guard into neoIcoFoam for a complete, diagnosable PISO loop
+- [x] **Phase 4: PISO Loop Completeness** - Wire reference cell, continuity monitoring, and matrix guard into neoIcoFoam for a complete, diagnosable PISO loop (completed 2026-05-12)
 - [ ] **Phase 5: End-to-End Validation** - Run cylinder3D 4-rank vs. serial and confirm L∞ < 1e-6; extend test suite to 4 ranks; run at HPC scale
 
 ## Phase Details
@@ -91,11 +91,11 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 3 plans in 2 waves
 
 **Wave 1** *(parallel — no shared files)*
-- [ ] 04-01-PLAN.md — HLTH-02 + PISO-02: add isAssembled_ guard to PDESolver; remove rank-0 guards from setReference()/SetReference::operator(); add runtime_error guards to computeRAU/computeRAUandHByA
-- [ ] 04-02-PLAN.md — PISO-03: inline continuity error reporting in neoIcoFoam.cpp using NeoN-native div(phi) + MPI allReduce; matches icoFoam log format
+- [x] 04-01-PLAN.md — HLTH-02 + PISO-02: add isAssembled_ guard to PDESolver; remove rank-0 guards from setReference()/SetReference::operator(); add runtime_error guards to computeRAU/computeRAUandHByA
+- [x] 04-02-PLAN.md — PISO-03: inline continuity error reporting in neoIcoFoam.cpp using NeoN-native div(phi) + MPI allReduce; matches icoFoam log format
 
 **Wave 2** *(blocked on Wave 1 completion)*
-- [ ] 04-03-PLAN.md — Build gate + [PISO-02] TEST_CASE in test_distributedPressureVelocityCoupling.cpp (rank-1 reference cell, pRefCell >= 0 gate); full ctest --preset develop suite green
+- [x] 04-03-PLAN.md — Build gate + [PISO-02] TEST_CASE in test_distributedPressureVelocityCoupling.cpp (rank-1 reference cell, pRefCell >= 0 gate); full ctest --preset develop suite green
 
 ### Phase 5: End-to-End Validation
 **Goal**: neoIcoFoam on cylinder3D with 4 MPI ranks completes without crash, divergence, or field error exceeding L∞ < 1e-6 vs. the serial run, and results are confirmed at HPC scale

@@ -261,7 +261,7 @@ TEST_CASE("Distributed PressureVelocityCoupling")
         nf::compare(nfFlux, ofFlux, ApproxScalar(epsilonII), true);
     }
 
-    SECTION("compute flux")
+    SECTION("update face velocity via pEqn")
     {
         nfPhi.correctBoundaryConditions();
         nf::compare(nfPhi, ofPhi, ApproxScalar(epsilon), false);
@@ -774,7 +774,7 @@ TEST_CASE("Distributed PressureVelocityCoupling reference cell on non-zero rank"
     // Reference cell: rank 1 pins its last cell; rank 0 leaves pRefCell = -1.
     Foam::label pRefCell = -1;
     const NeoN::scalar pRefValue = 1.0;
-    if (rt.mpiEnvironment.rank() == 1)
+    if (rt.mpiEnvironment.rank() == 1 && mesh.nCells() > 0)
     {
         pRefCell = static_cast<Foam::label>(mesh.nCells()) - 1;
     }
