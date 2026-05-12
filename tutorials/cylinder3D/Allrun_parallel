@@ -4,7 +4,8 @@ cd "${0%/*}" || exit                                # tutorials/cylinder3D/
 
 # Override to short diagnostic run
 foamDictionary -entry endTime       -set 5e-3  system/controlDict
-foamDictionary -entry writeInterval -set 10    system/controlDict
+foamDictionary -entry deltaT        -set 5e-4  system/controlDict
+foamDictionary -entry writeInterval -set 1     system/controlDict
 foamDictionary -entry executor      -set CPU   system/controlDict
 
 # Clean previous time output from processor dirs (keep 0/ and constant/)
@@ -18,6 +19,7 @@ mpirun -np 4 "$NEOICOFOAM" -parallel > log.neoIcoFoam 2>&1
 echo "neoIcoFoam parallel run complete. Log: log.neoIcoFoam"
 
 # Restore original settings
-foamDictionary -entry endTime       -set 1.0  system/controlDict
-foamDictionary -entry writeInterval -set 100  system/controlDict
-foamDictionary -entry executor      -set GPU  system/controlDict
+foamDictionary -entry endTime       -set 1.0   system/controlDict
+foamDictionary -entry deltaT        -set 5e-05 system/controlDict
+foamDictionary -entry writeInterval -set 100   system/controlDict
+foamDictionary -entry executor      -set GPU   system/controlDict

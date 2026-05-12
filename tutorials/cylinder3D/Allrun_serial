@@ -1,0 +1,21 @@
+#!/bin/sh
+# Run neoIcoFoam in serial on the full (non-decomposed) mesh.
+# Compare against 4-rank parallel output with:
+#   compare_fields.py --ref ../cylinder3D_serial --ref-ranks 1 --neo . --ranks 4
+cd "${0%/*}" || exit                                # tutorials/cylinder3D/
+
+SERIAL_CASE="$(pwd)/../cylinder3D_serial"
+rm -rf "$SERIAL_CASE"
+mkdir -p "$SERIAL_CASE"
+cp -r system constant 0 "$SERIAL_CASE/"
+
+foamDictionary -entry endTime       -set 5e-3   "$SERIAL_CASE/system/controlDict"
+foamDictionary -entry deltaT        -set 5e-4   "$SERIAL_CASE/system/controlDict"
+foamDictionary -entry writeInterval -set 1      "$SERIAL_CASE/system/controlDict"
+foamDictionary -entry executor      -set CPU    "$SERIAL_CASE/system/controlDict"
+foamDictionary -entry startFrom     -set startTime "$SERIAL_CASE/system/controlDict"
+foamDictionary -entry startTime     -set 0      "$SERIAL_CASE/system/controlDict"
+
+NEOICOFOAM="../../build/develop/bin/neoIcoFoam"
+(cd "$SERIAL_CASE" && "$NEOICOFOAM" > log.neoIcoFoam 2>&1)
+echo "neoIcoFoam serial run complete. Log: $SERIAL_CASE/log.neoIcoFoam"

@@ -117,10 +117,12 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
     const bool distributed = mpiEnv.isInitialized() && mpiEnv.sizeRank() > 1;
     const auto& activeMap = distributed ? distributedPreconditionerMap : preconditionerMap;
 
-    // if no preconditioner is set but smoother switch to BiCGStab with BJ
+    // smoothSolver has no preconditioner entry; map to DILU (ILU) which is valid
+    // for asymmetric matrices (momentum equation). DIC/IC requires SPD and fails
+    // on the convection-diffusion operator with a SIGFPE during factorisation.
     if (!solverDict.contains("preconditioner") && solverDict.contains("smoother"))
     {
-        solverDict.insert("preconditioner", activeMap.at("DIC"));
+        solverDict.insert("preconditioner", activeMap.at("DILU"));
     }
 
     if (solverDict.contains("smoother"))

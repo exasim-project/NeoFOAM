@@ -142,8 +142,25 @@ def _linf_vector(a, b, components=3):
 def _discover_times(case_dir, num_ranks):
     """Return sorted list of output times present in all processorN dirs.
 
+    When num_ranks==1, reads time directories directly from case_dir (serial).
     Excludes time '0' (initial conditions, not solver output).
     """
+    if num_ranks == 1:
+        subdirs = {
+            d
+            for d in os.listdir(case_dir)
+            if os.path.isdir(os.path.join(case_dir, d))
+        }
+        times = set()
+        for d in subdirs:
+            try:
+                t = float(d)
+                if t > 0.0:
+                    times.add(d)
+            except ValueError:
+                pass
+        return sorted(times, key=float)
+
     all_times = None
     for rank in range(num_ranks):
         proc_dir = os.path.join(case_dir, f"processor{rank}")
@@ -173,6 +190,19 @@ def _discover_times(case_dir, num_ranks):
 
 def _is_vector_field(case_dir, time_str, field, num_ranks):
     """Heuristically determine if a field is a vector field."""
+    if num_ranks == 1:
+        path = os.path.join(case_dir, time_str, field)
+        try:
+            with _open_field_file(path) as fh:
+                content = fh.read(4096)
+            if "List<vector>" in content:
+                return True
+            if "List<scalar>" in content:
+                return False
+        except (FileNotFoundError, OSError):
+            pass
+        return False
+
     for rank in range(num_ranks):
         path = os.path.join(
             case_dir, f"processor{rank}", time_str, field
@@ -189,13 +219,35 @@ def _is_vector_field(case_dir, time_str, field, num_ranks):
     return False
 
 
-def compare(ref_dir, neo_dir, fields, threshold, num_ranks=4):
+def _read_field_values(case_dir, time_str, field, num_ranks):
+    """Read and concatenate internalField values for a field.
+
+    For num_ranks==1, reads directly from case_dir/time/field (serial).
+    For num_ranks>1, concatenates across processorN/ directories in rank order.
+    """
+    if num_ranks == 1:
+        path = os.path.join(case_dir, time_str, field)
+        return _read_internal_field(path)
+
+    vals = []
+    for rank in range(num_ranks):
+        path = os.path.join(case_dir, f"processor{rank}", time_str, field)
+        vals.extend(_read_internal_field(path))
+    return vals
+
+
+def compare(ref_dir, neo_dir, fields, threshold, num_ranks=4, ref_ranks=None):
     """Compare fields between ref and neo directories.
 
+    ref_ranks: rank count for the reference case (defaults to num_ranks).
+               Set to 1 to read a serial reference directly from ref_dir/<time>/<field>.
     Returns (max_linf, any_over_threshold).
     Prints a table to stdout.
     """
-    ref_times = _discover_times(ref_dir, num_ranks)
+    if ref_ranks is None:
+        ref_ranks = num_ranks
+
+    ref_times = _discover_times(ref_dir, ref_ranks)
     neo_times = _discover_times(neo_dir, num_ranks)
 
     common_times = sorted(
@@ -218,20 +270,10 @@ def compare(ref_dir, neo_dir, fields, threshold, num_ranks=4):
     for time_str in common_times:
         row = [f"{float(time_str):14.6g}"]
         for field in fields:
-            is_vec = _is_vector_field(ref_dir, time_str, field, num_ranks)
+            is_vec = _is_vector_field(ref_dir, time_str, field, ref_ranks)
 
-            # Concatenate internal field values across all ranks in order
-            ref_vals = []
-            neo_vals = []
-            for rank in range(num_ranks):
-                ref_path = os.path.join(
-                    ref_dir, f"processor{rank}", time_str, field
-                )
-                neo_path = os.path.join(
-                    neo_dir, f"processor{rank}", time_str, field
-                )
-                ref_vals.extend(_read_internal_field(ref_path))
-                neo_vals.extend(_read_internal_field(neo_path))
+            ref_vals = _read_field_values(ref_dir, time_str, field, ref_ranks)
+            neo_vals = _read_field_values(neo_dir, time_str, field, num_ranks)
 
             if is_vec:
                 linf = _linf_vector(ref_vals, neo_vals)
@@ -288,7 +330,14 @@ def main():
         type=int,
         default=4,
         metavar="N",
-        help="Number of MPI ranks / processor directories (default: 4)",
+        help="Number of MPI ranks / processor directories for --neo (default: 4)",
+    )
+    parser.add_argument(
+        "--ref-ranks",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Rank count for --ref (default: same as --ranks). Use 1 for a serial reference.",
     )
     args = parser.parse_args()
 
@@ -306,7 +355,12 @@ def main():
     print()
 
     _, any_over = compare(
-        args.ref, args.neo, args.fields, args.threshold, num_ranks=args.ranks
+        args.ref,
+        args.neo,
+        args.fields,
+        args.threshold,
+        num_ranks=args.ranks,
+        ref_ranks=args.ref_ranks,
     )
 
     if any_over:
