@@ -84,11 +84,12 @@ def _read_internal_field(filepath):
     count = int(count_match.group(1))
     after_paren = tail[count_match.end():]
 
-    # Read until closing parenthesis
-    close_idx = after_paren.find(")")
-    if close_idx < 0:
+    # Read until the list-terminating closing parenthesis (a ')' on its own line).
+    # We must NOT use the first ')' because vector entries contain their own parens.
+    term_match = re.search(r"\n\s*\)\s*(\n|$)", after_paren)
+    if term_match is None:
         raise ValueError(f"Unterminated internalField list in {filepath}")
-    raw = after_paren[:close_idx]
+    raw = after_paren[: term_match.start()]
 
     field_type = match.group(2)  # "scalar" or "vector"
     values = []
