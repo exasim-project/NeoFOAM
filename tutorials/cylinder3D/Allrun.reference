@@ -7,9 +7,14 @@ echo "Creating reference case in $REF_CASE"
 mkdir -p "$REF_CASE"
 cp -r system constant processor0 processor1 processor2 processor3 "$REF_CASE/"
 
-# Override to short diagnostic run
+# Clean previous time output from processor dirs (keep 0/ and constant/)
+for i in 0 1 2 3; do
+    find "$REF_CASE/processor$i" -mindepth 1 -maxdepth 1 -type d \
+        ! -name '0' ! -name 'constant' -exec rm -rf {} + 2>/dev/null || true
+done
+
 foamDictionary -entry endTime       -set 5e-3 "$REF_CASE/system/controlDict"
-foamDictionary -entry writeInterval -set 20   "$REF_CASE/system/controlDict"
+foamDictionary -entry writeInterval -set 10   "$REF_CASE/system/controlDict"
 
 cd "$REF_CASE"
 mpirun -np 4 icoFoam -parallel > log.icoFoam 2>&1

@@ -3,13 +3,21 @@ cd "${0%/*}" || exit                                # tutorials/cylinder3D/
 . ${WM_PROJECT_DIR:?}/bin/tools/RunFunctions
 
 # Override to short diagnostic run
-foamDictionary -entry endTime       -set 5e-3 system/controlDict
-foamDictionary -entry writeInterval -set 20   system/controlDict
+foamDictionary -entry endTime       -set 5e-3  system/controlDict
+foamDictionary -entry writeInterval -set 10    system/controlDict
+foamDictionary -entry executor      -set CPU   system/controlDict
+
+# Clean previous time output from processor dirs (keep 0/ and constant/)
+for i in 0 1 2 3; do
+    find processor$i -mindepth 1 -maxdepth 1 -type d \
+        ! -name '0' ! -name 'constant' -exec rm -rf {} + 2>/dev/null || true
+done
 
 NEOICOFOAM="../../build/develop/bin/neoIcoFoam"    # adjust for HPC (profiling preset)
 mpirun -np 4 "$NEOICOFOAM" -parallel > log.neoIcoFoam 2>&1
 echo "neoIcoFoam parallel run complete. Log: log.neoIcoFoam"
 
-# Restore original endTime
+# Restore original settings
 foamDictionary -entry endTime       -set 1.0  system/controlDict
 foamDictionary -entry writeInterval -set 100  system/controlDict
+foamDictionary -entry executor      -set GPU  system/controlDict

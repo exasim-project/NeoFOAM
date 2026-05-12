@@ -203,17 +203,22 @@ int main(int argc, char* argv[])
                     );
 
                     NeoN::scalar globalAbsVolSum = localAbsVolSum;
-                    NeoN::mpi::allReduce(
-                        globalAbsVolSum, NeoN::mpi::ReduceOp::Sum, rt.mpiEnvironment.comm()
-                    );
                     NeoN::scalar globalSignedVolSum = localSignedVolSum;
-                    NeoN::mpi::allReduce(
-                        globalSignedVolSum, NeoN::mpi::ReduceOp::Sum, rt.mpiEnvironment.comm()
-                    );
                     NeoN::scalar totalVol = localTotalVol;
-                    NeoN::mpi::allReduce(
-                        totalVol, NeoN::mpi::ReduceOp::Sum, rt.mpiEnvironment.comm()
-                    );
+                    if (rt.mpiEnvironment.isInitialized() && rt.mpiEnvironment.sizeRank() > 1)
+                    {
+                        NeoN::mpi::allReduce(
+                            globalAbsVolSum, NeoN::mpi::ReduceOp::Sum, rt.mpiEnvironment.comm()
+                        );
+                        NeoN::mpi::allReduce(
+                            globalSignedVolSum,
+                            NeoN::mpi::ReduceOp::Sum,
+                            rt.mpiEnvironment.comm()
+                        );
+                        NeoN::mpi::allReduce(
+                            totalVol, NeoN::mpi::ReduceOp::Sum, rt.mpiEnvironment.comm()
+                        );
+                    }
 
                     const NeoN::scalar sumLocalContErr = dt * globalAbsVolSum / totalVol;
                     const NeoN::scalar globalContErr = dt * globalSignedVolSum / totalVol;
