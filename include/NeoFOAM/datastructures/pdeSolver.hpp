@@ -43,6 +43,7 @@ public:
         , needReference_(false)
         , pRefCell_(0)
         , pRefValue_(static_cast<NeoN::scalar>(0.0))
+        , isAssembled_(false)
     {
         expr_.read(runTime_.fvSchemesDict);
     };
@@ -54,7 +55,8 @@ public:
         , ls_(expr.ls_)
         , needReference_(expr.needReference_)
         , pRefCell_(expr.pRefCell_)
-        , pRefValue_(expr.pRefValue_) {};
+        , pRefValue_(expr.pRefValue_)
+        , isAssembled_(expr.isAssembled_) {};
 
     ~PDESolver() = default;
 
@@ -69,6 +71,8 @@ public:
     NeoN::dsl::Expression<ValueType>& expression() { return expr_; }
 
     const NeoN::Executor& exec() const { return ls_.exec(); }
+
+    bool isAssembled() const { return isAssembled_; }
 
     template<typename FunctorValueType>
     struct SetReference : public NeoN::dsl::PostAssemblyBase<ValueType, IndexType>
@@ -154,6 +158,7 @@ public:
     {
         ls_.reset();
         expr_.assemble(runTime_.t, runTime_.dt, ls_);
+        isAssembled_ = true;
         return ls_;
     }
 
@@ -290,6 +295,7 @@ private:
     bool needReference_;
     NeoN::localIdx pRefCell_;
     NeoN::scalar pRefValue_;
+    bool isAssembled_;
 };
 
 
