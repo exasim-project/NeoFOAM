@@ -333,9 +333,12 @@ TEST_CASE("Distributed PressureVelocityCoupling")
             nfP,
             rt
         );
-        if (rt.mpiEnvironment.rank() == 0)
+        const Foam::label localPRefCell = (Foam::Pstream::myProcNo() == 0)
+            ? Foam::label(0)
+            : Foam::label(-1);
+        if (localPRefCell >= 0)
         {
-            pEqn.setReference(0, 0.0);
+            pEqn.setReference(static_cast<NeoN::localIdx>(localPRefCell), 0.0);
         }
 
         auto stats = pEqn.solve();
@@ -407,7 +410,7 @@ TEST_CASE("Distributed PressureVelocityCoupling")
         forAll(mesh.boundary(), patchI)
         {
             const auto& fvPatch = mesh.boundary()[patchI];
-            if (!isA<Foam::processorFvPatch>(fvPatch)) continue;
+            if (!dynamic_cast<const Foam::processorFvPatch*>(&fvPatch)) continue;
 
             const auto& deltaCoeffs = fvPatch.deltaCoeffs();
             const auto& magSf = fvPatch.magSf();
@@ -477,7 +480,7 @@ TEST_CASE("Distributed PressureVelocityCoupling")
         forAll(mesh.boundary(), patchI)
         {
             const auto& fvPatch = mesh.boundary()[patchI];
-            if (!isA<Foam::processorFvPatch>(fvPatch)) continue;
+            if (!dynamic_cast<const Foam::processorFvPatch*>(&fvPatch)) continue;
 
             const auto& deltaCoeffs = fvPatch.deltaCoeffs();
             const auto& magSf = fvPatch.magSf();
