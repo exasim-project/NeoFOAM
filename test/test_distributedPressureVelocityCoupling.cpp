@@ -407,7 +407,7 @@ TEST_CASE("Distributed PressureVelocityCoupling")
         forAll(mesh.boundary(), patchI)
         {
             const auto& fvPatch = mesh.boundary()[patchI];
-            if (!isA<Foam::processorFvPatch>(fvPatch)) continue;
+            if (!dynamic_cast<const Foam::processorFvPatch*>(&fvPatch)) continue;
 
             const auto& deltaCoeffs = fvPatch.deltaCoeffs();
             const auto& magSf = fvPatch.magSf();
@@ -477,7 +477,7 @@ TEST_CASE("Distributed PressureVelocityCoupling")
         forAll(mesh.boundary(), patchI)
         {
             const auto& fvPatch = mesh.boundary()[patchI];
-            if (!isA<Foam::processorFvPatch>(fvPatch)) continue;
+            if (!dynamic_cast<const Foam::processorFvPatch*>(&fvPatch)) continue;
 
             const auto& deltaCoeffs = fvPatch.deltaCoeffs();
             const auto& magSf = fvPatch.magSf();
