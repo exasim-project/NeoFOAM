@@ -59,7 +59,7 @@ HPC validation uses CUDA-aware MPI with multiple physical GPUs (ad-hoc run + rep
 **Plans**: 2 plans in 1 wave
 
 **Wave 1** *(parallel — different file sets)*
-- [ ] 02-01-PLAN.md — NeoN audit: confirm NEON_LAMBDA bodies are already std::-free (per pre-audit); add exempt comment to ginkgoL1Stop.cpp:200; verify vec3.hpp mag() uses Kokkos::sqrt; close GPU-KRN-01/02/03
+- [x] 02-01-PLAN.md — NeoN audit: confirm NEON_LAMBDA bodies are already std::-free (per pre-audit); add exempt comment to ginkgoL1Stop.cpp:200; verify vec3.hpp mag() uses Kokkos::sqrt; close GPU-KRN-01/02/03
 - [ ] 02-02-PLAN.md — NeoFOAM audit + build verify: confirm include/NeoFOAM/ has no device-lambda std:: hits; add exempt comment to procFaceCheck.hpp:30; run cmake --build with device-warning filter; run ctest — no new failures vs 66/80 baseline; close GPU-KRN-04
 
 **Cross-cutting constraints:** Replacements only inside `NEON_LAMBDA`/`NeoN_LAMBDA` bodies — host-side code may legitimately use `std::` math; exempt instances (ginkgoL1Stop.cpp, procFaceCheck.hpp) are host-side and documented
@@ -127,7 +127,7 @@ HPC validation uses CUDA-aware MPI with multiple physical GPUs (ad-hoc run + rep
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. GPU MPI Transport | 2/2 | Complete | 2026-05-13 |
-| 2. GPU Kernel Fixes | 0/2 | Planned | — |
+| 2. GPU Kernel Fixes | 1/2 | In Progress|  |
 | 3. Test Suite Parameterization | 0/2 | Not started | — |
 | 4. Ginkgo GPU Integration | 0/1 | Not started | — |
 | 5. E2E Validation | 0/2 | Not started | — |

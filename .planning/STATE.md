@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: GPU Correctness — Distributed neoIcoFoam
 status: executing
-stopped_at: Phase 2 planned — ready to execute Phase 2
-last_updated: "2026-05-13T00:00:00.000Z"
+stopped_at: Completed 02-01-PLAN.md — GPU-KRN-01/02/03 closed
+last_updated: "2026-05-13T13:53:28.932Z"
 last_activity: 2026-05-13
 progress:
-  total_phases: 5
-  completed_phases: 1
-  total_plans: 9
-  completed_plans: 2
-  percent: 20
+  total_phases: 7
+  completed_phases: 6
+  total_plans: 21
+  completed_plans: 20
+  percent: 95
 ---
 
 # Project State
@@ -21,7 +21,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-13)
 
 **Core value:** neoIcoFoam on cylinder3D with 4 MPI ranks using GPUExecutor produces field results within L∞ < 1e-6 of the CPU serial run.
-**Current focus:** Phase 01 — gpu-mpi-transport
+**Current focus:** Phase 02 — gpu-kernel-fixes
 
 ## v1.0 Summary (Complete)
 
@@ -40,11 +40,12 @@ Key v1 commits carried into v2 base:
 
 ## Current Position
 
-Phase: 01 (gpu-mpi-transport) — COMPLETE ✓
+Phase: 02 (gpu-kernel-fixes) — EXECUTING
+Plan: 2 of 2
 Phase: 02 (gpu-kernel-fixes) — PLANNED (2 plans, wave 1, ready to execute)
 Last activity: 2026-05-13
 
-Progress: [██░░░░░░░░] 20% (1 of 5 phases complete)
+Progress: [██████████] 95%
 
 ## Performance Metrics
 
@@ -64,6 +65,7 @@ Progress: [██░░░░░░░░] 20% (1 of 5 phases complete)
 | 04 | - | - | - |
 | 05 | - | - | - |
 | Phase 01 P01 | 49 | 3 tasks | 3 files |
+| Phase 02-gpu-kernel-fixes P01 | 10m | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -73,6 +75,7 @@ Progress: [██░░░░░░░░] 20% (1 of 5 phases complete)
 - Local GPU testing: WSL2 WDDM mode, no MPS, no CUDA-aware MPI; `mpirun -np N UCX_TLS=tcp` with host-staged buffers
 - HPC GPU testing: ad-hoc run + report back; CUDA-aware MPI available on cluster
 - Branches: `feat/gpu-distributed` in both NeoFOAM (from `feat/distributed-correctness`) and NeoN (from `fix/testsRebase`)
+- [Phase ?]: GPU-KRN-01/02/03: NeoN NEON_LAMBDA bodies confirmed std::-free — only exempt instance is ginkgoL1Stop.cpp:200 (Ginkgo host-side convergence criterion)
 
 ### Pending Todos
 
@@ -94,6 +97,6 @@ None at milestone start.
 
 ## Session Continuity
 
-Last session: 2026-05-13T10:34:38.464Z
-Stopped at: Phase 1 not yet planned — ready to plan
+Last session: 2026-05-13T13:53:25.640Z
+Stopped at: Completed 02-01-PLAN.md — GPU-KRN-01/02/03 closed
 Resume file: None

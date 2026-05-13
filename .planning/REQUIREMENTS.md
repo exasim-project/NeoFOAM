@@ -39,12 +39,12 @@ without divergence and produces L∞ < 1e-6 vs CPU serial reference.
 
 ### GPU Kernel Correctness (NeoN + NeoFOAM)
 
-- [ ] **GPU-KRN-01**: All `NEON_LAMBDA` / `NeoN_LAMBDA` device bodies use `Kokkos::abs`
+- [x] **GPU-KRN-01**: All `NEON_LAMBDA` / `NeoN_LAMBDA` device bodies use `Kokkos::abs`
   instead of `std::abs`. Includes the deferred v1 item in `basicGeometryScheme.cpp:215`.
 
-- [ ] **GPU-KRN-02**: All device lambdas use `Kokkos::sqrt` instead of `std::sqrt`.
+- [x] **GPU-KRN-02**: All device lambdas use `Kokkos::sqrt` instead of `std::sqrt`.
 
-- [ ] **GPU-KRN-03**: All device lambdas use `Kokkos::max` / `Kokkos::min` instead of
+- [x] **GPU-KRN-03**: All device lambdas use `Kokkos::max` / `Kokkos::min` instead of
   `std::max` / `std::min`.
 
 - [ ] **GPU-KRN-04**: `cmake --build --preset develop` with CUDA backend enabled exits 0
@@ -105,9 +105,9 @@ without divergence and produces L∞ < 1e-6 vs CPU serial reference.
 | GPU-MPI-01 | Phase 1: GPU MPI Transport | Complete |
 | GPU-MPI-02 | Phase 1: GPU MPI Transport | Complete |
 | GPU-MPI-03 | Phase 1: GPU MPI Transport | Complete |
-| GPU-KRN-01 | Phase 2: GPU Kernel Fixes | Pending |
-| GPU-KRN-02 | Phase 2: GPU Kernel Fixes | Pending |
-| GPU-KRN-03 | Phase 2: GPU Kernel Fixes | Pending |
+| GPU-KRN-01 | Phase 2: GPU Kernel Fixes | Complete |
+| GPU-KRN-02 | Phase 2: GPU Kernel Fixes | Complete |
+| GPU-KRN-03 | Phase 2: GPU Kernel Fixes | Complete |
 | GPU-KRN-04 | Phase 2: GPU Kernel Fixes | Pending |
 | GPU-EXE-01 | Phase 3: Test Suite Parameterization | Pending |
 | GPU-EXE-02 | Phase 3: Test Suite Parameterization | Pending |
