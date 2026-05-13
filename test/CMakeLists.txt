@@ -111,6 +111,31 @@ if(NEOFOAM_WITH_MPI)
     set_tests_properties(${TEST}_mpi4 PROPERTIES TIMEOUT 10 PROCESSORS 4 DISABLED TRUE)
   endforeach()
 
+  # GPU-executor entries (DISABLED by default): run only the GPUExecutor path on GPU hardware.
+  # These are identical to the 3-rank and 2-rank default entries except they filter Catch2
+  # sections that contain "GPUExecutor" in their name.  Enable on GPU hardware with:
+  #   ctest --preset develop -R "_gpu$" --overwrite DISABLED:BOOL=FALSE
+  # Note: The 3-rank default entries (distributedUnstructuredMesh, etc.) and the _mpi2 entries
+  # automatically run GPUExecutor sections when Kokkos::num_devices() > 0 at runtime.
+  # The _gpu entries exist for selective GPU-only targeting during debugging.
+  foreach(TEST distributedUnstructuredMesh distributedPressureVelocityCoupling distributedMomentum)
+    add_test(
+      NAME ${TEST}_gpu
+      COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 3
+              ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tests/neofoam_test_${TEST} -parallel
+      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test/setup_pressureVelocityCoupling)
+    set_tests_properties(${TEST}_gpu PROPERTIES TIMEOUT 30 PROCESSORS 3 DISABLED TRUE)
+  endforeach()
+
+  foreach(TEST distributedUnstructuredMesh distributedPressureVelocityCoupling distributedMomentum)
+    add_test(
+      NAME ${TEST}_mpi2_gpu
+      COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+              ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tests/neofoam_test_${TEST} -parallel
+      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test/setup_pressureVelocityCoupling_mpi2)
+    set_tests_properties(${TEST}_mpi2_gpu PROPERTIES TIMEOUT 30 PROCESSORS 2 DISABLED TRUE)
+  endforeach()
+
   # Graded-mesh entries (ENABLED): geometry correctness tests on non-uniform 2-rank mesh.
   # Only distributedUnstructuredMesh -- [GEO-01] and [GEO-02] are mesh-level tests
   # (no full pressure-velocity solve, per D-04 in 03-CONTEXT.md).
