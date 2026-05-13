@@ -47,7 +47,7 @@ without divergence and produces L∞ < 1e-6 vs CPU serial reference.
 - [x] **GPU-KRN-03**: All device lambdas use `Kokkos::max` / `Kokkos::min` instead of
   `std::max` / `std::min`.
 
-- [ ] **GPU-KRN-04**: `cmake --build --preset develop` with CUDA backend enabled exits 0
+- [x] **GPU-KRN-04**: `cmake --build --preset develop` with CUDA backend enabled exits 0
   with no device-compilation errors from non-GPU-safe math calls.
 
 ### Executor Parameterization (NeoN + NeoFOAM)
@@ -108,7 +108,7 @@ without divergence and produces L∞ < 1e-6 vs CPU serial reference.
 | GPU-KRN-01 | Phase 2: GPU Kernel Fixes | Complete |
 | GPU-KRN-02 | Phase 2: GPU Kernel Fixes | Complete |
 | GPU-KRN-03 | Phase 2: GPU Kernel Fixes | Complete |
-| GPU-KRN-04 | Phase 2: GPU Kernel Fixes | Pending |
+| GPU-KRN-04 | Phase 2: GPU Kernel Fixes | Complete |
 | GPU-EXE-01 | Phase 3: Test Suite Parameterization | Pending |
 | GPU-EXE-02 | Phase 3: Test Suite Parameterization | Pending |
 | GPU-GNK-01 | Phase 4: Ginkgo GPU Integration | Pending |

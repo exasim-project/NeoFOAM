@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: GPU Correctness — Distributed neoIcoFoam
 status: executing
-stopped_at: Completed 02-01-PLAN.md — GPU-KRN-01/02/03 closed
-last_updated: "2026-05-13T13:53:28.932Z"
+stopped_at: Completed 02-02-PLAN.md — GPU-KRN-04 closed; Phase 02 complete
+last_updated: "2026-05-13T14:34:36.319Z"
 last_activity: 2026-05-13
 progress:
   total_phases: 7
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 21
-  completed_plans: 20
-  percent: 95
+  completed_plans: 21
+  percent: 100
 ---
 
 # Project State
@@ -45,7 +45,7 @@ Plan: 2 of 2
 Phase: 02 (gpu-kernel-fixes) — PLANNED (2 plans, wave 1, ready to execute)
 Last activity: 2026-05-13
 
-Progress: [██████████] 95%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -66,6 +66,7 @@ Progress: [██████████] 95%
 | 05 | - | - | - |
 | Phase 01 P01 | 49 | 3 tasks | 3 files |
 | Phase 02-gpu-kernel-fixes P01 | 10m | 2 tasks | 1 files |
+| Phase 02-gpu-kernel-fixes P02 | 34 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -76,6 +77,7 @@ Progress: [██████████] 95%
 - HPC GPU testing: ad-hoc run + report back; CUDA-aware MPI available on cluster
 - Branches: `feat/gpu-distributed` in both NeoFOAM (from `feat/distributed-correctness`) and NeoN (from `fix/testsRebase`)
 - [Phase ?]: GPU-KRN-01/02/03: NeoN NEON_LAMBDA bodies confirmed std::-free — only exempt instance is ginkgoL1Stop.cpp:200 (Ginkgo host-side convergence criterion)
+- [Phase ?]: GPU-KRN-04 CLOSED: CUDA build exits 0 with no std:: device warnings; ctest 77/80 passing with only pre-existing failures unchanged
 
 ### Pending Todos
 
@@ -97,6 +99,6 @@ None at milestone start.
 
 ## Session Continuity
 
-Last session: 2026-05-13T13:53:25.640Z
-Stopped at: Completed 02-01-PLAN.md — GPU-KRN-01/02/03 closed
+Last session: 2026-05-13T14:34:36.308Z
+Stopped at: Completed 02-02-PLAN.md — GPU-KRN-04 closed; Phase 02 complete
 Resume file: None

@@ -20,7 +20,7 @@ HPC validation uses CUDA-aware MPI with multiple physical GPUs (ad-hoc run + rep
 ## Phases
 
 - [x] **Phase 1: GPU MPI Transport** — Host-stage MPI buffers so GPUExecutor field exchange works without CUDA-aware MPI
-- [ ] **Phase 2: GPU Kernel Fixes** — Replace all `std::` math in device lambdas with `Kokkos::` equivalents; GPU build clean
+- [x] **Phase 2: GPU Kernel Fixes** — Replace all `std::` math in device lambdas with `Kokkos::` equivalents; GPU build clean (completed 2026-05-13)
 - [ ] **Phase 3: Test Suite Parameterization** — Distributed tests accept GPUExecutor; local WSL2 multi-rank GPU passes
 - [ ] **Phase 4: Ginkgo GPU Integration** — Ginkgo distributed solve verified correct with GPUExecutor
 - [ ] **Phase 5: E2E Validation** — cylinder3D 4-rank GPUExecutor completes; L∞ < 1e-6 vs CPU serial on HPC
@@ -60,7 +60,7 @@ HPC validation uses CUDA-aware MPI with multiple physical GPUs (ad-hoc run + rep
 
 **Wave 1** *(parallel — different file sets)*
 - [x] 02-01-PLAN.md — NeoN audit: confirm NEON_LAMBDA bodies are already std::-free (per pre-audit); add exempt comment to ginkgoL1Stop.cpp:200; verify vec3.hpp mag() uses Kokkos::sqrt; close GPU-KRN-01/02/03
-- [ ] 02-02-PLAN.md — NeoFOAM audit + build verify: confirm include/NeoFOAM/ has no device-lambda std:: hits; add exempt comment to procFaceCheck.hpp:30; run cmake --build with device-warning filter; run ctest — no new failures vs 66/80 baseline; close GPU-KRN-04
+- [x] 02-02-PLAN.md — NeoFOAM audit + build verify: confirm include/NeoFOAM/ has no device-lambda std:: hits; add exempt comment to procFaceCheck.hpp:30; run cmake --build with device-warning filter; run ctest — no new failures vs 66/80 baseline; close GPU-KRN-04
 
 **Cross-cutting constraints:** Replacements only inside `NEON_LAMBDA`/`NeoN_LAMBDA` bodies — host-side code may legitimately use `std::` math; exempt instances (ginkgoL1Stop.cpp, procFaceCheck.hpp) are host-side and documented
 
@@ -127,7 +127,7 @@ HPC validation uses CUDA-aware MPI with multiple physical GPUs (ad-hoc run + rep
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. GPU MPI Transport | 2/2 | Complete | 2026-05-13 |
-| 2. GPU Kernel Fixes | 1/2 | In Progress|  |
+| 2. GPU Kernel Fixes | 2/2 | Complete   | 2026-05-13 |
 | 3. Test Suite Parameterization | 0/2 | Not started | — |
 | 4. Ginkgo GPU Integration | 0/1 | Not started | — |
 | 5. E2E Validation | 0/2 | Not started | — |
