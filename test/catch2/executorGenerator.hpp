@@ -34,12 +34,11 @@ public:
 #elif defined(NEON_ENABLE_THREADS)
         execs.push_back({"CPUExecutor", NeoN::CPUExecutor {}});
 #endif
-#if defined(NEON_ENABLE_CUDA)
+#if defined(NEON_ENABLE_CUDA) || defined(NEON_ENABLE_HIP) || defined(NEON_ENABLE_SYCL)
+    if (Kokkos::num_devices() > 0)
+    {
         execs.push_back({"GPUExecutor", NeoN::GPUExecutor {}});
-#elif defined(NEON_ENABLE_HIP)
-        execs.push_back({"GPUExecutor", NeoN::GPUExecutor {}});
-#elif defined(NEON_ENABLE_SYCL)
-        execs.push_back({"GPUExecutor", NeoN::GPUExecutor {}});
+    }
 #endif
     }
 
