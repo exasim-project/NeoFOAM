@@ -19,6 +19,7 @@ Foam::fvMesh* meshPtr;  // A single mesh object
 
 int main(int argc, char* argv[])
 {
+    std::cout << __FILE__ << ":" << __LINE__ << "\n";
     int result;
     NeoN::initialize(argc, argv);
     {
