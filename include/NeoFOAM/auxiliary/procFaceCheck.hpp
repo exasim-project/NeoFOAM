@@ -27,6 +27,7 @@ namespace detail
 
 inline bool valuesMatch(NeoN::scalar a, NeoN::scalar b, double tol)
 {
+    // host-side face comparison utility — std::abs/max are safe here (not device-compiled)
     const double diff = std::abs(static_cast<double>(a) - static_cast<double>(b));
     const double mag = std::max(std::abs(static_cast<double>(a)), std::abs(static_cast<double>(b)));
     return diff <= tol * std::max(1.0, mag);
