@@ -5,6 +5,7 @@
 
 #include "NeoFOAM/NeoFOAM.hpp"
 #include "NeoFOAM/auxiliary/procFaceCheck.hpp"
+#include "NeoFOAM/auxiliary/continuityError.hpp"
 
 #include "fvCFD.H"
 #include "pisoControl.H"
@@ -160,77 +161,8 @@ int main(int argc, char* argv[])
                         );
                     }
                 }
-                // [PISO-03] Continuity error — NeoN-native, computed from live phi.
-                // Formula matches OpenFOAM continuityErrs.H:
-                //   sumLocal = dt * gWeightedAverage(|div phi|)  (absolute, globally reduced)
-                //   global   = dt * gWeightedAverage( div phi )  (signed,   globally reduced)
-                //   cumulative accumulates global (signed) across all PISO iterations
-                {
-                    const NeoN::scalar dt = runTime.deltaTValue();
-                    const auto nCells = static_cast<NeoN::localIdx>(rt.nfMesh.nCells());
-                    // Wrap div(phi) in Expression to use the returning explicitOperation overload
-                    NeoN::dsl::Expression<NeoN::scalar> divExpr(rt.exec);
-                    divExpr.addOperator(NeoN::dsl::exp::div(phi));
-                    NeoN::Vector<NeoN::scalar> divPhi = divExpr.explicitOperation(nCells);
-                    auto divPhiView = divPhi.view();
-                    auto volView = rt.nfMesh.cellVolumes().view();
-
-                    // Rank-local weighted sums and volume (MPI-reduced below)
-                    NeoN::scalar localAbsVolSum = 0.0;
-                    NeoN::parallelReduce(
-                        rt.exec,
-                        {0, static_cast<size_t>(nCells)},
-                        NEON_LAMBDA(const size_t i, NeoN::scalar& s) {
-                            s += Kokkos::abs(divPhiView[i]) * volView[i];
-                        },
-                        localAbsVolSum
-                    );
-                    NeoN::scalar localSignedVolSum = 0.0;
-                    NeoN::parallelReduce(
-                        rt.exec,
-                        {0, static_cast<size_t>(nCells)},
-                        NEON_LAMBDA(const size_t i, NeoN::scalar& s) {
-                            s += divPhiView[i] * volView[i];
-                        },
-                        localSignedVolSum
-                    );
-                    NeoN::scalar localTotalVol = 0.0;
-                    NeoN::parallelReduce(
-                        rt.exec,
-                        {0, static_cast<size_t>(nCells)},
-                        NEON_LAMBDA(const size_t i, NeoN::scalar& s) { s += volView[i]; },
-                        localTotalVol
-                    );
-
-                    NeoN::scalar globalAbsVolSum = localAbsVolSum;
-                    NeoN::scalar globalSignedVolSum = localSignedVolSum;
-                    NeoN::scalar totalVol = localTotalVol;
-                    if (rt.mpiEnvironment.isInitialized() && rt.mpiEnvironment.sizeRank() > 1)
-                    {
-                        NeoN::mpi::allReduce(
-                            globalAbsVolSum, NeoN::mpi::ReduceOp::Sum, rt.mpiEnvironment.comm()
-                        );
-                        NeoN::mpi::allReduce(
-                            globalSignedVolSum,
-                            NeoN::mpi::ReduceOp::Sum,
-                            rt.mpiEnvironment.comm()
-                        );
-                        NeoN::mpi::allReduce(
-                            totalVol, NeoN::mpi::ReduceOp::Sum, rt.mpiEnvironment.comm()
-                        );
-                    }
-
-                    const NeoN::scalar sumLocalContErr = dt * globalAbsVolSum / totalVol;
-                    const NeoN::scalar globalContErr = dt * globalSignedVolSum / totalVol;
-                    cumulativeContErr += globalContErr;
-
-                    NeoN::Logging::info(
-                        "time step continuity errors : sum local = {}, global = {}, cumulative = {}",
-                        sumLocalContErr,
-                        globalContErr,
-                        cumulativeContErr
-                    );
-                }
+                // [PISO-03] Continuity error
+                nf::reportContinuityError(phi, rt, cumulativeContErr);
 
                 nf::updateVelocity(hByA, crAU, p, U);
                 U.correctBoundaryConditions();
