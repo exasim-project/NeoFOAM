@@ -1,0 +1,87 @@
+\doxysection{continuity\+Error.\+hpp}
+\hypertarget{continuityError_8hpp_source}{}\label{continuityError_8hpp_source}\index{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/continuityError.hpp@{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/continuityError.hpp}}
+\mbox{\hyperlink{continuityError_8hpp}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00001}00001\ \textcolor{comment}{//\ SPDX-\/License-\/Identifier:\ GPL-\/3.0-\/or-\/later}}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00002}00002\ \textcolor{comment}{//\ SPDX-\/FileCopyrightText:\ 2025\ -\/\ 2026\ NeoFOAM\ authors}}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00003}00003\ }
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00004}00004\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00005}00005\ }
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00006}00006\ \textcolor{preprocessor}{\#include\ "{}NeoN/NeoN.hpp"{}}}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00007}00007\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{runTime_8hpp}{NeoFOAM/datastructures/runTime.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00008}00008\ }
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00009}00009\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceNeoFOAM}{NeoFOAM}}}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00010}00010\ \{}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00011}00011\ }
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00025}\mbox{\hyperlink{namespaceNeoFOAM_a216c99c971b9acb00fbd8ff36d9f2ee9}{00025}}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_a216c99c971b9acb00fbd8ff36d9f2ee9}{reportContinuityError}}(}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00026}00026\ \ \ \ \ \textcolor{keyword}{const}\ NeoN::finiteVolume::cellCentred::SurfaceField<NeoN::scalar>\&\ phi,}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00027}00027\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{RunTime}}\&\ rt,}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00028}00028\ \ \ \ \ NeoN::scalar\&\ cumulative}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00029}00029\ )}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00030}00030\ \{}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00031}00031\ \ \ \ \ \textcolor{keyword}{const}\ NeoN::scalar\ dt\ =\ rt.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_a6a3e375c6054e387635ba04bdfe76c6d}{dt}};}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00032}00032\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ nCells\ =\ \textcolor{keyword}{static\_cast<}NeoN::localIdx\textcolor{keyword}{>}(rt.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_a810936522333c8fdaf8ffdacefa3909d}{nfMesh}}.nCells());}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00033}00033\ }
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00034}00034\ \ \ \ \ NeoN::dsl::Expression<NeoN::scalar>\ divExpr(rt.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_a8dcd260a0853c8590add966729198cb1}{exec}});}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00035}00035\ \ \ \ \ divExpr.addOperator(NeoN::dsl::exp::div(phi));}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00036}00036\ \ \ \ \ NeoN::Vector<NeoN::scalar>\ divPhi\ =\ divExpr.explicitOperation(nCells);}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00037}00037\ }
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00038}00038\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ divPhiView\ =\ divPhi.view();}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00039}00039\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ volView\ =\ rt.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_a810936522333c8fdaf8ffdacefa3909d}{nfMesh}}.cellVolumes().view();}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00040}00040\ }
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00041}00041\ \ \ \ \ NeoN::scalar\ localAbsVolSum\ =\ 0.0;}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00042}00042\ \ \ \ \ NeoN::parallelReduce(}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00043}00043\ \ \ \ \ \ \ \ \ rt.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_a8dcd260a0853c8590add966729198cb1}{exec}},}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00044}00044\ \ \ \ \ \ \ \ \ \{0,\ static\_cast<size\_t>(nCells)\},}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00045}00045\ \ \ \ \ \ \ \ \ NEON\_LAMBDA(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ i,\ NeoN::scalar\&\ s)\ \{}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00046}00046\ \ \ \ \ \ \ \ \ \ \ \ \ s\ +=\ Kokkos::abs(divPhiView[i])\ *\ volView[i];}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00047}00047\ \ \ \ \ \ \ \ \ \},}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00048}00048\ \ \ \ \ \ \ \ \ localAbsVolSum}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00049}00049\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00050}00050\ }
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00051}00051\ \ \ \ \ NeoN::scalar\ localSignedVolSum\ =\ 0.0;}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00052}00052\ \ \ \ \ NeoN::parallelReduce(}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00053}00053\ \ \ \ \ \ \ \ \ rt.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_a8dcd260a0853c8590add966729198cb1}{exec}},}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00054}00054\ \ \ \ \ \ \ \ \ \{0,\ static\_cast<size\_t>(nCells)\},}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00055}00055\ \ \ \ \ \ \ \ \ NEON\_LAMBDA(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ i,\ NeoN::scalar\&\ s)\ \{\ s\ +=\ divPhiView[i]\ *\ volView[i];\ \},}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00056}00056\ \ \ \ \ \ \ \ \ localSignedVolSum}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00057}00057\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00058}00058\ }
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00059}00059\ \ \ \ \ NeoN::scalar\ localTotalVol\ =\ 0.0;}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00060}00060\ \ \ \ \ NeoN::parallelReduce(}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00061}00061\ \ \ \ \ \ \ \ \ rt.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_a8dcd260a0853c8590add966729198cb1}{exec}},}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00062}00062\ \ \ \ \ \ \ \ \ \{0,\ static\_cast<size\_t>(nCells)\},}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00063}00063\ \ \ \ \ \ \ \ \ NEON\_LAMBDA(\textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ i,\ NeoN::scalar\&\ s)\ \{\ s\ +=\ volView[i];\ \},}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00064}00064\ \ \ \ \ \ \ \ \ localTotalVol}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00065}00065\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00066}00066\ }
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00067}00067\ \ \ \ \ NeoN::scalar\ globalAbsVolSum\ =\ localAbsVolSum;}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00068}00068\ \ \ \ \ NeoN::scalar\ globalSignedVolSum\ =\ localSignedVolSum;}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00069}00069\ \ \ \ \ NeoN::scalar\ totalVol\ =\ localTotalVol;}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00070}00070\ }
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00071}00071\ \ \ \ \ \textcolor{keywordflow}{if}\ (rt.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_ad5773d54934f9c502a84a00e4e2248fd}{mpiEnvironment}}.isInitialized()\ \&\&\ rt.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_ad5773d54934f9c502a84a00e4e2248fd}{mpiEnvironment}}.sizeRank()\ >\ 1)}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00072}00072\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00073}00073\ \ \ \ \ \ \ \ \ NeoN::mpi::allReduce(}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00074}00074\ \ \ \ \ \ \ \ \ \ \ \ \ globalAbsVolSum,\ NeoN::mpi::ReduceOp::Sum,\ rt.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_ad5773d54934f9c502a84a00e4e2248fd}{mpiEnvironment}}.comm()}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00075}00075\ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00076}00076\ \ \ \ \ \ \ \ \ NeoN::mpi::allReduce(}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00077}00077\ \ \ \ \ \ \ \ \ \ \ \ \ globalSignedVolSum,\ NeoN::mpi::ReduceOp::Sum,\ rt.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_ad5773d54934f9c502a84a00e4e2248fd}{mpiEnvironment}}.comm()}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00078}00078\ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00079}00079\ \ \ \ \ \ \ \ \ NeoN::mpi::allReduce(totalVol,\ NeoN::mpi::ReduceOp::Sum,\ rt.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_ad5773d54934f9c502a84a00e4e2248fd}{mpiEnvironment}}.comm());}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00080}00080\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00081}00081\ }
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00082}00082\ \ \ \ \ \textcolor{keyword}{const}\ NeoN::scalar\ sumLocalContErr\ =\ dt\ *\ globalAbsVolSum\ /\ totalVol;}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00083}00083\ \ \ \ \ \textcolor{keyword}{const}\ NeoN::scalar\ globalContErr\ =\ dt\ *\ globalSignedVolSum\ /\ totalVol;}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00084}00084\ \ \ \ \ cumulative\ +=\ globalContErr;}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00085}00085\ }
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00086}00086\ \ \ \ \ NeoN::Logging::info(}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00087}00087\ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}time\ step\ continuity\ errors\ :\ sum\ local\ =\ \{\},\ global\ =\ \{\},\ cumulative\ =\ \{\}"{}},}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00088}00088\ \ \ \ \ \ \ \ \ sumLocalContErr,}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00089}00089\ \ \ \ \ \ \ \ \ globalContErr,}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00090}00090\ \ \ \ \ \ \ \ \ cumulative}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00091}00091\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00092}00092\ \}}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00093}00093\ }
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00094}00094\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
+
+\end{DoxyCode}

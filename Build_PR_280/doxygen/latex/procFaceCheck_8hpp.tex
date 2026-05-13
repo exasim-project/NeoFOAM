@@ -1,0 +1,52 @@
+\doxysection{/home/runner/work/\+Neo\+FOAM/\+Neo\+FOAM/include/\+Neo\+FOAM/auxiliary/proc\+Face\+Check.hpp File Reference}
+\hypertarget{procFaceCheck_8hpp}{}\label{procFaceCheck_8hpp}\index{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/procFaceCheck.hpp@{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/procFaceCheck.hpp}}
+{\ttfamily \#include $<$cmath$>$}\newline
+{\ttfamily \#include $<$cstdio$>$}\newline
+{\ttfamily \#include $<$string$>$}\newline
+{\ttfamily \#include $<$vector$>$}\newline
+{\ttfamily \#include $<$mpi.\+h$>$}\newline
+{\ttfamily \#include "{}Neo\+N/\+Neo\+N.\+hpp"{}}\newline
+\doxysubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structNeoFOAM_1_1detail_1_1MpiTraits_3_01NeoN_1_1scalar_01_4}{Neo\+FOAM\+::detail\+::\+Mpi\+Traits$<$ Neo\+N\+::scalar $>$}}
+\item 
+struct \mbox{\hyperlink{structNeoFOAM_1_1detail_1_1MpiTraits_3_01NeoN_1_1Vec3_01_4}{Neo\+FOAM\+::detail\+::\+Mpi\+Traits$<$ Neo\+N\+::\+Vec3 $>$}}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+namespace \mbox{\hyperlink{namespaceNeoFOAM}{Neo\+FOAM}}
+\item 
+namespace \mbox{\hyperlink{namespaceNeoFOAM_1_1detail}{Neo\+FOAM\+::detail}}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+enum class \mbox{\hyperlink{namespaceNeoFOAM_a519d51d486c56905acac95c3c19f40b8}{Neo\+FOAM\+::\+Sign\+Convention}} \{ \mbox{\hyperlink{namespaceNeoFOAM_a519d51d486c56905acac95c3c19f40b8af5f286e73bda105e538310b3190f75c5}{Neo\+FOAM\+::\+Equal}}
+, \mbox{\hyperlink{namespaceNeoFOAM_a519d51d486c56905acac95c3c19f40b8aa7dc0046aa7de98df5052d76ca99bd60}{Neo\+FOAM\+::\+Flip\+Expected}}
+ \}
+\begin{DoxyCompactList}\small\item\em Sign convention for proc-\/face cross-\/rank comparison. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+bool \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a6b2ab34117463c1287b75eddb4f53c27}{Neo\+FOAM\+::detail\+::values\+Match}} (Neo\+N\+::scalar a, Neo\+N\+::scalar b, double tol)
+\item 
+bool \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a1d8a5f61b3600d1641b94aa9e2be3ac7}{Neo\+FOAM\+::detail\+::values\+Match}} (Neo\+N\+::\+Vec3 a, Neo\+N\+::\+Vec3 b, double tol)
+\item 
+std\+::string \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a0e8b111c1a1c94ecf8104232ee70441b}{Neo\+FOAM\+::detail\+::format\+Value}} (Neo\+N\+::scalar v)
+\item 
+std\+::string \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a163fdd977ba625d43481f5b686a7beb9}{Neo\+FOAM\+::detail\+::format\+Value}} (Neo\+N\+::\+Vec3 v)
+\item 
+Neo\+N\+::scalar \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_aa7bc73c92a874d8121fe446d23c2f3f0}{Neo\+FOAM\+::detail\+::negate}} (Neo\+N\+::scalar v)
+\item 
+Neo\+N\+::\+Vec3 \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a5ec0fba4472ff6df81545cc32399f0ca}{Neo\+FOAM\+::detail\+::negate}} (Neo\+N\+::\+Vec3 v)
+\item 
+{\footnotesize template$<$typename Field $>$ }\\auto \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a419ab3b6e5cfe20fa2a7bf3878a48703}{Neo\+FOAM\+::detail\+::extract\+Proc\+Boundary\+Values}} (const Field \&field)
+\item 
+{\footnotesize template$<$typename Field $>$ }\\auto \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_aa6d4ce310a0c4c43c8a0c27ec2dcff28}{Neo\+FOAM\+::detail\+::extract\+Proc\+Owner\+Internal\+Values}} (const Field \&field)
+\item 
+{\footnotesize template$<$typename Field $>$ }\\bool \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a8245891b7b3171ce11c5911e86f1f357}{Neo\+FOAM\+::detail\+::field\+Is\+Volume}} (const Field \&field)
+\item 
+{\footnotesize template$<$typename Field $>$ }\\bool \mbox{\hyperlink{namespaceNeoFOAM_a553d8232134c9a7761f69ca5e61b41e0}{Neo\+FOAM\+::check\+Proc\+Face\+Consistency}} (const Field \&field, const std\+::string \&label, double tolerance=1e-\/12, \mbox{\hyperlink{namespaceNeoFOAM_a519d51d486c56905acac95c3c19f40b8}{Sign\+Convention}} sign=\mbox{\hyperlink{namespaceNeoFOAM_a519d51d486c56905acac95c3c19f40b8af5f286e73bda105e538310b3190f75c5}{Sign\+Convention\+::\+Equal}})
+\begin{DoxyCompactList}\small\item\em Assert that proc-\/face boundary values are consistent across ranks. \end{DoxyCompactList}\end{DoxyCompactItemize}
