@@ -19,7 +19,7 @@ HPC validation uses CUDA-aware MPI with multiple physical GPUs (ad-hoc run + rep
 
 ## Phases
 
-- [ ] **Phase 1: GPU MPI Transport** — Host-stage MPI buffers so GPUExecutor field exchange works without CUDA-aware MPI
+- [x] **Phase 1: GPU MPI Transport** — Host-stage MPI buffers so GPUExecutor field exchange works without CUDA-aware MPI
 - [ ] **Phase 2: GPU Kernel Fixes** — Replace all `std::` math in device lambdas with `Kokkos::` equivalents; GPU build clean
 - [ ] **Phase 3: Test Suite Parameterization** — Distributed tests accept GPUExecutor; local WSL2 multi-rank GPU passes
 - [ ] **Phase 4: Ginkgo GPU Integration** — Ginkgo distributed solve verified correct with GPUExecutor
@@ -42,7 +42,7 @@ HPC validation uses CUDA-aware MPI with multiple physical GPUs (ad-hoc run + rep
 - [x] 01-01-PLAN.md — Host-stage `communicateBoundaryData`: add `NeoN_CUDA_AWARE_MPI` cmake flag (default OFF) to `src/NeoN/CMakeLists.txt` + `src/NeoN/include/CMakeLists.txt`; wrap `MPI_Alltoallv` in both scalar and Vec3 overloads of `boundaryData.hpp` with `#if defined(NEON_CUDA_AWARE_MPI)` / `#else` host-staging / `#endif`; all six `fence(exec)` calls preserved; build green on both flag states
 
 **Wave 2** *(blocked on 01-01 building clean)*
-- [ ] 01-02-PLAN.md — WSL2 smoke test: run `mpirun -np 3 UCX_TLS=tcp ./build/develop/bin/tests/neon_test_partitioning` with GPUExecutor (via `allAvailableExecutor()` on CUDA build); confirm proc-boundary scalar and Vec3 values match expected ghost-cell values on GPU path; `ctest --preset develop` CPU suite green
+- [x] 01-02-PLAN.md — WSL2 smoke test: run `mpirun -np 3 UCX_TLS=tcp ./build/develop/bin/tests/neon_test_partitioning` with GPUExecutor (via `allAvailableExecutor()` on CUDA build); confirm proc-boundary scalar and Vec3 values match expected ghost-cell values on GPU path; `ctest --preset develop` CPU suite green
 
 **Cross-cutting constraints:** NeoN edits on `feat/gpu-distributed`; `cmake --build --preset develop -- -j4` (never exceed -j4); `UCX_TLS=tcp` for all local GPU MPI runs on WSL2
 
@@ -59,10 +59,10 @@ HPC validation uses CUDA-aware MPI with multiple physical GPUs (ad-hoc run + rep
 **Plans**: 2 plans in 1 wave
 
 **Wave 1** *(parallel — different file sets)*
-- [ ] 02-01-PLAN.md — Audit + fix NeoN device lambdas: `grep -rn "NEON_LAMBDA\|NeoN_LAMBDA" src/NeoN/` → collect all lambda bodies → replace `std::` math with `Kokkos::` equivalents; build green; ctest CPU green
-- [ ] 02-02-PLAN.md — Audit + fix NeoFOAM device lambdas (if any in `src/` or `include/NeoFOAM/`); build green; full ctest green
+- [ ] 02-01-PLAN.md — NeoN audit: confirm NEON_LAMBDA bodies are already std::-free (per pre-audit); add exempt comment to ginkgoL1Stop.cpp:200; verify vec3.hpp mag() uses Kokkos::sqrt; close GPU-KRN-01/02/03
+- [ ] 02-02-PLAN.md — NeoFOAM audit + build verify: confirm include/NeoFOAM/ has no device-lambda std:: hits; add exempt comment to procFaceCheck.hpp:30; run cmake --build with device-warning filter; run ctest — no new failures vs 66/80 baseline; close GPU-KRN-04
 
-**Cross-cutting constraints:** Replacements only inside `NEON_LAMBDA`/`NeoN_LAMBDA` bodies — host-side code may legitimately use `std::` math
+**Cross-cutting constraints:** Replacements only inside `NEON_LAMBDA`/`NeoN_LAMBDA` bodies — host-side code may legitimately use `std::` math; exempt instances (ginkgoL1Stop.cpp, procFaceCheck.hpp) are host-side and documented
 
 ---
 
@@ -126,8 +126,8 @@ HPC validation uses CUDA-aware MPI with multiple physical GPUs (ad-hoc run + rep
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. GPU MPI Transport | 1/2 | In Progress|  |
-| 2. GPU Kernel Fixes | 0/2 | Not started | — |
+| 1. GPU MPI Transport | 2/2 | Complete | 2026-05-13 |
+| 2. GPU Kernel Fixes | 0/2 | Planned | — |
 | 3. Test Suite Parameterization | 0/2 | Not started | — |
 | 4. Ginkgo GPU Integration | 0/1 | Not started | — |
 | 5. E2E Validation | 0/2 | Not started | — |
