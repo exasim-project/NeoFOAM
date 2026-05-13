@@ -33,3 +33,8 @@ The repository is structured in the following way:
 - *tests* demonstrating that NeoFOAM and OpenFOAM deliver identical results are provided by this repository in the test folder.
 - *examples* provides examples of how NeoFOAM can be used for writing applications
 - *tutorials* provides tutorial cases which can be run like typical OpenFOAM cases
+
+## Agentic coding
+
+We provide an `AGENTS.md` file to support LLM-based coding workflows.
+Please instruct tools such as Claude Code to reference this file, for example by prompting: “See `AGENTS.md` for shared project instructions.”
