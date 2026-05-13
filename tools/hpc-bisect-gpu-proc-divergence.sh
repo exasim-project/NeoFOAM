@@ -170,7 +170,13 @@ while IFS= read -r cpu_file; do
             first_delta="${linf}"
         fi
     fi
-done < <(find "${OUTPUT_DIR}/cpu" -type f -name '*.txt' | sort)
+done < <(find "${OUTPUT_DIR}/cpu" -type f -name '*.txt' -printf '%T@ %p\n' | sort -n | cut -d' ' -f2-)
+# ^ sort by mtime (temporal) instead of alphabetical so FIRST_DIVERGENCE
+# reflects the first dump produced by the solver, not the first one in
+# lexicographic order. Within the same step/piso/nonOrth, alphabetical
+# order doesn't match temporal order (e.g. "after_momentumPredictor" <
+# "after_momentumSolve_preCorrectBC" < "after_rotateOldTimes" lexically,
+# but rotateOldTimes runs first temporally).
 
 # ---------------- summary -------------------------------------------------- #
 SUMMARY_OUT="${OUTPUT_DIR}/FIRST_DIVERGENCE.txt"
