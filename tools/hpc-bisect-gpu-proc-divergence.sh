@@ -44,31 +44,37 @@ MPIRUN="${MPIRUN:-mpirun}"
 log() { printf '[%s] %s\n' "$(date +%H:%M:%S)" "$*" >&2; }
 die() { log "FATAL: $*"; exit 2; }
 
-# Patch controlDict in-place with a chosen executor and endTime.
-write_controlDict() {
+# Patch ONLY the entries we need in the user's existing system/controlDict.
+# Preserves everything else (BC schemes, libs, functionObjects, etc.) untouched.
+# Backs the original up to system/controlDict.bisect_backup on first call;
+# `restore_controlDict` (registered as an EXIT trap) puts it back.
+patch_controlDict() {
     local exec_name="$1"
-    cat > "${CASE_DIR}/system/controlDict" <<EOF
-FoamFile { version 2.0; format ascii; class dictionary; object controlDict; }
+    local cd="${CASE_DIR}/system/controlDict"
+    [[ -f "${cd}" ]] || die "system/controlDict not found at ${cd}"
 
-application     neoIcoFoam;
-startFrom       startTime;
-startTime       0;
-stopAt          endTime;
-endTime         ${END_TIME};
-deltaT          0.0005;
-writeControl    runTime;
-writeInterval   ${WRITE_INTERVAL};
-purgeWrite      0;
-writeFormat     ascii;
-writePrecision  10;
-writeCompression off;
-timeFormat      general;
-timePrecision   6;
-runTimeModifiable true;
+    if [[ ! -f "${cd}.bisect_backup" ]]; then
+        cp "${cd}" "${cd}.bisect_backup"
+        log "  backed up controlDict -> ${cd}.bisect_backup"
+    fi
 
-executor        ${exec_name};
-EOF
+    if ! command -v foamDictionary >/dev/null 2>&1; then
+        die "foamDictionary not on PATH — source the OpenFOAM environment first"
+    fi
+
+    foamDictionary -entry endTime       -set "${END_TIME}"       "${cd}" >/dev/null
+    foamDictionary -entry writeInterval -set "${WRITE_INTERVAL}" "${cd}" >/dev/null
+    foamDictionary -entry executor      -set "${exec_name}"      "${cd}" >/dev/null
 }
+
+restore_controlDict() {
+    local cd="${CASE_DIR}/system/controlDict"
+    if [[ -f "${cd}.bisect_backup" ]]; then
+        mv "${cd}.bisect_backup" "${cd}"
+        log "restored original controlDict"
+    fi
+}
+trap restore_controlDict EXIT
 
 # Run one configuration. Dumps land in proc*/dumps/ inside the case;
 # we move them out into the output tree afterwards.
@@ -79,7 +85,7 @@ run_one() {
     # Clean previous proc dumps in-case
     rm -rf "${CASE_DIR}"/processor*/dumps
 
-    write_controlDict "${exec_name}"
+    patch_controlDict "${exec_name}"
 
     # decomposeParDict assumed already present and configured for NRANKS.
     # If you regenerate from scratch, run `decomposePar -force` here.
