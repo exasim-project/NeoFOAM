@@ -28,10 +28,7 @@ TEST_CASE("Distributed PressureVelocityCoupling")
     float epsilonII = 1e-13;
     Foam::Time& runTime = *timePtr;
 
-    //auto [execName, exec] = GENERATE(allAvailableExecutor());
-    auto [execName, exec] = GENERATE(
-    std::pair<std::string, NeoN::Executor>{"CPUExecutor", NeoN::CPUExecutor{}}
-);
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
 
     auto rt = nf::createAdapterRunTime(runTime, exec);
     auto& mesh = rt.mesh;
@@ -499,9 +496,7 @@ TEST_CASE("BC-01: fixedValue size-1 token not downgraded to empty")
     }
 
     Foam::Time& runTime = *timePtr;
-    auto [execName, exec] = GENERATE(
-        std::pair<std::string, NeoN::Executor>{"CPUExecutor", NeoN::CPUExecutor {}}
-    );
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
     auto rt = nf::createAdapterRunTime(runTime, exec);
     auto& mesh = rt.mesh;
 
@@ -533,9 +528,7 @@ TEST_CASE("BC-02: processorCyclic patch in surface reader does not crash")
     }
 
     Foam::Time& runTime = *timePtr;
-    auto [execName, exec] = GENERATE(
-        std::pair<std::string, NeoN::Executor>{"CPUExecutor", NeoN::CPUExecutor {}}
-    );
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
     auto rt = nf::createAdapterRunTime(runTime, exec);
     auto& mesh = rt.mesh;
 
@@ -571,9 +564,7 @@ TEST_CASE("BC-03: PDESolver constructed without setReference does not trigger UB
     }
 
     Foam::Time& runTime = *timePtr;
-    auto [execName, exec] = GENERATE(
-        std::pair<std::string, NeoN::Executor>{"CPUExecutor", NeoN::CPUExecutor {}}
-    );
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
     auto rt = nf::createAdapterRunTime(runTime, exec);
     auto& mesh = rt.mesh;
     auto& schemesDict = rt.fvSchemesDict;
@@ -639,9 +630,7 @@ TEST_CASE("MPI-02: SurfaceField internalVector proc-face slots updated after exc
     }
 
     Foam::Time& runTime = *timePtr;
-    auto [execName, exec] = GENERATE(
-        std::pair<std::string, NeoN::Executor>{"CPUExecutor", NeoN::CPUExecutor {}}
-    );
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
     auto rt = nf::createAdapterRunTime(runTime, exec);
     auto& mesh = rt.mesh;
 
@@ -708,9 +697,7 @@ TEST_CASE("Distributed PressureVelocityCoupling reference cell on non-zero rank"
 
     Foam::Time& runTime = *timePtr;
 
-    auto [execName, exec] = GENERATE(
-        std::pair<std::string, NeoN::Executor>{"CPUExecutor", NeoN::CPUExecutor{}}
-    );
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
 
     auto rt = nf::createAdapterRunTime(runTime, exec);
     auto& mesh = rt.mesh;
@@ -805,9 +792,7 @@ TEST_CASE("LSA-01: faceToMatrixAddress distributed spike -- Laplacian residual",
     }
 
     Foam::Time& runTime = *timePtr;
-    auto [execName, exec] = GENERATE(
-        std::pair<std::string, NeoN::Executor>{"CPUExecutor", NeoN::CPUExecutor {}}
-    );
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
     auto rt = nf::createAdapterRunTime(runTime, exec);
     auto& mesh = rt.mesh;
     auto& schemesDict = rt.fvSchemesDict;

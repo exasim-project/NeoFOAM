@@ -26,12 +26,7 @@ TEST_CASE("DistributedMomentum")
 
     float epsilon = 1e-32;
     Foam::Time& runTime = *timePtr;
-    // MPI distributed tests are pinned to CPUExecutor pending full distributed
-    // GPU support. allAvailableExecutor() includes GPUExecutor even when no GPU
-    // is present, causing SIGSEGV when CUDA/HIP kernels execute without a device.
-    auto [execName, exec] = GENERATE(
-        std::pair<std::string, NeoN::Executor>{"CPUExecutor", NeoN::CPUExecutor{}}
-    );
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
 
     auto rt = nf::createAdapterRunTime(runTime, exec);
     auto& mesh = rt.mesh;

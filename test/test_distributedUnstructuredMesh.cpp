@@ -27,10 +27,7 @@ TEST_CASE("Distributed UnstructuredMesh")
 
     float epsilon = 1e-32;
     Foam::Time& runTime = *timePtr;
-    //auto [execName, exec] = GENERATE(allAvailableExecutor());
-    auto [execName, exec] = GENERATE(
-    std::pair<std::string, NeoN::Executor>{"CPUExecutor", NeoN::CPUExecutor{}}
-);
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
 
     auto rt = nf::createAdapterRunTime(runTime, exec);
     auto& mesh = rt.mesh;
@@ -273,9 +270,7 @@ TEST_CASE("GEO-01: deltaCoeffs at proc faces use cell-to-cell distance", "[GEO-0
     }
 
     Foam::Time& runTime = *timePtr;
-    auto [execName, exec] = GENERATE(
-        std::pair<std::string, NeoN::Executor> {"CPUExecutor", NeoN::CPUExecutor {}}
-    );
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
     auto rt = nf::createAdapterRunTime(runTime, exec);
     auto& mesh = rt.mesh;
 
@@ -438,9 +433,7 @@ TEST_CASE("GEO-02: proc-face weight symmetry on graded mesh", "[GEO-02]")
     }
 
     Foam::Time& runTime = *timePtr;
-    auto [execName, exec] = GENERATE(
-        std::pair<std::string, NeoN::Executor> {"CPUExecutor", NeoN::CPUExecutor {}}
-    );
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
     auto rt = nf::createAdapterRunTime(runTime, exec);
 
     SECTION_IF(
