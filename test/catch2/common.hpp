@@ -38,4 +38,12 @@ struct ApproxVector
             && Catch::Approx(0).margin(margin[1]) == diff[1]
             && Catch::Approx(0).margin(margin[2]) == diff[2];
     }
+    bool operator()(NeoN::Vec3 rhs, Foam::scalar lhs) const
+    {
+        NeoN::Vec3 diff(rhs[0] - lhs, rhs[1] - lhs, rhs[2] - lhs);
+
+        return Catch::Approx(0).margin(margin[0]) == diff[0]
+            && Catch::Approx(0).margin(margin[1]) == diff[1]
+            && Catch::Approx(0).margin(margin[2]) == diff[2];
+    }
 };
