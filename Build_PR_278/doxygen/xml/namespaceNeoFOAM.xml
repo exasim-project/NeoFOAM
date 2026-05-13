@@ -274,6 +274,60 @@
         </inbodydescription>
         <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/comparison.hpp" line="30" column="6" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/comparison.hpp" declline="30" declcolumn="6"/>
       </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1a216c99c971b9acb00fbd8ff36d9f2ee9" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void NeoFOAM::reportContinuityError</definition>
+        <argsstring>(const NeoN::finiteVolume::cellCentred::SurfaceField&lt; NeoN::scalar &gt; &amp;phi, const RunTime &amp;rt, NeoN::scalar &amp;cumulative)</argsstring>
+        <name>reportContinuityError</name>
+        <qualifiedname>NeoFOAM::reportContinuityError</qualifiedname>
+        <param>
+          <type>const NeoN::finiteVolume::cellCentred::SurfaceField&lt; NeoN::scalar &gt; &amp;</type>
+          <declname>phi</declname>
+        </param>
+        <param>
+          <type>const <ref refid="structNeoFOAM_1_1RunTime" kindref="compound">RunTime</ref> &amp;</type>
+          <declname>rt</declname>
+        </param>
+        <param>
+          <type>NeoN::scalar &amp;</type>
+          <declname>cumulative</declname>
+        </param>
+        <briefdescription>
+<para>Compute and log time-step continuity errors from the face flux field. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Computes sum-local, global, and cumulative continuity errors matching the OpenFOAM continuityErrs.H formulation: sumLocal = dt * volWeightedAverage( |div(phi)| ) (abs, MPI-reduced) global = dt * volWeightedAverage(  div(phi)  ) (signed, MPI-reduced) cumulative accumulates global across all PISO iterations</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>phi</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Face-flux NeoN SurfaceField </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>rt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para><ref refid="namespaceNeoFOAM" kindref="compound">NeoFOAM</ref> <ref refid="structNeoFOAM_1_1RunTime" kindref="compound">RunTime</ref> (provides exec, mesh, MPI env, dt) </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>cumulative</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Running cumulative error — caller must initialise to 0 </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/continuityError.hpp" line="25" column="13" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/continuityError.hpp" bodystart="25" bodyend="92"/>
+      </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1af69b228bd9e492814da093da0a51d1ac" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>NeoN::Vec3</type>
         <definition>NeoN::Vec3 NeoFOAM::convert</definition>

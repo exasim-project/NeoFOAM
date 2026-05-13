@@ -145,6 +145,9 @@ Functions</h2></td></tr>
 <tr class="memitem:aa63d77fd599301dc114f8358d866b805" id="r_aa63d77fd599301dc114f8358d866b805"><td class="memTemplParams" colspan="2">template&lt;typename NT , typename OT &gt; </td></tr>
 <tr class="memitem:aa63d77fd599301dc114f8358d866b805"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#aa63d77fd599301dc114f8358d866b805">operator==</a> (const fvcc::SurfaceField&lt; NT &gt; &amp;nf, const Foam::GeometricField&lt; OT, Foam::fvsPatchField, Foam::surfaceMesh &gt; &amp;of)</td></tr>
 <tr class="separator:aa63d77fd599301dc114f8358d866b805"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a216c99c971b9acb00fbd8ff36d9f2ee9" id="r_a216c99c971b9acb00fbd8ff36d9f2ee9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#a216c99c971b9acb00fbd8ff36d9f2ee9">reportContinuityError</a> (const NeoN::finiteVolume::cellCentred::SurfaceField&lt; NeoN::scalar &gt; &amp;phi, const <a class="el" href="structNeoFOAM_1_1RunTime.html">RunTime</a> &amp;rt, NeoN::scalar &amp;cumulative)</td></tr>
+<tr class="memdesc:a216c99c971b9acb00fbd8ff36d9f2ee9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute and log time-step continuity errors from the face flux field.  <br /></td></tr>
+<tr class="separator:a216c99c971b9acb00fbd8ff36d9f2ee9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af69b228bd9e492814da093da0a51d1ac" id="r_af69b228bd9e492814da093da0a51d1ac"><td class="memItemLeft" align="right" valign="top">NeoN::Vec3&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#af69b228bd9e492814da093da0a51d1ac">convert</a> (const Foam::vector &amp;in)</td></tr>
 <tr class="separator:af69b228bd9e492814da093da0a51d1ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad1260c29740a3affa838a7e57a2d71b9" id="r_ad1260c29740a3affa838a7e57a2d71b9"><td class="memItemLeft" align="right" valign="top">NeoN::scalar&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#ad1260c29740a3affa838a7e57a2d71b9">convert</a> (const Foam::scalar &amp;in)</td></tr>
@@ -1309,6 +1312,61 @@ template&lt;typename FoamType &gt; </div>
 </div><div class="memdoc">
 
 <p class="definition">Definition at line <a class="el" href="readers_8hpp_source.html#l00035">35</a> of file <a class="el" href="readers_8hpp_source.html">readers.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a216c99c971b9acb00fbd8ff36d9f2ee9" name="a216c99c971b9acb00fbd8ff36d9f2ee9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a216c99c971b9acb00fbd8ff36d9f2ee9">&#9670;&#160;</a></span>reportContinuityError()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void NeoFOAM::reportContinuityError </td>
+          <td>(</td>
+          <td class="paramtype">const NeoN::finiteVolume::cellCentred::SurfaceField&lt; NeoN::scalar &gt; &amp;&#160;</td>
+          <td class="paramname"><em>phi</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structNeoFOAM_1_1RunTime.html">RunTime</a> &amp;&#160;</td>
+          <td class="paramname"><em>rt</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">NeoN::scalar &amp;&#160;</td>
+          <td class="paramname"><em>cumulative</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Compute and log time-step continuity errors from the face flux field. </p>
+<p>Computes sum-local, global, and cumulative continuity errors matching the OpenFOAM continuityErrs.H formulation: sumLocal = dt * volWeightedAverage( |div(phi)| ) (abs, MPI-reduced) global = dt * volWeightedAverage(  div(phi)  ) (signed, MPI-reduced) cumulative accumulates global across all PISO iterations</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">phi</td><td>Face-flux NeoN SurfaceField </td></tr>
+    <tr><td class="paramname">rt</td><td><a class="el" href="namespaceNeoFOAM.html">NeoFOAM</a> <a class="el" href="structNeoFOAM_1_1RunTime.html">RunTime</a> (provides exec, mesh, MPI env, dt) </td></tr>
+    <tr><td class="paramname">cumulative</td><td>Running cumulative error — caller must initialise to 0 </td></tr>
+  </table>
+  </dd>
+</dl>
+
+<p class="definition">Definition at line <a class="el" href="continuityError_8hpp_source.html#l00025">25</a> of file <a class="el" href="continuityError_8hpp_source.html">continuityError.hpp</a>.</p>
 
 </div>
 </div>
