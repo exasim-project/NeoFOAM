@@ -5,6 +5,7 @@
 
 #include "NeoFOAM/NeoFOAM.hpp"
 #include "NeoFOAM/auxiliary/procFaceCheck.hpp"
+#include "NeoFOAM/auxiliary/procFaceDump.hpp"
 #include "NeoFOAM/auxiliary/continuityError.hpp"
 
 #include "fvCFD.H"
@@ -68,10 +69,14 @@ int main(int argc, char* argv[])
         NeoN::scalar cumulativeContErr = 0.0;
 
         NeoN::Logging::info("Starting time loop");
+        int stepIdx = 0;  // DUMP: time-step counter for proc-face dumps
         while (runTime.loop())
         {
             // Logging supports string formatting
             NeoN::Logging::info("Time = {}", rt.t);
+
+            ++stepIdx;             // DUMP
+            int pisoIter = 0;      // DUMP: reset per time step
 
             fvcc::rotateOldTimes(U);
             fvcc::rotateOldTimes(phi);
@@ -79,6 +84,8 @@ int main(int argc, char* argv[])
             nf::checkProcFaceConsistency(
                 phi, "phi after rotateOldTimes", 1e-12, nf::SignConvention::FlipExpected
             );
+            nf::dumpProcFaces(U,   "U",   "after_rotateOldTimes", stepIdx, 0, 0);  // DUMP
+            nf::dumpProcFaces(phi, "phi", "after_rotateOldTimes", stepIdx, 0, 0);  // DUMP
 
             auto [maxCoNum, meanCoNum] = fvcc::computeCoNum(phi, rt.dt);
             NeoN::Logging::info("Courant Number mean: {} max: {}", meanCoNum, maxCoNum);
@@ -100,6 +107,7 @@ int main(int argc, char* argv[])
                 UEqn.solve(-1.0 * dsl::exp::grad(p));
                 U.correctBoundaryConditions();
                 nf::checkProcFaceConsistency(U, "U after momentumPredictor solve");
+                nf::dumpProcFaces(U, "U", "after_momentumPredictor", stepIdx, 0, 0);  // DUMP
             }
             else
             {
@@ -112,8 +120,12 @@ int main(int argc, char* argv[])
             while (piso.correct())
             {
                 NeoN::Logging::info("PISO loop");
+                ++pisoIter;            // DUMP
+                int nonOrthIter = 0;   // DUMP: reset per PISO outer iter
                 auto [crAU, hByA] = nf::computeRAUandHByA(UEqn);
                 nf::constrainHbyA(U, p, hByA);
+                nf::dumpProcFaces(crAU, "rAU",  "after_computeRAUandHByA", stepIdx, pisoIter, 0);  // DUMP
+                nf::dumpProcFaces(hByA, "hByA", "after_computeRAUandHByA", stepIdx, pisoIter, 0);  // DUMP
 
                 nnfvcc::SurfaceField<NeoN::scalar> rAU =
                     fvcc::SurfaceInterpolation<NeoN::scalar>(
@@ -123,8 +135,10 @@ int main(int argc, char* argv[])
                     )
                         .interpolate(crAU);
                 rAU.name = "rAUf";
+                nf::dumpProcFaces(rAU, "rAUf", "after_rAU_interpolate", stepIdx, pisoIter, 0);  // DUMP
 
                 auto phiHbyA = nf::flux(hByA) + rAU * fvcc::ddtFluxCorr(U, phi, rt.dt, ddtScheme);
+                nf::dumpProcFaces(phiHbyA, "phiHbyA", "after_phiHbyA_construct", stepIdx, pisoIter, 0);  // DUMP — KEY for suspect #1
 
                 // TODO additionally missing
                 // Foam::adjustPhi(phiHbyA, U, p);
@@ -134,6 +148,7 @@ int main(int argc, char* argv[])
                 // Non-orthogonal pressure corrector loop
                 while (piso.correctNonOrthogonal())
                 {
+                    ++nonOrthIter;  // DUMP
                     // Pressure corrector
                     nf::PDESolver<NeoN::scalar> pEqn(
                         NeoN::dsl::imp::laplacian(rAU, p) - NeoN::dsl::exp::div(phiHbyA),
@@ -149,6 +164,7 @@ int main(int argc, char* argv[])
                     auto stats = pEqn.solve();
                     p.correctBoundaryConditions();
                     nf::checkProcFaceConsistency(p, "p after correctBC");
+                    nf::dumpProcFaces(p, "p", "after_pSolve", stepIdx, pisoIter, nonOrthIter);  // DUMP
 
                     if (piso.finalNonOrthogonalIter())
                     {
@@ -159,6 +175,7 @@ int main(int argc, char* argv[])
                             1e-12,
                             nf::SignConvention::FlipExpected
                         );
+                        nf::dumpProcFaces(phi, "phi", "after_updateFaceVelocity", stepIdx, pisoIter, nonOrthIter);  // DUMP
                     }
                 }
                 // [PISO-03] Continuity error
@@ -167,6 +184,7 @@ int main(int argc, char* argv[])
                 nf::updateVelocity(hByA, crAU, p, U);
                 U.correctBoundaryConditions();
                 nf::checkProcFaceConsistency(U, "U after updateVelocity");
+                nf::dumpProcFaces(U, "U", "after_updateVelocity", stepIdx, pisoIter, 0);  // DUMP
             }
 
             runTime.write();
