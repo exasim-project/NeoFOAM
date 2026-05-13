@@ -95,6 +95,9 @@ TEST_CASE("PressureVelocityCoupling")
             ApproxVector(1e-15)
         );
 
+        // NeoN stores boundary diagonal contributions directly in the matrix, whereas
+        // OpenFOAM keeps them separate. Remove them before comparing against OpenFOAM
+        // coefficients.
         nf::compare(
             NeoN::la::removeBoundaryContributions(nfUEqn.linearSystem()).matrix().diag(),
             ofUEqn.diag(),
