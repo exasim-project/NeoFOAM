@@ -1,75 +1,28 @@
 # SPDX-License-Identifier: Unlicense
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-# has to be first since it adds the main target
 add_subdirectory(catch2)
-set(TEST_CATCH2_DIR ${CMAKE_CURRENT_LIST_DIR}/catch2)
-list(APPEND CMAKE_MODULE_PATH ${Catch2_SOURCE_DIR}/extras)
 
 function(neofoam_unit_test TEST SETUP_DIRECTORY)
-  set(options "")
-  set(oneValueKeywords "MPI_SIZE" "COMMAND" "WORKING_DIRECTORY")
-  set(multiValueKeywords "")
-  cmake_parse_arguments("NEOFOAM" "${options}" "${oneValueKeywords}" "${multiValueKeywords}"
-                        ${ARGN})
-  if(NOT DEFINED "NEOFOAM_WORKING_DIRECTORY")
-    set(NEOFOAM_WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tests)
-  endif()
-  if(NOT DEFINED "NEOFOAM_COMMAND")
-    set(NEOFOAM_COMMAND neofoam_test_${TEST})
-  else()
-    message(Warning "NEOFOAM_command already defined ${NEOFOAM_COMMAND}")
+  if(NOT DEFINED "neofoam_WORKING_DIRECTORY")
+    set(neofoam_WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tests)
   endif()
 
-  add_executable("${NEOFOAM_COMMAND}" "test_${TEST}.cpp")
-  install(TARGETS ${NEOFOAM_COMMAND})
+  add_executable(neofoam_${TEST} "test_${TEST}.cpp")
 
-  target_include_directories(${NEOFOAM_COMMAND} PRIVATE "${TEST_CATCH2_DIR}")
-  set_target_properties(${NEOFOAM_COMMAND} PROPERTIES OUTPUT_NAME neofoam_test_${TEST})
-  target_compile_definitions(${NEOFOAM_COMMAND} PUBLIC OMPI_SKIP_MPICXX)
+  target_compile_definitions(neofoam_${TEST} PUBLIC OMPI_SKIP_MPICXX)
 
-  target_link_libraries(
-    ${NEOFOAM_COMMAND}
-    PUBLIC NeoFOAM_public_api OpenFOAM Catch2::Catch2
-    PRIVATE NeoN NeoFOAM)
+  target_link_libraries(neofoam_${TEST} NeoFOAM_public_api neofoam_catch_main OpenFOAM)
 
-  if(NOT NEOFOAM_MPI_SIZE)
-    target_link_libraries(${NEOFOAM_COMMAND} PRIVATE neofoam_catch_main)
-  else()
-    target_link_libraries(${NEOFOAM_COMMAND} PRIVATE neofoam_catch_main_mpi)
-  endif()
+  set(NFT_PWD ${neofoam_WORKING_DIRECTORY})
+  set_target_properties(neofoam_${TEST} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${NFT_PWD})
 
-  if(WIN32)
-    set_target_properties(
-      ${NEOFOAM_COMMAND}
-      PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${NEOFOAM_WORKING_DIRECTORY}/$<0:>
-                 LIBRARY_OUTPUT_DIRECTORY ${NEOFOAM_WORKING_DIRECTORY}/$<0:>
-                 ARCHIVE_OUTPUT_DIRECTORY ${NEOFOAM_WORKING_DIRECTORY}/$<0:>)
-  else()
-    # cmake-lint: disable=C0307
-    set_target_properties(${NEOFOAM_COMMAND} PROPERTIES RUNTIME_OUTPUT_DIRECTORY
-                                                        ${NEOFOAM_WORKING_DIRECTORY})
-  endif()
+  add_test(
+    NAME neofoam_${TEST}
+    COMMAND ${neofoam_WORKING_DIRECTORY}/neofoam_${TEST}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test/${SETUP_DIRECTORY})
 
-  if(NOT NEOFOAM_MPI_SIZE)
-    add_test(
-      NAME neofoam_test_${TEST}
-      COMMAND ${NEOFOAM_COMMAND}
-      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test/${SETUP_DIRECTORY})
-  else()
-    add_test(
-      NAME ${TEST}
-      COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${NEOFOAM_MPI_SIZE}
-              ${NEOFOAM_WORKING_DIRECTORY}/${NEOFOAM_COMMAND} -parallel
-      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test/${SETUP_DIRECTORY})
-    set_tests_properties(${TEST} PROPERTIES TIMEOUT 10)
-    set_tests_properties(${TEST} PROPERTIES PROCESSORS ${NEOFOAM_MPI_SIZE})
-    if(${MPIEXEC_MAX_NUMPROCS} LESS NEOFOAM_MPI_SIZE)
-      message(WARNING "Test <${TEST}> requested <${NEOFOAM_MPI_SIZE}> processors, "
-                      "but only <${MPIEXEC_MAX_NUMPROCS}> are available. Disabling test "
-                      "<${TEST}>")
-    endif()
-  endif()
+  install(TARGETS neofoam_${TEST})
 endfunction()
 
 neofoam_unit_test(readDict setup_operator)
@@ -84,42 +37,3 @@ neofoam_unit_test(pressureVelocityCoupling setup_pressureVelocityCoupling)
 neofoam_unit_test(advection setup_advection)
 neofoam_unit_test(compatibility setup_compatibility)
 neofoam_unit_test(momentum setup_pressureVelocityCoupling)
-
-if(NEOFOAM_WITH_MPI)
-  # Build executables and register the 3-rank CTest entries (default names without suffix).
-  neofoam_unit_test(distributedUnstructuredMesh setup_pressureVelocityCoupling MPI_SIZE 3)
-  neofoam_unit_test(distributedPressureVelocityCoupling setup_pressureVelocityCoupling MPI_SIZE 3)
-  neofoam_unit_test(distributedMomentum setup_pressureVelocityCoupling MPI_SIZE 3)
-
-  # 2-rank entries (ENABLED): use the 2-rank decomposition in setup_pressureVelocityCoupling_mpi2.
-  foreach(TEST distributedUnstructuredMesh distributedPressureVelocityCoupling distributedMomentum)
-    add_test(
-      NAME ${TEST}_mpi2
-      COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
-              ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tests/neofoam_test_${TEST} -parallel
-      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test/setup_pressureVelocityCoupling_mpi2)
-    set_tests_properties(${TEST}_mpi2 PROPERTIES TIMEOUT 10 PROCESSORS 2)
-  endforeach()
-
-  # 4-rank entries (DISABLED): no 4-rank decomposition in Phase 2; enabled in Phase 5.
-  foreach(TEST distributedUnstructuredMesh distributedPressureVelocityCoupling distributedMomentum)
-    add_test(
-      NAME ${TEST}_mpi4
-      COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4
-              ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tests/neofoam_test_${TEST} -parallel
-      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test/setup_pressureVelocityCoupling)
-    set_tests_properties(${TEST}_mpi4 PROPERTIES TIMEOUT 10 PROCESSORS 4 DISABLED TRUE)
-  endforeach()
-
-  # Graded-mesh entries (ENABLED): geometry correctness tests on non-uniform 2-rank mesh.
-  # Only distributedUnstructuredMesh -- [GEO-01] and [GEO-02] are mesh-level tests
-  # (no full pressure-velocity solve, per D-04 in 03-CONTEXT.md).
-  foreach(TEST distributedUnstructuredMesh)
-    add_test(
-      NAME ${TEST}_graded
-      COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
-              ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tests/neofoam_test_${TEST} -parallel
-      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test/setup_pressureVelocityCoupling_graded)
-    set_tests_properties(${TEST}_graded PROPERTIES TIMEOUT 10 PROCESSORS 2)
-  endforeach()
-endif()

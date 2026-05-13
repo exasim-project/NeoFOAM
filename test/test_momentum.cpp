@@ -73,6 +73,7 @@ TEST_CASE("Momentum")
 
     SECTION("Solve transient momentum without grad(p) on " + execName)
     {
+
         Foam::fvVectorMatrix ofUEqn(
             fvm::ddt(ofU) + fvm::div(ofPhi, ofU) - fvm::laplacian(ofNu, ofU)
         );
@@ -96,7 +97,7 @@ TEST_CASE("Momentum")
         nfUEqn.solve();
 
         nfU.correctBoundaryConditions();
-        nf::compare(nfU, ofU, ApproxVector({1e-04}));
+        nf::compare(nfU, ofU, ApproxVector({1e-08, 1e-08, 1e-08}));
     }
 
     SECTION("Solve transient momentum with grad(p) on " + execName)
@@ -124,6 +125,6 @@ TEST_CASE("Momentum")
 
         nfUEqn.solve(-1.0 * dsl::exp::grad(nfP));
         nfU.correctBoundaryConditions();
-        nf::compare(nfU, ofU, ApproxVector({1e-04}));
+        nf::compare(nfU, ofU, ApproxVector({1e-08, 1e-08, 1e-08}));
     }
 }

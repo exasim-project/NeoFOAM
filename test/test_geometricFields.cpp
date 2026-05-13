@@ -26,6 +26,7 @@ TEST_CASE("VolumeField")
         auto nfT = NeoFOAM::constructFrom(exec, nfMesh, ofT);
         NeoFOAM::compare(nfT, ofT, ApproxScalar(1e-15));
     }
+
     SECTION("volumeVectorField " + execName)
     {
         auto nfU = NeoFOAM::constructFrom(exec, nfMesh, ofU);

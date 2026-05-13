@@ -19,19 +19,10 @@
 
 #include "fvm.H"
 #include "fvc.H"
-#include "processorFvPatch.H"
 // #include "fvCFD.H"
 
 namespace NeoFOAM
 {
-
-/**
- * @brief Conditionally enters a Catch2 SECTION if the given condition is true.
- * @param COND The boolean condition to evaluate.
- * @param ... The section name and optional description forwarded to SECTION.
- */
-#define SECTION_IF(COND, ...)                                                                      \
-    if (COND) SECTION(__VA_ARGS__)
 
 void randomizeField(auto& field)
 {
@@ -153,41 +144,17 @@ void compare(const NFFIELD& a, const OFFIELD& b, Compare comp, const bool withBo
         // of boundary patches in the same order as b.boundaryField()
         if (withBoundaries)
         {
-            auto ofBoundaryData = std::vector<typename NFFIELD::VectorValueType> {};
-            auto nfBoundaryHost = a.boundaryData().value().copyToHost();
-
-            // Build the OF reference in the same order NeoN stores
-            // boundaryData().value(): non-processor patches first, processor
-            // patches in the trailing tail. Both kinds are compared.
+            size_t start = 0;
+            auto aBoundaryHost = a.boundaryData().value().copyToHost();
             for (const auto& patch : b.boundaryField())
             {
-                if (patch.type() == "processor")
-                {
-                    continue;
-                }
                 auto bBoundarySpan = std::span(patch.cdata(), patch.size());
-                for (auto b : bBoundarySpan)
-                {
-                    ofBoundaryData.push_back(convert(b));
-                }
+                REQUIRE_THAT(
+                    aBoundaryHost.view({start, start + patch.size()}),
+                    Catch::Matchers::RangeEquals(bBoundarySpan, comp)
+                );
+                start += patch.size();
             }
-            for (const auto& patch : b.boundaryField())
-            {
-                if (patch.type() != "processor")
-                {
-                    continue;
-                }
-                auto bBoundarySpan = std::span(patch.cdata(), patch.size());
-                for (auto b : bBoundarySpan)
-                {
-                    ofBoundaryData.push_back(convert(b));
-                }
-            }
-
-            REQUIRE_THAT(
-                nfBoundaryHost.view({0, ofBoundaryData.size()}),
-                Catch::Matchers::RangeEquals(ofBoundaryData, comp)
-            );
         }
     }
 }
