@@ -133,4 +133,84 @@ void dumpProcFaces(
     std::fclose(f);
 }
 
+/**
+ * @brief Dump the LOCAL owner-cell internalVector value at every proc-tail face.
+ *
+ * This is the value `correctBoundaryConditions()` reads from `internalVector_`
+ * and sends to the neighbour rank's ghost (boundaryData). It is therefore the
+ * pre-exchange "source" value for proc-face MPI sync.
+ *
+ * Pairing with @ref dumpProcFaces (which dumps the post-exchange ghost) lets
+ * the bisect script discriminate:
+ *   • pre and post both differ across CPU/GPU  → solver upstream of correctBC
+ *     wrote wrong values to internalVector at proc-owner cells.
+ *   • pre matches across CPU/GPU but post differs → MPI exchange path
+ *     (host-stage copies, fence, unpack) is corrupting the value in transit.
+ *
+ * No-op unless NEOFOAM_PROC_DUMP=1. No-op for SurfaceField (the concept
+ * "owner-cell internal at a face" is volume-only).
+ *
+ * Output filename: processor{rank}/dumps/<step:04d>_<piso>_<nonOrth>_<checkpoint>__<field>_ownerInternal.txt
+ */
+template<typename Field>
+void dumpProcOwnerInternal(
+    const Field& field,
+    const std::string& fieldName,
+    const std::string& checkpoint,
+    int stepIdx,
+    int pisoIter,
+    int nonOrthIter
+)
+{
+    if (!procDumpEnabled()) return;
+
+    const auto& bm = field.mesh().boundaryMesh();
+    if (!bm.isDistributed()) return;
+    if (!detail::fieldIsVolume(field)) return;
+
+    const auto procPatchCount = bm.nProcBoundaryPatches();
+    if (procPatchCount == 0) return;
+
+    int rank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    auto perPatchOwner = detail::extractProcOwnerInternalValues(field);
+
+    namespace fs = std::filesystem;
+    const fs::path dir = fs::path("processor" + std::to_string(rank)) / "dumps";
+    std::error_code ec;
+    fs::create_directories(dir, ec);
+
+    char filename[512];
+    std::snprintf(
+        filename,
+        sizeof(filename),
+        "%s/%04d_%d_%d_%s__%s_ownerInternal.txt",
+        dir.string().c_str(),
+        stepIdx,
+        pisoIter,
+        nonOrthIter,
+        checkpoint.c_str(),
+        fieldName.c_str()
+    );
+
+    std::FILE* f = std::fopen(filename, "w");
+    if (!f) return;
+
+    for (NeoN::localIdx p = 0; p < procPatchCount; ++p)
+    {
+        const auto nFaces = perPatchOwner[p].size();
+        for (std::size_t bf = 0; bf < nFaces; ++bf)
+        {
+            detail::dumpRow(
+                f,
+                static_cast<int>(p),
+                static_cast<int>(bf),
+                perPatchOwner[p][bf]
+            );
+        }
+    }
+    std::fclose(f);
+}
+
 } // namespace NeoFOAM

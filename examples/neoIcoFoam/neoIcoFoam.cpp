@@ -105,6 +105,13 @@ int main(int argc, char* argv[])
                 // NOTE solve on a temporary clone of UEqn
                 // TODO use a free function here
                 UEqn.solve(-1.0 * dsl::exp::grad(p));
+                // DUMP: pre-correctBC owner-internal at proc-tail faces.
+                //   This is the source value correctBoundaryConditions() will
+                //   send to the neighbour rank. Compared against the post-
+                //   correctBC boundaryData dump below, this discriminates a
+                //   solver bug (pre already wrong) from an exchange bug
+                //   (pre matches across CPU/GPU but post diverges).
+                nf::dumpProcOwnerInternal(U, "U", "after_momentumSolve_preCorrectBC", stepIdx, 0, 0);
                 U.correctBoundaryConditions();
                 nf::checkProcFaceConsistency(U, "U after momentumPredictor solve");
                 nf::dumpProcFaces(U, "U", "after_momentumPredictor", stepIdx, 0, 0);  // DUMP
