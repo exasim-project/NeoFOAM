@@ -213,4 +213,72 @@ void dumpProcOwnerInternal(
     std::fclose(f);
 }
 
+/**
+ * @brief Dump the assembled non-local matrix coefficients (one value per proc face).
+ *
+ * Use to discriminate "GPU matrix assembly is wrong" from "GPU solver is wrong":
+ *   - Call AFTER `PDESolver::assemble()` and BEFORE `PDESolver::solve(...)`.
+ *   - Diff CPU vs GPU. If values differ at the same proc-face indices as the
+ *     subsequent solve diverges → assembly bug. If values match → solver bug
+ *     (Ginkgo distributed CUDA apply / halo).
+ *
+ * The non-local COO matrix has exactly one entry per proc-boundary face on this
+ * rank (size = nProcBoundaryFaces). Values are the proc-face off-diagonal
+ * coefficients accumulated by every operator that contributes (div, laplacian,
+ * ...). For Vec3-valued systems each entry is a Vec3.
+ *
+ * Output filename:
+ *   processor{rank}/dumps/<step:04d>_<piso>_<nonOrth>_<checkpoint>__<fieldName>_nonLocalA.txt
+ *
+ * Row format: "0 <faceIdx> <val...>" (single virtual patch 0 for the flat
+ * non-local entry list — proc-face indexing here is the COO row order, not
+ * mesh-boundary patch order).
+ */
+template<typename LinearSystem>
+void dumpNonLocalMatrixValues(
+    const LinearSystem& ls,
+    const std::string& fieldName,
+    const std::string& checkpoint,
+    int stepIdx,
+    int pisoIter,
+    int nonOrthIter
+)
+{
+    if (!procDumpEnabled()) return;
+
+    auto valsHost = ls.nonLocalMatrix().values().copyToHost();
+    const auto v = valsHost.view();
+    if (v.size() == 0) return;
+
+    int rank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    namespace fs = std::filesystem;
+    const fs::path dir = fs::path("processor" + std::to_string(rank)) / "dumps";
+    std::error_code ec;
+    fs::create_directories(dir, ec);
+
+    char filename[512];
+    std::snprintf(
+        filename,
+        sizeof(filename),
+        "%s/%04d_%d_%d_%s__%s_nonLocalA.txt",
+        dir.string().c_str(),
+        stepIdx,
+        pisoIter,
+        nonOrthIter,
+        checkpoint.c_str(),
+        fieldName.c_str()
+    );
+
+    std::FILE* f = std::fopen(filename, "w");
+    if (!f) return;
+
+    for (std::size_t i = 0; i < v.size(); ++i)
+    {
+        detail::dumpRow(f, 0, static_cast<int>(i), v[i]);
+    }
+    std::fclose(f);
+}
+
 } // namespace NeoFOAM

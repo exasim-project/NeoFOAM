@@ -100,6 +100,16 @@ int main(int argc, char* argv[])
 
             const auto ddtScheme = UEqn.ddtScheme();
 
+            // DUMP: assemble explicitly so we can dump the matrix BEFORE Ginkgo
+            //   sees it. Discriminates "GPU assembly wrote wrong proc-face
+            //   coefficients" from "Ginkgo distributed CUDA apply is wrong".
+            //   The downstream solve(rhs) re-assembles internally (with the
+            //   rhs source added); the matrix coefficients themselves are
+            //   identical between this pre-assemble and the solver's
+            //   internal assemble, so the dump captures what Ginkgo will use.
+            UEqn.assemble();
+            nf::dumpNonLocalMatrixValues(UEqn.linearSystem(), "U", "after_UEqn_assemble", stepIdx, 0, 0);
+
             if (piso.momentumPredictor())
             {
                 // NOTE solve on a temporary clone of UEqn
@@ -115,12 +125,6 @@ int main(int argc, char* argv[])
                 U.correctBoundaryConditions();
                 nf::checkProcFaceConsistency(U, "U after momentumPredictor solve");
                 nf::dumpProcFaces(U, "U", "after_momentumPredictor", stepIdx, 0, 0);  // DUMP
-            }
-            else
-            {
-                // NOTE since computing rAU and HbyA requires an assembled system matrix we
-                // explicitly trigger assembly here.
-                UEqn.assemble();
             }
 
             // --- PISO loop
