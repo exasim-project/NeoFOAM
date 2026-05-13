@@ -4,7 +4,6 @@
 #include "NeoN/NeoN.hpp"
 
 #include "NeoFOAM/NeoFOAM.hpp"
-#include "NeoFOAM/auxiliary/procFaceCheck.hpp"
 #include "NeoFOAM/auxiliary/continuityError.hpp"
 
 #include "fvCFD.H"
@@ -75,10 +74,6 @@ int main(int argc, char* argv[])
 
             fvcc::rotateOldTimes(U);
             fvcc::rotateOldTimes(phi);
-            nf::checkProcFaceConsistency(U, "U after rotateOldTimes");
-            nf::checkProcFaceConsistency(
-                phi, "phi after rotateOldTimes", 1e-12, nf::SignConvention::FlipExpected
-            );
 
             auto [maxCoNum, meanCoNum] = fvcc::computeCoNum(phi, rt.dt);
             NeoN::Logging::info("Courant Number mean: {} max: {}", meanCoNum, maxCoNum);
@@ -99,7 +94,6 @@ int main(int argc, char* argv[])
                 // TODO use a free function here
                 UEqn.solve(-1.0 * dsl::exp::grad(p));
                 U.correctBoundaryConditions();
-                nf::checkProcFaceConsistency(U, "U after momentumPredictor solve");
             }
             else
             {
@@ -148,25 +142,23 @@ int main(int argc, char* argv[])
 
                     auto stats = pEqn.solve();
                     p.correctBoundaryConditions();
-                    nf::checkProcFaceConsistency(p, "p after correctBC");
 
                     if (piso.finalNonOrthogonalIter())
                     {
                         nf::updateFaceVelocity(phiHbyA, pEqn, phi);
-                        nf::checkProcFaceConsistency(
-                            phi,
-                            "phi after updateFaceVelocity",
-                            1e-12,
-                            nf::SignConvention::FlipExpected
-                        );
                     }
                 }
-                // [PISO-03] Continuity error
-                nf::reportContinuityError(phi, rt, cumulativeContErr);
+                auto [sumLocalContErr, globalContErr, cumulative] = nf::continuityError(phi, rt, cumulativeContErr);
+
+                NeoN::Logging::info(
+                    "time step continuity errors : sum local = {}, global = {}, cumulative = {}",
+                    sumLocalContErr,
+                    globalContErr,
+                    cumulative
+                );
 
                 nf::updateVelocity(hByA, crAU, p, U);
                 U.correctBoundaryConditions();
-                nf::checkProcFaceConsistency(U, "U after updateVelocity");
             }
 
             runTime.write();

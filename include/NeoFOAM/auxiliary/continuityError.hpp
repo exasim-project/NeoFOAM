@@ -22,7 +22,7 @@ namespace NeoFOAM
  * @param rt            NeoFOAM RunTime (provides exec, mesh, MPI env, dt)
  * @param cumulative    Running cumulative error — caller must initialise to 0
  */
-inline void reportContinuityError(
+inline std::tuple<NeoN::scalar, NeoN::scalar, NeoN::scalar> continuityError(
     const NeoN::finiteVolume::cellCentred::SurfaceField<NeoN::scalar>& phi,
     const RunTime& rt,
     NeoN::scalar& cumulative
@@ -83,12 +83,7 @@ inline void reportContinuityError(
     const NeoN::scalar globalContErr = dt * globalSignedVolSum / totalVol;
     cumulative += globalContErr;
 
-    NeoN::Logging::info(
-        "time step continuity errors : sum local = {}, global = {}, cumulative = {}",
-        sumLocalContErr,
-        globalContErr,
-        cumulative
-    );
+    return  {sumLocalContErr, globalContErr, cumulative};
 }
 
 } // namespace NeoFOAM
