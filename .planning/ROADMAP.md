@@ -39,10 +39,10 @@ HPC validation uses CUDA-aware MPI with multiple physical GPUs (ad-hoc run + rep
 **Plans**: 2 plans in 2 waves
 
 **Wave 1** *(no deps)*
-- [ ] 01-01-PLAN.md — Host-stage `communicateBoundaryData`: add `NeoN_CUDA_AWARE_MPI` cmake flag (default OFF); implement device→host copy before `MPI_Alltoallv`, host→device after; `fence(exec)` preserved; NeoN build green; NeoFOAM bumps submodule pointer
+- [ ] 01-01-PLAN.md — Host-stage `communicateBoundaryData`: add `NeoN_CUDA_AWARE_MPI` cmake flag (default OFF) to `src/NeoN/CMakeLists.txt` + `src/NeoN/include/CMakeLists.txt`; wrap `MPI_Alltoallv` in both scalar and Vec3 overloads of `boundaryData.hpp` with `#if defined(NEON_CUDA_AWARE_MPI)` / `#else` host-staging / `#endif`; all six `fence(exec)` calls preserved; build green on both flag states
 
 **Wave 2** *(blocked on 01-01 building clean)*
-- [ ] 01-02-PLAN.md — WSL2 smoke test: run `mpirun -np 2 UCX_TLS=tcp ./neon_test_distributedPressureVelocityCoupling` with `GPUExecutor`; diagnose any failures; confirm proc-boundary data exchange produces correct values on GPU
+- [ ] 01-02-PLAN.md — WSL2 smoke test: run `mpirun -np 3 UCX_TLS=tcp ./build/develop/bin/tests/neon_test_partitioning` with GPUExecutor (via `allAvailableExecutor()` on CUDA build); confirm proc-boundary scalar and Vec3 values match expected ghost-cell values on GPU path; `ctest --preset develop` CPU suite green
 
 **Cross-cutting constraints:** NeoN edits on `feat/gpu-distributed`; `cmake --build --preset develop -- -j4` (never exceed -j4); `UCX_TLS=tcp` for all local GPU MPI runs on WSL2
 
