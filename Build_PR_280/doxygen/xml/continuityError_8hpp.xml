@@ -65,7 +65,7 @@
 <codeline lineno="9"><highlight class="normal"></highlight><highlight class="keyword">namespace<sp/></highlight><highlight class="normal"><ref refid="namespaceNeoFOAM" kindref="compound">NeoFOAM</ref></highlight></codeline>
 <codeline lineno="10"><highlight class="normal">{</highlight></codeline>
 <codeline lineno="11"><highlight class="normal"></highlight></codeline>
-<codeline lineno="25" refid="namespaceNeoFOAM_1a216c99c971b9acb00fbd8ff36d9f2ee9" refkind="member"><highlight class="normal"></highlight><highlight class="keyword">inline</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1a216c99c971b9acb00fbd8ff36d9f2ee9" kindref="member">reportContinuityError</ref>(</highlight></codeline>
+<codeline lineno="25" refid="namespaceNeoFOAM_1ab7ef05397e0dca7f888788b174c584dd" refkind="member"><highlight class="normal"></highlight><highlight class="keyword">inline</highlight><highlight class="normal"><sp/>std::tuple&lt;NeoN::scalar,<sp/>NeoN::scalar,<sp/>NeoN::scalar&gt;<sp/><ref refid="namespaceNeoFOAM_1ab7ef05397e0dca7f888788b174c584dd" kindref="member">continuityError</ref>(</highlight></codeline>
 <codeline lineno="26"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::finiteVolume::cellCentred::SurfaceField&lt;NeoN::scalar&gt;&amp;<sp/>phi,</highlight></codeline>
 <codeline lineno="27"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="structNeoFOAM_1_1RunTime" kindref="compound">RunTime</ref>&amp;<sp/>rt,</highlight></codeline>
 <codeline lineno="28"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::scalar&amp;<sp/>cumulative</highlight></codeline>
@@ -126,15 +126,10 @@
 <codeline lineno="83"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::scalar<sp/>globalContErr<sp/>=<sp/>dt<sp/>*<sp/>globalSignedVolSum<sp/>/<sp/>totalVol;</highlight></codeline>
 <codeline lineno="84"><highlight class="normal"><sp/><sp/><sp/><sp/>cumulative<sp/>+=<sp/>globalContErr;</highlight></codeline>
 <codeline lineno="85"><highlight class="normal"></highlight></codeline>
-<codeline lineno="86"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::Logging::info(</highlight></codeline>
-<codeline lineno="87"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="stringliteral">&quot;time<sp/>step<sp/>continuity<sp/>errors<sp/>:<sp/>sum<sp/>local<sp/>=<sp/>{},<sp/>global<sp/>=<sp/>{},<sp/>cumulative<sp/>=<sp/>{}&quot;</highlight><highlight class="normal">,</highlight></codeline>
-<codeline lineno="88"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>sumLocalContErr,</highlight></codeline>
-<codeline lineno="89"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>globalContErr,</highlight></codeline>
-<codeline lineno="90"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>cumulative</highlight></codeline>
-<codeline lineno="91"><highlight class="normal"><sp/><sp/><sp/><sp/>);</highlight></codeline>
-<codeline lineno="92"><highlight class="normal">}</highlight></codeline>
-<codeline lineno="93"><highlight class="normal"></highlight></codeline>
-<codeline lineno="94"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>NeoFOAM</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="86"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/><sp/>{sumLocalContErr,<sp/>globalContErr,<sp/>cumulative};</highlight></codeline>
+<codeline lineno="87"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="88"><highlight class="normal"></highlight></codeline>
+<codeline lineno="89"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>NeoFOAM</highlight><highlight class="normal"></highlight></codeline>
     </programlisting>
     <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/continuityError.hpp"/>
   </compounddef>

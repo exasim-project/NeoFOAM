@@ -94,7 +94,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span>{</div>
 <div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span> </div>
 <div class="foldopen" id="foldopen00025" data-start="{" data-end="}">
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#a216c99c971b9acb00fbd8ff36d9f2ee9">   25</a></span><span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code hl_function" href="namespaceNeoFOAM.html#a216c99c971b9acb00fbd8ff36d9f2ee9">reportContinuityError</a>(</div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#ab7ef05397e0dca7f888788b174c584dd">   25</a></span><span class="keyword">inline</span> std::tuple&lt;NeoN::scalar, NeoN::scalar, NeoN::scalar&gt; <a class="code hl_function" href="namespaceNeoFOAM.html#ab7ef05397e0dca7f888788b174c584dd">continuityError</a>(</div>
 <div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>    <span class="keyword">const</span> NeoN::finiteVolume::cellCentred::SurfaceField&lt;NeoN::scalar&gt;&amp; phi,</div>
 <div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>    <span class="keyword">const</span> <a class="code hl_struct" href="structNeoFOAM_1_1RunTime.html">RunTime</a>&amp; rt,</div>
 <div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>    NeoN::scalar&amp; cumulative</div>
@@ -155,18 +155,13 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>    <span class="keyword">const</span> NeoN::scalar globalContErr = dt * globalSignedVolSum / totalVol;</div>
 <div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>    cumulative += globalContErr;</div>
 <div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span> </div>
-<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>    NeoN::Logging::info(</div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>        <span class="stringliteral">&quot;time step continuity errors : sum local = {}, global = {}, cumulative = {}&quot;</span>,</div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>        sumLocalContErr,</div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>        globalContErr,</div>
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>        cumulative</div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>    );</div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>}</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>    <span class="keywordflow">return</span>  {sumLocalContErr, globalContErr, cumulative};</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>}</div>
 </div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span> </div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>} <span class="comment">// namespace NeoFOAM</span></div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span> </div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>} <span class="comment">// namespace NeoFOAM</span></div>
 <div class="ttc" id="anamespaceNeoFOAM_html"><div class="ttname"><a href="namespaceNeoFOAM.html">NeoFOAM</a></div><div class="ttdef"><b>Definition</b> <a href="pressureVelocityCoupling_8hpp_source.html#l00014">pressureVelocityCoupling.hpp:15</a></div></div>
-<div class="ttc" id="anamespaceNeoFOAM_html_a216c99c971b9acb00fbd8ff36d9f2ee9"><div class="ttname"><a href="namespaceNeoFOAM.html#a216c99c971b9acb00fbd8ff36d9f2ee9">NeoFOAM::reportContinuityError</a></div><div class="ttdeci">void reportContinuityError(const NeoN::finiteVolume::cellCentred::SurfaceField&lt; NeoN::scalar &gt; &amp;phi, const RunTime &amp;rt, NeoN::scalar &amp;cumulative)</div><div class="ttdoc">Compute and log time-step continuity errors from the face flux field.</div><div class="ttdef"><b>Definition</b> <a href="continuityError_8hpp_source.html#l00025">continuityError.hpp:25</a></div></div>
+<div class="ttc" id="anamespaceNeoFOAM_html_ab7ef05397e0dca7f888788b174c584dd"><div class="ttname"><a href="namespaceNeoFOAM.html#ab7ef05397e0dca7f888788b174c584dd">NeoFOAM::continuityError</a></div><div class="ttdeci">std::tuple&lt; NeoN::scalar, NeoN::scalar, NeoN::scalar &gt; continuityError(const NeoN::finiteVolume::cellCentred::SurfaceField&lt; NeoN::scalar &gt; &amp;phi, const RunTime &amp;rt, NeoN::scalar &amp;cumulative)</div><div class="ttdoc">Compute and log time-step continuity errors from the face flux field.</div><div class="ttdef"><b>Definition</b> <a href="continuityError_8hpp_source.html#l00025">continuityError.hpp:25</a></div></div>
 <div class="ttc" id="arunTime_8hpp_html"><div class="ttname"><a href="runTime_8hpp.html">runTime.hpp</a></div></div>
 <div class="ttc" id="astructNeoFOAM_1_1RunTime_html"><div class="ttname"><a href="structNeoFOAM_1_1RunTime.html">NeoFOAM::RunTime</a></div><div class="ttdef"><b>Definition</b> <a href="runTime_8hpp_source.html#l00017">runTime.hpp:18</a></div></div>
 <div class="ttc" id="astructNeoFOAM_1_1RunTime_html_a6a3e375c6054e387635ba04bdfe76c6d"><div class="ttname"><a href="structNeoFOAM_1_1RunTime.html#a6a3e375c6054e387635ba04bdfe76c6d">NeoFOAM::RunTime::dt</a></div><div class="ttdeci">Foam::scalar dt</div><div class="ttdef"><b>Definition</b> <a href="runTime_8hpp_source.html#l00025">runTime.hpp:25</a></div></div>

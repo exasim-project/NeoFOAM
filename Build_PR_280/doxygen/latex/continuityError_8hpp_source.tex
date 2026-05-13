@@ -13,7 +13,7 @@
 \DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00009}00009\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceNeoFOAM}{NeoFOAM}}}
 \DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00010}00010\ \{}
 \DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00011}00011\ }
-\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00025}\mbox{\hyperlink{namespaceNeoFOAM_a216c99c971b9acb00fbd8ff36d9f2ee9}{00025}}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_a216c99c971b9acb00fbd8ff36d9f2ee9}{reportContinuityError}}(}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00025}\mbox{\hyperlink{namespaceNeoFOAM_ab7ef05397e0dca7f888788b174c584dd}{00025}}\ \textcolor{keyword}{inline}\ std::tuple<NeoN::scalar,\ NeoN::scalar,\ NeoN::scalar>\ \mbox{\hyperlink{namespaceNeoFOAM_ab7ef05397e0dca7f888788b174c584dd}{continuityError}}(}
 \DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00026}00026\ \ \ \ \ \textcolor{keyword}{const}\ NeoN::finiteVolume::cellCentred::SurfaceField<NeoN::scalar>\&\ phi,}
 \DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00027}00027\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{RunTime}}\&\ rt,}
 \DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00028}00028\ \ \ \ \ NeoN::scalar\&\ cumulative}
@@ -74,14 +74,9 @@
 \DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00083}00083\ \ \ \ \ \textcolor{keyword}{const}\ NeoN::scalar\ globalContErr\ =\ dt\ *\ globalSignedVolSum\ /\ totalVol;}
 \DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00084}00084\ \ \ \ \ cumulative\ +=\ globalContErr;}
 \DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00085}00085\ }
-\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00086}00086\ \ \ \ \ NeoN::Logging::info(}
-\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00087}00087\ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}time\ step\ continuity\ errors\ :\ sum\ local\ =\ \{\},\ global\ =\ \{\},\ cumulative\ =\ \{\}"{}},}
-\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00088}00088\ \ \ \ \ \ \ \ \ sumLocalContErr,}
-\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00089}00089\ \ \ \ \ \ \ \ \ globalContErr,}
-\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00090}00090\ \ \ \ \ \ \ \ \ cumulative}
-\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00091}00091\ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00092}00092\ \}}
-\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00093}00093\ }
-\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00094}00094\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00086}00086\ \ \ \ \ \textcolor{keywordflow}{return}\ \ \{sumLocalContErr,\ globalContErr,\ cumulative\};}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00087}00087\ \}}
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00088}00088\ }
+\DoxyCodeLine{\Hypertarget{continuityError_8hpp_source_l00089}00089\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
 
 \end{DoxyCode}
