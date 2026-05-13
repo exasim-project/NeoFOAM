@@ -189,6 +189,7 @@ public:
         // Do some sanity checks before trying to solve
         // NF_ASSERT(ls.exec() == solution.exec(), "Executors are not the same");
         auto stats = solver.solve(ls, psi_.internalVector());
+        NeoN::fence(psi_.exec());
 
         for (auto& stat : stats.entries)
         {
