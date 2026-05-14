@@ -87,4 +87,9 @@ void updateVelocity(
  */
 nnfvcc::SurfaceField<scalar> flux(const nnfvcc::VolumeField<Vec3>& volField);
 
+/* @brief Reimplementation of OpenFOAMs fvScalarMatrix.flux() for pressure equations
+ * @return flux surface field computed from the assembled pressure linear system
+ */
+nnfvcc::SurfaceField<scalar> flux(const PDESolver<scalar>& expr);
+
 }

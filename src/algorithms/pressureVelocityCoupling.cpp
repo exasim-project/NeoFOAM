@@ -283,4 +283,78 @@ nnfvcc::SurfaceField<scalar> flux(const nnfvcc::VolumeField<Vec3>& volField)
     return faceFlux;
 }
 
+nnfvcc::SurfaceField<scalar> flux(const PDESolver<scalar>& expr)
+{
+    const auto& p = expr.getField();
+    const auto& mesh = p.mesh();
+    const auto nInternalFaces = mesh.nInternalFaces();
+    const auto nBoundaryFaces = mesh.nBoundaryFaces();
+    const auto exec = expr.exec();
+
+    const auto [owner, neighbour, internalP] =
+        views(mesh.faceOwner(), mesh.faceNeighbour(), p.internalVector());
+
+    const auto& ls = expr.linearSystem();
+    const auto rowPtrs = ls.matrix().sparsity()->rowOffs().view();
+    const auto neiOffs = ls.faceToMatrixAddress()->neighbourOffset().view();
+    const auto ownOffs = ls.faceToMatrixAddress()->ownerOffset().view();
+    auto values = ls.matrix().values().view();
+
+    auto surfaceBCs = nnfvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh);
+    auto faceFlux = nnfvcc::SurfaceField<scalar>(exec, "pFlux", mesh, surfaceBCs);
+    NeoN::fill(faceFlux.internalVector(), NeoN::zero<scalar>());
+    NeoN::fill(faceFlux.boundaryData().value(), NeoN::zero<scalar>());
+    auto [iFlux, bFlux] = views(faceFlux.internalVector(), faceFlux.boundaryData().value());
+
+    NeoN::parallelFor(
+        exec,
+        {0, nInternalFaces},
+        NEON_LAMBDA(const size_t facei) {
+            auto own = static_cast<std::size_t>(owner[facei]);
+            auto nei = static_cast<std::size_t>(neighbour[facei]);
+            auto rowNeiStart = rowPtrs[nei];
+            auto rowOwnStart = rowPtrs[own];
+            auto upper = values[rowNeiStart + neiOffs[facei]];
+            auto lower = values[rowOwnStart + ownOffs[facei]];
+            iFlux[facei] = upper * internalP[nei] - lower * internalP[own];
+        }
+    );
+
+    const auto [mValue, rhsValue] = views(ls.boundaryMatrix(), ls.boundaryRhs());
+    const auto faceCells = mesh.boundaryMesh().faceCells().view();
+
+    NeoN::parallelFor(
+        exec,
+        {nInternalFaces, nInternalFaces + nBoundaryFaces},
+        NEON_LAMBDA(const size_t facei) {
+            auto bfacei = facei - nInternalFaces;
+            scalar bflux = rhsValue[bfacei] - mValue.values[bfacei] * internalP[faceCells[bfacei]];
+            iFlux[facei] = bflux;
+            bFlux[bfacei] = bflux;
+        }
+    );
+
+    const auto nTotalFaces = faceFlux.internalVector().size();
+    const auto nlValues = ls.nonLocalMatrix().values().view();
+    const auto nlRows = ls.nonLocalMatrix().rowOffs().view();
+    const auto pBoundV = p.boundaryData().value().view();
+
+    NeoN::parallelFor(
+        exec,
+        {nInternalFaces + nBoundaryFaces, nTotalFaces},
+        NEON_LAMBDA(const size_t facei) {
+            auto bcfaceii = facei - (nInternalFaces + nBoundaryFaces);
+            auto bfacei = facei - nInternalFaces;
+            auto own = static_cast<std::size_t>(nlRows[bcfaceii]);
+            auto coupling = nlValues[bcfaceii];
+            auto pGhost = pBoundV[bfacei];
+            scalar pflux = coupling * (pGhost - internalP[own]);
+            iFlux[facei] = pflux;
+            bFlux[bfacei] = pflux;
+        }
+    );
+
+    return faceFlux;
+}
+
 }
