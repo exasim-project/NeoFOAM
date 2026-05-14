@@ -1,0 +1,46 @@
+\doxysection{/home/runner/work/\+Neo\+FOAM/\+Neo\+FOAM/include/\+Neo\+FOAM/auxiliary/proc\+Face\+Dump.hpp File Reference}
+\hypertarget{procFaceDump_8hpp}{}\label{procFaceDump_8hpp}\index{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/procFaceDump.hpp@{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/procFaceDump.hpp}}
+{\ttfamily \#include $<$cstdio$>$}\newline
+{\ttfamily \#include $<$cstdlib$>$}\newline
+{\ttfamily \#include $<$filesystem$>$}\newline
+{\ttfamily \#include $<$string$>$}\newline
+{\ttfamily \#include $<$system\+\_\+error$>$}\newline
+{\ttfamily \#include $<$type\+\_\+traits$>$}\newline
+{\ttfamily \#include $<$vector$>$}\newline
+{\ttfamily \#include $<$mpi.\+h$>$}\newline
+{\ttfamily \#include "{}Neo\+N/\+Neo\+N.\+hpp"{}}\newline
+{\ttfamily \#include "{}Neo\+FOAM/auxiliary/proc\+Face\+Check.\+hpp"{}}\newline
+\doxysubsubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+namespace \mbox{\hyperlink{namespaceNeoFOAM}{Neo\+FOAM}}
+\item 
+namespace \mbox{\hyperlink{namespaceNeoFOAM_1_1detail}{Neo\+FOAM\+::detail}}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+bool \mbox{\hyperlink{namespaceNeoFOAM_a0efd6b3f9233fdccd1f9a0da506bd235}{Neo\+FOAM\+::proc\+Dump\+Enabled}} ()
+\item 
+void \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a09be5a178b7d38074142bed86f530591}{Neo\+FOAM\+::detail\+::dump\+Row}} (std\+::\+FILE \texorpdfstring{$\ast$}{*}f, int patch, int face, Neo\+N\+::scalar v)
+\item 
+void \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a4fe24fb4ad9cc62aeb553142e530402e}{Neo\+FOAM\+::detail\+::dump\+Row}} (std\+::\+FILE \texorpdfstring{$\ast$}{*}f, int patch, int face, Neo\+N\+::\+Vec3 v)
+\item 
+{\footnotesize template$<$typename Field $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_a952fda4b1d9489082c71db343566c799}{Neo\+FOAM\+::dump\+Proc\+Faces}} (const Field \&field, const std\+::string \&field\+Name, const std\+::string \&checkpoint, int step\+Idx, int piso\+Iter, int non\+Orth\+Iter)
+\begin{DoxyCompactList}\small\item\em Dump proc-\/tail boundary\+Data().value() for one field to a per-\/rank file. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename Field $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_a8c32c11fc067e607968a6bdd51508a5c}{Neo\+FOAM\+::dump\+Proc\+Owner\+Internal}} (const Field \&field, const std\+::string \&field\+Name, const std\+::string \&checkpoint, int step\+Idx, int piso\+Iter, int non\+Orth\+Iter)
+\begin{DoxyCompactList}\small\item\em Dump the LOCAL owner-\/cell internal\+Vector value at every proc-\/tail face. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a27bf96c8382d8bcdfa3c13e9f5ba0acd}{Neo\+FOAM\+::detail\+::dump\+Vector\+Row}} (std\+::\+FILE \texorpdfstring{$\ast$}{*}f, std\+::size\+\_\+t i, Neo\+N\+::scalar v)
+\begin{DoxyCompactList}\small\item\em Write one row of a flat Vector dump. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a5e7304d375cc41ccc3b302667f13570d}{Neo\+FOAM\+::detail\+::dump\+Vector\+Row}} (std\+::\+FILE \texorpdfstring{$\ast$}{*}f, std\+::size\+\_\+t i, Neo\+N\+::\+Vec3 v)
+\item 
+{\footnotesize template$<$typename Integral , std\+::enable\+\_\+if\+\_\+t$<$ std\+::is\+\_\+integral\+\_\+v$<$ Integral $>$, int $>$  = 0$>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_adbaf9aa72dbecae93cacba1d9cf8ca99}{Neo\+FOAM\+::detail\+::dump\+Vector\+Row}} (std\+::\+FILE \texorpdfstring{$\ast$}{*}f, std\+::size\+\_\+t i, Integral v)
+\item 
+{\footnotesize template$<$typename T $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_aeb2f97ba2d1b15705ceffa3a17d40781}{Neo\+FOAM\+::dump\+Vector}} (const Neo\+N\+::\+Vector$<$ T $>$ \&vec, const std\+::string \&name, const std\+::string \&checkpoint, int step\+Idx, int piso\+Iter, int non\+Orth\+Iter)
+\begin{DoxyCompactList}\small\item\em Dump every element of a Vector to a per-\/rank file. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename T $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_a1797b5a1be62412b9bf496d7b0b1fb78}{Neo\+FOAM\+::dump\+Host\+Vector}} (const std\+::vector$<$ T $>$ \&vec, const std\+::string \&name, const std\+::string \&checkpoint, int step\+Idx, int piso\+Iter, int non\+Orth\+Iter)
+\begin{DoxyCompactList}\small\item\em Dump a host-\/side std\+::vector (e.\+g. comm\+Pattern.\+send\+Counts / recv\+Idx). \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename Linear\+System , typename Vector $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_ab460fb58f75ff6a97965d20939d253e8}{Neo\+FOAM\+::dump\+Full\+Linear\+System}} (const Linear\+System \&ls, const Vector \&x, const std\+::string \&system\+Name, const std\+::string \&checkpoint, int step\+Idx, int piso\+Iter, int non\+Orth\+Iter)
+\begin{DoxyCompactList}\small\item\em Comprehensive dump of every Neo\+N-\/side input that goes into a Ginkgo distributed solve. Diff these CPU vs GPU on the same rank to find exactly which component (if any) we hand to Ginkgo differently. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename Linear\+System $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_a56ea9bf5b60a36355083a55d52918534}{Neo\+FOAM\+::dump\+Non\+Local\+Matrix\+Values}} (const Linear\+System \&ls, const std\+::string \&field\+Name, const std\+::string \&checkpoint, int step\+Idx, int piso\+Iter, int non\+Orth\+Iter)
+\begin{DoxyCompactList}\small\item\em Dump the assembled non-\/local matrix coefficients (one value per proc face). \end{DoxyCompactList}\end{DoxyCompactItemize}

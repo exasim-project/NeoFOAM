@@ -1,0 +1,449 @@
+\doxysection{proc\+Face\+Dump.\+hpp}
+\hypertarget{procFaceDump_8hpp_source}{}\label{procFaceDump_8hpp_source}\index{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/procFaceDump.hpp@{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/procFaceDump.hpp}}
+\mbox{\hyperlink{procFaceDump_8hpp}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00001}00001\ \textcolor{comment}{//\ SPDX-\/License-\/Identifier:\ GPL-\/3.0-\/or-\/later}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00002}00002\ \textcolor{comment}{//\ SPDX-\/FileCopyrightText:\ 2026\ NeoFOAM\ authors}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00003}00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00004}00004\ \textcolor{comment}{//\ Per-\/rank\ proc-\/boundary\ value\ dumps\ for\ offline\ CPU-\/vs-\/GPU\ bisection.}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00005}00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00006}00006\ \textcolor{comment}{//\ Gated\ entirely\ on\ env\ NEOFOAM\_PROC\_DUMP=1\ —\ when\ unset,\ every\ call\ is\ a}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00007}00007\ \textcolor{comment}{//\ no-\/op\ (single\ getenv\ at\ first\ call,\ cached).\ For\ the\ bisect\ workflow\ see}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00008}00008\ \textcolor{comment}{//\ tools/hpc-\/bisect-\/gpu-\/proc-\/divergence.sh.}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00009}00009\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00010}00010\ \textcolor{comment}{//\ Output\ one\ file\ per\ (step,\ pisoIter,\ nonOrthIter,\ checkpoint,\ fieldName):}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00011}00011\ \textcolor{comment}{//\ \ \ processor\{rank\}/dumps/<step:04d>\_<piso>\_<nonOrth>\_<checkpoint>\_\_<field>.txt}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00012}00012\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00013}00013\ \textcolor{comment}{//\ Each\ row\ is\ "{}<patch>\ <face>\ <value...>"{}\ with\ values\ formatted\ at\ \%.10e\ so}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00014}00014\ \textcolor{comment}{//\ CPU↔GPU\ FP\ roundoff\ (\string~1e-\/15)\ rounds\ to\ identical\ text\ and\ real\ divergence}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00015}00015\ \textcolor{comment}{//\ (the\ bug\ we're\ hunting)\ is\ visible\ to\ strict\ diff(1).}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00016}00016\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00017}00017\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00018}00018\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00019}00019\ \textcolor{preprocessor}{\#include\ <cstdio>}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00020}00020\ \textcolor{preprocessor}{\#include\ <cstdlib>}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00021}00021\ \textcolor{preprocessor}{\#include\ <filesystem>}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00022}00022\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00023}00023\ \textcolor{preprocessor}{\#include\ <system\_error>}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00024}00024\ \textcolor{preprocessor}{\#include\ <type\_traits>}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00025}00025\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00026}00026\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00027}00027\ \textcolor{preprocessor}{\#include\ <mpi.h>}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00028}00028\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00029}00029\ \textcolor{preprocessor}{\#include\ "{}NeoN/NeoN.hpp"{}}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00030}00030\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{procFaceCheck_8hpp}{NeoFOAM/auxiliary/procFaceCheck.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00031}00031\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00032}00032\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceNeoFOAM}{NeoFOAM}}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00033}00033\ \{}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00034}00034\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00035}\mbox{\hyperlink{namespaceNeoFOAM_a0efd6b3f9233fdccd1f9a0da506bd235}{00035}}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespaceNeoFOAM_a0efd6b3f9233fdccd1f9a0da506bd235}{procDumpEnabled}}()}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00036}00036\ \{}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00037}00037\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ enabled\ =\ std::getenv(\textcolor{stringliteral}{"{}NEOFOAM\_PROC\_DUMP"{}})\ !=\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00038}00038\ \ \ \ \ \textcolor{keywordflow}{return}\ enabled;}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00039}00039\ \}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00040}00040\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00041}00041\ \textcolor{keyword}{namespace\ }detail}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00042}00042\ \{}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00043}00043\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00044}\mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a09be5a178b7d38074142bed86f530591}{00044}}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a09be5a178b7d38074142bed86f530591}{dumpRow}}(std::FILE*\ f,\ \textcolor{keywordtype}{int}\ patch,\ \textcolor{keywordtype}{int}\ face,\ NeoN::scalar\ v)}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00045}00045\ \{}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00046}00046\ \ \ \ \ std::fprintf(f,\ \textcolor{stringliteral}{"{}\%d\ \%d\ \%.10e\(\backslash\)n"{}},\ patch,\ face,\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{double}\textcolor{keyword}{>}(v));}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00047}00047\ \}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00048}00048\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00049}\mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a4fe24fb4ad9cc62aeb553142e530402e}{00049}}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a09be5a178b7d38074142bed86f530591}{dumpRow}}(std::FILE*\ f,\ \textcolor{keywordtype}{int}\ patch,\ \textcolor{keywordtype}{int}\ face,\ NeoN::Vec3\ v)}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00050}00050\ \{}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00051}00051\ \ \ \ \ std::fprintf(}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00052}00052\ \ \ \ \ \ \ \ \ f,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00053}00053\ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}\%d\ \%d\ \%.10e\ \%.10e\ \%.10e\(\backslash\)n"{}},}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00054}00054\ \ \ \ \ \ \ \ \ patch,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00055}00055\ \ \ \ \ \ \ \ \ face,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00056}00056\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{double}\textcolor{keyword}{>}(v[0]),}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00057}00057\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{double}\textcolor{keyword}{>}(v[1]),}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00058}00058\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{double}\textcolor{keyword}{>}(v[2])}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00059}00059\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00060}00060\ \}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00061}00061\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00062}00062\ \}\ \textcolor{comment}{//\ namespace\ detail}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00063}00063\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00078}00078\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Field>}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00079}\mbox{\hyperlink{namespaceNeoFOAM_a952fda4b1d9489082c71db343566c799}{00079}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_a952fda4b1d9489082c71db343566c799}{dumpProcFaces}}(}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00080}00080\ \ \ \ \ \textcolor{keyword}{const}\ Field\&\ field,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00081}00081\ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ fieldName,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00082}00082\ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ checkpoint,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00083}00083\ \ \ \ \ \textcolor{keywordtype}{int}\ stepIdx,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00084}00084\ \ \ \ \ \textcolor{keywordtype}{int}\ pisoIter,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00085}00085\ \ \ \ \ \textcolor{keywordtype}{int}\ nonOrthIter}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00086}00086\ )}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00087}00087\ \{}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00088}00088\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{namespaceNeoFOAM_a0efd6b3f9233fdccd1f9a0da506bd235}{procDumpEnabled}}())\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00089}00089\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00090}00090\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ bm\ =\ field.mesh().boundaryMesh();}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00091}00091\ \ \ \ \ \textcolor{keywordflow}{if}\ (!bm.isDistributed())\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00092}00092\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00093}00093\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ procPatchCount\ =\ bm.nProcBoundaryPatches();}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00094}00094\ \ \ \ \ \textcolor{keywordflow}{if}\ (procPatchCount\ ==\ 0)\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00095}00095\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00096}00096\ \ \ \ \ \textcolor{keywordtype}{int}\ rank\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00097}00097\ \ \ \ \ MPI\_Comm\_rank(MPI\_COMM\_WORLD,\ \&rank);}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00098}00098\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00099}00099\ \ \ \ \ \textcolor{keyword}{auto}\ perPatchBoundary\ =\ \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a419ab3b6e5cfe20fa2a7bf3878a48703}{detail::extractProcBoundaryValues}}(field);}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00100}00100\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00101}00101\ \ \ \ \ \textcolor{keyword}{namespace\ }fs\ =\ std::filesystem;}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00102}00102\ \ \ \ \ \textcolor{keyword}{const}\ fs::path\ dir\ =\ fs::path(\textcolor{stringliteral}{"{}processor"{}}\ +\ std::to\_string(rank))\ /\ \textcolor{stringliteral}{"{}dumps"{}};}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00103}00103\ \ \ \ \ std::error\_code\ ec;}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00104}00104\ \ \ \ \ fs::create\_directories(dir,\ ec);}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00105}00105\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00106}00106\ \ \ \ \ \textcolor{keywordtype}{char}\ filename[512];}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00107}00107\ \ \ \ \ std::snprintf(}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00108}00108\ \ \ \ \ \ \ \ \ filename,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00109}00109\ \ \ \ \ \ \ \ \ \textcolor{keyword}{sizeof}(filename),}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00110}00110\ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}\%s/\%04d\_\%d\_\%d\_\%s\_\_\%s.txt"{}},}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00111}00111\ \ \ \ \ \ \ \ \ dir.string().c\_str(),}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00112}00112\ \ \ \ \ \ \ \ \ stepIdx,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00113}00113\ \ \ \ \ \ \ \ \ pisoIter,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00114}00114\ \ \ \ \ \ \ \ \ nonOrthIter,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00115}00115\ \ \ \ \ \ \ \ \ checkpoint.c\_str(),}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00116}00116\ \ \ \ \ \ \ \ \ fieldName.c\_str()}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00117}00117\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00118}00118\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00119}00119\ \ \ \ \ std::FILE*\ f\ =\ std::fopen(filename,\ \textcolor{stringliteral}{"{}w"{}});}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00120}00120\ \ \ \ \ \textcolor{keywordflow}{if}\ (!f)\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00121}00121\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00122}00122\ \ \ \ \ \textcolor{keywordflow}{for}\ (NeoN::localIdx\ p\ =\ 0;\ p\ <\ procPatchCount;\ ++p)}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00123}00123\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00124}00124\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ nFaces\ =\ perPatchBoundary[p].size();}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00125}00125\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (std::size\_t\ bf\ =\ 0;\ bf\ <\ nFaces;\ ++bf)}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00126}00126\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00127}00127\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a09be5a178b7d38074142bed86f530591}{detail::dumpRow}}(}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00128}00128\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ f,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00129}00129\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{int}\textcolor{keyword}{>}(p),}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00130}00130\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{int}\textcolor{keyword}{>}(bf),}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00131}00131\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ perPatchBoundary[p][bf]}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00132}00132\ \ \ \ \ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00133}00133\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00134}00134\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00135}00135\ \ \ \ \ std::fclose(f);}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00136}00136\ \}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00137}00137\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00157}00157\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Field>}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00158}\mbox{\hyperlink{namespaceNeoFOAM_a8c32c11fc067e607968a6bdd51508a5c}{00158}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_a8c32c11fc067e607968a6bdd51508a5c}{dumpProcOwnerInternal}}(}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00159}00159\ \ \ \ \ \textcolor{keyword}{const}\ Field\&\ field,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00160}00160\ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ fieldName,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00161}00161\ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ checkpoint,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00162}00162\ \ \ \ \ \textcolor{keywordtype}{int}\ stepIdx,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00163}00163\ \ \ \ \ \textcolor{keywordtype}{int}\ pisoIter,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00164}00164\ \ \ \ \ \textcolor{keywordtype}{int}\ nonOrthIter}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00165}00165\ )}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00166}00166\ \{}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00167}00167\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{namespaceNeoFOAM_a0efd6b3f9233fdccd1f9a0da506bd235}{procDumpEnabled}}())\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00168}00168\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00169}00169\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ bm\ =\ field.mesh().boundaryMesh();}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00170}00170\ \ \ \ \ \textcolor{keywordflow}{if}\ (!bm.isDistributed())\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00171}00171\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a8245891b7b3171ce11c5911e86f1f357}{detail::fieldIsVolume}}(field))\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00172}00172\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00173}00173\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ procPatchCount\ =\ bm.nProcBoundaryPatches();}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00174}00174\ \ \ \ \ \textcolor{keywordflow}{if}\ (procPatchCount\ ==\ 0)\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00175}00175\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00176}00176\ \ \ \ \ \textcolor{keywordtype}{int}\ rank\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00177}00177\ \ \ \ \ MPI\_Comm\_rank(MPI\_COMM\_WORLD,\ \&rank);}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00178}00178\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00179}00179\ \ \ \ \ \textcolor{keyword}{auto}\ perPatchOwner\ =\ \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_aa6d4ce310a0c4c43c8a0c27ec2dcff28}{detail::extractProcOwnerInternalValues}}(field);}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00180}00180\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00181}00181\ \ \ \ \ \textcolor{keyword}{namespace\ }fs\ =\ std::filesystem;}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00182}00182\ \ \ \ \ \textcolor{keyword}{const}\ fs::path\ dir\ =\ fs::path(\textcolor{stringliteral}{"{}processor"{}}\ +\ std::to\_string(rank))\ /\ \textcolor{stringliteral}{"{}dumps"{}};}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00183}00183\ \ \ \ \ std::error\_code\ ec;}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00184}00184\ \ \ \ \ fs::create\_directories(dir,\ ec);}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00185}00185\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00186}00186\ \ \ \ \ \textcolor{keywordtype}{char}\ filename[512];}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00187}00187\ \ \ \ \ std::snprintf(}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00188}00188\ \ \ \ \ \ \ \ \ filename,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00189}00189\ \ \ \ \ \ \ \ \ \textcolor{keyword}{sizeof}(filename),}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00190}00190\ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}\%s/\%04d\_\%d\_\%d\_\%s\_\_\%s\_ownerInternal.txt"{}},}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00191}00191\ \ \ \ \ \ \ \ \ dir.string().c\_str(),}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00192}00192\ \ \ \ \ \ \ \ \ stepIdx,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00193}00193\ \ \ \ \ \ \ \ \ pisoIter,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00194}00194\ \ \ \ \ \ \ \ \ nonOrthIter,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00195}00195\ \ \ \ \ \ \ \ \ checkpoint.c\_str(),}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00196}00196\ \ \ \ \ \ \ \ \ fieldName.c\_str()}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00197}00197\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00198}00198\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00199}00199\ \ \ \ \ std::FILE*\ f\ =\ std::fopen(filename,\ \textcolor{stringliteral}{"{}w"{}});}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00200}00200\ \ \ \ \ \textcolor{keywordflow}{if}\ (!f)\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00201}00201\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00202}00202\ \ \ \ \ \textcolor{keywordflow}{for}\ (NeoN::localIdx\ p\ =\ 0;\ p\ <\ procPatchCount;\ ++p)}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00203}00203\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00204}00204\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ nFaces\ =\ perPatchOwner[p].size();}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00205}00205\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (std::size\_t\ bf\ =\ 0;\ bf\ <\ nFaces;\ ++bf)}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00206}00206\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00207}00207\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a09be5a178b7d38074142bed86f530591}{detail::dumpRow}}(}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00208}00208\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ f,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00209}00209\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{int}\textcolor{keyword}{>}(p),}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00210}00210\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{int}\textcolor{keyword}{>}(bf),}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00211}00211\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ perPatchOwner[p][bf]}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00212}00212\ \ \ \ \ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00213}00213\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00214}00214\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00215}00215\ \ \ \ \ std::fclose(f);}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00216}00216\ \}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00217}00217\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00218}00218\ \textcolor{keyword}{namespace\ }detail}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00219}00219\ \{}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00220}00220\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00229}\mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a27bf96c8382d8bcdfa3c13e9f5ba0acd}{00229}}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a27bf96c8382d8bcdfa3c13e9f5ba0acd}{dumpVectorRow}}(std::FILE*\ f,\ std::size\_t\ i,\ NeoN::scalar\ v)}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00230}00230\ \{}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00231}00231\ \ \ \ \ std::fprintf(f,\ \textcolor{stringliteral}{"{}0\ \%zu\ \%.10e\(\backslash\)n"{}},\ i,\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{double}\textcolor{keyword}{>}(v));}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00232}00232\ \}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00233}00233\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00234}\mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a5e7304d375cc41ccc3b302667f13570d}{00234}}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a27bf96c8382d8bcdfa3c13e9f5ba0acd}{dumpVectorRow}}(std::FILE*\ f,\ std::size\_t\ i,\ NeoN::Vec3\ v)}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00235}00235\ \{}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00236}00236\ \ \ \ \ std::fprintf(}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00237}00237\ \ \ \ \ \ \ \ \ f,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00238}00238\ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}0\ \%zu\ \%.10e\ \%.10e\ \%.10e\(\backslash\)n"{}},}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00239}00239\ \ \ \ \ \ \ \ \ i,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00240}00240\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{double}\textcolor{keyword}{>}(v[0]),}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00241}00241\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{double}\textcolor{keyword}{>}(v[1]),}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00242}00242\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{double}\textcolor{keyword}{>}(v[2])}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00243}00243\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00244}00244\ \}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00245}00245\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00246}00246\ \textcolor{comment}{//\ Single\ template\ overload\ handles\ all\ integer\ widths\ uniformly:\ localIdx}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00247}00247\ \textcolor{comment}{//\ (==\ int\ on\ the\ default\ 32-\/bit-\/label\ build)\ and\ the\ int\ values\ inside}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00248}00248\ \textcolor{comment}{//\ commPattern.sendCounts\ /\ recvIdx.\ Cast\ to\ long\ long\ so\ any\ signed\ integer}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00249}00249\ \textcolor{comment}{//\ fits\ and\ the\ output\ format\ is\ stable\ across\ builds.}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00250}00250\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Integral,\ std::enable\_if\_t<std::is\_\textcolor{keywordtype}{int}egral\_v<Integral>,\ \textcolor{keywordtype}{int}>\ =\ 0>}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00251}\mbox{\hyperlink{namespaceNeoFOAM_1_1detail_adbaf9aa72dbecae93cacba1d9cf8ca99}{00251}}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a27bf96c8382d8bcdfa3c13e9f5ba0acd}{dumpVectorRow}}(std::FILE*\ f,\ std::size\_t\ i,\ Integral\ v)}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00252}00252\ \{}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00253}00253\ \ \ \ \ std::fprintf(f,\ \textcolor{stringliteral}{"{}0\ \%zu\ \%lld\(\backslash\)n"{}},\ i,\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{long}\ \textcolor{keywordtype}{long}\textcolor{keyword}{>}(v));}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00254}00254\ \}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00255}00255\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00256}00256\ \}\ \textcolor{comment}{//\ namespace\ detail}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00257}00257\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00268}00268\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00269}\mbox{\hyperlink{namespaceNeoFOAM_aeb2f97ba2d1b15705ceffa3a17d40781}{00269}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_aeb2f97ba2d1b15705ceffa3a17d40781}{dumpVector}}(}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00270}00270\ \ \ \ \ \textcolor{keyword}{const}\ NeoN::Vector<T>\&\ vec,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00271}00271\ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ name,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00272}00272\ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ checkpoint,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00273}00273\ \ \ \ \ \textcolor{keywordtype}{int}\ stepIdx,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00274}00274\ \ \ \ \ \textcolor{keywordtype}{int}\ pisoIter,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00275}00275\ \ \ \ \ \textcolor{keywordtype}{int}\ nonOrthIter}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00276}00276\ )}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00277}00277\ \{}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00278}00278\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{namespaceNeoFOAM_a0efd6b3f9233fdccd1f9a0da506bd235}{procDumpEnabled}}())\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00279}00279\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00280}00280\ \ \ \ \ \textcolor{keyword}{auto}\ host\ =\ vec.copyToHost();}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00281}00281\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ v\ =\ host.view();}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00282}00282\ \ \ \ \ \textcolor{keywordflow}{if}\ (v.size()\ ==\ 0)\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00283}00283\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00284}00284\ \ \ \ \ \textcolor{keywordtype}{int}\ rank\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00285}00285\ \ \ \ \ MPI\_Comm\_rank(MPI\_COMM\_WORLD,\ \&rank);}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00286}00286\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00287}00287\ \ \ \ \ \textcolor{keyword}{namespace\ }fs\ =\ std::filesystem;}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00288}00288\ \ \ \ \ \textcolor{keyword}{const}\ fs::path\ dir\ =\ fs::path(\textcolor{stringliteral}{"{}processor"{}}\ +\ std::to\_string(rank))\ /\ \textcolor{stringliteral}{"{}dumps"{}};}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00289}00289\ \ \ \ \ std::error\_code\ ec;}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00290}00290\ \ \ \ \ fs::create\_directories(dir,\ ec);}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00291}00291\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00292}00292\ \ \ \ \ \textcolor{keywordtype}{char}\ filename[512];}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00293}00293\ \ \ \ \ std::snprintf(}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00294}00294\ \ \ \ \ \ \ \ \ filename,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00295}00295\ \ \ \ \ \ \ \ \ \textcolor{keyword}{sizeof}(filename),}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00296}00296\ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}\%s/\%04d\_\%d\_\%d\_\%s\_\_\%s\_vec.txt"{}},}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00297}00297\ \ \ \ \ \ \ \ \ dir.string().c\_str(),}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00298}00298\ \ \ \ \ \ \ \ \ stepIdx,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00299}00299\ \ \ \ \ \ \ \ \ pisoIter,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00300}00300\ \ \ \ \ \ \ \ \ nonOrthIter,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00301}00301\ \ \ \ \ \ \ \ \ checkpoint.c\_str(),}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00302}00302\ \ \ \ \ \ \ \ \ name.c\_str()}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00303}00303\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00304}00304\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00305}00305\ \ \ \ \ std::FILE*\ f\ =\ std::fopen(filename,\ \textcolor{stringliteral}{"{}w"{}});}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00306}00306\ \ \ \ \ \textcolor{keywordflow}{if}\ (!f)\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00307}00307\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00308}00308\ \ \ \ \ \textcolor{keywordflow}{for}\ (std::size\_t\ i\ =\ 0;\ i\ <\ v.size();\ ++i)}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00309}00309\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00310}00310\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a27bf96c8382d8bcdfa3c13e9f5ba0acd}{detail::dumpVectorRow}}(f,\ i,\ v[i]);}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00311}00311\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00312}00312\ \ \ \ \ std::fclose(f);}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00313}00313\ \}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00314}00314\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00318}00318\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00319}\mbox{\hyperlink{namespaceNeoFOAM_a1797b5a1be62412b9bf496d7b0b1fb78}{00319}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_a1797b5a1be62412b9bf496d7b0b1fb78}{dumpHostVector}}(}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00320}00320\ \ \ \ \ \textcolor{keyword}{const}\ std::vector<T>\&\ vec,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00321}00321\ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ name,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00322}00322\ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ checkpoint,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00323}00323\ \ \ \ \ \textcolor{keywordtype}{int}\ stepIdx,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00324}00324\ \ \ \ \ \textcolor{keywordtype}{int}\ pisoIter,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00325}00325\ \ \ \ \ \textcolor{keywordtype}{int}\ nonOrthIter}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00326}00326\ )}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00327}00327\ \{}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00328}00328\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{namespaceNeoFOAM_a0efd6b3f9233fdccd1f9a0da506bd235}{procDumpEnabled}}())\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00329}00329\ \ \ \ \ \textcolor{keywordflow}{if}\ (vec.empty())\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00330}00330\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00331}00331\ \ \ \ \ \textcolor{keywordtype}{int}\ rank\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00332}00332\ \ \ \ \ MPI\_Comm\_rank(MPI\_COMM\_WORLD,\ \&rank);}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00333}00333\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00334}00334\ \ \ \ \ \textcolor{keyword}{namespace\ }fs\ =\ std::filesystem;}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00335}00335\ \ \ \ \ \textcolor{keyword}{const}\ fs::path\ dir\ =\ fs::path(\textcolor{stringliteral}{"{}processor"{}}\ +\ std::to\_string(rank))\ /\ \textcolor{stringliteral}{"{}dumps"{}};}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00336}00336\ \ \ \ \ std::error\_code\ ec;}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00337}00337\ \ \ \ \ fs::create\_directories(dir,\ ec);}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00338}00338\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00339}00339\ \ \ \ \ \textcolor{keywordtype}{char}\ filename[512];}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00340}00340\ \ \ \ \ std::snprintf(}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00341}00341\ \ \ \ \ \ \ \ \ filename,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00342}00342\ \ \ \ \ \ \ \ \ \textcolor{keyword}{sizeof}(filename),}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00343}00343\ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}\%s/\%04d\_\%d\_\%d\_\%s\_\_\%s\_vec.txt"{}},}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00344}00344\ \ \ \ \ \ \ \ \ dir.string().c\_str(),}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00345}00345\ \ \ \ \ \ \ \ \ stepIdx,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00346}00346\ \ \ \ \ \ \ \ \ pisoIter,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00347}00347\ \ \ \ \ \ \ \ \ nonOrthIter,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00348}00348\ \ \ \ \ \ \ \ \ checkpoint.c\_str(),}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00349}00349\ \ \ \ \ \ \ \ \ name.c\_str()}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00350}00350\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00351}00351\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00352}00352\ \ \ \ \ std::FILE*\ f\ =\ std::fopen(filename,\ \textcolor{stringliteral}{"{}w"{}});}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00353}00353\ \ \ \ \ \textcolor{keywordflow}{if}\ (!f)\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00354}00354\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00355}00355\ \ \ \ \ \textcolor{keywordflow}{for}\ (std::size\_t\ i\ =\ 0;\ i\ <\ vec.size();\ ++i)}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00356}00356\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00357}00357\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a27bf96c8382d8bcdfa3c13e9f5ba0acd}{detail::dumpVectorRow}}(f,\ i,\ vec[i]);}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00358}00358\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00359}00359\ \ \ \ \ std::fclose(f);}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00360}00360\ \}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00361}00361\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00382}00382\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ LinearSystem,\ \textcolor{keyword}{typename}\ Vector>}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00383}\mbox{\hyperlink{namespaceNeoFOAM_ab460fb58f75ff6a97965d20939d253e8}{00383}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_ab460fb58f75ff6a97965d20939d253e8}{dumpFullLinearSystem}}(}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00384}00384\ \ \ \ \ \textcolor{keyword}{const}\ LinearSystem\&\ ls,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00385}00385\ \ \ \ \ \textcolor{keyword}{const}\ Vector\&\ x,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00386}00386\ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ systemName,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00387}00387\ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ checkpoint,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00388}00388\ \ \ \ \ \textcolor{keywordtype}{int}\ stepIdx,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00389}00389\ \ \ \ \ \textcolor{keywordtype}{int}\ pisoIter,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00390}00390\ \ \ \ \ \textcolor{keywordtype}{int}\ nonOrthIter}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00391}00391\ )}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00392}00392\ \{}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00393}00393\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{namespaceNeoFOAM_a0efd6b3f9233fdccd1f9a0da506bd235}{procDumpEnabled}}())\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00394}00394\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00395}00395\ \ \ \ \ \textcolor{comment}{//\ Local\ matrix}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00396}00396\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_aeb2f97ba2d1b15705ceffa3a17d40781}{dumpVector}}(}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00397}00397\ \ \ \ \ \ \ \ \ ls.matrix().values(),}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00398}00398\ \ \ \ \ \ \ \ \ systemName\ +\ \textcolor{stringliteral}{"{}\_localA\_values"{}},}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00399}00399\ \ \ \ \ \ \ \ \ checkpoint,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00400}00400\ \ \ \ \ \ \ \ \ stepIdx,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00401}00401\ \ \ \ \ \ \ \ \ pisoIter,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00402}00402\ \ \ \ \ \ \ \ \ nonOrthIter}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00403}00403\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00404}00404\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_aeb2f97ba2d1b15705ceffa3a17d40781}{dumpVector}}(}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00405}00405\ \ \ \ \ \ \ \ \ ls.matrix().sparsity()-\/>colIdxs(),}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00406}00406\ \ \ \ \ \ \ \ \ systemName\ +\ \textcolor{stringliteral}{"{}\_localA\_colIdxs"{}},}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00407}00407\ \ \ \ \ \ \ \ \ checkpoint,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00408}00408\ \ \ \ \ \ \ \ \ stepIdx,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00409}00409\ \ \ \ \ \ \ \ \ pisoIter,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00410}00410\ \ \ \ \ \ \ \ \ nonOrthIter}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00411}00411\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00412}00412\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_aeb2f97ba2d1b15705ceffa3a17d40781}{dumpVector}}(}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00413}00413\ \ \ \ \ \ \ \ \ ls.matrix().sparsity()-\/>rowOffs(),}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00414}00414\ \ \ \ \ \ \ \ \ systemName\ +\ \textcolor{stringliteral}{"{}\_localA\_rowOffs"{}},}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00415}00415\ \ \ \ \ \ \ \ \ checkpoint,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00416}00416\ \ \ \ \ \ \ \ \ stepIdx,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00417}00417\ \ \ \ \ \ \ \ \ pisoIter,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00418}00418\ \ \ \ \ \ \ \ \ nonOrthIter}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00419}00419\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00420}00420\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00421}00421\ \ \ \ \ \textcolor{comment}{//\ Non-\/local\ matrix}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00422}00422\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_aeb2f97ba2d1b15705ceffa3a17d40781}{dumpVector}}(}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00423}00423\ \ \ \ \ \ \ \ \ ls.nonLocalMatrix().values(),}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00424}00424\ \ \ \ \ \ \ \ \ systemName\ +\ \textcolor{stringliteral}{"{}\_nonLocalA\_values"{}},}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00425}00425\ \ \ \ \ \ \ \ \ checkpoint,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00426}00426\ \ \ \ \ \ \ \ \ stepIdx,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00427}00427\ \ \ \ \ \ \ \ \ pisoIter,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00428}00428\ \ \ \ \ \ \ \ \ nonOrthIter}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00429}00429\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00430}00430\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_aeb2f97ba2d1b15705ceffa3a17d40781}{dumpVector}}(}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00431}00431\ \ \ \ \ \ \ \ \ ls.nonLocalMatrix().sparsity()-\/>colIdxs(),}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00432}00432\ \ \ \ \ \ \ \ \ systemName\ +\ \textcolor{stringliteral}{"{}\_nonLocalA\_colIdxs"{}},}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00433}00433\ \ \ \ \ \ \ \ \ checkpoint,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00434}00434\ \ \ \ \ \ \ \ \ stepIdx,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00435}00435\ \ \ \ \ \ \ \ \ pisoIter,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00436}00436\ \ \ \ \ \ \ \ \ nonOrthIter}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00437}00437\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00438}00438\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_aeb2f97ba2d1b15705ceffa3a17d40781}{dumpVector}}(}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00439}00439\ \ \ \ \ \ \ \ \ ls.nonLocalMatrix().sparsity()-\/>rowOffs(),}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00440}00440\ \ \ \ \ \ \ \ \ systemName\ +\ \textcolor{stringliteral}{"{}\_nonLocalA\_rowOffs"{}},}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00441}00441\ \ \ \ \ \ \ \ \ checkpoint,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00442}00442\ \ \ \ \ \ \ \ \ stepIdx,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00443}00443\ \ \ \ \ \ \ \ \ pisoIter,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00444}00444\ \ \ \ \ \ \ \ \ nonOrthIter}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00445}00445\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00446}00446\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00447}00447\ \ \ \ \ \textcolor{comment}{//\ RHS\ and\ initial\ iterate}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00448}00448\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_aeb2f97ba2d1b15705ceffa3a17d40781}{dumpVector}}(ls.rhs(),\ systemName\ +\ \textcolor{stringliteral}{"{}\_rhs"{}},\ checkpoint,\ stepIdx,\ pisoIter,\ nonOrthIter);}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00449}00449\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_aeb2f97ba2d1b15705ceffa3a17d40781}{dumpVector}}(x,\ systemName\ +\ \textcolor{stringliteral}{"{}\_x\_initial"{}},\ checkpoint,\ stepIdx,\ pisoIter,\ nonOrthIter);}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00450}00450\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00451}00451\ \ \ \ \ \textcolor{comment}{//\ CommPattern\ (host-\/side\ integer\ arrays)}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00452}00452\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_a1797b5a1be62412b9bf496d7b0b1fb78}{dumpHostVector}}(}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00453}00453\ \ \ \ \ \ \ \ \ ls.commPattern().sendCounts,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00454}00454\ \ \ \ \ \ \ \ \ systemName\ +\ \textcolor{stringliteral}{"{}\_commPattern\_sendCounts"{}},}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00455}00455\ \ \ \ \ \ \ \ \ checkpoint,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00456}00456\ \ \ \ \ \ \ \ \ stepIdx,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00457}00457\ \ \ \ \ \ \ \ \ pisoIter,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00458}00458\ \ \ \ \ \ \ \ \ nonOrthIter}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00459}00459\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00460}00460\ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_a1797b5a1be62412b9bf496d7b0b1fb78}{dumpHostVector}}(}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00461}00461\ \ \ \ \ \ \ \ \ ls.commPattern().recvIdx,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00462}00462\ \ \ \ \ \ \ \ \ systemName\ +\ \textcolor{stringliteral}{"{}\_commPattern\_recvIdx"{}},}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00463}00463\ \ \ \ \ \ \ \ \ checkpoint,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00464}00464\ \ \ \ \ \ \ \ \ stepIdx,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00465}00465\ \ \ \ \ \ \ \ \ pisoIter,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00466}00466\ \ \ \ \ \ \ \ \ nonOrthIter}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00467}00467\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00468}00468\ \}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00469}00469\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00491}00491\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ LinearSystem>}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00492}\mbox{\hyperlink{namespaceNeoFOAM_a56ea9bf5b60a36355083a55d52918534}{00492}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_a56ea9bf5b60a36355083a55d52918534}{dumpNonLocalMatrixValues}}(}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00493}00493\ \ \ \ \ \textcolor{keyword}{const}\ LinearSystem\&\ ls,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00494}00494\ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ fieldName,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00495}00495\ \ \ \ \ \textcolor{keyword}{const}\ std::string\&\ checkpoint,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00496}00496\ \ \ \ \ \textcolor{keywordtype}{int}\ stepIdx,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00497}00497\ \ \ \ \ \textcolor{keywordtype}{int}\ pisoIter,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00498}00498\ \ \ \ \ \textcolor{keywordtype}{int}\ nonOrthIter}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00499}00499\ )}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00500}00500\ \{}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00501}00501\ \ \ \ \ \textcolor{keywordflow}{if}\ (!\mbox{\hyperlink{namespaceNeoFOAM_a0efd6b3f9233fdccd1f9a0da506bd235}{procDumpEnabled}}())\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00502}00502\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00503}00503\ \ \ \ \ \textcolor{keyword}{auto}\ valsHost\ =\ ls.nonLocalMatrix().values().copyToHost();}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00504}00504\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ v\ =\ valsHost.view();}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00505}00505\ \ \ \ \ \textcolor{keywordflow}{if}\ (v.size()\ ==\ 0)\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00506}00506\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00507}00507\ \ \ \ \ \textcolor{keywordtype}{int}\ rank\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00508}00508\ \ \ \ \ MPI\_Comm\_rank(MPI\_COMM\_WORLD,\ \&rank);}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00509}00509\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00510}00510\ \ \ \ \ \textcolor{keyword}{namespace\ }fs\ =\ std::filesystem;}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00511}00511\ \ \ \ \ \textcolor{keyword}{const}\ fs::path\ dir\ =\ fs::path(\textcolor{stringliteral}{"{}processor"{}}\ +\ std::to\_string(rank))\ /\ \textcolor{stringliteral}{"{}dumps"{}};}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00512}00512\ \ \ \ \ std::error\_code\ ec;}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00513}00513\ \ \ \ \ fs::create\_directories(dir,\ ec);}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00514}00514\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00515}00515\ \ \ \ \ \textcolor{keywordtype}{char}\ filename[512];}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00516}00516\ \ \ \ \ std::snprintf(}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00517}00517\ \ \ \ \ \ \ \ \ filename,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00518}00518\ \ \ \ \ \ \ \ \ \textcolor{keyword}{sizeof}(filename),}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00519}00519\ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}\%s/\%04d\_\%d\_\%d\_\%s\_\_\%s\_nonLocalA.txt"{}},}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00520}00520\ \ \ \ \ \ \ \ \ dir.string().c\_str(),}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00521}00521\ \ \ \ \ \ \ \ \ stepIdx,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00522}00522\ \ \ \ \ \ \ \ \ pisoIter,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00523}00523\ \ \ \ \ \ \ \ \ nonOrthIter,}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00524}00524\ \ \ \ \ \ \ \ \ checkpoint.c\_str(),}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00525}00525\ \ \ \ \ \ \ \ \ fieldName.c\_str()}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00526}00526\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00527}00527\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00528}00528\ \ \ \ \ std::FILE*\ f\ =\ std::fopen(filename,\ \textcolor{stringliteral}{"{}w"{}});}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00529}00529\ \ \ \ \ \textcolor{keywordflow}{if}\ (!f)\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00530}00530\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00531}00531\ \ \ \ \ \textcolor{keywordflow}{for}\ (std::size\_t\ i\ =\ 0;\ i\ <\ v.size();\ ++i)}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00532}00532\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00533}00533\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a09be5a178b7d38074142bed86f530591}{detail::dumpRow}}(f,\ 0,\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{int}\textcolor{keyword}{>}(i),\ v[i]);}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00534}00534\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00535}00535\ \ \ \ \ std::fclose(f);}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00536}00536\ \}}
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00537}00537\ }
+\DoxyCodeLine{\Hypertarget{procFaceDump_8hpp_source_l00538}00538\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
+
+\end{DoxyCode}
