@@ -56,6 +56,10 @@ namespace fvcc = NeoN::finiteVolume::cellCentred  // NeoN cell-centred FV types
 namespace nf = NeoFOAM    // short alias used in examples/tests
 ```
 
+### Code conventions
+
+- Use curly braces for for loops even for single line loop bodys
+
 ### `include/NeoFOAM/` + `src/` — the library
 
 **`datastructures/`**
@@ -88,8 +92,21 @@ A complete PISO incompressible solver that demonstrates the canonical usage patt
 
 ### `test/`
 
+Tests should generally validate behavior across all enabled executors (CPU/GPU) and avoid assumptions about deterministic floating-point ordering.
+
 Each test file starts an OpenFOAM `Time`/mesh in `test_main.cpp`, then Catch2 test cases use `GENERATE(allAvailableExecutor())` to run the same case on every compiled executor (Serial, CPUExecutor for OpenMP/threads, GPUExecutor for CUDA/HIP/SYCL). Setup case files live in `test/setup_<name>/`.
 
 ## `NeoFOAM.hpp` is generated
 
 `include/NeoFOAM/NeoFOAM.hpp` does not exist in the source tree — it is generated at configure time from `NeoFOAM.hpp.in` and `#include`s every header in `include/NeoFOAM/`. Always include it as `#include "NeoFOAM/NeoFOAM.hpp"`.
+
+## Git workflow
+
+-  Always create a backup branch before performing a rebase
+
+## GPU considerations
+- Device kernels must use NEON_LAMBDA
+- Avoid host-only allocations/access inside kernels
+- Prefer parallelFor abstractions over raw loops
+- Explicit synchronization may be required before host reads ( NeoN::fence(exec) )
+- Use .copyToHost() when validating vectors in tests

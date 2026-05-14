@@ -37,4 +37,4 @@ The repository is structured in the following way:
 ## Agentic coding
 
 We provide an `AGENTS.md` file to support LLM-based coding workflows.
-Please instruct tools such as Claude Code to reference this file, for example by prompting: “See `AGENTS.md` for shared project instructions.”
+Please instruct AI coding tools to reference this file, for example by prompting: “See `AGENTS.md` for shared project instructions.”
