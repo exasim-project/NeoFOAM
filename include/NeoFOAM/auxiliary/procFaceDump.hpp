@@ -213,6 +213,258 @@ void dumpProcOwnerInternal(
     std::fclose(f);
 }
 
+namespace detail
+{
+
+/**
+ * @brief Write one row of a flat Vector dump.
+ *
+ * Format mirrors the proc-face dumps: "0 <index> <value...>". The leading 0 is
+ * a placeholder "patch" column so the bisect script's awk numerical comparator
+ * (which skips columns 1-2 as integer headers) treats <index> as a column to
+ * skip and <value...> as the columns to compare.
+ */
+inline void dumpVectorRow(std::FILE* f, std::size_t i, NeoN::scalar v)
+{
+    std::fprintf(f, "0 %zu %.10e\n", i, static_cast<double>(v));
+}
+
+inline void dumpVectorRow(std::FILE* f, std::size_t i, NeoN::Vec3 v)
+{
+    std::fprintf(
+        f,
+        "0 %zu %.10e %.10e %.10e\n",
+        i,
+        static_cast<double>(v[0]),
+        static_cast<double>(v[1]),
+        static_cast<double>(v[2])
+    );
+}
+
+inline void dumpVectorRow(std::FILE* f, std::size_t i, NeoN::localIdx v)
+{
+    std::fprintf(f, "0 %zu %lld\n", i, static_cast<long long>(v));
+}
+
+inline void dumpVectorRow(std::FILE* f, std::size_t i, int v)
+{
+    std::fprintf(f, "0 %zu %d\n", i, v);
+}
+
+} // namespace detail
+
+/**
+ * @brief Dump every element of a Vector to a per-rank file.
+ *
+ * Element type T can be scalar, Vec3, localIdx, or int. Used to capture
+ * exactly what NeoN hands to Ginkgo so CPU vs GPU runs can be diffed byte
+ * for byte across every input component (matrix values, sparsity arrays,
+ * rhs, initial iterate).
+ *
+ * Output: processor{rank}/dumps/<step:04d>_<piso>_<nonOrth>_<checkpoint>__<name>_vec.txt
+ */
+template<typename T>
+void dumpVector(
+    const NeoN::Vector<T>& vec,
+    const std::string& name,
+    const std::string& checkpoint,
+    int stepIdx,
+    int pisoIter,
+    int nonOrthIter
+)
+{
+    if (!procDumpEnabled()) return;
+
+    auto host = vec.copyToHost();
+    const auto v = host.view();
+    if (v.size() == 0) return;
+
+    int rank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    namespace fs = std::filesystem;
+    const fs::path dir = fs::path("processor" + std::to_string(rank)) / "dumps";
+    std::error_code ec;
+    fs::create_directories(dir, ec);
+
+    char filename[512];
+    std::snprintf(
+        filename,
+        sizeof(filename),
+        "%s/%04d_%d_%d_%s__%s_vec.txt",
+        dir.string().c_str(),
+        stepIdx,
+        pisoIter,
+        nonOrthIter,
+        checkpoint.c_str(),
+        name.c_str()
+    );
+
+    std::FILE* f = std::fopen(filename, "w");
+    if (!f) return;
+
+    for (std::size_t i = 0; i < v.size(); ++i)
+    {
+        detail::dumpVectorRow(f, i, v[i]);
+    }
+    std::fclose(f);
+}
+
+/**
+ * @brief Dump a host-side std::vector (e.g. commPattern.sendCounts / recvIdx).
+ */
+template<typename T>
+void dumpHostVector(
+    const std::vector<T>& vec,
+    const std::string& name,
+    const std::string& checkpoint,
+    int stepIdx,
+    int pisoIter,
+    int nonOrthIter
+)
+{
+    if (!procDumpEnabled()) return;
+    if (vec.empty()) return;
+
+    int rank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    namespace fs = std::filesystem;
+    const fs::path dir = fs::path("processor" + std::to_string(rank)) / "dumps";
+    std::error_code ec;
+    fs::create_directories(dir, ec);
+
+    char filename[512];
+    std::snprintf(
+        filename,
+        sizeof(filename),
+        "%s/%04d_%d_%d_%s__%s_vec.txt",
+        dir.string().c_str(),
+        stepIdx,
+        pisoIter,
+        nonOrthIter,
+        checkpoint.c_str(),
+        name.c_str()
+    );
+
+    std::FILE* f = std::fopen(filename, "w");
+    if (!f) return;
+
+    for (std::size_t i = 0; i < vec.size(); ++i)
+    {
+        detail::dumpVectorRow(f, i, vec[i]);
+    }
+    std::fclose(f);
+}
+
+/**
+ * @brief Comprehensive dump of every NeoN-side input that goes into a Ginkgo
+ * distributed solve. Diff these CPU vs GPU on the same rank to find exactly
+ * which component (if any) we hand to Ginkgo differently.
+ *
+ * Captures:
+ *   - matrix().values()                local CSR coefficients
+ *   - matrix().sparsity()->colIdxs()   local CSR column indices
+ *   - matrix().sparsity()->rowOffs()   local CSR row offsets
+ *   - nonLocalMatrix().values()        non-local COO coefficients
+ *   - nonLocalMatrix().sparsity()->colIdxs()   non-local COO column indices (= global ghost cell IDs)
+ *   - nonLocalMatrix().sparsity()->rowOffs()   non-local COO row indices (local cell)
+ *   - rhs()                            assembled RHS
+ *   - x                                initial iterate Ginkgo sees
+ *   - commPattern.sendCounts           per-rank send counts (host)
+ *   - commPattern.recvIdx              global indices of received ghosts (host)
+ *
+ * Call site: between PDESolver::assemble() and PDESolver::solve(). All entries
+ * persist across the solve call; what Ginkgo sees is identical to what we dump.
+ */
+template<typename LinearSystem, typename Vector>
+void dumpFullLinearSystem(
+    const LinearSystem& ls,
+    const Vector& x,
+    const std::string& systemName,
+    const std::string& checkpoint,
+    int stepIdx,
+    int pisoIter,
+    int nonOrthIter
+)
+{
+    if (!procDumpEnabled()) return;
+
+    // Local matrix
+    dumpVector(
+        ls.matrix().values(),
+        systemName + "_localA_values",
+        checkpoint,
+        stepIdx,
+        pisoIter,
+        nonOrthIter
+    );
+    dumpVector(
+        ls.matrix().sparsity()->colIdxs(),
+        systemName + "_localA_colIdxs",
+        checkpoint,
+        stepIdx,
+        pisoIter,
+        nonOrthIter
+    );
+    dumpVector(
+        ls.matrix().sparsity()->rowOffs(),
+        systemName + "_localA_rowOffs",
+        checkpoint,
+        stepIdx,
+        pisoIter,
+        nonOrthIter
+    );
+
+    // Non-local matrix
+    dumpVector(
+        ls.nonLocalMatrix().values(),
+        systemName + "_nonLocalA_values",
+        checkpoint,
+        stepIdx,
+        pisoIter,
+        nonOrthIter
+    );
+    dumpVector(
+        ls.nonLocalMatrix().sparsity()->colIdxs(),
+        systemName + "_nonLocalA_colIdxs",
+        checkpoint,
+        stepIdx,
+        pisoIter,
+        nonOrthIter
+    );
+    dumpVector(
+        ls.nonLocalMatrix().sparsity()->rowOffs(),
+        systemName + "_nonLocalA_rowOffs",
+        checkpoint,
+        stepIdx,
+        pisoIter,
+        nonOrthIter
+    );
+
+    // RHS and initial iterate
+    dumpVector(ls.rhs(), systemName + "_rhs", checkpoint, stepIdx, pisoIter, nonOrthIter);
+    dumpVector(x, systemName + "_x_initial", checkpoint, stepIdx, pisoIter, nonOrthIter);
+
+    // CommPattern (host-side integer arrays)
+    dumpHostVector(
+        ls.commPattern().sendCounts,
+        systemName + "_commPattern_sendCounts",
+        checkpoint,
+        stepIdx,
+        pisoIter,
+        nonOrthIter
+    );
+    dumpHostVector(
+        ls.commPattern().recvIdx,
+        systemName + "_commPattern_recvIdx",
+        checkpoint,
+        stepIdx,
+        pisoIter,
+        nonOrthIter
+    );
+}
+
 /**
  * @brief Dump the assembled non-local matrix coefficients (one value per proc face).
  *

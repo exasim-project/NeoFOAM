@@ -100,15 +100,22 @@ int main(int argc, char* argv[])
 
             const auto ddtScheme = UEqn.ddtScheme();
 
-            // DUMP: assemble explicitly so we can dump the matrix BEFORE Ginkgo
-            //   sees it. Discriminates "GPU assembly wrote wrong proc-face
-            //   coefficients" from "Ginkgo distributed CUDA apply is wrong".
-            //   The downstream solve(rhs) re-assembles internally (with the
-            //   rhs source added); the matrix coefficients themselves are
-            //   identical between this pre-assemble and the solver's
-            //   internal assemble, so the dump captures what Ginkgo will use.
+            // DUMP: explicitly pre-assemble so we can capture EVERY input
+            //   handed to Ginkgo (local CSR values + sparsity, nonLocal COO
+            //   values + sparsity, RHS, initial iterate x, and the host-side
+            //   commPattern). Diff these CPU vs GPU on the same rank to
+            //   identify whether the bug is in our data prep or downstream
+            //   in Ginkgo's distributed CUDA solve.
             UEqn.assemble();
-            nf::dumpNonLocalMatrixValues(UEqn.linearSystem(), "U", "after_UEqn_assemble", stepIdx, 0, 0);
+            nf::dumpFullLinearSystem(
+                UEqn.linearSystem(),
+                U.internalVector(),
+                "U",
+                "after_UEqn_assemble",
+                stepIdx,
+                0,
+                0
+            );
 
             if (piso.momentumPredictor())
             {
