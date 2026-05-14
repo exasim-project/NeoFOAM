@@ -21,6 +21,8 @@
 #include <filesystem>
 #include <string>
 #include <system_error>
+#include <type_traits>
+#include <vector>
 
 #include <mpi.h>
 
@@ -241,14 +243,14 @@ inline void dumpVectorRow(std::FILE* f, std::size_t i, NeoN::Vec3 v)
     );
 }
 
-inline void dumpVectorRow(std::FILE* f, std::size_t i, NeoN::localIdx v)
+// Single template overload handles all integer widths uniformly: localIdx
+// (== int on the default 32-bit-label build) and the int values inside
+// commPattern.sendCounts / recvIdx. Cast to long long so any signed integer
+// fits and the output format is stable across builds.
+template<typename Integral, std::enable_if_t<std::is_integral_v<Integral>, int> = 0>
+inline void dumpVectorRow(std::FILE* f, std::size_t i, Integral v)
 {
     std::fprintf(f, "0 %zu %lld\n", i, static_cast<long long>(v));
-}
-
-inline void dumpVectorRow(std::FILE* f, std::size_t i, int v)
-{
-    std::fprintf(f, "0 %zu %d\n", i, v);
 }
 
 } // namespace detail
