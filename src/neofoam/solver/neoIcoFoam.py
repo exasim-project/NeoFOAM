@@ -108,7 +108,7 @@ class NeoIcoFoam:
                 nfb.update_velocity(hByA, rAU, p, U)
                 U.correct_boundary_conditions()
 
-            if runTime.outputTime():  # type: ignore[attr-defined]
+            if runTime.outputTime():
                 nfb.write_scalar_field(p, rt)
                 nfb.write_vector_field(U, rt)
 
