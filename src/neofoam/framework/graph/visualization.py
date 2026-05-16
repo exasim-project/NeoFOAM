@@ -1,23 +1,26 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# SPDX-FileCopyrightText: 2023 NeoFOAM authors
+# SPDX-FileCopyrightText: 2026 NeoFOAM authors
+
+"""Visualization helpers for graph structures."""
+
 import json
 
 import networkx as nx  # type: ignore[import-untyped]
 from pyvis.network import Network  # type: ignore[import-untyped]
 
 
-def digraph_to_pyvis_html(G: nx.DiGraph, html_path: str = "dag.html") -> None:
+def digraph_to_pyvis_html(graph: nx.DiGraph, html_path: str = "dag.html") -> None:
+    """Render a directed graph to a pyvis HTML file."""
     net = Network(directed=True, notebook=False)
-    for node, attrs in G.nodes(data=True):
-        shape = attrs.get("shape", "ellipse")  # default if missing
+    for node, attrs in graph.nodes(data=True):
+        shape = attrs.get("shape", "ellipse")
         net.add_node(
             node, label=str(node), shape=shape, color=attrs.get("color", "lightblue")
         )
-    for source, target in G.edges:
+    for source, target in graph.edges:
         net.add_edge(source, target)
 
-    # Layout options
     options = {
         "layout": {
             "hierarchical": {
@@ -32,7 +35,7 @@ def digraph_to_pyvis_html(G: nx.DiGraph, html_path: str = "dag.html") -> None:
         "edges": {
             "arrows": {"to": {"enabled": True}},
             "smooth": False,
-            "font": {"size": 14, "align": "middle"},  # edge label styling
+            "font": {"size": 14, "align": "middle"},
         },
     }
 
