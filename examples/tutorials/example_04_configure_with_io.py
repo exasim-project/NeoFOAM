@@ -228,7 +228,7 @@ processing = ProcessingConfig.load(case_dir=case)
 print(f"stage1 type:      {type(processing.stage1).__name__}")
 print(f"stage1.algorithm: {processing.stage1.algorithm}")
 print(f"stage2.threshold: {processing.stage2.threshold}")
-print(f"JSON schema knows about the nesting:")
+print("JSON schema knows about the nesting:")
 print(f"  {list(ProcessingConfig.model_json_schema()['$defs'].keys())}")
 
 # %%
