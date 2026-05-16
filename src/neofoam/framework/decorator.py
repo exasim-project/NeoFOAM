@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
+
+"""Decorators for marking functions as operations or conditions."""
+
 from __future__ import annotations
 
 import functools

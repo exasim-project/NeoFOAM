@@ -47,21 +47,18 @@ def validate_dependency_graph(
     known_names = set(name_counts)
     for node_name, dependencies in dependencies_by_node.items():
         for dependency in dependencies:
-            # skip self-dependencies and duplicates, which are handled by other checks
-            if dependency in known_names:
-                continue
-
-            diagnostics.append(
-                GraphDiagnostic(
-                    code="missing_dependency",
-                    node_name=node_name,
-                    dependency=dependency,
-                    message=(
-                        f"InitStep '{node_name}' depends on '{dependency}', "
-                        f"but '{dependency}' was not found"
-                    ),
+            if dependency not in known_names:
+                diagnostics.append(
+                    GraphDiagnostic(
+                        code="missing_dependency",
+                        node_name=node_name,
+                        dependency=dependency,
+                        message=(
+                            f"InitStep '{node_name}' depends on '{dependency}', "
+                            f"but '{dependency}' was not found"
+                        ),
+                    )
                 )
-            )
 
     if diagnostics:
         return GraphValidationReport(diagnostics=tuple(diagnostics))
