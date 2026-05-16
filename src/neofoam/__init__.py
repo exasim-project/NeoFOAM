@@ -5,3 +5,17 @@
 __version__ = "0.0.1"
 
 from . import neofoam_bindings as neofoam_bindings  # type: ignore[attr-defined]
+
+from .framework.context import FieldUpdates
+from .framework.initialization import Depends, StagedInit, field
+from .framework.model import Model
+from .framework.solver import Solver
+
+__all__ = [
+    "Depends",
+    "FieldUpdates",
+    "Model",
+    "Solver",
+    "StagedInit",
+    "field",
+]

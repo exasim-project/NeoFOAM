@@ -26,7 +26,7 @@ The context object is simply a simple data container that holds references to al
         fields: dict[str, Any]
         models: dict[str, Any]
         mesh: Any = None
-        runTime: Any = None
+        runtime: Any = None
 
 
 Each operation is a class that implements a specific functionality, such as updating a field based on a governing equation or applying boundary conditions.
@@ -91,7 +91,9 @@ These operations types can be visualized as follows and are the building blocks 
 The idea is that complex solver workflows can be constructed by combining these basic operation types in a hierarchical manner.
 
 
-All operations stored as instances of the ``Operation`` class, which contains the following attributes:
+All operations are stored as instances of the ``Operation`` class.
+``Operation`` wraps a callable with a single ``metadata`` field of type ``OperationMetadata``;
+properties on ``Operation`` (``operation_name``, ``operation_number``, ``depends_on``, ``before``, ``shape``, ``color``, ``domain_name``) delegate to that metadata.
 
 .. code-block:: python
 
@@ -100,14 +102,25 @@ All operations stored as instances of the ``Operation`` class, which contains th
         """A concrete operation class that wraps a function with metadata."""
 
         func: Union[ConditionalOp, IterativeOp, SequentialOp]
-        operation_number: OperationNumber = None
-        operation_name: str = None
-        domain_name: str | None = None
-        depends_on: list[str] | None = None
-        shape: str = "box"
-        color: str = "lightblue"
+        metadata: OperationMetadata = field(default_factory=OperationMetadata)
         level: int = 0
         sub_operations: list["Operation"] = field(default_factory=list)
+
+To construct an ``Operation``, pass the metadata explicitly:
+
+.. code-block:: python
+
+    from neofoam.framework.operations import Operation, SequentialOp
+    from neofoam.framework.types import OperationMetadata, OperationNumber
+
+    op = Operation(
+        func=SequentialOp(my_func),
+        metadata=OperationMetadata(
+            op_name="solve_momentum",
+            operation_number=OperationNumber("1.0"),
+            depends_on=["set_time_step"],
+        ),
+    )
 
 The solver framework gathers all ``Operation`` instances defined in the solver and model classes and constructs a workflow that can be executed in sequence.
 The resulting workflow is represented by the ``Operations`` class that is a container for all operations in the solver:
@@ -115,17 +128,19 @@ The resulting workflow is represented by the ``Operations`` class that is a cont
 .. code-block:: python
 
     class Operations:
-        def __init__(self, operations: list[Operation] = None):
-            if operations is not None:
-                self.ops = operations
-            else:
-                self.ops: list[Operation] = []
+        def __init__(self, operations: list[Operation] | None = None) -> None:
+            self.ops = operations if operations is not None else []
 
-        def run(self, ctx):
-        for operation in self.ops:
-            operation.run(ctx)
+        def run(self, ctx: Context) -> None:
+            self.print_tree()
+            for operation in self.ops:
+                operation.run(ctx)
 
 It provides a ``run`` method that executes all operations in sequence, passing the context object to each operation.
+
+.. note::
+   ``Operations.run`` always calls ``self.print_tree()`` before executing — every call writes the operation tree to stdout.
+   In normal solver usage ``run`` is invoked once on the resolved top-level container, so this only prints at startup.
 
 
 Conditions
@@ -207,28 +222,53 @@ The classical approach in contrast is a lot easier to read and understand as the
 
 
 However, this classical approach lacks modularity and extensibility as the solver workflow is hardcoded in a single method.
-To combine the advantages of both approaches, the ``StepBuilder`` class is introduced to build complex solver workflows in a more readable and understandable way.
-The ``StepBuilder`` class provides a fluent interface to define the solver workflow by chaining method calls.
-This makes it easier to read and understand the solver
+To combine the advantages of both approaches, the ``StepBuilder`` class is introduced to build complex solver workflows in a more readable way.
 
-It is used in the define_operations method of the solver class to build the solver workflow.
+The ``StepBuilder`` exposes two methods, ``step()`` and ``loop()``, plus context-manager support.
+``step(op)`` appends a sequential operation; ``loop(op)`` appends an iterative operation **and returns a fresh ``StepBuilder``** scoped to the new loop's sub-operations.
+Because ``__enter__`` returns ``self``, ``loop()`` can be used directly with ``with`` to nest scopes:
 
 .. code-block:: python
 
-    def define_operations(self, domain_name: str | None = None) -> Operations:
-        ops_col = self.operations(domain_name) # list of all available operations including the models
-        op_build = StepBuilder()
+    @incompressibleFluid.execution_graph_step
+    def execution_graph(self, domain_name: str | None = None) -> tuple[StepBuilder, Operations]:
+        ops = self.operations
+        algorithm_model = self.state.core_models[0]
+        algo_ops = Operations(algorithm_model._build_operations_for(algorithm_model))
 
-        with op_build as main_loop:
-            main_loop.step(ops_col["cfl_number"])
+        builder = StepBuilder()
+        time_loop_op = Operation(
+            func=IterativeOp(TimeLoop()),
+            metadata=OperationMetadata(op_name="time_loop"),
+        )
+        with builder.loop(time_loop_op) as time_builder:
+            time_builder.step(ops["set_time_step"])
+            time_builder.step(ops["increment_time"])
 
-            with main_loop.loop(ops_col["loop_condition"]) as pimple:
-                pimple.step(ops_col["momentum_equation"])
+            with time_builder.loop(algo_ops["inner_loop"]) as inner_builder:
+                inner_builder.step(algo_ops["momentum"])
+                inner_builder.step(algo_ops["continuity"])
+                inner_builder.step(ops["turbulence_correction"])
 
-                pimple.step(ops_col["pressure_correction"])
+            time_builder.step(ops["write_output"])
 
-                pimple.step(ops_col["turbulence_model"])
+        # Collect operations contributed by optional models
+        model_ops = Operations()
+        for m in self.state.optional_models:
+            model_ops.add(m.operations)
 
-        op_build.update_operations(ops_col) # add or modify steps defined by the models of a solver
+        return builder, model_ops
 
-        return op_build.operations
+The solver returns the ``StepBuilder`` (which describes the *structure*) together with a flat ``Operations`` container of model contributions.
+The two are merged by the ``DAGResolver``, which inspects each model operation's ``depends_on`` / ``before`` metadata, infers the correct loop scope, topologically sorts within each scope, and rebuilds the structure:
+
+.. code-block:: python
+
+    from neofoam.framework.graph import DAGResolver
+
+    builder, model_ops = solver.execution_graph()
+    resolver = DAGResolver()
+    resolved = resolver.resolve(builder, model_ops)
+    resolved.operations.run(ctx)
+
+This split keeps the solver's loop topology declarative while letting models inject operations at runtime without the solver having to know about them.
