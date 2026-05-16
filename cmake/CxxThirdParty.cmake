@@ -7,6 +7,13 @@ if(NeoFOAM_BUILD_TESTS OR NeoFOAM_BUILD_BENCHMARKS)
   cpmaddpackage(NAME Catch2 GITHUB_REPOSITORY catchorg/Catch2 VERSION 3.4.0)
 endif()
 
+if(NEOFOAM_WITH_MPI)
+  if(WIN32)
+    message(FATAL_ERROR "NEOFOAM_WITH_MPI not supported on Windows")
+  endif()
+  find_package(MPI 3.1 REQUIRED)
+endif()
+
 if(NEOFOAM_BUILD_BINDINGS)
   cpmaddpackage(
     NAME
