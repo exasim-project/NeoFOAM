@@ -141,7 +141,7 @@ jobs:
 
       - name: Install test dependencies
         run: |
-          uv run pip install -v .[all]
+          uv sync --all-extras -v
 
       - name: Test with pytest
         run: |
@@ -165,7 +165,7 @@ jobs:
 
       - name: Install test dependencies
         run: |
-          uv run pip install -v .[all]
+          uv sync --all-extras -v
 
       - name: Test with pytest
         run: |
@@ -214,5 +214,5 @@ jobs:
         python-version: 3.9
     - name: Check types with ty
       run: |
-        uv run pip install .[all]
-        poe type_check
+        uv sync --all-extras -v
+        uv run poe type_check
