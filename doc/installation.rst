@@ -12,6 +12,31 @@ Requirements
 Installing the Package
 ---------------------
 
+NeoFOAM can be installed in two ways: either by building everything from source (including NeoN) or by installing NeoN first as a library/wheel.
+
+Two-step Installation (Recommended)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This method first builds and installs NeoN as a wheel into your environment, then builds NeoFOAM against it. This is useful when NeoN is not yet available on PyPI.
+
+1. Build with pip:
+
+   .. code-block:: bash
+
+       pip install path/to/NeoN -v
+       # with a submodule
+       pip install src/NeoN[all] -v
+       pip install . -v
+
+2. Install uv:
+
+   .. code-block:: bash
+        # with a submodule otherwise point the source
+       uv sync --all-extras -v
+
+Development Installation
+^^^^^^^^^^^^^^^^^^^^^^^^
+
 To install the package and all development and documentation dependencies, run:
 
 .. code-block:: bash

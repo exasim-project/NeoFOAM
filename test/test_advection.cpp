@@ -102,6 +102,7 @@ TEST_CASE("Advection Equation")
     fvSchemesDict = NeoFOAM::mapFvSchemes(fvSchemesDict);
     Foam::scalar endTime = controlDict.get<Foam::scalar>("endTime");
 
+#if NF_WITH_SUNDIALS
     SECTION("Scalar advection with " + execName + " and " + "forwardEuler")
     {
         std::string timeIntegration = "forwardEuler";
@@ -154,6 +155,7 @@ TEST_CASE("Advection Equation")
         }
         NeoFOAM::compare(nfT, T, ApproxScalar(1e-10), false);
     }
+#endif
 
     std::string timeIntegration = "backwardEuler";
     NeoN::Dictionary fvSolutionDict {
