@@ -168,7 +168,7 @@ def test_execute_lazy_inits_returns_init_results():
         ),
         (
             [InitResult("runtime", "resource", "r")],
-            lambda c: c.runTime == "r",
+            lambda c: c.runtime == "r",
         ),
         (
             [InitResult("custom", "resource", "c")],
@@ -242,7 +242,7 @@ def test_execute_initialization_complex():
     ]
     ctx = execute_initialization(inits)
     assert ctx.mesh == "mesh"
-    assert ctx.runTime == "runtime"
+    assert ctx.runtime == "runtime"
     assert len(ctx.fields) == 2
     assert len(ctx.models) == 2
 
@@ -388,7 +388,7 @@ def test_build_context_resource_routing():
     ]
     ctx = build_context_from_objects(init_results)
     assert ctx.mesh == "mesh_obj"
-    assert ctx.runTime == "runtime_obj"
+    assert ctx.runtime == "runtime_obj"
     assert ctx.models["solver_state"] == "state_obj"
 
 
