@@ -43,7 +43,6 @@ TEST_CASE("Julia Momentum")
     std::string path = std::format("include(\"{}\")", JULIA_MODULE_INIT);
 
     jl_eval_string(path.c_str());
-
     if (jl_exception_occurred())
     {
         const char* p = jl_string_ptr(
@@ -56,7 +55,6 @@ TEST_CASE("Julia Momentum")
     auto& mesh = rt.mesh;
     auto& schemesDict = rt.fvSchemesDict;
     schemesDict = nf::mapFvSchemes(schemesDict);
-    std::cout << schemesDict << std::endl;
     auto divs = schemesDict.subDict("divSchemes");
     auto phiu = divs.get<NeoN::TokenList>("div(phi,U)");
 
@@ -109,14 +107,14 @@ TEST_CASE("Julia Momentum")
         );
 
         nf::PDESolver<NeoN::Vec3> nfUEqn(
-            // dsl::imp::ddt(nfU) +
+            dsl::imp::ddt(phi) +
             dsl::imp::div(faceFlux, phi) - 5 * dsl::imp::laplacian(gamma, phi), // expr
             phi,                                                                // volumefield
             rt                                                                  // runtime
         );
 
         nf::PDESolver<NeoN::Vec3> juliaUEqn(
-            // dsl::imp::ddt(nfU) +
+            dsl::imp::ddt(phi) +
             dsl::imp::div(faceFlux, phi) - 5 * dsl::imp::laplacian(gamma, phi), // expr
             phi,                                                                // volumefield
             rt                                                                  // runtime
@@ -134,7 +132,7 @@ TEST_CASE("Julia Momentum")
                   << "[ns]" << std::endl;
 
         std::chrono::steady_clock::time_point beginj = std::chrono::steady_clock::now();
-        juliaUEqn.warmupFaceBased();
+        // juliaUEqn.warmupFaceBased();
         juliaUEqn.juliaFaceBased(faceFlux, phi, gamma);
         std::chrono::steady_clock::time_point endj = std::chrono::steady_clock::now();
         std::cout << "Assembly time (JULIA) = "
@@ -149,7 +147,6 @@ TEST_CASE("Julia Momentum")
 
             fprintf(stderr, "%s%s\n", "error: ", p);
         }
-
         REQUIRE(!jl_exception_occurred());
     }
     jl_atexit_hook(0);

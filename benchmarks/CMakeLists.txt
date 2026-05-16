@@ -17,6 +17,11 @@ function(NeoN_benchmark BENCH)
   add_executable(bench_${BENCH} "${BENCH}.cpp")
   target_link_libraries(bench_${BENCH} PRIVATE Catch2::Catch2 OpenFOAM NeoFOAM)
   target_include_directories(bench_${BENCH} PRIVATE "${CMAKE_SOURCE_DIR}")
+  if(NeoN_WITH_JULIA )
+    target_compile_definitions(bench_${BENCH} PRIVATE
+        JULIA_MODULE_INIT="${JULIA_MODULE_INIT}"
+    )
+  endif()
 
   if(WIN32)
     set_target_properties(
@@ -48,7 +53,6 @@ function(NeoN_benchmark BENCH)
     benchmark_suite_${BENCH} ALL
     COMMENT "Target to generate test cases"
     DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/benchmarkSuite/${BENCH}")
-
   add_test(
     NAME bench_${BENCH}
     COMMAND
@@ -58,10 +62,13 @@ function(NeoN_benchmark BENCH)
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/benchmarkSuite)
 
 endfunction()
-
+if(NeoN_WITH_JULIA)
+  neon_benchmark(julia)
+endif()
 neon_benchmark(explicitOperators)
 neon_benchmark(implicitOperators)
 neon_benchmark(scalarAdvection)
 neon_benchmark(pressureVelocityCoupling)
 neon_benchmark(momentum)
 neon_benchmark(poisson)
+  
