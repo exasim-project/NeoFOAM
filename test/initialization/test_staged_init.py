@@ -8,7 +8,7 @@ import pytest
 
 from neofoam.framework.context import Context
 from neofoam.framework.initialization.config_context import ConfigContext
-from neofoam.framework.initialization.helpers import field, init, model
+from neofoam.framework.initialization.helpers import field, lazy, model
 from neofoam.framework.initialization.staged_init import (
     LoadResult,
     StagedInit,
@@ -184,7 +184,7 @@ def _make_full_init():
         assert len(core) == 1
         assert len(opt) == 1
         return [
-            init("mesh", create=lambda _ctx: "mesh_obj"),
+            lazy("mesh", create=lambda _ctx: "mesh_obj"),
             field("U", depends_on=["mesh"], create=lambda _ctx: "velocity"),
             model("algo", create=lambda _ctx: "algorithm"),
         ]
@@ -220,7 +220,7 @@ def test_run_without_resolve():
     @staged_init.build
     def build(core, opt):
         _ = (core, opt)
-        return [init("mesh", create=lambda _ctx: "m")]
+        return [lazy("mesh", create=lambda _ctx: "m")]
 
     ctx = staged_init.run()
     assert ctx.mesh == "m"
@@ -250,7 +250,7 @@ def test_run_wires_models_into_config(models, expected_key):
     @staged_init.build
     def build(core, opt):
         _ = (core, opt)
-        return [init("mesh", create=lambda _ctx: "m")]
+        return [lazy("mesh", create=lambda _ctx: "m")]
 
     staged_init.run()
     assert captured_cfg["registered"] is models[0]
@@ -273,7 +273,7 @@ def test_run_duplicate_model_registration_key_raises():
     @staged_init.build
     def build(core, opt):
         _ = (core, opt)
-        return [init("mesh", create=lambda _ctx: "m")]
+        return [lazy("mesh", create=lambda _ctx: "m")]
 
     with pytest.raises(ValueError, match="Duplicate model registration key"):
         staged_init.run()
@@ -315,7 +315,7 @@ def test_run_build_returns_lazy_inits_and_passes_models():
     def build(core, opt):
         captured["core"] = core
         captured["opt"] = opt
-        return [init("mesh", create=lambda _ctx: f"mesh_from_{len(core)}_core")]
+        return [lazy("mesh", create=lambda _ctx: f"mesh_from_{len(core)}_core")]
 
     result = staged_init.run_build()
     assert len(result) == 1
