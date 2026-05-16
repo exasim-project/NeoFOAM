@@ -1,0 +1,71 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSolution;
+}
+
+solvers
+{
+    p
+    {
+        solver          PCG;
+        preconditioner  diagonal;
+        tolerance       1e-7;
+        relTol          0.01;
+    }
+
+    pFinal
+    {
+        $p;
+        relTol          0;
+    }
+
+    U
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-05;
+        relTol          0.1;
+    }
+
+    nuTilda
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-15;
+        relTol          0;
+    }
+
+    k
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-15;
+        relTol          0;
+    }
+
+    epsilon
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-15;
+        relTol          0;
+    }
+
+    UFinal
+    {
+        $U;
+        relTol          0;
+    }
+}
+
+PISO
+{
+    momentumPredictor yes;
+    nCorrectors         2;
+    nNonOrthogonalCorrectors 0;
+}
+
+// ************************************************************************* //

@@ -1,0 +1,20 @@
+{
+    "type": "solver::Bicgstab",
+    "criteria": [
+        {
+            "type": "Iteration",
+            "max_iters": 1000
+        },
+        {
+            "type": "ResidualNorm",
+            "reduction_factor": 1e-8,
+            "baseline": "absolute"
+        }
+    ],
+    "preconditioner": {
+        "type": "preconditioner::Ilu",
+        "factorization": {
+            "type": "factorization::ParIlu"
+        }
+    }
+}
