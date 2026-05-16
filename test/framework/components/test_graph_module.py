@@ -36,5 +36,5 @@ def test_validate_dependency_graph_cycle():
 def test_networkx_topological_sorter_orders_graph():
     graph = build_dependency_digraph({"B": ["A"], "C": ["B"], "A": []})
 
-    order = NetworkxTopologicalSorter().solve(graph)
+    order = NetworkxTopologicalSorter().sort(graph)
     assert order == ["A", "B", "C"]

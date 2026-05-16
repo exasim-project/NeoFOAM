@@ -65,7 +65,7 @@ def topological_sort(
 
     name_to_init = {li.name: li for li in lazy_inits}
     graph = build_dependency_digraph({li.name: li.depends_on for li in lazy_inits})
-    sorted_names = NetworkxTopologicalSorter().solve(graph)
+    sorted_names = NetworkxTopologicalSorter().sort(graph)
 
     return [name_to_init[name] for name in sorted_names]
 

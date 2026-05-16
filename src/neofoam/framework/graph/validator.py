@@ -56,7 +56,7 @@ def validate_dependency_graph(
     graph = build_dependency_digraph(dependencies_by_node)
 
     try:
-        NetworkxTopologicalSorter().solve(graph)
+        NetworkxTopologicalSorter().sort(graph)
     except (nx.NetworkXError, nx.NetworkXUnfeasible):
         cycle_edges = nx.find_cycle(graph)
         cycle_names = tuple(edge[0] for edge in cycle_edges)
