@@ -98,7 +98,6 @@ TEST_CASE("momentum")
                     nfU,
                     rt
                 );
-
                 auto expr = dsl::Expression<NeoN::Vec3>(eqn.expression());
                 auto ls = NeoN::la::LinearSystem<
                     NeoN::Vec3,
