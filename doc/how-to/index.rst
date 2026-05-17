@@ -9,7 +9,3 @@ see the :doc:`tutorials </auto_tutorials/index>` instead.
    :maxdepth: 1
 
    install
-   register-plugin-model
-   declare-fvschemes-requirements
-   validate-without-running
-   /auto_how-to/example_01_list_models_and_configs
