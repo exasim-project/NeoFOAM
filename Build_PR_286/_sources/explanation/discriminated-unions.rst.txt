@@ -200,7 +200,6 @@ Boussinesq and Spalart–Allmaras register against it; the registry's
 discriminated union is what
 ``StagedInit.solver_inputs()`` walks during schema introspection.
 
-For the recipe to register a plugin model, see
-:doc:`/how-to/register-plugin-model`. For the two ways
-``incompressibleFluid`` actually picks up registered models at startup
-(plugin registry vs core specs), see :doc:`discovery-mechanisms`.
+For the two ways ``incompressibleFluid`` actually picks up registered
+models at startup (plugin registry vs core specs), see
+:doc:`discovery-mechanisms`.

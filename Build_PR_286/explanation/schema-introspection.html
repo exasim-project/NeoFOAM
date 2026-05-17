@@ -208,10 +208,6 @@
 <p class="caption" role="heading"><span class="caption-text">How-to guides</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../how-to/install.html">Install NeoFOAM</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../how-to/register-plugin-model.html">Register a plugin model with <code class="docutils literal notranslate"><span class="pre">incompressibleFluid</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="../how-to/declare-fvschemes-requirements.html">Declare fvSchemes / fvSolution requirements on an operation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../how-to/validate-without-running.html">Validate a case without running the solver</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../auto_how-to/example_01_list_models_and_configs.html">List available models and configs for a solver</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Explanation</span></p>
 <ul class="current">
@@ -296,8 +292,7 @@ that reflects the <em>currently-installed</em> plugin set — not whatever set
 the framework shipped with.</p>
 <p><strong>3. Per-operation requirements live on the operations themselves.</strong>
 Each operation declares its scheme/solution requirements with
-<code class="docutils literal notranslate"><span class="pre">&#64;fvSchemes.add(...)</span></code> and <code class="docutils literal notranslate"><span class="pre">&#64;fvSolution.add(...)</span></code> (see
-<a class="reference internal" href="../how-to/declare-fvschemes-requirements.html"><span class="doc">Declare fvSchemes / fvSolution requirements on an operation</span></a>).
+<code class="docutils literal notranslate"><span class="pre">&#64;fvSchemes.add(...)</span></code> and <code class="docutils literal notranslate"><span class="pre">&#64;fvSolution.add(...)</span></code>.
 <code class="docutils literal notranslate"><span class="pre">collect_requirements_from_models()</span></code> aggregates them across every
 active model; <code class="docutils literal notranslate"><span class="pre">verify_fvschemes()</span></code> and <code class="docutils literal notranslate"><span class="pre">verify_fvsolution()</span></code>
 check the loaded case against the aggregated set.</p>
@@ -320,8 +315,6 @@ fields are typed with the correct scheme unions (<code class="docutils literal n
 <code class="docutils literal notranslate"><span class="pre">DivScheme</span></code>, …) for every <code class="docutils literal notranslate"><span class="pre">&#64;fvSchemes.add</span></code> requirement
 declared by the active operations.</p></li>
 </ul>
-<p>For the recipe to call <code class="docutils literal notranslate"><span class="pre">validate()</span></code> from a script or a pre-flight
-check, see <a class="reference internal" href="../how-to/validate-without-running.html"><span class="doc">Validate a case without running the solver</span></a>.</p>
 </section>
 <section id="what-makes-this-hard-the-alternative">
 <h2>What makes this hard (the alternative)<a class="headerlink" href="#what-makes-this-hard-the-alternative" title="Link to this heading">¶</a></h2>
@@ -373,10 +366,6 @@ new scheme. That is the right behaviour, but it does mean
 <h2>When this matters in practice<a class="headerlink" href="#when-this-matters-in-practice" title="Link to this heading">¶</a></h2>
 <p>The user-visible recipes are:</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="../how-to/validate-without-running.html"><span class="doc">Validate a case without running the solver</span></a> — call
-<code class="docutils literal notranslate"><span class="pre">StagedInit.validate()</span></code> from a script or a pre-flight check.</p></li>
-<li><p><a class="reference internal" href="../how-to/declare-fvschemes-requirements.html"><span class="doc">Declare fvSchemes / fvSolution requirements on an operation</span></a> — make sure your
-operations declare what they need so validation can see it.</p></li>
 <li><p><a class="reference internal" href="../auto_tutorials/example_04_configure_with_io.html"><span class="doc">Typed configs: YAML, JSON, and OpenFOAM dictionaries</span></a> — use the schema
 export to drive config generation rather than hand-writing OpenFOAM
 dictionaries.</p></li>

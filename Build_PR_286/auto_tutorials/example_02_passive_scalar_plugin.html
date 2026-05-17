@@ -208,10 +208,6 @@
 <p class="caption" role="heading"><span class="caption-text">How-to guides</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../how-to/install.html">Install NeoFOAM</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../how-to/register-plugin-model.html">Register a plugin model with <code class="docutils literal notranslate"><span class="pre">incompressibleFluid</span></code></a></li>
-<li class="toctree-l1"><a class="reference internal" href="../how-to/declare-fvschemes-requirements.html">Declare fvSchemes / fvSolution requirements on an operation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../how-to/validate-without-running.html">Validate a case without running the solver</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../auto_how-to/example_01_list_models_and_configs.html">List available models and configs for a solver</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Explanation</span></p>
 <ul>
@@ -373,8 +369,7 @@ framework finds the <code class="docutils literal notranslate"><span class="pre"
 algorithm produces a divergence-free <code class="docutils literal notranslate"><span class="pre">phi</span></code> — solving with the
 corrected flux is what keeps the scalar conservative.
 <code class="docutils literal notranslate"><span class="pre">&#64;fvSchemes.add</span></code> / <code class="docutils literal notranslate"><span class="pre">&#64;fvSolution.add</span></code> declare requirements the
-framework’s verifier checks at startup; see
-<a class="reference internal" href="../how-to/declare-fvschemes-requirements.html"><span class="doc">Declare fvSchemes / fvSolution requirements on an operation</span></a>.</p>
+framework’s verifier checks at startup.</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@passive_scalar</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;continuity&quot;</span><span class="p">])</span>
 <span class="nd">@fvSchemes</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
     <span class="n">ddt</span><span class="o">=</span><span class="s2">&quot;ddt(s)&quot;</span><span class="p">,</span>
@@ -444,7 +439,7 @@ domain that has equilibrated to s ≈ 1 everywhere.</p>
 <span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.054 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.056 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-tutorials-example-02-passive-scalar-plugin-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/950b58d46c511014879911267bc7ea71/example_02_passive_scalar_plugin.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">example_02_passive_scalar_plugin.ipynb</span></code></a></p>

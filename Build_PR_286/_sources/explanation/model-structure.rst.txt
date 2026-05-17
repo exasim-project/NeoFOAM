@@ -175,6 +175,5 @@ That is the contract a model author has to fill in. Everything
 else — discovery, validation, merger, execution — is the
 framework's job.
 
-For the recipe of writing a plugin model from scratch, see
-:doc:`/how-to/register-plugin-model`. For a worked tutorial, see
+For a worked tutorial, see
 :doc:`/auto_tutorials/example_02_passive_scalar_plugin`.

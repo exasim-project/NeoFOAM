@@ -282,6 +282,3 @@ Two tutorials exercise this directly:
   ``StepBuilder`` tree from scratch and includes a worked example of
   an ``InitializationGraphError`` cycle. Seeing the DAG fail once
   before debugging it for real is part of the lesson.
-
-For the recipe of registering a plugin that contributes operations,
-see :doc:`/how-to/register-plugin-model`.
