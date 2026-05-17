@@ -4,7 +4,10 @@ import pytest
 from pydantic import BaseModel
 
 from neofoam.framework.context import Context, FieldUpdates
-from neofoam.framework.graph import compute_nodes_order, compute_steps_order
+from neofoam.framework.graph.visualization import (
+    _compute_nodes_order as compute_nodes_order,
+    _compute_steps_order as compute_steps_order,
+)
 from neofoam.framework.decorator import decorated_member_functions
 from neofoam.framework.model import Model
 from neofoam.framework.operations import Operation, OperationCollection

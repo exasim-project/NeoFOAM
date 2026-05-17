@@ -6,7 +6,7 @@ from typing import Any
 from pydantic import BaseModel
 
 from neofoam.framework.operations import Operations
-from neofoam.framework.graph import build_global_dag
+from neofoam.framework.graph import dependency_dag
 
 from .context import Context
 from .couplingInterface import CouplingInterface
@@ -23,7 +23,7 @@ class Simulation(BaseModel):
 
     def dependency_graph(self) -> Any:
         graph = {domain.name: domain.dependencies() for domain in self.domains}
-        return build_global_dag(graph)
+        return dependency_dag(graph)
 
     def init_simulation_context(self) -> SimulationContext:
         domain_context = {

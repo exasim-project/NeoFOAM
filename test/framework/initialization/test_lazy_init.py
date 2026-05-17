@@ -6,6 +6,7 @@
 
 import pytest
 
+from neofoam.framework.initialization.execution.executor import execute_step
 from neofoam.framework.initialization.init_step import InitStep, InitStepExecutionError
 
 
@@ -28,24 +29,34 @@ def test_creation():
     "kwargs,error_match",
     [
         (
-            {"name": "bad", "initializer": lambda _ctx: 1, "category": "invalid"},
-            "invalid category",
+            {"name": "bad", "initializer": lambda _ctx: 1, "category": ""},
+            "non-empty category",
         ),
         ({"name": "", "initializer": lambda _ctx: 42}, "non-empty name"),
         ({"name": "test", "initializer": None}, "must have an initializer"),
     ],
-    ids=["invalid-category", "empty-name", "none-initializer"],
+    ids=["empty-category", "empty-name", "none-initializer"],
 )
 def test_init_step_validation_raises(kwargs, error_match):
-    """InitStep validates category, name, and initializer."""
+    """InitStep validates name, initializer, and category presence."""
     with pytest.raises(ValueError, match=error_match):
         InitStep(**kwargs)
+
+
+def test_init_step_accepts_arbitrary_category_string():
+    """Category is open; any non-empty string is accepted."""
+    step = InitStep(
+        name="custom",
+        initializer=lambda _ctx: 1,
+        category="turbulence",
+    )
+    assert step.category == "turbulence"
 
 
 def test_execute_no_args():
     """Test executing InitStep with context-aware initializer."""
     lazy = InitStep(name="answer", initializer=lambda _ctx: 42)
-    result = lazy.execute({})
+    result = execute_step(lazy, {})
     assert result == 42
 
 
@@ -58,7 +69,7 @@ def test_execute_with_context():
     lazy = InitStep(name="doubled", depends_on=["x"], initializer=init_with_context)
 
     context = {"x": 21}
-    result = lazy.execute(context)
+    result = execute_step(lazy, context)
     assert result == 42
 
 
@@ -67,7 +78,7 @@ def test_execute_with_missing_context_key_is_wrapped():
     lazy = InitStep(name="needs_context", initializer=lambda ctx: ctx["x"])
 
     with pytest.raises(InitStepExecutionError, match="needs_context"):
-        lazy.execute(context={})
+        execute_step(lazy, {})
 
 
 def test_execute_none_initializer():
@@ -77,10 +88,10 @@ def test_execute_none_initializer():
     lazy.name = "broken"
     lazy.depends_on = []
     lazy.initializer = None
-    lazy.category = None
+    lazy.category = "resource"
 
     with pytest.raises(ValueError, match="has no initializer"):
-        lazy.execute({})
+        execute_step(lazy, {})
 
 
 def test_default_depends_on():
@@ -103,7 +114,7 @@ def test_execute_wraps_runtime_error():
 
     step = InitStep(name="fields.T", depends_on=["mesh"], initializer=exploding_init)
     with pytest.raises(InitStepExecutionError) as exc_info:
-        step.execute({})
+        execute_step(step, {})
 
     err = exc_info.value
     assert err.step_name == "fields.T"
@@ -119,7 +130,7 @@ def test_execute_does_not_wrap_value_error():
         initializer=lambda _ctx: (_ for _ in ()).throw(ValueError("bad value")),
     )
     with pytest.raises(ValueError, match="bad value"):
-        step.execute(context={})
+        execute_step(step, {})
 
 
 def test_execute_does_not_wrap_type_error():
@@ -130,4 +141,4 @@ def test_execute_does_not_wrap_type_error():
 
     step = InitStep(name="bad", initializer=bad_init)
     with pytest.raises(TypeError, match="wrong arg type"):
-        step.execute({})
+        execute_step(step, {})

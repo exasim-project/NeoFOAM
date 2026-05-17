@@ -19,7 +19,7 @@ from neofoam.framework.operations import (
     StepBuilder,
 )
 
-from .sorter import NetworkxTopologicalSorter
+from .sorter import NetworkxTopologicalSorter, TopologicalSorter
 
 
 class CyclicDependencyError(Exception):
@@ -46,7 +46,7 @@ def _walk(
             _walk(op.sub_operations, loop_scope, depth + 1, tagged, scope_depth)
 
 
-def collect_tagged_ops(
+def _collect_tagged_ops(
     builder: StepBuilder,
     model_ops: Operations,
 ) -> list[tuple[str, Operation]]:
@@ -75,7 +75,7 @@ def collect_tagged_ops(
     all_scopes: set[str] = {scope for scope, _ in tagged}
 
     for op in model_ops:
-        target = infer_target_scope(op, op_to_scope, all_scopes, scope_depth)
+        target = _infer_target_scope(op, op_to_scope, all_scopes, scope_depth)
         tagged.append((target, op))
         # Update lookup so chained model ops can find each other
         if op.operation_name:
@@ -94,7 +94,7 @@ def _deepest_scope(
     return sorted(scopes)[0]
 
 
-def infer_target_scope(
+def _infer_target_scope(
     op: Operation,
     op_to_scope: dict[str, str],
     all_scopes: set[str],
@@ -128,7 +128,7 @@ def infer_target_scope(
     return _deepest_scope(loop_scopes, scope_depth) if loop_scopes else "root"
 
 
-def build_global_graph(
+def _build_global_graph(
     tagged: list[tuple[str, Operation]],
 ) -> tuple[nx.DiGraph, dict[str, tuple[str, Operation]]]:
     """Build a single ``nx.DiGraph`` from all tagged operations.
@@ -170,10 +170,11 @@ def build_global_graph(
     return graph, op_map
 
 
-def sort_global(
+def _sort_global(
     graph: nx.DiGraph,
     op_map: dict[str, tuple[str, Operation]],
     tagged: list[tuple[str, Operation]],
+    sorter: TopologicalSorter,
 ) -> dict[str, list[Operation]]:
     """Topologically sort the global graph, grouping results back by scope.
 
@@ -194,8 +195,7 @@ def sort_global(
         )
 
     try:
-        sorter = NetworkxTopologicalSorter(key=_sort_key)
-        sorted_names = sorter.sort(graph)
+        sorted_names = sorter.sort(graph, key=_sort_key)
     except nx.NetworkXUnfeasible:
         raise CyclicDependencyError("Cyclic dependency detected in operation graph")
 
@@ -214,7 +214,7 @@ def sort_global(
     return dict(by_scope)
 
 
-def rebuild_builder(
+def _rebuild_builder(
     original: StepBuilder,
     sorted_scopes: dict[str, list[Operation]],
 ) -> StepBuilder:
@@ -260,14 +260,20 @@ class DAGResolver:
     Thin orchestrator that delegates to pure functions::
 
         collect_tagged_ops → build_global_graph → sort_global → rebuild_builder
+
+    The topological sorter is injected (DIP seam); default is
+    :class:`NetworkxTopologicalSorter`.
     """
+
+    def __init__(self, sorter: TopologicalSorter | None = None) -> None:
+        self._sorter: TopologicalSorter = sorter or NetworkxTopologicalSorter()
 
     def resolve(
         self,
         builder: StepBuilder,
         additional_ops: Operations,
     ) -> StepBuilder:
-        tagged = collect_tagged_ops(builder, additional_ops)
-        graph, op_map = build_global_graph(tagged)
-        sorted_scopes = sort_global(graph, op_map, tagged)
-        return rebuild_builder(builder, sorted_scopes)
+        tagged = _collect_tagged_ops(builder, additional_ops)
+        graph, op_map = _build_global_graph(tagged)
+        sorted_scopes = _sort_global(graph, op_map, tagged, sorter=self._sorter)
+        return _rebuild_builder(builder, sorted_scopes)
