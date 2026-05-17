@@ -131,9 +131,6 @@ jobs:
         with:
           openfoam-version: ${{ matrix.openfoam-version }}
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
-
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
@@ -141,12 +138,11 @@ jobs:
 
       - name: Install test dependencies
         run: |
-          uv venv
-          uv pip install -v .[all]
+          pip install -v .[all]
 
       - name: Test with pytest
         run: |
-          uv run pytest
+          pytest
 
   python-coverage:
     runs-on: ubuntu-24.04 # may use an older version to test
@@ -159,19 +155,18 @@ jobs:
         uses: gerlero/setup-openfoam@v1
         with:
           openfoam-version: 2506
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.9
+          python-version: '3.9'
 
       - name: Install test dependencies
         run: |
-          uv venv
-          uv pip install -v .[all]
+          pip install -v .[all]
 
       - name: Test with pytest
         run: |
-          source .venv/bin/activate
           pytest --cov=neofoam --cov-report=xml --cov-report=term
 
       # - name: Upload code coverage results to Codecov
@@ -210,12 +205,12 @@ jobs:
       with:
         openfoam-version: 2506
 
-    - name: Install uv
-      uses: astral-sh/setup-uv@v7
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v5
       with:
-        python-version: 3.9
+        python-version: '3.9'
+
     - name: Check types with ty
       run: |
-        uv venv
-        uv pip install .[all]
+        pip install .[all]
         poe type_check
