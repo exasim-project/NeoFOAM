@@ -4,10 +4,33 @@
 
 """Execution layer for the lazy-init framework.
 
-Public entry point is :func:`execute_initialization`. The package also
-re-exports :class:`InitResult`, :class:`InitializationGraphError`,
-:class:`CategoryRouter`, and :func:`execute_step` for callers that need
-finer-grained access.
+Given a list of
+:class:`~neofoam.framework.initialization.init_step.InitStep`
+objects, this layer:
+
+1. Validates the dependency graph
+   (:mod:`~neofoam.framework.initialization.execution.validation`).
+2. Topologically sorts the steps using the graph package's sorter
+   (:mod:`~neofoam.framework.initialization.execution.ordering`).
+3. Executes each step in order, capturing results as
+   :class:`InitResult`
+   (:mod:`~neofoam.framework.initialization.execution.executor`).
+4. Routes each result into the appropriate slot of a
+   :class:`~neofoam.framework.context.Context` via a
+   :class:`CategoryRouter`
+   (:mod:`~neofoam.framework.initialization.execution.context_builder`).
+
+The public entry point is :func:`execute_initialization` — one call
+that runs all four stages and returns the populated Context. For
+finer-grained control, the package re-exports the individual
+building blocks (:func:`execute_step`, :func:`execute_lazy_inits`,
+:func:`validate`, :class:`CategoryRouter`, :class:`InitResult`,
+:class:`InitializationGraphError`).
+
+The routing layer is open for extension: register a new category
+handler with :meth:`CategoryRouter.register` and pass the router to
+:func:`execute_initialization` to dispatch unknown categories
+without modifying framework code.
 """
 
 from __future__ import annotations
