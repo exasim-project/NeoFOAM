@@ -117,6 +117,40 @@ int main(int argc, char* argv[])
                 0
             );
 
+            // DUMP: the standalone explicit grad(p) source as an explicit
+            //   Vector<Vec3> field. At step 1 with p=0 internally, grad(p)
+            //   should be 0 everywhere. If it is non-zero on GPU at proc-
+            //   adjacent cells (and zero on CPU), the gradient operator is
+            //   reading uninitialised p.boundaryData() at the proc tail OR
+            //   using wrong proc-face indexing. Both classic NeoN bugs.
+            {
+                auto gradPExpr = NeoN::dsl::Expression<NeoN::Vec3>(-1.0 * dsl::exp::grad(p));
+                gradPExpr.read(rt.fvSchemesDict);
+                auto gradPSource = gradPExpr.explicitOperation(mesh.nCells());
+                nf::dumpVector(
+                    gradPSource, "grad_p_source", "before_UEqn_solve", stepIdx, 0, 0
+                );
+            }
+
+            // DUMP: the FULL LinearSystem solve(rhs) actually hands to Ginkgo
+            //   (implicit ls_ + explicit grad(p) folded into rhs). If this
+            //   rhs differs CPU/GPU while the implicit-only rhs above matched,
+            //   the gradient operator is producing different values on GPU.
+            //   This is the dump that captures whatever solve(rhs) sees right
+            //   before passing it to the Krylov solver.
+            {
+                auto rhsLS = UEqn.assemble(-1.0 * dsl::exp::grad(p));
+                nf::dumpFullLinearSystem(
+                    rhsLS,
+                    U.internalVector(),
+                    "U",
+                    "after_UEqn_assemble_with_grad",
+                    stepIdx,
+                    0,
+                    0
+                );
+            }
+
             if (piso.momentumPredictor())
             {
                 // NOTE solve on a temporary clone of UEqn
