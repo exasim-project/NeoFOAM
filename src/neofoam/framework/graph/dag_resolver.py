@@ -30,6 +30,22 @@ class MissingDependencyError(Exception):
     """Raised when an operation depends on a non-existent operation."""
 
 
+def _walk(
+    ops: list[Operation],
+    parent_scope: str,
+    depth: int,
+    tagged: list[tuple[str, Operation]],
+    scope_depth: dict[str, int],
+) -> None:
+    """Recursively tag operations with their scope and record loop-scope depths."""
+    for op in ops:
+        tagged.append((parent_scope, op))
+        if isinstance(op.func, IterativeOp):
+            loop_scope = op.operation_name or "loop"
+            scope_depth[loop_scope] = depth + 1
+            _walk(op.sub_operations, loop_scope, depth + 1, tagged, scope_depth)
+
+
 def collect_tagged_ops(
     builder: StepBuilder,
     model_ops: Operations,
@@ -47,15 +63,7 @@ def collect_tagged_ops(
     tagged: list[tuple[str, Operation]] = []
     scope_depth: dict[str, int] = {"root": 0}
 
-    def _walk(ops: list[Operation], parent_scope: str, depth: int) -> None:
-        for op in ops:
-            tagged.append((parent_scope, op))
-            if isinstance(op.func, IterativeOp):
-                loop_scope = op.operation_name or "loop"
-                scope_depth[loop_scope] = depth + 1
-                _walk(op.sub_operations, loop_scope, depth + 1)
-
-    _walk(builder.operations.ops, "root", 0)
+    _walk(builder.operations.ops, "root", 0, tagged, scope_depth)
 
     # Build op-name → scope lookup for scope inference
     op_to_scope: dict[str, str] = {}
