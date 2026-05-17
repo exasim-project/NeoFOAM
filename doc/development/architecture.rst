@@ -79,6 +79,14 @@ Each solver maintains a list of additional physics models that can add or modify
 These additional physics models are defined externally from the solver and only need to comply with the IncompressibleFluidModel interface, which can be defined separately by each solver.
 The execution order is determined at runtime based on the metadata specified in each model.
 
+.. note::
+
+   The snippet below is **conceptual pseudocode** — it shows the intended
+   shape of solver/model composition, not the real Python API. The working
+   API uses factory functions (``incompressibleFluid = Solver("...")``,
+   ``boussinesq = Model("...").register_with(incompressibleFluidModel)``)
+   plus decorators on those instances. See :doc:`initialization` for the
+   API reference and runnable examples.
 
 .. code-block:: python
 
