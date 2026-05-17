@@ -6,42 +6,64 @@
 Welcome to NeoFOAM!
 ===================
 
-The NeoFOAM is the coupling interface. It provides platform-portable implementations of common CFD algorithms and solvers using NeoN as a computational backend. It leverages standard OpenFOAM such that OpenFOAM simulations can be run on accelerator devices.
+NeoFOAM is the coupling interface between OpenFOAM and NeoN. It provides
+platform-portable implementations of common CFD algorithms and solvers using
+NeoN as a computational backend, while leveraging standard OpenFOAM cases so
+existing simulations can run on accelerator devices.
 
+The documentation is organised by purpose. Pick the quadrant that matches
+what you're trying to do:
 
-Table of Contents
-^^^^^^^^^^^^^^^^^
+- **Tutorials** — step-by-step lessons for newcomers. Start here if you're
+  new to NeoFOAM.
+- **How-to guides** — focused recipes for one specific task each. Use these
+  when you already know what you're trying to do.
+- **Explanation** — the *why* behind the design: architecture, three-stage
+  initialization, plugin system, operation graph.
+
+Reference documentation (API surface) is generated from docstrings and is
+deferred to a future release; for now, read the source.
+
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
+   :caption: Tutorials
 
-   self
-   installation
-   gettingStarted
-   goals_features
+   auto_tutorials/example_01_run_incompressible_fluid
+   auto_tutorials/example_02_passive_scalar_plugin
+   auto_tutorials/example_03_build_a_solver
+   auto_tutorials/example_04_configure_with_io
+
+.. toctree::
+   :maxdepth: 1
+   :caption: How-to guides
+
+   how-to/install
+   how-to/register-plugin-model
+   how-to/declare-fvschemes-requirements
+   how-to/validate-without-running
+   auto_how-to/example_01_list_models_and_configs
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Explanation
+
+   explanation/goals-and-core-concepts
+   explanation/solver-structure
+   explanation/model-structure
+   explanation/spec-runtime
+   explanation/three-stage-init
+   explanation/operations-and-the-dag
+   explanation/parameter-injection
+   explanation/discriminated-unions
+   explanation/discovery-mechanisms
+   explanation/schema-introspection
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Project
+
    ci
    debugProfileTools
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Usage:
-
-   usage/quickstart
-   usage/cli
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Development:
-
-   development/architecture
-   development/components
-   development/initialization
-   development/config_file
-   development/pluginsystem
-   development/solver
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
 
 Indices and tables
 ==================
