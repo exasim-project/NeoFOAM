@@ -66,9 +66,20 @@ Execution:
 from .config_context import ConfigContext
 from .init_step import InitCategory, InitStep, InitStepExecutionError
 from .helpers import field, operator, lazy, model, InitializerBuilder
-from .execution import execute_initialization, topological_sort, InitResult
+from .execution import (
+    CategoryRouter,
+    InitResult,
+    InitializationGraphError,
+    execute_initialization,
+    execute_step,
+)
 from .depends import Depends
-from .staged_init import StagedInit, ValidationError, LoadResult
+from .staged import (
+    LoadResult,
+    StagedInitRunner,
+    StagedInitSpec,
+    StagedInitSpecBuilder,
+)
 
 __all__ = [
     "ConfigContext",
@@ -76,15 +87,18 @@ __all__ = [
     "InitCategory",
     "InitStepExecutionError",
     "InitResult",
+    "InitializationGraphError",
+    "CategoryRouter",
     "field",
     "operator",
     "lazy",
     "model",
     "InitializerBuilder",
     "execute_initialization",
-    "topological_sort",
+    "execute_step",
     "Depends",
-    "StagedInit",
-    "ValidationError",
     "LoadResult",
+    "StagedInitRunner",
+    "StagedInitSpec",
+    "StagedInitSpecBuilder",
 ]

@@ -1,4 +1,7 @@
-# Version 0.3.0 ()
+# Version 0.3.0
+- Enable mempool via controlDict [#246](https://github.com/exasim-project/NeoFOAM/pull/246)
+
+## Development
 - Implement python framework [#133](https://github.com/exasim-project/NeoFOAM/pull/133)
 - Implement added icofoam.py and pimplefoam.py [#151](https://github.com/exasim-project/NeoFOAM/pull/151)Update submodule regularly by dependabot [#209](https://github.com/exasim-project/NeoFOAM/pull/209)
 - Update submodule regularly by dependabot [#209](https://github.com/exasim-project/NeoFOAM/pull/209)

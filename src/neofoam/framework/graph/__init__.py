@@ -4,41 +4,28 @@
 
 """Shared graph utilities for DAG validation and ordering."""
 
-from .dag_resolver import (
-    DAGResolver,
+from .resolver import (
     CyclicDependencyError,
+    DAGResolver,
     MissingDependencyError,
-    collect_tagged_ops,
-    infer_target_scope,
-    build_global_graph,
-    sort_global,
-    rebuild_builder,
-)
-from .models import GraphDiagnostic, GraphValidationReport
-from .operations_dag import (
-    build_dag,
-    build_global_dag,
 )
 from .sorter import NetworkxTopologicalSorter, TopologicalSorter
-from .validator import build_dependency_digraph, validate_dependency_graph
-from .visualization import digraph_to_pyvis_html
+from .validation import (
+    GraphValidationReport,
+    build_dependency_digraph,
+    validate_dependency_graph,
+)
+from .visualization import dependency_dag, digraph_to_pyvis_html
 
 __all__ = [
-    "GraphDiagnostic",
     "GraphValidationReport",
     "TopologicalSorter",
     "NetworkxTopologicalSorter",
     "DAGResolver",
     "CyclicDependencyError",
     "MissingDependencyError",
-    "collect_tagged_ops",
-    "infer_target_scope",
-    "build_global_graph",
-    "sort_global",
-    "rebuild_builder",
     "build_dependency_digraph",
-    "build_dag",
-    "build_global_dag",
+    "dependency_dag",
     "validate_dependency_graph",
     "digraph_to_pyvis_html",
 ]

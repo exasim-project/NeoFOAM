@@ -78,9 +78,8 @@ jobs:
         with:
           packages: >-
             ninja-build
-            clang-16
-            gcc-10
-            libomp-16-dev
+            clang-19
+            libomp-19-dev
             python3
             python3-dev
             build-essential
@@ -99,11 +98,12 @@ jobs:
       - name: Build NeoFOAM
         run: |
           source /usr/lib/openfoam/openfoam2406/etc/bashrc || true
-          CC=${{matrix.compiler.CC}}
-          CXX=${{matrix.compiler.CXX}}
           cmake --preset develop \
             -DNeoN_DEVEL_TOOLS=OFF \
             -DNeoN_BUILD_TESTS=OFF \
+            -DNEOFOAM_WITH_MPI=ON \
+            -DCMAKE_CXX_COMPILER=${{matrix.compiler.CXX}} \
+            -DCMAKE_C_COMPILER=${{matrix.compiler.CC}} \
             -DNeoN_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF \
             -DNEOFOAM_NEON_VERSION=${{ env.NEON_BRANCH }} \
             -DNEOFOAM_BUILD_BENCHMARKS=ON
@@ -141,7 +141,8 @@ jobs:
 
       - name: Install test dependencies
         run: |
-          uv run pip install -v .[all]
+          uv venv
+          uv pip install -v .[all]
 
       - name: Test with pytest
         run: |
@@ -165,7 +166,8 @@ jobs:
 
       - name: Install test dependencies
         run: |
-          uv run pip install -v .[all]
+          uv venv
+          uv pip install -v .[all]
 
       - name: Test with pytest
         run: |
@@ -214,5 +216,6 @@ jobs:
         python-version: 3.9
     - name: Check types with ty
       run: |
-        uv run pip install .[all]
+        uv venv
+        uv pip install .[all]
         poe type_check

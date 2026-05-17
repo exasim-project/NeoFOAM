@@ -176,8 +176,9 @@ def test_model1_operations_discovery() -> None:
 
 def test_init_dependency_injection() -> None:
     """@init stages use Depends() for dependency injection."""
-    from .dummy_init import init
+    from .dummy_init import create_init
 
+    init = create_init()
     init.argv = []
     ctx = init.run()
 

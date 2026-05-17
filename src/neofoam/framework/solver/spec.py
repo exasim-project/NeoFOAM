@@ -139,19 +139,20 @@ class SolverSpec:
         if "self" in sig.parameters and "self" not in kwargs:
             kwargs["self"] = runtime
 
-        # Set argv on StagedInit if it was injected as the first dependency
+        # Set argv on StagedInitRunner if it was injected as the first dependency
         first_param = next(iter(kwargs.values()), None) if kwargs else None
         if first_param is not None and hasattr(first_param, "argv"):
             first_param.argv = runtime.argv
 
         ctx = self._initialize_func(**kwargs)
 
-        # Transfer state from injected StagedInit to runtime
+        # Transfer state from injected StagedInitRunner to runtime
         if first_param is not None:
-            if hasattr(first_param, "state"):
-                runtime.state = first_param.state
+            inj_state = getattr(first_param, "state", None)
+            if inj_state is not None:
+                runtime.state = inj_state
             else:
-                # StagedInit stores core_models / optional_models directly
+                # StagedInitRunner stores core_models / optional_models directly
                 if hasattr(first_param, "core_models"):
                     runtime.state.core_models = first_param.core_models
                 if hasattr(first_param, "optional_models"):

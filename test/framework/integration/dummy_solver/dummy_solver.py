@@ -12,7 +12,7 @@ from typing import Annotated, Any, Optional
 
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.graph import DAGResolver
-from neofoam.framework.initialization import Depends, StagedInit
+from neofoam.framework.initialization import Depends, StagedInitRunner
 from neofoam.framework.operations import (
     IterativeOp,
     Operation,
@@ -51,7 +51,9 @@ dummy_solver_spec = Solver("DummySolver")
 
 
 @dummy_solver_spec.initializer
-def initialize(self: Any, init: Annotated[StagedInit, Depends(create_init)]) -> Context:
+def initialize(
+    self: Any, init: Annotated[StagedInitRunner, Depends(create_init)]
+) -> Context:
     """Initialize using create_init factory with dependency injection."""
     ctx = init.run()
     return ctx
