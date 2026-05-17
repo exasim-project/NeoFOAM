@@ -3,8 +3,7 @@ Model discovery: plugin vs core spec
 
 ``incompressibleFluid`` picks up models in two different ways. They
 co-exist and serve distinct purposes; this page explains the design
-rationale and when to use which. For the recipe see
-:doc:`/how-to/register-plugin-model`.
+rationale and when to use which.
 
 What makes this hard
 --------------------
@@ -174,6 +173,3 @@ The two mechanisms map to two concrete pieces of in-tree code:
 - ``PressureVelocityAlgorithm`` — core-spec path. The solver registers
   ``PIMPLE``, ``SIMPLE``, and ``PISO`` specs at construction; LOAD
   picks one by reading ``system/fvSolution``.
-
-For the recipe of registering a plugin model, see
-:doc:`/how-to/register-plugin-model`.

@@ -108,7 +108,6 @@ sphinx_gallery_conf = {
         "../examples/tutorials/example_02_passive_scalar_plugin.py",
         "../examples/tutorials/example_03_build_a_solver.py",
         "../examples/tutorials/example_04_configure_with_io.py",
-        "../examples/how-to/example_01_list_models_and_configs.py",
     ],
 }
 

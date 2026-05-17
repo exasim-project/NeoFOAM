@@ -102,8 +102,7 @@ def build(self: Any, cfg: PassiveScalarConfig) -> list[Any]:
 # algorithm produces a divergence-free ``phi`` — solving with the
 # corrected flux is what keeps the scalar conservative.
 # ``@fvSchemes.add`` / ``@fvSolution.add`` declare requirements the
-# framework's verifier checks at startup; see
-# :doc:`/how-to/declare-fvschemes-requirements`.
+# framework's verifier checks at startup.
 
 
 @passive_scalar.operation(depends_on=["continuity"])

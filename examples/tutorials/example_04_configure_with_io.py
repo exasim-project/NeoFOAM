@@ -296,8 +296,3 @@ for e in errors:
 # ---------------------
 # - :doc:`example_02_passive_scalar_plugin` shows a config attached
 #   to a plugin model via ``@spec.load``.
-# - :doc:`/how-to/validate-without-running` extends the same pattern
-#   to validate every config a solver needs *before* running it.
-# - :doc:`/auto_how-to/example_01_list_models_and_configs` dumps the
-#   schema of every config a solver knows about — useful for UI
-#   generation and AI-assisted case templating.

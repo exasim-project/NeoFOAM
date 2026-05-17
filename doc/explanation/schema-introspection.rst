@@ -32,8 +32,7 @@ the framework shipped with.
 
 **3. Per-operation requirements live on the operations themselves.**
 Each operation declares its scheme/solution requirements with
-``@fvSchemes.add(...)`` and ``@fvSolution.add(...)`` (see
-:doc:`/how-to/declare-fvschemes-requirements`).
+``@fvSchemes.add(...)`` and ``@fvSolution.add(...)``.
 ``collect_requirements_from_models()`` aggregates them across every
 active model; ``verify_fvschemes()`` and ``verify_fvsolution()``
 check the loaded case against the aggregated set.
@@ -56,9 +55,6 @@ The capabilities that fall out
   fields are typed with the correct scheme unions (``DdtScheme``,
   ``DivScheme``, …) for every ``@fvSchemes.add`` requirement
   declared by the active operations.
-
-For the recipe to call ``validate()`` from a script or a pre-flight
-check, see :doc:`/how-to/validate-without-running`.
 
 What makes this hard (the alternative)
 --------------------------------------
@@ -113,10 +109,6 @@ When this matters in practice
 
 The user-visible recipes are:
 
-- :doc:`/how-to/validate-without-running` — call
-  ``StagedInit.validate()`` from a script or a pre-flight check.
-- :doc:`/how-to/declare-fvschemes-requirements` — make sure your
-  operations declare what they need so validation can see it.
 - :doc:`/auto_tutorials/example_04_configure_with_io` — use the schema
   export to drive config generation rather than hand-writing OpenFOAM
   dictionaries.

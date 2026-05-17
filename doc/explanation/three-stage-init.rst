@@ -203,7 +203,7 @@ become cheap:
 
 - ``StagedInit.validate()`` runs LOAD + RESOLVE + VERIFY without
   BUILD. Case validation costs file I/O plus config wiring — no mesh,
-  no fields. See :doc:`/how-to/validate-without-running`.
+  no fields.
 - ``StagedInit.solver_inputs()`` introspects every config class
   without running anything. See :doc:`schema-introspection`.
 - ``StagedInit.scheme_inputs()`` introspects every required scheme
