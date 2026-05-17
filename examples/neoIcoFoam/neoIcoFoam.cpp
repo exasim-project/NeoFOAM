@@ -122,14 +122,32 @@ int main(int argc, char* argv[])
                 // NOTE solve on a temporary clone of UEqn
                 // TODO use a free function here
                 UEqn.solve(-1.0 * dsl::exp::grad(p));
-                // DUMP: pre-correctBC owner-internal at proc-tail faces.
-                //   This is the source value correctBoundaryConditions() will
-                //   send to the neighbour rank. Compared against the post-
-                //   correctBC boundaryData dump below, this discriminates a
-                //   solver bug (pre already wrong) from an exchange bug
-                //   (pre matches across CPU/GPU but post diverges).
+
+                // DUMP: U.internalVector() right after Ginkgo solve.
+                //   This IS Ginkgo's distributed solver output (the iterate
+                //   it wrote back into psi.internalVector()). Compare CPU vs
+                //   GPU here to see if the solver itself diverged before
+                //   any subsequent step touches the field.
+                nf::dumpVector(
+                    U.internalVector(), "U_internal", "after_UEqn_solve", stepIdx, 0, 0
+                );
+
                 nf::dumpProcOwnerInternal(U, "U", "after_momentumSolve_preCorrectBC", stepIdx, 0, 0);
                 U.correctBoundaryConditions();
+
+                // DUMP: full U state after correctBoundaryConditions().
+                //   internal + boundary. Compare CPU vs GPU. If internal
+                //   matches but boundary differs => bug is in the proc-tail
+                //   exchange path (correctBoundaryConditions). If both
+                //   differ identically to "after_UEqn_solve" => correctBC
+                //   is just propagating the prior divergence.
+                nf::dumpVector(
+                    U.internalVector(), "U_internal", "after_U_correctBC", stepIdx, 0, 0
+                );
+                nf::dumpVector(
+                    U.boundaryData().value(), "U_boundary", "after_U_correctBC", stepIdx, 0, 0
+                );
+
                 nf::checkProcFaceConsistency(U, "U after momentumPredictor solve");
                 nf::dumpProcFaces(U, "U", "after_momentumPredictor", stepIdx, 0, 0);  // DUMP
             }
@@ -179,8 +197,55 @@ int main(int argc, char* argv[])
                         pEqn.setReference(pRefCell, pRefValue);
                     }
 
+                    // DUMP: pre-assemble pEqn so we can capture EVERY input
+                    //   handed to Ginkgo for the pressure solve, identical
+                    //   to what we do for UEqn above. solve() will re-assemble
+                    //   internally; coefficients are deterministic so the
+                    //   dump matches what Ginkgo sees.
+                    pEqn.assemble();
+                    nf::dumpFullLinearSystem(
+                        pEqn.linearSystem(),
+                        p.internalVector(),
+                        "p",
+                        "after_pEqn_assemble",
+                        stepIdx,
+                        pisoIter,
+                        nonOrthIter
+                    );
+
                     auto stats = pEqn.solve();
+
+                    // DUMP: p.internalVector() right after Ginkgo solve.
+                    //   Pressure solver output before any BC correction.
+                    nf::dumpVector(
+                        p.internalVector(),
+                        "p_internal",
+                        "after_pEqn_solve",
+                        stepIdx,
+                        pisoIter,
+                        nonOrthIter
+                    );
+
                     p.correctBoundaryConditions();
+
+                    // DUMP: full p state after correctBoundaryConditions().
+                    nf::dumpVector(
+                        p.internalVector(),
+                        "p_internal",
+                        "after_p_correctBC",
+                        stepIdx,
+                        pisoIter,
+                        nonOrthIter
+                    );
+                    nf::dumpVector(
+                        p.boundaryData().value(),
+                        "p_boundary",
+                        "after_p_correctBC",
+                        stepIdx,
+                        pisoIter,
+                        nonOrthIter
+                    );
+
                     nf::checkProcFaceConsistency(p, "p after correctBC");
                     nf::dumpProcFaces(p, "p", "after_pSolve", stepIdx, pisoIter, nonOrthIter);  // DUMP
 
