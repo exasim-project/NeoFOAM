@@ -38,10 +38,6 @@ deferred to a future release; for now, read the source.
    :caption: How-to guides
 
    how-to/install
-   how-to/register-plugin-model
-   how-to/declare-fvschemes-requirements
-   how-to/validate-without-running
-   auto_how-to/example_01_list_models_and_configs
 
 .. toctree::
    :maxdepth: 1
