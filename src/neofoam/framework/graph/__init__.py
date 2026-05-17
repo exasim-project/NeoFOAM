@@ -2,7 +2,38 @@
 #
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Shared graph utilities for DAG validation and ordering."""
+"""Shared graph utilities for DAG validation, ordering, and visualization.
+
+Solvers and models in NeoFOAM declare their work as :class:`Operation`
+objects with ``depends_on`` / ``before`` constraints. Before those
+operations can run, the framework needs to:
+
+1. Validate the dependency graph (no duplicates, no missing dependencies,
+   no cycles) — see :mod:`~neofoam.framework.graph.validation`.
+2. Resolve a topological order, respecting loop scopes and using
+   ``operation_number`` as a tie-breaker — see
+   :mod:`~neofoam.framework.graph.resolver`.
+3. Optionally render the resulting graph for diagnostics — see
+   :mod:`~neofoam.framework.graph.visualization`.
+
+The package exposes ten public symbols across four modules:
+
+- :class:`DAGResolver` — the main entry point; merges and orders
+  operations across loop scopes.
+- :class:`TopologicalSorter` (Protocol) and
+  :class:`NetworkxTopologicalSorter` (default impl) — the injection
+  seam for swapping the sort backend.
+- :func:`validate_dependency_graph`, :class:`GraphValidationReport`,
+  and :func:`build_dependency_digraph` — pre-resolution graph
+  validation and the underlying :class:`networkx.DiGraph` builder.
+- :class:`CyclicDependencyError`, :class:`MissingDependencyError` —
+  the two domain exceptions the resolver can raise.
+- :func:`dependency_dag`, :func:`digraph_to_pyvis_html` — compose
+  per-domain DAGs and render them to an interactive HTML page.
+
+See :doc:`/explanation/operations-and-the-dag` for the design
+rationale and where the resolver fits into the solver lifecycle.
+"""
 
 from .resolver import (
     DAGResolver,
