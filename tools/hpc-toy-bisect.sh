@@ -54,8 +54,13 @@ die() { log "FATAL: $*"; exit 2; }
 [[ -x "${NEOFOAM_BIN}"     ]] || die "NEOFOAM_BIN not executable: ${NEOFOAM_BIN}"
 [[ -d "${CASE_DIR}"        ]] || die "CASE_DIR not found: ${CASE_DIR}"
 
+# OpenFOAM's bashrc references unset variables (FOAM_MODULE_APPBIN, etc.) on
+# its first source — temporarily relax `set -u` to avoid an unbound-variable
+# abort. Re-enable afterwards so the rest of the script keeps its strictness.
+set +u
 # shellcheck disable=SC1090
 source "${OPENFOAM_BASHRC}"
+set -u
 
 mkdir -p "${OUTPUT_DIR}"
 log "case dir:   ${CASE_DIR}"
