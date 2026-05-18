@@ -11,7 +11,9 @@
 #include "benchmarks/catch_main.hpp"
 #include "test/catch2/executorGenerator.hpp"
 #include "../test/common.hpp"
+#ifdef NeoN_WITH_JULIA
 #include <julia.h>
+#include <fmt/core.h>
 JULIA_DEFINE_FAST_TLS; // only define this once, in an executable (not in a
 // shared library) if you want fast code.
 namespace fvcc = NeoN::finiteVolume::cellCentred;
@@ -41,9 +43,12 @@ TEST_CASE("julia")
     {
         jl_init();
 
-        // std::format would be nice and I implore you to try and get it to run on the cluster. 
-        // Alas, I couldnt.
-        std::string path = "include(\"{" + std::string(JULIA_MODULE_INIT) + "}\")";
+        std::string path = fmt::format(
+            fmt::runtime(
+                "include(\"{}\")"
+            ),
+            JULIA_MODULE_INIT
+        );
         jl_eval_string(path.c_str());
 
         std::cout << "path: " << path << std::endl;
@@ -87,3 +92,4 @@ TEST_CASE("julia")
         jl_atexit_hook(0);
     }
 }
+#endif()

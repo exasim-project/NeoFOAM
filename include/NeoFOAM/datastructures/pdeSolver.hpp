@@ -7,6 +7,9 @@
 #include "NeoN/NeoN.hpp"
 
 #include "NeoFOAM/datastructures/runTime.hpp"
+#ifdef NeoN_WITH_JULIA
+#include <julia.h>
+#endif
 #include "NeoFOAM/compatibility/fvSolution.hpp"
 
 namespace dsl = NeoN::dsl;
@@ -199,6 +202,86 @@ public:
     }
 #ifdef NeoN_WITH_JULIA
 
+    void juliaCellbased(
+        const nfvcc::SurfaceField<double>& faceFlux,
+        const nfvcc::VolumeField<ValueType>& phi,
+        const nfvcc::SurfaceField<double>& gamma
+    )
+    {
+
+        const auto& mesh = phi.mesh();
+        auto cellIterator = std::make_shared<NeoN::la::CellBasedIterator>();
+        auto mi = NeoN::la::createSparsityPatternFaceToMatrixAddress<NeoN::localIdx>(mesh);
+        cellIterator->setComputeCellBasedData(mesh, mi);
+        auto fusedOPString = expr_.juliaOP();
+        const auto matIt = ls_.faceToMatrixAddress();
+        auto deltas = nfvcc::SurfaceField<NeoN::scalar>(
+            mesh.exec(),
+            "deltaCoeffs",
+            mesh,
+            nfvcc::createCalculatedBCs<nfvcc::SurfaceBoundary<NeoN::scalar>>(mesh)
+        );
+        auto iterator =
+            std::dynamic_pointer_cast<NeoN::la::CellBasedIterator>(ls_.getMeshIterator()->get());
+        auto exec = ls_.exec();
+        auto matrix = ls_.matrix().juliaPtr();
+        const auto sp = ls_.faceToMatrixAddress();
+        auto cellBasedData = iterator->getCellBasedData();
+        auto [cellFacesValues, cellFacesSegments] = cellBasedData->cellFaces.juliaPtrs();
+        auto faceNeighbourV = cellBasedData->faceNeighbour.juliaPtr();
+        auto faceSignV = cellBasedData->faceSign.juliaPtr();
+        auto matrixColumnIdxV = cellBasedData->matrixColumnIdx.juliaPtr();
+        const auto rowOffs = matIt->sparsityPattern()->rowOffs().juliaPtr();
+        const auto diagOffs = sp->diagOffset().juliaPtr();
+        const auto [gammaV, deltaV] = juliaPtrs(gamma.internalVector(), deltas.internalVector());
+
+        const auto [phiV, magFaceAreaV] = juliaPtrs(phi.internalVector(), mesh.magFaceAreas());
+        const auto JUfaceFluxV = faceFlux.internalVector().juliaPtr();
+
+        auto valPtr = ls_.matrix().juliaPtr();
+        // double
+        auto rhsPtr = ls_.rhs().juliaPtr();
+        std::cout << "bRHS:\n";
+        auto bRhs = ls_.boundaryRhs().juliaPtr();
+        auto bValues = ls_.boundaryMatrix().juliaPtr();
+        const auto vol = mesh.cellVolumes().juliaPtr();
+        const auto oldVector = oldTime(phi).internalVector().juliaPtr();
+
+        size_t nbinputs = 18;
+
+        jl_value_t* args[nbinputs];
+        args[0] = jl_box_int32(iterator->size());
+        args[1] = (jl_value_t*)cellFacesSegments;
+        args[2] = (jl_value_t*)diagOffs;
+        args[3] = (jl_value_t*)rowOffs;
+        args[4] = (jl_value_t*)cellFacesValues;
+        args[5] = (jl_value_t*)faceSignV;
+        args[7] = (jl_value_t*)valPtr;
+        args[8] = jl_cstr_to_string(fusedOPString.c_str());
+        args[9] = (jl_value_t*)JUfaceFluxV;
+        args[10] = (jl_value_t*)gammaV;
+        args[11] = (jl_value_t*)deltaV;
+        args[12] = (jl_value_t*)matrixColumnIdxV;
+        args[13] = (jl_value_t*)magFaceAreaV;
+        args[14] = (jl_value_t*)vol;
+        args[15] = (jl_value_t*)oldVector;
+        args[16] = (jl_value_t*)rhsPtr;
+        args[17] = jl_box_float64(runTime_.dt);
+        jl_module_t* mod = (jl_module_t*)jl_eval_string("MinimalFVM");
+
+        jl_function_t* func = jl_get_function(mod, "cellBased2");
+
+        jl_call(func, args, nbinputs);
+
+        if (jl_exception_occurred())
+        {
+            const char* p = jl_string_ptr(
+                jl_eval_string("sprint(showerror, ccall(:jl_exception_occurred, Any, ()))")
+            );
+
+            fprintf(stderr, "%s%s\n", "error: ", p);
+        }
+    }
     void juliaFaceBased(
         const nfvcc::SurfaceField<double>& faceFlux,
         const nfvcc::VolumeField<ValueType>& phi,
@@ -254,7 +337,7 @@ public:
         // double
         const auto bJUdeltaCoeffs = deltas.internalVector().juliaPtr();
 
-        
+
         auto valPtr = ls_.matrix().juliaPtr();
         // double
         auto rhsPtr = ls_.rhs().juliaPtr();
@@ -498,8 +581,8 @@ public:
 
     //             // Loop over faces of this cell
     //             auto diagValue = zero<ValueType>();
-    //             const auto numFaces = cellFacesSegments[celli + 1] - cellFacesSegments[celli];
-    //             const auto startIdx = cellFacesSegments[celli];
+    //             const auto numFaces = cellFacesSegments[celli + 1] -
+    //             cellFacesSegments[celli]; const auto startIdx = cellFacesSegments[celli];
 
     //             for (localIdx i = 0; i < numFaces; ++i)
     //             {
@@ -511,9 +594,10 @@ public:
     //                 const auto fluxDiv = phiV[faceIdx]; // faceFluxV[faceIdx];
     //                 // FIXME;Collapse annotationCheck failure on line R82Check failure: //
     //                 FIXME;Static checks / FIXME checkView details const auto weight =
-    //                 (phiV[faceIdx] >= 0) ? 0.0 : 1.0; // weightsV[faceIdx]; const auto lapFlux =
-    //                 deltaV[faceIdx] * gammaV[faceIdx] * magFaceAreaV[faceIdx]; const auto
-    //                 combinedFlux = (-weight * fluxDiv + lapFlux) * one<ValueType>();
+    //                 (phiV[faceIdx] >= 0) ? 0.0 : 1.0; // weightsV[faceIdx]; const auto
+    //                 lapFlux = deltaV[faceIdx] * gammaV[faceIdx] * magFaceAreaV[faceIdx];
+    //                 const auto combinedFlux = (-weight * fluxDiv + lapFlux) *
+    //                 one<ValueType>();
 
     //                 const auto offDiagValue = sign * combinedFlux;
     //                 matrix.values[matrixColumnIdxV[startIdx + i]] += offDiagValue;
@@ -637,5 +721,4 @@ NeoN::finiteVolume::cellCentred::VolumeField<ValueType> operator&(
 {
     return applyOperator(expr.linearSystem(), psi);
 }
-
 }

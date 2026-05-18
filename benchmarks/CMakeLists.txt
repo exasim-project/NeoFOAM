@@ -17,7 +17,23 @@ function(NeoN_benchmark BENCH)
   add_executable(bench_${BENCH} "${BENCH}.cpp")
   target_link_libraries(bench_${BENCH} PRIVATE Catch2::Catch2 OpenFOAM NeoFOAM)
   target_include_directories(bench_${BENCH} PRIVATE "${CMAKE_SOURCE_DIR}")
-  if(NeoN_WITH_JULIA )
+  if(NeoN_WITH_JULIA AND "${BENCH}" STREQUAL "julia")
+    execute_process(
+        COMMAND julia -e "print(rsplit(Sys.BINDIR, '/', limit=2)[1])"
+        OUTPUT_VARIABLE JULIA_DIR
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    execute_process(
+      COMMAND echo "[BENCHMARKING] JULIA_DIR: --------> '${JULIA_DIR}'"
+    )
+    target_include_directories(bench_${BENCH} PRIVATE "${JULIA_DIR}/include/julia")
+    target_link_libraries(bench_${BENCH} PRIVATE
+        "${JULIA_DIR}/lib/libjulia.so"
+    )
+    target_compile_definitions(bench_${BENCH} PRIVATE
+        JULIA_MODULE_INIT="${JULIA_MODULE_INIT}"
+    )
+    target_link_options(bench_${BENCH} PRIVATE "-Wl,-rpath,${JULIA_DIR}/lib")
     target_compile_definitions(bench_${BENCH} PRIVATE
         JULIA_MODULE_INIT="${JULIA_MODULE_INIT}"
     )
