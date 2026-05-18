@@ -147,4 +147,50 @@ if(NEOFOAM_WITH_MPI)
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test/setup_pressureVelocityCoupling_graded)
     set_tests_properties(${TEST}_graded PROPERTIES TIMEOUT 10 PROCESSORS 2)
   endforeach()
+
+  # --------------------------------------------------------------------------- #
+  # Doubly-graded toy reproducer for GPU multi-rank proc-boundary divergence
+  # (track T2 in .planning/debug/gpu-proc-boundary-divergence.md).
+  #
+  # The toy case is NOT pre-decomposed in-tree (a committed polyMesh + processor{0,1}
+  # tree would balloon the repo) — it ships only blockMeshDict + decomposeParDict
+  # and is decomposed on first use via:
+  #
+  #   cd test/setup_distributedChannelToy_mpi2
+  #   blockMesh && decomposePar -force
+  #
+  # The CTest entry is therefore registered DISABLED by default.  Enable on HPC
+  # after decomposition with:
+  #
+  #   ctest --preset develop -R distributedChannelToy \
+  #         --overwrite DISABLED:BOOL=FALSE
+  #
+  # The primary use of the toy case is to drive the `neoIcoFoam` binary itself
+  # with NEOFOAM_PROC_DUMP=1 / NEOFOAM_FULL_DUMP=1 via tools/hpc-toy-bisect.sh;
+  # this ctest entry is a 2-rank mesh-level sanity check (cell counts, proc patch).
+  # --------------------------------------------------------------------------- #
+  add_executable(neofoam_test_distributedChannelToy test_distributedChannelToy.cpp)
+  install(TARGETS neofoam_test_distributedChannelToy)
+  target_include_directories(neofoam_test_distributedChannelToy
+                             PRIVATE "${TEST_CATCH2_DIR}")
+  set_target_properties(neofoam_test_distributedChannelToy
+                        PROPERTIES OUTPUT_NAME neofoam_test_distributedChannelToy)
+  target_compile_definitions(neofoam_test_distributedChannelToy
+                             PUBLIC OMPI_SKIP_MPICXX)
+  target_link_libraries(
+    neofoam_test_distributedChannelToy
+    PUBLIC NeoFOAM_public_api OpenFOAM Catch2::Catch2
+    PRIVATE NeoN NeoFOAM neofoam_catch_main_mpi)
+  set_target_properties(neofoam_test_distributedChannelToy
+                        PROPERTIES RUNTIME_OUTPUT_DIRECTORY
+                                   ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tests)
+
+  add_test(
+    NAME distributedChannelToy_mpi2
+    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tests/neofoam_test_distributedChannelToy
+            -parallel
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test/setup_distributedChannelToy_mpi2)
+  set_tests_properties(distributedChannelToy_mpi2
+                       PROPERTIES TIMEOUT 30 PROCESSORS 2 DISABLED TRUE)
 endif()

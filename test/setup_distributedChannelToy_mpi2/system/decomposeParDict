@@ -1,0 +1,34 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      decomposeParDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Hierarchical (2 1 1) — proc cut sits at x = 0.5 (after grading).
+// The X-grading factor is 4, so the rank-0 block (xmin half) has the
+// fine cells and the rank-1 block (xmax half) has the coarse cells.
+// Face-weight asymmetry is maximised at the proc cut for streamwise
+// interpolation.
+
+numberOfSubdomains 2;
+
+method          hierarchical;
+
+hierarchicalCoeffs
+{
+    n           (2 1 1);
+    order       xyz;
+}
+
+
+// ************************************************************************* //

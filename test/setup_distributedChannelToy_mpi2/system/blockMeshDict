@@ -1,0 +1,94 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Doubly-graded toy channel reproducer for the GPU multi-rank proc-boundary
+// divergence bug (see .planning/debug/gpu-proc-boundary-divergence.md).
+//
+// Geometry: 1 x 0.25 x 0.05 channel
+// Cells:    10 x 5 x 3 = 150 cells
+// Grading:  simpleGrading (4 2 1)  -- non-trivial in BOTH X and Y, so face
+//           weights are NOT uniform across the proc cut. This is the cheapest
+//           geometry that exercises non-uniform interpolation weights AND
+//           non-uniform delta coefficients at proc faces.
+// Decomp:   simple (2 1 1)  -- proc cut runs through the streamwise grading,
+//           guaranteeing a non-trivial proc-boundary face stencil.
+
+scale   1;
+
+vertices
+(
+    (0.00  0.00   0.00)   //  0
+    (1.00  0.00   0.00)   //  1
+    (1.00  0.25   0.00)   //  2
+    (0.00  0.25   0.00)   //  3
+    (0.00  0.00   0.05)   //  4
+    (1.00  0.00   0.05)   //  5
+    (1.00  0.25   0.05)   //  6
+    (0.00  0.25   0.05)   //  7
+);
+
+blocks
+(
+    hex (0 1 2 3 4 5 6 7) (10 5 3) simpleGrading (4 2 1)
+);
+
+edges
+(
+);
+
+boundary
+(
+    inlet
+    {
+        type patch;
+        faces
+        (
+            (0 4 7 3)
+        );
+    }
+
+    outlet
+    {
+        type patch;
+        faces
+        (
+            (2 6 5 1)
+        );
+    }
+
+    walls
+    {
+        type wall;
+        faces
+        (
+            (1 5 4 0)   // ymin
+            (3 7 6 2)   // ymax
+        );
+    }
+
+    frontAndBack
+    {
+        type empty;
+        faces
+        (
+            (0 3 2 1)   // zmin
+            (4 5 6 7)   // zmax
+        );
+    }
+);
+
+
+// ************************************************************************* //
