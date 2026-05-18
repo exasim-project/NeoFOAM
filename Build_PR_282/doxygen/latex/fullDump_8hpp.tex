@@ -1,0 +1,46 @@
+\doxysection{/home/runner/work/\+Neo\+FOAM/\+Neo\+FOAM/include/\+Neo\+FOAM/auxiliary/full\+Dump.hpp File Reference}
+\hypertarget{fullDump_8hpp}{}\label{fullDump_8hpp}\index{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/fullDump.hpp@{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/fullDump.hpp}}
+{\ttfamily \#include $<$cstdio$>$}\newline
+{\ttfamily \#include $<$cstdlib$>$}\newline
+{\ttfamily \#include $<$filesystem$>$}\newline
+{\ttfamily \#include $<$string$>$}\newline
+{\ttfamily \#include $<$system\+\_\+error$>$}\newline
+{\ttfamily \#include $<$type\+\_\+traits$>$}\newline
+{\ttfamily \#include $<$mpi.\+h$>$}\newline
+{\ttfamily \#include "{}Neo\+N/\+Neo\+N.\+hpp"{}}\newline
+\doxysubsubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+namespace \mbox{\hyperlink{namespaceNeoFOAM}{Neo\+FOAM}}
+\item 
+namespace \mbox{\hyperlink{namespaceNeoFOAM_1_1detail}{Neo\+FOAM\+::detail}}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+bool \mbox{\hyperlink{namespaceNeoFOAM_a7db520a68a742fa01b65d00df73db7bf}{Neo\+FOAM\+::full\+Dump\+Enabled}} ()
+\item 
+std\+::filesystem\+::path \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a5de45b32deec3cb89d4e386672574c96}{Neo\+FOAM\+::detail\+::ensure\+Dump\+Dir}} (int rank)
+\begin{DoxyCompactList}\small\item\em Create processor\{rank\}/dumps/ once per rank. \end{DoxyCompactList}\item 
+std\+::string \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a7a5b061196dff07dcb9399aa8ce7c2a3}{Neo\+FOAM\+::detail\+::build\+Checkpoint\+Filename}} (int rank, int step\+Idx, int piso\+Iter, int non\+Orth\+Iter, const std\+::string \&checkpoint, const std\+::string \&name, const std\+::string \&kind)
+\item 
+std\+::string \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_ab893a844e04fcba2a572663108e01df6}{Neo\+FOAM\+::detail\+::build\+One\+Shot\+Filename}} (int rank, const std\+::string \&name)
+\item 
+void \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_ac331e1023c650ea0d8a0f5b9fd52131b}{Neo\+FOAM\+::detail\+::write\+Row}} (std\+::\+FILE \texorpdfstring{$\ast$}{*}f, std\+::size\+\_\+t i, Neo\+N\+::scalar v)
+\item 
+void \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a63022655a67b1c69d4eb96bfb2797ac2}{Neo\+FOAM\+::detail\+::write\+Row}} (std\+::\+FILE \texorpdfstring{$\ast$}{*}f, std\+::size\+\_\+t i, Neo\+N\+::\+Vec3 v)
+\item 
+{\footnotesize template$<$typename Integral , std\+::enable\+\_\+if\+\_\+t$<$ std\+::is\+\_\+integral\+\_\+v$<$ Integral $>$, int $>$  = 0$>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_aa0771cd4a074bda90c68e4174ab15580}{Neo\+FOAM\+::detail\+::write\+Row}} (std\+::\+FILE \texorpdfstring{$\ast$}{*}f, std\+::size\+\_\+t i, Integral v)
+\item 
+{\footnotesize template$<$typename T $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a8771c06a91d08b9479a10611b7232baa}{Neo\+FOAM\+::detail\+::dump\+Vector\+To\+File}} (const Neo\+N\+::\+Vector$<$ T $>$ \&vec, const std\+::string \&filename)
+\item 
+{\footnotesize template$<$typename Field $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_ac9b00c76b459e0bb5b0c0cda7a620874}{Neo\+FOAM\+::dump\+Internal}} (const Field \&field, const std\+::string \&name, const std\+::string \&checkpoint, int step\+Idx, int piso\+Iter, int non\+Orth\+Iter)
+\begin{DoxyCompactList}\small\item\em Dump the FULL internal\+Vector of a Volume/\+Surface field — one entry per cell (Volume) or per face (Surface). One line per entry. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename Surface\+Field $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_ad5861effb6fb1aef7336a328841f324b}{Neo\+FOAM\+::dump\+All\+Faces}} (const Surface\+Field \&field, const std\+::string \&name, const std\+::string \&checkpoint, int step\+Idx, int piso\+Iter, int non\+Orth\+Iter)
+\begin{DoxyCompactList}\small\item\em Dump the FULL face data of a Surface\+Field across the full face range (internal faces + non-\/proc boundary + proc tail) — one line per face. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename Linear\+System , typename Initial\+Iterate $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_a22265b9805f9a652a5fce4365859182d}{Neo\+FOAM\+::dump\+Dist\+Linear\+System}} (const Linear\+System \&ls, const Initial\+Iterate \&x0, const std\+::string \&name, const std\+::string \&checkpoint, int step\+Idx, int piso\+Iter, int non\+Orth\+Iter)
+\begin{DoxyCompactList}\small\item\em Dump the {\itshape rank-\/local block} of a distributed Linear\+System in CSR form, the rhs and the initial iterate, AND the row partitioning needed to rebuild a distributed matrix in {\ttfamily tools/ginkgo-\/standalone-\/cg/}. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{namespaceNeoFOAM_aae576d5d7ed0f683fd42cb056c9add92}{Neo\+FOAM\+::dump\+Geometry}} (const Neo\+N\+::\+Unstructured\+Mesh \&mesh)
+\begin{DoxyCompactList}\small\item\em Dump per-\/rank mesh geometry — written once. Idempotent (re-\/writes are harmless and produce identical output). \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{namespaceNeoFOAM_a36069e5773094d195733fe27f592abea}{Neo\+FOAM\+::dump\+Proc\+Meta}} (const Neo\+N\+::\+Unstructured\+Mesh \&mesh)
+\begin{DoxyCompactList}\small\item\em Dump per-\/rank meta\+: n\+Cells, range-\/partition row offset, MPI size, count and list of proc-\/patch neighbour ranks. \end{DoxyCompactList}\end{DoxyCompactItemize}

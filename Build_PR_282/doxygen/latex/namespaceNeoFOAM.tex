@@ -84,6 +84,18 @@ Neo\+N\+::\+Dictionary \mbox{\hyperlink{namespaceNeoFOAM_a75a914fbbb00d2f6a71272
 \item 
 Foam\+::vector \mbox{\hyperlink{namespaceNeoFOAM_ae5529700fe31e6531dc129ac14ad3966}{convert}} (const Neo\+N\+::\+Vec3 \&in)
 \item 
+bool \mbox{\hyperlink{namespaceNeoFOAM_a7db520a68a742fa01b65d00df73db7bf}{full\+Dump\+Enabled}} ()
+\item 
+{\footnotesize template$<$typename Field $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_ac9b00c76b459e0bb5b0c0cda7a620874}{dump\+Internal}} (const Field \&field, const std\+::string \&name, const std\+::string \&checkpoint, int step\+Idx, int piso\+Iter, int non\+Orth\+Iter)
+\begin{DoxyCompactList}\small\item\em Dump the FULL internal\+Vector of a Volume/\+Surface field — one entry per cell (Volume) or per face (Surface). One line per entry. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename Surface\+Field $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_ad5861effb6fb1aef7336a328841f324b}{dump\+All\+Faces}} (const Surface\+Field \&field, const std\+::string \&name, const std\+::string \&checkpoint, int step\+Idx, int piso\+Iter, int non\+Orth\+Iter)
+\begin{DoxyCompactList}\small\item\em Dump the FULL face data of a Surface\+Field across the full face range (internal faces + non-\/proc boundary + proc tail) — one line per face. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename Linear\+System , typename Initial\+Iterate $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_a22265b9805f9a652a5fce4365859182d}{dump\+Dist\+Linear\+System}} (const Linear\+System \&ls, const Initial\+Iterate \&x0, const std\+::string \&name, const std\+::string \&checkpoint, int step\+Idx, int piso\+Iter, int non\+Orth\+Iter)
+\begin{DoxyCompactList}\small\item\em Dump the {\itshape rank-\/local block} of a distributed Linear\+System in CSR form, the rhs and the initial iterate, AND the row partitioning needed to rebuild a distributed matrix in {\ttfamily tools/ginkgo-\/standalone-\/cg/}. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{namespaceNeoFOAM_aae576d5d7ed0f683fd42cb056c9add92}{dump\+Geometry}} (const Neo\+N\+::\+Unstructured\+Mesh \&mesh)
+\begin{DoxyCompactList}\small\item\em Dump per-\/rank mesh geometry — written once. Idempotent (re-\/writes are harmless and produce identical output). \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{namespaceNeoFOAM_a36069e5773094d195733fe27f592abea}{dump\+Proc\+Meta}} (const Neo\+N\+::\+Unstructured\+Mesh \&mesh)
+\begin{DoxyCompactList}\small\item\em Dump per-\/rank meta\+: n\+Cells, range-\/partition row offset, MPI size, count and list of proc-\/patch neighbour ranks. \end{DoxyCompactList}\item 
 {\footnotesize template$<$typename Field $>$ }\\bool \mbox{\hyperlink{namespaceNeoFOAM_a553d8232134c9a7761f69ca5e61b41e0}{check\+Proc\+Face\+Consistency}} (const Field \&field, const std\+::string \&label, double tolerance=1e-\/12, \mbox{\hyperlink{namespaceNeoFOAM_a519d51d486c56905acac95c3c19f40b8}{Sign\+Convention}} sign=\mbox{\hyperlink{namespaceNeoFOAM_a519d51d486c56905acac95c3c19f40b8af5f286e73bda105e538310b3190f75c5}{Sign\+Convention\+::\+Equal}})
 \begin{DoxyCompactList}\small\item\em Assert that proc-\/face boundary values are consistent across ranks. \end{DoxyCompactList}\item 
 bool \mbox{\hyperlink{namespaceNeoFOAM_a0efd6b3f9233fdccd1f9a0da506bd235}{proc\+Dump\+Enabled}} ()
@@ -402,6 +414,54 @@ Definition at line \mbox{\hyperlink{readers_8hpp_source_l00284}{284}} of file \m
 \doxysubsubsection{\texorpdfstring{createMesh()}{createMesh()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
 {\footnotesize\ttfamily std\+::unique\+\_\+ptr$<$ \mbox{\hyperlink{classNeoFOAM_1_1MeshAdapter}{Mesh\+Adapter}} $>$ Neo\+FOAM\+::create\+Mesh (\begin{DoxyParamCaption}\item[{const Neo\+N\+::\+Executor \&}]{exec,  }\item[{const Foam\+::\+Time \&}]{run\+Time }\end{DoxyParamCaption})}
 
+\Hypertarget{namespaceNeoFOAM_ad5861effb6fb1aef7336a328841f324b}\label{namespaceNeoFOAM_ad5861effb6fb1aef7336a328841f324b} 
+\index{NeoFOAM@{NeoFOAM}!dumpAllFaces@{dumpAllFaces}}
+\index{dumpAllFaces@{dumpAllFaces}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{dumpAllFaces()}{dumpAllFaces()}}
+{\footnotesize\ttfamily template$<$typename Surface\+Field $>$ \\
+void Neo\+FOAM\+::dump\+All\+Faces (\begin{DoxyParamCaption}\item[{const Surface\+Field \&}]{field,  }\item[{const std\+::string \&}]{name,  }\item[{const std\+::string \&}]{checkpoint,  }\item[{int}]{step\+Idx,  }\item[{int}]{piso\+Iter,  }\item[{int}]{non\+Orth\+Iter }\end{DoxyParamCaption})}
+
+
+
+Dump the FULL face data of a Surface\+Field across the full face range (internal faces + non-\/proc boundary + proc tail) — one line per face. 
+
+Two segments are written into the same file separated by a comment\+:
+\begin{DoxyItemize}
+\item lines {\ttfamily 0 .. n\+Total\+Faces-\/1} \+: internal\+Vector (compressed face indexing)
+\item lines {\ttfamily n\+Total\+Faces..end} \+: boundary\+Data().value() (boundary patch tail)
+\end{DoxyItemize}
+
+Both are needed because of the Surface\+Field dual-\/storage invariant (internal\+Vector\mbox{[}proc-\/tail\mbox{]} == boundary\+Data\mbox{[}proc-\/tail\mbox{]} LOCAL pre-\/exchange, != post-\/exchange where boundary\+Data holds the neighbour value).
+
+Compare this dump CPU vs GPU at each PISO checkpoint to see which segment diverges first — internal-\/face math, non-\/proc BC, or proc-\/tail exchange.
+
+No-\/op unless {\ttfamily NEOFOAM\+\_\+\+FULL\+\_\+\+DUMP=1}. No-\/op for Volume\+Field (we look at the internal\+Vector().size() == n\+Cells convention to detect).
+
+Output\+: processor\{rank\}/dumps/\texorpdfstring{$<$}{<}step\+:04d\texorpdfstring{$>$}{>}\+\_\+$<$piso$>$\+\_\+$<$non\+Orth$>$\+\_\+$<$checkpoint$>$\+\_\+\+\_\+$<$name$>$\+\_\+all\+Faces.\+txt 
+
+Definition at line \mbox{\hyperlink{fullDump_8hpp_source_l00214}{214}} of file \mbox{\hyperlink{fullDump_8hpp_source}{full\+Dump.\+hpp}}.
+
+\Hypertarget{namespaceNeoFOAM_a22265b9805f9a652a5fce4365859182d}\label{namespaceNeoFOAM_a22265b9805f9a652a5fce4365859182d} 
+\index{NeoFOAM@{NeoFOAM}!dumpDistLinearSystem@{dumpDistLinearSystem}}
+\index{dumpDistLinearSystem@{dumpDistLinearSystem}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{dumpDistLinearSystem()}{dumpDistLinearSystem()}}
+{\footnotesize\ttfamily template$<$typename Linear\+System , typename Initial\+Iterate $>$ \\
+void Neo\+FOAM\+::dump\+Dist\+Linear\+System (\begin{DoxyParamCaption}\item[{const Linear\+System \&}]{ls,  }\item[{const Initial\+Iterate \&}]{x0,  }\item[{const std\+::string \&}]{name,  }\item[{const std\+::string \&}]{checkpoint,  }\item[{int}]{step\+Idx,  }\item[{int}]{piso\+Iter,  }\item[{int}]{non\+Orth\+Iter }\end{DoxyParamCaption})}
+
+
+
+Dump the {\itshape rank-\/local block} of a distributed Linear\+System in CSR form, the rhs and the initial iterate, AND the row partitioning needed to rebuild a distributed matrix in {\ttfamily tools/ginkgo-\/standalone-\/cg/}. 
+
+Files produced (per rank, per call site)\+: $<$prefix$>$\+\_\+\+\_\+$<$name$>$\+\_\+\+A\+\_\+rowptr.\+txt — local CSR row offsets (size n\+Local\+Rows + 1) $<$prefix$>$\+\_\+\+\_\+$<$name$>$\+\_\+\+A\+\_\+colidx.\+txt — local CSR column indices (size nnz\+\_\+local) $<$prefix$>$\+\_\+\+\_\+$<$name$>$\+\_\+\+A\+\_\+values.\+txt — local CSR values (size nnz\+\_\+local) $<$prefix$>$\+\_\+\+\_\+$<$name$>$\+\_\+non\+Local\+A\+\_\+values.\+txt — non-\/local COO values $<$prefix$>$\+\_\+\+\_\+$<$name$>$\+\_\+non\+Local\+A\+\_\+col\+Idxs.\+txt — non-\/local COO column indices (global ghost IDs) $<$prefix$>$\+\_\+\+\_\+$<$name$>$\+\_\+b.\+txt — rhs (size n\+Local\+Rows) $<$prefix$>$\+\_\+\+\_\+$<$name$>$\+\_\+x0.\+txt — initial iterate (size n\+Local\+Rows) $<$prefix$>$\+\_\+\+\_\+$<$name$>$\+\_\+partition.\+txt — single line "{}$<$rank$>$ $<$n\+Procs$>$ $<$n\+Local\+Rows$>$ $<$global\+Row\+Start$>$"{}
+
+The row partitioning is range-\/partition style and is constructed via MPI\+\_\+\+Exscan over {\ttfamily n\+Local\+Rows} so the standalone Ginkgo test can rebuild a distributed {\ttfamily gko\+::experimental\+::distributed\+::\+Matrix} from these files alone.
+
+No-\/op unless {\ttfamily NEOFOAM\+\_\+\+FULL\+\_\+\+DUMP=1}. Call AFTER {\ttfamily \doxylink{classNeoFOAM_1_1PDESolver_a8aef9ec9ddbd7e1dcb0f283cb6ad2dba}{PDESolver\+::assemble()}} / {\ttfamily PDESolver\+::assemble(rhs)} so the Linear\+System is fully populated.
+
+For Volume\+Field$<$scalar$>$ systems the values are scalar; for Vec3-\/valued systems they are Vec3 (one row per Vec3 component-\/wise, dumped as a vector). 
+
+Definition at line \mbox{\hyperlink{fullDump_8hpp_source_l00289}{289}} of file \mbox{\hyperlink{fullDump_8hpp_source}{full\+Dump.\+hpp}}.
+
 \Hypertarget{namespaceNeoFOAM_ab460fb58f75ff6a97965d20939d253e8}\label{namespaceNeoFOAM_ab460fb58f75ff6a97965d20939d253e8} 
 \index{NeoFOAM@{NeoFOAM}!dumpFullLinearSystem@{dumpFullLinearSystem}}
 \index{dumpFullLinearSystem@{dumpFullLinearSystem}!NeoFOAM@{NeoFOAM}}
@@ -431,6 +491,24 @@ Call site\+: between \doxylink{classNeoFOAM_1_1PDESolver_a8aef9ec9ddbd7e1dcb0f28
 
 Definition at line \mbox{\hyperlink{procFaceDump_8hpp_source_l00383}{383}} of file \mbox{\hyperlink{procFaceDump_8hpp_source}{proc\+Face\+Dump.\+hpp}}.
 
+\Hypertarget{namespaceNeoFOAM_aae576d5d7ed0f683fd42cb056c9add92}\label{namespaceNeoFOAM_aae576d5d7ed0f683fd42cb056c9add92} 
+\index{NeoFOAM@{NeoFOAM}!dumpGeometry@{dumpGeometry}}
+\index{dumpGeometry@{dumpGeometry}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{dumpGeometry()}{dumpGeometry()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::dump\+Geometry (\begin{DoxyParamCaption}\item[{const Neo\+N\+::\+Unstructured\+Mesh \&}]{mesh }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Dump per-\/rank mesh geometry — written once. Idempotent (re-\/writes are harmless and produce identical output). 
+
+Files (under processor\{rank\}/dumps/)\+: geometry\+\_\+sf.\+txt — internal face area vectors (size n\+Internal\+Faces) geometry\+\_\+cf.\+txt — internal face centres (size n\+Internal\+Faces) geometry\+\_\+face\+Cells.\+txt — boundary face\+Cells map (compressed) (size n\+Boundary\+Faces + n\+Proc\+Faces) geometry\+\_\+bm\+\_\+sf.\+txt — boundary face area vectors (compressed) geometry\+\_\+bm\+\_\+mag\+Sf.\+txt — boundary face magnitudes (compressed) geometry\+\_\+bm\+\_\+cf.\+txt — boundary face centres (compressed) geometry\+\_\+bm\+\_\+delta\+Coeffs.\+txt — boundary face delta coefficients (compressed) geometry\+\_\+bm\+\_\+weights.\+txt — boundary face interpolation weights (compressed)
+
+Useful when comparing CPU and GPU runs\+: identical geometry is a precondition for matching the assembled Linear\+System coefficients.
+
+No-\/op unless {\ttfamily NEOFOAM\+\_\+\+FULL\+\_\+\+DUMP=1}. 
+
+Definition at line \mbox{\hyperlink{fullDump_8hpp_source_l00415}{415}} of file \mbox{\hyperlink{fullDump_8hpp_source}{full\+Dump.\+hpp}}.
+
 \Hypertarget{namespaceNeoFOAM_a1797b5a1be62412b9bf496d7b0b1fb78}\label{namespaceNeoFOAM_a1797b5a1be62412b9bf496d7b0b1fb78} 
 \index{NeoFOAM@{NeoFOAM}!dumpHostVector@{dumpHostVector}}
 \index{dumpHostVector@{dumpHostVector}!NeoFOAM@{NeoFOAM}}
@@ -445,6 +523,25 @@ Dump a host-\/side std\+::vector (e.\+g. comm\+Pattern.\+send\+Counts / recv\+Id
 
 
 Definition at line \mbox{\hyperlink{procFaceDump_8hpp_source_l00319}{319}} of file \mbox{\hyperlink{procFaceDump_8hpp_source}{proc\+Face\+Dump.\+hpp}}.
+
+\Hypertarget{namespaceNeoFOAM_ac9b00c76b459e0bb5b0c0cda7a620874}\label{namespaceNeoFOAM_ac9b00c76b459e0bb5b0c0cda7a620874} 
+\index{NeoFOAM@{NeoFOAM}!dumpInternal@{dumpInternal}}
+\index{dumpInternal@{dumpInternal}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{dumpInternal()}{dumpInternal()}}
+{\footnotesize\ttfamily template$<$typename Field $>$ \\
+void Neo\+FOAM\+::dump\+Internal (\begin{DoxyParamCaption}\item[{const Field \&}]{field,  }\item[{const std\+::string \&}]{name,  }\item[{const std\+::string \&}]{checkpoint,  }\item[{int}]{step\+Idx,  }\item[{int}]{piso\+Iter,  }\item[{int}]{non\+Orth\+Iter }\end{DoxyParamCaption})}
+
+
+
+Dump the FULL internal\+Vector of a Volume/\+Surface field — one entry per cell (Volume) or per face (Surface). One line per entry. 
+
+No-\/op unless {\ttfamily NEOFOAM\+\_\+\+FULL\+\_\+\+DUMP=1}.
+
+Compare this dump rank-\/by-\/rank between a CPU-\/\+Neo\+FOAM run and a GPU-\/\+Neo\+FOAM run to localise interior-\/vs-\/boundary differences at every PISO checkpoint.
+
+Output\+: processor\{rank\}/dumps/\texorpdfstring{$<$}{<}step\+:04d\texorpdfstring{$>$}{>}\+\_\+$<$piso$>$\+\_\+$<$non\+Orth$>$\+\_\+$<$checkpoint$>$\+\_\+\+\_\+$<$name$>$\+\_\+internal.\+txt 
+
+Definition at line \mbox{\hyperlink{fullDump_8hpp_source_l00169}{169}} of file \mbox{\hyperlink{fullDump_8hpp_source}{full\+Dump.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_a56ea9bf5b60a36355083a55d52918534}\label{namespaceNeoFOAM_a56ea9bf5b60a36355083a55d52918534} 
 \index{NeoFOAM@{NeoFOAM}!dumpNonLocalMatrixValues@{dumpNonLocalMatrixValues}}
@@ -489,6 +586,32 @@ Filename\+: processor\{rank\}/dumps/\texorpdfstring{$<$}{<}step\+:04d\texorpdfst
 Pair every call with the existing nf\+::check\+Proc\+Face\+Consistency at the same checkpoint so the dump file traces the exact value sequence the consistency check sees. 
 
 Definition at line \mbox{\hyperlink{procFaceDump_8hpp_source_l00079}{79}} of file \mbox{\hyperlink{procFaceDump_8hpp_source}{proc\+Face\+Dump.\+hpp}}.
+
+\Hypertarget{namespaceNeoFOAM_a36069e5773094d195733fe27f592abea}\label{namespaceNeoFOAM_a36069e5773094d195733fe27f592abea} 
+\index{NeoFOAM@{NeoFOAM}!dumpProcMeta@{dumpProcMeta}}
+\index{dumpProcMeta@{dumpProcMeta}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{dumpProcMeta()}{dumpProcMeta()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::dump\+Proc\+Meta (\begin{DoxyParamCaption}\item[{const Neo\+N\+::\+Unstructured\+Mesh \&}]{mesh }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Dump per-\/rank meta\+: n\+Cells, range-\/partition row offset, MPI size, count and list of proc-\/patch neighbour ranks. 
+
+Single-\/line + tabular content (one entry per line after header), one file per rank\+:
+
+processor\{rank\}/dumps/proc\+\_\+meta.txt
+
+Contents\+:
+
+rank $<$r$>$ n\+Procs 
+
+n\+Cells {\ttfamily  n\+Internal\+Faces $<$if$>$ n\+Boundary\+Faces $<$bf$>$ n\+Proc\+Boundary\+Patches $<$pp$>$ n\+Proc\+Boundary\+Faces $<$pf$>$ global\+Row\+Start $<$g$>$ \# computed via MPI\+\_\+\+Exscan over n\+Cells (range partition) global\+NCells $<$total$>$ neighbour\+Ranks $<$r0$>$ $<$r1$>$ ...}
+
+{\ttfamily Consumed by {\ttfamily tools/ginkgo-\/standalone-\/cg/} to rebuild the distributed row-\/partition for a Ginkgo replay of the dumped Linear\+System.}
+
+{\ttfamily No-\/op unless {\ttfamily NEOFOAM\+\_\+\+FULL\+\_\+\+DUMP=1}. }
+
+Definition at line \mbox{\hyperlink{fullDump_8hpp_source_l00470}{470}} of file \mbox{\hyperlink{fullDump_8hpp_source}{full\+Dump.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_a8c32c11fc067e607968a6bdd51508a5c}\label{namespaceNeoFOAM_a8c32c11fc067e607968a6bdd51508a5c} 
 \index{NeoFOAM@{NeoFOAM}!dumpProcOwnerInternal@{dumpProcOwnerInternal}}
@@ -557,6 +680,16 @@ auto Neo\+FOAM\+::from\+Foam\+Field (\begin{DoxyParamCaption}\item[{const Neo\+N
 
 
 Definition at line \mbox{\hyperlink{readers_8hpp_source_l00022}{22}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
+
+\Hypertarget{namespaceNeoFOAM_a7db520a68a742fa01b65d00df73db7bf}\label{namespaceNeoFOAM_a7db520a68a742fa01b65d00df73db7bf} 
+\index{NeoFOAM@{NeoFOAM}!fullDumpEnabled@{fullDumpEnabled}}
+\index{fullDumpEnabled@{fullDumpEnabled}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{fullDumpEnabled()}{fullDumpEnabled()}}
+{\footnotesize\ttfamily bool Neo\+FOAM\+::full\+Dump\+Enabled (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+True when env var {\ttfamily NEOFOAM\+\_\+\+FULL\+\_\+\+DUMP} is set to a non-\/empty, non-\/"{}0"{} value. Cached on first call; lock-\/free thereafter. 
+
+Definition at line \mbox{\hyperlink{fullDump_8hpp_source_l00051}{51}} of file \mbox{\hyperlink{fullDump_8hpp_source}{full\+Dump.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_af3b37c9dbbd37df8a0849a0f383f06d9}\label{namespaceNeoFOAM_af3b37c9dbbd37df8a0849a0f383f06d9} 
 \index{NeoFOAM@{NeoFOAM}!insert@{insert}}

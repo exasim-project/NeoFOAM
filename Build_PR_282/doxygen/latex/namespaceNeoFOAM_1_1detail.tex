@@ -20,6 +20,20 @@ struct \mbox{\hyperlink{structNeoFOAM_1_1detail_1_1MpiTraits_3_01NeoN_1_1Vec3_01
 \doxysubsubsection*{Functions}
 \begin{DoxyCompactItemize}
 \item 
+std\+::filesystem\+::path \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a5de45b32deec3cb89d4e386672574c96}{ensure\+Dump\+Dir}} (int rank)
+\begin{DoxyCompactList}\small\item\em Create processor\{rank\}/dumps/ once per rank. \end{DoxyCompactList}\item 
+std\+::string \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a7a5b061196dff07dcb9399aa8ce7c2a3}{build\+Checkpoint\+Filename}} (int rank, int step\+Idx, int piso\+Iter, int non\+Orth\+Iter, const std\+::string \&checkpoint, const std\+::string \&name, const std\+::string \&kind)
+\item 
+std\+::string \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_ab893a844e04fcba2a572663108e01df6}{build\+One\+Shot\+Filename}} (int rank, const std\+::string \&name)
+\item 
+void \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_ac331e1023c650ea0d8a0f5b9fd52131b}{write\+Row}} (std\+::\+FILE \texorpdfstring{$\ast$}{*}f, std\+::size\+\_\+t i, Neo\+N\+::scalar v)
+\item 
+void \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a63022655a67b1c69d4eb96bfb2797ac2}{write\+Row}} (std\+::\+FILE \texorpdfstring{$\ast$}{*}f, std\+::size\+\_\+t i, Neo\+N\+::\+Vec3 v)
+\item 
+{\footnotesize template$<$typename Integral , std\+::enable\+\_\+if\+\_\+t$<$ std\+::is\+\_\+integral\+\_\+v$<$ Integral $>$, int $>$  = 0$>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_aa0771cd4a074bda90c68e4174ab15580}{write\+Row}} (std\+::\+FILE \texorpdfstring{$\ast$}{*}f, std\+::size\+\_\+t i, Integral v)
+\item 
+{\footnotesize template$<$typename T $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a8771c06a91d08b9479a10611b7232baa}{dump\+Vector\+To\+File}} (const Neo\+N\+::\+Vector$<$ T $>$ \&vec, const std\+::string \&filename)
+\item 
 bool \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a6b2ab34117463c1287b75eddb4f53c27}{values\+Match}} (Neo\+N\+::scalar a, Neo\+N\+::scalar b, double tol)
 \item 
 bool \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a1d8a5f61b3600d1641b94aa9e2be3ac7}{values\+Match}} (Neo\+N\+::\+Vec3 a, Neo\+N\+::\+Vec3 b, double tol)
@@ -60,6 +74,26 @@ void \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a5e7304d375cc41ccc3b302667f1357
 
 
 \doxysubsection{Function Documentation}
+\Hypertarget{namespaceNeoFOAM_1_1detail_a7a5b061196dff07dcb9399aa8ce7c2a3}\label{namespaceNeoFOAM_1_1detail_a7a5b061196dff07dcb9399aa8ce7c2a3} 
+\index{NeoFOAM::detail@{NeoFOAM::detail}!buildCheckpointFilename@{buildCheckpointFilename}}
+\index{buildCheckpointFilename@{buildCheckpointFilename}!NeoFOAM::detail@{NeoFOAM::detail}}
+\doxysubsubsection{\texorpdfstring{buildCheckpointFilename()}{buildCheckpointFilename()}}
+{\footnotesize\ttfamily std\+::string Neo\+FOAM\+::detail\+::build\+Checkpoint\+Filename (\begin{DoxyParamCaption}\item[{int}]{rank,  }\item[{int}]{step\+Idx,  }\item[{int}]{piso\+Iter,  }\item[{int}]{non\+Orth\+Iter,  }\item[{const std\+::string \&}]{checkpoint,  }\item[{const std\+::string \&}]{name,  }\item[{const std\+::string \&}]{kind }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Build a per-\/checkpoint filename\+: processor\{rank\}/dumps/\texorpdfstring{$<$}{<}step\+:04d\texorpdfstring{$>$}{>}\+\_\+$<$piso$>$\+\_\+$<$non\+Orth$>$\+\_\+$<$checkpoint$>$\+\_\+\+\_\+$<$name$>$\+\_\+$<$kind$>$.\+txt 
+
+Definition at line \mbox{\hyperlink{fullDump_8hpp_source_l00076}{76}} of file \mbox{\hyperlink{fullDump_8hpp_source}{full\+Dump.\+hpp}}.
+
+\Hypertarget{namespaceNeoFOAM_1_1detail_ab893a844e04fcba2a572663108e01df6}\label{namespaceNeoFOAM_1_1detail_ab893a844e04fcba2a572663108e01df6} 
+\index{NeoFOAM::detail@{NeoFOAM::detail}!buildOneShotFilename@{buildOneShotFilename}}
+\index{buildOneShotFilename@{buildOneShotFilename}!NeoFOAM::detail@{NeoFOAM::detail}}
+\doxysubsubsection{\texorpdfstring{buildOneShotFilename()}{buildOneShotFilename()}}
+{\footnotesize\ttfamily std\+::string Neo\+FOAM\+::detail\+::build\+One\+Shot\+Filename (\begin{DoxyParamCaption}\item[{int}]{rank,  }\item[{const std\+::string \&}]{name }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+Build a one-\/shot filename\+: processor\{rank\}/dumps/$<$name$>$.txt 
+
+Definition at line \mbox{\hyperlink{fullDump_8hpp_source_l00105}{105}} of file \mbox{\hyperlink{fullDump_8hpp_source}{full\+Dump.\+hpp}}.
+
 \Hypertarget{namespaceNeoFOAM_1_1detail_aaf277cdfa64f90d5470e3b9d751249af}\label{namespaceNeoFOAM_1_1detail_aaf277cdfa64f90d5470e3b9d751249af} 
 \index{NeoFOAM::detail@{NeoFOAM::detail}!copyImpl@{copyImpl}}
 \index{copyImpl@{copyImpl}!NeoFOAM::detail@{NeoFOAM::detail}}
@@ -125,6 +159,31 @@ Definition at line \mbox{\hyperlink{procFaceDump_8hpp_source_l00229}{229}} of fi
 
 
 Definition at line \mbox{\hyperlink{procFaceDump_8hpp_source_l00234}{234}} of file \mbox{\hyperlink{procFaceDump_8hpp_source}{proc\+Face\+Dump.\+hpp}}.
+
+\Hypertarget{namespaceNeoFOAM_1_1detail_a8771c06a91d08b9479a10611b7232baa}\label{namespaceNeoFOAM_1_1detail_a8771c06a91d08b9479a10611b7232baa} 
+\index{NeoFOAM::detail@{NeoFOAM::detail}!dumpVectorToFile@{dumpVectorToFile}}
+\index{dumpVectorToFile@{dumpVectorToFile}!NeoFOAM::detail@{NeoFOAM::detail}}
+\doxysubsubsection{\texorpdfstring{dumpVectorToFile()}{dumpVectorToFile()}}
+{\footnotesize\ttfamily template$<$typename T $>$ \\
+void Neo\+FOAM\+::detail\+::dump\+Vector\+To\+File (\begin{DoxyParamCaption}\item[{const Neo\+N\+::\+Vector$<$ T $>$ \&}]{vec,  }\item[{const std\+::string \&}]{filename }\end{DoxyParamCaption})}
+
+
+
+Definition at line \mbox{\hyperlink{fullDump_8hpp_source_l00137}{137}} of file \mbox{\hyperlink{fullDump_8hpp_source}{full\+Dump.\+hpp}}.
+
+\Hypertarget{namespaceNeoFOAM_1_1detail_a5de45b32deec3cb89d4e386672574c96}\label{namespaceNeoFOAM_1_1detail_a5de45b32deec3cb89d4e386672574c96} 
+\index{NeoFOAM::detail@{NeoFOAM::detail}!ensureDumpDir@{ensureDumpDir}}
+\index{ensureDumpDir@{ensureDumpDir}!NeoFOAM::detail@{NeoFOAM::detail}}
+\doxysubsubsection{\texorpdfstring{ensureDumpDir()}{ensureDumpDir()}}
+{\footnotesize\ttfamily std\+::filesystem\+::path Neo\+FOAM\+::detail\+::ensure\+Dump\+Dir (\begin{DoxyParamCaption}\item[{int}]{rank }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Create processor\{rank\}/dumps/ once per rank. 
+
+
+
+Definition at line \mbox{\hyperlink{fullDump_8hpp_source_l00065}{65}} of file \mbox{\hyperlink{fullDump_8hpp_source}{full\+Dump.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_1_1detail_a419ab3b6e5cfe20fa2a7bf3878a48703}\label{namespaceNeoFOAM_1_1detail_a419ab3b6e5cfe20fa2a7bf3878a48703} 
 \index{NeoFOAM::detail@{NeoFOAM::detail}!extractProcBoundaryValues@{extractProcBoundaryValues}}
@@ -218,6 +277,37 @@ Definition at line \mbox{\hyperlink{procFaceCheck_8hpp_source_l00028}{28}} of fi
 
 
 Definition at line \mbox{\hyperlink{procFaceCheck_8hpp_source_l00036}{36}} of file \mbox{\hyperlink{procFaceCheck_8hpp_source}{proc\+Face\+Check.\+hpp}}.
+
+\Hypertarget{namespaceNeoFOAM_1_1detail_aa0771cd4a074bda90c68e4174ab15580}\label{namespaceNeoFOAM_1_1detail_aa0771cd4a074bda90c68e4174ab15580} 
+\index{NeoFOAM::detail@{NeoFOAM::detail}!writeRow@{writeRow}}
+\index{writeRow@{writeRow}!NeoFOAM::detail@{NeoFOAM::detail}}
+\doxysubsubsection{\texorpdfstring{writeRow()}{writeRow()}\hspace{0.1cm}{\footnotesize\ttfamily [1/3]}}
+{\footnotesize\ttfamily template$<$typename Integral , std\+::enable\+\_\+if\+\_\+t$<$ std\+::is\+\_\+integral\+\_\+v$<$ Integral $>$, int $>$  = 0$>$ \\
+void Neo\+FOAM\+::detail\+::write\+Row (\begin{DoxyParamCaption}\item[{std\+::\+FILE \texorpdfstring{$\ast$}{*}}]{f,  }\item[{std\+::size\+\_\+t}]{i,  }\item[{Integral}]{v }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \mbox{\hyperlink{fullDump_8hpp_source_l00131}{131}} of file \mbox{\hyperlink{fullDump_8hpp_source}{full\+Dump.\+hpp}}.
+
+\Hypertarget{namespaceNeoFOAM_1_1detail_ac331e1023c650ea0d8a0f5b9fd52131b}\label{namespaceNeoFOAM_1_1detail_ac331e1023c650ea0d8a0f5b9fd52131b} 
+\index{NeoFOAM::detail@{NeoFOAM::detail}!writeRow@{writeRow}}
+\index{writeRow@{writeRow}!NeoFOAM::detail@{NeoFOAM::detail}}
+\doxysubsubsection{\texorpdfstring{writeRow()}{writeRow()}\hspace{0.1cm}{\footnotesize\ttfamily [2/3]}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::detail\+::write\+Row (\begin{DoxyParamCaption}\item[{std\+::\+FILE \texorpdfstring{$\ast$}{*}}]{f,  }\item[{std\+::size\+\_\+t}]{i,  }\item[{Neo\+N\+::scalar}]{v }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \mbox{\hyperlink{fullDump_8hpp_source_l00113}{113}} of file \mbox{\hyperlink{fullDump_8hpp_source}{full\+Dump.\+hpp}}.
+
+\Hypertarget{namespaceNeoFOAM_1_1detail_a63022655a67b1c69d4eb96bfb2797ac2}\label{namespaceNeoFOAM_1_1detail_a63022655a67b1c69d4eb96bfb2797ac2} 
+\index{NeoFOAM::detail@{NeoFOAM::detail}!writeRow@{writeRow}}
+\index{writeRow@{writeRow}!NeoFOAM::detail@{NeoFOAM::detail}}
+\doxysubsubsection{\texorpdfstring{writeRow()}{writeRow()}\hspace{0.1cm}{\footnotesize\ttfamily [3/3]}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::detail\+::write\+Row (\begin{DoxyParamCaption}\item[{std\+::\+FILE \texorpdfstring{$\ast$}{*}}]{f,  }\item[{std\+::size\+\_\+t}]{i,  }\item[{Neo\+N\+::\+Vec3}]{v }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \mbox{\hyperlink{fullDump_8hpp_source_l00118}{118}} of file \mbox{\hyperlink{fullDump_8hpp_source}{full\+Dump.\+hpp}}.
 
 
 

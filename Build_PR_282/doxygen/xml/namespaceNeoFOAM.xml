@@ -522,6 +522,224 @@
         </inbodydescription>
         <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/convert.hpp" line="80" column="14" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/convert.hpp" declline="80" declcolumn="14"/>
       </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1a7db520a68a742fa01b65d00df73db7bf" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool NeoFOAM::fullDumpEnabled</definition>
+        <argsstring>()</argsstring>
+        <name>fullDumpEnabled</name>
+        <qualifiedname>NeoFOAM::fullDumpEnabled</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>True when env var <computeroutput>NEOFOAM_FULL_DUMP</computeroutput> is set to a non-empty, non-&quot;0&quot; value. Cached on first call; lock-free thereafter. </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/fullDump.hpp" line="51" column="13" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/fullDump.hpp" bodystart="51" bodyend="59"/>
+      </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1ac9b00c76b459e0bb5b0c0cda7a620874" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename Field</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void NeoFOAM::dumpInternal</definition>
+        <argsstring>(const Field &amp;field, const std::string &amp;name, const std::string &amp;checkpoint, int stepIdx, int pisoIter, int nonOrthIter)</argsstring>
+        <name>dumpInternal</name>
+        <qualifiedname>NeoFOAM::dumpInternal</qualifiedname>
+        <param>
+          <type>const Field &amp;</type>
+          <declname>field</declname>
+        </param>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>name</declname>
+        </param>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>checkpoint</declname>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>stepIdx</declname>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>pisoIter</declname>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>nonOrthIter</declname>
+        </param>
+        <briefdescription>
+<para>Dump the FULL internalVector of a Volume/Surface field — one entry per cell (Volume) or per face (Surface). One line per entry. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>No-op unless <computeroutput>NEOFOAM_FULL_DUMP=1</computeroutput>.</para>
+<para>Compare this dump rank-by-rank between a CPU-NeoFOAM run and a GPU-NeoFOAM run to localise interior-vs-boundary differences at every PISO checkpoint.</para>
+<para>Output: processor{rank}/dumps/&lt;step:04d&gt;_&lt;piso&gt;_&lt;nonOrth&gt;_&lt;checkpoint&gt;__&lt;name&gt;_internal.txt </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/fullDump.hpp" line="169" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/fullDump.hpp" bodystart="169" bodyend="186"/>
+      </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1ad5861effb6fb1aef7336a328841f324b" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename SurfaceField</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void NeoFOAM::dumpAllFaces</definition>
+        <argsstring>(const SurfaceField &amp;field, const std::string &amp;name, const std::string &amp;checkpoint, int stepIdx, int pisoIter, int nonOrthIter)</argsstring>
+        <name>dumpAllFaces</name>
+        <qualifiedname>NeoFOAM::dumpAllFaces</qualifiedname>
+        <param>
+          <type>const SurfaceField &amp;</type>
+          <declname>field</declname>
+        </param>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>name</declname>
+        </param>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>checkpoint</declname>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>stepIdx</declname>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>pisoIter</declname>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>nonOrthIter</declname>
+        </param>
+        <briefdescription>
+<para>Dump the FULL face data of a SurfaceField across the full face range (internal faces + non-proc boundary + proc tail) — one line per face. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Two segments are written into the same file separated by a comment:<itemizedlist>
+<listitem><para>lines <computeroutput>0 .. nTotalFaces-1</computeroutput> : internalVector (compressed face indexing)</para>
+</listitem><listitem><para>lines <computeroutput>nTotalFaces..end</computeroutput> : boundaryData().value() (boundary patch tail)</para>
+</listitem></itemizedlist>
+</para>
+<para>Both are needed because of the SurfaceField dual-storage invariant (internalVector[proc-tail] == boundaryData[proc-tail] LOCAL pre-exchange, != post-exchange where boundaryData holds the neighbour value).</para>
+<para>Compare this dump CPU vs GPU at each PISO checkpoint to see which segment diverges first — internal-face math, non-proc BC, or proc-tail exchange.</para>
+<para>No-op unless <computeroutput>NEOFOAM_FULL_DUMP=1</computeroutput>. No-op for VolumeField (we look at the internalVector().size() == nCells convention to detect).</para>
+<para>Output: processor{rank}/dumps/&lt;step:04d&gt;_&lt;piso&gt;_&lt;nonOrth&gt;_&lt;checkpoint&gt;__&lt;name&gt;_allFaces.txt </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/fullDump.hpp" line="214" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/fullDump.hpp" bodystart="214" bodyend="256"/>
+      </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1a22265b9805f9a652a5fce4365859182d" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename LinearSystem</type>
+          </param>
+          <param>
+            <type>typename InitialIterate</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void NeoFOAM::dumpDistLinearSystem</definition>
+        <argsstring>(const LinearSystem &amp;ls, const InitialIterate &amp;x0, const std::string &amp;name, const std::string &amp;checkpoint, int stepIdx, int pisoIter, int nonOrthIter)</argsstring>
+        <name>dumpDistLinearSystem</name>
+        <qualifiedname>NeoFOAM::dumpDistLinearSystem</qualifiedname>
+        <param>
+          <type>const LinearSystem &amp;</type>
+          <declname>ls</declname>
+        </param>
+        <param>
+          <type>const InitialIterate &amp;</type>
+          <declname>x0</declname>
+        </param>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>name</declname>
+        </param>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>checkpoint</declname>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>stepIdx</declname>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>pisoIter</declname>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>nonOrthIter</declname>
+        </param>
+        <briefdescription>
+<para>Dump the <emphasis>rank-local block</emphasis> of a distributed LinearSystem in CSR form, the rhs and the initial iterate, AND the row partitioning needed to rebuild a distributed matrix in <computeroutput>tools/ginkgo-standalone-cg/</computeroutput>. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Files produced (per rank, per call site): &lt;prefix&gt;__&lt;name&gt;_A_rowptr.txt — local CSR row offsets (size nLocalRows + 1) &lt;prefix&gt;__&lt;name&gt;_A_colidx.txt — local CSR column indices (size nnz_local) &lt;prefix&gt;__&lt;name&gt;_A_values.txt — local CSR values (size nnz_local) &lt;prefix&gt;__&lt;name&gt;_nonLocalA_values.txt — non-local COO values &lt;prefix&gt;__&lt;name&gt;_nonLocalA_colIdxs.txt — non-local COO column indices (global ghost IDs) &lt;prefix&gt;__&lt;name&gt;_b.txt — rhs (size nLocalRows) &lt;prefix&gt;__&lt;name&gt;_x0.txt — initial iterate (size nLocalRows) &lt;prefix&gt;__&lt;name&gt;_partition.txt — single line &quot;&lt;rank&gt; &lt;nProcs&gt; &lt;nLocalRows&gt; &lt;globalRowStart&gt;&quot;</para>
+<para>The row partitioning is range-partition style and is constructed via MPI_Exscan over <computeroutput>nLocalRows</computeroutput> so the standalone Ginkgo test can rebuild a distributed <computeroutput>gko::experimental::distributed::Matrix</computeroutput> from these files alone.</para>
+<para>No-op unless <computeroutput>NEOFOAM_FULL_DUMP=1</computeroutput>. Call AFTER <computeroutput><ref refid="classNeoFOAM_1_1PDESolver_1a8aef9ec9ddbd7e1dcb0f283cb6ad2dba" kindref="member">PDESolver::assemble()</ref></computeroutput> / <computeroutput>PDESolver::assemble(rhs)</computeroutput> so the LinearSystem is fully populated.</para>
+<para>For VolumeField&lt;scalar&gt; systems the values are scalar; for Vec3-valued systems they are Vec3 (one row per Vec3 component-wise, dumped as a vector). </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/fullDump.hpp" line="289" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/fullDump.hpp" bodystart="289" bodyend="389"/>
+      </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1aae576d5d7ed0f683fd42cb056c9add92" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void NeoFOAM::dumpGeometry</definition>
+        <argsstring>(const NeoN::UnstructuredMesh &amp;mesh)</argsstring>
+        <name>dumpGeometry</name>
+        <qualifiedname>NeoFOAM::dumpGeometry</qualifiedname>
+        <param>
+          <type>const NeoN::UnstructuredMesh &amp;</type>
+          <declname>mesh</declname>
+        </param>
+        <briefdescription>
+<para>Dump per-rank mesh geometry — written once. Idempotent (re-writes are harmless and produce identical output). </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Files (under processor{rank}/dumps/): geometry_sf.txt — internal face area vectors (size nInternalFaces) geometry_cf.txt — internal face centres (size nInternalFaces) geometry_faceCells.txt — boundary faceCells map (compressed) (size nBoundaryFaces + nProcFaces) geometry_bm_sf.txt — boundary face area vectors (compressed) geometry_bm_magSf.txt — boundary face magnitudes (compressed) geometry_bm_cf.txt — boundary face centres (compressed) geometry_bm_deltaCoeffs.txt — boundary face delta coefficients (compressed) geometry_bm_weights.txt — boundary face interpolation weights (compressed)</para>
+<para>Useful when comparing CPU and GPU runs: identical geometry is a precondition for matching the assembled LinearSystem coefficients.</para>
+<para>No-op unless <computeroutput>NEOFOAM_FULL_DUMP=1</computeroutput>. </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/fullDump.hpp" line="415" column="13" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/fullDump.hpp" bodystart="415" bodyend="436"/>
+      </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1a36069e5773094d195733fe27f592abea" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void NeoFOAM::dumpProcMeta</definition>
+        <argsstring>(const NeoN::UnstructuredMesh &amp;mesh)</argsstring>
+        <name>dumpProcMeta</name>
+        <qualifiedname>NeoFOAM::dumpProcMeta</qualifiedname>
+        <param>
+          <type>const NeoN::UnstructuredMesh &amp;</type>
+          <declname>mesh</declname>
+        </param>
+        <briefdescription>
+<para>Dump per-rank meta: nCells, range-partition row offset, MPI size, count and list of proc-patch neighbour ranks. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Single-line + tabular content (one entry per line after header), one file per rank:</para>
+<para>processor{rank}/dumps/proc_meta.txt</para>
+<para>Contents:</para>
+<para>rank &lt;r&gt; nProcs </para>
+<para>nCells <computeroutput> nInternalFaces &lt;if&gt; nBoundaryFaces &lt;bf&gt; nProcBoundaryPatches &lt;pp&gt; nProcBoundaryFaces &lt;pf&gt; globalRowStart &lt;g&gt; # computed via MPI_Exscan over nCells (range partition) globalNCells &lt;total&gt; neighbourRanks &lt;r0&gt; &lt;r1&gt; ...</computeroutput></para>
+<para><computeroutput>Consumed by <computeroutput>tools/ginkgo-standalone-cg/</computeroutput> to rebuild the distributed row-partition for a Ginkgo replay of the dumped LinearSystem.</computeroutput></para>
+<para><computeroutput>No-op unless <computeroutput>NEOFOAM_FULL_DUMP=1</computeroutput>. </computeroutput></para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/fullDump.hpp" line="470" column="13" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/fullDump.hpp" bodystart="470" bodyend="520"/>
+      </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1a553d8232134c9a7761f69ca5e61b41e0" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
           <param>

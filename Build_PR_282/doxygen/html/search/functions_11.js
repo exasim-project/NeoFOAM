@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['write_0',['write',['../namespaceNeoFOAM.html#a0fdc041fbcfcb89b3d2f87395606b3c7',1,'NeoFOAM::write(const NeoN::scalarVector &amp;sf, const Foam::fvMesh &amp;mesh, const std::string fieldName)'],['../namespaceNeoFOAM.html#a74bbfc6d5d7a681b4737ae8b42916d5b',1,'NeoFOAM::write(const NeoN::Vector&lt; NeoN::Vec3 &gt; &amp;sf, const Foam::fvMesh &amp;mesh, const std::string fieldName)'],['../namespaceNeoFOAM.html#ab761525a35b5b6bb313c2c67c053211a',1,'NeoFOAM::write(const fvcc::VolumeField&lt; NeoN::scalar &gt; &amp;volField, const Foam::fvMesh &amp;mesh)'],['../namespaceNeoFOAM.html#ac90ca3a810facf8e02d279ef402ecc68',1,'NeoFOAM::write(const fvcc::VolumeField&lt; NeoN::Vec3 &gt; &amp;volField, const Foam::fvMesh &amp;mesh)']]]
+  ['valuesmatch_0',['valuesmatch',['../namespaceNeoFOAM_1_1detail.html#a6b2ab34117463c1287b75eddb4f53c27',1,'NeoFOAM::detail::valuesMatch(NeoN::scalar a, NeoN::scalar b, double tol)'],['../namespaceNeoFOAM_1_1detail.html#a1d8a5f61b3600d1641b94aa9e2be3ac7',1,'NeoFOAM::detail::valuesMatch(NeoN::Vec3 a, NeoN::Vec3 b, double tol)']]]
 ];

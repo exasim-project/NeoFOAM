@@ -1,12 +1,19 @@
 var searchData=
 [
-  ['ddtscheme_0',['ddtScheme',['../classNeoFOAM_1_1PDESolver.html#a86cbd7e62f99eb30d6e6466ebc6b7be2',1,'NeoFOAM::PDESolver']]],
-  ['dumpfulllinearsystem_1',['dumpFullLinearSystem',['../namespaceNeoFOAM.html#ab460fb58f75ff6a97965d20939d253e8',1,'NeoFOAM']]],
-  ['dumphostvector_2',['dumpHostVector',['../namespaceNeoFOAM.html#a1797b5a1be62412b9bf496d7b0b1fb78',1,'NeoFOAM']]],
-  ['dumpnonlocalmatrixvalues_3',['dumpNonLocalMatrixValues',['../namespaceNeoFOAM.html#a56ea9bf5b60a36355083a55d52918534',1,'NeoFOAM']]],
-  ['dumpprocfaces_4',['dumpProcFaces',['../namespaceNeoFOAM.html#a952fda4b1d9489082c71db343566c799',1,'NeoFOAM']]],
-  ['dumpprocownerinternal_5',['dumpProcOwnerInternal',['../namespaceNeoFOAM.html#a8c32c11fc067e607968a6bdd51508a5c',1,'NeoFOAM']]],
-  ['dumprow_6',['dumprow',['../namespaceNeoFOAM_1_1detail.html#a09be5a178b7d38074142bed86f530591',1,'NeoFOAM::detail::dumpRow(std::FILE *f, int patch, int face, NeoN::scalar v)'],['../namespaceNeoFOAM_1_1detail.html#a4fe24fb4ad9cc62aeb553142e530402e',1,'NeoFOAM::detail::dumpRow(std::FILE *f, int patch, int face, NeoN::Vec3 v)']]],
-  ['dumpvector_7',['dumpVector',['../namespaceNeoFOAM.html#aeb2f97ba2d1b15705ceffa3a17d40781',1,'NeoFOAM']]],
-  ['dumpvectorrow_8',['dumpvectorrow',['../namespaceNeoFOAM_1_1detail.html#a27bf96c8382d8bcdfa3c13e9f5ba0acd',1,'NeoFOAM::detail::dumpVectorRow(std::FILE *f, std::size_t i, NeoN::scalar v)'],['../namespaceNeoFOAM_1_1detail.html#a5e7304d375cc41ccc3b302667f13570d',1,'NeoFOAM::detail::dumpVectorRow(std::FILE *f, std::size_t i, NeoN::Vec3 v)'],['../namespaceNeoFOAM_1_1detail.html#adbaf9aa72dbecae93cacba1d9cf8ca99',1,'NeoFOAM::detail::dumpVectorRow(std::FILE *f, std::size_t i, Integral v)']]]
+  ['checkentrytype_0',['checkEntryType',['../namespaceNeoFOAM.html#a59b79053c26ad967a2ac57d1e4d0b9bb',1,'NeoFOAM']]],
+  ['checkprocfaceconsistency_1',['checkProcFaceConsistency',['../namespaceNeoFOAM.html#a553d8232134c9a7761f69ca5e61b41e0',1,'NeoFOAM']]],
+  ['computenboundaryfaces_2',['computeNBoundaryFaces',['../namespaceNeoFOAM.html#ace35b46c775da4f108a8badb0e6186da',1,'NeoFOAM']]],
+  ['computeoffset_3',['computeOffset',['../namespaceNeoFOAM.html#a62f928cde50543e956837887cd78fc2e',1,'NeoFOAM']]],
+  ['computerau_4',['computeRAU',['../namespaceNeoFOAM.html#a1be6b4e6d34b984c97e0bb2d6f1f203a',1,'NeoFOAM']]],
+  ['computerauandhbya_5',['computeRAUandHByA',['../namespaceNeoFOAM.html#a5e7536121d9a45374ff8b89da6ffa683',1,'NeoFOAM']]],
+  ['constfrommany_6',['constFromMany',['../namespaceNeoFOAM.html#a999cf2f9840de1da0b4265f93d4a6006',1,'NeoFOAM']]],
+  ['constrainhbya_7',['constrainHbyA',['../namespaceNeoFOAM.html#a386425b9e39dc89773b9248909cf4139',1,'NeoFOAM']]],
+  ['constructandregister_8',['constructAndRegister',['../namespaceNeoFOAM.html#a48fbbbb3755e34d928cf0d189532d93c',1,'NeoFOAM']]],
+  ['constructfrom_9',['constructFrom',['../namespaceNeoFOAM.html#ab7276ff683225b6140acfa56618926b5',1,'NeoFOAM']]],
+  ['convert_10',['convert',['../namespaceNeoFOAM.html#a6ec00844dad3c9dc8a493e026a75c5f8',1,'NeoFOAM::convert(const Foam::word &amp;in)'],['../namespaceNeoFOAM.html#ae5529700fe31e6531dc129ac14ad3966',1,'NeoFOAM::convert(const NeoN::Vec3 &amp;in)'],['../namespaceNeoFOAM.html#a75a914fbbb00d2f6a71272c9a1b85b43',1,'NeoFOAM::convert(const Foam::dictionary dict)'],['../namespaceNeoFOAM.html#a26fb8ceed319cfbb4f1b417d8f714ac9',1,'NeoFOAM::convert(const Foam::label &amp;in)'],['../namespaceNeoFOAM.html#ac1ff3b3a6fdd4f5fd318f839d55c37bb',1,'NeoFOAM::convert(const Foam::ITstream &amp;in)'],['../namespaceNeoFOAM.html#ad1260c29740a3affa838a7e57a2d71b9',1,'NeoFOAM::convert(const Foam::scalar &amp;in)'],['../namespaceNeoFOAM.html#af69b228bd9e492814da093da0a51d1ac',1,'NeoFOAM::convert(const Foam::vector &amp;in)']]],
+  ['copyimpl_11',['copyImpl',['../namespaceNeoFOAM_1_1detail.html#aaf277cdfa64f90d5470e3b9d751249af',1,'NeoFOAM::detail']]],
+  ['createadapterruntime_12',['createadapterruntime',['../namespaceNeoFOAM.html#aa712c3e1651e243f84deb034fe0e42ec',1,'NeoFOAM::createAdapterRunTime(const Foam::Time &amp;runTime, const NeoN::Executor exec)'],['../namespaceNeoFOAM.html#a070bec2a3a31c4ed6c81b2babb1350a8',1,'NeoFOAM::createAdapterRunTime(const Foam::Time &amp;runTime)']]],
+  ['createcommunicationpattern_13',['createCommunicationPattern',['../namespaceNeoFOAM.html#a5517961b8549d1c932dc7a0fa29e3de0',1,'NeoFOAM']]],
+  ['createexecutor_14',['createexecutor',['../namespaceNeoFOAM.html#a2d15e0c07e7e714cd7cb24248c0e0a64',1,'NeoFOAM::createExecutor(const Foam::dictionary &amp;dict)'],['../namespaceNeoFOAM.html#ac77aa23b184bcb66d69edc48540b1892',1,'NeoFOAM::createExecutor(const Foam::word &amp;execName)']]],
+  ['createmesh_15',['createmesh',['../namespaceNeoFOAM.html#ac60b005cd9f9140205f676b9953615e4',1,'NeoFOAM::createMesh(const NeoN::Executor &amp;exec, const Foam::Time &amp;runTime)'],['../namespaceNeoFOAM.html#a70f3fbdfd753d2672cd8c017f759e7f8',1,'NeoFOAM::createMesh(const Foam::Time &amp;runTime)']]]
 ];

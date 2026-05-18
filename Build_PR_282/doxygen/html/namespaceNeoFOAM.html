@@ -170,6 +170,26 @@ Functions</h2></td></tr>
 <tr class="separator:af3b37c9dbbd37df8a0849a0f383f06d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae5529700fe31e6531dc129ac14ad3966" id="r_ae5529700fe31e6531dc129ac14ad3966"><td class="memItemLeft" align="right" valign="top">Foam::vector&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#ae5529700fe31e6531dc129ac14ad3966">convert</a> (const NeoN::Vec3 &amp;in)</td></tr>
 <tr class="separator:ae5529700fe31e6531dc129ac14ad3966"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7db520a68a742fa01b65d00df73db7bf" id="r_a7db520a68a742fa01b65d00df73db7bf"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#a7db520a68a742fa01b65d00df73db7bf">fullDumpEnabled</a> ()</td></tr>
+<tr class="separator:a7db520a68a742fa01b65d00df73db7bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac9b00c76b459e0bb5b0c0cda7a620874" id="r_ac9b00c76b459e0bb5b0c0cda7a620874"><td class="memTemplParams" colspan="2">template&lt;typename Field &gt; </td></tr>
+<tr class="memitem:ac9b00c76b459e0bb5b0c0cda7a620874"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#ac9b00c76b459e0bb5b0c0cda7a620874">dumpInternal</a> (const Field &amp;field, const std::string &amp;name, const std::string &amp;checkpoint, int stepIdx, int pisoIter, int nonOrthIter)</td></tr>
+<tr class="memdesc:ac9b00c76b459e0bb5b0c0cda7a620874"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dump the FULL internalVector of a Volume/Surface field — one entry per cell (Volume) or per face (Surface). One line per entry.  <br /></td></tr>
+<tr class="separator:ac9b00c76b459e0bb5b0c0cda7a620874"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad5861effb6fb1aef7336a328841f324b" id="r_ad5861effb6fb1aef7336a328841f324b"><td class="memTemplParams" colspan="2">template&lt;typename SurfaceField &gt; </td></tr>
+<tr class="memitem:ad5861effb6fb1aef7336a328841f324b"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#ad5861effb6fb1aef7336a328841f324b">dumpAllFaces</a> (const SurfaceField &amp;field, const std::string &amp;name, const std::string &amp;checkpoint, int stepIdx, int pisoIter, int nonOrthIter)</td></tr>
+<tr class="memdesc:ad5861effb6fb1aef7336a328841f324b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dump the FULL face data of a SurfaceField across the full face range (internal faces + non-proc boundary + proc tail) — one line per face.  <br /></td></tr>
+<tr class="separator:ad5861effb6fb1aef7336a328841f324b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a22265b9805f9a652a5fce4365859182d" id="r_a22265b9805f9a652a5fce4365859182d"><td class="memTemplParams" colspan="2">template&lt;typename LinearSystem , typename InitialIterate &gt; </td></tr>
+<tr class="memitem:a22265b9805f9a652a5fce4365859182d"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#a22265b9805f9a652a5fce4365859182d">dumpDistLinearSystem</a> (const LinearSystem &amp;ls, const InitialIterate &amp;x0, const std::string &amp;name, const std::string &amp;checkpoint, int stepIdx, int pisoIter, int nonOrthIter)</td></tr>
+<tr class="memdesc:a22265b9805f9a652a5fce4365859182d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dump the <em>rank-local block</em> of a distributed LinearSystem in CSR form, the rhs and the initial iterate, AND the row partitioning needed to rebuild a distributed matrix in <code>tools/ginkgo-standalone-cg/</code>.  <br /></td></tr>
+<tr class="separator:a22265b9805f9a652a5fce4365859182d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aae576d5d7ed0f683fd42cb056c9add92" id="r_aae576d5d7ed0f683fd42cb056c9add92"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#aae576d5d7ed0f683fd42cb056c9add92">dumpGeometry</a> (const NeoN::UnstructuredMesh &amp;mesh)</td></tr>
+<tr class="memdesc:aae576d5d7ed0f683fd42cb056c9add92"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dump per-rank mesh geometry — written once. Idempotent (re-writes are harmless and produce identical output).  <br /></td></tr>
+<tr class="separator:aae576d5d7ed0f683fd42cb056c9add92"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a36069e5773094d195733fe27f592abea" id="r_a36069e5773094d195733fe27f592abea"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#a36069e5773094d195733fe27f592abea">dumpProcMeta</a> (const NeoN::UnstructuredMesh &amp;mesh)</td></tr>
+<tr class="memdesc:a36069e5773094d195733fe27f592abea"><td class="mdescLeft">&#160;</td><td class="mdescRight">Dump per-rank meta: nCells, range-partition row offset, MPI size, count and list of proc-patch neighbour ranks.  <br /></td></tr>
+<tr class="separator:a36069e5773094d195733fe27f592abea"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a553d8232134c9a7761f69ca5e61b41e0" id="r_a553d8232134c9a7761f69ca5e61b41e0"><td class="memTemplParams" colspan="2">template&lt;typename Field &gt; </td></tr>
 <tr class="memitem:a553d8232134c9a7761f69ca5e61b41e0"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#a553d8232134c9a7761f69ca5e61b41e0">checkProcFaceConsistency</a> (const Field &amp;field, const std::string &amp;label, double tolerance=1e-12, <a class="el" href="namespaceNeoFOAM.html#a519d51d486c56905acac95c3c19f40b8">SignConvention</a> sign=<a class="el" href="namespaceNeoFOAM.html#a519d51d486c56905acac95c3c19f40b8af5f286e73bda105e538310b3190f75c5">SignConvention::Equal</a>)</td></tr>
 <tr class="memdesc:a553d8232134c9a7761f69ca5e61b41e0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Assert that proc-face boundary values are consistent across ranks.  <br /></td></tr>
@@ -925,6 +945,140 @@ template&lt;class FoamFieldType &gt; </div>
 
 </div>
 </div>
+<a id="ad5861effb6fb1aef7336a328841f324b" name="ad5861effb6fb1aef7336a328841f324b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad5861effb6fb1aef7336a328841f324b">&#9670;&#160;</a></span>dumpAllFaces()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename SurfaceField &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">void NeoFOAM::dumpAllFaces </td>
+          <td>(</td>
+          <td class="paramtype">const SurfaceField &amp;&#160;</td>
+          <td class="paramname"><em>field</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>checkpoint</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>stepIdx</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>pisoIter</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>nonOrthIter</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Dump the FULL face data of a SurfaceField across the full face range (internal faces + non-proc boundary + proc tail) — one line per face. </p>
+<p>Two segments are written into the same file separated by a comment:</p><ul>
+<li>lines <code>0 .. nTotalFaces-1</code> : internalVector (compressed face indexing)</li>
+<li>lines <code>nTotalFaces..end</code> : boundaryData().value() (boundary patch tail)</li>
+</ul>
+<p>Both are needed because of the SurfaceField dual-storage invariant (internalVector[proc-tail] == boundaryData[proc-tail] LOCAL pre-exchange, != post-exchange where boundaryData holds the neighbour value).</p>
+<p>Compare this dump CPU vs GPU at each PISO checkpoint to see which segment diverges first — internal-face math, non-proc BC, or proc-tail exchange.</p>
+<p>No-op unless <code>NEOFOAM_FULL_DUMP=1</code>. No-op for VolumeField (we look at the internalVector().size() == nCells convention to detect).</p>
+<p>Output: processor{rank}/dumps/&lt;step:04d&gt;_&lt;piso&gt;_&lt;nonOrth&gt;_&lt;checkpoint&gt;__&lt;name&gt;_allFaces.txt </p>
+
+<p class="definition">Definition at line <a class="el" href="fullDump_8hpp_source.html#l00214">214</a> of file <a class="el" href="fullDump_8hpp_source.html">fullDump.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a22265b9805f9a652a5fce4365859182d" name="a22265b9805f9a652a5fce4365859182d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a22265b9805f9a652a5fce4365859182d">&#9670;&#160;</a></span>dumpDistLinearSystem()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename LinearSystem , typename InitialIterate &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">void NeoFOAM::dumpDistLinearSystem </td>
+          <td>(</td>
+          <td class="paramtype">const LinearSystem &amp;&#160;</td>
+          <td class="paramname"><em>ls</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const InitialIterate &amp;&#160;</td>
+          <td class="paramname"><em>x0</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>checkpoint</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>stepIdx</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>pisoIter</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>nonOrthIter</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Dump the <em>rank-local block</em> of a distributed LinearSystem in CSR form, the rhs and the initial iterate, AND the row partitioning needed to rebuild a distributed matrix in <code>tools/ginkgo-standalone-cg/</code>. </p>
+<p>Files produced (per rank, per call site): &lt;prefix&gt;__&lt;name&gt;_A_rowptr.txt — local CSR row offsets (size nLocalRows + 1) &lt;prefix&gt;__&lt;name&gt;_A_colidx.txt — local CSR column indices (size nnz_local) &lt;prefix&gt;__&lt;name&gt;_A_values.txt — local CSR values (size nnz_local) &lt;prefix&gt;__&lt;name&gt;_nonLocalA_values.txt — non-local COO values &lt;prefix&gt;__&lt;name&gt;_nonLocalA_colIdxs.txt — non-local COO column indices (global ghost IDs) &lt;prefix&gt;__&lt;name&gt;_b.txt — rhs (size nLocalRows) &lt;prefix&gt;__&lt;name&gt;_x0.txt — initial iterate (size nLocalRows) &lt;prefix&gt;__&lt;name&gt;_partition.txt — single line "&lt;rank&gt; &lt;nProcs&gt; &lt;nLocalRows&gt; &lt;globalRowStart&gt;"</p>
+<p>The row partitioning is range-partition style and is constructed via MPI_Exscan over <code>nLocalRows</code> so the standalone Ginkgo test can rebuild a distributed <code>gko::experimental::distributed::Matrix</code> from these files alone.</p>
+<p>No-op unless <code>NEOFOAM_FULL_DUMP=1</code>. Call AFTER <code><a class="el" href="classNeoFOAM_1_1PDESolver.html#a8aef9ec9ddbd7e1dcb0f283cb6ad2dba" title="assemble the linear system owned by the solver based on the current expression">PDESolver::assemble()</a></code> / <code>PDESolver::assemble(rhs)</code> so the LinearSystem is fully populated.</p>
+<p>For VolumeField&lt;scalar&gt; systems the values are scalar; for Vec3-valued systems they are Vec3 (one row per Vec3 component-wise, dumped as a vector). </p>
+
+<p class="definition">Definition at line <a class="el" href="fullDump_8hpp_source.html#l00289">289</a> of file <a class="el" href="fullDump_8hpp_source.html">fullDump.hpp</a>.</p>
+
+</div>
+</div>
 <a id="ab460fb58f75ff6a97965d20939d253e8" name="ab460fb58f75ff6a97965d20939d253e8"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ab460fb58f75ff6a97965d20939d253e8">&#9670;&#160;</a></span>dumpFullLinearSystem()</h2>
 
@@ -1002,6 +1156,39 @@ template&lt;typename LinearSystem , typename Vector &gt; </div>
 
 </div>
 </div>
+<a id="aae576d5d7ed0f683fd42cb056c9add92" name="aae576d5d7ed0f683fd42cb056c9add92"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aae576d5d7ed0f683fd42cb056c9add92">&#9670;&#160;</a></span>dumpGeometry()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void NeoFOAM::dumpGeometry </td>
+          <td>(</td>
+          <td class="paramtype">const NeoN::UnstructuredMesh &amp;&#160;</td>
+          <td class="paramname"><em>mesh</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Dump per-rank mesh geometry — written once. Idempotent (re-writes are harmless and produce identical output). </p>
+<p>Files (under processor{rank}/dumps/): geometry_sf.txt — internal face area vectors (size nInternalFaces) geometry_cf.txt — internal face centres (size nInternalFaces) geometry_faceCells.txt — boundary faceCells map (compressed) (size nBoundaryFaces + nProcFaces) geometry_bm_sf.txt — boundary face area vectors (compressed) geometry_bm_magSf.txt — boundary face magnitudes (compressed) geometry_bm_cf.txt — boundary face centres (compressed) geometry_bm_deltaCoeffs.txt — boundary face delta coefficients (compressed) geometry_bm_weights.txt — boundary face interpolation weights (compressed)</p>
+<p>Useful when comparing CPU and GPU runs: identical geometry is a precondition for matching the assembled LinearSystem coefficients.</p>
+<p>No-op unless <code>NEOFOAM_FULL_DUMP=1</code>. </p>
+
+<p class="definition">Definition at line <a class="el" href="fullDump_8hpp_source.html#l00415">415</a> of file <a class="el" href="fullDump_8hpp_source.html">fullDump.hpp</a>.</p>
+
+</div>
+</div>
 <a id="a1797b5a1be62412b9bf496d7b0b1fb78" name="a1797b5a1be62412b9bf496d7b0b1fb78"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a1797b5a1be62412b9bf496d7b0b1fb78">&#9670;&#160;</a></span>dumpHostVector()</h2>
 
@@ -1057,6 +1244,67 @@ template&lt;typename T &gt; </div>
 <p>Dump a host-side std::vector (e.g. commPattern.sendCounts / recvIdx). </p>
 
 <p class="definition">Definition at line <a class="el" href="procFaceDump_8hpp_source.html#l00319">319</a> of file <a class="el" href="procFaceDump_8hpp_source.html">procFaceDump.hpp</a>.</p>
+
+</div>
+</div>
+<a id="ac9b00c76b459e0bb5b0c0cda7a620874" name="ac9b00c76b459e0bb5b0c0cda7a620874"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac9b00c76b459e0bb5b0c0cda7a620874">&#9670;&#160;</a></span>dumpInternal()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename Field &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">void NeoFOAM::dumpInternal </td>
+          <td>(</td>
+          <td class="paramtype">const Field &amp;&#160;</td>
+          <td class="paramname"><em>field</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>checkpoint</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>stepIdx</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>pisoIter</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>nonOrthIter</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Dump the FULL internalVector of a Volume/Surface field — one entry per cell (Volume) or per face (Surface). One line per entry. </p>
+<p>No-op unless <code>NEOFOAM_FULL_DUMP=1</code>.</p>
+<p>Compare this dump rank-by-rank between a CPU-NeoFOAM run and a GPU-NeoFOAM run to localise interior-vs-boundary differences at every PISO checkpoint.</p>
+<p>Output: processor{rank}/dumps/&lt;step:04d&gt;_&lt;piso&gt;_&lt;nonOrth&gt;_&lt;checkpoint&gt;__&lt;name&gt;_internal.txt </p>
+
+<p class="definition">Definition at line <a class="el" href="fullDump_8hpp_source.html#l00169">169</a> of file <a class="el" href="fullDump_8hpp_source.html">fullDump.hpp</a>.</p>
 
 </div>
 </div>
@@ -1183,6 +1431,43 @@ template&lt;typename Field &gt; </div>
 <p>Pair every call with the existing nf::checkProcFaceConsistency at the same checkpoint so the dump file traces the exact value sequence the consistency check sees. </p>
 
 <p class="definition">Definition at line <a class="el" href="procFaceDump_8hpp_source.html#l00079">79</a> of file <a class="el" href="procFaceDump_8hpp_source.html">procFaceDump.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a36069e5773094d195733fe27f592abea" name="a36069e5773094d195733fe27f592abea"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a36069e5773094d195733fe27f592abea">&#9670;&#160;</a></span>dumpProcMeta()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void NeoFOAM::dumpProcMeta </td>
+          <td>(</td>
+          <td class="paramtype">const NeoN::UnstructuredMesh &amp;&#160;</td>
+          <td class="paramname"><em>mesh</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Dump per-rank meta: nCells, range-partition row offset, MPI size, count and list of proc-patch neighbour ranks. </p>
+<p>Single-line + tabular content (one entry per line after header), one file per rank:</p>
+<p>processor{rank}/dumps/proc_meta.txt</p>
+<p>Contents:</p>
+<p>rank &lt;r&gt; nProcs </p>
+<p>nCells <code> nInternalFaces &lt;if&gt; nBoundaryFaces &lt;bf&gt; nProcBoundaryPatches &lt;pp&gt; nProcBoundaryFaces &lt;pf&gt; globalRowStart &lt;g&gt; # computed via MPI_Exscan over nCells (range partition) globalNCells &lt;total&gt; neighbourRanks &lt;r0&gt; &lt;r1&gt; ...</code></p>
+<p><code>Consumed by <code>tools/ginkgo-standalone-cg/</code> to rebuild the distributed row-partition for a Ginkgo replay of the dumped LinearSystem.</code></p>
+<p><code>No-op unless <code>NEOFOAM_FULL_DUMP=1</code>. </code></p>
+
+<p class="definition">Definition at line <a class="el" href="fullDump_8hpp_source.html#l00470">470</a> of file <a class="el" href="fullDump_8hpp_source.html">fullDump.hpp</a>.</p>
 
 </div>
 </div>
@@ -1403,6 +1688,34 @@ template&lt;typename FoamType &gt; </div>
 </div><div class="memdoc">
 
 <p class="definition">Definition at line <a class="el" href="readers_8hpp_source.html#l00022">22</a> of file <a class="el" href="readers_8hpp_source.html">readers.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a7db520a68a742fa01b65d00df73db7bf" name="a7db520a68a742fa01b65d00df73db7bf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7db520a68a742fa01b65d00df73db7bf">&#9670;&#160;</a></span>fullDumpEnabled()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool NeoFOAM::fullDumpEnabled </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>True when env var <code>NEOFOAM_FULL_DUMP</code> is set to a non-empty, non-"0" value. Cached on first call; lock-free thereafter. </p>
+
+<p class="definition">Definition at line <a class="el" href="fullDump_8hpp_source.html#l00051">51</a> of file <a class="el" href="fullDump_8hpp_source.html">fullDump.hpp</a>.</p>
 
 </div>
 </div>

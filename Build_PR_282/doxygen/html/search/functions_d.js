@@ -1,7 +1,8 @@
 var searchData=
 [
-  ['setdeltat_0',['setDeltaT',['../namespaceNeoFOAM.html#a39bc76acefb5a1dd3074b0feba5864eb',1,'NeoFOAM']]],
-  ['setreference_1',['setreference',['../classNeoFOAM_1_1PDESolver.html#aa632d298feb601ef802ba3b85b2dc8ed',1,'NeoFOAM::PDESolver::setReference()'],['../structNeoFOAM_1_1PDESolver_1_1SetReference.html#a8871e71d55b49e4309d2acc9207825dd',1,'NeoFOAM::PDESolver::SetReference::SetReference()']]],
-  ['solve_2',['solve',['../classNeoFOAM_1_1PDESolver.html#a0464b266cbae77cbfa7f4ffec79e6acb',1,'NeoFOAM::PDESolver::solve()'],['../classNeoFOAM_1_1PDESolver.html#a7f4464b4305040de5ace88df987c05df',1,'NeoFOAM::PDESolver::solve(dsl::SpatialOperator&lt; NeoN::Vec3 &gt; &amp;&amp;rhs)']]],
-  ['syncruntimes_3',['syncRunTimes',['../namespaceNeoFOAM.html#aff116721405a6ad86fee9675a3cc3156',1,'NeoFOAM']]]
+  ['readopenfoammesh_0',['readOpenFOAMMesh',['../namespaceNeoFOAM.html#afb828727f0f7b23418e94e1c464d9dae',1,'NeoFOAM']]],
+  ['readorcreate_1',['readOrCreate',['../namespaceNeoFOAM.html#ae3448b9356abfd01a14f812c7acffc7c',1,'NeoFOAM']]],
+  ['readsurfaceboundaryconditions_2',['readSurfaceBoundaryConditions',['../namespaceNeoFOAM.html#adb365cf8e725db6dbfc0a758c392e2b1',1,'NeoFOAM']]],
+  ['readvolboundaryconditions_3',['readVolBoundaryConditions',['../namespaceNeoFOAM.html#a6cb4d89d1e44667e5a66f5119bad9206',1,'NeoFOAM']]],
+  ['reportcontinuityerror_4',['reportContinuityError',['../namespaceNeoFOAM.html#a216c99c971b9acb00fbd8ff36d9f2ee9',1,'NeoFOAM']]]
 ];
