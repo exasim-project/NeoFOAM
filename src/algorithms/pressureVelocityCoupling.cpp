@@ -178,7 +178,10 @@ void updateFaceVelocity(
     // here would mix sign conventions, so we derive bvalue directly from iPhi.
     const auto nTotalFaces = phi.internalVector().size();
     const auto nlValues = ls.nonLocalMatrix().values().view();
-    const auto nlRows = ls.nonLocalMatrix().rowOffs().view();
+    // In the new CooSparsityPattern (post-CooSparsity merge) the per-nnz row
+    // indices live in rowIdxs(); rowOffs() is a CSR-style derived array. The
+    // proc-face loop needs the per-nnz owner cell, hence rowIdxs().
+    const auto nlRows = ls.nonLocalMatrix().sparsity()->rowIdxs().view();
     const auto pBoundV = p.boundaryData().value().view();
 
     NeoN::parallelFor(
