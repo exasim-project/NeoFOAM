@@ -6,6 +6,7 @@
 #include "NeoFOAM/NeoFOAM.hpp"
 #include "NeoFOAM/auxiliary/procFaceCheck.hpp"
 #include "NeoFOAM/auxiliary/procFaceDump.hpp"
+#include "NeoFOAM/auxiliary/fullDump.hpp"
 #include "NeoFOAM/auxiliary/continuityError.hpp"
 
 #include "fvCFD.H"
@@ -64,6 +65,15 @@ int main(int argc, char* argv[])
 
         auto commPattern = createCommunicationPattern(rt);
 
+        // FULL DUMP: one-shot geometry + per-rank meta. Step 0, written once.
+        //   Gated on NEOFOAM_FULL_DUMP=1 (no-op when unset). Captures sf,
+        //   magSf, cf, faceCells, deltaCoeffs, weights AND a per-rank
+        //   proc_meta.txt with the range-partition row offset that the
+        //   standalone Ginkgo CG reproducer (tools/ginkgo-standalone-cg/)
+        //   reads back to rebuild a distributed gko matrix from a dump tree.
+        nf::dumpGeometry(rt.nfMesh);
+        nf::dumpProcMeta(rt.nfMesh);
+
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
         NeoN::scalar cumulativeContErr = 0.0;
@@ -86,6 +96,10 @@ int main(int argc, char* argv[])
             );
             nf::dumpProcFaces(U,   "U",   "after_rotateOldTimes", stepIdx, 0, 0);  // DUMP
             nf::dumpProcFaces(phi, "phi", "after_rotateOldTimes", stepIdx, 0, 0);  // DUMP
+            // FULL DUMP: U + phi internal + all faces at the entry to the time step.
+            nf::dumpInternal(U,    "U",   "after_rotateOldTimes", stepIdx, 0, 0);
+            nf::dumpInternal(phi,  "phi", "after_rotateOldTimes", stepIdx, 0, 0);
+            nf::dumpAllFaces(phi,  "phi", "after_rotateOldTimes", stepIdx, 0, 0);
 
             auto [maxCoNum, meanCoNum] = fvcc::computeCoNum(phi, rt.dt);
             NeoN::Logging::info("Courant Number mean: {} max: {}", meanCoNum, maxCoNum);
@@ -149,6 +163,21 @@ int main(int argc, char* argv[])
                     0,
                     0
                 );
+
+                // FULL DUMP: distributed-form CSR + b + x0 + per-rank partition
+                //   for `tools/ginkgo-standalone-cg/` replay. This is THE input
+                //   Ginkgo's distributed CG receives — diff CPU vs GPU here to
+                //   localise: matrix assembly bug (A,b differ) vs Ginkgo bug
+                //   (A,b match but solver produces different x).
+                nf::dumpDistLinearSystem(
+                    rhsLS,
+                    U.internalVector(),
+                    "U",
+                    "before_UEqn_solve",
+                    stepIdx,
+                    0,
+                    0
+                );
             }
 
             if (piso.momentumPredictor())
@@ -165,6 +194,7 @@ int main(int argc, char* argv[])
                 nf::dumpVector(
                     U.internalVector(), "U_internal", "after_UEqn_solve", stepIdx, 0, 0
                 );
+                nf::dumpInternal(U, "U", "after_UEqn_solve", stepIdx, 0, 0);  // FULL DUMP
 
                 nf::dumpProcOwnerInternal(U, "U", "after_momentumSolve_preCorrectBC", stepIdx, 0, 0);
                 U.correctBoundaryConditions();
@@ -181,6 +211,7 @@ int main(int argc, char* argv[])
                 nf::dumpVector(
                     U.boundaryData().value(), "U_boundary", "after_U_correctBC", stepIdx, 0, 0
                 );
+                nf::dumpInternal(U, "U", "after_U_correctBC", stepIdx, 0, 0);  // FULL DUMP
 
                 nf::checkProcFaceConsistency(U, "U after momentumPredictor solve");
                 nf::dumpProcFaces(U, "U", "after_momentumPredictor", stepIdx, 0, 0);  // DUMP
@@ -196,6 +227,8 @@ int main(int argc, char* argv[])
                 nf::constrainHbyA(U, p, hByA);
                 nf::dumpProcFaces(crAU, "rAU",  "after_computeRAUandHByA", stepIdx, pisoIter, 0);  // DUMP
                 nf::dumpProcFaces(hByA, "hByA", "after_computeRAUandHByA", stepIdx, pisoIter, 0);  // DUMP
+                nf::dumpInternal(crAU, "rAU",  "after_computeRAUandHByA", stepIdx, pisoIter, 0);   // FULL
+                nf::dumpInternal(hByA, "hByA", "after_computeRAUandHByA", stepIdx, pisoIter, 0);   // FULL
 
                 nnfvcc::SurfaceField<NeoN::scalar> rAU =
                     fvcc::SurfaceInterpolation<NeoN::scalar>(
@@ -206,9 +239,11 @@ int main(int argc, char* argv[])
                         .interpolate(crAU);
                 rAU.name = "rAUf";
                 nf::dumpProcFaces(rAU, "rAUf", "after_rAU_interpolate", stepIdx, pisoIter, 0);  // DUMP
+                nf::dumpAllFaces(rAU, "rAUf", "after_rAU_interpolate", stepIdx, pisoIter, 0);  // FULL
 
                 auto phiHbyA = nf::flux(hByA) + rAU * fvcc::ddtFluxCorr(U, phi, rt.dt, ddtScheme);
                 nf::dumpProcFaces(phiHbyA, "phiHbyA", "after_phiHbyA_construct", stepIdx, pisoIter, 0);  // DUMP — KEY for suspect #1
+                nf::dumpAllFaces(phiHbyA, "phiHbyA", "after_phiHbyA_construct", stepIdx, pisoIter, 0);  // FULL
 
                 // TODO additionally missing
                 // Foam::adjustPhi(phiHbyA, U, p);
@@ -247,6 +282,20 @@ int main(int argc, char* argv[])
                         nonOrthIter
                     );
 
+                    // FULL DUMP: distributed-form CSR for pEqn — symmetric
+                    //   counterpart to the UEqn dump above. Same purpose:
+                    //   standalone Ginkgo CG reproducer reads this back to
+                    //   replay the exact solve.
+                    nf::dumpDistLinearSystem(
+                        pEqn.linearSystem(),
+                        p.internalVector(),
+                        "p",
+                        "before_pEqn_solve",
+                        stepIdx,
+                        pisoIter,
+                        nonOrthIter
+                    );
+
                     auto stats = pEqn.solve();
 
                     // DUMP: p.internalVector() right after Ginkgo solve.
@@ -259,6 +308,9 @@ int main(int argc, char* argv[])
                         pisoIter,
                         nonOrthIter
                     );
+                    nf::dumpInternal(
+                        p, "p", "after_pEqn_solve", stepIdx, pisoIter, nonOrthIter
+                    );  // FULL DUMP
 
                     p.correctBoundaryConditions();
 
@@ -279,6 +331,9 @@ int main(int argc, char* argv[])
                         pisoIter,
                         nonOrthIter
                     );
+                    nf::dumpInternal(
+                        p, "p", "after_p_correctBC", stepIdx, pisoIter, nonOrthIter
+                    );  // FULL DUMP
 
                     nf::checkProcFaceConsistency(p, "p after correctBC");
                     nf::dumpProcFaces(p, "p", "after_pSolve", stepIdx, pisoIter, nonOrthIter);  // DUMP
@@ -293,6 +348,7 @@ int main(int argc, char* argv[])
                             nf::SignConvention::FlipExpected
                         );
                         nf::dumpProcFaces(phi, "phi", "after_updateFaceVelocity", stepIdx, pisoIter, nonOrthIter);  // DUMP
+                        nf::dumpAllFaces(phi, "phi", "after_updateFaceVelocity", stepIdx, pisoIter, nonOrthIter);  // FULL
                     }
                 }
                 // [PISO-03] Continuity error
@@ -302,6 +358,8 @@ int main(int argc, char* argv[])
                 U.correctBoundaryConditions();
                 nf::checkProcFaceConsistency(U, "U after updateVelocity");
                 nf::dumpProcFaces(U, "U", "after_updateVelocity", stepIdx, pisoIter, 0);  // DUMP
+                nf::dumpInternal(U, "U",   "after_updateVelocity", stepIdx, pisoIter, 0);  // FULL
+                nf::dumpAllFaces(phi, "phi", "after_updateVelocity", stepIdx, pisoIter, 0); // FULL
             }
 
             runTime.write();
