@@ -196,15 +196,15 @@ std::vector<ValueType> solveLocalCG(
         static_cast<gko::size_type>(nLocalRows),
         static_cast<gko::size_type>(nLocalRows)
     };
-    auto host_csr = gko::matrix::Csr<ValueType, IndexType>::create(host_exec, host_dim);
-    host_csr->read(gko::matrix_data<ValueType, IndexType>::create_from_arrays(
+    auto host_csr = gko::matrix::Csr<ValueType, IndexType>::create(
+        host_exec,
         host_dim,
         gko::array<ValueType>(host_exec, values.begin(), values.end()),
         gko::array<IndexType>(host_exec, colIdx.begin(), colIdx.end()),
         gko::array<IndexType>(host_exec, rowPtr.begin(), rowPtr.end())
-    ));
+    );
 
-    auto A = gko::matrix::Csr<ValueType, IndexType>::create(exec);
+    auto A = gko::share(gko::matrix::Csr<ValueType, IndexType>::create(exec));
     A->copy_from(host_csr.get());
 
     auto bDim = gko::dim<2>{static_cast<gko::size_type>(nLocalRows), 1};
@@ -232,7 +232,8 @@ std::vector<ValueType> solveLocalCG(
         )
         .on(exec);
 
-    auto loggerStorage = gko::log::Convergence<ValueType>::create();
+    std::shared_ptr<gko::log::Convergence<ValueType>> loggerStorage =
+        gko::share(gko::log::Convergence<ValueType>::create());
     auto solver = solverFactory->generate(A);
     solver->add_logger(loggerStorage);
     solver->apply(b.get(), x.get());
