@@ -3,7 +3,6 @@
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
 from neofoam.framework.graph import (
-    NetworkxTopologicalSorter,
     build_dependency_digraph,
     validate_dependency_graph,
 )
@@ -33,8 +32,24 @@ def test_validate_dependency_graph_cycle():
     assert report.diagnostics[0].code == "cycle"
 
 
-def test_networkx_topological_sorter_orders_graph():
-    graph = build_dependency_digraph({"B": ["A"], "C": ["B"], "A": []})
+def test_validate_dependency_graph_valid_returns_empty_report():
+    report = validate_dependency_graph(
+        ["A", "B", "C"], {"A": [], "B": ["A"], "C": ["B"]}
+    )
 
-    order = NetworkxTopologicalSorter().solve(graph)
-    assert order == ["A", "B", "C"]
+    assert report.is_valid
+    assert report.diagnostics == ()
+
+
+def test_validate_dependency_graph_self_dependency():
+    report = validate_dependency_graph(["A"], {"A": ["A"]})
+
+    assert not report.is_valid
+    assert any(d.code == "cycle" for d in report.diagnostics)
+
+
+def test_build_dependency_digraph_edge_direction():
+    graph = build_dependency_digraph({"B": ["A"]})
+
+    assert graph.has_edge("A", "B")
+    assert not graph.has_edge("B", "A")

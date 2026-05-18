@@ -1,0 +1,38 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# SPDX-FileCopyrightText: 2026 NeoFOAM authors
+
+"""Topological ordering of init steps; optional pre-validation."""
+
+from __future__ import annotations
+
+from ...graph import NetworkxTopologicalSorter, TopologicalSorter
+from ..init_step import InitStep
+from .validation import InitializationGraphError, validate
+
+
+def _topological_sort(
+    lazy_inits: list[InitStep],
+    *,
+    validate_graph: bool = True,
+    sorter: TopologicalSorter | None = None,
+) -> list[InitStep]:
+    """Sort ``lazy_inits`` by their declared dependencies.
+
+    When ``validate_graph`` is true, the dependency graph is validated and
+    :class:`InitializationGraphError` is raised on the first failure. The
+    sorter defaults to :class:`NetworkxTopologicalSorter`.
+    """
+    if validate_graph:
+        report = validate(lazy_inits)
+        if not report.is_valid:
+            raise InitializationGraphError(report)
+
+    from ...graph.validation import _build_dependency_digraph
+
+    name_to_init = {li.name: li for li in lazy_inits}
+    graph = _build_dependency_digraph({li.name: li.depends_on for li in lazy_inits})
+    active_sorter = sorter or NetworkxTopologicalSorter()
+    sorted_names = active_sorter.sort(graph)
+
+    return [name_to_init[name] for name in sorted_names]

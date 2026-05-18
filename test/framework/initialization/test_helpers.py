@@ -6,10 +6,12 @@
 
 import pytest
 
+from neofoam.framework.initialization.execution.executor import execute_step
 from neofoam.framework.initialization.helpers import (
     field,
-    init,
+    lazy,
     model,
+    operator,
 )
 from neofoam.framework.initialization.init_step import InitStep
 
@@ -22,7 +24,8 @@ from neofoam.framework.initialization.init_step import InitStep
     [
         (field, "fields.", "fields"),
         (model, "models.", "models"),
-        (init, "", "resource"),
+        (operator, "operators.", "operators"),
+        (lazy, "", "resource"),
     ],
 )
 def test_helper_naming(helper, prefix, category):
@@ -34,7 +37,7 @@ def test_helper_naming(helper, prefix, category):
     assert result.depends_on == []
 
 
-@pytest.mark.parametrize("helper", [field, model, init])
+@pytest.mark.parametrize("helper", [field, model, operator, lazy])
 def test_helper_with_deps(helper):
     """All helpers pass through custom depends_on."""
     result = helper("X", create=lambda _ctx: 1, depends_on=["a", "b"])
@@ -43,8 +46,8 @@ def test_helper_with_deps(helper):
 
 def test_helper_execute():
     """Helpers produce executable InitStep objects."""
-    assert field("U", create=lambda _ctx: "velocity").execute({}) == "velocity"
-    assert init("mesh", create=lambda _ctx: "mesh_obj").execute({}) == "mesh_obj"
+    assert execute_step(field("U", create=lambda _ctx: "velocity"), {}) == "velocity"
+    assert execute_step(lazy("mesh", create=lambda _ctx: "mesh_obj"), {}) == "mesh_obj"
 
 
 # --- InitializerBuilder tests ---
@@ -67,29 +70,29 @@ def test_builder_add_methods(builder, method, expected_prefix, kwargs):
 
 def test_builder_add_resource(builder):
     """add_resource creates an unprefixed InitStep."""
-    builder.add_initializer("mesh", "mock_mesh")
+    builder.add_resource("mesh", "mock_mesh")
     inits = builder.build()
     assert len(inits) == 1
     assert inits[0].name == "mesh"
-    assert inits[0].execute({}) == "mock_mesh"
+    assert execute_step(inits[0], {}) == "mock_mesh"
 
 
 def test_builder_add_field_callable(builder):
     """add_field with callable value passes the callable through."""
     builder.add_field("p", depends_on=["mesh"], value=lambda _ctx: "computed")
-    assert builder.build()[0].execute({}) == "computed"
+    assert execute_step(builder.build()[0], {}) == "computed"
 
 
 def test_builder_add_model_callable(builder):
     """add_model with callable value passes the callable through."""
     builder.add_model("turb", value=lambda _ctx: "turb_inst")
-    assert builder.build()[0].execute({}) == "turb_inst"
+    assert execute_step(builder.build()[0], {}) == "turb_inst"
 
 
 def test_builder_chaining(builder):
     """All builder methods return self for chaining."""
     result = (
-        builder.add_initializer("mesh", "m")
+        builder.add_resource("mesh", "m")
         .add_field("U", depends_on=["mesh"], value=1)
         .add_model("algo", value=2)
     )
@@ -147,3 +150,14 @@ def test_builder_add_preserves_explicit_category(builder):
     li = InitStep("custom", initializer=lambda _ctx: 1, category="resource")
     builder.add(li)
     assert builder.build()[0].category == "resource"
+
+
+def test_builds_init_steps_protocol_matches_run_build(builder, mock_core_model):
+    """`BuildsInitSteps` Protocol matches objects exposing run_build()."""
+    from neofoam.framework.initialization.helpers import BuildsInitSteps
+
+    class NoRunBuild:
+        pass
+
+    assert isinstance(mock_core_model, BuildsInitSteps)
+    assert not isinstance(NoRunBuild(), BuildsInitSteps)

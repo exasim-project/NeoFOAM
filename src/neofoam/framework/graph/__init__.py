@@ -2,30 +2,61 @@
 #
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Shared graph utilities for DAG validation and ordering."""
+"""Shared graph utilities for DAG validation, ordering, and visualization.
 
-from .builder import build_dependency_digraph
-from .models import GraphDiagnostic, GraphValidationReport
-from .operations_dag import (
-    build_dag,
-    build_global_dag,
-    compute_nodes_order,
-    compute_steps_order,
+Solvers and models in NeoFOAM declare their work as :class:`Operation`
+objects with ``depends_on`` / ``before`` constraints. Before those
+operations can run, the framework needs to:
+
+1. Validate the dependency graph (no duplicates, no missing dependencies,
+   no cycles) — see :mod:`~neofoam.framework.graph.validation`.
+2. Resolve a topological order, respecting loop scopes and using
+   ``operation_number`` as a tie-breaker — see
+   :mod:`~neofoam.framework.graph.resolver`.
+3. Optionally render the resulting graph for diagnostics — see
+   :mod:`~neofoam.framework.graph.visualization`.
+
+The package exposes ten public symbols across four modules:
+
+- :class:`DAGResolver` — the main entry point; merges and orders
+  operations across loop scopes.
+- :class:`TopologicalSorter` (Protocol) and
+  :class:`NetworkxTopologicalSorter` (default impl) — the injection
+  seam for swapping the sort backend.
+- :func:`validate_dependency_graph`, :class:`GraphValidationReport`,
+  and :func:`build_dependency_digraph` — pre-resolution graph
+  validation and the underlying :class:`networkx.DiGraph` builder.
+- :class:`CyclicDependencyError`, :class:`MissingDependencyError` —
+  the two domain exceptions the resolver can raise.
+- :func:`dependency_dag`, :func:`digraph_to_pyvis_html` — compose
+  per-domain DAGs and render them to an interactive HTML page.
+
+See :doc:`/explanation/operations-and-the-dag` for the design
+rationale and where the resolver fits into the solver lifecycle.
+"""
+
+from .resolver import (
+    DAGResolver,
+    CyclicDependencyError,
+    MissingDependencyError,
 )
 from .sorter import NetworkxTopologicalSorter, TopologicalSorter
-from .validator import validate_dependency_graph
-from .visualization import digraph_to_pyvis_html
+from .validation import (
+    GraphValidationReport,
+    build_dependency_digraph,
+    validate_dependency_graph,
+)
+from .visualization import dependency_dag, digraph_to_pyvis_html
 
 __all__ = [
-    "GraphDiagnostic",
     "GraphValidationReport",
     "TopologicalSorter",
     "NetworkxTopologicalSorter",
+    "DAGResolver",
+    "CyclicDependencyError",
+    "MissingDependencyError",
     "build_dependency_digraph",
-    "build_dag",
-    "build_global_dag",
-    "compute_nodes_order",
-    "compute_steps_order",
+    "dependency_dag",
     "validate_dependency_graph",
     "digraph_to_pyvis_html",
 ]

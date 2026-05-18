@@ -8,11 +8,24 @@ Helper Functions for Lazy Initialization
 Provides convenience functions for creating InitStep objects with common patterns.
 """
 
-from typing import Callable, Any, List, Optional, Union
+from typing import Callable, Any, List, Optional, Protocol, Union, runtime_checkable
 from .init_step import InitStep, InitCategory
 
 
-def _make_init(
+@runtime_checkable
+class BuildsInitSteps(Protocol):
+    """Protocol matched by objects that contribute :class:`InitStep` lists.
+
+    Models / sub-systems implement ``run_build()`` to expose their
+    initialization steps to :class:`InitializerBuilder`. The Protocol gives
+    the contract a name (mypy can check it) and replaces the duck-typed
+    ``hasattr(item, "run_build")`` checks used elsewhere.
+    """
+
+    def run_build(self) -> List[InitStep]: ...
+
+
+def _make_lazy(
     prefix: Optional[str],
     category: InitCategory,
     name: str,
@@ -50,10 +63,34 @@ def field(
     Example:
         field("U", create=lambda ctx: create_vector_field(ctx["mesh"], U0), depends_on=["mesh"])
     """
-    return _make_init("fields", "fields", name, create, depends_on)
+    return _make_lazy("fields", "fields", name, create, depends_on)
 
 
-def init(
+def operator(
+    name: str,
+    create: Callable[[dict[str, Any]], Any],
+    depends_on: Optional[List[str]] = None,
+) -> InitStep:
+    """
+    Helper for creating operator lazy initializers.
+
+    Automatically prefixes name with "operators." and sets category.
+
+    Args:
+        name: Operator name (e.g., "div", "grad", "laplacian")
+        create: Function that creates the operator
+        depends_on: List of dependencies (default: [])
+
+    Returns:
+        InitStep for the operator
+
+    Example:
+        operator("div", create=lambda ctx: Divergence(ctx["mesh"]), depends_on=["mesh"])
+    """
+    return _make_lazy("operators", "operators", name, create, depends_on)
+
+
+def lazy(
     name: str,
     create: Callable[[dict[str, Any]], Any],
     depends_on: Optional[List[str]] = None,
@@ -75,7 +112,7 @@ def init(
     Example:
         lazy("mesh", create=lambda ctx: mesh)
     """
-    return _make_init(None, "resource", name, create, depends_on)
+    return _make_lazy(None, "resource", name, create, depends_on)
 
 
 def model(
@@ -99,7 +136,7 @@ def model(
     Example:
         model("transport", depends_on=["fields.U"], create=lambda ctx: ...)
     """
-    return _make_init("models", "models", name, create, depends_on)
+    return _make_lazy("models", "models", name, create, depends_on)
 
 
 class InitializerBuilder:
@@ -143,19 +180,19 @@ class InitializerBuilder:
             )
         return self
 
-    def add_initializer(self, name: str, value: Any) -> "InitializerBuilder":
+    def add_resource(self, name: str, value: Any) -> "InitializerBuilder":
         """
-        Add a initializer for mesh, domain, config, etc.).
+        Add a resource (mesh, domain, runtime, config, etc.).
 
         Args:
-            name: Initializer name
-            value: The initializer value (will be captured in lambda)
+            name: Resource name
+            value: The resource value (will be captured in lambda)
 
         Returns:
             Self for chaining
         """
         # Wrap in a zero-arg closure; default-arg capture avoids late-binding (P-2.5)
-        self.initializers.append(init(name, create=lambda _ctx: value))
+        self.initializers.append(lazy(name, create=lambda _ctx: value))
         return self
 
     def add_model(self, name: str, value: Any) -> "InitializerBuilder":
@@ -199,8 +236,8 @@ class InitializerBuilder:
             # Add the model itself
             self.add_model(name, model_instance)
 
-            # Add InitStep objects from run_build() if available
-            if hasattr(model_instance, "run_build"):
+            # Add InitStep objects from run_build() if available.
+            if isinstance(model_instance, BuildsInitSteps):
                 self.extend(model_instance.run_build())
 
         return self
@@ -261,7 +298,7 @@ class InitializerBuilder:
             Self for chaining
         """
         for m in optional_models:
-            if hasattr(m, "run_build"):
+            if isinstance(m, BuildsInitSteps):
                 self.extend(m.run_build())
         return self
 
