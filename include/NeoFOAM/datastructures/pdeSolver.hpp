@@ -203,6 +203,7 @@ public:
         const nfvcc::SurfaceField<double>& faceFlux,
         const nfvcc::VolumeField<ValueType>& phi,
         const nfvcc::SurfaceField<double>& gamma
+		bool doGpu
     )
     {
         const auto matIt = ls_.faceToMatrixAddress();
@@ -282,7 +283,7 @@ public:
         args[18] = (jl_value_t*)bValues;
         args[19] = (jl_value_t*)bRhs;
         jl_module_t* mod = (jl_module_t*)jl_eval_string("MinimalFVM");
-
+		auto funcName = 
         jl_function_t* func = jl_get_function(mod, "faceBasedAll");
 
         std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();

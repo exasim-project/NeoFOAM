@@ -7,6 +7,7 @@
 #include "common.hpp"
 #include "constrainHbyA.H"
 #include <julia.h>
+#include <fmt/core.h>
 JULIA_DEFINE_FAST_TLS; // only define this once, in an executable (not in a
 // shared library) if you want fast code.
 namespace fvc = Foam::fvc;
@@ -40,8 +41,16 @@ TEST_CASE("Julia Momentum")
 
     // std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
-    std::string path = std::format("include(\"{}\")", JULIA_MODULE_INIT);
-
+    //std::string path = std::format("include(\"{}\")", JULIA_MODULE_INIT);
+    std::string pre = "include(\""; 
+    std::string inf = JULIA_MODULE_INIT;
+    std::string suf = "\")";
+    std::string path = pre + inf + suf;
+    auto tst = fmt::format(
+					fmt::runtime("include(\"{}\")"),
+					JULIA_MODULE_INIT
+	); 
+	std::cout << "path to init: "<< path << std::endl;
     jl_eval_string(path.c_str());
 
     if (jl_exception_occurred())
@@ -109,14 +118,14 @@ TEST_CASE("Julia Momentum")
         );
 
         nf::PDESolver<NeoN::Vec3> nfUEqn(
-            // dsl::imp::ddt(nfU) +
+            dsl::imp::ddt(phi) +
             dsl::imp::div(faceFlux, phi) - 5 * dsl::imp::laplacian(gamma, phi), // expr
             phi,                                                                // volumefield
             rt                                                                  // runtime
         );
 
         nf::PDESolver<NeoN::Vec3> juliaUEqn(
-            // dsl::imp::ddt(nfU) +
+            dsl::imp::ddt(phi) +
             dsl::imp::div(faceFlux, phi) - 5 * dsl::imp::laplacian(gamma, phi), // expr
             phi,                                                                // volumefield
             rt                                                                  // runtime
