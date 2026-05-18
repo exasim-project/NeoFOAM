@@ -241,7 +241,90 @@ int main(int argc, char* argv[])
                 nf::dumpProcFaces(rAU, "rAUf", "after_rAU_interpolate", stepIdx, pisoIter, 0);  // DUMP
                 nf::dumpAllFaces(rAU, "rAUf", "after_rAU_interpolate", stepIdx, pisoIter, 0);  // FULL
 
-                auto phiHbyA = nf::flux(hByA) + rAU * fvcc::ddtFluxCorr(U, phi, rt.dt, ddtScheme);
+                // ----- phiHbyA construction split into three explicit steps so
+                //   we can `checkProcFaceConsistency` each intermediate. The
+                //   original single-line was
+                //     phiHbyA = nf::flux(hByA) + rAU * fvcc::ddtFluxCorr(...)
+                //   When the final `phi after updateFaceVelocity` fails the
+                //   sign-flip consistency check (the symptom for both CPU
+                //   and GPU 2-rank toy runs), the discriminator question is
+                //   which of these three sub-expressions FIRST shows
+                //   sign-flip inconsistency at proc faces:
+                //     (a) phiHbyA_pre_ddtCorr = nf::flux(hByA)
+                //     (b) ddtCorrField        = fvcc::ddtFluxCorr(...)
+                //     (c) phiHbyA             = (a) + rAU * (b)
+                //   See the debug session for the decision tree.
+
+                // (a) flux(hByA) BEFORE ddtFluxCorr — checks the upwind/linear
+                //   surface interpolation + face-area dot product proc-face
+                //   sign convention.
+                auto phiHbyA_pre_ddtCorr = nf::flux(hByA);
+                nf::checkProcFaceConsistency(
+                    phiHbyA_pre_ddtCorr,
+                    "phiHbyA after flux(hByA), pre-ddtCorr",
+                    1e-12,
+                    nf::SignConvention::FlipExpected
+                );
+                nf::dumpProcFaces(
+                    phiHbyA_pre_ddtCorr,
+                    "phiHbyA_pre_ddtCorr",
+                    "phiHbyA_pre_ddtCorr",
+                    stepIdx,
+                    pisoIter,
+                    0
+                );  // DUMP
+                nf::dumpAllFaces(
+                    phiHbyA_pre_ddtCorr,
+                    "phiHbyA_pre_ddtCorr",
+                    "phiHbyA_pre_ddtCorr",
+                    stepIdx,
+                    pisoIter,
+                    0
+                );  // FULL
+
+                // (b) ddtFluxCorr output — the kernel just patched in the
+                //   companion NeoN commit to use bm.sf() at proc-tail faces
+                //   (was previously reading OF-full mesh.faceAreas() at the
+                //   compressed proc-face index). If this checkpoint still
+                //   reports MISMATCH after the fix, the indexing fix was
+                //   right in principle but ddtFluxCorr is not the chain
+                //   head — pivot to (a) or to flux() upstream.
+                auto ddtCorrField = fvcc::ddtFluxCorr(U, phi, rt.dt, ddtScheme);
+                nf::checkProcFaceConsistency(
+                    ddtCorrField,
+                    "ddtFluxCorr output",
+                    1e-12,
+                    nf::SignConvention::FlipExpected
+                );
+                nf::dumpProcFaces(
+                    ddtCorrField,
+                    "ddtCorrField",
+                    "ddtFluxCorr_output",
+                    stepIdx,
+                    pisoIter,
+                    0
+                );  // DUMP
+                nf::dumpAllFaces(
+                    ddtCorrField,
+                    "ddtCorrField",
+                    "ddtFluxCorr_output",
+                    stepIdx,
+                    pisoIter,
+                    0
+                );  // FULL
+
+                // (c) phiHbyA full = flux + rAU * ddtCorr. The original RHS,
+                //   reconstructed term-by-term so SurfaceField operator+ /
+                //   operator* (which update BOTH internalVector and
+                //   boundaryData proc-tail) run on the same intermediates
+                //   the previous one-liner produced.
+                auto phiHbyA = phiHbyA_pre_ddtCorr + rAU * ddtCorrField;
+                nf::checkProcFaceConsistency(
+                    phiHbyA,
+                    "phiHbyA full = flux + rAU*ddtCorr",
+                    1e-12,
+                    nf::SignConvention::FlipExpected
+                );
                 nf::dumpProcFaces(phiHbyA, "phiHbyA", "after_phiHbyA_construct", stepIdx, pisoIter, 0);  // DUMP — KEY for suspect #1
                 nf::dumpAllFaces(phiHbyA, "phiHbyA", "after_phiHbyA_construct", stepIdx, pisoIter, 0);  // FULL
 
