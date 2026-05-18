@@ -16,14 +16,14 @@ FoamFile
 
 dimensions      [0 1 -1 0 0 0 0];
 
-internalField   uniform (0.1 0 0);
+internalField   uniform (0.1 0.0 0.0); // NB: trailing components MUST be 0.0 not 0 — NeoN TokenList parses each component independently; mixed scalar/int trips any_cast in readers.hpp:87.
 
 boundaryField
 {
     inlet
     {
         type            fixedValue;
-        value           uniform (0.1 0 0);
+        value           uniform (0.1 0.0 0.0); // NB: trailing components MUST be 0.0 not 0 — NeoN TokenList parses each component independently; mixed scalar/int trips any_cast in readers.hpp:87.
     }
 
     outlet
