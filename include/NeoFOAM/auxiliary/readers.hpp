@@ -2,7 +2,11 @@
 // SPDX-FileCopyrightText: 2023 NeoFOAM authors
 #pragma once
 
+#include <cstdio>
+#include <cstdlib>
 #include <type_traits>
+
+#include <mpi.h>
 
 #include "NeoN/NeoN.hpp"
 
@@ -200,8 +204,26 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
             NeoN::Dictionary neoPatchDict = convert(patchDict);
             patchInserter[patchDict.get<Foam::word>("type")](neoPatchDict);
             bcs.emplace_back(nfMesh, neoPatchDict, patchi);
+            if (std::getenv("NF_PROC_BC_TRACE"))
+            {
+                int r = 0;
+                MPI_Comm_rank(MPI_COMM_WORLD, &r);
+                std::fprintf(
+                    stderr,
+                    "[NF_PROC_BC_TRACE][rank %d][readVolBC] proc patch '%s' added at patchID=%d\n",
+                    r, bName.c_str(), patchi);
+            }
             patchi++;
         }
+    }
+    if (std::getenv("NF_PROC_BC_TRACE"))
+    {
+        int r = 0;
+        MPI_Comm_rank(MPI_COMM_WORLD, &r);
+        std::fprintf(
+            stderr,
+            "[NF_PROC_BC_TRACE][rank %d][readVolBC] total BCs=%zu (incl. proc)\n",
+            r, bcs.size());
     }
     return bcs;
 }
