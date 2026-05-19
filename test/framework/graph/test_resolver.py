@@ -5,6 +5,8 @@
 """Unit tests for DAGResolver — tests each pure function in isolation,
 plus integration tests through the ``DAGResolver.resolve()`` orchestrator."""
 
+from __future__ import annotations
+
 from typing import Any
 
 import pytest
