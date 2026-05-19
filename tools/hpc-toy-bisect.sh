@@ -62,11 +62,14 @@ set +u
 source "${OPENFOAM_BASHRC}"
 set -u
 
+DECOMP_METHOD="${DECOMP_METHOD:-hierarchical}"
+
 mkdir -p "${OUTPUT_DIR}"
 log "case dir:   ${CASE_DIR}"
 log "output dir: ${OUTPUT_DIR}"
 log "binary:     ${NEOFOAM_BIN}"
 log "ranks:      ${NRANKS}"
+log "decomp:     ${DECOMP_METHOD}"
 
 # -------- 1. Prepare the toy mesh ----------------------------------------- #
 (
@@ -76,15 +79,25 @@ log "ranks:      ${NRANKS}"
         log "running blockMesh"
         blockMesh > "${OUTPUT_DIR}/log.blockMesh" 2>&1
     fi
-    if [[ ! -d "processor0" ]] || [[ "constant/polyMesh/boundary" -nt "processor0/constant/polyMesh/boundary" ]]; then
-        log "running decomposePar -force"
-        # Restore 0/ from 0.orig/ in case decomposePar consumed it
-        if [[ -d "0.orig" ]] && [[ ! -f "0/U" ]]; then
-            cp 0.orig/U 0/U
-            cp 0.orig/p 0/p
+    # Swap decomposeParDict if DECOMP_METHOD requests a non-default method.
+    # Re-decompose unconditionally when the method changes — the existing
+    # processor*/ dirs may have been laid out by a different method.
+    if [[ "${DECOMP_METHOD}" != "hierarchical" ]]; then
+        local_dict="system/decomposeParDict.${DECOMP_METHOD}"
+        if [[ ! -f "${local_dict}" ]]; then
+            die "missing decomposeParDict variant: ${CASE_DIR}/${local_dict}"
         fi
-        decomposePar -force > "${OUTPUT_DIR}/log.decomposePar" 2>&1
+        cp "${local_dict}" "system/decomposeParDict"
+        log "swapped decomposeParDict -> ${DECOMP_METHOD}"
     fi
+    log "running decomposePar -force (${DECOMP_METHOD})"
+    # Restore 0/ from 0.orig/ in case decomposePar consumed it
+    if [[ -d "0.orig" ]] && [[ ! -f "0/U" ]]; then
+        cp 0.orig/U 0/U
+        cp 0.orig/p 0/p
+    fi
+    rm -rf processor[0-9]*  # force a clean redecomposition
+    decomposePar -force > "${OUTPUT_DIR}/log.decomposePar" 2>&1
 )
 
 [[ -d "${CASE_DIR}/processor0" ]] \

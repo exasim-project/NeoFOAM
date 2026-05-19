@@ -1,0 +1,28 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      decomposeParDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Scotch variant. Triggers a (scotch, GPU-executor) regression that does
+// not surface under hierarchical decomposition. Scotch produces a proc
+// boundary aligned by graph locality rather than by a cartesian cut, so
+// proc-tail faceCells/sf entries are scattered in OF face order — a
+// pattern that some GPU kernel paths apparently mishandle.
+
+numberOfSubdomains 2;
+
+method          scotch;
+
+
+// ************************************************************************* //
