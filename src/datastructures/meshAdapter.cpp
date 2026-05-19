@@ -128,19 +128,36 @@ computeNeighbRankAndSize(const Foam::fvMesh& mesh)
 
 int32_t computeNBoundaryFaces(const Foam::fvMesh& mesh)
 {
-    // NeoN's UnstructuredMesh::nBoundaryFaces() counts REGULAR boundary faces
-    // only; processor-patch faces are exposed separately via
-    // boundaryMesh().nProcBoundaryFaces() (see NeoN Phase B commit
-    // 077396b993). Filter out processor patches here to match.
+    // Total boundary faces INCLUDING processor faces. flatBCField relies on
+    // this to pre-size its accumulator; both the regular-first and
+    // processor-tail loops in flatBCField then fill it. NOT the same as
+    // NeoN::UnstructuredMesh::nBoundaryFaces() (regular-only) — that value
+    // is computed via computeNRegularBoundaryFaces below.
     const Foam::fvBoundaryMesh& bMesh = mesh.boundary();
     int32_t nBoundaryFaces = 0;
     forAll(bMesh, patchI)
     {
         const Foam::fvPatch& patch = bMesh[patchI];
-        if (Foam::isA<Foam::processorFvPatch>(patch)) continue;
         nBoundaryFaces += patch.size();
     }
     return nBoundaryFaces;
+}
+
+int32_t computeNRegularBoundaryFaces(const Foam::fvMesh& mesh)
+{
+    // Regular (non-processor) boundary faces only — matches the NeoN
+    // post-CooSparsity convention where UnstructuredMesh::nBoundaryFaces()
+    // excludes proc faces and BoundaryMesh::nProcBoundaryFaces() tracks
+    // them separately. See NeoN Phase B commit 077396b993.
+    const Foam::fvBoundaryMesh& bMesh = mesh.boundary();
+    int32_t n = 0;
+    forAll(bMesh, patchI)
+    {
+        const Foam::fvPatch& patch = bMesh[patchI];
+        if (Foam::isA<Foam::processorFvPatch>(patch)) continue;
+        n += patch.size();
+    }
+    return n;
 }
 
 int32_t computeNRegularBoundaries(const Foam::fvMesh& mesh)
@@ -164,10 +181,11 @@ readOpenFOAMMesh(const NeoN::Executor exec, const Foam::fvMesh& mesh, bool fullM
 {
     const int32_t nCells = mesh.nCells();
     const int32_t nInternalFaces = mesh.nInternalFaces();
-    const int32_t nBoundaryFaces = computeNBoundaryFaces(mesh);
-    // NeoN convention (post-CooSparsity + Phase B): nBoundaries and nFaces
-    // count REGULAR-only; processor patches/faces are tracked via the
-    // BoundaryMesh's nProcBoundaryPatches() / nProcBoundaryFaces().
+    // NeoN convention (post-CooSparsity + Phase B): UnstructuredMesh's
+    // nBoundaryFaces, nBoundaries, and nFaces are REGULAR-only; processor
+    // patches/faces are tracked via BoundaryMesh::nProcBoundaryPatches() /
+    // nProcBoundaryFaces().
+    const int32_t nBoundaryFaces = computeNRegularBoundaryFaces(mesh);
     const int32_t nBoundaries = computeNRegularBoundaries(mesh);
     const int32_t nFaces = nInternalFaces + nBoundaryFaces;
 
