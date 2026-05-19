@@ -177,30 +177,38 @@ void updateFaceVelocity(
     // flux (set by correctBoundaryConditions() on predictedPhi). Using bPredValue
     // here would mix sign conventions, so we derive bvalue directly from iPhi.
     const auto nTotalFaces = phi.internalVector().size();
-    const auto nlValues = ls.nonLocalMatrix().values().view();
-    // In the new CooSparsityPattern (post-CooSparsity merge) the per-nnz row
-    // indices live in rowIdxs(); rowOffs() is a CSR-style derived array. The
-    // proc-face loop needs the per-nnz owner cell, hence rowIdxs().
-    const auto nlRows = ls.nonLocalMatrix().sparsity()->rowIdxs().view();
-    const auto pBoundV = p.boundaryData().value().view();
+    // Skip proc-face section entirely on serial / non-distributed meshes:
+    // LinearSystem::nonLocalMatrix_ is default-constructed (sparsity() returns
+    // a null shared_ptr) when boundaryMesh().isDistributed() is false. The
+    // loop range below would be empty in that case anyway, but the captured
+    // .sparsity()->rowIdxs() dereference is unconditional and segfaults.
+    if (nTotalFaces > nInternalFaces + nBoundaryFaces && ls.hasNonLocalMatrix())
+    {
+        const auto nlValues = ls.nonLocalMatrix().values().view();
+        // In the new CooSparsityPattern (post-CooSparsity merge) the per-nnz row
+        // indices live in rowIdxs(); rowOffs() is a CSR-style derived array. The
+        // proc-face loop needs the per-nnz owner cell, hence rowIdxs().
+        const auto nlRows = ls.nonLocalMatrix().sparsity()->rowIdxs().view();
+        const auto pBoundV = p.boundaryData().value().view();
 
-    NeoN::parallelFor(
-        exec,
-        {nInternalFaces + nBoundaryFaces, nTotalFaces},
-        NEON_LAMBDA(const size_t facei) {
-            auto bcfaceii = facei - (nInternalFaces + nBoundaryFaces);
-            auto bfacei = facei - nInternalFaces;
-            auto own = static_cast<std::size_t>(nlRows[bcfaceii]);
-            auto coupling = nlValues[bcfaceii];
-            auto pGhost = pBoundV[bfacei];
-            scalar pflux = coupling * (pGhost - internalP[own]);
-            iPhi[facei] = iPredPhi[facei] - pflux;
-            // Mirror internalVector: boundaryData().value() proc-tail stores LOCAL flux.
-            // bPredValue[bfacei] holds RECEIVED ghost flux (from correctBoundaryConditions),
-            // which has the wrong sign convention for local storage.
-            bvalue[bfacei] = iPhi[facei];
-        }
-    );
+        NeoN::parallelFor(
+            exec,
+            {nInternalFaces + nBoundaryFaces, nTotalFaces},
+            NEON_LAMBDA(const size_t facei) {
+                auto bcfaceii = facei - (nInternalFaces + nBoundaryFaces);
+                auto bfacei = facei - nInternalFaces;
+                auto own = static_cast<std::size_t>(nlRows[bcfaceii]);
+                auto coupling = nlValues[bcfaceii];
+                auto pGhost = pBoundV[bfacei];
+                scalar pflux = coupling * (pGhost - internalP[own]);
+                iPhi[facei] = iPredPhi[facei] - pflux;
+                // Mirror internalVector: boundaryData().value() proc-tail stores LOCAL flux.
+                // bPredValue[bfacei] holds RECEIVED ghost flux (from correctBoundaryConditions),
+                // which has the wrong sign convention for local storage.
+                bvalue[bfacei] = iPhi[facei];
+            }
+        );
+    }
 }
 
 void updateVelocity(
