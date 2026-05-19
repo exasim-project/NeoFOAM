@@ -8,6 +8,8 @@
 #include "processorFvPatch.H"
 #include "lduInterfaceField.H"
 
+#include <mpi.h>
+
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 
@@ -262,6 +264,22 @@ readOpenFOAMMesh(const NeoN::Executor exec, const Foam::fvMesh& mesh, bool fullM
         static_cast<NeoN::localIdx>(nFaces),
         bMesh
     );
+
+    // For distributed meshes, set globalOffset = exclusive prefix sum of nCells
+    // across MPI ranks. NeoN's distributed sparsity / ginkgo solver consumes
+    // this to build the partition index_map. NeoN's BoundaryMesh::isDistributed
+    // returns true iff there is at least one proc-boundary patch on any rank.
+    if (uMesh.boundaryMesh().isDistributed())
+    {
+        int local = static_cast<int>(nCells);
+        int prefix = 0;
+        MPI_Exscan(&local, &prefix, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+        // MPI_Exscan leaves rank 0's output undefined; force to 0.
+        int worldRank = 0;
+        MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
+        if (worldRank == 0) prefix = 0;
+        uMesh.setGlobalOffset(static_cast<NeoN::localIdx>(prefix));
+    }
 
     return uMesh;
 }
