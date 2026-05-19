@@ -128,14 +128,30 @@ computeNeighbRankAndSize(const Foam::fvMesh& mesh)
 
 int32_t computeNBoundaryFaces(const Foam::fvMesh& mesh)
 {
+    // NeoN's UnstructuredMesh::nBoundaryFaces() counts REGULAR boundary faces
+    // only; processor-patch faces are exposed separately via
+    // boundaryMesh().nProcBoundaryFaces() (see NeoN Phase B commit
+    // 077396b993). Filter out processor patches here to match.
     const Foam::fvBoundaryMesh& bMesh = mesh.boundary();
     int32_t nBoundaryFaces = 0;
     forAll(bMesh, patchI)
     {
         const Foam::fvPatch& patch = bMesh[patchI];
+        if (Foam::isA<Foam::processorFvPatch>(patch)) continue;
         nBoundaryFaces += patch.size();
     }
     return nBoundaryFaces;
+}
+
+int32_t computeNRegularBoundaries(const Foam::fvMesh& mesh)
+{
+    const Foam::fvBoundaryMesh& bMesh = mesh.boundary();
+    int32_t n = 0;
+    forAll(bMesh, patchI)
+    {
+        if (!Foam::isA<Foam::processorFvPatch>(bMesh[patchI])) ++n;
+    }
+    return n;
 }
 
 NeoN::CommunicationPattern createCommunicationPattern(const RunTime& runTime)
@@ -149,8 +165,11 @@ readOpenFOAMMesh(const NeoN::Executor exec, const Foam::fvMesh& mesh, bool fullM
     const int32_t nCells = mesh.nCells();
     const int32_t nInternalFaces = mesh.nInternalFaces();
     const int32_t nBoundaryFaces = computeNBoundaryFaces(mesh);
-    const int32_t nBoundaries = mesh.boundary().size();
-    const int32_t nFaces = mesh.nFaces();
+    // NeoN convention (post-CooSparsity + Phase B): nBoundaries and nFaces
+    // count REGULAR-only; processor patches/faces are tracked via the
+    // BoundaryMesh's nProcBoundaryPatches() / nProcBoundaryFaces().
+    const int32_t nBoundaries = computeNRegularBoundaries(mesh);
+    const int32_t nFaces = nInternalFaces + nBoundaryFaces;
 
     // Executor of "optional" fields
     const NeoN::Executor optExec = fullMeshOnGPU ? exec : NeoN::SerialExecutor {};
@@ -218,6 +237,11 @@ readOpenFOAMMesh(const NeoN::Executor exec, const Foam::fvMesh& mesh, bool fullM
         fromFoamField(exec, magFaceAreas),
         fromFoamField(exec, mesh.faceOwner()),
         fromFoamField(exec, mesh.faceNeighbour()),
+        static_cast<NeoN::localIdx>(nCells),
+        static_cast<NeoN::localIdx>(nInternalFaces),
+        static_cast<NeoN::localIdx>(nBoundaryFaces),
+        static_cast<NeoN::localIdx>(nBoundaries),
+        static_cast<NeoN::localIdx>(nFaces),
         bMesh
     );
 
