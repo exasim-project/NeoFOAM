@@ -3,14 +3,19 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Configuration File IO" href="config_file.html"><link rel="prev" title="Main Components" href="components.html">
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html">
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/development/initialization.html">
 
-    <!-- Generated with Sphinx 7.2.6 and Furo 2025.12.19 -->
-        <title>3-Stage Solver Initialization - NeoFOAM documentation</title>
-      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=acfd86a5" />
+    <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
+        <title>Solver Framework - NeoFOAM documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
-    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=eafc0fe6" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=fd6457a4" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=6a4ff913" />
     
@@ -193,28 +198,89 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <ul>
-<li class="toctree-l1"><a class="reference internal" href="../index.html">Welcome to NeoFOAM!</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../gettingStarted.html">Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../goals_features.html">Goals</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../goals_features.html#features">Features</a></li>
+  <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../auto_tutorials/example_01_run_incompressible_fluid.html">Run your first NeoFOAM case</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../auto_tutorials/example_02_passive_scalar_plugin.html">Add a passive scalar transport model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../auto_tutorials/example_03_build_a_solver.html">Build a scalar-transport solver from scratch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../auto_tutorials/example_04_configure_with_io.html">Typed configs: YAML, JSON, and OpenFOAM dictionaries</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">How-to guides</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../how-to/install.html">Install NeoFOAM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../auto_how-to/example_register_a_model.html">Register a new model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../auto_how-to/example_add_an_init_step_category.html">Add a custom InitStep category</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../auto_how-to/example_work_with_config_files.html">Work with configuration files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../auto_how-to/example_visualize_the_operation_dag.html">Visualize the operation DAG</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../auto_how-to/example_use_depends_for_injection.html">Inject dependencies into operations</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../reference/framework/index.html">neofoam.framework</a><input aria-label="Toggle navigation of neofoam.framework" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../reference/framework/context.html">neofoam.framework.context</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/framework/operations.html">neofoam.framework.operations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/framework/types.html">neofoam.framework.types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/framework/conditions.html">neofoam.framework.conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/framework/decorator.html">neofoam.framework.decorator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/framework/config_injection.html">neofoam.framework.config_injection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/framework/dependency_resolver.html">neofoam.framework.dependency_resolver</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../reference/graph/index.html">neofoam.framework.graph</a><input aria-label="Toggle navigation of neofoam.framework.graph" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../reference/graph/sorter.html">neofoam.framework.graph.sorter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/graph/resolver.html">neofoam.framework.graph.resolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/graph/validation.html">neofoam.framework.graph.validation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/graph/visualization.html">neofoam.framework.graph.visualization</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../reference/initialization/index.html">neofoam.framework.initialization</a><input aria-label="Toggle navigation of neofoam.framework.initialization" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../reference/initialization/init_step.html">neofoam.framework.initialization.init_step</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/initialization/helpers.html">neofoam.framework.initialization.helpers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/initialization/config_context.html">neofoam.framework.initialization.config_context</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/initialization/depends.html">neofoam.framework.initialization.depends</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../reference/initialization/execution/index.html">neofoam.framework.initialization.execution</a><input aria-label="Toggle navigation of neofoam.framework.initialization.execution" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../reference/initialization/execution/init_result.html">neofoam.framework.initialization.execution.init_result</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/initialization/execution/validation.html">neofoam.framework.initialization.execution.validation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/initialization/execution/ordering.html">neofoam.framework.initialization.execution.ordering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/initialization/execution/executor.html">neofoam.framework.initialization.execution.executor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/initialization/execution/context_builder.html">neofoam.framework.initialization.execution.context_builder</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../reference/initialization/staged/index.html">neofoam.framework.initialization.staged</a><input aria-label="Toggle navigation of neofoam.framework.initialization.staged" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../reference/initialization/staged/spec.html">neofoam.framework.initialization.staged.spec</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/initialization/staged/runner.html">neofoam.framework.initialization.staged.runner</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../reference/model/index.html">neofoam.framework.model</a><input aria-label="Toggle navigation of neofoam.framework.model" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../reference/model/spec.html">neofoam.framework.model.spec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/model/runtime.html">neofoam.framework.model.runtime</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../reference/solver/index.html">neofoam.framework.solver</a><input aria-label="Toggle navigation of neofoam.framework.solver" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../reference/solver/spec.html">neofoam.framework.solver.spec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/solver/runtime.html">neofoam.framework.solver.runtime</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Explanation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/goals-and-core-concepts.html">Goals &amp; core concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/solver-structure.html">Solver structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/model-structure.html">Model structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/spec-runtime.html">Spec and Runtime</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/three-stage-init.html">Three-stage initialization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/operations-and-the-dag.html">Operations and the DAG</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/parameter-injection.html">Parameter injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/discriminated-unions.html">The discriminated-union plugin registry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/discovery-mechanisms.html">Model discovery: plugin vs core spec</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/schema-introspection.html">Schema introspection</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Project</span></p>
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="../ci.html">Continuous Integration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../debugProfileTools.html">Using Kokkos Tools</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">Usage:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../usage/quickstart.html">Quick Start Guide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../usage/cli.html">Command Line Interface</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">Development:</span></p>
-<ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
-<li class="toctree-l1"><a class="reference internal" href="components.html">Main Components</a></li>
-<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">3-Stage Solver Initialization</a></li>
-<li class="toctree-l1"><a class="reference internal" href="config_file.html">Configuration File IO</a></li>
-<li class="toctree-l1"><a class="reference internal" href="pluginsystem.html">Plugin System</a></li>
-<li class="toctree-l1"><a class="reference internal" href="solver.html">Solver and Models</a></li>
 </ul>
 
 </div>
@@ -253,152 +319,1082 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="stage-solver-initialization">
-<h1>3-Stage Solver Initialization<a class="headerlink" href="#stage-solver-initialization" title="Link to this heading">¶</a></h1>
-<section id="motivation">
-<h2>Motivation<a class="headerlink" href="#motivation" title="Link to this heading">¶</a></h2>
-<p>The operation concept makes it possible to reorder, add or remove solver operations just by adding additional models.
-However, this flexibility requires a more sophisticated initialization process to ensure that all models and their dependencies are properly configured before runtime objects (fields, meshes) are created.
-The <strong>3-stage initialization process</strong> handles complex dependencies between solvers, models, and physics algorithms.</p>
-<p>This ensures that configuration is loaded, dependencies are resolved, and runtime objects (fields, meshes) are built in the correct order.
-To reduce the size of the solver code, the initialization logic is encapsulated in the <code class="docutils literal notranslate"><span class="pre">StagedInit</span></code> class and associated decorators that define each state in a separated file.</p>
+          <section id="solver-framework">
+<h1>Solver Framework<a class="headerlink" href="#solver-framework" title="Link to this heading">¶</a></h1>
+<p>NeoFOAM’s solver framework uses a <strong>Spec/Runtime architecture</strong> combined with a <strong>3-stage initialization process</strong> to handle complex dependencies between solvers, models, and physics algorithms.</p>
+<section id="architecture-overview">
+<h2>Architecture Overview<a class="headerlink" href="#architecture-overview" title="Link to this heading">¶</a></h2>
+<p>The framework separates <strong>definition</strong> from <strong>execution</strong> using two core concepts:</p>
+<ul class="simple">
+<li><p><strong>Spec</strong> (<code class="docutils literal notranslate"><span class="pre">ModelSpec</span></code>, <code class="docutils literal notranslate"><span class="pre">SolverSpec</span></code>): Immutable definition created at module import time. Decorators register behavior (load, resolve, build, operations) without executing anything.</p></li>
+<li><p><strong>Runtime</strong> (<code class="docutils literal notranslate"><span class="pre">ModelRuntime</span></code>, <code class="docutils literal notranslate"><span class="pre">SolverRuntime</span></code>): Mutable per-instance state created from a Spec. Holds loaded config, resolved dependencies, and runtime objects.</p></li>
+</ul>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Module Import Time              Solver Startup
+─────────────────              ──────────────
+ModelSpec (definition)  ──►  ModelRuntime (instance)
+SolverSpec (definition) ──►  SolverRuntime (instance)
+</pre></div>
+</div>
+<p>This separation allows multiple independent runtime instances from a single spec, clean testability, and plugin-based model discovery.</p>
 </section>
-<section id="the-process-load-resolve-build">
-<h2>The Process: Load → Resolve → Build<a class="headerlink" href="#the-process-load-resolve-build" title="Link to this heading">¶</a></h2>
+<section id="modelspec-modelruntime">
+<h2>ModelSpec &amp; ModelRuntime<a class="headerlink" href="#modelspec-modelruntime" title="Link to this heading">¶</a></h2>
+<p>A <code class="docutils literal notranslate"><span class="pre">ModelSpec</span></code> defines a physics model (e.g., turbulence, transport). Create one using the <code class="docutils literal notranslate"><span class="pre">Model()</span></code> factory function and register behavior with decorators.</p>
+<section id="creating-a-modelspec">
+<h3>Creating a ModelSpec<a class="headerlink" href="#creating-a-modelspec" title="Link to this heading">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigContext</span><span class="p">,</span> <span class="n">InitStep</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization.helpers</span><span class="w"> </span><span class="kn">import</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseConfig</span><span class="p">,</span> <span class="n">IOStrategy</span><span class="p">,</span> <span class="n">YAML</span>
+
+<span class="c1"># Create the spec at module level</span>
+<span class="n">transport</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;Transport&quot;</span><span class="p">)</span>
+
+<span class="c1"># Register a config class</span>
+<span class="nd">@transport</span><span class="o">.</span><span class="n">config</span>
+<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">&quot;transportProperties&quot;</span><span class="p">))</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TransportConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
+    <span class="n">viscosity</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span>
+    <span class="n">density</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1000.0</span>
+
+<span class="c1"># Stage 1: LOAD — return a config object (no side effects)</span>
+<span class="nd">@transport</span><span class="o">.</span><span class="n">load</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span><span class="n">case_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">_entry</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransportConfig</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">TransportConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">)</span>
+
+<span class="c1"># Stage 1b: DETECT — should this model be active?</span>
+<span class="nd">@transport</span><span class="o">.</span><span class="n">detect</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">detect</span><span class="p">(</span><span class="n">case_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">case_dir</span> <span class="o">/</span> <span class="s2">&quot;transportProperties.yaml&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+
+<span class="c1"># Stage 2: RESOLVE — wire inter-model dependencies</span>
+<span class="nd">@transport</span><span class="o">.</span><span class="n">resolve</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">ModelRuntime</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">ConfigContext</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">TransportConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransportConfig</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">viscosity</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid viscosity&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">cfg</span>
+
+<span class="c1"># Stage 3: BUILD — return lazy initializers</span>
+<span class="nd">@transport</span><span class="o">.</span><span class="n">build</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">ModelRuntime</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">TransportConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitStep</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">field</span><span class="p">(</span><span class="s2">&quot;nu&quot;</span><span class="p">,</span> <span class="n">create</span><span class="o">=</span><span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">cfg</span><span class="o">.</span><span class="n">viscosity</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">]),</span>
+    <span class="p">]</span>
+</pre></div>
+</div>
+</section>
+<section id="decorator-summary">
+<h3>Decorator Summary<a class="headerlink" href="#decorator-summary" title="Link to this heading">¶</a></h3>
+<div class="table-wrapper colwidths-given docutils container">
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 35.0%" />
+<col style="width: 45.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Decorator</p></th>
+<th class="head"><p>Signature</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&#64;spec.config</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">class</span> <span class="pre">MyConfig(BaseConfig)</span></code></p></td>
+<td><p>Register config class for auto-construction</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&#64;spec.load</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(case_dir:</span> <span class="pre">Path,</span> <span class="pre">entry:</span> <span class="pre">Any)</span> <span class="pre">-&gt;</span> <span class="pre">Config</span></code></p></td>
+<td><p>Load config from files (LOAD stage)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&#64;spec.detect</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(case_dir:</span> <span class="pre">Path)</span> <span class="pre">-&gt;</span> <span class="pre">bool</span> <span class="pre">|</span> <span class="pre">list[str]</span></code></p></td>
+<td><p>Check if model should be active</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&#64;spec.resolve</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(self:</span> <span class="pre">ModelRuntime,</span> <span class="pre">ctx:</span> <span class="pre">ConfigContext,</span> <span class="pre">cfg:</span> <span class="pre">MyConfig)</span> <span class="pre">-&gt;</span> <span class="pre">Config</span></code></p></td>
+<td><p>Wire dependencies (RESOLVE stage)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&#64;spec.build</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(self:</span> <span class="pre">ModelRuntime,</span> <span class="pre">cfg:</span> <span class="pre">MyConfig)</span> <span class="pre">-&gt;</span> <span class="pre">list[InitStep]</span></code></p></td>
+<td><p>Create lazy initializers (BUILD stage)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">&#64;spec.operation</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(self,</span> <span class="pre">field1:</span> <span class="pre">float,</span> <span class="pre">cfg:</span> <span class="pre">Config)</span> <span class="pre">-&gt;</span> <span class="pre">FieldUpdates</span></code></p></td>
+<td><p>Register a runtime operation</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&#64;spec.operation_collection</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(self)</span> <span class="pre">-&gt;</span> <span class="pre">Operations</span></code></p></td>
+<td><p>Conditional operation dispatch</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="modelruntime">
+<h3>ModelRuntime<a class="headerlink" href="#modelruntime" title="Link to this heading">¶</a></h3>
+<p>A <code class="docutils literal notranslate"><span class="pre">ModelRuntime</span></code> is created from a spec via <code class="docutils literal notranslate"><span class="pre">instantiate()</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create a runtime instance</span>
+<span class="n">runtime</span> <span class="o">=</span> <span class="n">transport</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;./case&quot;</span><span class="p">))</span>
+
+<span class="c1"># Runtime holds the loaded config</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">runtime</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">viscosity</span><span class="p">)</span>  <span class="c1"># 1e-6</span>
+
+<span class="c1"># Execute stages</span>
+<span class="n">config_ctx</span> <span class="o">=</span> <span class="n">ConfigContext</span><span class="p">()</span>
+<span class="n">runtime</span><span class="o">.</span><span class="n">run_resolve</span><span class="p">(</span><span class="n">config_ctx</span><span class="p">)</span>      <span class="c1"># Stage 2</span>
+<span class="n">init_steps</span> <span class="o">=</span> <span class="n">runtime</span><span class="o">.</span><span class="n">run_build</span><span class="p">()</span>     <span class="c1"># Stage 3</span>
+
+<span class="c1"># Access operations</span>
+<span class="n">ops</span> <span class="o">=</span> <span class="n">runtime</span><span class="o">.</span><span class="n">operations</span>  <span class="c1"># list[Operation]</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="solverspec-solverruntime">
+<h2>SolverSpec &amp; SolverRuntime<a class="headerlink" href="#solverspec-solverruntime" title="Link to this heading">¶</a></h2>
+<p>A <code class="docutils literal notranslate"><span class="pre">SolverSpec</span></code> defines a solver’s initialization, execution graph, and operations.</p>
+<section id="creating-a-solverspec">
+<h3>Creating a SolverSpec<a class="headerlink" href="#creating-a-solverspec" title="Link to this heading">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Annotated</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">Solver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span><span class="p">,</span> <span class="n">FieldUpdates</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization</span><span class="w"> </span><span class="kn">import</span> <span class="n">StagedInit</span><span class="p">,</span> <span class="n">Depends</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.operations</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Operation</span><span class="p">,</span> <span class="n">Operations</span><span class="p">,</span> <span class="n">StepBuilder</span><span class="p">,</span>
+    <span class="n">SequentialOp</span><span class="p">,</span> <span class="n">IterativeOp</span><span class="p">,</span> <span class="n">OperationMetadata</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">solver_spec</span> <span class="o">=</span> <span class="n">Solver</span><span class="p">(</span><span class="s2">&quot;PimpleSolver&quot;</span><span class="p">)</span>
+
+<span class="c1"># Initialization: orchestrates the 3-stage process</span>
+<span class="nd">@solver_spec</span><span class="o">.</span><span class="n">initializer</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">initialize</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">init</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">StagedInit</span><span class="p">,</span> <span class="n">Depends</span><span class="p">(</span><span class="n">create_init_manager</span><span class="p">)],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Context</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">init</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+<span class="c1"># Execution graph: defines the solver&#39;s loop structure</span>
+<span class="nd">@solver_spec</span><span class="o">.</span><span class="n">execution_graph_step</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">execution_graph</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">StepBuilder</span><span class="p">,</span> <span class="n">Operations</span><span class="p">]:</span>
+    <span class="n">builder</span> <span class="o">=</span> <span class="n">StepBuilder</span><span class="p">()</span>
+    <span class="c1"># Add solver steps and loops (see Operations section)</span>
+    <span class="k">return</span> <span class="n">builder</span><span class="p">,</span> <span class="n">model_operations</span>
+
+<span class="c1"># Solver operations</span>
+<span class="nd">@solver_spec</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">&quot;1.0&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;solve_momentum&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">solve_momentum</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">U</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FieldUpdates</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">&quot;U&quot;</span><span class="p">:</span> <span class="n">U</span> <span class="o">*</span> <span class="mf">0.99</span><span class="p">})</span>
+</pre></div>
+</div>
+</section>
+<section id="using-the-solverruntime">
+<h3>Using the SolverRuntime<a class="headerlink" href="#using-the-solverruntime" title="Link to this heading">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create a runtime</span>
+<span class="n">solver</span> <span class="o">=</span> <span class="n">solver_spec</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span><span class="n">argv</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;--case&quot;</span><span class="p">,</span> <span class="s2">&quot;./cavity&quot;</span><span class="p">])</span>
+
+<span class="c1"># Run initialization (executes LOAD → RESOLVE → BUILD)</span>
+<span class="n">ctx</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
+
+<span class="c1"># Build execution graph</span>
+<span class="n">builder</span><span class="p">,</span> <span class="n">model_ops</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">execution_graph</span><span class="p">()</span>
+
+<span class="c1"># Access solver operations</span>
+<span class="n">ops</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">operations</span>  <span class="c1"># Operations container</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="stage-initialization">
+<h2>3-Stage Initialization<a class="headerlink" href="#stage-initialization" title="Link to this heading">¶</a></h2>
+<p>The initialization process ensures configuration is loaded, dependencies are resolved, and runtime objects are built in the correct order.</p>
 <pre  class="mermaid">
         %%{init: {'sequence': {'actorMargin': 300}}}%%
 sequenceDiagram
     autonumber
-    participant Solver
-    participant Manager as StagedInit
-    participant UserCode as User Handlers (&#64;init...)
+    participant SR as SolverRuntime
+    participant SI as StagedInit
+    participant MS as ModelSpec (&#64;spec decorators)
+    participant MR as ModelRuntime
 
-    Note right of Solver: Dependency Injection&lt;br/&gt;provides StagedInit instance
-    Solver-&gt;&gt;Manager: init.run()
+    SR-&gt;&gt;SI: init.run()
 
     rect rgb(235, 245, 255)
-        Note over Manager, UserCode: 1. LOAD STAGE
-        Manager-&gt;&gt;UserCode: Call &#64;init.load()
-        UserCode--&gt;&gt;Manager: Return LoadResult [List of Models]
-        Note right of Manager: DATA: LoadResult passed to next stage
+        Note over SI, MS: 1. LOAD STAGE
+        SI-&gt;&gt;MS: Detect models + load configs
+        MS--&gt;&gt;MR: spec.instantiate() creates ModelRuntime
+        MR--&gt;&gt;SI: Return LoadResult [list of ModelRuntime]
     end
 
     rect rgb(255, 245, 235)
-        Note over Manager, UserCode: 2. RESOLVE STAGE
-        Manager-&gt;&gt;Manager: Create ConfigContext from LoadResult
-        Manager-&gt;&gt;UserCode: Call &#64;init.resolve(ConfigContext)
-        Note right of UserCode: Models wire dependencies&lt;br/&gt;using ConfigContext
-        UserCode--&gt;&gt;Manager: (Completion)
-        Note right of Manager: DATA: Verified Model Graph passed to next stage
+        Note over SI, MR: 2. RESOLVE STAGE
+        SI-&gt;&gt;SI: Create ConfigContext, register models
+        SI-&gt;&gt;MR: runtime.run_resolve(ConfigContext)
+        Note right of MR: Models wire dependencies,&lt;br/&gt;update configs
+        MR--&gt;&gt;SI: (Completion)
     end
 
     rect rgb(235, 255, 240)
-        Note over Manager, UserCode: 3. BUILD STAGE
-        Manager-&gt;&gt;UserCode: Call &#64;init.build(mesh)
-        UserCode--&gt;&gt;Manager: Return List[InitStep]
-        Note right of Manager: DATA: Dependency Graph created from List[InitStep]
+        Note over SI, MR: 3. BUILD STAGE
+        SI-&gt;&gt;MR: runtime.run_build()
+        MR--&gt;&gt;SI: Return list[InitStep]
+        Note right of SI: Topological sort of all InitSteps
 
-        loop For each InitStep in Order
-            Manager-&gt;&gt;Manager: Execute InitStep
-            Note right of Manager: Object created &amp; stored in Runtime Context
+        loop For each InitStep in order
+            SI-&gt;&gt;SI: Execute InitStep
+            Note right of SI: Object stored in Context
         end
     end
 
-    Manager--&gt;&gt;Solver: Return Runtime Context
-    </pre><p>The diagram illustrates how data transforms and moves through the system during initialization:</p>
-<ol class="arabic simple">
-<li><p><strong>LOAD Stage (Data In)</strong>:
-- <strong>Input</strong>: Configuration files (dictionaries).
-- <strong>Output</strong>: A <code class="docutils literal notranslate"><span class="pre">LoadResult</span></code> object containing a list of <strong>Model Instances</strong>.
-- These models are “empty shells” at this point—they have configuration data but no connections to other models and no fields.</p></li>
-<li><p><strong>RESOLVE Stage (Wiring)</strong>:
-- <strong>Input</strong>: The <code class="docutils literal notranslate"><span class="pre">LoadResult</span></code> from stage 1.
-- <strong>Mechanism</strong>: The <code class="docutils literal notranslate"><span class="pre">ConfigContext</span></code> acts as a registry. Models are registered by name.
-- <strong>Action</strong>: Models query the <code class="docutils literal notranslate"><span class="pre">ConfigContext</span></code> to find their dependencies (e.g., <code class="docutils literal notranslate"><span class="pre">context.get(&quot;transport&quot;)</span></code>).
-- <strong>Result</strong>: A fully connected graph of model instances, verified and ready for deployment.</p></li>
-<li><p><strong>BUILD Stage (Construction)</strong>:
-- <strong>Input</strong>: The connected models and the mesh.
-- <strong>Output</strong>: A list of <code class="docutils literal notranslate"><span class="pre">InitStep</span></code> objects (recipes).
-- <strong>Execution</strong>: The <code class="docutils literal notranslate"><span class="pre">Init</span> <span class="pre">Manager</span></code> sorts these recipes topologically based on declared dependencies. It then executes them one by one.
-- <strong>Runtime Context</strong>: As each recipe executes (e.g., creating a field), its result is stored in the <code class="docutils literal notranslate"><span class="pre">Runtime</span> <span class="pre">Context</span></code>. Subsequent recipes can look up these results (e.g., <code class="docutils literal notranslate"><span class="pre">context[&quot;fields.U&quot;]</span></code>) to build dependent objects.</p></li>
+    SI--&gt;&gt;SR: Return Context
+    </pre><ol class="arabic simple">
+<li><p><strong>LOAD Stage</strong>: Read configuration files, detect active models, create <code class="docutils literal notranslate"><span class="pre">ModelRuntime</span></code> instances. No interaction between models yet. No mesh or heavy memory allocation.</p></li>
+<li><p><strong>RESOLVE Stage</strong>: Models wire dependencies via <code class="docutils literal notranslate"><span class="pre">ConfigContext</span></code>. Validate compatible configurations. Adapt algorithms based on active models.</p></li>
+<li><p><strong>VERIFY Stage</strong> (implicit, between RESOLVE and BUILD): The framework collects <code class="docutils literal notranslate"><span class="pre">&#64;fvSchemes.add(...)</span></code> and <code class="docutils literal notranslate"><span class="pre">&#64;fvSolution.add(...)</span></code> requirements from every active operation and checks them against the loaded <code class="docutils literal notranslate"><span class="pre">system/fvSchemes</span></code> and <code class="docutils literal notranslate"><span class="pre">system/fvSolution</span></code>. See <span class="xref std std-ref">verification</span> below.</p></li>
+<li><p><strong>BUILD Stage</strong>: Return <code class="docutils literal notranslate"><span class="pre">InitStep</span></code> objects describing how to create runtime objects. The framework sorts them topologically and executes them in dependency order, building a <code class="docutils literal notranslate"><span class="pre">Context</span></code>.</p></li>
 </ol>
-</section>
-<section id="why-3-stages">
-<h2>Why 3 Stages?<a class="headerlink" href="#why-3-stages" title="Link to this heading">¶</a></h2>
-<ol class="arabic simple">
-<li><p><strong>Stage 1: LOAD</strong>
-- Reads configuration files (dictionaries, YAML, etc.).
-- Discovers available models (e.g., Turbulence, Transport).
-- <strong>No</strong> interaction between models yet.
-- <strong>No</strong> mesh or heavy memory allocation.</p></li>
-<li><p><strong>Stage 2: RESOLVE</strong>
-- Establishes connections between models.
-- Validates compatible configurations (e.g., “Is this turbulence model compatible with this solver?”).
-- Adapts algorithms based on active models (e.g., switching to buoyant pressure solver if Boussinesq model is present).</p></li>
-<li><p><strong>Stage 3: BUILD</strong>
-- Only the InitSteps are defined here, but they are not executed until the Manager topologically sorts them.
-- A graph of dependencies is used for <strong>Initialization</strong> to ensure fields are created in dependency order (Mesh → U → Turbulence).</p></li>
-</ol>
-</section>
-<section id="usage-example">
-<h2>Usage Example<a class="headerlink" href="#usage-example" title="Link to this heading">¶</a></h2>
-<p>Define each stage with decorators on a <code class="docutils literal notranslate"><span class="pre">StagedInit</span></code> instance. The <code class="docutils literal notranslate"><span class="pre">&#64;load</span></code> handler returns a <code class="docutils literal notranslate"><span class="pre">LoadResult</span></code>,
-the optional <code class="docutils literal notranslate"><span class="pre">&#64;resolve</span></code> handler wires models via <code class="docutils literal notranslate"><span class="pre">ConfigContext</span></code>, and the <code class="docutils literal notranslate"><span class="pre">&#64;build</span></code> handler returns
-a list of <code class="docutils literal notranslate"><span class="pre">InitStep</span></code> objects. Calling <code class="docutils literal notranslate"><span class="pre">run()</span></code> executes all three stages and returns a <code class="docutils literal notranslate"><span class="pre">Context</span></code>.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neofoam.framework.initialization.staged_init</span> <span class="kn">import</span> <span class="n">StagedInit</span><span class="p">,</span> <span class="n">LoadResult</span>
-<span class="kn">from</span> <span class="nn">neofoam.framework.initialization.helpers</span> <span class="kn">import</span> <span class="n">field</span><span class="p">,</span> <span class="n">init</span><span class="p">,</span> <span class="n">model</span>
+<p id="verification">Operations declare which OpenFOAM scheme entries and linear-solver entries they
+need with two decorators from <code class="docutils literal notranslate"><span class="pre">neofoam.foam</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.foam</span><span class="w"> </span><span class="kn">import</span> <span class="n">fvSchemes</span><span class="p">,</span> <span class="n">fvSolution</span>
 
-<span class="n">staged</span> <span class="o">=</span> <span class="n">StagedInit</span><span class="p">(</span><span class="s2">&quot;IncompressibleSolver&quot;</span><span class="p">)</span>
-
-<span class="c1"># --- Stage 1: Load configuration and lightweight model objects ---</span>
-<span class="nd">@staged</span><span class="o">.</span><span class="n">load</span>
-<span class="k">def</span> <span class="nf">load_config</span><span class="p">():</span>
-    <span class="n">transport</span> <span class="o">=</span> <span class="n">TransportModel</span><span class="p">()</span>       <span class="c1"># no fields yet</span>
-    <span class="n">turbulence</span> <span class="o">=</span> <span class="n">TurbulenceModel</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">LoadResult</span><span class="p">(</span><span class="n">core_models</span><span class="o">=</span><span class="p">[</span><span class="n">transport</span><span class="p">],</span> <span class="n">optional_models</span><span class="o">=</span><span class="p">[</span><span class="n">turbulence</span><span class="p">])</span>
-
-<span class="c1"># --- Stage 2 (optional): Wire cross-model dependencies ---</span>
-<span class="nd">@staged</span><span class="o">.</span><span class="n">resolve</span>
-<span class="k">def</span> <span class="nf">resolve_dependencies</span><span class="p">(</span><span class="n">cfg</span><span class="p">):</span>
-    <span class="n">turbulence</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;turbulence&quot;</span><span class="p">)</span>
-    <span class="n">turbulence</span><span class="o">.</span><span class="n">transport_ref</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;transport&quot;</span><span class="p">)</span>
-
-<span class="c1"># --- Stage 3: Return InitStep recipes (the framework orders them) ---</span>
-<span class="nd">@staged</span><span class="o">.</span><span class="n">build</span>
-<span class="k">def</span> <span class="nf">build_runtime</span><span class="p">(</span><span class="n">core_models</span><span class="p">,</span> <span class="n">optional_models</span><span class="p">):</span>
-    <span class="k">return</span> <span class="p">[</span>
-        <span class="c1"># Root objects (no dependencies)</span>
-        <span class="n">init</span><span class="p">(</span><span class="s2">&quot;mesh&quot;</span><span class="p">,</span> <span class="n">create</span><span class="o">=</span><span class="k">lambda</span> <span class="n">_ctx</span><span class="p">:</span> <span class="n">create_mesh</span><span class="p">()),</span>
-
-        <span class="c1"># Fields depend on mesh</span>
-        <span class="n">field</span><span class="p">(</span><span class="s2">&quot;p&quot;</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">],</span> <span class="n">create</span><span class="o">=</span><span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">read_pressure</span><span class="p">(</span><span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">])),</span>
-        <span class="n">field</span><span class="p">(</span><span class="s2">&quot;U&quot;</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">],</span> <span class="n">create</span><span class="o">=</span><span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">read_velocity</span><span class="p">(</span><span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">])),</span>
-
-        <span class="c1"># Models depend on fields</span>
-        <span class="n">model</span><span class="p">(</span><span class="s2">&quot;algo&quot;</span><span class="p">,</span> <span class="n">create</span><span class="o">=</span><span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">create_algorithm</span><span class="p">(</span><span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">],</span> <span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;fields.p&quot;</span><span class="p">])),</span>
-    <span class="p">]</span>
-
-<span class="c1"># --- Execute all 3 stages ---</span>
-<span class="n">ctx</span> <span class="o">=</span> <span class="n">staged</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
-
-<span class="c1"># ctx is a Context object:</span>
-<span class="c1">#   ctx.mesh    == result of init(&quot;mesh&quot;, ...)</span>
-<span class="c1">#   ctx.fields  == {&quot;U&quot;: ..., &quot;p&quot;: ...}</span>
-<span class="c1">#   ctx.models  == {&quot;algo&quot;: ...}</span>
+<span class="nd">@pimple</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">&quot;2.1&quot;</span><span class="p">)</span>
+<span class="nd">@fvSchemes</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+    <span class="n">ddt</span><span class="o">=</span><span class="s2">&quot;ddt(U)&quot;</span><span class="p">,</span>
+    <span class="n">div</span><span class="o">=</span><span class="s2">&quot;div(phi,U)&quot;</span><span class="p">,</span>
+    <span class="n">grad</span><span class="o">=</span><span class="s2">&quot;grad(U)&quot;</span><span class="p">,</span>
+    <span class="n">laplacian</span><span class="o">=</span><span class="s2">&quot;laplacian(nuEff,U)&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="nd">@fvSolution</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;U&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">momentum</span><span class="p">(</span><span class="o">...</span><span class="p">):</span>
+    <span class="o">...</span>
 </pre></div>
 </div>
-<p>The framework topologically sorts the <code class="docutils literal notranslate"><span class="pre">InitStep</span></code> list, executes each initializer in order,
-and populates the <code class="docutils literal notranslate"><span class="pre">Context</span></code>. Circular or missing dependencies raise immediately.</p>
+<p>Short names (<code class="docutils literal notranslate"><span class="pre">ddt</span></code>, <code class="docutils literal notranslate"><span class="pre">div</span></code>, <code class="docutils literal notranslate"><span class="pre">grad</span></code>, <code class="docutils literal notranslate"><span class="pre">laplacian</span></code>, <code class="docutils literal notranslate"><span class="pre">snGrad</span></code>,
+<code class="docutils literal notranslate"><span class="pre">interpolation</span></code>) are mapped to the canonical OpenFOAM section names
+(<code class="docutils literal notranslate"><span class="pre">ddtSchemes</span></code>, <code class="docutils literal notranslate"><span class="pre">divSchemes</span></code>, …). Unknown names pass through, so
+<code class="docutils literal notranslate"><span class="pre">&#64;fvSchemes.add(wallDist=&quot;method&quot;)</span></code> adds a <code class="docutils literal notranslate"><span class="pre">wallDist</span></code> requirement directly.</p>
+<p>When a <code class="docutils literal notranslate"><span class="pre">StagedInit.LOAD</span></code> returns a <code class="docutils literal notranslate"><span class="pre">LoadResult</span></code> with <code class="docutils literal notranslate"><span class="pre">fv_schemes_config</span></code>
+and/or <code class="docutils literal notranslate"><span class="pre">fv_solution_config</span></code> populated (typically by loading
+<code class="docutils literal notranslate"><span class="pre">FvSchemesConfig.load(case_dir=...)</span></code> and <code class="docutils literal notranslate"><span class="pre">FvSolutionConfig.load(...)</span></code>), the
+framework runs <code class="docutils literal notranslate"><span class="pre">StagedInit._verify</span></code> between RESOLVE and BUILD. It:</p>
+<ol class="arabic simple">
+<li><p>Collects every requirement from every active operation
+(<code class="docutils literal notranslate"><span class="pre">collect_requirements_from_models</span></code>).</p></li>
+<li><p>Confirms every required entry is present in the corresponding dictionary
+(structural check).</p></li>
+<li><p>Validates the value against a typed Pydantic scheme model
+(<code class="docutils literal notranslate"><span class="pre">DdtScheme</span></code>, <code class="docutils literal notranslate"><span class="pre">DivScheme</span></code>, …) when one applies.</p></li>
+</ol>
+<p>On failure, <code class="docutils literal notranslate"><span class="pre">StagedInit.run</span></code> raises <code class="docutils literal notranslate"><span class="pre">RuntimeError</span></code> listing every
+<code class="docutils literal notranslate"><span class="pre">VerificationError</span></code> with file, field, and message. To check a case without
+running the solver, call <code class="docutils literal notranslate"><span class="pre">StagedInit.validate()</span></code> — it executes LOAD →
+RESOLVE → VERIFY and returns the error list rather than raising.</p>
+<section id="stagedinit">
+<h3>StagedInit<a class="headerlink" href="#stagedinit" title="Link to this heading">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">StagedInit</span></code> class orchestrates the 3-stage process. It is typically injected into the solver’s <code class="docutils literal notranslate"><span class="pre">&#64;initializer</span></code> via <code class="docutils literal notranslate"><span class="pre">Depends</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">StagedInit</span><span class="p">,</span> <span class="n">LoadResult</span><span class="p">,</span> <span class="n">ConfigContext</span><span class="p">,</span> <span class="n">InitializerBuilder</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">init</span> <span class="o">=</span> <span class="n">StagedInit</span><span class="p">(</span><span class="s2">&quot;MySolver&quot;</span><span class="p">)</span>
+
+<span class="nd">@init</span><span class="o">.</span><span class="n">load</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_config</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">LoadResult</span><span class="p">:</span>
+    <span class="c1"># Detect and instantiate models</span>
+    <span class="n">optional_models</span> <span class="o">=</span> <span class="n">MyModelInterface</span><span class="o">.</span><span class="n">detect_specs_with_manifest</span><span class="p">(</span>
+        <span class="n">case_dir</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;./case&quot;</span><span class="p">),</span>
+        <span class="n">manifest_path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;./case/models.yaml&quot;</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">LoadResult</span><span class="p">(</span>
+        <span class="n">core_models</span><span class="o">=</span><span class="p">[</span><span class="n">algorithm_config</span><span class="p">],</span>
+        <span class="n">optional_models</span><span class="o">=</span><span class="n">optional_models</span><span class="p">,</span>
+    <span class="p">)</span>
+
+<span class="nd">@init</span><span class="o">.</span><span class="n">resolve</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_dependencies</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">ConfigContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">runtime</span> <span class="ow">in</span> <span class="n">init</span><span class="o">.</span><span class="n">optional_models</span><span class="p">:</span>
+        <span class="n">runtime</span><span class="o">.</span><span class="n">run_resolve</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+
+<span class="nd">@init</span><span class="o">.</span><span class="n">build</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_runtime</span><span class="p">(</span>
+    <span class="n">core_models</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">optional_models</span><span class="p">:</span> <span class="nb">list</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitStep</span><span class="p">]:</span>
+    <span class="n">builder</span> <span class="o">=</span> <span class="n">InitializerBuilder</span><span class="p">()</span>
+    <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">init</span><span class="p">(</span><span class="s2">&quot;mesh&quot;</span><span class="p">,</span> <span class="n">create</span><span class="o">=</span><span class="k">lambda</span> <span class="n">_ctx</span><span class="p">:</span> <span class="n">mesh_data</span><span class="p">))</span>
+    <span class="n">builder</span><span class="o">.</span><span class="n">add_core_models</span><span class="p">([(</span><span class="s2">&quot;algorithm&quot;</span><span class="p">,</span> <span class="n">algo_config</span><span class="p">)])</span>
+    <span class="n">builder</span><span class="o">.</span><span class="n">add_field</span><span class="p">(</span><span class="s2">&quot;p&quot;</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">],</span> <span class="n">value</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">builder</span><span class="o">.</span><span class="n">add_field</span><span class="p">(</span><span class="s2">&quot;U&quot;</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">],</span> <span class="n">value</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+
+    <span class="c1"># Each model contributes its own InitSteps</span>
+    <span class="k">for</span> <span class="n">runtime</span> <span class="ow">in</span> <span class="n">optional_models</span><span class="p">:</span>
+        <span class="n">builder</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">runtime</span><span class="o">.</span><span class="n">run_build</span><span class="p">())</span>
+
+    <span class="k">return</span> <span class="n">builder</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+
+<span class="c1"># Execute all stages at once</span>
+<span class="n">ctx</span> <span class="o">=</span> <span class="n">init</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>  <span class="c1"># Returns Context</span>
+
+<span class="c1"># Or execute stages individually</span>
+<span class="n">load_result</span> <span class="o">=</span> <span class="n">init</span><span class="o">.</span><span class="n">run_load</span><span class="p">()</span>
+<span class="n">init</span><span class="o">.</span><span class="n">run_resolve</span><span class="p">(</span><span class="n">ConfigContext</span><span class="p">())</span>
+<span class="n">init_steps</span> <span class="o">=</span> <span class="n">init</span><span class="o">.</span><span class="n">run_build</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="configcontext">
+<h3>ConfigContext<a class="headerlink" href="#configcontext" title="Link to this heading">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">ConfigContext</span></code> is the registry passed to every <code class="docutils literal notranslate"><span class="pre">&#64;resolve</span></code> callback.
+It carries:</p>
+<ul class="simple">
+<li><p>a flat <code class="docutils literal notranslate"><span class="pre">name</span> <span class="pre">-&gt;</span> <span class="pre">model</span></code> map for the current region (<code class="docutils literal notranslate"><span class="pre">register</span></code>, <code class="docutils literal notranslate"><span class="pre">get</span></code>,
+<code class="docutils literal notranslate"><span class="pre">contains</span></code>, <code class="docutils literal notranslate"><span class="pre">all</span></code>);</p></li>
+<li><p>helpers for type- and prefix-based lookup (<code class="docutils literal notranslate"><span class="pre">get_by_type</span></code>, <code class="docutils literal notranslate"><span class="pre">get_by_prefix</span></code>);</p></li>
+<li><p>inspection of fields marked <code class="docutils literal notranslate"><span class="pre">Configurable</span></code> (<code class="docutils literal notranslate"><span class="pre">get_configurable_fields</span></code>);</p></li>
+<li><p>attribute-style access — <code class="docutils literal notranslate"><span class="pre">ctx.algorithm</span></code> is shorthand for <code class="docutils literal notranslate"><span class="pre">ctx.get(&quot;algorithm&quot;)</span></code>.</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@boussinesq</span><span class="o">.</span><span class="n">resolve</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">ConfigContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">algo_name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;Pimple&quot;</span><span class="p">,</span> <span class="s2">&quot;Simple&quot;</span><span class="p">,</span> <span class="s2">&quot;Piso&quot;</span><span class="p">):</span>
+        <span class="n">algo</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">algo_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">algo</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">algo</span><span class="o">.</span><span class="n">use_boussinesq</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">return</span>
+</pre></div>
+</div>
+<section id="multi-region-multi-domain-coupling">
+<h4>Multi-region (multi-domain) coupling<a class="headerlink" href="#multi-region-multi-domain-coupling" title="Link to this heading">¶</a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">ConfigContext</span></code> also supports multiple <strong>regions</strong>, which is the foundation
+for multi-domain simulations such as conjugate heat transfer. Each region is a
+separate namespace; models register into one and address each other across
+regions with dot notation:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">config</span> <span class="o">=</span> <span class="n">ConfigContext</span><span class="p">(</span><span class="n">current_region</span><span class="o">=</span><span class="s2">&quot;fluid&quot;</span><span class="p">)</span>
+<span class="n">config</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;temperature&quot;</span><span class="p">,</span> <span class="n">fluid_temp</span><span class="p">)</span>              <span class="c1"># in fluid</span>
+<span class="n">config</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;temperature&quot;</span><span class="p">,</span> <span class="n">solid_temp</span><span class="p">,</span> <span class="n">region</span><span class="o">=</span><span class="s2">&quot;solid&quot;</span><span class="p">)</span>
+
+<span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;temperature&quot;</span><span class="p">)</span>            <span class="c1"># -&gt; fluid_temp (current region)</span>
+<span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;solid.temperature&quot;</span><span class="p">)</span>      <span class="c1"># -&gt; solid_temp (cross-region)</span>
+<span class="n">config</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="s2">&quot;solid.temperature&quot;</span><span class="p">)</span> <span class="c1"># -&gt; True</span>
+<span class="n">config</span><span class="o">.</span><span class="n">regions</span>                       <span class="c1"># -&gt; [&quot;fluid&quot;, &quot;solid&quot;]</span>
+</pre></div>
+</div>
+<p>A model in the fluid region can pull its solid-region counterpart out of the
+<code class="docutils literal notranslate"><span class="pre">ConfigContext</span></code> during RESOLVE without either side having to know how the
+other was constructed. This is the only place in the framework where
+multi-domain coupling is currently expressed.</p>
+</section>
+</section>
+<section id="schema-introspection">
+<h3>Schema Introspection<a class="headerlink" href="#schema-introspection" title="Link to this heading">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">StagedInit</span></code> exposes two helpers that surface every config class and scheme
+requirement reachable from the solver, without running it. They are the
+intended entry points for UIs, AI-assisted workflows, and case templating.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">init.solver_inputs()</span> <span class="pre">-&gt;</span> <span class="pre">dict[str,</span> <span class="pre">type]</span></code> — maps each registered model name
+(core specs, registered plugins, and any models loaded after <code class="docutils literal notranslate"><span class="pre">run()</span></code>) to
+its configuration class.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">init.scheme_inputs()</span> <span class="pre">-&gt;</span> <span class="pre">type</span></code> — builds a typed Pydantic model whose fields
+are the union of all <code class="docutils literal notranslate"><span class="pre">&#64;fvSchemes.add(...)</span></code> requirements across active
+operations. Each field is typed with the appropriate scheme union
+(<code class="docutils literal notranslate"><span class="pre">DdtScheme</span></code>, <code class="docutils literal notranslate"><span class="pre">DivScheme</span></code>, etc.).</p></li>
+</ul>
+<p>Both return classes you can call <code class="docutils literal notranslate"><span class="pre">.model_json_schema()</span></code> on:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">init</span> <span class="o">=</span> <span class="n">StagedInit</span><span class="p">(</span><span class="s2">&quot;incompressibleFluid&quot;</span><span class="p">,</span> <span class="n">plugin_interface</span><span class="o">=</span><span class="n">incompressibleFluidModel</span><span class="p">)</span>
+<span class="n">init</span><span class="o">.</span><span class="n">register_core_models</span><span class="p">([</span><span class="n">pimple</span><span class="p">,</span> <span class="n">simple</span><span class="p">,</span> <span class="n">piso</span><span class="p">])</span>
+
+<span class="c1"># Every config class the solver might consume</span>
+<span class="n">schema_by_model</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">name</span><span class="p">:</span> <span class="bp">cls</span><span class="o">.</span><span class="n">model_json_schema</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">init</span><span class="o">.</span><span class="n">solver_inputs</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+<span class="p">}</span>
+
+<span class="c1"># The exact fvSchemes the solver needs, with valid value enumerations</span>
+<span class="n">schemes_schema</span> <span class="o">=</span> <span class="n">init</span><span class="o">.</span><span class="n">scheme_inputs</span><span class="p">()</span><span class="o">.</span><span class="n">model_json_schema</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="lazy-initialization">
+<h2>Lazy Initialization<a class="headerlink" href="#lazy-initialization" title="Link to this heading">¶</a></h2>
+<p>In the BUILD stage, objects are not created immediately. Instead, <code class="docutils literal notranslate"><span class="pre">InitStep</span></code> objects describe <strong>what</strong> to create and <strong>what dependencies</strong> are needed. The framework builds a dependency graph and executes them in topological order.</p>
+<section id="initstep">
+<h3>InitStep<a class="headerlink" href="#initstep" title="Link to this heading">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization</span><span class="w"> </span><span class="kn">import</span> <span class="n">InitStep</span>
+
+<span class="n">InitStep</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;fields.U&quot;</span><span class="p">,</span>                                    <span class="c1"># Unique identifier</span>
+    <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">],</span>                                 <span class="c1"># Must exist before this runs</span>
+    <span class="n">initializer</span><span class="o">=</span><span class="k">lambda</span> <span class="n">results</span><span class="p">:</span> <span class="n">create_field</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">]),</span>  <span class="c1"># Receives dict of prior results</span>
+    <span class="n">category</span><span class="o">=</span><span class="s2">&quot;fields&quot;</span><span class="p">,</span>                                   <span class="c1"># Route to ctx.fields</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Categories determine where results are stored in the <code class="docutils literal notranslate"><span class="pre">Context</span></code>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;fields&quot;</span></code> → <code class="docutils literal notranslate"><span class="pre">ctx.fields[&quot;U&quot;]</span></code> (name prefix <code class="docutils literal notranslate"><span class="pre">fields.</span></code> stripped)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;models&quot;</span></code> → <code class="docutils literal notranslate"><span class="pre">ctx.models[&quot;turbulence&quot;]</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;operators&quot;</span></code> → <code class="docutils literal notranslate"><span class="pre">ctx.models[&quot;div_phi&quot;]</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;resource&quot;</span></code> with <code class="docutils literal notranslate"><span class="pre">name=&quot;mesh&quot;</span></code> → <code class="docutils literal notranslate"><span class="pre">ctx.mesh</span></code> (top-level slot)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;resource&quot;</span></code> with <code class="docutils literal notranslate"><span class="pre">name=&quot;runtime&quot;</span></code> → <code class="docutils literal notranslate"><span class="pre">ctx.runtime</span></code></p></li>
+<li><p>Any other <code class="docutils literal notranslate"><span class="pre">&quot;resource&quot;</span></code> falls back to <code class="docutils literal notranslate"><span class="pre">ctx.models[name]</span></code> and emits a warning.</p></li>
+</ul>
+</section>
 <section id="helper-functions">
 <h3>Helper Functions<a class="headerlink" href="#helper-functions" title="Link to this heading">¶</a></h3>
-<p>Helper functions create <code class="docutils literal notranslate"><span class="pre">InitStep</span></code> objects with automatic naming conventions:</p>
+<p>Helpers create <code class="docutils literal notranslate"><span class="pre">InitStep</span></code> objects with automatic naming and category:</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">init(name,</span> <span class="pre">create,</span> <span class="pre">depends_on)</span></code> — general-purpose, no prefix (for mesh, runtime, algorithm, etc.)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">field(name,</span> <span class="pre">create,</span> <span class="pre">depends_on)</span></code> — prefixes with <code class="docutils literal notranslate"><span class="pre">fields.</span></code> (e.g., <code class="docutils literal notranslate"><span class="pre">field(&quot;U&quot;,</span> <span class="pre">...)</span></code> → name <code class="docutils literal notranslate"><span class="pre">fields.U</span></code>)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">model(name,</span> <span class="pre">create,</span> <span class="pre">depends_on)</span></code> — prefixes with <code class="docutils literal notranslate"><span class="pre">models.</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">init(name,</span> <span class="pre">create,</span> <span class="pre">depends_on)</span></code> — general-purpose, no prefix, category <code class="docutils literal notranslate"><span class="pre">&quot;resource&quot;</span></code> (for mesh, runtime, algorithm, etc.)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">field(name,</span> <span class="pre">create,</span> <span class="pre">depends_on)</span></code> — prefixes with <code class="docutils literal notranslate"><span class="pre">fields.</span></code>, category <code class="docutils literal notranslate"><span class="pre">&quot;fields&quot;</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">model(name,</span> <span class="pre">create,</span> <span class="pre">depends_on)</span></code> — prefixes with <code class="docutils literal notranslate"><span class="pre">models.</span></code>, category <code class="docutils literal notranslate"><span class="pre">&quot;models&quot;</span></code></p></li>
 </ul>
-<p>Each initializer receives a <code class="docutils literal notranslate"><span class="pre">context</span></code> dict containing all previously created objects, keyed by their full name.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization</span><span class="w"> </span><span class="kn">import</span> <span class="n">field</span><span class="p">,</span> <span class="n">init</span><span class="p">,</span> <span class="n">model</span>
+
+<span class="c1"># field(&quot;p&quot;, ...) -&gt; InitStep(name=&quot;fields.p&quot;, category=&quot;fields&quot;)</span>
+<span class="n">field</span><span class="p">(</span><span class="s2">&quot;p&quot;</span><span class="p">,</span> <span class="n">create</span><span class="o">=</span><span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">])</span>
+
+<span class="c1"># model(&quot;turbulence&quot;, ...) -&gt; InitStep(name=&quot;models.turbulence&quot;, category=&quot;models&quot;)</span>
+<span class="n">model</span><span class="p">(</span><span class="s2">&quot;turbulence&quot;</span><span class="p">,</span> <span class="n">create</span><span class="o">=</span><span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">make_turb</span><span class="p">(),</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">,</span> <span class="s2">&quot;fields.p&quot;</span><span class="p">])</span>
+
+<span class="c1"># init(&quot;mesh&quot;, ...) -&gt; InitStep(name=&quot;mesh&quot;, category=&quot;resource&quot;)</span>
+<span class="n">init</span><span class="p">(</span><span class="s2">&quot;mesh&quot;</span><span class="p">,</span> <span class="n">create</span><span class="o">=</span><span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">load_mesh</span><span class="p">())</span>
+</pre></div>
+</div>
+<p>All helpers default to an empty dependency list <code class="docutils literal notranslate"><span class="pre">[]</span></code> if not specified.</p>
 </section>
+<section id="initializerbuilder">
+<h3>InitializerBuilder<a class="headerlink" href="#initializerbuilder" title="Link to this heading">¶</a></h3>
+<p>The fluent <code class="docutils literal notranslate"><span class="pre">InitializerBuilder</span></code> simplifies constructing lists of <code class="docutils literal notranslate"><span class="pre">InitStep</span></code> objects.
+Its public methods are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">add(step)</span></code> — append a pre-built <code class="docutils literal notranslate"><span class="pre">InitStep</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">extend(steps)</span></code> — append a list of <code class="docutils literal notranslate"><span class="pre">InitStep</span></code> objects</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">add_initializer(name,</span> <span class="pre">value)</span></code> — top-level resource (no prefix)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">add_field(name,</span> <span class="pre">depends_on,</span> <span class="pre">value)</span></code> — field (auto-prefixed <code class="docutils literal notranslate"><span class="pre">fields.</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">add_model(name,</span> <span class="pre">value)</span></code> — model (auto-prefixed <code class="docutils literal notranslate"><span class="pre">models.</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">add_core_models(items)</span></code> — register a list of <code class="docutils literal notranslate"><span class="pre">(name,</span> <span class="pre">model)</span></code> tuples and pull in their <code class="docutils literal notranslate"><span class="pre">run_build()</span></code> steps</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">add_optional_models(models)</span></code> — call <code class="docutils literal notranslate"><span class="pre">run_build()</span></code> on each and append</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">build()</span></code> — return the assembled <code class="docutils literal notranslate"><span class="pre">list[InitStep]</span></code></p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">InitializerBuilder</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">init</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">builder</span> <span class="o">=</span> <span class="n">InitializerBuilder</span><span class="p">()</span>
+<span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">init</span><span class="p">(</span><span class="s2">&quot;mesh&quot;</span><span class="p">,</span> <span class="n">create</span><span class="o">=</span><span class="k">lambda</span> <span class="n">_ctx</span><span class="p">:</span> <span class="n">mesh_data</span><span class="p">))</span>
+<span class="n">builder</span><span class="o">.</span><span class="n">add_field</span><span class="p">(</span><span class="s2">&quot;p&quot;</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">],</span> <span class="n">value</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+<span class="n">builder</span><span class="o">.</span><span class="n">add_field</span><span class="p">(</span><span class="s2">&quot;U&quot;</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">],</span> <span class="n">value</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+<span class="n">builder</span><span class="o">.</span><span class="n">add_core_models</span><span class="p">([(</span><span class="s2">&quot;algorithm&quot;</span><span class="p">,</span> <span class="n">algo</span><span class="p">)])</span>
+
+<span class="c1"># Extend with model-contributed steps</span>
+<span class="n">builder</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">model_runtime</span><span class="o">.</span><span class="n">run_build</span><span class="p">())</span>
+
+<span class="n">init_steps</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>  <span class="c1"># Returns list[InitStep]</span>
+</pre></div>
+</div>
+</section>
+<section id="dependency-resolution">
+<h3>Dependency Resolution<a class="headerlink" href="#dependency-resolution" title="Link to this heading">¶</a></h3>
+<p>Dependencies are strings matching the <code class="docutils literal notranslate"><span class="pre">name</span></code> of other <code class="docutils literal notranslate"><span class="pre">InitStep</span></code> objects. The framework:</p>
+<ul class="simple">
+<li><p>Uses <code class="docutils literal notranslate"><span class="pre">networkx.lexicographical_topological_sort</span></code> for deterministic ordering.
+For <em>operation</em> graphs (not init graphs) the <code class="docutils literal notranslate"><span class="pre">DAGResolver</span></code> passes a custom key
+<code class="docutils literal notranslate"><span class="pre">(operation_number</span> <span class="pre">is</span> <span class="pre">None,</span> <span class="pre">operation_number,</span> <span class="pre">node_name)</span></code> — operations with an
+<code class="docutils literal notranslate"><span class="pre">operation_number</span></code> sort first (lowest number wins), then unnumbered operations
+break ties alphabetically. This is why models can anchor themselves into a phase
+by picking <code class="docutils literal notranslate"><span class="pre">operation_number=&quot;2.5&quot;</span></code> etc.</p></li>
+<li><p>Detects cycles and raises <code class="docutils literal notranslate"><span class="pre">InitializationGraphError</span></code> before execution</p></li>
+<li><p>Ensures each initializer executes exactly once</p></li>
+</ul>
+<p>Example dependency chain:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>mesh (no deps)
+  |
+  +---&gt; fields.p (depends on [&quot;mesh&quot;])
+  |
+  +---&gt; fields.U (depends on [&quot;mesh&quot;])
+            |
+            +---&gt; models.turbulence (depends on [&quot;fields.U&quot;, &quot;fields.p&quot;])
+                      |
+                      +---&gt; algorithm (depends on [&quot;models.turbulence&quot;])
+</pre></div>
+</div>
+</section>
+</section>
+<section id="model-discovery-manifests">
+<h2>Model Discovery &amp; Manifests<a class="headerlink" href="#model-discovery-manifests" title="Link to this heading">¶</a></h2>
+<p>The framework supports <strong>three</strong> mechanisms for getting a model into a solver run.
+They co-exist and serve different purposes; pick the one that matches your situation:</p>
+<div class="table-wrapper colwidths-given docutils container">
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 22.0%" />
+<col style="width: 28.0%" />
+<col style="width: 50.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Mechanism</p></th>
+<th class="head"><p>Where it lives</p></th>
+<th class="head"><p>When to use it</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Plugin registry</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&#64;PluginSystem.register</span></code> on a base class; concrete specs call
+<code class="docutils literal notranslate"><span class="pre">Model(&quot;Name&quot;).register_with(&lt;interface&gt;)</span></code>. Discovered with
+<code class="docutils literal notranslate"><span class="pre">&lt;interface&gt;.detect_models(case_dir=...)</span></code>.</p></td>
+<td><p>Optional, externally-pluggable physics (e.g.
+<code class="docutils literal notranslate"><span class="pre">boussinesq</span></code>, <code class="docutils literal notranslate"><span class="pre">spalart_allmaras</span></code> for <code class="docutils literal notranslate"><span class="pre">incompressibleFluidModel</span></code>).
+Models opt themselves in based on case data via <code class="docutils literal notranslate"><span class="pre">&#64;detect</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Core specs</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">StagedInit.register_core_models([spec1,</span> <span class="pre">spec2,</span> <span class="pre">...])</span></code>. Discovered
+through ordering in <code class="docutils literal notranslate"><span class="pre">LoadResult.core_models</span></code>.</p></td>
+<td><p>Mandatory components the solver always expects, where one of several
+variants is selected by case configuration. Example: PIMPLE / SIMPLE /
+PISO pressure-velocity algorithms in <code class="docutils literal notranslate"><span class="pre">incompressibleFluid</span></code> —
+<code class="docutils literal notranslate"><span class="pre">base.PressureVelocityAlgorithm.detect_and_create()</span></code> reads
+<code class="docutils literal notranslate"><span class="pre">system/fvSolution</span></code> and returns the chosen spec, which the solver
+then expects at <code class="docutils literal notranslate"><span class="pre">state.core_models[0]</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>YAML manifest</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">load_manifest(manifest_path,</span> <span class="pre">case_dir,</span> <span class="pre">registry_name)</span></code> from
+<code class="docutils literal notranslate"><span class="pre">neofoam.framework.model</span></code>.</p></td>
+<td><p>Multi-instance models or fully-explicit configuration. Each YAML entry
+names a <code class="docutils literal notranslate"><span class="pre">type</span></code> and <code class="docutils literal notranslate"><span class="pre">name</span></code> plus inline config; the framework
+instantiates a <code class="docutils literal notranslate"><span class="pre">ModelRuntime</span></code> per entry.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>A single solver may use all three: <code class="docutils literal notranslate"><span class="pre">incompressibleFluid</span></code> registers
+<code class="docutils literal notranslate"><span class="pre">pimple/simple/piso</span></code> as core specs (because exactly one is always required),
+exposes <code class="docutils literal notranslate"><span class="pre">incompressibleFluidModel</span></code> as a plugin interface (so add-on physics
+like Boussinesq can plug in via <code class="docutils literal notranslate"><span class="pre">&#64;detect</span></code>), and could additionally accept a
+manifest for cases that need multiple instances of the same plugin.</p>
+<p>Models can be discovered automatically via <code class="docutils literal notranslate"><span class="pre">&#64;detect</span></code> or loaded explicitly from YAML manifests.</p>
+<section id="auto-detection-with-detect">
+<h3>Auto-Detection with &#64;detect<a class="headerlink" href="#auto-detection-with-detect" title="Link to this heading">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">&#64;detect</span></code> decorator determines whether a model should be active. It can return a simple <code class="docutils literal notranslate"><span class="pre">bool</span></code> or a <code class="docutils literal notranslate"><span class="pre">list[str]</span></code> of instance IDs for multi-instance models.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Simple detection</span>
+<span class="nd">@transport</span><span class="o">.</span><span class="n">detect</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">detect</span><span class="p">(</span><span class="n">case_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">case_dir</span> <span class="o">/</span> <span class="s2">&quot;transportProperties.yaml&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+
+<span class="c1"># Multi-instance detection</span>
+<span class="nd">@multi_model</span><span class="o">.</span><span class="n">detect</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">detect</span><span class="p">(</span><span class="n">case_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">case_dir</span> <span class="o">/</span> <span class="s2">&quot;sources.yaml&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>  <span class="c1"># [&quot;instance_a&quot;, &quot;instance_b&quot;]</span>
+</pre></div>
+</div>
+<p>Usage:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">transport</span><span class="o">.</span><span class="n">run_detect</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;./case&quot;</span><span class="p">))</span>
+<span class="c1"># DetectResult(detected=True, instance_ids=[])</span>
+
+<span class="n">result</span> <span class="o">=</span> <span class="n">multi_model</span><span class="o">.</span><span class="n">run_detect</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;./case&quot;</span><span class="p">))</span>
+<span class="c1"># DetectResult(detected=True, instance_ids=[&quot;instance_a&quot;, &quot;instance_b&quot;])</span>
+</pre></div>
+</div>
+</section>
+<section id="yaml-manifests">
+<h3>YAML Manifests<a class="headerlink" href="#yaml-manifests" title="Link to this heading">¶</a></h3>
+<p>Manifests provide explicit model instantiation with inline config. The manifest format:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># models.yaml</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">MultiModel</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">instance_a</span>
+<span class="w">  </span><span class="nt">scale</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.5</span>
+<span class="w">  </span><span class="nt">offset</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1</span>
+
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">MultiModel</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">instance_b</span>
+<span class="w">  </span><span class="nt">scale</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2.0</span>
+<span class="w">  </span><span class="nt">offset</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.5</span>
+</pre></div>
+</div>
+<p>Load manifests with <code class="docutils literal notranslate"><span class="pre">load_manifest()</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_manifest</span>
+
+<span class="n">runtimes</span> <span class="o">=</span> <span class="n">load_manifest</span><span class="p">(</span>
+    <span class="n">manifest_path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;./case/models.yaml&quot;</span><span class="p">),</span>
+    <span class="n">case_dir</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;./case&quot;</span><span class="p">),</span>
+    <span class="n">registry_name</span><span class="o">=</span><span class="s2">&quot;MyModelInterface&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="c1"># Returns list[ModelRuntime], one per manifest entry</span>
+</pre></div>
+</div>
+<p>For manifest loading to work, the model must be registered with a plugin interface:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">model_spec</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;MultiModel&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">register_with</span><span class="p">(</span><span class="n">MyModelInterface</span><span class="p">)</span>
+
+<span class="nd">@model_spec</span><span class="o">.</span><span class="n">config</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MultiModelConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
+    <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="n">offset</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+</pre></div>
+</div>
+</section>
+<section id="multi-instance-build">
+<h3>Multi-Instance Build<a class="headerlink" href="#multi-instance-build" title="Link to this heading">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">&#64;build</span></code> receives <code class="docutils literal notranslate"><span class="pre">self:</span> <span class="pre">ModelRuntime</span></code> as the first parameter. Use it to access the instance name for multi-instance models. Config parameters are auto-injected by type:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@multi_model</span><span class="o">.</span><span class="n">build</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">ModelRuntime</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">MultiModelConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitStep</span><span class="p">]:</span>
+    <span class="c1"># Use self.name for instance-specific field names</span>
+    <span class="n">field_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;model_field_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">field</span><span class="p">(</span><span class="n">field_name</span><span class="p">,</span> <span class="n">create</span><span class="o">=</span><span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">cfg</span><span class="o">.</span><span class="n">scale</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">]),</span>
+    <span class="p">]</span>
+</pre></div>
+</div>
+</section>
+<section id="combined-discovery">
+<h3>Combined Discovery<a class="headerlink" href="#combined-discovery" title="Link to this heading">¶</a></h3>
+<p>A common pattern combines manifest loading with auto-detection for models not covered by the manifest:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">MyModelInterface</span><span class="p">:</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">detect_specs_with_manifest</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">,</span> <span class="n">manifest_path</span><span class="p">):</span>
+        <span class="c1"># 1. Load models from manifest</span>
+        <span class="n">manifest_runtimes</span> <span class="o">=</span> <span class="n">load_manifest</span><span class="p">(</span><span class="n">manifest_path</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">,</span> <span class="s2">&quot;MyModelInterface&quot;</span><span class="p">)</span>
+
+        <span class="c1"># 2. Auto-detect remaining models</span>
+        <span class="k">for</span> <span class="n">spec</span><span class="p">,</span> <span class="n">result</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">detect_specs</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">detected</span><span class="p">:</span>
+                <span class="c1"># Skip if already in manifest</span>
+                <span class="o">...</span>
+
+        <span class="k">return</span> <span class="n">combined_runtimes</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="operations-execution-graph">
+<h2>Operations &amp; Execution Graph<a class="headerlink" href="#operations-execution-graph" title="Link to this heading">¶</a></h2>
+<p>Operations define the computational steps a solver or model performs at runtime. They are registered with decorators and composed into a nested execution graph.</p>
+<section id="defining-operations">
+<h3>Defining Operations<a class="headerlink" href="#defining-operations" title="Link to this heading">¶</a></h3>
+<p>Operations are decorated functions that receive field values from the <code class="docutils literal notranslate"><span class="pre">Context</span></code> and return <code class="docutils literal notranslate"><span class="pre">FieldUpdates</span></code> to modify them:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">FieldUpdates</span>
+
+<span class="nd">@solver_spec</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">&quot;1.0&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;solve_momentum&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">solve_momentum</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">U</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FieldUpdates</span><span class="p">:</span>
+    <span class="c1"># Parameter names match ctx.fields keys (auto-injected)</span>
+    <span class="n">new_U</span> <span class="o">=</span> <span class="n">U</span> <span class="o">-</span> <span class="mf">0.01</span> <span class="o">*</span> <span class="n">p</span>
+    <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">&quot;U&quot;</span><span class="p">:</span> <span class="n">new_U</span><span class="p">})</span>
+
+<span class="nd">@model_spec</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span>
+    <span class="n">operation_number</span><span class="o">=</span><span class="s2">&quot;2.5&quot;</span><span class="p">,</span>
+    <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;solve_momentum&quot;</span><span class="p">],</span>  <span class="c1"># Execute after this operation</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;update_turbulence&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">update_turbulence</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">U</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>                       <span class="c1"># Auto-injected from ctx.fields[&quot;U&quot;]</span>
+    <span class="n">cfg</span><span class="p">:</span> <span class="n">TurbulenceConfig</span><span class="p">,</span>          <span class="c1"># Auto-injected by type from runtime.config</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FieldUpdates</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">&quot;k&quot;</span><span class="p">:</span> <span class="n">U</span> <span class="o">*</span> <span class="n">cfg</span><span class="o">.</span><span class="n">c_mu</span><span class="p">})</span>
+
+<span class="c1"># Operations can also receive the full Context via a `ctx` parameter</span>
+<span class="nd">@model_spec</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">&quot;3.0&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;coupled_step&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">coupled_step</span><span class="p">(</span>
+    <span class="n">ctx</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>                       <span class="c1"># Full Context object</span>
+    <span class="n">model_field</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>             <span class="c1"># Also auto-injected from ctx.fields</span>
+    <span class="n">cfg</span><span class="p">:</span> <span class="n">TurbulenceConfig</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FieldUpdates</span><span class="p">:</span>
+    <span class="n">mesh</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">mesh</span>
+    <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">&quot;model_field&quot;</span><span class="p">:</span> <span class="n">model_field</span> <span class="o">*</span> <span class="mf">0.9</span><span class="p">})</span>
+</pre></div>
+</div>
+<p>Key features of operation auto-injection:</p>
+<ul class="simple">
+<li><p><strong>Field injection</strong>: Parameter names matching <code class="docutils literal notranslate"><span class="pre">ctx.fields</span></code> keys are automatically populated</p></li>
+<li><p><strong>Config injection</strong>: Parameters whose <strong>type annotation</strong> is a <code class="docutils literal notranslate"><span class="pre">BaseConfig</span></code> subclass are discovered and injected from <code class="docutils literal notranslate"><span class="pre">runtime.config</span></code> (matched by type, not by parameter name)</p></li>
+<li><p><strong>Context injection</strong>: A parameter named <code class="docutils literal notranslate"><span class="pre">ctx</span></code> receives the full <code class="docutils literal notranslate"><span class="pre">Context</span></code> object</p></li>
+<li><p><strong>Self binding</strong>: <code class="docutils literal notranslate"><span class="pre">self</span></code> is bound to the <code class="docutils literal notranslate"><span class="pre">ModelRuntime</span></code> or <code class="docutils literal notranslate"><span class="pre">SolverRuntime</span></code> instance</p></li>
+<li><p><strong>Lazy state</strong>: Use <code class="docutils literal notranslate"><span class="pre">if</span> <span class="pre">not</span> <span class="pre">hasattr(self,</span> <span class="pre">'_counter'):</span> <span class="pre">self._counter</span> <span class="pre">=</span> <span class="pre">0</span></code> for per-runtime state</p></li>
+</ul>
+</section>
+<section id="conditional-operation-dispatch">
+<h3>Conditional Operation Dispatch<a class="headerlink" href="#conditional-operation-dispatch" title="Link to this heading">¶</a></h3>
+<p>Use <code class="docutils literal notranslate"><span class="pre">&#64;operation_collection</span></code> to select different operations based on runtime config:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@model_spec</span><span class="o">.</span><span class="n">operation_collection</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">collected_operations</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Operations</span><span class="p">:</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">coupled</span><span class="p">:</span>
+        <span class="c1"># Return coupled variant</span>
+        <span class="n">op</span> <span class="o">=</span> <span class="n">Operation</span><span class="p">(</span>
+            <span class="n">func</span><span class="o">=</span><span class="n">SequentialOp</span><span class="p">(</span><span class="n">coupled_step_fn</span><span class="p">),</span>
+            <span class="n">metadata</span><span class="o">=</span><span class="n">OperationMetadata</span><span class="p">(</span>
+                <span class="n">op_name</span><span class="o">=</span><span class="s2">&quot;coupled_step&quot;</span><span class="p">,</span>
+                <span class="n">operation_number</span><span class="o">=</span><span class="n">OperationNumber</span><span class="p">(</span><span class="s2">&quot;2.9&quot;</span><span class="p">),</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Return standalone variant</span>
+        <span class="n">op</span> <span class="o">=</span> <span class="n">Operation</span><span class="p">(</span>
+            <span class="n">func</span><span class="o">=</span><span class="n">SequentialOp</span><span class="p">(</span><span class="n">standalone_step_fn</span><span class="p">),</span>
+            <span class="n">metadata</span><span class="o">=</span><span class="n">OperationMetadata</span><span class="p">(</span>
+                <span class="n">op_name</span><span class="o">=</span><span class="s2">&quot;standalone_step&quot;</span><span class="p">,</span>
+                <span class="n">operation_number</span><span class="o">=</span><span class="n">OperationNumber</span><span class="p">(</span><span class="s2">&quot;2.9&quot;</span><span class="p">),</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">Operations</span><span class="p">([</span><span class="n">op</span><span class="p">])</span>
+</pre></div>
+</div>
+</section>
+<section id="operation-types">
+<h3>Operation Types<a class="headerlink" href="#operation-types" title="Link to this heading">¶</a></h3>
+<p>Operations are wrapped in type markers that determine execution behavior:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">SequentialOp(func)</span></code>: Executes once per call</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">IterativeOp(func)</span></code>: Loops while <code class="docutils literal notranslate"><span class="pre">func</span></code> returns <code class="docutils literal notranslate"><span class="pre">True</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ConditionalOp(func)</span></code>: Conditional execution gate (returns <code class="docutils literal notranslate"><span class="pre">bool</span></code>)</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.operations</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Operation</span><span class="p">,</span> <span class="n">SequentialOp</span><span class="p">,</span> <span class="n">IterativeOp</span><span class="p">,</span> <span class="n">ConditionalOp</span><span class="p">,</span> <span class="n">OperationMetadata</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># A step that runs once</span>
+<span class="n">step</span> <span class="o">=</span> <span class="n">Operation</span><span class="p">(</span>
+    <span class="n">func</span><span class="o">=</span><span class="n">SequentialOp</span><span class="p">(</span><span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">solve</span><span class="p">(</span><span class="n">ctx</span><span class="p">)),</span>
+    <span class="n">metadata</span><span class="o">=</span><span class="n">OperationMetadata</span><span class="p">(</span><span class="n">op_name</span><span class="o">=</span><span class="s2">&quot;solve&quot;</span><span class="p">,</span> <span class="n">operation_number</span><span class="o">=</span><span class="n">OperationNumber</span><span class="p">(</span><span class="s2">&quot;1.0&quot;</span><span class="p">)),</span>
+<span class="p">)</span>
+
+<span class="c1"># A loop that repeats until convergence</span>
+<span class="n">loop</span> <span class="o">=</span> <span class="n">Operation</span><span class="p">(</span>
+    <span class="n">func</span><span class="o">=</span><span class="n">IterativeOp</span><span class="p">(</span><span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="ow">not</span> <span class="n">converged</span><span class="p">(</span><span class="n">ctx</span><span class="p">)),</span>
+    <span class="n">metadata</span><span class="o">=</span><span class="n">OperationMetadata</span><span class="p">(</span><span class="n">op_name</span><span class="o">=</span><span class="s2">&quot;outer_loop&quot;</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="stepbuilder-execution-graph">
+<h3>StepBuilder &amp; Execution Graph<a class="headerlink" href="#stepbuilder-execution-graph" title="Link to this heading">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">StepBuilder</span></code> creates nested loop structures for solver execution:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">StepBuilder</span>
+
+<span class="n">builder</span> <span class="o">=</span> <span class="n">StepBuilder</span><span class="p">()</span>
+
+<span class="c1"># Add a sequential step at top level</span>
+<span class="n">builder</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">momentum_op</span><span class="p">)</span>
+
+<span class="c1"># Create a loop scope — returns a new StepBuilder for the loop body</span>
+<span class="n">inner</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">loop</span><span class="p">(</span><span class="n">convergence_check_op</span><span class="p">)</span>  <span class="c1"># -&gt; StepBuilder</span>
+<span class="n">inner</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">pressure_op</span><span class="p">)</span>
+<span class="n">inner</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">correction_op</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">DAGResolver</span></code> merges the solver’s structural graph with model operations:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.graph.dag_resolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">DAGResolver</span>
+
+<span class="n">builder</span><span class="p">,</span> <span class="n">model_ops</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">execution_graph</span><span class="p">()</span>
+<span class="n">resolver</span> <span class="o">=</span> <span class="n">DAGResolver</span><span class="p">()</span>
+<span class="n">resolved</span> <span class="o">=</span> <span class="n">resolver</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">builder</span><span class="p">,</span> <span class="n">model_ops</span><span class="p">)</span>  <span class="c1"># -&gt; StepBuilder</span>
+</pre></div>
+</div>
+<p>The resolver:</p>
+<ol class="arabic simple">
+<li><p>Collects all operations from the builder and model operations</p></li>
+<li><p>Infers which scope each model operation belongs to (based on <code class="docutils literal notranslate"><span class="pre">depends_on</span></code> / <code class="docutils literal notranslate"><span class="pre">before</span></code>)</p></li>
+<li><p>Builds a global dependency graph</p></li>
+<li><p>Topologically sorts within each scope</p></li>
+<li><p>Rebuilds the <code class="docutils literal notranslate"><span class="pre">StepBuilder</span></code> with sorted operations</p></li>
+</ol>
+</section>
+</section>
+<section id="context-fieldupdates">
+<h2>Context &amp; FieldUpdates<a class="headerlink" href="#context-fieldupdates" title="Link to this heading">¶</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">Context</span></code> is the central data structure passed through initialization and operations.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span><span class="p">,</span> <span class="n">FieldUpdates</span>
+
+<span class="c1"># Context after initialization</span>
+<span class="n">ctx</span> <span class="o">=</span> <span class="n">Context</span><span class="p">(</span>
+    <span class="n">fields</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;U&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;p&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;k&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
+    <span class="n">models</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;turbulence&quot;</span><span class="p">:</span> <span class="n">turb_model</span><span class="p">,</span> <span class="s2">&quot;optional_models&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">rt1</span><span class="p">,</span> <span class="n">rt2</span><span class="p">]},</span>
+    <span class="n">mesh</span><span class="o">=</span><span class="n">mesh_object</span><span class="p">,</span>
+    <span class="n">runtime</span><span class="o">=</span><span class="n">time_object</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Operations return FieldUpdates to modify ctx.fields</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">my_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">U</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FieldUpdates</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">&quot;U&quot;</span><span class="p">:</span> <span class="n">U</span> <span class="o">*</span> <span class="mf">0.99</span><span class="p">})</span>
+<span class="c1"># After execution: ctx.fields[&quot;U&quot;] is updated automatically</span>
+</pre></div>
+</div>
+</section>
+<section id="dependency-injection">
+<h2>Dependency Injection<a class="headerlink" href="#dependency-injection" title="Link to this heading">¶</a></h2>
+<p>The framework uses <code class="docutils literal notranslate"><span class="pre">Depends</span></code> markers for dependency injection, primarily in solver initialization:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization</span><span class="w"> </span><span class="kn">import</span> <span class="n">Depends</span><span class="p">,</span> <span class="n">StagedInit</span>
+
+<span class="nd">@solver_spec</span><span class="o">.</span><span class="n">initializer</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">initialize</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">init</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">StagedInit</span><span class="p">,</span> <span class="n">Depends</span><span class="p">(</span><span class="n">create_init_manager</span><span class="p">)],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Context</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">init</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Depends</span></code> supports:</p>
+<ul class="simple">
+<li><p><strong>Callable providers</strong>: <code class="docutils literal notranslate"><span class="pre">Depends(factory_function)</span></code> — calls the function to produce the value</p></li>
+<li><p><strong>String paths</strong>: <code class="docutils literal notranslate"><span class="pre">Depends(&quot;fields.U&quot;)</span></code> — looks up a value in the context</p></li>
+<li><p><strong>Scoping</strong>: <code class="docutils literal notranslate"><span class="pre">Depends(fn,</span> <span class="pre">scope=&quot;time_step&quot;)</span></code> — controls cache lifetime (<code class="docutils literal notranslate"><span class="pre">time_step</span></code>, <code class="docutils literal notranslate"><span class="pre">iteration</span></code>, <code class="docutils literal notranslate"><span class="pre">operation</span></code>)</p></li>
+<li><p><strong>Caching</strong>: <code class="docutils literal notranslate"><span class="pre">Depends(fn,</span> <span class="pre">cache=True)</span></code> — caches the result within scope (default)</p></li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The framework does not yet automatically invalidate <code class="docutils literal notranslate"><span class="pre">Depends</span></code> caches between time steps or iterations.
+With <code class="docutils literal notranslate"><span class="pre">cache=True</span></code> (the default) a <code class="docutils literal notranslate"><span class="pre">Depends(callable)</span></code> resolves once per process unless the application
+explicitly calls <code class="docutils literal notranslate"><span class="pre">DependencyResolver.clear_scope(&quot;time_step&quot;)</span></code>. Use <code class="docutils literal notranslate"><span class="pre">cache=False</span></code> for providers that
+must re-evaluate every call until the lifecycle hooks are wired in.</p>
+</div>
+</section>
+<section id="complete-example">
+<h2>Complete Example<a class="headerlink" href="#complete-example" title="Link to this heading">¶</a></h2>
+<p>Here is a complete example showing a transport model and solver working together.</p>
+<section id="transport-model">
+<h3>Transport Model<a class="headerlink" href="#transport-model" title="Link to this heading">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># my_solver/models/transport.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigContext</span><span class="p">,</span> <span class="n">InitStep</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization.helpers</span><span class="w"> </span><span class="kn">import</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">FieldUpdates</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseConfig</span><span class="p">,</span> <span class="n">IOStrategy</span><span class="p">,</span> <span class="n">YAML</span>
+
+<span class="n">transport</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;Transport&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">register_with</span><span class="p">(</span><span class="n">PhysicsModelInterface</span><span class="p">)</span>
+
+<span class="nd">@transport</span><span class="o">.</span><span class="n">config</span>
+<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">&quot;transportProperties&quot;</span><span class="p">))</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TransportConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
+    <span class="n">viscosity</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span>
+    <span class="n">density</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1000.0</span>
+
+<span class="nd">@transport</span><span class="o">.</span><span class="n">load</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span><span class="n">case_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">_entry</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransportConfig</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">TransportConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">)</span>
+
+<span class="nd">@transport</span><span class="o">.</span><span class="n">detect</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">detect</span><span class="p">(</span><span class="n">case_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">case_dir</span> <span class="o">/</span> <span class="s2">&quot;transportProperties.yaml&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+
+<span class="nd">@transport</span><span class="o">.</span><span class="n">resolve</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">ModelRuntime</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">ConfigContext</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">TransportConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TransportConfig</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">cfg</span><span class="o">.</span><span class="n">viscosity</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid viscosity&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">cfg</span>
+
+<span class="nd">@transport</span><span class="o">.</span><span class="n">build</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">ModelRuntime</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">TransportConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitStep</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">field</span><span class="p">(</span><span class="s2">&quot;nu&quot;</span><span class="p">,</span> <span class="n">create</span><span class="o">=</span><span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">cfg</span><span class="o">.</span><span class="n">viscosity</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">]),</span>
+    <span class="p">]</span>
+
+<span class="nd">@transport</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">&quot;2.5&quot;</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;solve_momentum&quot;</span><span class="p">])</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">update_viscosity</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">nu</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">TransportConfig</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FieldUpdates</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">&quot;nu&quot;</span><span class="p">:</span> <span class="n">cfg</span><span class="o">.</span><span class="n">viscosity</span><span class="p">})</span>
+</pre></div>
+</div>
+</section>
+<section id="solver">
+<h3>Solver<a class="headerlink" href="#solver" title="Link to this heading">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># my_solver/solver.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Annotated</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">Solver</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span><span class="p">,</span> <span class="n">FieldUpdates</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization</span><span class="w"> </span><span class="kn">import</span> <span class="n">StagedInit</span><span class="p">,</span> <span class="n">Depends</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.operations</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Operation</span><span class="p">,</span> <span class="n">Operations</span><span class="p">,</span> <span class="n">StepBuilder</span><span class="p">,</span>
+    <span class="n">SequentialOp</span><span class="p">,</span> <span class="n">IterativeOp</span><span class="p">,</span> <span class="n">OperationMetadata</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">OperationNumber</span>
+
+<span class="n">solver_spec</span> <span class="o">=</span> <span class="n">Solver</span><span class="p">(</span><span class="s2">&quot;SimpleSolver&quot;</span><span class="p">)</span>
+
+<span class="nd">@solver_spec</span><span class="o">.</span><span class="n">initializer</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">initialize</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">init</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">StagedInit</span><span class="p">,</span> <span class="n">Depends</span><span class="p">(</span><span class="n">create_init</span><span class="p">)],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Context</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">init</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+<span class="nd">@solver_spec</span><span class="o">.</span><span class="n">execution_graph_step</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">execution_graph</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">StepBuilder</span><span class="p">,</span> <span class="n">Operations</span><span class="p">]:</span>
+    <span class="n">builder</span> <span class="o">=</span> <span class="n">StepBuilder</span><span class="p">()</span>
+
+    <span class="c1"># Outer loop</span>
+    <span class="n">outer</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">loop</span><span class="p">(</span><span class="n">Operation</span><span class="p">(</span>
+        <span class="n">func</span><span class="o">=</span><span class="n">IterativeOp</span><span class="p">(</span><span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">&quot;iteration&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">100</span><span class="p">),</span>
+        <span class="n">metadata</span><span class="o">=</span><span class="n">OperationMetadata</span><span class="p">(</span><span class="n">op_name</span><span class="o">=</span><span class="s2">&quot;outer_loop&quot;</span><span class="p">),</span>
+    <span class="p">))</span>
+
+    <span class="c1"># Solver step inside the loop</span>
+    <span class="n">outer</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">Operation</span><span class="p">(</span>
+        <span class="n">func</span><span class="o">=</span><span class="n">SequentialOp</span><span class="p">(</span><span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="n">metadata</span><span class="o">=</span><span class="n">OperationMetadata</span><span class="p">(</span>
+            <span class="n">op_name</span><span class="o">=</span><span class="s2">&quot;solve_momentum&quot;</span><span class="p">,</span>
+            <span class="n">operation_number</span><span class="o">=</span><span class="n">OperationNumber</span><span class="p">(</span><span class="s2">&quot;1.0&quot;</span><span class="p">),</span>
+        <span class="p">),</span>
+    <span class="p">))</span>
+
+    <span class="c1"># Collect model operations</span>
+    <span class="n">model_ops</span> <span class="o">=</span> <span class="n">Operations</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">rt</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">optional_models</span><span class="p">:</span>
+        <span class="n">model_ops</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">rt</span><span class="o">.</span><span class="n">operations</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">builder</span><span class="p">,</span> <span class="n">model_ops</span>
+
+<span class="nd">@solver_spec</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">&quot;1.0&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;solve_momentum&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">solve_momentum</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">U</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FieldUpdates</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">&quot;U&quot;</span><span class="p">:</span> <span class="n">U</span> <span class="o">-</span> <span class="mf">0.01</span> <span class="o">*</span> <span class="n">p</span><span class="p">})</span>
+</pre></div>
+</div>
+</section>
+<section id="running-the-solver">
+<h3>Running the Solver<a class="headerlink" href="#running-the-solver" title="Link to this heading">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.graph.dag_resolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">DAGResolver</span>
+
+<span class="c1"># 1. Create runtime</span>
+<span class="n">solver</span> <span class="o">=</span> <span class="n">solver_spec</span><span class="o">.</span><span class="n">instantiate</span><span class="p">()</span>
+
+<span class="c1"># 2. Initialize (LOAD → RESOLVE → BUILD)</span>
+<span class="n">ctx</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
+
+<span class="c1"># 3. Build execution graph and resolve dependencies</span>
+<span class="n">builder</span><span class="p">,</span> <span class="n">model_ops</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">execution_graph</span><span class="p">()</span>
+<span class="n">resolver</span> <span class="o">=</span> <span class="n">DAGResolver</span><span class="p">()</span>
+<span class="n">resolved</span> <span class="o">=</span> <span class="n">resolver</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">builder</span><span class="p">,</span> <span class="n">model_ops</span><span class="p">)</span>
+
+<span class="c1"># 4. Run the solver loop</span>
+<span class="c1"># (iterate over resolved operations, calling op.run(ctx))</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="error-handling">
+<h2>Error Handling<a class="headerlink" href="#error-handling" title="Link to this heading">¶</a></h2>
+<p>Raise exceptions in any stage to halt initialization:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@model_spec</span><span class="o">.</span><span class="n">resolve</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">ModelRuntime</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">ConfigContext</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">MyConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MyConfig</span><span class="p">:</span>
+    <span class="n">required</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;transport&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">required</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Transport model required but not found&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">cfg</span>
+</pre></div>
+</div>
+<p>Exceptions propagate without being caught, allowing proper error handling in your application.</p>
+<p>The initialization system also detects structural errors early:</p>
+<ul class="simple">
+<li><p><strong>Cyclic dependencies</strong>: <code class="docutils literal notranslate"><span class="pre">InitializationGraphError</span></code> raised before any <code class="docutils literal notranslate"><span class="pre">InitStep</span></code> executes</p></li>
+<li><p><strong>Missing dependencies</strong>: Detected during graph validation</p></li>
+<li><p><strong>Duplicate names</strong>: Caught when building the dependency graph</p></li>
+</ul>
+</section>
+<section id="testing">
+<h2>Testing<a class="headerlink" href="#testing" title="Link to this heading">¶</a></h2>
+<p>The test suite is organized across multiple directories:</p>
+<p><strong>Framework component tests</strong> (<code class="docutils literal notranslate"><span class="pre">test/framework/components/</span></code>):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">test_model_spec.py</span></code> — ModelSpec decorator and instantiation tests</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test_operations.py</span></code> — Operation, Operations, StepBuilder tests</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test_dag_resolver.py</span></code> — DAG resolution and topological sort tests</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test_manifest.py</span></code> — Manifest loading tests</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test_conditions.py</span></code> — ConditionalOp tests</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test_graph_module.py</span></code> — Graph validation and sorting</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test_operation_metadata.py</span></code> — OperationMetadata tests</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test_step_number.py</span></code> — OperationNumber tests</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test_visualize_dag.py</span></code> — DAG visualization tests</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">decorator/test_decorator.py</span></code> — Decorator behavior tests</p></li>
+</ul>
+<p><strong>Integration tests</strong> (<code class="docutils literal notranslate"><span class="pre">test/framework/integration/dummy_solver/</span></code>):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">test_dummy_solver.py</span></code> — Full solver lifecycle (init, graph, run)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test_model3.py</span></code> — Conditional operation dispatch</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test_model4.py</span></code> — Multi-instance model detection and manifests</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test_model_registration.py</span></code> — Plugin registration and discovery</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test_staged_init.py</span></code> — StagedInit orchestration tests</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test_validation.py</span></code> — Config validation tests</p></li>
+</ul>
+<p><strong>Initialization tests</strong> (<code class="docutils literal notranslate"><span class="pre">test/initialization/</span></code>):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">test_execution.py</span></code> — InitStep execution and topological sort</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test_config_context.py</span></code> — ConfigContext registry tests</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test_depends.py</span></code> — Depends marker and dependency resolution</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test_helpers.py</span></code> — InitStep helper functions and InitializerBuilder</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test_lazy_init.py</span></code> — InitStep dataclass tests</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">test_staged_init.py</span></code> — StagedInit stage execution tests</p></li>
+</ul>
+<p>Run all framework tests:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pytest<span class="w"> </span>test/framework/<span class="w"> </span>test/initialization/<span class="w"> </span>-v
+</pre></div>
+</div>
+<section id="testing-modelspec">
+<h3>Testing ModelSpec<a class="headerlink" href="#testing-modelspec" title="Link to this heading">¶</a></h3>
+<p>Test individual stages in isolation:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.model.runtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelRuntime</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_model_build</span><span class="p">():</span>
+    <span class="n">rt</span> <span class="o">=</span> <span class="n">ModelRuntime</span><span class="p">(</span>
+        <span class="n">spec</span><span class="o">=</span><span class="n">transport</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;transport&quot;</span><span class="p">,</span>
+        <span class="n">config</span><span class="o">=</span><span class="n">TransportConfig</span><span class="p">(</span><span class="n">viscosity</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="mf">1000.0</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Test BUILD stage</span>
+    <span class="n">steps</span> <span class="o">=</span> <span class="n">rt</span><span class="o">.</span><span class="n">run_build</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">steps</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">steps</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="s2">&quot;fields.nu&quot;</span> <span class="ow">in</span> <span class="n">names</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_model_operations</span><span class="p">():</span>
+    <span class="n">rt</span> <span class="o">=</span> <span class="n">ModelRuntime</span><span class="p">(</span>
+        <span class="n">spec</span><span class="o">=</span><span class="n">transport</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;transport&quot;</span><span class="p">,</span>
+        <span class="n">config</span><span class="o">=</span><span class="n">TransportConfig</span><span class="p">(</span><span class="n">viscosity</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="n">ops</span> <span class="o">=</span> <span class="n">rt</span><span class="o">.</span><span class="n">operations</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">ops</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
+    <span class="k">assert</span> <span class="n">ops</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">operation_name</span> <span class="o">==</span> <span class="s2">&quot;update_viscosity&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="testing-full-initialization">
+<h3>Testing Full Initialization<a class="headerlink" href="#testing-full-initialization" title="Link to this heading">¶</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_full_initialization</span><span class="p">():</span>
+    <span class="n">solver</span> <span class="o">=</span> <span class="n">solver_spec</span><span class="o">.</span><span class="n">instantiate</span><span class="p">()</span>
+    <span class="n">ctx</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
+
+    <span class="c1"># Verify context</span>
+    <span class="k">assert</span> <span class="s2">&quot;U&quot;</span> <span class="ow">in</span> <span class="n">ctx</span><span class="o">.</span><span class="n">fields</span>
+    <span class="k">assert</span> <span class="s2">&quot;p&quot;</span> <span class="ow">in</span> <span class="n">ctx</span><span class="o">.</span><span class="n">fields</span>
+    <span class="k">assert</span> <span class="n">ctx</span><span class="o">.</span><span class="n">mesh</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_execution_graph</span><span class="p">():</span>
+    <span class="n">solver</span> <span class="o">=</span> <span class="n">solver_spec</span><span class="o">.</span><span class="n">instantiate</span><span class="p">()</span>
+    <span class="n">ctx</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
+
+    <span class="n">builder</span><span class="p">,</span> <span class="n">model_ops</span> <span class="o">=</span> <span class="n">solver</span><span class="o">.</span><span class="n">execution_graph</span><span class="p">()</span>
+    <span class="n">resolver</span> <span class="o">=</span> <span class="n">DAGResolver</span><span class="p">()</span>
+    <span class="n">resolved</span> <span class="o">=</span> <span class="n">resolver</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">builder</span><span class="p">,</span> <span class="n">model_ops</span><span class="p">)</span>
+
+    <span class="c1"># Verify operations are properly ordered</span>
+    <span class="c1"># ...</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="key-design-decisions">
+<h2>Key Design Decisions<a class="headerlink" href="#key-design-decisions" title="Link to this heading">¶</a></h2>
+<ol class="arabic simple">
+<li><p><strong>Spec/Runtime separation</strong>: Specs are immutable definitions created at module import time. Runtimes are mutable per-instance state. This enables multiple independent instances from one definition and clean plugin registration.</p></li>
+<li><p><strong>Config as return value</strong>: <code class="docutils literal notranslate"><span class="pre">&#64;load</span></code> returns a config object; <code class="docutils literal notranslate"><span class="pre">&#64;resolve</span></code> receives <code class="docutils literal notranslate"><span class="pre">self:</span> <span class="pre">ModelRuntime</span></code> and auto-injected config, and may return an updated config. Returning <code class="docutils literal notranslate"><span class="pre">None</span></code> is allowed — in that case the runtime keeps its existing config. <code class="docutils literal notranslate"><span class="pre">&#64;resolve</span></code> may also reach into other models registered in the <code class="docutils literal notranslate"><span class="pre">ConfigContext</span></code> and mutate their attributes (e.g. setting <code class="docutils literal notranslate"><span class="pre">pressure_model.use_boussinesq</span> <span class="pre">=</span> <span class="pre">True</span></code>) when it needs to influence another component’s downstream operation dispatch.</p></li>
+<li><p><strong>Manifest-based discovery</strong>: Models are discovered via YAML manifests and <code class="docutils literal notranslate"><span class="pre">&#64;detect</span></code> predicates, replacing the old <code class="docutils literal notranslate"><span class="pre">get_models()</span></code> pattern. This decouples model registration from solver code.</p></li>
+<li><p><strong>Operation auto-injection</strong>: Operation parameter names are matched against <code class="docutils literal notranslate"><span class="pre">ctx.fields</span></code> keys. Parameters whose <strong>type</strong> is a <code class="docutils literal notranslate"><span class="pre">BaseConfig</span></code> subclass are found in <code class="docutils literal notranslate"><span class="pre">runtime.config</span></code> by type. A parameter named <code class="docutils literal notranslate"><span class="pre">ctx</span></code> receives the full <code class="docutils literal notranslate"><span class="pre">Context</span></code>. No manual context lookups needed.</p></li>
+<li><p><strong>DAGResolver for graph merging</strong>: Model operations are placed into the solver’s loop structure automatically based on their <code class="docutils literal notranslate"><span class="pre">depends_on</span></code> and <code class="docutils literal notranslate"><span class="pre">before</span></code> declarations, then topologically sorted within each scope.</p></li>
+<li><p><strong>Lazy initialization</strong>: The BUILD stage produces <code class="docutils literal notranslate"><span class="pre">InitStep</span></code> descriptions, not live objects. This enables dependency validation, cycle detection, and deterministic ordering before any memory is allocated.</p></li>
+</ol>
 </section>
 </section>
 
@@ -407,26 +1403,8 @@ and populates the <code class="docutils literal notranslate"><span class="pre">C
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="config_file.html">
-              <div class="page-info">
-                <div class="context">
-                  <span>Next</span>
-                </div>
-                <div class="title">Configuration File IO</div>
-              </div>
-              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
-            </a>
-          <a class="prev-page" href="components.html">
-              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
-              <div class="page-info">
-                <div class="context">
-                  <span>Previous</span>
-                </div>
-                
-                <div class="title">Main Components</div>
-                
-              </div>
-            </a>
+          
+          
         </div>
         <div class="bottom-of-page">
           <div class="left-details">
@@ -457,14 +1435,64 @@ and populates the <code class="docutils literal notranslate"><span class="pre">C
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">3-Stage Solver Initialization</a><ul>
-<li><a class="reference internal" href="#motivation">Motivation</a></li>
-<li><a class="reference internal" href="#the-process-load-resolve-build">The Process: Load → Resolve → Build</a></li>
-<li><a class="reference internal" href="#why-3-stages">Why 3 Stages?</a></li>
-<li><a class="reference internal" href="#usage-example">Usage Example</a><ul>
-<li><a class="reference internal" href="#helper-functions">Helper Functions</a></li>
+<li><a class="reference internal" href="#">Solver Framework</a><ul>
+<li><a class="reference internal" href="#architecture-overview">Architecture Overview</a></li>
+<li><a class="reference internal" href="#modelspec-modelruntime">ModelSpec &amp; ModelRuntime</a><ul>
+<li><a class="reference internal" href="#creating-a-modelspec">Creating a ModelSpec</a></li>
+<li><a class="reference internal" href="#decorator-summary">Decorator Summary</a></li>
+<li><a class="reference internal" href="#modelruntime">ModelRuntime</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#solverspec-solverruntime">SolverSpec &amp; SolverRuntime</a><ul>
+<li><a class="reference internal" href="#creating-a-solverspec">Creating a SolverSpec</a></li>
+<li><a class="reference internal" href="#using-the-solverruntime">Using the SolverRuntime</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#stage-initialization">3-Stage Initialization</a><ul>
+<li><a class="reference internal" href="#stagedinit">StagedInit</a></li>
+<li><a class="reference internal" href="#configcontext">ConfigContext</a><ul>
+<li><a class="reference internal" href="#multi-region-multi-domain-coupling">Multi-region (multi-domain) coupling</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#schema-introspection">Schema Introspection</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#lazy-initialization">Lazy Initialization</a><ul>
+<li><a class="reference internal" href="#initstep">InitStep</a></li>
+<li><a class="reference internal" href="#helper-functions">Helper Functions</a></li>
+<li><a class="reference internal" href="#initializerbuilder">InitializerBuilder</a></li>
+<li><a class="reference internal" href="#dependency-resolution">Dependency Resolution</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#model-discovery-manifests">Model Discovery &amp; Manifests</a><ul>
+<li><a class="reference internal" href="#auto-detection-with-detect">Auto-Detection with &#64;detect</a></li>
+<li><a class="reference internal" href="#yaml-manifests">YAML Manifests</a></li>
+<li><a class="reference internal" href="#multi-instance-build">Multi-Instance Build</a></li>
+<li><a class="reference internal" href="#combined-discovery">Combined Discovery</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#operations-execution-graph">Operations &amp; Execution Graph</a><ul>
+<li><a class="reference internal" href="#defining-operations">Defining Operations</a></li>
+<li><a class="reference internal" href="#conditional-operation-dispatch">Conditional Operation Dispatch</a></li>
+<li><a class="reference internal" href="#operation-types">Operation Types</a></li>
+<li><a class="reference internal" href="#stepbuilder-execution-graph">StepBuilder &amp; Execution Graph</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#context-fieldupdates">Context &amp; FieldUpdates</a></li>
+<li><a class="reference internal" href="#dependency-injection">Dependency Injection</a></li>
+<li><a class="reference internal" href="#complete-example">Complete Example</a><ul>
+<li><a class="reference internal" href="#transport-model">Transport Model</a></li>
+<li><a class="reference internal" href="#solver">Solver</a></li>
+<li><a class="reference internal" href="#running-the-solver">Running the Solver</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#error-handling">Error Handling</a></li>
+<li><a class="reference internal" href="#testing">Testing</a><ul>
+<li><a class="reference internal" href="#testing-modelspec">Testing ModelSpec</a></li>
+<li><a class="reference internal" href="#testing-full-initialization">Testing Full Initialization</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#key-design-decisions">Key Design Decisions</a></li>
 </ul>
 </li>
 </ul>
@@ -477,9 +1505,11 @@ and populates the <code class="docutils literal notranslate"><span class="pre">C
     </aside>
   </div>
 </div><script src="../_static/documentation_options.js?v=5929fcd5"></script>
-    <script src="../_static/doctools.js?v=888ff710"></script>
-    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    <script src="../_static/sg-tags.js?v=d80f6fa4"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
     <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
     <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
 
