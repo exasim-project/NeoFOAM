@@ -8,5 +8,6 @@ neofoam.framework.initialization.execution
 
    init_result
    validation
+   ordering
    executor
    context_builder

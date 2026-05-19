@@ -149,7 +149,7 @@ breathe_default_members = ("members", "undoc-members")
 # URL while excluding it from the sidebar — otherwise furo renders
 # both the gallery index *and* the per-page entries, which collapses
 # the Tutorials section in the sidebar when navigating between pages.
-_GALLERY_INDEX_DOCS = {"auto_tutorials/index"}
+_GALLERY_INDEX_DOCS = {"auto_tutorials/index", "auto_how-to/index"}
 
 
 def _orphan_gallery_indices(app, docname, source):

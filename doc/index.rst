@@ -37,13 +37,21 @@ what you're trying to do:
    :caption: How-to guides
 
    how-to/install
+   auto_how-to/example_register_a_model
+   auto_how-to/example_add_an_init_step_category
+   auto_how-to/example_work_with_config_files
+   auto_how-to/example_visualize_the_operation_dag
+   auto_how-to/example_use_depends_for_injection
 
 .. toctree::
    :maxdepth: 2
    :caption: Reference
 
+   reference/framework/index
    reference/graph/index
    reference/initialization/index
+   reference/model/index
+   reference/solver/index
 
 .. toctree::
    :maxdepth: 1
