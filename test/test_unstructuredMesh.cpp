@@ -81,15 +81,15 @@ TEST_CASE("UnstructuredMesh")
         auto sameCellVolumes = nfMesh.cellVolumes() == ofMesh.cellVolumes();
         REQUIRE(sameCellVolumes);
 
-        auto sameFaceCentres = nfMesh.faceCentres() == ofMesh.faceCentres();
+        auto sameFaceCentres = nfMesh.faceCenters() == ofMesh.faceCentres();
         REQUIRE(sameFaceCentres);
 
-        auto sameFaceAreas = nfMesh.faceAreas() == ofMesh.faceAreas();
-        REQUIRE(sameFaceAreas);
+        auto sameFaceNormals = nfMesh.faceNormals() == ofMesh.faceAreas();
+        REQUIRE(sameFaceNormals);
 
         auto magSf = Foam::mag(ofMesh.faceAreas());
-        auto sameMagSf = nfMesh.magFaceAreas() == magSf();
-        REQUIRE(sameMagSf);
+        auto sameFaceAreas = nfMesh.faceAreas() == magSf();
+        REQUIRE(sameFaceAreas);
 
         // TODO NeoN::Vector to OF List comparison currently not supported
         // auto sameOwner = nfMesh.faceOwner() == ofMesh.faceOwner();
@@ -107,37 +107,37 @@ TEST_CASE("UnstructuredMesh")
         {
             forAll(ofBMesh, patchi)
             {
-                REQUIRE(ofBMesh[patchi].size() == nfBMesh.faceCells(patchi).size());
+                REQUIRE(ofBMesh[patchi].size() == nfBMesh.faceOwners(patchi).size());
             }
         }
 
         REQUIRE_THAT(
-            nfBMesh.faceCells(),
+            nfBMesh.faceOwners(),
             allPatchesMatch(ofBMesh, nfBMesh, [](const auto& p) { return p.faceCells(); })
         );
 
         REQUIRE_THAT(
-            nfBMesh.cf(),
+            nfBMesh.faceCenters(),
             allPatchesMatch(ofBMesh, nfBMesh, [](const auto& p) { return p.Cf(); })
         );
 
         REQUIRE_THAT(
-            nfBMesh.cn(),
+            nfBMesh.ownerCellCenters(),
             allPatchesMatch(ofBMesh, nfBMesh, [](const auto& p) { return p.Cn()(); })
         );
 
         REQUIRE_THAT(
-            nfBMesh.sf(),
+            nfBMesh.faceNormals(),
             allPatchesMatch(ofBMesh, nfBMesh, [](const auto& p) { return p.Sf(); })
         );
 
         REQUIRE_THAT(
-            nfBMesh.magSf(),
+            nfBMesh.faceAreas(),
             allPatchesMatch(ofBMesh, nfBMesh, [](const auto& p) { return p.magSf(); })
         );
 
         REQUIRE_THAT(
-            nfBMesh.nf(),
+            nfBMesh.faceUnitNormals(),
             allPatchesMatch(ofBMesh, nfBMesh, [](const auto& p) { return p.nf()(); })
         );
 
