@@ -94,7 +94,7 @@ void updateFaceVelocity(
     const auto nInternalFaces = mesh.nInternalFaces();
     const auto exec = phi.exec();
     const auto [owner, neighbour, internalP] =
-        views(mesh.faceOwner(), mesh.faceNeighbour(), p.internalVector());
+        views(mesh.faceOwners(), mesh.faceNeighbors(), p.internalVector());
 
     const auto& ls = expr.linearSystem();
     const auto rowPtrs = ls.matrix().sparsity()->rowOffs().view();
@@ -124,7 +124,7 @@ void updateFaceVelocity(
     auto [bvalue, bPredValue, faceCells] = views(
         phi.boundaryData().value(),
         predictedPhi.boundaryData().value(),
-        mesh.boundaryMesh().faceCells()
+        mesh.boundaryMesh().faceOwners()
     );
 
     const auto [mValue, rhsValue] = views(ls.boundaryMatrix(), ls.boundaryRhs());
@@ -174,13 +174,13 @@ nnfvcc::SurfaceField<scalar> flux(const nnfvcc::VolumeField<Vec3>& volField)
     NeoN::fill(faceFlux.internalVector(), NeoN::zero<scalar>());
     NeoN::fill(faceFlux.boundaryData().value(), NeoN::zero<scalar>());
     const auto [owner, neighbour, weightIn, faceAreas, volFieldIn, volFieldBc, bSf] = views(
-        mesh.faceOwner(),
-        mesh.faceNeighbour(),
+        mesh.faceOwners(),
+        mesh.faceNeighbors(),
         weight.internalVector(),
-        mesh.faceAreas(),
+        mesh.faceNormals(),
         volField.internalVector(),
         volField.boundaryData().value(),
-        mesh.boundaryMesh().sf()
+        mesh.boundaryMesh().faceNormals()
     );
 
     auto [faceFluxIn, bvalue] = views(faceFlux.internalVector(), faceFlux.boundaryData().value());
