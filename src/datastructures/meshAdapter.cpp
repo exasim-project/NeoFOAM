@@ -54,7 +54,7 @@ NeoN::localIdx computeProcBoundaryPatches(const Foam::fvMesh& mesh)
     const Foam::fvBoundaryMesh& bMesh = mesh.boundary();
     forAll(bMesh, patchI)
     {
-        if (isA<Foam::processorFvPatch>(bMesh[patchI]))
+        if (Foam::isA<Foam::processorFvPatch>(bMesh[patchI]))
         {
             count++;
         }
@@ -68,7 +68,7 @@ std::vector<NeoN::localIdx> computeNeighbourRank(const Foam::fvMesh& mesh)
     const Foam::fvBoundaryMesh& bMesh = mesh.boundary();
     forAll(bMesh, patchI)
     {
-        const auto* procPatch = isA<Foam::processorFvPatch>(bMesh[patchI]);
+        const auto* procPatch = Foam::isA<Foam::processorFvPatch>(bMesh[patchI]);
         if (procPatch)
         {
             result.push_back(static_cast<NeoN::localIdx>(procPatch->neighbProcNo()));
