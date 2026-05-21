@@ -33,7 +33,7 @@ TEST_CASE("cell To Face Stencil")
     {
         fvcc::CellToFaceStencil cellToFaceStencil(nfMesh);
         NeoN::SegmentedVector<NeoN::localIdx, NeoN::localIdx> stencil =
-            cellToFaceStencil.computeStencil();
+            cellToFaceStencil.computeInternalStencil();
 
         auto hostStencil = stencil.copyToHost();
         auto stencilView = hostStencil.view();
@@ -41,7 +41,6 @@ TEST_CASE("cell To Face Stencil")
         for (auto celli = 0; celli < mesh.cells().size(); celli++)
         {
             std::unordered_set<Foam::label> faceSet;
-            REQUIRE(stencilView.view(celli).size() == mesh.cells()[celli].size());
             for (auto facei : mesh.cells()[celli])
             {
                 faceSet.insert(facei);
