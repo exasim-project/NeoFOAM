@@ -33,7 +33,7 @@ TEST_CASE("cell To Face Stencil")
     {
         fvcc::CellToFaceStencil cellToFaceStencil(nfMesh);
         NeoN::SegmentedVector<NeoN::localIdx, NeoN::localIdx> stencil =
-            cellToFaceStencil.computeStencil();
+            cellToFaceStencil.computeInternalStencil();
 
         auto hostStencil = stencil.copyToHost();
         auto stencilView = hostStencil.view();
