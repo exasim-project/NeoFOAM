@@ -37,7 +37,7 @@ TEST_CASE("Julia Momentum")
     float epsilon = 1e-32;
     Foam::Time& runTime = *timePtr;
     // auto [execName, exec] = GENERATE(allAvailableExecutor());
-    auto exec = NeoN::CPUExecutor {};
+    auto exec = NeoN::GPUExecutor {};
     std::cout << "exec: " << exec.name() << std::endl;
     auto path = fmt::format(
 		fmt::runtime("include(\"{}\")"),
