@@ -29,10 +29,11 @@ function(neofoam_unit_test TEST SETUP_DIRECTORY)
   target_compile_definitions(${NEOFOAM_COMMAND} PUBLIC OMPI_SKIP_MPICXX)
 
   if(NeoN_WITH_JULIA)
+
     execute_process(
-        COMMAND julia -e "print(rsplit(Sys.BINDIR, '/', limit=2)[1])"
-        OUTPUT_VARIABLE JULIA_DIR
-        OUTPUT_STRIP_TRAILING_WHITESPACE
+      COMMAND julialauncher +1.11 -e "print(rsplit(Sys.BINDIR, '/', limit=2)[1])"
+      OUTPUT_VARIABLE JULIA_DIR
+      OUTPUT_STRIP_TRAILING_WHITESPACE
     )
     execute_process(
       COMMAND echo "JULIA_DIR: --------> '${JULIA_DIR}'"

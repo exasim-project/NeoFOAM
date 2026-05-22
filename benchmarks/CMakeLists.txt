@@ -19,7 +19,7 @@ function(NeoN_benchmark BENCH)
   target_include_directories(bench_${BENCH} PRIVATE "${CMAKE_SOURCE_DIR}")
   if(NeoN_WITH_JULIA AND "${BENCH}" STREQUAL "julia")
     execute_process(
-        COMMAND julia -e "print(rsplit(Sys.BINDIR, '/', limit=2)[1])"
+        COMMAND julialauncher +1.11 -e "print(rsplit(Sys.BINDIR, '/', limit=2)[1])"
         OUTPUT_VARIABLE JULIA_DIR
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
