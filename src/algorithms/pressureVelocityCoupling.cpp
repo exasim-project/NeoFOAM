@@ -94,7 +94,7 @@ void updateFaceVelocity(
     const auto nInternalFaces = mesh.nInternalFaces();
     const auto exec = phi.exec();
     const auto [owner, neighbour, internalP] =
-        views(mesh.faceOwner(), mesh.faceNeighbour(), p.internalVector());
+        views(mesh.faceOwners(), mesh.faceNeighbors(), p.internalVector());
 
     const auto& ls = expr.linearSystem();
     const auto rowPtrs = ls.matrix().sparsity()->rowOffs().view();
@@ -124,19 +124,17 @@ void updateFaceVelocity(
     auto [bvalue, bPredValue, faceCells] = views(
         phi.boundaryData().value(),
         predictedPhi.boundaryData().value(),
-        mesh.boundaryMesh().faceCells()
+        mesh.boundaryMesh().faceOwners()
     );
 
     const auto [mValue, rhsValue] = views(ls.boundaryMatrix(), ls.boundaryRhs());
 
     NeoN::parallelFor(
         exec,
-        {nInternalFaces, iPhi.size()},
-        NEON_LAMBDA(const size_t facei) {
-            auto bfacei = facei - nInternalFaces;
+        {0, static_cast<size_t>(mesh.nBoundaryFaces())},
+        NEON_LAMBDA(const size_t bfacei) {
             scalar bflux =
                 (rhsValue[bfacei] - mValue.values[bfacei] * internalP[faceCells[bfacei]]);
-            iPhi[facei] = iPredPhi[facei] - bflux;
             bvalue[bfacei] = bPredValue[bfacei] - bflux;
         }
     );
@@ -164,6 +162,7 @@ nnfvcc::SurfaceField<scalar> flux(const nnfvcc::VolumeField<Vec3>& volField)
 
     const auto& mesh = volField.mesh();
     const auto nInternalFaces = mesh.nInternalFaces();
+    const auto nBoundaryFaces = mesh.nBoundaryFaces();
     NeoN::Input input = NeoN::TokenList({std::string("linear")});
     auto linear = nnfvcc::SurfaceInterpolation<Vec3>(exec, mesh, input);
     const auto weight = linear.weight(volField);
@@ -174,13 +173,13 @@ nnfvcc::SurfaceField<scalar> flux(const nnfvcc::VolumeField<Vec3>& volField)
     NeoN::fill(faceFlux.internalVector(), NeoN::zero<scalar>());
     NeoN::fill(faceFlux.boundaryData().value(), NeoN::zero<scalar>());
     const auto [owner, neighbour, weightIn, faceAreas, volFieldIn, volFieldBc, bSf] = views(
-        mesh.faceOwner(),
-        mesh.faceNeighbour(),
+        mesh.faceOwners(),
+        mesh.faceNeighbors(),
         weight.internalVector(),
-        mesh.faceAreas(),
+        mesh.faceNormals(),
         volField.internalVector(),
         volField.boundaryData().value(),
-        mesh.boundaryMesh().sf()
+        mesh.boundaryMesh().faceNormals()
     );
 
     auto [faceFluxIn, bvalue] = views(faceFlux.internalVector(), faceFlux.boundaryData().value());
@@ -200,13 +199,8 @@ nnfvcc::SurfaceField<scalar> flux(const nnfvcc::VolumeField<Vec3>& volField)
 
     NeoN::parallelFor(
         exec,
-        {nInternalFaces, faceFluxIn.size()},
-        NEON_LAMBDA(const size_t facei) {
-            auto faceBCI = facei - nInternalFaces;
-
-            faceFluxIn[facei] = bSf[faceBCI] & volFieldBc[faceBCI];
-            bvalue[faceBCI] = bSf[faceBCI] & volFieldBc[faceBCI];
-        }
+        {0, static_cast<size_t>(nBoundaryFaces)},
+        NEON_LAMBDA(const size_t bfacei) { bvalue[bfacei] = bSf[bfacei] & volFieldBc[bfacei]; }
     );
 
     return faceFlux;

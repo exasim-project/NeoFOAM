@@ -49,6 +49,7 @@ TEST_CASE("PressureVelocityCoupling")
         ),
         fvc::flux(ofU)
     );
+    ofPhi.correctBoundaryConditions();
 
     Foam::surfaceScalarField ofNu(
         Foam::IOobject(
@@ -61,6 +62,7 @@ TEST_CASE("PressureVelocityCoupling")
         mesh,
         Foam::dimensionedScalar("nu", Foam::dimensionSet(0, 2, -1, 0, 0), 0.01)
     );
+    ofNu.correctBoundaryConditions();
 
     auto nfPhi = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofPhi);
     auto nfNu = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofNu);
@@ -86,6 +88,22 @@ TEST_CASE("PressureVelocityCoupling")
 
         Foam::volScalarField forAU("rAU", 1.0 / ofUEqn.A());
         nfUEqn.assemble();
+
+        nf::compare(
+            NeoN::la::upper(nfUEqn.linearSystem().matrix()),
+            ofUEqn.upper(),
+            ApproxVector(1e-15)
+        );
+
+        // NeoN stores boundary diagonal contributions directly in the matrix, whereas
+        // OpenFOAM keeps them separate. Remove them before comparing against OpenFOAM
+        // coefficients.
+        nf::compare(
+            NeoN::la::removeBoundaryContributions(nfUEqn.linearSystem()).matrix().diag(),
+            ofUEqn.diag(),
+            ApproxVector(1e-15)
+        );
+
         auto nfrAU = nf::computeRAU(nfUEqn);
 
         NeoFOAM::compare(nfrAU, forAU, ApproxScalar(1e-15), true);
