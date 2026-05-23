@@ -130,12 +130,12 @@ Each strategy implements the ``ReadingStrategy`` and ``WritingStrategy`` interfa
    * - ``JSON(file, subdict=...)``
      - JSON
      - ``JSON("config.json", subdict="services.db")``
-   * - ``OPENFOAM(file)``
+   * - ``OF(file)``
      - OpenFOAM dictionary
-     - ``OPENFOAM("system/fvSolution")``
-   * - ``OPENFOAM(file, subdict=...)``
+     - ``OF("system/fvSolution")``
+   * - ``OF(file, subdict=...)``
      - OpenFOAM dictionary
-     - ``OPENFOAM("system/fvSolution", subdict="PISO")``
+     - ``OF("system/fvSolution", subdict="PISO")``
 
 YAML, JSON, and OpenFOAM strategies support three subdict modes:
 
@@ -164,8 +164,8 @@ YAML, JSON, and OpenFOAM strategies support three subdict modes:
        solver: str
        tolerance: float
 
-     @IOStrategy(OPENFOAM("system/fvSolution", subdict="PISO"))
-     class PISOConfig(BaseConfig):
+   @IOStrategy(OF("system/fvSolution", subdict="PISO"))
+   class PISOConfig(BaseConfig):
        nCorrectors: int
        nNonOrthogonalCorrectors: int
 
