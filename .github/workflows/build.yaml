@@ -78,9 +78,8 @@ jobs:
         with:
           packages: >-
             ninja-build
-            clang-16
-            gcc-10
-            libomp-16-dev
+            clang-19
+            libomp-19-dev
             python3
             python3-dev
             build-essential
@@ -99,11 +98,12 @@ jobs:
       - name: Build NeoFOAM
         run: |
           source /usr/lib/openfoam/openfoam2406/etc/bashrc || true
-          CC=${{matrix.compiler.CC}}
-          CXX=${{matrix.compiler.CXX}}
           cmake --preset develop \
             -DNeoN_DEVEL_TOOLS=OFF \
             -DNeoN_BUILD_TESTS=OFF \
+            -DNEOFOAM_WITH_MPI=ON \
+            -DCMAKE_CXX_COMPILER=${{matrix.compiler.CXX}} \
+            -DCMAKE_C_COMPILER=${{matrix.compiler.CC}} \
             -DNeoN_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF \
             -DNEOFOAM_NEON_VERSION=${{ env.NEON_BRANCH }} \
             -DNEOFOAM_BUILD_BENCHMARKS=ON
@@ -131,9 +131,6 @@ jobs:
         with:
           openfoam-version: ${{ matrix.openfoam-version }}
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
-
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
@@ -141,11 +138,11 @@ jobs:
 
       - name: Install test dependencies
         run: |
-          uv run pip install -v .[all]
+          pip install -v .[all]
 
       - name: Test with pytest
         run: |
-          uv run pytest
+          pytest
 
   python-coverage:
     runs-on: ubuntu-24.04 # may use an older version to test
@@ -158,18 +155,18 @@ jobs:
         uses: gerlero/setup-openfoam@v1
         with:
           openfoam-version: 2506
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.9
+          python-version: '3.9'
 
       - name: Install test dependencies
         run: |
-          uv run pip install -v .[all]
+          pip install -v .[all]
 
       - name: Test with pytest
         run: |
-          source .venv/bin/activate
           pytest --cov=neofoam --cov-report=xml --cov-report=term
 
       # - name: Upload code coverage results to Codecov
@@ -208,11 +205,12 @@ jobs:
       with:
         openfoam-version: 2506
 
-    - name: Install uv
-      uses: astral-sh/setup-uv@v7
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v5
       with:
-        python-version: 3.9
+        python-version: '3.9'
+
     - name: Check types with ty
       run: |
-        uv run pip install .[all]
+        pip install .[all]
         poe type_check

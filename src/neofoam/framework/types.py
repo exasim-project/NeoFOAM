@@ -2,14 +2,13 @@
 #
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-"""Core types: OperationDef, OperationMetadata, OpType, OperationNumber."""
+"""Core types: OperationMetadata, OpType, OperationNumber."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
 from functools import total_ordering
-from typing import Any, Callable
 
 
 @total_ordering
@@ -60,17 +59,6 @@ class OperationNumber:
 
     def __str__(self) -> str:
         return ".".join(str(p) for p in self.parts)
-
-
-@dataclass
-class OperationDef:
-    """Typed definition of a registered operation — replaces raw (func, dict) tuples."""
-
-    func: Callable[..., Any]
-    operation_number: str | None = None
-    depends_on: list[str] | None = None
-    before: list[str] | None = None
-    name: str = ""
 
 
 class OpType(Enum):

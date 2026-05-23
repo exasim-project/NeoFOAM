@@ -180,11 +180,21 @@ class Operations:
         return count_ops(self.ops)
 
 
+# Backward-compatible alias — use Operations directly in new code.
+OperationCollection = Operations
+
+
 class StepBuilder:
     def __init__(self, operations: list[Operation] | None = None) -> None:
         self.operations = (
             Operations(operations) if operations is not None else Operations()
         )
+
+    def __enter__(self) -> StepBuilder:
+        return self
+
+    def __exit__(self, exc_type: object, exc_value: object, traceback: object) -> None:
+        pass
 
     def step(self, operation: Operation) -> StepBuilder:
         self.operations.add(operation)
@@ -193,9 +203,3 @@ class StepBuilder:
     def loop(self, operation: Operation) -> StepBuilder:
         self.operations.add(operation)
         return StepBuilder(operations=self.operations[-1].sub_operations)
-
-    def __enter__(self) -> StepBuilder:
-        return self
-
-    def __exit__(self, *args: Any) -> None:
-        return None

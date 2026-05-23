@@ -16,12 +16,14 @@ from pathlib import Path
 from pydantic import Field, PrivateAttr
 
 from neofoam.framework.initialization import (
-    StagedInit,
-    LoadResult,
     ConfigContext,
     InitializerBuilder,
     InitStep,
+    LoadResult,
+    StagedInitRunner,
+    StagedInitSpec,
 )
+from neofoam.framework.model import ModelRuntime
 from neofoam.io import BaseConfig, YAML, IOStrategy
 
 from .models.dummy_model import DummyModelInterface
@@ -63,65 +65,64 @@ class DummyAlgorithm(BaseConfig):
         return self._iteration_count < 3
 
 
-init = StagedInit("DummySolver")
+def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
+    """Build a fresh StagedInitRunner for DummySolver.
 
+    Closures over ``runner`` give the resolve stage access to the live
+    optional_models list (populated by the load stage on the same runner).
+    """
+    spec_builder = StagedInitSpec.build("DummySolver")
+    resolved_case_dir = case_dir or Path(__file__).parent / "configs"
 
-def create_init(case_dir: Optional[Path] = None) -> StagedInit:
-    setattr(init, "_case_dir", case_dir)
-    return init
+    @spec_builder.load
+    def load_config() -> LoadResult:
+        algorithm = DummyAlgorithm.load(case_dir=resolved_case_dir, validate=False)
+        core_model2 = CoreModel2.load(case_dir=resolved_case_dir, validate=False)
+        solver_cfg = SolverConfig.load(case_dir=resolved_case_dir, validate=False)
+        mesh_cfg = MeshConfig.load(case_dir=resolved_case_dir, validate=False)
 
+        optional_models: list[ModelRuntime] = [
+            spec.instantiate(case_dir=resolved_case_dir, instance_id=spec.name)
+            for spec in DummyModelInterface.detect_specs()
+        ]
 
-@init.load
-def load_config() -> LoadResult:
-    """LOAD stage: load core configs and instantiate optional ModelRuntimes."""
-    case_dir = getattr(init, "_case_dir", None) or Path(__file__).parent / "configs"
+        return LoadResult(
+            core_models=[algorithm, core_model2, solver_cfg, mesh_cfg],
+            optional_models=optional_models,
+        )
 
-    algorithm = DummyAlgorithm.load(case_dir=case_dir, validate=False)
-    core_model2 = CoreModel2.load(case_dir=case_dir, validate=False)
-    solver_cfg = SolverConfig.load(case_dir=case_dir, validate=False)
-    mesh_cfg = MeshConfig.load(case_dir=case_dir, validate=False)
+    @spec_builder.resolve
+    def resolve_models(config: ConfigContext) -> None:
+        for runtime in runner.optional_models:
+            runtime.run_resolve(config)
 
-    optional_models = DummyModelInterface.detect_specs_with_manifest(
-        case_dir=case_dir,
-        manifest_path=case_dir / "models.yaml",
-    )
+    @spec_builder.build
+    def build_lazy(
+        core_models: list[Any], optional_models: list[Any]
+    ) -> list[InitStep]:
+        algorithm = next(m for m in core_models if isinstance(m, DummyAlgorithm))
+        core_model2 = next(m for m in core_models if isinstance(m, CoreModel2))
+        solver_cfg = next(m for m in core_models if isinstance(m, SolverConfig))
+        mesh_cfg = next(m for m in core_models if isinstance(m, MeshConfig))
 
-    return LoadResult(
-        core_models=[algorithm, core_model2, solver_cfg, mesh_cfg],
-        optional_models=optional_models,
-    )
+        builder = InitializerBuilder()
+        builder.add_resource("mesh", mesh_cfg.model_dump())
+        builder.add_resource("domain", mesh_cfg.model_dump())
+        builder.add_core_models([("algorithm", algorithm), ("core2", core_model2)])
+        builder.add_model("config", solver_cfg.model_dump())
+        builder.add_field("field1", depends_on=["mesh"], value=1.0)
+        builder.add_field("field2", depends_on=["mesh"], value=101325.0)
+        builder.add_field(
+            "field3",
+            depends_on=["fields.field1"],
+            value=lambda ctx: ctx["fields.field1"] * 0.01,
+        )
 
+        for runtime in optional_models:
+            builder.extend(runtime.run_build())
 
-@init.resolve
-def resolve_models(config: ConfigContext) -> None:
-    """RESOLVE stage: call each runtime's resolve so models can wire dependencies."""
-    for runtime in init.optional_models:
-        runtime.run_resolve(config)
+        builder.add_model("optional_models", optional_models)
+        return builder.build()
 
-
-@init.build
-def build_lazy(core_models: list[Any], optional_models: list[Any]) -> list[InitStep]:
-    """BUILD stage: compose all InitSteps for execute_initialization."""
-    algorithm = next(m for m in core_models if isinstance(m, DummyAlgorithm))
-    core_model2 = next(m for m in core_models if isinstance(m, CoreModel2))
-    solver_cfg = next(m for m in core_models if isinstance(m, SolverConfig))
-    mesh_cfg = next(m for m in core_models if isinstance(m, MeshConfig))
-
-    builder = InitializerBuilder()
-    builder.add_resource("mesh", mesh_cfg.model_dump())
-    builder.add_resource("domain", mesh_cfg.model_dump())
-    builder.add_core_models([("algorithm", algorithm), ("core2", core_model2)])
-    builder.add_model("config", solver_cfg.model_dump())
-    builder.add_field("field1", depends_on=["mesh"], value=1.0)
-    builder.add_field("field2", depends_on=["mesh"], value=101325.0)
-    builder.add_field(
-        "field3",
-        depends_on=["fields.field1"],
-        value=lambda ctx: ctx["fields.field1"] * 0.01,
-    )
-
-    for runtime in optional_models:
-        builder.extend(runtime.run_build())
-
-    builder.add_model("optional_models", optional_models)
-    return builder.build()
+    runner = StagedInitRunner(spec_builder.finalize())
+    return runner

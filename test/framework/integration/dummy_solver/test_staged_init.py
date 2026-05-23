@@ -2,125 +2,56 @@
 # SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
 """
-Tests for 3-stage initialization pattern.
+End-to-end tests for the DummySolver 3-stage initialization.
 
-Tests the StagedInit class and dummy_init_staged.py implementation
-following the IncompressibleFluidInitializer pattern.
+Internal StagedInitSpec / StagedInitRunner behavior is covered under
+``test/framework/initialization/staged/``; this file only exercises the
+full LOAD → RESOLVE → BUILD flow via ``dummy_init.create_init``.
 """
-
-from typing import Any
 
 import pytest
 
-from neofoam.framework.initialization import (
-    InitStep,
-    LoadResult,
-    StagedInit,
-)
 from .dummy_init import create_init
-
-# ============================================================================
-# Test: StagedInit class basics
-# ============================================================================
-
-
-def test_staged_init_creation() -> None:
-    """Test creating a StagedInit instance."""
-    init = StagedInit("TestSolver")
-
-    assert init.name == "TestSolver"
-    assert init.argv == []
-    assert init._hooks.load is None
-    assert init._hooks.resolve is None
-    assert init._hooks.build is None
-
-
-def test_staged_init_decorators() -> None:
-    """Test that decorators register functions."""
-    init = StagedInit("TestSolver")
-
-    @init.load
-    def load_config() -> LoadResult:
-        return LoadResult(core_models=[], optional_models=[])
-
-    @init.resolve
-    def resolve_deps(config: Any) -> None:
-        pass
-
-    @init.build
-    def build_lazy(
-        core_models: list[Any], optional_models: list[Any]
-    ) -> list[InitStep]:
-        return []
-
-    assert init._hooks.load is load_config
-    assert init._hooks.resolve is resolve_deps
-    assert init._hooks.build is build_lazy
-
-
-def test_staged_init_requires_load() -> None:
-    """Test that run() requires @init.load."""
-    init = StagedInit("TestSolver")
-
-    with pytest.raises(RuntimeError, match="No @TestSolver.load defined"):
-        init.run()
-
-
-# ============================================================================
-# Test: Dummy solver 3-stage initialization
-# ============================================================================
 
 
 def test_dummy_init_staged_full_run() -> None:
-    """Test complete 3-stage initialization flow."""
-
+    """Complete 3-stage initialization produces a Context with fields/models/mesh."""
     init_instance = create_init()
     init_instance.argv = []
 
-    # Run full initialization
     ctx = init_instance.run()
 
-    # Verify context has fields
     assert "field1" in ctx.fields
     assert "field2" in ctx.fields
     assert "field3" in ctx.fields
-
-    # Verify field values
     assert ctx.fields["field1"] == 1.0
     assert ctx.fields["field2"] == 101325.0
-    assert ctx.fields["field3"] == 0.01  # field1 * 0.01
+    assert ctx.fields["field3"] == 0.01
 
-    # Verify models
     assert "algorithm" in ctx.models
     assert "core2" in ctx.models
     assert "config" in ctx.models
 
-    # Verify mesh
     assert "mesh" in ctx.mesh or hasattr(ctx, "mesh")
 
 
 def test_optional_models_integration() -> None:
-    """Test that optional models are properly initialized and configured."""
-
+    """Optional models are detected, resolved, and produce InitSteps."""
     init_instance = create_init()
     init_instance.argv = []
 
     ctx = init_instance.run()
 
-    # Verify model fields were created (if models are enabled)
     optional_model_keys = ["model_field1", "model_field2", "model_field3"]
     detected_optional_fields = [k for k in optional_model_keys if k in ctx.fields]
 
-    # Should have optional model fields if models were detected
-    optional_models = getattr(init_instance, "_optional_models", [])
+    optional_models = init_instance.optional_models
     if len(optional_models) > 0:
         assert len(detected_optional_fields) > 0
 
-    # Verify algorithm
     algorithm = ctx.models.get("algorithm")
     assert algorithm is not None
 
-    # If model1 runtime is present, check that it has a config loaded
     from neofoam.framework.model import ModelRuntime
 
     rt_m1 = next(

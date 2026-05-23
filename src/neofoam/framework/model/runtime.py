@@ -12,12 +12,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, TYPE_CHECKING
 
-from neofoam.framework.operation_wrapper import inject_and_call
-
 if TYPE_CHECKING:
     from .spec import ModelSpec
     from neofoam.framework.initialization import ConfigContext, InitStep
-    from neofoam.framework.operations import Operations
+    from neofoam.framework.operations import Operation
 
 
 @dataclass
@@ -31,37 +29,31 @@ class ModelRuntime:
     """
 
     spec: "ModelSpec"
-    name: str  # manifest "name" or spec.name for detect-only models
+    name: str  # unique: "<spec.name>_<instance_id>"
     config: Any  # loaded config — updated during RESOLVE
 
     def run_resolve(self, ctx: "ConfigContext") -> None:
         """Call spec's resolve func; store the returned updated config."""
         if self.spec._resolve_func is not None:
-            result = inject_and_call(
-                self.spec._resolve_func,
-                self,
-                self.spec._resolve_call_meta,
-                ctx=ctx,
-            )
+            result = self.spec._resolve_func(self.config, ctx)
             if result is not None:
                 self.config = result
 
     def run_build(self) -> list["InitStep"]:
-        """Call spec's build func with self=runtime and injected configs."""
+        """Call spec's build func with this instance's config (if it accepts args)."""
+        import inspect
+
         if self.spec._build_func is None:
             return []
-        return inject_and_call(  # type: ignore[no-any-return]
-            self.spec._build_func,
-            self,
-            self.spec._build_call_meta,
-        )
+        sig = inspect.signature(self.spec._build_func)
+        if len(sig.parameters) > 0:
+            return self.spec._build_func(self.config)  # type: ignore[no-any-return]
+        return self.spec._build_func()  # type: ignore[no-any-return]
 
     @property
-    def operations(self) -> "Operations":
+    def operations(self) -> list["Operation"]:
         """Build operations with this runtime as the self binding."""
-        from neofoam.framework.operations import Operations
-
-        return Operations(self.spec._build_operations_for(self))
+        return self.spec._build_operations_for(self)
 
     @property
     def configs(self) -> list[Any]:

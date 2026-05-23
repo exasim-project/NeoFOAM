@@ -205,7 +205,7 @@ TEST_CASE("GradOperator")
             {
                 NeoN::fill(nfGradT.internalVector(), NeoN::Vec3(0, 0, 0));
                 NeoN::fill(nfGradT.boundaryData().value(), NeoN::Vec3(0, 0, 0));
-                fvcc::GaussGreenGrad(exec, nfMesh).grad(nfT, NeoN::dsl::Coeff(), nfGradT);
+                fvcc::GaussGreenGrad(exec, nfMesh).grad(nfT, nfGradT, NeoN::dsl::Coeff());
                 NeoN::fence(exec);
                 return;
             };

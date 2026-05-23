@@ -21,6 +21,11 @@ set_property(
 
 target_link_libraries(NeoFOAM_public_api INTERFACE NeoN::NeoN NeoN::NeoN_public_api)
 
+if(NEOFOAM_WITH_MPI)
+  target_link_libraries(NeoN_public_api INTERFACE MPI::MPI_CXX)
+  target_link_libraries(NeoFOAM_public_api INTERFACE MPI::MPI_CXX)
+endif()
+
 # Get list of some *.hpp files in folder include
 file(GLOB_RECURSE include_files *.hpp)
 

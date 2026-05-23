@@ -242,7 +242,54 @@ Stage Details
 
 2. **RESOLVE Stage**: Models wire dependencies via ``ConfigContext``. Validate compatible configurations. Adapt algorithms based on active models.
 
-3. **BUILD Stage**: Return ``InitStep`` objects describing how to create runtime objects. The framework sorts them topologically and executes them in dependency order, building a ``Context``.
+3. **VERIFY Stage** (implicit, between RESOLVE and BUILD): The framework collects ``@fvSchemes.add(...)`` and ``@fvSolution.add(...)`` requirements from every active operation and checks them against the loaded ``system/fvSchemes`` and ``system/fvSolution``. See :ref:`verification` below.
+
+4. **BUILD Stage**: Return ``InitStep`` objects describing how to create runtime objects. The framework sorts them topologically and executes them in dependency order, building a ``Context``.
+
+.. _verification:
+
+Verification (fvSchemes / fvSolution)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Operations declare which OpenFOAM scheme entries and linear-solver entries they
+need with two decorators from ``neofoam.foam``:
+
+.. code-block:: python
+
+    from neofoam.foam import fvSchemes, fvSolution
+
+    @pimple.operation(operation_number="2.1")
+    @fvSchemes.add(
+        ddt="ddt(U)",
+        div="div(phi,U)",
+        grad="grad(U)",
+        laplacian="laplacian(nuEff,U)",
+    )
+    @fvSolution.add("U")
+    def momentum(...):
+        ...
+
+Short names (``ddt``, ``div``, ``grad``, ``laplacian``, ``snGrad``,
+``interpolation``) are mapped to the canonical OpenFOAM section names
+(``ddtSchemes``, ``divSchemes``, ...). Unknown names pass through, so
+``@fvSchemes.add(wallDist="method")`` adds a ``wallDist`` requirement directly.
+
+When a ``StagedInit.LOAD`` returns a ``LoadResult`` with ``fv_schemes_config``
+and/or ``fv_solution_config`` populated (typically by loading
+``FvSchemesConfig.load(case_dir=...)`` and ``FvSolutionConfig.load(...)``), the
+framework runs ``StagedInit._verify`` between RESOLVE and BUILD. It:
+
+1. Collects every requirement from every active operation
+   (``collect_requirements_from_models``).
+2. Confirms every required entry is present in the corresponding dictionary
+   (structural check).
+3. Validates the value against a typed Pydantic scheme model
+   (``DdtScheme``, ``DivScheme``, ...) when one applies.
+
+On failure, ``StagedInit.run`` raises ``RuntimeError`` listing every
+``VerificationError`` with file, field, and message. To check a case without
+running the solver, call ``StagedInit.validate()`` — it executes LOAD →
+RESOLVE → VERIFY and returns the error list rather than raising.
 
 StagedInit
 ~~~~~~~~~~
@@ -279,7 +326,7 @@ The ``StagedInit`` class orchestrates the 3-stage process. It is typically injec
         core_models: list, optional_models: list
     ) -> list[InitStep]:
         builder = InitializerBuilder()
-        builder.add_resource("mesh", mesh_data)
+        builder.add(init("mesh", create=lambda _ctx: mesh_data))
         builder.add_core_models([("algorithm", algo_config)])
         builder.add_field("p", depends_on=["mesh"], value=0.0)
         builder.add_field("U", depends_on=["mesh"], value=0.0)
@@ -297,6 +344,85 @@ The ``StagedInit`` class orchestrates the 3-stage process. It is typically injec
     load_result = init.run_load()
     init.run_resolve(ConfigContext())
     init_steps = init.run_build()
+
+
+ConfigContext
+~~~~~~~~~~~~~
+
+``ConfigContext`` is the registry passed to every ``@resolve`` callback.
+It carries:
+
+- a flat ``name -> model`` map for the current region (``register``, ``get``,
+  ``contains``, ``all``);
+- helpers for type- and prefix-based lookup (``get_by_type``, ``get_by_prefix``);
+- inspection of fields marked ``Configurable`` (``get_configurable_fields``);
+- attribute-style access — ``ctx.algorithm`` is shorthand for ``ctx.get("algorithm")``.
+
+.. code-block:: python
+
+    @boussinesq.resolve
+    def resolve(self, ctx: ConfigContext) -> None:
+        for algo_name in ("Pimple", "Simple", "Piso"):
+            algo = ctx.get(algo_name)
+            if algo is not None:
+                algo.use_boussinesq = True
+                return
+
+Multi-region (multi-domain) coupling
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``ConfigContext`` also supports multiple **regions**, which is the foundation
+for multi-domain simulations such as conjugate heat transfer. Each region is a
+separate namespace; models register into one and address each other across
+regions with dot notation:
+
+.. code-block:: python
+
+    config = ConfigContext(current_region="fluid")
+    config.register("temperature", fluid_temp)              # in fluid
+    config.register("temperature", solid_temp, region="solid")
+
+    config.get("temperature")            # -> fluid_temp (current region)
+    config.get("solid.temperature")      # -> solid_temp (cross-region)
+    config.contains("solid.temperature") # -> True
+    config.regions                       # -> ["fluid", "solid"]
+
+A model in the fluid region can pull its solid-region counterpart out of the
+``ConfigContext`` during RESOLVE without either side having to know how the
+other was constructed. This is the only place in the framework where
+multi-domain coupling is currently expressed.
+
+
+Schema Introspection
+~~~~~~~~~~~~~~~~~~~~
+
+``StagedInit`` exposes two helpers that surface every config class and scheme
+requirement reachable from the solver, without running it. They are the
+intended entry points for UIs, AI-assisted workflows, and case templating.
+
+- ``init.solver_inputs() -> dict[str, type]`` — maps each registered model name
+  (core specs, registered plugins, and any models loaded after ``run()``) to
+  its configuration class.
+- ``init.scheme_inputs() -> type`` — builds a typed Pydantic model whose fields
+  are the union of all ``@fvSchemes.add(...)`` requirements across active
+  operations. Each field is typed with the appropriate scheme union
+  (``DdtScheme``, ``DivScheme``, etc.).
+
+Both return classes you can call ``.model_json_schema()`` on:
+
+.. code-block:: python
+
+    init = StagedInit("incompressibleFluid", plugin_interface=incompressibleFluidModel)
+    init.register_core_models([pimple, simple, piso])
+
+    # Every config class the solver might consume
+    schema_by_model = {
+        name: cls.model_json_schema()
+        for name, cls in init.solver_inputs().items()
+    }
+
+    # The exact fvSchemes the solver needs, with valid value enumerations
+    schemes_schema = init.scheme_inputs().model_json_schema()
 
 
 Lazy Initialization
@@ -323,45 +449,59 @@ Categories determine where results are stored in the ``Context``:
 - ``"fields"`` |rarr| ``ctx.fields["U"]`` (name prefix ``fields.`` stripped)
 - ``"models"`` |rarr| ``ctx.models["turbulence"]``
 - ``"operators"`` |rarr| ``ctx.models["div_phi"]``
-- ``"resource"`` |rarr| ``ctx.fields["mesh"]`` or ``ctx.runtime`` (top-level)
+- ``"resource"`` with ``name="mesh"`` |rarr| ``ctx.mesh`` (top-level slot)
+- ``"resource"`` with ``name="runtime"`` |rarr| ``ctx.runtime``
+- Any other ``"resource"`` falls back to ``ctx.models[name]`` and emits a warning.
 
 Helper Functions
 ~~~~~~~~~~~~~~~~
 
 Helpers create ``InitStep`` objects with automatic naming and category:
 
+- ``init(name, create, depends_on)`` — general-purpose, no prefix, category ``"resource"`` (for mesh, runtime, algorithm, etc.)
+- ``field(name, create, depends_on)`` — prefixes with ``fields.``, category ``"fields"``
+- ``model(name, create, depends_on)`` — prefixes with ``models.``, category ``"models"``
+
 .. code-block:: python
 
-    from neofoam.framework.initialization import field, operator, lazy, model
+    from neofoam.framework.initialization import field, init, model
 
     # field("p", ...) -> InitStep(name="fields.p", category="fields")
     field("p", create=lambda ctx: 0.0, depends_on=["mesh"])
 
-    # operator("div_phi", ...) -> InitStep(name="operators.div_phi", category="operators")
-    operator("div_phi", create=lambda ctx: make_div(ctx["fields.U"]), depends_on=["fields.U"])
-
     # model("turbulence", ...) -> InitStep(name="models.turbulence", category="models")
     model("turbulence", create=lambda ctx: make_turb(), depends_on=["fields.U", "fields.p"])
 
-    # lazy("mesh", ...) -> InitStep(name="mesh", category="resource")
-    lazy("mesh", create=lambda ctx: load_mesh())
+    # init("mesh", ...) -> InitStep(name="mesh", category="resource")
+    init("mesh", create=lambda ctx: load_mesh())
 
 All helpers default to an empty dependency list ``[]`` if not specified.
 
 InitializerBuilder
 ~~~~~~~~~~~~~~~~~~
 
-The fluent ``InitializerBuilder`` simplifies constructing lists of ``InitStep`` objects:
+The fluent ``InitializerBuilder`` simplifies constructing lists of ``InitStep`` objects.
+Its public methods are:
+
+- ``add(step)`` — append a pre-built ``InitStep``
+- ``extend(steps)`` — append a list of ``InitStep`` objects
+- ``add_initializer(name, value)`` — top-level resource (no prefix)
+- ``add_field(name, depends_on, value)`` — field (auto-prefixed ``fields.``)
+- ``add_model(name, value)`` — model (auto-prefixed ``models.``)
+- ``add_core_models(items)`` — register a list of ``(name, model)`` tuples and pull in their ``run_build()`` steps
+- ``add_optional_models(models)`` — call ``run_build()`` on each and append
+- ``build()`` — return the assembled ``list[InitStep]``
 
 .. code-block:: python
 
-    from neofoam.framework.initialization import InitializerBuilder
+    from neofoam.framework.initialization import (
+        InitializerBuilder, field, init, model,
+    )
 
     builder = InitializerBuilder()
-    builder.add_resource("mesh", mesh_data)
+    builder.add(init("mesh", create=lambda _ctx: mesh_data))
     builder.add_field("p", depends_on=["mesh"], value=0.0)
     builder.add_field("U", depends_on=["mesh"], value=0.0)
-    builder.add_operator("div_phi", depends_on=["fields.U"], value=make_div)
     builder.add_core_models([("algorithm", algo)])
 
     # Extend with model-contributed steps
@@ -374,7 +514,12 @@ Dependency Resolution
 
 Dependencies are strings matching the ``name`` of other ``InitStep`` objects. The framework:
 
-- Uses ``networkx.lexicographical_topological_sort`` for deterministic ordering
+- Uses ``networkx.lexicographical_topological_sort`` for deterministic ordering.
+  For *operation* graphs (not init graphs) the ``DAGResolver`` passes a custom key
+  ``(operation_number is None, operation_number, node_name)`` — operations with an
+  ``operation_number`` sort first (lowest number wins), then unnumbered operations
+  break ties alphabetically. This is why models can anchor themselves into a phase
+  by picking ``operation_number="2.5"`` etc.
 - Detects cycles and raises ``InitializationGraphError`` before execution
 - Ensures each initializer executes exactly once
 
@@ -395,6 +540,45 @@ Example dependency chain:
 
 Model Discovery & Manifests
 ----------------------------
+
+The framework supports **three** mechanisms for getting a model into a solver run.
+They co-exist and serve different purposes; pick the one that matches your situation:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 22 28 50
+
+   * - Mechanism
+     - Where it lives
+     - When to use it
+   * - **Plugin registry**
+     - ``@PluginSystem.register`` on a base class; concrete specs call
+       ``Model("Name").register_with(<interface>)``. Discovered with
+       ``<interface>.detect_models(case_dir=...)``.
+     - Optional, externally-pluggable physics (e.g.
+       ``boussinesq``, ``spalart_allmaras`` for ``incompressibleFluidModel``).
+       Models opt themselves in based on case data via ``@detect``.
+   * - **Core specs**
+     - ``StagedInit.register_core_models([spec1, spec2, ...])``. Discovered
+       through ordering in ``LoadResult.core_models``.
+     - Mandatory components the solver always expects, where one of several
+       variants is selected by case configuration. Example: PIMPLE / SIMPLE /
+       PISO pressure-velocity algorithms in ``incompressibleFluid`` —
+       ``base.PressureVelocityAlgorithm.detect_and_create()`` reads
+       ``system/fvSolution`` and returns the chosen spec, which the solver
+       then expects at ``state.core_models[0]``.
+   * - **YAML manifest**
+     - ``load_manifest(manifest_path, case_dir, registry_name)`` from
+       ``neofoam.framework.model``.
+     - Multi-instance models or fully-explicit configuration. Each YAML entry
+       names a ``type`` and ``name`` plus inline config; the framework
+       instantiates a ``ModelRuntime`` per entry.
+
+A single solver may use all three: ``incompressibleFluid`` registers
+``pimple/simple/piso`` as core specs (because exactly one is always required),
+exposes ``incompressibleFluidModel`` as a plugin interface (so add-on physics
+like Boussinesq can plug in via ``@detect``), and could additionally accept a
+manifest for cases that need multiple instances of the same plugin.
 
 Models can be discovered automatically via ``@detect`` or loaded explicitly from YAML manifests.
 
@@ -697,6 +881,12 @@ The framework uses ``Depends`` markers for dependency injection, primarily in so
 - **Scoping**: ``Depends(fn, scope="time_step")`` — controls cache lifetime (``time_step``, ``iteration``, ``operation``)
 - **Caching**: ``Depends(fn, cache=True)`` — caches the result within scope (default)
 
+.. warning::
+   The framework does not yet automatically invalidate ``Depends`` caches between time steps or iterations.
+   With ``cache=True`` (the default) a ``Depends(callable)`` resolves once per process unless the application
+   explicitly calls ``DependencyResolver.clear_scope("time_step")``. Use ``cache=False`` for providers that
+   must re-evaluate every call until the lifecycle hooks are wired in.
+
 
 Complete Example
 ----------------
@@ -956,7 +1146,7 @@ Key Design Decisions
 
 1. **Spec/Runtime separation**: Specs are immutable definitions created at module import time. Runtimes are mutable per-instance state. This enables multiple independent instances from one definition and clean plugin registration.
 
-2. **Config as return value**: ``@load`` returns a config object; ``@resolve`` receives ``self: ModelRuntime`` and auto-injected config, and returns updated config. No self-mutation — configs are explicit data flowing through stages.
+2. **Config as return value**: ``@load`` returns a config object; ``@resolve`` receives ``self: ModelRuntime`` and auto-injected config, and may return an updated config. Returning ``None`` is allowed — in that case the runtime keeps its existing config. ``@resolve`` may also reach into other models registered in the ``ConfigContext`` and mutate their attributes (e.g. setting ``pressure_model.use_boussinesq = True``) when it needs to influence another component's downstream operation dispatch.
 
 3. **Manifest-based discovery**: Models are discovered via YAML manifests and ``@detect`` predicates, replacing the old ``get_models()`` pattern. This decouples model registration from solver code.
 

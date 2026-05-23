@@ -9,6 +9,8 @@ implementation with real configuration files. Configuration classes use
 the @IOStrategy(YAML(...)) decorator pattern for declarative IO configuration.
 """
 
+from __future__ import annotations
+
 import shutil
 from pathlib import Path
 from typing import Any

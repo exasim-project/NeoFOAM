@@ -72,7 +72,7 @@ def test_model3_config_loaded_via_instantiate() -> None:
     """instantiate() loads Model3Config from disk."""
     from .models.model3 import model3, Model3Config
 
-    rt = model3.instantiate(CASE_DIR)
+    rt = model3.instantiate(CASE_DIR, "CoupledModel")
     assert isinstance(rt.config, Model3Config)
     assert rt.config.mode == "coupled"
     assert rt.config.damping == 0.5
@@ -146,7 +146,7 @@ def test_model3_accumulator_tracks_state() -> None:
 def test_model3_integrates_with_full_solver() -> None:
     """Model3 operations appear in the resolved DAG and ctx is correctly built."""
     from .dummy_solver import dummy_solver as solver
-    from neofoam.framework.operations import Operations
+    from neofoam.framework.operations import OperationCollection
 
     ctx = solver.initialize()
 
@@ -154,8 +154,8 @@ def test_model3_integrates_with_full_solver() -> None:
     assert ctx.fields["model3_field"] == 0.0
     assert "accumulator" in ctx.models
 
-    model_ops = Operations()
-    for rt in solver.state.optional_models:
+    model_ops = OperationCollection()
+    for rt in solver.optional_models:
         model_ops.add(rt.operations)
 
     op_names = [op.operation_name for op in model_ops]

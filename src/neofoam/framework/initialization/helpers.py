@@ -8,13 +8,21 @@ Helper Functions for Lazy Initialization
 Provides convenience functions for creating InitStep objects with common patterns.
 """
 
-from typing import Callable, Any, List, Optional, Union
+from typing import Callable, Any, List, Optional, Protocol, Union, runtime_checkable
 from .init_step import InitStep, InitCategory
 
 
-# ---------------------------------------------------------------------------
-# Core factory — all four helpers delegate to this
-# ---------------------------------------------------------------------------
+@runtime_checkable
+class BuildsInitSteps(Protocol):
+    """Protocol matched by objects that contribute :class:`InitStep` lists.
+
+    Models / sub-systems implement ``run_build()`` to expose their
+    initialization steps to :class:`InitializerBuilder`. The Protocol gives
+    the contract a name (mypy can check it) and replaces the duck-typed
+    ``hasattr(item, "run_build")`` checks used elsewhere.
+    """
+
+    def run_build(self) -> List[InitStep]: ...
 
 
 def _make_lazy(
@@ -230,8 +238,8 @@ class InitializerBuilder:
             # Add the model itself
             self.add_model(name, model_instance)
 
-            # Add InitStep objects from run_build() if available
-            if hasattr(model_instance, "run_build"):
+            # Add InitStep objects from run_build() if available.
+            if isinstance(model_instance, BuildsInitSteps):
                 self.extend(model_instance.run_build())
 
         return self
@@ -311,7 +319,7 @@ class InitializerBuilder:
             Self for chaining
         """
         for m in optional_models:
-            if hasattr(m, "run_build"):
+            if isinstance(m, BuildsInitSteps):
                 self.extend(m.run_build())
         return self
 

@@ -10,50 +10,23 @@ callables; all mutable state lives on ModelRuntime created per instantiate().
 
 from __future__ import annotations
 
-import inspect
 import re
-from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Literal, Optional, Union
+from typing import Any, Callable, Literal, Optional
 
 from pydantic import BaseModel
 
-from neofoam.framework.base_spec import BaseSpec
-from neofoam.framework.operations import Operation, Operations
+from neofoam.framework.dependency_resolver import (
+    DependencyResolver,
+    wrap_with_dependency_resolution,
+)
+from neofoam.framework.operations import Operation, Operations, SequentialOp
+from neofoam.framework.types import OperationMetadata, OperationNumber
 
 from .runtime import ModelRuntime
 
 
-def _validate_param_count(
-    func: Callable[..., Any],
-    expected: int,
-    decorator: str,
-    mode: str = "exact",
-) -> None:
-    actual = len(inspect.signature(func).parameters)
-    if mode == "exact":
-        if actual != expected:
-            raise TypeError(
-                f"{decorator} function '{func.__name__}' has {actual} parameter(s); "
-                f"expected exactly {expected}."
-            )
-    elif mode == "min":
-        if actual < expected:
-            raise TypeError(
-                f"{decorator} function '{func.__name__}' has {actual} parameter(s); "
-                f"expected at least {expected}."
-            )
-
-
-@dataclass
-class DetectResult:
-    """Result of a model detection check."""
-
-    detected: bool
-    instance_ids: list[str] = field(default_factory=list)
-
-
-class ModelSpec(BaseSpec):
+class ModelSpec:
     """
     Immutable model definition.  Read-only after module import.
 
@@ -62,80 +35,87 @@ class ModelSpec(BaseSpec):
     """
 
     def __init__(self, name: str) -> None:
-        super().__init__(name)
+        self.name = name
         self.enabled = True
 
         self._load_func: Optional[Callable[..., Any]] = None
         self._resolve_func: Optional[Callable[..., Any]] = None
-        self._resolve_call_meta: dict[str, Any] = {}
         self._build_func: Optional[Callable[..., Any]] = None
-        self._build_call_meta: dict[str, Any] = {}
         self._detect_func: Optional[Callable[..., Any]] = None
 
+        self._operations: list[tuple[Any, dict[str, Any]]] = []
         self._operation_collection_func: Optional[Callable[..., Any]] = None
+
+        self._dependency_resolver = DependencyResolver()
 
     # ------------------------------------------------------------------
     # Stage decorators — store only, no side-effects
     # ------------------------------------------------------------------
 
-    def load(self, func: Callable[..., Any]) -> Callable[..., Any]:
+    def load(self, func: Callable[[Path, str], Any]) -> Callable[[Path, str], Any]:
         """
-        Register the LOAD function (optional override for custom logic).
+        Register the LOAD function.
 
-        Signature: ``def load(case_dir: Path, entry: dict) -> SomeConfig``
+        Signature: ``def load(case_dir: Path, instance_id: str) -> SomeConfig``
         """
-        _validate_param_count(func, expected=2, decorator="@load")
         self._load_func = func
         return func
 
-    def resolve(self, func: Callable[..., Any]) -> Callable[..., Any]:
+    def resolve(self, func: Callable[[Any, Any], Any]) -> Callable[..., Any]:
         """
         Register the RESOLVE function.
 
-        Signature: ``def resolve(self: ModelRuntime, ctx: ConfigContext, cfg: MyConfig, ...) -> Config``
+        Signature: ``def resolve(config: MyConfig, ctx: ConfigContext) -> MyConfig``
         """
-        from neofoam.framework.operation_wrapper import discover_call_metadata
-
-        _validate_param_count(func, expected=2, decorator="@resolve", mode="min")
         self._resolve_func = func
-        self._resolve_call_meta = discover_call_metadata(func)
         return func
 
     def build(self, func: Callable[..., list[Any]]) -> Callable[..., list[Any]]:
         """
         Register the BUILD function.
 
-        Signature: ``def build(self: ModelRuntime, cfg: MyConfig, ...) -> list[InitStep]``
+        Signature: ``def build(config: MyConfig) -> list[InitStep]``
         """
-        from neofoam.framework.operation_wrapper import discover_call_metadata
-
-        _validate_param_count(func, expected=1, decorator="@build", mode="min")
         self._build_func = func
-        self._build_call_meta = discover_call_metadata(func)
         return func
 
-    def detect(
-        self, func: Callable[..., Union[bool, list[str]]]
-    ) -> Callable[..., Union[bool, list[str]]]:
+    def detect(self, func: Callable[[], bool]) -> Callable[[], bool]:
         """Register the DETECT predicate."""
-        _validate_param_count(func, expected=1, decorator="@detect")
         self._detect_func = func
         return func
 
-    def run_detect(self, case_dir: Path) -> DetectResult:
-        """Run the detect predicate and return a DetectResult."""
-        if self._detect_func is None:
-            return DetectResult(detected=True)
-
-        result = self._detect_func(case_dir)
-
-        if isinstance(result, list):
-            return DetectResult(detected=len(result) > 0, instance_ids=result)
-        return DetectResult(detected=bool(result))
+    def run_detect(self) -> bool:
+        """Return True if the detect predicate passes (default: True)."""
+        return self._detect_func() if self._detect_func is not None else True
 
     # ------------------------------------------------------------------
-    # Operation decorators (operation() inherited from BaseSpec)
+    # Operation decorators
     # ------------------------------------------------------------------
+
+    def operation(
+        self,
+        operation_number: Optional[str] = None,
+        depends_on: Optional[list[str]] = None,
+        before: Optional[list[str]] = None,
+        name: Optional[str] = None,
+    ) -> Callable[..., Any]:
+        """Decorator to register a model operation."""
+
+        def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+            self._operations.append(
+                (
+                    func,  # store original; wrapping happens in _build_operations_for
+                    {
+                        "operation_number": operation_number,
+                        "depends_on": depends_on,
+                        "before": before,
+                        "name": name or func.__name__,
+                    },
+                )
+            )
+            return func
+
+        return decorator
 
     def operation_collection(
         self, func: Callable[..., Operations]
@@ -148,68 +128,73 @@ class ModelSpec(BaseSpec):
     # Instantiation
     # ------------------------------------------------------------------
 
-    def instantiate(
-        self,
-        case_dir: Path,
-        entry: Optional[dict[str, Any]] = None,
-    ) -> ModelRuntime:
+    def instantiate(self, case_dir: Path, instance_id: str) -> ModelRuntime:
         """
         Create a fresh ModelRuntime for one instance of this spec.
 
-        Loading priority:
-        1. If @load registered → call it (with case_dir + entry or just case_dir)
-        2. Else if @config registered and entry provided → auto-construct
-        3. Else → error
+        Calls the @load function and wraps the result in a ModelRuntime.
         """
-        if isinstance(entry, str):
-            raise TypeError(
-                "instantiate() no longer accepts instance_id as a string. "
-                "Pass entry=dict or use the manifest loader."
-            )
-
-        runtime_name = entry["name"] if entry and "name" in entry else self.name
-
-        if self._load_func is not None:
-            config = self._load_func(case_dir, entry)
-        elif self._config_class is not None and entry is not None:
-            fields = {k: v for k, v in entry.items() if k not in ("type", "name")}
-            config = self._config_class.model_construct(**fields)  # type: ignore[attr-defined]
-        else:
+        if self._load_func is None:
             raise ValueError(
-                f"ModelSpec '{self.name}': cannot instantiate. "
-                "Register @load or @config with an entry dict."
+                f"ModelSpec '{self.name}' has no @load stage. "
+                "Every model must register a load function with @<spec>.load."
             )
+        config = self._load_func(case_dir, instance_id)
 
-        return ModelRuntime(
+        rt = ModelRuntime(
             spec=self,
-            name=runtime_name,
+            name=f"{self.name}_{instance_id}",
             config=config,
         )
+        return rt
 
     # ------------------------------------------------------------------
     # Operation building (called by ModelRuntime.operations)
     # ------------------------------------------------------------------
 
-    def _build_operations_for(self, runtime: ModelRuntime) -> list[Operation]:  # type: ignore[override]
+    def _build_operations_for(self, runtime: ModelRuntime) -> list[Operation]:
         """
         Build Operation objects with *runtime* as the ``self`` binding.
 
-        Handles operation_collection dispatch and multi-instance suffix,
-        then delegates to BaseSpec._build_operations_for for the core loop.
+        Returns a fresh list per call so multiple runtimes never share
+        wrapper state.
         """
+        from neofoam.framework.config_injection import (
+            _discover_configs_from_signature,
+            _create_runtime_config_wrapper,
+        )
+
         if self._operation_collection_func is not None:
             result = self._operation_collection_func(runtime)
             if isinstance(result, Operations):
                 return list(result)
             return result  # type: ignore[no-any-return]
 
-        # Suffix operation names when runtime.name differs from spec name
-        # (indicates multi-instance model from manifest).
-        suffix = (
-            f"_{runtime.name}" if runtime.name and runtime.name != self.name else ""
-        )
+        ops: list[Operation] = []
+        for func, metadata in self._operations:
+            discovered = _discover_configs_from_signature(func)
+            if discovered:
+                wrapped = _create_runtime_config_wrapper(func, discovered, runtime)
+            else:
+                wrapped = wrap_with_dependency_resolution(
+                    func, runtime, self._dependency_resolver
+                )
 
-        return super()._build_operations_for(runtime, suffix=suffix)
+            op = Operation(
+                func=SequentialOp(wrapped),
+                metadata=OperationMetadata(
+                    op_name=metadata["name"],
+                    operation_number=(
+                        OperationNumber(metadata["operation_number"])
+                        if metadata["operation_number"]
+                        else None
+                    ),
+                    depends_on=metadata["depends_on"] or [],
+                    before=metadata["before"] or [],
+                ),
+            )
+            ops.append(op)
+        return ops
 
     # ------------------------------------------------------------------
     # Plugin registration

@@ -11,7 +11,7 @@ upstream_length = 0.1  # [m]
 downstream_length = 0.3  # [m]
 
 # size to roughly match cells outside ring
-cell_size = 0.3 * ring_thickness * 0.25 # [m]
+cell_size = 0.3 * ring_thickness * 0.25  # [m]
 print(f"cell size: {cell_size} m")
 bl_thickness = 1e-4
 c2c_expansion = 1.2  # cell-to-cell expansion ratio
@@ -56,9 +56,17 @@ def make_box(p1, p2, size_axes, patches):
 
 # top 3 boxes
 make_box(
-    [-upstream_length, outer_point], [-outer_point, domain_height / 2], [0, 1], {"back": "upper_wall", "left": "inlet"}
+    [-upstream_length, outer_point],
+    [-outer_point, domain_height / 2],
+    [0, 1],
+    {"back": "upper_wall", "left": "inlet"},
 )
-make_box([-outer_point, outer_point], [outer_point, domain_height / 2], [], {"back": "upper_wall"})
+make_box(
+    [-outer_point, outer_point],
+    [outer_point, domain_height / 2],
+    [],
+    {"back": "upper_wall"},
+)
 make_box(
     [outer_point, outer_point],
     [downstream_length, domain_height / 2],
@@ -67,8 +75,15 @@ make_box(
 )
 
 # left and right of the cylinder
-make_box([-upstream_length, -outer_point], [-outer_point, outer_point], [], {"left": "inlet"})
-make_box([outer_point, -outer_point], [downstream_length, outer_point], [], {"right": "outlet"})
+make_box(
+    [-upstream_length, -outer_point], [-outer_point, outer_point], [], {"left": "inlet"}
+)
+make_box(
+    [outer_point, -outer_point],
+    [downstream_length, outer_point],
+    [],
+    {"right": "outlet"},
+)
 
 # bottom 3 boxes
 make_box(
@@ -77,7 +92,12 @@ make_box(
     [0, 1],
     {"front": "lower_wall", "left": "inlet"},
 )
-make_box([-outer_point, -domain_height / 2], [outer_point, -outer_point], [], {"front": "lower_wall"})
+make_box(
+    [-outer_point, -domain_height / 2],
+    [outer_point, -outer_point],
+    [],
+    {"front": "lower_wall"},
+)
 make_box(
     [outer_point, -domain_height / 2],
     [downstream_length, -outer_point],

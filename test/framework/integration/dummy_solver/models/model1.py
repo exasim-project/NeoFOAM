@@ -13,7 +13,6 @@ from pydantic import Field
 
 from neofoam.framework.context import FieldUpdates
 from neofoam.framework.initialization import ConfigContext, InitStep
-from neofoam.framework.model import ModelRuntime
 from neofoam.io import BaseConfig, IOStrategy, YAML
 
 from .dummy_model import DummyModelInterface, Model
@@ -42,7 +41,7 @@ model1 = Model("DummyModel1").register_with(DummyModelInterface)
 
 
 @model1.load
-def load(case_dir: Path, _entry: Any) -> Any:
+def load(case_dir: Path, instance_id: str) -> Any:
     from types import SimpleNamespace
 
     return SimpleNamespace(
@@ -52,14 +51,14 @@ def load(case_dir: Path, _entry: Any) -> Any:
 
 
 @model1.detect
-def detect_model(_case_dir: Path) -> bool:
+def detect_model() -> bool:
     return True
 
 
 @model1.resolve
-def resolve(self: ModelRuntime, ctx: ConfigContext) -> Any:
+def resolve(config: Any, ctx: ConfigContext) -> Any:
     """RESOLVE stage: no cross-model wiring needed for model1."""
-    return self.config
+    return config
 
 
 def _make_field2_init(cfg: Model1Config) -> Callable[[dict[str, Any]], float]:
@@ -70,13 +69,15 @@ def _make_field2_init(cfg: Model1Config) -> Callable[[dict[str, Any]], float]:
 
 
 @model1.build
-def build(self: ModelRuntime, main: Model1Config) -> list[InitStep]:
+def build(config: Any) -> list[InitStep]:
     """
     BUILD stage: create LazyInit objects for fields managed by this model.
 
-    ``main`` is auto-injected from runtime.config (a SimpleNamespace with
-    .main and .step_config) by matching the Model1Config type.
+    ``config`` is a SimpleNamespace with .main (Model1Config) and
+    .step_config (Model1StepConfig) since two config types are discovered.
     """
+    main = config.main if hasattr(config, "main") else config
+
     return [
         InitStep(
             name="model_field1",

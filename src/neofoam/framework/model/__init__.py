@@ -10,15 +10,7 @@ Public API:
     Model        — factory alias: Model("Name") -> ModelSpec
 """
 
-from .spec import ModelSpec, Model, DetectResult
+from .spec import ModelSpec, Model
 from .runtime import ModelRuntime
-from .manifest import ManifestError, load_manifest
 
-__all__ = [
-    "ModelSpec",
-    "ModelRuntime",
-    "Model",
-    "DetectResult",
-    "ManifestError",
-    "load_manifest",
-]
+__all__ = ["ModelSpec", "ModelRuntime", "Model"]

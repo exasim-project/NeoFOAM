@@ -16,7 +16,6 @@ from pydantic import Field
 
 from neofoam.framework.context import FieldUpdates
 from neofoam.framework.initialization import ConfigContext, InitStep
-from neofoam.framework.model import ModelRuntime
 from neofoam.framework.operations import Operation, Operations, SequentialOp
 from neofoam.framework.types import OperationMetadata, OperationNumber
 from neofoam.io import BaseConfig, IOStrategy, YAML
@@ -51,20 +50,20 @@ model3 = Model("CoupledModel").register_with(DummyModelInterface)
 
 
 @model3.load
-def load(case_dir: Path, _entry: Any) -> Model3Config:
+def load(case_dir: Path, instance_id: str) -> Model3Config:
     return Model3Config.load(case_dir=case_dir, validate=False)
 
 
 @model3.detect
-def detect_model(_case_dir: Path) -> bool:
+def detect_model() -> bool:
     return True
 
 
 @model3.resolve
-def resolve(
-    self: ModelRuntime, ctx: ConfigContext, config: Model3Config
-) -> Model3Config:
+def resolve(config: Model3Config, ctx: ConfigContext) -> Model3Config:
     """Check if DummyModel1 is active and store as coupled flag in config."""
+    from neofoam.framework.model import ModelRuntime
+
     coupled = any(
         isinstance(v, ModelRuntime) and v.spec.name == "DummyModel1"
         for v in ctx.all().values()
@@ -73,7 +72,7 @@ def resolve(
 
 
 @model3.build
-def build(self: ModelRuntime, config: Model3Config) -> list[InitStep]:
+def build(config: Model3Config) -> list[InitStep]:
     """Create fields and the nested accumulator sub-model."""
 
     def create_model3_field(_ctx: dict[str, Any]) -> float:
@@ -139,23 +138,25 @@ def collected_operations(self: Any) -> Operations:
 
     ``self`` is the ModelRuntime; ``self.config.coupled`` was set during RESOLVE.
     """
-    from neofoam.framework.operation_wrapper import wrap_operation
+    from neofoam.framework.config_injection import (
+        _discover_configs_from_signature,
+        _create_runtime_config_wrapper,
+    )
 
-    op_def = (
+    raw_func, metadata = (
         self.spec._operations[0] if self.config.coupled else self.spec._operations[1]
     )
 
-    wrapped = wrap_operation(op_def.func, self, self.spec._dependency_resolver)
+    discovered = _discover_configs_from_signature(raw_func)
+    wrapped = _create_runtime_config_wrapper(raw_func, discovered, self)
 
     op = Operation(
         func=SequentialOp(wrapped),
         metadata=OperationMetadata(
             op_name="model3_step",
-            operation_number=OperationNumber(op_def.operation_number)
-            if op_def.operation_number
-            else None,
-            depends_on=op_def.depends_on or [],
-            before=op_def.before or [],
+            operation_number=OperationNumber(metadata["operation_number"]),
+            depends_on=metadata["depends_on"] or [],
+            before=metadata["before"] or [],
         ),
     )
     ops = Operations()
