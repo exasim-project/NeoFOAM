@@ -36,8 +36,8 @@ rationale and where the resolver fits into the solver lifecycle.
 """
 
 from .resolver import (
-    DAGResolver,
     CyclicDependencyError,
+    DAGResolver,
     MissingDependencyError,
 )
 from .sorter import NetworkxTopologicalSorter, TopologicalSorter

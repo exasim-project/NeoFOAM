@@ -81,9 +81,17 @@ def test_compute_nodes_order_dependency_respected():
 
 
 def test_compute_steps_order_returns_sorted_operations():
-    op_a = Operation(func=lambda ctx: None, operation_name="A")
-    op_b = Operation(func=lambda ctx: None, operation_name="B", depends_on=["A"])
-    op_c = Operation(func=lambda ctx: None, operation_name="C", depends_on=["B"])
+    from neofoam.framework.operations import SequentialOp
+
+    def _op(name, depends_on=None):
+        return Operation(
+            func=SequentialOp(lambda ctx: None),
+            metadata=OperationMetadata(op_name=name, depends_on=depends_on or []),
+        )
+
+    op_a = _op("A")
+    op_b = _op("B", depends_on=["A"])
+    op_c = _op("C", depends_on=["B"])
     collection = OperationCollection(operations=[op_c, op_a, op_b])
 
     sorted_ops = _compute_steps_order(collection)

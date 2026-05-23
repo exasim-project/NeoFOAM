@@ -4,14 +4,17 @@
 
 """Unit tests for initialization helpers."""
 
+from typing import Any, Callable
+
 import pytest
 
 from neofoam.framework.initialization.execution.executor import execute_step
 from neofoam.framework.initialization.helpers import (
     field,
+    operator,
     lazy,
     model,
-    operator,
+    InitializerBuilder,
 )
 from neofoam.framework.initialization.init_step import InitStep
 
@@ -23,12 +26,14 @@ from neofoam.framework.initialization.init_step import InitStep
     "helper,prefix,category",
     [
         (field, "fields.", "fields"),
-        (model, "models.", "models"),
         (operator, "operators.", "operators"),
+        (model, "models.", "models"),
         (lazy, "", "resource"),
     ],
 )
-def test_helper_naming(helper, prefix, category):
+def test_helper_naming(
+    helper: Callable[..., InitStep], prefix: str, category: str
+) -> None:
     """All helpers create InitStep with correct name prefix and category."""
     result = helper("X", create=lambda _ctx: 1)
     assert isinstance(result, InitStep)
@@ -37,14 +42,14 @@ def test_helper_naming(helper, prefix, category):
     assert result.depends_on == []
 
 
-@pytest.mark.parametrize("helper", [field, model, operator, lazy])
-def test_helper_with_deps(helper):
+@pytest.mark.parametrize("helper", [field, operator, model, lazy])
+def test_helper_with_deps(helper: Callable[..., InitStep]) -> None:
     """All helpers pass through custom depends_on."""
     result = helper("X", create=lambda _ctx: 1, depends_on=["a", "b"])
     assert result.depends_on == ["a", "b"]
 
 
-def test_helper_execute():
+def test_helper_execute() -> None:
     """Helpers produce executable InitStep objects."""
     assert execute_step(field("U", create=lambda _ctx: "velocity"), {}) == "velocity"
     assert execute_step(lazy("mesh", create=lambda _ctx: "mesh_obj"), {}) == "mesh_obj"
@@ -58,17 +63,23 @@ def test_helper_execute():
     [
         ("add_field", "fields.", {"depends_on": ["mesh"], "value": 42}),
         ("add_model", "models.", {"value": "instance"}),
+        ("add_operator", "operators.", {"depends_on": ["fields.U"], "value": "op"}),
     ],
 )
-def test_builder_add_methods(builder, method, expected_prefix, kwargs):
-    """Builder add_field/add_model create correctly prefixed InitStep."""
+def test_builder_add_methods(
+    builder: InitializerBuilder,
+    method: str,
+    expected_prefix: str,
+    kwargs: dict[str, Any],
+) -> None:
+    """Builder add_field/add_model/add_operator create correctly prefixed InitStep."""
     getattr(builder, method)("X", **kwargs)
     inits = builder.build()
     assert len(inits) == 1
     assert inits[0].name == f"{expected_prefix}X"
 
 
-def test_builder_add_resource(builder):
+def test_builder_add_resource(builder: InitializerBuilder) -> None:
     """add_resource creates an unprefixed InitStep."""
     builder.add_resource("mesh", "mock_mesh")
     inits = builder.build()
@@ -77,30 +88,33 @@ def test_builder_add_resource(builder):
     assert execute_step(inits[0], {}) == "mock_mesh"
 
 
-def test_builder_add_field_callable(builder):
+def test_builder_add_field_callable(builder: InitializerBuilder) -> None:
     """add_field with callable value passes the callable through."""
     builder.add_field("p", depends_on=["mesh"], value=lambda _ctx: "computed")
     assert execute_step(builder.build()[0], {}) == "computed"
 
 
-def test_builder_add_model_callable(builder):
+def test_builder_add_model_callable(builder: InitializerBuilder) -> None:
     """add_model with callable value passes the callable through."""
     builder.add_model("turb", value=lambda _ctx: "turb_inst")
     assert execute_step(builder.build()[0], {}) == "turb_inst"
 
 
-def test_builder_chaining(builder):
+def test_builder_chaining(builder: InitializerBuilder) -> None:
     """All builder methods return self for chaining."""
     result = (
         builder.add_resource("mesh", "m")
         .add_field("U", depends_on=["mesh"], value=1)
         .add_model("algo", value=2)
+        .add_operator("mom", depends_on=[], value=3)
     )
     assert result is builder
-    assert len(builder.build()) == 3
+    assert len(builder.build()) == 4
 
 
-def test_builder_add_core_models(builder, mock_core_model):
+def test_builder_add_core_models(
+    builder: InitializerBuilder, mock_core_model: Any
+) -> None:
     """add_core_models adds model + InitSteps from run_build() unchanged."""
     builder.add_core_models([("algorithm", mock_core_model)])
     inits = builder.build()
@@ -112,11 +126,11 @@ def test_builder_add_core_models(builder, mock_core_model):
     assert any(li.name == "test_op" and li.category == "operators" for li in inits)
 
 
-def test_builder_add_core_models_without_name(builder):
+def test_builder_add_core_models_without_name(builder: InitializerBuilder) -> None:
     """add_core_models uses lowercase class name when no tuple name given."""
 
     class AlgorithmModel:
-        def run_build(self):
+        def run_build(self) -> list[InitStep]:
             return []
 
     builder.add_core_models([AlgorithmModel()])
@@ -124,7 +138,9 @@ def test_builder_add_core_models_without_name(builder):
     assert inits[0].name == "models.algorithmmodel"
 
 
-def test_builder_add_optional_models(builder, mock_optional_model):
+def test_builder_add_optional_models(
+    builder: InitializerBuilder, mock_optional_model: Any
+) -> None:
     """add_optional_models adds run_build() InitSteps unchanged."""
     builder.add_optional_models([mock_optional_model])
     inits = builder.build()
@@ -132,7 +148,7 @@ def test_builder_add_optional_models(builder, mock_optional_model):
     assert any(li.name == "optional_field" and li.category == "fields" for li in inits)
 
 
-def test_builder_add_and_extend(builder):
+def test_builder_add_and_extend(builder: InitializerBuilder) -> None:
     """add() and extend() store InitStep objects directly."""
     a = InitStep("a", initializer=lambda _ctx: 1)
     b = InitStep("b", initializer=lambda _ctx: 2)
@@ -145,7 +161,7 @@ def test_builder_add_and_extend(builder):
     assert inits[0] is a
 
 
-def test_builder_add_preserves_explicit_category(builder):
+def test_builder_add_preserves_explicit_category(builder: InitializerBuilder) -> None:
     """Builder.add stores explicit category as provided by InitStep."""
     li = InitStep("custom", initializer=lambda _ctx: 1, category="resource")
     builder.add(li)

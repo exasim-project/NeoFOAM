@@ -26,10 +26,10 @@ def test_load_result_all_models_empty():
     assert lr.all_models == []
 
 
-def test_load_result_validate_raises():
+def test_load_result_validate_empty_returns_no_errors():
+    """With no configs, validate() runs the IO validator and returns an empty list."""
     lr = LoadResult(core_models=[], optional_models=[])
-    with pytest.raises(NotImplementedError):
-        lr.validate()
+    assert lr.validate() == []
 
 
 def test_load_result_configs_empty():

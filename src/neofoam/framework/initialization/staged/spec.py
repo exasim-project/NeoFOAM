@@ -51,10 +51,11 @@ class LoadResult:
                 configs.extend(model.configs)
         return configs
 
-    def validate(self) -> list[_ValidationError]:
-        raise NotImplementedError(
-            "validate() requires IO layer - not implemented in tests"
-        )
+    def validate(self) -> list[Any]:
+        """Validate all model configs and return a list of errors."""
+        from neofoam.io import validate_models
+
+        return validate_models(self.configs)
 
 
 LoadFn = Callable[[], LoadResult]

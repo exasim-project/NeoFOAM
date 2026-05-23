@@ -13,6 +13,13 @@ class PluginRegistry:
     plugin_registry: list[Type[BaseModel]] = field(default_factory=list)
     plugin_model: Union[Type[BaseModel], None] = None
 
+    def get_plugin_names(self) -> list[str]:
+        names: list[str] = []
+        for plugin_cls in self.plugin_registry:
+            model_type = getattr(plugin_cls, "model_type", None)
+            names.append(model_type or plugin_cls.__name__)
+        return names
+
 
 class PluginSystem:
     """

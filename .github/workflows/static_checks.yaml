@@ -144,15 +144,17 @@ jobs:
         openfoam-version: 2506
 
 
-    - name: Install uv
-      uses: astral-sh/setup-uv@v7
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
       with:
         python-version: 3.12
+
     - name: Install Python dependencies
       run: |
-        uv sync --all-extras
+        pip install .[all] -v
+
     - name: Run pre-commit on all files
-      run: uv run pre-commit run --all --color always --verbose
+      run: pre-commit run --all --color always --verbose
     - name: check for todo fixme note
       run: |
         NTODOS="$(grep -r 'TODO DONT MERGE' --exclude-dir=.github | wc -l)"

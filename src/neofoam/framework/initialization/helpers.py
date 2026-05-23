@@ -77,15 +77,15 @@ def operator(
     Automatically prefixes name with "operators." and sets category.
 
     Args:
-        name: Operator name (e.g., "div", "grad", "laplacian")
+        name: Operator name (e.g., "momentum", "pressure_poisson")
         create: Function that creates the operator
-        depends_on: List of dependencies (default: [])
+        depends_on: List of dependencies
 
     Returns:
         InitStep for the operator
 
     Example:
-        operator("div", create=lambda ctx: Divergence(ctx["mesh"]), depends_on=["mesh"])
+        operator("momentum", depends_on=["fields.U", "fields.p"], create=lambda ctx: ...)
     """
     return _make_lazy("operators", "operators", name, create, depends_on)
 
@@ -180,9 +180,11 @@ class InitializerBuilder:
             )
         return self
 
+    # ---- public API ----
+
     def add_resource(self, name: str, value: Any) -> "InitializerBuilder":
         """
-        Add a resource (mesh, domain, runtime, config, etc.).
+        Add a top-level resource (mesh, domain, config, etc.).
 
         Args:
             name: Resource name
@@ -260,6 +262,25 @@ class InitializerBuilder:
             Self for chaining
         """
         return self._add_typed(field, name, value, depends_on)
+
+    def add_operator(
+        self,
+        name: str,
+        depends_on: List[str],
+        value: Union[Any, Callable[[dict[str, Any]], Any]],
+    ) -> "InitializerBuilder":
+        """
+        Add an operator with 'operators.' prefix.
+
+        Args:
+            name: Operator name (without 'operators.' prefix)
+            depends_on: List of dependency names
+            value: Operator instance or callable to create it
+
+        Returns:
+            Self for chaining
+        """
+        return self._add_typed(operator, name, value, depends_on)
 
     def add(self, initializer: InitStep) -> "InitializerBuilder":
         """

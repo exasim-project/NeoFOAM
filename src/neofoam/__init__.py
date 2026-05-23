@@ -4,4 +4,7 @@
 # neofoam package
 __version__ = "0.0.1"
 
-from . import neofoam_bindings as neofoam_bindings  # type: ignore[attr-defined]
+try:
+    from . import neofoam_bindings as neofoam_bindings  # type: ignore[attr-defined,unused-ignore]
+except ImportError:
+    neofoam_bindings = None  # type: ignore[assignment,unused-ignore]

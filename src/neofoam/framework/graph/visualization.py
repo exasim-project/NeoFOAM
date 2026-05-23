@@ -72,11 +72,11 @@ def _compute_nodes_order(nodes: list[OperationMetadata]) -> list[str]:
 
 def _compute_steps_order(op_col: OperationCollection) -> Operations:
     """Order ``op_col``'s operations to match :func:`_compute_nodes_order`."""
-    nodes = [op.operation_metadata() for op in op_col.ops]
+    nodes = [op.metadata for op in op_col.ops]
     sorted_names = _compute_nodes_order(nodes)
 
     sorted_ops = Operations()
-    name_to_op = {op.name: op for op in op_col.ops}
+    name_to_op = {op.operation_name: op for op in op_col.ops}
     for node_name in sorted_names:
         sorted_ops.add(name_to_op[node_name])
     return sorted_ops

@@ -9,6 +9,7 @@
 - added neoicofoam [243](https://github.com/exasim-project/NeoFOAM/pull/243)
 - Allow auto grabbing version from submodule without initialization and update the documentation [#210](https://github.com/exasim-project/NeoFOAM/pull/210)
 - Refactor graph and init package  [#284](https://github.com/exasim-project/NeoFOAM/pull/284)
+- Replace Model/Solver/Simulation with Spec/Runtime architecture [#285](https://github.com/exasim-project/NeoFOAM/pull/285)
 
 ## Fixes
 - Fix spurious bad_any_cast errors when reading fixedValue boundaries [#194](https://github.com/exasim-project/NeoFOAM/pull/194)

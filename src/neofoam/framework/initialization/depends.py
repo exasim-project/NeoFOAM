@@ -13,7 +13,9 @@ class Depends:
     Supported usage includes initializer injection, e.g.:
 
         @solver.initializer
-        def initialize(init: Annotated[StagedInit, Depends(create_init)]) -> Context:
+        def initialize(
+            init: Annotated[StagedInitRunner, Depends(create_init)],
+        ) -> Context:
             return init.run()
     """
 
