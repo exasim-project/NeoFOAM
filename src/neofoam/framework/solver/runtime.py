@@ -42,6 +42,7 @@ class SolverRuntime:
     name: str
     argv: list[Any] = field(default_factory=list)
     state: SolverState = field(default_factory=SolverState)
+    config: Any = None
     _config_instance: Any = field(default=None, repr=False)
 
     # ------------------------------------------------------------------

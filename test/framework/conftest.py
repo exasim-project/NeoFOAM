@@ -2,9 +2,11 @@
 #
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
 
-"""Shared test helpers for framework tests."""
+"""Shared test helpers and BaseConfig stubs for framework tests."""
 
 from typing import Any
+
+from neofoam.io import BaseConfig
 
 
 class MaxIterations:
@@ -19,3 +21,24 @@ class MaxIterations:
         if self.current_iter <= self.max_iters:
             return True
         return False
+
+
+# ---------------------------------------------------------------------------
+# Shared BaseConfig stubs
+# ---------------------------------------------------------------------------
+
+
+class MyConfig(BaseConfig):
+    x: int = 1
+
+
+class OtherConfig(BaseConfig):
+    y: int = 2
+
+
+class StepConfig(BaseConfig):
+    factor: float = 0.01
+
+
+class StubConfig(BaseConfig):
+    factor: float = 2.0
