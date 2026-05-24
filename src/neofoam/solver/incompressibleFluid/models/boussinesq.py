@@ -66,6 +66,12 @@ def _read_boussinesq_config() -> BoussinesqConfig:
 
 boussinesq = Model("boussinesq").register_with(incompressibleFluidModel)
 
+# Declare the configs this model owns. ``BoussinesqConfig`` is loaded via
+# ``@boussinesq.load`` below; registering it here only makes it part of the
+# declared schema set (``collect_config_classes``) — the ``@load`` path
+# still drives instantiation, so this does not change loading behaviour.
+boussinesq.config(BoussinesqConfig)
+
 # Per-spec fvSchemes / fvSolution slices for the energy equation.
 BoussinesqFvSchemes = boussinesq.config(fvSchemes)
 BoussinesqFvSolution = boussinesq.config(fvSolution)

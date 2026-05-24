@@ -51,6 +51,23 @@ class LoadResult:
                 configs.extend(model.configs)
         return configs
 
+    @property
+    def config_classes(self) -> list[type]:
+        """Declared config schema set across all models.
+
+        Returns the distinct ``BaseConfig`` subclasses every model
+        declares — both classes registered via ``spec.config(...)`` (even
+        when their instances are never loaded, e.g. a model whose
+        ``@load`` short-circuits ``instantiate``) and the classes of any
+        loaded config instances. Deduped by identity, order-preserved.
+
+        This is the with-a-case view (after LOAD); for the case-free schema
+        of a whole solver see ``collect_config_classes``.
+        """
+        from neofoam.io import collect_config_classes
+
+        return collect_config_classes(self.all_models)
+
     def validate(self) -> list[Any]:
         """Validate all model configs and return a list of errors."""
         from neofoam.io import validate_models

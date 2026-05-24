@@ -10,6 +10,7 @@ in this port; SIMPLE / PISO / boussinesq / SA variants from the source
 branch are intentionally omitted.
 """
 
+from .config_schema import config_classes
 from .incompressibleFluid import incompressibleFluid, run
 
-__all__ = ["incompressibleFluid", "run"]
+__all__ = ["incompressibleFluid", "run", "config_classes"]
