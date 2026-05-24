@@ -22,8 +22,15 @@ from neofoam.framework.operations import (
 from neofoam.framework.solver import Solver
 from neofoam.framework.types import OperationMetadata
 
-# Import create_init from dummy_init
-from .dummy_init import create_init
+# Import create_init + the solver-core config classes from dummy_init
+from .dummy_init import (
+    CoreModel2,
+    DummyAlgorithm,
+    MeshConfig,
+    SolverConfig,
+    create_init,
+)
+from .models.dummy_model import DummyModelInterface
 
 
 class AlgorithmLoop:
@@ -48,6 +55,16 @@ class AlgorithmLoop:
 
 # Create SolverSpec (immutable definition)
 dummy_solver_spec = Solver("DummySolver")
+
+# Declare the full config schema on the spec, case-free. This solver has no
+# core model *family* (no select-one dispatcher) — its core configs are
+# declared directly — and binds the optional ``DummyModelInterface`` family,
+# whose registered members (model1-4) contribute their configs to the schema.
+dummy_solver_spec.config(SolverConfig)
+dummy_solver_spec.config(MeshConfig)
+dummy_solver_spec.config(CoreModel2)
+dummy_solver_spec.config(DummyAlgorithm)
+dummy_solver_spec.optional_models(DummyModelInterface)
 
 
 @dummy_solver_spec.initializer

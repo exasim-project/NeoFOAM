@@ -8,17 +8,21 @@ consumes. This page shows how to *collect* those configs from the
 solver, *print* them, and *save* them back to disk as a fresh case
 directory.
 
-Two handles drive this:
+Three handles drive this:
 
+- ``neofoam.configurations(solver)`` — the **case-free** schema view: every
+  config class the solver may consume, derived from what the solver declares
+  on its spec at import. No case directory needed.
 - ``LoadResult.configs`` — the loaded config **instances** (values read
-  from the case).
-- ``LoadResult.config_classes`` — the declared config **classes** (the
-  schema set), including classes a model registers but never loads.
+  from a specific case).
+- ``LoadResult.config_classes`` — the declared config **classes** for that
+  load, including classes a model registers but never loads.
 
-Saving the instances with ``neofoam.io.save_configs`` reconstructs the
-case files on disk. Filling fresh instances from the *classes* and saving
-them is how a case can be created from configs alone — e.g. by an agent
-that knows the schema but starts from an empty directory.
+Saving the instances with ``neofoam.io.save_configs`` (or the view's
+``.save(...)``) reconstructs the case files on disk. Filling fresh instances
+from the schema and saving them is how a case can be created from configs
+alone — e.g. by an agent that knows the schema but starts from an empty
+directory.
 
 Unlike the other config how-tos, this one reads real OpenFOAM dictionaries
 from the bundled cases, so it needs ``pybFoam`` (like the tutorials).
@@ -40,13 +44,10 @@ import shutil
 import tempfile
 from pathlib import Path
 
+from neofoam import configurations
 from neofoam.framework.initialization import ConfigContext
 from neofoam.io import save_configs
-from neofoam.solver.incompressibleFluid import config_classes
-from neofoam.solver.incompressibleFluid.configs import (
-    ControlDictConfig,
-    TransportPropertiesConfig,
-)
+from neofoam.solver.incompressibleFluid import incompressibleFluid
 from neofoam.solver.incompressibleFluid.create_fields import create_init
 from neofoam.tutorial import clone_case
 
@@ -56,14 +57,28 @@ _ORIGINAL_CWD = Path.cwd()
 # %%
 # The full schema — without a case
 # --------------------------------
-# Before touching any case, ``config_classes()`` lists every config class
-# the solver may consume: solver-core configs, the PIMPLE ``fvSchemes`` /
-# ``fvSolution`` slices, and the configs of every registered optional model
-# (here, boussinesq). This is the schema an agent fills — then saves with
-# ``save_configs`` — to build a case from scratch.
+# Before touching any case, ``configurations(incompressibleFluid)`` returns a
+# case-free view of every config class the solver may consume: solver-core
+# configs, the PIMPLE ``fvSchemes`` / ``fvSolution`` slices, and the configs
+# of every registered optional model (here, boussinesq). This is the schema
+# an agent fills — then saves — to build a case from scratch. The same call
+# works for any solver, because the classes are declared on its spec.
 
-for cls in config_classes():
+schema = configurations(incompressibleFluid)
+
+print("config classes:", schema.names)
+for cls in schema:
     print(f"{cls.__name__:28s} fields: {sorted(cls.model_fields)}")
+
+# %%
+# Look a class up, and read its JSON Schema
+# -----------------------------------------
+# The view is subscriptable by class name, and ``json_schema()`` returns the
+# JSON Schema of every class — the form most agent / UI tooling consumes.
+
+control_dict = schema["ControlDictConfig"]
+print("ControlDictConfig fields:", sorted(control_dict.model_fields))
+print("JSON schema keys        :", list(schema.json_schema()))
 
 
 def load_and_resolve(case: Path):
@@ -172,17 +187,23 @@ for cfg in hot_result.configs:
 # %%
 # Scaffold a case from configs alone
 # ----------------------------------
-# The reverse direction: construct configs from values — no source case —
-# and save them. An empty directory becomes a valid (partial) case. This is
-# the building block for generating a case programmatically.
+# The reverse direction: build configs from values — no source case — via
+# the schema view's ``new()`` (which pydantic-validates), then write them
+# with ``save()``. An empty directory becomes a valid (partial) case. This
+# is the building block for generating a case programmatically — an agent
+# fills ``schema`` and saves it.
 
 scaffold = Path(tempfile.mkdtemp(prefix="neofoam_scaffold_"))
-save_configs(
+schema.save(
     [
-        ControlDictConfig(
-            application="pimpleFoam", endTime=10.0, deltaT=0.01, writeInterval=1.0
+        schema.new(
+            "ControlDictConfig",
+            application="pimpleFoam",
+            endTime=10.0,
+            deltaT=0.01,
+            writeInterval=1.0,
         ),
-        TransportPropertiesConfig(transportModel="Newtonian", nu=1e-5),
+        schema.new("TransportPropertiesConfig", transportModel="Newtonian", nu=1e-5),
     ],
     case_dir=scaffold,
 )
@@ -193,7 +214,7 @@ for path in sorted(scaffold.rglob("*")):
         print("  ", path.relative_to(scaffold))
 
 # Reload to prove the written files are valid.
-reloaded = ControlDictConfig.load(case_dir=scaffold)
+reloaded = schema["ControlDictConfig"].load(case_dir=scaffold)
 print("reloaded controlDict.endTime:", reloaded.endTime)
 
 

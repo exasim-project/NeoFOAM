@@ -14,23 +14,18 @@ agent). The loaded *instances* for a concrete case come from
 
 from __future__ import annotations
 
-from neofoam.io import collect_config_classes
-
 
 def config_classes() -> list[type]:
     """All config classes the incompressibleFluid solver may consume.
 
-    Static — needs no case directory. Optional-model classes are listed for
-    every registered model (detection, which needs a case, is not run).
+    Static — needs no case directory. Thin wrapper over the framework's
+    solver-agnostic :func:`neofoam.configurations`: the schema is derived
+    from the configs and model families declared on the ``incompressibleFluid``
+    spec at import. Optional-model classes are listed for every registered
+    model (detection, which needs a case, is not run).
     """
-    from .configs import ControlDictConfig, TransportPropertiesConfig
-    from .models.incompressibleFluidModel import incompressibleFluidModel
-    from .models.pressure_velocity.pimpleAlgorithm import pimple
+    from neofoam.framework.solver import configurations
 
-    sources: list[object] = [
-        ControlDictConfig,
-        TransportPropertiesConfig,
-        pimple,
-        *incompressibleFluidModel.all_specs(),
-    ]
-    return collect_config_classes(sources)
+    from .incompressibleFluid import incompressibleFluid
+
+    return list(configurations(incompressibleFluid))

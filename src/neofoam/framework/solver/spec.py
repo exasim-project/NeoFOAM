@@ -45,6 +45,8 @@ class SolverSpec:
     def __init__(self, name: str) -> None:
         self.name = name
         self._config_classes: list[type] = []
+        self._core_model_specs: list[Any] = []
+        self._optional_model_specs: list[Any] = []
         self._operations: list[tuple[Any, dict[str, Any]]] = []
         self._initialize_func: Optional[Callable[..., Context]] = None
         self._execution_graph_func: Optional[Callable[..., tuple[Any, Any]]] = None
@@ -88,6 +90,59 @@ class SolverSpec:
             return cls
         self._config_classes.append(cls)
         return cls
+
+    # ------------------------------------------------------------------
+    # Model-family registration
+    # ------------------------------------------------------------------
+
+    def core_models(self, family: Any) -> Any:
+        """Bind a *required* model family (exactly one member runs per case).
+
+        ``family`` must expose ``all_specs()`` (member specs, case-free) and
+        ``detect_and_create()`` (select the single member for a concrete
+        case). Example: the pressure-velocity family (PIMPLE / SIMPLE /
+        PISO). Every member's configs join the case-free schema; detection
+        picks which one runs.
+        """
+        if family not in self._core_model_specs:
+            self._core_model_specs.append(family)
+        return family
+
+    def optional_models(self, family: Any) -> Any:
+        """Bind an *optional* model family (zero or more members per case).
+
+        ``family`` must expose ``all_specs()`` (member specs, case-free) and
+        ``detect_models(case_dir)`` (the active members for a concrete case).
+        Example: the ``incompressibleFluidModel`` family (boussinesq, …).
+        Every member's configs join the case-free schema; detection picks
+        which (if any) are active.
+        """
+        if family not in self._optional_model_specs:
+            self._optional_model_specs.append(family)
+        return family
+
+    @property
+    def model_specs(self) -> list[Any]:
+        """Every member of every bound family, case-free (no detection).
+
+        The union that — together with the solver's own ``_config_classes``
+        — defines the full config schema returned by :func:`configurations`.
+        """
+        specs: list[Any] = []
+        for family in (*self._core_model_specs, *self._optional_model_specs):
+            specs.extend(family.all_specs())
+        return specs
+
+    def detect_core_models(self, case_dir: Optional[Any] = None) -> list[Any]:
+        """Select the single active member of each bound core family."""
+        return [family.detect_and_create() for family in self._core_model_specs]
+
+    def detect_optional_models(self, case_dir: Optional[Any] = None) -> list[Any]:
+        """Collect the active members of each bound optional family."""
+        active: list[Any] = []
+        for family in self._optional_model_specs:
+            active.extend(family.detect_models(case_dir))
+        return active
 
     def _aggregate_configs(self, instances: list[Any]) -> Any:
         """Build ``runtime.config`` from loaded instances."""
