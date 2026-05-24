@@ -61,6 +61,7 @@ from typing import Annotated, Any, Optional
 
 from pydantic import Field
 
+from neofoam import configurations
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.graph import DAGResolver
 from neofoam.framework.initialization import (
@@ -309,6 +310,34 @@ print(f"validation errors: {len(_errors)}")
 
 
 # %%
+# Get the whole schema, case-free
+# -------------------------------
+# The section above needed a case on disk (``run_load()``). To surface
+# *what a solver declares* before any case exists — to scaffold a fresh
+# case, or hand the schema to a GUI or an agent — ask the framework
+# directly. ``configurations(spec)`` walks the spec's ``.config(...)``
+# declarations (plus the members of any model family it binds) and returns
+# a case-free view over the pydantic config classes.
+
+schema = configurations(sqrt_solver_spec)
+print("declared config classes:", schema.names)  # ['SqrtSolverConfig']
+
+# Build + validate an instance from values alone — no file required:
+controls = schema.new("SqrtSolverConfig", max_iterations=20, tolerance=1e-10)
+print("built from values:", controls.model_dump())
+
+# ``schema.json_schema()`` and ``schema.as_output_model()`` expose the same
+# set as JSON Schema or one aggregate pydantic model — the forms a GUI or a
+# Pydantic-AI agent consumes.
+#
+# Only ``SqrtSolverConfig`` appears: it is what *this solver spec* declares.
+# ``BabylonianConfig`` lives on the ``babylonian`` *model* spec; a solver
+# surfaces a model's configs in its own schema when it binds that model as a
+# *family* (``spec.core_models(...)`` / ``spec.optional_models(...)``) — see
+# :doc:`example_collect_and_save_configs`.
+
+
+# %%
 # Run it
 # ------
 # Instantiate the spec, call ``.initialize()`` (which executes the
@@ -339,6 +368,9 @@ assert abs(ctx.fields["x"] - math.sqrt(target)) < 1e-6
 #   ``@<Sub>.add(...)`` decorators on each operation.
 # - :doc:`example_work_with_config_files` — declare, load, validate,
 #   and subdict-isolate ``BaseConfig`` classes on their own.
+# - :doc:`example_collect_and_save_configs` — ``configurations(solver)``
+#   in full: collect a solver's whole schema (including model families),
+#   then save instances to scaffold a case.
 # - :doc:`example_register_a_model` — the model side in isolation,
 #   including ``@spec.resolve`` and ``@spec.detect``.
 # - :doc:`example_use_depends_for_injection` — pull values from

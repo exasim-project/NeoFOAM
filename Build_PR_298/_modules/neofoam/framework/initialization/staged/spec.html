@@ -212,6 +212,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../../auto_how-to/example_work_with_config_files.html">Work with configuration files</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../auto_how-to/example_custom_solver_with_configs.html">Add config files to a solver and model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../auto_how-to/example_per_model_fvschemes.html">Declare per-model fvSchemes / fvSolution slices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../auto_how-to/example_collect_and_save_configs.html">Collect and save all of a solver’s configs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../auto_how-to/example_visualize_the_operation_dag.html">Visualize the operation DAG</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../auto_how-to/example_use_depends_for_injection.html">Inject dependencies into operations</a></li>
 </ul>
@@ -369,6 +370,23 @@
             <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;configs&quot;</span><span class="p">):</span>
                 <span class="n">configs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">configs</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">configs</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">config_classes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">type</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Declared config schema set across all models.</span>
+
+<span class="sd">        Returns the distinct ``BaseConfig`` subclasses every model</span>
+<span class="sd">        declares — both classes registered via ``spec.config(...)`` (even</span>
+<span class="sd">        when their instances are never loaded, e.g. a model whose</span>
+<span class="sd">        ``@load`` short-circuits ``instantiate``) and the classes of any</span>
+<span class="sd">        loaded config instances. Deduped by identity, order-preserved.</span>
+
+<span class="sd">        This is the with-a-case view (after LOAD); for the case-free schema</span>
+<span class="sd">        of a whole solver see ``collect_config_classes``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">collect_config_classes</span>
+
+        <span class="k">return</span> <span class="n">collect_config_classes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">all_models</span><span class="p">)</span>
 
 <div class="viewcode-block" id="LoadResult.validate">
 <a class="viewcode-back" href="../../../../../reference/initialization/staged/spec.html#neofoam.framework.initialization.staged.spec.LoadResult.validate">[docs]</a>

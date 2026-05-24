@@ -71,7 +71,7 @@ The loader resolves that filename against the ``case_dir`` you pass
 in. Here we copy the two YAML fixtures shipped alongside this page
 into a throwaway directory and use it as the case.
 
-.. GENERATED FROM PYTHON SOURCE LINES 54-97
+.. GENERATED FROM PYTHON SOURCE LINES 54-98
 
 .. code-block:: Python
 
@@ -85,6 +85,7 @@ into a throwaway directory and use it as the case.
 
     from pydantic import Field
 
+    from neofoam import configurations
     from neofoam.framework.context import Context, FieldUpdates
     from neofoam.framework.graph import DAGResolver
     from neofoam.framework.initialization import (
@@ -126,12 +127,12 @@ into a throwaway directory and use it as the case.
 
  .. code-block:: none
 
-    case_dir = /tmp/neofoam_sqrt_nyop6v98
+    case_dir = /tmp/neofoam_sqrt_qgizb8iz
 
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 98-107
+.. GENERATED FROM PYTHON SOURCE LINES 99-108
 
 Declare the model's config
 --------------------------
@@ -143,7 +144,7 @@ binds the class to a file inside ``case_dir``; the Pydantic
 .. literalinclude:: ../../examples/how-to/babylonian_config.yaml
    :language: yaml
 
-.. GENERATED FROM PYTHON SOURCE LINES 107-115
+.. GENERATED FROM PYTHON SOURCE LINES 108-116
 
 .. code-block:: Python
 
@@ -162,7 +163,7 @@ binds the class to a file inside ``case_dir``; the Pydantic
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 116-124
+.. GENERATED FROM PYTHON SOURCE LINES 117-125
 
 Declare the solver's config
 ---------------------------
@@ -173,7 +174,7 @@ each layer responsible for its own knobs.
 .. literalinclude:: ../../examples/how-to/sqrt_solver_config.yaml
    :language: yaml
 
-.. GENERATED FROM PYTHON SOURCE LINES 124-132
+.. GENERATED FROM PYTHON SOURCE LINES 125-133
 
 .. code-block:: Python
 
@@ -192,7 +193,7 @@ each layer responsible for its own knobs.
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 133-151
+.. GENERATED FROM PYTHON SOURCE LINES 134-152
 
 Define the model: register, build, operation
 --------------------------------------------
@@ -213,7 +214,7 @@ Declared at module scope, the ``Model`` earns three calls:
   looked up in ``ctx.fields`` by *name*; ``cfg: BabylonianConfig``
   is auto-injected from ``runtime.config`` by *type* (shape 5).
 
-.. GENERATED FROM PYTHON SOURCE LINES 151-174
+.. GENERATED FROM PYTHON SOURCE LINES 152-175
 
 .. code-block:: Python
 
@@ -247,7 +248,7 @@ Declared at module scope, the ``Model`` earns three calls:
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 175-195
+.. GENERATED FROM PYTHON SOURCE LINES 176-196
 
 Wire the solver via StagedInitSpec
 ----------------------------------
@@ -270,7 +271,7 @@ Here we ask for ``optional_models`` (the non-config-class entries
 from LOAD); ``core_models`` and ``models`` are the other accepted
 names.
 
-.. GENERATED FROM PYTHON SOURCE LINES 195-217
+.. GENERATED FROM PYTHON SOURCE LINES 196-218
 
 .. code-block:: Python
 
@@ -303,7 +304,7 @@ names.
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 218-241
+.. GENERATED FROM PYTHON SOURCE LINES 219-242
 
 Define the solver: register its config + execution graph
 --------------------------------------------------------
@@ -329,7 +330,7 @@ check is constructed inside ``_execution_graph`` with the loaded
 config and target value baked in as a closure; its ``__call__(ctx)``
 only ever reads ``ctx.fields`` — no ``ctx.models`` access required.
 
-.. GENERATED FROM PYTHON SOURCE LINES 241-291
+.. GENERATED FROM PYTHON SOURCE LINES 242-292
 
 .. code-block:: Python
 
@@ -390,7 +391,7 @@ only ever reads ``ctx.fields`` — no ``ctx.models`` access required.
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 292-299
+.. GENERATED FROM PYTHON SOURCE LINES 293-300
 
 Validate every loaded config without running the solver
 -------------------------------------------------------
@@ -400,7 +401,7 @@ BUILD ever runs. ``runner.run_load()`` executes the LOAD stage in
 isolation; ``.configs`` returns a flat list and ``.validate()``
 runs ``neofoam.io.validate_models`` over it.
 
-.. GENERATED FROM PYTHON SOURCE LINES 299-311
+.. GENERATED FROM PYTHON SOURCE LINES 300-312
 
 .. code-block:: Python
 
@@ -432,7 +433,55 @@ runs ``neofoam.io.validate_models`` over it.
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 312-318
+.. GENERATED FROM PYTHON SOURCE LINES 313-321
+
+Get the whole schema, case-free
+-------------------------------
+The section above needed a case on disk (``run_load()``). To surface
+*what a solver declares* before any case exists — to scaffold a fresh
+case, or hand the schema to a GUI or an agent — ask the framework
+directly. ``configurations(spec)`` walks the spec's ``.config(...)``
+declarations (plus the members of any model family it binds) and returns
+a case-free view over the pydantic config classes.
+
+.. GENERATED FROM PYTHON SOURCE LINES 321-340
+
+.. code-block:: Python
+
+
+    schema = configurations(sqrt_solver_spec)
+    print("declared config classes:", schema.names)  # ['SqrtSolverConfig']
+
+    # Build + validate an instance from values alone — no file required:
+    controls = schema.new("SqrtSolverConfig", max_iterations=20, tolerance=1e-10)
+    print("built from values:", controls.model_dump())
+
+    # ``schema.json_schema()`` and ``schema.as_output_model()`` expose the same
+    # set as JSON Schema or one aggregate pydantic model — the forms a GUI or a
+    # Pydantic-AI agent consumes.
+    #
+    # Only ``SqrtSolverConfig`` appears: it is what *this solver spec* declares.
+    # ``BabylonianConfig`` lives on the ``babylonian`` *model* spec; a solver
+    # surfaces a model's configs in its own schema when it binds that model as a
+    # *family* (``spec.core_models(...)`` / ``spec.optional_models(...)``) — see
+    # :doc:`example_collect_and_save_configs`.
+
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ .. code-block:: none
+
+    declared config classes: ['SqrtSolverConfig']
+    built from values: {'max_iterations': 20, 'tolerance': 1e-10}
+
+
+
+
+.. GENERATED FROM PYTHON SOURCE LINES 341-347
 
 Run it
 ------
@@ -441,7 +490,7 @@ three-stage init), build the execution graph, resolve it into a
 flat operation list, and run. After the loop exits,
 ``ctx.fields["x"]`` carries the converged answer.
 
-.. GENERATED FROM PYTHON SOURCE LINES 318-333
+.. GENERATED FROM PYTHON SOURCE LINES 347-362
 
 .. code-block:: Python
 
@@ -476,7 +525,7 @@ flat operation list, and run. After the loop exits,
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 334-348
+.. GENERATED FROM PYTHON SOURCE LINES 363-380
 
 See also
 --------
@@ -486,6 +535,9 @@ See also
   ``@<Sub>.add(...)`` decorators on each operation.
 - :doc:`example_work_with_config_files` — declare, load, validate,
   and subdict-isolate ``BaseConfig`` classes on their own.
+- :doc:`example_collect_and_save_configs` — ``configurations(solver)``
+  in full: collect a solver's whole schema (including model families),
+  then save instances to scaffold a case.
 - :doc:`example_register_a_model` — the model side in isolation,
   including ``@spec.resolve`` and ``@spec.detect``.
 - :doc:`example_use_depends_for_injection` — pull values from
@@ -496,7 +548,7 @@ See also
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 0.007 seconds)
+   **Total running time of the script:** (0 minutes 0.009 seconds)
 
 
 .. _sphx_glr_download_auto_how-to_example_custom_solver_with_configs.py:

@@ -213,6 +213,7 @@
 <li class="toctree-l1"><a class="reference internal" href="example_work_with_config_files.html">Work with configuration files</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Add config files to a solver and model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_per_model_fvschemes.html">Declare per-model fvSchemes / fvSolution slices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_collect_and_save_configs.html">Collect and save all of a solver’s configs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_visualize_the_operation_dag.html">Visualize the operation DAG</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_use_depends_for_injection.html">Inject dependencies into operations</a></li>
 </ul>
@@ -382,6 +383,7 @@ into a throwaway directory and use it as the case.</p>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">Field</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="w"> </span><span class="kn">import</span> <span class="n">configurations</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span><span class="p">,</span> <span class="n">FieldUpdates</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">DAGResolver</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -415,7 +417,7 @@ into a throwaway directory and use it as the case.</p>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;case_dir =&quot;</span><span class="p">,</span> <span class="n">CASE_DIR</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>case_dir = /tmp/neofoam_sqrt_nyop6v98
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>case_dir = /tmp/neofoam_sqrt_qgizb8iz
 </pre></div>
 </div>
 </section>
@@ -630,6 +632,37 @@ validation errors: 0
 </pre></div>
 </div>
 </section>
+<section id="get-the-whole-schema-case-free">
+<h2>Get the whole schema, case-free<a class="headerlink" href="#get-the-whole-schema-case-free" title="Link to this heading">¶</a></h2>
+<p>The section above needed a case on disk (<code class="docutils literal notranslate"><span class="pre">run_load()</span></code>). To surface
+<em>what a solver declares</em> before any case exists — to scaffold a fresh
+case, or hand the schema to a GUI or an agent — ask the framework
+directly. <code class="docutils literal notranslate"><span class="pre">configurations(spec)</span></code> walks the spec’s <code class="docutils literal notranslate"><span class="pre">.config(...)</span></code>
+declarations (plus the members of any model family it binds) and returns
+a case-free view over the pydantic config classes.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">schema</span> <span class="o">=</span> <span class="n">configurations</span><span class="p">(</span><span class="n">sqrt_solver_spec</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;declared config classes:&quot;</span><span class="p">,</span> <span class="n">schema</span><span class="o">.</span><span class="n">names</span><span class="p">)</span>  <span class="c1"># [&#39;SqrtSolverConfig&#39;]</span>
+
+<span class="c1"># Build + validate an instance from values alone — no file required:</span>
+<span class="n">controls</span> <span class="o">=</span> <span class="n">schema</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;SqrtSolverConfig&quot;</span><span class="p">,</span> <span class="n">max_iterations</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">tolerance</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;built from values:&quot;</span><span class="p">,</span> <span class="n">controls</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span>
+
+<span class="c1"># ``schema.json_schema()`` and ``schema.as_output_model()`` expose the same</span>
+<span class="c1"># set as JSON Schema or one aggregate pydantic model — the forms a GUI or a</span>
+<span class="c1"># Pydantic-AI agent consumes.</span>
+<span class="c1">#</span>
+<span class="c1"># Only ``SqrtSolverConfig`` appears: it is what *this solver spec* declares.</span>
+<span class="c1"># ``BabylonianConfig`` lives on the ``babylonian`` *model* spec; a solver</span>
+<span class="c1"># surfaces a model&#39;s configs in its own schema when it binds that model as a</span>
+<span class="c1"># *family* (``spec.core_models(...)`` / ``spec.optional_models(...)``) — see</span>
+<span class="c1"># :doc:`example_collect_and_save_configs`.</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>declared config classes: [&#39;SqrtSolverConfig&#39;]
+built from values: {&#39;max_iterations&#39;: 20, &#39;tolerance&#39;: 1e-10}
+</pre></div>
+</div>
+</section>
 <section id="run-it">
 <h2>Run it<a class="headerlink" href="#run-it" title="Link to this heading">¶</a></h2>
 <p>Instantiate the spec, call <code class="docutils literal notranslate"><span class="pre">.initialize()</span></code> (which executes the
@@ -665,6 +698,9 @@ math.sqrt       = 1.4142135623730951
 <code class="docutils literal notranslate"><span class="pre">&#64;&lt;Sub&gt;.add(...)</span></code> decorators on each operation.</p></li>
 <li><p><a class="reference internal" href="example_work_with_config_files.html"><span class="doc">Work with configuration files</span></a> — declare, load, validate,
 and subdict-isolate <code class="docutils literal notranslate"><span class="pre">BaseConfig</span></code> classes on their own.</p></li>
+<li><p><a class="reference internal" href="example_collect_and_save_configs.html"><span class="doc">Collect and save all of a solver’s configs</span></a> — <code class="docutils literal notranslate"><span class="pre">configurations(solver)</span></code>
+in full: collect a solver’s whole schema (including model families),
+then save instances to scaffold a case.</p></li>
 <li><p><a class="reference internal" href="example_register_a_model.html"><span class="doc">Register a new model</span></a> — the model side in isolation,
 including <code class="docutils literal notranslate"><span class="pre">&#64;spec.resolve</span></code> and <code class="docutils literal notranslate"><span class="pre">&#64;spec.detect</span></code>.</p></li>
 <li><p><a class="reference internal" href="example_use_depends_for_injection.html"><span class="doc">Inject dependencies into operations</span></a> — pull values from
@@ -672,7 +708,7 @@ including <code class="docutils literal notranslate"><span class="pre">&#64;spec
 <li><p><a class="reference internal" href="../explanation/three-stage-init.html"><span class="doc">Three-stage initialization</span></a> — why LOAD / RESOLVE / BUILD
 are split.</p></li>
 </ul>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.007 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.009 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-how-to-example-custom-solver-with-configs-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/d8285367e9db501f92a1fef0826cf5de/example_custom_solver_with_configs.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">example_custom_solver_with_configs.ipynb</span></code></a></p>
@@ -752,6 +788,7 @@ are split.</p></li>
 <li><a class="reference internal" href="#wire-the-solver-via-stagedinitspec">Wire the solver via StagedInitSpec</a></li>
 <li><a class="reference internal" href="#define-the-solver-register-its-config-execution-graph">Define the solver: register its config + execution graph</a></li>
 <li><a class="reference internal" href="#validate-every-loaded-config-without-running-the-solver">Validate every loaded config without running the solver</a></li>
+<li><a class="reference internal" href="#get-the-whole-schema-case-free">Get the whole schema, case-free</a></li>
 <li><a class="reference internal" href="#run-it">Run it</a></li>
 <li><a class="reference internal" href="#see-also">See also</a></li>
 </ul>

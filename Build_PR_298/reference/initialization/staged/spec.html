@@ -213,6 +213,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../auto_how-to/example_work_with_config_files.html">Work with configuration files</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../auto_how-to/example_custom_solver_with_configs.html">Add config files to a solver and model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../auto_how-to/example_per_model_fvschemes.html">Declare per-model fvSchemes / fvSolution slices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../auto_how-to/example_collect_and_save_configs.html">Collect and save all of a solver’s configs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../auto_how-to/example_visualize_the_operation_dag.html">Visualize the operation DAG</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../auto_how-to/example_use_depends_for_injection.html">Inject dependencies into operations</a></li>
 </ul>
@@ -336,6 +337,19 @@ declare what a solver <em>is</em>.</p>
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.framework.initialization.staged.spec.</span></span><span class="sig-name descname"><span class="pre">LoadResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">core_models</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optional_models</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/neofoam/framework/initialization/staged/spec.html#LoadResult"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.initialization.staged.spec.LoadResult" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Outcome of the LOAD stage: core and optional model objects.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="neofoam.framework.initialization.staged.spec.LoadResult.config_classes">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">config_classes</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">type</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#neofoam.framework.initialization.staged.spec.LoadResult.config_classes" title="Link to this definition">¶</a></dt>
+<dd><p>Declared config schema set across all models.</p>
+<p>Returns the distinct <code class="docutils literal notranslate"><span class="pre">BaseConfig</span></code> subclasses every model
+declares — both classes registered via <code class="docutils literal notranslate"><span class="pre">spec.config(...)</span></code> (even
+when their instances are never loaded, e.g. a model whose
+<code class="docutils literal notranslate"><span class="pre">&#64;load</span></code> short-circuits <code class="docutils literal notranslate"><span class="pre">instantiate</span></code>) and the classes of any
+loaded config instances. Deduped by identity, order-preserved.</p>
+<p>This is the with-a-case view (after LOAD); for the case-free schema
+of a whole solver see <code class="docutils literal notranslate"><span class="pre">collect_config_classes</span></code>.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="neofoam.framework.initialization.staged.spec.LoadResult.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/neofoam/framework/initialization/staged/spec.html#LoadResult.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.initialization.staged.spec.LoadResult.validate" title="Link to this definition">¶</a></dt>
@@ -425,6 +439,7 @@ preserved on the user’s side (the decorator pattern stays familiar).</p>
             <ul>
 <li><a class="reference internal" href="#">neofoam.framework.initialization.staged.spec</a><ul>
 <li><a class="reference internal" href="#neofoam.framework.initialization.staged.spec.LoadResult"><code class="docutils literal notranslate"><span class="pre">LoadResult</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.framework.initialization.staged.spec.LoadResult.config_classes"><code class="docutils literal notranslate"><span class="pre">LoadResult.config_classes</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.initialization.staged.spec.LoadResult.validate"><code class="docutils literal notranslate"><span class="pre">LoadResult.validate()</span></code></a></li>
 </ul>
 </li>

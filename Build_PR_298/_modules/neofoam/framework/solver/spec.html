@@ -212,6 +212,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../auto_how-to/example_work_with_config_files.html">Work with configuration files</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../auto_how-to/example_custom_solver_with_configs.html">Add config files to a solver and model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../auto_how-to/example_per_model_fvschemes.html">Declare per-model fvSchemes / fvSolution slices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../auto_how-to/example_collect_and_save_configs.html">Collect and save all of a solver’s configs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../auto_how-to/example_visualize_the_operation_dag.html">Visualize the operation DAG</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../auto_how-to/example_use_depends_for_injection.html">Inject dependencies into operations</a></li>
 </ul>
@@ -364,6 +365,8 @@
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_config_classes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">type</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_core_model_specs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_optional_model_specs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_operations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_func</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Context</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_execution_graph_func</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -409,6 +412,71 @@
             <span class="k">return</span> <span class="bp">cls</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_config_classes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">cls</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Model-family registration</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="SolverSpec.core_models">
+<a class="viewcode-back" href="../../../../reference/solver/spec.html#neofoam.framework.solver.spec.SolverSpec.core_models">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">core_models</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">family</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Bind a *required* model family (exactly one member runs per case).</span>
+
+<span class="sd">        ``family`` must expose ``all_specs()`` (member specs, case-free) and</span>
+<span class="sd">        ``detect_and_create()`` (select the single member for a concrete</span>
+<span class="sd">        case). Example: the pressure-velocity family (PIMPLE / SIMPLE /</span>
+<span class="sd">        PISO). Every member&#39;s configs join the case-free schema; detection</span>
+<span class="sd">        picks which one runs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">family</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_core_model_specs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_core_model_specs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">family</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">family</span></div>
+
+
+<div class="viewcode-block" id="SolverSpec.optional_models">
+<a class="viewcode-back" href="../../../../reference/solver/spec.html#neofoam.framework.solver.spec.SolverSpec.optional_models">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">optional_models</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">family</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Bind an *optional* model family (zero or more members per case).</span>
+
+<span class="sd">        ``family`` must expose ``all_specs()`` (member specs, case-free) and</span>
+<span class="sd">        ``detect_models(case_dir)`` (the active members for a concrete case).</span>
+<span class="sd">        Example: the ``incompressibleFluidModel`` family (boussinesq, …).</span>
+<span class="sd">        Every member&#39;s configs join the case-free schema; detection picks</span>
+<span class="sd">        which (if any) are active.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">family</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_optional_model_specs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_optional_model_specs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">family</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">family</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">model_specs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Every member of every bound family, case-free (no detection).</span>
+
+<span class="sd">        The union that — together with the solver&#39;s own ``_config_classes``</span>
+<span class="sd">        — defines the full config schema returned by :func:`configurations`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">specs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">family</span> <span class="ow">in</span> <span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_core_model_specs</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_optional_model_specs</span><span class="p">):</span>
+            <span class="n">specs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">family</span><span class="o">.</span><span class="n">all_specs</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">specs</span>
+
+<div class="viewcode-block" id="SolverSpec.detect_core_models">
+<a class="viewcode-back" href="../../../../reference/solver/spec.html#neofoam.framework.solver.spec.SolverSpec.detect_core_models">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">detect_core_models</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Select the single active member of each bound core family.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">family</span><span class="o">.</span><span class="n">detect_and_create</span><span class="p">()</span> <span class="k">for</span> <span class="n">family</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_core_model_specs</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="SolverSpec.detect_optional_models">
+<a class="viewcode-back" href="../../../../reference/solver/spec.html#neofoam.framework.solver.spec.SolverSpec.detect_optional_models">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">detect_optional_models</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Collect the active members of each bound optional family.&quot;&quot;&quot;</span>
+        <span class="n">active</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">family</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_optional_model_specs</span><span class="p">:</span>
+            <span class="n">active</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">family</span><span class="o">.</span><span class="n">detect_models</span><span class="p">(</span><span class="n">case_dir</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">active</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_aggregate_configs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instances</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
