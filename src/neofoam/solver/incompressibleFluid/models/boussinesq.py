@@ -8,9 +8,11 @@ turbulent diffusivity alphat, density factor rhok, geopotential gh/ghf,
 modified pressure p_rgh, plus the energy equation and rhok update ops.
 
 Ported from ``feat/python_solvers`` and adapted to the ModelSpec API:
-build receives the loaded config (no ``self``), and the
-``fvSchemes`` / ``fvSolution`` decorators from ``neofoam.foam`` (not yet
-present in ``stack/python_arch``) are omitted.
+build receives the loaded config (no ``self``). The energy equation
+declares its ``system/fvSchemes`` entries and ``system/fvSolution``
+solver via per-spec ``@BoussinesqFvSchemes.add(...)`` /
+``@BoussinesqFvSolution.add(...)`` slices, mirroring the PIMPLE
+algorithm.
 """
 
 from pathlib import Path
@@ -20,6 +22,7 @@ import pybFoam as pyf
 from pybFoam import fvm, surfaceScalarField, volScalarField
 from pydantic import Field
 
+from neofoam.foam import fvSchemes, fvSolution
 from neofoam.framework.context import FieldUpdates
 from neofoam.framework.initialization import ConfigContext, field
 from neofoam.io import BaseConfig
@@ -62,6 +65,10 @@ def _read_boussinesq_config() -> BoussinesqConfig:
 
 
 boussinesq = Model("boussinesq").register_with(incompressibleFluidModel)
+
+# Per-spec fvSchemes / fvSolution slices for the energy equation.
+BoussinesqFvSchemes = boussinesq.config(fvSchemes)
+BoussinesqFvSolution = boussinesq.config(fvSolution)
 
 
 @boussinesq.load
@@ -148,6 +155,8 @@ def build(configs: BoussinesqConfig) -> list[object]:
 
 
 @boussinesq.operation(operation_number="2.5", depends_on=["momentum"])
+@BoussinesqFvSchemes.add(ddt="default", div="div(phi,T)", laplacian="default")
+@BoussinesqFvSolution.add("T")
 def solve_energy(
     self: Any,
     T: volScalarField,

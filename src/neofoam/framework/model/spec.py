@@ -13,7 +13,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, Callable, Literal, Optional
+from typing import Any, Callable, Literal, Optional, TypeVar, cast
 
 from pydantic import BaseModel
 
@@ -25,6 +25,9 @@ from neofoam.framework.operations import Operation, Operations, SequentialOp
 from neofoam.framework.types import OperationMetadata, OperationNumber
 
 from .runtime import ModelRuntime
+
+
+_ConfigT = TypeVar("_ConfigT", bound=type)
 
 
 def _snake_case(name: str) -> str:
@@ -73,7 +76,7 @@ class ModelSpec:
     # Config registration
     # ------------------------------------------------------------------
 
-    def config(self, cls: type) -> type:
+    def config(self, cls: _ConfigT) -> _ConfigT:
         """Register a config class. Callable multiple times.
 
         When more than one class is registered, ``runtime.config`` becomes a
@@ -84,7 +87,7 @@ class ModelSpec:
         :class:`neofoam.foam.fvSchemes`) get a fresh per-spec subclass.
         """
         if getattr(cls, "_synthesize_per_spec", False):
-            subclass = type(f"{self.name}_{cls.__name__}", (cls,), {})
+            subclass = cast(_ConfigT, type(f"{self.name}_{cls.__name__}", (cls,), {}))
             subclass._pending_sections = {}  # type: ignore[attr-defined]
             subclass._finalized = False  # type: ignore[attr-defined]
             self._config_classes.append(subclass)
