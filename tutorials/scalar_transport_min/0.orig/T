@@ -1,0 +1,32 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    object      T;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 0 0 0 0 0 0];
+
+// Uniform zero internal field; the inlet drives a tracer plume that
+// the solver advects across the domain and diffusion smears.
+internalField   uniform 0;
+
+boundaryField
+{
+    inlet           { type fixedValue; value uniform 1; }
+    outlet          { type zeroGradient; }
+    walls           { type zeroGradient; }
+    frontAndBack    { type empty; }
+}
+
+
+// ************************************************************************* //

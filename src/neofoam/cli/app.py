@@ -55,5 +55,17 @@ def neoicofoam(ctx: typer.Context) -> None:
     solver.run()
 
 
+@solver_app.command(
+    name="incompressiblefluid",
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
+def incompressiblefluid(ctx: typer.Context) -> None:
+    """Transient PIMPLE solver for incompressible Newtonian flow."""
+    from neofoam.solver.incompressibleFluid import run as run_incompressible_fluid
+
+    argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
+    run_incompressible_fluid(argv)
+
+
 if __name__ == "__main__":
     app()
