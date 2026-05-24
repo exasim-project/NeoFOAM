@@ -1,0 +1,1120 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html">
+        <link rel="canonical" href="https://exasim-project.com/NeoFOAM/development/architecture.html">
+
+    <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
+        <title>Architecture - NeoFOAM documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css?v=fd6457a4" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=6a4ff913" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">NeoFOAM  documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  
+  <span class="sidebar-brand-text">NeoFOAM  documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../auto_tutorials/example_01_run_incompressible_fluid.html">Run your first NeoFOAM case</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../auto_tutorials/example_02_passive_scalar_plugin.html">Add a passive scalar transport model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../auto_tutorials/example_03_build_a_solver.html">Build a scalar-transport solver from scratch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../auto_tutorials/example_04_configure_with_io.html">Typed configs: YAML, JSON, and OpenFOAM dictionaries</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">How-to guides</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../how-to/install.html">Install NeoFOAM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../auto_how-to/example_register_a_model.html">Register a new model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../auto_how-to/example_add_an_init_step_category.html">Add a custom InitStep category</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../auto_how-to/example_work_with_config_files.html">Work with configuration files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../auto_how-to/example_visualize_the_operation_dag.html">Visualize the operation DAG</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../auto_how-to/example_use_depends_for_injection.html">Inject dependencies into operations</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../reference/framework/index.html">neofoam.framework</a><input aria-label="Toggle navigation of neofoam.framework" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../reference/framework/context.html">neofoam.framework.context</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/framework/operations.html">neofoam.framework.operations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/framework/types.html">neofoam.framework.types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/framework/conditions.html">neofoam.framework.conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/framework/decorator.html">neofoam.framework.decorator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/framework/config_injection.html">neofoam.framework.config_injection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/framework/dependency_resolver.html">neofoam.framework.dependency_resolver</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../reference/graph/index.html">neofoam.framework.graph</a><input aria-label="Toggle navigation of neofoam.framework.graph" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../reference/graph/sorter.html">neofoam.framework.graph.sorter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/graph/resolver.html">neofoam.framework.graph.resolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/graph/validation.html">neofoam.framework.graph.validation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/graph/visualization.html">neofoam.framework.graph.visualization</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../reference/initialization/index.html">neofoam.framework.initialization</a><input aria-label="Toggle navigation of neofoam.framework.initialization" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../reference/initialization/init_step.html">neofoam.framework.initialization.init_step</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/initialization/helpers.html">neofoam.framework.initialization.helpers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/initialization/config_context.html">neofoam.framework.initialization.config_context</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/initialization/depends.html">neofoam.framework.initialization.depends</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../reference/initialization/execution/index.html">neofoam.framework.initialization.execution</a><input aria-label="Toggle navigation of neofoam.framework.initialization.execution" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../reference/initialization/execution/init_result.html">neofoam.framework.initialization.execution.init_result</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/initialization/execution/validation.html">neofoam.framework.initialization.execution.validation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/initialization/execution/ordering.html">neofoam.framework.initialization.execution.ordering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/initialization/execution/executor.html">neofoam.framework.initialization.execution.executor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/initialization/execution/context_builder.html">neofoam.framework.initialization.execution.context_builder</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../reference/initialization/staged/index.html">neofoam.framework.initialization.staged</a><input aria-label="Toggle navigation of neofoam.framework.initialization.staged" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../reference/initialization/staged/spec.html">neofoam.framework.initialization.staged.spec</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../reference/initialization/staged/runner.html">neofoam.framework.initialization.staged.runner</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../reference/model/index.html">neofoam.framework.model</a><input aria-label="Toggle navigation of neofoam.framework.model" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../reference/model/spec.html">neofoam.framework.model.spec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/model/runtime.html">neofoam.framework.model.runtime</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../reference/solver/index.html">neofoam.framework.solver</a><input aria-label="Toggle navigation of neofoam.framework.solver" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../reference/solver/spec.html">neofoam.framework.solver.spec</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reference/solver/runtime.html">neofoam.framework.solver.runtime</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Explanation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/goals-and-core-concepts.html">Goals &amp; core concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/solver-structure.html">Solver structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/model-structure.html">Model structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/spec-runtime.html">Spec and Runtime</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/three-stage-init.html">Three-stage initialization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/operations-and-the-dag.html">Operations and the DAG</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/parameter-injection.html">Parameter injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/discriminated-unions.html">The discriminated-union plugin registry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/discovery-mechanisms.html">Model discovery: plugin vs core spec</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../explanation/schema-introspection.html">Schema introspection</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Project</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../ci.html">Continuous Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../debugProfileTools.html">Using Kokkos Tools</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../_sources/development/architecture.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="architecture">
+<h1>Architecture<a class="headerlink" href="#architecture" title="Link to this heading">¶</a></h1>
+<p>NeoFOAM is a multi-language repository containing both C++ and Python code.
+This document describes the architecture of NeoFOAM, including its C++ core and Python interface components.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<dl class="simple">
+<dt>This section of the documentation provides:</dt><dd><ul class="simple">
+<li><p>a high-level overview of the <em>planned</em> architecture</p></li>
+<li><p>guidance through the review process</p></li>
+<li><p>example implementations serving only as proof of concept to illustrate the <em>planned</em> architecture</p></li>
+<li><p>a note that detailed features will evolve and refine the architecture, updating examples as development progresses</p></li>
+</ul>
+</dd>
+</dl>
+</div>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h2>
+<p>NeoFOAM is designed as a multi-physics, Python-based simulation framework.
+Additionally, it includes a set of C++-based legacy solvers, such as neoIcoFoam, to simplify the transition from existing OpenFOAM solvers and workflows.
+It provides a flexible and modular architecture that allows users to easily extend and customize their simulation setup.</p>
+<p>The architecture provides the following features to achieve the goals outlined in the <a class="reference internal" href="../goals_features.html"><span class="doc">goals and features</span></a> document:</p>
+<ul class="simple">
+<li><p>Easy coupling of multiple domains and physical models</p></li>
+<li><p>Field and model initialization based on dependency graphs</p></li>
+<li><p>Modular solver design that computes data dependencies at runtime</p></li>
+<li><p>Plugin architecture for extending models and fields</p></li>
+</ul>
+<p>To support multi-physics capabilities, multiple computational domains are supported.
+Each domain has <strong>one solver</strong> assigned, which defines the governing equations, operations, and <strong>optional additional physical models.</strong>
+Coupling between domains is automatically handled based on the selected physics modules.</p>
+<p>The following sections describe the main architectural features and implementation examples, providing a high-level overview.</p>
+</section>
+<section id="extensible-solver-architecture">
+<h2>Extensible Solver Architecture<a class="headerlink" href="#extensible-solver-architecture" title="Link to this heading">¶</a></h2>
+<p>To promote code reuse and maintainability, solver execution operations can be configured at runtime based on the selected physics models.
+This is illustrated in the diagram below, where a fluid solver is extended with three physics submodules.</p>
+<pre  class="mermaid">
+        flowchart TD
+
+     subgraph MAIN [&quot;Main Solver Loop&quot;]
+         OP1[&quot;Solver &lt;/br&gt; Momentum Equation&quot;]
+         OP2[&quot;Added by Model &lt;/br&gt; Temperature Equation&quot;]
+         OP3[&quot;Solver &lt;/br&gt; Continuity Equation&quot;]
+         OP4[&quot;Solver &lt;/br&gt; Update Turbulence&quot;]
+     end
+
+     OP1 --&gt; OP2
+     OP2 --&gt; OP3
+     OP3 --&gt; OP4
+
+     %% Physics Extensions (simplified)
+     subgraph AddPhysics [&quot;Additional Physics Modules&quot;]
+         direction TB
+         POROSITY[&quot;Porosity&quot;]
+         ROTATION[&quot;Rotating Reference Frame&quot;]
+         BUOYANCY[&quot;Boussinesq Approximation&quot;]
+     end
+     POROSITY -.-&gt; OP1
+     ROTATION -.-&gt; OP1
+     BUOYANCY -.-&gt; OP2
+     BUOYANCY -.-&gt; OP3
+
+     style MAIN fill:#E3F2FD
+     style AddPhysics fill:#E3F2FD
+     style OP1 fill:#2196F3,color:#fff
+     style OP2 fill:#FF9800,color:#fff
+     style OP3 fill:#9C27B0,color:#fff
+     style OP4 fill:#607D8B,color:#fff
+    </pre><p>The solver defines the main operations to be executed: momentum, continuity, and turbulence model updates.
+Additional physics models, such as porosity, rotation, or buoyancy, can modify or add operations.
+In this case, the porosity model and the Rotating Reference Frame add momentum source terms, while the Boussinesq model adds a temperature equation and modifies the continuity equation.</p>
+<p>Each solver maintains a list of additional physics models that can add or modify operations.
+These additional physics models are defined externally from the solver and only need to comply with the IncompressibleFluidModel interface, which can be defined separately by each solver.
+The execution order is determined at runtime based on the metadata specified in each model.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The snippet below is <strong>conceptual pseudocode</strong> — it shows the intended
+shape of solver/model composition, not the real Python API. The working
+API uses factory functions (<code class="docutils literal notranslate"><span class="pre">incompressibleFluid</span> <span class="pre">=</span> <span class="pre">Solver(&quot;...&quot;)</span></code>,
+<code class="docutils literal notranslate"><span class="pre">boussinesq</span> <span class="pre">=</span> <span class="pre">Model(&quot;...&quot;).register_with(incompressibleFluidModel)</span></code>)
+plus decorators on those instances. See <a class="reference internal" href="initialization.html"><span class="doc">Solver Framework</span></a> for the
+API reference and runnable examples.</p>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Pseudocode illustrating solver and model structure</span>
+<span class="nd">@Solver</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">IncompressibleFluidSolver</span><span class="p">:</span>
+    <span class="n">models</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">IncompressibleFluidModel</span><span class="p">]</span>  <span class="c1"># Additional physics models</span>
+    <span class="nd">@Solver</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">momentum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
+    <span class="nd">@Solver</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">continuity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
+    <span class="nd">@Solver</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_turbulence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
+
+<span class="nd">@IncompressibleFluidModel</span><span class="o">.</span><span class="n">register</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BoussinesqModel</span><span class="p">:</span>
+    <span class="nd">@IncompressibleFluidModel</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">temperature_equation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
+
+<span class="nd">@IncompressibleFluidModel</span><span class="o">.</span><span class="n">register</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PorosityModel</span><span class="p">:</span>
+    <span class="nd">@IncompressibleFluidModel</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_momentum_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
+
+<span class="nd">@IncompressibleFluidModel</span><span class="o">.</span><span class="n">register</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">RotatingReferenceFrame</span><span class="p">:</span>
+    <span class="nd">@IncompressibleFluidModel</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_momentum_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
+</pre></div>
+</div>
+<p>As a result, the solver can be easily extended with new physics using minimal additional code.
+Users only need to define a new model that adds the desired operations to the solver at runtime, without modifying the core solver.
+New models can be registered via the plugin system and selected in input files.</p>
+</section>
+<section id="conceptual-implementation">
+<h2>Conceptual Implementation<a class="headerlink" href="#conceptual-implementation" title="Link to this heading">¶</a></h2>
+<p>After solvers and models are initialized, their operations must be identified and sorted to determine the correct execution order.
+This order is managed by the <strong>Operations</strong> class, shown conceptually below:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Pseudocode showing how operations are stored and executed</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Operations</span><span class="p">:</span>
+    <span class="n">ops</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]</span>  <span class="c1"># All operations to execute</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Operation</span><span class="p">:</span>
+    <span class="n">func</span><span class="p">:</span> <span class="nb">callable</span>
+    <span class="n">sub_operations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Operation</span><span class="p">]</span>  <span class="c1"># Nested operations</span>
+    <span class="n">metadata</span><span class="p">:</span> <span class="n">Any</span>  <span class="c1"># Metadata for sorting or description</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span> <span class="k">pass</span>
+</pre></div>
+</div>
+<p>An operation represents a single computational operation in a solver or model, functioning as a callable task.
+Each solver or model can define multiple operations stored as <cite>Operation</cite> objects.
+These can hold sub-operations and metadata to assist in sorting and dependency management.</p>
+<p>After sorting (detailed in future documentation), the <cite>Operations</cite> class holds all operations required to run the newly-configured solver.</p>
+<p>This modular design allows users to add or remove physical effects without altering the core solver structure, encouraging maintainability and reuse.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Implementation is still a work in progress.</p>
+</div>
+</section>
+<section id="simulation-with-multiple-domains-solvers">
+<h2>Simulation with Multiple Domains/Solvers<a class="headerlink" href="#simulation-with-multiple-domains-solvers" title="Link to this heading">¶</a></h2>
+<p>The same concept can be extended to multi-physics scenarios with multiple domains and solvers.
+Each solver defines its own operations, while coupling between solvers is managed automatically at runtime based on defined physics models and settings.</p>
+<p>The diagram below illustrates this for two domains in a conjugate heat transfer example:</p>
+<pre  class="mermaid">
+        %%{init: {'flowchart': { 'htmlLabels': true, 'wrap': true }}}%%
+flowchart TB
+    subgraph setup1 [&quot;Setup&quot;]
+        direction TB
+        S1A[&quot;Initialize Fields&quot;]
+    end
+
+    subgraph setup2 [&quot;Setup&quot;]
+        direction TB
+        S2A[&quot;Initialize Temperature Field&quot;]
+    end
+
+    subgraph S1 [&quot;Non-Thermal Fluid Solver&quot;]
+        direction TB
+        S1C[&quot;Momentum Predictor&quot;]
+        S1C --&gt; S1E[&quot;Solve Energy Equation&quot;]
+        S1E --&gt; S1F[&quot;Pressure Corrector&lt;br/&gt;PISO Loop&quot;]
+        S1F --&gt; S1J[&quot;Update Turbulence Model&quot;]
+    end
+
+    subgraph S2 [&quot;Thermal Solid Solver&quot;]
+        direction TB
+        S2B[&quot;Solve Energy Equation&quot;] --&gt; S2D[&quot;Update Solid Properties&quot;]
+    end
+
+    setup1 --&gt; S1C
+    setup2 --&gt; S2B
+    S1E --&gt; S2B
+    S2B --&gt; S1E
+    </pre><p>Here, a non-thermal fluid solver and a thermal solid solver solve a conjugate heat transfer problem.
+Each solver has its own initialization phase. Once the <strong>Operations</strong> are determined, coupling between them is established.
+The operation sequences of both solvers are then updated to include inter-solver data exchange.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Implementation is still a work in progress.</p>
+</div>
+</section>
+<section id="initialization-stage">
+<h2>Initialization Stage<a class="headerlink" href="#initialization-stage" title="Link to this heading">¶</a></h2>
+<p>The initialization stage sets up the simulation environment — reading input files, initializing fields, and preparing solvers and models.</p>
+<p>Although not yet finalized, the planned initialization stage will perform the following tasks:</p>
+<ol class="arabic simple">
+<li><p>Read and parse input files and configuration settings.</p></li>
+<li><p>Initialize computational domains and meshes.</p></li>
+<li><p>Exchange dependencies between operations (e.g., adding a Boussinesq approximation modifies the pressure equation formulation).</p></li>
+<li><p>Define solver operations based on selected physics models.</p></li>
+<li><p>Sort operations to determine correct execution order.</p></li>
+</ol>
+</section>
+<section id="plugin-architecture">
+<h2>Plugin Architecture<a class="headerlink" href="#plugin-architecture" title="Link to this heading">¶</a></h2>
+<section id="motivation">
+<h3>Motivation<a class="headerlink" href="#motivation" title="Link to this heading">¶</a></h3>
+<p>Modern scientific and engineering workflows require flexible, extensible frameworks.
+NeoFOAM’s plugin architecture enables users and developers to add new physics models, boundary conditions, and solver modules without modifying core code.
+This promotes maintainability, collaboration, and rapid prototyping.</p>
+</section>
+<section id="concept">
+<h3>Concept<a class="headerlink" href="#concept" title="Link to this heading">¶</a></h3>
+<p>NeoFOAM implements a runtime-extensible plugin/configuration system using Pydantic discriminated unions and a registry pattern.
+The core idea is to allow new plugin types (e.g., models, fields, solvers) to be dynamically registered at runtime or via Python entry points (setuptools).
+Each plugin type (such as a physics model or boundary condition) is managed by a registry, which collects available classes and exposes a unified configuration model for validation and schema generation.</p>
+<p><strong>Background: Pydantic Discriminated Unions</strong></p>
+<p>Pydantic supports discriminated unions f    or type-safe configuration, but union members must be defined at model creation time.
+For example, the following ensures a pet is either a Cat, Dog, or Lizard:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Cat</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">pet_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;cat&#39;</span><span class="p">]</span>
+    <span class="n">meows</span><span class="p">:</span> <span class="nb">int</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Dog</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">pet_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;dog&#39;</span><span class="p">]</span>
+    <span class="n">barks</span><span class="p">:</span> <span class="nb">float</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Lizard</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">pet_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;lizard&#39;</span><span class="p">]</span>
+    <span class="n">scales</span><span class="p">:</span> <span class="nb">bool</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Model</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">pet</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Cat</span><span class="p">,</span> <span class="n">Dog</span><span class="p">,</span> <span class="n">Lizard</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">discriminator</span><span class="o">=</span><span class="s1">&#39;pet_type&#39;</span><span class="p">)</span>
+    <span class="n">n</span><span class="p">:</span> <span class="nb">int</span>
+</pre></div>
+</div>
+<p>This works for static unions but cannot be extended dynamically — a limitation for plugin systems.</p>
+<p><strong>How NeoFOAM Solves This</strong></p>
+<p>Plugins are registered using a decorator-based API.
+Each registration automatically rebuilds the Pydantic model for that plugin type, updating the discriminated union to include new plugins.
+Thus, the configuration model always reflects available plugins and remains valid for schema generation and input validation.</p>
+<p>Example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ShapeBase</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">TriangleConfig</span><span class="p">)</span>
+<span class="n">shape</span> <span class="o">=</span> <span class="n">ShapeBase</span><span class="o">.</span><span class="n">plugin_model</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;shape_type&quot;</span><span class="p">:</span> <span class="s2">&quot;triangle&quot;</span><span class="p">,</span> <span class="s2">&quot;base&quot;</span><span class="p">:</span> <span class="mf">3.0</span><span class="p">,</span> <span class="s2">&quot;height&quot;</span><span class="p">:</span> <span class="mf">4.0</span><span class="p">},</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;yellow&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This approach enables <strong>true runtime extensibility</strong> while maintaining strong input validation.
+The updated model can always be retrieved via the <cite>plugin_model</cite> attribute.</p>
+</section>
+<section id="usage">
+<h3>Usage<a class="headerlink" href="#usage" title="Link to this heading">¶</a></h3>
+<p>To add a new plugin, users define a Python class and register it with the corresponding base class:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.core.plugin_system</span><span class="w"> </span><span class="kn">import</span> <span class="n">PluginSystem</span>
+
+<span class="nd">@PluginSystem</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">discriminator_variable</span><span class="o">=</span><span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="n">discriminator</span><span class="o">=</span><span class="s2">&quot;model_type&quot;</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ModelBase</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+
+<span class="nd">@ModelBase</span><span class="o">.</span><span class="n">register</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MyCustomModel</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">model_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;custom&quot;</span><span class="p">]</span>
+    <span class="n">parameter</span><span class="p">:</span> <span class="nb">float</span>
+
+<span class="c1"># Instantiate a model config</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">ModelBase</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;model_type&quot;</span><span class="p">:</span> <span class="s2">&quot;custom&quot;</span><span class="p">,</span> <span class="s2">&quot;parameter&quot;</span><span class="p">:</span> <span class="mf">1.23</span><span class="p">},</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;example&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Plugins can also be discovered and registered automatically via Python entry points, allowing third-party packages to extend NeoFOAM seamlessly.
+The unified configuration and schema system simplifies UI generation, input validation, and documentation of available plugins.</p>
+</section>
+</section>
+<section id="model-introspection-and-schema-generation">
+<h2>Model Introspection and Schema Generation<a class="headerlink" href="#model-introspection-and-schema-generation" title="Link to this heading">¶</a></h2>
+<p>Model configuration and validation in NeoFOAM are powered by Pydantic, which provides input validation and automatic JSON Schema generation.
+This mechanism enables model discovery, UI integration, and automatic documentation.</p>
+<p>Pydantic’s schema generation supports:</p>
+<ul class="simple">
+<li><p>Input validation — ensures consistent and type-safe configurations</p></li>
+<li><p>UI generation — enables dynamic form or editor creation</p></li>
+<li><p>Automatic documentation — exposes all field names, types, and constraints</p></li>
+<li><p>Metadata discovery — supports downstream analysis and automation</p></li>
+<li><p>AI-assisted workflows — provides structured schemas for AI-based reasoning</p></li>
+</ul>
+<p>To retrieve a model’s JSON Schema, use:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># For a registered plugin or configuration model</span>
+<span class="n">schema</span> <span class="o">=</span> <span class="n">ShapeBase</span><span class="o">.</span><span class="n">plugin_model</span><span class="o">.</span><span class="n">model_json_schema</span><span class="p">()</span>
+
+<span class="c1"># For any Pydantic model</span>
+<span class="n">schema</span> <span class="o">=</span> <span class="n">MyModel</span><span class="o">.</span><span class="n">model_json_schema</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This unified mechanism allows programmatic discovery of fields, types, validation rules, and defaults.
+All solvers, models, and plugins must therefore use Pydantic for input configuration.</p>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2025, NeoFOAM authors
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Architecture</a><ul>
+<li><a class="reference internal" href="#overview">Overview</a></li>
+<li><a class="reference internal" href="#extensible-solver-architecture">Extensible Solver Architecture</a></li>
+<li><a class="reference internal" href="#conceptual-implementation">Conceptual Implementation</a></li>
+<li><a class="reference internal" href="#simulation-with-multiple-domains-solvers">Simulation with Multiple Domains/Solvers</a></li>
+<li><a class="reference internal" href="#initialization-stage">Initialization Stage</a></li>
+<li><a class="reference internal" href="#plugin-architecture">Plugin Architecture</a><ul>
+<li><a class="reference internal" href="#motivation">Motivation</a></li>
+<li><a class="reference internal" href="#concept">Concept</a></li>
+<li><a class="reference internal" href="#usage">Usage</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#model-introspection-and-schema-generation">Model Introspection and Schema Generation</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    <script src="../_static/sg-tags.js?v=d80f6fa4"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
+
+
+
+const initStyles = () => {
+    const defaultStyle = document.createElement('style');
+    defaultStyle.textContent = `pre.mermaid {
+    /* Same as .mermaid-container > pre */
+    display: block;
+    width: 100%;
+}
+
+pre.mermaid > svg {
+    /* Same as .mermaid-container > pre > svg */
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}`;
+    document.head.appendChild(defaultStyle);
+
+    const fullscreenStyle = document.createElement('style');
+    fullscreenStyle.textContent = `.mermaid-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+.mermaid-container > pre {
+    display: block;
+    width: 100%;
+}
+
+.mermaid-container > pre > svg {
+    height: 500px;
+    width: 100%;
+    max-width: 100% !important;
+}
+
+.mermaid-fullscreen-btn {
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    color: #333;
+}
+
+.mermaid-fullscreen-btn:hover {
+    opacity: 100% !important;
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-btn.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-btn.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal {
+    display: none;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 95vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.98);
+    z-index: 9999;
+    padding: 20px;
+    overflow: auto;
+}
+
+.mermaid-fullscreen-modal.dark-theme {
+    background: rgba(0, 0, 0, 0.98);
+}
+
+.mermaid-fullscreen-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen {
+    position: relative;
+    width: 95vw;
+    height: 90vh;
+    max-width: 95vw;
+    max-height: 90vh;
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen.dark-theme {
+    background: #1a1a1a;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+
+.mermaid-container-fullscreen pre.mermaid {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mermaid-container-fullscreen .mermaid svg {
+    height: 100% !important;
+    width: 100% !important;
+    cursor: grab;
+}
+
+.mermaid-fullscreen-close {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s;
+    font-size: 24px;
+    line-height: 1;
+    color: #333;
+}
+
+.mermaid-fullscreen-close:hover {
+    background: white;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    transform: scale(1.1);
+}
+
+.mermaid-fullscreen-close.dark-theme {
+    background: rgba(50, 50, 50, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #e0e0e0;
+}
+
+.mermaid-fullscreen-close.dark-theme:hover {
+    background: rgba(60, 60, 60, 1);
+    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);
+}
+
+.mermaid-fullscreen-modal .mermaid-fullscreen-btn {
+    display: none !important;
+}`;
+    document.head.appendChild(fullscreenStyle);
+}
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    // We use a set of heuristics:
+    // 1. Check for common dark mode classes or attributes
+    // 2. Check computed background color brightness
+    if (document.documentElement.classList.contains('dark') ||
+        document.documentElement.getAttribute('data-theme') === 'dark' ||
+        document.body.classList.contains('dark') ||
+        document.body.getAttribute('data-theme') === 'dark') {
+        // console.log("Dark theme detected via class/attribute");
+        return true;
+    }
+    if (document.documentElement.classList.contains('light') ||
+        document.documentElement.getAttribute('data-theme') === 'light' ||
+        document.body.classList.contains('light') ||
+        document.body.getAttribute('data-theme') === 'light') {
+        // console.log("Light theme detected via class/attribute");
+        return false;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // console.log("Dark theme detected via prefers-color-scheme");
+        return true;
+    }
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        // console.log("Background color brightness:", brightness);
+        return brightness < 128;
+    }
+    // console.log("No dark or light theme detected, defaulting to light theme");
+    return false;
+};
+
+let darkTheme = isDarkTheme();
+let modal = null;
+let modalContent = null;
+let previousScrollOffset = [window.scrollX, window.scrollY];
+
+const runMermaid = async (rerun) => {
+    console.log("Running mermaid diagrams, rerun =", rerun);
+    // clear all existing mermaid charts
+    let all_mermaids = document.querySelectorAll(".mermaid");
+
+    if (rerun) {
+        all_mermaids.forEach((el) => {
+            if(!el.hasAttribute("data-original-code")) {
+                // store original code
+                // console.log(`Storing original code for first run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+            if(el.getAttribute("data-processed") === "true") {
+                // remove and restore original
+                el.removeAttribute("data-processed");
+                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
+                el.innerHTML = el.getAttribute('data-original-code');
+            } else {
+                // store original code
+                // console.log(`Storing original code for re-run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+        });
+        await mermaid.run();
+    }
+
+    all_mermaids = document.querySelectorAll(".mermaid");
+    const mermaids_processed = document.querySelectorAll(".mermaid[data-processed='true']");
+
+    if ("False" === "True") {
+        const mermaids_to_add_zoom = -1 === -1 ? all_mermaids.length : -1;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll("");
+            if(all_mermaids.length !== mermaids_processed.length) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            } else if(svgs.size() !== mermaids_to_add_zoom) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            } else {
+                svgs.each(function() {
+                    var svg = d3.select(this);
+                    svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+                    var inner = svg.select("g");
+                    var zoom = d3.zoom().on("zoom", function(event) {
+                        inner.attr("transform", event.transform);
+                    });
+                    svg.call(zoom);
+                });
+            }
+        }
+    } else if(all_mermaids.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(() => runMermaid(false), 200);
+        return;
+    }
+
+    // Stop here if not adding fullscreen capability
+    if ("True" !== "True") return;
+
+    if (modal !== null ) {
+        // Destroy existing modal
+        modal.remove();
+        modal = null;
+        modalContent = null;
+    }
+
+    modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    const closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeModal();
+        }
+    });
+
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            // Already processed, adjust button class if needed
+            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
+            if (existingBtn) {
+                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+            }
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = '⛶';
+        fullscreenBtn.style.opacity = '50%';
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scroll, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.sdisplay = 'block';
+
+                if ("False" === "True") {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        container.appendChild(fullscreenBtn);
+    });
+};
+
+const load = async () => {
+    initStyles();
+
+    await runMermaid(true);
+
+    const reRunIfThemeChanges = async () => {
+        const newDarkTheme = isDarkTheme();
+        if (newDarkTheme !== darkTheme) {
+            darkTheme = newDarkTheme;
+            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
+            await mermaid.initialize(
+                {...JSON.parse(
+                    `{"startOnLoad": false}`
+                ),
+                ...{ darkMode: darkTheme, theme: darkTheme ? 'dark' : 'default' },
+                }
+            );
+            await runMermaid(true);
+        }
+    };
+
+    // Update theme classes when theme changes
+    const themeObserver = new MutationObserver(reRunIfThemeChanges);
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    themeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+};
+
+
+
+
+
+console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
+mermaid.initialize(
+    {...JSON.parse(
+        `{"startOnLoad": false}`
+    ),
+    ...{ darkMode: darkTheme, theme: darkTheme ? 'dark' : 'default' },
+    }
+);
+
+window.addEventListener("load", load);
+window.runMermaid = runMermaid;</script>
+    </body>
+</html>
