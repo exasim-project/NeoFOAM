@@ -37,7 +37,8 @@ from pybFoam import (
 )
 
 from neofoam import FieldUpdates, Model, field
-from neofoam.foam import fvSchemes, fvSolution
+
+# from neofoam.foam import fvSchemes, fvSolution
 from neofoam.io import BaseConfig
 from neofoam.solver.incompressibleFluid import run as run_incompressible
 from neofoam.solver.incompressibleFluid.models import incompressibleFluidModel
@@ -63,9 +64,14 @@ passive_scalar = Model("passive_scalar").register_with(incompressibleFluidModel)
 # config load, no operations, no overhead.
 
 
+# Framework note: in the current branch ``@spec.detect`` takes no
+# arguments (the old ``case_dir`` parameter was removed) and ``load``
+# now receives ``(case_dir, instance_id)`` instead of ``(case_dir,
+# entry)``. Detection happens with the case as the cwd, so a relative
+# path probes the right file.
 @passive_scalar.detect
-def detect(case_dir: Path) -> bool:
-    return (case_dir / "constant" / "scalarProperties").exists()
+def detect() -> bool:
+    return Path("constant/scalarProperties").exists()
 
 
 # %%
@@ -74,9 +80,9 @@ def detect(case_dir: Path) -> bool:
 
 
 @passive_scalar.load
-def load(case_dir: Path, _entry: Any) -> PassiveScalarConfig:
+def load(_case_dir: Path, _instance_id: str) -> PassiveScalarConfig:
     props = pyf.dictionary.read("constant/scalarProperties")
-    return PassiveScalarConfig(D=props.get_scalar("D"))
+    return PassiveScalarConfig(D=props.get[float]("D"))
 
 
 # %%
@@ -88,7 +94,7 @@ def load(case_dir: Path, _entry: Any) -> PassiveScalarConfig:
 
 
 @passive_scalar.build
-def build(self: Any, cfg: PassiveScalarConfig) -> list[Any]:
+def build(cfg: PassiveScalarConfig) -> list[Any]:
     def create_s(context: dict[str, Any]) -> volScalarField:
         return volScalarField.read_field(context["mesh"], "s")
 
@@ -106,12 +112,12 @@ def build(self: Any, cfg: PassiveScalarConfig) -> list[Any]:
 
 
 @passive_scalar.operation(depends_on=["continuity"])
-@fvSchemes.add(
-    ddt="ddt(s)",
-    div="div(phi,s)",
-    laplacian="laplacian(D,s)",
-)
-@fvSolution.add("s")
+# @fvSchemes.add(
+#     ddt="ddt(s)",
+#     div="div(phi,s)",
+#     laplacian="laplacian(D,s)",
+# )
+# @fvSolution.add("s")
 def solve_s(
     self: Any,
     s: volScalarField,

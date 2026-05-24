@@ -36,6 +36,7 @@ from neofoam.framework.operations import (
 from neofoam.framework.types import OperationMetadata
 
 from ..incompressibleFluidModel import Model
+from .control_factory import create_pimple_control
 
 
 pimple = Model("Pimple")
@@ -43,10 +44,6 @@ pimple = Model("Pimple")
 
 class TurbulenceModel(Protocol):
     def divDevReff(self, velocity: volVectorField) -> Any: ...
-
-
-def _create_pimple_control(context: dict[str, Any]) -> Any:
-    return pyf.pimpleControl(context["mesh"])
 
 
 @pimple.build
@@ -106,7 +103,7 @@ def build(self: Any) -> list[Any]:
         field("p", create_p, depends_on=["mesh"]),
         field("U", create_U, depends_on=["mesh"]),
         field("phi", create_phi, depends_on=["fields.U"]),
-        model("pimple_control", _create_pimple_control, depends_on=["mesh"]),
+        model("pimple_control", create_pimple_control, depends_on=["mesh"]),
         model("cumulativeContErr", create_cumulative_cont_err),
     ]
 

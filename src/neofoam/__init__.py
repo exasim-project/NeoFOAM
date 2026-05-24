@@ -8,3 +8,16 @@ try:
     from . import neofoam_bindings as neofoam_bindings  # type: ignore[attr-defined,unused-ignore]
 except ImportError:
     neofoam_bindings = None  # type: ignore[assignment,unused-ignore]
+
+from .framework.context import FieldUpdates
+from .framework.initialization import Depends, field
+from .framework.model import Model
+from .framework.solver import Solver
+
+__all__ = [
+    "Depends",
+    "FieldUpdates",
+    "Model",
+    "Solver",
+    "field",
+]

@@ -69,6 +69,7 @@ def execution_graph(
     )
 
     with builder.loop(time_loop_op) as time_builder:
+        time_builder.step(ops["set_time_step"])
         time_builder.step(ops["increment_time"])
 
         with time_builder.loop(algo_ops["inner_loop"]) as inner_builder:
@@ -128,6 +129,29 @@ def run(
             sys.stdout.flush()
             os.dup2(saved_fd, 1)
             os.close(saved_fd)
+
+
+@incompressibleFluid.operation()
+def set_time_step(
+    self: Any,
+    ctx: Context,
+    pressure_velocity: Annotated[Optional[Any], "models"],
+    cfl_condition: Annotated[Optional[Any], "models"],
+) -> None:
+    """Adjust the time step based on CFL when running a transient algorithm.
+
+    SIMPLE is steady-state, so the deltaT adjustment is skipped there.
+    Missing ``cfl_condition`` (e.g. SIMPLE, or when CFL was not enabled)
+    also short-circuits.
+    """
+    if (
+        pressure_velocity is not None
+        and getattr(pressure_velocity, "algorithm_type", "").upper() == "SIMPLE"
+    ):
+        return
+
+    if cfl_condition is not None:
+        cfl_condition(ctx)
 
 
 @incompressibleFluid.operation()

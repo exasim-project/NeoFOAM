@@ -97,18 +97,11 @@ sphinx_gallery_conf = {
     "download_all_examples": False,
     "plot_gallery": "True",
     "image_scrapers": ("matplotlib", DynamicScraper()),
-    # Don't abort the whole Sphinx build when an example script fails.
-    # The tutorials below import symbols (FieldUpdates, neofoam.tutorial,
-    # Depends, StagedInit, …) that arrive in later slices of the
-    # feat/python_solvers port; until then their gallery output is a
-    # rendered traceback, but the rest of the docs still build.
+    # Keep building the rest of the docs even if a tutorial errors.
     "abort_on_example_error": False,
-    "expected_failing_examples": [
-        "../examples/tutorials/example_01_run_incompressible_fluid.py",
-        "../examples/tutorials/example_02_passive_scalar_plugin.py",
-        "../examples/tutorials/example_03_build_a_solver.py",
-        "../examples/tutorials/example_04_configure_with_io.py",
-    ],
+    # All tutorials currently execute cleanly against the ported
+    # incompressibleFluid solver, so none are expected to fail.
+    "expected_failing_examples": [],
 }
 
 templates_path = ["_templates"]
