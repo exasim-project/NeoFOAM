@@ -9,72 +9,54 @@ PIMPLE reads ``divSchemes.div(phi,U)``; the turbulence model reads
 ``divSchemes.div(phi,k)``; both share the file but care about different
 entries.
 
-The framework exposes :class:`~neofoam.foam.fvSchemes` and
-:class:`~neofoam.foam.fvSolution` as :class:`BaseConfig` base classes.
+The framework exposes ``fvSchemes`` and
+``fvSolution`` as ``BaseConfig`` base classes.
 ``spec.config(fvSchemes)`` returns a *per-spec subclass*; operations on
 that spec extend it with typed entries via ``@<Subclass>.add(...)``.
 Each ``.add(...)`` call injects typed Pydantic fields whose value types
-come from :mod:`neofoam.foam.schemes` — bad values raise at LOAD time,
+come from ``neofoam.foam.schemes`` — bad values raise at LOAD time,
 missing entries surface as Pydantic ``missing`` errors.
 
-This page works the mechanism end-to-end with a small synthetic case
-(YAML on disk so the example runs without pybFoam).
+This page works the mechanism end-to-end against dictionary fixtures
+shipped next to the example (YAML on disk so it runs without pybFoam).
 """
 
 # %%
-# Stage a tiny synthetic case directory
-# -------------------------------------
+# Stage the case directory from shipped dictionary fixtures
+# ---------------------------------------------------------
 # Real OpenFOAM cases ship ``system/fvSchemes`` and ``system/fvSolution``
-# in dictionary format. To keep the example pybFoam-free, the YAML
-# fixtures below have the same *shape* — sections at the top level, each
-# containing entry keys like ``div(phi,U)``. The per-spec subclass
-# overrides the inherited ``@IOStrategy(OF(...))`` with a YAML strategy
-# pointing at the local file.
+# in dictionary format. The fixtures shipped next to this page have the
+# same *shape* — sections at the top level, each containing entry keys
+# like ``div(phi,U)`` — kept as YAML so the example runs without pybFoam.
+# We copy them into a throwaway case dir and load *from those files*
+# rather than constructing the dictionaries inline.
+#
+# .. literalinclude:: ../../examples/how-to/per_model_fvSchemes.yaml
+#    :language: yaml
+#    :caption: per_model_fvSchemes.yaml
+#
+# .. literalinclude:: ../../examples/how-to/per_model_fvSolution.yaml
+#    :language: yaml
+#    :caption: per_model_fvSolution.yaml
 
+import inspect
 import shutil
 import tempfile
 from pathlib import Path
-
-import yaml
 
 from neofoam.foam import fvSchemes, fvSolution
 from neofoam.framework.model import Model
 from neofoam.io import IOStrategy, YAML
 
+
+def _here() -> None:
+    """Marker used to locate this script on disk via inspect.getfile()."""
+
+
+HERE = Path(inspect.getfile(_here)).resolve().parent
 CASE_DIR = Path(tempfile.mkdtemp(prefix="neofoam_fvschemes_"))
-(CASE_DIR / "fvSchemes.yaml").write_text(
-    yaml.safe_dump(
-        {
-            "divSchemes": {
-                "default": "none",
-                "div(phi,U)": "Gauss linear",
-                "div(phi,k)": "Gauss upwind",
-            },
-            "gradSchemes": {
-                "default": "Gauss linear",
-                "grad(U)": "Gauss linear",
-                "grad(p)": "Gauss linear",
-            },
-            "laplacianSchemes": {
-                "default": "Gauss linear corrected",
-                "laplacian(nuEff,U)": "Gauss linear corrected",
-                "laplacian(rAU,p)": "Gauss linear corrected",
-            },
-        }
-    )
-)
-(CASE_DIR / "fvSolution.yaml").write_text(
-    yaml.safe_dump(
-        {
-            "solvers": {
-                "U": {"solver": "PBiCG", "tolerance": 1.0e-6},
-                "p": {"solver": "PCG", "tolerance": 1.0e-7},
-                "k": {"solver": "PBiCG", "tolerance": 1.0e-6},
-            },
-            "PIMPLE": {"nOuterCorrectors": 1, "nCorrectors": 2},
-        }
-    )
-)
+for _name in ("per_model_fvSchemes.yaml", "per_model_fvSolution.yaml"):
+    shutil.copy(HERE / _name, CASE_DIR / _name)
 print("case_dir =", CASE_DIR)
 
 
@@ -91,9 +73,9 @@ pimple = Model("Pimple")
 PimpleFvSchemes = pimple.config(fvSchemes)
 PimpleFvSolution = pimple.config(fvSolution)
 
-# Point the synthesised subclasses at our YAML fixtures.
-IOStrategy(YAML("fvSchemes.yaml"))(PimpleFvSchemes)
-IOStrategy(YAML("fvSolution.yaml"))(PimpleFvSolution)
+# Point the synthesised subclasses at our shipped YAML fixtures.
+IOStrategy(YAML("per_model_fvSchemes.yaml"))(PimpleFvSchemes)
+IOStrategy(YAML("per_model_fvSolution.yaml"))(PimpleFvSolution)
 
 
 # %%
@@ -172,13 +154,18 @@ print("solution.solvers.U            :", solution.solvers.U)
 # Bad input surfaces as a validation error
 # ----------------------------------------
 # An OpenFOAM file with an unparsable scheme value fails Pydantic
-# validation — no separate verification step needed.
+# validation — no separate verification step needed. The malformed
+# fixture ships alongside the page:
+#
+# .. literalinclude:: ../../examples/how-to/per_model_fvSchemes_bad.yaml
+#    :language: yaml
+#    :caption: per_model_fvSchemes_bad.yaml
 
-(CASE_DIR / "fvSchemes_bad.yaml").write_text(
-    yaml.safe_dump({"divSchemes": {"div(phi,U)": "notARealScheme garbage"}})
+shutil.copy(
+    HERE / "per_model_fvSchemes_bad.yaml", CASE_DIR / "per_model_fvSchemes_bad.yaml"
 )
 try:
-    PimpleFvSchemes.load(case_dir=CASE_DIR, file="fvSchemes_bad.yaml")
+    PimpleFvSchemes.load(case_dir=CASE_DIR, file="per_model_fvSchemes_bad.yaml")
 except Exception as exc:
     print(f"caught {type(exc).__name__} as expected — bad scheme value")
 
@@ -205,7 +192,7 @@ print("TurbFvSchemes sections        :", sorted(TurbFvSchemes.model_fields))
 # - :doc:`example_custom_solver_with_configs` — solver-owned config
 #   ownership story; the per-model fvSchemes pattern here is the
 #   per-model analog.
-# - :mod:`neofoam.foam.schemes` — the typed scheme unions used as
+# - ``neofoam.foam.schemes`` — the typed scheme unions used as
 #   value types when ``.add(...)`` injects fields.
 """Cleanup the temporary case directory."""
 shutil.rmtree(CASE_DIR, ignore_errors=True)

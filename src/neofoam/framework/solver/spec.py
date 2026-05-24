@@ -75,7 +75,7 @@ class SolverSpec:
         registration leaves ``runtime.config`` as the instance itself.
 
         Classes opting in via ``_synthesize_per_spec = True`` (e.g.
-        :class:`neofoam.foam.fvSchemes`) get a fresh per-spec subclass.
+        ``neofoam.foam.fvSchemes``) get a fresh per-spec subclass.
         """
         if getattr(cls, "_synthesize_per_spec", False):
             subclass = cast(_ConfigT, type(f"{self.name}_{cls.__name__}", (cls,), {}))

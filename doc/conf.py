@@ -128,6 +128,8 @@ nitpick_ignore_regex = [
     (r"py:.*", r"openfoam\..*"),
     (r"cpp:.*", r".*"),
     (r"std:doc", r"/development/.*"),
+    # Internal TypeVars surfaced in generic signatures (spec.config).
+    (r"py:class", r".*\._ConfigT$"),
 ]
 
 # -- Options for HTML output -------------------------------------------------

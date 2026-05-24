@@ -5,7 +5,7 @@
 
 Currently exports:
 
-- ``fvSchemes`` / ``fvSolution`` — :class:`BaseConfig` base classes
+- ``fvSchemes`` / ``fvSolution`` — ``BaseConfig`` base classes
   bound to ``system/fvSchemes`` and ``system/fvSolution``. Register
   via ``spec.config(fvSchemes)`` to receive a per-spec subclass that
   operations extend via ``@<Subclass>.add(...)``.
