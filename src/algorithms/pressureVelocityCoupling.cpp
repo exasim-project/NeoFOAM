@@ -69,10 +69,10 @@ computeRAUandHByA(const PDESolver<Vec3>& expr)
     auto hByA = nnfvcc::VolumeField<Vec3>(expr.exec(), "HbyA", mesh, hByABCs);
 
     NeoN::la::scaledInvDiagNegLUx(
-        ls,
+        ls.matrix(),
         u.internalVector(),
-        u.boundaryData().value(),
-        mesh,
+        ls.rhs(),
+        mesh.cellVolumes(),
         rAU.internalVector(),
         hByA.internalVector()
     );
@@ -95,7 +95,7 @@ void updateFaceVelocity(
     const auto nBoundaryFaces = mesh.nBoundaryFaces();
     const auto exec = phi.exec();
     const auto [owner, neighbour, internalP] =
-        views(mesh.faceOwner(), mesh.faceNeighbour(), p.internalVector());
+        views(mesh.faceOwners(), mesh.faceNeighbors(), p.internalVector());
 
     const auto& ls = expr.linearSystem();
     const auto rowPtrs = ls.matrix().sparsity()->rowOffs().view();
@@ -125,7 +125,7 @@ void updateFaceVelocity(
     auto [bvalue, bPredValue, faceCells] = views(
         phi.boundaryData().value(),
         predictedPhi.boundaryData().value(),
-        mesh.boundaryMesh().faceCells()
+        mesh.boundaryMesh().faceOwners()
     );
 
     const auto [mValue, rhsValue] = views(ls.boundaryMatrix(), ls.boundaryRhs());
@@ -161,8 +161,8 @@ void updateFaceVelocity(
     // p.boundaryData().value() at the proc tail and is populated by the prior
     // p.correctBoundaryConditions()/constructAndRegister exchange.
     const auto nTotalFaces = phi.internalVector().size();
-    const auto nlValues = ls.nonLocalMatrix().values().view();
-    const auto nlRows = ls.nonLocalMatrix().rowOffs().view();
+    const auto nlValues = ls.offDiagonalMatrix().values().view();
+    const auto nlRows = ls.offDiagonalMatrix().rowOffs().view();
     const auto pBoundV = p.boundaryData().value().view();
 
     NeoN::parallelFor(
@@ -213,14 +213,14 @@ nnfvcc::SurfaceField<scalar> flux(const nnfvcc::VolumeField<Vec3>& volField)
 
     NeoN::fill(faceFlux.internalVector(), NeoN::zero<scalar>());
     NeoN::fill(faceFlux.boundaryData().value(), NeoN::zero<scalar>());
-    const auto [owner, neighbour, weightIn, faceAreas, volFieldIn, volFieldBc, bSf] = views(
-        mesh.faceOwner(),
-        mesh.faceNeighbour(),
+    const auto [owner, neighbour, weightIn, faceNormals, volFieldIn, volFieldBc, bSf] = views(
+        mesh.faceOwners(),
+        mesh.faceNeighbors(),
         weight.internalVector(),
-        mesh.faceAreas(),
+        mesh.faceNormals(),
         volField.internalVector(),
         volField.boundaryData().value(),
-        mesh.boundaryMesh().sf()
+        mesh.boundaryMesh().faceNormals()
     );
 
     auto [faceFluxIn, bvalue] = views(faceFlux.internalVector(), faceFlux.boundaryData().value());
@@ -233,7 +233,7 @@ nnfvcc::SurfaceField<scalar> flux(const nnfvcc::VolumeField<Vec3>& volField)
             auto nei = static_cast<std::size_t>(neighbour[facei]);
 
             faceFluxIn[facei] =
-                faceAreas[facei]
+                faceNormals[facei]
                 & (weightIn[facei] * (volFieldIn[own] - volFieldIn[nei]) + volFieldIn[nei]);
         }
     );
@@ -263,7 +263,7 @@ nnfvcc::SurfaceField<scalar> flux(const nnfvcc::VolumeField<Vec3>& volField)
     // the ghost cell value is stored at volField.boundaryData().value()[faceBCI] (the
     // proc tail), and the cell-to-face weight is in weight.internalVector()[facei].
     const auto nTotalFaces = mesh.nTotalFaces();
-    const auto procFaceCells = mesh.boundaryMesh().faceCells().view();
+    const auto procFaceCells = mesh.boundaryMesh().faceOwners().view();
 
     NeoN::parallelFor(
         exec,
@@ -292,7 +292,7 @@ nnfvcc::SurfaceField<scalar> flux(const PDESolver<scalar>& expr)
     const auto exec = expr.exec();
 
     const auto [owner, neighbour, internalP] =
-        views(mesh.faceOwner(), mesh.faceNeighbour(), p.internalVector());
+        views(mesh.faceOwners(), mesh.faceNeighbors(), p.internalVector());
 
     const auto& ls = expr.linearSystem();
     const auto rowPtrs = ls.matrix().sparsity()->rowOffs().view();
@@ -321,7 +321,7 @@ nnfvcc::SurfaceField<scalar> flux(const PDESolver<scalar>& expr)
     );
 
     const auto [mValue, rhsValue] = views(ls.boundaryMatrix(), ls.boundaryRhs());
-    const auto faceCells = mesh.boundaryMesh().faceCells().view();
+    const auto faceCells = mesh.boundaryMesh().faceOwners().view();
 
     NeoN::parallelFor(
         exec,
@@ -335,8 +335,8 @@ nnfvcc::SurfaceField<scalar> flux(const PDESolver<scalar>& expr)
     );
 
     const auto nTotalFaces = faceFlux.internalVector().size();
-    const auto nlValues = ls.nonLocalMatrix().values().view();
-    const auto nlRows = ls.nonLocalMatrix().rowOffs().view();
+    const auto nlValues = ls.offDiagonalMatrix().values().view();
+    const auto nlRows = ls.offDiagonalMatrix().rowOffs().view();
     const auto pBoundV = p.boundaryData().value().view();
 
     NeoN::parallelFor(
