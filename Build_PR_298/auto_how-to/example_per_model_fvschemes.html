@@ -334,71 +334,80 @@ controls). Each model that runs only needs a <em>slice</em> of those files —
 PIMPLE reads <code class="docutils literal notranslate"><span class="pre">divSchemes.div(phi,U)</span></code>; the turbulence model reads
 <code class="docutils literal notranslate"><span class="pre">divSchemes.div(phi,k)</span></code>; both share the file but care about different
 entries.</p>
-<p>The framework exposes <code class="xref py py-class docutils literal notranslate"><span class="pre">fvSchemes</span></code> and
-<code class="xref py py-class docutils literal notranslate"><span class="pre">fvSolution</span></code> as <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseConfig</span></code> base classes.
+<p>The framework exposes <code class="docutils literal notranslate"><span class="pre">fvSchemes</span></code> and
+<code class="docutils literal notranslate"><span class="pre">fvSolution</span></code> as <code class="docutils literal notranslate"><span class="pre">BaseConfig</span></code> base classes.
 <code class="docutils literal notranslate"><span class="pre">spec.config(fvSchemes)</span></code> returns a <em>per-spec subclass</em>; operations on
 that spec extend it with typed entries via <code class="docutils literal notranslate"><span class="pre">&#64;&lt;Subclass&gt;.add(...)</span></code>.
 Each <code class="docutils literal notranslate"><span class="pre">.add(...)</span></code> call injects typed Pydantic fields whose value types
-come from <code class="xref py py-mod docutils literal notranslate"><span class="pre">neofoam.foam.schemes</span></code> — bad values raise at LOAD time,
+come from <code class="docutils literal notranslate"><span class="pre">neofoam.foam.schemes</span></code> — bad values raise at LOAD time,
 missing entries surface as Pydantic <code class="docutils literal notranslate"><span class="pre">missing</span></code> errors.</p>
-<p>This page works the mechanism end-to-end with a small synthetic case
-(YAML on disk so the example runs without pybFoam).</p>
-<section id="stage-a-tiny-synthetic-case-directory">
-<h2>Stage a tiny synthetic case directory<a class="headerlink" href="#stage-a-tiny-synthetic-case-directory" title="Link to this heading">¶</a></h2>
+<p>This page works the mechanism end-to-end against dictionary fixtures
+shipped next to the example (YAML on disk so it runs without pybFoam).</p>
+<section id="stage-the-case-directory-from-shipped-dictionary-fixtures">
+<h2>Stage the case directory from shipped dictionary fixtures<a class="headerlink" href="#stage-the-case-directory-from-shipped-dictionary-fixtures" title="Link to this heading">¶</a></h2>
 <p>Real OpenFOAM cases ship <code class="docutils literal notranslate"><span class="pre">system/fvSchemes</span></code> and <code class="docutils literal notranslate"><span class="pre">system/fvSolution</span></code>
-in dictionary format. To keep the example pybFoam-free, the YAML
-fixtures below have the same <em>shape</em> — sections at the top level, each
-containing entry keys like <code class="docutils literal notranslate"><span class="pre">div(phi,U)</span></code>. The per-spec subclass
-overrides the inherited <code class="docutils literal notranslate"><span class="pre">&#64;IOStrategy(OF(...))</span></code> with a YAML strategy
-pointing at the local file.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
+in dictionary format. The fixtures shipped next to this page have the
+same <em>shape</em> — sections at the top level, each containing entry keys
+like <code class="docutils literal notranslate"><span class="pre">div(phi,U)</span></code> — kept as YAML so the example runs without pybFoam.
+We copy them into a throwaway case dir and load <em>from those files</em>
+rather than constructing the dictionaries inline.</p>
+<div class="literal-block-wrapper docutils container" id="id1">
+<div class="code-block-caption"><span class="caption-text">per_model_fvSchemes.yaml</span><a class="headerlink" href="#id1" title="Link to this code">¶</a></div>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">divSchemes</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">default</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">none</span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">div(phi,U)</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Gauss linear</span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">div(phi,k)</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Gauss upwind</span>
+<span class="nt">gradSchemes</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">default</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Gauss linear</span>
+<span class="w">  </span><span class="nt">grad(U)</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Gauss linear</span>
+<span class="w">  </span><span class="nt">grad(p)</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Gauss linear</span>
+<span class="nt">laplacianSchemes</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">default</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Gauss linear corrected</span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">laplacian(nuEff,U)</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Gauss linear corrected</span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">laplacian(rAU,p)</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Gauss linear corrected</span>
+</pre></div>
+</div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id2">
+<div class="code-block-caption"><span class="caption-text">per_model_fvSolution.yaml</span><a class="headerlink" href="#id2" title="Link to this code">¶</a></div>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">solvers</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">U</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">solver</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PBiCG</span>
+<span class="w">    </span><span class="nt">tolerance</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0e-6</span>
+<span class="w">  </span><span class="nt">p</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">solver</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PCG</span>
+<span class="w">    </span><span class="nt">tolerance</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0e-7</span>
+<span class="w">  </span><span class="nt">k</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">solver</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PBiCG</span>
+<span class="w">    </span><span class="nt">tolerance</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0e-6</span>
+<span class="nt">PIMPLE</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">nOuterCorrectors</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">  </span><span class="nt">nCorrectors</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+</pre></div>
+</div>
+</div>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-
-<span class="kn">import</span><span class="w"> </span><span class="nn">yaml</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.foam</span><span class="w"> </span><span class="kn">import</span> <span class="n">fvSchemes</span><span class="p">,</span> <span class="n">fvSolution</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">IOStrategy</span><span class="p">,</span> <span class="n">YAML</span>
 
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_here</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Marker used to locate this script on disk via inspect.getfile().&quot;&quot;&quot;</span>
+
+
+<span class="n">HERE</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">getfile</span><span class="p">(</span><span class="n">_here</span><span class="p">))</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span>
 <span class="n">CASE_DIR</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">tempfile</span><span class="o">.</span><span class="n">mkdtemp</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;neofoam_fvschemes_&quot;</span><span class="p">))</span>
-<span class="p">(</span><span class="n">CASE_DIR</span> <span class="o">/</span> <span class="s2">&quot;fvSchemes.yaml&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
-    <span class="n">yaml</span><span class="o">.</span><span class="n">safe_dump</span><span class="p">(</span>
-        <span class="p">{</span>
-            <span class="s2">&quot;divSchemes&quot;</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="s2">&quot;none&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;div(phi,U)&quot;</span><span class="p">:</span> <span class="s2">&quot;Gauss linear&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;div(phi,k)&quot;</span><span class="p">:</span> <span class="s2">&quot;Gauss upwind&quot;</span><span class="p">,</span>
-            <span class="p">},</span>
-            <span class="s2">&quot;gradSchemes&quot;</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="s2">&quot;Gauss linear&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;grad(U)&quot;</span><span class="p">:</span> <span class="s2">&quot;Gauss linear&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;grad(p)&quot;</span><span class="p">:</span> <span class="s2">&quot;Gauss linear&quot;</span><span class="p">,</span>
-            <span class="p">},</span>
-            <span class="s2">&quot;laplacianSchemes&quot;</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="s2">&quot;Gauss linear corrected&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;laplacian(nuEff,U)&quot;</span><span class="p">:</span> <span class="s2">&quot;Gauss linear corrected&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;laplacian(rAU,p)&quot;</span><span class="p">:</span> <span class="s2">&quot;Gauss linear corrected&quot;</span><span class="p">,</span>
-            <span class="p">},</span>
-        <span class="p">}</span>
-    <span class="p">)</span>
-<span class="p">)</span>
-<span class="p">(</span><span class="n">CASE_DIR</span> <span class="o">/</span> <span class="s2">&quot;fvSolution.yaml&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
-    <span class="n">yaml</span><span class="o">.</span><span class="n">safe_dump</span><span class="p">(</span>
-        <span class="p">{</span>
-            <span class="s2">&quot;solvers&quot;</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s2">&quot;U&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;solver&quot;</span><span class="p">:</span> <span class="s2">&quot;PBiCG&quot;</span><span class="p">,</span> <span class="s2">&quot;tolerance&quot;</span><span class="p">:</span> <span class="mf">1.0e-6</span><span class="p">},</span>
-                <span class="s2">&quot;p&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;solver&quot;</span><span class="p">:</span> <span class="s2">&quot;PCG&quot;</span><span class="p">,</span> <span class="s2">&quot;tolerance&quot;</span><span class="p">:</span> <span class="mf">1.0e-7</span><span class="p">},</span>
-                <span class="s2">&quot;k&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;solver&quot;</span><span class="p">:</span> <span class="s2">&quot;PBiCG&quot;</span><span class="p">,</span> <span class="s2">&quot;tolerance&quot;</span><span class="p">:</span> <span class="mf">1.0e-6</span><span class="p">},</span>
-            <span class="p">},</span>
-            <span class="s2">&quot;PIMPLE&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;nOuterCorrectors&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;nCorrectors&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span>
-        <span class="p">}</span>
-    <span class="p">)</span>
-<span class="p">)</span>
+<span class="k">for</span> <span class="n">_name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;per_model_fvSchemes.yaml&quot;</span><span class="p">,</span> <span class="s2">&quot;per_model_fvSolution.yaml&quot;</span><span class="p">):</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">HERE</span> <span class="o">/</span> <span class="n">_name</span><span class="p">,</span> <span class="n">CASE_DIR</span> <span class="o">/</span> <span class="n">_name</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;case_dir =&quot;</span><span class="p">,</span> <span class="n">CASE_DIR</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>case_dir = /tmp/neofoam_fvschemes_kzk9itn0
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>case_dir = /tmp/neofoam_fvschemes_h1b7o_39
 </pre></div>
 </div>
 </section>
@@ -413,9 +422,9 @@ need pybFoam.</p>
 <span class="n">PimpleFvSchemes</span> <span class="o">=</span> <span class="n">pimple</span><span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="n">fvSchemes</span><span class="p">)</span>
 <span class="n">PimpleFvSolution</span> <span class="o">=</span> <span class="n">pimple</span><span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="n">fvSolution</span><span class="p">)</span>
 
-<span class="c1"># Point the synthesised subclasses at our YAML fixtures.</span>
-<span class="n">IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">&quot;fvSchemes.yaml&quot;</span><span class="p">))(</span><span class="n">PimpleFvSchemes</span><span class="p">)</span>
-<span class="n">IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">&quot;fvSolution.yaml&quot;</span><span class="p">))(</span><span class="n">PimpleFvSolution</span><span class="p">)</span>
+<span class="c1"># Point the synthesised subclasses at our shipped YAML fixtures.</span>
+<span class="n">IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">&quot;per_model_fvSchemes.yaml&quot;</span><span class="p">))(</span><span class="n">PimpleFvSchemes</span><span class="p">)</span>
+<span class="n">IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">&quot;per_model_fvSolution.yaml&quot;</span><span class="p">))(</span><span class="n">PimpleFvSolution</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -501,12 +510,20 @@ solution.solvers.U            : {&#39;solver&#39;: &#39;PBiCG&#39;, &#39;toleran
 <section id="bad-input-surfaces-as-a-validation-error">
 <h2>Bad input surfaces as a validation error<a class="headerlink" href="#bad-input-surfaces-as-a-validation-error" title="Link to this heading">¶</a></h2>
 <p>An OpenFOAM file with an unparsable scheme value fails Pydantic
-validation — no separate verification step needed.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">CASE_DIR</span> <span class="o">/</span> <span class="s2">&quot;fvSchemes_bad.yaml&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
-    <span class="n">yaml</span><span class="o">.</span><span class="n">safe_dump</span><span class="p">({</span><span class="s2">&quot;divSchemes&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;div(phi,U)&quot;</span><span class="p">:</span> <span class="s2">&quot;notARealScheme garbage&quot;</span><span class="p">}})</span>
+validation — no separate verification step needed. The malformed
+fixture ships alongside the page:</p>
+<div class="literal-block-wrapper docutils container" id="id3">
+<div class="code-block-caption"><span class="caption-text">per_model_fvSchemes_bad.yaml</span><a class="headerlink" href="#id3" title="Link to this code">¶</a></div>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">divSchemes</span><span class="p">:</span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">div(phi,U)</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">notARealScheme garbage</span>
+</pre></div>
+</div>
+</div>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span>
+    <span class="n">HERE</span> <span class="o">/</span> <span class="s2">&quot;per_model_fvSchemes_bad.yaml&quot;</span><span class="p">,</span> <span class="n">CASE_DIR</span> <span class="o">/</span> <span class="s2">&quot;per_model_fvSchemes_bad.yaml&quot;</span>
 <span class="p">)</span>
 <span class="k">try</span><span class="p">:</span>
-    <span class="n">PimpleFvSchemes</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">CASE_DIR</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="s2">&quot;fvSchemes_bad.yaml&quot;</span><span class="p">)</span>
+    <span class="n">PimpleFvSchemes</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">CASE_DIR</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="s2">&quot;per_model_fvSchemes_bad.yaml&quot;</span><span class="p">)</span>
 <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;caught </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> as expected — bad scheme value&quot;</span><span class="p">)</span>
 </pre></div>
@@ -539,14 +556,14 @@ TurbFvSchemes sections        : [&#39;divSchemes&#39;]
 <li><p><a class="reference internal" href="example_custom_solver_with_configs.html"><span class="doc">Add config files to a solver and model</span></a> — solver-owned config
 ownership story; the per-model fvSchemes pattern here is the
 per-model analog.</p></li>
-<li><p><code class="xref py py-mod docutils literal notranslate"><span class="pre">neofoam.foam.schemes</span></code> — the typed scheme unions used as
+<li><p><code class="docutils literal notranslate"><span class="pre">neofoam.foam.schemes</span></code> — the typed scheme unions used as
 value types when <code class="docutils literal notranslate"><span class="pre">.add(...)</span></code> injects fields.</p></li>
 </ul>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;Cleanup the temporary case directory.&quot;&quot;&quot;</span>
 <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">CASE_DIR</span><span class="p">,</span> <span class="n">ignore_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.017 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.014 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-how-to-example-per-model-fvschemes-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/25e2dc4778329dac2e3ce01b416d63cc/example_per_model_fvschemes.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">example_per_model_fvschemes.ipynb</span></code></a></p>
@@ -618,7 +635,7 @@ value types when <code class="docutils literal notranslate"><span class="pre">.a
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Declare per-model fvSchemes / fvSolution slices</a><ul>
-<li><a class="reference internal" href="#stage-a-tiny-synthetic-case-directory">Stage a tiny synthetic case directory</a></li>
+<li><a class="reference internal" href="#stage-the-case-directory-from-shipped-dictionary-fixtures">Stage the case directory from shipped dictionary fixtures</a></li>
 <li><a class="reference internal" href="#declare-the-model-and-register-per-spec-subclasses">Declare the model and register per-spec subclasses</a></li>
 <li><a class="reference internal" href="#operations-declare-which-entries-they-need">Operations declare which entries they need</a></li>
 <li><a class="reference internal" href="#what-the-subclass-now-looks-like">What the subclass now looks like</a></li>

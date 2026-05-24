@@ -3,7 +3,7 @@ Add config files to a solver and model
 ======================================
 
 A solver and the models it runs each carry their own
-:class:`~neofoam.io.BaseConfig`. The framework reads them from disk at
+``BaseConfig``. The framework reads them from disk at
 LOAD time and threads them into operations by type annotation, so the
 operation code never reaches into ``ctx`` for its own parameters.
 
@@ -40,14 +40,14 @@ External validation in one call::
 The rest of this page builds the smallest end-to-end example that
 exercises shapes 1, 2 (callback as fall-back), and 5 — a Babylonian
 square-root iteration ``x_{n+1} = 0.5 * (x_n + target / x_n)`` — and
-asserts the result matches :func:`math.sqrt`. The arithmetic is
+asserts the result matches ``math.sqrt``. The arithmetic is
 incidental; configs are the subject.
 """
 
 # %%
 # Stage the YAML fixtures into a case directory
 # ---------------------------------------------
-# Every :class:`BaseConfig` binds to a *filename*, not a full path.
+# Every ``BaseConfig`` binds to a *filename*, not a full path.
 # The loader resolves that filename against the ``case_dir`` you pass
 # in. Here we copy the two YAML fixtures shipped alongside this page
 # into a throwaway directory and use it as the case.
@@ -102,7 +102,7 @@ print("case_dir =", CASE_DIR)
 # binds the class to a file inside ``case_dir``; the Pydantic
 # ``Field(...)`` validators reject bad input on load.
 #
-# .. literalinclude:: babylonian_config.yaml
+# .. literalinclude:: ../../examples/how-to/babylonian_config.yaml
 #    :language: yaml
 
 
@@ -119,7 +119,7 @@ class BabylonianConfig(BaseConfig):
 # many iterations to allow. Keeping these on a separate config makes
 # each layer responsible for its own knobs.
 #
-# .. literalinclude:: sqrt_solver_config.yaml
+# .. literalinclude:: ../../examples/how-to/sqrt_solver_config.yaml
 #    :language: yaml
 
 
@@ -132,7 +132,7 @@ class SqrtSolverConfig(BaseConfig):
 # %%
 # Define the model: register, build, operation
 # --------------------------------------------
-# Declared at module scope, the :class:`Model` earns three calls:
+# Declared at module scope, the ``Model`` earns three calls:
 #
 # - ``babylonian.config(BabylonianConfig)`` (shape 1 — class form)
 #   registers the config class. The framework auto-loads it via the
@@ -141,7 +141,7 @@ class SqrtSolverConfig(BaseConfig):
 #   ``@babylonian.load`` only when load needs custom args
 #   (``validate=False``, multi-source merge) or manifest-driven
 #   multi-instance loading.
-# - ``@babylonian.build`` emits the :class:`InitStep` objects that
+# - ``@babylonian.build`` emits the ``InitStep`` objects that
 #   produce the fields the operation will read. ``cfg`` is
 #   auto-injected from ``runtime.config`` because its annotation
 #   matches (shape 5).
@@ -175,7 +175,7 @@ def babylonian_step(self: Any, x: float, cfg: BabylonianConfig) -> FieldUpdates:
 # Wire the solver via StagedInitSpec
 # ----------------------------------
 # Solvers don't host the build stage directly — a
-# :class:`StagedInitSpec` registers LOAD and BUILD (and an optional
+# ``StagedInitSpec`` registers LOAD and BUILD (and an optional
 # RESOLVE, omitted here) as independent callbacks.
 #
 # - **LOAD** returns the solver config plus every model runtime in a
@@ -338,7 +338,7 @@ assert abs(ctx.fields["x"] - math.sqrt(target)) < 1e-6
 #   ``fvSchemes`` / ``fvSolution`` subclasses built up by
 #   ``@<Sub>.add(...)`` decorators on each operation.
 # - :doc:`example_work_with_config_files` — declare, load, validate,
-#   and subdict-isolate :class:`BaseConfig` classes on their own.
+#   and subdict-isolate ``BaseConfig`` classes on their own.
 # - :doc:`example_register_a_model` — the model side in isolation,
 #   including ``@spec.resolve`` and ``@spec.detect``.
 # - :doc:`example_use_depends_for_injection` — pull values from

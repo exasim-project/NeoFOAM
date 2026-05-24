@@ -329,7 +329,7 @@ to download the full example code.</p>
 <section class="sphx-glr-example-title" id="add-config-files-to-a-solver-and-model">
 <span id="sphx-glr-auto-how-to-example-custom-solver-with-configs-py"></span><h1>Add config files to a solver and model<a class="headerlink" href="#add-config-files-to-a-solver-and-model" title="Link to this heading">¶</a></h1>
 <p>A solver and the models it runs each carry their own
-<code class="xref py py-class docutils literal notranslate"><span class="pre">BaseConfig</span></code>. The framework reads them from disk at
+<code class="docutils literal notranslate"><span class="pre">BaseConfig</span></code>. The framework reads them from disk at
 LOAD time and threads them into operations by type annotation, so the
 operation code never reaches into <code class="docutils literal notranslate"><span class="pre">ctx</span></code> for its own parameters.</p>
 <section id="user-facing-api-five-shapes">
@@ -364,12 +364,12 @@ configs from <code class="docutils literal notranslate"><span class="pre">ctx</s
 <p>The rest of this page builds the smallest end-to-end example that
 exercises shapes 1, 2 (callback as fall-back), and 5 — a Babylonian
 square-root iteration <code class="docutils literal notranslate"><span class="pre">x_{n+1}</span> <span class="pre">=</span> <span class="pre">0.5</span> <span class="pre">*</span> <span class="pre">(x_n</span> <span class="pre">+</span> <span class="pre">target</span> <span class="pre">/</span> <span class="pre">x_n)</span></code> — and
-asserts the result matches <code class="xref py py-func docutils literal notranslate"><span class="pre">math.sqrt()</span></code>. The arithmetic is
+asserts the result matches <code class="docutils literal notranslate"><span class="pre">math.sqrt</span></code>. The arithmetic is
 incidental; configs are the subject.</p>
 </section>
 <section id="stage-the-yaml-fixtures-into-a-case-directory">
 <h2>Stage the YAML fixtures into a case directory<a class="headerlink" href="#stage-the-yaml-fixtures-into-a-case-directory" title="Link to this heading">¶</a></h2>
-<p>Every <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseConfig</span></code> binds to a <em>filename</em>, not a full path.
+<p>Every <code class="docutils literal notranslate"><span class="pre">BaseConfig</span></code> binds to a <em>filename</em>, not a full path.
 The loader resolves that filename against the <code class="docutils literal notranslate"><span class="pre">case_dir</span></code> you pass
 in. Here we copy the two YAML fixtures shipped alongside this page
 into a throwaway directory and use it as the case.</p>
@@ -415,7 +415,7 @@ into a throwaway directory and use it as the case.</p>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;case_dir =&quot;</span><span class="p">,</span> <span class="n">CASE_DIR</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>case_dir = /tmp/neofoam_sqrt_amxbgx1_
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>case_dir = /tmp/neofoam_sqrt_nyop6v98
 </pre></div>
 </div>
 </section>
@@ -425,6 +425,10 @@ into a throwaway directory and use it as the case.</p>
 we want and the seed for the iteration. <code class="docutils literal notranslate"><span class="pre">&#64;IOStrategy(YAML(...))</span></code>
 binds the class to a file inside <code class="docutils literal notranslate"><span class="pre">case_dir</span></code>; the Pydantic
 <code class="docutils literal notranslate"><span class="pre">Field(...)</span></code> validators reject bad input on load.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">target</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2.0</span>
+<span class="nt">initial_guess</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
+</pre></div>
+</div>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">&quot;babylonian_config.yaml&quot;</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">BabylonianConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
     <span class="n">target</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;value whose square root is wanted&quot;</span><span class="p">)</span>
@@ -437,6 +441,10 @@ binds the class to a file inside <code class="docutils literal notranslate"><spa
 <p>The solver owns the <em>algorithm controls</em> — when to stop and how
 many iterations to allow. Keeping these on a separate config makes
 each layer responsible for its own knobs.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">max_iterations</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
+<span class="nt">tolerance</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0e-12</span>
+</pre></div>
+</div>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">&quot;sqrt_solver_config.yaml&quot;</span><span class="p">))</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">SqrtSolverConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
     <span class="n">max_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
@@ -446,7 +454,7 @@ each layer responsible for its own knobs.</p>
 </section>
 <section id="define-the-model-register-build-operation">
 <h2>Define the model: register, build, operation<a class="headerlink" href="#define-the-model-register-build-operation" title="Link to this heading">¶</a></h2>
-<p>Declared at module scope, the <code class="xref py py-class docutils literal notranslate"><span class="pre">Model</span></code> earns three calls:</p>
+<p>Declared at module scope, the <code class="docutils literal notranslate"><span class="pre">Model</span></code> earns three calls:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">babylonian.config(BabylonianConfig)</span></code> (shape 1 — class form)
 registers the config class. The framework auto-loads it via the
@@ -455,7 +463,7 @@ so no callback is needed. Use the callback form
 <code class="docutils literal notranslate"><span class="pre">&#64;babylonian.load</span></code> only when load needs custom args
 (<code class="docutils literal notranslate"><span class="pre">validate=False</span></code>, multi-source merge) or manifest-driven
 multi-instance loading.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&#64;babylonian.build</span></code> emits the <code class="xref py py-class docutils literal notranslate"><span class="pre">InitStep</span></code> objects that
+<li><p><code class="docutils literal notranslate"><span class="pre">&#64;babylonian.build</span></code> emits the <code class="docutils literal notranslate"><span class="pre">InitStep</span></code> objects that
 produce the fields the operation will read. <code class="docutils literal notranslate"><span class="pre">cfg</span></code> is
 auto-injected from <code class="docutils literal notranslate"><span class="pre">runtime.config</span></code> because its annotation
 matches (shape 5).</p></li>
@@ -489,7 +497,7 @@ is auto-injected from <code class="docutils literal notranslate"><span class="pr
 <section id="wire-the-solver-via-stagedinitspec">
 <h2>Wire the solver via StagedInitSpec<a class="headerlink" href="#wire-the-solver-via-stagedinitspec" title="Link to this heading">¶</a></h2>
 <p>Solvers don’t host the build stage directly — a
-<code class="xref py py-class docutils literal notranslate"><span class="pre">StagedInitSpec</span></code> registers LOAD and BUILD (and an optional
+<code class="docutils literal notranslate"><span class="pre">StagedInitSpec</span></code> registers LOAD and BUILD (and an optional
 RESOLVE, omitted here) as independent callbacks.</p>
 <ul class="simple">
 <li><p><strong>LOAD</strong> returns the solver config plus every model runtime in a
@@ -656,7 +664,7 @@ math.sqrt       = 1.4142135623730951
 <code class="docutils literal notranslate"><span class="pre">fvSchemes</span></code> / <code class="docutils literal notranslate"><span class="pre">fvSolution</span></code> subclasses built up by
 <code class="docutils literal notranslate"><span class="pre">&#64;&lt;Sub&gt;.add(...)</span></code> decorators on each operation.</p></li>
 <li><p><a class="reference internal" href="example_work_with_config_files.html"><span class="doc">Work with configuration files</span></a> — declare, load, validate,
-and subdict-isolate <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseConfig</span></code> classes on their own.</p></li>
+and subdict-isolate <code class="docutils literal notranslate"><span class="pre">BaseConfig</span></code> classes on their own.</p></li>
 <li><p><a class="reference internal" href="example_register_a_model.html"><span class="doc">Register a new model</span></a> — the model side in isolation,
 including <code class="docutils literal notranslate"><span class="pre">&#64;spec.resolve</span></code> and <code class="docutils literal notranslate"><span class="pre">&#64;spec.detect</span></code>.</p></li>
 <li><p><a class="reference internal" href="example_use_depends_for_injection.html"><span class="doc">Inject dependencies into operations</span></a> — pull values from
@@ -664,7 +672,7 @@ including <code class="docutils literal notranslate"><span class="pre">&#64;spec
 <li><p><a class="reference internal" href="../explanation/three-stage-init.html"><span class="doc">Three-stage initialization</span></a> — why LOAD / RESOLVE / BUILD
 are split.</p></li>
 </ul>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.008 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.007 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-how-to-example-custom-solver-with-configs-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/d8285367e9db501f92a1fef0826cf5de/example_custom_solver_with_configs.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">example_custom_solver_with_configs.ipynb</span></code></a></p>
