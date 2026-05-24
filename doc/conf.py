@@ -15,6 +15,15 @@ import os
 
 locale.setlocale(locale.LC_NUMERIC, "C")
 
+# Gallery tutorials call ``neofoam.tutorial.clone_case`` which resolves
+# the bundled cases via ``NEOFOAM_CASES_DIR``.
+os.environ.setdefault(
+    "NEOFOAM_CASES_DIR",
+    os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "tutorials"
+    ),
+)
+
 # OpenFOAM installs a SIGFPE trap that fires on NaN / divide-by-zero /
 # overflow at the CPU level. Some Python paths (PyOS_double_to_string)
 # trip it during gallery execution. Disable for the doc build only.
