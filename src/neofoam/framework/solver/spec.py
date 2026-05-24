@@ -13,7 +13,7 @@ from __future__ import annotations
 import inspect
 import re
 from types import SimpleNamespace
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, TypeVar, cast
 
 from neofoam.framework.context import Context
 from neofoam.framework.dependency_resolver import (
@@ -24,6 +24,9 @@ from neofoam.framework.operations import Operation, OperationCollection, Sequent
 from neofoam.framework.types import OperationMetadata, OperationNumber
 
 from .runtime import SolverRuntime
+
+
+_ConfigT = TypeVar("_ConfigT", bound=type)
 
 
 def _snake_case(name: str) -> str:
@@ -64,7 +67,7 @@ class SolverSpec:
     # Config registration
     # ------------------------------------------------------------------
 
-    def config(self, cls: type) -> type:
+    def config(self, cls: _ConfigT) -> _ConfigT:
         """Register a config class. Callable multiple times.
 
         When more than one class is registered, ``runtime.config`` becomes a
@@ -75,7 +78,7 @@ class SolverSpec:
         :class:`neofoam.foam.fvSchemes`) get a fresh per-spec subclass.
         """
         if getattr(cls, "_synthesize_per_spec", False):
-            subclass = type(f"{self.name}_{cls.__name__}", (cls,), {})
+            subclass = cast(_ConfigT, type(f"{self.name}_{cls.__name__}", (cls,), {}))
             subclass._pending_sections = {}  # type: ignore[attr-defined]
             subclass._finalized = False  # type: ignore[attr-defined]
             self._config_classes.append(subclass)
