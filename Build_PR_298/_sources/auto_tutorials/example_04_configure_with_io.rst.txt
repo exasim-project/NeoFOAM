@@ -54,14 +54,7 @@ Imports
 
 
 
-.. rst-class:: sphx-glr-script-out
 
-.. code-block:: pytb
-
-    Traceback (most recent call last):
-      File "/home/runner/work/NeoFOAM/NeoFOAM/examples/tutorials/example_04_configure_with_io.py", line 29, in <module>
-        from neofoam.tutorial import clone_case
-    ModuleNotFoundError: No module named 'neofoam.tutorial'
 
 
 
@@ -85,6 +78,24 @@ with both flat and nested subdicts), and a deeper OpenFOAM dict
     for path in sorted(case.rglob("*")):
         if path.is_file():
             print(f"  {path.relative_to(case)}")
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ .. code-block:: none
+
+    case: /tmp/neofoam_x0imemvy/configs_demo
+      bad_solver.yaml
+      fvSolution.yaml
+      solver_config.json
+      solver_config.yaml
+      system/processing
+      system/solverDict
+
+
 
 
 .. GENERATED FROM PYTHON SOURCE LINES 46-53
@@ -111,6 +122,12 @@ behaviour below.
 
 
 
+
+
+
+
+
+
 .. GENERATED FROM PYTHON SOURCE LINES 63-69
 
 Load
@@ -128,6 +145,19 @@ from the ``@IOStrategy`` decorator.
     cfg = SolverConfig.load(case_dir=case)
     print(cfg)
     print(f"  tolerance type: {type(cfg.tolerance).__name__}")
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ .. code-block:: none
+
+    tolerance=1e-06 maxIterations=200 solver='PCG'
+      tolerance type: float
+
+
 
 
 .. GENERATED FROM PYTHON SOURCE LINES 75-81
@@ -149,6 +179,21 @@ touched.
     cfg.save(case_dir=case)
 
     print((case / "solver_config.yaml").read_text())
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ .. code-block:: none
+
+    tolerance: 1.0e-08
+    maxIterations: 500
+    solver: PCG
+
+
+
 
 
 .. GENERATED FROM PYTHON SOURCE LINES 89-95
@@ -176,6 +221,18 @@ we use both here to show the decorator is the *only* coupling.
     print(SolverConfigJSON.load(case_dir=case))
 
 
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ .. code-block:: none
+
+    tolerance=1e-06 maxIterations=200 solver='PCG'
+
+
+
+
 .. GENERATED FROM PYTHON SOURCE LINES 107-113
 
 Same data, OpenFOAM dictionary
@@ -201,6 +258,18 @@ keys verbatim; that's deliberate.
     print(SolverConfigOF.load(case_dir=case))
 
 
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ .. code-block:: none
+
+    tolerance=1e-06 maxIterations=200 solver='PCG'
+
+
+
+
 .. GENERATED FROM PYTHON SOURCE LINES 125-130
 
 Flat subdict: multiple configs in one file
@@ -223,6 +292,18 @@ PIMPLE outer-loop control, and tolerances into a single file. The
 
     pimple = PIMPLEConfig.load(case_dir=case)
     print(f"PIMPLE: {pimple}")
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ .. code-block:: none
+
+    PIMPLE: nOuterCorrectors=2 nCorrectors=2
+
+
 
 
 .. GENERATED FROM PYTHON SOURCE LINES 142-148
@@ -254,6 +335,19 @@ the canonical "share one fvSolution between many models" pattern.
 
     print(f"solvers.p: {PSolverConfig.load(case_dir=case)}")
     print(f"solvers.U: {USolverConfig.load(case_dir=case)}")
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ .. code-block:: none
+
+    solvers.p: solver='PCG' tolerance=1e-06
+    solvers.U: solver='smoothSolver' tolerance=1e-05
+
+
 
 
 .. GENERATED FROM PYTHON SOURCE LINES 166-173
@@ -300,6 +394,20 @@ sub-blocks — two levels of nesting, mapped to two configs below.
     print(f"processing.stage2:  {Stage2Config.load(case_dir=case)}")
 
 
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ .. code-block:: none
+
+    metadata:           name='scalarTransport' version='1.0' priority=5
+    processing.stage1:  algorithm='fast' threshold=0.001 maxIterations=100 batchSize=32
+    processing.stage2:  algorithm='accurate' threshold=0.0001 maxIterations=50 batchSize=16
+
+
+
+
 .. GENERATED FROM PYTHON SOURCE LINES 203-212
 
 Structured field types: nested models, not just primitives
@@ -337,6 +445,22 @@ load, exactly like for top-level fields.
     print(f"stage2.threshold: {processing.stage2.threshold}")
     print("JSON schema knows about the nesting:")
     print(f"  {list(ProcessingConfig.model_json_schema()['$defs'].keys())}")
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ .. code-block:: none
+
+    stage1 type:      StageParams
+    stage1.algorithm: fast
+    stage2.threshold: 0.0001
+    JSON schema knows about the nesting:
+      ['StageParams']
+
+
 
 
 .. GENERATED FROM PYTHON SOURCE LINES 235-252
@@ -380,6 +504,61 @@ only edited ``stage1``.
     print((case / "system" / "processing").read_text())
 
 
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ .. code-block:: none
+
+    /*--------------------------------*- C++ -*----------------------------------*\
+    | =========                 |                                                 |
+    | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+    |  \\    /   O peration     | Version:  2412                                  |
+    |   \\  /    A nd           | Website:  www.openfoam.com                      |
+    |    \\/     M anipulation  |                                                 |
+    \*---------------------------------------------------------------------------*/
+    // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+    FoamFile
+    {
+        version         2;
+        format          ascii;
+        class           dictionary;
+        object          processing;
+    }
+
+    metadata
+    {
+        name            scalarTransport;
+        version         "1.0";
+        priority        5;
+    }
+
+    processing
+    {
+        stage1
+        {
+            algorithm       fast;
+            threshold       1e-05;
+            maxIterations   250;
+            batchSize       32;
+        }
+        stage2
+        {
+            algorithm       accurate;
+            threshold       0.0001;
+            maxIterations   50;
+            batchSize       16;
+        }
+    }
+
+
+    // ************************************************************************* //
+
+
+
+
+
 .. GENERATED FROM PYTHON SOURCE LINES 268-274
 
 Validation: bad data fails on load
@@ -402,6 +581,19 @@ test.
             print(f"  {err['loc']}: {err['msg']}")
 
 
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ .. code-block:: none
+
+    Caught ValidationError:
+      ('tolerance',): Input should be greater than 0
+
+
+
+
 .. GENERATED FROM PYTHON SOURCE LINES 283-289
 
 Collect errors instead of raising
@@ -421,6 +613,18 @@ to surface every problem at once rather than the first one.
         print(f"{e.file_name}: {e.field} — {e.message}")
 
 
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ .. code-block:: none
+
+    bad_solver.yaml: ('tolerance',) — Input should be greater than 0
+
+
+
+
 .. GENERATED FROM PYTHON SOURCE LINES 295-299
 
 Where to go from here
@@ -431,7 +635,7 @@ Where to go from here
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 0.075 seconds)
+   **Total running time of the script:** (0 minutes 0.022 seconds)
 
 
 .. _sphx_glr_download_auto_tutorials_example_04_configure_with_io.py:

@@ -41,7 +41,7 @@ haven't run a NeoFOAM case yet, do
 Plugin imports
 --------------
 
-.. GENERATED FROM PYTHON SOURCE LINES 24-46
+.. GENERATED FROM PYTHON SOURCE LINES 24-47
 
 .. code-block:: Python
 
@@ -61,7 +61,8 @@ Plugin imports
     )
 
     from neofoam import FieldUpdates, Model, field
-    from neofoam.foam import fvSchemes, fvSolution
+
+    # from neofoam.foam import fvSchemes, fvSolution
     from neofoam.io import BaseConfig
     from neofoam.solver.incompressibleFluid import run as run_incompressible
     from neofoam.solver.incompressibleFluid.models import incompressibleFluidModel
@@ -69,26 +70,19 @@ Plugin imports
 
 
 
-.. rst-class:: sphx-glr-script-out
-
-.. code-block:: pytb
-
-    Traceback (most recent call last):
-      File "/home/runner/work/NeoFOAM/NeoFOAM/examples/tutorials/example_02_passive_scalar_plugin.py", line 39, in <module>
-        from neofoam import FieldUpdates, Model, field
-    ImportError: cannot import name 'FieldUpdates' from 'neofoam' (/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/neofoam/__init__.py)
 
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 47-51
+
+.. GENERATED FROM PYTHON SOURCE LINES 48-52
 
 Scaffold the plugin
 -------------------
 ``register_with`` adds the empty spec to ``incompressibleFluid``'s
 plugin registry. The four decorators below populate it.
 
-.. GENERATED FROM PYTHON SOURCE LINES 51-59
+.. GENERATED FROM PYTHON SOURCE LINES 52-60
 
 .. code-block:: Python
 
@@ -101,44 +95,67 @@ plugin registry. The four decorators below populate it.
     passive_scalar = Model("passive_scalar").register_with(incompressibleFluidModel)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 60-64
+
+
+
+
+
+
+.. GENERATED FROM PYTHON SOURCE LINES 61-65
 
 Activate when ``constant/scalarProperties`` is present
 ------------------------------------------------------
 Without that file the framework skips the model entirely — no
 config load, no operations, no overhead.
 
-.. GENERATED FROM PYTHON SOURCE LINES 64-71
+.. GENERATED FROM PYTHON SOURCE LINES 65-77
 
 .. code-block:: Python
 
 
 
+    # Framework note: in the current branch ``@spec.detect`` takes no
+    # arguments (the old ``case_dir`` parameter was removed) and ``load``
+    # now receives ``(case_dir, instance_id)`` instead of ``(case_dir,
+    # entry)``. Detection happens with the case as the cwd, so a relative
+    # path probes the right file.
     @passive_scalar.detect
-    def detect(case_dir: Path) -> bool:
-        return (case_dir / "constant" / "scalarProperties").exists()
+    def detect() -> bool:
+        return Path("constant/scalarProperties").exists()
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 72-74
+
+
+
+
+
+
+.. GENERATED FROM PYTHON SOURCE LINES 78-80
 
 Load the diffusivity from the case
 ----------------------------------
 
-.. GENERATED FROM PYTHON SOURCE LINES 74-82
+.. GENERATED FROM PYTHON SOURCE LINES 80-88
 
 .. code-block:: Python
 
 
 
     @passive_scalar.load
-    def load(case_dir: Path, _entry: Any) -> PassiveScalarConfig:
+    def load(_case_dir: Path, _instance_id: str) -> PassiveScalarConfig:
         props = pyf.dictionary.read("constant/scalarProperties")
-        return PassiveScalarConfig(D=props.get_scalar("D"))
+        return PassiveScalarConfig(D=props.get[float]("D"))
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 83-88
+
+
+
+
+
+
+.. GENERATED FROM PYTHON SOURCE LINES 89-94
 
 Register the new field
 ----------------------
@@ -146,14 +163,14 @@ The framework topologically sorts every model's contributions plus
 the solver's own. ``cfg`` is auto-injected by *type* — the
 framework finds the ``PassiveScalarConfig`` on ``runtime.config``.
 
-.. GENERATED FROM PYTHON SOURCE LINES 88-98
+.. GENERATED FROM PYTHON SOURCE LINES 94-104
 
 .. code-block:: Python
 
 
 
     @passive_scalar.build
-    def build(self: Any, cfg: PassiveScalarConfig) -> list[Any]:
+    def build(cfg: PassiveScalarConfig) -> list[Any]:
         def create_s(context: dict[str, Any]) -> volScalarField:
             return volScalarField.read_field(context["mesh"], "s")
 
@@ -161,7 +178,13 @@ framework finds the ``PassiveScalarConfig`` on ``runtime.config``.
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 99-106
+
+
+
+
+
+
+.. GENERATED FROM PYTHON SOURCE LINES 105-112
 
 Add the transport operation
 ---------------------------
@@ -171,19 +194,19 @@ corrected flux is what keeps the scalar conservative.
 ``@fvSchemes.add`` / ``@fvSolution.add`` declare requirements the
 framework's verifier checks at startup.
 
-.. GENERATED FROM PYTHON SOURCE LINES 106-127
+.. GENERATED FROM PYTHON SOURCE LINES 112-133
 
 .. code-block:: Python
 
 
 
     @passive_scalar.operation(depends_on=["continuity"])
-    @fvSchemes.add(
-        ddt="ddt(s)",
-        div="div(phi,s)",
-        laplacian="laplacian(D,s)",
-    )
-    @fvSolution.add("s")
+    # @fvSchemes.add(
+    #     ddt="ddt(s)",
+    #     div="div(phi,s)",
+    #     laplacian="laplacian(D,s)",
+    # )
+    # @fvSolution.add("s")
     def solve_s(
         self: Any,
         s: volScalarField,
@@ -197,7 +220,13 @@ framework's verifier checks at startup.
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 128-137
+
+
+
+
+
+
+.. GENERATED FROM PYTHON SOURCE LINES 134-143
 
 Run incompressibleFluid on the bundled case
 -------------------------------------------
@@ -209,7 +238,7 @@ clear advection-diffusion front develops. We truncate the runtime
 so the figure captures the dye plume mid-flight rather than a
 domain that has equilibrated to s ≈ 1 everywhere.
 
-.. GENERATED FROM PYTHON SOURCE LINES 137-149
+.. GENERATED FROM PYTHON SOURCE LINES 143-155
 
 .. code-block:: Python
 
@@ -226,12 +255,18 @@ domain that has equilibrated to s ≈ 1 everywhere.
         run_incompressible(["neofoam"])
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 150-152
+
+
+
+
+
+
+.. GENERATED FROM PYTHON SOURCE LINES 156-158
 
 Plot the dye field
 ------------------
 
-.. GENERATED FROM PYTHON SOURCE LINES 152-176
+.. GENERATED FROM PYTHON SOURCE LINES 158-182
 
 .. code-block:: Python
 
@@ -261,9 +296,23 @@ Plot the dye field
     pl.show()
 
 
+
+
+.. image-sg:: /auto_tutorials/images/sphx_glr_example_02_passive_scalar_plugin_001.gif
+   :alt: example 02 passive scalar plugin
+   :srcset: /auto_tutorials/images/sphx_glr_example_02_passive_scalar_plugin_001.gif
+   :class: sphx-glr-single-img
+
+
+
+
+
+
+
+
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 0.033 seconds)
+   **Total running time of the script:** (0 minutes 17.509 seconds)
 
 
 .. _sphx_glr_download_auto_tutorials_example_02_passive_scalar_plugin.py:
