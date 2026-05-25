@@ -176,7 +176,7 @@ void updateFaceVelocity(
             auto pGhost = pBoundV[bfacei];
             scalar pflux = coupling * (pGhost - internalP[own]);
             iPhi[facei] = iPredPhi[facei] - pflux;
-            bvalue[bfacei] = bPredValue[bfacei] - pflux;
+            bvalue[bfacei] = iPredPhi[facei] - pflux;
         }
     );
 }
@@ -240,42 +240,24 @@ nnfvcc::SurfaceField<scalar> flux(const nnfvcc::VolumeField<Vec3>& volField)
 
     NeoN::parallelFor(
         exec,
-        {nInternalFaces, nInternalFaces + nBoundaryFaces},
-        NEON_LAMBDA(const size_t facei) {
-            auto faceBCI = facei - nInternalFaces;
-
-            faceFluxIn[facei] = bSf[faceBCI] & volFieldBc[faceBCI];
-            bvalue[faceBCI] = bSf[faceBCI] & volFieldBc[faceBCI];
-        }
+        {0, nBoundaryFaces},
+        NEON_LAMBDA(const size_t faceBCI) { bvalue[faceBCI] = bSf[faceBCI] & volFieldBc[faceBCI]; }
     );
 
     // Processor-boundary faces.
-    //
-    // Indexing convention (matches updateFaceVelocity and the assembly):
-    //   facei  in [nInternalFaces + nBoundaryFaces, nTotalFaces)
-    //   faceBCI = facei - nInternalFaces  -> proc tail of boundaryMesh().sf() and of
-    //                                        volField.boundaryData().value()
-    //
-    // For OpenFOAM's fvc::flux(HbyA) on processor patches, the face value is the
-    // linear interpolation between the local owner cell and the ghost cell:
-    //     phi_f = w * volField[own] + (1 - w) * volField[ghost]
-    // matching the internal-face formula above. After volField.correctBoundaryConditions()
-    // the ghost cell value is stored at volField.boundaryData().value()[faceBCI] (the
-    // proc tail), and the cell-to-face weight is in weight.internalVector()[facei].
-    const auto nTotalFaces = mesh.nTotalFaces();
+    // faceBCI = nBoundaryFaces + proci -> proc tail of boundaryData().value()
+    const auto nProcFaces = mesh.nProcBoundaryFaces();
     const auto procFaceCells = mesh.boundaryMesh().faceOwners().view();
+    const auto bndWeights = mesh.boundaryMesh().weights().view();
 
     NeoN::parallelFor(
         exec,
-        {nInternalFaces + nBoundaryFaces, nTotalFaces},
-        NEON_LAMBDA(const size_t facei) {
-            auto faceBCI = facei - nInternalFaces;
+        {0, nProcFaces},
+        NEON_LAMBDA(const size_t proci) {
+            auto faceBCI = static_cast<size_t>(nBoundaryFaces) + proci;
             auto own = static_cast<std::size_t>(procFaceCells[faceBCI]);
-            // Same form as the internal-face line: w*(own - ghost) + ghost
-            //   = w * volFieldIn[own] + (1 - w) * volFieldBc[faceBCI]
-            auto faceVal =
-                weightIn[facei] * (volFieldIn[own] - volFieldBc[faceBCI]) + volFieldBc[faceBCI];
-            faceFluxIn[facei] = bSf[faceBCI] & faceVal;
+            auto w = bndWeights[faceBCI];
+            auto faceVal = w * (volFieldIn[own] - volFieldBc[faceBCI]) + volFieldBc[faceBCI];
             bvalue[faceBCI] = bSf[faceBCI] & faceVal;
         }
     );
