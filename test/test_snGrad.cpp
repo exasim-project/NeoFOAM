@@ -51,14 +51,11 @@ TEST_CASE("snGrad schemes")
         fvcc::FaceNormalGradientFactory<NeoN::scalar>::create(exec, nfMesh, input)
             ->faceNormalGrad(nfT, nfSnGradT);
 
-        // Internal faces
+        // Internal faces — iterate the surface field directly as a range
         const auto nfInternal = nfSnGradT.internalVector().copyToHost();
-        const std::span<const Foam::scalar> ofInternal(
-            ofSnGradT.primitiveField().cdata(), ofSnGradT.size()
-        );
         REQUIRE_THAT(
-            nfInternal.view({0, ofInternal.size()}),
-            Catch::Matchers::RangeEquals(ofInternal, ApproxScalar(1e-15))
+            nfInternal.view({0, ofSnGradT.size()}),
+            Catch::Matchers::RangeEquals(ofSnGradT, ApproxScalar(1e-15))
         );
 
         // Boundary patches
@@ -66,10 +63,9 @@ TEST_CASE("snGrad schemes")
         size_t patchStart = 0;
         for (const auto& patch : ofSnGradT.boundaryField())
         {
-            const std::span<const Foam::scalar> ofPatch(patch.cdata(), patch.size());
             REQUIRE_THAT(
                 nfBoundary.view({patchStart, patchStart + patch.size()}),
-                Catch::Matchers::RangeEquals(ofPatch, ApproxScalar(1e-15))
+                Catch::Matchers::RangeEquals(patch, ApproxScalar(1e-15))
             );
             patchStart += patch.size();
         }
@@ -89,22 +85,18 @@ TEST_CASE("snGrad schemes")
             ->faceNormalGrad(nfT, nfSnGradT);
 
         const auto nfInternal = nfSnGradT.internalVector().copyToHost();
-        const std::span<const Foam::scalar> ofInternal(
-            ofSnGradT.primitiveField().cdata(), ofSnGradT.size()
-        );
         REQUIRE_THAT(
-            nfInternal.view({0, ofInternal.size()}),
-            Catch::Matchers::RangeEquals(ofInternal, ApproxScalar(1e-12))
+            nfInternal.view({0, ofSnGradT.size()}),
+            Catch::Matchers::RangeEquals(ofSnGradT, ApproxScalar(1e-12))
         );
 
         const auto nfBoundary = nfSnGradT.boundaryData().value().copyToHost();
         size_t patchStart = 0;
         for (const auto& patch : ofSnGradT.boundaryField())
         {
-            const std::span<const Foam::scalar> ofPatch(patch.cdata(), patch.size());
             REQUIRE_THAT(
                 nfBoundary.view({patchStart, patchStart + patch.size()}),
-                Catch::Matchers::RangeEquals(ofPatch, ApproxScalar(1e-12))
+                Catch::Matchers::RangeEquals(patch, ApproxScalar(1e-12))
             );
             patchStart += patch.size();
         }
@@ -124,22 +116,18 @@ TEST_CASE("snGrad schemes")
             ->faceNormalGrad(nfT, nfSnGradT);
 
         const auto nfInternal = nfSnGradT.internalVector().copyToHost();
-        const std::span<const Foam::scalar> ofInternal(
-            ofSnGradT.primitiveField().cdata(), ofSnGradT.size()
-        );
         REQUIRE_THAT(
-            nfInternal.view({0, ofInternal.size()}),
-            Catch::Matchers::RangeEquals(ofInternal, ApproxScalar(1e-12))
+            nfInternal.view({0, ofSnGradT.size()}),
+            Catch::Matchers::RangeEquals(ofSnGradT, ApproxScalar(1e-12))
         );
 
         const auto nfBoundary = nfSnGradT.boundaryData().value().copyToHost();
         size_t patchStart = 0;
         for (const auto& patch : ofSnGradT.boundaryField())
         {
-            const std::span<const Foam::scalar> ofPatch(patch.cdata(), patch.size());
             REQUIRE_THAT(
                 nfBoundary.view({patchStart, patchStart + patch.size()}),
-                Catch::Matchers::RangeEquals(ofPatch, ApproxScalar(1e-12))
+                Catch::Matchers::RangeEquals(patch, ApproxScalar(1e-12))
             );
             patchStart += patch.size();
         }
@@ -162,22 +150,18 @@ TEST_CASE("snGrad schemes")
             ->faceNormalGrad(nfT, nfSnGradT);
 
         const auto nfInternal = nfSnGradT.internalVector().copyToHost();
-        const std::span<const Foam::scalar> ofInternal(
-            ofSnGradT.primitiveField().cdata(), ofSnGradT.size()
-        );
         REQUIRE_THAT(
-            nfInternal.view({0, ofInternal.size()}),
-            Catch::Matchers::RangeEquals(ofInternal, ApproxScalar(1e-12))
+            nfInternal.view({0, ofSnGradT.size()}),
+            Catch::Matchers::RangeEquals(ofSnGradT, ApproxScalar(1e-12))
         );
 
         const auto nfBoundary = nfSnGradT.boundaryData().value().copyToHost();
         size_t patchStart = 0;
         for (const auto& patch : ofSnGradT.boundaryField())
         {
-            const std::span<const Foam::scalar> ofPatch(patch.cdata(), patch.size());
             REQUIRE_THAT(
                 nfBoundary.view({patchStart, patchStart + patch.size()}),
-                Catch::Matchers::RangeEquals(ofPatch, ApproxScalar(1e-12))
+                Catch::Matchers::RangeEquals(patch, ApproxScalar(1e-12))
             );
             patchStart += patch.size();
         }
@@ -197,22 +181,18 @@ TEST_CASE("snGrad schemes")
             ->faceNormalGrad(nfU, nfSnGradU);
 
         const auto nfInternal = nfSnGradU.internalVector().copyToHost();
-        const std::span<const Foam::vector> ofInternal(
-            ofSnGradU.primitiveField().cdata(), ofSnGradU.size()
-        );
         REQUIRE_THAT(
-            nfInternal.view({0, ofInternal.size()}),
-            Catch::Matchers::RangeEquals(ofInternal, ApproxVector(1e-15))
+            nfInternal.view({0, ofSnGradU.size()}),
+            Catch::Matchers::RangeEquals(ofSnGradU, ApproxVector(1e-15))
         );
 
         const auto nfBoundary = nfSnGradU.boundaryData().value().copyToHost();
         size_t patchStart = 0;
         for (const auto& patch : ofSnGradU.boundaryField())
         {
-            const std::span<const Foam::vector> ofPatch(patch.cdata(), patch.size());
             REQUIRE_THAT(
                 nfBoundary.view({patchStart, patchStart + patch.size()}),
-                Catch::Matchers::RangeEquals(ofPatch, ApproxVector(1e-15))
+                Catch::Matchers::RangeEquals(patch, ApproxVector(1e-15))
             );
             patchStart += patch.size();
         }
@@ -232,22 +212,18 @@ TEST_CASE("snGrad schemes")
             ->faceNormalGrad(nfU, nfSnGradU);
 
         const auto nfInternal = nfSnGradU.internalVector().copyToHost();
-        const std::span<const Foam::vector> ofInternal(
-            ofSnGradU.primitiveField().cdata(), ofSnGradU.size()
-        );
         REQUIRE_THAT(
-            nfInternal.view({0, ofInternal.size()}),
-            Catch::Matchers::RangeEquals(ofInternal, ApproxVector(1e-12))
+            nfInternal.view({0, ofSnGradU.size()}),
+            Catch::Matchers::RangeEquals(ofSnGradU, ApproxVector(1e-12))
         );
 
         const auto nfBoundary = nfSnGradU.boundaryData().value().copyToHost();
         size_t patchStart = 0;
         for (const auto& patch : ofSnGradU.boundaryField())
         {
-            const std::span<const Foam::vector> ofPatch(patch.cdata(), patch.size());
             REQUIRE_THAT(
                 nfBoundary.view({patchStart, patchStart + patch.size()}),
-                Catch::Matchers::RangeEquals(ofPatch, ApproxVector(1e-12))
+                Catch::Matchers::RangeEquals(patch, ApproxVector(1e-12))
             );
             patchStart += patch.size();
         }
@@ -267,22 +243,18 @@ TEST_CASE("snGrad schemes")
             ->faceNormalGrad(nfU, nfSnGradU);
 
         const auto nfInternal = nfSnGradU.internalVector().copyToHost();
-        const std::span<const Foam::vector> ofInternal(
-            ofSnGradU.primitiveField().cdata(), ofSnGradU.size()
-        );
         REQUIRE_THAT(
-            nfInternal.view({0, ofInternal.size()}),
-            Catch::Matchers::RangeEquals(ofInternal, ApproxVector(1e-12))
+            nfInternal.view({0, ofSnGradU.size()}),
+            Catch::Matchers::RangeEquals(ofSnGradU, ApproxVector(1e-12))
         );
 
         const auto nfBoundary = nfSnGradU.boundaryData().value().copyToHost();
         size_t patchStart = 0;
         for (const auto& patch : ofSnGradU.boundaryField())
         {
-            const std::span<const Foam::vector> ofPatch(patch.cdata(), patch.size());
             REQUIRE_THAT(
                 nfBoundary.view({patchStart, patchStart + patch.size()}),
-                Catch::Matchers::RangeEquals(ofPatch, ApproxVector(1e-12))
+                Catch::Matchers::RangeEquals(patch, ApproxVector(1e-12))
             );
             patchStart += patch.size();
         }
