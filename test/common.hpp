@@ -197,5 +197,84 @@ FieldType randDimField(const Foam::fvMesh& mesh, Foam::dimensionSet dimensionSet
     return field;
 }
 
+template<typename OFField, typename Predicate>
+struct EqualsMatcher : Catch::Matchers::MatcherGenericBase
+{
+    EqualsMatcher(OFField expected, Predicate pred, bool withBoundaries = true)
+        : expected_(std::move(expected))
+        , pred_(pred)
+        , withBoundaries_(withBoundaries)
+    {}
+
+    template<typename NFField>
+    bool match(const NFField& actual) const
+    {
+        if constexpr (std::is_same_v<NFField, NeoN::Vector<NeoN::scalar>> || std::is_same_v<NFField, NeoN::Vector<NeoN::Vec3>>)
+        {
+            auto aHost = actual.copyToHost();
+            auto bSpan = std::span(expected_.cdata(), expected_.size());
+            if (static_cast<std::size_t>(aHost.size()) < bSpan.size()) return false;
+            auto aSub = aHost.view({0, bSpan.size()});
+            return std::equal(begin(aSub), end(aSub), bSpan.begin(), bSpan.end(), pred_);
+        }
+        else
+        {
+            auto aHost = actual.internalVector().copyToHost();
+            const auto bSpan = std::span(expected_.primitiveField().cdata(), expected_.size());
+            if (static_cast<std::size_t>(aHost.size()) < bSpan.size()) return false;
+            auto aSub = aHost.view({0, bSpan.size()});
+            if (!std::equal(begin(aSub), end(aSub), bSpan.begin(), bSpan.end(), pred_))
+                return false;
+
+            if (withBoundaries_)
+            {
+                std::vector<typename NFField::VectorValueType> ofBoundaryData;
+                // const_cast to reach the non-const value() which calls waitAll() for MPI
+                // completion
+                auto nfBoundaryHost =
+                    const_cast<NFField&>(actual).boundaryData().value().copyToHost();
+
+                for (const auto& patch : expected_.boundaryField())
+                {
+                    if (patch.type() == "processor") continue;
+                    auto bBoundarySpan = std::span(patch.cdata(), patch.size());
+                    for (auto val : bBoundarySpan)
+                        ofBoundaryData.push_back(convert(val));
+                }
+                for (const auto& patch : expected_.boundaryField())
+                {
+                    if (patch.type() != "processor") continue;
+                    auto bBoundarySpan = std::span(patch.cdata(), patch.size());
+                    for (auto val : bBoundarySpan)
+                        ofBoundaryData.push_back(convert(val));
+                }
+
+                auto bndSub = nfBoundaryHost.view({0, ofBoundaryData.size()});
+                return std::equal(
+                    begin(bndSub),
+                    end(bndSub),
+                    ofBoundaryData.begin(),
+                    ofBoundaryData.end(),
+                    pred_
+                );
+            }
+            return true;
+        }
+    }
+
+    std::string describe() const override { return "equals OpenFOAM field"; }
+
+private:
+
+    OFField expected_;
+    Predicate pred_;
+    bool withBoundaries_;
+};
+
+template<typename OFField, typename Predicate>
+auto Equals(OFField expected, Predicate pred, bool withBoundaries = true)
+{
+    return EqualsMatcher<OFField, Predicate> {std::move(expected), pred, withBoundaries};
+}
 
 }
