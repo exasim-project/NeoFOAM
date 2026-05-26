@@ -84,12 +84,12 @@ TEST_CASE("UnstructuredMesh")
         auto sameFaceCentres = nfMesh.faceCenters() == ofMesh.faceCentres();
         REQUIRE(sameFaceCentres);
 
-        auto sameFaceAreas = nfMesh.faceNormals() == ofMesh.faceAreas();
-        REQUIRE(sameFaceAreas);
+        auto sameFaceNormals = nfMesh.faceNormals() == ofMesh.faceAreas();
+        REQUIRE(sameFaceNormals);
 
         auto magSf = Foam::mag(ofMesh.faceAreas());
-        auto sameMagSf = nfMesh.faceAreas() == magSf();
-        REQUIRE(sameMagSf);
+        auto sameFaceAreas = nfMesh.faceAreas() == magSf();
+        REQUIRE(sameFaceAreas);
 
         // TODO NeoN::Vector to OF List comparison currently not supported
         // auto sameOwner = nfMesh.faceOwner() == ofMesh.faceOwner();

@@ -4,6 +4,8 @@
 #include "NeoFOAM/datastructures/meshAdapter.hpp"
 #include "NeoFOAM/auxiliary/readers.hpp"
 
+#include "processorFvPatch.H"
+
 
 #include "processorFvPatch.H"
 #include "lduInterfaceField.H"
@@ -126,6 +128,35 @@ computeNeighbRankAndSize(const Foam::fvMesh& mesh)
     return result;
 }
 
+NeoN::localIdx computeProcBoundaryPatches(const Foam::fvMesh& mesh)
+{
+    NeoN::localIdx count = 0;
+    const Foam::fvBoundaryMesh& bMesh = mesh.boundary();
+    forAll(bMesh, patchI)
+    {
+        if (Foam::isA<Foam::processorFvPatch>(bMesh[patchI]))
+        {
+            count++;
+        }
+    }
+    return count;
+}
+
+std::vector<NeoN::localIdx> computeNeighbourRank(const Foam::fvMesh& mesh)
+{
+    std::vector<NeoN::localIdx> result;
+    const Foam::fvBoundaryMesh& bMesh = mesh.boundary();
+    forAll(bMesh, patchI)
+    {
+        const auto* procPatch = Foam::isA<Foam::processorFvPatch>(bMesh[patchI]);
+        if (procPatch)
+        {
+            result.push_back(static_cast<NeoN::localIdx>(procPatch->neighbProcNo()));
+        }
+    }
+    return result;
+}
+
 int32_t computeNBoundaryFaces(const Foam::fvMesh& mesh)
 {
     const Foam::fvBoundaryMesh& bMesh = mesh.boundary();
@@ -146,12 +177,6 @@ NeoN::CommunicationPattern createCommunicationPattern(const RunTime& runTime)
 NeoN::UnstructuredMesh
 readOpenFOAMMesh(const NeoN::Executor exec, const Foam::fvMesh& mesh, bool fullMeshOnGPU)
 {
-    const int32_t nCells = mesh.nCells();
-    const int32_t nInternalFaces = mesh.nInternalFaces();
-    const int32_t nBoundaryFaces = computeNBoundaryFaces(mesh);
-    const int32_t nBoundaries = mesh.boundary().size();
-    const int32_t nFaces = mesh.nFaces();
-
     // Executor of "optional" fields
     const NeoN::Executor optExec = fullMeshOnGPU ? exec : NeoN::SerialExecutor {};
 
@@ -192,9 +217,7 @@ readOpenFOAMMesh(const NeoN::Executor exec, const Foam::fvMesh& mesh, bool fullM
     std::vector<NeoN::localIdx> offset = computeOffset(mesh);
 
     std::vector<NeoN::localIdx> neighbRank = computeNeighbRank(mesh);
-
     NeoN::localIdx nProcPatches = neighbRank.size();
-    std::vector<NeoN::localIdx> neighbourRank = computeNeighbRank(mesh);
     NeoN::BoundaryMesh bMesh(
         exec,
         fromFoamField(exec, faceCells),
@@ -208,10 +231,11 @@ readOpenFOAMMesh(const NeoN::Executor exec, const Foam::fvMesh& mesh, bool fullM
         fromFoamField(exec, deltaCoeffs),
         offset,
         nProcPatches,
-        neighbourRank
+        neighbRank
     );
 
     NeoN::UnstructuredMesh uMesh(
+        exec,
         fromFoamField(optExec, mesh.points()),
         fromFoamField(exec, mesh.cellVolumes()),
         fromFoamField(exec, mesh.cellCentres()),

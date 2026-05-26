@@ -132,12 +132,10 @@ void updateFaceVelocity(
 
     NeoN::parallelFor(
         exec,
-        {nInternalFaces, nInternalFaces + nBoundaryFaces},
-        NEON_LAMBDA(const size_t facei) {
-            auto bfacei = facei - nInternalFaces;
+        {0, static_cast<size_t>(mesh.nBoundaryFaces())},
+        NEON_LAMBDA(const size_t bfacei) {
             scalar bflux =
                 (rhsValue[bfacei] - mValue.values[bfacei] * internalP[faceCells[bfacei]]);
-            iPhi[facei] = iPredPhi[facei] - bflux;
             bvalue[bfacei] = bPredValue[bfacei] - bflux;
         }
     );

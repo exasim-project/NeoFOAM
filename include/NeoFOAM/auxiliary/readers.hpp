@@ -250,30 +250,22 @@ auto constructFrom(
 
         const std::size_t nInt = nfMesh.nInternalFaces();
         const std::size_t nBnd = nfMesh.boundaryMesh().offset().back();
-        const std::size_t nFaces = nInt + nBnd;
 
-        NF_DINFO(
-            "Internal: " + std::to_string(nInt) + ", Boundary: " + std::to_string(nBnd)
-            + ", nFaces: " + std::to_string(nFaces)
-        );
+        NF_DINFO("Internal: " + std::to_string(nInt) + ", Boundary: " + std::to_string(nBnd));
 
-        Foam::Field<FoamComponentType> flat(nFaces);
+        Foam::Field<FoamComponentType> internalData(nInt);
         Foam::Field<FoamComponentType> bval(nBnd);
 
-        // Internal faces first: [0, nInt)
+        // Internal faces only: [0, nInt)
         forAll(in, facei)
         {
             if (static_cast<std::size_t>(facei) < nInt)
             {
-                flat[facei] = convert(in[facei]);
+                internalData[facei] = convert(in[facei]);
             }
         }
 
-        // Boundary faces appended in patch order: [nInt, nFaces).
-        // Match the NeoN convention where non-processor patches come first and
-        // processor patches are appended at the tail (createCalculatedBCs /
-        // createExtrapolatedBCs lay the boundary range out the same way).
-        Foam::label idx = static_cast<Foam::label>(nInt);
+        // Boundary faces in patch order: [0, nBnd)
         Foam::label bi = 0;
         // Pass 1 — non-processor patches.
         forAll(in.boundaryField(), patchi)
@@ -285,9 +277,7 @@ auto constructFrom(
             }
             forAll(pin, facei)
             {
-                flat[idx] = convert(pin[facei]);
                 bval[bi] = convert(pin[facei]);
-                ++idx;
                 ++bi;
             }
         }
@@ -301,19 +291,14 @@ auto constructFrom(
             }
             forAll(pin, facei)
             {
-                flat[idx] = convert(pin[facei]);
                 bval[bi] = convert(pin[facei]);
-                ++idx;
                 ++bi;
             }
         }
 
-        // (Optional) asserts in debug:
-        NF_ASSERT_EQUAL(static_cast<std::size_t>(idx), nFaces);
         NF_ASSERT_EQUAL(static_cast<std::size_t>(bi), nBnd);
 
-        out.internalVector() = fromFoamField(exec, flat);
-        // FIXME this assume consistent order of the patches
+        out.internalVector() = fromFoamField(exec, internalData);
         out.boundaryData().value() = fromFoamField(exec, bval);
         out.correctBoundaryConditions();
         return out;
