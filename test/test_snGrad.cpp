@@ -31,7 +31,7 @@ TEST_CASE("snGrad schemes")
     auto ofU = randomVectorField(runTime, mesh, "U");
     auto nfU = NeoFOAM::constructFrom(exec, nfMesh, ofU);
 
-    // Helper: zero-fill a NeoFOAM surface field with the supplied zero value
+    // Zero-fill a NeoFOAM surface field
     auto zeroSurface = [](auto& field, auto zeroVal)
     {
         NeoN::fill(field.internalVector(), zeroVal);
@@ -40,12 +40,10 @@ TEST_CASE("snGrad schemes")
 
     SECTION("uncorrected matches OpenFOAM on " + execName)
     {
-        // OpenFOAM: explicit uncorrected snGrad
         Foam::IStringStream is("uncorrected");
         auto tSnGradT = Foam::fv::snGradScheme<Foam::scalar>::New(mesh, is)->snGrad(ofT);
         const Foam::surfaceScalarField& ofSnGradT = tSnGradT.cref();
 
-        // NeoFOAM: uncorrected scheme
         auto nfSnGradT = NeoFOAM::constructFrom(exec, nfMesh, ofSnGradT);
         zeroSurface(nfSnGradT, NeoN::scalar(0.0));
 
@@ -53,18 +51,36 @@ TEST_CASE("snGrad schemes")
         fvcc::FaceNormalGradientFactory<NeoN::scalar>::create(exec, nfMesh, input)
             ->faceNormalGrad(nfT, nfSnGradT);
 
-        // On the orthogonal setup_operator mesh: nonOrthDeltaCoeffs == deltaCoeffs
-        NeoFOAM::compare(nfSnGradT, ofSnGradT, ApproxScalar(1e-15), true);
+        // Internal faces
+        const auto nfInternal = nfSnGradT.internalVector().copyToHost();
+        const std::span<const Foam::scalar> ofInternal(
+            ofSnGradT.primitiveField().cdata(), ofSnGradT.size()
+        );
+        REQUIRE_THAT(
+            nfInternal.view({0, ofInternal.size()}),
+            Catch::Matchers::RangeEquals(ofInternal, ApproxScalar(1e-15))
+        );
+
+        // Boundary patches
+        const auto nfBoundary = nfSnGradT.boundaryData().value().copyToHost();
+        size_t patchStart = 0;
+        for (const auto& patch : ofSnGradT.boundaryField())
+        {
+            const std::span<const Foam::scalar> ofPatch(patch.cdata(), patch.size());
+            REQUIRE_THAT(
+                nfBoundary.view({patchStart, patchStart + patch.size()}),
+                Catch::Matchers::RangeEquals(ofPatch, ApproxScalar(1e-15))
+            );
+            patchStart += patch.size();
+        }
     }
 
     SECTION("corrected matches OpenFOAM on " + execName)
     {
-        // OpenFOAM: explicit corrected snGrad
         Foam::IStringStream is("corrected");
         auto tSnGradT = Foam::fv::snGradScheme<Foam::scalar>::New(mesh, is)->snGrad(ofT);
         const Foam::surfaceScalarField& ofSnGradT = tSnGradT.cref();
 
-        // NeoFOAM: corrected scheme
         auto nfSnGradT = NeoFOAM::constructFrom(exec, nfMesh, ofSnGradT);
         zeroSurface(nfSnGradT, NeoN::scalar(0.0));
 
@@ -72,14 +88,30 @@ TEST_CASE("snGrad schemes")
         fvcc::FaceNormalGradientFactory<NeoN::scalar>::create(exec, nfMesh, input)
             ->faceNormalGrad(nfT, nfSnGradT);
 
-        // On orthogonal mesh corrVec = 0, so corrected == uncorrected; gradient
-        // computation is exact when correction vanishes
-        NeoFOAM::compare(nfSnGradT, ofSnGradT, ApproxScalar(1e-12), true);
+        const auto nfInternal = nfSnGradT.internalVector().copyToHost();
+        const std::span<const Foam::scalar> ofInternal(
+            ofSnGradT.primitiveField().cdata(), ofSnGradT.size()
+        );
+        REQUIRE_THAT(
+            nfInternal.view({0, ofInternal.size()}),
+            Catch::Matchers::RangeEquals(ofInternal, ApproxScalar(1e-12))
+        );
+
+        const auto nfBoundary = nfSnGradT.boundaryData().value().copyToHost();
+        size_t patchStart = 0;
+        for (const auto& patch : ofSnGradT.boundaryField())
+        {
+            const std::span<const Foam::scalar> ofPatch(patch.cdata(), patch.size());
+            REQUIRE_THAT(
+                nfBoundary.view({patchStart, patchStart + patch.size()}),
+                Catch::Matchers::RangeEquals(ofPatch, ApproxScalar(1e-12))
+            );
+            patchStart += patch.size();
+        }
     }
 
     SECTION("limited (0.333) matches OpenFOAM limited on " + execName)
     {
-        // Terse OF form: "limited <coeff>"
         Foam::IStringStream is("limited 0.333");
         auto tSnGradT = Foam::fv::snGradScheme<Foam::scalar>::New(mesh, is)->snGrad(ofT);
         const Foam::surfaceScalarField& ofSnGradT = tSnGradT.cref();
@@ -91,13 +123,32 @@ TEST_CASE("snGrad schemes")
         fvcc::FaceNormalGradientFactory<NeoN::scalar>::create(exec, nfMesh, input)
             ->faceNormalGrad(nfT, nfSnGradT);
 
-        NeoFOAM::compare(nfSnGradT, ofSnGradT, ApproxScalar(1e-12), true);
+        const auto nfInternal = nfSnGradT.internalVector().copyToHost();
+        const std::span<const Foam::scalar> ofInternal(
+            ofSnGradT.primitiveField().cdata(), ofSnGradT.size()
+        );
+        REQUIRE_THAT(
+            nfInternal.view({0, ofInternal.size()}),
+            Catch::Matchers::RangeEquals(ofInternal, ApproxScalar(1e-12))
+        );
+
+        const auto nfBoundary = nfSnGradT.boundaryData().value().copyToHost();
+        size_t patchStart = 0;
+        for (const auto& patch : ofSnGradT.boundaryField())
+        {
+            const std::span<const Foam::scalar> ofPatch(patch.cdata(), patch.size());
+            REQUIRE_THAT(
+                nfBoundary.view({patchStart, patchStart + patch.size()}),
+                Catch::Matchers::RangeEquals(ofPatch, ApproxScalar(1e-12))
+            );
+            patchStart += patch.size();
+        }
     }
 
     SECTION("limited corrected (0.5) — verbose OF form matches on " + execName)
     {
-        // Verbose OF form: "limited corrected <coeff>" — the form that appears inside
-        // laplacianSchemes entries like "Gauss linear limited corrected 0.5"
+        // "limited corrected <coeff>" — form used inside laplacianSchemes entries
+        // like "Gauss linear limited corrected 0.5"
         Foam::IStringStream is("limited corrected 0.5");
         auto tSnGradT = Foam::fv::snGradScheme<Foam::scalar>::New(mesh, is)->snGrad(ofT);
         const Foam::surfaceScalarField& ofSnGradT = tSnGradT.cref();
@@ -110,7 +161,26 @@ TEST_CASE("snGrad schemes")
         fvcc::FaceNormalGradientFactory<NeoN::scalar>::create(exec, nfMesh, input)
             ->faceNormalGrad(nfT, nfSnGradT);
 
-        NeoFOAM::compare(nfSnGradT, ofSnGradT, ApproxScalar(1e-12), true);
+        const auto nfInternal = nfSnGradT.internalVector().copyToHost();
+        const std::span<const Foam::scalar> ofInternal(
+            ofSnGradT.primitiveField().cdata(), ofSnGradT.size()
+        );
+        REQUIRE_THAT(
+            nfInternal.view({0, ofInternal.size()}),
+            Catch::Matchers::RangeEquals(ofInternal, ApproxScalar(1e-12))
+        );
+
+        const auto nfBoundary = nfSnGradT.boundaryData().value().copyToHost();
+        size_t patchStart = 0;
+        for (const auto& patch : ofSnGradT.boundaryField())
+        {
+            const std::span<const Foam::scalar> ofPatch(patch.cdata(), patch.size());
+            REQUIRE_THAT(
+                nfBoundary.view({patchStart, patchStart + patch.size()}),
+                Catch::Matchers::RangeEquals(ofPatch, ApproxScalar(1e-12))
+            );
+            patchStart += patch.size();
+        }
     }
 
     SECTION("uncorrected Vec3 matches OpenFOAM on " + execName)
@@ -126,7 +196,26 @@ TEST_CASE("snGrad schemes")
         fvcc::FaceNormalGradientFactory<NeoN::Vec3>::create(exec, nfMesh, input)
             ->faceNormalGrad(nfU, nfSnGradU);
 
-        NeoFOAM::compare(nfSnGradU, ofSnGradU, ApproxVector(1e-15), true);
+        const auto nfInternal = nfSnGradU.internalVector().copyToHost();
+        const std::span<const Foam::vector> ofInternal(
+            ofSnGradU.primitiveField().cdata(), ofSnGradU.size()
+        );
+        REQUIRE_THAT(
+            nfInternal.view({0, ofInternal.size()}),
+            Catch::Matchers::RangeEquals(ofInternal, ApproxVector(1e-15))
+        );
+
+        const auto nfBoundary = nfSnGradU.boundaryData().value().copyToHost();
+        size_t patchStart = 0;
+        for (const auto& patch : ofSnGradU.boundaryField())
+        {
+            const std::span<const Foam::vector> ofPatch(patch.cdata(), patch.size());
+            REQUIRE_THAT(
+                nfBoundary.view({patchStart, patchStart + patch.size()}),
+                Catch::Matchers::RangeEquals(ofPatch, ApproxVector(1e-15))
+            );
+            patchStart += patch.size();
+        }
     }
 
     SECTION("corrected Vec3 matches OpenFOAM on " + execName)
@@ -142,8 +231,26 @@ TEST_CASE("snGrad schemes")
         fvcc::FaceNormalGradientFactory<NeoN::Vec3>::create(exec, nfMesh, input)
             ->faceNormalGrad(nfU, nfSnGradU);
 
-        // Orthogonal mesh: corrVec = 0, so corrected == uncorrected for Vec3 too
-        NeoFOAM::compare(nfSnGradU, ofSnGradU, ApproxVector(1e-12), true);
+        const auto nfInternal = nfSnGradU.internalVector().copyToHost();
+        const std::span<const Foam::vector> ofInternal(
+            ofSnGradU.primitiveField().cdata(), ofSnGradU.size()
+        );
+        REQUIRE_THAT(
+            nfInternal.view({0, ofInternal.size()}),
+            Catch::Matchers::RangeEquals(ofInternal, ApproxVector(1e-12))
+        );
+
+        const auto nfBoundary = nfSnGradU.boundaryData().value().copyToHost();
+        size_t patchStart = 0;
+        for (const auto& patch : ofSnGradU.boundaryField())
+        {
+            const std::span<const Foam::vector> ofPatch(patch.cdata(), patch.size());
+            REQUIRE_THAT(
+                nfBoundary.view({patchStart, patchStart + patch.size()}),
+                Catch::Matchers::RangeEquals(ofPatch, ApproxVector(1e-12))
+            );
+            patchStart += patch.size();
+        }
     }
 
     SECTION("limited Vec3 (0.333) matches OpenFOAM limited on " + execName)
@@ -159,6 +266,25 @@ TEST_CASE("snGrad schemes")
         fvcc::FaceNormalGradientFactory<NeoN::Vec3>::create(exec, nfMesh, input)
             ->faceNormalGrad(nfU, nfSnGradU);
 
-        NeoFOAM::compare(nfSnGradU, ofSnGradU, ApproxVector(1e-12), true);
+        const auto nfInternal = nfSnGradU.internalVector().copyToHost();
+        const std::span<const Foam::vector> ofInternal(
+            ofSnGradU.primitiveField().cdata(), ofSnGradU.size()
+        );
+        REQUIRE_THAT(
+            nfInternal.view({0, ofInternal.size()}),
+            Catch::Matchers::RangeEquals(ofInternal, ApproxVector(1e-12))
+        );
+
+        const auto nfBoundary = nfSnGradU.boundaryData().value().copyToHost();
+        size_t patchStart = 0;
+        for (const auto& patch : ofSnGradU.boundaryField())
+        {
+            const std::span<const Foam::vector> ofPatch(patch.cdata(), patch.size());
+            REQUIRE_THAT(
+                nfBoundary.view({patchStart, patchStart + patch.size()}),
+                Catch::Matchers::RangeEquals(ofPatch, ApproxVector(1e-12))
+            );
+            patchStart += patch.size();
+        }
     }
 }
