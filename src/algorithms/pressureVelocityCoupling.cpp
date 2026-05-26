@@ -172,44 +172,26 @@ void updateFaceVelocity(
         }
     );
 
-    // Processor-boundary faces.
-    //
-    // Indexing convention (matches scaledInvDiagNegLUx and the assembly):
-    //   facei in [nInternalFaces + nBoundaryFaces, nTotalFaces)
-    //   bcfaceii = facei - (nInternalFaces + nBoundaryFaces)  -> index into nonLocalMatrix
-    //   bfacei   = facei -  nInternalFaces                    -> index into boundaryData
-    //                                                            (proc tail starts at
-    //                                                            nBoundaryFaces;
-    //                                                             bcfaceii + nBoundaryFaces ==
-    //                                                             bfacei)
-    //
-    // OpenFOAM's lduMatrix interface contribution to fvm::laplacian's flux is the
-    // matrix-vector product across the processor patch:
-    //   flux_proc = M[own, ghost] * p_ghost - M[ghost, own] * p_own
-    // For the symmetric Laplacian M[own, ghost] == M[ghost, own] == nonLocalCoeff,
-    // so this reduces to nonLocalCoeff * (p_ghost - p_own). p_ghost lives in
-    // p.boundaryData().value() at the proc tail and is populated by the prior
-    // p.correctBoundaryConditions()/constructAndRegister exchange.
+    // Processor-boundary faces: proc patch sits at the tail of boundaryData().value()
+    // starting at index nBoundaryFaces. Indexed directly as [0, nProcFaces) to stay
+    // within the boundary-data buffer (phi.internalVector() only covers internal faces).
     const auto nProcFaces = mesh.nProcBoundaryFaces();
     if (nProcFaces > 0)
     {
-        const auto nTotalFaces = phi.internalVector().size();
         const auto nlValues = ls.offDiagonalMatrix().values().view();
         const auto nlRows = ls.offDiagonalMatrix().rowOffs().view();
         const auto pBoundV = p.boundaryData().value().view();
 
         NeoN::parallelFor(
             exec,
-            {nInternalFaces + nBoundaryFaces, nTotalFaces},
-            NEON_LAMBDA(const size_t facei) {
-                auto bcfaceii = facei - (nInternalFaces + nBoundaryFaces);
-                auto bfacei = facei - nInternalFaces;
-                auto own = static_cast<std::size_t>(nlRows[bcfaceii]);
-                auto coupling = nlValues[bcfaceii];
+            {0, nProcFaces},
+            NEON_LAMBDA(const size_t procFacei) {
+                auto bfacei = nBoundaryFaces + procFacei;
+                auto own = static_cast<std::size_t>(nlRows[procFacei]);
+                auto coupling = nlValues[procFacei];
                 auto pGhost = pBoundV[bfacei];
                 scalar pflux = coupling * (pGhost - internalP[own]);
-                iPhi[facei] = iPredPhi[facei] - pflux;
-                bvalue[bfacei] = iPredPhi[facei] - pflux;
+                bvalue[bfacei] = bPredValue[bfacei] - pflux;
             }
         );
     }
