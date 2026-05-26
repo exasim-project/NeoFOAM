@@ -179,7 +179,6 @@ void updateFaceVelocity(
     if (nProcFaces > 0)
     {
         const auto nlValues = ls.offDiagonalMatrix().values().view();
-        const auto nlRows = ls.offDiagonalMatrix().rowOffs().view();
         const auto pBoundV = p.boundaryData().value().view();
 
         NeoN::parallelFor(
@@ -187,7 +186,7 @@ void updateFaceVelocity(
             {0, nProcFaces},
             NEON_LAMBDA(const size_t procFacei) {
                 auto bfacei = nBoundaryFaces + procFacei;
-                auto own = static_cast<std::size_t>(nlRows[procFacei]);
+                auto own = static_cast<std::size_t>(faceCells[bfacei]);
                 auto coupling = nlValues[procFacei];
                 auto pGhost = pBoundV[bfacei];
                 scalar pflux = coupling * (pGhost - internalP[own]);
