@@ -190,25 +190,29 @@ void updateFaceVelocity(
     // so this reduces to nonLocalCoeff * (p_ghost - p_own). p_ghost lives in
     // p.boundaryData().value() at the proc tail and is populated by the prior
     // p.correctBoundaryConditions()/constructAndRegister exchange.
-    const auto nTotalFaces = phi.internalVector().size();
-    const auto nlValues = ls.offDiagonalMatrix().values().view();
-    const auto nlRows = ls.offDiagonalMatrix().rowOffs().view();
-    const auto pBoundV = p.boundaryData().value().view();
+    const auto nProcFaces = mesh.nProcBoundaryFaces();
+    if (nProcFaces > 0)
+    {
+        const auto nTotalFaces = phi.internalVector().size();
+        const auto nlValues = ls.offDiagonalMatrix().values().view();
+        const auto nlRows = ls.offDiagonalMatrix().rowOffs().view();
+        const auto pBoundV = p.boundaryData().value().view();
 
-    NeoN::parallelFor(
-        exec,
-        {nInternalFaces + nBoundaryFaces, nTotalFaces},
-        NEON_LAMBDA(const size_t facei) {
-            auto bcfaceii = facei - (nInternalFaces + nBoundaryFaces);
-            auto bfacei = facei - nInternalFaces;
-            auto own = static_cast<std::size_t>(nlRows[bcfaceii]);
-            auto coupling = nlValues[bcfaceii];
-            auto pGhost = pBoundV[bfacei];
-            scalar pflux = coupling * (pGhost - internalP[own]);
-            iPhi[facei] = iPredPhi[facei] - pflux;
-            bvalue[bfacei] = iPredPhi[facei] - pflux;
-        }
-    );
+        NeoN::parallelFor(
+            exec,
+            {nInternalFaces + nBoundaryFaces, nTotalFaces},
+            NEON_LAMBDA(const size_t facei) {
+                auto bcfaceii = facei - (nInternalFaces + nBoundaryFaces);
+                auto bfacei = facei - nInternalFaces;
+                auto own = static_cast<std::size_t>(nlRows[bcfaceii]);
+                auto coupling = nlValues[bcfaceii];
+                auto pGhost = pBoundV[bfacei];
+                scalar pflux = coupling * (pGhost - internalP[own]);
+                iPhi[facei] = iPredPhi[facei] - pflux;
+                bvalue[bfacei] = iPredPhi[facei] - pflux;
+            }
+        );
+    }
 }
 
 void updateVelocity(

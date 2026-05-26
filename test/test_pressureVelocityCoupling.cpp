@@ -284,7 +284,7 @@ TEST_CASE("PressureVelocityCoupling")
         REQUIRE(initResNorm != 0);
         REQUIRE(finalResNorm < initResNorm);
 
-        // FIXME fails
+        // TODO fails
         // REQUIRE_THAT(nfP, EqualsInternal(ofp, ApproxScalar(1e-12)));
         // REQUIRE_THAT(nfP.boundaryData(), EqualsBoundary(ofp, ApproxScalar(1e-12)));
     }
