@@ -176,7 +176,11 @@ public:
         return ls;
     }
 
-    NeoN::la::SolverStats solve() { return solveImpl(expr_, ls_); }
+    NeoN::la::SolverStats solve()
+    {
+        ls_.reset();
+        return solveImpl(expr_, ls_);
+    }
 
     /** @brief solve expression with additional rhs
      *
@@ -237,7 +241,6 @@ private:
         //       && fieldSolverDict.subDict("preconditioner").template get<std::string>("type")
         //              == "preconditioner::Ic")
         //   {
-        // NF_PING();
         //       auto exprIn = -1.0 * expr;
         //       stats = NeoN::dsl::detail::iterativeSolveImpl(
         //           exprIn,
