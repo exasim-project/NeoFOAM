@@ -16,6 +16,9 @@ namespace dsl = NeoN::dsl;
 namespace nnfvcc = NeoN::finiteVolume::cellCentred;
 namespace nf = NeoFOAM;
 
+using NeoFOAM::EqualsInternal;
+using NeoFOAM::EqualsBoundary;
+
 extern Foam::Time* timePtr; // A single time object
 TEST_CASE("Distributed PressureVelocityCoupling")
 {
@@ -57,6 +60,7 @@ TEST_CASE("Distributed PressureVelocityCoupling")
         ),
         fvc::flux(ofU)
     );
+    ofPhi.correctBoundaryConditions();
 
     Foam::surfaceScalarField ofNu(
         Foam::IOobject(
@@ -69,6 +73,7 @@ TEST_CASE("Distributed PressureVelocityCoupling")
         mesh,
         Foam::dimensionedScalar("nu", Foam::dimensionSet(0, 2, -1, 0, 0), 0.01)
     );
+    ofNu.correctBoundaryConditions();
 
     auto nfPhi = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofPhi);
     auto nfNu = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofNu);
@@ -88,19 +93,23 @@ TEST_CASE("Distributed PressureVelocityCoupling")
 
     NeoN::fill(nfUEqn.linearSystem().rhs(), NeoN::Vec3(0.0, 0.0, 0.0));
 
-    REQUIRE_THAT(nfP, nf::Equals(ofp, ApproxScalar(epsilon)));
-    REQUIRE_THAT(nfU, nf::Equals(ofU, ApproxVector(epsilon)));
+    REQUIRE_THAT(nfP, EqualsInternal(ofp, ApproxScalar(epsilon)));
+    REQUIRE_THAT(nfP.boundaryData(), EqualsBoundary(ofp, ApproxScalar(epsilon)));
+    REQUIRE_THAT(nfU, EqualsInternal(ofU, ApproxVector(epsilon)));
+    REQUIRE_THAT(nfU.boundaryData(), EqualsBoundary(ofU, ApproxVector(epsilon)));
 
     SECTION("rAU" + execName)
     {
-        REQUIRE_THAT(nfU, nf::Equals(ofU, ApproxVector(epsilon)));
+        REQUIRE_THAT(nfU, EqualsInternal(ofU, ApproxVector(epsilon)));
+        REQUIRE_THAT(nfU.boundaryData(), EqualsBoundary(ofU, ApproxVector(epsilon)));
 
         Foam::volScalarField forAU("rAU", 1.0 / ofUEqn.A());
         forAU.correctBoundaryConditions();
         nfUEqn.assemble();
         auto nfrAU = nf::computeRAU(nfUEqn);
 
-        REQUIRE_THAT(nfrAU, nf::Equals(forAU, ApproxScalar(epsilonII)));
+        REQUIRE_THAT(nfrAU, EqualsInternal(forAU, ApproxScalar(epsilonII)));
+        // REQUIRE_THAT(nfrAU.boundaryData(), EqualsBoundary(forAU, ApproxScalar(epsilonII)));
     }
 
     SECTION("interpolate rAU" + execName)
@@ -118,7 +127,8 @@ TEST_CASE("Distributed PressureVelocityCoupling")
         // matches OF's per-rank value, where the ghost cell value comes from
         // the prior crAU.correctBoundaryConditions() exchange done inside
         // computeRAU.
-        REQUIRE_THAT(nfU, nf::Equals(ofU, ApproxVector(epsilon)));
+        REQUIRE_THAT(nfU, EqualsInternal(ofU, ApproxVector(epsilon)));
+        REQUIRE_THAT(nfU.boundaryData(), EqualsBoundary(ofU, ApproxVector(epsilon)));
 
         Foam::volScalarField forAU("rAU", 1.0 / ofUEqn.A());
         forAU.correctBoundaryConditions();
@@ -134,7 +144,8 @@ TEST_CASE("Distributed PressureVelocityCoupling")
         // Sanity: input to the interpolation must already match OF, otherwise
         // any disagreement we see at the surface field is not the
         // interpolation's fault.
-        REQUIRE_THAT(nfrAU, nf::Equals(forAU, ApproxScalar(epsilonII)));
+        REQUIRE_THAT(nfrAU, EqualsInternal(forAU, ApproxScalar(epsilonII)));
+        // REQUIRE_THAT(nfrAU.boundaryData(), EqualsBoundary(forAU, ApproxScalar(epsilonII)));
 
         nnfvcc::SurfaceField<NeoN::scalar> nfRAUf = fvcc::SurfaceInterpolation<NeoN::scalar>(
                                                         rt.exec,
@@ -143,7 +154,8 @@ TEST_CASE("Distributed PressureVelocityCoupling")
         )
                                                         .interpolate(nfrAU);
 
-        REQUIRE_THAT(nfRAUf, nf::Equals(ofRAUf, ApproxScalar(epsilonII)));
+        REQUIRE_THAT(nfRAUf, EqualsInternal(ofRAUf, ApproxScalar(epsilonII)));
+        // REQUIRE_THAT(nfRAUf.boundaryData(), EqualsBoundary(ofRAUf, ApproxScalar(epsilonII)));
     }
 
     SECTION("compute gradP" + execName)
@@ -167,7 +179,8 @@ TEST_CASE("Distributed PressureVelocityCoupling")
         // cells exercise the proc-boundary loop without relying on the proc
         // patch comparison which `nf::compare` currently skips for processor
         // patches.
-        REQUIRE_THAT(nfP, nf::Equals(ofp, ApproxScalar(epsilon)));
+        REQUIRE_THAT(nfP, EqualsInternal(ofp, ApproxScalar(epsilon)));
+        REQUIRE_THAT(nfP.boundaryData(), EqualsBoundary(ofp, ApproxScalar(epsilon)));
 
         ofp.correctBoundaryConditions();
         nfP.correctBoundaryConditions();
@@ -175,16 +188,18 @@ TEST_CASE("Distributed PressureVelocityCoupling")
         Foam::volVectorField ofGradP("gradP", fvc::grad(ofp));
         auto nfGradP = nnfvcc::GaussGreenGrad(rt.exec, rt.nfMesh).grad(nfP);
 
-        REQUIRE_THAT(nfGradP, nf::Equals(ofGradP, ApproxVector(epsilonII), false));
+        REQUIRE_THAT(nfGradP, EqualsInternal(ofGradP, ApproxVector(epsilonII)));
     }
 
     SECTION("HbyA" + execName)
     {
-        REQUIRE_THAT(nfU, nf::Equals(ofU, ApproxVector(epsilon)));
-        REQUIRE_THAT(nfPhi, nf::Equals(ofPhi, ApproxScalar(epsilon)));
+        REQUIRE_THAT(nfU, EqualsInternal(ofU, ApproxVector(epsilon)));
+        REQUIRE_THAT(nfU.boundaryData(), EqualsBoundary(ofU, ApproxVector(epsilon)));
+        REQUIRE_THAT(nfPhi, EqualsInternal(ofPhi, ApproxScalar(epsilon)));
+        REQUIRE_THAT(nfPhi.boundaryData(), EqualsBoundary(ofPhi, ApproxScalar(epsilon)));
         REQUIRE_THAT(
             nfUEqn.linearSystem().rhs(),
-            nf::Equals(ofUEqn.source(), ApproxVector(epsilon))
+            EqualsInternal(ofUEqn.source(), ApproxVector(epsilon))
         );
 
         Foam::volScalarField forAU("rAU", 1.0 / ofUEqn.A());
@@ -195,22 +210,24 @@ TEST_CASE("Distributed PressureVelocityCoupling")
         // NOTE removeBoundaryContributions is not working in distributed case
         // REQUIRE_THAT(
         //     NeoN::la::removeBoundaryContributions(nfUEqn.linearSystem()).matrix().diag(),
-        //     nf::Equals(ofUEqn.diag(), ApproxVector(1e-15))
+        //     EqualsInternal(ofUEqn.diag(), ApproxVector(1e-15))
         // );
 
         REQUIRE_THAT(
             NeoN::la::upper(nfUEqn.linearSystem().matrix()),
-            nf::Equals(ofUEqn.upper(), ApproxVector(1e-15))
+            EqualsInternal(ofUEqn.upper(), ApproxVector(1e-15))
         );
 
         auto [nfrAU, nfHbyA] = nf::computeRAUandHByA(nfUEqn);
 
-        REQUIRE_THAT(nfHbyA, nf::Equals(HbyA, ApproxVector(epsilonII)));
+        REQUIRE_THAT(nfHbyA, EqualsInternal(HbyA, ApproxVector(epsilonII)));
+        //    REQUIRE_THAT(nfHbyA.boundaryData(), EqualsBoundary(HbyA, ApproxVector(epsilonII)));
     }
 
     SECTION("constrainHbyA")
     {
-        REQUIRE_THAT(nfU, nf::Equals(ofU, ApproxVector(epsilon)));
+        REQUIRE_THAT(nfU, EqualsInternal(ofU, ApproxVector(epsilon)));
+        REQUIRE_THAT(nfU.boundaryData(), EqualsBoundary(ofU, ApproxVector(epsilon)));
         Foam::volScalarField forAU("rAU", 1.0 / ofUEqn.A());
         Foam::volVectorField HbyA("HbyA", forAU * ofUEqn.H());
         Foam::volVectorField ofConstrainHbyA(
@@ -222,12 +239,15 @@ TEST_CASE("Distributed PressureVelocityCoupling")
 
         nf::constrainHbyA(nfU, nfP, nfHbyA);
 
-        REQUIRE_THAT(nfHbyA, nf::Equals(ofConstrainHbyA, ApproxVector(1e-12)));
+        REQUIRE_THAT(nfHbyA, EqualsInternal(ofConstrainHbyA, ApproxVector(1e-12)));
+        // REQUIRE_THAT(nfHbyA.boundaryData(), EqualsBoundary(ofConstrainHbyA,
+        // ApproxVector(1e-12)));
     }
 
     SECTION("compute flux")
     {
-        REQUIRE_THAT(nfU, nf::Equals(ofU, ApproxVector(epsilon)));
+        REQUIRE_THAT(nfU, EqualsInternal(ofU, ApproxVector(epsilon)));
+        REQUIRE_THAT(nfU.boundaryData(), EqualsBoundary(ofU, ApproxVector(epsilon)));
         Foam::volScalarField forAU("rAU", 1.0 / ofUEqn.A());
         Foam::volVectorField HbyA("HbyA", forAU * ofUEqn.H());
         Foam::volVectorField ofConstrainHbyA(
@@ -239,13 +259,14 @@ TEST_CASE("Distributed PressureVelocityCoupling")
         Foam::surfaceScalarField ofFlux("ofFlux", fvc::flux(HbyA));
         auto nfFlux = nf::flux(nfHbyA);
 
-        REQUIRE_THAT(nfFlux, nf::Equals(ofFlux, ApproxScalar(epsilonII)));
+        REQUIRE_THAT(nfFlux, EqualsInternal(ofFlux, ApproxScalar(epsilonII)));
+        // REQUIRE_THAT(nfFlux.boundaryData(), EqualsBoundary(ofFlux, ApproxScalar(epsilonII)));
     }
 
     SECTION("compute flux")
     {
         nfPhi.correctBoundaryConditions();
-        REQUIRE_THAT(nfPhi, nf::Equals(ofPhi, ApproxScalar(epsilon), false));
+        REQUIRE_THAT(nfPhi, EqualsInternal(ofPhi, ApproxScalar(epsilon)));
         auto forAUf =
             NeoFOAM::randDimField<Foam::surfaceScalarField>(mesh, {0, 0, 1, 0, 0}, "rAUf");
         auto nfrAUf = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, forAUf);
@@ -276,17 +297,18 @@ TEST_CASE("Distributed PressureVelocityCoupling")
 
         REQUIRE_THAT(
             NeoN::la::upper(pEqn.linearSystem().matrix()),
-            nf::Equals(ofpEqn.upper(), ApproxScalar(epsilonII), false)
+            EqualsInternal(ofpEqn.upper(), ApproxScalar(epsilonII))
         );
 
         nf::updateFaceVelocity(nfPhi, pEqn, nfPhi0);
-        REQUIRE_THAT(nfPhi0, nf::Equals(ofPhi0, ApproxScalar(epsilonII)));
+        REQUIRE_THAT(nfPhi0, EqualsInternal(ofPhi0, ApproxScalar(epsilonII)));
+        // REQUIRE_THAT(nfPhi0.boundaryData(), EqualsBoundary(ofPhi0, ApproxScalar(epsilonII)));
     }
 
     SECTION("solve pEqn")
     {
-        REQUIRE_THAT(nfPhi, nf::Equals(ofPhi, ApproxScalar(epsilon), false));
-        REQUIRE_THAT(nfP, nf::Equals(ofp, ApproxScalar(1e-12), false));
+        REQUIRE_THAT(nfPhi, EqualsInternal(ofPhi, ApproxScalar(epsilon)));
+        REQUIRE_THAT(nfP, EqualsInternal(ofp, ApproxScalar(1e-12)));
 
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
         solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
@@ -325,11 +347,11 @@ TEST_CASE("Distributed PressureVelocityCoupling")
 
         REQUIRE_THAT(
             NeoN::la::upper(pEqn.linearSystem().matrix()),
-            nf::Equals(ofpEqn.upper(), ApproxScalar(epsilonII), false)
+            EqualsInternal(ofpEqn.upper(), ApproxScalar(epsilonII))
         );
         REQUIRE_THAT(
             pEqn.linearSystem().rhs(),
-            nf::Equals(ofpEqn.source(), ApproxScalar(epsilonII), false)
+            EqualsInternal(ofpEqn.source(), ApproxScalar(epsilonII))
         );
 
         nfP.correctBoundaryConditions();
@@ -340,10 +362,12 @@ TEST_CASE("Distributed PressureVelocityCoupling")
         REQUIRE(initResNorm != 0);
         REQUIRE(finalResNorm < initResNorm);
 
-        REQUIRE_THAT(nfP, nf::Equals(ofp, ApproxScalar(1e-32)));
-        REQUIRE_THAT(nfPhi, nf::Equals(ofPhi, ApproxScalar(1e-32)));
+        REQUIRE_THAT(nfP, EqualsInternal(ofp, ApproxScalar(1e-32)));
+        REQUIRE_THAT(nfP.boundaryData(), EqualsBoundary(ofp, ApproxScalar(1e-32)));
+        REQUIRE_THAT(nfPhi, EqualsInternal(ofPhi, ApproxScalar(1e-32)));
+        REQUIRE_THAT(nfPhi.boundaryData(), EqualsBoundary(ofPhi, ApproxScalar(1e-32)));
 
         auto nfPhi0 = nf::flux(pEqn);
-        REQUIRE_THAT(nfPhi0, nf::Equals(ofPhi0(), ApproxScalar(1e-05), false));
+        REQUIRE_THAT(nfPhi0, EqualsInternal(ofPhi0(), ApproxScalar(1e-05)));
     }
 }

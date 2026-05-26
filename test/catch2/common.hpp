@@ -26,6 +26,8 @@
 
 namespace nnfvcc = NeoN::finiteVolume::cellCentred;
 
+#define SECTION_IF(condition, ...) SECTION(__VA_ARGS__) if (condition)
+
 
 /** @brief Approximate scalar comparison predicate for use with EqualsInternal/EqualsBoundary. */
 struct ApproxScalar

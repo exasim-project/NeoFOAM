@@ -90,8 +90,10 @@ TEST_CASE("PressureVelocityCoupling")
         REQUIRE_THAT(nfU, EqualsInternal(ofU, ApproxVector(epsilon)));
         REQUIRE_THAT(nfU.boundaryData(), EqualsBoundary(ofU, ApproxVector(epsilon)));
 
-        nf::compare(nfNu, ofNu, ApproxScalar(epsilon));
-        nf::compare(nfPhi, ofPhi, ApproxScalar(epsilon));
+        REQUIRE_THAT(nfNu, EqualsInternal(ofNu, ApproxScalar(epsilon)));
+        REQUIRE_THAT(nfNu.boundaryData(), EqualsBoundary(ofNu, ApproxScalar(epsilon)));
+        REQUIRE_THAT(nfPhi, EqualsInternal(ofPhi, ApproxScalar(epsilon)));
+        REQUIRE_THAT(nfPhi.boundaryData(), EqualsBoundary(ofPhi, ApproxScalar(epsilon)));
 
         Foam::volScalarField forAU("rAU", 1.0 / ofUEqn.A());
         nfUEqn.assemble();
@@ -199,10 +201,45 @@ TEST_CASE("PressureVelocityCoupling")
         REQUIRE_THAT(nfPhi0.boundaryData(), EqualsBoundary(ofPhi0, ApproxScalar(1e-15)));
     }
 
+    SECTION("assemble pEqn")
+    {
+        REQUIRE_THAT(nfPhi, EqualsInternal(ofPhi, ApproxScalar(epsilon)));
+        REQUIRE_THAT(nfP, EqualsInternal(ofp, ApproxScalar(1e-12)));
+
+        auto& solverDict = rt.fvSolutionDict.subDict("solvers");
+        solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
+
+        auto forAUf =
+            NeoFOAM::randDimField<Foam::surfaceScalarField>(mesh, {0, 0, 1, 0, 0}, "rAUf");
+        auto nfrAUf = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, forAUf);
+
+        Foam::fvScalarMatrix ofpEqn(fvm::laplacian(forAUf, ofp) == fvc::div(ofPhi));
+        solve(ofpEqn);
+
+
+        nf::PDESolver<NeoN::scalar> pEqn(
+            dsl::imp::laplacian(nfrAUf, nfP) - dsl::exp::div(nfPhi),
+            nfP,
+            rt
+        );
+
+        auto stats = pEqn.assemble();
+
+        REQUIRE_THAT(
+            NeoN::la::removeBoundaryContributions(pEqn.linearSystem()).matrix().diag(),
+            EqualsInternal(ofpEqn.diag(), ApproxScalar(1e-15))
+        );
+
+        REQUIRE_THAT(
+            NeoN::la::upper(pEqn.linearSystem().matrix()),
+            EqualsInternal(ofpEqn.upper(), ApproxScalar(1e-15))
+        );
+    }
+
     SECTION("solve pEqn")
     {
-        nf::compare(nfPhi, ofPhi, ApproxScalar(epsilon), false);
-        nf::compare(nfP, ofp, ApproxScalar(1e-12), false);
+        REQUIRE_THAT(nfPhi, EqualsInternal(ofPhi, ApproxScalar(epsilon)));
+        REQUIRE_THAT(nfP, EqualsInternal(ofp, ApproxScalar(1e-12)));
 
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
         solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
@@ -223,21 +260,20 @@ TEST_CASE("PressureVelocityCoupling")
 
         auto stats = pEqn.solve();
 
-        // NOTE removeBoundaryContributions is not working in distributed case
-        // nf::compare(
-        //     NeoN::la::removeBoundaryContributions(pEqn.linearSystem()).matrix().diag(),
-        //     ofpEqn.diag(),
-        //     ApproxScalar(1e-15),
-        //     false
-        // );
-
-        nf::compare(
-            NeoN::la::upper(pEqn.linearSystem().matrix()),
-            ofpEqn.upper(),
-            ApproxScalar(1e-15),
-            false
+        REQUIRE_THAT(
+            NeoN::la::removeBoundaryContributions(pEqn.linearSystem()).matrix().diag(),
+            EqualsInternal(ofpEqn.diag(), ApproxScalar(1e-15))
         );
-        nf::compare(pEqn.linearSystem().rhs(), ofpEqn.source(), ApproxScalar(1e-15), false);
+
+        REQUIRE_THAT(
+            NeoN::la::upper(pEqn.linearSystem().matrix()),
+            EqualsInternal(ofpEqn.upper(), ApproxScalar(1e-15))
+        );
+
+        REQUIRE_THAT(
+            pEqn.linearSystem().rhs(),
+            EqualsInternal(ofpEqn.source(), ApproxScalar(1e-15))
+        );
 
         ofp.correctBoundaryConditions();
         nfP.correctBoundaryConditions();
@@ -247,7 +283,7 @@ TEST_CASE("PressureVelocityCoupling")
         REQUIRE(numIter != 0);
         REQUIRE(initResNorm != 0);
         REQUIRE(finalResNorm < initResNorm);
-
-        nf::compare(nfP, ofp, ApproxScalar(1e-12), true);
+        REQUIRE_THAT(nfP, EqualsInternal(ofp, ApproxScalar(1e-12)));
+        REQUIRE_THAT(nfP.boundaryData(), EqualsBoundary(ofp, ApproxScalar(1e-12)));
     }
 }

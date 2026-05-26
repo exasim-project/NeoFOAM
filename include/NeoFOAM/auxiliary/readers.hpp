@@ -300,7 +300,6 @@ auto constructFrom(
 
         out.internalVector() = fromFoamField(exec, internalData);
         out.boundaryData().value() = fromFoamField(exec, bval);
-        out.correctBoundaryConditions();
         return out;
     }
     else

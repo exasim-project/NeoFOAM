@@ -24,8 +24,7 @@ template<typename ValueType, typename IndexType = NeoN::localIdx>
 class PDESolver
 {
     using VolumeField = NeoN::finiteVolume::cellCentred::VolumeField<ValueType>;
-    using LinearSystem =
-        NeoN::la::LinearSystem<ValueType, NeoN::la::CSRMatrix<ValueType, NeoN::localIdx>>;
+    using LinearSystem = NeoN::la::LinearSystem<ValueType>;
 
 public:
 
@@ -76,9 +75,7 @@ public:
             , pRefValue_(pRefValue)
         {}
 
-        virtual void operator()(NeoN::la::LinearSystem<
-                                FunctorValueType,
-                                NeoN::la::CSRMatrix<FunctorValueType, IndexType>>& ls)
+        virtual void operator()(NeoN::la::LinearSystem<FunctorValueType>& ls)
         {
             // Only the rank that owns the reference cell may pin it. `pRefCell_`
             // is interpreted as a local index on that one rank; on every other
@@ -176,7 +173,11 @@ public:
         return ls;
     }
 
-    NeoN::la::SolverStats solve() { return solveImpl(expr_, ls_); }
+    NeoN::la::SolverStats solve()
+    {
+        ls_.reset();
+        return solveImpl(expr_, ls_);
+    }
 
     /** @brief solve expression with additional rhs
      *
@@ -213,16 +214,16 @@ private:
 
     NeoN::la::SolverStats solveImpl(dsl::Expression<ValueType>& expr, LinearSystem& ls)
     {
-        // Only if ValueType is scalar
-        auto functs = std::vector<NeoN::dsl::PostAssemblyBase<ValueType, IndexType>> {};
+        std::optional<SetReference<ValueType>> refFunct;
+        std::vector<const NeoN::dsl::PostAssemblyBase<ValueType, IndexType>*> functs;
 
         if constexpr (std::is_same_v<ValueType, NeoN::scalar>)
         {
-            functs =
-                needReference_
-                    ? std::vector<NeoN::dsl::PostAssemblyBase<ValueType, IndexType>> {SetReference<
-                        ValueType>(pRefCell_, pRefValue_)}
-                    : std::vector<NeoN::dsl::PostAssemblyBase<ValueType, IndexType>> {};
+            if (needReference_)
+            {
+                refFunct.emplace(pRefCell_, pRefValue_);
+                functs.push_back(&refFunct.value());
+            }
         }
 
         auto solverDict = runTime_.fvSolutionDict.subDict("solvers");
@@ -237,7 +238,6 @@ private:
         //       && fieldSolverDict.subDict("preconditioner").template get<std::string>("type")
         //              == "preconditioner::Ic")
         //   {
-        // NF_PING();
         //       auto exprIn = -1.0 * expr;
         //       stats = NeoN::dsl::detail::iterativeSolveImpl(
         //           exprIn,
@@ -289,7 +289,7 @@ private:
 
 template<typename ValueType, typename IndexType = NeoN::localIdx>
 NeoN::finiteVolume::cellCentred::VolumeField<ValueType> applyOperator(
-    const la::LinearSystem<ValueType, NeoN::la::CSRMatrix<ValueType, IndexType>>& ls,
+    const la::LinearSystem<ValueType>& ls,
     const NeoN::finiteVolume::cellCentred::VolumeField<ValueType>& psi
 )
 {
