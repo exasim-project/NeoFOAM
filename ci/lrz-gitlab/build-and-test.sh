@@ -64,6 +64,7 @@ if [[ "$GPU_VENDOR" == "nvidia" ]]; then
         -DNEOFOAM_NEON_DIR=../NeoN \
         -DCMAKE_CUDA_ARCHITECTURES=89 \
         -DNeoN_WITH_THREADS=OFF \
+        -DNeoN_WITH_MPI=ON \
         -DNEOFOAM_BUILD_BENCHMARKS=ON
 elif [[ "$GPU_VENDOR" == "amd" ]]; then
     cmake --preset $PRESET \
@@ -76,6 +77,7 @@ elif [[ "$GPU_VENDOR" == "amd" ]]; then
         -DCMAKE_HIP_ARCHITECTURES=gfx90a \
         -DKokkos_ARCH_AMD_GFX90A=ON \
         -DNeoN_WITH_THREADS=OFF \
+        -DNeoN_WITH_MPI=ON \
         -DNEOFOAM_BUILD_BENCHMARKS=ON
 elif [[ "$GPU_VENDOR" == "intel" ]]; then
     cmake --preset $PRESET \
@@ -85,6 +87,7 @@ elif [[ "$GPU_VENDOR" == "intel" ]]; then
         -DKokkos_ENABLE_SYCL=ON \
         -DKokkos_ARCH_INTEL_PVC=ON \
         -DNeoN_WITH_THREADS=OFF \
+        -DNeoN_WITH_MPI=OFF \
         -DCMAKE_BUILD_TYPE="release" \
         -DNEOFOAM_BUILD_BENCHMARKS=ON
 fi
