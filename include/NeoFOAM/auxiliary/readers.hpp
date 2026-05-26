@@ -188,7 +188,9 @@ auto constructFrom(
     }
     else if constexpr (NeoFOAM::detail::isSurfaceField<ContainerType>)
     {
-        using FoamComponentType = typename FoamFieldType::cmptType;
+        // Element type of the GeometricField (T in GeometricField<T,...>) — NOT cmptType,
+        // which decomposes vectors into scalars and would break the surface-vector path.
+        using FoamComponentType = typename FoamFieldType::value_type;
 
         ContainerType out(exec, in.name(), nfMesh, readSurfaceBoundaryConditions(nfMesh, in));
 
@@ -205,7 +207,7 @@ auto constructFrom(
         {
             if (static_cast<std::size_t>(facei) < nInt)
             {
-                internalData[facei] = convert(in[facei]);
+                internalData[facei] = in[facei];
             }
         }
 
@@ -216,7 +218,7 @@ auto constructFrom(
             const auto& pin = in.boundaryField()[patchi];
             forAll(pin, facei)
             {
-                bval[bi] = convert(pin[facei]);
+                bval[bi] = pin[facei];
                 ++bi;
             }
         }
