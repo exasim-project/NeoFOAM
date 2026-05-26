@@ -13,8 +13,6 @@ namespace NeoFOAM
 
 void updateDdtSchemes(NeoN::Dictionary& solverDict);
 
-void updateSnGradSchemes(NeoN::Dictionary& schemeDict);
-
 NeoN::Dictionary mapFvSchemes(const NeoN::Dictionary& schemesDict);
 
 } // namespace NeoFOAM

@@ -28,10 +28,14 @@ TEST_CASE("snGrad schemes")
     auto ofT = randomScalarField(runTime, mesh, "T");
     auto nfT = NeoFOAM::constructFrom(exec, nfMesh, ofT);
 
-    // Helper: zero-fill NeoFOAM surface field
-    auto zeroSurface = [](auto& field)
+    auto ofU = randomVectorField(runTime, mesh, "U");
+    auto nfU = NeoFOAM::constructFrom(exec, nfMesh, ofU);
+
+    // Helper: zero-fill a NeoFOAM surface field with the supplied zero value
+    auto zeroSurface = [](auto& field, auto zeroVal)
     {
-        NeoN::fill(field.internalVector(), NeoN::scalar(0.0));
+        NeoN::fill(field.internalVector(), zeroVal);
+        NeoN::fill(field.boundaryData().value(), zeroVal);
     };
 
     SECTION("uncorrected matches OpenFOAM on " + execName)
@@ -43,14 +47,14 @@ TEST_CASE("snGrad schemes")
 
         // NeoFOAM: uncorrected scheme
         auto nfSnGradT = NeoFOAM::constructFrom(exec, nfMesh, ofSnGradT);
-        zeroSurface(nfSnGradT);
+        zeroSurface(nfSnGradT, NeoN::scalar(0.0));
 
         NeoN::Input input = NeoN::TokenList({std::string("uncorrected")});
         fvcc::FaceNormalGradientFactory<NeoN::scalar>::create(exec, nfMesh, input)
             ->faceNormalGrad(nfT, nfSnGradT);
 
         // On the orthogonal setup_operator mesh: nonOrthDeltaCoeffs == deltaCoeffs
-        NeoFOAM::compare(nfSnGradT, ofSnGradT, ApproxScalar(1e-15), false);
+        NeoFOAM::compare(nfSnGradT, ofSnGradT, ApproxScalar(1e-15), true);
     }
 
     SECTION("corrected matches OpenFOAM on " + execName)
@@ -62,7 +66,7 @@ TEST_CASE("snGrad schemes")
 
         // NeoFOAM: corrected scheme
         auto nfSnGradT = NeoFOAM::constructFrom(exec, nfMesh, ofSnGradT);
-        zeroSurface(nfSnGradT);
+        zeroSurface(nfSnGradT, NeoN::scalar(0.0));
 
         NeoN::Input input = NeoN::TokenList({std::string("corrected")});
         fvcc::FaceNormalGradientFactory<NeoN::scalar>::create(exec, nfMesh, input)
@@ -70,27 +74,91 @@ TEST_CASE("snGrad schemes")
 
         // On orthogonal mesh corrVec = 0, so corrected == uncorrected; gradient
         // computation is exact when correction vanishes
-        NeoFOAM::compare(nfSnGradT, ofSnGradT, ApproxScalar(1e-12), false);
+        NeoFOAM::compare(nfSnGradT, ofSnGradT, ApproxScalar(1e-12), true);
     }
 
-    SECTION("limitedCorrected (0.333) matches OpenFOAM limited on " + execName)
+    SECTION("limited (0.333) matches OpenFOAM limited on " + execName)
     {
-        // OpenFOAM: "limited <coeff>" — backwards-compat: coeff is a plain number
+        // Terse OF form: "limited <coeff>"
         Foam::IStringStream is("limited 0.333");
         Foam::surfaceScalarField ofSnGradT =
             Foam::fv::snGradScheme<Foam::scalar>::New(mesh, is)->snGrad(ofT);
 
-        // NeoFOAM: limitedCorrected scheme with same coefficient
         auto nfSnGradT = NeoFOAM::constructFrom(exec, nfMesh, ofSnGradT);
-        zeroSurface(nfSnGradT);
+        zeroSurface(nfSnGradT, NeoN::scalar(0.0));
 
-        NeoN::Input input =
-            NeoN::TokenList({std::string("limitedCorrected"), NeoN::scalar(0.333)});
+        NeoN::Input input = NeoN::TokenList({std::string("limited"), NeoN::scalar(0.333)});
         fvcc::FaceNormalGradientFactory<NeoN::scalar>::create(exec, nfMesh, input)
             ->faceNormalGrad(nfT, nfSnGradT);
 
-        // On orthogonal mesh corrVec = 0 so limiter doesn't apply;
-        // result equals uncorrected
-        NeoFOAM::compare(nfSnGradT, ofSnGradT, ApproxScalar(1e-12), false);
+        NeoFOAM::compare(nfSnGradT, ofSnGradT, ApproxScalar(1e-12), true);
+    }
+
+    SECTION("limited corrected (0.5) — verbose OF form matches on " + execName)
+    {
+        // Verbose OF form: "limited corrected <coeff>" — the form that appears inside
+        // laplacianSchemes entries like "Gauss linear limited corrected 0.5"
+        Foam::IStringStream is("limited corrected 0.5");
+        Foam::surfaceScalarField ofSnGradT =
+            Foam::fv::snGradScheme<Foam::scalar>::New(mesh, is)->snGrad(ofT);
+
+        auto nfSnGradT = NeoFOAM::constructFrom(exec, nfMesh, ofSnGradT);
+        zeroSurface(nfSnGradT, NeoN::scalar(0.0));
+
+        NeoN::Input input =
+            NeoN::TokenList({std::string("limited"), std::string("corrected"), NeoN::scalar(0.5)});
+        fvcc::FaceNormalGradientFactory<NeoN::scalar>::create(exec, nfMesh, input)
+            ->faceNormalGrad(nfT, nfSnGradT);
+
+        NeoFOAM::compare(nfSnGradT, ofSnGradT, ApproxScalar(1e-12), true);
+    }
+
+    SECTION("uncorrected Vec3 matches OpenFOAM on " + execName)
+    {
+        Foam::IStringStream is("uncorrected");
+        Foam::surfaceVectorField ofSnGradU =
+            Foam::fv::snGradScheme<Foam::vector>::New(mesh, is)->snGrad(ofU);
+
+        auto nfSnGradU = NeoFOAM::constructFrom(exec, nfMesh, ofSnGradU);
+        zeroSurface(nfSnGradU, NeoN::Vec3 {0.0, 0.0, 0.0});
+
+        NeoN::Input input = NeoN::TokenList({std::string("uncorrected")});
+        fvcc::FaceNormalGradientFactory<NeoN::Vec3>::create(exec, nfMesh, input)
+            ->faceNormalGrad(nfU, nfSnGradU);
+
+        NeoFOAM::compare(nfSnGradU, ofSnGradU, ApproxVector(1e-15), true);
+    }
+
+    SECTION("corrected Vec3 matches OpenFOAM on " + execName)
+    {
+        Foam::IStringStream is("corrected");
+        Foam::surfaceVectorField ofSnGradU =
+            Foam::fv::snGradScheme<Foam::vector>::New(mesh, is)->snGrad(ofU);
+
+        auto nfSnGradU = NeoFOAM::constructFrom(exec, nfMesh, ofSnGradU);
+        zeroSurface(nfSnGradU, NeoN::Vec3 {0.0, 0.0, 0.0});
+
+        NeoN::Input input = NeoN::TokenList({std::string("corrected")});
+        fvcc::FaceNormalGradientFactory<NeoN::Vec3>::create(exec, nfMesh, input)
+            ->faceNormalGrad(nfU, nfSnGradU);
+
+        // Orthogonal mesh: corrVec = 0, so corrected == uncorrected for Vec3 too
+        NeoFOAM::compare(nfSnGradU, ofSnGradU, ApproxVector(1e-12), true);
+    }
+
+    SECTION("limited Vec3 (0.333) matches OpenFOAM limited on " + execName)
+    {
+        Foam::IStringStream is("limited 0.333");
+        Foam::surfaceVectorField ofSnGradU =
+            Foam::fv::snGradScheme<Foam::vector>::New(mesh, is)->snGrad(ofU);
+
+        auto nfSnGradU = NeoFOAM::constructFrom(exec, nfMesh, ofSnGradU);
+        zeroSurface(nfSnGradU, NeoN::Vec3 {0.0, 0.0, 0.0});
+
+        NeoN::Input input = NeoN::TokenList({std::string("limited"), NeoN::scalar(0.333)});
+        fvcc::FaceNormalGradientFactory<NeoN::Vec3>::create(exec, nfMesh, input)
+            ->faceNormalGrad(nfU, nfSnGradU);
+
+        NeoFOAM::compare(nfSnGradU, ofSnGradU, ApproxVector(1e-12), true);
     }
 }
