@@ -90,8 +90,10 @@ TEST_CASE("PressureVelocityCoupling")
         REQUIRE_THAT(nfU, EqualsInternal(ofU, ApproxVector(epsilon)));
         REQUIRE_THAT(nfU.boundaryData(), EqualsBoundary(ofU, ApproxVector(epsilon)));
 
-        nf::compare(nfNu, ofNu, ApproxScalar(epsilon));
-        nf::compare(nfPhi, ofPhi, ApproxScalar(epsilon));
+        REQUIRE_THAT(nfNu, EqualsInternal(ofNu, ApproxScalar(epsilon)));
+        REQUIRE_THAT(nfNu.boundaryData(), EqualsBoundary(ofNu, ApproxScalar(epsilon)));
+        REQUIRE_THAT(nfPhi, EqualsInternal(ofPhi, ApproxScalar(epsilon)));
+        REQUIRE_THAT(nfPhi.boundaryData(), EqualsBoundary(ofPhi, ApproxScalar(epsilon)));
 
         Foam::volScalarField forAU("rAU", 1.0 / ofUEqn.A());
         nfUEqn.assemble();
@@ -201,8 +203,8 @@ TEST_CASE("PressureVelocityCoupling")
 
     SECTION("solve pEqn")
     {
-        nf::compare(nfPhi, ofPhi, ApproxScalar(epsilon), false);
-        nf::compare(nfP, ofp, ApproxScalar(1e-12), false);
+        REQUIRE_THAT(nfPhi, EqualsInternal(ofPhi, ApproxScalar(epsilon)));
+        REQUIRE_THAT(nfP, EqualsInternal(ofp, ApproxScalar(1e-12)));
 
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
         solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
@@ -231,13 +233,14 @@ TEST_CASE("PressureVelocityCoupling")
         //     false
         // );
 
-        nf::compare(
+        REQUIRE_THAT(
             NeoN::la::upper(pEqn.linearSystem().matrix()),
-            ofpEqn.upper(),
-            ApproxScalar(1e-15),
-            false
+            EqualsInternal(ofpEqn.upper(), ApproxScalar(1e-15))
         );
-        nf::compare(pEqn.linearSystem().rhs(), ofpEqn.source(), ApproxScalar(1e-15), false);
+        REQUIRE_THAT(
+            pEqn.linearSystem().rhs(),
+            EqualsInternal(ofpEqn.source(), ApproxScalar(1e-15))
+        );
 
         ofp.correctBoundaryConditions();
         nfP.correctBoundaryConditions();
@@ -248,6 +251,7 @@ TEST_CASE("PressureVelocityCoupling")
         REQUIRE(initResNorm != 0);
         REQUIRE(finalResNorm < initResNorm);
 
-        nf::compare(nfP, ofp, ApproxScalar(1e-12), true);
+        REQUIRE_THAT(nfP, EqualsInternal(ofp, ApproxScalar(1e-12)));
+        REQUIRE_THAT(nfP.boundaryData(), EqualsBoundary(ofp, ApproxScalar(1e-12)));
     }
 }

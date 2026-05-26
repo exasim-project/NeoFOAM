@@ -15,6 +15,9 @@ namespace dsl = NeoN::dsl;
 namespace nnfvcc = NeoN::finiteVolume::cellCentred;
 namespace nf = NeoFOAM;
 
+using NeoFOAM::EqualsInternal;
+using NeoFOAM::EqualsBoundary;
+
 extern Foam::Time* timePtr; // A single time object
 
 TEST_CASE("DistributedMomentum")
@@ -94,8 +97,10 @@ TEST_CASE("DistributedMomentum")
         // require fields to be initially the same
         // NOTE we skip comparing boundary values for now, since in distributed they have
         // different order
-        nf::compare(nfP, ofp, ApproxScalar(epsilon), true);
-        nf::compare(nfU, ofU, ApproxVector(epsilon), true);
+        REQUIRE_THAT(nfP, EqualsInternal(ofp, ApproxScalar(epsilon)));
+        REQUIRE_THAT(nfP.boundaryData(), EqualsBoundary(ofp, ApproxScalar(epsilon)));
+        REQUIRE_THAT(nfU, EqualsInternal(ofU, ApproxVector(epsilon)));
+        REQUIRE_THAT(nfU.boundaryData(), EqualsBoundary(ofU, ApproxVector(epsilon)));
 
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
         solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
@@ -109,7 +114,6 @@ TEST_CASE("DistributedMomentum")
         REQUIRE(numIterDist != 0);
         REQUIRE(initResNormDist != 0);
         REQUIRE(finalResNormDist < initResNormDist);
-        // // nfU.correctBoundaryConditions();
-        nf::compare(nfU, ofU, ApproxVector({1e-03}), false);
+        REQUIRE_THAT(nfU, EqualsInternal(ofU, ApproxVector(1e-03)));
     }
 }
