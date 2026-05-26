@@ -24,16 +24,19 @@ TEST_CASE("VolumeField")
     SECTION("volumeScalarField " + execName)
     {
         auto nfT = NeoFOAM::constructFrom(exec, nfMesh, ofT);
-        NeoFOAM::compare(nfT, ofT, ApproxScalar(1e-15));
+        REQUIRE_THAT(nfT, EqualsInternal(ofT, ApproxScalar(1e-15)));
+        REQUIRE_THAT(nfT.boundaryData(), EqualsBoundary(ofT, ApproxScalar(1e-15)));
     }
     SECTION("volumeVectorField " + execName)
     {
         auto nfU = NeoFOAM::constructFrom(exec, nfMesh, ofU);
-        NeoFOAM::compare(nfU, ofU, ApproxVector(1e-15));
+        REQUIRE_THAT(nfU, EqualsInternal(ofU, ApproxVector(1e-15)));
+        REQUIRE_THAT(nfU.boundaryData(), EqualsBoundary(ofU, ApproxVector(1e-15)));
     }
     SECTION("surfaceScalarField " + execName)
     {
         auto nfPhi = NeoFOAM::constructFrom(exec, nfMesh, ofPhi);
-        NeoFOAM::compare(nfPhi, ofPhi, ApproxScalar(1e-15));
+        REQUIRE_THAT(nfPhi, EqualsInternal(ofPhi, ApproxScalar(1e-15)));
+        REQUIRE_THAT(nfPhi.boundaryData(), EqualsBoundary(ofPhi, ApproxScalar(1e-15)));
     }
 }

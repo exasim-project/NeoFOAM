@@ -66,15 +66,15 @@ TEST_CASE("matrix multiplication")
         ddtOp.implicitOperation(ls, runTime.value(), runTime.deltaTValue());
 
         // check rhs
-        nf::compare(ls.rhs(), matrix.source(), ApproxScalar(epsilon));
+        REQUIRE_THAT(ls.rhs(), EqualsInternal(matrix.source(), ApproxScalar(epsilon)));
 
         // check diag
         auto diag = ls.matrix().diag();
-        nf::compare(diag, matrix.diag(), ApproxScalar(epsilon));
+        REQUIRE_THAT(diag, EqualsInternal(matrix.diag(), ApproxScalar(epsilon)));
 
         auto result = NeoFOAM::applyOperator(ls, nfT);
         auto ddtV = ddt * mesh.V();
-        nf::compare(result.internalVector(), ddtV(), ApproxScalar(epsilon));
+        REQUIRE_THAT(result.internalVector(), EqualsInternal(ddtV(), ApproxScalar(epsilon)));
     }
 
     SECTION("sourceterm_" + execName)
@@ -145,13 +145,15 @@ TEST_CASE("matrix multiplication")
         // diag and rhs differ from the foam matrix as openfoam does not added the boundary values
         // to the matrix therefore we only check the operator results
         auto result = NeoFOAM::applyOperator(nfPDE.linearSystem(), nfT);
-        nf::compare(result.internalVector(), divV(), ApproxScalar(epsilon));
+        REQUIRE_THAT(result.internalVector(), EqualsInternal(divV(), ApproxScalar(epsilon)));
 
-        nf::compare(nfPDE.linearSystem().matrix().diag(), matrix.diag(), ApproxScalar(epsilon));
-        nf::compare(
+        REQUIRE_THAT(
+            nfPDE.linearSystem().matrix().diag(),
+            EqualsInternal(matrix.diag(), ApproxScalar(epsilon))
+        );
+        REQUIRE_THAT(
             NeoN::la::upper(nfPDE.linearSystem().matrix()),
-            matrix.upper(),
-            ApproxScalar(epsilon)
+            EqualsInternal(matrix.upper(), ApproxScalar(epsilon))
         );
     }
 
@@ -174,12 +176,14 @@ TEST_CASE("matrix multiplication")
         // diag and rhs differ from the foam matrix as openfoam does not added the boundary values
         // to the matrix therefore we only check the operator results
         auto result = NeoFOAM::applyOperator(nfPDE.linearSystem(), nfT);
-        nf::compare(result.internalVector(), lapV(), ApproxScalar(epsilon));
-        nf::compare(nfPDE.linearSystem().matrix().diag(), matrix.diag(), ApproxScalar(epsilon));
-        nf::compare(
+        REQUIRE_THAT(result.internalVector(), EqualsInternal(lapV(), ApproxScalar(epsilon)));
+        REQUIRE_THAT(
+            nfPDE.linearSystem().matrix().diag(),
+            EqualsInternal(matrix.diag(), ApproxScalar(epsilon))
+        );
+        REQUIRE_THAT(
             NeoN::la::upper(nfPDE.linearSystem().matrix()),
-            matrix.upper(),
-            ApproxScalar(epsilon)
+            EqualsInternal(matrix.upper(), ApproxScalar(epsilon))
         );
     }
 }
