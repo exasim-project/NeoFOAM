@@ -153,7 +153,7 @@ TEST_CASE("Advection Equation")
                 T.write(); // for some reason T was not written
             }
         }
-        NeoFOAM::compare(nfT, T, ApproxScalar(1e-10), false);
+        REQUIRE_THAT(nfT, EqualsInternal(T, ApproxScalar(1e-10)));
     }
 #endif
 
@@ -186,7 +186,7 @@ TEST_CASE("Advection Equation")
             nfPhi.internalVector() =
                 nfPhi0.internalVector() * std::cos(pi * (t + 0.5 * dt) / endTime);
 
-            NeoFOAM::compare(nfT, T, ApproxScalar(1e-04), false);
+            REQUIRE_THAT(nfT, EqualsInternal(T, ApproxScalar(1e-04)));
 
             // advance Foam fields in time
             {
@@ -210,6 +210,6 @@ TEST_CASE("Advection Equation")
             }
         }
 
-        NeoFOAM::compare(nfT, T, ApproxScalar(1e-8), false);
+        REQUIRE_THAT(nfT, EqualsInternal(T, ApproxScalar(1e-8)));
     }
 }

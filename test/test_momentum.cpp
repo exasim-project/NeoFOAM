@@ -87,8 +87,10 @@ TEST_CASE("Momentum")
         NeoN::fill(nfUEqn.linearSystem().rhs(), NeoN::Vec3(0.0, 0.0, 0.0));
 
         // require fields to be initially the same
-        nf::compare(nfU, ofU, ApproxVector(epsilon));
-        nf::compare(nfP, ofp, ApproxScalar(epsilon));
+        REQUIRE_THAT(nfU, EqualsInternal(ofU, ApproxVector(epsilon)));
+        REQUIRE_THAT(nfU.boundaryData(), EqualsBoundary(ofU, ApproxVector(epsilon)));
+        REQUIRE_THAT(nfP, EqualsInternal(ofp, ApproxScalar(epsilon)));
+        REQUIRE_THAT(nfP.boundaryData(), EqualsBoundary(ofp, ApproxScalar(epsilon)));
 
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
         solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
@@ -97,7 +99,8 @@ TEST_CASE("Momentum")
         nfUEqn.solve();
 
         nfU.correctBoundaryConditions();
-        nf::compare(nfU, ofU, ApproxVector({1e-08, 1e-08, 1e-08}));
+        REQUIRE_THAT(nfU, EqualsInternal(ofU, ApproxVector({1e-08, 1e-08, 1e-08})));
+        REQUIRE_THAT(nfU.boundaryData(), EqualsBoundary(ofU, ApproxVector({1e-08, 1e-08, 1e-08})));
     }
 
     SECTION("Solve transient momentum with grad(p) on " + execName)
@@ -115,8 +118,10 @@ TEST_CASE("Momentum")
         NeoN::fill(nfUEqn.linearSystem().rhs(), NeoN::Vec3(0.0, 0.0, 0.0));
 
         // require fields to be initially the same
-        nf::compare(nfU, ofU, ApproxVector(epsilon));
-        nf::compare(nfP, ofp, ApproxScalar(epsilon));
+        REQUIRE_THAT(nfU, EqualsInternal(ofU, ApproxVector(epsilon)));
+        REQUIRE_THAT(nfU.boundaryData(), EqualsBoundary(ofU, ApproxVector(epsilon)));
+        REQUIRE_THAT(nfP, EqualsInternal(ofp, ApproxScalar(epsilon)));
+        REQUIRE_THAT(nfP.boundaryData(), EqualsBoundary(ofp, ApproxScalar(epsilon)));
 
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
         solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
@@ -125,6 +130,7 @@ TEST_CASE("Momentum")
 
         nfUEqn.solve(-1.0 * dsl::exp::grad(nfP));
         nfU.correctBoundaryConditions();
-        nf::compare(nfU, ofU, ApproxVector({1e-08, 1e-08, 1e-08}));
+        REQUIRE_THAT(nfU, EqualsInternal(ofU, ApproxVector({1e-08, 1e-08, 1e-08})));
+        REQUIRE_THAT(nfU.boundaryData(), EqualsBoundary(ofU, ApproxVector({1e-08, 1e-08, 1e-08})));
     }
 }
