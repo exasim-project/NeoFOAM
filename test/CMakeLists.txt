@@ -7,7 +7,7 @@ set(TEST_CATCH2_DIR ${CMAKE_CURRENT_LIST_DIR}/catch2)
 list(APPEND CMAKE_MODULE_PATH ${Catch2_SOURCE_DIR}/extras)
 
 function(neofoam_unit_test TEST SETUP_DIRECTORY)
-  set(options "BLOCK_MESH")
+  set(options "")
   set(oneValueKeywords "MPI_SIZE" "COMMAND" "WORKING_DIRECTORY")
   set(multiValueKeywords "")
   cmake_parse_arguments("NEOFOAM" "${options}" "${oneValueKeywords}" "${multiValueKeywords}"
@@ -56,28 +56,6 @@ function(neofoam_unit_test TEST SETUP_DIRECTORY)
       NAME neofoam_test_${TEST}
       COMMAND ${NEOFOAM_COMMAND}
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test/${SETUP_DIRECTORY})
-
-    if(NEOFOAM_BLOCK_MESH)
-      if(NOT NEOFOAM_BLOCKMESH_EXECUTABLE)
-        find_program(NEOFOAM_BLOCKMESH_EXECUTABLE blockMesh
-                     HINTS ENV FOAM_APPBIN ENV FOAM_USER_APPBIN
-                     DOC "OpenFOAM blockMesh utility")
-        if(NOT NEOFOAM_BLOCKMESH_EXECUTABLE)
-          message(FATAL_ERROR
-            "blockMesh not found — source OpenFOAM before configuring "
-            "(required for test '${TEST}' which generates its polyMesh on the fly)")
-        endif()
-      endif()
-
-      add_test(
-        NAME neofoam_blockMesh_${TEST}
-        COMMAND ${NEOFOAM_BLOCKMESH_EXECUTABLE}
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test/${SETUP_DIRECTORY})
-      set_tests_properties(neofoam_blockMesh_${TEST}
-                           PROPERTIES FIXTURES_SETUP blockMesh_${TEST})
-      set_tests_properties(neofoam_test_${TEST}
-                           PROPERTIES FIXTURES_REQUIRED blockMesh_${TEST})
-    endif()
   else()
     add_test(
       NAME ${TEST}
@@ -106,7 +84,7 @@ neofoam_unit_test(pressureVelocityCoupling setup_pressureVelocityCoupling)
 neofoam_unit_test(advection setup_advection)
 neofoam_unit_test(compatibility setup_compatibility)
 neofoam_unit_test(momentum setup_pressureVelocityCoupling)
-neofoam_unit_test(snGrad setup_snGrad BLOCK_MESH)
+neofoam_unit_test(snGrad setup_snGrad)
 
 if(NEOFOAM_WITH_MPI)
   neofoam_unit_test(distributedMomentum setup_pressureVelocityCoupling MPI_SIZE 3)
