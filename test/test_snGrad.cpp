@@ -42,8 +42,8 @@ TEST_CASE("snGrad schemes")
     {
         // OpenFOAM: explicit uncorrected snGrad
         Foam::IStringStream is("uncorrected");
-        Foam::surfaceScalarField ofSnGradT =
-            Foam::fv::snGradScheme<Foam::scalar>::New(mesh, is)->snGrad(ofT);
+        auto tSnGradT = Foam::fv::snGradScheme<Foam::scalar>::New(mesh, is)->snGrad(ofT);
+        const Foam::surfaceScalarField& ofSnGradT = tSnGradT.cref();
 
         // NeoFOAM: uncorrected scheme
         auto nfSnGradT = NeoFOAM::constructFrom(exec, nfMesh, ofSnGradT);
@@ -61,8 +61,8 @@ TEST_CASE("snGrad schemes")
     {
         // OpenFOAM: explicit corrected snGrad
         Foam::IStringStream is("corrected");
-        Foam::surfaceScalarField ofSnGradT =
-            Foam::fv::snGradScheme<Foam::scalar>::New(mesh, is)->snGrad(ofT);
+        auto tSnGradT = Foam::fv::snGradScheme<Foam::scalar>::New(mesh, is)->snGrad(ofT);
+        const Foam::surfaceScalarField& ofSnGradT = tSnGradT.cref();
 
         // NeoFOAM: corrected scheme
         auto nfSnGradT = NeoFOAM::constructFrom(exec, nfMesh, ofSnGradT);
@@ -81,8 +81,8 @@ TEST_CASE("snGrad schemes")
     {
         // Terse OF form: "limited <coeff>"
         Foam::IStringStream is("limited 0.333");
-        Foam::surfaceScalarField ofSnGradT =
-            Foam::fv::snGradScheme<Foam::scalar>::New(mesh, is)->snGrad(ofT);
+        auto tSnGradT = Foam::fv::snGradScheme<Foam::scalar>::New(mesh, is)->snGrad(ofT);
+        const Foam::surfaceScalarField& ofSnGradT = tSnGradT.cref();
 
         auto nfSnGradT = NeoFOAM::constructFrom(exec, nfMesh, ofSnGradT);
         zeroSurface(nfSnGradT, NeoN::scalar(0.0));
@@ -99,8 +99,8 @@ TEST_CASE("snGrad schemes")
         // Verbose OF form: "limited corrected <coeff>" — the form that appears inside
         // laplacianSchemes entries like "Gauss linear limited corrected 0.5"
         Foam::IStringStream is("limited corrected 0.5");
-        Foam::surfaceScalarField ofSnGradT =
-            Foam::fv::snGradScheme<Foam::scalar>::New(mesh, is)->snGrad(ofT);
+        auto tSnGradT = Foam::fv::snGradScheme<Foam::scalar>::New(mesh, is)->snGrad(ofT);
+        const Foam::surfaceScalarField& ofSnGradT = tSnGradT.cref();
 
         auto nfSnGradT = NeoFOAM::constructFrom(exec, nfMesh, ofSnGradT);
         zeroSurface(nfSnGradT, NeoN::scalar(0.0));
@@ -116,8 +116,8 @@ TEST_CASE("snGrad schemes")
     SECTION("uncorrected Vec3 matches OpenFOAM on " + execName)
     {
         Foam::IStringStream is("uncorrected");
-        Foam::surfaceVectorField ofSnGradU =
-            Foam::fv::snGradScheme<Foam::vector>::New(mesh, is)->snGrad(ofU);
+        auto tSnGradU = Foam::fv::snGradScheme<Foam::vector>::New(mesh, is)->snGrad(ofU);
+        const Foam::surfaceVectorField& ofSnGradU = tSnGradU.cref();
 
         auto nfSnGradU = NeoFOAM::constructFrom(exec, nfMesh, ofSnGradU);
         zeroSurface(nfSnGradU, NeoN::Vec3 {0.0, 0.0, 0.0});
@@ -132,8 +132,8 @@ TEST_CASE("snGrad schemes")
     SECTION("corrected Vec3 matches OpenFOAM on " + execName)
     {
         Foam::IStringStream is("corrected");
-        Foam::surfaceVectorField ofSnGradU =
-            Foam::fv::snGradScheme<Foam::vector>::New(mesh, is)->snGrad(ofU);
+        auto tSnGradU = Foam::fv::snGradScheme<Foam::vector>::New(mesh, is)->snGrad(ofU);
+        const Foam::surfaceVectorField& ofSnGradU = tSnGradU.cref();
 
         auto nfSnGradU = NeoFOAM::constructFrom(exec, nfMesh, ofSnGradU);
         zeroSurface(nfSnGradU, NeoN::Vec3 {0.0, 0.0, 0.0});
@@ -149,8 +149,8 @@ TEST_CASE("snGrad schemes")
     SECTION("limited Vec3 (0.333) matches OpenFOAM limited on " + execName)
     {
         Foam::IStringStream is("limited 0.333");
-        Foam::surfaceVectorField ofSnGradU =
-            Foam::fv::snGradScheme<Foam::vector>::New(mesh, is)->snGrad(ofU);
+        auto tSnGradU = Foam::fv::snGradScheme<Foam::vector>::New(mesh, is)->snGrad(ofU);
+        const Foam::surfaceVectorField& ofSnGradU = tSnGradU.cref();
 
         auto nfSnGradU = NeoFOAM::constructFrom(exec, nfMesh, ofSnGradU);
         zeroSurface(nfSnGradU, NeoN::Vec3 {0.0, 0.0, 0.0});
