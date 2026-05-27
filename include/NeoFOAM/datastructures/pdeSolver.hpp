@@ -214,56 +214,43 @@ private:
 
     NeoN::la::SolverStats solveImpl(dsl::Expression<ValueType>& expr, LinearSystem& ls)
     {
-        std::optional<SetReference<ValueType>> refFunct;
-        std::vector<const NeoN::dsl::PostAssemblyBase<ValueType, IndexType>*> functs;
+        // Re-read schemes (idempotent with the constructor read)
+        expr.read(runTime_.fvSchemesDict);
 
+        // Assemble without post-assembly functors; we apply SetReference separately below
+        // to ensure correct polymorphic dispatch — storing PostAssemblyBase by value causes
+        // object slicing that silently disables virtual overrides.
+        expr.assemble(runTime_.t, runTime_.dt, ls);
+
+        // Subtract the explicit source term from the rhs (mirrors iterativeSolveImpl)
+        auto expTmp = expr.explicitOperation(psi_.mesh().nCells());
+        auto [vol, expSource, rhs] =
+            NeoN::views(psi_.mesh().cellVolumes(), expTmp, ls.rhs());
+        NeoN::parallelFor(
+            psi_.exec(),
+            {0, static_cast<NeoN::localIdx>(rhs.size())},
+            NEON_LAMBDA(const NeoN::localIdx i) { rhs[i] -= expSource[i] * vol[i]; }
+        );
+
+        // Apply reference-cell pinning directly (avoids object-slicing issue)
         if constexpr (std::is_same_v<ValueType, NeoN::scalar>)
         {
             if (needReference_)
             {
-                refFunct.emplace(pRefCell_, pRefValue_);
-                functs.push_back(&refFunct.value());
+                SetReference<ValueType> refFunct(pRefCell_, pRefValue_);
+                refFunct(ls);
             }
         }
 
         auto solverDict = runTime_.fvSolutionDict.subDict("solvers");
         auto fieldSolverDict = solverDict.subDict(psi_.name);
+        NeoN::fence(psi_.exec());
+        NF_ASSERT(ls.exec() == psi_.exec(), "Executors are not the same");
 
-        auto stats = NeoN::la::SolverStats();
-        // FIXME
-        // TODO NOTE: This is a temporary solution to avoid negative values on the diagonal
-        // when IC is selected as preconditioner by scaling the system matrix with -1.0.
-        // NOTE: This will produce -p as a result.
-        //   if (psi_.name == "p" && fieldSolverDict.contains("preconditioner")
-        //       && fieldSolverDict.subDict("preconditioner").template get<std::string>("type")
-        //              == "preconditioner::Ic")
-        //   {
-        //       auto exprIn = -1.0 * expr;
-        //       stats = NeoN::dsl::detail::iterativeSolveImpl(
-        //           exprIn,
-        //           ls,
-        //           psi_,
-        //           runTime_.t,
-        //           runTime_.dt,
-        //           runTime_.fvSchemesDict,
-        //           fieldSolverDict,
-        //           functs
-        //       );
-        //   }
-        //   else
-        //   {
-        stats = NeoN::dsl::detail::iterativeSolveImpl(
-            expr,
-            ls,
-            psi_,
-            runTime_.t,
-            runTime_.dt,
-            runTime_.fvSchemesDict,
-            fieldSolverDict,
-            functs
-        );
+        auto solver = NeoN::la::Solver(psi_.exec(), fieldSolverDict);
+        auto stats = solver.solve(ls, psi_.internalVector());
 
-        for (auto stat : stats.entries)
+        for (auto& stat : stats.entries)
         {
             NeoN::Logging::info(
                 "Solving for {} Initial residual: {} Final residual: {} No Iterations: {}",
@@ -281,9 +268,9 @@ private:
     dsl::Expression<ValueType> expr_;
     const RunTime& runTime_;
     LinearSystem ls_;
-    bool needReference_;
-    NeoN::localIdx pRefCell_;
-    NeoN::scalar pRefValue_;
+    bool needReference_ = false;
+    NeoN::localIdx pRefCell_ = 0;
+    NeoN::scalar pRefValue_ = 0.0;
 };
 
 
