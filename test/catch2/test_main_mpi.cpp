@@ -56,8 +56,7 @@ int main(int argc, char* argv[])
                 int rc = std::system("blockMesh > log.blockMesh 2>&1");
                 if (rc != 0)
                 {
-                    std::cerr << "blockMesh failed (rc=" << rc
-                              << "); see log.blockMesh\n";
+                    std::cerr << "blockMesh failed (rc=" << rc << "); see log.blockMesh\n";
                     MPI_Abort(MPI_COMM_WORLD, 1);
                 }
             }
@@ -69,8 +68,7 @@ int main(int argc, char* argv[])
                 int rc = std::system("decomposePar -force > log.decomposePar 2>&1");
                 if (rc != 0)
                 {
-                    std::cerr << "decomposePar failed (rc=" << rc
-                              << "); see log.decomposePar\n";
+                    std::cerr << "decomposePar failed (rc=" << rc << "); see log.decomposePar\n";
                     MPI_Abort(MPI_COMM_WORLD, 1);
                 }
             }

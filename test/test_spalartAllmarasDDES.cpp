@@ -577,13 +577,13 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
         saBase(rt.exec, rt.nfMesh, nfNu, nfWallDist, nfNearWallDist, nfDelta);
 
     auto gradOp = nnfvcc::GaussGreenGrad(exec, rt.nfMesh);
-    VolTensor G(
+    VolTensor nfGradU(
         exec,
         "gradU",
         rt.nfMesh,
         fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<Tensor>>(rt.nfMesh)
     );
-    gradOp.gradTensor(nfU, G);
+    gradOp.gradTensor(nfU, nfGradU);
 
     VolVector gradNuTilda(exec, "gradNuTilda", rt.nfMesh, volCalcVecBCs);
     VolScalar magSqrGradNuTilda(exec, "magSqrGradNuTilda", rt.nfMesh, volCalcBCs);
@@ -628,7 +628,7 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
         nfFusedSpCoeff,
         nfNuTilda,
         nfNu,
-        G,
+        nfGradU,
         nfWallDist,
         nfDelta,
         magSqrGradNuTilda
@@ -640,21 +640,21 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
     interpolationScheme.insert(std::string("linear"));
     interpolationScheme.insert(std::string("uncorrected"));
     fvcc::GaussViscousStress opVisc(exec, rt.nfMesh, interpolationScheme);
-    auto nfViscousStress = opVisc.viscousStress(nfNu, nut, G, dsl::Coeff(1.0));
+    auto nfViscousStress = opVisc.viscousStress(nfNu, nut, nfGradU, dsl::Coeff(1.0));
     // Used to meet 1e-12 target but after nutWallFunction update now only 1e-9
     REQUIRE_THAT(nfViscousStress, EqualsInternal(ofViscousStress, ApproxVector(1e-9)));
     REQUIRE_THAT(nfU, EqualsInternal(U, ApproxVector(1e-12)));
     REQUIRE_THAT(nfU.boundaryData(), EqualsBoundary(U, ApproxVector(1e-12)));
     nf::PDESolver<NeoN::Vec3> UEqn(
         dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(nfSurfNuEff, nfU)
-            + dsl::exp::viscousStress(nfNu, nut, G),
+            + dsl::exp::viscousStress(nfNu, nut, nfGradU),
         nfU,
         rt
     );
     UEqn.solve(-1.0 * dsl::exp::grad(nfP));
     nfU.correctBoundaryConditions();
 
-    gradOp.gradTensor(nfU, G);
+    gradOp.gradTensor(nfU, nfGradU);
     gradOp.grad(nfNuTilda, gradNuTilda);
     saBase.calcMagSqrVec(magSqrGradNuTilda, gradNuTilda);
     saBase.computeProdSpDDES(
@@ -662,7 +662,7 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
         nfFusedSpCoeff,
         nfNuTilda,
         nfNu,
-        G,
+        nfGradU,
         nfWallDist,
         nfDelta,
         magSqrGradNuTilda
