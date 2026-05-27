@@ -291,7 +291,7 @@ SpalartAllmarasDDES::SpalartAllmarasDDES(
     , nuEff_(exec, "nuEff", mesh, fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh))
     , nuTildaEff_(
           exec,
-          "nuTildaEff",
+          "DnuTildaEff",
           mesh,
           fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh)
       )
@@ -446,7 +446,7 @@ void SpalartAllmarasDDES::calcNuTildaDiffusionCoeff(
         "SA-DDES::calcNuTildaDiffusionCoeff::boundary"
     );
 
-    nuTildeEffF.name = "nuTildaEff";
+    nuTildeEffF.name = "DnuTildaEff";
 }
 
 void SpalartAllmarasDDES::calcMagSqrVec(

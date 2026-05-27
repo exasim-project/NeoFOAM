@@ -28,7 +28,8 @@ scalar computeUTau(
     const scalar y,
     const scalar nuw,
     const scalar nutw,
-    scalar& err
+    scalar& err,
+    const int maxIter
 )
 {
     err = 0.0;
@@ -54,7 +55,7 @@ scalar computeUTau(
         err = NeoN::mag((ut - uTauNew) / ut);
         ut = uTauNew;
     }
-    while (ut > ROOTVSMALL && err > TOLERANCE && ++iter < MAX_ITER);
+    while (ut > ROOTVSMALL && err > TOLERANCE && ++iter < maxIter);
 
     return ut > 0.0 ? ut : 0.0;
 }
@@ -99,11 +100,19 @@ inline void setNutUSpaldingWallFunction(
             const scalar currentNut = value[i];
 
             scalar err = 0.0;
-            const scalar uTau = computeUTau(magGradU, magUp, y, nuw, currentNut, err);
+            const scalar uTau = computeUTau(magGradU, magUp, y, nuw, currentNut, err, MAX_ITER);
+
+            // Mirrors OF nutUSpaldingWallFunctionFvPatchScalarField::calcNut restart-
+            // preservation block: if the current nutw already satisfies the Spalding
+            // relation to within tolerance (measured by err after one Newton step from
+            // the current state), keep it. Avoids drifting onto a different Newton
+            // basin when re-entering the wall function from a converged state.
+            scalar errOneIter = 0.0;
+            computeUTau(magGradU, magUp, y, nuw, currentNut, errOneIter, 1);
 
             const scalar nutCandidate = (uTau * uTau) / (magGradU + ROOTVSMALL) - nuw;
-
-            const scalar nutw = nutCandidate > 0.0 ? nutCandidate : 0.0;
+            const scalar nutCandidateClamped = nutCandidate > 0.0 ? nutCandidate : 0.0;
+            const scalar nutw = (errOneIter < TOLERANCE) ? currentNut : nutCandidateClamped;
 
             refValue[i] = nutw;
             value[i] = nutw;
