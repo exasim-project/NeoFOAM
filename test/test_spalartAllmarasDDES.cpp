@@ -549,6 +549,13 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
     auto [nfWallDist, nfDelta, nut, nfNearWallDist] =
         NeoFOAM::constFromMany(rt.exec, rt.nfMesh, wallDist, delta, ofNut, nearWallDist);
 
+    // Cold-start seed: foamTurb->validate() ran first and mutated ofNut.boundary on walls
+    // via the Spalding wall function. constFromMany inherited those post-validate values
+    // into nut.boundary. To verify NF and OF land on the same Newton root from a true
+    // cold start, reseed nut.boundary back to the disk uniform value before NF's
+    // correctNut iterates the wall function.
+    NeoN::fill(nut.boundaryData().value(), Foam::scalar(5e-05));
+
     auto volCalcBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<Scalar>>(rt.nfMesh);
     auto volCalcVecBCs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<Vec3>>(rt.nfMesh);
     auto surfCalcBCs = fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<Scalar>>(rt.nfMesh);
@@ -789,6 +796,10 @@ TEST_CASE("SA-DDES: NeoFOAM wrapper validate() + correct() matches OpenFOAM")
 
     auto [nfWallDist, nfDelta, nut, nfNearWallDist, nfNu] =
         NeoFOAM::constFromMany(rt.exec, rt.nfMesh, wallDist, delta, ofNut, nearWallDist, tnu());
+
+    // Cold-start seed (see Test 1): reset nut.boundary to disk value so NF's Spalding
+    // Newton starts where OF's did.
+    NeoN::fill(nut.boundaryData().value(), Foam::scalar(5e-05));
 
 
     // --- Wrapper: validate then one time step ---
