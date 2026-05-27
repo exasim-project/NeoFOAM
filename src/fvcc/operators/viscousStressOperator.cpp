@@ -147,9 +147,10 @@ void divDevReff(
 
     const auto [Sf, tauFV, vol, rhsV] =
         views(mesh.faceNormals(), tauF.internalVector(), mesh.cellVolumes(), rhs);
+    const auto tauFB = tauF.boundaryData().value().view();
 
     const localIdx nIF = mesh.nInternalFaces();
-    const localIdx nFaces = tauF.size();
+    const localIdx nBnd = mesh.nBoundaryFaces();
 
     parallelFor(
         exec,
@@ -164,10 +165,10 @@ void divDevReff(
 
     parallelFor(
         exec,
-        {nIF, nFaces},
-        NEON_LAMBDA(const localIdx f) {
-            const Vec3 flux = scalar(-1.0) * (tauFV[f] & Sf[f]);
-            atomicAddVec3(&rhsV[faceCells[f - nIF]], flux);
+        {0, nBnd},
+        NEON_LAMBDA(const localIdx bfi) {
+            const Vec3 flux = scalar(-1.0) * (tauFB[bfi] & Sf[nIF + bfi]);
+            atomicAddVec3(&rhsV[faceCells[bfi]], flux);
         },
         "divDevReff::boundary"
     );
