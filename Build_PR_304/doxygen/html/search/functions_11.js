@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['_7emeshadapter_0',['~MeshAdapter',['../classNeoFOAM_1_1MeshAdapter.html#aecf77843c02d153223582904d3b78670',1,'NeoFOAM::MeshAdapter']]],
-  ['_7epdesolver_1',['~PDESolver',['../classNeoFOAM_1_1PDESolver.html#a25556a10c54c223f4cafef62444b3538',1,'NeoFOAM::PDESolver']]]
+  ['write_0',['write',['../namespaceNeoFOAM.html#a0fdc041fbcfcb89b3d2f87395606b3c7',1,'NeoFOAM::write(const NeoN::scalarVector &amp;sf, const Foam::fvMesh &amp;mesh, const std::string fieldName)'],['../namespaceNeoFOAM.html#a74bbfc6d5d7a681b4737ae8b42916d5b',1,'NeoFOAM::write(const NeoN::Vector&lt; NeoN::Vec3 &gt; &amp;sf, const Foam::fvMesh &amp;mesh, const std::string fieldName)'],['../namespaceNeoFOAM.html#ab761525a35b5b6bb313c2c67c053211a',1,'NeoFOAM::write(const fvcc::VolumeField&lt; NeoN::scalar &gt; &amp;volField, const Foam::fvMesh &amp;mesh)'],['../namespaceNeoFOAM.html#ac90ca3a810facf8e02d279ef402ecc68',1,'NeoFOAM::write(const fvcc::VolumeField&lt; NeoN::Vec3 &gt; &amp;volField, const Foam::fvMesh &amp;mesh)']]]
 ];
