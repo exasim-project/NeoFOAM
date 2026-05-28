@@ -26,7 +26,9 @@ TEST_CASE("Distributed UnstructuredMesh")
 
     float epsilon = 1e-32;
     Foam::Time& runTime = *timePtr;
-    auto [execName, exec] = GENERATE(allAvailableExecutor());
+    // CPU executor only for now; GPU MPI path requires CUDA-aware MPI.
+    std::string execName = "CPUExecutor";
+    NeoN::Executor exec = NeoN::CPUExecutor {};
 
     auto rt = nf::createAdapterRunTime(runTime, exec);
     auto& mesh = rt.mesh;
