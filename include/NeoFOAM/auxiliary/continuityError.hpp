@@ -9,23 +9,25 @@
 namespace NeoFOAM
 {
 
+struct ContinuityErrors
+{
+    NeoN::scalar sumLocal;
+    NeoN::scalar global;
+};
+
 /**
- * @brief Compute and log time-step continuity errors from the face flux field.
+ * @brief Compute time-step continuity errors from the face flux field.
  *
- * Computes sum-local, global, and cumulative continuity errors matching the
- * OpenFOAM continuityErrs.H formulation:
+ * Matches the OpenFOAM continuityErrs.H formulation:
  *   sumLocal  = dt * volWeightedAverage( |div(phi)| )   (abs, MPI-reduced)
  *   global    = dt * volWeightedAverage(  div(phi)  )   (signed, MPI-reduced)
- *   cumulative accumulates global across all PISO iterations
  *
- * @param phi           Face-flux NeoN SurfaceField
- * @param rt            NeoFOAM RunTime (provides exec, mesh, MPI env, dt)
- * @param cumulative    Running cumulative error — caller must initialise to 0
+ * @param phi   Face-flux NeoN SurfaceField
+ * @param rt    NeoFOAM RunTime (provides exec, mesh, MPI env, dt)
  */
-inline void reportContinuityError(
+inline ContinuityErrors computeContinuityError(
     const NeoN::finiteVolume::cellCentred::SurfaceField<NeoN::scalar>& phi,
-    const RunTime& rt,
-    NeoN::scalar& cumulative
+    const RunTime& rt
 )
 {
     const NeoN::scalar dt = rt.dt;
@@ -68,25 +70,48 @@ inline void reportContinuityError(
     NeoN::scalar globalSignedVolSum = localSignedVolSum;
     NeoN::scalar totalVol = localTotalVol;
 
-    if (rt.mpiEnvironment.isInitialized() && rt.mpiEnvironment.sizeRank() > 1)
+#ifdef NF_WITH_MPI_SUPPORT
+    if (rt.nfMesh.boundaryMesh().isDistributed())
     {
-        NeoN::mpi::allReduce(globalAbsVolSum, NeoN::mpi::ReduceOp::Sum, rt.mpiEnvironment.comm());
-        NeoN::mpi::allReduce(
-            globalSignedVolSum,
-            NeoN::mpi::ReduceOp::Sum,
-            rt.mpiEnvironment.comm()
+        NeoN::mpi::Environment env;
+        NeoN::scalar sums[3] = {globalAbsVolSum, globalSignedVolSum, totalVol};
+        MPI_Allreduce(
+            MPI_IN_PLACE,
+            sums,
+            3,
+            NeoN::mpi::getType<NeoN::scalar>(),
+            MPI_SUM,
+            env.comm()
         );
-        NeoN::mpi::allReduce(totalVol, NeoN::mpi::ReduceOp::Sum, rt.mpiEnvironment.comm());
+        globalAbsVolSum = sums[0];
+        globalSignedVolSum = sums[1];
+        totalVol = sums[2];
     }
+#endif
 
-    const NeoN::scalar sumLocalContErr = dt * globalAbsVolSum / totalVol;
-    const NeoN::scalar globalContErr = dt * globalSignedVolSum / totalVol;
-    cumulative += globalContErr;
+    return {dt * globalAbsVolSum / totalVol, dt * globalSignedVolSum / totalVol};
+}
+
+/**
+ * @brief Compute, accumulate, and log time-step continuity errors.
+ *
+ * @param phi           Face-flux NeoN SurfaceField
+ * @param rt            NeoFOAM RunTime (provides exec, mesh, MPI env, dt)
+ * @param cumulative    Running cumulative error — caller must initialise to 0
+ */
+inline void reportContinuityError(
+    const NeoN::finiteVolume::cellCentred::SurfaceField<NeoN::scalar>& phi,
+    const RunTime& rt,
+    NeoN::scalar& cumulative
+)
+{
+    const auto errs = computeContinuityError(phi, rt);
+    cumulative += errs.global;
 
     NeoN::Logging::info(
         "time step continuity errors : sum local = {}, global = {}, cumulative = {}",
-        sumLocalContErr,
-        globalContErr,
+        errs.sumLocal,
+        errs.global,
         cumulative
     );
 }
