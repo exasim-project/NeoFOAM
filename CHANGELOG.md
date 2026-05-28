@@ -1,6 +1,8 @@
 # Version 0.3.0 (unreleased)
 - Enable mempool via controlDict [#246](https://github.com/exasim-project/NeoFOAM/pull/246)
 - Add SpalartAllmarasDDES turbulence model and integration test [#233](https://github.com/exasim-project/NeoFOAM/pull/233)
+- Added continuity error calculation [#306](https://github.com/exasim-project/NeoFOAM/pull/306)
+
 
 ## Development
 - Update submodule regularly by dependabot [#209](https://github.com/exasim-project/NeoFOAM/pull/209)
