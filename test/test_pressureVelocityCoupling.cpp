@@ -188,7 +188,7 @@ TEST_CASE("PressureVelocityCoupling")
         pEqn.assemble();
 
         REQUIRE_THAT(
-            pEqn.linearSystem().matrix().diag(),
+            NeoN::la::removeBoundaryContributions(pEqn.linearSystem()).matrix().diag(),
             EqualsInternal(ofpEqn.diag(), ApproxScalar(1e-15))
         );
         REQUIRE_THAT(
@@ -271,7 +271,7 @@ TEST_CASE("PressureVelocityCoupling")
         );
 
         REQUIRE_THAT(
-            pEqn.linearSystem().rhs(),
+            NeoN::la::removeBoundaryContributions(pEqn.linearSystem()).rhs(),
             EqualsInternal(ofpEqn.source(), ApproxScalar(1e-15))
         );
 

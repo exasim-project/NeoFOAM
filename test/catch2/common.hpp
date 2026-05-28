@@ -82,15 +82,39 @@ namespace NeoFOAM
 /** @brief Fill every cell of an OpenFOAM field with random values and sync boundary conditions. */
 void randomizeField(auto& field)
 {
+    using FieldType = std::decay_t<decltype(field)>;
     std::mt19937 gen(42);
     std::uniform_real_distribution<> dis(1.0, 2.0);
 
-    forAll(field, celli)
+    if constexpr (std::is_same_v<FieldType, Foam::surfaceScalarField>)
     {
-        field[celli] = dis(gen);
+        // Surface fields: boundary patches hold the face values themselves;
+        // correctBoundaryConditions() does not randomize them. Without this,
+        // a Dirichlet-anchored equation built from a random surface gamma
+        // would see zero coefficients on the Dirichlet patch and behave as
+        // a singular pure-Neumann system.
+        auto& intF = field.primitiveFieldRef();
+        forAll(intF, facei)
+        {
+            intF[facei] = dis(gen);
+        }
+        forAll(field.boundaryField(), patchi)
+        {
+            auto& p = field.boundaryFieldRef()[patchi];
+            forAll(p, i)
+            {
+                p[i] = dis(gen);
+            }
+        }
     }
-
-    field.correctBoundaryConditions();
+    else
+    {
+        forAll(field, celli)
+        {
+            field[celli] = dis(gen);
+        }
+        field.correctBoundaryConditions();
+    }
 }
 
 /** @brief Create and return a named OpenFOAM field of type @p FieldType with values supplied by @p
