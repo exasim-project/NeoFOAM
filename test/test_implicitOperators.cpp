@@ -148,7 +148,7 @@ TEST_CASE("matrix multiplication")
         REQUIRE_THAT(result.internalVector(), EqualsInternal(divV(), ApproxScalar(epsilon)));
 
         REQUIRE_THAT(
-            nfPDE.linearSystem().matrix().diag(),
+            NeoN::la::removeBoundaryContributions(nfPDE.linearSystem()).matrix().diag(),
             EqualsInternal(matrix.diag(), ApproxScalar(epsilon))
         );
         REQUIRE_THAT(
@@ -178,7 +178,7 @@ TEST_CASE("matrix multiplication")
         auto result = NeoFOAM::applyOperator(nfPDE.linearSystem(), nfT);
         REQUIRE_THAT(result.internalVector(), EqualsInternal(lapV(), ApproxScalar(epsilon)));
         REQUIRE_THAT(
-            nfPDE.linearSystem().matrix().diag(),
+            NeoN::la::removeBoundaryContributions(nfPDE.linearSystem()).matrix().diag(),
             EqualsInternal(matrix.diag(), ApproxScalar(epsilon))
         );
         REQUIRE_THAT(

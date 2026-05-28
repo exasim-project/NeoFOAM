@@ -317,11 +317,7 @@ TEST_CASE("Distributed PressureVelocityCoupling")
             NeoFOAM::randDimField<Foam::surfaceScalarField>(mesh, {0, 0, 1, 0, 0}, "rAUf");
         auto nfrAUf = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, forAUf);
 
-        // Foam::surfaceScalarField ofPhi0("phi0", ofPhi * 0.0);
-        // auto nfPhi0 = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofPhi);
-
         Foam::fvScalarMatrix ofpEqn(fvm::laplacian(forAUf, ofp) == fvc::div(ofPhi));
-        ofpEqn.setReference(0, 0.0);
         ofp.correctBoundaryConditions();
         solve(ofpEqn);
         ofp.correctBoundaryConditions();
@@ -332,10 +328,6 @@ TEST_CASE("Distributed PressureVelocityCoupling")
             nfP,
             rt
         );
-        if (rt.mpiEnvironment.rank() == 0)
-        {
-            pEqn.setReference(0, 0.0);
-        }
 
         auto stats = pEqn.solve();
 
@@ -350,7 +342,7 @@ TEST_CASE("Distributed PressureVelocityCoupling")
             EqualsInternal(ofpEqn.upper(), ApproxScalar(epsilonII))
         );
         REQUIRE_THAT(
-            pEqn.linearSystem().rhs(),
+            NeoN::la::removeBoundaryContributions(pEqn.linearSystem()).rhs(),
             EqualsInternal(ofpEqn.source(), ApproxScalar(epsilonII))
         );
 
