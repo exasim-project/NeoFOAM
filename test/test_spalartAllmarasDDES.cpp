@@ -596,9 +596,9 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
     VolScalar nfFusedSpCoeff(exec, "nfFusedSpCoeff", rt.nfMesh, volCalcBCs);
 
     const auto& coeffs = saBase.coeffs();
-    const auto Cw1 = saBase.cw1();
+    const auto cw1 = saBase.cw1();
 
-    REQUIRE(Cw1 == ofCw1);
+    REQUIRE(cw1 == ofCw1);
 
     auto surfInterpol = fvcc::SurfaceInterpolation<Scalar>(
         rt.exec,

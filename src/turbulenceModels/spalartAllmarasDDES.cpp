@@ -187,9 +187,9 @@ void kernelComputeProdSp(
                 scalar(10)
             );
             const scalar r6 = r * r * r * r * r * r;
-            const scalar g_ = r + cw2 * (r6 - r);
-            const scalar g6 = g_ * g_ * g_ * g_ * g_ * g_;
-            const scalar fw = g_ * Kokkos::pow((scalar(1) + cw36) / (g6 + cw36), scalar(1.0 / 6.0));
+            const scalar g = r + cw2 * (r6 - r);
+            const scalar g6 = g * g * g * g * g * g;
+            const scalar fw = g * Kokkos::pow((scalar(1) + cw36) / (g6 + cw36), scalar(1.0 / 6.0));
 
             productionV[i] = cb1 * sTilde * nuTilda + cb2S * gradNuTildeMagSqrV[i];
             spCoeffV[i] = cw1 * fw * nuTilda * invSqrdTilde;
