@@ -132,7 +132,12 @@ public:
 
     void setReference(NeoN::localIdx pRefCell, NeoN::scalar pRefValue)
     {
-        if (runTime_.mpiEnvironment.rank() == 0)
+        // Accept the call in serial (MPI not initialised — mpiRank is the
+        // sentinel -1, which would compare unequal to 0 if cast to size_t)
+        // and on rank 0 in parallel. SetReference::operator() further guards
+        // the matrix mutation against non-rank-0 in initialised MPI.
+        const auto& mpiEnv = runTime_.mpiEnvironment;
+        if (!mpiEnv.isInitialized() || mpiEnv.rank() == 0)
         {
             needReference_ = true;
             pRefCell_ = pRefCell;
@@ -210,8 +215,8 @@ public:
         return stats;
     }
 
-private:
-
+    // Public because NVCC forbids extended __host__ __device__ lambdas
+    // (NEON_LAMBDA) inside private or protected member functions.
     NeoN::la::SolverStats solveImpl(dsl::Expression<ValueType>& expr, LinearSystem& ls)
     {
         // Re-read schemes (idempotent with the constructor read)
@@ -263,6 +268,8 @@ private:
 
         return stats;
     }
+
+private:
 
     VolumeField& psi_;
     dsl::Expression<ValueType> expr_;
