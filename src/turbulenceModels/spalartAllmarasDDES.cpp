@@ -15,13 +15,6 @@ using NeoN::SymmTensor;
 namespace NeoFOAM
 {
 
-// ============================================================
-// File-scope kernel helpers
-// CUDA: extended __host__ __device__ lambdas (NEON_LAMBDA) are
-// not allowed inside private/protected member functions.
-// All parallelFor kernels live here as free functions.
-// ============================================================
-
 namespace
 {
 

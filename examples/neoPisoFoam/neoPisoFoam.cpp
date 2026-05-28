@@ -67,6 +67,9 @@ int main(int argc, char* argv[])
         auto nearWallDist = nf::constructFrom(rt.exec, rt.nfMesh, ofNearWallDist);
         auto delta = nf::constructFrom(rt.exec, rt.nfMesh, lesModel.delta());
         nf::SpalartAllmarasDDES turb(rt.exec, rt.nfMesh, nu, wallDist, nearWallDist, delta);
+
+        // Calculate prerequisite variables for turbulence model
+        // e.g. gradU, diffusion coeff and calls correctNut
         turb.validate(U, nuTilda, nut);
 
         // TODO: surface interpolation also instantiated in turbulence model -> doubled?!
