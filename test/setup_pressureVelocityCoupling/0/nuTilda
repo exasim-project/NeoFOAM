@@ -9,46 +9,34 @@ FoamFile
 {
     version     2.0;
     format      ascii;
-    class       dictionary;
-    object      controlDict;
+    class       volScalarField;
+    object      nuTilda;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-application     laplacianFoam;
+dimensions      [0 2 -1 0 0 0 0];
 
-startFrom       startTime;
+internalField   uniform 5e-05;
 
-startTime       0;
-
-stopAt          endTime;
-
-endTime         3;
-
-deltaT          0.01;
-
-writeControl    runTime;
-
-writeInterval   10000;
-
-purgeWrite      0;
-
-writeFormat     ascii;
-
-writePrecision  16;
-
-writeCompression off;
-
-timeFormat      general;
-
-timePrecision   16;
-
-runTimeModifiable true;
-
-profiling
+boundaryField
 {
-    active      true;
-    cpuInfo     true;
-    memInfo     true;
-    sysInfo     true;
+    fixedWalls
+    {
+        type            fixedValue;
+        value           $internalField;
+    }
+
+    inlet
+    {
+        type            fixedValue;
+        value           uniform 5e-05;
+    }
+
+    outlet
+    {
+        type            zeroGradient;
+    }
 }
+
+
 // ************************************************************************* //
