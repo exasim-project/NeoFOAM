@@ -48,6 +48,11 @@ target_include_directories(
 target_compile_definitions(OpenFOAM INTERFACE WM_LABEL_SIZE=$ENV{WM_LABEL_SIZE} NoRepository
                                               WM_$ENV{WM_PRECISION_OPTION} OPENFOAM=$ENV{FOAM_API})
 
+# Foam exposes WM_LABEL_SIZE (32/64); propagate to NeoN's label width
+if(WM_LABEL_SIZE EQUAL 64)
+  target_compile_definitions(NeoN PUBLIC NeoN_DP_LABEL)
+endif()
+
 importoflibrary(OpenFOAM)
 importoflibrary(meshTools)
 importoflibrary(finiteVolume)
