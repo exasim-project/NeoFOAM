@@ -229,8 +229,7 @@ public:
 
         // Subtract the explicit source term from the rhs (mirrors iterativeSolveImpl)
         auto expTmp = expr.explicitOperation(psi_.mesh().nCells());
-        auto [vol, expSource, rhs] =
-            NeoN::views(psi_.mesh().cellVolumes(), expTmp, ls.rhs());
+        auto [vol, expSource, rhs] = NeoN::views(psi_.mesh().cellVolumes(), expTmp, ls.rhs());
         NeoN::parallelFor(
             psi_.exec(),
             {0, static_cast<NeoN::localIdx>(rhs.size())},

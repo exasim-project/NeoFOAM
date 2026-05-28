@@ -333,16 +333,22 @@ nnfvcc::SurfaceField<scalar> flux(const PDESolver<scalar>& expr)
 
     const auto nTotalFaces = faceFlux.internalVector().size();
     const auto nlValues = ls.offDiagonalMatrix().values().view();
-    const auto nlRows = ls.offDiagonalMatrix().rowOffs().view();
     const auto pBoundV = p.boundaryData().value().view();
 
     NeoN::parallelFor(
         exec,
         {nInternalFaces + nBoundaryFaces, nTotalFaces},
         NEON_LAMBDA(const size_t facei) {
+            // Local-owner of the proc-boundary face. Don't pull from
+            // offDiagonalMatrix() — its rowOffs() returns CSR-style
+            // cumulative offsets (not row indices), and even its rowIdxs()
+            // would carry global cell ids (see createEmptyLinearSystem,
+            // where row entries are faceOwners + globalOffset). The
+            // boundaryMesh's faceOwners view is the local-index source
+            // already used by the physical-boundary loop above.
             auto bcfaceii = facei - (nInternalFaces + nBoundaryFaces);
             auto bfacei = facei - nInternalFaces;
-            auto own = static_cast<std::size_t>(nlRows[bcfaceii]);
+            auto own = static_cast<std::size_t>(faceCells[bfacei]);
             auto coupling = nlValues[bcfaceii];
             auto pGhost = pBoundV[bfacei];
             scalar pflux = coupling * (pGhost - internalP[own]);

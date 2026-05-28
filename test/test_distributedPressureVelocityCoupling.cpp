@@ -359,10 +359,7 @@ TEST_CASE("Distributed PressureVelocityCoupling")
         REQUIRE_THAT(nfPhi, EqualsInternal(ofPhi, ApproxScalar(1e-32)));
         REQUIRE_THAT(nfPhi.boundaryData(), EqualsBoundary(ofPhi, ApproxScalar(1e-32)));
 
-        // TODO nf::flux(pEqn) hits an out-of-bounds in NeoN's proc-boundary
-        // index range when iterating beyond physical boundary faces; tracked
-        // separately. Enable once that helper is fixed for distributed runs.
-        // auto nfPhi0 = nf::flux(pEqn);
-        // REQUIRE_THAT(nfPhi0, EqualsInternal(ofPhi0(), ApproxScalar(1e-05)));
+        auto nfPhi0 = nf::flux(pEqn);
+        REQUIRE_THAT(nfPhi0, EqualsInternal(ofPhi0(), ApproxScalar(1e-05)));
     }
 }
