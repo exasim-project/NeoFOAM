@@ -2,10 +2,12 @@
 <doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.8" xml:lang="en-US">
   <compounddef id="namespaceNeoFOAM" kind="namespace" language="C++">
     <compoundname>NeoFOAM</compoundname>
+    <innerclass refid="structNeoFOAM_1_1ContinuityErrors" prot="public">NeoFOAM::ContinuityErrors</innerclass>
     <innerclass refid="classNeoFOAM_1_1CreateFromFoamField" prot="public">NeoFOAM::CreateFromFoamField</innerclass>
     <innerclass refid="classNeoFOAM_1_1MeshAdapter" prot="public">NeoFOAM::MeshAdapter</innerclass>
     <innerclass refid="classNeoFOAM_1_1PDESolver" prot="public">NeoFOAM::PDESolver</innerclass>
     <innerclass refid="structNeoFOAM_1_1RunTime" prot="public">NeoFOAM::RunTime</innerclass>
+    <innerclass refid="classNeoFOAM_1_1SpalartAllmarasDDES" prot="public">NeoFOAM::SpalartAllmarasDDES</innerclass>
     <innerclass refid="structNeoFOAM_1_1TypeMap" prot="public">NeoFOAM::TypeMap</innerclass>
     <innerclass refid="structNeoFOAM_1_1TypeMap_3_01Foam_1_1Field_3_01Foam_1_1scalar_01_4_01_4" prot="public">NeoFOAM::TypeMap&lt; Foam::Field&lt; Foam::scalar &gt; &gt;</innerclass>
     <innerclass refid="structNeoFOAM_1_1TypeMap_3_01Foam_1_1Field_3_01Foam_1_1vector_01_4_01_4" prot="public">NeoFOAM::TypeMap&lt; Foam::Field&lt; Foam::vector &gt; &gt;</innerclass>
@@ -243,6 +245,48 @@
         </inbodydescription>
         <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/comparison.hpp" line="30" column="6" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/comparison.hpp" declline="30" declcolumn="6"/>
       </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1acae8bf32ecdb138af11850e725c58572" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="structNeoFOAM_1_1ContinuityErrors" kindref="compound">ContinuityErrors</ref></type>
+        <definition>ContinuityErrors NeoFOAM::computeContinuityError</definition>
+        <argsstring>(const NeoN::finiteVolume::cellCentred::SurfaceField&lt; NeoN::scalar &gt; &amp;phi, const RunTime &amp;rt)</argsstring>
+        <name>computeContinuityError</name>
+        <qualifiedname>NeoFOAM::computeContinuityError</qualifiedname>
+        <param>
+          <type>const NeoN::finiteVolume::cellCentred::SurfaceField&lt; NeoN::scalar &gt; &amp;</type>
+          <declname>phi</declname>
+        </param>
+        <param>
+          <type>const <ref refid="structNeoFOAM_1_1RunTime" kindref="compound">RunTime</ref> &amp;</type>
+          <declname>rt</declname>
+        </param>
+        <briefdescription>
+<para>Compute time-step continuity errors from the face flux field. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Matches the OpenFOAM continuityErrs.H formulation: sumLocal = dt * volWeightedAverage( |div(phi)| ) (abs, MPI-reduced) global = dt * volWeightedAverage(  div(phi)  ) (signed, MPI-reduced)</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>phi</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Face-flux <ref refid="namespaceNeoN" kindref="compound">NeoN</ref> SurfaceField </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>rt</parametername>
+</parameternamelist>
+<parameterdescription>
+<para><ref refid="namespaceNeoFOAM" kindref="compound">NeoFOAM</ref> <ref refid="structNeoFOAM_1_1RunTime" kindref="compound">RunTime</ref> (provides exec, mesh, MPI env, dt) </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/continuityError.hpp" line="28" column="25" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/continuityError.hpp" bodystart="28" bodyend="93"/>
+      </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1a216c99c971b9acb00fbd8ff36d9f2ee9" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
         <type>void</type>
         <definition>void NeoFOAM::reportContinuityError</definition>
@@ -262,16 +306,15 @@
           <declname>cumulative</declname>
         </param>
         <briefdescription>
-<para>Compute and log time-step continuity errors from the face flux field. </para>
+<para>Compute, accumulate, and log time-step continuity errors. </para>
         </briefdescription>
         <detaileddescription>
-<para>Computes sum-local, global, and cumulative continuity errors matching the OpenFOAM continuityErrs.H formulation: sumLocal = dt * volWeightedAverage( |div(phi)| ) (abs, MPI-reduced) global = dt * volWeightedAverage(  div(phi)  ) (signed, MPI-reduced) cumulative accumulates global across all PISO iterations</para>
 <para><parameterlist kind="param"><parameteritem>
 <parameternamelist>
 <parametername>phi</parametername>
 </parameternamelist>
 <parameterdescription>
-<para>Face-flux NeoN SurfaceField </para>
+<para>Face-flux <ref refid="namespaceNeoN" kindref="compound">NeoN</ref> SurfaceField </para>
 </parameterdescription>
 </parameteritem>
 <parameteritem>
@@ -295,7 +338,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/continuityError.hpp" line="25" column="13" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/continuityError.hpp" bodystart="25" bodyend="92"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/continuityError.hpp" line="102" column="13" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/continuityError.hpp" bodystart="102" bodyend="117"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1af69b228bd9e492814da093da0a51d1ac" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>NeoN::Vec3</type>
@@ -525,7 +568,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="34" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="34" bodyend="121"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="34" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="34" bodyend="123"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1adb365cf8e725db6dbfc0a758c392e2b1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
@@ -552,7 +595,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="124" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="124" bodyend="170"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="126" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="126" bodyend="172"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1ab7276ff683225b6140acfa56618926b5" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
@@ -583,7 +626,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="173" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="173" bodyend="241"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="175" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="175" bodyend="266"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1a999cf2f9840de1da0b4265f93d4a6006" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
@@ -629,7 +672,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="307" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="307" bodyend="310"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="332" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="332" bodyend="335"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1a48fbbbb3755e34d928cf0d189532d93c" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
@@ -666,7 +709,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="314" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="314" bodyend="336"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="339" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="339" bodyend="361"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1a39bc76acefb5a1dd3074b0feba5864eb" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>void</type>
@@ -1101,7 +1144,7 @@
           <defval>false</defval>
         </param>
         <briefdescription>
-<para>read OpenFOAM mesh and construct NeoN mesh </para>
+<para>read OpenFOAM mesh and construct <ref refid="namespaceNeoN" kindref="compound">NeoN</ref> mesh </para>
         </briefdescription>
         <detaileddescription>
 <para><parameterlist kind="param"><parameteritem>
@@ -1204,7 +1247,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pdeSolver.hpp" line="264" column="46" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pdeSolver.hpp" bodystart="264" bodyend="279"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pdeSolver.hpp" line="268" column="46" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pdeSolver.hpp" bodystart="268" bodyend="283"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1a9de226ba9098594fc8b6b867a35adccc" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
@@ -1235,7 +1278,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pdeSolver.hpp" line="283" column="46" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pdeSolver.hpp" bodystart="283" bodyend="289"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pdeSolver.hpp" line="287" column="46" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pdeSolver.hpp" bodystart="287" bodyend="293"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1ae3448b9356abfd01a14f812c7acffc7c" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
