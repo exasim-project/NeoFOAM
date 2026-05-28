@@ -59,6 +59,7 @@ int main(int argc, char* argv[])
 
         NeoN::Logging::info("Creating phi");
         auto& phi = nf::constructAndRegister(vectorCollection, rt, ofPhi, false);
+        NeoN::scalar cumulativeContErr = 0.0;
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -143,8 +144,7 @@ int main(int argc, char* argv[])
                         nf::updateFaceVelocity(phiHbyA, pEqn, phi);
                     }
                 }
-                // TODO: missing
-                // #include "continuityErrs.H"
+                nf::reportContinuityError(phi, rt, cumulativeContErr);
 
                 nf::updateVelocity(hByA, crAU, p, U);
                 U.correctBoundaryConditions();
