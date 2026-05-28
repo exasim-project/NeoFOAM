@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2306                                 |
+|  \\    /   O peration     |                                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -10,45 +10,87 @@ FoamFile
     version     2.0;
     format      ascii;
     class       dictionary;
-    object      controlDict;
+    object      fvSchemes;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-application     laplacianFoam;
-
-startFrom       startTime;
-
-startTime       0;
-
-stopAt          endTime;
-
-endTime         3;
-
-deltaT          0.01;
-
-writeControl    runTime;
-
-writeInterval   10000;
-
-purgeWrite      0;
-
-writeFormat     ascii;
-
-writePrecision  16;
-
-writeCompression off;
-
-timeFormat      general;
-
-timePrecision   16;
-
-runTimeModifiable true;
-
-profiling
+ddtSchemes
 {
-    active      true;
-    cpuInfo     true;
-    memInfo     true;
-    sysInfo     true;
+    default         Euler;
 }
+
+<<<<<<< HEAD:test/setup_pressureVelocityCoupling/processor0/constant/polyMesh/faceProcAddressing
+42
+(
+2
+3
+10
+11
+18
+23
+24
+31
+32
+39
+44
+49
+55
+56
+57
+64
+65
+66
+73
+74
+75
+82
+83
+84
+100
+101
+102
+103
+104
+105
+106
+107
+108
+1
+9
+17
+22
+30
+38
+43
+48
+53
+)
+=======
+gradSchemes
+{
+    default         Gauss linear;
+    grad(T)         Gauss linear;
+}
+>>>>>>> origin/develop:test/setup_snGrad/system/fvSchemes
+
+divSchemes
+{
+    default         none;
+}
+
+laplacianSchemes
+{
+    default         none;
+}
+
+interpolationSchemes
+{
+    default         linear;
+}
+
+snGradSchemes
+{
+    default         corrected;
+}
+
 // ************************************************************************* //

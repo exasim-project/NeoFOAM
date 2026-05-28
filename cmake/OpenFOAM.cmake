@@ -13,25 +13,35 @@
 # cmake-format: on
 function(importOFLibrary NAME)
   set(options "")
-  set(oneValueKeywords "INCLUDE" "LIBNAME" "LIBPATH")
-  set(multiValueKeywords "EXTRA_LINK_TARGET")
+  set(oneValueKeywords "LIBNAME" "LIBPATH")
+  set(multiValueKeywords "INCLUDE_LN" "INCLUDE_ROOT" "EXTRA_LINK_TARGET")
   cmake_parse_arguments("NF" "${options}" "${oneValueKeywords}" "${multiValueKeywords}" ${ARGN})
-  if(NOT DEFINED "NF_LIBNAME")
+
+  if(NOT DEFINED NF_LIBNAME)
     set(NF_LIBNAME ${NAME})
   endif()
-  if(NOT DEFINED "NF_INCLUDE")
-    set(NF_INCLUDE ${NAME})
-  endif()
-  if(NOT DEFINED "NF_LIBPATH")
+  if(NOT DEFINED NF_LIBPATH)
     set(NF_LIBPATH $ENV{FOAM_LIBBIN})
   endif()
 
-  set(OFINCDIR $ENV{FOAM_SRC}/${NF_INCLUDE}/lnInclude)
+  # Default: OpenFOAM libs typically expose headers via <module>/lnInclude
+  if(NOT DEFINED NF_INCLUDE_LN AND NOT DEFINED NF_INCLUDE_ROOT)
+    set(NF_INCLUDE_LN ${NAME})
+  endif()
+
+  set(OFINCDIRS "")
+  foreach(inc IN LISTS NF_INCLUDE_LN)
+    list(APPEND OFINCDIRS "$ENV{FOAM_SRC}/${inc}/lnInclude")
+  endforeach()
+  foreach(inc IN LISTS NF_INCLUDE_ROOT)
+    list(APPEND OFINCDIRS "$ENV{FOAM_SRC}/${inc}")
+  endforeach()
+
   set(OFLIBDIR ${NF_LIBPATH}/lib${NF_LIBNAME}${CMAKE_SHARED_LIBRARY_SUFFIX})
 
   add_library(OpenFOAM::${NAME} SHARED IMPORTED)
   set_target_properties(OpenFOAM::${NAME} PROPERTIES IMPORTED_LOCATION ${OFLIBDIR}
-                                                     INTERFACE_INCLUDE_DIRECTORIES ${OFINCDIR})
+                                                     INTERFACE_INCLUDE_DIRECTORIES "${OFINCDIRS}")
   target_link_libraries(
     OpenFOAM
     PUBLIC
@@ -56,13 +66,14 @@ endif()
 importoflibrary(OpenFOAM)
 importoflibrary(meshTools)
 importoflibrary(finiteVolume)
-importoflibrary(incompressibleTransportModels INCLUDE transportModels/incompressible)
-importoflibrary(turbulenceModels INCLUDE TurbulenceModels/turbulenceModels)
-importoflibrary(incompressibleTurbulenceModels INCLUDE TurbulenceModels/incompressible)
+importoflibrary(incompressibleTransportModels INCLUDE_ROOT transportModels INCLUDE_LN
+                transportModels/incompressible)
+importoflibrary(turbulenceModels INCLUDE_LN TurbulenceModels/turbulenceModels)
+importoflibrary(incompressibleTurbulenceModels INCLUDE_LN TurbulenceModels/incompressible)
 importoflibrary(
   Pstream
   INCLUDE
-  Pstream/mpi
+  Pstream/mpi/lnInclude
   LIBPATH
   $ENV{FOAM_LIBBIN}/$ENV{FOAM_MPI}
   EXTRA_LINK_TARGET

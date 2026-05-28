@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2306                                 |
+|  \\    /   O peration     |                                                 |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -9,46 +9,63 @@ FoamFile
 {
     version     2.0;
     format      ascii;
-    class       dictionary;
-    object      controlDict;
+    class       volVectorField;
+    object      U;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-application     laplacianFoam;
+dimensions      [0 1 -1 0 0 0 0];
 
-startFrom       startTime;
+<<<<<<< HEAD:test/setup_pressureVelocityCoupling/processor0/constant/polyMesh/pointProcAddressing
+32
+(
+0
+1
+4
+5
+8
+9
+12
+13
+16
+17
+20
+21
+24
+25
+28
+29
+32
+33
+36
+37
+40
+41
+44
+45
+48
+49
+52
+53
+56
+57
+60
+61
+)
+=======
+internalField   uniform (0.0 0.0 0.0);
+>>>>>>> origin/develop:test/setup_snGrad/0/U
 
-startTime       0;
-
-stopAt          endTime;
-
-endTime         3;
-
-deltaT          0.01;
-
-writeControl    runTime;
-
-writeInterval   10000;
-
-purgeWrite      0;
-
-writeFormat     ascii;
-
-writePrecision  16;
-
-writeCompression off;
-
-timeFormat      general;
-
-timePrecision   16;
-
-runTimeModifiable true;
-
-profiling
+boundaryField
 {
-    active      true;
-    cpuInfo     true;
-    memInfo     true;
-    sysInfo     true;
+    fixedWalls
+    {
+        type            zeroGradient;
+    }
+    frontAndBack
+    {
+        type            empty;
+    }
 }
+
 // ************************************************************************* //

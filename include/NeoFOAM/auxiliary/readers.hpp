@@ -121,7 +121,9 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
          [](auto& dict) { dict.insert("type", std::string("calculated")); }},
         {"empty", [](auto& dict) { dict.insert("type", std::string("empty")); }},
         {"symmetryPlane", [](auto& dict) { dict.insert("type", std::string("symmetry")); }},
-        {"symmetry", [](auto& dict) { dict.insert("type", std::string("symmetry")); }}
+        {"symmetry", [](auto& dict) { dict.insert("type", std::string("symmetry")); }},
+        {"nutUSpaldingWallFunction",
+         [](auto& dict) { dict.insert("type", std::string("nutUSpaldingWallFunction")); }}
     };
 
     int patchi = 0;
@@ -236,15 +238,39 @@ auto constructFrom(
 
     if constexpr (NeoFOAM::detail::isVolumeField<ContainerType>)
     {
-        NeoN::mpi::Environment mpiEnv;
+        using FoamValueType = typename FoamFieldType::value_type;
         ContainerType out(exec, in.name(), nfMesh, readVolBoundaryConditions(nfMesh, in));
         out.internalVector() = fromFoamField(exec, in.primitiveField());
+        std::size_t nBnd = 0;
+        forAll(in.boundaryField(), patchi)
+        {
+            nBnd += in.boundaryField()[patchi].size();
+        }
+
+        Foam::Field<FoamValueType> bval(nBnd);
+
+        Foam::label bi = 0;
+        forAll(in.boundaryField(), patchi)
+        {
+            const auto& pin = in.boundaryField()[patchi];
+            forAll(pin, i)
+            {
+                // IMPORTANT:
+                // keep OpenFOAM type here (scalar or vector)
+                bval[bi++] = pin[i];
+            }
+        }
+
+        NF_ASSERT_EQUAL(static_cast<std::size_t>(bi), nBnd);
+        out.boundaryData().value() = fromFoamField(exec, bval);
         out.correctBoundaryConditions();
         return out;
     }
     else if constexpr (NeoFOAM::detail::isSurfaceField<ContainerType>)
     {
-        using FoamComponentType = typename FoamFieldType::cmptType;
+        // Element type of the GeometricField (T in GeometricField<T,...>) — NOT cmptType,
+        // which decomposes vectors into scalars and would break the surface-vector path.
+        using FoamComponentType = typename FoamFieldType::value_type;
 
         ContainerType out(exec, in.name(), nfMesh, readSurfaceBoundaryConditions(nfMesh, in));
 
@@ -261,7 +287,7 @@ auto constructFrom(
         {
             if (static_cast<std::size_t>(facei) < nInt)
             {
-                internalData[facei] = convert(in[facei]);
+                internalData[facei] = in[facei];
             }
         }
 
@@ -291,7 +317,7 @@ auto constructFrom(
             }
             forAll(pin, facei)
             {
-                bval[bi] = convert(pin[facei]);
+                bval[bi] = pin[facei];
                 ++bi;
             }
         }
