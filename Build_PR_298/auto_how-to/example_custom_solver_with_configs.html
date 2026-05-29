@@ -329,80 +329,74 @@ to download the full example code.</p>
 </div>
 <section class="sphx-glr-example-title" id="add-config-files-to-a-solver-and-model">
 <span id="sphx-glr-auto-how-to-example-custom-solver-with-configs-py"></span><h1>Add config files to a solver and model<a class="headerlink" href="#add-config-files-to-a-solver-and-model" title="Link to this heading">¶</a></h1>
-<p>A solver and the models it runs each carry their own
-<code class="docutils literal notranslate"><span class="pre">BaseConfig</span></code>. The framework reads them from disk at
-LOAD time and threads them into operations by type annotation, so the
-operation code never reaches into <code class="docutils literal notranslate"><span class="pre">ctx</span></code> for its own parameters.</p>
-<section id="user-facing-api-five-shapes">
-<h2>User-facing API — five shapes<a class="headerlink" href="#user-facing-api-five-shapes" title="Link to this heading">¶</a></h2>
-<p>Every config goes through the spec (model or solver). Five forms cover
-everything:</p>
-<ol class="arabic simple">
-<li><p><strong>Single config — class form</strong>: <code class="docutils literal notranslate"><span class="pre">spec.config(SqrtSolverConfig)</span></code>.
-The class is self-describing via <code class="docutils literal notranslate"><span class="pre">&#64;IOStrategy(...)</span></code>; the framework
-auto-locates the instance after load.</p></li>
-<li><p><strong>Single config — callback form (escape hatch)</strong>:
-<code class="docutils literal notranslate"><span class="pre">&#64;spec.config</span></code> over a <code class="docutils literal notranslate"><span class="pre">def</span> <span class="pre">_load(case_dir:</span> <span class="pre">Path)</span> <span class="pre">-&gt;</span> <span class="pre">SqrtSolverConfig</span></code>.
-Use when load needs custom args (<code class="docutils literal notranslate"><span class="pre">validate=False</span></code>, defaults
-overrides) or merges from multiple sources.</p></li>
-<li><p><strong>Multiple configs</strong>: call <code class="docutils literal notranslate"><span class="pre">spec.config(Cls)</span></code> repeatedly.
-<code class="docutils literal notranslate"><span class="pre">runtime.config</span></code> then becomes a <code class="docutils literal notranslate"><span class="pre">SimpleNamespace</span></code> keyed by
-snake-case class name; type-injection still works in operations.</p></li>
-<li><p><strong>fvSchemes / fvSolution slices</strong>: <code class="docutils literal notranslate"><span class="pre">Sub</span> <span class="pre">=</span> <span class="pre">spec.config(fvSchemes)</span></code>
-returns a per-spec subclass; operations extend it via
-<code class="docutils literal notranslate"><span class="pre">&#64;Sub.add(div=&quot;div(phi,U)&quot;)</span></code> — typed Pydantic fields are injected
-incrementally. See <a class="reference internal" href="example_per_model_fvschemes.html"><span class="doc">Declare per-model fvSchemes / fvSolution slices</span></a> for the full
-pattern.</p></li>
-<li><p><strong>Consume in operations / lifecycle callbacks</strong>: annotate the
-parameter with the config class. The framework finds it on
-<code class="docutils literal notranslate"><span class="pre">runtime.config</span></code> by type and passes it in. Operations never read
-configs from <code class="docutils literal notranslate"><span class="pre">ctx</span></code>.</p></li>
-</ol>
-<p>External validation in one call:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">errors</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">run_load</span><span class="p">()</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>      <span class="c1"># Pydantic over every loaded config</span>
+<p><strong>Key question.</strong> How do I attach configuration to the things that
+run — a <em>model</em>, a <em>solver</em>, and the per-spec <em>fvSchemes / fvSolution</em>
+slices — and read it inside an operation without reaching into a
+global <code class="docutils literal notranslate"><span class="pre">ctx</span></code>?</p>
+<p><strong>Answer.</strong> Each config is owned by the spec that declares it:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">spec</span><span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="n">MyConfig</span><span class="p">)</span>                 <span class="c1"># declare: this spec owns MyConfig</span>
 </pre></div>
 </div>
-<p>The rest of this page builds the smallest end-to-end example that
-exercises shapes 1, 2 (callback as fall-back), and 5 — a Babylonian
-square-root iteration <code class="docutils literal notranslate"><span class="pre">x_{n+1}</span> <span class="pre">=</span> <span class="pre">0.5</span> <span class="pre">*</span> <span class="pre">(x_n</span> <span class="pre">+</span> <span class="pre">target</span> <span class="pre">/</span> <span class="pre">x_n)</span></code> — and
-asserts the result matches <code class="docutils literal notranslate"><span class="pre">math.sqrt</span></code>. The arithmetic is
-incidental; configs are the subject.</p>
-</section>
-<section id="stage-the-yaml-fixtures-into-a-case-directory">
-<h2>Stage the YAML fixtures into a case directory<a class="headerlink" href="#stage-the-yaml-fixtures-into-a-case-directory" title="Link to this heading">¶</a></h2>
-<p>Every <code class="docutils literal notranslate"><span class="pre">BaseConfig</span></code> binds to a <em>filename</em>, not a full path.
-The loader resolves that filename against the <code class="docutils literal notranslate"><span class="pre">case_dir</span></code> you pass
-in. Here we copy the two YAML fixtures shipped alongside this page
-into a throwaway directory and use it as the case.</p>
+<p>Operations receive it by type annotation:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">MyConfig</span><span class="p">):</span>       <span class="c1"># consume: by type, not via ctx</span>
+    <span class="o">...</span>                               <span class="c1"># framework injects the loaded instance</span>
+</pre></div>
+</div>
+<p>The same mechanic applies on a <code class="docutils literal notranslate"><span class="pre">Model</span></code>, on a <code class="docutils literal notranslate"><span class="pre">Solver</span></code>, and (with a
+typed-slice twist) on <code class="docutils literal notranslate"><span class="pre">fvSchemes</span></code> / <code class="docutils literal notranslate"><span class="pre">fvSolution</span></code>. The injector
+itself is shared code in <a class="reference internal" href="../reference/framework/config_injection.html#module-neofoam.framework.config_injection" title="neofoam.framework.config_injection"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neofoam.framework.config_injection</span></code></a>:
+config parameters resolve from <code class="docutils literal notranslate"><span class="pre">runtime.config</span></code> by <em>type</em>; field
+parameters resolve from <code class="docutils literal notranslate"><span class="pre">ctx.fields</span></code> by <em>name</em>.</p>
+<p>The rest of this page proves each surface with the smallest runnable
+example.</p>
+<section id="stage-the-yaml-fixtures">
+<h2>Stage the YAML fixtures<a class="headerlink" href="#stage-the-yaml-fixtures" title="Link to this heading">¶</a></h2>
+<p>Each <code class="docutils literal notranslate"><span class="pre">BaseConfig</span></code> binds to a <em>filename</em>; the loader resolves it
+against <code class="docutils literal notranslate"><span class="pre">case_dir</span></code>. The three fixtures shipped next to this page
+are staged into a throwaway directory.</p>
+<div class="literal-block-wrapper docutils container" id="id1">
+<div class="code-block-caption"><span class="caption-text">babylonian_config.yaml</span><a class="headerlink" href="#id1" title="Link to this code">¶</a></div>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">target</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2.0</span>
+<span class="nt">initial_guess</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
+</pre></div>
+</div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id2">
+<div class="code-block-caption"><span class="caption-text">sqrt_solver_config.yaml</span><a class="headerlink" href="#id2" title="Link to this code">¶</a></div>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">max_iterations</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
+<span class="nt">tolerance</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0e-12</span>
+</pre></div>
+</div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id3">
+<div class="code-block-caption"><span class="caption-text">per_model_fvSchemes.yaml</span><a class="headerlink" href="#id3" title="Link to this code">¶</a></div>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">divSchemes</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">default</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">none</span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">div(phi,U)</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Gauss linear</span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">div(phi,k)</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Gauss upwind</span>
+<span class="nt">gradSchemes</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">default</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Gauss linear</span>
+<span class="w">  </span><span class="nt">grad(U)</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Gauss linear</span>
+<span class="w">  </span><span class="nt">grad(p)</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Gauss linear</span>
+<span class="nt">laplacianSchemes</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">default</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Gauss linear corrected</span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">laplacian(nuEff,U)</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Gauss linear corrected</span>
+<span class="w">  </span><span class="l l-Scalar l-Scalar-Plain">laplacian(rAU,p)</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Gauss linear corrected</span>
+</pre></div>
+</div>
+</div>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">Field</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="w"> </span><span class="kn">import</span> <span class="n">configurations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.foam</span><span class="w"> </span><span class="kn">import</span> <span class="n">fvSchemes</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span><span class="p">,</span> <span class="n">FieldUpdates</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">DAGResolver</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">Depends</span><span class="p">,</span>
-    <span class="n">InitializerBuilder</span><span class="p">,</span>
-    <span class="n">InitStep</span><span class="p">,</span>
-    <span class="n">LoadResult</span><span class="p">,</span>
-    <span class="n">StagedInitRunner</span><span class="p">,</span>
-    <span class="n">StagedInitSpec</span><span class="p">,</span>
-<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.operations</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">IterativeOp</span><span class="p">,</span>
-    <span class="n">Operation</span><span class="p">,</span>
-    <span class="n">Operations</span><span class="p">,</span>
-    <span class="n">StepBuilder</span><span class="p">,</span>
-<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">Solver</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">OperationMetadata</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseConfig</span><span class="p">,</span> <span class="n">IOStrategy</span><span class="p">,</span> <span class="n">YAML</span>
 
 
@@ -411,304 +405,145 @@ into a throwaway directory and use it as the case.</p>
 
 
 <span class="n">HERE</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">getfile</span><span class="p">(</span><span class="n">_here</span><span class="p">))</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span>
-<span class="n">CASE_DIR</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">tempfile</span><span class="o">.</span><span class="n">mkdtemp</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;neofoam_sqrt_&quot;</span><span class="p">))</span>
-<span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">HERE</span> <span class="o">/</span> <span class="s2">&quot;babylonian_config.yaml&quot;</span><span class="p">,</span> <span class="n">CASE_DIR</span> <span class="o">/</span> <span class="s2">&quot;babylonian_config.yaml&quot;</span><span class="p">)</span>
-<span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">HERE</span> <span class="o">/</span> <span class="s2">&quot;sqrt_solver_config.yaml&quot;</span><span class="p">,</span> <span class="n">CASE_DIR</span> <span class="o">/</span> <span class="s2">&quot;sqrt_solver_config.yaml&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;case_dir =&quot;</span><span class="p">,</span> <span class="n">CASE_DIR</span><span class="p">)</span>
-</pre></div>
-</div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>case_dir = /tmp/neofoam_sqrt_qgizb8iz
+<span class="n">CASE</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">tempfile</span><span class="o">.</span><span class="n">mkdtemp</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;neofoam_cfg_&quot;</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">_name</span> <span class="ow">in</span> <span class="p">(</span>
+    <span class="s2">&quot;babylonian_config.yaml&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;sqrt_solver_config.yaml&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;per_model_fvSchemes.yaml&quot;</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">HERE</span> <span class="o">/</span> <span class="n">_name</span><span class="p">,</span> <span class="n">CASE</span> <span class="o">/</span> <span class="n">_name</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
-<section id="declare-the-model-s-config">
-<h2>Declare the model’s config<a class="headerlink" href="#declare-the-model-s-config" title="Link to this heading">¶</a></h2>
-<p>The model owns its problem statement: the value whose square root
-we want and the seed for the iteration. <code class="docutils literal notranslate"><span class="pre">&#64;IOStrategy(YAML(...))</span></code>
-binds the class to a file inside <code class="docutils literal notranslate"><span class="pre">case_dir</span></code>; the Pydantic
-<code class="docutils literal notranslate"><span class="pre">Field(...)</span></code> validators reject bad input on load.</p>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">target</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2.0</span>
-<span class="nt">initial_guess</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
-</pre></div>
-</div>
+<section id="model-declare-consume">
+<h2>Model — declare + consume<a class="headerlink" href="#model-declare-consume" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">model.config(ProblemConfig)</span></code> is the declaration. The operation
+names the config in its signature; <code class="docutils literal notranslate"><span class="pre">rt.operations[0].run(ctx)</span></code> is
+the consumption: <code class="docutils literal notranslate"><span class="pre">cfg</span></code> is injected from <code class="docutils literal notranslate"><span class="pre">rt.config</span></code> by type,
+<code class="docutils literal notranslate"><span class="pre">x</span></code> is pulled from <code class="docutils literal notranslate"><span class="pre">ctx.fields</span></code> by name. The operation body
+touches <code class="docutils literal notranslate"><span class="pre">cfg.target</span></code> directly — never <code class="docutils literal notranslate"><span class="pre">ctx</span></code> — and that is the
+whole point.</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">&quot;babylonian_config.yaml&quot;</span><span class="p">))</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">BabylonianConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
-    <span class="n">target</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;value whose square root is wanted&quot;</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProblemConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
+    <span class="n">target</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="n">initial_guess</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+
+
+<span class="n">newton</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;Newton&quot;</span><span class="p">)</span>
+<span class="n">newton</span><span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="n">ProblemConfig</span><span class="p">)</span>  <span class="c1"># declare</span>
+
+
+<span class="nd">@newton</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">&quot;1.0&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">ProblemConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FieldUpdates</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">cfg</span><span class="o">.</span><span class="n">target</span> <span class="o">/</span> <span class="n">x</span><span class="p">)})</span>  <span class="c1"># consume</span>
+
+
+<span class="n">rt</span> <span class="o">=</span> <span class="n">newton</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">CASE</span><span class="p">)</span>
+<span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rt</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="n">ProblemConfig</span><span class="p">)</span>  <span class="c1"># declare → autoloaded</span>
+<span class="n">ctx</span> <span class="o">=</span> <span class="n">Context</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">rt</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">initial_guess</span><span class="p">},</span> <span class="n">models</span><span class="o">=</span><span class="p">{})</span>
+<span class="n">rt</span><span class="o">.</span><span class="n">operations</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>  <span class="c1"># consume → injected</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;model: x after one step =&quot;</span><span class="p">,</span> <span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">])</span>
+<span class="k">assert</span> <span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="mf">2.0</span> <span class="o">/</span> <span class="mf">1.0</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>model: x after one step = 1.5
 </pre></div>
 </div>
 </section>
-<section id="declare-the-solver-s-config">
-<h2>Declare the solver’s config<a class="headerlink" href="#declare-the-solver-s-config" title="Link to this heading">¶</a></h2>
-<p>The solver owns the <em>algorithm controls</em> — when to stop and how
-many iterations to allow. Keeping these on a separate config makes
-each layer responsible for its own knobs.</p>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">max_iterations</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
-<span class="nt">tolerance</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0e-12</span>
-</pre></div>
-</div>
+<section id="solver-same-declaration-same-injection">
+<h2>Solver — same declaration, same injection<a class="headerlink" href="#solver-same-declaration-same-injection" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">solver.config(ControlsConfig)</span></code> is the identical one-liner.
+A solver populates <code class="docutils literal notranslate"><span class="pre">runtime.config</span></code> during <code class="docutils literal notranslate"><span class="pre">initialize()</span></code>: the
+framework pulls every registered config class out of
+<code class="docutils literal notranslate"><span class="pre">state.core_models</span></code> and assigns it to <code class="docutils literal notranslate"><span class="pre">runtime.config</span></code>. After
+that, operations consume the config by type using the <em>same</em>
+shared injector as the model — no separate mechanism.</p>
+<p>Everything else a real solver carries (StagedInitSpec, execution
+graphs, DAG resolution) is plumbing for <em>running</em> an algorithm, not
+for <em>attaching configs</em>. It is covered in
+<a class="reference internal" href="../auto_tutorials/example_03_build_a_solver.html"><span class="doc">Build a scalar-transport solver from scratch</span></a>.</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">&quot;sqrt_solver_config.yaml&quot;</span><span class="p">))</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">SqrtSolverConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ControlsConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
     <span class="n">max_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
     <span class="n">tolerance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">1e-12</span><span class="p">)</span>
+
+
+<span class="n">sqrt</span> <span class="o">=</span> <span class="n">Solver</span><span class="p">(</span><span class="s2">&quot;Sqrt&quot;</span><span class="p">)</span>
+<span class="n">sqrt</span><span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="n">ControlsConfig</span><span class="p">)</span>  <span class="c1"># declare — same call as on the model</span>
+
+
+<span class="nd">@sqrt</span><span class="o">.</span><span class="n">initializer</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_init</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Context</span><span class="p">:</span>
+    <span class="c1"># Minimal initializer: load the config into state.core_models so</span>
+    <span class="c1"># the framework can pick it up onto runtime.config.</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">core_models</span> <span class="o">=</span> <span class="p">[</span><span class="n">ControlsConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">CASE</span><span class="p">)]</span>
+    <span class="k">return</span> <span class="n">Context</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="mf">9.0</span><span class="p">},</span> <span class="n">models</span><span class="o">=</span><span class="p">{})</span>
+
+
+<span class="nd">@sqrt</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">&quot;1.0&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">report</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">ControlsConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;solver: tolerance=</span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">tolerance</span><span class="si">}</span><span class="s2">, x=</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># consume — by type</span>
+
+
+<span class="n">srt</span> <span class="o">=</span> <span class="n">sqrt</span><span class="o">.</span><span class="n">instantiate</span><span class="p">()</span>
+<span class="n">sctx</span> <span class="o">=</span> <span class="n">srt</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
+<span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">srt</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="n">ControlsConfig</span><span class="p">)</span>  <span class="c1"># declare → on runtime.config</span>
+<span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">srt</span><span class="o">.</span><span class="n">operations</span><span class="p">:</span>
+    <span class="n">op</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">sctx</span><span class="p">)</span>  <span class="c1"># consume → injected</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>solver: tolerance=1e-12, x=9.0
 </pre></div>
 </div>
 </section>
-<section id="define-the-model-register-build-operation">
-<h2>Define the model: register, build, operation<a class="headerlink" href="#define-the-model-register-build-operation" title="Link to this heading">¶</a></h2>
-<p>Declared at module scope, the <code class="docutils literal notranslate"><span class="pre">Model</span></code> earns three calls:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">babylonian.config(BabylonianConfig)</span></code> (shape 1 — class form)
-registers the config class. The framework auto-loads it via the
-class’s <code class="docutils literal notranslate"><span class="pre">&#64;IOStrategy</span></code> binding on <code class="docutils literal notranslate"><span class="pre">babylonian.instantiate(case_dir=…)</span></code>,
-so no callback is needed. Use the callback form
-<code class="docutils literal notranslate"><span class="pre">&#64;babylonian.load</span></code> only when load needs custom args
-(<code class="docutils literal notranslate"><span class="pre">validate=False</span></code>, multi-source merge) or manifest-driven
-multi-instance loading.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&#64;babylonian.build</span></code> emits the <code class="docutils literal notranslate"><span class="pre">InitStep</span></code> objects that
-produce the fields the operation will read. <code class="docutils literal notranslate"><span class="pre">cfg</span></code> is
-auto-injected from <code class="docutils literal notranslate"><span class="pre">runtime.config</span></code> because its annotation
-matches (shape 5).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">&#64;babylonian.operation</span></code> is the work itself. <code class="docutils literal notranslate"><span class="pre">x:</span> <span class="pre">float</span></code> is
-looked up in <code class="docutils literal notranslate"><span class="pre">ctx.fields</span></code> by <em>name</em>; <code class="docutils literal notranslate"><span class="pre">cfg:</span> <span class="pre">BabylonianConfig</span></code>
-is auto-injected from <code class="docutils literal notranslate"><span class="pre">runtime.config</span></code> by <em>type</em> (shape 5).</p></li>
-</ul>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">babylonian</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;Babylonian&quot;</span><span class="p">)</span>
-<span class="n">babylonian</span><span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="n">BabylonianConfig</span><span class="p">)</span>
+<section id="fvschemes-fvsolution-declare-a-typed-slice-add-entries-load">
+<h2>fvSchemes / fvSolution — declare a typed slice, add entries, load<a class="headerlink" href="#fvschemes-fvsolution-declare-a-typed-slice-add-entries-load" title="Link to this heading">¶</a></h2>
+<p>A model that needs an entry from <code class="docutils literal notranslate"><span class="pre">system/fvSchemes</span></code> declares a
+<em>per-spec subclass</em> with the same one-liner: <code class="docutils literal notranslate"><span class="pre">spec.config(fvSchemes)</span></code>
+returns a fresh class. Operations then extend it with typed entries
+via <code class="docutils literal notranslate"><span class="pre">&#64;&lt;Sub&gt;.add(...)</span></code>. Loading the subclass yields a Pydantic
+instance whose values have been typechecked against the OpenFOAM
+scheme unions in <code class="xref py py-mod docutils literal notranslate"><span class="pre">neofoam.foam.schemes</span></code>.</p>
+<p>The full story (multiple sections, <code class="docutils literal notranslate"><span class="pre">fvSolution</span></code> too, bad-input
+behaviour, independent subclasses per spec) lives in
+<a class="reference internal" href="example_per_model_fvschemes.html"><span class="doc">Declare per-model fvSchemes / fvSolution slices</span></a>.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">pimple</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;Pimple&quot;</span><span class="p">)</span>
+<span class="n">PimpleFvSchemes</span> <span class="o">=</span> <span class="n">pimple</span><span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="n">fvSchemes</span><span class="p">)</span>  <span class="c1"># declare — returns a subclass</span>
+<span class="n">IOStrategy</span><span class="p">(</span><span class="n">YAML</span><span class="p">(</span><span class="s2">&quot;per_model_fvSchemes.yaml&quot;</span><span class="p">))(</span><span class="n">PimpleFvSchemes</span><span class="p">)</span>
 
 
-<span class="nd">@babylonian</span><span class="o">.</span><span class="n">build</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">_bab_build</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="n">BabylonianConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitStep</span><span class="p">]:</span>
-    <span class="k">return</span> <span class="p">[</span>
-        <span class="n">InitStep</span><span class="p">(</span>
-            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;x&quot;</span><span class="p">,</span>
-            <span class="n">initializer</span><span class="o">=</span><span class="k">lambda</span> <span class="n">_ctx</span><span class="p">:</span> <span class="n">cfg</span><span class="o">.</span><span class="n">initial_guess</span><span class="p">,</span>
-            <span class="n">depends_on</span><span class="o">=</span><span class="p">[],</span>
-            <span class="n">category</span><span class="o">=</span><span class="s2">&quot;fields&quot;</span><span class="p">,</span>
-        <span class="p">),</span>
-    <span class="p">]</span>
+<span class="nd">@pimple</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">&quot;2.1&quot;</span><span class="p">)</span>
+<span class="nd">@PimpleFvSchemes</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">div</span><span class="o">=</span><span class="s2">&quot;div(phi,U)&quot;</span><span class="p">)</span>  <span class="c1"># consume — typed entry on the slice</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">momentum</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pretend U-momentum operation.&quot;&quot;&quot;</span>
 
 
-<span class="nd">@babylonian</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">operation_number</span><span class="o">=</span><span class="s2">&quot;1.0&quot;</span><span class="p">)</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">babylonian_step</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">BabylonianConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FieldUpdates</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One Babylonian iteration: x ← 0.5 * (x + target / x).&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">cfg</span><span class="o">.</span><span class="n">target</span> <span class="o">/</span> <span class="n">x</span><span class="p">)})</span>
+<span class="n">schemes</span> <span class="o">=</span> <span class="n">PimpleFvSchemes</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">CASE</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;fvSchemes: div(phi,U) =&quot;</span><span class="p">,</span> <span class="n">schemes</span><span class="o">.</span><span class="n">divSchemes</span><span class="o">.</span><span class="n">div_phi_U</span><span class="p">)</span>
 </pre></div>
 </div>
-</section>
-<section id="wire-the-solver-via-stagedinitspec">
-<h2>Wire the solver via StagedInitSpec<a class="headerlink" href="#wire-the-solver-via-stagedinitspec" title="Link to this heading">¶</a></h2>
-<p>Solvers don’t host the build stage directly — a
-<code class="docutils literal notranslate"><span class="pre">StagedInitSpec</span></code> registers LOAD and BUILD (and an optional
-RESOLVE, omitted here) as independent callbacks.</p>
-<ul class="simple">
-<li><p><strong>LOAD</strong> returns the solver config plus every model runtime in a
-single <code class="docutils literal notranslate"><span class="pre">LoadResult</span></code>. The model runtime carries its own config
-(auto-loaded via <code class="docutils literal notranslate"><span class="pre">babylonian.config(...)</span></code>).</p></li>
-<li><p><strong>BUILD</strong> receives the model runtimes and collects their
-<code class="docutils literal notranslate"><span class="pre">InitStep</span></code> lists. Solver config does <em>not</em> go through
-<code class="docutils literal notranslate"><span class="pre">InitializerBuilder.add_*</span></code> — the framework picks the
-<code class="docutils literal notranslate"><span class="pre">SqrtSolverConfig</span></code> instance out of <code class="docutils literal notranslate"><span class="pre">LoadResult.core_models</span></code>
-and assigns it to <code class="docutils literal notranslate"><span class="pre">runtime.config</span></code> because the spec registered
-<code class="docutils literal notranslate"><span class="pre">SqrtSolverConfig</span></code> via <code class="docutils literal notranslate"><span class="pre">&#64;spec.config</span></code> (next section).</p></li>
-</ul>
-<p>BUILD’s signature is inspected: declare only the kwargs you need.
-Here we ask for <code class="docutils literal notranslate"><span class="pre">optional_models</span></code> (the non-config-class entries
-from LOAD); <code class="docutils literal notranslate"><span class="pre">core_models</span></code> and <code class="docutils literal notranslate"><span class="pre">models</span></code> are the other accepted
-names.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">create_init</span><span class="p">(</span><span class="n">case_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StagedInitRunner</span><span class="p">:</span>
-    <span class="n">spec_builder</span> <span class="o">=</span> <span class="n">StagedInitSpec</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="s2">&quot;SqrtSolver&quot;</span><span class="p">)</span>
-    <span class="n">resolved_case_dir</span> <span class="o">=</span> <span class="n">case_dir</span> <span class="ow">or</span> <span class="n">CASE_DIR</span>
-
-    <span class="nd">@spec_builder</span><span class="o">.</span><span class="n">load</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_load</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">LoadResult</span><span class="p">:</span>
-        <span class="n">solver_cfg</span> <span class="o">=</span> <span class="n">SqrtSolverConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">resolved_case_dir</span><span class="p">,</span> <span class="n">validate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-        <span class="n">bab</span> <span class="o">=</span> <span class="n">babylonian</span><span class="o">.</span><span class="n">instantiate</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">resolved_case_dir</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">LoadResult</span><span class="p">(</span><span class="n">core_models</span><span class="o">=</span><span class="p">[</span><span class="n">solver_cfg</span><span class="p">],</span> <span class="n">optional_models</span><span class="o">=</span><span class="p">[</span><span class="n">bab</span><span class="p">])</span>
-
-    <span class="nd">@spec_builder</span><span class="o">.</span><span class="n">build</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_build</span><span class="p">(</span><span class="n">core_models</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">optional_models</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitStep</span><span class="p">]:</span>
-        <span class="n">builder</span> <span class="o">=</span> <span class="n">InitializerBuilder</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">runtime</span> <span class="ow">in</span> <span class="n">optional_models</span><span class="p">:</span>
-            <span class="n">builder</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">runtime</span><span class="o">.</span><span class="n">run_build</span><span class="p">())</span>
-        <span class="k">return</span> <span class="n">builder</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
-
-    <span class="k">return</span> <span class="n">StagedInitRunner</span><span class="p">(</span><span class="n">spec_builder</span><span class="o">.</span><span class="n">finalize</span><span class="p">())</span>
-</pre></div>
-</div>
-</section>
-<section id="define-the-solver-register-its-config-execution-graph">
-<h2>Define the solver: register its config + execution graph<a class="headerlink" href="#define-the-solver-register-its-config-execution-graph" title="Link to this heading">¶</a></h2>
-<p>The solver registers <code class="docutils literal notranslate"><span class="pre">SqrtSolverConfig</span></code> against its spec via
-<code class="docutils literal notranslate"><span class="pre">spec.config(SqrtSolverConfig)</span></code> — <strong>shape 1, the class form</strong>.
-The framework locates the matching instance in <code class="docutils literal notranslate"><span class="pre">core_models</span></code>
-during <code class="docutils literal notranslate"><span class="pre">initialize()</span></code> and assigns it to <code class="docutils literal notranslate"><span class="pre">runtime.config</span></code>;
-operations and lifecycle callbacks then receive it by type
-(shape 5), the same way model operations do.</p>
-<p>To register multiple configs against the same spec
-(e.g. <code class="docutils literal notranslate"><span class="pre">SqrtSolverConfig</span></code> <em>plus</em> a separate <code class="docutils literal notranslate"><span class="pre">DiagnosticsConfig</span></code>),
-call <code class="docutils literal notranslate"><span class="pre">.config(...)</span></code> again — <code class="docutils literal notranslate"><span class="pre">runtime.config</span></code> becomes a
-<code class="docutils literal notranslate"><span class="pre">SimpleNamespace</span></code> keyed by snake-case class name (shape 3) and
-every type-injected parameter still finds its instance by class.</p>
-<p>To override the auto-load (custom <code class="docutils literal notranslate"><span class="pre">validate</span></code> flag, multi-source
-merge), use the <strong>callback form</strong> — <code class="docutils literal notranslate"><span class="pre">&#64;sqrt_solver_spec.config</span></code>
-over <code class="docutils literal notranslate"><span class="pre">def</span> <span class="pre">_load(case_dir:</span> <span class="pre">Path)</span> <span class="pre">-&gt;</span> <span class="pre">SqrtSolverConfig</span></code> (shape 2).</p>
-<p>The execution graph is a single iterative loop. The convergence
-check is constructed inside <code class="docutils literal notranslate"><span class="pre">_execution_graph</span></code> with the loaded
-config and target value baked in as a closure; its <code class="docutils literal notranslate"><span class="pre">__call__(ctx)</span></code>
-only ever reads <code class="docutils literal notranslate"><span class="pre">ctx.fields</span></code> — no <code class="docutils literal notranslate"><span class="pre">ctx.models</span></code> access required.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">sqrt_solver_spec</span> <span class="o">=</span> <span class="n">Solver</span><span class="p">(</span><span class="s2">&quot;SqrtSolver&quot;</span><span class="p">)</span>
-<span class="n">sqrt_solver_spec</span><span class="o">.</span><span class="n">config</span><span class="p">(</span><span class="n">SqrtSolverConfig</span><span class="p">)</span>
-
-
-<span class="k">class</span><span class="w"> </span><span class="nc">ConvergenceCheck</span><span class="p">:</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">SqrtSolverConfig</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_cfg</span> <span class="o">=</span> <span class="n">cfg</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_target</span> <span class="o">=</span> <span class="n">target</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_iteration</span> <span class="o">=</span> <span class="mi">0</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_iteration</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iteration</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cfg</span><span class="o">.</span><span class="n">max_iterations</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">False</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">]</span>
-        <span class="k">return</span> <span class="nb">abs</span><span class="p">(</span><span class="n">x</span> <span class="o">*</span> <span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_target</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cfg</span><span class="o">.</span><span class="n">tolerance</span>
-
-
-<span class="nd">@sqrt_solver_spec</span><span class="o">.</span><span class="n">initializer</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">_initialize</span><span class="p">(</span>
-    <span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">init</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">StagedInitRunner</span><span class="p">,</span> <span class="n">Depends</span><span class="p">(</span><span class="n">create_init</span><span class="p">)]</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Context</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">init</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
-
-
-<span class="nd">@sqrt_solver_spec</span><span class="o">.</span><span class="n">execution_graph_step</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">_execution_graph</span><span class="p">(</span>
-    <span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-    <span class="n">cfg</span><span class="p">:</span> <span class="n">SqrtSolverConfig</span><span class="p">,</span>
-    <span class="n">domain_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">StepBuilder</span><span class="p">,</span> <span class="n">Operations</span><span class="p">]:</span>
-    <span class="n">_</span> <span class="o">=</span> <span class="n">domain_name</span>
-    <span class="n">target</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
-        <span class="n">rt</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">target</span>
-        <span class="k">for</span> <span class="n">rt</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">optional_models</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rt</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="n">BabylonianConfig</span><span class="p">)</span>
-    <span class="p">)</span>
-    <span class="n">builder</span> <span class="o">=</span> <span class="n">StepBuilder</span><span class="p">()</span>
-    <span class="n">loop</span> <span class="o">=</span> <span class="n">Operation</span><span class="p">(</span>
-        <span class="n">func</span><span class="o">=</span><span class="n">IterativeOp</span><span class="p">(</span><span class="n">ConvergenceCheck</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">target</span><span class="p">)),</span>
-        <span class="n">metadata</span><span class="o">=</span><span class="n">OperationMetadata</span><span class="p">(</span><span class="n">op_name</span><span class="o">=</span><span class="s2">&quot;sqrt_loop&quot;</span><span class="p">),</span>
-    <span class="p">)</span>
-    <span class="n">loop_builder</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">loop</span><span class="p">(</span><span class="n">loop</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">model_runtime</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">optional_models</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">model_runtime</span><span class="o">.</span><span class="n">operations</span><span class="p">:</span>
-            <span class="n">loop_builder</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">op</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">builder</span><span class="p">,</span> <span class="n">Operations</span><span class="p">()</span>
-</pre></div>
-</div>
-</section>
-<section id="validate-every-loaded-config-without-running-the-solver">
-<h2>Validate every loaded config without running the solver<a class="headerlink" href="#validate-every-loaded-config-without-running-the-solver" title="Link to this heading">¶</a></h2>
-<p>Useful for CLI / GUI front-ends that want to surface every config
-the solver and its models declared, and re-validate them before
-BUILD ever runs. <code class="docutils literal notranslate"><span class="pre">runner.run_load()</span></code> executes the LOAD stage in
-isolation; <code class="docutils literal notranslate"><span class="pre">.configs</span></code> returns a flat list and <code class="docutils literal notranslate"><span class="pre">.validate()</span></code>
-runs <code class="docutils literal notranslate"><span class="pre">neofoam.io.validate_models</span></code> over it.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">_runner</span> <span class="o">=</span> <span class="n">create_init</span><span class="p">()</span>
-<span class="n">_load_result</span> <span class="o">=</span> <span class="n">_runner</span><span class="o">.</span><span class="n">run_load</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Loaded configs:&quot;</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">_cfg</span> <span class="ow">in</span> <span class="n">_load_result</span><span class="o">.</span><span class="n">configs</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">_cfg</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="s2">&quot;→&quot;</span><span class="p">,</span> <span class="n">_cfg</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span>
-
-<span class="n">_errors</span> <span class="o">=</span> <span class="n">_load_result</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
-<span class="k">assert</span> <span class="n">_errors</span> <span class="o">==</span> <span class="p">[],</span> <span class="n">_errors</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;validation errors: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">_errors</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Loaded configs:
-  SqrtSolverConfig → {&#39;max_iterations&#39;: 50, &#39;tolerance&#39;: 1e-12}
-  BabylonianConfig → {&#39;target&#39;: 2.0, &#39;initial_guess&#39;: 1.0}
-validation errors: 0
-</pre></div>
-</div>
-</section>
-<section id="get-the-whole-schema-case-free">
-<h2>Get the whole schema, case-free<a class="headerlink" href="#get-the-whole-schema-case-free" title="Link to this heading">¶</a></h2>
-<p>The section above needed a case on disk (<code class="docutils literal notranslate"><span class="pre">run_load()</span></code>). To surface
-<em>what a solver declares</em> before any case exists — to scaffold a fresh
-case, or hand the schema to a GUI or an agent — ask the framework
-directly. <code class="docutils literal notranslate"><span class="pre">configurations(spec)</span></code> walks the spec’s <code class="docutils literal notranslate"><span class="pre">.config(...)</span></code>
-declarations (plus the members of any model family it binds) and returns
-a case-free view over the pydantic config classes.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">schema</span> <span class="o">=</span> <span class="n">configurations</span><span class="p">(</span><span class="n">sqrt_solver_spec</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;declared config classes:&quot;</span><span class="p">,</span> <span class="n">schema</span><span class="o">.</span><span class="n">names</span><span class="p">)</span>  <span class="c1"># [&#39;SqrtSolverConfig&#39;]</span>
-
-<span class="c1"># Build + validate an instance from values alone — no file required:</span>
-<span class="n">controls</span> <span class="o">=</span> <span class="n">schema</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;SqrtSolverConfig&quot;</span><span class="p">,</span> <span class="n">max_iterations</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">tolerance</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;built from values:&quot;</span><span class="p">,</span> <span class="n">controls</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span>
-
-<span class="c1"># ``schema.json_schema()`` and ``schema.as_output_model()`` expose the same</span>
-<span class="c1"># set as JSON Schema or one aggregate pydantic model — the forms a GUI or a</span>
-<span class="c1"># Pydantic-AI agent consumes.</span>
-<span class="c1">#</span>
-<span class="c1"># Only ``SqrtSolverConfig`` appears: it is what *this solver spec* declares.</span>
-<span class="c1"># ``BabylonianConfig`` lives on the ``babylonian`` *model* spec; a solver</span>
-<span class="c1"># surfaces a model&#39;s configs in its own schema when it binds that model as a</span>
-<span class="c1"># *family* (``spec.core_models(...)`` / ``spec.optional_models(...)``) — see</span>
-<span class="c1"># :doc:`example_collect_and_save_configs`.</span>
-</pre></div>
-</div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>declared config classes: [&#39;SqrtSolverConfig&#39;]
-built from values: {&#39;max_iterations&#39;: 20, &#39;tolerance&#39;: 1e-10}
-</pre></div>
-</div>
-</section>
-<section id="run-it">
-<h2>Run it<a class="headerlink" href="#run-it" title="Link to this heading">¶</a></h2>
-<p>Instantiate the spec, call <code class="docutils literal notranslate"><span class="pre">.initialize()</span></code> (which executes the
-three-stage init), build the execution graph, resolve it into a
-flat operation list, and run. After the loop exits,
-<code class="docutils literal notranslate"><span class="pre">ctx.fields[&quot;x&quot;]</span></code> carries the converged answer.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">sqrt_solver</span> <span class="o">=</span> <span class="n">sqrt_solver_spec</span><span class="o">.</span><span class="n">instantiate</span><span class="p">()</span>
-<span class="n">ctx</span> <span class="o">=</span> <span class="n">sqrt_solver</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
-<span class="n">builder</span><span class="p">,</span> <span class="n">model_ops</span> <span class="o">=</span> <span class="n">sqrt_solver</span><span class="o">.</span><span class="n">execution_graph</span><span class="p">()</span>
-<span class="n">resolved</span> <span class="o">=</span> <span class="n">DAGResolver</span><span class="p">()</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">builder</span><span class="p">,</span> <span class="n">model_ops</span><span class="p">)</span>
-<span class="n">resolved</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
-
-<span class="n">target</span> <span class="o">=</span> <span class="n">BabylonianConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">CASE_DIR</span><span class="p">)</span><span class="o">.</span><span class="n">target</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;target          = </span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;computed sqrt   = </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;math.sqrt       = </span><span class="si">{</span><span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">target</span><span class="p">)</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;|difference|    = </span><span class="si">{</span><span class="nb">abs</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">target</span><span class="p">))</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="k">assert</span> <span class="nb">abs</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">target</span><span class="p">))</span> <span class="o">&lt;</span> <span class="mf">1e-6</span>
-</pre></div>
-</div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>target          = 2.0
-computed sqrt   = 1.414213562373095
-math.sqrt       = 1.4142135623730951
-|difference|    = 2.22e-16
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>fvSchemes: div(phi,U) = type=&#39;Gauss&#39; interpolation=Linear(type=&#39;linear&#39;)
 </pre></div>
 </div>
 </section>
 <section id="see-also">
 <h2>See also<a class="headerlink" href="#see-also" title="Link to this heading">¶</a></h2>
 <ul class="simple">
-<li><p><a class="reference internal" href="example_per_model_fvschemes.html"><span class="doc">Declare per-model fvSchemes / fvSolution slices</span></a> — shape 4: per-model
-<code class="docutils literal notranslate"><span class="pre">fvSchemes</span></code> / <code class="docutils literal notranslate"><span class="pre">fvSolution</span></code> subclasses built up by
-<code class="docutils literal notranslate"><span class="pre">&#64;&lt;Sub&gt;.add(...)</span></code> decorators on each operation.</p></li>
-<li><p><a class="reference internal" href="example_work_with_config_files.html"><span class="doc">Work with configuration files</span></a> — declare, load, validate,
-and subdict-isolate <code class="docutils literal notranslate"><span class="pre">BaseConfig</span></code> classes on their own.</p></li>
-<li><p><a class="reference internal" href="example_collect_and_save_configs.html"><span class="doc">Collect and save all of a solver’s configs</span></a> — <code class="docutils literal notranslate"><span class="pre">configurations(solver)</span></code>
-in full: collect a solver’s whole schema (including model families),
-then save instances to scaffold a case.</p></li>
-<li><p><a class="reference internal" href="example_register_a_model.html"><span class="doc">Register a new model</span></a> — the model side in isolation,
-including <code class="docutils literal notranslate"><span class="pre">&#64;spec.resolve</span></code> and <code class="docutils literal notranslate"><span class="pre">&#64;spec.detect</span></code>.</p></li>
-<li><p><a class="reference internal" href="example_use_depends_for_injection.html"><span class="doc">Inject dependencies into operations</span></a> — pull values from
-<code class="docutils literal notranslate"><span class="pre">ctx.models</span></code> or external providers via <code class="docutils literal notranslate"><span class="pre">Annotated[T,</span> <span class="pre">...]</span></code>.</p></li>
+<li><p><a class="reference internal" href="example_work_with_config_files.html"><span class="doc">Work with configuration files</span></a> — declaring, loading,
+validating, and subdict-isolating <code class="docutils literal notranslate"><span class="pre">BaseConfig</span></code> classes on their
+own (single-config focus).</p></li>
+<li><p><a class="reference internal" href="example_per_model_fvschemes.html"><span class="doc">Declare per-model fvSchemes / fvSolution slices</span></a> — the typed-slice mechanic in
+full, including per-operation entry declarations and bad-input
+behaviour.</p></li>
+<li><p><a class="reference internal" href="example_collect_and_save_configs.html"><span class="doc">Collect and save all of a solver’s configs</span></a> — case-free schema of a
+whole solver via <code class="docutils literal notranslate"><span class="pre">configurations(spec)</span></code>, and scaffolding a case
+from configs alone.</p></li>
+<li><p><a class="reference internal" href="example_register_a_model.html"><span class="doc">Register a new model</span></a> — the model side end-to-end
+(<code class="docutils literal notranslate"><span class="pre">&#64;spec.resolve</span></code>, <code class="docutils literal notranslate"><span class="pre">&#64;spec.detect</span></code>).</p></li>
 <li><p><a class="reference internal" href="../explanation/three-stage-init.html"><span class="doc">Three-stage initialization</span></a> — why LOAD / RESOLVE / BUILD
 are split.</p></li>
 </ul>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.009 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.008 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-how-to-example-custom-solver-with-configs-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/d8285367e9db501f92a1fef0826cf5de/example_custom_solver_with_configs.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">example_custom_solver_with_configs.ipynb</span></code></a></p>
@@ -780,16 +615,10 @@ are split.</p></li>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Add config files to a solver and model</a><ul>
-<li><a class="reference internal" href="#user-facing-api-five-shapes">User-facing API — five shapes</a></li>
-<li><a class="reference internal" href="#stage-the-yaml-fixtures-into-a-case-directory">Stage the YAML fixtures into a case directory</a></li>
-<li><a class="reference internal" href="#declare-the-model-s-config">Declare the model’s config</a></li>
-<li><a class="reference internal" href="#declare-the-solver-s-config">Declare the solver’s config</a></li>
-<li><a class="reference internal" href="#define-the-model-register-build-operation">Define the model: register, build, operation</a></li>
-<li><a class="reference internal" href="#wire-the-solver-via-stagedinitspec">Wire the solver via StagedInitSpec</a></li>
-<li><a class="reference internal" href="#define-the-solver-register-its-config-execution-graph">Define the solver: register its config + execution graph</a></li>
-<li><a class="reference internal" href="#validate-every-loaded-config-without-running-the-solver">Validate every loaded config without running the solver</a></li>
-<li><a class="reference internal" href="#get-the-whole-schema-case-free">Get the whole schema, case-free</a></li>
-<li><a class="reference internal" href="#run-it">Run it</a></li>
+<li><a class="reference internal" href="#stage-the-yaml-fixtures">Stage the YAML fixtures</a></li>
+<li><a class="reference internal" href="#model-declare-consume">Model — declare + consume</a></li>
+<li><a class="reference internal" href="#solver-same-declaration-same-injection">Solver — same declaration, same injection</a></li>
+<li><a class="reference internal" href="#fvschemes-fvsolution-declare-a-typed-slice-add-entries-load">fvSchemes / fvSolution — declare a typed slice, add entries, load</a></li>
 <li><a class="reference internal" href="#see-also">See also</a></li>
 </ul>
 </li>
