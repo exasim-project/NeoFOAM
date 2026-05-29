@@ -26,8 +26,7 @@ var searchData=
   ['correctnut_23',['correctNut',['../classNeoFOAM_1_1SpalartAllmarasDDES.html#a79da919da2b00c0d070c4b1cf47c0213',1,'NeoFOAM::SpalartAllmarasDDES']]],
   ['create_24',['create',['../classNeoN_1_1finiteVolume_1_1cellCentred_1_1ViscousStressOperatorFactory.html#a0a4823b29df75c785e7f2b5ddb09079b',1,'NeoN::finiteVolume::cellCentred::ViscousStressOperatorFactory']]],
   ['createadapterruntime_25',['createadapterruntime',['../namespaceNeoFOAM.html#aa712c3e1651e243f84deb034fe0e42ec',1,'NeoFOAM::createAdapterRunTime(const Foam::Time &amp;runTime, const NeoN::Executor exec)'],['../namespaceNeoFOAM.html#a070bec2a3a31c4ed6c81b2babb1350a8',1,'NeoFOAM::createAdapterRunTime(const Foam::Time &amp;runTime)']]],
-  ['createcommunicationpattern_26',['createCommunicationPattern',['../namespaceNeoFOAM.html#a5517961b8549d1c932dc7a0fa29e3de0',1,'NeoFOAM']]],
-  ['createexecutor_27',['createexecutor',['../namespaceNeoFOAM.html#a2d15e0c07e7e714cd7cb24248c0e0a64',1,'NeoFOAM::createExecutor(const Foam::dictionary &amp;dict)'],['../namespaceNeoFOAM.html#ac77aa23b184bcb66d69edc48540b1892',1,'NeoFOAM::createExecutor(const Foam::word &amp;execName)']]],
-  ['createmesh_28',['createmesh',['../namespaceNeoFOAM.html#ac60b005cd9f9140205f676b9953615e4',1,'NeoFOAM::createMesh(const NeoN::Executor &amp;exec, const Foam::Time &amp;runTime)'],['../namespaceNeoFOAM.html#a70f3fbdfd753d2672cd8c017f759e7f8',1,'NeoFOAM::createMesh(const Foam::Time &amp;runTime)']]],
-  ['cw1_29',['cw1',['../classNeoFOAM_1_1SpalartAllmarasDDES.html#ab3d0eda637080e405dc9aa39f88448e1',1,'NeoFOAM::SpalartAllmarasDDES']]]
+  ['createexecutor_26',['createexecutor',['../namespaceNeoFOAM.html#a2d15e0c07e7e714cd7cb24248c0e0a64',1,'NeoFOAM::createExecutor(const Foam::dictionary &amp;dict)'],['../namespaceNeoFOAM.html#ac77aa23b184bcb66d69edc48540b1892',1,'NeoFOAM::createExecutor(const Foam::word &amp;execName)']]],
+  ['createmesh_27',['createmesh',['../namespaceNeoFOAM.html#ac60b005cd9f9140205f676b9953615e4',1,'NeoFOAM::createMesh(const NeoN::Executor &amp;exec, const Foam::Time &amp;runTime)'],['../namespaceNeoFOAM.html#a70f3fbdfd753d2672cd8c017f759e7f8',1,'NeoFOAM::createMesh(const Foam::Time &amp;runTime)']]],
+  ['cw1_28',['cw1',['../classNeoFOAM_1_1SpalartAllmarasDDES.html#ab3d0eda637080e405dc9aa39f88448e1',1,'NeoFOAM::SpalartAllmarasDDES']]]
 ];
