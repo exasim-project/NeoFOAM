@@ -2,85 +2,63 @@
 Add config files to a solver and model
 ======================================
 
-A solver and the models it runs each carry their own
-``BaseConfig``. The framework reads them from disk at
-LOAD time and threads them into operations by type annotation, so the
-operation code never reaches into ``ctx`` for its own parameters.
+**Key question.** How do I attach configuration to the things that
+run — a *model*, a *solver*, and the per-spec *fvSchemes / fvSolution*
+slices — and read it inside an operation without reaching into a
+global ``ctx``?
 
-User-facing API — five shapes
------------------------------
+**Answer.** Each config is owned by the spec that declares it:
 
-Every config goes through the spec (model or solver). Five forms cover
-everything:
+.. code-block:: python
 
-1. **Single config — class form**: ``spec.config(SqrtSolverConfig)``.
-   The class is self-describing via ``@IOStrategy(...)``; the framework
-   auto-locates the instance after load.
-2. **Single config — callback form (escape hatch)**:
-   ``@spec.config`` over a ``def _load(case_dir: Path) -> SqrtSolverConfig``.
-   Use when load needs custom args (``validate=False``, defaults
-   overrides) or merges from multiple sources.
-3. **Multiple configs**: call ``spec.config(Cls)`` repeatedly.
-   ``runtime.config`` then becomes a ``SimpleNamespace`` keyed by
-   snake-case class name; type-injection still works in operations.
-4. **fvSchemes / fvSolution slices**: ``Sub = spec.config(fvSchemes)``
-   returns a per-spec subclass; operations extend it via
-   ``@Sub.add(div="div(phi,U)")`` — typed Pydantic fields are injected
-   incrementally. See :doc:`example_per_model_fvschemes` for the full
-   pattern.
-5. **Consume in operations / lifecycle callbacks**: annotate the
-   parameter with the config class. The framework finds it on
-   ``runtime.config`` by type and passes it in. Operations never read
-   configs from ``ctx``.
+    spec.config(MyConfig)                 # declare: this spec owns MyConfig
 
-External validation in one call::
+Operations receive it by type annotation:
 
-    errors = runner.run_load().validate()      # Pydantic over every loaded config
+.. code-block:: python
 
-The rest of this page builds the smallest end-to-end example that
-exercises shapes 1, 2 (callback as fall-back), and 5 — a Babylonian
-square-root iteration ``x_{n+1} = 0.5 * (x_n + target / x_n)`` — and
-asserts the result matches ``math.sqrt``. The arithmetic is
-incidental; configs are the subject.
+    def op(self, x, cfg: MyConfig):       # consume: by type, not via ctx
+        ...                               # framework injects the loaded instance
+
+The same mechanic applies on a ``Model``, on a ``Solver``, and (with a
+typed-slice twist) on ``fvSchemes`` / ``fvSolution``. The injector
+itself is shared code in :mod:`neofoam.framework.config_injection`:
+config parameters resolve from ``runtime.config`` by *type*; field
+parameters resolve from ``ctx.fields`` by *name*.
+
+The rest of this page proves each surface with the smallest runnable
+example.
 """
 
 # %%
-# Stage the YAML fixtures into a case directory
-# ---------------------------------------------
-# Every ``BaseConfig`` binds to a *filename*, not a full path.
-# The loader resolves that filename against the ``case_dir`` you pass
-# in. Here we copy the two YAML fixtures shipped alongside this page
-# into a throwaway directory and use it as the case.
+# Stage the YAML fixtures
+# -----------------------
+# Each ``BaseConfig`` binds to a *filename*; the loader resolves it
+# against ``case_dir``. The three fixtures shipped next to this page
+# are staged into a throwaway directory.
+#
+# .. literalinclude:: ../../examples/how-to/babylonian_config.yaml
+#    :language: yaml
+#    :caption: babylonian_config.yaml
+# .. literalinclude:: ../../examples/how-to/sqrt_solver_config.yaml
+#    :language: yaml
+#    :caption: sqrt_solver_config.yaml
+# .. literalinclude:: ../../examples/how-to/per_model_fvSchemes.yaml
+#    :language: yaml
+#    :caption: per_model_fvSchemes.yaml
 
 import inspect
-import math
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Annotated, Any, Optional
+from typing import Any
 
 from pydantic import Field
 
-from neofoam import configurations
+from neofoam.foam import fvSchemes
 from neofoam.framework.context import Context, FieldUpdates
-from neofoam.framework.graph import DAGResolver
-from neofoam.framework.initialization import (
-    Depends,
-    InitializerBuilder,
-    InitStep,
-    LoadResult,
-    StagedInitRunner,
-    StagedInitSpec,
-)
 from neofoam.framework.model import Model
-from neofoam.framework.operations import (
-    IterativeOp,
-    Operation,
-    Operations,
-    StepBuilder,
-)
 from neofoam.framework.solver import Solver
-from neofoam.framework.types import OperationMetadata
 from neofoam.io import BaseConfig, IOStrategy, YAML
 
 
@@ -89,291 +67,138 @@ def _here() -> None:
 
 
 HERE = Path(inspect.getfile(_here)).resolve().parent
-CASE_DIR = Path(tempfile.mkdtemp(prefix="neofoam_sqrt_"))
-shutil.copy(HERE / "babylonian_config.yaml", CASE_DIR / "babylonian_config.yaml")
-shutil.copy(HERE / "sqrt_solver_config.yaml", CASE_DIR / "sqrt_solver_config.yaml")
-print("case_dir =", CASE_DIR)
+CASE = Path(tempfile.mkdtemp(prefix="neofoam_cfg_"))
+for _name in (
+    "babylonian_config.yaml",
+    "sqrt_solver_config.yaml",
+    "per_model_fvSchemes.yaml",
+):
+    shutil.copy(HERE / _name, CASE / _name)
 
 
 # %%
-# Declare the model's config
-# --------------------------
-# The model owns its problem statement: the value whose square root
-# we want and the seed for the iteration. ``@IOStrategy(YAML(...))``
-# binds the class to a file inside ``case_dir``; the Pydantic
-# ``Field(...)`` validators reject bad input on load.
-#
-# .. literalinclude:: ../../examples/how-to/babylonian_config.yaml
-#    :language: yaml
+# Model — declare + consume
+# -------------------------
+# ``model.config(ProblemConfig)`` is the declaration. The operation
+# names the config in its signature; ``rt.operations[0].run(ctx)`` is
+# the consumption: ``cfg`` is injected from ``rt.config`` by type,
+# ``x`` is pulled from ``ctx.fields`` by name. The operation body
+# touches ``cfg.target`` directly — never ``ctx`` — and that is the
+# whole point.
 
 
 @IOStrategy(YAML("babylonian_config.yaml"))
-class BabylonianConfig(BaseConfig):
-    target: float = Field(gt=0, description="value whose square root is wanted")
+class ProblemConfig(BaseConfig):
+    target: float = Field(gt=0)
     initial_guess: float = Field(gt=0, default=1.0)
 
 
+newton = Model("Newton")
+newton.config(ProblemConfig)  # declare
+
+
+@newton.operation(operation_number="1.0")
+def step(self: Any, x: float, cfg: ProblemConfig) -> FieldUpdates:
+    return FieldUpdates({"x": 0.5 * (x + cfg.target / x)})  # consume
+
+
+rt = newton.instantiate(case_dir=CASE)
+assert isinstance(rt.config, ProblemConfig)  # declare → autoloaded
+ctx = Context(fields={"x": rt.config.initial_guess}, models={})
+rt.operations[0].run(ctx)  # consume → injected
+print("model: x after one step =", ctx.fields["x"])
+assert ctx.fields["x"] == 0.5 * (1.0 + 2.0 / 1.0)
+
+
 # %%
-# Declare the solver's config
-# ---------------------------
-# The solver owns the *algorithm controls* — when to stop and how
-# many iterations to allow. Keeping these on a separate config makes
-# each layer responsible for its own knobs.
+# Solver — same declaration, same injection
+# -----------------------------------------
+# ``solver.config(ControlsConfig)`` is the identical one-liner.
+# A solver populates ``runtime.config`` during ``initialize()``: the
+# framework pulls every registered config class out of
+# ``state.core_models`` and assigns it to ``runtime.config``. After
+# that, operations consume the config by type using the *same*
+# shared injector as the model — no separate mechanism.
 #
-# .. literalinclude:: ../../examples/how-to/sqrt_solver_config.yaml
-#    :language: yaml
+# Everything else a real solver carries (StagedInitSpec, execution
+# graphs, DAG resolution) is plumbing for *running* an algorithm, not
+# for *attaching configs*. It is covered in
+# :doc:`/auto_tutorials/example_03_build_a_solver`.
 
 
 @IOStrategy(YAML("sqrt_solver_config.yaml"))
-class SqrtSolverConfig(BaseConfig):
+class ControlsConfig(BaseConfig):
     max_iterations: int = Field(gt=0, default=50)
     tolerance: float = Field(gt=0, default=1e-12)
 
 
-# %%
-# Define the model: register, build, operation
-# --------------------------------------------
-# Declared at module scope, the ``Model`` earns three calls:
-#
-# - ``babylonian.config(BabylonianConfig)`` (shape 1 — class form)
-#   registers the config class. The framework auto-loads it via the
-#   class's ``@IOStrategy`` binding on ``babylonian.instantiate(case_dir=…)``,
-#   so no callback is needed. Use the callback form
-#   ``@babylonian.load`` only when load needs custom args
-#   (``validate=False``, multi-source merge) or manifest-driven
-#   multi-instance loading.
-# - ``@babylonian.build`` emits the ``InitStep`` objects that
-#   produce the fields the operation will read. ``cfg`` is
-#   auto-injected from ``runtime.config`` because its annotation
-#   matches (shape 5).
-# - ``@babylonian.operation`` is the work itself. ``x: float`` is
-#   looked up in ``ctx.fields`` by *name*; ``cfg: BabylonianConfig``
-#   is auto-injected from ``runtime.config`` by *type* (shape 5).
-
-babylonian = Model("Babylonian")
-babylonian.config(BabylonianConfig)
+sqrt = Solver("Sqrt")
+sqrt.config(ControlsConfig)  # declare — same call as on the model
 
 
-@babylonian.build
-def _bab_build(cfg: BabylonianConfig) -> list[InitStep]:
-    return [
-        InitStep(
-            name="x",
-            initializer=lambda _ctx: cfg.initial_guess,
-            depends_on=[],
-            category="fields",
-        ),
-    ]
+@sqrt.initializer
+def _init(self: Any) -> Context:
+    # Minimal initializer: load the config into state.core_models so
+    # the framework can pick it up onto runtime.config.
+    self.state.core_models = [ControlsConfig.load(case_dir=CASE)]
+    return Context(fields={"x": 9.0}, models={})
 
 
-@babylonian.operation(operation_number="1.0")
-def babylonian_step(self: Any, x: float, cfg: BabylonianConfig) -> FieldUpdates:
-    """One Babylonian iteration: x ← 0.5 * (x + target / x)."""
-    return FieldUpdates({"x": 0.5 * (x + cfg.target / x)})
+@sqrt.operation(operation_number="1.0")
+def report(self: Any, x: float, cfg: ControlsConfig) -> None:
+    print(f"solver: tolerance={cfg.tolerance}, x={x}")  # consume — by type
+
+
+srt = sqrt.instantiate()
+sctx = srt.initialize()
+assert isinstance(srt.config, ControlsConfig)  # declare → on runtime.config
+for op in srt.operations:
+    op.run(sctx)  # consume → injected
 
 
 # %%
-# Wire the solver via StagedInitSpec
-# ----------------------------------
-# Solvers don't host the build stage directly — a
-# ``StagedInitSpec`` registers LOAD and BUILD (and an optional
-# RESOLVE, omitted here) as independent callbacks.
+# fvSchemes / fvSolution — declare a typed slice, add entries, load
+# -----------------------------------------------------------------
+# A model that needs an entry from ``system/fvSchemes`` declares a
+# *per-spec subclass* with the same one-liner: ``spec.config(fvSchemes)``
+# returns a fresh class. Operations then extend it with typed entries
+# via ``@<Sub>.add(...)``. Loading the subclass yields a Pydantic
+# instance whose values have been typechecked against the OpenFOAM
+# scheme unions in :mod:`neofoam.foam.schemes`.
 #
-# - **LOAD** returns the solver config plus every model runtime in a
-#   single ``LoadResult``. The model runtime carries its own config
-#   (auto-loaded via ``babylonian.config(...)``).
-# - **BUILD** receives the model runtimes and collects their
-#   ``InitStep`` lists. Solver config does *not* go through
-#   ``InitializerBuilder.add_*`` — the framework picks the
-#   ``SqrtSolverConfig`` instance out of ``LoadResult.core_models``
-#   and assigns it to ``runtime.config`` because the spec registered
-#   ``SqrtSolverConfig`` via ``@spec.config`` (next section).
-#
-# BUILD's signature is inspected: declare only the kwargs you need.
-# Here we ask for ``optional_models`` (the non-config-class entries
-# from LOAD); ``core_models`` and ``models`` are the other accepted
-# names.
+# The full story (multiple sections, ``fvSolution`` too, bad-input
+# behaviour, independent subclasses per spec) lives in
+# :doc:`example_per_model_fvschemes`.
+
+pimple = Model("Pimple")
+PimpleFvSchemes = pimple.config(fvSchemes)  # declare — returns a subclass
+IOStrategy(YAML("per_model_fvSchemes.yaml"))(PimpleFvSchemes)
 
 
-def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
-    spec_builder = StagedInitSpec.build("SqrtSolver")
-    resolved_case_dir = case_dir or CASE_DIR
-
-    @spec_builder.load
-    def _load() -> LoadResult:
-        solver_cfg = SqrtSolverConfig.load(case_dir=resolved_case_dir, validate=False)
-        bab = babylonian.instantiate(case_dir=resolved_case_dir)
-        return LoadResult(core_models=[solver_cfg], optional_models=[bab])
-
-    @spec_builder.build
-    def _build(core_models: list[Any], optional_models: list[Any]) -> list[InitStep]:
-        builder = InitializerBuilder()
-        for runtime in optional_models:
-            builder.extend(runtime.run_build())
-        return builder.build()
-
-    return StagedInitRunner(spec_builder.finalize())
+@pimple.operation(operation_number="2.1")
+@PimpleFvSchemes.add(div="div(phi,U)")  # consume — typed entry on the slice
+def momentum() -> None:
+    """Pretend U-momentum operation."""
 
 
-# %%
-# Define the solver: register its config + execution graph
-# --------------------------------------------------------
-# The solver registers ``SqrtSolverConfig`` against its spec via
-# ``spec.config(SqrtSolverConfig)`` — **shape 1, the class form**.
-# The framework locates the matching instance in ``core_models``
-# during ``initialize()`` and assigns it to ``runtime.config``;
-# operations and lifecycle callbacks then receive it by type
-# (shape 5), the same way model operations do.
-#
-# To register multiple configs against the same spec
-# (e.g. ``SqrtSolverConfig`` *plus* a separate ``DiagnosticsConfig``),
-# call ``.config(...)`` again — ``runtime.config`` becomes a
-# ``SimpleNamespace`` keyed by snake-case class name (shape 3) and
-# every type-injected parameter still finds its instance by class.
-#
-# To override the auto-load (custom ``validate`` flag, multi-source
-# merge), use the **callback form** — ``@sqrt_solver_spec.config``
-# over ``def _load(case_dir: Path) -> SqrtSolverConfig`` (shape 2).
-#
-# The execution graph is a single iterative loop. The convergence
-# check is constructed inside ``_execution_graph`` with the loaded
-# config and target value baked in as a closure; its ``__call__(ctx)``
-# only ever reads ``ctx.fields`` — no ``ctx.models`` access required.
-
-sqrt_solver_spec = Solver("SqrtSolver")
-sqrt_solver_spec.config(SqrtSolverConfig)
-
-
-class ConvergenceCheck:
-    def __init__(self, cfg: SqrtSolverConfig, target: float) -> None:
-        self._cfg = cfg
-        self._target = target
-        self._iteration = 0
-
-    def __call__(self, ctx: Context) -> bool:
-        self._iteration += 1
-        if self._iteration > self._cfg.max_iterations:
-            return False
-        x = ctx.fields["x"]
-        return abs(x * x - self._target) > self._cfg.tolerance
-
-
-@sqrt_solver_spec.initializer
-def _initialize(
-    self: Any, init: Annotated[StagedInitRunner, Depends(create_init)]
-) -> Context:
-    return init.run()
-
-
-@sqrt_solver_spec.execution_graph_step
-def _execution_graph(
-    self: Any,
-    cfg: SqrtSolverConfig,
-    domain_name: Optional[str] = None,
-) -> tuple[StepBuilder, Operations]:
-    _ = domain_name
-    target = next(
-        rt.config.target
-        for rt in self.state.optional_models
-        if isinstance(rt.config, BabylonianConfig)
-    )
-    builder = StepBuilder()
-    loop = Operation(
-        func=IterativeOp(ConvergenceCheck(cfg, target)),
-        metadata=OperationMetadata(op_name="sqrt_loop"),
-    )
-    loop_builder = builder.loop(loop)
-    for model_runtime in self.state.optional_models:
-        for op in model_runtime.operations:
-            loop_builder.step(op)
-    return builder, Operations()
-
-
-# %%
-# Validate every loaded config without running the solver
-# -------------------------------------------------------
-# Useful for CLI / GUI front-ends that want to surface every config
-# the solver and its models declared, and re-validate them before
-# BUILD ever runs. ``runner.run_load()`` executes the LOAD stage in
-# isolation; ``.configs`` returns a flat list and ``.validate()``
-# runs ``neofoam.io.validate_models`` over it.
-
-_runner = create_init()
-_load_result = _runner.run_load()
-print("Loaded configs:")
-for _cfg in _load_result.configs:
-    print(" ", type(_cfg).__name__, "→", _cfg.model_dump())
-
-_errors = _load_result.validate()
-assert _errors == [], _errors
-print(f"validation errors: {len(_errors)}")
-
-
-# %%
-# Get the whole schema, case-free
-# -------------------------------
-# The section above needed a case on disk (``run_load()``). To surface
-# *what a solver declares* before any case exists — to scaffold a fresh
-# case, or hand the schema to a GUI or an agent — ask the framework
-# directly. ``configurations(spec)`` walks the spec's ``.config(...)``
-# declarations (plus the members of any model family it binds) and returns
-# a case-free view over the pydantic config classes.
-
-schema = configurations(sqrt_solver_spec)
-print("declared config classes:", schema.names)  # ['SqrtSolverConfig']
-
-# Build + validate an instance from values alone — no file required:
-controls = schema.new("SqrtSolverConfig", max_iterations=20, tolerance=1e-10)
-print("built from values:", controls.model_dump())
-
-# ``schema.json_schema()`` and ``schema.as_output_model()`` expose the same
-# set as JSON Schema or one aggregate pydantic model — the forms a GUI or a
-# Pydantic-AI agent consumes.
-#
-# Only ``SqrtSolverConfig`` appears: it is what *this solver spec* declares.
-# ``BabylonianConfig`` lives on the ``babylonian`` *model* spec; a solver
-# surfaces a model's configs in its own schema when it binds that model as a
-# *family* (``spec.core_models(...)`` / ``spec.optional_models(...)``) — see
-# :doc:`example_collect_and_save_configs`.
-
-
-# %%
-# Run it
-# ------
-# Instantiate the spec, call ``.initialize()`` (which executes the
-# three-stage init), build the execution graph, resolve it into a
-# flat operation list, and run. After the loop exits,
-# ``ctx.fields["x"]`` carries the converged answer.
-
-sqrt_solver = sqrt_solver_spec.instantiate()
-ctx = sqrt_solver.initialize()
-builder, model_ops = sqrt_solver.execution_graph()
-resolved = DAGResolver().resolve(builder, model_ops)
-resolved.operations.run(ctx)
-
-target = BabylonianConfig.load(case_dir=CASE_DIR).target
-print(f"target          = {target}")
-print(f"computed sqrt   = {ctx.fields['x']!r}")
-print(f"math.sqrt       = {math.sqrt(target)!r}")
-print(f"|difference|    = {abs(ctx.fields['x'] - math.sqrt(target)):.2e}")
-assert abs(ctx.fields["x"] - math.sqrt(target)) < 1e-6
+schemes = PimpleFvSchemes.load(case_dir=CASE)
+print("fvSchemes: div(phi,U) =", schemes.divSchemes.div_phi_U)
 
 
 # %%
 # See also
 # --------
 #
-# - :doc:`example_per_model_fvschemes` — shape 4: per-model
-#   ``fvSchemes`` / ``fvSolution`` subclasses built up by
-#   ``@<Sub>.add(...)`` decorators on each operation.
-# - :doc:`example_work_with_config_files` — declare, load, validate,
-#   and subdict-isolate ``BaseConfig`` classes on their own.
-# - :doc:`example_collect_and_save_configs` — ``configurations(solver)``
-#   in full: collect a solver's whole schema (including model families),
-#   then save instances to scaffold a case.
-# - :doc:`example_register_a_model` — the model side in isolation,
-#   including ``@spec.resolve`` and ``@spec.detect``.
-# - :doc:`example_use_depends_for_injection` — pull values from
-#   ``ctx.models`` or external providers via ``Annotated[T, ...]``.
+# - :doc:`example_work_with_config_files` — declaring, loading,
+#   validating, and subdict-isolating ``BaseConfig`` classes on their
+#   own (single-config focus).
+# - :doc:`example_per_model_fvschemes` — the typed-slice mechanic in
+#   full, including per-operation entry declarations and bad-input
+#   behaviour.
+# - :doc:`example_collect_and_save_configs` — case-free schema of a
+#   whole solver via ``configurations(spec)``, and scaffolding a case
+#   from configs alone.
+# - :doc:`example_register_a_model` — the model side end-to-end
+#   (``@spec.resolve``, ``@spec.detect``).
 # - :doc:`/explanation/three-stage-init` — why LOAD / RESOLVE / BUILD
 #   are split.
