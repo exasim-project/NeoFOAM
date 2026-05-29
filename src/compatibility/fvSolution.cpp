@@ -113,8 +113,12 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
     // would be true in those cases too, so we'd wrap the preconditioner in
     // Schwarz for a serial solve and SIGILL inside Ginkgo. Gate the wrap on
     // MPI being initialised AND sizeRank > 1.
+#ifdef NF_WITH_MPI_SUPPORT
     NeoN::mpi::Environment mpiEnv;
     const bool distributed = mpiEnv.isInitialized() && mpiEnv.sizeRank() > 1;
+#else
+    const bool distributed = false;
+#endif
     const auto& activeMap = distributed ? distributedPreconditionerMap : preconditionerMap;
 
     // if no preconditioner is set but smoother switch to BiCGStab with BJ

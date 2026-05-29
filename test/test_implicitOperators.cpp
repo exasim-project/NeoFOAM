@@ -20,7 +20,6 @@ extern Foam::fvMesh* meshPtr;  // A single mesh object
 
 TEST_CASE("matrix multiplication")
 {
-    NeoN::mpi::Environment mpiEnviron;
     float epsilon = 1e-32;
     Foam::Time& runTime = *timePtr;
     Foam::argList& args = *argsPtr;

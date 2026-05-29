@@ -320,42 +320,39 @@ nnfvcc::SurfaceField<scalar> flux(const PDESolver<scalar>& expr)
     const auto [mValue, rhsValue] = views(ls.boundaryMatrix(), ls.boundaryRhs());
     const auto faceCells = mesh.boundaryMesh().faceOwners().view();
 
+    // Boundary fluxes go in faceFlux.boundaryData().value() — faceFlux.internalVector()
+    // only covers internal faces (see updateFaceVelocity for the same pattern).
     NeoN::parallelFor(
         exec,
-        {nInternalFaces, nInternalFaces + nBoundaryFaces},
-        NEON_LAMBDA(const size_t facei) {
-            auto bfacei = facei - nInternalFaces;
+        {0, static_cast<size_t>(nBoundaryFaces)},
+        NEON_LAMBDA(const size_t bfacei) {
             scalar bflux = rhsValue[bfacei] - mValue.values[bfacei] * internalP[faceCells[bfacei]];
-            iFlux[facei] = bflux;
             bFlux[bfacei] = bflux;
         }
     );
 
-    const auto nTotalFaces = faceFlux.internalVector().size();
-    const auto nlValues = ls.offDiagonalMatrix().values().view();
-    const auto pBoundV = p.boundaryData().value().view();
+    // Processor-boundary faces sit at the tail of boundaryData().value() at indices
+    // [nBoundaryFaces, nBoundaryFaces + nProcFaces). faceOwners() is local-index for
+    // both physical and proc faces (BoundaryMesh::nBoundaryFaces excludes proc tail).
+    const auto nProcFaces = mesh.nProcBoundaryFaces();
+    if (nProcFaces > 0)
+    {
+        const auto nlValues = ls.offDiagonalMatrix().values().view();
+        const auto pBoundV = p.boundaryData().value().view();
 
-    NeoN::parallelFor(
-        exec,
-        {nInternalFaces + nBoundaryFaces, nTotalFaces},
-        NEON_LAMBDA(const size_t facei) {
-            // Local-owner of the proc-boundary face. Don't pull from
-            // offDiagonalMatrix() — its rowOffs() returns CSR-style
-            // cumulative offsets (not row indices), and even its rowIdxs()
-            // would carry global cell ids (see createEmptyLinearSystem,
-            // where row entries are faceOwners + globalOffset). The
-            // boundaryMesh's faceOwners view is the local-index source
-            // already used by the physical-boundary loop above.
-            auto bcfaceii = facei - (nInternalFaces + nBoundaryFaces);
-            auto bfacei = facei - nInternalFaces;
-            auto own = static_cast<std::size_t>(faceCells[bfacei]);
-            auto coupling = nlValues[bcfaceii];
-            auto pGhost = pBoundV[bfacei];
-            scalar pflux = coupling * (pGhost - internalP[own]);
-            iFlux[facei] = pflux;
-            bFlux[bfacei] = pflux;
-        }
-    );
+        NeoN::parallelFor(
+            exec,
+            {0, static_cast<size_t>(nProcFaces)},
+            NEON_LAMBDA(const size_t procFacei) {
+                auto bfacei = nBoundaryFaces + procFacei;
+                auto own = static_cast<std::size_t>(faceCells[bfacei]);
+                auto coupling = nlValues[procFacei];
+                auto pGhost = pBoundV[bfacei];
+                scalar pflux = coupling * (pGhost - internalP[own]);
+                bFlux[bfacei] = pflux;
+            }
+        );
+    }
 
     return faceFlux;
 }

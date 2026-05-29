@@ -91,11 +91,13 @@ public:
             // needed; the rank-0 convention is the only one neoIcoFoam currently
             // uses, and this matches what OpenFOAM's processorPolyPatch /
             // fvMatrix::setReference do internally.
+#ifdef NF_WITH_MPI_SUPPORT
             NeoN::mpi::Environment mpiEnv;
             if (mpiEnv.isInitialized() && mpiEnv.rank() != 0)
             {
                 return;
             }
+#endif
 
             const auto rowOffs = ls.matrix().sparsity()->rowOffs().view();
             const auto diagOffset = ls.faceToMatrixAddress()->diagOffset().view();
@@ -136,6 +138,7 @@ public:
         // sentinel -1, which would compare unequal to 0 if cast to size_t)
         // and on rank 0 in parallel. SetReference::operator() further guards
         // the matrix mutation against non-rank-0 in initialised MPI.
+#ifdef NF_WITH_MPI_SUPPORT
         const auto& mpiEnv = runTime_.mpiEnvironment;
         if (!mpiEnv.isInitialized() || mpiEnv.rank() == 0)
         {
@@ -143,6 +146,11 @@ public:
             pRefCell_ = pRefCell;
             pRefValue_ = pRefValue;
         }
+#else
+        needReference_ = true;
+        pRefCell_ = pRefCell;
+        pRefValue_ = pRefValue;
+#endif
     }
 
     /** @brief assemble the linear system owned by the solver based on the current expression */

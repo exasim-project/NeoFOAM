@@ -60,8 +60,6 @@ int main(int argc, char* argv[])
         auto& phi = nf::constructAndRegister(vectorCollection, rt, ofPhi, false);
         NeoN::scalar cumulativeContErr = 0.0;
 
-        auto commPattern = createCommunicationPattern(rt);
-
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
         NeoN::Logging::info("Starting time loop");

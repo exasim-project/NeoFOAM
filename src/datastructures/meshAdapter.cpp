@@ -169,10 +169,12 @@ int32_t computeNBoundaryFaces(const Foam::fvMesh& mesh)
     return nBoundaryFaces;
 }
 
+#ifdef NF_WITH_MPI_SUPPORT
 NeoN::CommunicationPattern createCommunicationPattern(const RunTime& runTime)
 {
     return NeoN::computeCommunicationPattern(runTime.nfMesh);
 }
+#endif
 
 NeoN::UnstructuredMesh
 readOpenFOAMMesh(const NeoN::Executor exec, const Foam::fvMesh& mesh, bool fullMeshOnGPU)

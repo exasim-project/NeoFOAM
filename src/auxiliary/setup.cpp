@@ -113,7 +113,9 @@ RunTime createAdapterRunTime(const Foam::Time& in, const NeoN::Executor exec)
     NeoN::Logging::info("Creating NeoFOAM runTime");
     std::unique_ptr<MeshAdapter> meshPtr = createMesh(exec, in);
     MeshAdapter& mesh = *meshPtr;
+#ifdef NF_WITH_MPI_SUPPORT
     auto mpiEnvironment = NeoN::mpi::Environment {};
+#endif
 
     auto& nfMesh = mesh.nfMesh();
     return NeoFOAM::RunTime {
@@ -130,7 +132,9 @@ RunTime createAdapterRunTime(const Foam::Time& in, const NeoN::Executor exec)
         .controlDict = convert(in.controlDict()),
         .fvSolutionDict = convert(mesh.solutionDict()),
         .fvSchemesDict = convert(mesh.schemesDict()),
+#ifdef NF_WITH_MPI_SUPPORT
         .mpiEnvironment = mpiEnvironment
+#endif
     };
 }
 

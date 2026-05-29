@@ -29,7 +29,9 @@ struct RunTime
     NeoN::Dictionary controlDict;
     NeoN::Dictionary fvSolutionDict;
     NeoN::Dictionary fvSchemesDict;
+#ifdef NF_WITH_MPI_SUPPORT
     NeoN::mpi::Environment mpiEnvironment;
+#endif
 };
 
 
@@ -44,6 +46,8 @@ RegisteredType& readOrCreate(RunTime& runTime, std::string name, InitializerType
     return runTime.controlDict.get<RegisteredType>(name);
 }
 
+#ifdef NF_WITH_MPI_SUPPORT
 NeoN::CommunicationPattern createCommunicationPattern(const RunTime& runTime);
+#endif
 
 } // End namespace NeoFOAM
