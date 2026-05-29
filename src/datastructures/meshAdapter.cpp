@@ -9,6 +9,8 @@
 
 #include "processorFvPatch.H"
 #include "lduInterfaceField.H"
+#include "labelIOList.H"
+#include "polyMesh.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -176,6 +178,41 @@ NeoN::CommunicationPattern createCommunicationPattern(const RunTime& runTime)
 }
 #endif
 
+// Reads OpenFOAM's `constant/polyMesh/cellProcAddressing` if present and returns
+// it as a vector of NeoN::localIdx (one entry per local cell, giving the global
+// cell index in the undecomposed mesh). Returns an empty vector if the addressing
+// file is not on disk — typical for serial runs that never went through
+// `decomposePar`, or for synthetic meshes.
+//
+// Only the local rank's own `cellProcAddressing` is read; no MPI calls.
+//
+// The contents feed `UnstructuredMesh::foamGlobalCellIds`, which is purely
+// informational for OF round-tripping (reconstruction, checkpoint loading) and
+// is NOT consumed by NeoN's internal halo communication or by Ginkgo's
+// distributed linear-algebra path. See commPattern audit REVIEW.md H3.
+std::vector<NeoN::localIdx> readFoamGlobalCellIds(const Foam::fvMesh& mesh)
+{
+    Foam::IOobject header(
+        "cellProcAddressing",
+        mesh.facesInstance(),
+        Foam::polyMesh::meshSubDir,
+        mesh,
+        Foam::IOobject::READ_IF_PRESENT,
+        Foam::IOobject::NO_WRITE
+    );
+
+    if (!header.typeHeaderOk<Foam::labelIOList>(true))
+    {
+        return {};
+    }
+
+    Foam::labelIOList foamAddressing(header);
+    std::vector<NeoN::localIdx> result;
+    result.reserve(static_cast<std::size_t>(foamAddressing.size()));
+    forAll(foamAddressing, i) { result.push_back(static_cast<NeoN::localIdx>(foamAddressing[i])); }
+    return result;
+}
+
 NeoN::UnstructuredMesh
 readOpenFOAMMesh(const NeoN::Executor exec, const Foam::fvMesh& mesh, bool fullMeshOnGPU)
 {
@@ -246,7 +283,8 @@ readOpenFOAMMesh(const NeoN::Executor exec, const Foam::fvMesh& mesh, bool fullM
         fromFoamField(exec, magFaceAreas),
         fromFoamField(exec, mesh.faceOwner()),
         fromFoamField(exec, mesh.faceNeighbour()),
-        bMesh
+        bMesh,
+        readFoamGlobalCellIds(mesh)
     );
 
     return uMesh;

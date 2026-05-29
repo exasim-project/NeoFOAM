@@ -82,4 +82,35 @@ TEST_CASE("Distributed UnstructuredMesh")
         auto recvIdxExp = std::vector<int> {9, 10, 11, 12, 13, 14, 15, 16, 17};
         REQUIRE(commPattern.recvIdx == recvIdxExp);
     }
+
+    // OpenFOAM's `decomposePar -decompositionMethod cyclic` (the default for
+    // this 3-rank fixture) places original-mesh cell `i` on rank `i % nProc`.
+    // The cellProcAddressing files reflect this striping, so when the NeoFOAM
+    // mesh adapter reads them they must show up verbatim in
+    // `foamGlobalCellIds()`. This is the round-trip identity that
+    // reconstructPar and any other OF-side post-processing tool depends on.
+    //
+    // Note: these values are independent of `globalOffset()` / `commPattern`
+    // assertions above, which use the NeoN-internal contiguous numbering
+    // (MPI_Scan-based) consumed by Ginkgo. See commPattern audit REVIEW.md H3.
+    SECTION("foamGlobalCellIds reflects cellProcAddressing")
+    {
+        REQUIRE(rt.nfMesh.hasFoamAddressing());
+        REQUIRE(rt.nfMesh.foamGlobalCellIds().size() == 9);
+    }
+    SECTION_IF(rt.mpiEnvironment.rank() == 0, "Rank 0 owns OF cells {0, 3, 6, ..., 24}")
+    {
+        const auto expected = std::vector<NeoN::localIdx> {0, 3, 6, 9, 12, 15, 18, 21, 24};
+        REQUIRE(rt.nfMesh.foamGlobalCellIds() == expected);
+    }
+    SECTION_IF(rt.mpiEnvironment.rank() == 1, "Rank 1 owns OF cells {1, 4, 7, ..., 25}")
+    {
+        const auto expected = std::vector<NeoN::localIdx> {1, 4, 7, 10, 13, 16, 19, 22, 25};
+        REQUIRE(rt.nfMesh.foamGlobalCellIds() == expected);
+    }
+    SECTION_IF(rt.mpiEnvironment.rank() == 2, "Rank 2 owns OF cells {2, 5, 8, ..., 26}")
+    {
+        const auto expected = std::vector<NeoN::localIdx> {2, 5, 8, 11, 14, 17, 20, 23, 26};
+        REQUIRE(rt.nfMesh.foamGlobalCellIds() == expected);
+    }
 }
