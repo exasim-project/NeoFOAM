@@ -303,7 +303,7 @@ auto constructFrom(
             }
             forAll(pin, facei)
             {
-                bval[bi] = convert(pin[facei]);
+                bval[bi] = pin[facei];
                 ++bi;
             }
         }
