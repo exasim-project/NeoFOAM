@@ -12,5 +12,6 @@ var searchData=
   ['spalartallmarasddes_9',['spalartallmarasddes',['../classNeoFOAM_1_1SpalartAllmarasDDES.html',1,'NeoFOAM::SpalartAllmarasDDES'],['../classNeoFOAM_1_1SpalartAllmarasDDES.html#aeb3ae19e8acb36b656d547de8837c33f',1,'NeoFOAM::SpalartAllmarasDDES::SpalartAllmarasDDES()']]],
   ['spalartallmarasddes_2ehpp_10',['spalartAllmarasDDES.hpp',['../spalartAllmarasDDES_8hpp.html',1,'']]],
   ['subcycleindex_11',['subCycleIndex',['../classNeoFOAM_1_1CreateFromFoamField.html#a0b659c2eb72285147dd9d0622203c9c7',1,'NeoFOAM::CreateFromFoamField']]],
-  ['syncruntimes_12',['syncRunTimes',['../namespaceNeoFOAM.html#aff116721405a6ad86fee9675a3cc3156',1,'NeoFOAM']]]
+  ['sumlocal_12',['sumLocal',['../structNeoFOAM_1_1ContinuityErrors.html#aff5b9f9bc60466ce0ae2479324be7f0a',1,'NeoFOAM::ContinuityErrors']]],
+  ['syncruntimes_13',['syncRunTimes',['../namespaceNeoFOAM.html#aff116721405a6ad86fee9675a3cc3156',1,'NeoFOAM']]]
 ];

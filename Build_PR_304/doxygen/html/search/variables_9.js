@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['prefcell_5f_0',['pRefCell_',['../structNeoFOAM_1_1PDESolver_1_1SetReference.html#a312bf19b6c97dcb123a125e2be3c9bc4',1,'NeoFOAM::PDESolver::SetReference']]],
-  ['prefvalue_5f_1',['pRefValue_',['../structNeoFOAM_1_1PDESolver_1_1SetReference.html#a3c95dcddaa8f9c91c6a660df2f75312b',1,'NeoFOAM::PDESolver::SetReference']]]
+  ['name_0',['name',['../classNeoFOAM_1_1CreateFromFoamField.html#ac5497af5c8e233a15d3ef9f3c622bb49',1,'NeoFOAM::CreateFromFoamField']]],
+  ['nfmesh_1',['nfmesh',['../classNeoFOAM_1_1CreateFromFoamField.html#a6e3d71162913f61365a2373c2396feed',1,'NeoFOAM::CreateFromFoamField::nfMesh'],['../structNeoFOAM_1_1RunTime.html#a810936522333c8fdaf8ffdacefa3909d',1,'NeoFOAM::RunTime::nfMesh']]]
 ];
