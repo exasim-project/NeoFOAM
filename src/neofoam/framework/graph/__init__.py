@@ -12,14 +12,18 @@ operations can run, the framework needs to:
    no cycles) — see :mod:`~neofoam.framework.graph.validation`.
 2. Resolve a topological order, respecting loop scopes and using
    ``operation_number`` as a tie-breaker — see
-   :mod:`~neofoam.framework.graph.resolver`.
+   :mod:`~neofoam.framework.graph.resolver`. For the simpler
+   ``{node: [deps]}`` case, :func:`topological_order` (see
+   :mod:`~neofoam.framework.graph.ordering`) builds the graph and sorts it.
 3. Optionally render the resulting graph for diagnostics — see
    :mod:`~neofoam.framework.graph.visualization`.
 
-The package exposes ten public symbols across four modules:
+The package exposes its public symbols across five modules:
 
 - :class:`DAGResolver` — the main entry point; merges and orders
   operations across loop scopes.
+- :func:`topological_order` — order a plain ``{node: [deps]}`` mapping
+  without touching networkx directly.
 - :class:`TopologicalSorter` (Protocol) and
   :class:`NetworkxTopologicalSorter` (default impl) — the injection
   seam for swapping the sort backend.
@@ -35,6 +39,7 @@ See :doc:`/explanation/operations-and-the-dag` for the design
 rationale and where the resolver fits into the solver lifecycle.
 """
 
+from .ordering import topological_order
 from .resolver import (
     CyclicDependencyError,
     DAGResolver,
@@ -53,6 +58,7 @@ __all__ = [
     "TopologicalSorter",
     "NetworkxTopologicalSorter",
     "DAGResolver",
+    "topological_order",
     "CyclicDependencyError",
     "MissingDependencyError",
     "build_dependency_digraph",

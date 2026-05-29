@@ -12,12 +12,14 @@ except ImportError:
 from .framework.context import FieldUpdates
 from .framework.initialization import Depends, field
 from .framework.model import Model
-from .framework.solver import Solver
+from .framework.solver import Configurations, Solver, configurations
 
 __all__ = [
+    "Configurations",
     "Depends",
     "FieldUpdates",
     "Model",
     "Solver",
+    "configurations",
     "field",
 ]

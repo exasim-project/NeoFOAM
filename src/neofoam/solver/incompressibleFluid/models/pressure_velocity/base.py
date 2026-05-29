@@ -20,6 +20,17 @@ class PressureVelocityAlgorithm:
     """Dispatcher for pressure-velocity coupling algorithms."""
 
     @classmethod
+    def all_specs(cls) -> list[Any]:
+        """Every member spec of the family, case-free (no detection).
+
+        Used to enumerate the family's config classes (per-spec
+        ``fvSchemes`` / ``fvSolution`` slices) for the solver schema. This
+        minimal port wires up only PIMPLE; SIMPLE / PISO would join the
+        list as they are ported.
+        """
+        return [pimple]
+
+    @classmethod
     def detect_and_create(cls) -> Any:
         """Detect algorithm from fvSolution and prime its state."""
         fv_solution = pyf.dictionary.read("system/fvSolution")

@@ -25,7 +25,10 @@ from neofoam.framework.operations import (
 from neofoam.framework.solver import Solver
 from neofoam.framework.types import OperationMetadata
 
+from .configs import ControlDictConfig, TransportPropertiesConfig
 from .create_fields import create_init
+from .models.incompressibleFluidModel import incompressibleFluidModel
+from .models.pressure_velocity.base import PressureVelocityAlgorithm
 
 
 class TimeLoop:
@@ -36,6 +39,14 @@ class TimeLoop:
 
 
 incompressibleFluid = Solver("incompressibleFluid")
+
+# Declare the full config schema on the spec, case-free: the solver's own
+# configs plus the model families it owns. Every member's configs join the
+# schema; per-case detection (in create_fields) picks which members run.
+incompressibleFluid.config(ControlDictConfig)
+incompressibleFluid.config(TransportPropertiesConfig)
+incompressibleFluid.core_models(PressureVelocityAlgorithm)  # required: pick ONE
+incompressibleFluid.optional_models(incompressibleFluidModel)  # zero or more
 
 
 @incompressibleFluid.initializer

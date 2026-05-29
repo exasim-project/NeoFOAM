@@ -27,6 +27,7 @@ class Model4Config(BaseConfig):
 
 
 model4 = Model("MultiModel").register_with(DummyModelInterface)
+model4.config(Model4Config)
 
 
 @model4.detect

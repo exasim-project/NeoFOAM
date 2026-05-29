@@ -44,11 +44,16 @@ def case(tmp_path: Path) -> Generator[Path, None, None]:
 
 @requires_openfoam
 def test_solver_crashes_validator_should_predict(case: Path) -> None:
-    """The solver crashes on val_pitzDaily; the validator should predict it.
+    """Contract: if the solver crashes on val_pitzDaily, the validator
+    should have predicted it via ``run_load().validate()``.
 
-    Currently EXPECTED TO FAIL — exposes validator gaps in the minimal
-    port (no FvSchemes/FvSolution/transportProperties configs are
-    loaded into LoadResult yet, so ``validate()`` finds zero errors).
+    The LOAD stage now collects the solver-core configs (controlDict,
+    transportProperties), so those are validated. The remaining gap is the
+    PIMPLE ``fvSolution`` slice (here the ``U`` solver is hidden behind a
+    regex key): validating it requires loading the slice, which the
+    OpenFOAM reader cannot yet parse (typed scheme values / ``dict`` solver
+    entries). Until then ``validate()`` cannot predict a crash that stems
+    only from that slice.
     """
     os.environ["FOAM_SIGFPE"] = ""
 
@@ -81,3 +86,23 @@ def test_solver_crashes_validator_should_predict(case: Path) -> None:
             f"Solver crashed (see {persistent_log}).\n"
             f"But validator found NO errors — it should have predicted this crash."
         )
+
+
+@requires_openfoam
+def test_load_result_exposes_solver_configs(case: Path) -> None:
+    """LOAD surfaces the solver's config instances and declared classes.
+
+    ``LoadResult.configs`` is no longer empty for incompressibleFluid: the
+    solver-core configs and the PIMPLE fvSchemes/fvSolution slices are
+    collected, and ``config_classes`` lists the declared schema set (the
+    basis for scaffolding a case from configs alone).
+    """
+    load_result = create_init(case_dir=case).run_load()
+
+    class_names = {c.__name__ for c in load_result.config_classes}
+    assert "ControlDictConfig" in class_names
+    assert "TransportPropertiesConfig" in class_names
+    assert any("fvSchemes" in n for n in class_names)
+    assert any("fvSolution" in n for n in class_names)
+
+    assert load_result.configs, "expected at least the solver-core configs"

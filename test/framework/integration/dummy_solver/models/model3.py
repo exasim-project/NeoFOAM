@@ -47,6 +47,7 @@ class Accumulator:
 
 # ModelSpec — immutable definition
 model3 = Model("CoupledModel").register_with(DummyModelInterface)
+model3.config(Model3Config)
 
 
 @model3.load

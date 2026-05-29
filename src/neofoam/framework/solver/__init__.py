@@ -12,5 +12,13 @@ Public API:
 
 from .spec import SolverSpec, Solver
 from .runtime import SolverRuntime, SolverState
+from .configurations import Configurations, configurations
 
-__all__ = ["SolverSpec", "SolverRuntime", "SolverState", "Solver"]
+__all__ = [
+    "SolverSpec",
+    "SolverRuntime",
+    "SolverState",
+    "Solver",
+    "Configurations",
+    "configurations",
+]
