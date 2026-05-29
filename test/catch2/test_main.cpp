@@ -80,6 +80,14 @@ int main(int argc, char* argv[])
                           << "See log.blockMesh for details.\n";
                 return 1;
             }
+            int rc2 = std::system("decomposePar > log.decomposePar 2>&1");
+            if (rc2 != 0)
+            {
+                std::cerr << "decomposePar failed (rc=" << rc2
+                          << "); ensure OpenFOAM is sourced and 'decomposePar' is on PATH. "
+                          << "See log.decomposePar for details.\n";
+                return 1;
+            }
         }
 
 #include "setRootCase.H"
