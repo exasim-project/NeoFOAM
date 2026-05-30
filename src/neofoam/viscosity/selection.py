@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any, Optional, Union
 
 from .fallback import OpenFOAMViscosityModel, TransportFactory
-from .interface import ModelSpec, viscosityModel
+from .viscosityModel import ModelSpec, viscosityModel
 
 __all__ = ["model_name", "select_viscosity_model", "select_from_case"]
 

@@ -14,7 +14,7 @@ from pydantic import BaseModel
 
 from neofoam.core.plugin_system import PluginSystem
 from neofoam.framework.model import ModelSpec
-from neofoam.viscosity.interface import viscosityModel
+from neofoam.viscosity.viscosityModel import viscosityModel
 
 # Importing the package registers the bundled natives (Newtonian).
 import neofoam.viscosity  # noqa: F401

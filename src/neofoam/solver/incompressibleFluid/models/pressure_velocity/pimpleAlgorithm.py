@@ -54,7 +54,7 @@ PimpleFvSolution = pimple.config(fvSolution)
 
 
 class TurbulenceModel(Protocol):
-    def divDevReff(self, velocity: volVectorField) -> Any: ...
+    def divDevReff(self, U: volVectorField, nu: Any, nut: Any) -> Any: ...
 
 
 @pimple.build
@@ -147,8 +147,12 @@ def momentum(
     p: volScalarField,
     turbulence: Annotated[TurbulenceModel, "models"],
     pimple_control: Annotated[Any, "models"],
+    nu: Any = None,
+    nut: Any = None,
 ) -> FieldUpdates:
-    UEqn = fvVectorMatrix(fvm.ddt(U) + fvm.div(phi, U) + turbulence.divDevReff(U))
+    UEqn = fvVectorMatrix(
+        fvm.ddt(U) + fvm.div(phi, U) + turbulence.divDevReff(U, nu, nut)
+    )
     UEqn.relax()
 
     if pimple_control.momentumPredictor():
@@ -228,10 +232,14 @@ def momentum_boussinesq(
     p_rgh: volScalarField,
     rhok: volScalarField,
     ghf: surfaceScalarField,
+    nu: Any = None,
+    nut: Any = None,
 ) -> FieldUpdates:
     mesh = U.mesh()
 
-    UEqn = fvVectorMatrix(fvm.ddt(U) + fvm.div(phi, U) + turbulence.divDevReff(U))
+    UEqn = fvVectorMatrix(
+        fvm.ddt(U) + fvm.div(phi, U) + turbulence.divDevReff(U, nu, nut)
+    )
     UEqn.relax()
 
     if pimple_control.momentumPredictor():

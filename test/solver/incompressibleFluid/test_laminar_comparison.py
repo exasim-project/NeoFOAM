@@ -3,11 +3,11 @@
 
 """Field-by-field comparison for the native ``laminar`` turbulence model.
 
-Exercises the Option-C turbulence path end-to-end: the native ``LaminarModel``
-dispatches the momentum stress term to a ``LinearViscoStress`` that draws ``nu``
-from the native ``Newtonian`` viscosity model (``nuEff = nu + nut``, with
-``nut == 0``). The momentum operation is unchanged — it still calls
-``turbulence.divDevReff(U)``.
+Exercises the native turbulence path end-to-end: the ``laminar`` spec is built
+generically (``spec.create``) and its adapter assembles the momentum stress term
+``divDevReff(U)`` from ``nuEff = nu + nut`` (``nut == 0``), drawing ``nu`` from
+the native ``Newtonian`` viscosity model. The momentum operation is unchanged —
+it still calls ``turbulence.divDevReff(U)``.
 
 The bundled ``tutorials/pitzDaily`` case is switched to ``simulationType
 laminar`` for both solvers; incompressibleFluid (PIMPLE, native laminar) must

@@ -8,6 +8,6 @@ Importing this package registers the bundled native models with the
 each model module).
 """
 
-from .newtonian import NewtonianModel, newtonian
+from .newtonian import newtonian
 
-__all__ = ["newtonian", "NewtonianModel"]
+__all__ = ["newtonian"]

@@ -1,12 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""``TurbulenceModel`` Protocol — the surface every turbulence model satisfies.
+"""``TurbulenceModel`` Protocol — the one small read interface the solver uses.
 
-Both native (NeoFOAM) models and the OpenFOAM fallback adapter implement this
-Protocol. It mirrors the turbulence object consumed by the incompressibleFluid
-operations (``nut``/``nu`` in the Boussinesq energy equation, ``divDevReff`` in
-the momentum equation, ``correct`` after pressure-velocity coupling).
+The momentum-transport model the solver consumes exposes a single method: the
+deviatoric momentum-stress term ``divDevReff(U, nu, nut)``. The molecular ``nu``
+and eddy ``nut`` viscosities are Context fields the viscosity and turbulence
+models own (registered/updated by their operations); the model only assembles
+the stress from them. Field updates are operations, so there is no ``correct``.
 
 Pure-Python; no pybFoam import.
 """
@@ -18,20 +19,8 @@ __all__ = ["TurbulenceModel"]
 
 @runtime_checkable
 class TurbulenceModel(Protocol):
-    """Minimal turbulence model surface used by the incompressible solver."""
+    """Minimal momentum-transport surface used by the incompressible solver."""
 
-    def nut(self) -> Any:
-        """Turbulent (eddy) viscosity field."""
-        ...
-
-    def nu(self) -> Any:
-        """Laminar (molecular) viscosity field."""
-        ...
-
-    def divDevReff(self, U: Any) -> Any:
-        """Divergence of the deviatoric Reynolds stress for the momentum eq."""
-        ...
-
-    def correct(self) -> None:
-        """Advance the turbulence fields after pressure-velocity coupling."""
+    def divDevReff(self, U: Any, nu: Any, nut: Any) -> Any:
+        """Deviatoric momentum-stress divergence, built from ``nu`` and ``nut``."""
         ...

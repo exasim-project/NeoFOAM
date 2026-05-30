@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Tests for the turbulenceModel plugin interface and native registration.
+"""Tests for the momentumTransportModel plugin interface and native registration.
 
 Expected members are derived from the *actually registered* names and from the
 discovered cases, never from string literals: adding a native model (with its
@@ -14,7 +14,7 @@ from pydantic import BaseModel
 
 from neofoam.core.plugin_system import PluginSystem
 from neofoam.framework.model import ModelSpec
-from neofoam.turbulence.interface import turbulenceModel
+from neofoam.turbulence.momentumTransport import momentumTransportModel
 
 # Importing the package registers the bundled natives (laminar).
 import neofoam.turbulence  # noqa: F401
@@ -30,22 +30,22 @@ FALLBACK_NAMES = {
 
 
 def test_turbulence_interface_registered_in_plugin_system() -> None:
-    assert PluginSystem.get_registered("turbulenceModel") is not None
+    assert PluginSystem.get_registered("momentumTransportModel") is not None
 
 
 def test_native_case_models_are_registered() -> None:
-    assert NATIVE_NAMES <= set(turbulenceModel.registered_names())
+    assert NATIVE_NAMES <= set(momentumTransportModel.registered_names())
 
 
 def test_all_specs_returns_model_spec_objects() -> None:
-    specs = turbulenceModel.all_specs()
+    specs = momentumTransportModel.all_specs()
     assert specs, "expected at least one registered spec"
     assert all(isinstance(spec, ModelSpec) for spec in specs)
 
 
 def test_find_spec_round_trips_registered_names() -> None:
-    for name in turbulenceModel.registered_names():
-        spec = turbulenceModel.find_spec(name)
+    for name in momentumTransportModel.registered_names():
+        spec = momentumTransportModel.find_spec(name)
         assert isinstance(spec, ModelSpec)
         assert spec.name == name
 
@@ -53,12 +53,12 @@ def test_find_spec_round_trips_registered_names() -> None:
 def test_find_spec_unknown_returns_none() -> None:
     # A fallback case's model name has no native spec by definition.
     for name in FALLBACK_NAMES:
-        assert turbulenceModel.find_spec(name) is None
+        assert momentumTransportModel.find_spec(name) is None
 
 
 def test_registered_specs_detect_true() -> None:
-    for name in turbulenceModel.registered_names():
-        spec = turbulenceModel.find_spec(name)
+    for name in momentumTransportModel.registered_names():
+        spec = momentumTransportModel.find_spec(name)
         assert spec is not None
         assert spec.run_detect() is True
 
@@ -71,7 +71,7 @@ def _union_members(annotation: Any) -> tuple[Any, ...]:
 def test_plugin_model_is_discriminated_union() -> None:
     """The interface exposes a pydantic model whose ``model`` field discriminates
     over every registered turbulence model by ``model_type``."""
-    plugin_model = turbulenceModel.plugin_model  # type: ignore[attr-defined]
+    plugin_model = momentumTransportModel.plugin_model  # type: ignore[attr-defined]
     assert isinstance(plugin_model, type)
     assert issubclass(plugin_model, BaseModel)
 
@@ -82,14 +82,14 @@ def test_plugin_model_is_discriminated_union() -> None:
         get_args(member.model_fields["model_type"].annotation)[0]
         for member in _union_members(field.annotation)
     }
-    assert set(turbulenceModel.registered_names()) <= member_types
+    assert set(momentumTransportModel.registered_names()) <= member_types
 
 
 def test_plugin_model_dispatches_by_discriminator() -> None:
     """Validation selects the right variant purely from the discriminator."""
-    name = turbulenceModel.registered_names()[0]
+    name = momentumTransportModel.registered_names()[0]
 
-    instance = turbulenceModel.create(  # type: ignore[attr-defined]
+    instance = momentumTransportModel.create(  # type: ignore[attr-defined]
         model={"model_type": name}
     )
 

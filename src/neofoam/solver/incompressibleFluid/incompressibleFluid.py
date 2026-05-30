@@ -13,7 +13,7 @@ from typing import Annotated, Any, Optional
 
 from pybFoam import Info
 
-from neofoam.framework.context import Context, FieldUpdates
+from neofoam.framework.context import Context
 from neofoam.framework.graph import DAGResolver
 from neofoam.framework.initialization import Depends, StagedInitRunner
 from neofoam.framework.operations import (
@@ -24,8 +24,10 @@ from neofoam.framework.operations import (
 )
 from neofoam.framework.solver import Solver
 from neofoam.framework.types import OperationMetadata
+from neofoam.turbulence import momentumTransportModel
+from neofoam.viscosity import viscosityModel
 
-from .configs import ControlDictConfig, TransportPropertiesConfig
+from .configs import ControlDictConfig
 from .create_fields import create_init
 from .models.incompressibleFluidModel import incompressibleFluidModel
 from .models.pressure_velocity.base import PressureVelocityAlgorithm
@@ -43,9 +45,16 @@ incompressibleFluid = Solver("incompressibleFluid")
 # Declare the full config schema on the spec, case-free: the solver's own
 # configs plus the model families it owns. Every member's configs join the
 # schema; per-case detection (in create_fields) picks which members run.
+# Viscosity (transport) and momentum-transport (turbulence) are core model
+# families: each contributes its own config (transportProperties /
+# turbulenceProperties) through its registered models, so the solver does not
+# name those config classes itself.
 incompressibleFluid.config(ControlDictConfig)
-incompressibleFluid.config(TransportPropertiesConfig)
 incompressibleFluid.core_models(PressureVelocityAlgorithm)  # required: pick ONE
+incompressibleFluid.core_models(viscosityModel)  # molecular nu (transportProperties)
+incompressibleFluid.core_models(
+    momentumTransportModel
+)  # nut + stress (turbulenceProperties)
 incompressibleFluid.optional_models(incompressibleFluidModel)  # zero or more
 
 
@@ -86,7 +95,6 @@ def execution_graph(
         with time_builder.loop(algo_ops["inner_loop"]) as inner_builder:
             inner_builder.step(algo_ops["momentum"])
             inner_builder.step(algo_ops["continuity"])
-            inner_builder.step(ops["turbulence_correction"])
 
         time_builder.step(ops["write_output"])
 
@@ -129,6 +137,14 @@ def run(
         Info("Starting time loop")
 
         builder, model_ops = solver.execution_graph()
+
+        # The viscosity and momentum-transport core models own their Context
+        # fields (nu, nut) and update them through their own operations; merge
+        # those into the graph (each is numbered to run before the momentum
+        # predictor). Done here, where the built models are reachable on ctx.
+        for model_name in ("viscosity", "turbulence"):
+            model_ops.add(ctx.models[model_name].operations)
+
         resolver = DAGResolver()
         resolved = resolver.resolve(builder, model_ops)
         resolved.operations.run(ctx)
@@ -173,20 +189,6 @@ def increment_time(self: Any, ctx: Context) -> None:
 
 
 @incompressibleFluid.operation(depends_on=["continuity"])
-def turbulence_correction(
-    self: Any,
-    laminarTransport: Annotated[Optional[Any], "models"],
-    turbulence: Annotated[Optional[Any], "models"],
-) -> FieldUpdates:
-    """Correct laminar transport + turbulence after pressure-velocity coupling."""
-    if laminarTransport is not None:
-        laminarTransport.correct()
-    if turbulence is not None:
-        turbulence.correct()
-    return FieldUpdates({})
-
-
-@incompressibleFluid.operation(depends_on=["turbulence_correction"])
 def write_output(self: Any, ctx: Context) -> None:
     """Write fields to disk and report execution time."""
     ctx.runtime.write(True)

@@ -1,38 +1,34 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Tests for the native ``Newtonian`` viscosity model — function + config (R5).
+"""Tests for the native ``Newtonian`` viscosity model — operation + config.
 
-The model is built the way the solver builds it: selected from its case and fed
-``nu`` read from the real ``constant/transportProperties`` (never a fabricated
-constructor argument). Expected values come from the case's ``expected.yaml``.
+The model owns the molecular viscosity field ``nu``: it is built the way the
+solver builds it (selected from its case) and its operation is run to publish
+``fields.nu``, exactly as the solver merges the model's operations into the DAG.
+Expected values come from the case's ``expected.yaml`` — never a fabricated
+constructor argument.
 """
 
 from pathlib import Path
-from typing import Any
 
-from neofoam.viscosity.base import ViscosityModel
+from neofoam.framework.model import ModelRuntime
 from neofoam.viscosity.config import TransportPropertiesConfig
 
-from viscosity.conftest import build_as_solver, case_for
+from viscosity.conftest import build_as_solver, case_for, run_field_ops
 
 #: Point the Newtonian model at the case the solver would feed it.
 NEWTONIAN = case_for("Newtonian")
 
 
-# --- function: runtime behaviour, built from the loaded dict ---
-def test_nu_returns_value_from_dict() -> None:
-    model = build_as_solver(NEWTONIAN)
-    assert model.nu().value() == NEWTONIAN.model["nu"]
+# --- model owns + updates its nu field, run as the solver runs it ---
+def test_model_is_a_runtime() -> None:
+    assert isinstance(build_as_solver(NEWTONIAN), ModelRuntime)
 
 
-def test_correct_is_a_noop() -> None:
-    assert build_as_solver(NEWTONIAN).correct() is None
-
-
-def test_satisfies_viscosity_protocol() -> None:
-    model: Any = build_as_solver(NEWTONIAN)
-    assert isinstance(model, ViscosityModel)
+def test_update_nu_publishes_field_from_dict() -> None:
+    fields = run_field_ops(build_as_solver(NEWTONIAN))
+    assert fields["nu"].value() == NEWTONIAN.model["nu"]
 
 
 # --- config: the model's own config loads, validates, and round-trips ---

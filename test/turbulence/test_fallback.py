@@ -29,16 +29,15 @@ def test_fallback_delegates_to_impl() -> None:
     impl = MagicMock()
     impl.nut.return_value = "nut"
     impl.nu.return_value = "nu"
-    impl.divDevReff.return_value = "divDevReff"
     model = OpenFOAMTurbulenceModel("U", "phi", "transport", factory=lambda *a: impl)
 
     model.build()
 
+    # nut/nu/correct delegate to the wrapped pybFoam model; divDevReff is the
+    # shared linear viscous stress (covered end-to-end by the comparison test).
     assert model.nut() == "nut"
     assert model.nu() == "nu"
-    assert model.divDevReff("U") == "divDevReff"
     model.correct()
-    impl.divDevReff.assert_called_once_with("U")
     impl.correct.assert_called_once_with()
 
 

@@ -12,10 +12,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 import pybFoam as pyf
-from pybFoam.turbulence import (
-    incompressibleTurbulenceModel,
-    singlePhaseTransportModel,
-)
+from pybFoam.turbulence import singlePhaseTransportModel
 
 from neofoam.framework.initialization import (
     ConfigContext,
@@ -27,9 +24,14 @@ from neofoam.framework.initialization import (
     lazy,
     model as init_model,
 )
+from neofoam.framework.model import ModelSpec
 from neofoam.models.stability_criteria import CFLCondition
+from neofoam.turbulence import SpecMomentumTransport, select_turbulence_model
+from neofoam.turbulence.config import TurbulencePropertiesConfig
+from neofoam.viscosity import select_viscosity_model
+from neofoam.viscosity.config import TransportPropertiesConfig
 
-from .configs import ControlDictConfig, TransportPropertiesConfig
+from .configs import ControlDictConfig
 from .models.incompressibleFluidModel import incompressibleFluidModel
 from .models.pressure_velocity.base import PressureVelocityAlgorithm
 
@@ -89,6 +91,9 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         cfl_condition = next(
             (m for m in core_models if isinstance(m, CFLCondition)), None
         )
+        transport_config = next(
+            (m for m in core_models if isinstance(m, TransportPropertiesConfig)), None
+        )
         argv = runner.argv
 
         def create_runtime(_ctx: dict[str, Any]) -> Any:
@@ -99,14 +104,39 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             return pyf.fvMesh(ctx["runtime"])
 
         def create_laminar_transport(ctx: dict[str, Any]) -> Any:
+            # Raw pybFoam transport: drives correct() and feeds the OpenFOAM
+            # turbulence fallback factory, which expects this concrete object.
             return singlePhaseTransportModel(ctx["fields.U"], ctx["fields.phi"])
 
+        def create_viscosity(ctx: dict[str, Any]) -> Any:
+            # The viscosity model owns the molecular ``nu`` field: it registers
+            # /updates ``fields.nu`` through its operations. Native models are a
+            # plain ModelRuntime (config + operations); the OpenFOAM fallback
+            # publishes ``nu`` from the raw transport. Both expose ``operations``.
+            selected = select_viscosity_model(transport_config)
+            if isinstance(selected, ModelSpec):
+                return selected.instantiate(resolved_case_dir)
+            return selected.build(transport=ctx["models.laminarTransport"])
+
         def create_turbulence(ctx: dict[str, Any]) -> Any:
-            return incompressibleTurbulenceModel.New(
-                ctx["fields.U"],
-                ctx["fields.phi"],
-                ctx["models.laminarTransport"],
+            # The momentum-transport model owns ``fields.nut`` (via its
+            # operations) and assembles ``divDevReff`` through its registered
+            # stress computer. Native models are wrapped by the small
+            # SpecMomentumTransport read interface; the OpenFOAM fallback wraps
+            # the pybFoam model the same way. Both expose ``operations`` and
+            # ``divDevReff(U, nu, nut)``.
+            turb_config = TurbulencePropertiesConfig.load(
+                case_dir=resolved_case_dir, validate=False
             )
+            selected = select_turbulence_model(
+                turb_config,
+                U=ctx["fields.U"],
+                phi=ctx["fields.phi"],
+                transport=ctx["models.laminarTransport"],
+            )
+            if isinstance(selected, ModelSpec):
+                return SpecMomentumTransport(selected.instantiate(resolved_case_dir))
+            return selected.build()
 
         builder = InitializerBuilder()
         builder.add(lazy("runtime", create_runtime))
@@ -131,12 +161,20 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         )
         builder.add(
             init_model(
+                "viscosity",
+                create_viscosity,
+                depends_on=["models.laminarTransport"],
+            )
+        )
+        builder.add(
+            init_model(
                 "turbulence",
                 create_turbulence,
                 depends_on=[
                     "fields.U",
                     "fields.phi",
                     "models.laminarTransport",
+                    "models.viscosity",
                 ],
             )
         )

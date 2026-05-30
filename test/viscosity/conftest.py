@@ -28,7 +28,6 @@ import yaml
 from neofoam.framework.model import ModelSpec
 from neofoam.viscosity.config import TransportPropertiesConfig
 from neofoam.viscosity.fallback import OpenFOAMViscosityModel
-from neofoam.viscosity.models.newtonian import NewtonianModel
 from neofoam.viscosity.selection import select_viscosity_model
 
 # Importing the package registers the bundled native models (Newtonian).
@@ -38,10 +37,6 @@ import neofoam.viscosity  # noqa: F401
 #: real ``constant/transportProperties`` dictionary plus an ``expected.yaml``
 #: manifest (no dict content is encoded in the test modules).
 CASES_DIR = Path(__file__).resolve().parent / "cases"
-
-#: Kinematic-viscosity dimensions [0 2 -1 0 0 0 0] — mirrors
-#: ``create_fields._NU_DIMENSIONS``.
-_NU_DIMENSIONS = (0.0, 2.0, -1.0, 0.0, 0.0, 0.0, 0.0)
 
 
 @dataclass(frozen=True)
@@ -90,38 +85,32 @@ def case_for(model_name: str) -> Case:
     raise LookupError(f"no native case for model {model_name!r}")
 
 
-def _read_nu(case_dir: Path) -> Any:
-    """Build ``nu`` from ``constant/transportProperties`` (replica of the solver).
-
-    Self-contained replica of the solver-private ``create_fields._read_nu``
-    (plan Q3a): the pybFoam transport binding exposes no ``nu()``, so the native
-    Newtonian model is fed a ``dimensionedScalar`` built from the same dict
-    entry OpenFOAM reads. Folds back into a shared helper once
-    ``newtonian.load`` is implemented.
-    """
-    import pybFoam as pyf
-
-    transport_dict = pyf.dictionary.read(
-        str(case_dir / "constant" / "transportProperties")
-    )
-    return pyf.dimensionedScalar(
-        pyf.Word("nu"), pyf.dimensionSet(*_NU_DIMENSIONS), transport_dict
-    )
-
-
 def build_as_solver(case: Case) -> Any:
     """Initialize the viscosity model exactly as ``create_viscosity`` does.
 
-    Loads the real config, selects the model, and — for the native Newtonian —
-    builds ``NewtonianModel`` from ``nu`` read out of the case dict. For
-    non-native cases the selector's fallback adapter is returned (unbuilt), the
-    same object the solver wires its raw transport behind.
+    A native model is a plain :class:`ModelRuntime` that owns its ``nu`` field
+    (registered/updated by its operations); for non-native cases the selector's
+    fallback adapter is returned (unbuilt).
     """
     cfg = TransportPropertiesConfig.load(case_dir=case.path)
     selected = select_viscosity_model(cfg)
-    if isinstance(selected, ModelSpec) and selected.name == "Newtonian":
-        return NewtonianModel(_read_nu(case.path))
+    if isinstance(selected, ModelSpec):
+        return selected.instantiate(case.path)
     return selected
+
+
+def run_field_ops(model: Any) -> dict[str, Any]:
+    """Run a model's operations against a fresh Context; return ``ctx.fields``.
+
+    Materialises the fields the model owns (e.g. ``nu``) the way the solver does
+    when it merges the model's operations into the execution graph.
+    """
+    from neofoam.framework.context import Context
+
+    ctx = Context(fields={}, models={})
+    for op in model.operations:
+        op.run(ctx)
+    return ctx.fields
 
 
 def assert_selection(selected: Any, case: Case) -> None:

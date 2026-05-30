@@ -9,23 +9,17 @@ mirroring :mod:`neofoam.turbulence`. Native models register with
 ``transportModel`` by name and falls back to pybFoam's
 ``singlePhaseTransportModel`` (:class:`OpenFOAMViscosityModel`) when no native
 model is registered.
-
-``TransportPropertiesConfig`` is intentionally NOT re-exported here so that
-importing :mod:`neofoam.viscosity` stays free of ``neofoam.io`` / pybFoam;
-import it explicitly from :mod:`neofoam.viscosity.config` when needed.
 """
 
-from .base import ViscosityModel
 from .fallback import OpenFOAMViscosityModel
-from .interface import viscosityModel
 from .selection import model_name, select_from_case, select_viscosity_model
+from .viscosityModel import viscosityModel
 
 # Import side-effect: register the bundled native viscosity models.
 from . import models  # noqa: E402
 
 __all__ = [
     "viscosityModel",
-    "ViscosityModel",
     "OpenFOAMViscosityModel",
     "model_name",
     "select_viscosity_model",

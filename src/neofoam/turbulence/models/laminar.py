@@ -1,51 +1,38 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Trivial native turbulence model: ``laminar`` (no turbulence).
+"""Native momentum-transport model: ``laminar`` (no turbulence).
 
-Skeleton model that exercises the full plugin-registration and selection path
-without any turbulence physics. ``nut`` is zero and ``correct`` is a no-op. Real
-models (kEpsilon, kOmegaSST, …) follow this shape, adding ``@build`` /
-``@operation`` physics in later work.
+``laminar`` is a :class:`ModelSpec` + config + **one operation** + a registered
+stress computer — no class. It owns the eddy-viscosity field ``nut``: the model
+registers/updates it in the Context through :func:`update_nut`, which writes
+``fields.nut`` (a constant zero — laminar flow has no turbulence). It also
+**registers how its momentum stress is built** — the shared linear
+(Boussinesq) :func:`~neofoam.turbulence.stress.linear_viscous_stress`; a RAS/LES
+or non-linear model would register a different stress computer and add its own
+k/ε/ω transport operations.
 """
 
-from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
-from ..interface import Model, turbulenceModel
+from neofoam.framework.context import FieldUpdates
+from neofoam.viscosity.io import dimensioned_viscosity
 
-__all__ = ["laminar", "LaminarModel"]
+from ..config import TurbulencePropertiesConfig
+from ..momentumTransport import Model, momentumTransportModel, register_momentum_stress
+from ..stress import linear_viscous_stress
 
-laminar = Model("laminar").register_with(turbulenceModel)
+__all__ = ["laminar"]
 
+laminar = Model("laminar").register_with(momentumTransportModel)
+laminar.config(TurbulencePropertiesConfig)
 
-@laminar.detect
-def detect() -> bool:
-    """``laminar`` is always available as the no-op model."""
-    return True
-
-
-@laminar.load
-def load(_case_dir: Path, _instance_id: Optional[str]) -> None:
-    """Skeleton: laminar carries no config yet."""
-    return None
+# The model dispatches its stress computer — laminar reuses the shared linear
+# (Boussinesq) assembly. A different closure registers a different function here.
+register_momentum_stress(laminar, linear_viscous_stress)
 
 
-class LaminarModel:
-    """No-op turbulence model satisfying the ``TurbulenceModel`` Protocol."""
-
-    def nut(self) -> Any:
-        """Turbulent viscosity — zero for laminar flow."""
-        return 0.0
-
-    def nu(self) -> Any:
-        """Laminar viscosity — placeholder in the skeleton."""
-        return 0.0
-
-    def divDevReff(self, U: Any) -> Any:
-        """Not implemented in the skeleton (no momentum coupling yet)."""
-        raise NotImplementedError("laminar divDevReff is not implemented yet")
-
-    def correct(self) -> None:
-        """No turbulence fields to advance for laminar flow."""
-        return None
+@laminar.operation(operation_number="2.0")  # runs before the momentum predictor
+def update_nut(self: Any) -> FieldUpdates:
+    """Create / update the eddy-viscosity field ``fields.nut`` (zero for laminar)."""
+    return FieldUpdates({"nut": dimensioned_viscosity("nut", 0.0)})

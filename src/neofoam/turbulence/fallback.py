@@ -1,20 +1,30 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""OpenFOAM turbulence fallback adapter.
+"""OpenFOAM turbulence (momentum-transport) fallback adapter.
 
-When no native NeoFOAM turbulence model is registered for the configured model
-name, the selector returns an :class:`OpenFOAMTurbulenceModel`. It delegates to
-pybFoam's ``incompressibleTurbulenceModel.New(U, phi, transport)`` factory — the
-same call the incompressibleFluid solver uses today in ``create_fields.py``.
+When no native model matches the configured turbulence model, the selector
+returns an :class:`OpenFOAMTurbulenceModel`. The pybFoam
+``incompressibleTurbulenceModel`` owns its eddy viscosity and assembles its own
+``divDevReff`` internally, so the adapter delegates the momentum stress to it
+(ignoring the native Context ``nu``/``nut``, which a native closure would use)
+and advances the model via a ``correct()`` operation after the pressure-velocity
+coupling — the proven OpenFOAM lifecycle. Materialising the OF eddy viscosity as
+a Context field is unsafe (it duplicates the model's registered ``nut``), which is
+why the fallback keeps its own stress rather than the shared assembly.
 
-The pybFoam factory is *injectable* via the ``factory`` argument and otherwise
-imported lazily inside :func:`_default_factory`. Importing this module therefore
-never imports pybFoam, so the fallback wiring is unit-testable in a plain
-(OpenFOAM-free) environment.
+pybFoam is imported lazily, so importing this module needs no OpenFOAM build.
 """
 
 from typing import Any, Callable, Optional
+
+from neofoam.framework.context import FieldUpdates
+from neofoam.framework.dependency_resolver import (
+    DependencyResolver,
+    wrap_with_dependency_resolution,
+)
+from neofoam.framework.operations import Operation, SequentialOp
+from neofoam.framework.types import OperationMetadata
 
 __all__ = ["OpenFOAMTurbulenceModel", "TurbulenceFactory"]
 
@@ -30,11 +40,11 @@ def _default_factory() -> "TurbulenceFactory":
 
 
 class OpenFOAMTurbulenceModel:
-    """Adapter wrapping a pybFoam turbulence model as a ``TurbulenceModel``.
+    """Adapter publishing a pybFoam turbulence model's ``nut`` as a field.
 
-    Construction is side-effect free; the underlying pybFoam model is created
-    only when :meth:`build` is called. ``build`` uses the injected ``factory``
-    if given, else lazily imports pybFoam via :func:`_default_factory`.
+    Construction is side-effect free; the underlying model is created on
+    :meth:`build`. ``divDevReff`` reuses the shared linear viscous stress, so the
+    fallback assembles the momentum term the same way the native path does.
     """
 
     def __init__(
@@ -69,8 +79,33 @@ class OpenFOAMTurbulenceModel:
     def nu(self) -> Any:
         return self._require_impl().nu()
 
-    def divDevReff(self, U: Any) -> Any:
+    def divDevReff(self, U: Any, nu: Any = None, nut: Any = None) -> Any:
+        """Momentum stress term — the pybFoam model assembles it internally.
+
+        The native Context ``nu``/``nut`` are ignored: the OpenFOAM model owns its
+        own eddy viscosity and stress assembly.
+        """
         return self._require_impl().divDevReff(U)
 
     def correct(self) -> None:
         self._require_impl().correct()
+
+    @property
+    def operations(self) -> list[Operation]:
+        """One operation advancing the model after the pressure-velocity coupling."""
+        impl = self._require_impl()
+
+        def correct() -> FieldUpdates:
+            impl.correct()
+            return FieldUpdates({})
+
+        return [
+            Operation(
+                func=SequentialOp(
+                    wrap_with_dependency_resolution(correct, None, DependencyResolver())
+                ),
+                metadata=OperationMetadata(
+                    op_name="of_correct_turbulence", depends_on=["continuity"]
+                ),
+            ),
+        ]

@@ -1,19 +1,22 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Plugin interface for viscosity (transport) models.
+"""Viscosity plugin interface.
 
-Standalone viscosity subsystem mirroring :mod:`neofoam.turbulence`: transport
-models register themselves via ``Model("name").register_with(viscosityModel)``
-and are discovered case-free by name. ``constant/transportProperties`` is a
-case-global dictionary, so the subsystem is not tied to a single solver.
+A viscosity model supplies the molecular kinematic viscosity ``nu``. It is a
+core model family of the incompressible solver: ``laminarTransport`` (the pybFoam
+``singlePhaseTransportModel``) and a native viscosity model are the *same
+abstraction* — the molecular-``nu`` provider, OpenFOAM vs. native.
 
-This module is intentionally free of any ``neofoam.io`` / pybFoam import so the
-registry and selection logic stay importable without a built OpenFOAM
-environment.
+Native models register here via ``Model("name").register_with(viscosityModel)``
+and are discovered case-free by name. There is **no per-model class and no
+adapter**: a model is a :class:`ModelSpec` + config + operations and **owns its
+``nu`` field on the Context**, registering/updating it through its operations.
+The viscosity model deliberately has no read interface — its only consumer is the
+momentum-transport model, which reads ``nu`` as a Context field.
 """
 
-from typing import Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel
 
@@ -52,3 +55,14 @@ class viscosityModel(BaseModel):
             if spec.name == name:
                 return spec
         return None
+
+    @classmethod
+    def detect_and_create(cls) -> Any:
+        """Select the active model for the case in the current directory.
+
+        The core-model-family hook: reads ``constant/transportProperties`` and
+        returns the matching native spec or the OpenFOAM fallback adapter.
+        """
+        from .selection import select_from_case
+
+        return select_from_case()

@@ -3,10 +3,12 @@
 
 """Solver-core configs for incompressibleFluid.
 
-Pydantic ``BaseConfig`` classes for ``system/controlDict`` and
-``constant/transportProperties``, loaded via ``@IOStrategy(OF(...))``.
-These feed validation of time-stepping and fluid properties before the
-solver opens any C++ runtime.
+Pydantic ``BaseConfig`` for ``system/controlDict``, loaded via
+``@IOStrategy(OF(...))`` — it feeds validation of the time-stepping controls
+before the solver opens any C++ runtime. ``constant/transportProperties`` is
+**not** declared here: it is owned by the viscosity model
+(:class:`neofoam.viscosity.config.TransportPropertiesConfig`), which the solver
+binds as a core model family.
 """
 
 from typing import Optional
@@ -33,11 +35,3 @@ class ControlDictConfig(BaseConfig):
         if self.adjustTimeStep and self.maxCo is None:
             raise ValueError("maxCo must be set when adjustTimeStep=True")
         return self
-
-
-@IOStrategy(OF("constant/transportProperties"))
-class TransportPropertiesConfig(BaseConfig):
-    """Fluid transport properties from ``constant/transportProperties``."""
-
-    transportModel: str = "Newtonian"
-    nu: float = Field(gt=0)

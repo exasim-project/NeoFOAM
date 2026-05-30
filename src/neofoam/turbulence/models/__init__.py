@@ -4,10 +4,10 @@
 """Native turbulence models.
 
 Importing this package registers the bundled native models with the
-``turbulenceModel`` plugin interface (registration is an import side-effect of
-each model module).
+``momentumTransportModel`` plugin interface (registration is an import
+side-effect of each model module).
 """
 
-from .laminar import LaminarModel, laminar
+from .laminar import laminar
 
-__all__ = ["laminar", "LaminarModel"]
+__all__ = ["laminar"]

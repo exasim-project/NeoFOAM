@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any, Optional, Union
 
 from .fallback import OpenFOAMTurbulenceModel, TurbulenceFactory
-from .interface import ModelSpec, turbulenceModel
+from .momentumTransport import ModelSpec, momentumTransportModel
 
 __all__ = ["model_name", "select_turbulence_model", "select_from_case"]
 
@@ -59,7 +59,7 @@ def select_turbulence_model(
     native model is registered for that name.
     """
     name = model_name(config)
-    spec = turbulenceModel.find_spec(name) if name is not None else None
+    spec = momentumTransportModel.find_spec(name) if name is not None else None
     if spec is not None:
         return spec
     return OpenFOAMTurbulenceModel(U, phi, transport, factory=of_factory)

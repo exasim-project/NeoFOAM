@@ -30,26 +30,16 @@ import yaml
 from neofoam.framework.model import ModelSpec
 from neofoam.turbulence.config import TurbulencePropertiesConfig
 from neofoam.turbulence.fallback import OpenFOAMTurbulenceModel
-from neofoam.turbulence.models.laminar import LaminarModel
+from neofoam.turbulence.momentumTransport import SpecMomentumTransport
 from neofoam.turbulence.selection import select_turbulence_model
 
 # Importing the package registers the bundled native models (laminar).
 import neofoam.turbulence  # noqa: F401
 
-# The native laminar model draws nu from a viscosity model, exactly as the
-# solver wires models.turbulence to models.viscosity.
-from neofoam.viscosity.config import TransportPropertiesConfig
-from neofoam.viscosity.models.newtonian import NewtonianModel
-from neofoam.viscosity.selection import select_viscosity_model
-
 #: Self-contained OpenFOAM cases shipped with the turbulence tests. Each holds a
 #: real ``constant/turbulenceProperties`` dictionary plus an ``expected.yaml``
 #: manifest (no dict content is encoded in the test modules).
 CASES_DIR = Path(__file__).resolve().parent / "cases"
-
-#: Kinematic-viscosity dimensions [0 2 -1 0 0 0 0] — mirrors
-#: ``create_fields._NU_DIMENSIONS``.
-_NU_DIMENSIONS = (0.0, 2.0, -1.0, 0.0, 0.0, 0.0, 0.0)
 
 
 @dataclass(frozen=True)
@@ -98,50 +88,33 @@ def case_for(model_name: str) -> Case:
     raise LookupError(f"no native case for model {model_name!r}")
 
 
-def _read_nu(case_dir: Path) -> Any:
-    """Build ``nu`` from ``constant/transportProperties`` (replica of the solver).
-
-    Self-contained replica of the solver-private ``create_fields._read_nu``: the
-    pybFoam transport binding exposes no ``nu()``, so the native Newtonian model
-    is fed a ``dimensionedScalar`` built from the same dict entry OpenFOAM reads.
-    Folds back into a shared helper once the model ``load`` hooks are implemented.
-    """
-    import pybFoam as pyf
-
-    transport_dict = pyf.dictionary.read(
-        str(case_dir / "constant" / "transportProperties")
-    )
-    return pyf.dimensionedScalar(
-        pyf.Word("nu"), pyf.dimensionSet(*_NU_DIMENSIONS), transport_dict
-    )
-
-
-def _build_viscosity(case_dir: Path) -> Any:
-    """Build the viscosity model from the case, as ``create_viscosity`` does."""
-    cfg = TransportPropertiesConfig.load(case_dir=case_dir)
-    selected = select_viscosity_model(cfg)
-    if isinstance(selected, ModelSpec) and selected.name == "Newtonian":
-        return NewtonianModel(_read_nu(case_dir))
-    return selected
-
-
 def build_as_solver(case: Case) -> Any:
-    """Initialize the turbulence model exactly as ``create_turbulence`` does.
+    """Initialize the momentum-transport model exactly as ``create_turbulence`` does.
 
-    Loads the real config, selects the model, and — for the native ``laminar`` —
-    builds ``LaminarModel`` with a viscosity model read from the case dict. For
-    non-native cases the selector's fallback adapter is returned (unbuilt), the
-    same object the solver builds its raw pybFoam turbulence behind.
+    A native model is wrapped by the small :class:`SpecMomentumTransport` read
+    interface over its :class:`ModelRuntime` (which owns ``nut`` and registers a
+    stress computer). For non-native cases the selector's fallback adapter is
+    returned (unbuilt).
     """
     cfg = TurbulencePropertiesConfig.load(case_dir=case.path)
     selected = select_turbulence_model(cfg)
     if isinstance(selected, ModelSpec):
-        if selected.name == "laminar":
-            return LaminarModel(viscosity=_build_viscosity(case.path))
-        raise NotImplementedError(
-            f"native turbulence model {selected.name!r} is not wired yet"
-        )
+        return SpecMomentumTransport(selected.instantiate(case.path))
     return selected
+
+
+def run_field_ops(model: Any) -> dict[str, Any]:
+    """Run a model's operations against a fresh Context; return ``ctx.fields``.
+
+    Materialises the fields the model owns (e.g. ``nut``) the way the solver does
+    when it merges the model's operations into the execution graph.
+    """
+    from neofoam.framework.context import Context
+
+    ctx = Context(fields={}, models={})
+    for op in model.operations:
+        op.run(ctx)
+    return ctx.fields
 
 
 def assert_selection(selected: Any, case: Case) -> None:
