@@ -44,6 +44,4 @@ RegisteredType& readOrCreate(RunTime& runTime, std::string name, InitializerType
     return runTime.controlDict.get<RegisteredType>(name);
 }
 
-NeoN::CommunicationPattern createCommunicationPattern(const RunTime& runTime);
-
 } // End namespace NeoFOAM

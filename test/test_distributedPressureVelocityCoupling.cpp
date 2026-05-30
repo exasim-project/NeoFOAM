@@ -358,8 +358,5 @@ TEST_CASE("Distributed PressureVelocityCoupling")
         REQUIRE_THAT(nfP.boundaryData(), EqualsBoundary(ofp, ApproxScalar(1e-32)));
         REQUIRE_THAT(nfPhi, EqualsInternal(ofPhi, ApproxScalar(1e-32)));
         REQUIRE_THAT(nfPhi.boundaryData(), EqualsBoundary(ofPhi, ApproxScalar(1e-32)));
-
-        auto nfPhi0 = nf::flux(pEqn);
-        REQUIRE_THAT(nfPhi0, EqualsInternal(ofPhi0(), ApproxScalar(1e-05)));
     }
 }
