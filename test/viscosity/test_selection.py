@@ -3,50 +3,45 @@
 
 """Tests for viscosity model selection (native match vs OpenFOAM fallback).
 
-Configs are duck-typed ``SimpleNamespace`` objects, so these tests run without
-``neofoam.io`` / pybFoam.
+Parametrized over the discovered cases: the config is loaded from each real
+case, and the selected model's name/kind is checked against the case manifest.
+A registered native being dispatched (not falling back) is covered by the real
+``resolves_to: native`` cases — no throwaway registration. Each native model
+added (with its case) extends this automatically.
+
+This also exercises the pybFoam-bound ``select_from_case`` entry point (absorbed
+from the old ``test_selection_from_case.py``).
 """
 
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
-from neofoam.framework.model import ModelSpec
-from neofoam.viscosity.fallback import OpenFOAMViscosityModel
-from neofoam.viscosity.interface import Model, viscosityModel
-from neofoam.viscosity.selection import model_name, select_viscosity_model
+import pytest
 
-# Register the bundled natives (Newtonian).
-import neofoam.viscosity.models  # noqa: F401
+from neofoam.viscosity.config import TransportPropertiesConfig
+from neofoam.viscosity.selection import (
+    model_name,
+    select_from_case,
+    select_viscosity_model,
+)
+
+from viscosity.conftest import CASES, Case, assert_selection
 
 
-def _cfg(transport_model: str) -> SimpleNamespace:
-    return SimpleNamespace(transportModel=transport_model)
+@pytest.mark.parametrize("case", CASES, ids=lambda c: c.name)
+def test_select_from_loaded_config(case: Case) -> None:
+    cfg = TransportPropertiesConfig.load(case_dir=case.path)
+    selected = select_viscosity_model(cfg, of_factory=MagicMock())
+    assert_selection(selected, case)
 
 
-def test_model_name_resolves_transport_model() -> None:
-    assert model_name(_cfg("Newtonian")) == "Newtonian"
-    assert model_name(_cfg("CrossPowerLaw")) == "CrossPowerLaw"
+@pytest.mark.parametrize("case", CASES, ids=lambda c: c.name)
+def test_select_from_case(case: Case) -> None:
+    selected = select_from_case(case.path, of_factory=MagicMock())
+    assert_selection(selected, case)
+
+
+def test_model_name_missing_transport_model_is_none() -> None:
+    # The positive path (a real transportModel resolves) is covered, manifest
+    # driven, by test_config.py; here we only pin the not-determinable case.
     assert model_name(SimpleNamespace()) is None
-
-
-def test_select_returns_native_spec_for_newtonian() -> None:
-    selected = select_viscosity_model(_cfg("Newtonian"))
-    assert isinstance(selected, ModelSpec)
-    assert selected.name == "Newtonian"
-
-
-def test_select_returns_native_for_registered_model(
-    clean_viscosity_registry: None,
-) -> None:
-    cross = Model("CrossPowerLaw").register_with(viscosityModel)
-
-    selected = select_viscosity_model(_cfg("CrossPowerLaw"))
-
-    assert isinstance(selected, ModelSpec)
-    assert selected is cross
-
-
-def test_select_falls_back_to_openfoam_for_unknown_model() -> None:
-    factory = MagicMock()
-    selected = select_viscosity_model(_cfg("BirdCarreau"), of_factory=factory)
-    assert isinstance(selected, OpenFOAMViscosityModel)

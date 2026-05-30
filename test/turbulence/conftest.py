@@ -1,85 +1,156 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Shared fixtures for turbulence tests.
+"""Local helpers for the turbulence test suite — case discovery + solver-faithful build.
 
-``register_with`` mutates the global ``PluginSystem`` registry as an import
-side-effect, and that state persists across a test session. The
-``clean_turbulence_registry`` fixture snapshots the registry and removes any
-spec a test registers (e.g. a throwaway ``kEpsilon`` native), so registrations
-do not leak between tests.
+Everything here is concrete to turbulence (no generic plugin abstraction yet).
+Cases are *discovered* by globbing ``cases/*/`` for an ``expected.yaml``
+manifest, so adding a case directory extends coverage with zero test-module
+edits. Expected values come from those manifests, never from literals baked into
+test bodies.
+
+Models are built exactly the way the incompressibleFluid solver builds them in
+``create_fields.create_turbulence``: select from the case's real
+``constant/turbulenceProperties`` and, for the native ``laminar`` model, inject a
+viscosity model built from the same case's ``constant/transportProperties`` — the
+way ``models.turbulence`` is wired to ``models.viscosity``. Nothing is
+hand-fabricated.
+
+OpenFOAM / pybFoam is a hard requirement of NeoFOAM, so there is no
+"skip if OpenFOAM missing" gating here and the registry is used as-is (no
+throwaway registration to clean up between tests).
 """
 
-import subprocess
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterator
+from typing import Any, Optional
 
-import pytest
+import yaml
 
-from neofoam.core.plugin_system import PluginSystem
+from neofoam.framework.model import ModelSpec
+from neofoam.turbulence.config import TurbulencePropertiesConfig
+from neofoam.turbulence.fallback import OpenFOAMTurbulenceModel
+from neofoam.turbulence.models.laminar import LaminarModel
+from neofoam.turbulence.selection import select_turbulence_model
 
-# Ensure the bundled native models (laminar) are registered before any test.
+# Importing the package registers the bundled native models (laminar).
 import neofoam.turbulence  # noqa: F401
 
+# The native laminar model draws nu from a viscosity model, exactly as the
+# solver wires models.turbulence to models.viscosity.
+from neofoam.viscosity.config import TransportPropertiesConfig
+from neofoam.viscosity.models.newtonian import NewtonianModel
+from neofoam.viscosity.selection import select_viscosity_model
+
 #: Self-contained OpenFOAM cases shipped with the turbulence tests. Each holds a
-#: real ``constant/turbulenceProperties`` dictionary (no dict content is encoded
-#: in the test modules).
+#: real ``constant/turbulenceProperties`` dictionary plus an ``expected.yaml``
+#: manifest (no dict content is encoded in the test modules).
 CASES_DIR = Path(__file__).resolve().parent / "cases"
-RAS_CASE = CASES_DIR / "ras_kEpsilon"  # simulationType RAS, RASModel kEpsilon
-LES_CASE = CASES_DIR / "les_Smagorinsky"  # simulationType LES, LESModel Smagorinsky
-LAMINAR_CASE = CASES_DIR / "laminar"  # simulationType laminar
+
+#: Kinematic-viscosity dimensions [0 2 -1 0 0 0 0] — mirrors
+#: ``create_fields._NU_DIMENSIONS``.
+_NU_DIMENSIONS = (0.0, 2.0, -1.0, 0.0, 0.0, 0.0, 0.0)
 
 
-def _require_case(case_dir: Path) -> Path:
-    if not (case_dir / "constant" / "turbulenceProperties").is_file():
-        pytest.skip(f"case not available: {case_dir}")
-    return case_dir
+@dataclass(frozen=True)
+class Case:
+    """A discovered turbulence case and its expectation manifest."""
+
+    name: str  # directory name → parametrize id
+    path: Path  # case dir (holds constant/turbulenceProperties + expected.yaml)
+    config: dict[str, Any]  # manifest["config"]    — expected parsed dict
+    selection: dict[str, Any]  # manifest["selection"] — {model_name, resolves_to}
+    model: Optional[dict[str, Any]]  # manifest.get("model") — per-model runtime values
 
 
-@pytest.fixture
-def ras_case() -> Path:
-    """RAS / kEpsilon case (copied verbatim from ``tutorials/hotRoom``)."""
-    return _require_case(RAS_CASE)
+def discover_cases() -> list[Case]:
+    """Glob ``cases/*/expected.yaml`` and load each into a :class:`Case`."""
+    cases: list[Case] = []
+    for manifest in sorted(CASES_DIR.glob("*/expected.yaml")):
+        data = yaml.safe_load(manifest.read_text())
+        cases.append(
+            Case(
+                name=manifest.parent.name,
+                path=manifest.parent,
+                config=data["config"],
+                selection=data["selection"],
+                model=data.get("model"),
+            )
+        )
+    return cases
 
 
-@pytest.fixture
-def les_case() -> Path:
-    """LES / Smagorinsky case."""
-    return _require_case(LES_CASE)
+#: Module-level so it can be used directly in ``@pytest.mark.parametrize``.
+CASES = discover_cases()
 
 
-@pytest.fixture
-def laminar_case() -> Path:
-    """Laminar case (no RAS/LES sub-dictionary)."""
-    return _require_case(LAMINAR_CASE)
+def case_for(model_name: str) -> Case:
+    """Return the native case whose ``selection.model_name`` is ``model_name``.
+
+    Points a registered native model at the case the solver would feed it.
+    """
+    for case in CASES:
+        if (
+            case.selection["resolves_to"] == "native"
+            and case.selection["model_name"] == model_name
+        ):
+            return case
+    raise LookupError(f"no native case for model {model_name!r}")
 
 
-def _check_openfoam_available() -> bool:
-    """Return True iff ``blockMesh`` is on PATH and runnable."""
-    try:
-        result = subprocess.run(["blockMesh", "-help"], capture_output=True, timeout=5)
-        return result.returncode == 0
-    except (subprocess.TimeoutExpired, FileNotFoundError):
-        return False
+def _read_nu(case_dir: Path) -> Any:
+    """Build ``nu`` from ``constant/transportProperties`` (replica of the solver).
+
+    Self-contained replica of the solver-private ``create_fields._read_nu``: the
+    pybFoam transport binding exposes no ``nu()``, so the native Newtonian model
+    is fed a ``dimensionedScalar`` built from the same dict entry OpenFOAM reads.
+    Folds back into a shared helper once the model ``load`` hooks are implemented.
+    """
+    import pybFoam as pyf
+
+    transport_dict = pyf.dictionary.read(
+        str(case_dir / "constant" / "transportProperties")
+    )
+    return pyf.dimensionedScalar(
+        pyf.Word("nu"), pyf.dimensionSet(*_NU_DIMENSIONS), transport_dict
+    )
 
 
-#: Skip marker for tests that read OpenFOAM dictionaries via pybFoam.
-requires_openfoam = pytest.mark.skipif(
-    not _check_openfoam_available(),
-    reason="OpenFOAM not available",
-)
+def _build_viscosity(case_dir: Path) -> Any:
+    """Build the viscosity model from the case, as ``create_viscosity`` does."""
+    cfg = TransportPropertiesConfig.load(case_dir=case_dir)
+    selected = select_viscosity_model(cfg)
+    if isinstance(selected, ModelSpec) and selected.name == "Newtonian":
+        return NewtonianModel(_read_nu(case_dir))
+    return selected
 
 
-@pytest.fixture
-def clean_turbulence_registry() -> Iterator[None]:
-    """Remove any turbulenceModel plugins registered during the test."""
-    registry = PluginSystem.get_registered("turbulenceModel")
-    before = list(registry.plugin_registry) if registry else []
-    try:
-        yield
-    finally:
-        registry = PluginSystem.get_registered("turbulenceModel")
-        if registry is not None:
-            for plugin_cls in list(registry.plugin_registry):
-                if plugin_cls not in before:
-                    PluginSystem.remove_plugin_model("turbulenceModel", plugin_cls)
+def build_as_solver(case: Case) -> Any:
+    """Initialize the turbulence model exactly as ``create_turbulence`` does.
+
+    Loads the real config, selects the model, and — for the native ``laminar`` —
+    builds ``LaminarModel`` with a viscosity model read from the case dict. For
+    non-native cases the selector's fallback adapter is returned (unbuilt), the
+    same object the solver builds its raw pybFoam turbulence behind.
+    """
+    cfg = TurbulencePropertiesConfig.load(case_dir=case.path)
+    selected = select_turbulence_model(cfg)
+    if isinstance(selected, ModelSpec):
+        if selected.name == "laminar":
+            return LaminarModel(viscosity=_build_viscosity(case.path))
+        raise NotImplementedError(
+            f"native turbulence model {selected.name!r} is not wired yet"
+        )
+    return selected
+
+
+def assert_selection(selected: Any, case: Case) -> None:
+    """Assert ``selected`` matches the case manifest's ``selection`` block."""
+    resolves_to = case.selection["resolves_to"]
+    if resolves_to == "native":
+        assert isinstance(selected, ModelSpec)
+        assert selected.name == case.selection["model_name"]
+    elif resolves_to == "fallback":
+        assert isinstance(selected, OpenFOAMTurbulenceModel)
+    else:
+        raise AssertionError(f"unknown resolves_to: {resolves_to!r}")

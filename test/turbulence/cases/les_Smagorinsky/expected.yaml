@@ -1,0 +1,12 @@
+# Expected values for the LES / Smagorinsky case. No native NeoFOAM model is
+# registered for Smagorinsky, so selection resolves to the OpenFOAM fallback.
+config:                       # cross-checked against the real turbulenceProperties read
+  simulationType: LES
+  RAS: null
+  LES:                        # full sub-dictionary, compared wholesale
+    LESModel: Smagorinsky
+    turbulence: true
+    delta: cubeRootVol
+selection:
+  model_name: Smagorinsky
+  resolves_to: fallback       # native | fallback

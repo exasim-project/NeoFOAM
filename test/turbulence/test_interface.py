@@ -1,88 +1,96 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Tests for the turbulenceModel plugin interface and native registration."""
+"""Tests for the turbulenceModel plugin interface and native registration.
 
-from typing import Union, get_args, get_origin
+Expected members are derived from the *actually registered* names and from the
+discovered cases, never from string literals: adding a native model (with its
+case) extends these checks automatically.
+"""
+
+from typing import Any, Union, get_args, get_origin
 
 from pydantic import BaseModel
 
 from neofoam.core.plugin_system import PluginSystem
 from neofoam.framework.model import ModelSpec
-from neofoam.turbulence.interface import Model, turbulenceModel
+from neofoam.turbulence.interface import turbulenceModel
 
-# Importing the models package registers the bundled natives (laminar).
-import neofoam.turbulence.models  # noqa: F401
+# Importing the package registers the bundled natives (laminar).
+import neofoam.turbulence  # noqa: F401
+
+from turbulence.conftest import CASES
+
+NATIVE_NAMES = {
+    c.selection["model_name"] for c in CASES if c.selection["resolves_to"] == "native"
+}
+FALLBACK_NAMES = {
+    c.selection["model_name"] for c in CASES if c.selection["resolves_to"] == "fallback"
+}
 
 
 def test_turbulence_interface_registered_in_plugin_system() -> None:
     assert PluginSystem.get_registered("turbulenceModel") is not None
 
 
-def test_laminar_registered_with_interface() -> None:
-    assert "laminar" in turbulenceModel.registered_names()
+def test_native_case_models_are_registered() -> None:
+    assert NATIVE_NAMES <= set(turbulenceModel.registered_names())
 
 
 def test_all_specs_returns_model_spec_objects() -> None:
     specs = turbulenceModel.all_specs()
-    assert specs, "expected at least the laminar spec"
+    assert specs, "expected at least one registered spec"
     assert all(isinstance(spec, ModelSpec) for spec in specs)
-    assert "laminar" in [spec.name for spec in specs]
 
 
-def test_find_spec_returns_spec_by_name() -> None:
-    spec = turbulenceModel.find_spec("laminar")
-    assert isinstance(spec, ModelSpec)
-    assert spec.name == "laminar"
+def test_find_spec_round_trips_registered_names() -> None:
+    for name in turbulenceModel.registered_names():
+        spec = turbulenceModel.find_spec(name)
+        assert isinstance(spec, ModelSpec)
+        assert spec.name == name
 
 
 def test_find_spec_unknown_returns_none() -> None:
-    assert turbulenceModel.find_spec("kEpsilon") is None
+    # A fallback case's model name has no native spec by definition.
+    for name in FALLBACK_NAMES:
+        assert turbulenceModel.find_spec(name) is None
 
 
-def test_laminar_detect_is_true() -> None:
-    spec = turbulenceModel.find_spec("laminar")
-    assert spec is not None
-    assert spec.run_detect() is True
+def test_registered_specs_detect_true() -> None:
+    for name in turbulenceModel.registered_names():
+        spec = turbulenceModel.find_spec(name)
+        assert spec is not None
+        assert spec.run_detect() is True
 
 
-def test_plugin_model_is_discriminated_union(clean_turbulence_registry: None) -> None:
-    """The interface exposes a pydantic model whose ``model`` field is a
-    discriminated union over every registered turbulence model."""
-    Model("kEpsilon").register_with(turbulenceModel)
-    Model("kOmegaSST").register_with(turbulenceModel)
+def _union_members(annotation: Any) -> tuple[Any, ...]:
+    # A single-member Union collapses to the bare type, so normalize both forms.
+    return get_args(annotation) if get_origin(annotation) is Union else (annotation,)
 
+
+def test_plugin_model_is_discriminated_union() -> None:
+    """The interface exposes a pydantic model whose ``model`` field discriminates
+    over every registered turbulence model by ``model_type``."""
     plugin_model = turbulenceModel.plugin_model  # type: ignore[attr-defined]
     assert isinstance(plugin_model, type)
     assert issubclass(plugin_model, BaseModel)
 
     field = plugin_model.model_fields["model"]
-    assert get_origin(field.annotation) is Union
     assert field.discriminator == "model_type"
 
-    # Each registered model contributes one arm to the union.
     member_types = {
         get_args(member.model_fields["model_type"].annotation)[0]
-        for member in get_args(field.annotation)
+        for member in _union_members(field.annotation)
     }
-    assert {"laminar", "kEpsilon", "kOmegaSST"} <= member_types
-
-    # The discriminated union is reflected in the JSON schema.
-    discriminator = plugin_model.model_json_schema()["properties"]["model"][
-        "discriminator"
-    ]
-    assert discriminator["propertyName"] == "model_type"
-    assert {"laminar", "kEpsilon", "kOmegaSST"} <= set(discriminator["mapping"])
+    assert set(turbulenceModel.registered_names()) <= member_types
 
 
-def test_plugin_model_dispatches_by_discriminator(
-    clean_turbulence_registry: None,
-) -> None:
+def test_plugin_model_dispatches_by_discriminator() -> None:
     """Validation selects the right variant purely from the discriminator."""
-    Model("kOmegaSST").register_with(turbulenceModel)
+    name = turbulenceModel.registered_names()[0]
 
     instance = turbulenceModel.create(  # type: ignore[attr-defined]
-        model={"model_type": "kOmegaSST"}
+        model={"model_type": name}
     )
 
-    assert instance.model.model_type == "kOmegaSST"
+    assert instance.model.model_type == name

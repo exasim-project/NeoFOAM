@@ -3,40 +3,26 @@
 
 """Tests for reading ``constant/transportProperties`` via BaseConfig.
 
-These read real OpenFOAM dictionaries from the bundled cases under
-``test/viscosity/cases`` (no dict content is encoded here). They touch the
-OpenFOAM reading strategy (pybFoam), so they carry the ``requires_openfoam``
-marker.
+Parametrized over every discovered case: the real OpenFOAM dictionary is read
+and compared against the case's ``expected.yaml`` manifest, so the manifests can
+never silently disagree with the shipped dicts. No dict content or expected
+value is encoded in this module.
 """
 
-from pathlib import Path
+import pytest
 
 from neofoam.viscosity.config import TransportPropertiesConfig
 from neofoam.viscosity.selection import model_name
 
-from viscosity.conftest import requires_openfoam
+from viscosity.conftest import CASES, Case
 
 
-@requires_openfoam
-def test_reads_newtonian_transport_model(newtonian_case: Path) -> None:
-    cfg = TransportPropertiesConfig.load(case_dir=newtonian_case)
-    assert cfg.transportModel == "Newtonian"
-    assert cfg.nu == 1e-05
-
-
-@requires_openfoam
-def test_reads_non_newtonian_transport_model(cross_power_law_case: Path) -> None:
-    cfg = TransportPropertiesConfig.load(case_dir=cross_power_law_case)
-    assert cfg.transportModel == "CrossPowerLaw"
-    assert cfg.nu is None  # coefficients live in their own sub-dictionary
-
-
-@requires_openfoam
-def test_model_name_from_loaded_config(
-    newtonian_case: Path, cross_power_law_case: Path
-) -> None:
-    newtonian_cfg = TransportPropertiesConfig.load(case_dir=newtonian_case)
-    assert model_name(newtonian_cfg) == "Newtonian"
-
-    cross_cfg = TransportPropertiesConfig.load(case_dir=cross_power_law_case)
-    assert model_name(cross_cfg) == "CrossPowerLaw"
+@pytest.mark.parametrize("case", CASES, ids=lambda c: c.name)
+def test_transport_properties_match_manifest(case: Case) -> None:
+    cfg = TransportPropertiesConfig.load(case_dir=case.path)
+    dumped = cfg.model_dump()
+    # Compare only the keys the manifest declares — robust to optional-field
+    # defaults; the fallback case's ``nu: null`` is still asserted explicitly.
+    for key, expected in case.config.items():
+        assert dumped[key] == expected
+    assert model_name(cfg) == case.selection["model_name"]

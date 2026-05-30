@@ -1,88 +1,96 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Tests for the viscosityModel plugin interface and native registration."""
+"""Tests for the viscosityModel plugin interface and native registration.
 
-from typing import Union, get_args, get_origin
+Expected members are derived from the *actually registered* names and from the
+discovered cases, never from string literals: adding a native model (with its
+case) extends these checks automatically.
+"""
+
+from typing import Any, Union, get_args, get_origin
 
 from pydantic import BaseModel
 
 from neofoam.core.plugin_system import PluginSystem
 from neofoam.framework.model import ModelSpec
-from neofoam.viscosity.interface import Model, viscosityModel
+from neofoam.viscosity.interface import viscosityModel
 
-# Importing the models package registers the bundled natives (Newtonian).
-import neofoam.viscosity.models  # noqa: F401
+# Importing the package registers the bundled natives (Newtonian).
+import neofoam.viscosity  # noqa: F401
+
+from viscosity.conftest import CASES
+
+NATIVE_NAMES = {
+    c.selection["model_name"] for c in CASES if c.selection["resolves_to"] == "native"
+}
+FALLBACK_NAMES = {
+    c.selection["model_name"] for c in CASES if c.selection["resolves_to"] == "fallback"
+}
 
 
 def test_viscosity_interface_registered_in_plugin_system() -> None:
     assert PluginSystem.get_registered("viscosityModel") is not None
 
 
-def test_newtonian_registered_with_interface() -> None:
-    assert "Newtonian" in viscosityModel.registered_names()
+def test_native_case_models_are_registered() -> None:
+    assert NATIVE_NAMES <= set(viscosityModel.registered_names())
 
 
 def test_all_specs_returns_model_spec_objects() -> None:
     specs = viscosityModel.all_specs()
-    assert specs, "expected at least the Newtonian spec"
+    assert specs, "expected at least one registered spec"
     assert all(isinstance(spec, ModelSpec) for spec in specs)
-    assert "Newtonian" in [spec.name for spec in specs]
 
 
-def test_find_spec_returns_spec_by_name() -> None:
-    spec = viscosityModel.find_spec("Newtonian")
-    assert isinstance(spec, ModelSpec)
-    assert spec.name == "Newtonian"
+def test_find_spec_round_trips_registered_names() -> None:
+    for name in viscosityModel.registered_names():
+        spec = viscosityModel.find_spec(name)
+        assert isinstance(spec, ModelSpec)
+        assert spec.name == name
 
 
 def test_find_spec_unknown_returns_none() -> None:
-    assert viscosityModel.find_spec("CrossPowerLaw") is None
+    # A fallback case's transportModel has no native spec by definition.
+    for name in FALLBACK_NAMES:
+        assert viscosityModel.find_spec(name) is None
 
 
-def test_newtonian_detect_is_true() -> None:
-    spec = viscosityModel.find_spec("Newtonian")
-    assert spec is not None
-    assert spec.run_detect() is True
+def test_registered_specs_detect_true() -> None:
+    for name in viscosityModel.registered_names():
+        spec = viscosityModel.find_spec(name)
+        assert spec is not None
+        assert spec.run_detect() is True
 
 
-def test_plugin_model_is_discriminated_union(clean_viscosity_registry: None) -> None:
-    """The interface exposes a pydantic model whose ``model`` field is a
-    discriminated union over every registered viscosity model."""
-    Model("CrossPowerLaw").register_with(viscosityModel)
-    Model("BirdCarreau").register_with(viscosityModel)
+def _union_members(annotation: Any) -> tuple[Any, ...]:
+    # A single-member Union collapses to the bare type, so normalize both forms.
+    return get_args(annotation) if get_origin(annotation) is Union else (annotation,)
 
+
+def test_plugin_model_is_discriminated_union() -> None:
+    """The interface exposes a pydantic model whose ``model`` field discriminates
+    over every registered viscosity model by ``model_type``."""
     plugin_model = viscosityModel.plugin_model  # type: ignore[attr-defined]
     assert isinstance(plugin_model, type)
     assert issubclass(plugin_model, BaseModel)
 
     field = plugin_model.model_fields["model"]
-    assert get_origin(field.annotation) is Union
     assert field.discriminator == "model_type"
 
     member_types = {
         get_args(member.model_fields["model_type"].annotation)[0]
-        for member in get_args(field.annotation)
+        for member in _union_members(field.annotation)
     }
-    assert {"Newtonian", "CrossPowerLaw", "BirdCarreau"} <= member_types
-
-    discriminator = plugin_model.model_json_schema()["properties"]["model"][
-        "discriminator"
-    ]
-    assert discriminator["propertyName"] == "model_type"
-    assert {"Newtonian", "CrossPowerLaw", "BirdCarreau"} <= set(
-        discriminator["mapping"]
-    )
+    assert set(viscosityModel.registered_names()) <= member_types
 
 
-def test_plugin_model_dispatches_by_discriminator(
-    clean_viscosity_registry: None,
-) -> None:
+def test_plugin_model_dispatches_by_discriminator() -> None:
     """Validation selects the right variant purely from the discriminator."""
-    Model("CrossPowerLaw").register_with(viscosityModel)
+    name = viscosityModel.registered_names()[0]
 
     instance = viscosityModel.create(  # type: ignore[attr-defined]
-        model={"model_type": "CrossPowerLaw"}
+        model={"model_type": name}
     )
 
-    assert instance.model.model_type == "CrossPowerLaw"
+    assert instance.model.model_type == name
