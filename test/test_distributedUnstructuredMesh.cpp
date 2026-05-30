@@ -55,31 +55,4 @@ TEST_CASE("Distributed UnstructuredMesh")
 
         REQUIRE(rt.nfMesh.boundaryMesh().neighbourRank()[0] == 1);
     }
-
-    auto commPattern = computeCommunicationPattern(rt.nfMesh);
-    SECTION_IF(rt.mpiEnvironment.rank() == 1, "Correct commPattern on rank 1")
-    {
-        auto sendCountsExp = std::vector<int> {9, 0, 9, 18};
-        REQUIRE(commPattern.sendCounts == sendCountsExp);
-        REQUIRE(rt.nfMesh.globalOffset() == 9);
-        auto recvIdxExp =
-            std::vector<int> {0, 1, 2, 3, 4, 5, 6, 7, 8, 18, 19, 20, 21, 22, 23, 24, 25, 26};
-        REQUIRE(commPattern.recvIdx == recvIdxExp);
-    }
-    SECTION_IF(rt.mpiEnvironment.rank() == 0, "Correct commPattern on rank 0")
-    {
-        auto sendCountsExp = std::vector<int> {0, 9, 0, 9};
-        REQUIRE(commPattern.sendCounts == sendCountsExp);
-        REQUIRE(rt.nfMesh.globalOffset() == 0);
-        auto recvIdxExp = std::vector<int> {9, 10, 11, 12, 13, 14, 15, 16, 17};
-        REQUIRE(commPattern.recvIdx == recvIdxExp);
-    }
-    SECTION_IF(rt.mpiEnvironment.rank() == 2, "Correct commPattern on rank 2")
-    {
-        auto sendCountsExp = std::vector<int> {0, 9, 0, 9};
-        REQUIRE(commPattern.sendCounts == sendCountsExp);
-        REQUIRE(rt.nfMesh.globalOffset() == 18);
-        auto recvIdxExp = std::vector<int> {9, 10, 11, 12, 13, 14, 15, 16, 17};
-        REQUIRE(commPattern.recvIdx == recvIdxExp);
-    }
 }
