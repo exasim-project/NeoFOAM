@@ -5,9 +5,6 @@
 #include "NeoFOAM/auxiliary/readers.hpp"
 
 #include "processorFvPatch.H"
-
-
-#include "processorFvPatch.H"
 #include "lduInterfaceField.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
