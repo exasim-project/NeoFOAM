@@ -5,8 +5,10 @@
 
 Adapted from ``feat/python_solvers`` to the SolverSpec/ModelSpec API in
 ``stack/python_arch``. Only PIMPLE is wired up; SIMPLE/PISO/boussinesq/SA
-and the CFLCondition adjust-time-step path from the source branch are
-omitted in this minimal version.
+are omitted in this minimal version. The main iteration loop is owned by the
+``solution_loop`` engine (see ``neofoam.algorithms.solution_loop`` and
+``models.solution_loop``): it drives advancement, deltaT adjustment from
+injectable stability constraints, and the write decision.
 """
 
 from typing import Annotated, Any, Optional
@@ -26,13 +28,16 @@ from neofoam.framework.solver import Solver
 from neofoam.framework.types import OperationMetadata
 
 from .create_fields import create_init
+from .models.solution_loop import SolutionLoopPredicate
 
 
-class TimeLoop:
-    """Helper class for managing the main time loop predicate."""
-
-    def __call__(self, ctx: Context) -> bool:
-        return bool(ctx.runtime.run())
+# model lookup helper: find an instantiated core model by its spec name
+def _core_model(state: Any, spec_name: str) -> Any:
+    return next(
+        m
+        for m in state.core_models
+        if getattr(getattr(m, "spec", None), "name", None) == spec_name
+    )
 
 
 incompressibleFluid = Solver("incompressibleFluid")
@@ -63,21 +68,27 @@ def execution_graph(
     algorithm_model = self.state.core_models[0]
     algo_ops = Operations(algorithm_model._build_operations_for(algorithm_model))
 
+    # The main iteration loop is the solutionLoop model: its operations
+    # (set_time_step / increment_time) and predicate own advancement and deltaT
+    # adjustment. Persisting fields is the separate fieldWriter model.
+    loop_ops = Operations(_core_model(self.state, "solutionLoop").operations)
+    writer_ops = Operations(_core_model(self.state, "fieldWriter").operations)
+
     time_loop_op = Operation(
-        func=IterativeOp(TimeLoop()),
+        func=IterativeOp(SolutionLoopPredicate()),
         metadata=OperationMetadata(op_name="time_loop"),
     )
 
     with builder.loop(time_loop_op) as time_builder:
-        time_builder.step(ops["set_time_step"])
-        time_builder.step(ops["increment_time"])
+        time_builder.step(loop_ops["set_time_step"])
+        time_builder.step(loop_ops["increment_time"])
 
         with time_builder.loop(algo_ops["inner_loop"]) as inner_builder:
             inner_builder.step(algo_ops["momentum"])
             inner_builder.step(algo_ops["continuity"])
             inner_builder.step(ops["turbulence_correction"])
 
-        time_builder.step(ops["write_output"])
+        time_builder.step(writer_ops["write_output"])
 
     # Collect operations from optional models (empty by default).
     model_ops = Operations()
@@ -131,36 +142,6 @@ def run(
             os.close(saved_fd)
 
 
-@incompressibleFluid.operation()
-def set_time_step(
-    self: Any,
-    ctx: Context,
-    pressure_velocity: Annotated[Optional[Any], "models"],
-    cfl_condition: Annotated[Optional[Any], "models"],
-) -> None:
-    """Adjust the time step based on CFL when running a transient algorithm.
-
-    SIMPLE is steady-state, so the deltaT adjustment is skipped there.
-    Missing ``cfl_condition`` (e.g. SIMPLE, or when CFL was not enabled)
-    also short-circuits.
-    """
-    if (
-        pressure_velocity is not None
-        and getattr(pressure_velocity, "algorithm_type", "").upper() == "SIMPLE"
-    ):
-        return
-
-    if cfl_condition is not None:
-        cfl_condition(ctx)
-
-
-@incompressibleFluid.operation()
-def increment_time(self: Any, ctx: Context) -> None:
-    """Print current simulation time and increment."""
-    Info(f"Time = {ctx.runtime.timeName()}")
-    ctx.runtime.increment()
-
-
 @incompressibleFluid.operation(depends_on=["continuity"])
 def turbulence_correction(
     self: Any,
@@ -173,10 +154,3 @@ def turbulence_correction(
     if turbulence is not None:
         turbulence.correct()
     return FieldUpdates({})
-
-
-@incompressibleFluid.operation(depends_on=["turbulence_correction"])
-def write_output(self: Any, ctx: Context) -> None:
-    """Write fields to disk and report execution time."""
-    ctx.runtime.write(True)
-    ctx.runtime.printExecutionTime()

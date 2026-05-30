@@ -10,6 +10,7 @@ from .control import (
     ResidualConvergenceCondition,
     SimpleControl,
     SingleIterationCondition,
+    SolutionControl,
 )
 
 __all__ = [
@@ -19,4 +20,5 @@ __all__ = [
     "ResidualConvergenceCondition",
     "SimpleControl",
     "SingleIterationCondition",
+    "SolutionControl",
 ]

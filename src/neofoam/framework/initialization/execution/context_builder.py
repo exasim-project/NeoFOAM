@@ -39,10 +39,15 @@ class ContextBuilder:
     models: dict[str, Any] = field(default_factory=dict)
     mesh: Any = None
     runtime: Any = None
+    write_fields: set[str] = field(default_factory=set)
 
     def to_context(self) -> Context:
         return Context(
-            fields=self.fields, models=self.models, mesh=self.mesh, runtime=self.runtime
+            fields=self.fields,
+            models=self.models,
+            mesh=self.mesh,
+            runtime=self.runtime,
+            write_fields=self.write_fields,
         )
 
 
@@ -90,6 +95,9 @@ class CategoryRouter:
     def route(self, builder: ContextBuilder, result: InitResult) -> None:
         handler = self._handlers.get(result.category, _fallback_to_models)
         handler(builder, result.name, result.value)
+        # collect fields flagged for persistence (auto-write)
+        if result.write:
+            builder.write_fields.add(_strip_prefix(result.name, "fields"))
 
 
 def default_router() -> CategoryRouter:

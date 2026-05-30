@@ -59,6 +59,23 @@ def test_default_router_routing(init_results, check):
     assert check(ctx)
 
 
+def test_write_flag_collected_into_write_fields() -> None:
+    ctx = build_context_from_results(
+        [
+            InitResult("fields.p", "fields", "p", write=True),
+            InitResult("fields.U", "fields", "v", write=True),
+            InitResult("fields.UEqn", "fields", "m"),  # not flagged
+        ]
+    )
+    assert ctx.fields == {"p": "p", "U": "v", "UEqn": "m"}
+    assert ctx.write_fields == {"p", "U"}  # only write=True fields
+
+
+def test_write_fields_defaults_empty() -> None:
+    ctx = build_context_from_results([InitResult("fields.p", "fields", "p")])
+    assert ctx.write_fields == set()
+
+
 def test_build_context_routes_by_category():
     init_results = [
         InitResult("fields.U", "fields", "velocity"),

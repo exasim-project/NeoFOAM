@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class FieldUpdates(dict[str, Any]):
@@ -32,3 +32,6 @@ class Context(BaseModel):
     models: dict[str, Any]
     mesh: Any = None
     runtime: Any = None
+    # names of fields (keys of ``fields``) flagged for persistence via
+    # ``field(..., write=True)``; a per-field write backend writes exactly these.
+    write_fields: set[str] = Field(default_factory=set)

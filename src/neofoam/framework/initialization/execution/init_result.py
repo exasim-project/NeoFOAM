@@ -22,3 +22,4 @@ class InitResult:
     name: str
     category: InitCategory
     value: Any
+    write: bool = False  # field flagged for persistence (auto-write)
