@@ -128,7 +128,6 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
 
     int patchi = 0;
     std::vector<fvcc::VolumeBoundary<type_primitive_t>> bcs;
-    NeoN::mpi::Environment mpiEnv;
     // do non processor first
     for (const auto bName : bDict.toc())
     {

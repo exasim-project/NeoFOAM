@@ -148,7 +148,7 @@ public:
     /** @brief assemble the linear system owned by the solver based on the current expression */
     LinearSystem& assemble()
     {
-        ls_.reset();
+        // ls_.reset();
         expr_.assemble(runTime_.t, runTime_.dt, ls_);
         return ls_;
     }
@@ -184,7 +184,7 @@ public:
 
     NeoN::la::SolverStats solve()
     {
-        ls_.reset();
+        // ls_.reset();
         return solveImpl(expr_, ls_);
     }
 
