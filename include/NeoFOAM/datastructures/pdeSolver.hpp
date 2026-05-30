@@ -63,59 +63,6 @@ public:
 
     const NeoN::Executor& exec() const { return ls_.exec(); }
 
-    template<typename FunctorValueType>
-    struct SetReference : public NeoN::dsl::PostAssemblyBase<ValueType, IndexType>
-    {
-
-        NeoN::localIdx pRefCell_;
-        NeoN::scalar pRefValue_;
-
-        SetReference(NeoN::localIdx pRefCell, NeoN::scalar pRefValue)
-            : pRefCell_(pRefCell)
-            , pRefValue_(pRefValue)
-        {}
-
-        virtual void operator()(NeoN::la::LinearSystem<FunctorValueType>& ls)
-        {
-            // Only the rank that owns the reference cell may pin it. `pRefCell_`
-            // is interpreted as a local index on that one rank; on every other
-            // rank we leave the matrix untouched. Without this guard a 3-rank
-            // distributed cavity ends up pinning three *different* physical
-            // cells (each rank's local index `pRefCell_`) to the same value, the
-            // global system becomes over-constrained, and the converged pressure
-            // shows step discontinuities at processor boundaries because each
-            // rank's local solve settles on a different absolute level.
-            //
-            // FIXME: assume rank 0 owns the reference. For arbitrary global
-            // pRefCell a global→(rank, local) mapping via the mesh partition is
-            // needed; the rank-0 convention is the only one neoIcoFoam currently
-            // uses, and this matches what OpenFOAM's processorPolyPatch /
-            // fvMatrix::setReference do internally.
-            NeoN::mpi::Environment mpiEnv;
-            if (mpiEnv.isInitialized() && mpiEnv.rank() != 0)
-            {
-                return;
-            }
-
-            const auto rowOffs = ls.matrix().sparsity()->rowOffs().view();
-            const auto diagOffset = ls.faceToMatrixAddress()->diagOffset().view();
-            auto rhs = ls.rhs().view();
-            auto values = ls.matrix().values().view();
-            // make an explicit copy to avoid capture this warning in kokkos lambda
-            auto pRefValue = pRefValue_;
-
-            NeoN::parallelFor(
-                ls.exec(),
-                {pRefCell_, pRefCell_ + 1},
-                NEON_LAMBDA(const std::size_t refCelli) {
-                    auto diagIdx = rowOffs[refCelli] + diagOffset[refCelli];
-                    auto diagValue = values[diagIdx];
-                    rhs[refCelli] += diagValue * pRefValue;
-                    values[diagIdx] += diagValue;
-                }
-            );
-        }
-    };
 
     NeoN::finiteVolume::cellCentred::DdtScheme ddtScheme() const
     {
@@ -148,7 +95,7 @@ public:
     /** @brief assemble the linear system owned by the solver based on the current expression */
     LinearSystem& assemble()
     {
-        // ls_.reset();
+        ls_.reset();
         expr_.assemble(runTime_.t, runTime_.dt, ls_);
         return ls_;
     }
@@ -184,7 +131,7 @@ public:
 
     NeoN::la::SolverStats solve()
     {
-        // ls_.reset();
+        ls_.reset();
         return solveImpl(expr_, ls_);
     }
 
@@ -245,7 +192,7 @@ public:
         {
             if (needReference_)
             {
-                SetReference<ValueType> refFunct(pRefCell_, pRefValue_);
+                NeoN::dsl::SetReference<ValueType> refFunct(pRefCell_, pRefValue_);
                 refFunct(ls);
             }
         }
