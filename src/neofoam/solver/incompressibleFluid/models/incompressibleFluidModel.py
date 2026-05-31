@@ -24,6 +24,24 @@ class incompressibleFluidModel(BaseModel):
     """Plugin interface for solver-local incompressibleFluid models."""
 
     @classmethod
+    def all_specs(cls) -> list[ModelSpec]:
+        """Return every registered optional-model spec, without detection.
+
+        Unlike :meth:`detect_models`, this does not run ``detect`` (which
+        needs a case) — it lists the full set of optional models so their
+        config classes can be enumerated case-free.
+        """
+        registry = PluginSystem.get_registered("incompressibleFluidModel")
+        if not registry:
+            return []
+
+        return [
+            plugin_cls.get_model_instance(plugin_cls)
+            for plugin_cls in registry.plugin_registry
+            if hasattr(plugin_cls, "get_model_instance")
+        ]
+
+    @classmethod
     def detect_models(cls, case_dir: Optional[Path] = None) -> list[ModelRuntime]:
         """Return enabled model runtimes from the plugin registry.
 

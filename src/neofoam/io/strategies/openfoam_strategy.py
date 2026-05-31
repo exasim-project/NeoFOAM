@@ -232,6 +232,9 @@ class OpenFOAMStrategy(SubdictMixin):
                 continue
 
             value = data[key]
+            # Unset optional fields are simply absent from the dictionary.
+            if value is None:
+                continue
             typ = _unwrap_type(field_info.annotation)
 
             # Nested BaseModel → recurse

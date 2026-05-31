@@ -23,6 +23,7 @@ from neofoam.io.decorator import (
 )
 from neofoam.io.base import BaseConfig
 from neofoam.io.input_validation import validate_models
+from neofoam.io.scaffold import collect_config_classes, save_configs
 
 __all__ = [
     # Protocols
@@ -47,4 +48,7 @@ __all__ = [
     # Validation
     "ValidationErrors",
     "validate_models",
+    # Scaffolding
+    "save_configs",
+    "collect_config_classes",
 ]

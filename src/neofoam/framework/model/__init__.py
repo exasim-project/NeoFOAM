@@ -13,4 +13,8 @@ Public API:
 from .spec import ModelSpec, Model
 from .runtime import ModelRuntime
 
-__all__ = ["ModelSpec", "ModelRuntime", "Model"]
+__all__ = [
+    "ModelSpec",
+    "ModelRuntime",
+    "Model",
+]

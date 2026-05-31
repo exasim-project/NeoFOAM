@@ -27,7 +27,7 @@ from neofoam.framework.initialization import (
     lazy,
     model as init_model,
 )
-from .configs import ControlDictConfig
+from .configs import ControlDictConfig, TransportPropertiesConfig
 from .models.field_writer import fieldWriter, writer_backend_steps
 from .models.incompressibleFluidModel import incompressibleFluidModel
 from .models.pressure_velocity.base import PressureVelocityAlgorithm
@@ -54,8 +54,26 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         solution_loop_model = solutionLoop.instantiate(resolved_case_dir, "main")
         field_writer_model = fieldWriter.instantiate(resolved_case_dir, "main")
 
+        # Solver-core configs, so ``LoadResult.configs`` exposes the
+        # configs the solver consumes (collectible / savable / printable).
+        # ``validate=False`` keeps loading lenient — ``LoadResult.validate()``
+        # reports any errors. ``pressure_model`` stays at index 0; these
+        # append after it and are inert in the BUILD stage (selected there
+        # by isinstance).
+        #
+        # The PIMPLE ``fvSchemes`` / ``fvSolution`` slices are *declared* on
+        # the ``pimple`` spec, so ``LoadResult.config_classes`` lists them as
+        # part of the schema set. Their instances are not loaded here: the
+        # OpenFOAM reader does not yet parse the typed scheme values
+        # (``DivScheme`` …) / ``dict`` solver entries those slices carry.
+        core_models = [pressure_model, solution_loop_model, field_writer_model]
+        core_models += [
+            ControlDictConfig.load(case_dir=resolved_case_dir, validate=False),
+            TransportPropertiesConfig.load(case_dir=resolved_case_dir, validate=False),
+        ]
+
         return LoadResult(
-            core_models=[pressure_model, solution_loop_model, field_writer_model],
+            core_models=core_models,
             optional_models=optional_models,
         )
 

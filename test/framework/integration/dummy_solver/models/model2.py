@@ -24,6 +24,7 @@ class Model2Config(BaseConfig):
 
 
 model2 = Model("DummyModel2").register_with(DummyModelInterface)
+model2.config(Model2Config)
 
 
 @model2.load

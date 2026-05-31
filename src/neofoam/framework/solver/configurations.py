@@ -1,0 +1,104 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 NeoFOAM authors
+
+"""A solver's config schema, case-free.
+
+:func:`configurations` returns a :class:`Configurations` view over every
+``BaseConfig`` class a solver may consume — its own declared configs plus
+the configs of every member of every bound model family — **without a case
+directory**. The classes are pydantic models, so the view doubles as the
+schema an agent (e.g. via Pydantic AI) fills and saves to scaffold a case.
+
+Solver-agnostic: it walks ``solver._config_classes`` and
+``solver.model_specs`` through :func:`neofoam.io.collect_config_classes`
+and runs no detection.
+"""
+
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Iterator, Union, cast
+
+from pydantic import BaseModel, create_model
+
+from neofoam.io.base import BaseConfig
+
+
+def _snake_case(name: str) -> str:
+    s1 = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", name)
+    return re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", s1).lower()
+
+
+@dataclass(frozen=True)
+class Configurations:
+    """Case-free view over a solver's config classes (all pydantic models)."""
+
+    solver: Any
+    classes: list[type[BaseConfig]]
+
+    # -- listing -------------------------------------------------------
+
+    @property
+    def names(self) -> list[str]:
+        """Class names, in declaration order."""
+        return [cls.__name__ for cls in self.classes]
+
+    def __iter__(self) -> Iterator[type[BaseConfig]]:
+        return iter(self.classes)
+
+    def __len__(self) -> int:
+        return len(self.classes)
+
+    def __getitem__(self, name: str) -> type[BaseConfig]:
+        """Look a config class up by its ``__name__``."""
+        for cls in self.classes:
+            if cls.__name__ == name:
+                return cls
+        raise KeyError(f"{name!r} not in {self.solver.name} configs: {self.names}")
+
+    # -- build & validate ---------------------------------------------
+
+    def new(self, name: str, **values: Any) -> Any:
+        """Construct + pydantic-validate one config from values alone."""
+        return self[name](**values)
+
+    def json_schema(self) -> dict[str, dict[str, Any]]:
+        """JSON Schema per config class, keyed by class name."""
+        return {cls.__name__: cls.model_json_schema() for cls in self.classes}
+
+    def as_output_model(self, model_name: str = "CaseSpec") -> type[BaseModel]:
+        """An aggregate pydantic model with one field per config class.
+
+        Suitable as a Pydantic AI ``output_type``: each field is named by
+        the snake-case class name and typed as that config class, so an
+        agent fills the whole case in one structured response.
+        """
+        fields: dict[str, Any] = {
+            _snake_case(cls.__name__): (cls, ...) for cls in self.classes
+        }
+        return create_model(model_name, **fields)
+
+    # -- persist -------------------------------------------------------
+
+    def save(self, configs: Any, *, case_dir: Union[Path, str]) -> list[Path]:
+        """Write config instances to ``case_dir`` (delegates to ``save_configs``)."""
+        from neofoam.io import save_configs
+
+        return save_configs(configs, case_dir=case_dir)
+
+
+def configurations(solver: Any) -> Configurations:
+    """The case-free config schema of ``solver`` as a :class:`Configurations`.
+
+    Walks the solver's own declared configs and every member of every bound
+    model family (``solver.model_specs``), deduped by identity. Runs no
+    detection and needs no case directory.
+    """
+    from neofoam.io import collect_config_classes
+
+    classes = collect_config_classes([solver, *solver.model_specs])
+    return Configurations(
+        solver=solver, classes=cast("list[type[BaseConfig]]", classes)
+    )

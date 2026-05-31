@@ -39,6 +39,9 @@ class Model1StepConfig(BaseConfig):
 # ModelSpec — immutable definition, registered once at module import
 model1 = Model("DummyModel1").register_with(DummyModelInterface)
 
+model1.config(Model1Config)
+model1.config(Model1StepConfig)
+
 
 @model1.load
 def load(case_dir: Path, instance_id: str) -> Any:

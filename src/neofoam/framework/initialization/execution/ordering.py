@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from ...graph import NetworkxTopologicalSorter, TopologicalSorter
+from ...graph import TopologicalSorter, topological_order
 from ..init_step import InitStep
 from .validation import InitializationGraphError, validate
 
@@ -28,11 +28,9 @@ def _topological_sort(
         if not report.is_valid:
             raise InitializationGraphError(report)
 
-    from ...graph.validation import _build_dependency_digraph
-
     name_to_init = {li.name: li for li in lazy_inits}
-    graph = _build_dependency_digraph({li.name: li.depends_on for li in lazy_inits})
-    active_sorter = sorter or NetworkxTopologicalSorter()
-    sorted_names = active_sorter.sort(graph)
+    sorted_names = topological_order(
+        {li.name: li.depends_on for li in lazy_inits}, sorter=sorter
+    )
 
     return [name_to_init[name] for name in sorted_names]

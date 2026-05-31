@@ -6,9 +6,14 @@
 Adapted from ``feat/python_solvers`` to the SolverSpec/ModelSpec API in
 ``stack/python_arch``. Includes the boussinesq momentum/continuity
 variants so the buoyancy plugin can swap them in via
-``pimple.use_boussinesq``. The ``neofoam.foam.fvSchemes`` /
-``neofoam.foam.fvSolution`` decorators from the source branch are
-omitted (those modules don't yet exist in ``stack/python_arch``).
+``pimple.use_boussinesq``.
+
+Each operation declares the ``system/fvSchemes`` entries it discretises
+and the ``system/fvSolution`` solvers it needs via
+``@PimpleFvSchemes.add(...)`` / ``@PimpleFvSolution.add(...)``. The
+per-spec slices are obtained from ``pimple.config(fvSchemes)`` /
+``pimple.config(fvSolution)`` so the declarations are scoped to this
+model rather than mutating the shared base classes.
 """
 
 from typing import Annotated, Any, Callable, Protocol
@@ -24,6 +29,7 @@ from pybFoam import (
     volVectorField,
 )
 
+from neofoam.foam import fvSchemes, fvSolution
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.dependency_resolver import wrap_with_dependency_resolution
 from neofoam.framework.initialization import field, model
@@ -40,6 +46,11 @@ from .control_factory import create_pimple_control
 
 
 pimple = Model("Pimple")
+
+# Per-spec fvSchemes / fvSolution slices. Operations extend these via
+# ``@PimpleFvSchemes.add(...)`` / ``@PimpleFvSolution.add(...)`` below.
+PimpleFvSchemes = pimple.config(fvSchemes)
+PimpleFvSolution = pimple.config(fvSolution)
 
 
 class TurbulenceModel(Protocol):
@@ -126,6 +137,10 @@ def inner_loop(ctx: Context) -> bool:
 
 
 @pimple.operation(operation_number="2.1")
+@PimpleFvSchemes.add(
+    ddt="ddt(U)", div="div(phi,U)", grad="grad(U)", laplacian="laplacian(nuEff,U)"
+)
+@PimpleFvSolution.add("U")
 def momentum(
     U: volVectorField,
     phi: surfaceScalarField,
@@ -143,6 +158,13 @@ def momentum(
 
 
 @pimple.operation(operation_number="2.2", depends_on=["momentum"])
+@PimpleFvSchemes.add(
+    grad="grad(p)",
+    laplacian="laplacian(rAU,p)",
+    interpolation=["flux(HbyA)", "interpolate(rAU)", "dotInterpolate(S,U_0)"],
+    snGrad="snGrad(p)",
+)
+@PimpleFvSolution.add("p")
 def continuity(
     U: volVectorField,
     p: volScalarField,
@@ -189,6 +211,14 @@ def continuity(
 
 
 @pimple.operation(operation_number="2.1")
+@PimpleFvSchemes.add(
+    ddt="ddt(U)",
+    div="div(phi,U)",
+    grad="grad(U)",
+    laplacian="laplacian(nuEff,U)",
+    snGrad="snGrad(rhok)",
+)
+@PimpleFvSolution.add("U")
 def momentum_boussinesq(
     U: volVectorField,
     phi: surfaceScalarField,
@@ -216,6 +246,13 @@ def momentum_boussinesq(
 
 
 @pimple.operation(operation_number="2.2", depends_on=["momentum_boussinesq"])
+@PimpleFvSchemes.add(
+    grad="grad(p_rgh)",
+    laplacian="laplacian(rAUf,p_rgh)",
+    interpolation="flux(U)",
+    snGrad="snGrad(p_rgh)",
+)
+@PimpleFvSolution.add("p_rgh")
 def continuity_boussinesq(
     U: volVectorField,
     p: volScalarField,

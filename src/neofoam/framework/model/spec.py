@@ -12,7 +12,8 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Any, Callable, Literal, Optional
+from types import SimpleNamespace
+from typing import Any, Callable, Literal, Optional, TypeVar, cast
 
 from pydantic import BaseModel
 
@@ -24,6 +25,14 @@ from neofoam.framework.operations import Operation, Operations, SequentialOp
 from neofoam.framework.types import OperationMetadata, OperationNumber
 
 from .runtime import ModelRuntime
+
+
+_ConfigT = TypeVar("_ConfigT", bound=type)
+
+
+def _snake_case(name: str) -> str:
+    s1 = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", name)
+    return re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", s1).lower()
 
 
 class ModelSpec:
@@ -38,6 +47,8 @@ class ModelSpec:
         self.name = name
         self.enabled = True
 
+        self._config_classes: list[type] = []
+
         self._load_func: Optional[Callable[..., Any]] = None
         self._resolve_func: Optional[Callable[..., Any]] = None
         self._build_func: Optional[Callable[..., Any]] = None
@@ -48,11 +59,68 @@ class ModelSpec:
 
         self._dependency_resolver = DependencyResolver()
 
+    @property
+    def _config_class(self) -> Optional[type]:
+        return self._config_classes[0] if self._config_classes else None
+
+    @_config_class.setter
+    def _config_class(self, cls: Optional[type]) -> None:
+        if cls is None:
+            self._config_classes = []
+        elif not self._config_classes:
+            self._config_classes = [cls]
+        else:
+            self._config_classes[0] = cls
+
+    # ------------------------------------------------------------------
+    # Config registration
+    # ------------------------------------------------------------------
+
+    def config(self, cls: _ConfigT) -> _ConfigT:
+        """Register a config class. Callable multiple times.
+
+        When more than one class is registered, ``runtime.config`` becomes a
+        ``SimpleNamespace`` keyed by snake-case class name; a single
+        registration leaves ``runtime.config`` as the instance itself.
+
+        Classes opting in via ``_synthesize_per_spec = True`` (e.g.
+        ``neofoam.foam.fvSchemes``) get a fresh per-spec subclass.
+        """
+        if getattr(cls, "_synthesize_per_spec", False):
+            subclass = cast(_ConfigT, type(f"{self.name}_{cls.__name__}", (cls,), {}))
+            subclass._pending_sections = {}  # type: ignore[attr-defined]
+            subclass._finalized = False  # type: ignore[attr-defined]
+            self._config_classes.append(subclass)
+            return subclass
+
+        if cls in self._config_classes:
+            return cls
+        self._config_classes.append(cls)
+        return cls
+
+    def _aggregate_configs(self, instances: list[Any]) -> Any:
+        """Build ``runtime.config`` from loaded instances."""
+        if not self._config_classes:
+            return None
+
+        matched: dict[str, Any] = {}
+        for cls in self._config_classes:
+            for inst in instances:
+                if isinstance(inst, cls):
+                    matched[_snake_case(cls.__name__)] = inst
+                    break
+
+        if not matched:
+            return None
+        if len(self._config_classes) == 1:
+            return next(iter(matched.values()))
+        return SimpleNamespace(**matched)
+
     # ------------------------------------------------------------------
     # Stage decorators — store only, no side-effects
     # ------------------------------------------------------------------
 
-    def load(self, func: Callable[[Path, str], Any]) -> Callable[[Path, str], Any]:
+    def load(self, func: Callable[..., Any]) -> Callable[..., Any]:
         """
         Register the LOAD function.
 
@@ -61,7 +129,7 @@ class ModelSpec:
         self._load_func = func
         return func
 
-    def resolve(self, func: Callable[[Any, Any], Any]) -> Callable[..., Any]:
+    def resolve(self, func: Callable[..., Any]) -> Callable[..., Any]:
         """
         Register the RESOLVE function.
 
@@ -104,7 +172,7 @@ class ModelSpec:
         def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             self._operations.append(
                 (
-                    func,  # store original; wrapping happens in _build_operations_for
+                    func,
                     {
                         "operation_number": operation_number,
                         "depends_on": depends_on,
@@ -128,25 +196,41 @@ class ModelSpec:
     # Instantiation
     # ------------------------------------------------------------------
 
-    def instantiate(self, case_dir: Path, instance_id: str) -> ModelRuntime:
+    def instantiate(
+        self,
+        case_dir: Path,
+        instance_id: Optional[str] = None,
+    ) -> ModelRuntime:
         """
         Create a fresh ModelRuntime for one instance of this spec.
 
-        Calls the @load function and wraps the result in a ModelRuntime.
-        """
-        if self._load_func is None:
-            raise ValueError(
-                f"ModelSpec '{self.name}' has no @load stage. "
-                "Every model must register a load function with @<spec>.load."
-            )
-        config = self._load_func(case_dir, instance_id)
+        Loading priority:
 
-        rt = ModelRuntime(
-            spec=self,
-            name=f"{self.name}_{instance_id}",
-            config=config,
+        1. If ``@load`` registered → call it (with ``case_dir`` + ``instance_id``).
+        2. Else if one or more ``@config(Cls)`` registered → auto-load every
+           class via its ``@IOStrategy`` binding. Aggregates to a
+           ``SimpleNamespace`` when ≥ 2 are registered.
+        3. Else → error.
+        """
+        if self._load_func is not None:
+            config = self._load_func(case_dir, instance_id)
+            rt_name = f"{self.name}_{instance_id}" if instance_id else self.name
+            return ModelRuntime(spec=self, name=rt_name, config=config)
+
+        if self._config_classes:
+            loaded = [
+                cls.load(case_dir=case_dir, validate=False)  # type: ignore[attr-defined]
+                for cls in self._config_classes
+            ]
+            config = self._aggregate_configs(loaded)
+            if config is None:
+                config = loaded[0] if loaded else None
+            return ModelRuntime(spec=self, name=self.name, config=config)
+
+        raise ValueError(
+            f"ModelSpec '{self.name}': cannot instantiate. "
+            "Register @load or @config(Cls) on the spec."
         )
-        return rt
 
     # ------------------------------------------------------------------
     # Operation building (called by ModelRuntime.operations)
@@ -201,12 +285,7 @@ class ModelSpec:
     # ------------------------------------------------------------------
 
     def register_with(self, plugin_interface: type) -> "ModelSpec":
-        """
-        Register this ModelSpec with a PluginSystem interface.
-
-        Creates a dynamic wrapper class whose ``get_model_instance``
-        returns this spec, matching the pattern used by ModelInstance.
-        """
+        """Register this ModelSpec with a PluginSystem interface."""
         wrapper_class = type(
             self.name,
             (BaseModel,),
@@ -231,8 +310,7 @@ class ModelSpec:
 
     @staticmethod
     def _to_snake_case(name: str) -> str:
-        s1 = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
-        return re.sub("([a-z0-9])([A-Z])", r"\1_\2", s1).lower()
+        return _snake_case(name)
 
 
 def Model(name: str) -> ModelSpec:
