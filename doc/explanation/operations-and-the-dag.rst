@@ -117,8 +117,8 @@ what the runtime carries from one operation to the next:
 
 Operation bodies see the Context two ways:
 
-- **Direct access.** ``ctx.runtime.timeName()``,
-  ``ctx.runtime.write(True)``, ``ctx["fields.U"]``,
+- **Direct access.** ``ctx.time.timeName()``,
+  ``ctx.time.write(True)``, ``ctx["fields.U"]``,
   ``ctx["models.laminarTransport"]``. The string keys
   (``"fields.U"``) come from the BUILD-time
   ``InitStep`` that allocated each entry — that's why ``create_fields.py``
