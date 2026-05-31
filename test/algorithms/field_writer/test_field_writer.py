@@ -14,10 +14,15 @@ from typing import Any, Mapping, cast
 
 from pydantic import Field
 
+from neofoam.algorithms.field_writer.field_writer import (
+    build,
+    fieldWriter,
+    write_output,
+)
+from neofoam.algorithms.field_writer.write_control import WriteControlConfig
+from neofoam.algorithms.field_writer.writer import FieldHook, FieldWriter, NullFieldHook
+from neofoam.algorithms.solution_loop.loop_state import LoopState
 from neofoam.framework.context import Context
-from neofoam.algorithms.field_writer import build, fieldWriter, write_output
-from neofoam.algorithms.write_control import WriteControlConfig
-from neofoam.algorithms.writer import FieldHook, FieldWriter, NullFieldHook
 
 
 class FakeFieldHook(FieldHook):
@@ -31,27 +36,19 @@ class FakeFieldHook(FieldHook):
         self.calls.append(dict(fields))
 
 
-class FakeStepper:
-    """Minimal StepView; outputTime drives the write decision."""
-
-    def __init__(self, *, output: bool) -> None:
-        self._output = output
-
-    def value(self) -> float:
-        return 0.0
-
-    def timeIndex(self) -> int:
-        return 1
-
-    def outputTime(self) -> bool:
-        return self._output
+def _state(*, write: bool) -> LoopState:
+    """A LoopState (the StepView) whose write flag drives the decision."""
+    return LoopState(value=0.0, delta_t=0.1, end_time=1.0, write_time=write)
 
 
 class FakeContext:
-    def __init__(self, models: dict[str, Any], fields: dict[str, Any]) -> None:
+    def __init__(
+        self, models: dict[str, Any], fields: dict[str, Any], time: LoopState
+    ) -> None:
         self.models = models
         self.fields = fields
         self.write_fields = set(fields)
+        self.time = time
 
 
 # --- the Model ------------------------------------------------------------
@@ -90,10 +87,10 @@ def test_write_output_persists_flagged_fields_on_a_write_step() -> None:
         FakeContext(
             models={
                 "writer": writer,
-                "stepper": FakeStepper(output=True),
                 "step_reporter": lambda: reported.append(True),
             },
             fields={"U": object(), "p": object()},
+            time=_state(write=True),
         ),
     )
     write_output(None, ctx)
@@ -107,8 +104,9 @@ def test_write_output_skips_on_a_non_write_step() -> None:
     ctx = cast(
         Context,
         FakeContext(
-            models={"writer": writer, "stepper": FakeStepper(output=False)},
+            models={"writer": writer},
             fields={"U": object()},
+            time=_state(write=False),
         ),
     )
     write_output(None, ctx)

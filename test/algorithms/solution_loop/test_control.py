@@ -10,7 +10,7 @@ ends the run on residual convergence.
 
 from __future__ import annotations
 
-from neofoam.algorithms.control import PimpleControl, SolutionControl
+from neofoam.algorithms.solution_loop.control import PimpleControl, SolutionControl
 
 
 class FakeStepper:

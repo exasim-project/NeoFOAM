@@ -7,18 +7,18 @@
 
 Writing is a separate concern from advancing the stepper, so it is a separate
 core Model from ``solutionLoop`` (SRP). It is backend-agnostic and wraps a
-:class:`~neofoam.algorithms.writer.FieldWriter`:
+:class:`~neofoam.algorithms.field_writer.writer.FieldWriter`:
 
 * **SRP** — the writer decides *whether* this is a write step and, if so, writes
   the fields; it does not advance time.
 * **OCP** — *when* to write is a
-  :class:`~neofoam.algorithms.write_control.WriteControl` policy selected through
+  :class:`~neofoam.algorithms.field_writer.write_control.WriteControl` policy selected through
   the discriminated union from the validated
-  :class:`~neofoam.algorithms.write_control.WriteControlConfig` (a ``BaseConfig``
+  :class:`~neofoam.algorithms.field_writer.write_control.WriteControlConfig` (a ``BaseConfig``
   loaded straight from ``system/controlDict``).
 * **DIP** — the write *action* goes through a
-  :class:`~neofoam.algorithms.writer.FieldHook`. The default is
-  :class:`~neofoam.algorithms.writer.NullFieldHook` (persists nothing); a solver
+  :class:`~neofoam.algorithms.field_writer.writer.FieldHook`. The default is
+  :class:`~neofoam.algorithms.field_writer.writer.NullFieldHook` (persists nothing); a solver
   injects its backend hook post-build (registry write, per-field write, …).
 
 The optional ``ctx.models["step_reporter"]`` callable (``() -> None``) lets a
@@ -28,11 +28,11 @@ backend report per-step timing after a write; absent ⇒ no-op.
 from pathlib import Path
 from typing import Any
 
-from neofoam.algorithms.write_control import (
+from neofoam.algorithms.field_writer.write_control import (
     WriteControlConfig,
     write_control_from_config,
 )
-from neofoam.algorithms.writer import FieldWriter, NullFieldHook
+from neofoam.algorithms.field_writer.writer import FieldWriter, NullFieldHook
 from neofoam.framework.context import Context
 from neofoam.framework.initialization import InitStep, model
 from neofoam.framework.model import Model
@@ -67,16 +67,16 @@ def build(config: WriteControlConfig) -> list[InitStep]:
 def write_output(self: Any, ctx: Context) -> None:
     """Write the flagged fields on write steps; optionally report step timing.
 
-    The decision reads the pure-Python stepper (Python-computed ``outputTime``);
-    the action writes through the injected backend hook. Only the
-    ``write=True``-flagged fields are handed over (a registry backend ignores
-    them and writes everything anyway).
+    The decision reads the loop state (``ctx.time``, with the Python-computed
+    ``write_time`` flag); the action writes through the injected backend hook.
+    Only the ``write=True``-flagged fields are handed over (a registry backend
+    ignores them and writes everything anyway).
     """
     writer: FieldWriter = ctx.models["writer"]
     to_write = {
         name: ctx.fields[name] for name in ctx.write_fields if name in ctx.fields
     }
-    writer.write(ctx.models["stepper"], to_write)
+    writer.write(ctx.time, to_write)
     reporter = ctx.models.get("step_reporter")
     if reporter is not None:
         reporter()

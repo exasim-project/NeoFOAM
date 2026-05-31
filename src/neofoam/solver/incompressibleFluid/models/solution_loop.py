@@ -6,37 +6,39 @@
 """pybFoam backend wiring for the framework ``solutionLoop`` core Model.
 
 The *model* — load ``TimeControlConfig`` from ``system/controlDict``, build the
-pure-Python stepper + :class:`~neofoam.algorithms.solution_loop.SolutionLoop`
-engine, and the loop-body operations (``set_time_step`` / ``increment_time``) plus
-the outer predicate — lives in the framework
-(:mod:`neofoam.algorithms.solution_loop`) and is re-exported here so the
-solver entrypoint and ``create_fields`` keep importing the same names.
+``LoopState`` (``ctx.time``) + the
+:class:`~neofoam.algorithms.solution_loop.solution_loop.SolutionLoop` engine, and
+the loop-body operations (``set_time_step`` / ``increment_time``) plus the outer
+predicate — lives in the framework
+(:mod:`neofoam.algorithms.solution_loop.solution_loop`) and is re-exported here so
+the solver entrypoint and ``create_fields`` keep importing the same names.
 
-This module adds only the pybFoam backend touch-points the framework loop model
-delegates to (DIP):
+This module adds only the pybFoam-specific touch-points the framework loop model
+delegates to (DIP). The :class:`FoamTime` ``LoopBackend`` itself lives in the
+backend-agnostic ``algorithms`` package (it is duck-typed on the wrapped time
+object); here we only:
 
-* :class:`PybFoamStepSink` — mirrors the Python stepper onto ``pybFoam.Time`` so
-  field IO lands in the right time directory;
-* :func:`loop_backend_steps` — init steps that inject the sink into the
-  framework-built stepper and register the ``courant_provider`` (CFL measured on
-  the live ``phi``) and ``loop_logger`` (``pybFoam.Info``) the framework
-  operations consult.
+* :func:`loop_backend_steps` — init steps that construct the ``FoamTime`` backend
+  from the injected ``pybFoam.Time`` and inject it into the framework-built engine,
+  and register the ``courant_provider`` (CFL on the live ``phi``) and
+  ``loop_logger`` (``pybFoam.Info``) the framework operations consult.
 """
 
 from typing import Any
 
 from pybFoam import Info, computeCFLNumber
 
-from neofoam.framework.initialization import InitStep, model
-from neofoam.algorithms.solution_loop import (  # re-exported for the solver
+from neofoam.algorithms.solution_loop.foam_time import FoamTime  # re-exported
+from neofoam.algorithms.solution_loop.solution_loop import (  # re-exported for the solver
     SolutionLoopPredicate,
     build,
     increment_time,
+    make_loop_state,
     make_solution_loop,
-    make_stepper,
     set_time_step,
     solutionLoop,
 )
+from neofoam.framework.initialization import InitStep, model
 
 __all__ = [
     "solutionLoop",
@@ -44,49 +46,27 @@ __all__ = [
     "build",
     "set_time_step",
     "increment_time",
-    "make_stepper",
+    "make_loop_state",
     "make_solution_loop",
-    "PybFoamStepSink",
+    "FoamTime",
     "loop_backend_steps",
 ]
-
-
-class PybFoamStepSink:
-    """Mirror the Python stepper onto ``pybFoam.Time`` (a ``StepSink``).
-
-    The stepper owns the advancement *logic* (deltaT, run, outputTime — all in
-    Python); this keeps OpenFOAM's ``Time`` in lockstep so field IO lands in the
-    right time directory. We push the (already-computed) deltaT and let
-    ``Foam::Time`` take the matching step via ``increment`` — ``setTime`` can't be
-    called from Python (``instant`` has no binding constructor). It does not
-    write — that is the ``fieldWriter`` Model's job.
-    """
-
-    def __init__(self, runtime: Any) -> None:
-        self._t = runtime
-
-    def set_delta_t(self, dt: float) -> None:
-        self._t.setDeltaT(dt)
-
-    def advance_to(self, value: float, index: int) -> None:
-        # deltaT was already pushed via set_delta_t; advance by the same step
-        self._t.increment()
 
 
 def loop_backend_steps() -> list[InitStep]:
     """Init steps wiring the pybFoam backend into the framework ``solutionLoop``.
 
-    * injects :class:`PybFoamStepSink` into the framework-built stepper (which
-      defaults to a no-op ``NullStepSink``);
+    * injects the :class:`FoamTime` backend into the framework-built engine
+      (which defaults to a no-op ``NullLoopBackend``);
     * registers ``courant_provider`` — CFL on the live ``phi``, pushed into the
       engine by ``set_time_step`` when stability constraints are present;
     * registers ``loop_logger`` — ``pybFoam.Info`` for the per-step time print.
     """
 
-    def inject_sink(ctx: dict[str, Any]) -> PybFoamStepSink:
-        sink = PybFoamStepSink(ctx["runtime"])
-        ctx["models.stepper"].set_sink(sink)
-        return sink
+    def inject_backend(ctx: dict[str, Any]) -> FoamTime:
+        backend = FoamTime(ctx["_foam_time"])
+        ctx["models.solution_loop"].set_backend(backend)
+        return backend
 
     def make_courant_provider(ctx: dict[str, Any]) -> Any:
         return lambda c: computeCFLNumber(c.fields["phi"])[0]
@@ -95,7 +75,11 @@ def loop_backend_steps() -> list[InitStep]:
         return Info
 
     return [
-        model("stepper_sink", inject_sink, depends_on=["models.stepper", "runtime"]),
+        model(
+            "loop_backend",
+            inject_backend,
+            depends_on=["models.solution_loop", "_foam_time"],
+        ),
         model("courant_provider", make_courant_provider),
         model("loop_logger", make_logger),
     ]

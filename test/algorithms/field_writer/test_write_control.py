@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from neofoam.algorithms.write_control import (
+from neofoam.algorithms.field_writer.write_control import (
     StepperWriteControl,
     IntervalWriteControl,
     RunTimeWriteControl,
@@ -16,32 +16,21 @@ from neofoam.algorithms.write_control import (
 
 
 class FakeStepper:
-    """Minimal stepper satisfying what WriteControl reads (value/index/output)."""
+    """Minimal StepView: the attributes WriteControl reads (value/index/write_time)."""
 
     def __init__(self, *, end: float = 1.0, dt: float = 1.0) -> None:
-        self._t = 0.0
+        self.value = 0.0
         self._dt = dt
         self._end = end
-        self._index = 0
+        self.index = 0
+        self.write_time = False
 
     def run(self) -> bool:
-        return self._t < self._end - 1e-10
+        return self.value < self._end - 1e-10
 
     def increment(self) -> None:
-        self._t = round(self._t + self._dt, 10)
-        self._index += 1
-
-    def value(self) -> float:
-        return self._t
-
-    def deltaTValue(self) -> float:
-        return self._dt
-
-    def timeIndex(self) -> int:
-        return self._index
-
-    def outputTime(self) -> bool:
-        return False
+        self.value = round(self.value + self._dt, 10)
+        self.index += 1
 
 
 def test_policies_satisfy_protocol() -> None:
@@ -72,12 +61,10 @@ def test_runtime_writes_every_interval_of_sim_time() -> None:
     assert decisions == [False, True, False, True, False]
 
 
-def test_stepper_write_control_forwards_output_time() -> None:
-    class AlwaysWrite(FakeStepper):
-        def outputTime(self) -> bool:
-            return True
-
-    assert StepperWriteControl().should_write(AlwaysWrite()) is True
+def test_stepper_write_control_forwards_write_flag() -> None:
+    writing = FakeStepper()
+    writing.write_time = True
+    assert StepperWriteControl().should_write(writing) is True
     assert StepperWriteControl().should_write(FakeStepper()) is False
 
 

@@ -7,10 +7,10 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from neofoam.algorithms.time_step import MaxDeltaTConstraint
+from neofoam.algorithms.constraints.time_step import MaxDeltaTConstraint
 from neofoam.core.plugin_system import PluginSystem
-from neofoam.algorithms.foam_time import TimeControlConfig
-from neofoam.algorithms.time_integration import (
+from neofoam.algorithms.solution_loop.config import TimeControlConfig
+from neofoam.algorithms.solution_loop.time_integration import (
     SteadyIntegration,
     TimeIntegration,
     TransientIntegration,

@@ -38,7 +38,7 @@ class ContextBuilder:
     fields: dict[str, Any] = field(default_factory=dict)
     models: dict[str, Any] = field(default_factory=dict)
     mesh: Any = None
-    runtime: Any = None
+    time: Any = None
     write_fields: set[str] = field(default_factory=set)
 
     def to_context(self) -> Context:
@@ -46,7 +46,7 @@ class ContextBuilder:
             fields=self.fields,
             models=self.models,
             mesh=self.mesh,
-            runtime=self.runtime,
+            time=self.time,
             write_fields=self.write_fields,
         )
 
@@ -69,8 +69,8 @@ def _route_operators(builder: ContextBuilder, name: str, value: Any) -> None:
 def _route_resource(builder: ContextBuilder, name: str, value: Any) -> None:
     if name == "mesh":
         builder.mesh = value
-    elif name == "runtime":
-        builder.runtime = value
+    elif name == "time":
+        builder.time = value
     else:
         _fallback_to_models(builder, name, value)
 
@@ -93,6 +93,11 @@ class CategoryRouter:
         self._handlers[category] = handler
 
     def route(self, builder: ContextBuilder, result: InitResult) -> None:
+        # init-only resources (leading underscore) stay in the executor's
+        # working dict for dependent build steps but are never routed onto the
+        # Context — e.g. a backend Foam::Time held only by the mesh/hook/backend.
+        if result.name.startswith("_"):
+            return
         handler = self._handlers.get(result.category, _fallback_to_models)
         handler(builder, result.name, result.value)
         # collect fields flagged for persistence (auto-write)

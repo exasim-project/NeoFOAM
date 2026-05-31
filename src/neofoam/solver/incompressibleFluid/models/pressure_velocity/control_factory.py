@@ -5,7 +5,7 @@
 
 These factories read the algorithm subdict of ``system/fvSolution`` via
 pybFoam and return :class:`PimpleControl` / :class:`SimpleControl`
-instances from :mod:`neofoam.algorithms.control`. They replace direct
+instances from :mod:`neofoam.algorithms.solution_loop.control`. They replace direct
 use of ``pybFoam.pimpleControl`` so loop logic stays in Python.
 """
 
@@ -13,7 +13,7 @@ from typing import Any
 
 import pybFoam as pyf
 
-from neofoam.algorithms.control import PimpleControl, SimpleControl
+from neofoam.algorithms.solution_loop.control import PimpleControl, SimpleControl
 
 
 def _read_algorithm_dict(algorithm_name: str) -> Any:

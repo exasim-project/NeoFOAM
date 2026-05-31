@@ -11,7 +11,7 @@ solver opens any C++ runtime.
 
 from pydantic import Field
 
-from neofoam.algorithms.foam_time import TimeControlConfig
+from neofoam.algorithms.solution_loop.config import TimeControlConfig
 from neofoam.io import BaseConfig, IOStrategy, OF
 
 
@@ -22,7 +22,7 @@ class ControlDictConfig(TimeControlConfig):
     Inherits the time-stepping + write schema (``startTime``/``endTime``/
     ``deltaT``/``adjustTimeStep``/``maxCo``/``maxDeltaT``/``writeControl``/
     ``writeInterval`` and the ``adjustTimeStep`` ⇒ ``maxCo`` invariant) from
-    :class:`~neofoam.algorithms.foam_time.TimeControlConfig`, so the framework
+    :class:`~neofoam.algorithms.solution_loop.config.TimeControlConfig`, so the framework
     stepper / loop / write control all consume one validated config. Adds only
     the solver-specific keys and binds the file via ``@IOStrategy``.
     """

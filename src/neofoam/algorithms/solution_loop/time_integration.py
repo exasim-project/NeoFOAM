@@ -14,7 +14,7 @@ regime-specific decisions the stepper used to branch on with an ``enum`` —
   steady run is a unit pseudo-step);
 * ``step_name`` — how the current step renders (a float time vs. an integer
   iteration index);
-* ``constraints`` — which :class:`~neofoam.algorithms.time_step.DeltaTConstraint`
+* ``constraints`` — which :class:`~neofoam.algorithms.constraints.time_step.DeltaTConstraint`
   the regime injects (adaptive ``maxDeltaT`` cap for transient; none for steady).
 
 A new regime (pseudo-transient, local/dual time stepping, …) is a new
@@ -27,7 +27,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal
 
-from neofoam.algorithms.time_step import (
+from neofoam.algorithms.constraints.time_step import (
     VGREAT,
     DeltaTConstraint,
     MaxDeltaTConstraint,
@@ -36,7 +36,7 @@ from neofoam.core.plugin_system import PluginSystem
 from neofoam.io import BaseConfig
 
 if TYPE_CHECKING:
-    from neofoam.algorithms.foam_time import TimeControlConfig
+    from neofoam.algorithms.solution_loop.config import TimeControlConfig
 
 
 @PluginSystem.register(

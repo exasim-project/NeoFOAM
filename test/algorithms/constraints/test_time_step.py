@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import pytest
 
-from neofoam.algorithms.time_step import (
+from neofoam.algorithms.constraints.time_step import (
     VGREAT,
     CourantConstraint,
     DeltaTConstraint,

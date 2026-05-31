@@ -43,15 +43,15 @@ class WriteControlConfig(BaseConfig):
 
 @runtime_checkable
 class StepView(Protocol):
-    """The narrow slice of the stepper a write policy reads to decide a write step.
+    """The narrow slice of loop state a write policy reads to decide a write step.
 
-    ``FoamTime`` satisfies it structurally (so does any backend time exposing
-    ``value``/``timeIndex``/``outputTime``).
+    The :class:`~neofoam.algorithms.solution_loop.loop_state.LoopState` dataclass
+    satisfies it structurally (so does any object exposing these attributes).
     """
 
-    def value(self) -> float: ...
-    def timeIndex(self) -> int: ...
-    def outputTime(self) -> bool: ...
+    value: float  # current time
+    index: int  # current step index
+    write_time: bool  # the loop's own (Python-computed) write flag
 
 
 @PluginSystem.register(
@@ -75,7 +75,7 @@ class StepperWriteControl(WriteControl):
     write_control_type: Literal["stepper"] = "stepper"
 
     def should_write(self, stepper: StepView) -> bool:
-        return stepper.outputTime()
+        return stepper.write_time
 
 
 @WriteControl.register
@@ -86,7 +86,7 @@ class IntervalWriteControl(WriteControl):
     interval: int = 1
 
     def should_write(self, stepper: StepView) -> bool:
-        return stepper.timeIndex() % max(1, self.interval) == 0
+        return stepper.index % max(1, self.interval) == 0
 
 
 @WriteControl.register
@@ -102,8 +102,8 @@ class RunTimeWriteControl(WriteControl):
         self._last = self.start
 
     def should_write(self, stepper: StepView) -> bool:
-        if stepper.value() - self._last >= self.interval - _EPS:
-            self._last = stepper.value()
+        if stepper.value - self._last >= self.interval - _EPS:
+            self._last = stepper.value
             return True
         return False
 

@@ -81,12 +81,12 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         field_writer_model = _by_spec("fieldWriter")
         argv = runner.argv
 
-        def create_runtime(_ctx: dict[str, Any]) -> Any:
+        def create_foam_time(_ctx: dict[str, Any]) -> Any:
             argList = pyf.argList(argv)
             return pyf.Time(argList)
 
         def create_mesh(ctx: dict[str, Any]) -> Any:
-            return pyf.fvMesh(ctx["runtime"])
+            return pyf.fvMesh(ctx["_foam_time"])
 
         def create_laminar_transport(ctx: dict[str, Any]) -> Any:
             return singlePhaseTransportModel(ctx["fields.U"], ctx["fields.phi"])
@@ -99,15 +99,18 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             )
 
         builder = InitializerBuilder()
-        builder.add(lazy("runtime", create_runtime))
-        builder.add(lazy("mesh", create_mesh, depends_on=["runtime"]))
+        # the pybFoam Foam::Time is an init-only resource ("_foam_time"): it
+        # parents the mesh objectRegistry and is the write(True) target, but is
+        # never routed onto the Context (the leading underscore keeps it hidden).
+        builder.add(lazy("_foam_time", create_foam_time))
+        builder.add(lazy("mesh", create_mesh, depends_on=["_foam_time"]))
 
         # solutionLoop + fieldWriter are the framework *core* Models, instantiated
         # as real ModelRuntimes: add_core_models registers them and runs each
-        # @build, emitting the stepper/engine and the FieldWriter steps. They are
-        # backend-agnostic; the pybFoam touch-points (StepSink, Courant provider,
-        # logger, write hook, step reporter) are injected by the *_backend_steps
-        # below through the framework's injection seams.
+        # @build, emitting the LoopState (ctx.time) + engine and the FieldWriter
+        # steps. They are backend-agnostic; the pybFoam touch-points (the FoamTime
+        # LoopBackend, Courant provider, logger, write hook, step reporter) are
+        # injected by the *_backend_steps below through the framework seams.
         builder.add_core_models(
             [
                 ("solution_loop_model", solution_loop_model),

@@ -10,12 +10,12 @@ step (fields, probes, residual logs, …). It is a
 point.
 
 :class:`FieldWriter` is the concrete writer for simulation fields. Like
-:class:`~neofoam.algorithms.solution_loop.SolutionLoop` (advance + push to a
-``StepSink``), it splits responsibilities:
+:class:`~neofoam.algorithms.solution_loop.solution_loop.SolutionLoop` (advance + mirror to a
+``LoopBackend``), it splits responsibilities:
 
 * the **policy** — when to write — is a
-  :class:`~neofoam.algorithms.write_control.WriteControl` plugin (OCP), reading
-  only a :class:`~neofoam.algorithms.write_control.StepView` of the stepper;
+  :class:`~neofoam.algorithms.field_writer.write_control.WriteControl` plugin (OCP), reading
+  only a :class:`~neofoam.algorithms.field_writer.write_control.StepView` of the stepper;
 * the **backend** — actually writing to disk — is a :class:`FieldHook` plugin, so
   the same FieldWriter serves multiple backends (registry write, per-field
   write, ``NullFieldHook`` for standalone).
@@ -31,7 +31,7 @@ from typing import Any, Literal, Mapping
 from pydantic import ConfigDict, Field
 
 from neofoam.core.plugin_system import PluginSystem
-from neofoam.algorithms.write_control import StepView, WriteControl
+from neofoam.algorithms.field_writer.write_control import StepView, WriteControl
 from neofoam.io import BaseConfig
 
 

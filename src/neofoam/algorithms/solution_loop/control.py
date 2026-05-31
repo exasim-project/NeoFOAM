@@ -508,7 +508,7 @@ class SolutionControl(BaseModel):
         self._residual_check(None)  # recompute from stored residuals
         return self._residual_check.converged()
 
-    def run(self, runtime: Any) -> bool:
+    def run(self, loop: Any) -> bool:
         """Outer-loop predicate: govern advancement only.
 
         End the run on convergence (stop advancing), otherwise report whether
@@ -516,9 +516,10 @@ class SolutionControl(BaseModel):
         ``WriteControl``'s responsibility — so ``stop()`` here means "end the
         run", not OpenFOAM's ``writeAndEnd``.
 
-        The ``SolutionLoop`` calls this once per step:
-        ``return solution_control.run(ctx.runtime)``.
+        ``SolutionLoop.running()`` calls this once per step, passing the loop
+        itself (which exposes ``run()``/``stop()`` over its ``LoopState``):
+        ``return self._control.run(self)``.
         """
         if self.converged():
-            runtime.stop()  # end the run (no write)
-        return bool(runtime.run())
+            loop.stop()  # end the run (no write)
+        return bool(loop.run())

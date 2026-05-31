@@ -6,7 +6,7 @@
 Adapted from ``feat/python_solvers`` to the SolverSpec/ModelSpec API in
 ``stack/python_arch``. Only PIMPLE is wired up; SIMPLE/PISO/boussinesq/SA
 are omitted in this minimal version. The main iteration loop is owned by the
-``solution_loop`` engine (see ``neofoam.algorithms.solution_loop`` and
+``solution_loop`` engine (see ``neofoam.algorithms.solution_loop.solution_loop`` and
 ``models.solution_loop``): it drives advancement, deltaT adjustment from
 injectable stability constraints, and the write decision.
 """
