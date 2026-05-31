@@ -87,7 +87,7 @@ elif [[ "$GPU_VENDOR" == "intel" ]]; then
         -DKokkos_ENABLE_SYCL=ON \
         -DKokkos_ARCH_INTEL_PVC=ON \
         -DNeoN_WITH_THREADS=OFF \
-        -DNeoN_WITH_MPI=OFF \
+        -DNeoN_WITH_MPI=ON \
         -DNEOFOAM_WITH_MPI=OFF \
         -DCMAKE_BUILD_TYPE="release" \
         -DNEOFOAM_BUILD_BENCHMARKS=ON

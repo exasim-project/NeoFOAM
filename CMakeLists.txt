@@ -40,7 +40,9 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 include(cmake/OpenFOAM.cmake)
 include(cmake/KokkosTools.cmake)
 
-set(NeoN_WITH_MPI ${NEOFOAM_WITH_MPI} CACHE BOOL "" FORCE)
+set(NeoN_WITH_MPI
+    ${NEOFOAM_WITH_MPI}
+    CACHE BOOL "" FORCE)
 if(NOT DEFINED NEOFOAM_NEON_DIR)
   if(EXISTS ${PROJECT_SOURCE_DIR}/src/NeoN/CMakeLists.txt AND NOT DEFINED NEOFOAM_NEON_VERSION)
     message(STATUS "src/NeoN/CMakeLists.txt found, using NeoN")
