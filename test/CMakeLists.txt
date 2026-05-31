@@ -33,12 +33,6 @@ function(neofoam_unit_test TEST SETUP_DIRECTORY)
     PUBLIC NeoFOAM_public_api OpenFOAM Catch2::Catch2
     PRIVATE NeoN NeoFOAM)
 
-  if(NOT NEOFOAM_MPI_SIZE)
-    target_link_libraries(${NEOFOAM_COMMAND} PRIVATE neofoam_catch_main)
-  else()
-    target_link_libraries(${NEOFOAM_COMMAND} PRIVATE neofoam_catch_main_mpi)
-  endif()
-
   if(WIN32)
     set_target_properties(
       ${NEOFOAM_COMMAND}
@@ -52,18 +46,20 @@ function(neofoam_unit_test TEST SETUP_DIRECTORY)
   endif()
 
   if(NOT NEOFOAM_MPI_SIZE)
+    target_link_libraries(${NEOFOAM_COMMAND} PRIVATE neofoam_catch_main)
     add_test(
       NAME neofoam_test_${TEST}
       COMMAND ${NEOFOAM_COMMAND}
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test/${SETUP_DIRECTORY})
   else()
+    target_link_libraries(${NEOFOAM_COMMAND} PRIVATE neofoam_catch_main_mpi)
     add_test(
-      NAME ${TEST}
+      NAME neofoam_test_${TEST}
       COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${NEOFOAM_MPI_SIZE}
               ${NEOFOAM_WORKING_DIRECTORY}/${NEOFOAM_COMMAND} -parallel
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test/${SETUP_DIRECTORY})
-    set_tests_properties(${TEST} PROPERTIES TIMEOUT 10)
-    set_tests_properties(${TEST} PROPERTIES PROCESSORS ${NEOFOAM_MPI_SIZE})
+    set_tests_properties(neofoam_test_${TEST} PROPERTIES TIMEOUT 10)
+    set_tests_properties(neofoam_test_${TEST} PROPERTIES PROCESSORS ${NEOFOAM_MPI_SIZE})
     if(${MPIEXEC_MAX_NUMPROCS} LESS NEOFOAM_MPI_SIZE)
       message(WARNING "Test <${TEST}> requested <${NEOFOAM_MPI_SIZE}> processors, "
                       "but only <${MPIEXEC_MAX_NUMPROCS}> are available. Disabling test "
@@ -89,8 +85,10 @@ neofoam_unit_test(snGrad setup_snGrad)
 neofoam_unit_test(spalartAllmarasDDES setup_pressureVelocityCoupling)
 neofoam_unit_test(continuityError setup_pressureVelocityCoupling)
 
-if(NEOFOAM_WITH_MPI)
+if(${NEOFOAM_WITH_MPI})
   neofoam_unit_test(distributedUnstructuredMesh setup_pressureVelocityCoupling MPI_SIZE 3)
   neofoam_unit_test(distributedPressureVelocityCoupling setup_pressureVelocityCoupling MPI_SIZE 3)
   neofoam_unit_test(distributedMomentum setup_pressureVelocityCoupling MPI_SIZE 3)
+else()
+  message(WARNING "Test skip building MPI based tests")
 endif()
