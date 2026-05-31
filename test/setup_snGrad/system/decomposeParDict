@@ -1,0 +1,25 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | NeoFOAM: distributed snGrad test case           |
+|  \\    /   O peration     |                                                 |
+|   \\  /    A nd           |                                                 |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      decomposeParDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+numberOfSubdomains 3;
+
+// scotch handles the 5x5 (25-cell) mesh without requiring a divisible split, and
+// produces processor faces that are non-orthogonal on this sheared mesh — exactly
+// what the distributed snGrad test needs to exercise the proc-boundary correction.
+
+method          scotch;
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
