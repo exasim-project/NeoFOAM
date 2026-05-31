@@ -27,11 +27,11 @@ from neofoam.framework.initialization import (
     lazy,
     model as init_model,
 )
-from neofoam.models.stability_criteria import CFLCondition
-
 from .configs import ControlDictConfig, TransportPropertiesConfig
+from .models.field_writer import fieldWriter, writer_backend_steps
 from .models.incompressibleFluidModel import incompressibleFluidModel
 from .models.pressure_velocity.base import PressureVelocityAlgorithm
+from .models.solution_loop import loop_backend_steps, solutionLoop
 
 
 def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
@@ -48,11 +48,11 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         pressure_model = PressureVelocityAlgorithm.detect_and_create()
         optional_models = incompressibleFluidModel.detect_models(resolved_case_dir)
 
-        # CFLCondition is only meaningful for transient algorithms; SIMPLE
-        # is steady-state so we skip it there.
-        core_models: list[Any] = [pressure_model]
-        if getattr(pressure_model, "algorithm_type", "").upper() != "SIMPLE":
-            core_models.append(CFLCondition())
+        # solutionLoop (advances time) and fieldWriter (persists fields) are
+        # separate-concern Models, loaded here so their controlDict is validated
+        # up front; both are composed by incompressibleFluid.execution_graph.
+        solution_loop_model = solutionLoop.instantiate(resolved_case_dir, "main")
+        field_writer_model = fieldWriter.instantiate(resolved_case_dir, "main")
 
         # Solver-core configs, so ``LoadResult.configs`` exposes the
         # configs the solver consumes (collectible / savable / printable).
@@ -66,6 +66,7 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         # part of the schema set. Their instances are not loaded here: the
         # OpenFOAM reader does not yet parse the typed scheme values
         # (``DivScheme`` …) / ``dict`` solver entries those slices carry.
+        core_models = [pressure_model, solution_loop_model, field_writer_model]
         core_models += [
             ControlDictConfig.load(case_dir=resolved_case_dir, validate=False),
             TransportPropertiesConfig.load(case_dir=resolved_case_dir, validate=False),
@@ -86,17 +87,24 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         core_models: list[Any], optional_models: list[Any]
     ) -> list[InitStep]:
         pressure_model = core_models[0]
-        cfl_condition = next(
-            (m for m in core_models if isinstance(m, CFLCondition)), None
-        )
+
+        def _by_spec(spec_name: str) -> Any:
+            return next(
+                m
+                for m in core_models
+                if getattr(getattr(m, "spec", None), "name", None) == spec_name
+            )
+
+        solution_loop_model = _by_spec("solutionLoop")
+        field_writer_model = _by_spec("fieldWriter")
         argv = runner.argv
 
-        def create_runtime(_ctx: dict[str, Any]) -> Any:
+        def create_foam_time(_ctx: dict[str, Any]) -> Any:
             argList = pyf.argList(argv)
             return pyf.Time(argList)
 
         def create_mesh(ctx: dict[str, Any]) -> Any:
-            return pyf.fvMesh(ctx["runtime"])
+            return pyf.fvMesh(ctx["_foam_time"])
 
         def create_laminar_transport(ctx: dict[str, Any]) -> Any:
             return singlePhaseTransportModel(ctx["fields.U"], ctx["fields.phi"])
@@ -109,8 +117,28 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             )
 
         builder = InitializerBuilder()
-        builder.add(lazy("runtime", create_runtime))
-        builder.add(lazy("mesh", create_mesh, depends_on=["runtime"]))
+        # the pybFoam Foam::Time is an init-only resource ("_foam_time"): it
+        # parents the mesh objectRegistry and is the write(True) target, but is
+        # never routed onto the Context (the leading underscore keeps it hidden).
+        builder.add(lazy("_foam_time", create_foam_time))
+        builder.add(lazy("mesh", create_mesh, depends_on=["_foam_time"]))
+
+        # solutionLoop + fieldWriter are the framework *core* Models, instantiated
+        # as real ModelRuntimes: add_core_models registers them and runs each
+        # @build, emitting the LoopState (ctx.time) + engine and the FieldWriter
+        # steps. They are backend-agnostic; the pybFoam touch-points (the FoamTime
+        # LoopBackend, Courant provider, logger, write hook, step reporter) are
+        # injected by the *_backend_steps below through the framework seams.
+        builder.add_core_models(
+            [
+                ("solution_loop_model", solution_loop_model),
+                ("field_writer_model", field_writer_model),
+            ]
+        )
+        builder.extend(loop_backend_steps())
+        builder.extend(
+            writer_backend_steps(ControlDictConfig.load(case_dir=resolved_case_dir))
+        )
 
         # PIMPLE is passed to add_core_models so it lands in models.pressure_velocity.
         # Its lazy field/model InitSteps come from pimple._build_func directly —
@@ -118,9 +146,6 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         builder.add_core_models([("pressure_velocity", pressure_model)])
         if pressure_model._build_func is not None:
             builder.extend(pressure_model._build_func(pressure_model))
-
-        if cfl_condition is not None:
-            builder.add(init_model("cfl_condition", lambda _ctx: cfl_condition))
 
         builder.add(
             init_model(

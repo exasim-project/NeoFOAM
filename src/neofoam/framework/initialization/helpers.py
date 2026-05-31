@@ -31,6 +31,7 @@ def _make_lazy(
     name: str,
     create: Callable[[dict[str, Any]], Any],
     depends_on: Optional[List[str]] = None,
+    write: bool = False,
 ) -> InitStep:
     """Internal factory shared by field / operator / model / lazy."""
     full_name = f"{prefix}.{name}" if prefix else name
@@ -39,6 +40,7 @@ def _make_lazy(
         depends_on=depends_on or [],
         initializer=create,
         category=category,
+        write=write,
     )
 
 
@@ -46,6 +48,7 @@ def field(
     name: str,
     create: Callable[[dict[str, Any]], Any],
     depends_on: Optional[List[str]] = None,
+    write: bool = False,
 ) -> InitStep:
     """
     Helper for creating field lazy initializers.
@@ -56,14 +59,18 @@ def field(
         name: Field name (e.g., "U", "p", "nu")
         create: Function that creates the field
         depends_on: List of dependencies (default: [])
+        write: Flag this field for persistence (auto-write). Collected into
+            ``Context.write_fields`` so a per-field write backend knows which
+            fields to write to disk.
 
     Returns:
         InitStep for the field
 
     Example:
-        field("U", create=lambda ctx: create_vector_field(ctx["mesh"], U0), depends_on=["mesh"])
+        field("U", create=lambda ctx: create_vector_field(ctx["mesh"], U0),
+              depends_on=["mesh"], write=True)
     """
-    return _make_lazy("fields", "fields", name, create, depends_on)
+    return _make_lazy("fields", "fields", name, create, depends_on, write=write)
 
 
 def operator(

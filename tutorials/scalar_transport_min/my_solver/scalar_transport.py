@@ -27,7 +27,7 @@ from .create_fields import create_init
 
 class TimeLoop:
     def __call__(self, ctx: Context) -> bool:
-        return bool(ctx.runtime.run())
+        return bool(ctx.time.run())
 
 
 scalar_transport = Solver("scalar_transport")
@@ -63,8 +63,8 @@ def execution_graph(
 
 @scalar_transport.operation()
 def increment_time(self: Any, ctx: Context) -> None:
-    Info(f"Time = {ctx.runtime.timeName()}")
-    ctx.runtime.increment()
+    Info(f"Time = {ctx.time.timeName()}")
+    ctx.time.increment()
 
 
 @scalar_transport.operation(depends_on=["increment_time"])
@@ -82,5 +82,5 @@ def solve_T(
 
 @scalar_transport.operation(depends_on=["solve_T"])
 def write_output(self: Any, ctx: Context) -> None:
-    ctx.runtime.write(True)
-    ctx.runtime.printExecutionTime()
+    ctx.time.write(True)
+    ctx.time.printExecutionTime()

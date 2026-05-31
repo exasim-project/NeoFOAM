@@ -75,7 +75,7 @@ from neofoam.tutorial import clone_case
 
 class TimeLoop:
     def __call__(self, ctx: Context) -> bool:
-        return bool(ctx.runtime.run())
+        return bool(ctx.time.run())
 
 
 scalar_transport = Solver("scalar_transport")
@@ -91,7 +91,7 @@ scalar_transport = Solver("scalar_transport")
 # before ``runner.run()``).
 #
 # This solver has no plugin models, so LOAD and RESOLVE are trivial.
-# BUILD creates the runtime + mesh, then registers one ``field(...)``
+# BUILD creates the time object + mesh, then registers one ``field(...)``
 # per object with ``depends_on`` listing prerequisite step names.
 # ``create_phi`` reads ``ctx["fields.U"]`` (the prefixed name) because
 # ``field("U", ...)`` produces an ``InitStep`` named ``fields.U``.
@@ -114,9 +114,9 @@ def create_init(case_dir: Optional[Any] = None) -> StagedInitRunner:
     ) -> list[InitStep]:
         argv = runner.argv
         builder = InitializerBuilder()
-        builder.add(lazy("runtime", lambda _ctx: pyf.Time(pyf.argList(argv))))
+        builder.add(lazy("time", lambda _ctx: pyf.Time(pyf.argList(argv))))
         builder.add(
-            lazy("mesh", lambda ctx: pyf.fvMesh(ctx["runtime"]), depends_on=["runtime"])
+            lazy("mesh", lambda ctx: pyf.fvMesh(ctx["time"]), depends_on=["time"])
         )
 
         def create_T(ctx: dict[str, Any]) -> volScalarField:
@@ -196,8 +196,8 @@ def execution_graph(
 
 @scalar_transport.operation()
 def increment_time(self: Any, ctx: Context) -> None:
-    Info(f"Time = {ctx.runtime.timeName()}")
-    ctx.runtime.increment()
+    Info(f"Time = {ctx.time.timeName()}")
+    ctx.time.increment()
 
 
 @scalar_transport.operation(depends_on=["increment_time"])
@@ -215,8 +215,8 @@ def solve_T(
 
 @scalar_transport.operation(depends_on=["solve_T"])
 def write_output(self: Any, ctx: Context) -> None:
-    ctx.runtime.write(True)
-    ctx.runtime.printExecutionTime()
+    ctx.time.write(True)
+    ctx.time.printExecutionTime()
 
 
 # %%
