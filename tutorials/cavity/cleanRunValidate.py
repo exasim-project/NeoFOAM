@@ -91,7 +91,7 @@ def restore0_dir(case_path: Path) -> None:
     shutil.copytree(zero_orig, zero)
     logger.info("Restored 0/ from 0.orig/")
 
-def run_case(case_path: Path, preset: str = "develop") -> None:
+def run_case(case_path: Path, preset: str = "develop", mode: str = "serial") -> None:
     logger.info("Starting Allrun workflow...")
 
     foamfile = case_path / "cavity.foam"
@@ -109,6 +109,18 @@ def run_case(case_path: Path, preset: str = "develop") -> None:
     finally:
         blockmesh_log.close()
 
+    if mode == "parallel":
+        decompose_log = open(case_path / "log.decomposePar", "w")
+        logger.info("Running decomposePar")
+        try:
+            subprocess.check_call(["decomposePar"], cwd=case_path,
+                                  stdout=decompose_log, stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as e:
+            logger.error("decomposePar failed.")
+            sys.exit(e.returncode)
+        finally:
+            decompose_log.close()
+
     solver = case_path / f"../../build/{preset}/bin/neoIcoFoam"
     if not solver.exists():
         logger.error(f"Solver binary not found: {solver}")
@@ -117,7 +129,12 @@ def run_case(case_path: Path, preset: str = "develop") -> None:
     neo_log = open(case_path / "log.neoIcoFoam", "w")
     logger.info("Running neoIcoFoam")
     try:
-        subprocess.check_call([str(solver)], cwd=case_path,
+        if mode == "parallel":
+            run_args = ["mpirun", "-n", "3", str(solver), "-parallel"]
+        else:
+            run_args = [str(solver)]
+
+        subprocess.check_call(run_args, cwd=case_path,
                               stdout=neo_log, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         logger.error("neoIcoFoam failed.")
@@ -207,6 +224,7 @@ def main() -> None:
         parser.add_argument("--clean", action="store_true", help="Clean case only")
         parser.add_argument("--run", action="store_true", help="Run solver only")
         parser.add_argument("--case", type=str, default=".", help="Case directory")
+        parser.add_argument("--mode", type=str, default="serial", help="Case directory")
         parser.add_argument("--preset", type=str, default="develop", help="CMake preset name (used in build/<preset>/bin/)")
         parser.add_argument("--tol-u", type=float, default=5e-2)
         parser.add_argument("--tol-v", type=float, default=5e-2)
@@ -225,7 +243,7 @@ def main() -> None:
 
         # Default: clean + run + validate
         clean_case(case_path)
-        run_case(case_path, args.preset)
+        run_case(case_path, args.preset, args.mode)
 
         case = FoamCase(case_path)
         nu, Re = computeRe(case)

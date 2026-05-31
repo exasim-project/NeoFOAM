@@ -16,6 +16,7 @@ echo "=== GPU vendor=$GPU_VENDOR, NeoN branch=$NEON_BRANCH ==="
 # -------------------------
 echo "=== Tool versions ==="
 cmake --version
+mpirun --version
 g++ --version || clang++ --version
 
 if [[ "$GPU_VENDOR" == "nvidia" ]]; then
@@ -107,7 +108,8 @@ ctest --preset $PRESET -R neofoam --output-on-failure
 SKIP_VALIDATION=${SKIP_VALIDATION:-false}
 if [[ "$SKIP_VALIDATION" != "true" ]]; then
     pushd tutorials/cavity >/dev/null
-    python3 cleanRunValidate.py --preset "$PRESET"
+    python3 cleanRunValidate.py --preset "$PRESET" --mode serial
+    python3 cleanRunValidate.py --preset "$PRESET" --mode distributed
     popd >/dev/null
 else
     echo "=== Skipping validation (skip-validation label set) ==="

@@ -65,8 +65,14 @@
         case "$GPU_VENDOR" in
           nvidia|amd)
             echo "Running AMD/NVIDIA OpenFOAM environment setup"
+            echo "Looking for mpi support in LIBBIN"
+            ls $FOAM_LIBBIN
+            ls $FOAM_INST_DIR/
+            ls $FOAM_INST_DIR/ThirdParty-v2412
+            ls $FOAM_INST_DIR/ThirdParty-v2412/platforms/*
+            echo $WM_THIRD_PARTY_DIR
             export PATH="$FOAM_APPBIN:$PATH"
-            export FOAM_MPI=$(basename $(dirname $(find $FOAM_LIBBIN -name libPstream.so | head -n1)))
+            export FOAM_MPI=sys-openmpi #$(basename $(dirname $(find $FOAM_LIBBIN/sys-openmpi -name libPstream.so | head -n1)))
             echo "Detected FOAM_MPI=$FOAM_MPI"
             export LD_LIBRARY_PATH="$FOAM_LIBBIN:$FOAM_LIBBIN/$FOAM_MPI:$LD_LIBRARY_PATH"
             export CMAKE_LIBRARY_PATH="$FOAM_LIBBIN:$FOAM_LIBBIN/$FOAM_MPI:$CMAKE_LIBRARY_PATH"

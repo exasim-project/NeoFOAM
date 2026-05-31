@@ -23,6 +23,8 @@
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
+#include <fstream>
+
 
 Foam::Time* timePtr;
 Foam::argList* argsPtr;
@@ -69,6 +71,9 @@ int main(int argc, char* argv[])
                 if (rc != 0)
                 {
                     std::cerr << "decomposePar failed (rc=" << rc << "); see log.decomposePar\n";
+                    std::ifstream f("log.decomposePar");
+                    if (f.is_open())
+                        std::cout << f.rdbuf();
                     MPI_Abort(MPI_COMM_WORLD, 1);
                 }
             }
