@@ -85,7 +85,6 @@ int main(int argc, char* argv[])
     // ensure any kokkos initialization output will appear first
     std::cout << std::flush;
     std::cerr << std::flush;
-    // MPI_Barrier(COMM);
 
     int sepIdx = argc - 1;
 

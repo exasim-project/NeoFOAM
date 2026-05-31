@@ -73,7 +73,6 @@ TEST_CASE("Momentum")
 
     SECTION("Solve transient momentum without grad(p) on " + execName)
     {
-
         Foam::fvVectorMatrix ofUEqn(
             fvm::ddt(ofU) + fvm::div(ofPhi, ofU) - fvm::laplacian(ofNu, ofU)
         );

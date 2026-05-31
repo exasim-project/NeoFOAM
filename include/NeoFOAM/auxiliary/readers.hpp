@@ -11,6 +11,8 @@
 #include "NeoFOAM/auxiliary/typeConversion.hpp"
 #include "NeoFOAM/auxiliary/fieldTraits.hpp"
 
+#include "processorFvPatch.H"
+
 namespace fvcc = NeoN::finiteVolume::cellCentred;
 
 namespace NeoFOAM
@@ -26,7 +28,6 @@ auto fromFoamField(const NeoN::Executor& exec, const FoamType& field)
         reinterpret_cast<const mapped_t*>(field.cdata()),
         static_cast<size_t>(field.size())
     );
-
     return nfField;
 };
 
@@ -60,37 +61,52 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
         {"fixedValue",
          [](auto& dict)
          {
-             dict.insert("type", std::string("fixedValue"));
              NeoN::TokenList tokenList = dict.template get<NeoN::TokenList>("value");
-             type_primitive_t fixedValue {};
-             // test if things can be read as scalar first, if it doesn't work
-             // read as int and convert to scalar
-             if constexpr (std::is_same<type_primitive_t, NeoN::Vec3>::value)
+             auto fixedValue = NeoN::zero<type_primitive_t>();
+
+             // NOTE FIXME in parallel cases we end up with token.size ==1
+             // leading to nonuniform as first token. This  means probably that
+             // parsing the foam dictionary aborts early and omits 0();
+             if (tokenList.size() > 1)
              {
-                 NeoN::Vec3 tmpFixedValue {};
-                 auto tokens = tokenList.tokens();
-                 NeoN::scalar* ret = std::any_cast<NeoN::scalar>(&tokens[1]);
-                 if (ret)
+                 dict.insert("type", std::string("fixedValue"));
+                 // test if things can be read as scalar first, if it doesn't work
+                 // read as int and convert to scalar
+                 if constexpr (std::is_same<type_primitive_t, NeoN::Vec3>::value)
                  {
-                     tmpFixedValue[0] = tokenList.get<NeoN::scalar>(1);
-                     tmpFixedValue[1] = tokenList.get<NeoN::scalar>(2);
-                     tmpFixedValue[2] = tokenList.get<NeoN::scalar>(3);
+                     NeoN::Vec3 tmpFixedValue {};
+                     auto tokens = tokenList.tokens();
+                     NeoN::scalar* ret = std::any_cast<NeoN::scalar>(&tokens[1]);
+                     if (ret)
+                     {
+                         tmpFixedValue[0] = tokenList.get<NeoN::scalar>(1);
+                         tmpFixedValue[1] = tokenList.get<NeoN::scalar>(2);
+                         tmpFixedValue[2] = tokenList.get<NeoN::scalar>(3);
+                     }
+                     else
+                     {
+                         tmpFixedValue[0] = NeoN::scalar(tokenList.get<Foam::label>(1));
+                         tmpFixedValue[1] = NeoN::scalar(tokenList.get<Foam::label>(2));
+                         tmpFixedValue[2] = NeoN::scalar(tokenList.get<Foam::label>(3));
+                     }
+                     dict.insert("fixedValue", tmpFixedValue);
+                     return;
                  }
                  else
                  {
-                     tmpFixedValue[0] = NeoN::scalar(tokenList.get<Foam::label>(1));
-                     tmpFixedValue[1] = NeoN::scalar(tokenList.get<Foam::label>(2));
-                     tmpFixedValue[2] = NeoN::scalar(tokenList.get<Foam::label>(3));
+                     auto tokens = tokenList.tokens();
+                     fixedValue = 0.0;
+                     NeoN::scalar* ret = std::any_cast<NeoN::scalar>(&tokens[1]);
+                     fixedValue =
+                         ret ? NeoN::scalar(*ret) : NeoN::scalar(tokenList.get<Foam::label>(1));
                  }
-                 dict.insert("fixedValue", tmpFixedValue);
+                 dict.insert("fixedValue", fixedValue);
              }
              else
              {
-                 auto& token = tokenList.tokens()[1];
-                 NeoN::scalar* ret = std::any_cast<NeoN::scalar>(&token);
-                 fixedValue =
-                     ret ? NeoN::scalar(*ret) : NeoN::scalar(std::any_cast<Foam::label>(token));
-                 dict.insert("fixedValue", fixedValue);
+                 // FIXME is this an empty boundary?
+                 dict.insert("type", std::string("empty"));
+                 // left blank
              }
          }},
         {"noSlip", // TODO specialize for vector
@@ -100,6 +116,7 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
              dict.insert("fixedValue", type_primitive_t {});
          }},
         {"calculated", [](auto& dict) { dict.insert("type", std::string("calculated")); }},
+        {"processor", [](auto& dict) { dict.insert("type", std::string("processor")); }},
         {"extrapolatedCalculated",
          [](auto& dict) { dict.insert("type", std::string("calculated")); }},
         {"empty", [](auto& dict) { dict.insert("type", std::string("empty")); }},
@@ -111,13 +128,28 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
 
     int patchi = 0;
     std::vector<fvcc::VolumeBoundary<type_primitive_t>> bcs;
-    for (const auto& bName : bDict.toc())
+    // do non processor first
+    for (const auto bName : bDict.toc())
     {
         Foam::dictionary patchDict = bDict.subDict(bName);
-        NeoN::Dictionary neoPatchDict = convert(patchDict);
-        patchInserter[patchDict.get<Foam::word>("type")](neoPatchDict);
-        bcs.emplace_back(nfMesh, neoPatchDict, patchi);
-        patchi++;
+        if (patchDict.get<Foam::word>("type") != "processor")
+        {
+            NeoN::Dictionary neoPatchDict = convert(patchDict);
+            patchInserter[patchDict.get<Foam::word>("type")](neoPatchDict);
+            bcs.emplace_back(nfMesh, neoPatchDict, patchi);
+            patchi++;
+        }
+    }
+    for (const auto bName : bDict.toc())
+    {
+        Foam::dictionary patchDict = bDict.subDict(bName);
+        if (patchDict.get<Foam::word>("type") == "processor")
+        {
+            NeoN::Dictionary neoPatchDict = convert(patchDict);
+            patchInserter[patchDict.get<Foam::word>("type")](neoPatchDict);
+            bcs.emplace_back(nfMesh, neoPatchDict, patchi);
+            patchi++;
+        }
     }
     return bcs;
 }
@@ -140,6 +172,7 @@ auto readSurfaceBoundaryConditions(
     Foam::dictionary bDict(is);
     int patchi = 0;
 
+    // TODO this approach fails for procBoundary0to1
     std::map<std::string, std::function<void(NeoN::Dictionary&)>> patchInserter {
         {"fixedGradient", [](auto& dict) { dict.insert("type", std::string("fixedGradient")); }},
         {"zeroGradient",
@@ -154,7 +187,14 @@ auto readSurfaceBoundaryConditions(
              dict.insert("type", std::string("fixedValue"));
              dict.insert("fixedValue", type_primitive_t {});
          }},
+        {"noSlip", // TODO specialize for vector
+         [](auto& dict)
+         {
+             dict.insert("type", std::string("fixedValue"));
+             dict.insert("fixedValue", type_primitive_t {});
+         }},
         {"calculated", [](auto& dict) { dict.insert("type", std::string("calculated")); }},
+        {"processor", [](auto& dict) { dict.insert("type", std::string("processor")); }},
         {"empty", [](auto& dict) { dict.insert("type", std::string("empty")); }},
         {"symmetryPlane", [](auto& dict) { dict.insert("type", std::string("symmetry")); }},
         {"symmetry", [](auto& dict) { dict.insert("type", std::string("symmetry")); }}
@@ -163,10 +203,24 @@ auto readSurfaceBoundaryConditions(
     for (const auto& bName : bDict.toc())
     {
         Foam::dictionary patchDict = bDict.subDict(bName);
-        NeoN::Dictionary neoPatchDict;
-        patchInserter[patchDict.get<Foam::word>("type")](neoPatchDict);
-        bcs.push_back(fvcc::SurfaceBoundary<type_primitive_t>(uMesh, neoPatchDict, patchi));
-        patchi++;
+        if (patchDict.get<Foam::word>("type") != "processor")
+        {
+            NeoN::Dictionary neoPatchDict;
+            patchInserter[patchDict.get<Foam::word>("type")](neoPatchDict);
+            bcs.push_back(fvcc::SurfaceBoundary<type_primitive_t>(uMesh, neoPatchDict, patchi));
+            patchi++;
+        }
+    }
+    for (const auto& bName : bDict.toc())
+    {
+        Foam::dictionary patchDict = bDict.subDict(bName);
+        if (patchDict.get<Foam::word>("type") == "processor")
+        {
+            NeoN::Dictionary neoPatchDict;
+            patchInserter[patchDict.get<Foam::word>("type")](neoPatchDict);
+            bcs.push_back(fvcc::SurfaceBoundary<type_primitive_t>(uMesh, neoPatchDict, patchi));
+            patchi++;
+        }
     }
     return bcs;
 }
@@ -238,9 +292,28 @@ auto constructFrom(
 
         // Boundary faces in patch order: [0, nBnd)
         Foam::label bi = 0;
+        // Pass 1 — non-processor patches.
         forAll(in.boundaryField(), patchi)
         {
             const auto& pin = in.boundaryField()[patchi];
+            if (pin.patch().type() == "processor")
+            {
+                continue;
+            }
+            forAll(pin, facei)
+            {
+                bval[bi] = pin[facei];
+                ++bi;
+            }
+        }
+        // Pass 2 — processor patches (proc tail of the boundary range).
+        forAll(in.boundaryField(), patchi)
+        {
+            const auto& pin = in.boundaryField()[patchi];
+            if (pin.patch().type() != "processor")
+            {
+                continue;
+            }
             forAll(pin, facei)
             {
                 bval[bi] = pin[facei];
@@ -252,7 +325,6 @@ auto constructFrom(
 
         out.internalVector() = fromFoamField(exec, internalData);
         out.boundaryData().value() = fromFoamField(exec, bval);
-        out.correctBoundaryConditions();
         return out;
     }
     else
@@ -286,7 +358,9 @@ public:
     fvcc::VectorDocument operator()(NeoN::Database& db)
     {
         using type_container_t = typename TypeMap<FieldType>::container_type;
+
         type_container_t convertedField = constructFrom(exec, nfMesh, foamField);
+
         if (name != "")
         {
             convertedField.name = name;

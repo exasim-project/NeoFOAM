@@ -16,6 +16,14 @@ FoamFile
 
 solvers
 {
+    p
+    {
+        solver          PCG;
+        preconditioner  diagonal;
+        tolerance       0.0;
+        relTol          1e-5;
+    }
+
     U
     {
         solver          PBiCGStab;
@@ -36,6 +44,13 @@ solvers
     {
         $nuTilda;
     }
+}
+
+PISO
+{
+        momentumPredictor yes;
+        nCorrectors 4;
+        nNonOrthogonalCorrectors 0;
 }
 
 // ************************************************************************* //

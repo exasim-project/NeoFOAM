@@ -29,6 +29,7 @@ struct RunTime
     NeoN::Dictionary controlDict;
     NeoN::Dictionary fvSolutionDict;
     NeoN::Dictionary fvSchemesDict;
+    NeoN::mpi::Environment mpiEnvironment;
 };
 
 

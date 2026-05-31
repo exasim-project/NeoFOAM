@@ -41,10 +41,14 @@ TEST_CASE("cell To Face Stencil")
         for (auto celli = 0; celli < mesh.cells().size(); celli++)
         {
             std::unordered_set<Foam::label> faceSet;
+            size_t nInternalCellFaces = 0;
             for (auto facei : mesh.cells()[celli])
             {
+                if (static_cast<size_t>(facei) < static_cast<size_t>(mesh.nInternalFaces()))
+                    nInternalCellFaces++;
                 faceSet.insert(facei);
             }
+            REQUIRE(stencilView.view(celli).size() == nInternalCellFaces);
 
             for (auto facei : stencilView.view(celli))
             {

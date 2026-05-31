@@ -27,7 +27,6 @@ TEST_CASE("VolumeField")
         REQUIRE_THAT(nfT, EqualsInternal(ofT, ApproxScalar(1e-15)));
         REQUIRE_THAT(nfT.boundaryData(), EqualsBoundary(ofT, ApproxScalar(1e-15)));
     }
-
     SECTION("volumeVectorField " + execName)
     {
         auto nfU = NeoFOAM::constructFrom(exec, nfMesh, ofU);
