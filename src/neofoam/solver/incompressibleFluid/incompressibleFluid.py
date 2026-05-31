@@ -89,30 +89,26 @@ def execution_graph(
         metadata=OperationMetadata(op_name="time_loop"),
     )
 
-    # The fluid-property models own their operations and the solver steps them
-    # explicitly into their predict/correct slots. ``viscousStress.update``
-    # refreshes ``nuEff`` *before* the pressure-velocity loop (predict, reading
-    # nu/nut); the viscosity and momentum-transport models *correct* their fields
-    # *after* the loop (the OpenFOAM fallback runs the model's correct there;
-    # constant native closures contribute no correct op).
-    stress_ops = ctx.models["viscousStress"].operations
-    turbulence_ops = ctx.models["turbulence"].operations
+    # The fluid-property models own their operations; the solver steps them after
+    # the pressure-velocity loop (the end-of-step *correct* phase, matching
+    # pimpleFoam) — viscosity before turbulence (turbulence reads nu), each iterated
+    # since a model may contribute several ops. ``nuEff`` is primed at init and the
+    # momentum predictor uses the value the turbulence model refreshed at the end of
+    # the previous step; the OpenFOAM fallbacks advance their pybFoam model here.
     viscosity_ops = ctx.models["viscosity"].operations
+    turbulence_ops = ctx.models["turbulence"].operations
 
     with builder.loop(time_loop_op) as time_builder:
         time_builder.step(ops["set_time_step"])
         time_builder.step(ops["increment_time"])
 
-        for op in stress_ops:  # predict: refresh nuEff before the loop
-            time_builder.step(op)
-
         with time_builder.loop(algo_ops["inner_loop"]) as inner_builder:
             inner_builder.step(algo_ops["momentum"])
             inner_builder.step(algo_ops["continuity"])
 
-        for op in turbulence_ops:  # correct after the pressure-velocity loop
-            time_builder.step(op)
         for op in viscosity_ops:
+            time_builder.step(op)
+        for op in turbulence_ops:
             time_builder.step(op)
 
         time_builder.step(ops["write_output"])

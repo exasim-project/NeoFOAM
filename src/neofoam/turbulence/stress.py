@@ -8,13 +8,15 @@ assembled from the molecular ``nu`` and eddy ``nut`` viscosities. Its lifecycle:
 
 * ``update(ctx)`` runs **before** the PIMPLE loop — it *reads* ``nu``/``nut``
   (Context fields the viscosity and momentum-transport models own) and refreshes
-  the effective viscosity ``nuEff``; it does not modify ``nu``/``nut``.
+  the effective viscosity ``nuEff``; it does not modify ``nu``/``nut``. The
+  *operation* that calls ``update`` is owned by the momentum-transport model (e.g.
+  ``laminar``'s ``update_viscous_stress``), not by this object.
 * ``divDevReff(U)`` is called **by the momentum equation** and uses the
   refreshed ``nuEff``.
 
-**The momentum-transport model defines which stress it uses** — each concrete
-model returns its own from ``viscous_stress()`` (the family interface is only a
-dispatcher). A linear eddy-viscosity closure (laminar, kEpsilon, …) uses
+**The momentum-transport model defines which stress it uses** — a native model
+registers its stress via its ``@build``; these classes are the reusable assembly.
+A linear eddy-viscosity closure (laminar, kEpsilon, …) uses
 :class:`LinearViscousStress`; the OpenFOAM fallback uses :class:`OpenFOAMStress`,
 which delegates to the pybFoam model. pybFoam is imported lazily, so this module
 stays importable without a built OpenFOAM environment.
@@ -22,43 +24,10 @@ stays importable without a built OpenFOAM environment.
 
 from typing import Any
 
-from neofoam.framework.context import Context, FieldUpdates
-from neofoam.framework.dependency_resolver import (
-    DependencyResolver,
-    wrap_with_dependency_resolution,
-)
-from neofoam.framework.operations import Operation, SequentialOp
-from neofoam.framework.types import OperationMetadata
-
 __all__ = [
     "LinearViscousStress",
     "OpenFOAMStress",
 ]
-
-
-def _update_operations() -> list[Operation]:
-    """The single ``update`` operation: refresh ``nuEff`` (predict).
-
-    The solver steps this explicitly before the pressure-velocity loop, so it
-    carries no ``operation_number``/``depends_on``. It resolves the viscous-stress
-    object from the Context at run time (never closes over it / its ``nuEff``) so a
-    field-valued ``nuEff`` is not captured into an execution-graph reference cycle.
-    """
-
-    def update_viscous_stress(ctx: Context) -> FieldUpdates:
-        ctx.models["viscousStress"].update(ctx)
-        return FieldUpdates({})
-
-    return [
-        Operation(
-            func=SequentialOp(
-                wrap_with_dependency_resolution(
-                    update_viscous_stress, None, DependencyResolver()
-                )
-            ),
-            metadata=OperationMetadata(op_name="update_viscous_stress"),
-        )
-    ]
 
 
 def _add_viscosity(nu: Any, nut: Any) -> Any:
@@ -134,8 +103,9 @@ class LinearViscousStress:
     def update(self, ctx: Any) -> None:
         """Refresh ``nuEff`` from the Context's ``nu`` and ``nut`` (read-only).
 
-        ``nut`` is optional: a laminar momentum-transport model registers none, so
-        an absent ``nut`` means no eddy viscosity (``nuEff = nu``). A RAS/LES model
+        Called by the momentum predictor right before ``divDevReff`` consumes it.
+        ``nut`` is optional: a laminar momentum-transport model registers none, so an
+        absent ``nut`` means no eddy viscosity (``nuEff = nu``); a RAS/LES model
         registers ``nut`` and ``nuEff = nu + nut``.
         """
         nut = ctx.fields.get("nut")
@@ -160,10 +130,6 @@ class LinearViscousStress:
         )
         return fvm.laplacian(_negate(nuEff), U) - fvc.div(stress)
 
-    @property
-    def operations(self) -> list[Operation]:
-        return _update_operations()
-
 
 class OpenFOAMStress:
     """Stress delegated to the OpenFOAM fallback model (it assembles its own).
@@ -184,7 +150,3 @@ class OpenFOAMStress:
 
     def divDevReff(self, U: Any) -> Any:
         return self._turbulence.divDevReff(U)
-
-    @property
-    def operations(self) -> list[Operation]:
-        return _update_operations()

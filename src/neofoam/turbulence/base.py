@@ -21,6 +21,14 @@ __all__ = ["ViscousStress"]
 class ViscousStress(Protocol):
     """Minimal momentum-stress surface the incompressible solver consumes."""
 
+    def update(self, ctx: Any) -> None:
+        """Refresh the effective viscosity from the Context's ``nu``/``nut``.
+
+        Called by the momentum predictor right before :meth:`divDevReff` consumes
+        it. The OpenFOAM-fallback stress owns its eddy viscosity and no-ops here.
+        """
+        ...
+
     def divDevReff(self, U: Any) -> Any:
         """Deviatoric momentum-stress divergence for the momentum equation."""
         ...

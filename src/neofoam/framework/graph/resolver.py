@@ -178,20 +178,31 @@ def _sort_global(
 ) -> dict[str, list[Operation]]:
     """Topologically sort the global graph, grouping results back by scope.
 
-    ``OperationNumber`` is used **only as a tie-breaker** when multiple
-    operations have no dependency relationship.
+    Ordering precedence among the sequential ops of a scope:
 
-    Loop (``IterativeOp``) operations are not graph nodes — they are
-    structural containers.  They are re-injected into their parent scope
-    (at the front) so that :func:`rebuild_builder` can reconstruct nesting.
+    1. ``depends_on`` / ``before`` edges (hard topological constraint);
+    2. ``OperationNumber`` (numbered ops first, then by value);
+    3. **builder insertion order** — the op's position in the pre-order
+       ``tagged`` list — so explicitly stepped ops that carry no number keep the
+       order they were stepped in. (Model ops, appended after the builder walk,
+       sort last.)
+
+    Loop (``IterativeOp``) operations are not graph nodes — they are structural
+    containers. They are merged back into their parent scope *by builder order*
+    (not forced to the front), so a loop sits exactly where it was stepped
+    relative to the surrounding ops; ops may therefore precede **and** follow a
+    loop in the same scope. Loops carry no edges, so interleaving them by builder
+    index is always dependency-safe.
     """
+    # Builder insertion order: position in the pre-order ``tagged`` list.
+    order: dict[int, int] = {id(op): i for i, (_, op) in enumerate(tagged)}
 
     def _sort_key(node_name: str) -> tuple[Any, ...]:
         _, op = op_map[node_name]
         return (
             op.operation_number is None,  # numbered ops first
             op.operation_number,  # then by number value
-            node_name,  # finally alphabetical
+            order.get(id(op), len(order)),  # finally builder order
         )
 
     try:
@@ -199,19 +210,37 @@ def _sort_global(
     except nx.NetworkXUnfeasible:
         raise CyclicDependencyError("Cyclic dependency detected in operation graph")
 
-    by_scope: dict[str, list[Operation]] = defaultdict(list)
-
-    # First: collect loop ops per parent scope (they are structural, not sorted)
-    for scope, op in tagged:
-        if isinstance(op.func, IterativeOp):
-            by_scope[scope].append(op)
-
-    # Then: append sorted sequential ops per scope
+    # Sequential ops per scope, in topological order.
+    seq_by_scope: dict[str, list[Operation]] = defaultdict(list)
     for name in sorted_names:
         scope, op = op_map[name]
-        by_scope[scope].append(op)
+        seq_by_scope[scope].append(op)
 
-    return dict(by_scope)
+    # Loop ops per scope (structural containers, not graph nodes).
+    loops_by_scope: dict[str, list[Operation]] = defaultdict(list)
+    for scope, op in tagged:
+        if isinstance(op.func, IterativeOp):
+            loops_by_scope[scope].append(op)
+
+    # Merge loops into each scope's sequential ops by builder order. The
+    # sequential ops keep their topological order; each loop is inserted ahead of
+    # the first sequential op stepped after it.
+    by_scope: dict[str, list[Operation]] = {}
+    for scope in set(seq_by_scope) | set(loops_by_scope):
+        seq = seq_by_scope[scope]
+        loops = sorted(loops_by_scope[scope], key=lambda op: order[id(op)])
+        merged: list[Operation] = []
+        next_loop = 0
+        for seq_op in seq:
+            seq_idx = order.get(id(seq_op), len(order))
+            while next_loop < len(loops) and order[id(loops[next_loop])] < seq_idx:
+                merged.append(loops[next_loop])
+                next_loop += 1
+            merged.append(seq_op)
+        merged.extend(loops[next_loop:])
+        by_scope[scope] = merged
+
+    return by_scope
 
 
 def _rebuild_builder(

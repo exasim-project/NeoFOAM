@@ -5,8 +5,10 @@
 
 A momentum-transport model contributes ``divDevReff(U)`` — the divergence of the
 deviatoric momentum stress — and **defines which stress it uses**: each concrete
-model returns its own viscous-stress object from :meth:`viscous_stress`. The
-family interface :class:`momentumTransportModel` and the wrapper
+native model registers its own ``viscousStress`` object via its ``@build`` (laminar
+→ :class:`~neofoam.turbulence.stress.LinearViscousStress`), and exposes its driving
+operations in two phases (``predict_operations`` before the loop, ``operations``
+after). The family interface :class:`momentumTransportModel` and the wrapper
 :class:`SpecMomentumTransport` are only *dispatchers* — they select / forward to
 the concrete model (laminar, kEpsilon, …, or the OpenFOAM fallback), they do not
 decide the stress themselves.
@@ -30,8 +32,6 @@ from pydantic import BaseModel
 from neofoam.core.plugin_system import PluginSystem
 from neofoam.framework.model import Model, ModelRuntime, ModelSpec  # noqa: F401
 
-from .stress import LinearViscousStress
-
 __all__ = [
     "momentumTransportModel",
     "SpecMomentumTransport",
@@ -44,12 +44,13 @@ __all__ = [
 class SpecMomentumTransport:
     """A native momentum-transport model placed at ``models.turbulence``.
 
-    Built (in ``create_fields``) from a momentum-transport ``ModelRuntime``. It
-    owns the eddy viscosity ``nut`` through the runtime's operations and
-    **defines its momentum stress** via :meth:`viscous_stress`: native linear
-    closures (laminar, kEpsilon, kOmegaSST, Smagorinsky, …) use the linear
-    eddy-viscosity assembly (``nuEff = nu + nut``). A non-linear / viscoelastic
-    native model would override this to return its own stress.
+    Built (in ``create_fields``) from a momentum-transport ``ModelRuntime``. The
+    concrete model (laminar, kEpsilon, …) **owns its viscous stress**: it registers
+    the ``viscousStress`` object via its ``@build`` and defines the operations that
+    drive it. This wrapper just forwards the model's ``@spec.operation``s, which the
+    solver steps *after* the pressure-velocity loop (the end-of-step *correct* phase,
+    matching OpenFOAM): laminar's single op refreshes ``nuEff``; a kEpsilon closure
+    would add its k/ε transport solve here too — hence a model may expose *several*.
     """
 
     #: Descriptive tag for the stress family this model uses.
@@ -60,12 +61,8 @@ class SpecMomentumTransport:
 
     @property
     def operations(self) -> Any:
-        """The model's ``@spec.operation``s, for the solver to merge into its DAG."""
+        """The model's ``@spec.operation``s, stepped after the loop (may be several)."""
         return self._runtime.operations
-
-    def viscous_stress(self) -> LinearViscousStress:
-        """The stress this model uses — the linear eddy-viscosity assembly."""
-        return LinearViscousStress()
 
 
 @PluginSystem.register(discriminator_variable="model", discriminator="model_type")

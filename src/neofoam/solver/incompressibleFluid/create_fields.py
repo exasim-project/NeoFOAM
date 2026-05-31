@@ -73,10 +73,11 @@ def _add_turbulence_model(builder: InitializerBuilder, case_dir: Path) -> None:
     """Add the momentum-transport model + the ``fields.nut`` it owns *if necessary*.
 
     A native model (selected by name from ``turbulenceProperties``) is built here,
-    wrapped by :class:`SpecMomentumTransport`, and its ``@build`` step emits
-    ``fields.nut`` only when the closure has an eddy viscosity (laminar emits
-    none). The OpenFOAM fallback is built lazily from the live ``U``/``phi``/
-    transport and assembles its own stress, so it registers no ``nut``.
+    wrapped by :class:`SpecMomentumTransport`. Its ``@build`` step registers the
+    ``viscousStress`` the momentum equation uses (and ``fields.nut`` only when the
+    closure has an eddy viscosity — laminar emits none). The OpenFOAM fallback is
+    built lazily from the live ``U``/``phi``/transport and assembles its own stress,
+    which it exposes via ``viscous_stress()`` for the momentum equation.
     """
     turb_config = TurbulencePropertiesConfig.load(case_dir=case_dir, validate=False)
     name = turbulence_model_name(turb_config)
@@ -85,6 +86,8 @@ def _add_turbulence_model(builder: InitializerBuilder, case_dir: Path) -> None:
         runtime = spec.instantiate(case_dir)
         model_obj = SpecMomentumTransport(runtime)
         builder.add(init_model("turbulence", lambda _ctx: model_obj))
+        # The model's @build registers ``models.viscousStress`` (and ``fields.nut``
+        # if it has an eddy viscosity).
         builder.extend(runtime.run_build())
         return
 
@@ -93,11 +96,21 @@ def _add_turbulence_model(builder: InitializerBuilder, case_dir: Path) -> None:
             ctx["fields.U"], ctx["fields.phi"], ctx["models.laminarTransport"]
         ).build()
 
+    def create_viscous_stress(ctx: dict[str, Any]) -> Any:
+        # The fallback assembles its own stress; ask the model for it so the
+        # momentum equation resolves ``models.viscousStress`` uniformly.
+        return ctx["models.turbulence"].viscous_stress()
+
     builder.add(
         init_model(
             "turbulence",
             build_turbulence,
             depends_on=["fields.U", "fields.phi", "models.laminarTransport"],
+        )
+    )
+    builder.add(
+        init_model(
+            "viscousStress", create_viscous_stress, depends_on=["models.turbulence"]
         )
     )
 
@@ -174,12 +187,6 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             # turbulence fallback factory, which expects this concrete object.
             return singlePhaseTransportModel(ctx["fields.U"], ctx["fields.phi"])
 
-        def create_viscous_stress(ctx: dict[str, Any]) -> Any:
-            # The momentum-transport model DEFINES the stress it uses; the solver
-            # just asks it. ``update`` refreshes ``nuEff`` from ``nu``/``nut``
-            # before the loop, ``divDevReff(U)`` is the momentum term.
-            return ctx["models.turbulence"].viscous_stress()
-
         builder = InitializerBuilder()
         builder.add(lazy("runtime", create_runtime))
         builder.add(lazy("mesh", create_mesh, depends_on=["runtime"]))
@@ -209,19 +216,13 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         # ``fields.nut`` only if it has an eddy viscosity (laminar emits none —
         # ``LinearViscousStress`` then treats ``nut`` as zero). The OpenFOAM
         # fallbacks need the live transport, so they are built lazily and publish
-        # their field through the model resolved from the Context.
+        # their field through the model resolved from the Context. Each turbulence
+        # path also registers ``models.viscousStress`` (native: the model's @build;
+        # fallback: from the model's viscous_stress()).
         _add_viscosity_model(
             builder, select_viscosity_model(transport_config), resolved_case_dir
         )
         _add_turbulence_model(builder, resolved_case_dir)
-
-        builder.add(
-            init_model(
-                "viscousStress",
-                create_viscous_stress,
-                depends_on=["models.turbulence"],
-            )
-        )
 
         builder.add_optional_models(optional_models)
         builder.add_model("optional_models", optional_models)

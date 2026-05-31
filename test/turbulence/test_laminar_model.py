@@ -3,19 +3,19 @@
 
 """Tests for the native ``laminar`` momentum-transport model.
 
-The model owns the eddy-viscosity field ``nut`` — but for laminar flow ``nut`` is
-a constant zero, registered once at BUILD by the solver's ``create_fields``, so
-the model contributes **no per-step operation**. It declares the ``stress_kind``
-the ``viscousStress`` dispatch keys off. It is built the way the solver builds it
-(selected from its case, wrapped by ``SpecMomentumTransport``); expected values
-come from the case's ``expected.yaml``. The constant-``nut`` value and the stress
-assembly are exercised end-to-end by ``test_laminar_comparison``.
+Laminar flow has no eddy viscosity, so the model registers **no ``nut`` field**
+and solves **no transport equation** — it contributes **no per-step operation**.
+It owns the viscous stress: its ``@build`` registers the ``viscousStress`` object
+the momentum equation resolves (and refreshes via ``update`` where it is consumed).
+It is built the way the solver builds it (selected from its case, wrapped by
+``SpecMomentumTransport``); expected values come from the case's ``expected.yaml``.
+The stress assembly is exercised end-to-end by ``test_laminar_comparison``.
 """
 
 from typing import Any
 
 from neofoam.turbulence.config import TurbulencePropertiesConfig
-from neofoam.turbulence.stress import LinearViscousStress
+from neofoam.turbulence.models.laminar import laminar
 
 from turbulence.conftest import build_as_solver, case_for
 
@@ -23,8 +23,9 @@ from turbulence.conftest import build_as_solver, case_for
 LAMINAR = case_for("laminar")
 
 
-# --- nut is a build-time constant, so the model adds no per-step operation ---
-def test_contributes_no_step_operation() -> None:
+# --- laminar solves no transport equation, so it adds no per-step operation;
+#     the momentum predictor refreshes the stress where it is consumed ---
+def test_contributes_no_operation() -> None:
     assert list(build_as_solver(LAMINAR).operations) == []
 
 
@@ -33,9 +34,13 @@ def test_stress_kind_is_linear() -> None:
     assert build_as_solver(LAMINAR).stress_kind == "linear"
 
 
-def test_model_defines_linear_viscous_stress() -> None:
-    stress = build_as_solver(LAMINAR).viscous_stress()
-    assert isinstance(stress, LinearViscousStress)
+def test_model_registers_viscous_stress() -> None:
+    # laminar's @build registers the viscousStress the momentum equation resolves.
+    # That it is a LinearViscousStress and its assembly are covered end-to-end by
+    # test_laminar_comparison.
+    runtime = laminar.instantiate(LAMINAR.path)
+    names = [s.name for s in runtime.run_build()]
+    assert "models.viscousStress" in names
 
 
 # --- config: the model's own config loads, validates, and round-trips ---
