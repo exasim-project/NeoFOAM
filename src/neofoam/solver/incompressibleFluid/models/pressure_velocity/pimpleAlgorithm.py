@@ -53,8 +53,9 @@ PimpleFvSchemes = pimple.config(fvSchemes)
 PimpleFvSolution = pimple.config(fvSolution)
 
 
-class TurbulenceModel(Protocol):
-    def divDevReff(self, velocity: volVectorField) -> Any: ...
+class ViscousStress(Protocol):
+    def update(self, ctx: Context) -> None: ...
+    def divDevReff(self, U: volVectorField) -> Any: ...
 
 
 @pimple.build
@@ -145,10 +146,17 @@ def momentum(
     U: volVectorField,
     phi: surfaceScalarField,
     p: volScalarField,
-    turbulence: Annotated[TurbulenceModel, "models"],
+    viscousStress: Annotated[ViscousStress, "models"],
     pimple_control: Annotated[Any, "models"],
+    ctx: Context,
 ) -> FieldUpdates:
-    UEqn = fvVectorMatrix(fvm.ddt(U) + fvm.div(phi, U) + turbulence.divDevReff(U))
+    # Refresh the effective viscosity right where it is consumed: the momentum
+    # transport model owns nuEff (nu + nut); ``update`` reads the current nu/nut
+    # from the Context (a laminar model has no nut, the OpenFOAM fallback owns its
+    # own and no-ops here). nut is fixed across the PIMPLE outer iterations, so this
+    # matches OpenFOAM's once-per-step eddy viscosity.
+    viscousStress.update(ctx)
+    UEqn = fvVectorMatrix(fvm.ddt(U) + fvm.div(phi, U) + viscousStress.divDevReff(U))
     UEqn.relax()
 
     if pimple_control.momentumPredictor():
@@ -223,15 +231,18 @@ def momentum_boussinesq(
     U: volVectorField,
     phi: surfaceScalarField,
     p: volScalarField,
-    turbulence: Annotated[TurbulenceModel, "models"],
+    viscousStress: Annotated[ViscousStress, "models"],
     pimple_control: Annotated[Any, "models"],
     p_rgh: volScalarField,
     rhok: volScalarField,
     ghf: surfaceScalarField,
+    ctx: Context,
 ) -> FieldUpdates:
     mesh = U.mesh()
 
-    UEqn = fvVectorMatrix(fvm.ddt(U) + fvm.div(phi, U) + turbulence.divDevReff(U))
+    # Refresh nuEff where it is consumed (see ``momentum``).
+    viscousStress.update(ctx)
+    UEqn = fvVectorMatrix(fvm.ddt(U) + fvm.div(phi, U) + viscousStress.divDevReff(U))
     UEqn.relax()
 
     if pimple_control.momentumPredictor():

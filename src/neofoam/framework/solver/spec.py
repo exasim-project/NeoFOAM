@@ -260,12 +260,17 @@ class SolverSpec:
         return ctx
 
     def _run_execution_graph(
-        self, runtime: SolverRuntime, domain_name: Optional[str] = None
+        self,
+        runtime: SolverRuntime,
+        domain_name: Optional[str] = None,
+        ctx: Optional[Context] = None,
     ) -> tuple[Any, Any]:
         """Execute the registered execution graph step.
 
-        Any ``BaseConfig``-annotated parameter in the callback signature
-        is type-injected from ``runtime.config``.
+        Any ``BaseConfig``-annotated parameter in the callback signature is
+        type-injected from ``runtime.config``; a ``Context``-annotated parameter
+        is injected with the live ``ctx`` (so the step can reach the built models
+        without the runtime holding a long-lived reference to the context).
         """
         if self._execution_graph_func is None:
             raise RuntimeError(
@@ -284,6 +289,10 @@ class SolverSpec:
             kwargs["self"] = runtime
         if "domain_name" in sig.parameters:
             kwargs["domain_name"] = domain_name
+
+        for name, param in sig.parameters.items():
+            if param.annotation is Context:
+                kwargs[name] = ctx
 
         for cfg_meta in _discover_configs_from_signature(self._execution_graph_func):
             kwargs[cfg_meta["param_name"]] = _find_config_by_type(

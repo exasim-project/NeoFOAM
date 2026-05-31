@@ -63,7 +63,11 @@ def build(config: WriteControlConfig) -> list[InitStep]:
 
 
 # -- operation: write on write steps --------------------------------------
-@fieldWriter.operation(depends_on=["turbulence_correction"])
+# Stepped last in the solver's time loop, so builder-insertion order already
+# places it after every field-mutating op (pressure-velocity, viscosity and
+# turbulence correction); no explicit ``depends_on`` is needed and a generic
+# writer must not name a specific solver's correction op.
+@fieldWriter.operation()
 def write_output(self: Any, ctx: Context) -> None:
     """Write the flagged fields on write steps; optionally report step timing.
 

@@ -27,6 +27,10 @@ def test_config_classes_is_case_free() -> None:
     names = {c.__name__ for c in classes}
     # Solver-core configs.
     assert {"ControlDictConfig", "TransportPropertiesConfig"} <= names
+    # The fluid-property models are part of the schema: viscosity model
+    # selection lives in constant/transportProperties (TransportPropertiesConfig,
+    # asserted above), turbulence model selection in constant/turbulenceProperties.
+    assert "TurbulencePropertiesConfig" in names
     # PIMPLE fvSchemes / fvSolution slices (per-spec subclass names).
     assert any("fvSchemes" in n for n in names)
     assert any("fvSolution" in n for n in names)

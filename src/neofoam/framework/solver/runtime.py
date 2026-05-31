@@ -85,10 +85,15 @@ class SolverRuntime:
         return self.spec._run_initialize(self)
 
     def execution_graph(
-        self, domain_name: Optional[str] = None
+        self, domain_name: Optional[str] = None, ctx: Optional["Context"] = None
     ) -> tuple["StepBuilder", "OperationCollection"]:
-        """Execute the registered execution graph step."""
-        return self.spec._run_execution_graph(self, domain_name)
+        """Execute the registered execution graph step.
+
+        ``ctx`` (the initialized :class:`Context`) is forwarded so a step that
+        declares a ``Context`` parameter can reach the built models; it is passed
+        transiently, never stored on the runtime.
+        """
+        return self.spec._run_execution_graph(self, domain_name, ctx)
 
     @property
     def operations(self) -> "OperationCollection":
