@@ -5,17 +5,17 @@
 from neofoam.framework.context import Context
 
 
-def test_context_defaults():
+def test_context_defaults() -> None:
     ctx = Context(fields={}, models={})
 
     assert ctx.fields == {}
     assert ctx.models == {}
     assert ctx.mesh is None
-    assert ctx.runtime is None
+    assert ctx.time is None
 
 
-def test_context_runtime_attribute():
+def test_context_time_attribute() -> None:
     sentinel = object()
-    ctx = Context(fields={}, models={}, runtime=sentinel)
+    ctx = Context(fields={}, models={}, time=sentinel)
 
-    assert ctx.runtime is sentinel
+    assert ctx.time is sentinel

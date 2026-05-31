@@ -36,8 +36,8 @@ specific entry from it. Two examples from
     # from incompressibleFluid.py
     @incompressibleFluid.operation()
     def increment_time(self: Any, ctx: Context) -> None:
-        Info(f"Time = {ctx.runtime.timeName()}")
-        ctx.runtime.increment()
+        Info(f"Time = {ctx.time.timeName()}")
+        ctx.time.increment()
 
     # from models/pressure_velocity/pimpleAlgorithm.py
     @pimple.operation(operation_number="2.1")
@@ -61,7 +61,7 @@ specific entry from it. Two examples from
 Two ways of touching the Context show up here:
 
 - **Direct read** — ``increment_time`` takes ``ctx: Context`` and
-  reaches into ``ctx.runtime`` to ask the OpenFOAM runtime for the
+  reaches into ``ctx.time`` to ask the OpenFOAM runtime for the
   current time and to advance it.
 - **Parameter injection** — ``momentum`` doesn't take ``ctx`` at all.
   The framework inspects the function signature and fills each

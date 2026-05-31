@@ -44,19 +44,48 @@ from neofoam.framework.initialization.init_step import InitStep
             lambda c: c.mesh == "m",
         ),
         (
-            [InitResult("runtime", "resource", "r")],
-            lambda c: c.runtime == "r",
+            [InitResult("time", "resource", "r")],
+            lambda c: c.time == "r",
         ),
         (
             [InitResult("custom", "resource", "c")],
             lambda c: c.models == {"custom": "c"},
         ),
+        (
+            [InitResult("_foam_time", "resource", "hidden")],
+            lambda c: c.models == {} and c.time is None,
+        ),
     ],
-    ids=["fields", "models", "operators", "mesh", "runtime", "unknown_resource"],
+    ids=[
+        "fields",
+        "models",
+        "operators",
+        "mesh",
+        "time",
+        "unknown_resource",
+        "init_only",
+    ],
 )
 def test_default_router_routing(init_results, check):
     ctx = build_context_from_results(init_results)
     assert check(ctx)
+
+
+def test_write_flag_collected_into_write_fields() -> None:
+    ctx = build_context_from_results(
+        [
+            InitResult("fields.p", "fields", "p", write=True),
+            InitResult("fields.U", "fields", "v", write=True),
+            InitResult("fields.UEqn", "fields", "m"),  # not flagged
+        ]
+    )
+    assert ctx.fields == {"p": "p", "U": "v", "UEqn": "m"}
+    assert ctx.write_fields == {"p", "U"}  # only write=True fields
+
+
+def test_write_fields_defaults_empty() -> None:
+    ctx = build_context_from_results([InitResult("fields.p", "fields", "p")])
+    assert ctx.write_fields == set()
 
 
 def test_build_context_routes_by_category():
@@ -146,7 +175,7 @@ def test_execute_initialization_end_to_end():
 def test_execute_initialization_complex():
     inits = [
         InitStep("mesh", depends_on=[], initializer=lambda _ctx: "mesh"),
-        InitStep("runtime", depends_on=[], initializer=lambda _ctx: "runtime"),
+        InitStep("time", depends_on=[], initializer=lambda _ctx: "time"),
         InitStep(
             "fields.U",
             depends_on=["mesh"],
@@ -174,7 +203,7 @@ def test_execute_initialization_complex():
     ]
     ctx = execute_initialization(inits)
     assert ctx.mesh == "mesh"
-    assert ctx.runtime == "runtime"
+    assert ctx.time == "time"
     assert len(ctx.fields) == 2
     assert len(ctx.models) == 2
 

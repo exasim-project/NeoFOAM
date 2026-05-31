@@ -3,13 +3,14 @@
 
 """Algorithm control primitives (Pydantic-validated)."""
 
-from .control import (
+from .solution_loop.control import (
     BooleanFlagCondition,
     IterationCountCondition,
     PimpleControl,
     ResidualConvergenceCondition,
     SimpleControl,
     SingleIterationCondition,
+    SolutionControl,
 )
 
 __all__ = [
@@ -19,4 +20,5 @@ __all__ = [
     "ResidualConvergenceCondition",
     "SimpleControl",
     "SingleIterationCondition",
+    "SolutionControl",
 ]

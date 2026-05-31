@@ -463,3 +463,63 @@ class SimpleControl(BaseModel):
         self._inner_loop_open = True
         self._non_ortho.reset()
         self._iteration_count = 0
+
+
+class SolutionControl(BaseModel):
+    """Outer solution-loop control — *separate* from the algorithm controls.
+
+    Owns the outer-loop predicate (advance time, end on convergence); the
+    corrector-loop structure stays in :class:`PimpleControl` / :class:`SimpleControl`.
+    Mirrors ``Foam::solutionControl`` + ``simpleControl::loop()``.
+
+    ``residualControl`` empty  ⇒ transient: never ends early, runs to ``endTime``.
+    ``residualControl`` set    ⇒ steady: ends the run once every field's residual
+    drops below its tolerance (``endTime`` is then the iteration cap).
+    """
+
+    model_config = {"arbitrary_types_allowed": True}
+
+    residualControl: dict[str, float] = Field(
+        default_factory=dict,
+        description="Field tolerance mapping for outer convergence (empty = transient)",
+    )
+
+    _residual_check: Optional[ResidualConvergenceCondition] = None
+    _residuals: dict[str, float] = {}
+
+    def model_post_init(self, __context: Any) -> None:
+        self._residuals = {}
+        self._residual_check = ResidualConvergenceCondition(
+            residualControl=self.residualControl
+        )
+        # feed the residual check from the residuals the solver publishes
+        # (replaces the placeholder that always returned 1.0 = never converged)
+        self._residual_check._get_residual = lambda _ctx, field: self._residuals.get(
+            field, 1.0
+        )
+
+    def store_residual(self, field: str, initial_residual: float) -> None:
+        """Publish the initial residual of ``field`` for convergence checking."""
+        self._residuals[field] = float(initial_residual)
+
+    def converged(self) -> bool:
+        """True once every ``residualControl`` field is below tolerance."""
+        assert self._residual_check is not None
+        self._residual_check(None)  # recompute from stored residuals
+        return self._residual_check.converged()
+
+    def run(self, loop: Any) -> bool:
+        """Outer-loop predicate: govern advancement only.
+
+        End the run on convergence (stop advancing), otherwise report whether
+        there are more steps. It never writes — persisting fields is the
+        ``WriteControl``'s responsibility — so ``stop()`` here means "end the
+        run", not OpenFOAM's ``writeAndEnd``.
+
+        ``SolutionLoop.running()`` calls this once per step, passing the loop
+        itself (which exposes ``run()``/``stop()`` over its ``LoopState``):
+        ``return self._control.run(self)``.
+        """
+        if self.converged():
+            loop.stop()  # end the run (no write)
+        return bool(loop.run())

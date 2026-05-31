@@ -45,6 +45,7 @@ def execute_lazy_inits(
                 name=lazy_init.name,
                 category=lazy_init.category,
                 value=obj,
+                write=lazy_init.write,
             )
         )
 

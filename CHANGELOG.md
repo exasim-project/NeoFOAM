@@ -11,6 +11,7 @@
 - Refactor graph and init package  [#284](https://github.com/exasim-project/NeoFOAM/pull/284)
 - Replace Model/Solver/Simulation with Spec/Runtime architecture [#285](https://github.com/exasim-project/NeoFOAM/pull/285)
 - Add incompressibleFluid solver [#299](https://github.com/exasim-project/NeoFOAM/pull/299)
+- added solutionLoop and Writer [#309](https://github.com/exasim-project/NeoFOAM/pull/309)
 
 ## Fixes
 - Fix spurious bad_any_cast errors when reading fixedValue boundaries [#194](https://github.com/exasim-project/NeoFOAM/pull/194)

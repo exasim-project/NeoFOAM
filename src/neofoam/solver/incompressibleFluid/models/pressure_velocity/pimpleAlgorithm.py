@@ -112,9 +112,9 @@ def build(self: Any) -> list[Any]:
         return {"pRefCell": pRefCell, "pRefValue": pRefValue}
 
     init_steps = [
-        field("p", create_p, depends_on=["mesh"]),
-        field("U", create_U, depends_on=["mesh"]),
-        field("phi", create_phi, depends_on=["fields.U"]),
+        field("p", create_p, depends_on=["mesh"], write=True),
+        field("U", create_U, depends_on=["mesh"], write=True),
+        field("phi", create_phi, depends_on=["fields.U"], write=True),
         model("pimple_control", create_pimple_control, depends_on=["mesh"]),
         model("cumulativeContErr", create_cumulative_cont_err),
     ]
