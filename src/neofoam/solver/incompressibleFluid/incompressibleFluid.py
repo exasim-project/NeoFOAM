@@ -69,6 +69,7 @@ def initialize(
 @incompressibleFluid.execution_graph_step
 def execution_graph(
     self: Any,
+    ctx: Context,
     domain_name: Optional[str] = None,
 ) -> tuple[StepBuilder, Operations]:
     """Build the time-loop + PIMPLE inner-loop execution graph."""
@@ -88,17 +89,36 @@ def execution_graph(
         metadata=OperationMetadata(op_name="time_loop"),
     )
 
+    # The fluid-property models own their operations and the solver steps them
+    # explicitly into their predict/correct slots. ``viscousStress.update``
+    # refreshes ``nuEff`` *before* the pressure-velocity loop (predict, reading
+    # nu/nut); the viscosity and momentum-transport models *correct* their fields
+    # *after* the loop (the OpenFOAM fallback runs the model's correct there;
+    # constant native closures contribute no correct op).
+    stress_ops = ctx.models["viscousStress"].operations
+    turbulence_ops = ctx.models["turbulence"].operations
+    viscosity_ops = ctx.models["viscosity"].operations
+
     with builder.loop(time_loop_op) as time_builder:
         time_builder.step(ops["set_time_step"])
         time_builder.step(ops["increment_time"])
+
+        for op in stress_ops:  # predict: refresh nuEff before the loop
+            time_builder.step(op)
 
         with time_builder.loop(algo_ops["inner_loop"]) as inner_builder:
             inner_builder.step(algo_ops["momentum"])
             inner_builder.step(algo_ops["continuity"])
 
+        for op in turbulence_ops:  # correct after the pressure-velocity loop
+            time_builder.step(op)
+        for op in viscosity_ops:
+            time_builder.step(op)
+
         time_builder.step(ops["write_output"])
 
-    # Collect operations from optional models (empty by default).
+    # Optional-model operations are merged by the resolver (placed by their own
+    # depends_on / operation_number).
     model_ops = Operations()
     for opt in self.state.optional_models:
         model_ops.add(opt.operations)
@@ -136,14 +156,7 @@ def run(
 
         Info("Starting time loop")
 
-        builder, model_ops = solver.execution_graph()
-
-        # The viscosity and momentum-transport core models own their Context
-        # fields (nu, nut) and update them through their own operations; merge
-        # those into the graph (each is numbered to run before the momentum
-        # predictor). Done here, where the built models are reachable on ctx.
-        for model_name in ("viscosity", "turbulence"):
-            model_ops.add(ctx.models[model_name].operations)
+        builder, model_ops = solver.execution_graph(ctx=ctx)
 
         resolver = DAGResolver()
         resolved = resolver.resolve(builder, model_ops)

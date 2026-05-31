@@ -1,13 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Tests for the native ``Newtonian`` viscosity model — operation + config.
+"""Tests for the native ``Newtonian`` viscosity model — build + config.
 
-The model owns the molecular viscosity field ``nu``: it is built the way the
-solver builds it (selected from its case) and its operation is run to publish
-``fields.nu``, exactly as the solver merges the model's operations into the DAG.
-Expected values come from the case's ``expected.yaml`` — never a fabricated
-constructor argument.
+The model owns the molecular viscosity field ``nu``. For a Newtonian fluid ``nu``
+is a constant, registered once at BUILD by the solver's ``create_fields`` from
+``transportProperties``, so the model contributes **no per-step operation**. It is
+built the way the solver builds it (selected from its case); the constant-``nu``
+value is exercised end-to-end by ``test_laminar_comparison``. Config expectations
+come from the case's ``expected.yaml`` — never a fabricated constructor argument.
 """
 
 from pathlib import Path
@@ -15,20 +16,19 @@ from pathlib import Path
 from neofoam.framework.model import ModelRuntime
 from neofoam.viscosity.config import TransportPropertiesConfig
 
-from viscosity.conftest import build_as_solver, case_for, run_field_ops
+from viscosity.conftest import build_as_solver, case_for
 
 #: Point the Newtonian model at the case the solver would feed it.
 NEWTONIAN = case_for("Newtonian")
 
 
-# --- model owns + updates its nu field, run as the solver runs it ---
+# --- model is built as a runtime; nu is a build-time constant (no step op) ---
 def test_model_is_a_runtime() -> None:
     assert isinstance(build_as_solver(NEWTONIAN), ModelRuntime)
 
 
-def test_update_nu_publishes_field_from_dict() -> None:
-    fields = run_field_ops(build_as_solver(NEWTONIAN))
-    assert fields["nu"].value() == NEWTONIAN.model["nu"]
+def test_contributes_no_step_operation() -> None:
+    assert list(build_as_solver(NEWTONIAN).operations) == []
 
 
 # --- config: the model's own config loads, validates, and round-trips ---

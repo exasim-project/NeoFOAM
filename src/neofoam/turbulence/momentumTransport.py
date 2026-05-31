@@ -4,12 +4,12 @@
 """Momentum-transport plugin interface + the one small read interface.
 
 A momentum-transport model contributes ``divDevReff(U)`` — the divergence of the
-deviatoric momentum stress. It owns the eddy viscosity ``nut`` (a Context field
-it registers/updates via its operations) and **defines how its stress is
-assembled**: each model registers a stress computer via
-:func:`register_momentum_stress`, so a linear closure reuses
-:func:`~neofoam.turbulence.stress.linear_viscous_stress` while a non-linear /
-viscoelastic model registers its own — the choice stays with the model.
+deviatoric momentum stress — and **defines which stress it uses**: each concrete
+model returns its own viscous-stress object from :meth:`viscous_stress`. The
+family interface :class:`momentumTransportModel` and the wrapper
+:class:`SpecMomentumTransport` are only *dispatchers* — they select / forward to
+the concrete model (laminar, kEpsilon, …, or the OpenFOAM fallback), they do not
+decide the stress themselves.
 
 The name follows OpenFOAM-13's ``momentumTransportModel``: it covers laminar,
 RAS and LES under one honest umbrella and composes with rheology through the same
@@ -17,63 +17,55 @@ RAS and LES under one honest umbrella and composes with rheology through the sam
 
 Native models register here via ``Model("name").register_with(momentumTransportModel)``.
 There is **no per-model class**: a model is a :class:`ModelSpec` + config +
-operations + a registered stress computer. :class:`SpecMomentumTransport` is the
-single small read interface the solver consumes; it dispatches ``divDevReff`` to
-the model's registered stress.
+operations. :class:`SpecMomentumTransport` is the single small read interface the
+solver consumes for native models; the OpenFOAM fallback
+(:class:`~neofoam.turbulence.fallback.OpenFOAMTurbulenceModel`) is a peer model
+with the same interface, so the solver treats both uniformly.
 """
 
-from typing import Any, Callable, Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel
 
 from neofoam.core.plugin_system import PluginSystem
 from neofoam.framework.model import Model, ModelRuntime, ModelSpec  # noqa: F401
 
+from .stress import LinearViscousStress
+
 __all__ = [
     "momentumTransportModel",
     "SpecMomentumTransport",
-    "register_momentum_stress",
     "Model",
     "ModelRuntime",
     "ModelSpec",
 ]
 
-#: Stress computers, registered by each model (keyed by spec name). The model
-#: decides *how* ``divDevReff(U, nu, nut)`` is built; this keeps that swappable.
-_STRESS: dict[str, Callable[..., Any]] = {}
-
-
-def register_momentum_stress(spec: ModelSpec, stress: Callable[..., Any]) -> ModelSpec:
-    """Register the stress computer a momentum-transport model dispatches to.
-
-    Called by the model module; ``stress(U, nu, nut)`` returns the momentum
-    stress matrix term. Returns ``spec`` for chaining.
-    """
-    _STRESS[spec.name] = stress
-    return spec
-
 
 class SpecMomentumTransport:
-    """The one small read interface: dispatches ``divDevReff`` to the model.
+    """A native momentum-transport model placed at ``models.turbulence``.
 
-    Built (in ``create_fields``) from a momentum-transport ``ModelRuntime``. The
-    molecular ``nu`` and eddy ``nut`` are Context fields passed in by the
-    momentum operation; this object only routes ``divDevReff`` to the model's
-    registered stress computer and exposes the model's operations for the DAG.
+    Built (in ``create_fields``) from a momentum-transport ``ModelRuntime``. It
+    owns the eddy viscosity ``nut`` through the runtime's operations and
+    **defines its momentum stress** via :meth:`viscous_stress`: native linear
+    closures (laminar, kEpsilon, kOmegaSST, Smagorinsky, …) use the linear
+    eddy-viscosity assembly (``nuEff = nu + nut``). A non-linear / viscoelastic
+    native model would override this to return its own stress.
     """
+
+    #: Descriptive tag for the stress family this model uses.
+    stress_kind = "linear"
 
     def __init__(self, runtime: ModelRuntime) -> None:
         self._runtime = runtime
-        self._stress = _STRESS[runtime.spec.name]
-
-    def divDevReff(self, U: Any, nu: Any, nut: Any) -> Any:
-        """Momentum stress term — assembled by the model's stress computer."""
-        return self._stress(U, nu, nut)
 
     @property
     def operations(self) -> Any:
         """The model's ``@spec.operation``s, for the solver to merge into its DAG."""
         return self._runtime.operations
+
+    def viscous_stress(self) -> LinearViscousStress:
+        """The stress this model uses — the linear eddy-viscosity assembly."""
+        return LinearViscousStress()
 
 
 @PluginSystem.register(discriminator_variable="model", discriminator="model_type")

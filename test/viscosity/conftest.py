@@ -99,20 +99,6 @@ def build_as_solver(case: Case) -> Any:
     return selected
 
 
-def run_field_ops(model: Any) -> dict[str, Any]:
-    """Run a model's operations against a fresh Context; return ``ctx.fields``.
-
-    Materialises the fields the model owns (e.g. ``nu``) the way the solver does
-    when it merges the model's operations into the execution graph.
-    """
-    from neofoam.framework.context import Context
-
-    ctx = Context(fields={}, models={})
-    for op in model.operations:
-        op.run(ctx)
-    return ctx.fields
-
-
 def assert_selection(selected: Any, case: Case) -> None:
     """Assert ``selected`` matches the case manifest's ``selection`` block."""
     resolves_to = case.selection["resolves_to"]

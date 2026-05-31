@@ -3,53 +3,39 @@
 
 """Tests for the native ``laminar`` momentum-transport model.
 
-The model owns the eddy-viscosity field ``nut`` (registered/updated by its
-operation) and registers the stress computer the small read interface dispatches
-to. It is built the way the solver builds it (selected from its case, wrapped by
-``SpecMomentumTransport``); expected values come from the case's ``expected.yaml``.
-The viscous-stress assembly itself is exercised end-to-end by
-``test_laminar_comparison``.
+The model owns the eddy-viscosity field ``nut`` — but for laminar flow ``nut`` is
+a constant zero, registered once at BUILD by the solver's ``create_fields``, so
+the model contributes **no per-step operation**. It declares the ``stress_kind``
+the ``viscousStress`` dispatch keys off. It is built the way the solver builds it
+(selected from its case, wrapped by ``SpecMomentumTransport``); expected values
+come from the case's ``expected.yaml``. The constant-``nut`` value and the stress
+assembly are exercised end-to-end by ``test_laminar_comparison``.
 """
 
 from typing import Any
 
-import pytest
-
-from neofoam.turbulence.base import TurbulenceModel
 from neofoam.turbulence.config import TurbulencePropertiesConfig
-from neofoam.turbulence.momentumTransport import _STRESS
-from neofoam.turbulence.stress import linear_viscous_stress
+from neofoam.turbulence.stress import LinearViscousStress
 
-from turbulence.conftest import build_as_solver, case_for, run_field_ops
+from turbulence.conftest import build_as_solver, case_for
 
 #: Point the laminar model at the case the solver would feed it.
 LAMINAR = case_for("laminar")
 
 
-# --- model owns + updates its nut field, run as the solver runs it ---
-def test_update_nut_publishes_zero_field() -> None:
-    fields = run_field_ops(build_as_solver(LAMINAR))
-    assert fields["nut"].value() == LAMINAR.model["nut"]
+# --- nut is a build-time constant, so the model adds no per-step operation ---
+def test_contributes_no_step_operation() -> None:
+    assert list(build_as_solver(LAMINAR).operations) == []
 
 
-# --- the model registers / dispatches its own stress computer ---
-def test_registers_linear_viscous_stress() -> None:
-    assert _STRESS["laminar"] is linear_viscous_stress
+# --- the model itself defines the (linear) stress it uses ---
+def test_stress_kind_is_linear() -> None:
+    assert build_as_solver(LAMINAR).stress_kind == "linear"
 
 
-def test_divDevReff_dispatches_to_registered_stress(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """divDevReff routes to the model's registered stress computer."""
-    sentinel = object()
-    monkeypatch.setitem(_STRESS, "laminar", lambda U, nu, nut: sentinel)
-    model = build_as_solver(LAMINAR)
-    assert model.divDevReff("U", "nu", "nut") is sentinel
-
-
-def test_satisfies_turbulence_protocol() -> None:
-    model: Any = build_as_solver(LAMINAR)
-    assert isinstance(model, TurbulenceModel)
+def test_model_defines_linear_viscous_stress() -> None:
+    stress = build_as_solver(LAMINAR).viscous_stress()
+    assert isinstance(stress, LinearViscousStress)
 
 
 # --- config: the model's own config loads, validates, and round-trips ---

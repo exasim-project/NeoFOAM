@@ -3,36 +3,40 @@
 
 """Native momentum-transport model: ``laminar`` (no turbulence).
 
-``laminar`` is a :class:`ModelSpec` + config + **one operation** + a registered
-stress computer — no class. It owns the eddy-viscosity field ``nut``: the model
-registers/updates it in the Context through :func:`update_nut`, which writes
-``fields.nut`` (a constant zero — laminar flow has no turbulence). It also
-**registers how its momentum stress is built** — the shared linear
-(Boussinesq) :func:`~neofoam.turbulence.stress.linear_viscous_stress`; a RAS/LES
-or non-linear model would register a different stress computer and add its own
-k/ε/ω transport operations.
+``laminar`` is a :class:`ModelSpec` + config — no class. Laminar flow has no eddy
+viscosity, so the model registers **no ``nut`` field** and contributes **no
+correct operation**. What it *does* define is **which stress the momentum equation
+uses**: its ``@build`` registers the ``viscousStress`` model — here the linear
+(Boussinesq) eddy-viscosity assembly ``LinearViscousStress`` (``nuEff = nu + nut``;
+an absent ``nut`` means ``nuEff = nu``). A RAS/LES closure is the same shape but
+additionally registers ``nut`` and a k/ε/ω ``correct`` operation, and a non-linear
+closure registers a different stress here — the choice stays with the model.
 """
 
 from typing import Any
 
-from neofoam.framework.context import FieldUpdates
-from neofoam.viscosity.io import dimensioned_viscosity
+from neofoam.framework.initialization import model
 
 from ..config import TurbulencePropertiesConfig
-from ..momentumTransport import Model, momentumTransportModel, register_momentum_stress
-from ..stress import linear_viscous_stress
+from ..momentumTransport import Model, momentumTransportModel
+from ..stress import LinearViscousStress
 
 __all__ = ["laminar"]
 
 laminar = Model("laminar").register_with(momentumTransportModel)
 laminar.config(TurbulencePropertiesConfig)
 
-# The model dispatches its stress computer — laminar reuses the shared linear
-# (Boussinesq) assembly. A different closure registers a different function here.
-register_momentum_stress(laminar, linear_viscous_stress)
 
+@laminar.build
+def build(config: TurbulencePropertiesConfig) -> list[Any]:
+    """Register the ``viscousStress`` that computes the momentum stress term.
 
-@laminar.operation(operation_number="2.0")  # runs before the momentum predictor
-def update_nut(self: Any) -> FieldUpdates:
-    """Create / update the eddy-viscosity field ``fields.nut`` (zero for laminar)."""
-    return FieldUpdates({"nut": dimensioned_viscosity("nut", 0.0)})
+    laminar dispatches the linear eddy-viscosity assembly; the solver runs this
+    through ``ModelRuntime.run_build()`` and merges the step, so ``divDevReff`` is
+    the model's decision, not the solver's.
+    """
+
+    def create_viscous_stress(_ctx: dict[str, Any]) -> Any:
+        return LinearViscousStress()
+
+    return [model("viscousStress", create_viscous_stress)]

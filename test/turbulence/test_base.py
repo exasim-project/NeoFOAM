@@ -1,36 +1,28 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Tests for the ``TurbulenceModel`` Protocol surface (cross-model).
+"""Tests for the ``ViscousStress`` Protocol — the surface momentum consumes.
 
-Each native model is built the way the solver builds it (from the case), then
-checked for protocol conformance — no hand-injected constructor args.
+The momentum equation calls ``viscousStress.divDevReff(U)``; the native linear
+assembly and the OpenFOAM-fallback delegate both satisfy this Protocol.
 """
 
 from typing import Any
 
-import pytest
-
-from neofoam.turbulence.base import TurbulenceModel
-
-from turbulence.conftest import CASES, Case, build_as_solver
-
-NATIVE_CASES = [c for c in CASES if c.selection["resolves_to"] == "native"]
+from neofoam.turbulence import LinearViscousStress
+from neofoam.turbulence.base import ViscousStress
 
 
-@pytest.mark.parametrize("case", NATIVE_CASES, ids=lambda c: c.name)
-def test_model_built_as_solver_satisfies_protocol(case: Case) -> None:
-    assert isinstance(build_as_solver(case), TurbulenceModel)
+def test_linear_viscous_stress_satisfies_protocol() -> None:
+    stress: Any = LinearViscousStress()
+    assert isinstance(stress, ViscousStress)
 
 
-def test_incomplete_class_is_not_a_turbulence_model() -> None:
+def test_incomplete_class_is_not_a_viscous_stress() -> None:
     class Incomplete:
-        def nut(self) -> Any:
-            return 0.0
+        def update(self, ctx: Any) -> None:
+            return None
 
-        def nu(self) -> Any:
-            return 0.0
+        # missing divDevReff
 
-        # missing divDevReff and correct
-
-    assert not isinstance(Incomplete(), TurbulenceModel)
+    assert not isinstance(Incomplete(), ViscousStress)

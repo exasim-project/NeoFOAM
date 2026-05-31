@@ -14,6 +14,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from neofoam.turbulence.fallback import OpenFOAMTurbulenceModel
+from neofoam.turbulence.stress import OpenFOAMStress
 
 
 def test_fallback_calls_injected_factory_with_fields() -> None:
@@ -39,6 +40,20 @@ def test_fallback_delegates_to_impl() -> None:
     assert model.nu() == "nu"
     model.correct()
     impl.correct.assert_called_once_with()
+
+
+def test_fallback_defines_openfoam_stress() -> None:
+    # The fallback is a peer model that defines its own stress, delegating
+    # divDevReff to the wrapped pybFoam model.
+    impl = MagicMock()
+    impl.divDevReff.return_value = "div"
+    model = OpenFOAMTurbulenceModel("U", "phi", "transport", factory=lambda *a: impl)
+    model.build()
+
+    stress = model.viscous_stress()
+    assert isinstance(stress, OpenFOAMStress)
+    assert stress.divDevReff("U") == "div"
+    impl.divDevReff.assert_called_once_with("U")
 
 
 def test_use_before_build_raises() -> None:

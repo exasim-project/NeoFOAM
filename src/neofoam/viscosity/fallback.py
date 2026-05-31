@@ -15,7 +15,7 @@ pybFoam is imported lazily, so importing this module needs no OpenFOAM build.
 
 from typing import Any, Callable, Optional
 
-from neofoam.framework.context import FieldUpdates
+from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.dependency_resolver import (
     DependencyResolver,
     wrap_with_dependency_resolution,
@@ -73,6 +73,17 @@ class OpenFOAMViscosityModel:
     def nu(self) -> Any:
         return self._require_impl().nu()
 
+    def nu_field(self) -> Any:
+        """Materialise the transport's ``nu`` as the Context field the model owns.
+
+        The pybFoam ``nu()`` is a ``tmp``; it is copied into a concrete
+        ``volScalarField`` named ``nu`` so the held Context field outlives the
+        ``tmp`` (a retained ``tmp`` would be use-after-free).
+        """
+        import pybFoam
+
+        return pybFoam.volScalarField(pybFoam.Word("nu"), self.nu())
+
     def correct(self) -> None:
         self._require_impl().correct()
 
@@ -80,13 +91,16 @@ class OpenFOAMViscosityModel:
     def operations(self) -> list[Operation]:
         """One operation advancing a rate-dependent transport model after coupling.
 
-        The OpenFOAM transport owns its viscosity; ``correct()`` runs after the
-        pressure-velocity coupling (after ``continuity``).
+        ``correct()`` runs after the pressure-velocity coupling (after
+        ``continuity``). It resolves the model from the :class:`Context` at run
+        time rather than closing over the pybFoam transport, so the mesh-bound
+        object is not captured into the execution-graph reference cycle (which
+        would leave it as cyclic garbage freed at an unsafe time during a later
+        in-process run).
         """
-        impl = self._require_impl()
 
-        def correct() -> FieldUpdates:
-            impl.correct()
+        def correct(ctx: Context) -> FieldUpdates:
+            ctx.models["viscosity"].correct()
             return FieldUpdates({})
 
         return [
@@ -94,8 +108,6 @@ class OpenFOAMViscosityModel:
                 func=SequentialOp(
                     wrap_with_dependency_resolution(correct, None, DependencyResolver())
                 ),
-                metadata=OperationMetadata(
-                    op_name="of_correct_viscosity", depends_on=["continuity"]
-                ),
+                metadata=OperationMetadata(op_name="of_correct_viscosity"),
             ),
         ]

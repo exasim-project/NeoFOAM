@@ -1,26 +1,26 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""``TurbulenceModel`` Protocol — the one small read interface the solver uses.
+"""``ViscousStress`` Protocol — the stress object the momentum equation calls.
 
-The momentum-transport model the solver consumes exposes a single method: the
-deviatoric momentum-stress term ``divDevReff(U, nu, nut)``. The molecular ``nu``
-and eddy ``nut`` viscosities are Context fields the viscosity and turbulence
-models own (registered/updated by their operations); the model only assembles
-the stress from them. Field updates are operations, so there is no ``correct``.
+The momentum predictor consumes a single collaborator: the ``viscousStress`` at
+``models.viscousStress``. It exposes ``divDevReff(U)`` — the deviatoric momentum
+stress term — built from the effective viscosity it refreshed (from ``nu`` and
+``nut``) in its ``update`` operation before the loop. Both the native linear
+assembly and the OpenFOAM-fallback delegate implement this surface.
 
 Pure-Python; no pybFoam import.
 """
 
 from typing import Any, Protocol, runtime_checkable
 
-__all__ = ["TurbulenceModel"]
+__all__ = ["ViscousStress"]
 
 
 @runtime_checkable
-class TurbulenceModel(Protocol):
-    """Minimal momentum-transport surface used by the incompressible solver."""
+class ViscousStress(Protocol):
+    """Minimal momentum-stress surface the incompressible solver consumes."""
 
-    def divDevReff(self, U: Any, nu: Any, nut: Any) -> Any:
-        """Deviatoric momentum-stress divergence, built from ``nu`` and ``nut``."""
+    def divDevReff(self, U: Any) -> Any:
+        """Deviatoric momentum-stress divergence for the momentum equation."""
         ...
