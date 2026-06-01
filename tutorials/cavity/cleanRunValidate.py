@@ -138,6 +138,7 @@ def run_case(case_path: Path, preset: str = "develop", mode: str = "serial") -> 
                               stdout=neo_log, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         logger.error("neoIcoFoam failed.")
+        print(e)
         sys.exit(e.returncode)
     finally:
         neo_log.close()
