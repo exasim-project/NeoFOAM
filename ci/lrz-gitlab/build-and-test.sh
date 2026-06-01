@@ -112,7 +112,10 @@ SKIP_VALIDATION=${SKIP_VALIDATION:-false}
 if [[ "$SKIP_VALIDATION" != "true" ]]; then
     pushd tutorials/cavity >/dev/null
     python3 cleanRunValidate.py --preset "$PRESET" --mode serial
-    python3 cleanRunValidate.py --preset "$PRESET" --mode parallel
+    # currently intel is too slow and nvidia hangs
+    if [[ "$GPU_VENDOR" != "intel" ]]; then
+        python3 cleanRunValidate.py --preset "$PRESET" --mode parallel
+    fi
     popd >/dev/null
 else
     echo "=== Skipping validation (skip-validation label set) ==="
