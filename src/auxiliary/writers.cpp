@@ -126,4 +126,68 @@ void write(const fvcc::VolumeField<NeoN::Vec3>& volField, const Foam::fvMesh& me
     foamField.write();
 }
 
+void write(const fvcc::SurfaceField<NeoN::scalar>& surfField, const Foam::fvMesh& mesh)
+{
+    Foam::surfaceScalarField foamField(
+        Foam::IOobject(
+            surfField.name,
+            mesh.time().timeName(),
+            mesh,
+            Foam::IOobject::NO_READ,
+            Foam::IOobject::AUTO_WRITE
+        ),
+        mesh,
+        Foam::dimensionedScalar(Foam::dimless, Foam::Zero)
+    );
+    // split storage: internalVector() is nInternalFaces; primitiveFieldRef() is the same size
+    detail::copyImpl(surfField.internalVector(), foamField.primitiveFieldRef());
+
+    auto hostBCValue = surfField.boundaryData().value().copyToHost();
+
+    forAll(foamField.boundaryField(), patchi)
+    {
+        auto& foamFieldPatch = foamField.boundaryFieldRef()[patchi];
+        auto [start, end] = surfField.boundaryData().range(patchi);
+
+        forAll(foamFieldPatch, bfacei)
+        {
+            foamFieldPatch[bfacei] = hostBCValue.view()[start + bfacei];
+        }
+    }
+    foamField.write();
+}
+
+void write(const fvcc::SurfaceField<NeoN::Vec3>& surfField, const Foam::fvMesh& mesh)
+{
+    Foam::surfaceVectorField foamField(
+        Foam::IOobject(
+            surfField.name,
+            mesh.time().timeName(),
+            mesh,
+            Foam::IOobject::NO_READ,
+            Foam::IOobject::AUTO_WRITE
+        ),
+        mesh,
+        Foam::dimensionedVector(Foam::dimless, Foam::Zero)
+    );
+    // split storage: internalVector() is nInternalFaces; primitiveFieldRef() is the same size
+    detail::copyImpl(surfField.internalVector(), foamField.primitiveFieldRef());
+
+    auto hostBCValue = surfField.boundaryData().value().copyToHost();
+
+    forAll(foamField.boundaryField(), patchi)
+    {
+        auto& foamFieldPatch = foamField.boundaryFieldRef()[patchi];
+        auto [start, end] = surfField.boundaryData().range(patchi);
+
+        forAll(foamFieldPatch, bfacei)
+        {
+            foamFieldPatch[bfacei][0] = hostBCValue.view()[start + bfacei][0];
+            foamFieldPatch[bfacei][1] = hostBCValue.view()[start + bfacei][1];
+            foamFieldPatch[bfacei][2] = hostBCValue.view()[start + bfacei][2];
+        }
+    }
+    foamField.write();
+}
+
 }
