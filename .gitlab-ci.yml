@@ -37,7 +37,7 @@
 # ============================================================
 #  Common OpenFOAM environment setup
 # ============================================================
-.openfoam-env-setup-nvidia-amd:
+.openfoam-env-setup:
   before_script:
     - |
         case "$GPU_VENDOR" in
@@ -48,14 +48,10 @@
             ;;
         esac
 
-.openfoam-env-setup-intel:
-  before_script:
-    - |
-        case "$GPU_VENDOR" in
           intel)
             echo "Running Intel oneAPI + OpenFOAM environment setup"
             source /opt/intel/oneapi/setvars.sh --force
-            eval "$(bash -c 'source /opt/openfoam/OpenFOAM-v2412/etc/bashrc >/dev/null 2>&1; export -p')"
+            eval "$(bash -c 'source $FOAM_INST_DIR/OpenFOAM-v2412/etc/bashrc >/dev/null 2>&1; export -p')"
             ;;
         esac
 
@@ -151,21 +147,21 @@ build-test-neofoam-nvidia:
   extends:
     - .gpu-nvidia
     - .rules-neofoam-testing
-    - .openfoam-env-setup-nvidia-amd
+    - .openfoam-env-setup
     - .build-and-test
 
 build-test-neofoam-amd:
   extends:
     - .gpu-amd
     - .rules-neofoam-testing
-    - .openfoam-env-setup-nvidia-amd
+    - .openfoam-env-setup
     - .build-and-test
 
 build-test-neofoam-intel:
   extends:
     - .gpu-intel
     - .rules-neofoam-testing
-    - .openfoam-env-setup-intel
+    - .openfoam-env-setup
     - .build-and-test
 
 # ============================================================
@@ -175,21 +171,21 @@ benchmark-neofoam-nvidia:
   extends:
     - .gpu-nvidia
     - .rules-neofoam-benchmarking
-    - .openfoam-env-setup-nvidia-amd
+    - .openfoam-env-setup
     - .benchmark
 
 benchmark-neofoam-amd:
   extends:
     - .gpu-amd
     - .rules-neofoam-benchmarking
-    - .openfoam-env-setup-nvidia-amd
+    - .openfoam-env-setup
     - .benchmark
 
 benchmark-neofoam-intel:
   extends:
     - .gpu-intel
     - .rules-neofoam-benchmarking
-    - .openfoam-env-setup-intel
+    - .openfoam-env-setup
     - .benchmark
 
 # ============================================================
@@ -199,19 +195,19 @@ build-test-from-neon-nvidia:
   extends:
     - .gpu-nvidia
     - .rules-neon-testing
-    - .openfoam-env-setup-nvidia-amd
+    - .openfoam-env-setup
     - .build-and-test
 
 build-test-from-neon-amd:
   extends:
     - .gpu-amd
     - .rules-neon-testing
-    - .openfoam-env-setup-nvidia-amd
+    - .openfoam-env-setup
     - .build-and-test
 
 build-test-from-neon-intel:
   extends:
     - .gpu-intel
     - .rules-neon-testing
-    - .openfoam-env-setup-intel
+    - .openfoam-env-setup
     - .build-and-test
