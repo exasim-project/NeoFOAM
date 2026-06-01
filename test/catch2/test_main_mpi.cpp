@@ -72,8 +72,7 @@ int main(int argc, char* argv[])
                 {
                     std::cerr << "decomposePar failed (rc=" << rc << "); see log.decomposePar\n";
                     std::ifstream f("log.decomposePar");
-                    if (f.is_open())
-                        std::cout << f.rdbuf();
+                    if (f.is_open()) std::cout << f.rdbuf();
                     MPI_Abort(MPI_COMM_WORLD, 1);
                 }
             }
