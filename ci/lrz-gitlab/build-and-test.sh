@@ -112,7 +112,7 @@ SKIP_VALIDATION=${SKIP_VALIDATION:-false}
 if [[ "$SKIP_VALIDATION" != "true" ]]; then
     pushd tutorials/cavity >/dev/null
     python3 cleanRunValidate.py --preset "$PRESET" --mode serial
-    python3 cleanRunValidate.py --preset "$PRESET" --mode distributed
+    python3 cleanRunValidate.py --preset "$PRESET" --mode parallel
     popd >/dev/null
 else
     echo "=== Skipping validation (skip-validation label set) ==="
