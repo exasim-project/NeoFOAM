@@ -18,7 +18,7 @@ dependencies = [
     "numpy",
     "matplotlib",
     "foamlib",
-    "pybFoam>=0.4.3",
+    "pybFoam>=0.4.4",
     "typer",
     "pydantic>=2.0.0",
     "networkx>=3.0",
@@ -71,8 +71,13 @@ docs = [
     # tutorials 02 and 03.
     "imageio",
 ]
+agent = [
+    # OpenAI-compatible client (local Ollama, OpenAI-style endpoints) plus the
+    # Anthropic backend for hosted Claude models (e.g. Haiku).
+    "pydantic-ai-slim[openai,anthropic]>=0.0.40",
+]
 all = [
-    "neofoam[dev,docs]",
+    "neofoam[dev,docs,agent]",
 ]
 
 [project.scripts]

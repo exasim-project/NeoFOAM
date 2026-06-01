@@ -24,20 +24,29 @@ def collect_config_classes(sources: Iterable[Any]) -> list[type]:
 
     Each source may be a ``BaseConfig`` **subclass** (taken as-is), a
     ``BaseConfig`` **instance** (its class), or a model **spec / runtime**
-    exposing ``_config_classes`` (declared classes) and/or ``configs``
-    (loaded instances). Specs are duck-typed, so this works without
-    importing the framework. Results are deduped by identity and
-    order-preserved.
+    exposing ``_config_classes`` (declared classes), ``_field_decls``
+    (declared on-disk fields — surfaced via
+    :func:`neofoam.fields.schema.schema_for`), and/or ``configs`` (loaded
+    instances). Specs are duck-typed, so this works without importing
+    the framework. Results are deduped by identity and order-preserved.
 
     This is the schema set an agent fills and :func:`save_configs` writes
     to scaffold a case — it surfaces classes a model declares even when
-    their instances are never loaded.
+    their instances are never loaded, including the synthesised per-field
+    schemas that pin the ``0/<name>`` files.
     """
     seen: list[type] = []
 
     def _add(cls: Any) -> None:
         if isinstance(cls, type) and issubclass(cls, BaseConfig) and cls not in seen:
             seen.append(cls)
+
+    # Local import: ``fields.schema`` depends on ``io.base`` (BaseConfig)
+    # and ``io.decorator`` (IOStrategy), so a module-level import here
+    # closes a cycle. The lazy resolution costs one ``import`` per
+    # ``collect_config_classes`` call, but only the first hit pays — the
+    # second call sees ``sys.modules`` already populated.
+    from neofoam.fields.schema import schema_for
 
     for source in sources:
         if isinstance(source, type):
@@ -51,6 +60,10 @@ def collect_config_classes(sources: Iterable[Any]) -> list[type]:
         spec = getattr(source, "spec", source)
         for declared in getattr(spec, "_config_classes", []) or []:
             _add(declared)
+        # Field declarations synthesise to per-field schemas. Cached on
+        # the decl object so the same call here returns the same class.
+        for decl in getattr(spec, "_field_decls", []) or []:
+            _add(schema_for(decl))
         for instance in getattr(source, "configs", []):
             _add(type(instance))
     return seen
