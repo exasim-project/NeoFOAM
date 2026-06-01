@@ -38,52 +38,15 @@
 #  Common OpenFOAM environment setup
 # ============================================================
 .openfoam-env-setup-nvidia-amd:
-  variables:
-    WM_PROJECT: OpenFOAM
-    WM_OPTIONS: linux64GccDPInt32Opt
-    WM_COMPILER_TYPE: system
-    WM_COMPILER: Gcc
-    WM_PRECISION_OPTION: DP
-    WM_LABEL_SIZE: 32
-    WM_COMPILE_OPTION: Opt
-    WM_OSTYPE: POSIX
-    WM_ARCH: linux64
-    WM_ARCH_OPTION: 64
-    WM_LINK_LANGUAGE: c++
-    WM_LABEL_OPTION: Int32
-    WM_MPLIB: SYSTEMOPENMPI
-    MPI_BUFFER_SIZE: 20000000
-
-    FOAM_ETC: "$FOAM_INST_DIR/$WM_PROJECT-$WM_PROJECT_VERSION/etc"
-    FOAM_SRC: "$FOAM_INST_DIR/$WM_PROJECT-$WM_PROJECT_VERSION/src"
-    FOAM_LIBBIN: "$FOAM_INST_DIR/$WM_PROJECT-$WM_PROJECT_VERSION/platforms/$WM_OPTIONS/lib"
-    FOAM_APPBIN: "$FOAM_INST_DIR/$WM_PROJECT-$WM_PROJECT_VERSION/platforms/$WM_OPTIONS/bin"
-    WM_PROJECT_DIR: "$FOAM_INST_DIR/$WM_PROJECT-$WM_PROJECT_VERSION"
-    WM_THIRD_PARTY_DIR: "$FOAM_INST_DIR/ThirdParty-v2412"
-
   before_script:
     - |
         case "$GPU_VENDOR" in
           nvidia|amd)
             echo "Running AMD/NVIDIA OpenFOAM environment setup"
             echo "Looking for mpi support in LIBBIN"
-            echo $WM_THIRD_PARTY_DIR
-            export PATH="$FOAM_APPBIN:$PATH"
-            export FOAM_MPI=sys-openmpi #$(basename $(dirname $(find $FOAM_LIBBIN/sys-openmpi -name libPstream.so | head -n1)))
-            echo "Detected FOAM_MPI=$FOAM_MPI"
-            export LD_LIBRARY_PATH="$FOAM_LIBBIN:$FOAM_LIBBIN/$FOAM_MPI:$LD_LIBRARY_PATH"
-            export CMAKE_LIBRARY_PATH="$FOAM_LIBBIN:$FOAM_LIBBIN/$FOAM_MPI:$CMAKE_LIBRARY_PATH"
-            export MANPATH="$FOAM_ETC/man:$MANPATH"
+            eval "$(bash -c 'source $FOAM_INST_DIR/OpenFOAM-v2412/etc/bashrc >/dev/null 2>&1; export -p')"
             ;;
         esac
-
-    # Debugging info
-    - echo "GPU_VENDOR=$GPU_VENDOR"
-    - echo "PATH=$PATH"
-    - echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
-    - echo "CMAKE_LIBRARY_PATH=$CMAKE_LIBRARY_PATH"
-    - which simpleFoam || echo "simpleFoam not found!"
-    - find $FOAM_LIBBIN -name "libPstream.so"
 
 .openfoam-env-setup-intel:
   before_script:
