@@ -130,7 +130,7 @@ def run_case(case_path: Path, preset: str = "develop", mode: str = "serial") -> 
     logger.info("Running neoIcoFoam")
     try:
         if mode == "parallel":
-            run_args = ["mpirun", "-n", "3", str(solver), "-parallel"]
+            run_args = ["mpirun", "-n", "4", str(solver), "-parallel"]
         else:
             run_args = [str(solver)]
 
