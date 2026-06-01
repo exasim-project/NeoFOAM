@@ -126,6 +126,7 @@ def test_case_spec_to_configs_filters_none_and_preserves_order() -> None:
 # Roundtrip via the OpenFOAM IO strategy
 # ---------------------------------------------------------------------------
 
+
 def test_load_case_from_disk_reads_every_present_config(tmp_path: Path) -> None:
     """``load_case_from_disk`` materialises the configs whose schemas match.
 
@@ -149,7 +150,6 @@ def test_load_case_from_disk_reads_every_present_config(tmp_path: Path) -> None:
     assert spec.turbulence_properties_config.RAS is not None
     assert spec.turbulence_properties_config.RAS.RASModel == "SpalartAllmaras"
     assert (spec.control_dict_config.endTime or 0.0) > 0.0
-
 
 
 def test_save_case_writes_files_via_registered_io_strategies(tmp_path: Path) -> None:
@@ -191,7 +191,6 @@ def test_save_case_writes_files_via_registered_io_strategies(tmp_path: Path) -> 
 # ---------------------------------------------------------------------------
 # End-to-end: a filled case runs the solver
 # ---------------------------------------------------------------------------
-
 
 
 def test_fill_case_no_llm_produces_a_runnable_case(tmp_path: Path) -> None:
@@ -250,7 +249,6 @@ def test_fill_case_no_llm_produces_a_runnable_case(tmp_path: Path) -> None:
         d.name for d in filled.iterdir() if d.is_dir() and d.name[0].isdigit()
     )
     assert len(time_dirs) >= 2, f"only saw time dirs {time_dirs}"
-
 
 
 def test_cli_agent_fill_no_llm(tmp_path: Path) -> None:
