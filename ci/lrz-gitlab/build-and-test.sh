@@ -19,6 +19,9 @@ cmake --version
 mpirun --version
 g++ --version || clang++ --version
 
+# use host buffer since no gpu aware mpi is available
+export NEON_FORCE_HOST_BUFFER=1
+
 if [[ "$GPU_VENDOR" == "nvidia" ]]; then
     echo "=== NVIDIA GPU info ==="
     nvidia-smi --query-gpu=gpu_name,memory.total,driver_version --format=csv
