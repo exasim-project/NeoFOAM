@@ -20,12 +20,11 @@ from typing import Annotated, Any, Protocol
 
 import pybFoam as pyf
 from pybFoam import fvm, surfaceScalarField, volScalarField
-from pydantic import Field
 
 from neofoam.foam import fvSchemes, fvSolution
 from neofoam.framework.context import FieldUpdates
 from neofoam.framework.initialization import ConfigContext, field
-from neofoam.io import BaseConfig
+from neofoam.io import OF, BaseConfig, IOStrategy
 
 from .incompressibleFluidModel import Model, incompressibleFluidModel
 
@@ -36,11 +35,12 @@ class ThermalTurbulenceModel(Protocol):
     def nu(self) -> Any: ...
 
 
+@IOStrategy(OF("constant/transportProperties"))
 class BoussinesqConfig(BaseConfig):
     beta: float
     TRef: float
-    Pr: float = Field(default=0.7, gt=0)
-    Prt: float = Field(default=0.85, gt=0)
+    Pr: float
+    Prt: float
     hRef: float = 0.0
 
 
