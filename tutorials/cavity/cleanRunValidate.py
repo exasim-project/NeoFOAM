@@ -142,6 +142,17 @@ def run_case(case_path: Path, preset: str = "develop", mode: str = "serial") -> 
         sys.exit(e.returncode)
     finally:
         neo_log.close()
+    if mode == "parallel":
+        reconstruct_log = open(case_path / "log.reconstructPar", "w")
+        logger.info("Running recontsructPar")
+        try:
+            subprocess.check_call(["reconstructPar"], cwd=case_path,
+                                  stdout=reconstruct_log, stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as e:
+            logger.error("reconstructPar failed.")
+            sys.exit(e.returncode)
+        finally:
+            reconstruct_log.close()
 
     logger.info("Allrun completed.")
 
