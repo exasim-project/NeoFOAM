@@ -207,56 +207,78 @@ void updateCriteria(NeoN::Dictionary& solverDict)
 namespace
 {
 
-// Build an OpenFOAM-style "preconditioner+solver" label (e.g. "DICPCG") from the
-// ORIGINAL OpenFOAM solver dictionary, before it is rewritten to Ginkgo names.
-std::string openFoamSolverLabel(const NeoN::Dictionary& solverDict)
+// Strip a Ginkgo "namespace::Name" identifier down to "Name" (e.g.
+// "solver::Cg" -> "Cg", "preconditioner::Ic" -> "Ic").
+std::string stripNamespace(const std::string& s)
 {
-    std::string solver =
-        solverDict.contains("solver") ? solverDict.get<std::string>("solver") : "unknown";
-
-    std::string precond;
-    // A dict-valued preconditioner is a user-provided Ginkgo config; leave it out
-    // of the short label. "none" and the smoother-only case have no preconditioner.
-    if (solverDict.contains("preconditioner") && !solverDict.isDict("preconditioner"))
-    {
-        const std::string& p = solverDict.get<std::string>("preconditioner");
-        if (p != "none") precond = p;
-    }
-    return precond + solver; // OpenFOAM prints the preconditioner first, e.g. DICPCG
+    const auto pos = s.rfind("::");
+    return pos == std::string::npos ? s : s.substr(pos + 2);
 }
 
-// Report the selected solver+preconditioner once, at setup time (rank-aware
-// logger), so it never touches the per-solve hot path.
-void reportSolverSelection(const NeoN::Dictionary& solverDict, const std::string& fieldName)
+// Build a label from the Ginkgo solver/preconditioner ACTUALLY selected after
+// mapping (e.g. "Ic+Cg", or "Schwarz(Ic)+Cg" for a distributed run). Reads the
+// post-mapping dictionary, so it reflects exactly what NeoN/Ginkgo will run.
+std::string ginkgoSolverLabel(const NeoN::Dictionary& mapped)
 {
-    const std::string forField = fieldName.empty() ? "" : fmt::format(" for {}", fieldName);
-    if (solverDict.contains("configFile"))
+    if (mapped.contains("configFile")) return "configFile";
+
+    std::string solver =
+        mapped.contains("type") ? stripNamespace(mapped.get<std::string>("type")) : "Ginkgo";
+
+    std::string precond;
+    if (mapped.contains("preconditioner"))
     {
-        NeoN::Logging::info(
-            "Selecting linear solver{}: Ginkgo config file {}",
-            forField,
-            solverDict.get<std::string>("configFile")
-        );
-        return;
+        if (mapped.isDict("preconditioner"))
+        {
+            const NeoN::Dictionary& pd = mapped.subDict("preconditioner");
+            if (pd.contains("type"))
+            {
+                const std::string ptype = pd.get<std::string>("type");
+                precond = stripNamespace(ptype);
+                // Unwrap the additive-Schwarz local solver so the meaningful
+                // per-rank preconditioner is visible in distributed runs.
+                if (ptype == "preconditioner::Schwarz" && pd.contains("local_solver")
+                    && pd.isDict("local_solver"))
+                {
+                    const NeoN::Dictionary& ld = pd.subDict("local_solver");
+                    if (ld.contains("type"))
+                        precond += "(" + stripNamespace(ld.get<std::string>("type")) + ")";
+                }
+            }
+        }
+        else
+        {
+            precond = stripNamespace(mapped.get<std::string>("preconditioner"));
+        }
     }
-    NeoN::Logging::info("Selecting linear solver{}: {}", forField, openFoamSolverLabel(solverDict));
+    return precond.empty() ? solver : precond + "+" + solver;
 }
 
 } // namespace
 
 NeoN::Dictionary mapFvSolution(const NeoN::Dictionary& solverDict, const std::string& fieldName)
 {
+    (void)fieldName; // residual reporting uses the field name carried by the solver
     NeoN::Dictionary modSolverDict = solverDict;
 
-    reportSolverSelection(solverDict, fieldName);
+    if (solverDict.contains("configFile"))
+    {
+        modSolverDict.insert("reportName", std::string("configFile"));
+        return modSolverDict;
+    }
 
-    if (solverDict.contains("configFile")) return solverDict;
     NeoN::Logging::warn("Mapping OpenFOAM solver settings to NeoN settings.\n"
                         "Currently, it is advisable to specify a configFile\n"
                         "for fine grained Ginkgo solver control\n");
     updateSolver(modSolverDict);
     updatePreconditioner(modSolverDict);
     updateCriteria(modSolverDict);
+
+    // Stash the Ginkgo solver/preconditioner label (e.g. "Ic+Cg") that fvSolution
+    // mapped to, for the per-solve residual report. Read from the post-mapping
+    // dict so it reflects what Ginkgo runs; the Ginkgo backend's parse() ignores
+    // this meta key. Computed once here -> no per-solve / hot-path cost.
+    modSolverDict.insert("reportName", ginkgoSolverLabel(modSolverDict));
 
     return modSolverDict;
 }
