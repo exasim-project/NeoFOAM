@@ -39,7 +39,7 @@ TEST_CASE("Julia Momentum")
     float epsilon = 1e-32;
     Foam::Time& runTime = *timePtr;
     // auto [execName, exec] = GENERATE(allAvailableExecutor());
-    auto exec = NeoN::SerialExecutor {};
+    auto exec = NeoN::GPUExecutor {};
     std::cout << "exec: " << exec.name() << std::endl;
     auto path = fmt::format(
 		fmt::runtime("include(\"{}\")"),
@@ -171,7 +171,6 @@ TEST_CASE("Julia Momentum")
                 std::chrono::duration_cast<std::chrono::microseconds>(endj2 - beginj2).count()
             ); 
             std::cout << result << std::endl;
-
         }
         // juliaUEqn_f.juliaFaceBased(faceFlux, phi, gamma);
         // auto jcv = jlsCellBased.matrix().values().view();

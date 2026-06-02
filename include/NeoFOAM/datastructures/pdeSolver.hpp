@@ -138,7 +138,7 @@ public:
     LinearSystem& assemble()
     {
         expr_.assemble(runTime_.t, runTime_.dt, ls_);
-        auto v = ls_.matrix().values().view();
+        // auto v = ls_.matrix().values().view();
         // auto rhs = ls_.rhs().view();
         // auto bRhs = ls_.boundaryRhs().view();
         // auto bValues = ls_.boundaryMatrix().values().view();
@@ -226,6 +226,7 @@ public:
         const auto& mesh = phi.mesh();
         const auto nInternalFaces = mesh.nInternalFaces();
         const auto nBoundaryFaces = mesh.nBoundaryFaces();
+        const auto nTotalFaces = nInternalFaces + nBoundaryFaces;
         auto fusedOPString = expr_.juliaOP();
 
         auto deltaCoeffs = NeoN::Vector<double>(ls_.exec(), nInternalFaces);
@@ -311,41 +312,52 @@ public:
         // vec3<double>
         auto refValue = phi.boundaryData().refValue().juliaPtr();
         size_t nbinputs = 27;
-
-        jl_value_t* args[nbinputs] = {
-            jl_box_int32(iterator->size()),
-            jowners,
-            cellFacesSegments,
-            diagOffs,
-            rowOffs,
-            cellFacesValues,
-            faceSignV,
-            valPtr,
-            jl_cstr_to_string(fusedOPString.c_str()),
-            ifaceFluxV,
-            bfaceFluxV,
-            iGamma,
-            bGamma,
-            ideltaCoeffs,
-            bdeltaCoeffs,
-            matrixColumnIdxV,
-            magFaceAreas,
-            valueFraction,
-            boundaryFaceOwners,
-            bValues,
-            bRhs,
-            vol,
-            oldVector,
-            refValue,
-            refGrad,
-            rhsPtr,
-            jl_box_float64(runTime_.dt)
-        };
+        if (useGPU)
+        {            
+            nbinputs += 2;
+        }
+        jl_value_t* args[nbinputs];
+        args[0] =  jl_box_int32(iterator->size());
+        args[1] =  (jl_value_t*)jowners;
+        args[2] =  (jl_value_t*)cellFacesSegments;
+        args[3] =  (jl_value_t*)diagOffs;
+        args[4] =  (jl_value_t*)rowOffs;
+        args[5] =  (jl_value_t*)cellFacesValues;
+        args[6] =  (jl_value_t*)faceSignV;
+        args[7] =  (jl_value_t*)valPtr;
+        args[8] =  jl_cstr_to_string(fusedOPString.c_str());
+        args[9] =  (jl_value_t*)ifaceFluxV;
+        args[10] = (jl_value_t*)bfaceFluxV;
+        args[11] = (jl_value_t*)iGamma;
+        args[12] = (jl_value_t*)bGamma;
+        args[13] = (jl_value_t*)ideltaCoeffs;
+        args[14] = (jl_value_t*)bdeltaCoeffs;
+        args[15] = (jl_value_t*)matrixColumnIdxV;
+        args[16] = (jl_value_t*)magFaceAreas;
+        args[17] = (jl_value_t*)valueFraction;
+        args[18] = (jl_value_t*)boundaryFaceOwners;
+        args[19] = (jl_value_t*)bValues;
+        args[20] = (jl_value_t*)bRhs;
+        args[21] = (jl_value_t*)vol;
+        args[22] = (jl_value_t*)oldVector;
+        args[23] = (jl_value_t*)refValue;
+        args[24] = (jl_value_t*)refGrad;
+        args[25] = (jl_value_t*)rhsPtr;
+        args[26] = jl_box_float64(runTime_.dt);
+        if (useGPU){
+            args[27] = jl_box_int32(nInternalFaces);
+            args[28] = jl_box_int32(nTotalFaces);
+        }         
         jl_module_t* mod = (jl_module_t*)jl_eval_string("MinimalFVM");
+		auto funcName = useGPU ? "cellBased_gpu" : "cellBased_";
 
-        jl_function_t* func = jl_get_function(mod, "cellBased_");
+        jl_function_t* func = jl_get_function(mod, funcName);
 
         jl_call(func, args, nbinputs);
+        auto va = ls_.matrix().values();
+        auto cpu = NeoN::CPUExecutor {};
+        auto cpuarr = va.copyToExecutor(cpu);
+        auto v = cpuarr.view();
         // auto v = ls_.matrix().values().view();
         // std::cout << "JULIA CELLBASED values: " << std::endl;
         // std::cout << v[0] << std::endl;
@@ -496,14 +508,14 @@ public:
 		auto funcName = useGPU ? "assemble_gpu" : "assemble";
         jl_function_t* func = jl_get_function(mod, funcName);
         jl_call(func, args, nbinputs);
-        auto v = ls_.matrix().values().view();
-        std::cout << "JULIA FACEBASED values: " << std::endl;
-        std::cout << v[0] << std::endl;
-        std::cout << v[1] << std::endl;
-        std::cout << v[2] << std::endl;
-        std::cout << v[3] << std::endl;
-        std::cout << v[4] << std::endl;
-        std::cout << v[v.size()-1] << std::endl;
+        // auto v = ls_.matrix().values().view();
+        // std::cout << "JULIA FACEBASED values: " << std::endl;
+        // std::cout << v[0] << std::endl;
+        // std::cout << v[1] << std::endl;
+        // std::cout << v[2] << std::endl;
+        // std::cout << v[3] << std::endl;
+        // std::cout << v[4] << std::endl;
+        // std::cout << v[v.size()-1] << std::endl;
         if (jl_exception_occurred())
         {
             const char* p = jl_string_ptr(
