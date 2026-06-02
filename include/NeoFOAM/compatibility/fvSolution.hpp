@@ -7,6 +7,8 @@
  */
 #pragma once
 
+#include <string>
+
 #include "NeoN/core/dictionary.hpp"
 
 
@@ -17,6 +19,13 @@ void updateSolver(NeoN::Dictionary& solverDict);
 
 void updatePreconditioner(NeoN::Dictionary& solverDict);
 
-NeoN::Dictionary mapFvSolution(const NeoN::Dictionary& solverDict);
+/* @brief Map an OpenFOAM fvSolution sub-dictionary to NeoN/Ginkgo settings.
+ *
+ * @param solverDict  The OpenFOAM solver sub-dictionary (e.g. solvers/p).
+ * @param fieldName   Optional field name, used only for an OpenFOAM-style
+ *                    "preconditioner+solver" report logged once at setup
+ *                    (e.g. "DICPCG"). No effect on the returned dictionary.
+ */
+NeoN::Dictionary mapFvSolution(const NeoN::Dictionary& solverDict, const std::string& fieldName = "");
 
 } // namespace NeoFOAM

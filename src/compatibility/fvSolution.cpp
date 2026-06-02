@@ -204,9 +204,51 @@ void updateCriteria(NeoN::Dictionary& solverDict)
 }
 
 
-NeoN::Dictionary mapFvSolution(const NeoN::Dictionary& solverDict)
+namespace
+{
+
+// Build an OpenFOAM-style "preconditioner+solver" label (e.g. "DICPCG") from the
+// ORIGINAL OpenFOAM solver dictionary, before it is rewritten to Ginkgo names.
+std::string openFoamSolverLabel(const NeoN::Dictionary& solverDict)
+{
+    std::string solver =
+        solverDict.contains("solver") ? solverDict.get<std::string>("solver") : "unknown";
+
+    std::string precond;
+    // A dict-valued preconditioner is a user-provided Ginkgo config; leave it out
+    // of the short label. "none" and the smoother-only case have no preconditioner.
+    if (solverDict.contains("preconditioner") && !solverDict.isDict("preconditioner"))
+    {
+        const std::string& p = solverDict.get<std::string>("preconditioner");
+        if (p != "none") precond = p;
+    }
+    return precond + solver; // OpenFOAM prints the preconditioner first, e.g. DICPCG
+}
+
+// Report the selected solver+preconditioner once, at setup time (rank-aware
+// logger), so it never touches the per-solve hot path.
+void reportSolverSelection(const NeoN::Dictionary& solverDict, const std::string& fieldName)
+{
+    const std::string forField = fieldName.empty() ? "" : fmt::format(" for {}", fieldName);
+    if (solverDict.contains("configFile"))
+    {
+        NeoN::Logging::info(
+            "Selecting linear solver{}: Ginkgo config file {}",
+            forField,
+            solverDict.get<std::string>("configFile")
+        );
+        return;
+    }
+    NeoN::Logging::info("Selecting linear solver{}: {}", forField, openFoamSolverLabel(solverDict));
+}
+
+} // namespace
+
+NeoN::Dictionary mapFvSolution(const NeoN::Dictionary& solverDict, const std::string& fieldName)
 {
     NeoN::Dictionary modSolverDict = solverDict;
+
+    reportSolverSelection(solverDict, fieldName);
 
     if (solverDict.contains("configFile")) return solverDict;
     NeoN::Logging::warn("Mapping OpenFOAM solver settings to NeoN settings.\n"

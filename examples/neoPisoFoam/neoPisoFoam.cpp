@@ -30,12 +30,14 @@ namespace nf = NeoFOAM;
 
 int main(int argc, char* argv[])
 {
-    NeoN::initialize(argc, argv);
-    {
+// Initialize OpenFOAM (and thereby MPI) BEFORE NeoN so that NeoN::initialize
+// sees an initialized MPI environment and mutes logging on non-root ranks
+// (and maps Kokkos device ids by mpi_rank). Mirrors neoIcoFoam ordering.
 #include "addCheckCaseOptions.H"
 #include "setRootCase.H"
 #include "createTime.H"
-
+    NeoN::initialize(argc, argv);
+    {
         auto rt = nf::createAdapterRunTime(runTime);
         auto& mesh = rt.mesh;
 
@@ -44,9 +46,9 @@ int main(int argc, char* argv[])
 #include "createFields.H"
 
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
-        solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
-        solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
-        solverDict.subDict("nuTilda") = nf::mapFvSolution(solverDict.subDict("nuTilda"));
+        solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"), "p");
+        solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"), "U");
+        solverDict.subDict("nuTilda") = nf::mapFvSolution(solverDict.subDict("nuTilda"), "nuTilda");
         auto& schemesDict = rt.fvSchemesDict;
         schemesDict = nf::mapFvSchemes(rt.fvSchemesDict);
 
