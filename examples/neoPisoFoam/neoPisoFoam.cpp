@@ -30,14 +30,12 @@ namespace nf = NeoFOAM;
 
 int main(int argc, char* argv[])
 {
-// Initialize OpenFOAM (and thereby MPI) BEFORE NeoN so that NeoN::initialize
-// sees an initialized MPI environment and mutes logging on non-root ranks
-// (and maps Kokkos device ids by mpi_rank). Mirrors neoIcoFoam ordering.
+    NeoN::initialize(argc, argv);
+    {
 #include "addCheckCaseOptions.H"
 #include "setRootCase.H"
 #include "createTime.H"
-    NeoN::initialize(argc, argv);
-    {
+
         auto rt = nf::createAdapterRunTime(runTime);
         auto& mesh = rt.mesh;
 
