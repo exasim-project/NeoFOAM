@@ -95,6 +95,9 @@ Classes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:ab22c992a83b56863da9f7862060adfd0" id="r_ab22c992a83b56863da9f7862060adfd0"><td class="memItemLeft" align="right" valign="top">NeoN::scalar&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM_1_1detail.html#ab22c992a83b56863da9f7862060adfd0">tokenAsScalar</a> (const NeoN::TokenList &amp;tokenList, std::size_t idx)</td></tr>
+<tr class="memdesc:ab22c992a83b56863da9f7862060adfd0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Promote a single TokenList entry to a NeoN::scalar regardless of whether OpenFOAM's lexer classified it as a SCALAR (double) or a LABEL (int).  <br /></td></tr>
+<tr class="separator:ab22c992a83b56863da9f7862060adfd0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaf277cdfa64f90d5470e3b9d751249af" id="r_aaf277cdfa64f90d5470e3b9d751249af"><td class="memTemplParams" colspan="2">template&lt;class SrcField , class DestField &gt; </td></tr>
 <tr class="memitem:aaf277cdfa64f90d5470e3b9d751249af"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM_1_1detail.html#aaf277cdfa64f90d5470e3b9d751249af">copyImpl</a> (const SrcField &amp;src, DestField &amp;dest)</td></tr>
 <tr class="separator:aaf277cdfa64f90d5470e3b9d751249af"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -138,6 +141,47 @@ template&lt;class SrcField , class DestField &gt; </div>
 </div><div class="memdoc">
 
 <p class="definition">Definition at line <a class="el" href="writers_8hpp_source.html#l00023">23</a> of file <a class="el" href="writers_8hpp_source.html">writers.hpp</a>.</p>
+
+</div>
+</div>
+<a id="ab22c992a83b56863da9f7862060adfd0" name="ab22c992a83b56863da9f7862060adfd0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab22c992a83b56863da9f7862060adfd0">&#9670;&#160;</a></span>tokenAsScalar()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">NeoN::scalar NeoFOAM::detail::tokenAsScalar </td>
+          <td>(</td>
+          <td class="paramtype">const NeoN::TokenList &amp;&#160;</td>
+          <td class="paramname"><em>tokenList</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::size_t&#160;</td>
+          <td class="paramname"><em>idx</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Promote a single TokenList entry to a NeoN::scalar regardless of whether OpenFOAM's lexer classified it as a SCALAR (double) or a LABEL (int). </p>
+<p>OpenFOAM tokenizes numeric primitives per token: a literal with a decimal point (e.g. <code>0.1</code>) becomes a SCALAR while a bare integer (e.g. <code>0</code>) becomes a LABEL. The components of a single vector value can therefore have different stored types — <code>uniform (0.1 0 0)</code> yields [scalar, label, label]. A strict <code>TokenList::get&lt;NeoN::scalar&gt;</code> throws <code>bad_any_cast</code> on the label components, so each component must be probed and promoted independently. </p>
+
+<p class="definition">Definition at line <a class="el" href="readers_8hpp_source.html#l00035">35</a> of file <a class="el" href="readers_8hpp_source.html">readers.hpp</a>.</p>
 
 </div>
 </div>
