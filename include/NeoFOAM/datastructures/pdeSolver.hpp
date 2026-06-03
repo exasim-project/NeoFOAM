@@ -153,16 +153,7 @@ public:
         // NF_ASSERT(ls.exec() == solution.exec(), "Executors are not the same");
         auto stats = solver.solve(ls, psi_.internalVector());
 
-        for (auto& stat : stats.entries)
-        {
-            NeoN::Logging::info(
-                "Solving for {} Initial residual: {} Final residual: {} No Iterations: {}",
-                psi_.name,
-                stat.initResNorm,
-                stat.finalResNorm,
-                stat.numIter
-            );
-        }
+        reportSolverStats(stats, fvSolution);
         return stats;
     }
 
@@ -205,21 +196,49 @@ public:
         auto solver = NeoN::la::Solver(psi_.exec(), fieldSolverDict);
         auto stats = solver.solve(ls, psi_.internalVector());
 
-        for (auto& stat : stats.entries)
-        {
-            NeoN::Logging::info(
-                "Solving for {} Initial residual: {} Final residual: {} No Iterations: {}",
-                psi_.name,
-                stat.initResNorm,
-                stat.finalResNorm,
-                stat.numIter
-            );
-        }
+        reportSolverStats(stats, fieldSolverDict);
 
         return stats;
     }
 
 private:
+
+    // Per-component name (Ux/Uy/Uz) when a vector field is solved as separate
+    // component systems; the plain field name otherwise (scalar or coupled solve).
+    static std::string componentName(const std::string& base, std::size_t i, std::size_t n)
+    {
+        if (n <= 1) return base;
+        constexpr const char* suffix[3] = {"x", "y", "z"};
+        return i < 3 ? base + suffix[i] : base + "[" + std::to_string(i) + "]";
+    }
+
+    // OpenFOAM-style per-solve residual report: "<precond><solver>:  Solving for
+    // <field>, Initial residual = ..., Final residual = ..., No Iterations N".
+    // The "<precond><solver>" label (e.g. DICPCG) is read from the solver dict's
+    // reportName meta key stashed by mapFvSolution -> no recomputation per solve.
+    // Logging is rank-aware and skips formatting on muted ranks (NeoN shouldLog).
+    void reportSolverStats(
+        const NeoN::la::SolverStats& stats,
+        const NeoN::Dictionary& fieldSolverDict
+    ) const
+    {
+        const std::string label = fieldSolverDict.contains("reportName")
+                                    ? fieldSolverDict.get<std::string>("reportName")
+                                    : std::string("Ginkgo");
+        const std::size_t n = stats.entries.size();
+        for (std::size_t i = 0; i < n; ++i)
+        {
+            const auto& stat = stats.entries[i];
+            NeoN::Logging::info(
+                "{}:  Solving for {}, Initial residual = {}, Final residual = {}, No Iterations {}",
+                label,
+                componentName(psi_.name, i, n),
+                stat.initResNorm,
+                stat.finalResNorm,
+                stat.numIter
+            );
+        }
+    }
 
     VolumeField& psi_;
     dsl::Expression<ValueType> expr_;
