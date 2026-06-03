@@ -30,12 +30,13 @@ namespace nf = NeoFOAM;
 
 int main(int argc, char* argv[])
 {
-    NeoN::initialize(argc, argv);
-    {
+// Bring up OpenFOAM (and MPI) before NeoN, matching neoIcoFoam, so the rank is
+// known when NeoN configures logging and the rank-0 muting engages immediately.
 #include "addCheckCaseOptions.H"
 #include "setRootCase.H"
 #include "createTime.H"
-
+    NeoN::initialize(argc, argv);
+    {
         auto rt = nf::createAdapterRunTime(runTime);
         auto& mesh = rt.mesh;
 

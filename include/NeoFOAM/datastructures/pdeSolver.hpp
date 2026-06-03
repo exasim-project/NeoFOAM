@@ -217,8 +217,10 @@ private:
     // The "<precond><solver>" label (e.g. DICPCG) is read from the solver dict's
     // reportName meta key stashed by mapFvSolution -> no recomputation per solve.
     // Logging is rank-aware and skips formatting on muted ranks (NeoN shouldLog).
-    void reportSolverStats(const NeoN::la::SolverStats& stats, const NeoN::Dictionary& fieldSolverDict)
-        const
+    void reportSolverStats(
+        const NeoN::la::SolverStats& stats,
+        const NeoN::Dictionary& fieldSolverDict
+    ) const
     {
         const std::string label = fieldSolverDict.contains("reportName")
                                     ? fieldSolverDict.get<std::string>("reportName")
