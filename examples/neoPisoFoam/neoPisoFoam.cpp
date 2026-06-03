@@ -44,9 +44,9 @@ int main(int argc, char* argv[])
 #include "createFields.H"
 
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
-        solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"), "p");
-        solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"), "U");
-        solverDict.subDict("nuTilda") = nf::mapFvSolution(solverDict.subDict("nuTilda"), "nuTilda");
+        solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
+        solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
+        solverDict.subDict("nuTilda") = nf::mapFvSolution(solverDict.subDict("nuTilda"));
         auto& schemesDict = rt.fvSchemesDict;
         schemesDict = nf::mapFvSchemes(rt.fvSchemesDict);
 

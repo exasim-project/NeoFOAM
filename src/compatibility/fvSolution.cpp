@@ -256,9 +256,8 @@ std::string ginkgoSolverLabel(const NeoN::Dictionary& mapped)
 
 } // namespace
 
-NeoN::Dictionary mapFvSolution(const NeoN::Dictionary& solverDict, const std::string& fieldName)
+NeoN::Dictionary mapFvSolution(const NeoN::Dictionary& solverDict)
 {
-    (void)fieldName; // residual reporting uses the field name carried by the solver
     NeoN::Dictionary modSolverDict = solverDict;
 
     if (solverDict.contains("configFile"))

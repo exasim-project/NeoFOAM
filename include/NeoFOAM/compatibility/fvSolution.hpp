@@ -7,8 +7,6 @@
  */
 #pragma once
 
-#include <string>
-
 #include "NeoN/core/dictionary.hpp"
 
 
@@ -21,11 +19,12 @@ void updatePreconditioner(NeoN::Dictionary& solverDict);
 
 /* @brief Map an OpenFOAM fvSolution sub-dictionary to NeoN/Ginkgo settings.
  *
+ * The returned dictionary additionally carries a "reportName" meta key holding
+ * the Ginkgo solver/preconditioner label (e.g. "Ic+Cg") used by the per-solve
+ * residual report. The Ginkgo backend's config parser ignores that key.
+ *
  * @param solverDict  The OpenFOAM solver sub-dictionary (e.g. solvers/p).
- * @param fieldName   Optional field name, used only for an OpenFOAM-style
- *                    "preconditioner+solver" report logged once at setup
- *                    (e.g. "DICPCG"). No effect on the returned dictionary.
  */
-NeoN::Dictionary mapFvSolution(const NeoN::Dictionary& solverDict, const std::string& fieldName = "");
+NeoN::Dictionary mapFvSolution(const NeoN::Dictionary& solverDict);
 
 } // namespace NeoFOAM
