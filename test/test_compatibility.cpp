@@ -86,4 +86,38 @@ TEST_CASE("fvSolution")
             );
         }
     }
+
+    // The mapped dictionary carries a "reportName" label (Ginkgo
+    // preconditioner+solver) that the per-solve residual report prints. These
+    // run serially, so the serial (non-Schwarz) preconditioner names apply.
+    SECTION("mapFvSolution reportName")
+    {
+        SECTION("DIC + PCG -> Ic+Cg")
+        {
+            solver1.insert("solver", std::string("PCG"));
+            solver1.insert("preconditioner", std::string("DIC"));
+            auto mapped = NeoFOAM::mapFvSolution(solver1);
+            REQUIRE(mapped.get<std::string>("reportName") == "Ic+Cg");
+        }
+        SECTION("DILU + PBiCGStab -> Ilu+Bicgstab")
+        {
+            solver1.insert("solver", std::string("PBiCGStab"));
+            solver1.insert("preconditioner", std::string("DILU"));
+            auto mapped = NeoFOAM::mapFvSolution(solver1);
+            REQUIRE(mapped.get<std::string>("reportName") == "Ilu+Bicgstab");
+        }
+        SECTION("diagonal + PCG -> Jacobi+Cg")
+        {
+            solver1.insert("solver", std::string("PCG"));
+            solver1.insert("preconditioner", std::string("diagonal"));
+            auto mapped = NeoFOAM::mapFvSolution(solver1);
+            REQUIRE(mapped.get<std::string>("reportName") == "Jacobi+Cg");
+        }
+        SECTION("configFile -> configFile")
+        {
+            solver1.insert("configFile", std::string("mySolver.json"));
+            auto mapped = NeoFOAM::mapFvSolution(solver1);
+            REQUIRE(mapped.get<std::string>("reportName") == "configFile");
+        }
+    }
 }
