@@ -91,31 +91,30 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="comment"> */</span></div>
 <div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#pragma once</span></div>
 <div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;string&gt;</span></div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &quot;NeoN/core/dictionary.hpp&quot;</span></div>
 <div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span> </div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &quot;NeoN/core/dictionary.hpp&quot;</span></div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span> </div>
-<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceNeoFOAM.html">NeoFOAM</a></div>
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span>{</div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span> </div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceNeoFOAM.html">NeoFOAM</a></div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span>{</div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span> </div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#ab68574263e9c80758820191001d6d256">   16</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="namespaceNeoFOAM.html#ab68574263e9c80758820191001d6d256">updateSolver</a>(NeoN::Dictionary&amp; solverDict);</div>
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span> </div>
-<div class="line"><a id="l00018" name="l00018"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#ab68574263e9c80758820191001d6d256">   18</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="namespaceNeoFOAM.html#ab68574263e9c80758820191001d6d256">updateSolver</a>(NeoN::Dictionary&amp; solverDict);</div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#a8c1ca67d102991ab4a3c1bc3a2a8fb03">   18</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="namespaceNeoFOAM.html#a8c1ca67d102991ab4a3c1bc3a2a8fb03">updatePreconditioner</a>(NeoN::Dictionary&amp; solverDict);</div>
 <div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span> </div>
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#a8c1ca67d102991ab4a3c1bc3a2a8fb03">   20</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="namespaceNeoFOAM.html#a8c1ca67d102991ab4a3c1bc3a2a8fb03">updatePreconditioner</a>(NeoN::Dictionary&amp; solverDict);</div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span> </div>
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span><span class="comment">/* @brief Map an OpenFOAM fvSolution sub-dictionary to NeoN/Ginkgo settings.</span></div>
-<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span><span class="comment"> * @param solverDict  The OpenFOAM solver sub-dictionary (e.g. solvers/p).</span></div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span><span class="comment"> * @param fieldName   Optional field name, used only for an OpenFOAM-style</span></div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="comment"> *                    &quot;preconditioner+solver&quot; report logged once at setup</span></div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span><span class="comment"> *                    (e.g. &quot;DICPCG&quot;). No effect on the returned dictionary.</span></div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span><span class="comment"> */</span></div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#a93ef10a4b4de51e4e32c707bd2196743">   29</a></span>NeoN::Dictionary <a class="code hl_function" href="namespaceNeoFOAM.html#a93ef10a4b4de51e4e32c707bd2196743">mapFvSolution</a>(<span class="keyword">const</span> NeoN::Dictionary&amp; solverDict, <span class="keyword">const</span> std::string&amp; fieldName = <span class="stringliteral">&quot;&quot;</span>);</div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span> </div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>} <span class="comment">// namespace NeoFOAM</span></div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="comment">/* @brief Map an OpenFOAM fvSolution sub-dictionary to NeoN/Ginkgo settings.</span></div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><span class="comment"> *</span></div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span><span class="comment"> * The returned dictionary additionally carries a &quot;reportName&quot; meta key holding</span></div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span><span class="comment"> * the Ginkgo solver/preconditioner label (e.g. &quot;Ic+Cg&quot;) used by the per-solve</span></div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span><span class="comment"> * residual report. The Ginkgo backend&#39;s config parser ignores that key.</span></div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span><span class="comment"> *</span></div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="comment"> * @param solverDict  The OpenFOAM solver sub-dictionary (e.g. solvers/p).</span></div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span><span class="comment"> */</span></div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#a809d8c49b332a3c4eb473b770d901e5b">   28</a></span>NeoN::Dictionary <a class="code hl_function" href="namespaceNeoFOAM.html#a809d8c49b332a3c4eb473b770d901e5b">mapFvSolution</a>(<span class="keyword">const</span> NeoN::Dictionary&amp; solverDict);</div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span> </div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>} <span class="comment">// namespace NeoFOAM</span></div>
 <div class="ttc" id="anamespaceNeoFOAM_html"><div class="ttname"><a href="namespaceNeoFOAM.html">NeoFOAM</a></div><div class="ttdef"><b>Definition</b> <a href="pressureVelocityCoupling_8hpp_source.html#l00014">pressureVelocityCoupling.hpp:15</a></div></div>
+<div class="ttc" id="anamespaceNeoFOAM_html_a809d8c49b332a3c4eb473b770d901e5b"><div class="ttname"><a href="namespaceNeoFOAM.html#a809d8c49b332a3c4eb473b770d901e5b">NeoFOAM::mapFvSolution</a></div><div class="ttdeci">NeoN::Dictionary mapFvSolution(const NeoN::Dictionary &amp;solverDict)</div></div>
 <div class="ttc" id="anamespaceNeoFOAM_html_a8c1ca67d102991ab4a3c1bc3a2a8fb03"><div class="ttname"><a href="namespaceNeoFOAM.html#a8c1ca67d102991ab4a3c1bc3a2a8fb03">NeoFOAM::updatePreconditioner</a></div><div class="ttdeci">void updatePreconditioner(NeoN::Dictionary &amp;solverDict)</div></div>
-<div class="ttc" id="anamespaceNeoFOAM_html_a93ef10a4b4de51e4e32c707bd2196743"><div class="ttname"><a href="namespaceNeoFOAM.html#a93ef10a4b4de51e4e32c707bd2196743">NeoFOAM::mapFvSolution</a></div><div class="ttdeci">NeoN::Dictionary mapFvSolution(const NeoN::Dictionary &amp;solverDict, const std::string &amp;fieldName=&quot;&quot;)</div></div>
 <div class="ttc" id="anamespaceNeoFOAM_html_ab68574263e9c80758820191001d6d256"><div class="ttname"><a href="namespaceNeoFOAM.html#ab68574263e9c80758820191001d6d256">NeoFOAM::updateSolver</a></div><div class="ttdeci">void updateSolver(NeoN::Dictionary &amp;solverDict)</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
