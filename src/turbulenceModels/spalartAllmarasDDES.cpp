@@ -344,6 +344,18 @@ void SpalartAllmarasDDES::correct(
     );
     nuTildaEqn.solve();
 
+    // Bound nuTilda >= 0
+    {
+        auto nuTildaV = nuTilda.internalVector().view();
+        NeoN::parallelFor(
+            exec_,
+            {0, static_cast<localIdx>(nuTilda.internalVector().size())},
+            NEON_LAMBDA(const localIdx i) { nuTildaV[i] = Kokkos::max(nuTildaV[i], scalar(0)); },
+            "SA-DDES::boundNuTilda"
+        );
+        nuTilda.correctBoundaryConditions();
+    }
+
     calcNuTildaDiffusionCoeff(nuTilda, surfNu_, surfNuTilda_, nuTildaEff_);
     correctNut(nut, surfNut_, nuEff_, nuTilda, nu_, surfNu_, U, nearWallDist_);
 }
@@ -418,7 +430,6 @@ void SpalartAllmarasDDES::calcNuTildaDiffusionCoeff(
     nnfvcc::SurfaceField<scalar>& nuTildeEffF
 ) const
 {
-    nuTilde.correctBoundaryConditions();
     surfInterp_.interpolate(nuTilde, surfNuTilde);
 
     const scalar invSigmaNut = scalar(1) / coeffs_.sigmaNut;
