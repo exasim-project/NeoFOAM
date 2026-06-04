@@ -98,12 +98,15 @@ computeRAUandHByA(const PDESolver<Vec3>& expr)
             {0, nProcFaces},
             NEON_LAMBDA(const NeoN::localIdx procFacei) {
                 auto own = static_cast<std::size_t>(bfOwners[nBoundaryFaces + procFacei]);
+                // scalar off-diagonal coupling (segregated vector-solve form): the single
+                // coefficient applies to every velocity component. The future coupled Vec3
+                // matrix path would index coeff per component (coeff[0..2]).
                 auto coeff = nlValues[procFacei];
                 auto uG = uGhostV[nBoundaryFaces + procFacei];
                 auto scale = rAUV[own] / volV[own];
-                Kokkos::atomic_sub(&hByAV[own][0], coeff[0] * uG[0] * scale);
-                Kokkos::atomic_sub(&hByAV[own][1], coeff[1] * uG[1] * scale);
-                Kokkos::atomic_sub(&hByAV[own][2], coeff[2] * uG[2] * scale);
+                Kokkos::atomic_sub(&hByAV[own][0], coeff * uG[0] * scale);
+                Kokkos::atomic_sub(&hByAV[own][1], coeff * uG[1] * scale);
+                Kokkos::atomic_sub(&hByAV[own][2], coeff * uG[2] * scale);
             },
             "computeHbyAProcBoundary"
         );

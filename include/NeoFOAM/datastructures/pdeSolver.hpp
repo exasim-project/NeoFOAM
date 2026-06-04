@@ -20,11 +20,18 @@ namespace NeoFOAM
  * for dependent operations like discrete momentum fields
  * needs storage for assembled matrix? and whether update is needed like for rAU and HbyA
  */
-template<typename ValueType, typename IndexType = NeoN::localIdx>
+template<
+    typename ValueType,
+    typename MatrixValueType = NeoN::scalar,
+    typename IndexType = NeoN::localIdx>
 class PDESolver
 {
     using VolumeField = NeoN::finiteVolume::cellCentred::VolumeField<ValueType>;
-    using LinearSystem = NeoN::la::LinearSystem<ValueType>;
+    // Matrix coefficients use MatrixValueType (scalar by default, giving the segregated
+    // vector-solve form for Vec3 fields); the rhs/solution use the field's ValueType.
+    // TODO: future work selects MatrixValueType == ValueType (the coupled Vec3 matrix)
+    // based on the presence of boundary conditions that require the full block-coupled form.
+    using LinearSystem = NeoN::la::LinearSystem<MatrixValueType, ValueType>;
 
 public:
 
@@ -37,7 +44,7 @@ public:
               "linearSystem" + psi.name,
               // FIXME find a proper place
               [&psi, &runTime]()
-              { return NeoN::la::createEmptyLinearSystem<ValueType>(psi.mesh()); }
+              { return NeoN::la::createEmptyLinearSystem<MatrixValueType, ValueType>(psi.mesh()); }
           ))
     {
         expr_.read(runTime_.fvSchemesDict);
@@ -107,12 +114,11 @@ public:
      * 2. a copy of the assembled linear system is made and the rhs is assembled
      * 3. the new linear system with rhs is returned
      */
-    NeoN::la::LinearSystem<ValueType> assemble(dsl::SpatialOperator<NeoN::Vec3>&& rhs)
+    LinearSystem assemble(dsl::SpatialOperator<NeoN::Vec3>&& rhs)
     {
         auto rhsExpr = dsl::Expression<ValueType>(-1.0 * rhs);
         rhsExpr.read(runTime_.fvSchemesDict);
-        auto ls =
-            NeoN::la::LinearSystem<ValueType>(assemble()); // includes expr_'s explicit sources
+        auto ls = LinearSystem(assemble());
         rhsExpr.assembleExplicitSource(ls, psi_.mesh());
 
         return ls;
@@ -249,9 +255,9 @@ NeoN::finiteVolume::cellCentred::VolumeField<ValueType> applyOperator(
 }
 
 
-template<typename ValueType, typename IndexType = NeoN::localIdx>
+template<typename ValueType>
 NeoN::finiteVolume::cellCentred::VolumeField<ValueType> operator&(
-    const PDESolver<ValueType, IndexType> expr,
+    const PDESolver<ValueType>& expr,
     const NeoN::finiteVolume::cellCentred::VolumeField<ValueType>& psi
 )
 {

@@ -213,9 +213,11 @@ TEST_CASE("Distributed PressureVelocityCoupling")
         //     EqualsInternal(ofUEqn.diag(), ApproxVector(1e-15))
         // );
 
+        // momentum is assembled into a scalar matrix (segregated form); OpenFOAM's
+        // fvVectorMatrix upper() is likewise scalar.
         REQUIRE_THAT(
             NeoN::la::upper(nfUEqn.linearSystem().matrix()),
-            EqualsInternal(ofUEqn.upper(), ApproxVector(1e-15))
+            EqualsInternal(ofUEqn.upper(), ApproxScalar {1e-15})
         );
 
         auto [nfrAU, nfHbyA] = nf::computeRAUandHByA(nfUEqn);
