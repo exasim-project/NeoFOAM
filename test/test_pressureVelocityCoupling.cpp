@@ -98,9 +98,11 @@ TEST_CASE("PressureVelocityCoupling")
         Foam::volScalarField forAU("rAU", 1.0 / ofUEqn.A());
         nfUEqn.assemble();
 
+        // The momentum system is assembled into a scalar matrix (segregated vector-solve form),
+        // matching OpenFOAM's fvVectorMatrix whose upper()/diag() coefficients are scalar.
         REQUIRE_THAT(
             NeoN::la::upper(nfUEqn.linearSystem().matrix()),
-            EqualsInternal(ofUEqn.upper(), ApproxVector(1e-15))
+            EqualsInternal(ofUEqn.upper(), ApproxScalar {1e-15})
         );
 
         // NeoN stores boundary diagonal contributions directly in the matrix, whereas
@@ -108,7 +110,7 @@ TEST_CASE("PressureVelocityCoupling")
         // coefficients.
         REQUIRE_THAT(
             NeoN::la::removeBoundaryContributions(nfUEqn.linearSystem()).matrix().diag(),
-            EqualsInternal(ofUEqn.diag(), ApproxVector(1e-15))
+            EqualsInternal(ofUEqn.diag(), ApproxScalar {1e-15})
         );
 
         auto nfrAU = nf::computeRAU(nfUEqn);
