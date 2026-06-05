@@ -78,6 +78,23 @@ TEST_CASE("L1 scaled residual matches OpenFOAM")
         const NeoN::scalar nfInitResidual = stats.entries[0].initResNorm;
 
         REQUIRE(nfInitResidual == Catch::Approx(ofInitResidual).epsilon(1e-6).margin(1e-12));
+
+        // Dictionary form: a boolean read from a dictionary file (fvSolution) arrives as a
+        // word/string, not a bool. Enabling via "l1ScaledResidual" as a string must work
+        // identically, otherwise the feature is unreachable from case dictionaries.
+        NeoN::Dictionary solverConfigStr {
+            {{"solver", std::string {"Ginkgo"}},
+             {"type", "solver::Cg"},
+             {"l1ScaledResidual", std::string {"true"}},
+             {"preconditioner",
+              NeoN::Dictionary {{{"type", "preconditioner::Jacobi"}, {"max_block_size", 1}}}},
+             {"criteria",
+              NeoN::Dictionary {{{"iteration", 0}, {"absolute_residual_norm", 1e-9}}}}}
+        };
+        auto solverStr = NeoN::la::Solver(exec, solverConfigStr);
+        auto statsStr = solverStr.solve(nfPDE.linearSystem(), nfT.internalVector());
+        REQUIRE(statsStr.entries.size() >= 1);
+        REQUIRE(statsStr.entries[0].initResNorm == Catch::Approx(ofInitResidual).epsilon(1e-6).margin(1e-12));
     }
 
     SECTION("L1 stopping criterion converges below tolerance " + execName)
