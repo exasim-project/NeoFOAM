@@ -96,7 +96,7 @@ public:
     LinearSystem& assemble()
     {
         ls_.reset();
-        expr_.assemble(runTime_.t, runTime_.dt, ls_);
+        expr_.assemble(runTime_.t, runTime_.dt, ls_, psi_.mesh());
         return ls_;
     }
 
@@ -111,20 +111,9 @@ public:
     {
         auto rhsExpr = dsl::Expression<ValueType>(-1.0 * rhs);
         rhsExpr.read(runTime_.fvSchemesDict);
-        auto ls = NeoN::la::LinearSystem<ValueType>(assemble());
-
-        // Collect explicit contributions from the main expression first, then from the extra rhs.
-        // The main expression's explicit ops are subtracted from rhs (DSL convention), so they
-        // must be included here just as iterativeSolveImpl does for the no-rhs overload.
-        auto expTmp = expr_.explicitOperation(psi_.mesh().nCells());
-        rhsExpr.explicitOperation(expTmp);
-
-        auto [vol, expSource, rhsV] = NeoN::views(psi_.mesh().cellVolumes(), expTmp, ls.rhs());
-        NeoN::parallelFor(
-            psi_.exec(),
-            {0, rhsV.size()},
-            NEON_LAMBDA(const NeoN::localIdx i) { rhsV[i] -= expSource[i] * vol[i]; }
-        );
+        auto ls =
+            NeoN::la::LinearSystem<ValueType>(assemble()); // includes expr_'s explicit sources
+        rhsExpr.assembleExplicitSource(ls, psi_.mesh());
 
         return ls;
     }
@@ -167,16 +156,7 @@ public:
         // Assemble without post-assembly functors; we apply SetReference separately below
         // to ensure correct polymorphic dispatch — storing PostAssemblyBase by value causes
         // object slicing that silently disables virtual overrides.
-        expr.assemble(runTime_.t, runTime_.dt, ls);
-
-        // Subtract the explicit source term from the rhs (mirrors iterativeSolveImpl)
-        auto expTmp = expr.explicitOperation(psi_.mesh().nCells());
-        auto [vol, expSource, rhs] = NeoN::views(psi_.mesh().cellVolumes(), expTmp, ls.rhs());
-        NeoN::parallelFor(
-            psi_.exec(),
-            {0, static_cast<NeoN::localIdx>(rhs.size())},
-            NEON_LAMBDA(const NeoN::localIdx i) { rhs[i] -= expSource[i] * vol[i]; }
-        );
+        expr.assemble(runTime_.t, runTime_.dt, ls, psi_.mesh());
 
         // Apply reference-cell pinning directly (avoids object-slicing issue)
         if constexpr (std::is_same_v<ValueType, NeoN::scalar>)
