@@ -245,7 +245,15 @@ SpalartAllmarasDDES::SpalartAllmarasDDES(
           mesh,
           fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh)
       )
-    , gradU_(exec, "gradU", mesh, fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<Tensor>>(mesh))
+    , gradU_(
+          exec,
+          "gradU",
+          mesh,
+          // Proc-aware calculated BCs: gradU's processor tail must hold the NEIGHBOUR cell gradient
+          // (filled by correctBoundaryConditions after gradTensor) so the proc-face viscous stress
+          // in divDevReff interpolates the correct far-side gradient across the rank boundary.
+          fvcc::createCalculatedProcBCs<nnfvcc::VolumeBoundary<Tensor>>(mesh)
+      )
     , gradNuTilda_(
           exec,
           "gradNuTilda",
@@ -308,6 +316,9 @@ void SpalartAllmarasDDES::validate(
 )
 {
     gradOp_.gradTensor(U, gradU_);
+    // Exchange the neighbour-cell gradient into gradU's processor tail (proc patches carry the
+    // processor BC; physical patches are 'calculated' no-ops, so their boundary gradient is kept).
+    gradU_.correctBoundaryConditions();
     calcNuTildaDiffusionCoeff(nuTilda, surfNu_, surfNuTilda_, nuTildaEff_);
     correctNut(nut, surfNut_, nuEff_, nuTilda, nu_, surfNu_, U, nearWallDist_);
 }
@@ -321,6 +332,8 @@ void SpalartAllmarasDDES::correct(
 )
 {
     gradOp_.gradTensor(U, gradU_);
+    // Exchange the neighbour-cell gradient into gradU's processor tail (see validate()).
+    gradU_.correctBoundaryConditions();
     gradOp_.grad(nuTilda, gradNuTilda_);
     calcMagSqrVec(magSqrGradNuTilda_, gradNuTilda_);
 
