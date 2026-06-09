@@ -30,12 +30,7 @@ TEST_CASE("DistributedMomentum")
 
     float epsilon = 1e-32;
     Foam::Time& runTime = *timePtr;
-    // CPUExecutor only: this machine has a single GPU, so a multi-rank test must not place data on
-    // the device (rank-to-GPU contention). Mirrors the rest of the distributed suite (e.g.
-    // test_snGrad_distributed). rAU/HbyA now carry processor BCs (halo exchange) that a single-GPU
-    // box cannot service across ranks.
-    const NeoN::Executor exec = NeoN::CPUExecutor {};
-    const std::string execName = "CPUExecutor";
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
 
     auto rt = nf::createAdapterRunTime(runTime, exec);
     auto& mesh = rt.mesh;

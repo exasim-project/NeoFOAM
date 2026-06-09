@@ -33,9 +33,6 @@ extern Foam::Time* timePtr; // A single time object (parallel runtime set up by 
 // corrupting the corrected/limited snGrad at proc-adjacent cells). All three schemes below match
 // OpenFOAM to ~1e-12 across processor boundaries on this sheared scotch decomposition.
 //
-// CPUExecutor only: this machine has a single GPU, so a multi-rank test must not place data on the
-// GPU (ranks would contend for the one device).
-//
 // The parallel sanity check is a SEPARATE test case on purpose: it keeps the binary's exit code
 // well-defined (and historically guarded against the all-skipped exit-code-4 case).
 TEST_CASE("Distributed snGrad parallel sanity")
@@ -47,7 +44,7 @@ TEST_CASE("Distributed snGrad parallel sanity")
 TEST_CASE("Distributed snGrad schemes")
 {
     Foam::Time& runTime = *timePtr;
-    const NeoN::Executor exec = NeoN::CPUExecutor {};
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
 
     auto rt = nf::createAdapterRunTime(runTime, exec);
     auto& mesh = rt.mesh;
@@ -115,17 +112,19 @@ TEST_CASE("Distributed snGrad schemes")
         REQUIRE_THAT(nfSnGradU.boundaryData(), EqualsBoundary(ofSnGradU, ApproxVector(1e-12)));
     };
 
-    SECTION("uncorrected Vec3 matches OpenFOAM across processor boundaries")
+    SECTION("uncorrected Vec3 matches OpenFOAM across processor boundaries on " + execName)
     {
         checkScheme("uncorrected", NeoN::TokenList({std::string("uncorrected")}));
     }
 
-    SECTION("corrected Vec3 matches OpenFOAM across processor boundaries")
+    SECTION("corrected Vec3 matches OpenFOAM across processor boundaries on " + execName)
     {
         checkScheme("corrected", NeoN::TokenList({std::string("corrected")}));
     }
 
-    SECTION("limited corrected Vec3 (0.5) matches OpenFOAM across processor boundaries")
+    SECTION(
+        "limited corrected Vec3 (0.5) matches OpenFOAM across processor boundaries on " + execName
+    )
     {
         checkScheme(
             "limited corrected 0.5",
