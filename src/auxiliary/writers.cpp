@@ -73,8 +73,7 @@ void write(const fvcc::VolumeField<NeoN::scalar>& volField, const Foam::fvMesh& 
     // BC types written by decomposePar / case setup. Without this the IOobject defaults all
     // boundary patches to 'calculated', erasing the pressure-reference fixedValue BC and making
     // the pressure equation singular on restart.
-    Foam::volScalarField* regField =
-        mesh.getObjectPtr<Foam::volScalarField>(volField.name);
+    Foam::volScalarField* regField = mesh.getObjectPtr<Foam::volScalarField>(volField.name);
     if (regField)
     {
         detail::copyImpl(volField.internalVector(), regField->ref());
@@ -129,8 +128,7 @@ void write(const fvcc::VolumeField<NeoN::scalar>& volField, const Foam::fvMesh& 
 void write(const fvcc::VolumeField<NeoN::Vec3>& volField, const Foam::fvMesh& mesh)
 {
     // Same BC-preservation strategy as write(VolumeField<scalar>, mesh) above.
-    Foam::volVectorField* regField =
-        mesh.getObjectPtr<Foam::volVectorField>(volField.name);
+    Foam::volVectorField* regField = mesh.getObjectPtr<Foam::volVectorField>(volField.name);
     if (regField)
     {
         detail::copyImpl(volField.internalVector(), regField->ref());
