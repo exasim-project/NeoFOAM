@@ -49,13 +49,21 @@ TEST_CASE("DistributedL1Residual")
 
     Foam::surfaceScalarField ofPhi(
         Foam::IOobject(
-            "phi", runTime.timeName(), mesh, Foam::IOobject::NO_READ, Foam::IOobject::NO_WRITE
+            "phi",
+            runTime.timeName(),
+            mesh,
+            Foam::IOobject::NO_READ,
+            Foam::IOobject::NO_WRITE
         ),
         fvc::flux(ofU)
     );
     Foam::surfaceScalarField ofNu(
         Foam::IOobject(
-            "nu", runTime.timeName(), mesh, Foam::IOobject::NO_READ, Foam::IOobject::NO_WRITE
+            "nu",
+            runTime.timeName(),
+            mesh,
+            Foam::IOobject::NO_READ,
+            Foam::IOobject::NO_WRITE
         ),
         mesh,
         Foam::dimensionedScalar("nu", Foam::dimensionSet(0, 2, -1, 0, 0), 0.01)
@@ -74,7 +82,9 @@ TEST_CASE("DistributedL1Residual")
         );
 
         nf::PDESolver<NeoN::Vec3> nfUEqn(
-            dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(nfNu, nfU), nfU, rt
+            dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(nfNu, nfU),
+            nfU,
+            rt
         );
 
         // Map the OpenFOAM solver controls and opt into the L1-scaled residual stop.
@@ -101,8 +111,7 @@ TEST_CASE("DistributedL1Residual")
             REQUIRE(entry.finalResNorm < entry.initResNorm);
             // parity with OpenFOAM's distributed initial residual (per component)
             REQUIRE(
-                entry.initResNorm
-                == Catch::Approx(ofInitRes[cmpt]).epsilon(1e-4).margin(1e-10)
+                entry.initResNorm == Catch::Approx(ofInitRes[cmpt]).epsilon(1e-4).margin(1e-10)
             );
         }
     }

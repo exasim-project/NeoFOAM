@@ -43,7 +43,9 @@ TEST_CASE("L1 scaled residual matches OpenFOAM")
         // OpenFOAM solve below evaluates its residual.
         auto [nfT, nfGamma] = NeoFOAM::constFromMany(exec, rt.nfMesh, ofT, ofGamma);
         auto nfPDE = NeoFOAM::PDESolver<NeoN::scalar>(
-            NeoN::dsl::Expression<NeoN::scalar>(NeoN::dsl::imp::laplacian(nfGamma, nfT)), nfT, rt
+            NeoN::dsl::Expression<NeoN::scalar>(NeoN::dsl::imp::laplacian(nfGamma, nfT)),
+            nfT,
+            rt
         );
         nfPDE.assemble();
 
@@ -68,8 +70,7 @@ TEST_CASE("L1 scaled residual matches OpenFOAM")
              {"l1ScaledResidual", true},
              {"preconditioner",
               NeoN::Dictionary {{{"type", "preconditioner::Jacobi"}, {"max_block_size", 1}}}},
-             {"criteria",
-              NeoN::Dictionary {{{"iteration", 0}, {"absolute_residual_norm", 1e-9}}}}}
+             {"criteria", NeoN::Dictionary {{{"iteration", 0}, {"absolute_residual_norm", 1e-9}}}}}
         };
         auto solver = NeoN::la::Solver(exec, solverConfig);
         auto stats = solver.solve(nfPDE.linearSystem(), nfT.internalVector());
@@ -88,13 +89,15 @@ TEST_CASE("L1 scaled residual matches OpenFOAM")
              {"l1ScaledResidual", std::string {"true"}},
              {"preconditioner",
               NeoN::Dictionary {{{"type", "preconditioner::Jacobi"}, {"max_block_size", 1}}}},
-             {"criteria",
-              NeoN::Dictionary {{{"iteration", 0}, {"absolute_residual_norm", 1e-9}}}}}
+             {"criteria", NeoN::Dictionary {{{"iteration", 0}, {"absolute_residual_norm", 1e-9}}}}}
         };
         auto solverStr = NeoN::la::Solver(exec, solverConfigStr);
         auto statsStr = solverStr.solve(nfPDE.linearSystem(), nfT.internalVector());
         REQUIRE(statsStr.entries.size() >= 1);
-        REQUIRE(statsStr.entries[0].initResNorm == Catch::Approx(ofInitResidual).epsilon(1e-6).margin(1e-12));
+        REQUIRE(
+            statsStr.entries[0].initResNorm
+            == Catch::Approx(ofInitResidual).epsilon(1e-6).margin(1e-12)
+        );
     }
 
     SECTION("L1 stopping criterion converges below tolerance " + execName)
@@ -106,7 +109,9 @@ TEST_CASE("L1 scaled residual matches OpenFOAM")
 
         auto [nfT, nfGamma] = NeoFOAM::constFromMany(exec, rt.nfMesh, ofT, ofGamma);
         auto nfPDE = NeoFOAM::PDESolver<NeoN::scalar>(
-            NeoN::dsl::Expression<NeoN::scalar>(NeoN::dsl::imp::laplacian(nfGamma, nfT)), nfT, rt
+            NeoN::dsl::Expression<NeoN::scalar>(NeoN::dsl::imp::laplacian(nfGamma, nfT)),
+            nfT,
+            rt
         );
         nfPDE.assemble();
 
