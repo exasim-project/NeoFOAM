@@ -75,12 +75,11 @@ TEST_CASE("momentum")
 
         SECTION(std::string("without RHS"))
         {
-                nf::PDESolver<NeoN::Vec3> eqn(
-                    dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU)
-                        - dsl::imp::laplacian(nfGamma, nfU),
-                    nfU,
-                    rt
-                );
+            nf::PDESolver<NeoN::Vec3> eqn(
+                dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(nfGamma, nfU),
+                nfU,
+                rt
+            );
             BENCHMARK(std::string(execName))
             {
                 eqn.assemble();
@@ -93,25 +92,26 @@ TEST_CASE("momentum")
         SECTION(std::string("without RHS optimized cellbased"))
         {
 
-        nf::PDESolver<NeoN::Vec3> eqn(
-            dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU)
-                - dsl::imp::laplacian(nfGamma, nfU),
-            nfU,
-            rt
-        );
+            nf::PDESolver<NeoN::Vec3> eqn(
+                dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(nfGamma, nfU),
+                nfU,
+                rt
+            );
 
-        auto cellIterator = std::make_shared<NeoN::la::CellBasedIterator>();
-        auto lsOpt = NeoN::la::createEmptyLinearSystem<NeoN::Vec3>(nfMesh, cellIterator);
-        auto [sp, mi] = NeoN::la::createSparsityPatternFaceToMatrixAddress<NeoN::la::CsrSparsityPattern<NeoN::localIdx>>(nfMesh);
-        cellIterator->setComputeCellBasedData(nfMesh, sp, mi);
+            auto cellIterator = std::make_shared<NeoN::la::CellBasedIterator>();
+            auto lsOpt = NeoN::la::createEmptyLinearSystem<NeoN::Vec3>(nfMesh, cellIterator);
+            auto [sp, mi] = NeoN::la::createSparsityPatternFaceToMatrixAddress<
+                NeoN::la::CsrSparsityPattern<NeoN::localIdx>>(nfMesh);
+            cellIterator->setComputeCellBasedData(nfMesh, sp, mi);
 
-	    auto opts = std::vector<std::shared_ptr<NeoN::dsl::Optimizer<NeoN::dsl::Expression<Vec3>>>> {
-		std::make_shared<NeoN::dsl::DivLapOptimizer<NeoN::dsl::Expression<Vec3>>>()
-	    };
+            auto opts =
+                std::vector<std::shared_ptr<NeoN::dsl::Optimizer<NeoN::dsl::Expression<Vec3>>>> {
+                    std::make_shared<NeoN::dsl::DivLapOptimizer<NeoN::dsl::Expression<Vec3>>>()
+                };
 
             BENCHMARK(std::string(execName))
             {
-                eqn.assemble2(lsOpt, opts );
+                eqn.assemble2(lsOpt, opts);
                 NeoN::fence(exec);
                 return;
             };
@@ -119,46 +119,45 @@ TEST_CASE("momentum")
 
         SECTION(std::string("without RHS optimized"))
         {
-                nf::PDESolver<NeoN::Vec3> eqn(
-                    dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU)
-                        - dsl::imp::laplacian(nfGamma, nfU),
-                    nfU,
-                    rt
-                );
+            nf::PDESolver<NeoN::Vec3> eqn(
+                dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(nfGamma, nfU),
+                nfU,
+                rt
+            );
 
-        auto cellIterator = std::make_shared<NeoN::la::FaceBasedIterator>();
-        auto lsOpt = NeoN::la::createEmptyLinearSystem<NeoN::Vec3>(nfMesh, cellIterator);
+            auto cellIterator = std::make_shared<NeoN::la::FaceBasedIterator>();
+            auto lsOpt = NeoN::la::createEmptyLinearSystem<NeoN::Vec3>(nfMesh, cellIterator);
 
             BENCHMARK(std::string(execName))
             {
-                eqn.assemble2(lsOpt,true);
+                eqn.assemble2(lsOpt, true);
                 NeoN::fence(exec);
                 return;
             };
         }
 
 
-//       SECTION(std::string("with RHS"))
-//       {
-//           BENCHMARK(std::string(execName))
-//           {
-//               nf::PDESolver<NeoN::Vec3> eqn(
-//                   dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU)
-//                       - dsl::imp::laplacian(nfGamma, nfU),
-//                   nfU,
-//                   rt
-//               );
-//
-//               auto expr = dsl::Expression<NeoN::Vec3>(eqn.expression());
-//               auto ls = NeoN::la::LinearSystem<
-//                   NeoN::Vec3,
-//                   NeoN::la::CSRMatrix<NeoN::Vec3, NeoN::localIdx>>(eqn.linearSystem());
-//               expr.addOperator(-1.0 * dsl::exp::grad(nfP));
-//               eqn.assemble();
-//               expr.assemble(rt.t, rt.dt, ls);
-//               NeoN::fence(exec);
-//               return;
-//           };
-//       }
+        //       SECTION(std::string("with RHS"))
+        //       {
+        //           BENCHMARK(std::string(execName))
+        //           {
+        //               nf::PDESolver<NeoN::Vec3> eqn(
+        //                   dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU)
+        //                       - dsl::imp::laplacian(nfGamma, nfU),
+        //                   nfU,
+        //                   rt
+        //               );
+        //
+        //               auto expr = dsl::Expression<NeoN::Vec3>(eqn.expression());
+        //               auto ls = NeoN::la::LinearSystem<
+        //                   NeoN::Vec3,
+        //                   NeoN::la::CSRMatrix<NeoN::Vec3, NeoN::localIdx>>(eqn.linearSystem());
+        //               expr.addOperator(-1.0 * dsl::exp::grad(nfP));
+        //               eqn.assemble();
+        //               expr.assemble(rt.t, rt.dt, ls);
+        //               NeoN::fence(exec);
+        //               return;
+        //           };
+        //       }
     }
 }
