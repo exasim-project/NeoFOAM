@@ -99,8 +99,7 @@ TEST_CASE("momentum")
                     rt
                 );
                 auto expr = dsl::Expression<NeoN::Vec3>(eqn.expression());
-                // momentum assembles into a scalar matrix with Vec3 rhs (segregated solve)
-                auto ls = NeoN::la::LinearSystem<NeoN::scalar, NeoN::Vec3>(eqn.linearSystem());
+                auto ls = eqn.linearSystem();
                 expr.addOperator(-1.0 * dsl::exp::grad(nfP));
                 eqn.assemble();
                 expr.assemble(rt.t, rt.dt, ls);
