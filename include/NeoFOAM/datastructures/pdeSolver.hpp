@@ -35,8 +35,6 @@ class PDESolver
 
 public:
 
-    using ExpressionType = dsl::Expression<ValueType>;
-
     PDESolver(dsl::Expression<ValueType> expr, VolumeField& psi, RunTime& runTime)
         : psi_(psi)
         , expr_(expr)
@@ -68,34 +66,7 @@ public:
 
     [[nodiscard]] const LinearSystem& linearSystem() const { return ls_; }
 
-    NeoN::la::LinearSystem<ValueType>& assemble2(NeoN::la::LinearSystem<ValueType>& ls, bool optimize=false)
-    {
-	if (optimize) {
-	    auto expr = NeoN::dsl::optimize(expr_);
-            expr.read(runTime_.fvSchemesDict);
-	    expr.assemble(runTime_.t, runTime_.dt, ls);
-	} else {
-	    expr_.assemble(runTime_.t, runTime_.dt,ls);
-	}
-        return ls;
-    }
-
     NeoN::dsl::Expression<ValueType>& expression() { return expr_; }
-    NeoN::la::LinearSystem<ValueType>& assemble2(
-		    NeoN::la::LinearSystem<ValueType>& ls,
-		    std::vector<std::shared_ptr<NeoN::dsl::Optimizer<NeoN::dsl::Expression<ValueType>>>> opts={})
-    {
-	if (opts.size()>0) {
-	    auto expr = NeoN::dsl::optimize(expr_, opts);
-            expr.read(runTime_.fvSchemesDict);
-	    expr.assemble(runTime_.t, runTime_.dt, ls);
-	} else {
-	    expr_.assemble(runTime_.t, runTime_.dt,ls);
-	}
-        return ls;
-    }
-
-
 
     const NeoN::Executor& exec() const { return ls_.exec(); }
 
