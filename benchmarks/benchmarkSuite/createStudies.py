@@ -23,14 +23,14 @@ def create_cases(src, root, case, force=False, detailed=False):
         shutil.rmtree(case_path)
     case_path.mkdir(parents=True, exist_ok=True)
 
-    cube_range = [8, 16, 32, 64, 128] if detailed else [i for i in range(25,350,25)]
+    cube_range = [8, 16, 32, 64, 128] if detailed else [16, 64]
     study_cube = record_generator(
         records=build_records("3DCube", cube_range ),
         template_case= src / "templates/3DCube",
         output_folder=case_path / "Cases",
     )
 
-    square_range = [8, 16, 32, 64, 128, 256, 512] if detailed else [10]
+    square_range = [8, 16, 32, 64, 128, 256, 512] if detailed else [64, 512]
     study_square = record_generator(
         records=build_records("2DSquare", square_range),
         template_case= src / "templates/2DSquare",
@@ -77,12 +77,8 @@ def execute_case(executable, target, name):
     r, dirs, fs = next(os.walk(target/name/"Cases"))
     root = Path(r)
     for study in dirs:
-        if (root/study/"execute.log").exists():
-            print(f"skipping {study}")
-            continue
         log = open(root/study/"execute.log",'a')  # so that data written to it will be appended
-        print(f"running {study}")
-        proc = subprocess.Popen([executable, "--benchmark-samples", "3", "--reporter", "xml", "-o", "stats.xml"], cwd = root/study, stdout=log, shell=False)
+        proc = subprocess.Popen([executable, "--reporter", "xml", "-o", "stats.xml"], cwd = root/study, stdout=log, shell=False)
         proc.wait()
 
 def gather_results(target, name):
@@ -92,7 +88,6 @@ def gather_results(target, name):
     cases = target/ name / "Cases"
     if not cases.exists():
         print(f"could not find {cases}")
-        return
 
     file = datafile(file_name="stats.xml", folder=".")
     benchmark_results = load_tables(
@@ -100,11 +95,8 @@ def gather_results(target, name):
     )
     if not benchmark_results is None:
         print(benchmark_results.columns)
-        try:
-            for test_case in benchmark_results["test_case"].unique():
-                    save_test_results(benchmark_results, test_case, results)
-        except:
-            pass
+        for test_case in benchmark_results["test_case"].unique():
+                save_test_results(benchmark_results, test_case, results)
     else:
         print(f"failed {target}, {name}, {benchmark_results}")
 
@@ -117,7 +109,6 @@ def display(target):
     r, dirs, fs = next(os.walk(cases))
     pd.set_option('display.float_format', lambda x: f'{x:.4f}')
     pd.set_option('display.max_columns', None)
-    pd.set_option('display.max_rows', None)
     pd.set_option('display.width',1000)
     for f in fs:
         if not f.endswith("csv"):
@@ -142,8 +133,8 @@ def main():
         target = sys.argv[3]
         case_name = sys.argv[4]
         detailed = sys.argv[5] == "fast"
-#        create_cases(Path(src), Path(target), case_name, True, detailed)
-#        prepare_case(Path(target), case_name)
+        create_cases(Path(src), Path(target), case_name, True, detailed)
+        prepare_case(Path(target), case_name)
     if mode == "execute":
         exe = sys.argv[2]
         target = sys.argv[3]
