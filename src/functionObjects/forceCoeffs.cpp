@@ -4,6 +4,7 @@
 #include "NeoFOAM/functionObjects/forceCoeffs.hpp"
 
 #include "addToRunTimeSelectionTable.H"
+#include "Pstream.H"
 
 using scalar = NeoN::scalar;
 
@@ -107,6 +108,13 @@ bool ForceCoeffs::write()
 {
     // neoForceCoeffs writes coefficient.dat only.
     // force.dat and moment.dat are written exclusively by neoForces.
+    // Coefficients are identical on every rank (forces were globally reduced in
+    // execute()); only the master rank writes the shared file.
+    if (!Foam::Pstream::master())
+    {
+        return true;
+    }
+
     auto& os = getOrCreateFile(
         "coefficient.dat",
         [&](std::ostream& s)
