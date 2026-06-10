@@ -146,8 +146,8 @@ void Forces::computePatchForces(
     const NeoN::Executor exec = meshAdapter_->exec();
 
     // Device views — no host copy of the full field
-    auto sfView = nfMesh.boundaryMesh().sf().view();
-    auto cfView = nfMesh.boundaryMesh().cf().view();
+    auto sfView = nfMesh.boundaryMesh().faceNormals().view();
+    auto cfView = nfMesh.boundaryMesh().faceCenters().view();
     auto pBcView = nfP.boundaryData().value().view();
 
     // 6-element device accumulator initialised to zero
@@ -208,8 +208,8 @@ void Forces::computePatchViscousForces(
     const NeoN::UnstructuredMesh& nfMesh = meshAdapter_->nfMesh();
     const NeoN::Executor exec = meshAdapter_->exec();
 
-    auto sfView = nfMesh.boundaryMesh().sf().view();
-    auto cfView = nfMesh.boundaryMesh().cf().view();
+    auto sfView = nfMesh.boundaryMesh().faceNormals().view();
+    auto cfView = nfMesh.boundaryMesh().faceCenters().view();
     auto gradUBView = gradU.boundaryData().value().view();
     auto nuRhoBView = nuRhoB.view();
 
