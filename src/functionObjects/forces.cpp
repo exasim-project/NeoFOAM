@@ -7,6 +7,7 @@
 #include "addToRunTimeSelectionTable.H"
 #include "polyMesh.H"
 #include "Pstream.H"
+#include "PstreamReduceOps.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * //
 
@@ -252,13 +253,6 @@ void Forces::computePatchViscousForces(
 
 bool Forces::execute()
 {
-    if (Foam::Pstream::parRun())
-    {
-        Foam::FatalError << "NeoFOAM::Forces does not support MPI parallel execution.\n"
-                         << "Run in serial or with a single MPI rank."
-                         << Foam::abort(Foam::FatalError);
-    }
-
     resolveMesh();
 
     result_ = ForceResult {};
@@ -344,6 +338,24 @@ bool Forces::execute()
             computePatchViscousForces(patchi, *gradU_, nuRhoB, cofR_, result_);
     }
 
+    // In a decomposed (MPI) run each rank only owns a slice of the wall patches;
+    // patches with no local faces yield an empty kernel range and contribute zero.
+    // Globally sum the local contributions so every rank holds the total force and
+    // moment (forceCoeffs derives its coefficients from these on every rank).
+    if (Foam::Pstream::parRun())
+    {
+        auto reduceVec3 = [](NeoN::Vec3& v)
+        {
+            Foam::vector fv(v[0], v[1], v[2]);
+            Foam::reduce(fv, Foam::sumOp<Foam::vector>());
+            v = NeoN::Vec3(fv[0], fv[1], fv[2]);
+        };
+        reduceVec3(result_.pressureForce);
+        reduceVec3(result_.pressureMoment);
+        reduceVec3(result_.viscousForce);
+        reduceVec3(result_.viscousMoment);
+    }
+
     return true;
 }
 
@@ -352,6 +364,13 @@ bool Forces::execute()
 
 bool Forces::write()
 {
+    // result_ has been globally reduced in execute(); only the master rank writes
+    // the shared postProcessing files to avoid every rank clobbering the same path.
+    if (!Foam::Pstream::master())
+    {
+        return true;
+    }
+
     const NeoN::Vec3 totalForce = result_.pressureForce + result_.viscousForce;
     const NeoN::Vec3 totalMoment = result_.pressureMoment + result_.viscousMoment;
 

@@ -62,8 +62,11 @@ struct ForceResult
  * write() appends one row each to @c postProcessing/<name>/<startTime>/force.dat
  * and @c postProcessing/<name>/<startTime>/moment.dat.
  *
- * @note MPI parallel execution is not supported; a FatalError is raised in execute() if
- *       Pstream::parRun() is true.
+ * @par MPI parallel execution
+ * Supported. On a decomposed mesh each rank integrates its local slice of the
+ * wall patches (patches with no local faces contribute zero); execute() then
+ * globally sums the force/moment contributions so every rank holds the total,
+ * and write() emits the shared output files from the master rank only.
  */
 class Forces : public FunctionObjectIO
 {
