@@ -56,7 +56,7 @@ void compareDataFiles(const fs::path& nfPath, const fs::path& ofPath, double mar
 } // namespace
 
 
-// ── TEST: distributed Forces against OpenFOAM's parallel forces FO ─────────────
+// ── TEST: distributed Forces against OpenFOAM's parallel forces functionObject ─────────────
 //
 // neoForces now supports MPI: each rank integrates its local slice of the wall
 // patches and execute() globally sums the contribution. OpenFOAM's own forces
@@ -113,7 +113,7 @@ TEST_CASE("DistributedForces - parallel force/moment match OpenFOAM reference")
         REQUIRE(forces.execute());
         REQUIRE(forces.write());
 
-        // OF reference (forces FO reduces across ranks internally)
+        // OF reference (forces functionObject reduces across ranks internally)
         Foam::volVectorField zeroU(
             Foam::IOobject(
                 "U",

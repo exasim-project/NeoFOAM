@@ -31,7 +31,7 @@ struct RunTime
     NeoN::Dictionary fvSolutionDict;
     NeoN::Dictionary fvSchemesDict;
     NeoN::mpi::Environment mpiEnvironment;
-    std::unique_ptr<DatabaseWrapper> dbWrapper;  ///< Registers db in Foam::Time objectRegistry
+    std::unique_ptr<DatabaseWrapper> dbWrapper; ///< Registers db in Foam::Time objectRegistry
 };
 
 
