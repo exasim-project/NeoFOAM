@@ -102,11 +102,11 @@ TEST_CASE("momentum")
 
         auto cellIterator = std::make_shared<NeoN::la::CellBasedIterator>();
         auto lsOpt = NeoN::la::createEmptyLinearSystem<NeoN::Vec3>(nfMesh, cellIterator);
-        auto mi = NeoN::la::createSparsityPatternFaceToMatrixAddress<NeoN::localIdx>(nfMesh);
-        cellIterator->setComputeCellBasedData(nfMesh, mi);
+        auto [sp, mi] = NeoN::la::createSparsityPatternFaceToMatrixAddress<NeoN::la::CsrSparsityPattern<NeoN::localIdx>>(nfMesh);
+        cellIterator->setComputeCellBasedData(nfMesh, sp, mi);
 
 	    auto opts = std::vector<std::shared_ptr<NeoN::dsl::Optimizer<NeoN::dsl::Expression<Vec3>>>> {
-		std::make_shared<NeoN::dsl::DdtDivLapOptimizer<NeoN::dsl::Expression<Vec3>>>()
+		std::make_shared<NeoN::dsl::DivLapOptimizer<NeoN::dsl::Expression<Vec3>>>()
 	    };
 
             BENCHMARK(std::string(execName))

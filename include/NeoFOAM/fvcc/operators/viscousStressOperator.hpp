@@ -171,6 +171,8 @@ public:
 
     std::string getName() const { return "ViscousStressOperator"; }
 
+    Dictionary getConfig() const { return {}; }
+
 private:
 
     const VolumeField<scalar>& nu_;
