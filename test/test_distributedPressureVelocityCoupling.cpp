@@ -207,9 +207,11 @@ TEST_CASE("Distributed PressureVelocityCoupling")
 
         nfUEqn.assemble();
 
+        // momentum is assembled into a scalar matrix (segregated form), so the diagonal is
+        // a scalar field — compare with ApproxScalar, like upper() below.
         REQUIRE_THAT(
             NeoN::la::removeBoundaryContributions(nfUEqn.linearSystem()).matrix().diag(),
-            EqualsInternal(ofUEqn.diag(), ApproxVector(1e-15))
+            EqualsInternal(ofUEqn.diag(), ApproxScalar(1e-15))
         );
 
         // momentum is assembled into a scalar matrix (segregated form); OpenFOAM's
