@@ -32,9 +32,9 @@ namespace detail
  * `TokenList::get<NeoN::scalar>` throws `bad_any_cast` on the label components,
  * so each component must be probed and promoted independently.
  */
-inline NeoN::scalar tokenAsScalar(const NeoN::TokenList& tokenList, std::size_t idx)
+inline NeoN::scalar tokenAsScalar(NeoN::TokenList& tokenList, std::size_t idx)
 {
-    auto& tokens = const_cast<NeoN::TokenList&>(tokenList).tokens();
+    auto& tokens = tokenList.tokens();
     if (const NeoN::scalar* asScalar = std::any_cast<NeoN::scalar>(&tokens[idx]))
     {
         return *asScalar;

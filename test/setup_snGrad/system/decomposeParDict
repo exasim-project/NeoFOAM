@@ -16,13 +16,9 @@ FoamFile
 
 numberOfSubdomains 3;
 
-// TODO: enable scotch in CI for stress testing a more realistic decomposition
-
-method  hierarchical;
-
-coeffs
-{
-    n   (3 1 1);
-}
+// scotch handles the 5x5 (25-cell) mesh without requiring a divisible split, and
+// produces processor faces that are non-orthogonal on this sheared mesh — exactly
+// what the distributed snGrad test needs to exercise the proc-boundary correction.
+method          scotch;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

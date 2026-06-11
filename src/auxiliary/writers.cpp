@@ -81,7 +81,7 @@ void write(const fvcc::VolumeField<NeoN::scalar>& volField, const Foam::fvMesh& 
         forAll(regField->boundaryField(), patchi)
         {
             auto& foamFieldPatch = regField->boundaryFieldRef()[patchi];
-            auto [start, end] = volField.boundaryData().range(patchi);
+            [[maybe_unused]] auto [start, end] = volField.boundaryData().range(patchi);
             forAll(foamFieldPatch, bfacei)
             {
                 foamFieldPatch[bfacei] = hostBCValue.view()[start + bfacei];
@@ -115,7 +115,7 @@ void write(const fvcc::VolumeField<NeoN::scalar>& volField, const Foam::fvMesh& 
     forAll(foamField.boundaryField(), patchi)
     {
         auto& foamFieldPatch = foamField.boundaryFieldRef()[patchi];
-        auto [start, end] = volField.boundaryData().range(patchi);
+        [[maybe_unused]] auto [start, end] = volField.boundaryData().range(patchi);
 
         forAll(foamFieldPatch, bfacei)
         {
@@ -136,7 +136,7 @@ void write(const fvcc::VolumeField<NeoN::Vec3>& volField, const Foam::fvMesh& me
         forAll(regField->boundaryField(), patchi)
         {
             auto& foamFieldPatch = regField->boundaryFieldRef()[patchi];
-            auto [start, end] = volField.boundaryData().range(patchi);
+            [[maybe_unused]] auto [start, end] = volField.boundaryData().range(patchi);
             forAll(foamFieldPatch, bfacei)
             {
                 foamFieldPatch[bfacei][0] = hostBCValue.view()[start + bfacei][0];
@@ -169,7 +169,7 @@ void write(const fvcc::VolumeField<NeoN::Vec3>& volField, const Foam::fvMesh& me
     forAll(foamField.boundaryField(), patchi)
     {
         auto& foamFieldPatch = foamField.boundaryFieldRef()[patchi];
-        auto [start, end] = volField.boundaryData().range(patchi);
+        [[maybe_unused]] auto [start, end] = volField.boundaryData().range(patchi);
 
         forAll(foamFieldPatch, bfacei)
         {
@@ -202,7 +202,7 @@ void write(const fvcc::SurfaceField<NeoN::scalar>& surfField, const Foam::fvMesh
     forAll(foamField.boundaryField(), patchi)
     {
         auto& foamFieldPatch = foamField.boundaryFieldRef()[patchi];
-        auto [start, end] = surfField.boundaryData().range(patchi);
+        [[maybe_unused]] auto [start, end] = surfField.boundaryData().range(patchi);
 
         forAll(foamFieldPatch, bfacei)
         {
@@ -233,7 +233,7 @@ void write(const fvcc::SurfaceField<NeoN::Vec3>& surfField, const Foam::fvMesh& 
     forAll(foamField.boundaryField(), patchi)
     {
         auto& foamFieldPatch = foamField.boundaryFieldRef()[patchi];
-        auto [start, end] = surfField.boundaryData().range(patchi);
+        [[maybe_unused]] auto [start, end] = surfField.boundaryData().range(patchi);
 
         forAll(foamFieldPatch, bfacei)
         {

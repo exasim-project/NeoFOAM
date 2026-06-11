@@ -4,6 +4,9 @@
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
 
+#include <algorithm>
+#include <cmath>
+
 #include "common.hpp"
 
 #include "fv.H"
@@ -14,27 +17,22 @@ namespace nf = NeoFOAM;
 
 extern Foam::Time* timePtr; // A single time object (parallel runtime set up by the MPI catch main)
 
-// Distributed snGrad regression test (review T4 / N3 / v2a / v2b). The serial test_snGrad cannot
-// exercise processor faces; this partitioned variant compares NeoN's snGrad against OpenFOAM
-// including the processor-patch values.
+// Distributed snGrad regression test. The serial test_snGrad cannot exercise processor faces; this
+// partitioned variant compares NeoN's snGrad against OpenFOAM including the processor-patch values.
 //
 // The setup_snGrad mesh is a sheared (non-orthogonal) parallelogram, decomposed across 3 ranks via
 // scotch, so the processor faces are non-orthogonal — this is the config that exercises the full
 // processor-boundary geometry:
-//   * uncorrected: exact owner-to-neighbour deltaCoeffs 1/|Cnei - Cown| (v2a),
+//   * uncorrected: exact owner-to-neighbour deltaCoeffs 1/|Cnei - Cown|,
 //   * corrected / limitedCorrected: the non-orthogonal correction corrVec . interpolate(grad)
-//     applied at processor faces via the neighbour-gradient halo (v2b).
+//     applied at processor faces via the neighbour-gradient halo.
 //
-// The distributed proc-halo bug that previously blocked these checks is fixed: the NeoFOAM→NeoN
-// converter now builds the per-proc-patch neighbourRank array in fvBoundaryMesh proc-patch order
-// (matching every consumer), processor BCs seed-then-post ALL proc patches before draining once
-// (so a rank with two proc patches no longer drops the second patch's halo), and the Vec3
-// GaussGreenGrad now adds the proc-face flux to the cell gradient (it previously omitted it,
-// corrupting the corrected/limited snGrad at proc-adjacent cells). All three schemes below match
-// OpenFOAM to ~1e-12 across processor boundaries on this sheared scotch decomposition.
+// All three schemes below match OpenFOAM to ~1e-12 across processor boundaries on this sheared
+// scotch decomposition.
 //
 // The parallel sanity check is a SEPARATE test case on purpose: it keeps the binary's exit code
-// well-defined (and historically guarded against the all-skipped exit-code-4 case).
+// well-defined even when every section is skipped (Catch2 otherwise reports the all-skipped
+// exit code 4).
 TEST_CASE("Distributed snGrad parallel sanity")
 {
     REQUIRE(Foam::Pstream::parRun());
@@ -56,8 +54,8 @@ TEST_CASE("Distributed snGrad schemes")
     // Verify the processor-patch halo directly: constructFrom() runs
     // nfU.correctBoundaryConditions() → setProcBoundaryValue (seeds owner) then the batched
     // processor-halo exchange, so nfU.boundaryData().value() proc-tail must equal OpenFOAM's
-    // processor-patch value (the neighbour cell value), NOT the owner value. This guards the
-    // comm-map / batched-exchange fix independently of any snGrad scheme.
+    // processor-patch value (the neighbour cell value), NOT the owner value. This checks the
+    // processor-halo exchange independently of any snGrad scheme.
     {
         Foam::label nNonProcBndFaces = 0;
         forAll(ofU.boundaryField(), patchi)

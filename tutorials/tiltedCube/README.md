@@ -5,7 +5,7 @@ distributed (processor-boundary) code paths quickly. ~2.4k cells, runs in second
 
 ## What makes it "complex"
 
-- A cube **tilted** relative to the background grid (15° yaw + 10° pitch), so snapped
+- A cube **tilted** relative to the background grid (27° yaw + 18° pitch), so snapped
   surface faces are non-axis-aligned → genuine skew and non-orthogonality.
 - **2 surface layers** (`addLayers`) → prism + polyhedral layer cells.
 - One surface refinement level → hanging-node split faces at the refinement interface.
@@ -64,16 +64,3 @@ NEOFOAM_BIN=../../build/develop/bin/neoIcoFoam ./compareCourant.sh 4
 
 NOTE: serial is run with whatever `executor` is in controlDict (GPU = fast), parallel
 forces CPU. Serial-GPU and serial-CPU agree, so GPU serial is a valid oracle.
-
-## Status / finding (2026-05-31)
-
-This case **reproduces** the distributed Courant inflation seen on the HPC mesh:
-parallel max Co is ~2× serial at step 1 and drifts systematically above serial
-thereafter (vs ~0 difference expected). The effect is milder here than on the real
-HPC mesh because the mesh quality is capped (non-orthogonality ≤ 45°) so the serial
-CG stays convergent. Use a harder mesh (higher tilt / more layers / coarser cap) to
-amplify. Related debug session: `.planning/debug/complex-mesh-co-divergence.md`.
-
-The processor-face `ddtFluxCorr` indexing defect (OF-full vs compressed `Sf`) is
-already fixed on branch `feat/gpu-distributed`; it is NOT fixed on
-`fix/geometrySchemeProcBoundary` (different surface-field storage model).
