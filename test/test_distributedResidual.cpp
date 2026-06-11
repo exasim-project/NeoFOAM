@@ -91,6 +91,11 @@ TEST_CASE("DistributedL1Residual")
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
         auto mappedU = nf::mapFvSolution(solverDict.subDict("U"));
         mappedU.insert("l1ScaledResidual", std::string("true"));
+        // This fixture's U dict has relTol=0 (relative stop disabled) and tolerance=1e-18,
+        // an absolute L1-scaled tolerance below the residual's numerical floor (~1e-16), so the
+        // criterion can only stop at maxIter. Cap it so CI does not grind 1000 iterations; the
+        // asserted INITIAL residual (evaluated at iteration 0) is unaffected.
+        mappedU.subDict("criteria").insert("iteration", NeoN::label(20));
         solverDict.subDict("U") = mappedU;
 
         // OpenFOAM ground truth: its default residual norm is the L1-scaled norm, reduced
