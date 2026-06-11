@@ -117,10 +117,15 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
     const bool distributed = mpiEnv.isInitialized() && mpiEnv.sizeRank() > 1;
     const auto& activeMap = distributed ? distributedPreconditionerMap : preconditionerMap;
 
-    // if no preconditioner is set but smoother switch to BiCGStab with BJ
+    // A smoother (e.g. symGaussSeidel) with no explicit preconditioner maps the solver to BiCGStab
+    // (see solverMap). BiCGStab is used for NON-symmetric systems such as the momentum matrix, so
+    // the defaulted preconditioner must be valid for non-symmetric matrices. Incomplete-Cholesky
+    // (DIC -> preconditioner::Ic) is symmetric-positive-definite only: on a non-SPD momentum block
+    // its factorisation hits a negative pivot and SIGFPEs (sqrt of a negative diagonal). Default to
+    // diagonal (block-Jacobi) instead, which is always defined and matches the intended behaviour.
     if (!solverDict.contains("preconditioner") && solverDict.contains("smoother"))
     {
-        solverDict.insert("preconditioner", activeMap.at("DIC"));
+        solverDict.insert("preconditioner", activeMap.at("diagonal"));
     }
 
     if (solverDict.contains("smoother"))

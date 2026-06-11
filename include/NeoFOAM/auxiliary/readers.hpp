@@ -18,6 +18,33 @@ namespace fvcc = NeoN::finiteVolume::cellCentred;
 namespace NeoFOAM
 {
 
+namespace detail
+{
+
+/**
+ * @brief Promote a single TokenList entry to a NeoN::scalar regardless of
+ * whether OpenFOAM's lexer classified it as a SCALAR (double) or a LABEL (int).
+ *
+ * OpenFOAM tokenizes numeric primitives per token: a literal with a decimal
+ * point (e.g. `0.1`) becomes a SCALAR while a bare integer (e.g. `0`) becomes a
+ * LABEL. The components of a single vector value can therefore have different
+ * stored types — `uniform (0.1 0 0)` yields [scalar, label, label]. A strict
+ * `TokenList::get<NeoN::scalar>` throws `bad_any_cast` on the label components,
+ * so each component must be probed and promoted independently.
+ */
+inline NeoN::scalar tokenAsScalar(NeoN::TokenList& tokenList, std::size_t idx)
+{
+    auto& tokens = tokenList.tokens();
+    if (const NeoN::scalar* asScalar = std::any_cast<NeoN::scalar>(&tokens[idx]))
+    {
+        return *asScalar;
+    }
+    // Not stored as a scalar — it was parsed as an integer label. Promote it.
+    return NeoN::scalar(tokenList.get<Foam::label>(idx));
+}
+
+} // namespace detail
+
 template<typename FoamType>
 auto fromFoamField(const NeoN::Executor& exec, const FoamType& field)
 {
@@ -70,35 +97,25 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
              if (tokenList.size() > 1)
              {
                  dict.insert("type", std::string("fixedValue"));
-                 // test if things can be read as scalar first, if it doesn't work
-                 // read as int and convert to scalar
+                 // OpenFOAM classifies each numeric token independently: a literal
+                 // with a decimal point is a SCALAR, a bare integer is a LABEL. A
+                 // single vector value can therefore mix the two (e.g. `(0.1 0 0)`
+                 // -> [scalar, label, label]). Read every component via
+                 // detail::tokenAsScalar so each is promoted to scalar on its own,
+                 // instead of choosing one branch for the whole value based solely
+                 // on the first component (which caused bad_any_cast on index 2/3).
                  if constexpr (std::is_same<type_primitive_t, NeoN::Vec3>::value)
                  {
                      NeoN::Vec3 tmpFixedValue {};
-                     auto tokens = tokenList.tokens();
-                     NeoN::scalar* ret = std::any_cast<NeoN::scalar>(&tokens[1]);
-                     if (ret)
-                     {
-                         tmpFixedValue[0] = tokenList.get<NeoN::scalar>(1);
-                         tmpFixedValue[1] = tokenList.get<NeoN::scalar>(2);
-                         tmpFixedValue[2] = tokenList.get<NeoN::scalar>(3);
-                     }
-                     else
-                     {
-                         tmpFixedValue[0] = NeoN::scalar(tokenList.get<Foam::label>(1));
-                         tmpFixedValue[1] = NeoN::scalar(tokenList.get<Foam::label>(2));
-                         tmpFixedValue[2] = NeoN::scalar(tokenList.get<Foam::label>(3));
-                     }
+                     tmpFixedValue[0] = detail::tokenAsScalar(tokenList, 1);
+                     tmpFixedValue[1] = detail::tokenAsScalar(tokenList, 2);
+                     tmpFixedValue[2] = detail::tokenAsScalar(tokenList, 3);
                      dict.insert("fixedValue", tmpFixedValue);
                      return;
                  }
                  else
                  {
-                     auto tokens = tokenList.tokens();
-                     fixedValue = 0.0;
-                     NeoN::scalar* ret = std::any_cast<NeoN::scalar>(&tokens[1]);
-                     fixedValue =
-                         ret ? NeoN::scalar(*ret) : NeoN::scalar(tokenList.get<Foam::label>(1));
+                     fixedValue = detail::tokenAsScalar(tokenList, 1);
                  }
                  dict.insert("fixedValue", fixedValue);
              }
