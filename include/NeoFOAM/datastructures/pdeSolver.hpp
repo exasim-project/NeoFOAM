@@ -139,9 +139,6 @@ public:
     {
         expr_.assemble(runTime_.t, runTime_.dt, ls_);
         // auto v = ls_.matrix().values().view();
-        // auto rhs = ls_.rhs().view();
-        // auto bRhs = ls_.boundaryRhs().view();
-        // auto bValues = ls_.boundaryMatrix().values().view();
         // auto va = ls_.matrix().values();
         // auto cpu = NeoN::CPUExecutor {};
         // auto cpuarr = va.copyToExecutor(cpu);
@@ -273,7 +270,14 @@ public:
         auto exec = ls_.exec();
         auto matrix = ls_.matrix().juliaPtr();
         const auto sp = ls_.faceToMatrixAddress();
+        if (!iterator->getCellBasedData())
+        {
+            iterator->setComputeCellBasedData(
+                phi.mesh(), ls_.matrix().sparsity(), matIt
+            );
+        }
         auto cellBasedData = iterator->getCellBasedData();
+
         auto [cellFacesValues, cellFacesSegments] = cellBasedData->cellFaces.juliaPtrs();
         auto faceSignV = cellBasedData->faceSign.juliaPtr();
         auto matrixColumnIdxV = cellBasedData->matrixColumnIdx.juliaPtr();
@@ -354,11 +358,10 @@ public:
         jl_function_t* func = jl_get_function(mod, funcName);
 
         jl_call(func, args, nbinputs);
-        auto va = ls_.matrix().values();
-        auto cpu = NeoN::CPUExecutor {};
-        auto cpuarr = va.copyToExecutor(cpu);
-        auto v = cpuarr.view();
-        // auto v = ls_.matrix().values().view();
+        // auto va = ls_.matrix().values();
+        // auto cpu = NeoN::CPUExecutor {};
+        // auto cpuarr = va.copyToExecutor(cpu);
+        // auto v = cpuarr.view();
         // std::cout << "JULIA CELLBASED values: " << std::endl;
         // std::cout << v[0] << std::endl;
         // std::cout << v[1] << std::endl;
@@ -379,7 +382,8 @@ public:
     void juliaFaceBased(
         const nfvcc::SurfaceField<double>& faceFlux,
         const nfvcc::VolumeField<ValueType>& phi,
-        const nfvcc::SurfaceField<double>& gamma
+        const nfvcc::SurfaceField<double>& gamma,
+        const bool global = false
     )
     {
         const NeoN::UnstructuredMesh& mesh = phi.mesh();
@@ -505,11 +509,36 @@ public:
 			args[27] = jl_box_int32(nTotalFaces);	
 		}
         jl_module_t* mod = (jl_module_t*)jl_eval_string("MinimalFVM");
-		auto funcName = useGPU ? "assemble_gpu" : "assemble";
+		auto funcName = "";
+        if (useGPU) {
+            if(global){
+                funcName = "globalassemble_gpu";
+            }
+            else {
+                funcName = "assemble_gpu";
+            }
+        }
+        else {
+            if(global){
+                funcName = "globalassemble";
+            }
+            else {
+                funcName = "assemble";
+            }
+        }
+        
         jl_function_t* func = jl_get_function(mod, funcName);
         jl_call(func, args, nbinputs);
-        // auto v = ls_.matrix().values().view();
-        // std::cout << "JULIA FACEBASED values: " << std::endl;
+        // auto va = ls_.matrix().values();
+        // auto cpu = NeoN::CPUExecutor {};
+        // auto cpuarr = va.copyToExecutor(cpu);
+        // auto v = cpuarr.view();   
+        // if (global){     
+        //     std::cout << "JULIA GLOBALFACEBASED values: " << std::endl;
+        // }
+        // else {
+        //     std::cout << "JULIA FACEBASED values: " << std::endl;
+        // }
         // std::cout << v[0] << std::endl;
         // std::cout << v[1] << std::endl;
         // std::cout << v[2] << std::endl;
