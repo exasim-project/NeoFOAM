@@ -1,0 +1,176 @@
+// SPDX-FileCopyrightText: 2025 - 2026 NeoFOAM authors
+//
+// SPDX-License-Identifier: MIT
+
+#pragma once
+
+#include "NeoN/fields/field.hpp"
+#include "NeoN/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"
+#include "NeoN/mesh/unstructured/unstructuredMesh.hpp"
+#include "NeoN/core/parallelAlgorithms.hpp"
+#include "NeoN/finiteVolume/cellCentred/fields/volumeField.hpp"
+
+namespace NeoN::finiteVolume::cellCentred::volumeBoundary
+{
+namespace fvcc = NeoN::finiteVolume::cellCentred;
+namespace detail
+{
+
+static constexpr label MAX_ITER = 10;
+static constexpr scalar TOLERANCE = 1e-9;
+static constexpr scalar KAPPA = 0.41;
+static constexpr scalar E = 9.8;
+
+KOKKOS_INLINE_FUNCTION
+scalar computeUTau(
+    const scalar magGradU,
+    const scalar magUp,
+    const scalar y,
+    const scalar nuw,
+    const scalar nutw,
+    scalar& err,
+    const int maxIter
+)
+{
+    err = 0.0;
+
+    scalar ut = Kokkos::sqrt((nutw + nuw) * magGradU);
+    if (ut <= ROOTVSMALL)
+    {
+        return 0.0;
+    }
+
+    int iter = 0;
+    do
+    {
+        const scalar kUu = Kokkos::min(KAPPA * magUp / ut, scalar(50));
+        const scalar fkUu = Kokkos::exp(kUu) - 1.0 - kUu * (1.0 + 0.5 * kUu);
+
+        const scalar f =
+            -ut * y / nuw + magUp / ut + (1.0 / E) * (fkUu - (1.0 / 6.0) * kUu * kUu * kUu);
+
+        const scalar df = y / nuw + magUp / (ut * ut) + (1.0 / E) * kUu * fkUu / ut;
+
+        const scalar uTauNew = ut + f / df;
+        err = NeoN::mag((ut - uTauNew) / ut);
+        ut = uTauNew;
+    }
+    while (ut > ROOTVSMALL && err > TOLERANCE && ++iter < maxIter);
+
+    return ut > 0.0 ? ut : 0.0;
+}
+
+inline void setNutUSpaldingWallFunction(
+    Field<scalar>& domainVector,
+    const fvcc::VolumeField<Vec3>& u,
+    const fvcc::VolumeField<scalar>& nu,
+    const fvcc::VolumeField<scalar>& nearWallDist,
+    const UnstructuredMesh& mesh,
+    std::pair<localIdx, localIdx> range
+)
+{
+    const auto uInternal = u.internalVector().view();
+    const auto uBoundary = u.boundaryData().value().view();
+    const auto nuBoundary = nu.boundaryData().value().view();
+
+    auto [refGradient, value, valueFraction, refValue, faceCells, deltaCoeffs, delta] = views(
+        domainVector.boundaryData().refGrad(),
+        domainVector.boundaryData().value(),
+        domainVector.boundaryData().valueFraction(),
+        domainVector.boundaryData().refValue(),
+        mesh.boundaryMesh().faceOwners(),
+        mesh.boundaryMesh().deltaCoeffs(),
+        nearWallDist.boundaryData().value()
+    );
+    NeoN::parallelFor(
+        domainVector.exec(),
+        range,
+        NEON_LAMBDA(const localIdx i) {
+            const localIdx owner = faceCells[i];
+
+            const Vec3 uInt = uInternal[owner];
+            const Vec3 uWall = uBoundary[i];
+            const Vec3 diff = uInt - uWall;
+
+            const scalar magUp = NeoN::mag(diff);
+            const scalar magGradU = NeoN::mag(diff * deltaCoeffs[i]);
+            const scalar y = delta[i];
+            const scalar nuw = nuBoundary[i];
+
+            const scalar currentNut = value[i];
+
+            scalar err = 0.0;
+            const scalar uTau = computeUTau(magGradU, magUp, y, nuw, currentNut, err, MAX_ITER);
+
+            // Mirrors OF nutUSpaldingWallFunctionFvPatchScalarField::calcNut restart-
+            // preservation block: if the current nutw already satisfies the Spalding
+            // relation to within tolerance (measured by err after one Newton step from
+            // the current state), keep it. Avoids drifting onto a different Newton
+            // basin when re-entering the wall function from a converged state.
+            scalar errOneIter = 0.0;
+            computeUTau(magGradU, magUp, y, nuw, currentNut, errOneIter, 1);
+
+            const scalar nutCandidate = (uTau * uTau) / (magGradU + ROOTVSMALL) - nuw;
+            const scalar nutCandidateClamped = nutCandidate > 0.0 ? nutCandidate : 0.0;
+            const scalar nutw = (errOneIter < TOLERANCE) ? currentNut : nutCandidateClamped;
+
+            refValue[i] = nutw;
+            value[i] = nutw;
+            valueFraction[i] = 1.0;
+            refGradient[i] = 0.0;
+        },
+        "setNutUSpaldingWallFunction"
+    );
+}
+
+} // namespace detail
+
+class NutUSpaldingWallFunction :
+    public VolumeBoundaryFactory<scalar>::template Register<NutUSpaldingWallFunction>
+{
+    using Base = VolumeBoundaryFactory<scalar>::template Register<NutUSpaldingWallFunction>;
+
+public:
+
+    NutUSpaldingWallFunction(const UnstructuredMesh& mesh, const Dictionary& dict, localIdx patchID)
+        : Base(mesh, dict, patchID, {.assignable = false, .fixesValue = true})
+        , mesh_(mesh)
+    {}
+
+    void correctBoundaryCondition(Field<scalar>& domainVector) final {}
+
+    void
+    correctBoundaryCondition(Field<scalar>& domainVector, const fvcc::BoundaryContext& ctx) final
+    {
+        detail::setNutUSpaldingWallFunction(
+            domainVector,
+            ctx.vectorFieldPtr("U"),
+            ctx.scalarFieldPtr("nu"),
+            ctx.scalarFieldPtr("nearWallDist"),
+            mesh_,
+            this->range()
+        );
+    }
+
+    static std::string name() { return "nutUSpaldingWallFunction"; }
+
+    std::string getName() const override { return name(); }
+
+    static std::string doc()
+    {
+        return "Spalding wall-function for nut with fixed internal constants.";
+    }
+
+    static std::string schema() { return "none"; }
+
+    std::unique_ptr<VolumeBoundaryFactory<scalar>> clone() const final
+    {
+        return std::make_unique<NutUSpaldingWallFunction>(*this);
+    }
+
+private:
+
+    const UnstructuredMesh& mesh_;
+};
+
+} // namespace NeoN::finiteVolume::cellCentred::volumeBoundary

@@ -16,7 +16,11 @@ echo "=== GPU vendor=$GPU_VENDOR, NeoN branch=$NEON_BRANCH ==="
 # -------------------------
 echo "=== Tool versions ==="
 cmake --version
+mpirun --version
 g++ --version || clang++ --version
+
+# use host buffer since no gpu aware mpi is available
+export NEON_FORCE_HOST_BUFFER=1
 
 if [[ "$GPU_VENDOR" == "nvidia" ]]; then
     echo "=== NVIDIA GPU info ==="
@@ -64,7 +68,7 @@ if [[ "$GPU_VENDOR" == "nvidia" ]]; then
         -DNEOFOAM_NEON_DIR=../NeoN \
         -DCMAKE_CUDA_ARCHITECTURES=89 \
         -DNeoN_WITH_THREADS=OFF \
-        -DNeoN_WITH_MPI=ON \
+        -DNEOFOAM_WITH_MPI=ON \
         -DNEOFOAM_BUILD_BENCHMARKS=ON
 elif [[ "$GPU_VENDOR" == "amd" ]]; then
     cmake --preset $PRESET \
@@ -77,7 +81,7 @@ elif [[ "$GPU_VENDOR" == "amd" ]]; then
         -DCMAKE_HIP_ARCHITECTURES=gfx90a \
         -DKokkos_ARCH_AMD_GFX90A=ON \
         -DNeoN_WITH_THREADS=OFF \
-        -DNeoN_WITH_MPI=ON \
+        -DNEOFOAM_WITH_MPI=ON \
         -DNEOFOAM_BUILD_BENCHMARKS=ON
 elif [[ "$GPU_VENDOR" == "intel" ]]; then
     cmake --preset $PRESET \
@@ -87,7 +91,7 @@ elif [[ "$GPU_VENDOR" == "intel" ]]; then
         -DKokkos_ENABLE_SYCL=ON \
         -DKokkos_ARCH_INTEL_PVC=ON \
         -DNeoN_WITH_THREADS=OFF \
-        -DNeoN_WITH_MPI=OFF \
+        -DNEOFOAM_WITH_MPI=ON \
         -DCMAKE_BUILD_TYPE="release" \
         -DNEOFOAM_BUILD_BENCHMARKS=ON
 fi
@@ -107,7 +111,11 @@ ctest --preset $PRESET -R neofoam --output-on-failure
 SKIP_VALIDATION=${SKIP_VALIDATION:-false}
 if [[ "$SKIP_VALIDATION" != "true" ]]; then
     pushd tutorials/cavity >/dev/null
-    python3 cleanRunValidate.py --preset "$PRESET"
+    python3 cleanRunValidate.py --preset "$PRESET" --mode serial
+    # currently intel is too slow and nvidia hangs
+    if [[ "$GPU_VENDOR" != "intel" ]]; then
+        python3 cleanRunValidate.py --preset "$PRESET" --mode parallel
+    fi
     popd >/dev/null
 else
     echo "=== Skipping validation (skip-validation label set) ==="

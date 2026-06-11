@@ -58,7 +58,7 @@ TEST_CASE("Interpolation")
         op.interpolate(nfT, nfSurfT);
         nfSurfT.correctBoundaryConditions();
 
-        NeoFOAM::compare(nfSurfT, ofSurfT, ApproxScalar(1e-15), false);
+        REQUIRE_THAT(nfSurfT, EqualsInternal(ofSurfT, ApproxScalar(1e-15)));
     }
 
     SECTION("GaussGreenGrad[scalar] on " + execName)
@@ -72,7 +72,7 @@ TEST_CASE("Interpolation")
         fvcc::GaussGreenGrad(exec, nfMesh).grad(nfT, NeoN::dsl::Coeff(), nfGradT.internalVector());
         nfGradT.correctBoundaryConditions();
 
-        NeoFOAM::compare(nfGradT, ofGradT, ApproxVector({1e-12, 1e-12, 1e-4}), false);
+        REQUIRE_THAT(nfGradT, EqualsInternal(ofGradT, ApproxVector({1e-12, 1e-12, 1e-4})));
     }
 
     auto ofPhi = NeoFOAM::randDimField<Foam::surfaceScalarField>(mesh, Foam::dimless, "phi");
@@ -90,7 +90,7 @@ TEST_CASE("Interpolation")
             .div(nfDivT, nfPhi, nfT, dsl::Coeff(1.0));
         nfDivT.correctBoundaryConditions();
 
-        NeoFOAM::compare(nfDivT, ofDivT, ApproxScalar(1e-15), false);
+        REQUIRE_THAT(nfDivT, EqualsInternal(ofDivT, ApproxScalar(1e-15)));
     }
 
 
@@ -108,6 +108,6 @@ TEST_CASE("Interpolation")
         divOp.explicitOperation(nfDivT.internalVector());
         nfDivT.correctBoundaryConditions();
 
-        NeoFOAM::compare(nfDivT, ofDivT, ApproxScalar(1e-15), false);
+        REQUIRE_THAT(nfDivT, EqualsInternal(ofDivT, ApproxScalar(1e-15)));
     }
 }

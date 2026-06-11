@@ -23,6 +23,7 @@ TEST_CASE("(backward) ddt implicit matches OpenFOAM", "[ddt][backward]")
 {
     Foam::Time& runTime = *timePtr;
     Foam::argList& args = *argsPtr;
+    NeoN::mpi::Environment mpiEnviron;
 
     NeoN::Database db;
     fvcc::VectorCollection& fieldCol = fvcc::VectorCollection::instance(db, "VectorCollection");

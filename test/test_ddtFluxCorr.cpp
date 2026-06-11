@@ -110,12 +110,20 @@ TEST_CASE("ddtCorr: OpenFOAM Euler vs NeoN (BDF1)")
     SurfScalar nfCorr = ddtFluxCorr(nfU, nfPhi, dt, scheme);
 
     // --- Sanity: states match
-    NeoFOAM::compare(nfU, U, ApproxVector(epsilon));
-    NeoFOAM::compare(nfU0, U.oldTime(), ApproxVector(epsilon));
-    NeoFOAM::compare(nfPhi, phi, ApproxScalar(epsilon));
-    NeoFOAM::compare(nfPhi0, phi.oldTime(), ApproxScalar(epsilon));
+    REQUIRE_THAT(nfU, EqualsInternal(U, ApproxVector(epsilon)));
+    REQUIRE_THAT(nfU.boundaryData(), EqualsBoundary(U, ApproxVector(epsilon)));
+    REQUIRE_THAT(nfU0, EqualsInternal(U.oldTime(), ApproxVector(epsilon)));
+    REQUIRE_THAT(nfU0.boundaryData(), EqualsBoundary(U.oldTime(), ApproxVector(epsilon)));
+    REQUIRE_THAT(nfPhi, EqualsInternal(phi, ApproxScalar(epsilon)));
+    REQUIRE_THAT(nfPhi.boundaryData(), EqualsBoundary(phi, ApproxScalar(epsilon)));
+    REQUIRE_THAT(nfPhi0, EqualsInternal(phi.oldTime(), ApproxScalar(epsilon)));
+    REQUIRE_THAT(nfPhi0.boundaryData(), EqualsBoundary(phi.oldTime(), ApproxScalar(epsilon)));
 
-    SECTION("ddtCorr " + execName) { NeoFOAM::compare(nfCorr, foamCorr, ApproxScalar(epsilon)); }
+    SECTION("ddtCorr " + execName)
+    {
+        REQUIRE_THAT(nfCorr, EqualsInternal(foamCorr, ApproxScalar(epsilon)));
+        REQUIRE_THAT(nfCorr.boundaryData(), EqualsBoundary(foamCorr, ApproxScalar(epsilon)));
+    }
 
     Foam::dimensionedScalar nu("nu", Foam::dimViscosity, 0.01);
 
@@ -154,6 +162,6 @@ TEST_CASE("ddtCorr: OpenFOAM Euler vs NeoN (BDF1)")
     auto phiHbyAND = NeoFOAM::flux(hByAND) + nfCorr * rAUNF;
     SECTION("application to actual fields: " + execName)
     {
-        NeoFOAM::compare(phiHbyAND, phiHbyA, ApproxScalar(1e-15), false);
+        REQUIRE_THAT(phiHbyAND, EqualsInternal(phiHbyA, ApproxScalar(1e-15)));
     }
 }

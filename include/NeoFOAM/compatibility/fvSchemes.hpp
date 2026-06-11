@@ -5,6 +5,7 @@
 #pragma once
 
 #include "NeoN/core/dictionary.hpp"
+#include "NeoN/core/tokenList.hpp"
 
 
 namespace NeoFOAM

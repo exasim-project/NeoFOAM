@@ -26,12 +26,18 @@ namespace NeoFOAM
  * for dependent operations like discrete momentum fields
  * needs storage for assembled matrix? and whether update is needed like for rAU and HbyA
  */
-template<typename ValueType, typename IndexType = NeoN::localIdx>
+template<
+    typename ValueType,
+    typename MatrixValueType = NeoN::scalar,
+    typename IndexType = NeoN::localIdx>
 class PDESolver
 {
     using VolumeField = NeoN::finiteVolume::cellCentred::VolumeField<ValueType>;
-    using LinearSystem =
-        NeoN::la::LinearSystem<ValueType, NeoN::la::CSRMatrix<ValueType, NeoN::localIdx>>;
+    // Matrix coefficients use MatrixValueType (scalar by default, giving the segregated
+    // vector-solve form for Vec3 fields); the rhs/solution use the field's ValueType.
+    // TODO: future work selects MatrixValueType == ValueType (the coupled Vec3 matrix)
+    // based on the presence of boundary conditions that require the full block-coupled form.
+    using LinearSystem = NeoN::la::LinearSystem<MatrixValueType, ValueType>;
 
 public:
 
@@ -40,10 +46,12 @@ public:
         , expr_(expr)
         , runTime_(runTime)
         , ls_(readOrCreate<LinearSystem>(
-            runTime,
-            "linearSystem" + psi.name,
-            [&psi]() { return NeoN::la::createEmptyLinearSystem<ValueType>(psi.mesh()); }
-        ))
+              runTime,
+              "linearSystem" + psi.name,
+              // FIXME find a proper place
+              [&psi, &runTime]()
+              { return NeoN::la::createEmptyLinearSystem<MatrixValueType, ValueType>(psi.mesh()); }
+          ))
     {
         expr_.read(runTime_.fvSchemesDict);
     };
@@ -78,41 +86,6 @@ public:
 
     const NeoN::Executor& exec() const { return ls_.exec(); }
 
-    template<typename FunctorValueType>
-    struct SetReference : public NeoN::dsl::PostAssemblyBase<ValueType, IndexType>
-    {
-
-        NeoN::localIdx pRefCell_;
-        NeoN::scalar pRefValue_;
-
-        SetReference(NeoN::localIdx pRefCell, NeoN::scalar pRefValue)
-            : pRefCell_(pRefCell)
-            , pRefValue_(pRefValue)
-        {}
-
-        virtual void operator()(NeoN::la::LinearSystem<
-                                FunctorValueType,
-                                NeoN::la::CSRMatrix<FunctorValueType, IndexType>>& ls)
-        {
-            const auto rowOffs = ls.matrix().sparsity()->rowOffs().view();
-            const auto diagOffset = ls.faceToMatrixAddress()->diagOffset().view();
-            auto rhs = ls.rhs().view();
-            auto values = ls.matrix().values().view();
-            // make an explicit copy to avoid capture this warning in kokkos lambda
-            auto pRefValue = pRefValue_;
-
-            NeoN::parallelFor(
-                ls.exec(),
-                {pRefCell_, pRefCell_ + 1},
-                NEON_LAMBDA(const std::size_t refCelli) {
-                    auto diagIdx = rowOffs[refCelli] + diagOffset[refCelli];
-                    auto diagValue = values[diagIdx];
-                    rhs[refCelli] += diagValue * pRefValue;
-                    values[diagIdx] += diagValue;
-                }
-            );
-        }
-    };
 
     NeoN::finiteVolume::cellCentred::DdtScheme ddtScheme() const
     {
@@ -129,15 +102,24 @@ public:
 
     void setReference(NeoN::localIdx pRefCell, NeoN::scalar pRefValue)
     {
-        needReference_ = true;
-        pRefCell_ = pRefCell;
-        pRefValue_ = pRefValue;
+        // Accept the call in serial (MPI not initialised — mpiRank is the
+        // sentinel -1, which would compare unequal to 0 if cast to size_t)
+        // and on rank 0 in parallel. SetReference::operator() further guards
+        // the matrix mutation against non-rank-0 in initialised MPI.
+        const auto& mpiEnv = runTime_.mpiEnvironment;
+        if (!mpiEnv.isInitialized() || mpiEnv.rank() == 0)
+        {
+            needReference_ = true;
+            pRefCell_ = pRefCell;
+            pRefValue_ = pRefValue;
+        }
     }
 
     /** @brief assemble the linear system owned by the solver based on the current expression */
     LinearSystem& assemble()
     {
-        expr_.assemble(runTime_.t, runTime_.dt, ls_);
+        ls_.reset();
+        expr_.assemble(runTime_.t, runTime_.dt, ls_, psi_.mesh());
         // auto v = ls_.matrix().values().view();
         // auto va = ls_.matrix().values();
         // auto cpu = NeoN::CPUExecutor {};
@@ -150,7 +132,6 @@ public:
         // std::cout << v[3] << std::endl;
         // std::cout << v[4] << std::endl;
         // std::cout << v[v.size()-1] << std::endl;
-
         return ls_;
     }
 
@@ -162,25 +143,21 @@ public:
      * 2. a copy of the assembled linear system is made and the rhs is assembled
      * 3. the new linear system with rhs is returned
      */
-    NeoN::la::LinearSystem<ValueType> assemble(dsl::SpatialOperator<NeoN::Vec3>&& rhs)
+    LinearSystem assemble(dsl::SpatialOperator<NeoN::Vec3>&& rhs)
     {
         auto rhsExpr = dsl::Expression<ValueType>(-1.0 * rhs);
         rhsExpr.read(runTime_.fvSchemesDict);
-        auto ls = NeoN::la::LinearSystem<ValueType>(assemble());
-
-        auto expTmp = rhsExpr.explicitOperation(psi_.mesh().nCells());
-
-        auto [vol, expSource, rhsV] = NeoN::views(psi_.mesh().cellVolumes(), expTmp, ls.rhs());
-        NeoN::parallelFor(
-            psi_.exec(),
-            {0, rhsV.size()},
-            NEON_LAMBDA(const NeoN::localIdx i) { rhsV[i] -= expSource[i] * vol[i]; }
-        );
+        auto ls = LinearSystem(assemble());
+        rhsExpr.assembleExplicitSource(ls, psi_.mesh());
 
         return ls;
     }
 
-    NeoN::la::SolverStats solve() { return solveImpl(expr_, ls_); }
+    NeoN::la::SolverStats solve()
+    {
+        ls_.reset();
+        return solveImpl(expr_, ls_);
+    }
 
     /** @brief solve expression with additional rhs
      *
@@ -200,16 +177,42 @@ public:
         // NF_ASSERT(ls.exec() == solution.exec(), "Executors are not the same");
         auto stats = solver.solve(ls, psi_.internalVector());
 
-        for (auto& stat : stats.entries)
+        reportSolverStats(stats, fvSolution);
+        return stats;
+    }
+
+    // Public because NVCC forbids extended __host__ __device__ lambdas
+    // (NEON_LAMBDA) inside private or protected member functions.
+    NeoN::la::SolverStats solveImpl(dsl::Expression<ValueType>& expr, LinearSystem& ls)
+    {
+        // Re-read schemes (idempotent with the constructor read)
+        expr.read(runTime_.fvSchemesDict);
+
+        // Assemble without post-assembly functors; we apply SetReference separately below
+        // to ensure correct polymorphic dispatch — storing PostAssemblyBase by value causes
+        // object slicing that silently disables virtual overrides.
+        expr.assemble(runTime_.t, runTime_.dt, ls, psi_.mesh());
+
+        // Apply reference-cell pinning directly (avoids object-slicing issue)
+        if constexpr (std::is_same_v<ValueType, NeoN::scalar>)
         {
-            NeoN::Logging::info(
-                "Solving for {} Initial residual: {} Final residual: {} No Iterations: {}",
-                psi_.name,
-                stat.initResNorm,
-                stat.finalResNorm,
-                stat.numIter
-            );
+            if (needReference_)
+            {
+                NeoN::dsl::SetReference<ValueType> refFunct(pRefCell_, pRefValue_);
+                refFunct(ls);
+            }
         }
+
+        auto solverDict = runTime_.fvSolutionDict.subDict("solvers");
+        auto fieldSolverDict = solverDict.subDict(psi_.name);
+        NeoN::fence(psi_.exec());
+        NF_ASSERT(ls.exec() == psi_.exec(), "Executors are not the same");
+
+        auto solver = NeoN::la::Solver(psi_.exec(), fieldSolverDict);
+        auto stats = solver.solve(ls, psi_.internalVector());
+
+        reportSolverStats(stats, fieldSolverDict);
+
         return stats;
     }
 #ifdef NeoN_WITH_JULIA
@@ -569,84 +572,56 @@ public:
 #endif
 private:
 
-    NeoN::la::SolverStats solveImpl(dsl::Expression<ValueType>& expr, LinearSystem& ls)
+    // Per-component name (Ux/Uy/Uz) when a vector field is solved as separate
+    // component systems; the plain field name otherwise (scalar or coupled solve).
+    static std::string componentName(const std::string& base, std::size_t i, std::size_t n)
     {
-        // Only if ValueType is scalar
-        auto functs = std::vector<NeoN::dsl::PostAssemblyBase<ValueType, IndexType>> {};
+        if (n <= 1) return base;
+        constexpr const char* suffix[3] = {"x", "y", "z"};
+        return i < 3 ? base + suffix[i] : base + "[" + std::to_string(i) + "]";
+    }
 
-        if constexpr (std::is_same_v<ValueType, NeoN::scalar>)
+    // OpenFOAM-style per-solve residual report: "<precond><solver>:  Solving for
+    // <field>, Initial residual = ..., Final residual = ..., No Iterations N".
+    // The "<precond><solver>" label (e.g. DICPCG) is read from the solver dict's
+    // reportName meta key stashed by mapFvSolution -> no recomputation per solve.
+    // Logging is rank-aware and skips formatting on muted ranks (NeoN shouldLog).
+    void reportSolverStats(
+        const NeoN::la::SolverStats& stats,
+        const NeoN::Dictionary& fieldSolverDict
+    ) const
+    {
+        const std::string label = fieldSolverDict.contains("reportName")
+                                    ? fieldSolverDict.get<std::string>("reportName")
+                                    : std::string("Ginkgo");
+        const std::size_t n = stats.entries.size();
+        for (std::size_t i = 0; i < n; ++i)
         {
-            functs =
-                needReference_
-                    ? std::vector<NeoN::dsl::PostAssemblyBase<ValueType, IndexType>> {SetReference<
-                          ValueType>(pRefCell_, pRefValue_)}
-                    : std::vector<NeoN::dsl::PostAssemblyBase<ValueType, IndexType>> {};
-        }
-
-        auto solverDict = runTime_.fvSolutionDict.subDict("solvers");
-        auto fieldSolverDict = solverDict.subDict(psi_.name);
-
-        auto stats = NeoN::la::SolverStats();
-        // TODO NOTE: This is a temporary solution to avoid negative values on the diagonal
-        // when IC is selected as preconditioner by scaling the system matrix with -1.0.
-        // NOTE: This will produce -p as a result.
-        if (psi_.name == "p" && fieldSolverDict.contains("preconditioner")
-            && fieldSolverDict.subDict("preconditioner").template get<std::string>("type")
-                   == "preconditioner::Ic")
-        {
-            auto exprIn = -1.0 * expr;
-            stats = NeoN::dsl::detail::iterativeSolveImpl(
-                exprIn,
-                ls,
-                psi_,
-                runTime_.t,
-                runTime_.dt,
-                runTime_.fvSchemesDict,
-                fieldSolverDict,
-                functs
-            );
-        }
-        else
-        {
-            stats = NeoN::dsl::detail::iterativeSolveImpl(
-                expr,
-                ls,
-                psi_,
-                runTime_.t,
-                runTime_.dt,
-                runTime_.fvSchemesDict,
-                fieldSolverDict,
-                functs
-            );
-        }
-
-        for (auto stat : stats.entries)
-        {
+            const auto& stat = stats.entries[i];
             NeoN::Logging::info(
-                "Solving for {} Initial residual: {} Final residual: {} No Iterations: {}",
-                psi_.name,
+                "{}:  Solving for {}, Initial residual = {}, Final residual = {}, No Iterations {}",
+                label,
+                componentName(psi_.name, i, n),
                 stat.initResNorm,
                 stat.finalResNorm,
                 stat.numIter
             );
         }
-
-        return stats;
     }
 
     VolumeField& psi_;
     dsl::Expression<ValueType> expr_;
     const RunTime& runTime_;
     LinearSystem ls_;
-    bool needReference_;
-    NeoN::localIdx pRefCell_;
-    NeoN::scalar pRefValue_;
+    bool needReference_ = false;
+    NeoN::localIdx pRefCell_ = 0;
+    NeoN::scalar pRefValue_ = 0.0;
 };
 
 
 template<typename ValueType, typename IndexType = NeoN::localIdx>
 NeoN::finiteVolume::cellCentred::VolumeField<ValueType> applyOperator(
-    const la::LinearSystem<ValueType, NeoN::la::CSRMatrix<ValueType, IndexType>>& ls,
+    const la::LinearSystem<ValueType>& ls,
     const NeoN::finiteVolume::cellCentred::VolumeField<ValueType>& psi
 )
 {
@@ -663,9 +638,9 @@ NeoN::finiteVolume::cellCentred::VolumeField<ValueType> applyOperator(
 }
 
 
-template<typename ValueType, typename IndexType = NeoN::localIdx>
+template<typename ValueType>
 NeoN::finiteVolume::cellCentred::VolumeField<ValueType> operator&(
-    const PDESolver<ValueType, IndexType> expr,
+    const PDESolver<ValueType>& expr,
     const NeoN::finiteVolume::cellCentred::VolumeField<ValueType>& psi
 )
 {

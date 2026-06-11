@@ -3,13 +3,11 @@
 // SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
 
-#include "NeoFOAM/compatibility/fvSolution.hpp"
+#include "NeoFOAM/compatibility/fvSchemes.hpp"
 
 #include <map>
 
 #include <NeoN/core/logging.hpp>
-#include <NeoN/core/primitives/scalar.hpp>
-#include <NeoN/core/primitives/label.hpp>
 
 
 namespace NeoFOAM
@@ -57,6 +55,8 @@ NeoN::Dictionary mapFvSchemes(const NeoN::Dictionary& schemesDict)
     NeoN::Dictionary modSchemesDict = schemesDict;
 
     updateDdtSchemes(modSchemesDict);
+    // snGrad scheme names (corrected, uncorrected, limited [corrected] <coeff>)
+    // are accepted by NeoN's factories directly — no remapping required.
 
     return modSchemesDict;
 }
