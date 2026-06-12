@@ -142,49 +142,62 @@ public:
         return ls_;
     }
 
-    /** @brief assemble the linear system with an additional rhs term
-     *
-     * the following assembly logic is applied
-     * 1. the "owned" linear system gets assembled
-     * 2. a copy of the assembled linear system is made and the rhs is assembled
-     * 3. the new linear system with rhs is returned
-     */
-    LinearSystem assemble(dsl::SpatialOperator<NeoN::Vec3>&& rhs)
-    {
-        auto rhsExpr = dsl::Expression<ValueType>(-1.0 * rhs);
-        rhsExpr.read(runTime_.fvSchemesDict);
-        auto ls = LinearSystem(assemble());
-        rhsExpr.assembleExplicitSource(ls, psi_.mesh());
-
-        return ls;
-    }
-
     NeoN::la::SolverStats solve()
     {
         ls_.reset();
         return solveImpl(expr_, ls_);
     }
 
-    /** @brief solve expression with additional rhs
+    /** @brief solve the expression augmented with an additional explicit rhs term
+     * (e.g. the momentum predictor's -grad(p)).
      *
-     * This function will create two versions of the linear system corresponding to the expression
-     * 1. the owned linear system without rhs is assembled and stored
-     * 2. a temporary linear system with rhs assembled and solved
+     * The owned system ls_ is assembled once and solved in place: the extra rhs term is applied to
+     * ls_.rhs() only for the duration of the solve and then added back, so ls_ is left holding the
+     * rhs-free ("H") system the subsequent rAU/HbyA step reads. With the momentum predictor enabled
+     * computeRAUandHByA consumes ls_.rhs() directly (the apps do not re-assemble in that branch),
+     * so the restore is required for a correct H. This avoids deep-copying the whole momentum
+     * LinearSystem on every solve; the solver takes the system rhs as const, so re-adding the
+     * source reproduces the previous copy-based behaviour exactly.
      */
     NeoN::la::SolverStats solve(dsl::SpatialOperator<NeoN::Vec3>&& rhs)
     {
-        // assemble wo rhs first
-        auto ls = assemble(std::move(rhs));
+        // 1. assemble the owned system once (implicit + main explicit sources via NeoN assemble).
+        assemble();
+
+        // 2. build the extra rhs term (e.g. -grad(p)). The main expression's explicit sources are
+        //    already folded into ls_ by assemble(), so only the extra term is collected here.
+        auto rhsExpr = dsl::Expression<ValueType>(-1.0 * rhs);
+        rhsExpr.read(runTime_.fvSchemesDict);
+        auto expSource =
+            rhsExpr.explicitOperation(static_cast<NeoN::localIdx>(psi_.mesh().nCells()));
+
+        // 3. apply the explicit source to ls_.rhs() in place for the solve (rhs -= source * vol).
+        {
+            auto [vol, src, rhsV] = NeoN::views(psi_.mesh().cellVolumes(), expSource, ls_.rhs());
+            NeoN::parallelFor(
+                psi_.exec(),
+                {0, rhsV.size()},
+                NEON_LAMBDA(const NeoN::localIdx i) { rhsV[i] -= src[i] * vol[i]; }
+            );
+        }
 
         auto solverDict = runTime_.fvSolutionDict.subDict("solvers");
         auto fvSolution = solverDict.subDict(psi_.name);
         stripNeoFOAMKeys(fvSolution);
         auto solver = NeoN::la::Solver(psi_.exec(), fvSolution);
-        // Do some sanity checks before trying to solve
-        // NF_ASSERT(ls.exec() == solution.exec(), "Executors are not the same");
-        auto stats = solver.solve(ls, psi_.internalVector());
-
+        auto stats = solver.solve(ls_, psi_.internalVector());
         reportSolverStats(stats, fvSolution);
+
+        // 4. restore ls_.rhs() to the rhs-free state so the following rAU/HbyA read the H-system.
+        {
+            auto [vol, src, rhsV] = NeoN::views(psi_.mesh().cellVolumes(), expSource, ls_.rhs());
+            NeoN::parallelFor(
+                psi_.exec(),
+                {0, rhsV.size()},
+                NEON_LAMBDA(const NeoN::localIdx i) { rhsV[i] += src[i] * vol[i]; }
+            );
+        }
+
         return stats;
     }
 
