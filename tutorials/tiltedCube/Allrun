@@ -1,0 +1,31 @@
+#!/bin/sh
+cd "${0%/*}" || exit                                # Run from this directory
+. ${WM_PROJECT_DIR:?}/bin/tools/RunFunctions        # Tutorial run functions
+#------------------------------------------------------------------------------
+# tiltedCube: a small tilted-cube snappyHexMesh case used to exercise the
+# distributed (processor-boundary) code paths on a genuinely complex mesh.
+#
+# Usage:
+#   ./Allrun                 # mesh + serial neoIcoFoam
+#   NPROCS=4 ./Allrun -par   # mesh + decompose + parallel neoIcoFoam
+#
+# Set NEOFOAM_BIN to override the solver binary (default: develop build).
+
+NEOFOAM_BIN="${NEOFOAM_BIN:-../../build/develop/bin/neoIcoFoam}"
+NPROCS="${NPROCS:-4}"
+
+# 1. mesh
+./Allmesh
+
+# 2. initial fields
+restore0Dir
+
+if [ "$1" = "-par" ] || [ "$1" = "-parallel" ]
+then
+    runApplication decomposePar -force
+    runParallel -np "$NPROCS" "$NEOFOAM_BIN"
+else
+    runApplication "$NEOFOAM_BIN"
+fi
+
+#------------------------------------------------------------------------------

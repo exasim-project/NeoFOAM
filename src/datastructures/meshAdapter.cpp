@@ -208,7 +208,13 @@ readOpenFOAMMesh(const NeoN::Executor exec, const Foam::fvMesh& mesh, bool fullM
     );
     std::vector<NeoN::localIdx> offset = computeOffset(mesh);
 
-    std::vector<NeoN::localIdx> neighbRank = computeNeighbRank(mesh);
+    // neighbourRank MUST be built in the same fvBoundaryMesh proc-patch order as computeOffset():
+    // every consumer (BoundaryMesh::neighbourRankForRange, computeCommunicationPattern) indexes
+    // neighbourRank_[k] by the k-th proc patch in offset order. computeNeighbRank() iterates
+    // lduInterfacePtrsList (interface-index order, skipping nulls), which diverges from offset
+    // order on non-X-split / sheared decompositions and yields the wrong peer rank. Use the
+    // fvBoundaryMesh-ordered computeNeighbourRank() instead (D1 of the proc-halo comm-map fix).
+    std::vector<NeoN::localIdx> neighbRank = computeNeighbourRank(mesh);
     NeoN::localIdx nProcPatches = neighbRank.size();
     NeoN::BoundaryMesh bMesh(
         exec,

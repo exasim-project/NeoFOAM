@@ -173,6 +173,27 @@ void divDevReff(
         "divDevReff::boundary"
     );
 
+    // Processor faces: the viscous-stress flux across a rank boundary, added to the owner cell
+    // (the neighbour cell is updated on its own rank). Proc faces are the compressed tail of the
+    // boundary arrays at [nBnd, nBnd + nProcFaces); use the boundary mesh's own face normals — the
+    // OF-full mesh.faceNormals() does not index proc faces. tauF's proc tail is the interpolated
+    // face stress, which carries the neighbour cell gradient via gradU's processor BC.
+    const localIdx nProcFaces = mesh.nProcBoundaryFaces();
+    if (nProcFaces > 0)
+    {
+        const auto bSf = mesh.boundaryMesh().faceNormals().view();
+        parallelFor(
+            exec,
+            {0, nProcFaces},
+            NEON_LAMBDA(const localIdx proci) {
+                const localIdx bfi = nBnd + proci;
+                const Vec3 flux = scalar(-1.0) * (tauFB[bfi] & bSf[bfi]);
+                atomicAddVec3(&rhsV[faceCells[bfi]], flux);
+            },
+            "divDevReff::proc"
+        );
+    }
+
     parallelFor(
         exec,
         {0, mesh.nCells()},

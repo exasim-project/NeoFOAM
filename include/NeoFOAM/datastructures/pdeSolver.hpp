@@ -6,6 +6,10 @@
 
 #include "NeoN/NeoN.hpp"
 
+#include <algorithm>
+#include <cmath>
+#include <string>
+
 #include "NeoFOAM/datastructures/runTime.hpp"
 #ifdef NeoN_WITH_JULIA
 #include <julia.h>

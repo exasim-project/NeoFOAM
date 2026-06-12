@@ -6,6 +6,7 @@
 
 #include "fvMesh.H"
 #include "volFields.H"
+#include "surfaceFields.H"
 
 #include "NeoFOAM/auxiliary/convert.hpp"
 
@@ -46,5 +47,13 @@ void write(const fvcc::VolumeField<NeoN::scalar>& volField, const Foam::fvMesh& 
 
 /*@brief writes a NeoN field back to disk using OF field file format*/
 void write(const fvcc::VolumeField<NeoN::Vec3>& volField, const Foam::fvMesh& mesh);
+
+/*@brief writes a NeoN surface field back to disk using OF field file format.
+ * Adapted to the split-storage SurfaceField (internalVector() is nInternalFaces only;
+ * boundary + processor faces live in boundaryData().value()). */
+void write(const fvcc::SurfaceField<NeoN::scalar>& surfField, const Foam::fvMesh& mesh);
+
+/*@brief writes a NeoN surface field back to disk using OF field file format*/
+void write(const fvcc::SurfaceField<NeoN::Vec3>& surfField, const Foam::fvMesh& mesh);
 
 } // namespace Foam

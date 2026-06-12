@@ -207,11 +207,12 @@ TEST_CASE("Distributed PressureVelocityCoupling")
 
         nfUEqn.assemble();
 
-        // NOTE removeBoundaryContributions is not working in distributed case
-        // REQUIRE_THAT(
-        //     NeoN::la::removeBoundaryContributions(nfUEqn.linearSystem()).matrix().diag(),
-        //     EqualsInternal(ofUEqn.diag(), ApproxVector(1e-15))
-        // );
+        // momentum is assembled into a scalar matrix (segregated form), so the diagonal is
+        // a scalar field — compare with ApproxScalar, like upper() below.
+        REQUIRE_THAT(
+            NeoN::la::removeBoundaryContributions(nfUEqn.linearSystem()).matrix().diag(),
+            EqualsInternal(ofUEqn.diag(), ApproxScalar(1e-15))
+        );
 
         // momentum is assembled into a scalar matrix (segregated form); OpenFOAM's
         // fvVectorMatrix upper() is likewise scalar.
@@ -291,11 +292,10 @@ TEST_CASE("Distributed PressureVelocityCoupling")
 
         pEqn.assemble();
 
-        // NOTE removeBoundaryContributions is not working in distributed case
-        // REQUIRE_THAT(
-        //     NeoN::la::removeBoundaryContributions(pEqn.linearSystem()).matrix().diag(),
-        //     nf::Equals(ofpEqn.diag(), ApproxScalar(1e-15), false)
-        // );
+        REQUIRE_THAT(
+            NeoN::la::removeBoundaryContributions(pEqn.linearSystem()).matrix().diag(),
+            EqualsInternal(ofpEqn.diag(), ApproxScalar(1e-15))
+        );
 
         REQUIRE_THAT(
             NeoN::la::upper(pEqn.linearSystem().matrix()),
@@ -333,11 +333,10 @@ TEST_CASE("Distributed PressureVelocityCoupling")
 
         auto stats = pEqn.solve();
 
-        // NOTE removeBoundaryContributions is not working in distributed case
-        // REQUIRE_THAT(
-        //     NeoN::la::removeBoundaryContributions(pEqn.linearSystem()).matrix().diag(),
-        //     nf::Equals(ofpEqn.diag(), ApproxScalar(1e-15), false)
-        // );
+        REQUIRE_THAT(
+            NeoN::la::removeBoundaryContributions(pEqn.linearSystem()).matrix().diag(),
+            EqualsInternal(ofpEqn.diag(), ApproxScalar(1e-15))
+        );
 
         REQUIRE_THAT(
             NeoN::la::upper(pEqn.linearSystem().matrix()),

@@ -47,19 +47,33 @@ jobs:
           echo "Using NeoFOAM branch: $NEOFOAM_BRANCH"
           echo "NEOFOAM_BRANCH=$NEOFOAM_BRANCH" >> $GITHUB_ENV
 
-          # Define remote repo URL
-          REPO_URL="https://github.com/exasim-project/NeoN"
+          # Define remote repo
+          NEON_REPO="exasim-project/NeoN"
+          REPO_URL="https://github.com/${NEON_REPO}"
 
+          # Prefer a NeoN branch with the same name as this NeoFOAM branch (coordinated
+          # PRs), but only while it still has commits that are NOT yet in develop. A
+          # same-named branch already merged into / contained in develop is stale and
+          # would build against an outdated NeoN API, so fall back to develop then.
+          NEON_BRANCH="develop"
           echo "Checking if branch '$NEOFOAM_BRANCH' exists in NeoN..."
-
-          # Query exact match: refs/heads/<branch>
           if git ls-remote --exit-code --heads "$REPO_URL" "refs/heads/${NEOFOAM_BRANCH}" >/dev/null 2>&1; then
-            echo "NeoN branch exists: $NEOFOAM_BRANCH"
-            echo "NEON_BRANCH=$NEOFOAM_BRANCH" >> $GITHUB_ENV
+            echo "NeoN branch exists; checking whether it is already merged into develop..."
+            # compare develop...<branch>: 'behind'/'identical' => branch fully contained in develop
+            NEON_STATUS=$(curl -s "https://api.github.com/repos/${NEON_REPO}/compare/develop...${NEOFOAM_BRANCH}" | jq -r '.status // empty' || echo "")
+            echo "compare(develop...${NEOFOAM_BRANCH}) status: ${NEON_STATUS:-<unknown>}"
+            if [ "$NEON_STATUS" = "behind" ] || [ "$NEON_STATUS" = "identical" ]; then
+              echo "NeoN branch is already merged into develop. Falling back to 'develop'."
+            else
+              echo "NeoN branch has unmerged commits (or status unknown). Using it: $NEOFOAM_BRANCH"
+              NEON_BRANCH="$NEOFOAM_BRANCH"
+            fi
           else
             echo "NeoN branch '$NEOFOAM_BRANCH' does not exist. Falling back to 'develop'."
-            echo "NEON_BRANCH=develop" >> $GITHUB_ENV
           fi
+
+          echo "Resolved NeoN ref: $NEON_BRANCH"
+          echo "NEON_BRANCH=$NEON_BRANCH" >> $GITHUB_ENV
 
       - name: Checkout NeoFOAM
         uses: actions/checkout@v4
