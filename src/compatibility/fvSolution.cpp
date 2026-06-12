@@ -313,6 +313,19 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
         solverDict.remove("relaxationFactor");
     }
 
+    // preconReuse: regenerate the preconditioner only every N solves (1 = every solve = no reuse).
+    // Unlike the keys above this is NOT consumed here -- GinkgoSolver reads it -- but normalize it
+    // to an int so GinkgoSolver's get<int> is reliable regardless of how the token was read.
+    if (solverDict.contains("preconReuse"))
+    {
+        int reuse = solverDict.isType<int>("preconReuse") ? solverDict.get<int>("preconReuse")
+                  : solverDict.isType<NeoN::label>("preconReuse")
+                      ? static_cast<int>(solverDict.get<NeoN::label>("preconReuse"))
+                      : static_cast<int>(solverDict.get<NeoN::scalar>("preconReuse"));
+        solverDict.remove("preconReuse");
+        solverDict.insert("preconReuse", reuse);
+    }
+
     // A smoother (e.g. symGaussSeidel) with no explicit preconditioner maps the solver to BiCGStab
     // (see solverMap). BiCGStab is used for NON-symmetric systems such as the momentum matrix, so
     // the defaulted preconditioner must be valid for non-symmetric matrices. Incomplete-Cholesky
@@ -344,6 +357,23 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
         {
             throw std::runtime_error("\nGAMG Preconditioner is not supported in NeoFOAM via "
                                      "dictionary entry, use a configFile instead\n");
+        }
+
+        // Native NeoN aDIC preconditioner. It is not a Ginkgo config type, so it is passed as a
+        // marker dict ({type: aDIC}) that GinkgoSolver recognises and injects as a generated
+        // preconditioner. Like DIC/Ic it requires an SPD matrix, so negate the assembled
+        // negative-definite pressure Laplacian. Symmetric (pressure) solves only; routed through
+        // the scalar, rank-local solve path.
+        if (preconditionerName == "aDIC")
+        {
+            solverDict.remove("preconditioner");
+            solverDict.insert(
+                "preconditioner",
+                NeoN::Dictionary({{std::string("type"), std::string("aDIC")}})
+            );
+            solverDict.insert("negateSystem", true);
+            NeoN::Logging::warn("Replacing preconditioner aDIC by native NeoN preconditioner::aDIC");
+            return;
         }
 
         auto mapEntry = activeMap.find(preconditionerName);

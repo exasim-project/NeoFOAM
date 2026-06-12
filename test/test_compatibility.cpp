@@ -209,6 +209,25 @@ TEST_CASE("fvSolution")
             solver1.insert("lSolver", std::string("bogus"));
             REQUIRE_THROWS(NeoFOAM::updatePreconditioner(solver1));
         }
+        SECTION("aDIC maps to a native marker + negateSystem")
+        {
+            solver1.insert("preconditioner", std::string("aDIC"));
+            NeoFOAM::updatePreconditioner(solver1);
+            // aDIC becomes a {type: aDIC} marker dict that GinkgoSolver injects as a generated
+            // preconditioner; it needs an SPD matrix so the system is negated.
+            REQUIRE(solver1.isDict("preconditioner"));
+            REQUIRE(solver1.subDict("preconditioner").get<std::string>("type") == "aDIC");
+            REQUIRE(solver1.get<bool>("negateSystem") == true);
+        }
+        SECTION("preconReuse is normalized to int and kept for GinkgoSolver")
+        {
+            solver1.insert("preconditioner", std::string("DIC"));
+            solver1.insert("preconReuse", 5);
+            NeoFOAM::updatePreconditioner(solver1);
+            // preconReuse is not consumed here (GinkgoSolver reads it), only normalized.
+            REQUIRE(solver1.contains("preconReuse"));
+            REQUIRE(solver1.get<int>("preconReuse") == 5);
+        }
     }
 
     // The mapped dictionary carries a "reportName" label (Ginkgo
@@ -252,6 +271,13 @@ TEST_CASE("fvSolution")
             solver1.insert("lSolver", std::string("ir"));
             auto mapped = NeoFOAM::mapFvSolution(solver1);
             REQUIRE(mapped.get<std::string>("reportName") == "Ic(Ir)+Cg");
+        }
+        SECTION("aDIC + PCG -> aDIC+Cg")
+        {
+            solver1.insert("solver", std::string("PCG"));
+            solver1.insert("preconditioner", std::string("aDIC"));
+            auto mapped = NeoFOAM::mapFvSolution(solver1);
+            REQUIRE(mapped.get<std::string>("reportName") == "aDIC+Cg");
         }
         SECTION("configFile -> configFile")
         {
