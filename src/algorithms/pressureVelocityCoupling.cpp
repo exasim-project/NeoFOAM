@@ -92,6 +92,7 @@ computeRAUandHByA(const PDESolver<Vec3>& expr)
         const auto rAUV = rAU.internalVector().view();
         const auto volV = mesh.cellVolumes().view();
         auto hByAV = hByA.internalVector().view();
+        const auto rowOrderV = mesh.boundaryMesh().getRowOrderWriteIndex().view();
 
         NeoN::parallelFor(
             expr.exec(),
@@ -101,7 +102,9 @@ computeRAUandHByA(const PDESolver<Vec3>& expr)
                 // scalar off-diagonal coupling (segregated vector-solve form): the single
                 // coefficient applies to every velocity component. The future coupled Vec3
                 // matrix path would index coeff per component (coeff[0..2]).
-                auto coeff = nlValues[procFacei];
+                // nlValues are stored in row-sorted order; use rowOrderV to map original
+                // proc-face index to its sorted position.
+                auto coeff = nlValues[rowOrderV[procFacei]];
                 auto uG = uGhostV[nBoundaryFaces + procFacei];
                 auto scale = rAUV[own] / volV[own];
                 Kokkos::atomic_sub(&hByAV[own][0], coeff * uG[0] * scale);
@@ -183,6 +186,7 @@ void updateFaceVelocity(
     {
         const auto nlValues = ls.offDiagonalMatrix().values().view();
         const auto pBoundV = p.boundaryData().value().view();
+        const auto rowOrderV = mesh.boundaryMesh().getRowOrderWriteIndex().view();
 
         NeoN::parallelFor(
             exec,
@@ -190,7 +194,7 @@ void updateFaceVelocity(
             NEON_LAMBDA(const size_t procFacei) {
                 auto bfacei = nBoundaryFaces + procFacei;
                 auto own = static_cast<std::size_t>(faceCells[bfacei]);
-                auto coupling = nlValues[procFacei];
+                auto coupling = nlValues[rowOrderV[procFacei]];
                 auto pGhost = pBoundV[bfacei];
                 scalar pflux = coupling * (pGhost - internalP[own]);
                 bvalue[bfacei] = bPredValue[bfacei] - pflux;
