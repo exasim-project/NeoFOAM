@@ -123,9 +123,16 @@ makeIsaiSolverDict(const std::string& isaiType, const std::optional<int>& sparsi
 // inner solve makes the preconditioner non-linear/variable across applies, which breaks the outer
 // CG (Krylov assumes a constant preconditioner). `relaxationFactor` is the Richardson damping
 // omega (Ginkgo default 1.0).
+//
+// Note the criterion must use Ginkgo's EXPLICIT factory form `{type: Iteration, max_iters: N}`.
+// Ir parses `criteria` via parse_or_get_factory_vector, which treats a map as a single criterion
+// factory keyed on `type`; the bare `{iteration: N}` shorthand is only understood by the
+// top-level solver's parse_minimal_criteria path, not here.
 NeoN::Dictionary makeIrSolverDict(int sweeps, const std::optional<NeoN::scalar>& relaxationFactor)
 {
-    NeoN::Dictionary criteria({{std::string("iteration"), sweeps}});
+    NeoN::Dictionary criteria(
+        {{std::string("type"), std::string("Iteration")}, {std::string("max_iters"), sweeps}}
+    );
     NeoN::Dictionary inner(
         {{std::string("type"), std::string("preconditioner::Jacobi")},
          {std::string("max_block_size"), 1}}

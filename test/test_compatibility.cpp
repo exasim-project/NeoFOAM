@@ -160,7 +160,9 @@ TEST_CASE("fvSolution")
             auto& lSolverDict = preconditionerDict.subDict("l_solver");
             REQUIRE(lSolverDict.get<std::string>("type") == "solver::Ir");
             // Fixed-iteration apply (never residual-stopped): default 1 sweep == aDIC.
-            REQUIRE(lSolverDict.subDict("criteria").get<int>("iteration") == 1);
+            // Ir needs Ginkgo's explicit criterion form {type: Iteration, max_iters: N}.
+            REQUIRE(lSolverDict.subDict("criteria").get<std::string>("type") == "Iteration");
+            REQUIRE(lSolverDict.subDict("criteria").get<int>("max_iters") == 1);
             // Inner relaxation is a point-Jacobi sweep.
             REQUIRE(lSolverDict.subDict("solver").get<std::string>("type") == "preconditioner::Jacobi");
             // No relaxation factor requested -> Ginkgo default, no key injected.
@@ -174,7 +176,7 @@ TEST_CASE("fvSolution")
             solver1.insert("relaxationFactor", NeoN::scalar(0.8));
             NeoFOAM::updatePreconditioner(solver1);
             auto& lSolverDict = solver1.subDict("preconditioner").subDict("l_solver");
-            REQUIRE(lSolverDict.subDict("criteria").get<int>("iteration") == 3);
+            REQUIRE(lSolverDict.subDict("criteria").get<int>("max_iters") == 3);
             REQUIRE(lSolverDict.get<NeoN::scalar>("relaxation_factor") == 0.8);
             REQUIRE_FALSE(solver1.contains("lSolverSweeps"));
             REQUIRE_FALSE(solver1.contains("relaxationFactor"));
