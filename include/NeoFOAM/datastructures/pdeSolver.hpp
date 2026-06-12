@@ -9,7 +9,6 @@
 #include <algorithm>
 #include <cmath>
 #include <string>
-#include <unordered_map>
 
 #include "NeoFOAM/datastructures/runTime.hpp"
 #include "NeoFOAM/compatibility/fvSolution.hpp"
@@ -18,71 +17,6 @@ namespace dsl = NeoN::dsl;
 
 namespace NeoFOAM
 {
-
-namespace detail
-{
-
-/** @brief Persistent per-field record of the previous linear solve's iteration count, keyed by
- * field name. Survives PDESolver reconstruction across PISO/PIMPLE iterations so minIter steering
- * can look back at the previous outer iteration. One process-wide map; field names are unique per
- * case and the L1 iteration count is identical across MPI ranks. */
-inline std::unordered_map<std::string, NeoN::localIdx>& solverIterHistory()
-{
-    static std::unordered_map<std::string, NeoN::localIdx> history;
-    return history;
-}
-
-/** @brief minIter steering (opt-in). When the field's solver dict sets `minIterFactor > 0`, set
- * `minIter = round(minIterFactor * previousIterations)` so the (globally reduced) L1 residual
- * check is skipped for the early iterations that cannot converge anyway. No-op until a previous
- * solve of this field has been recorded, and no-op when minIterFactor is absent or <= 0. */
-inline void applyMinIterSteering(NeoN::Dictionary& fieldSolverDict, const std::string& fieldName)
-{
-    if (!fieldSolverDict.contains("minIterFactor"))
-    {
-        return;
-    }
-    NeoN::scalar factor = 0.0;
-    if (fieldSolverDict.isType<NeoN::scalar>("minIterFactor"))
-    {
-        factor = fieldSolverDict.get<NeoN::scalar>("minIterFactor");
-    }
-    else if (fieldSolverDict.isType<int>("minIterFactor"))
-    {
-        factor = static_cast<NeoN::scalar>(fieldSolverDict.get<int>("minIterFactor"));
-    }
-    else if (fieldSolverDict.isType<NeoN::label>("minIterFactor"))
-    {
-        factor = static_cast<NeoN::scalar>(fieldSolverDict.get<NeoN::label>("minIterFactor"));
-    }
-    if (factor <= 0.0)
-    {
-        return;
-    }
-    const auto& history = solverIterHistory();
-    const auto it = history.find(fieldName);
-    if (it == history.end())
-    {
-        return;
-    }
-    const auto steered =
-        static_cast<NeoN::localIdx>(std::lround(factor * static_cast<double>(it->second)));
-    fieldSolverDict.insert("minIter", steered);
-}
-
-/** @brief Record the iteration count of the just-finished solve (max over solved components) for
- * the next minIter-steered solve of the same field. */
-inline void recordSolverIters(const std::string& fieldName, const NeoN::la::SolverStats& stats)
-{
-    NeoN::localIdx maxIters = 0;
-    for (const auto& entry : stats.entries)
-    {
-        maxIters = std::max(maxIters, entry.numIter);
-    }
-    solverIterHistory()[fieldName] = maxIters;
-}
-
-} // namespace detail
 
 /*@brief extends expression by giving access to assembled matrix
  * @note used in neoIcoFOAM directly instead of dsl::expression
@@ -213,12 +147,10 @@ public:
 
         auto solverDict = runTime_.fvSolutionDict.subDict("solvers");
         auto fvSolution = solverDict.subDict(psi_.name);
-        detail::applyMinIterSteering(fvSolution, psi_.name);
         auto solver = NeoN::la::Solver(psi_.exec(), fvSolution);
         // Do some sanity checks before trying to solve
         // NF_ASSERT(ls.exec() == solution.exec(), "Executors are not the same");
         auto stats = solver.solve(ls, psi_.internalVector());
-        detail::recordSolverIters(psi_.name, stats);
 
         reportSolverStats(stats, fvSolution);
         return stats;
@@ -248,13 +180,11 @@ public:
 
         auto solverDict = runTime_.fvSolutionDict.subDict("solvers");
         auto fieldSolverDict = solverDict.subDict(psi_.name);
-        detail::applyMinIterSteering(fieldSolverDict, psi_.name);
         NeoN::fence(psi_.exec());
         NF_ASSERT(ls.exec() == psi_.exec(), "Executors are not the same");
 
         auto solver = NeoN::la::Solver(psi_.exec(), fieldSolverDict);
         auto stats = solver.solve(ls, psi_.internalVector());
-        detail::recordSolverIters(psi_.name, stats);
 
         reportSolverStats(stats, fieldSolverDict);
 
