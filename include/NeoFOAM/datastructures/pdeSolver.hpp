@@ -355,7 +355,7 @@ public:
             args[27] = jl_box_int32(nInternalFaces);
             args[28] = jl_box_int32(nTotalFaces);
         }         
-        jl_module_t* mod = (jl_module_t*)jl_eval_string("MinimalFVM");
+        jl_module_t* mod = (jl_module_t*)jl_eval_string("JuNe");
 		auto funcName = useGPU ? "cellBased_gpu" : "cellBased_";
 
         jl_function_t* func = jl_get_function(mod, funcName);
@@ -511,7 +511,7 @@ public:
 			args[26] = jl_box_int32(nCells);
 			args[27] = jl_box_int32(nTotalFaces);	
 		}
-        jl_module_t* mod = (jl_module_t*)jl_eval_string("MinimalFVM");
+        jl_module_t* mod = (jl_module_t*)jl_eval_string("JuNe");
 		auto funcName = "";
         if (useGPU) {
             if(global){
@@ -560,7 +560,7 @@ public:
 
     void warmupFaceBased()
     {
-        jl_module_t* mod = (jl_module_t*)jl_eval_string("MinimalFVM");
+        jl_module_t* mod = (jl_module_t*)jl_eval_string("JuNe");
 
         jl_function_t* func = jl_get_function(mod, "warmup");
         auto fusedOPString = expr_.juliaOP();
