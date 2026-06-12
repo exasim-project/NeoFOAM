@@ -115,6 +115,33 @@ makeIsaiSolverDict(const std::string& isaiType, const std::optional<int>& sparsi
     return isai;
 }
 
+// Build a Ginkgo Ir (iterative refinement / Richardson) factory config for use as the apply
+// solver of an incomplete factorization. With a Jacobi inner solver and a FIXED sweep count this
+// performs `sweeps` damped-Jacobi sweeps on the triangular factor -- a parallel, setup-free
+// approximate triangular solve, the direct analogue of SPUMA's aDIC (which uses a single sweep).
+// The sweep count MUST be a fixed iteration criterion, never a residual one: a residual-stopped
+// inner solve makes the preconditioner non-linear/variable across applies, which breaks the outer
+// CG (Krylov assumes a constant preconditioner). `relaxationFactor` is the Richardson damping
+// omega (Ginkgo default 1.0).
+NeoN::Dictionary makeIrSolverDict(int sweeps, const std::optional<NeoN::scalar>& relaxationFactor)
+{
+    NeoN::Dictionary criteria({{std::string("iteration"), sweeps}});
+    NeoN::Dictionary inner(
+        {{std::string("type"), std::string("preconditioner::Jacobi")},
+         {std::string("max_block_size"), 1}}
+    );
+    NeoN::Dictionary ir(
+        {{std::string("type"), std::string("solver::Ir")},
+         {std::string("criteria"), criteria},
+         {std::string("solver"), inner}}
+    );
+    if (relaxationFactor)
+    {
+        ir.insert("relaxation_factor", *relaxationFactor);
+    }
+    return ir;
+}
+
 } // namespace
 
 void updatePreconditioner(NeoN::Dictionary& solverDict)
@@ -217,9 +244,10 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
     // triangular solve (solver::LowerTrs), whose dependency chains serialize on GPUs and
     // whose analysis phase is rebuilt every solve -- the reason Ic/Ilu lag a plain diagonal
     // (Jacobi) preconditioner on the device. `lSolver isai;` swaps that for an ISAI
-    // approximate-inverse apply (a parallel sparse mat-vec), the GPU-friendly analogue of
-    // SPUMA's aDIC. Read and strip up front so the key never leaks into the Ginkgo config.
-    // Recognised values: "trs"/"exact" (default, no-op) and "isai".
+    // approximate-inverse apply (a parallel sparse mat-vec) and `lSolver ir;` for a fixed number
+    // of Jacobi sweeps (Ginkgo Ir) -- both GPU-friendly analogues of SPUMA's aDIC. Read and strip
+    // up front so the key never leaks into the Ginkgo config. Recognised values: "trs"/"exact"
+    // (default, no-op), "isai", and "ir".
     std::optional<std::string> lSolver;
     if (solverDict.contains("lSolver"))
     {
@@ -245,6 +273,37 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
             sparsityPower = static_cast<int>(solverDict.get<NeoN::scalar>("sparsityPower"));
         }
         solverDict.remove("sparsityPower");
+    }
+
+    // Optional Ir (approximate triangular solve) controls; only meaningful with `lSolver ir;`.
+    // lSolverSweeps: number of fixed Jacobi sweeps (Ir iteration criterion); default 1, the
+    // single-sweep aDIC analogue. Integer tokens may arrive as int or label.
+    std::optional<int> lSolverSweeps;
+    if (solverDict.contains("lSolverSweeps"))
+    {
+        if (solverDict.isType<int>("lSolverSweeps"))
+        {
+            lSolverSweeps = solverDict.get<int>("lSolverSweeps");
+        }
+        else if (solverDict.isType<NeoN::label>("lSolverSweeps"))
+        {
+            lSolverSweeps = static_cast<int>(solverDict.get<NeoN::label>("lSolverSweeps"));
+        }
+        else
+        {
+            lSolverSweeps = static_cast<int>(solverDict.get<NeoN::scalar>("lSolverSweeps"));
+        }
+        solverDict.remove("lSolverSweeps");
+    }
+
+    // relaxationFactor: Richardson damping omega for the Ir sweeps (Ginkgo default 1.0).
+    std::optional<NeoN::scalar> relaxationFactor;
+    if (solverDict.contains("relaxationFactor"))
+    {
+        relaxationFactor = solverDict.isType<int>("relaxationFactor")
+                             ? NeoN::scalar(solverDict.get<int>("relaxationFactor"))
+                             : solverDict.get<NeoN::scalar>("relaxationFactor");
+        solverDict.remove("relaxationFactor");
     }
 
     // A smoother (e.g. symGaussSeidel) with no explicit preconditioner maps the solver to BiCGStab
@@ -301,41 +360,58 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
                 solverDict.insert("negateSystem", true);
             }
 
-            // Optional approximate-inverse (ISAI) apply override. Only valid for the
+            // Optional approximate apply override (ISAI or Ir). Only valid for the
             // factorization preconditioners (Ic/Ilu); fail loud on a misapplied or
             // misspelled key so a benchmark run can't silently fall back to the slow
             // exact-triangular-solve default.
             if (lSolver)
             {
                 const std::string& mode = *lSolver;
-                if (mode == "isai")
+                if (mode == "isai" || mode == "ir")
                 {
                     NeoN::Dictionary* facPrecond = factorizationPrecondDict(precond);
                     if (facPrecond == nullptr)
                     {
                         throw std::runtime_error(
-                            "\n'lSolver isai;' applies only to factorization preconditioners "
-                            "(DIC -> Ic, DILU -> Ilu); preconditioner '"
+                            "\n'lSolver " + mode
+                            + ";' applies only to factorization preconditioners (DIC -> Ic, "
+                              "DILU -> Ilu); preconditioner '"
                             + preconditionerName + "' has no triangular factor to approximate.\n"
                         );
                     }
-                    // Ic applies l_solver to L and its conjugate-transpose to L^H, so only a
-                    // lower override is needed. Ilu is asymmetric and needs both L and U.
-                    const std::string ptype = facPrecond->get<std::string>("type");
-                    facPrecond->insert("l_solver", makeIsaiSolverDict("lower", sparsityPower));
-                    if (ptype == "preconditioner::Ilu")
+                    // Ic applies the apply solver to L and its conjugate-transpose to L^H, so
+                    // only a lower override is needed. Ilu is asymmetric and needs both L and U.
+                    const bool isIlu =
+                        facPrecond->get<std::string>("type") == "preconditioner::Ilu";
+                    if (mode == "isai")
                     {
-                        facPrecond->insert(
-                            "u_solver", makeIsaiSolverDict("upper", sparsityPower)
-                        );
+                        facPrecond->insert("l_solver", makeIsaiSolverDict("lower", sparsityPower));
+                        if (isIlu)
+                        {
+                            facPrecond->insert(
+                                "u_solver", makeIsaiSolverDict("upper", sparsityPower)
+                            );
+                        }
+                    }
+                    else // "ir": a fixed number of Jacobi sweeps (default 1 == aDIC)
+                    {
+                        const int sweeps = lSolverSweeps.value_or(1);
+                        facPrecond->insert("l_solver", makeIrSolverDict(sweeps, relaxationFactor));
+                        if (isIlu)
+                        {
+                            facPrecond->insert(
+                                "u_solver", makeIrSolverDict(sweeps, relaxationFactor)
+                            );
+                        }
                     }
                 }
                 else if (mode != "trs" && mode != "exact")
                 {
                     throw std::runtime_error(
                         "\nUnknown lSolver '" + mode
-                        + "'. Valid values: 'isai' (approximate-inverse apply) or "
-                          "'trs'/'exact' (default exact triangular solve).\n"
+                        + "'. Valid values: 'isai' (approximate-inverse apply), 'ir' (fixed "
+                          "Jacobi-sweep approximate triangular solve), or 'trs'/'exact' (default "
+                          "exact triangular solve).\n"
                     );
                 }
             }

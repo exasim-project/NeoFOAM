@@ -150,10 +150,55 @@ TEST_CASE("fvSolution")
             REQUIRE(preconditionerDict.subDict("l_solver").get<std::string>("isai_type") == "lower");
             REQUIRE(preconditionerDict.subDict("u_solver").get<std::string>("isai_type") == "upper");
         }
+        SECTION("DIC with lSolver ir")
+        {
+            solver1.insert("preconditioner", std::string("DIC"));
+            solver1.insert("lSolver", std::string("ir"));
+            NeoFOAM::updatePreconditioner(solver1);
+            auto& preconditionerDict = solver1.subDict("preconditioner");
+            REQUIRE(preconditionerDict.get<std::string>("type") == "preconditioner::Ic");
+            auto& lSolverDict = preconditionerDict.subDict("l_solver");
+            REQUIRE(lSolverDict.get<std::string>("type") == "solver::Ir");
+            // Fixed-iteration apply (never residual-stopped): default 1 sweep == aDIC.
+            REQUIRE(lSolverDict.subDict("criteria").get<int>("iteration") == 1);
+            // Inner relaxation is a point-Jacobi sweep.
+            REQUIRE(lSolverDict.subDict("solver").get<std::string>("type") == "preconditioner::Jacobi");
+            // No relaxation factor requested -> Ginkgo default, no key injected.
+            REQUIRE_FALSE(lSolverDict.contains("relaxation_factor"));
+        }
+        SECTION("DIC with lSolver ir, sweeps and relaxationFactor")
+        {
+            solver1.insert("preconditioner", std::string("DIC"));
+            solver1.insert("lSolver", std::string("ir"));
+            solver1.insert("lSolverSweeps", 3);
+            solver1.insert("relaxationFactor", NeoN::scalar(0.8));
+            NeoFOAM::updatePreconditioner(solver1);
+            auto& lSolverDict = solver1.subDict("preconditioner").subDict("l_solver");
+            REQUIRE(lSolverDict.subDict("criteria").get<int>("iteration") == 3);
+            REQUIRE(lSolverDict.get<NeoN::scalar>("relaxation_factor") == 0.8);
+            REQUIRE_FALSE(solver1.contains("lSolverSweeps"));
+            REQUIRE_FALSE(solver1.contains("relaxationFactor"));
+        }
+        SECTION("DILU with lSolver ir injects both factors")
+        {
+            solver1.insert("preconditioner", std::string("DILU"));
+            solver1.insert("lSolver", std::string("ir"));
+            NeoFOAM::updatePreconditioner(solver1);
+            auto& preconditionerDict = solver1.subDict("preconditioner");
+            REQUIRE(preconditionerDict.get<std::string>("type") == "preconditioner::Ilu");
+            REQUIRE(preconditionerDict.subDict("l_solver").get<std::string>("type") == "solver::Ir");
+            REQUIRE(preconditionerDict.subDict("u_solver").get<std::string>("type") == "solver::Ir");
+        }
         SECTION("lSolver isai on a non-factorization preconditioner throws")
         {
             solver1.insert("preconditioner", std::string("diagonal"));
             solver1.insert("lSolver", std::string("isai"));
+            REQUIRE_THROWS(NeoFOAM::updatePreconditioner(solver1));
+        }
+        SECTION("lSolver ir on a non-factorization preconditioner throws")
+        {
+            solver1.insert("preconditioner", std::string("diagonal"));
+            solver1.insert("lSolver", std::string("ir"));
             REQUIRE_THROWS(NeoFOAM::updatePreconditioner(solver1));
         }
         SECTION("unknown lSolver value throws")
@@ -197,6 +242,14 @@ TEST_CASE("fvSolution")
             solver1.insert("lSolver", std::string("isai"));
             auto mapped = NeoFOAM::mapFvSolution(solver1);
             REQUIRE(mapped.get<std::string>("reportName") == "Ic(Isai)+Cg");
+        }
+        SECTION("DIC + lSolver ir + PCG -> Ic(Ir)+Cg")
+        {
+            solver1.insert("solver", std::string("PCG"));
+            solver1.insert("preconditioner", std::string("DIC"));
+            solver1.insert("lSolver", std::string("ir"));
+            auto mapped = NeoFOAM::mapFvSolution(solver1);
+            REQUIRE(mapped.get<std::string>("reportName") == "Ic(Ir)+Cg");
         }
         SECTION("configFile -> configFile")
         {
