@@ -89,7 +89,9 @@ public:
         : psi_(expr.psi_)
         , expr_(expr.expr_)
         , runTime_(expr.runTime_)
-        , ls_(expr.ls_) {};
+        , ls_(expr.ls_)
+        , matrixReuse_(expr.matrixReuse_)
+        , matrixAssembled_(false) {};
 
     ~PDESolver() = default;
 
@@ -139,14 +141,32 @@ public:
     {
         ls_.reset();
         expr_.assemble(runTime_.t, runTime_.dt, ls_, psi_.mesh());
+        matrixAssembled_ = true;
         return ls_;
     }
 
-    NeoN::la::SolverStats solve()
+    /** @brief enable reusing the assembled matrix across solves of this PDESolver, refreshing only
+     * the rhs each solve instead of re-assembling the matrix.
+     *
+     * Valid when the implicit matrix coefficients are unchanged between solves — e.g. the pressure
+     * Poisson matrix laplacian(rAU, p) across non-orthogonal / PISO correctors on a static mesh,
+     * where only the deferred non-orthogonal correction and the explicit div(phiHbyA) rhs change.
+     * Call markMatrixDirty() whenever the matrix must be rebuilt (moving mesh, changed rAU /
+     * diffusivity, changed implicit BC coefficients). Only effective for the non-segregated
+     * (scalar-matrix == field-type) form; the segregated vector solve always re-assembles, and a
+     * setReference pin forces a full assemble as well.
+     */
+    void enableMatrixReuse(bool on = true)
     {
-        ls_.reset();
-        return solveImpl(expr_, ls_);
+        matrixReuse_ = on;
+        matrixAssembled_ = false; // force a full assemble on the next solve
     }
+
+    /** @brief invalidate the cached matrix so the next solve re-assembles it in full. Hook for
+     * moving mesh / changed coefficients while matrix reuse is enabled. */
+    void markMatrixDirty() { matrixAssembled_ = false; }
+
+    NeoN::la::SolverStats solve() { return solveImpl(expr_, ls_); }
 
     /** @brief solve the expression augmented with an additional explicit rhs term
      * (e.g. the momentum predictor's -grad(p)).
@@ -201,6 +221,28 @@ public:
         return stats;
     }
 
+    // Assemble for a solve honouring the matrix-reuse setting: a full matrix+rhs assemble on the
+    // first solve (or when invalidated via markMatrixDirty, or while a setReference pin is active),
+    // otherwise an rhs-only refresh that reuses the cached matrix. The rhs-only path exists for the
+    // same-type (scalar-matrix == field-type) form only; the segregated vector solve, and any
+    // PDESolver with reuse disabled, always re-assembles in full — i.e. behaviour is unchanged
+    // unless enableMatrixReuse() was called.
+    void assembleForSolve(dsl::Expression<ValueType>& expr, LinearSystem& ls)
+    {
+        if constexpr (std::is_same_v<MatrixValueType, ValueType>)
+        {
+            if (matrixReuse_ && matrixAssembled_ && !needReference_)
+            {
+                ls.resetRhs();
+                expr.assembleRhs(ls, psi_.mesh());
+                return;
+            }
+        }
+        ls.reset();
+        expr.assemble(runTime_.t, runTime_.dt, ls, psi_.mesh());
+        matrixAssembled_ = true;
+    }
+
     // Public because NVCC forbids extended __host__ __device__ lambdas
     // (NEON_LAMBDA) inside private or protected member functions.
     NeoN::la::SolverStats solveImpl(dsl::Expression<ValueType>& expr, LinearSystem& ls)
@@ -210,8 +252,9 @@ public:
 
         // Assemble without post-assembly functors; we apply SetReference separately below
         // to ensure correct polymorphic dispatch — storing PostAssemblyBase by value causes
-        // object slicing that silently disables virtual overrides.
-        expr.assemble(runTime_.t, runTime_.dt, ls, psi_.mesh());
+        // object slicing that silently disables virtual overrides. assembleForSolve honours the
+        // matrix-reuse setting (full matrix+rhs assemble vs rhs-only refresh).
+        assembleForSolve(expr, ls);
 
         // Apply reference-cell pinning directly (avoids object-slicing issue)
         if constexpr (std::is_same_v<ValueType, NeoN::scalar>)
@@ -299,6 +342,11 @@ private:
     bool needReference_ = false;
     NeoN::localIdx pRefCell_ = 0;
     NeoN::scalar pRefValue_ = 0.0;
+    // Matrix-reuse cadence: when matrixReuse_ is enabled the assembled matrix is kept across
+    // solves and only the rhs is refreshed; matrixAssembled_ tracks whether ls_ already holds a
+    // valid matrix (set by a full assemble, cleared by markMatrixDirty / enableMatrixReuse).
+    bool matrixReuse_ = false;
+    bool matrixAssembled_ = false;
 };
 
 

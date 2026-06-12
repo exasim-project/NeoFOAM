@@ -126,21 +126,27 @@ int main(int argc, char* argv[])
                 // Update the pressure BCs to ensure flux consistency
                 // Foam::constrainPressure(p, U, phiHbyA, rAU);
 
+                // Pressure corrector. Construct the pressure equation once and reuse its matrix
+                // across the non-orthogonal correctors: laplacian(rAU, p) is identical between
+                // them (rAU and the mesh are fixed); only the deferred non-orthogonal correction
+                // and the explicit div(phiHbyA) rhs change, so only the rhs is refreshed.
+                // Moving mesh / changed rAU: call pEqn.markMatrixDirty() before the affected solve
+                // to force a full re-assemble. (A setReference pin also forces full assembly.)
+                nf::PDESolver<NeoN::scalar> pEqn(
+                    NeoN::dsl::imp::laplacian(rAU, p) - NeoN::dsl::exp::div(phiHbyA),
+                    p,
+                    rt
+                );
+                pEqn.enableMatrixReuse();
+
+                if (ofP.needReference() && pRefCell >= 0)
+                {
+                    pEqn.setReference(pRefCell, pRefValue);
+                }
+
                 // Non-orthogonal pressure corrector loop
                 while (piso.correctNonOrthogonal())
                 {
-                    // Pressure corrector
-                    nf::PDESolver<NeoN::scalar> pEqn(
-                        NeoN::dsl::imp::laplacian(rAU, p) - NeoN::dsl::exp::div(phiHbyA),
-                        p,
-                        rt
-                    );
-
-                    if (ofP.needReference() && pRefCell >= 0)
-                    {
-                        pEqn.setReference(pRefCell, pRefValue);
-                    }
-
                     auto stats = pEqn.solve();
                     p.correctBoundaryConditions();
 
