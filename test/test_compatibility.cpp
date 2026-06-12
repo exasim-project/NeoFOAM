@@ -110,6 +110,58 @@ TEST_CASE("fvSolution")
             REQUIRE(preconditionerDict.subDict("factorization").get<int>("iterations") == 10);
             REQUIRE(solver1.get<bool>("negateSystem") == true);
         }
+        SECTION("DIC with lSolver isai")
+        {
+            solver1.insert("preconditioner", std::string("DIC"));
+            solver1.insert("lSolver", std::string("isai"));
+            NeoFOAM::updatePreconditioner(solver1);
+            auto& preconditionerDict = solver1.subDict("preconditioner");
+            REQUIRE(preconditionerDict.get<std::string>("type") == "preconditioner::Ic");
+            // Ic applies the lower factor and its conj-transpose, so only an l_solver
+            // override is injected, set to a lower-triangular ISAI approximate inverse.
+            auto& lSolverDict = preconditionerDict.subDict("l_solver");
+            REQUIRE(lSolverDict.get<std::string>("type") == "preconditioner::Isai");
+            REQUIRE(lSolverDict.get<std::string>("isai_type") == "lower");
+            // sparsity_power not requested -> Ginkgo default, no key injected.
+            REQUIRE_FALSE(lSolverDict.contains("sparsity_power"));
+            // The control key is consumed, not leaked into the Ginkgo config.
+            REQUIRE_FALSE(solver1.contains("lSolver"));
+        }
+        SECTION("DIC with lSolver isai and sparsityPower")
+        {
+            solver1.insert("preconditioner", std::string("DIC"));
+            solver1.insert("lSolver", std::string("isai"));
+            solver1.insert("sparsityPower", 2);
+            NeoFOAM::updatePreconditioner(solver1);
+            auto& preconditionerDict = solver1.subDict("preconditioner");
+            auto& lSolverDict = preconditionerDict.subDict("l_solver");
+            REQUIRE(lSolverDict.get<std::string>("type") == "preconditioner::Isai");
+            REQUIRE(lSolverDict.get<int>("sparsity_power") == 2);
+            REQUIRE_FALSE(solver1.contains("sparsityPower"));
+        }
+        SECTION("DILU with lSolver isai injects both factors")
+        {
+            solver1.insert("preconditioner", std::string("DILU"));
+            solver1.insert("lSolver", std::string("isai"));
+            NeoFOAM::updatePreconditioner(solver1);
+            auto& preconditionerDict = solver1.subDict("preconditioner");
+            REQUIRE(preconditionerDict.get<std::string>("type") == "preconditioner::Ilu");
+            // Ilu is asymmetric: both lower and upper apply solvers are overridden.
+            REQUIRE(preconditionerDict.subDict("l_solver").get<std::string>("isai_type") == "lower");
+            REQUIRE(preconditionerDict.subDict("u_solver").get<std::string>("isai_type") == "upper");
+        }
+        SECTION("lSolver isai on a non-factorization preconditioner throws")
+        {
+            solver1.insert("preconditioner", std::string("diagonal"));
+            solver1.insert("lSolver", std::string("isai"));
+            REQUIRE_THROWS(NeoFOAM::updatePreconditioner(solver1));
+        }
+        SECTION("unknown lSolver value throws")
+        {
+            solver1.insert("preconditioner", std::string("DIC"));
+            solver1.insert("lSolver", std::string("bogus"));
+            REQUIRE_THROWS(NeoFOAM::updatePreconditioner(solver1));
+        }
     }
 
     // The mapped dictionary carries a "reportName" label (Ginkgo
@@ -137,6 +189,14 @@ TEST_CASE("fvSolution")
             solver1.insert("preconditioner", std::string("diagonal"));
             auto mapped = NeoFOAM::mapFvSolution(solver1);
             REQUIRE(mapped.get<std::string>("reportName") == "Jacobi+Cg");
+        }
+        SECTION("DIC + lSolver isai + PCG -> Ic(Isai)+Cg")
+        {
+            solver1.insert("solver", std::string("PCG"));
+            solver1.insert("preconditioner", std::string("DIC"));
+            solver1.insert("lSolver", std::string("isai"));
+            auto mapped = NeoFOAM::mapFvSolution(solver1);
+            REQUIRE(mapped.get<std::string>("reportName") == "Ic(Isai)+Cg");
         }
         SECTION("configFile -> configFile")
         {
