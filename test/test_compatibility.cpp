@@ -66,6 +66,8 @@ TEST_CASE("fvSolution")
             auto& preconditionerDict = solver1.subDict("preconditioner");
             REQUIRE(preconditionerDict.get<std::string>("type") == "preconditioner::Jacobi");
             REQUIRE(preconditionerDict.get<int>("max_block_size") == 1);
+            // Jacobi has no factorization, so the system must NOT be negated.
+            REQUIRE_FALSE(solver1.contains("negateSystem"));
         }
         SECTION("DIC")
         {
@@ -73,10 +75,31 @@ TEST_CASE("fvSolution")
             NeoFOAM::updatePreconditioner(solver1);
             auto& preconditionerDict = solver1.subDict("preconditioner");
             REQUIRE(preconditionerDict.get<std::string>("type") == "preconditioner::Ic");
+            REQUIRE(
+                preconditionerDict.subDict("factorization").get<std::string>("type")
+                == "factorization::ParIc"
+            );
+            // Incomplete Cholesky needs an SPD matrix -> request system negation.
+            REQUIRE(solver1.get<bool>("negateSystem") == true);
+            // No sweep count given -> Ginkgo's default (Auto) is used, no `iterations` key.
+            REQUIRE_FALSE(preconditionerDict.subDict("factorization").contains("iterations"));
+        }
+        SECTION("DIC with nSweeps")
+        {
+            solver1.insert("preconditioner", std::string("DIC"));
+            solver1.insert("nSweeps", 3);
+            NeoFOAM::updatePreconditioner(solver1);
+            auto& preconditionerDict = solver1.subDict("preconditioner");
+            REQUIRE(preconditionerDict.get<std::string>("type") == "preconditioner::Ic");
+            // nSweeps maps to the ParIc factorization's `iterations` and is consumed.
+            REQUIRE(preconditionerDict.subDict("factorization").get<int>("iterations") == 3);
+            REQUIRE(solver1.get<bool>("negateSystem") == true);
+            REQUIRE_FALSE(solver1.contains("nSweeps"));
         }
         SECTION("DILU")
         {
             solver1.insert("preconditioner", std::string("DILU"));
+            solver1.insert("nSweeps", 10);
             NeoFOAM::updatePreconditioner(solver1);
             auto& preconditionerDict = solver1.subDict("preconditioner");
             REQUIRE(preconditionerDict.get<std::string>("type") == "preconditioner::Ilu");
@@ -84,6 +107,8 @@ TEST_CASE("fvSolution")
                 preconditionerDict.subDict("factorization").get<std::string>("type")
                 == "factorization::ParIlu"
             );
+            REQUIRE(preconditionerDict.subDict("factorization").get<int>("iterations") == 10);
+            REQUIRE(solver1.get<bool>("negateSystem") == true);
         }
     }
 

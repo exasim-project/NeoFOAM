@@ -10,6 +10,7 @@
 #include "NeoFOAM/compatibility/fvSolution.hpp"
 
 #include <map>
+#include <optional>
 
 #include <NeoN/core/logging.hpp>
 #include <NeoN/core/mpi/environment.hpp>
@@ -45,6 +46,32 @@ void updateSolver(NeoN::Dictionary& solverDict)
         solverDict.insert("type", mapEntry->second.second);
     }
 }
+
+namespace
+{
+
+// Return a pointer to the ParIc/ParIlu factorization sub-dictionary inside a mapped
+// preconditioner dict, or nullptr if the preconditioner has no factorization (e.g. Jacobi).
+// Handles both the direct form (preconditioner::Ic -> "factorization") and the distributed
+// additive-Schwarz wrapper (preconditioner::Schwarz -> "local_solver" -> "factorization").
+NeoN::Dictionary* factorizationSubDict(NeoN::Dictionary& precond)
+{
+    if (precond.isDict("factorization"))
+    {
+        return &precond.subDict("factorization");
+    }
+    if (precond.isDict("local_solver"))
+    {
+        NeoN::Dictionary& local = precond.subDict("local_solver");
+        if (local.isDict("factorization"))
+        {
+            return &local.subDict("factorization");
+        }
+    }
+    return nullptr;
+}
+
+} // namespace
 
 void updatePreconditioner(NeoN::Dictionary& solverDict)
 {
@@ -117,6 +144,30 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
     const bool distributed = mpiEnv.isInitialized() && mpiEnv.sizeRank() > 1;
     const auto& activeMap = distributed ? distributedPreconditionerMap : preconditionerMap;
 
+    // Optional sweep count for the ParIc/ParIlu factorization (mapped to Ginkgo's `iterations`).
+    // OpenFOAM-style top-level key, e.g. `nSweeps 3;`. The number of fixed-point sweeps the
+    // factorization needs grows with parallelism: ~3 on CPU, ~10 on GPU (per Ginkgo's own
+    // guidance). Read and strip it up front so it never leaks into the Ginkgo solver config,
+    // whichever preconditioner branch runs below. Integer tokens from an OpenFOAM dictionary may
+    // arrive as int or label.
+    std::optional<int> nSweeps;
+    if (solverDict.contains("nSweeps"))
+    {
+        if (solverDict.isType<int>("nSweeps"))
+        {
+            nSweeps = solverDict.get<int>("nSweeps");
+        }
+        else if (solverDict.isType<NeoN::label>("nSweeps"))
+        {
+            nSweeps = static_cast<int>(solverDict.get<NeoN::label>("nSweeps"));
+        }
+        else
+        {
+            nSweeps = static_cast<int>(solverDict.get<NeoN::scalar>("nSweeps"));
+        }
+        solverDict.remove("nSweeps");
+    }
+
     // A smoother (e.g. symGaussSeidel) with no explicit preconditioner maps the solver to BiCGStab
     // (see solverMap). BiCGStab is used for NON-symmetric systems such as the momentum matrix, so
     // the defaulted preconditioner must be valid for non-symmetric matrices. Incomplete-Cholesky
@@ -153,13 +204,31 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
         auto mapEntry = activeMap.find(preconditionerName);
         if (mapEntry != activeMap.end())
         {
+            NeoN::Dictionary precond = mapEntry->second; // mutable copy to inject sweep count
+
+            // Factorization preconditioners (DIC -> Ic/ParIc, DILU -> Ilu/ParIlu) need an
+            // incomplete factorization of the system matrix. Two adjustments:
+            //  1. Forward the optional sweep count to the factorization's `iterations`.
+            //  2. The OpenFOAM pressure Laplacian is assembled negative-(semi)definite, but
+            //     incomplete Cholesky requires a positive-definite matrix. Request the solver
+            //     negate the system (solve (-A) x = (-b), same x and residual) so Ginkgo is
+            //     handed an SPD matrix. Jacobi (diagonal) has no factorization and is untouched.
+            if (NeoN::Dictionary* fac = factorizationSubDict(precond))
+            {
+                if (nSweeps)
+                {
+                    fac->insert("iterations", *nSweeps);
+                }
+                solverDict.insert("negateSystem", true);
+            }
+
             NeoN::Logging::warn(
                 "Replacing preconditioner {} by {}{}",
                 preconditionerName,
-                mapEntry->second.get<std::string>("type"),
+                precond.get<std::string>("type"),
                 distributed ? " (Schwarz-wrapped for distributed run)" : ""
             );
-            solverDict.insert("preconditioner", mapEntry->second);
+            solverDict.insert("preconditioner", precond);
         }
     }
 }
