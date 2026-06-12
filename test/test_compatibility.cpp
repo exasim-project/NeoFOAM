@@ -219,6 +219,14 @@ TEST_CASE("fvSolution")
             REQUIRE(solver1.subDict("preconditioner").get<std::string>("type") == "aDIC");
             REQUIRE(solver1.get<bool>("negateSystem") == true);
         }
+        SECTION("aDICGinkgo maps to a native marker + negateSystem")
+        {
+            solver1.insert("preconditioner", std::string("aDICGinkgo"));
+            NeoFOAM::updatePreconditioner(solver1);
+            REQUIRE(solver1.isDict("preconditioner"));
+            REQUIRE(solver1.subDict("preconditioner").get<std::string>("type") == "aDICGinkgo");
+            REQUIRE(solver1.get<bool>("negateSystem") == true);
+        }
         SECTION("preconReuse is normalized to int and kept for GinkgoSolver")
         {
             solver1.insert("preconditioner", std::string("DIC"));
@@ -278,6 +286,13 @@ TEST_CASE("fvSolution")
             solver1.insert("preconditioner", std::string("aDIC"));
             auto mapped = NeoFOAM::mapFvSolution(solver1);
             REQUIRE(mapped.get<std::string>("reportName") == "aDIC+Cg");
+        }
+        SECTION("aDICGinkgo + PCG -> aDICGinkgo+Cg")
+        {
+            solver1.insert("solver", std::string("PCG"));
+            solver1.insert("preconditioner", std::string("aDICGinkgo"));
+            auto mapped = NeoFOAM::mapFvSolution(solver1);
+            REQUIRE(mapped.get<std::string>("reportName") == "aDICGinkgo+Cg");
         }
         SECTION("configFile -> configFile")
         {

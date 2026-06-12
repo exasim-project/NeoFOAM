@@ -174,6 +174,12 @@ protected:
         gko::array<ValueType> diag{this->get_executor(), n};
 
         struct generate_op : gko::Operation {
+            generate_op(
+                std::size_t n, const ValueType* vals, const IndexType* col, const IndexType* row,
+                ValueType* diag, ValueType* rd)
+                : n(n), vals(vals), col(col), row(row), diag(diag), rd(rd)
+            {}
+
             std::size_t n;
             const ValueType* vals;
             const IndexType* col;
@@ -195,9 +201,9 @@ protected:
             }
         };
 
-        this->get_executor()->run(generate_op{
+        this->get_executor()->run(generate_op(
             n, mtx_->get_const_values(), mtx_->get_const_col_idxs(), mtx_->get_const_row_ptrs(),
-            diag.get_data(), rd_.get_data()});
+            diag.get_data(), rd_.get_data()));
     }
 
     void apply_impl(const gko::LinOp* b, gko::LinOp* x) const override
@@ -207,6 +213,12 @@ protected:
         const auto n = mtx_->get_size()[0];
 
         struct apply_op : gko::Operation {
+            apply_op(
+                std::size_t n, const ValueType* vals, const IndexType* col, const IndexType* row,
+                const ValueType* rd, const ValueType* b, ValueType* x, ValueType* work)
+                : n(n), vals(vals), col(col), row(row), rd(rd), b(b), x(x), work(work)
+            {}
+
             std::size_t n;
             const ValueType* vals;
             const IndexType* col;
@@ -230,10 +242,10 @@ protected:
             }
         };
 
-        this->get_executor()->run(apply_op{
+        this->get_executor()->run(apply_op(
             n, mtx_->get_const_values(), mtx_->get_const_col_idxs(), mtx_->get_const_row_ptrs(),
             rd_.get_const_data(), dense_b->get_const_values(), dense_x->get_values(),
-            work_.get_data()});
+            work_.get_data()));
     }
 
     void apply_impl(

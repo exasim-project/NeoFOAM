@@ -359,20 +359,23 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
                                      "dictionary entry, use a configFile instead\n");
         }
 
-        // Native NeoN aDIC preconditioner. It is not a Ginkgo config type, so it is passed as a
-        // marker dict ({type: aDIC}) that GinkgoSolver recognises and injects as a generated
-        // preconditioner. Like DIC/Ic it requires an SPD matrix, so negate the assembled
+        // Native NeoN aDIC preconditioners. Neither is a Ginkgo config type, so each is passed as a
+        // marker dict ({type: <name>}) that GinkgoSolver recognises and injects as a generated
+        // preconditioner. Like DIC/Ic they require an SPD matrix, so negate the assembled
         // negative-definite pressure Laplacian. Symmetric (pressure) solves only; routed through
-        // the scalar, rank-local solve path.
-        if (preconditionerName == "aDIC")
+        // the scalar, rank-local solve path. "aDIC" runs the Kokkos kernels; "aDICGinkgo" runs the
+        // same algorithm on Ginkgo's executor/stream (no per-apply Kokkos fence).
+        if (preconditionerName == "aDIC" || preconditionerName == "aDICGinkgo")
         {
+            const std::string markerType = preconditionerName;
             solverDict.remove("preconditioner");
             solverDict.insert(
-                "preconditioner",
-                NeoN::Dictionary({{std::string("type"), std::string("aDIC")}})
+                "preconditioner", NeoN::Dictionary({{std::string("type"), markerType}})
             );
             solverDict.insert("negateSystem", true);
-            NeoN::Logging::warn("Replacing preconditioner aDIC by native NeoN preconditioner::aDIC");
+            NeoN::Logging::warn(
+                "Replacing preconditioner {} by native NeoN preconditioner", preconditionerName
+            );
             return;
         }
 
