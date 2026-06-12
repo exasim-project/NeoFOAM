@@ -65,6 +65,12 @@ int main(int argc, char* argv[])
         NeoN::Logging::info("Starting time loop");
         while (runTime.loop())
         {
+            // runTime.loop() has already advanced OpenFOAM to the current step. Mirror that into
+            // the adapter time before logging: rt.t is set to startTime at construction and only
+            // refreshed later in syncRunTimes, so logging it here would report the previous step's
+            // time -- making NeoFOAM's time column start at 0 and lag OpenFOAM by one step when
+            // comparing per-step timings. syncRunTimes still runs below for the dt adjustment.
+            rt.t = runTime.time().value();
             // Logging supports string formatting
             NeoN::Logging::info("Time = {}", rt.t);
 
