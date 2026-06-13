@@ -43,14 +43,39 @@ public:
         : psi_(psi)
         , expr_(expr)
         , runTime_(runTime)
+
         , ls_(readOrCreate<LinearSystem>(
               runTime,
               "linearSystem" + psi.name,
               // FIXME find a proper place
               [&psi, &runTime]()
-              { return NeoN::la::createEmptyLinearSystem<MatrixValueType, ValueType>(psi.mesh()); }
+              {
+                  if (runTime.fvSolutionDict.subDict("solvers").subDict(psi.name).get(
+                          "assemblyStrategy",
+                          "face-based"
+                      )
+                      == "cell-based")
+                  {
+                      auto cellIterator = std::make_shared<NeoN::la::CellBasedIterator>();
+                      return NeoN::la::createEmptyLinearSystem<MatrixValueType, ValueType>(
+                          psi.mesh(),
+                          cellIterator
+                      );
+                  }
+                  else
+                  {
+                      return NeoN::la::createEmptyLinearSystem<MatrixValueType, ValueType>(psi.mesh(
+                      ));
+                  }
+              }
           ))
     {
+        // TODO run NeoN expr_ = NeoN::dsl::optimize(expr); if optimize is set in fvSolution
+        if (runTime_.fvSolutionDict.subDict("solvers").subDict(psi_.name).get("optimize", false))
+        {
+            expr_ = NeoN::dsl::optimize(expr_);
+        };
+
         expr_.read(runTime_.fvSchemesDict);
     };
 
