@@ -71,84 +71,6 @@ NeoN::Dictionary* factorizationSubDict(NeoN::Dictionary& precond)
     return nullptr;
 }
 
-// Return a pointer to the factorization-based preconditioner sub-dictionary itself
-// (the one carrying `type: preconditioner::Ic` / `preconditioner::Ilu`), i.e. the dict
-// where an `l_solver` / `u_solver` apply override belongs as a sibling of `factorization`.
-// Unlike factorizationSubDict, this returns the preconditioner dict, not the nested
-// `factorization`. Unwraps the distributed additive-Schwarz wrapper (Schwarz ->
-// local_solver). Returns nullptr for preconditioners without a factorization (e.g. Jacobi).
-NeoN::Dictionary* factorizationPrecondDict(NeoN::Dictionary& precond)
-{
-    if (precond.isDict("factorization"))
-    {
-        return &precond;
-    }
-    if (precond.isDict("local_solver"))
-    {
-        NeoN::Dictionary& local = precond.subDict("local_solver");
-        if (local.isDict("factorization"))
-        {
-            return &local;
-        }
-    }
-    return nullptr;
-}
-
-// Build a Ginkgo ISAI (Incomplete Sparse Approximate Inverse) factory config for use as the
-// apply solver of an incomplete factorization. `isaiType` is "lower" or "upper". ISAI
-// approximates the triangular factor's inverse as a sparse matrix, so the apply becomes a
-// single parallel sparse mat-vec instead of Ginkgo's default exact sparse triangular solve
-// (solver::LowerTrs), which serializes along dependency chains and rebuilds an analysis phase
-// every solve -- the dominant cost of Ic/Ilu on GPUs. `sparsityPower` (Ginkgo default 1)
-// trades approximation quality for cost: higher powers use a denser inverse pattern.
-NeoN::Dictionary
-makeIsaiSolverDict(const std::string& isaiType, const std::optional<int>& sparsityPower)
-{
-    NeoN::Dictionary isai(
-        {{std::string("type"), std::string("preconditioner::Isai")},
-         {std::string("isai_type"), isaiType}}
-    );
-    if (sparsityPower)
-    {
-        isai.insert("sparsity_power", *sparsityPower);
-    }
-    return isai;
-}
-
-// Build a Ginkgo Ir (iterative refinement / Richardson) factory config for use as the apply
-// solver of an incomplete factorization. With a Jacobi inner solver and a FIXED sweep count this
-// performs `sweeps` damped-Jacobi sweeps on the triangular factor -- a parallel, setup-free
-// approximate triangular solve, the direct analogue of SPUMA's aDIC (which uses a single sweep).
-// The sweep count MUST be a fixed iteration criterion, never a residual one: a residual-stopped
-// inner solve makes the preconditioner non-linear/variable across applies, which breaks the outer
-// CG (Krylov assumes a constant preconditioner). `relaxationFactor` is the Richardson damping
-// omega (Ginkgo default 1.0).
-//
-// Note the criterion must use Ginkgo's EXPLICIT factory form `{type: Iteration, max_iters: N}`.
-// Ir parses `criteria` via parse_or_get_factory_vector, which treats a map as a single criterion
-// factory keyed on `type`; the bare `{iteration: N}` shorthand is only understood by the
-// top-level solver's parse_minimal_criteria path, not here.
-NeoN::Dictionary makeIrSolverDict(int sweeps, const std::optional<NeoN::scalar>& relaxationFactor)
-{
-    NeoN::Dictionary criteria(
-        {{std::string("type"), std::string("Iteration")}, {std::string("max_iters"), sweeps}}
-    );
-    NeoN::Dictionary inner(
-        {{std::string("type"), std::string("preconditioner::Jacobi")},
-         {std::string("max_block_size"), 1}}
-    );
-    NeoN::Dictionary ir(
-        {{std::string("type"), std::string("solver::Ir")},
-         {std::string("criteria"), criteria},
-         {std::string("solver"), inner}}
-    );
-    if (relaxationFactor)
-    {
-        ir.insert("relaxation_factor", *relaxationFactor);
-    }
-    return ir;
-}
-
 } // namespace
 
 void updatePreconditioner(NeoN::Dictionary& solverDict)
@@ -246,86 +168,6 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
         solverDict.remove("nSweeps");
     }
 
-    // Optional apply-solver override for the factorization preconditioners (DIC -> Ic,
-    // DILU -> Ilu). By default Ginkgo applies the incomplete factor with an EXACT sparse
-    // triangular solve (solver::LowerTrs), whose dependency chains serialize on GPUs and
-    // whose analysis phase is rebuilt every solve -- the reason Ic/Ilu lag a plain diagonal
-    // (Jacobi) preconditioner on the device. `lSolver isai;` swaps that for an ISAI
-    // approximate-inverse apply (a parallel sparse mat-vec) and `lSolver ir;` for a fixed number
-    // of Jacobi sweeps (Ginkgo Ir) -- both GPU-friendly analogues of SPUMA's aDIC. Read and strip
-    // up front so the key never leaks into the Ginkgo config. Recognised values: "trs"/"exact"
-    // (default, no-op), "isai", and "ir".
-    std::optional<std::string> lSolver;
-    if (solverDict.contains("lSolver"))
-    {
-        lSolver = solverDict.get<std::string>("lSolver");
-        solverDict.remove("lSolver");
-    }
-
-    // Optional ISAI sparsity power (Ginkgo default 1); higher = denser inverse pattern,
-    // better approximation at higher cost. Only meaningful with `lSolver isai;`.
-    std::optional<int> sparsityPower;
-    if (solverDict.contains("sparsityPower"))
-    {
-        if (solverDict.isType<int>("sparsityPower"))
-        {
-            sparsityPower = solverDict.get<int>("sparsityPower");
-        }
-        else if (solverDict.isType<NeoN::label>("sparsityPower"))
-        {
-            sparsityPower = static_cast<int>(solverDict.get<NeoN::label>("sparsityPower"));
-        }
-        else
-        {
-            sparsityPower = static_cast<int>(solverDict.get<NeoN::scalar>("sparsityPower"));
-        }
-        solverDict.remove("sparsityPower");
-    }
-
-    // Optional Ir (approximate triangular solve) controls; only meaningful with `lSolver ir;`.
-    // lSolverSweeps: number of fixed Jacobi sweeps (Ir iteration criterion); default 1, the
-    // single-sweep aDIC analogue. Integer tokens may arrive as int or label.
-    std::optional<int> lSolverSweeps;
-    if (solverDict.contains("lSolverSweeps"))
-    {
-        if (solverDict.isType<int>("lSolverSweeps"))
-        {
-            lSolverSweeps = solverDict.get<int>("lSolverSweeps");
-        }
-        else if (solverDict.isType<NeoN::label>("lSolverSweeps"))
-        {
-            lSolverSweeps = static_cast<int>(solverDict.get<NeoN::label>("lSolverSweeps"));
-        }
-        else
-        {
-            lSolverSweeps = static_cast<int>(solverDict.get<NeoN::scalar>("lSolverSweeps"));
-        }
-        solverDict.remove("lSolverSweeps");
-    }
-
-    // relaxationFactor: Richardson damping omega for the Ir sweeps (Ginkgo default 1.0).
-    std::optional<NeoN::scalar> relaxationFactor;
-    if (solverDict.contains("relaxationFactor"))
-    {
-        relaxationFactor = solverDict.isType<int>("relaxationFactor")
-                             ? NeoN::scalar(solverDict.get<int>("relaxationFactor"))
-                             : solverDict.get<NeoN::scalar>("relaxationFactor");
-        solverDict.remove("relaxationFactor");
-    }
-
-    // preconReuse: regenerate the preconditioner only every N solves (1 = every solve = no reuse).
-    // Unlike the keys above this is NOT consumed here -- GinkgoSolver reads it -- but normalize it
-    // to an int so GinkgoSolver's get<int> is reliable regardless of how the token was read.
-    if (solverDict.contains("preconReuse"))
-    {
-        int reuse = solverDict.isType<int>("preconReuse") ? solverDict.get<int>("preconReuse")
-                  : solverDict.isType<NeoN::label>("preconReuse")
-                      ? static_cast<int>(solverDict.get<NeoN::label>("preconReuse"))
-                      : static_cast<int>(solverDict.get<NeoN::scalar>("preconReuse"));
-        solverDict.remove("preconReuse");
-        solverDict.insert("preconReuse", reuse);
-    }
-
     // A smoother (e.g. symGaussSeidel) with no explicit preconditioner maps the solver to BiCGStab
     // (see solverMap). BiCGStab is used for NON-symmetric systems such as the momentum matrix, so
     // the defaulted preconditioner must be valid for non-symmetric matrices. Incomplete-Cholesky
@@ -359,26 +201,6 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
                                      "dictionary entry, use a configFile instead\n");
         }
 
-        // Native NeoN aDIC preconditioners. Neither is a Ginkgo config type, so each is passed as a
-        // marker dict ({type: <name>}) that GinkgoSolver recognises and injects as a generated
-        // preconditioner. Like DIC/Ic they require an SPD matrix, so negate the assembled
-        // negative-definite pressure Laplacian. Symmetric (pressure) solves only; routed through
-        // the scalar, rank-local solve path. "aDIC" runs the Kokkos kernels; "aDICGinkgo" runs the
-        // same algorithm on Ginkgo's executor/stream (no per-apply Kokkos fence).
-        if (preconditionerName == "aDIC" || preconditionerName == "aDICGinkgo")
-        {
-            const std::string markerType = preconditionerName;
-            solverDict.remove("preconditioner");
-            solverDict.insert(
-                "preconditioner", NeoN::Dictionary({{std::string("type"), markerType}})
-            );
-            solverDict.insert("negateSystem", true);
-            NeoN::Logging::warn(
-                "Replacing preconditioner {} by native NeoN preconditioner", preconditionerName
-            );
-            return;
-        }
-
         auto mapEntry = activeMap.find(preconditionerName);
         if (mapEntry != activeMap.end())
         {
@@ -398,62 +220,6 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
                     fac->insert("iterations", *nSweeps);
                 }
                 solverDict.insert("negateSystem", true);
-            }
-
-            // Optional approximate apply override (ISAI or Ir). Only valid for the
-            // factorization preconditioners (Ic/Ilu); fail loud on a misapplied or
-            // misspelled key so a benchmark run can't silently fall back to the slow
-            // exact-triangular-solve default.
-            if (lSolver)
-            {
-                const std::string& mode = *lSolver;
-                if (mode == "isai" || mode == "ir")
-                {
-                    NeoN::Dictionary* facPrecond = factorizationPrecondDict(precond);
-                    if (facPrecond == nullptr)
-                    {
-                        throw std::runtime_error(
-                            "\n'lSolver " + mode
-                            + ";' applies only to factorization preconditioners (DIC -> Ic, "
-                              "DILU -> Ilu); preconditioner '"
-                            + preconditionerName + "' has no triangular factor to approximate.\n"
-                        );
-                    }
-                    // Ic applies the apply solver to L and its conjugate-transpose to L^H, so
-                    // only a lower override is needed. Ilu is asymmetric and needs both L and U.
-                    const bool isIlu =
-                        facPrecond->get<std::string>("type") == "preconditioner::Ilu";
-                    if (mode == "isai")
-                    {
-                        facPrecond->insert("l_solver", makeIsaiSolverDict("lower", sparsityPower));
-                        if (isIlu)
-                        {
-                            facPrecond->insert(
-                                "u_solver", makeIsaiSolverDict("upper", sparsityPower)
-                            );
-                        }
-                    }
-                    else // "ir": a fixed number of Jacobi sweeps (default 1 == aDIC)
-                    {
-                        const int sweeps = lSolverSweeps.value_or(1);
-                        facPrecond->insert("l_solver", makeIrSolverDict(sweeps, relaxationFactor));
-                        if (isIlu)
-                        {
-                            facPrecond->insert(
-                                "u_solver", makeIrSolverDict(sweeps, relaxationFactor)
-                            );
-                        }
-                    }
-                }
-                else if (mode != "trs" && mode != "exact")
-                {
-                    throw std::runtime_error(
-                        "\nUnknown lSolver '" + mode
-                        + "'. Valid values: 'isai' (approximate-inverse apply), 'ir' (fixed "
-                          "Jacobi-sweep approximate triangular solve), or 'trs'/'exact' (default "
-                          "exact triangular solve).\n"
-                    );
-                }
             }
 
             NeoN::Logging::warn(
@@ -543,18 +309,6 @@ std::string ginkgoSolverLabel(const NeoN::Dictionary& mapped)
             {
                 const std::string ptype = pd.get<std::string>("type");
                 precond = stripNamespace(ptype);
-                // Annotate a factorization preconditioner with its apply-solver override
-                // (e.g. "Ic(Isai)") so an ISAI run is distinguishable from the default
-                // exact-triangular-solve run in benchmark logs.
-                auto applySuffix = [](const NeoN::Dictionary& p) -> std::string
-                {
-                    if (p.isDict("l_solver") && p.subDict("l_solver").contains("type"))
-                    {
-                        return "(" + stripNamespace(p.subDict("l_solver").get<std::string>("type"))
-                             + ")";
-                    }
-                    return "";
-                };
                 // Unwrap the additive-Schwarz local solver so the meaningful
                 // per-rank preconditioner is visible in distributed runs.
                 if (ptype == "preconditioner::Schwarz" && pd.contains("local_solver")
@@ -563,13 +317,8 @@ std::string ginkgoSolverLabel(const NeoN::Dictionary& mapped)
                     const NeoN::Dictionary& ld = pd.subDict("local_solver");
                     if (ld.contains("type"))
                     {
-                        precond += "(" + stripNamespace(ld.get<std::string>("type"))
-                                 + applySuffix(ld) + ")";
+                        precond += "(" + stripNamespace(ld.get<std::string>("type")) + ")";
                     }
-                }
-                else
-                {
-                    precond += applySuffix(pd);
                 }
             }
         }

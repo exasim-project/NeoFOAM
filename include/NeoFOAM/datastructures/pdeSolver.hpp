@@ -183,14 +183,6 @@ public:
         NeoN::fence(psi_.exec());
         NF_ASSERT(ls.exec() == psi_.exec(), "Executors are not the same");
 
-        // Thread the field name as the preconditioner-reuse cache key so each field (p, U, ...)
-        // gets its own cached preconditioner. fieldSolverDict is a local copy, so this does not
-        // mutate the run-time dictionary. Only consulted by GinkgoSolver when reuse/aDIC is active.
-        if (!fieldSolverDict.contains("reuseKey"))
-        {
-            fieldSolverDict.insert("reuseKey", psi_.name);
-        }
-
         auto solver = NeoN::la::Solver(psi_.exec(), fieldSolverDict);
         auto stats = solver.solve(ls, psi_.internalVector());
 
