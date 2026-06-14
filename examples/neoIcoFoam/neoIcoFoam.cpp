@@ -5,6 +5,8 @@
 
 #include "NeoFOAM/NeoFOAM.hpp"
 
+#include "Kokkos_Core.hpp" // Kokkos::Profiling::{push,pop}Region
+
 #include "fvCFD.H"
 #include "pisoControl.H"
 
@@ -65,6 +67,11 @@ int main(int argc, char* argv[])
         NeoN::Logging::info("Starting time loop");
         while (runTime.loop())
         {
+            // "timeLoop" accumulates wall time across all steps; whatever falls outside it in the
+            // kp_space_time_stack Summary (mesh/field read, solver init) is one-time startup.
+            // Region timers are plain wall-clock scopes, so the solve regions below capture the
+            // Ginkgo solve time even though Ginkgo does not run as Kokkos kernels.
+            Kokkos::Profiling::pushRegion("timeLoop");
             // runTime.loop() has already advanced OpenFOAM to the current step. Mirror that into
             // the adapter time before logging: rt.t is set to startTime at construction and only
             // refreshed later in syncRunTimes, so logging it here would report the previous step's
@@ -90,6 +97,9 @@ int main(int argc, char* argv[])
 
             const auto ddtScheme = UEqn.ddtScheme();
 
+            // Manual push/pop (not a braced ScopedRegion) so UEqn/ddtScheme stay in scope for the
+            // PISO loop below; the region only brackets the expensive assemble+solve.
+            Kokkos::Profiling::pushRegion("momentumPredictor");
             if (piso.momentumPredictor())
             {
                 // NOTE solve on a temporary clone of UEqn
@@ -102,14 +112,18 @@ int main(int argc, char* argv[])
                 // explicitly trigger assembly here.
                 UEqn.assemble();
             }
+            Kokkos::Profiling::popRegion();
 
             // --- PISO loop
             while (piso.correct())
             {
                 NeoN::Logging::info("PISO loop");
+                Kokkos::Profiling::pushRegion("rAU_HbyA");
                 auto [crAU, hByA] = nf::computeRAUandHByA(UEqn);
                 nf::constrainHbyA(U, p, hByA);
+                Kokkos::Profiling::popRegion();
 
+                Kokkos::Profiling::pushRegion("fluxAssembly");
                 nnfvcc::SurfaceField<NeoN::scalar> rAU =
                     fvcc::SurfaceInterpolation<NeoN::scalar>(
                         rt.exec,
@@ -120,6 +134,7 @@ int main(int argc, char* argv[])
                 rAU.name = "rAUf";
 
                 auto phiHbyA = nf::flux(hByA) + rAU * fvcc::ddtFluxCorr(U, phi, rt.dt, ddtScheme);
+                Kokkos::Profiling::popRegion();
 
                 // TODO additionally missing
                 // Foam::adjustPhi(phiHbyA, U, p);
@@ -129,6 +144,9 @@ int main(int argc, char* argv[])
                 // Non-orthogonal pressure corrector loop
                 while (piso.correctNonOrthogonal())
                 {
+                    // Manual push/pop: pEqn must outlive the region for updateFaceVelocity below.
+                    // The region brackets the laplacian assembly and the Ginkgo pressure solve.
+                    Kokkos::Profiling::pushRegion("pressureAssembleSolve");
                     // Pressure corrector
                     nf::PDESolver<NeoN::scalar> pEqn(
                         NeoN::dsl::imp::laplacian(rAU, p) - NeoN::dsl::exp::div(phiHbyA),
@@ -142,19 +160,26 @@ int main(int argc, char* argv[])
                     }
 
                     auto stats = pEqn.solve();
+                    Kokkos::Profiling::popRegion();
+
                     p.correctBoundaryConditions();
 
                     if (piso.finalNonOrthogonalIter())
                     {
+                        Kokkos::Profiling::pushRegion("updateFaceVelocity");
                         nf::updateFaceVelocity(phiHbyA, pEqn, phi);
+                        Kokkos::Profiling::popRegion();
                     }
                 }
                 nf::reportContinuityError(phi, rt, cumulativeContErr);
 
+                Kokkos::Profiling::pushRegion("velocityCorrect");
                 nf::updateVelocity(hByA, crAU, p, U);
                 U.correctBoundaryConditions();
+                Kokkos::Profiling::popRegion();
             }
 
+            Kokkos::Profiling::pushRegion("IO");
             runTime.write();
             if (runTime.outputTime())
             {
@@ -163,8 +188,10 @@ int main(int argc, char* argv[])
                 NeoN::Logging::info("Writing U");
                 write(U, mesh);
             }
+            Kokkos::Profiling::popRegion();
 
             runTime.printExecutionTime(Info);
+            Kokkos::Profiling::popRegion(); // timeLoop
         }
     }
     NeoN::finalize();
