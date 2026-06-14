@@ -179,6 +179,13 @@ public:
         auto solverDict = runTime_.fvSolutionDict.subDict("solvers");
         auto fvSolution = solverDict.subDict(psi_.name);
         stripNeoFOAMKeys(fvSolution);
+        // Stable per-field key so NeoN can cache/reuse this field's Ginkgo solver factory across
+        // timesteps instead of re-parsing the config and rebuilding it every solve. Ginkgo-only:
+        // other backends do not strip unknown keys, so guard on the backend name.
+        if (fvSolution.template get<std::string>("solver", std::string {}) == "Ginkgo")
+        {
+            fvSolution.insert("reuseKey", psi_.name);
+        }
         auto solver = NeoN::la::Solver(psi_.exec(), fvSolution);
         // Do some sanity checks before trying to solve
         // NF_ASSERT(ls.exec() == solution.exec(), "Executors are not the same");
@@ -215,6 +222,13 @@ public:
         // Drop NeoFOAM-only keys before handing the dict to NeoN/Ginkgo, whose
         // config parser rejects unknown keys (e.g. assemblyStrategy, optimize).
         stripNeoFOAMKeys(fieldSolverDict);
+        // Stable per-field key so NeoN can cache/reuse this field's Ginkgo solver factory across
+        // timesteps instead of re-parsing the config and rebuilding it every solve. Ginkgo-only:
+        // other backends do not strip unknown keys, so guard on the backend name.
+        if (fieldSolverDict.template get<std::string>("solver", std::string {}) == "Ginkgo")
+        {
+            fieldSolverDict.insert("reuseKey", psi_.name);
+        }
         NeoN::fence(psi_.exec());
         NF_ASSERT(ls.exec() == psi_.exec(), "Executors are not the same");
 
