@@ -52,10 +52,7 @@ public:
               {
                   if (runTime.fvSolutionDict.subDict("solvers")
                           .subDict(psi.name)
-                          .template get<std::string>(
-                          "assemblyStrategy",
-                          "face-based"
-                      )
+                          .template get<std::string>("assemblyStrategy", "face-based")
                       == "cell-based")
                   {
                       auto cellIterator = std::make_shared<NeoN::la::CellBasedIterator>();
@@ -75,9 +72,11 @@ public:
         // TODO run NeoN expr_ = NeoN::dsl::optimize(expr); if optimize is set in fvSolution
         // NOTE OpenFOAM tokenizes a switch like 'optimize true;' as a word, so it is stored
         // as a std::string in the NeoN dictionary; reading it as bool throws bad_any_cast.
-        auto optimize = runTime_.fvSolutionDict.subDict("solvers")
-                            .subDict(psi_.name)
-                            .template get<std::string>("optimize", "false");
+        auto optimize =
+            runTime_.fvSolutionDict.subDict("solvers").subDict(psi_.name).template get<std::string>(
+                "optimize",
+                "false"
+            );
         if (optimize == "true" || optimize == "yes" || optimize == "on" || optimize == "1")
         {
             expr_ = NeoN::dsl::optimize(expr_);
