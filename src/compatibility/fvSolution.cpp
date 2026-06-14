@@ -38,11 +38,18 @@ NeoN::Dictionary makeIterationCriterion(int maxIters)
     return crit;
 }
 
-// Build a damped block-Jacobi smoother as a Ginkgo solver::Ir (iterative
-// refinement / Richardson) wrapping a point-Jacobi preconditioner. This is the
-// smoother Ginkgo's own multigrid examples use; relaxation_factor 0.9 damps the
-// high-frequency error the way OpenFOAM's GaussSeidel/DIC smoothers do. @p nSweeps
-// Richardson iterations are applied per smoother invocation (per multigrid level).
+// Build a scaled-correction block-Jacobi smoother as a Ginkgo solver::Ir
+// (iterative refinement / Richardson) wrapping a point-Jacobi preconditioner.
+// @p nSweeps Richardson iterations are applied per smoother invocation (per
+// multigrid level).
+//
+// scale_correction = 1 enables the experimental OpenFOAM-GAMGSolver::scale
+// smoother from Ginkgo's scaleCorrectionIR branch: each sweep scales the current
+// iterate by the optimal Rayleigh quotient alpha = (x·b)/(x·Ax) and adds a Jacobi
+// correction D^{-1}(b - alpha*Ax). This is what makes the multigrid competitive
+// with the ported SPUMA GAMG — plain Richardson (scale_correction 0) is far
+// slower. Requires the patched Ginkgo pinned in NeoN (Ir::parse reads the key);
+// the key would otherwise be rejected as unknown by config_check_decorator.
 NeoN::Dictionary makeJacobiSmoother(int nSweeps)
 {
     NeoN::Dictionary jacobi;
@@ -53,6 +60,7 @@ NeoN::Dictionary makeJacobiSmoother(int nSweeps)
     ir.insert("type", std::string("solver::Ir"));
     ir.insert("relaxation_factor", NeoN::scalar(0.9));
     ir.insert("solver", jacobi);
+    ir.insert("scale_correction", 1);
     ir.insert("criteria", makeIterationCriterion(nSweeps));
     return ir;
 }
