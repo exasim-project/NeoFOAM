@@ -23,6 +23,21 @@ namespace NeoFOAM
 namespace
 {
 
+// Build an explicit Ginkgo Iteration stopping criterion: {type Iteration; max_iters N}.
+// The multigrid solver parses its `criteria` via parse_or_get_factory_vector, which
+// requires the explicit factory form (a `type` key) — the minimal {iteration N} form
+// accepted by Cg/Ir's parse_or_get_criteria is NOT understood there and aborts with
+// "Contains empty, but try to get string". Use the explicit form everywhere inside the
+// multigrid config so it is valid for every consumer (matches Ginkgo's shipped
+// pgm-multigrid-cg.json).
+NeoN::Dictionary makeIterationCriterion(int maxIters)
+{
+    NeoN::Dictionary crit;
+    crit.insert("type", std::string("Iteration"));
+    crit.insert("max_iters", maxIters);
+    return crit;
+}
+
 // Build a damped block-Jacobi smoother as a Ginkgo solver::Ir (iterative
 // refinement / Richardson) wrapping a point-Jacobi preconditioner. This is the
 // smoother Ginkgo's own multigrid examples use; relaxation_factor 0.9 damps the
@@ -30,9 +45,6 @@ namespace
 // Richardson iterations are applied per smoother invocation (per multigrid level).
 NeoN::Dictionary makeJacobiSmoother(int nSweeps)
 {
-    NeoN::Dictionary criteria;
-    criteria.insert("iteration", nSweeps);
-
     NeoN::Dictionary jacobi;
     jacobi.insert("type", std::string("preconditioner::Jacobi"));
     jacobi.insert("max_block_size", 1);
@@ -41,7 +53,7 @@ NeoN::Dictionary makeJacobiSmoother(int nSweeps)
     ir.insert("type", std::string("solver::Ir"));
     ir.insert("relaxation_factor", NeoN::scalar(0.9));
     ir.insert("solver", jacobi);
-    ir.insert("criteria", criteria);
+    ir.insert("criteria", makeIterationCriterion(nSweeps));
     return ir;
 }
 
@@ -63,9 +75,6 @@ NeoN::Dictionary makeMultigridDict(int nVcycles)
     mgLevel.insert("type", std::string("multigrid::Pgm"));
     mgLevel.insert("deterministic", true);
 
-    NeoN::Dictionary criteria;
-    criteria.insert("iteration", nVcycles);
-
     NeoN::Dictionary mg;
     mg.insert("type", std::string("solver::Multigrid"));
     mg.insert("max_levels", 10);
@@ -75,7 +84,7 @@ NeoN::Dictionary makeMultigridDict(int nVcycles)
     mg.insert("pre_smoother", makeJacobiSmoother(1));
     mg.insert("coarsest_solver", makeJacobiSmoother(8));
     mg.insert("default_initial_guess", std::string("zero"));
-    mg.insert("criteria", criteria);
+    mg.insert("criteria", makeIterationCriterion(nVcycles));
     return mg;
 }
 
