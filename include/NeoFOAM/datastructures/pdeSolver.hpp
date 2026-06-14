@@ -50,7 +50,9 @@ public:
               // FIXME find a proper place
               [&psi, &runTime]()
               {
-                  if (runTime.fvSolutionDict.subDict("solvers").subDict(psi.name).get(
+                  if (runTime.fvSolutionDict.subDict("solvers")
+                          .subDict(psi.name)
+                          .template get<std::string>(
                           "assemblyStrategy",
                           "face-based"
                       )
@@ -71,7 +73,12 @@ public:
           ))
     {
         // TODO run NeoN expr_ = NeoN::dsl::optimize(expr); if optimize is set in fvSolution
-        if (runTime_.fvSolutionDict.subDict("solvers").subDict(psi_.name).get("optimize", false))
+        // NOTE OpenFOAM tokenizes a switch like 'optimize true;' as a word, so it is stored
+        // as a std::string in the NeoN dictionary; reading it as bool throws bad_any_cast.
+        auto optimize = runTime_.fvSolutionDict.subDict("solvers")
+                            .subDict(psi_.name)
+                            .template get<std::string>("optimize", "false");
+        if (optimize == "true" || optimize == "yes" || optimize == "on" || optimize == "1")
         {
             expr_ = NeoN::dsl::optimize(expr_);
         };
@@ -172,6 +179,7 @@ public:
 
         auto solverDict = runTime_.fvSolutionDict.subDict("solvers");
         auto fvSolution = solverDict.subDict(psi_.name);
+        stripNeoFOAMKeys(fvSolution);
         auto solver = NeoN::la::Solver(psi_.exec(), fvSolution);
         // Do some sanity checks before trying to solve
         // NF_ASSERT(ls.exec() == solution.exec(), "Executors are not the same");
@@ -205,6 +213,9 @@ public:
 
         auto solverDict = runTime_.fvSolutionDict.subDict("solvers");
         auto fieldSolverDict = solverDict.subDict(psi_.name);
+        // Drop NeoFOAM-only keys before handing the dict to NeoN/Ginkgo, whose
+        // config parser rejects unknown keys (e.g. assemblyStrategy, optimize).
+        stripNeoFOAMKeys(fieldSolverDict);
         NeoN::fence(psi_.exec());
         NF_ASSERT(ls.exec() == psi_.exec(), "Executors are not the same");
 
@@ -217,6 +228,20 @@ public:
     }
 
 private:
+
+    // Remove NeoFOAM-specific control keys from a per-field solver dict before it
+    // is passed to NeoN/Ginkgo. Ginkgo's config parser is strict and aborts on any
+    // unrecognised key, so these must be popped here rather than left in place.
+    static void stripNeoFOAMKeys(NeoN::Dictionary& dict)
+    {
+        for (const auto& key : {"assemblyStrategy", "optimize"})
+        {
+            if (dict.contains(key))
+            {
+                dict.remove(key);
+            }
+        }
+    }
 
     // Per-component name (Ux/Uy/Uz) when a vector field is solved as separate
     // component systems; the plain field name otherwise (scalar or coupled solve).
