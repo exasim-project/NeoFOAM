@@ -157,6 +157,33 @@ TEST_CASE("matrix multiplication")
         );
     }
 
+    SECTION("div linearUpwind_" + execName)
+    {
+        // OpenFOAM's fvmDiv with a corrected scheme builds the upwind matrix and adds the gradient
+        // correction to matrix.source() (fvm += fvc::surfaceIntegrate(faceFlux*correction)). The
+        // NeoN implicit div must reproduce the same operator action: applyOperator(ls,x) == (M & x)*V.
+        auto ofT = NeoFOAM::randomScalarField(runTime, mesh, "T");
+        auto ofPhi = NeoFOAM::randDimField<Foam::surfaceScalarField>(mesh, Foam::dimless, "phi");
+
+        Foam::IStringStream isLinUpw("linearUpwind grad(T)");
+        Foam::fv::gaussConvectionScheme<Foam::scalar> foamDiv(mesh, ofPhi, isLinUpw);
+        Foam::fvScalarMatrix matrix(foamDiv.fvmDiv(ofPhi, ofT));
+        Foam::volScalarField divT("divT", matrix & ofT);
+        auto divV = divT * mesh.V();
+
+        auto [nfT, nfPhi] = NeoFOAM::constFromMany(exec, rt.nfMesh, ofT, ofPhi);
+        auto ls = NeoN::la::createEmptyLinearSystem<NeoN::scalar>(rt.nfMesh);
+        NeoN::TokenList scheme =
+            NeoN::TokenList({std::string("linearUpwind"), std::string("grad(T)")});
+        fvcc::GaussGreenDiv<NeoN::scalar>(exec, rt.nfMesh, scheme)
+            .div(ls, nfPhi, nfT, dsl::Coeff(1.0));
+
+        // diag and rhs differ from the foam matrix as openfoam does not add the boundary values to
+        // the matrix; the deferred correction lives in the rhs, so we check the operator action.
+        auto result = NeoFOAM::applyOperator(ls, nfT);
+        REQUIRE_THAT(result.internalVector(), EqualsInternal(divV(), ApproxScalar(epsilon)));
+    }
+
     SECTION("laplacian_" + execName)
     {
         auto ofT = NeoFOAM::randomScalarField(runTime, mesh, "T");
