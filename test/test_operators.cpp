@@ -110,4 +110,55 @@ TEST_CASE("Interpolation")
 
         REQUIRE_THAT(nfDivT, EqualsInternal(ofDivT, ApproxScalar(1e-15)));
     }
+
+    // linearUpwind = upwind value + (Cf - C_upwind) & grad(phi)_upwind. The explicit divergence
+    // (fvcDiv) must reproduce OpenFOAM's gaussConvectionScheme with the linearUpwind interpolation.
+    // The mesh is effectively 2D (single empty z-layer), so internal-face d-vectors carry no
+    // z-component and the correction is driven by the in-plane gradient that matches OF tightly.
+    SECTION("GaussGreenDiv linearUpwind[scalar] on " + execName)
+    {
+        Foam::IStringStream isLinUpw("linearUpwind grad(T)");
+        auto foamDivScalar = Foam::fv::gaussConvectionScheme<Foam::scalar>(mesh, ofPhi, isLinUpw);
+        Foam::volScalarField ofDivT("ofDivT", foamDivScalar.fvcDiv(ofPhi, ofT));
+
+        auto nfDivT = NeoFOAM::constructFrom(exec, nfMesh, ofDivT);
+        zero(nfDivT, 0.0);
+
+        NeoN::TokenList scheme =
+            NeoN::TokenList({std::string("linearUpwind"), std::string("grad(T)")});
+        fvcc::GaussGreenDiv<NeoN::scalar>(exec, nfMesh, scheme)
+            .div(nfDivT, nfPhi, nfT, dsl::Coeff(1.0));
+        nfDivT.correctBoundaryConditions();
+
+        REQUIRE_THAT(nfDivT, EqualsInternal(ofDivT, ApproxScalar(1e-11)));
+    }
+
+    auto ofU = randomVectorField(runTime, mesh, "U");
+    auto nfU = NeoFOAM::constructFrom(exec, nfMesh, ofU);
+
+    SECTION("GaussGreenDiv linearUpwind[vector] on " + execName)
+    {
+        Foam::IStringStream isLinUpwV("linearUpwind grad(U)");
+        auto foamDivVec = Foam::fv::gaussConvectionScheme<Foam::vector>(mesh, ofPhi, isLinUpwV);
+        Foam::volVectorField ofDivU("ofDivU", foamDivVec.fvcDiv(ofPhi, ofU));
+
+        auto nfDivU = NeoFOAM::constructFrom(exec, nfMesh, ofDivU);
+        zero(nfDivU, NeoN::Vec3(0.0, 0.0, 0.0));
+
+        NeoN::TokenList scheme =
+            NeoN::TokenList({std::string("linearUpwind"), std::string("grad(U)")});
+        fvcc::GaussGreenDiv<NeoN::Vec3>(exec, nfMesh, scheme)
+            .div(nfDivU, nfPhi, nfU, dsl::Coeff(1.0));
+        nfDivU.correctBoundaryConditions();
+
+        // The divergence values are O(1e6) (cells are ~2e-3 m, so 1/V is large), so a relative
+        // tolerance per component is used rather than an absolute one.
+        auto approxRel = [](NeoN::Vec3 nf, Foam::vector of)
+        {
+            return Catch::Approx(of[0]).epsilon(1e-6).margin(1.0) == nf[0]
+                && Catch::Approx(of[1]).epsilon(1e-6).margin(1.0) == nf[1]
+                && Catch::Approx(of[2]).epsilon(1e-6).margin(1.0) == nf[2];
+        };
+        REQUIRE_THAT(nfDivU, EqualsInternal(ofDivU, approxRel));
+    }
 }
