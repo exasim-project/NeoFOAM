@@ -126,6 +126,28 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
                  // left blank
              }
          }},
+        {"uniformFixedValue",
+         [](auto& dict)
+         {
+             // uniformFixedValue stores its value as a Function1. We only support
+             // the (by far most common) `constant <value>` form, which converts to
+             // a TokenList of [word "constant", value...]; the value therefore
+             // starts at index 1, exactly like the `value uniform ...` case above.
+             dict.insert("type", std::string("fixedValue"));
+             NeoN::TokenList tokenList = dict.template get<NeoN::TokenList>("uniformValue");
+             if constexpr (std::is_same<type_primitive_t, NeoN::Vec3>::value)
+             {
+                 NeoN::Vec3 tmpFixedValue {};
+                 tmpFixedValue[0] = detail::tokenAsScalar(tokenList, 1);
+                 tmpFixedValue[1] = detail::tokenAsScalar(tokenList, 2);
+                 tmpFixedValue[2] = detail::tokenAsScalar(tokenList, 3);
+                 dict.insert("fixedValue", tmpFixedValue);
+             }
+             else
+             {
+                 dict.insert("fixedValue", detail::tokenAsScalar(tokenList, 1));
+             }
+         }},
         {"noSlip", // TODO specialize for vector
          [](auto& dict)
          {
@@ -143,6 +165,24 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
          [](auto& dict) { dict.insert("type", std::string("nutUSpaldingWallFunction")); }}
     };
 
+    // Look up the inserter for a patch type, failing with a descriptive error
+    // instead of std::map::operator[] silently creating an empty std::function
+    // (which would later throw the opaque std::bad_function_call when invoked).
+    auto applyInserter =
+        [&](const std::string& bcType, const std::string& bName, NeoN::Dictionary& d)
+    {
+        auto it = patchInserter.find(bcType);
+        if (it == patchInserter.end())
+        {
+            throw std::runtime_error(
+                "readVolBoundaryConditions: unsupported boundary condition type '" + bcType
+                + "' on patch '" + bName
+                + "'. Add a handler for it to patchInserter in readers.hpp."
+            );
+        }
+        it->second(d);
+    };
+
     int patchi = 0;
     std::vector<fvcc::VolumeBoundary<type_primitive_t>> bcs;
     // do non processor first
@@ -152,7 +192,7 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
         if (patchDict.get<Foam::word>("type") != "processor")
         {
             NeoN::Dictionary neoPatchDict = convert(patchDict);
-            patchInserter[patchDict.get<Foam::word>("type")](neoPatchDict);
+            applyInserter(patchDict.get<Foam::word>("type"), bName, neoPatchDict);
             bcs.emplace_back(nfMesh, neoPatchDict, patchi);
             patchi++;
         }
@@ -163,7 +203,7 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
         if (patchDict.get<Foam::word>("type") == "processor")
         {
             NeoN::Dictionary neoPatchDict = convert(patchDict);
-            patchInserter[patchDict.get<Foam::word>("type")](neoPatchDict);
+            applyInserter(patchDict.get<Foam::word>("type"), bName, neoPatchDict);
             bcs.emplace_back(nfMesh, neoPatchDict, patchi);
             patchi++;
         }
@@ -217,13 +257,28 @@ auto readSurfaceBoundaryConditions(
         {"symmetry", [](auto& dict) { dict.insert("type", std::string("symmetry")); }}
     };
 
+    auto applyInserter =
+        [&](const std::string& bcType, const std::string& bName, NeoN::Dictionary& d)
+    {
+        auto it = patchInserter.find(bcType);
+        if (it == patchInserter.end())
+        {
+            throw std::runtime_error(
+                "readSurfaceBoundaryConditions: unsupported boundary condition type '" + bcType
+                + "' on patch '" + bName
+                + "'. Add a handler for it to patchInserter in readers.hpp."
+            );
+        }
+        it->second(d);
+    };
+
     for (const auto& bName : bDict.toc())
     {
         Foam::dictionary patchDict = bDict.subDict(bName);
         if (patchDict.get<Foam::word>("type") != "processor")
         {
             NeoN::Dictionary neoPatchDict;
-            patchInserter[patchDict.get<Foam::word>("type")](neoPatchDict);
+            applyInserter(patchDict.get<Foam::word>("type"), bName, neoPatchDict);
             bcs.push_back(fvcc::SurfaceBoundary<type_primitive_t>(uMesh, neoPatchDict, patchi));
             patchi++;
         }
@@ -234,7 +289,7 @@ auto readSurfaceBoundaryConditions(
         if (patchDict.get<Foam::word>("type") == "processor")
         {
             NeoN::Dictionary neoPatchDict;
-            patchInserter[patchDict.get<Foam::word>("type")](neoPatchDict);
+            applyInserter(patchDict.get<Foam::word>("type"), bName, neoPatchDict);
             bcs.push_back(fvcc::SurfaceBoundary<type_primitive_t>(uMesh, neoPatchDict, patchi));
             patchi++;
         }
