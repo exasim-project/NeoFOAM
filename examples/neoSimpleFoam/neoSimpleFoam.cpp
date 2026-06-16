@@ -10,7 +10,6 @@
 #include "singlePhaseTransportModel.H"
 #include "turbulentTransportModel.H"
 #include "wallDist.H"
-#include "LESModel.H"
 
 #include <memory>
 
@@ -47,7 +46,8 @@ int main(int argc, char* argv[])
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
         solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
         solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
-        solverDict.subDict("nuTilda") = nf::mapFvSolution(solverDict.subDict("nuTilda"));
+        solverDict.subDict("k") = nf::mapFvSolution(solverDict.subDict("k"));
+        solverDict.subDict("omega") = nf::mapFvSolution(solverDict.subDict("omega"));
         auto& schemesDict = rt.fvSchemesDict;
         schemesDict = nf::mapFvSchemes(rt.fvSchemesDict);
 
@@ -56,8 +56,9 @@ int main(int argc, char* argv[])
 
         auto& p = nf::constructAndRegister(vectorCollection, rt, ofP, false);
         auto& U = nf::constructAndRegister(vectorCollection, rt, ofU, false);
-        auto& nuTilda = nf::constructAndRegister(vectorCollection, rt, ofNuTilda, false);
-        auto nut = nf::constructAndRegister(vectorCollection, rt, ofNut, false);
+        auto& k = nf::constructAndRegister(vectorCollection, rt, ofK, false);
+        auto& omega = nf::constructAndRegister(vectorCollection, rt, ofOmega, false);
+        auto& nut = nf::constructAndRegister(vectorCollection, rt, ofNut, false);
 
         NeoN::Logging::info("Creating phi");
         auto& phi = nf::constructAndRegister(vectorCollection, rt, ofPhi, false);
@@ -65,11 +66,9 @@ int main(int argc, char* argv[])
         // Turbulence model setup
         auto nu = nf::constructFrom(rt.exec, rt.nfMesh, tnu());
         auto wallDist = nf::constructFrom(rt.exec, rt.nfMesh, y.y());
-        auto nearWallDist = nf::constructFrom(rt.exec, rt.nfMesh, ofNearWallDist);
-        auto delta = nf::constructFrom(rt.exec, rt.nfMesh, lesModel.delta());
-        nf::SpalartAllmarasDDES turb(rt.exec, rt.nfMesh, nu, wallDist, nearWallDist, delta);
+        nf::KOmegaSST turb(rt.exec, rt.nfMesh, nu, wallDist);
 
-        turb.validate(U, nuTilda, nut);
+        turb.validate(U, k, omega, nut);
 
         // TODO: surface interpolation also instantiated in turbulence model -> doubled?!
         auto surfInterpol = fvcc::SurfaceInterpolation<NeoN::scalar>(
@@ -152,7 +151,7 @@ int main(int argc, char* argv[])
             }
 
             // Turbulence update
-            turb.correct(U, phi, nuTilda, nut, rt);
+            turb.correct(U, phi, k, omega, nut, rt);
 
             runTime.write();
             if (runTime.outputTime())
@@ -162,7 +161,8 @@ int main(int argc, char* argv[])
                 NeoN::Logging::info("Writing U");
                 write(U, mesh);
                 NeoN::Logging::info("Writing turbulence variables");
-                write(nuTilda, mesh);
+                write(k, mesh);
+                write(omega, mesh);
                 write(nut, mesh);
             }
 
