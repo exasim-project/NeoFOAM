@@ -288,7 +288,6 @@ void KOmegaSST::correct(
     ctx.insert("nu", nu_);
     ctx.insert("nearWallDist", nearWallDistTmp_);
 
-
     // Compute F1, sources, and sp coefficients using OLD nut
     computeF1AndSources(k, omega, nut, gradKTmp_, gradOmegaTmp_, gradUTmp_);
 
@@ -406,7 +405,6 @@ void KOmegaSST::correct(
             );
         }
     }
-
 
     // ----- omega equation -----
     PDESolver<scalar> omegaEqn(

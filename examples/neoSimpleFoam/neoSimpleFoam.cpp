@@ -4,6 +4,7 @@
 #include "NeoN/NeoN.hpp"
 
 #include "NeoFOAM/NeoFOAM.hpp"
+#include "NeoFOAM/turbulenceModels/kEpsilon.hpp"
 
 #include "fvCFD.H"
 #include "simpleControl.H"
@@ -25,10 +26,33 @@ namespace dsl = NeoN::dsl;
 namespace fvcc = NeoN::finiteVolume::cellCentred;
 namespace nf = NeoFOAM;
 
+namespace
+{
+
+// Resolve the field under-relaxation factor (alpha) for the given field name
+// from fvSolution.relaxationFactors.fields.<name>. Returns 1.0 (a bitwise
+// no-op inside applyFieldRelaxation) if the block, the fields subdict, or the
+// entry is absent. Tolerates int / scalar typing the same way the equation
+// factor lookup in PDESolver does.
+NeoN::scalar
+readFieldRelaxationFactor(const NeoN::Dictionary& fvSolutionDict, const std::string& fieldName)
+{
+    if (!fvSolutionDict.contains("relaxationFactors")) return NeoN::scalar(1);
+    const auto& rf = fvSolutionDict.subDict("relaxationFactors");
+    if (!rf.contains("fields")) return NeoN::scalar(1);
+    const auto& fields = rf.subDict("fields");
+    if (!fields.contains(fieldName)) return NeoN::scalar(1);
+    if (fields.isType<int>(fieldName)) return NeoN::scalar(fields.get<int>(fieldName));
+    return fields.get<NeoN::scalar>(fieldName);
+}
+
+} // namespace
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 int main(int argc, char* argv[])
 {
+// TODO move the whole omega/epsilon logic out of the solver
 // Bring up OpenFOAM (and MPI) before NeoN, matching neoIcoFoam, so the rank is
 // known when NeoN configures logging and the rank-0 muting engages immediately.
 #include "addCheckCaseOptions.H"
@@ -47,7 +71,11 @@ int main(int argc, char* argv[])
         solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
         solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
         solverDict.subDict("k") = nf::mapFvSolution(solverDict.subDict("k"));
-        solverDict.subDict("omega") = nf::mapFvSolution(solverDict.subDict("omega"));
+        // Map the active secondary-equation solver entry; see createFields.H
+        // for the rasModelName / isKOmegaSST / isKEpsilon switches.
+        const std::string secondaryFieldName = isKOmegaSST ? "omega" : "epsilon";
+        solverDict.subDict(secondaryFieldName) =
+            nf::mapFvSolution(solverDict.subDict(secondaryFieldName));
         auto& schemesDict = rt.fvSchemesDict;
         schemesDict = nf::mapFvSchemes(rt.fvSchemesDict);
 
@@ -56,19 +84,46 @@ int main(int argc, char* argv[])
 
         auto& p = nf::constructAndRegister(vectorCollection, rt, ofP, false);
         auto& U = nf::constructAndRegister(vectorCollection, rt, ofU, false);
-        auto& k = nf::constructAndRegister(vectorCollection, rt, ofK, false);
-        auto& omega = nf::constructAndRegister(vectorCollection, rt, ofOmega, false);
+        auto& k = nf::constructAndRegister(vectorCollection, rt, ofK, true);
         auto& nut = nf::constructAndRegister(vectorCollection, rt, ofNut, false);
+
+        // TODO this shouldn't be part of the solver
+        // The secondary turbulence-equation field is `omega` for kOmegaSST
+        // and `epsilon` for kEpsilon. Only the active one is registered.
+        auto& omega = isKOmegaSST ? nf::constructAndRegister(vectorCollection, rt, ofOmega, true)
+                                  : nf::constructAndRegister(vectorCollection, rt, ofOmega, false);
+        auto& epsilon = isKEpsilon
+                          ? nf::constructAndRegister(vectorCollection, rt, ofEpsilon, true)
+                          : nf::constructAndRegister(vectorCollection, rt, ofEpsilon, false);
 
         NeoN::Logging::info("Creating phi");
         auto& phi = nf::constructAndRegister(vectorCollection, rt, ofPhi, false);
 
-        // Turbulence model setup
+        // Turbulence model setup — branch on RAS model name read from
+        // constant/turbulenceProperties in createFields.H.
         auto nu = nf::constructFrom(rt.exec, rt.nfMesh, tnu());
         auto wallDist = nf::constructFrom(rt.exec, rt.nfMesh, y.y());
-        nf::KOmegaSST turb(rt.exec, rt.nfMesh, nu, wallDist);
 
-        turb.validate(U, k, omega, nut);
+        // TODO use a base class for turbulence here
+        std::optional<nf::KOmegaSST> turbKOmegaSST;
+        std::optional<nf::KEpsilon> turbKEpsilon;
+        if (isKOmegaSST)
+        {
+            turbKOmegaSST.emplace(rt.exec, rt.nfMesh, nu, wallDist);
+            turbKOmegaSST->validate(U, k, omega, nut);
+        }
+        else
+        {
+            turbKEpsilon.emplace(rt.exec, rt.nfMesh, nu, wallDist);
+            turbKEpsilon->validate(U, k, epsilon, nut);
+        }
+
+        // TODO use base class
+        // Unified accessors for the U-equation diffusivity and gradU.
+        auto turbNuEff = [&]() -> nnfvcc::SurfaceField<NeoN::scalar>&
+        { return isKOmegaSST ? turbKOmegaSST->nuEff() : turbKEpsilon->nuEff(); };
+        auto turbGradU = [&]() -> const nnfvcc::VolumeField<NeoN::Tensor>&
+        { return isKOmegaSST ? turbKOmegaSST->gradU() : turbKEpsilon->gradU(); };
 
         // TODO: surface interpolation also instantiated in turbulence model -> doubled?!
         auto surfInterpol = fvcc::SurfaceInterpolation<NeoN::scalar>(
@@ -90,8 +145,8 @@ int main(int argc, char* argv[])
 
             // Momentum predictor (no ddt for steady-state SIMPLE)
             nf::PDESolver<NeoN::Vec3> UEqn(
-                dsl::imp::div(phi, U) - dsl::imp::laplacian(turb.nuEff(), U)
-                    + dsl::exp::viscousStress(nu, nut, turb.gradU()),
+                dsl::imp::div(phi, U) - dsl::imp::laplacian(turbNuEff(), U)
+                    + dsl::exp::viscousStress(nu, nut, turbGradU()),
                 U,
                 rt
             );
@@ -105,7 +160,7 @@ int main(int argc, char* argv[])
                 UEqn.assemble();
             }
 
-            // --- SIMPLE pressure-velocity coupling (single pass, no inner PISO loop)
+            // SIMPLE pressure-velocity coupling (single pass, no inner PISO loop)
             {
                 auto [crAU, hByA] = nf::computeRAUandHByA(UEqn);
                 nf::constrainHbyA(U, p, hByA);
@@ -119,6 +174,13 @@ int main(int argc, char* argv[])
                 // TODO additionally missing
                 // Foam::adjustPhi(phiHbyA, U, p);
                 // Foam::constrainPressure(p, U, phiHbyA, rAU);
+
+                // Pre-solve snapshots: internal vector for applyFieldRelaxation
+                // and a full VolumeField for the deferred-correction recovery
+                // below (the Laplacian uses pre-solve p in its deferred
+                // correction; recovering it post-solve must use the same p).
+                auto pPrev = NeoN::dsl::fieldRelaxationSnapshot(p);
+                nnfvcc::VolumeField<NeoN::scalar> pSnapshot(p);
 
                 // Non-orthogonal pressure corrector loop
                 while (simple.correctNonOrthogonal())
@@ -140,18 +202,77 @@ int main(int argc, char* argv[])
                     if (simple.finalNonOrthogonalIter())
                     {
                         nf::updateFaceVelocity(phiHbyA, pEqn, phi);
+
+                        // Add back the deferred non-orthogonal correction the
+                        // Laplacian assembly moved to the RHS. Mirrors OF's
+                        // `fieldFlux += *faceFluxCorrectionPtr_` in
+                        // fvMatrix::flux() (fvMatrix.C:1516-1519) — without
+                        // this, phi carries leftover div(correctionFlux) on
+                        // non-orthogonal meshes and continuity errors diverge
+                        // by ~step 13 on the motorBike snappy mesh. No-op when
+                        // fvSchemes selects 'uncorrected' snGrad.
+                        {
+                            NeoN::Input snGradInput = NeoN::TokenList({std::string("corrected")});
+                            fvcc::FaceNormalGradient<NeoN::scalar> sng(
+                                rt.exec,
+                                rt.nfMesh,
+                                snGradInput
+                            );
+                            if (sng.hasImplicitCorrection())
+                            {
+                                nnfvcc::SurfaceField<NeoN::scalar> snGradCorr(
+                                    rt.exec,
+                                    "snGradCorr",
+                                    rt.nfMesh,
+                                    fvcc::createCalculatedBCs<
+                                        nnfvcc::SurfaceBoundary<NeoN::scalar>>(rt.nfMesh)
+                                );
+                                sng.implicitCorrection(pSnapshot, snGradCorr);
+
+                                const auto nInt = rt.nfMesh.nInternalFaces();
+                                const auto snGradCorrV = snGradCorr.internalVector().view();
+                                const auto rAUV = rAU.internalVector().view();
+                                const auto magSf = rt.nfMesh.faceAreas().view();
+                                auto phiV = phi.internalVector().view();
+                                NeoN::parallelFor(
+                                    rt.exec,
+                                    {0, nInt},
+                                    NEON_LAMBDA(const NeoN::localIdx i) {
+                                        phiV[i] += snGradCorrV[i] * rAUV[i] * magSf[i];
+                                    },
+                                    "addNonOrthCorrToPhi"
+                                );
+                            }
+                        }
                     }
                 }
                 nf::reportContinuityError(phi, rt, cumulativeContErr);
 
-                // TODO: p.relax() - explicit pressure under-relaxation not yet implemented
+                // Explicit pressure field under-relaxation — mirrors p.relax()
+                // in OpenFOAM's simpleFoam. Blends p with the pre-solve
+                // snapshot in place: p = pPrev + alpha*(p - pPrev). alpha=1
+                // is a bitwise no-op; reading the factor from
+                // relaxationFactors.fields.<name> in fvSolution.
+                NeoN::dsl::applyFieldRelaxation(
+                    p,
+                    pPrev,
+                    readFieldRelaxationFactor(rt.fvSolutionDict, "p")
+                );
+                p.correctBoundaryConditions();
 
                 nf::updateVelocity(hByA, crAU, p, U);
                 U.correctBoundaryConditions();
             }
 
             // Turbulence update
-            turb.correct(U, phi, k, omega, nut, rt);
+            if (isKOmegaSST)
+            {
+                turbKOmegaSST->correct(U, phi, k, omega, nut, rt);
+            }
+            else
+            {
+                turbKEpsilon->correct(U, phi, k, epsilon, nut, rt);
+            }
 
             runTime.write();
             if (runTime.outputTime())
@@ -162,7 +283,14 @@ int main(int argc, char* argv[])
                 write(U, mesh);
                 NeoN::Logging::info("Writing turbulence variables");
                 write(k, mesh);
-                write(omega, mesh);
+                if (isKOmegaSST)
+                {
+                    write(omega, mesh);
+                }
+                else
+                {
+                    write(epsilon, mesh);
+                }
                 write(nut, mesh);
             }
 

@@ -267,6 +267,14 @@ NeoN::Dictionary mapFvSolution(const NeoN::Dictionary& solverDict)
 
     if (solverDict.contains("configFile"))
     {
+        // SolverFactory::create() dispatches on `solver`; the configFile path
+        // doesn't write one (the user only specified configFile + tolerances)
+        // so the lookup throws `Key not found: solver`. Inject "Ginkgo" so
+        // the factory routes to GinkgoSolver, which itself reads configFile.
+        if (!modSolverDict.contains("solver"))
+        {
+            modSolverDict.insert("solver", std::string("Ginkgo"));
+        }
         modSolverDict.insert("reportName", std::string("configFile"));
         return modSolverDict;
     }

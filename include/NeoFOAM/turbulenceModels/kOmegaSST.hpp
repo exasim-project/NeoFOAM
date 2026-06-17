@@ -198,7 +198,6 @@ private:
     // Owner-cell wall distance copied to boundary faces so wall BCs get a non-zero y.
     nnfvcc::VolumeField<scalar> nearWallDistTmp_;
 
-
     // Cached face-interpolated nu (computed once in constructor)
     nnfvcc::SurfaceField<scalar> surfNuTmp_;
 

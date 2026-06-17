@@ -5,13 +5,6 @@
 
 #include "NeoFOAM/fvcc/boundary/volume/kqRWallFunction.hpp"
 #include "NeoFOAM/turbulenceModels/kEpsilon.hpp"
-#include "NeoFOAM/auxiliary/readers.hpp"
-#include "NeoFOAM/auxiliary/writers.hpp"
-#include "NeoFOAM/compatibility/fvSolution.hpp"
-
-#include "wallDist.H"
-#include "IOobject.H"
-#include "volFields.H"
 
 namespace dsl = NeoN::dsl;
 namespace fvcc = NeoN::finiteVolume::cellCentred;
@@ -676,5 +669,6 @@ void KEpsilonModel::write(MeshAdapter& mesh) const
     NeoFOAM::write(*epsilon_, mesh);
     NeoFOAM::write(*nut_, mesh);
 }
+
 
 } // namespace NeoFOAM

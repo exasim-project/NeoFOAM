@@ -19,18 +19,26 @@ namespace fvcc = NeoN::finiteVolume::cellCentred;
 namespace detail
 {
 
+// Defaults match OpenFOAM's wallFunctionCoefficients
+//  (src/TurbulenceModels/turbulenceModels/derivedFvPatchFields/wallFunctions/
+//   wallFunction/wallFunctionCoefficients/wallFunctionCoefficients.C:61-63).
 inline constexpr scalar EPSILON_WF_DEFAULT_CMU = 0.09;
 inline constexpr scalar EPSILON_WF_DEFAULT_KAPPA = 0.41;
 
-/**
- * Applies the epsilonWallFunction kernel face-by-face.
- *
- *   ε_vis = 2 · k · ν / y²              (viscous-sublayer estimate)
- *   ε_log = C_µ^0.75 · k^1.5 / (κ · y)  (log-layer estimate)
- *   ε_w   = √(ε_vis² + ε_log²)          (BINOMIAL n=2 blend)
- *
- * Sets the wall face value only; does not modify the internal field.
- */
+// Applies the epsilonWallFunction kernel face-by-face.
+//
+// Mirrors Foam::epsilonWallFunctionFvPatchScalarField::calculate() for the
+// BINOMIAL n=2 blender (the upstream default) and updateCoeffs()'s
+// write-back step: each wall face gets a blended ε computed from the adjacent
+// cell's k, the patch face's ν, and the cell-to-wall distance y.
+//
+//   ε_vis = 2 · k · ν / y²              (viscous-sublayer estimate)
+//   ε_log = C_µ^0.75 · k^1.5 / (κ · y)  (log-layer estimate)
+//   ε_w   = √(ε_vis² + ε_log²)          (BINOMIAL n=2 blend)
+//
+// Only sets the wall face value; does NOT stomp epsilon.internal[wall_cell].
+// See the longer note in omegaWallFunction.hpp on why an internal-cell write
+// without OF's setValues hook would only do harm.
 inline void setEpsilonWallFunction(
     Field<scalar>& epsilon,
     const fvcc::VolumeField<scalar>& k,
@@ -80,15 +88,15 @@ inline void setEpsilonWallFunction(
 
 } // namespace detail
 
-/**
- * Epsilon wall function boundary condition.
- *
- * Known limitations:
- *  - Single-patch-corner only: each wall cell is assumed to see at most one
- *    wall-function face.
- *  - G production-term feedback is not handled here; it is written by the
- *    parent kEpsilon model.
- */
+// Mirrors Foam::epsilonWallFunctionFvPatchScalarField
+//   (src/TurbulenceModels/turbulenceModels/derivedFvPatchFields/wallFunctions/
+//    epsilonWallFunctions/epsilonWallFunction/epsilonWallFunctionFvPatchScalarField.{H,C}).
+//
+// Single-patch-corner only: each wall cell is assumed to see at most one
+// wall-function face (cornerWeights == 1). The G production-term feedback that
+// upstream's updateCoeffs() also performs is not handled here — the parent
+// kEpsilon model writes that source via its own G-feedback step, mirroring
+// the same pattern KOmegaSST uses for omegaWallFunction.
 class EpsilonWallFunction :
     public VolumeBoundaryFactory<scalar>::template Register<EpsilonWallFunction>
 {
