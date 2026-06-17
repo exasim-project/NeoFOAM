@@ -119,9 +119,14 @@ int main(int argc, char* argv[])
         //     = ddt(U) + div(phi,U) - laplacian(nuEff,U) - div(nuEff*dev2(T(grad U))),
         // so the implicit laplacian alone is only PART of the viscous term. The explicit dev2
         // stress div((nuEff*dev2(T(grad(U))))) must be added for OF parity — it is non-zero
-        // wherever the reconstructed cell velocity has non-zero divergence. gradU is recomputed
-        // LOCALLY each outer corrector so the explicit stress tracks the current U; this
-        // is NOT turb.gradU(), which is frozen per step.
+        // wherever the reconstructed cell velocity has non-zero divergence.
+        //
+        // The dev2 stress tracks the CURRENT U. On the FIRST outer corrector U is still U^n — the
+        // exact field turb.gradU() was last computed from in the previous step's turb.correct() —
+        // so we reuse turb.gradU() there (no extra grad(U), no tensor-field allocation), exactly as
+        // neoPisoFoam does. Only the 2nd+ outer correctors solve against an updated U and recompute
+        // the gradient IN PLACE into localGradU, a buffer hoisted out of the time loop so no
+        // VolumeField<Tensor> is allocated per corrector.
         fvcc::GaussGreenGrad gradOp(rt.exec, rt.nfMesh);
 
         NeoN::Logging::info("Creating phi");
@@ -138,6 +143,11 @@ int main(int argc, char* argv[])
         // Calculate prerequisite variables for the turbulence model (gradU, diffusion coeff,
         // and an initial correctNut). Mirrors OpenFOAM's turbulence->validate().
         turb.validate(U, nuTilda, nut);
+
+        // Hoisted reuse buffer for the 2nd+ outer correctors' current-U velocity gradient,
+        // allocated ONCE here and refilled in place via gradTensor(U, localGradU) when needed —
+        // so no VolumeField<Tensor> (~nCells*9 scalars) is allocated per outer corrector.
+        auto localGradU = gradOp.gradTensor(U);
 
         // Hoist the surface interpolation once (constructed per inner corrector otherwise),
         // mirroring neoPisoFoam.cpp:77-81.
@@ -197,14 +207,28 @@ int main(int argc, char* argv[])
                 // the internal vector) so we can blend against it after the pressure solve.
                 auto prevP = NeoN::dsl::fieldRelaxationSnapshot(p);
 
-                // Momentum predictor. gradU (velocity-gradient tensor) is recomputed LOCALLY from
-                // the current U each outer corrector (the OF-parity point); the dev2 viscous
-                // stress is explicit (evaluated at assembly, like OpenFOAM's divDevReff). The
-                // implicit laplacian uses the SA-DDES effective surface viscosity turb.nuEff()
-                // (nu + nut, nut no longer zero), while the explicit stress uses the turbulence
-                // volume nu/nut coefficients with this LOCAL gradU — deliberately NOT turb.gradU(),
-                // which is frozen per step.
-                auto gradU = gradOp.gradTensor(U);
+                // Momentum predictor. The dev2 viscous stress is explicit (evaluated at assembly,
+                // like OpenFOAM's divDevReff) and needs grad of the CURRENT U. On the first outer
+                // corrector U == U^n, so turb.gradU() (computed from U^n in the previous step's
+                // turb.correct()) is reused verbatim — identical value in serial, but skips a full
+                // grad(U) tensor and a per-corrector VolumeField<Tensor> allocation, exactly as
+                // neoPisoFoam does. Later outer correctors solve against an updated U and recompute
+                // the gradient in place into the hoisted localGradU buffer.
+                const fvcc::VolumeField<NeoN::Tensor>* gradUPtr = nullptr;
+                if (pimpleLoop.firstIter())
+                {
+                    gradUPtr = &turb.gradU();
+                }
+                else
+                {
+                    gradOp.gradTensor(U, localGradU);
+                    gradUPtr = &localGradU;
+                }
+                const auto& gradU = *gradUPtr;
+
+                // The implicit laplacian uses the SA-DDES effective surface viscosity turb.nuEff()
+                // (nu + nut, nut no longer zero); the explicit dev2 stress uses the turbulence
+                // volume nu/nut coefficients with the gradU selected above.
                 nf::PDESolver<NeoN::Vec3> UEqn(
                     dsl::imp::ddt(U) + dsl::imp::div(phi, U) - dsl::imp::laplacian(turb.nuEff(), U)
                         + dsl::exp::viscousStress(nu, nut, gradU),
