@@ -37,9 +37,25 @@ void constrainHbyA(
 
 nnfvcc::VolumeField<scalar> computeRAU(const PDESolver<Vec3>& expr)
 {
-    // TODO this assumes an assembled matrix
-    // force assembly if not assembled
     const auto& ls = expr.linearSystem();
+    // Accepted limitation — scope of this guard:
+    // This guard catches an EMPTY / degenerate system (nnz == 0) only. It does NOT catch the
+    // real failure mode — an allocated-but-never-assembled system with an all-zero
+    // diagonal — because NeoN's createEmptyLinearSystem sizes the matrix values to the sparsity
+    // nnz (zero-filled) at construction and reset() never resizes, so values().size() > 0 is
+    // ALWAYS true on any real mesh even before assembly. That all-zero-diagonal case would still
+    // compute rAU = V/0 = inf/nan here. This is ACCEPTED as a documented limitation: the
+    // production PIMPLE loop ALWAYS calls solve(rhs)/assemble() (which populates the diagonal)
+    // before computeRAU/computeRAUandHByA, so the V/0 corruption is UNREACHABLE through the app
+    // today. A proper O(1) `assembled` flag on PDESolver (the TODO at pdeSolver.hpp:23) is the
+    // long-term fix; a per-call diagonal reduction was rejected to avoid a device->host sync on
+    // GPU (GPU-friendly-by-design constraint). NF_ASSERT (abort + stack trace), NOT
+    // NF_ASSERT_THROW — the frozen-NeoN NF_ASSERT_THROW macro mis-composes its message and fails
+    // to compile (see examples/neoPimpleFoam/neoPimpleFoam.cpp L150-158).
+    NF_ASSERT(
+        ls.matrix().values().size() > 0,
+        "computeRAU: linear system not assembled - call PDESolver::assemble() before reading rAU"
+    );
     const auto& mesh = expr.getField().mesh();
 
     auto rABCs = nnfvcc::createExtrapolatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh);
@@ -61,6 +77,20 @@ computeRAUandHByA(const PDESolver<Vec3>& expr)
     const auto& u = expr.getField();
     const auto& mesh = u.mesh();
     const auto& ls = expr.linearSystem();
+    // Accepted limitation — same scope as computeRAU above:
+    // Catches an EMPTY / degenerate (nnz == 0) system only; does NOT catch the all-zero-diagonal
+    // pre-assemble case, because createEmptyLinearSystem allocates values to the sparsity nnz
+    // (zero-filled) and reset() never resizes, so values().size() > 0 is always true on a real
+    // mesh before assembly. The all-zero-diagonal V/0 = inf/nan corruption is ACCEPTED as
+    // unreachable in the production PIMPLE loop because solve(rhs)/assemble() always precedes
+    // computeRAUandHByA. A proper O(1) `assembled` flag on PDESolver (pdeSolver.hpp:23 TODO) is
+    // the long-term fix. NF_ASSERT, not NF_ASSERT_THROW (frozen-NeoN throw-macro mis-composes its
+    // message).
+    NF_ASSERT(
+        ls.matrix().values().size() > 0,
+        "computeRAUandHByA: linear system not assembled - call PDESolver::assemble() before "
+        "reading rAU/HbyA"
+    );
 
     auto rABCs = nnfvcc::createExtrapolatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh);
     auto rAU = nnfvcc::VolumeField<scalar>(expr.exec(), "rAU", mesh, rABCs);

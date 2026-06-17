@@ -95,6 +95,13 @@ TEST_CASE("Momentum")
         solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
 
         Foam::solve(ofUEqn);
+        // This section asserts BASE (un-relaxed) momentum parity. The shared fixture carries
+        // relaxationFactors.equations.U=0.7 (added in 2c586b21 for the relaxedRAU/solver02 sections
+        // of test_pressureVelocityCoupling), but the OF reference here is NOT relaxed. Select the
+        // final-iteration path so NeoN looks up UFinal=1 -> applyMatrixRelaxation is a bitwise no-op,
+        // making both sides un-relaxed (apples-to-apples). Equation under-relaxation OF-parity is
+        // covered by test_pressureVelocityCoupling (relaxedRAU/solver02), not here.
+        nfUEqn.setFinalIter(true);
         nfUEqn.solve();
 
         nfU.correctBoundaryConditions();
@@ -127,6 +134,10 @@ TEST_CASE("Momentum")
 
         Foam::solve(ofUEqn == -fvc::grad(ofp));
 
+        // Un-relaxed parity (see the no-grad(p) section): UFinal=1 makes the NeoN solve a bitwise
+        // no-op for relaxation, matching the un-relaxed OF reference. Relaxation parity lives in
+        // test_pressureVelocityCoupling.
+        nfUEqn.setFinalIter(true);
         nfUEqn.solve(-1.0 * dsl::exp::grad(nfP));
         nfU.correctBoundaryConditions();
         REQUIRE_THAT(nfU, EqualsInternal(ofU, ApproxVector({1e-08, 1e-08, 1e-08})));

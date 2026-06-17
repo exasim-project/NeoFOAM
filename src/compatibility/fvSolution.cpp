@@ -287,4 +287,69 @@ NeoN::Dictionary mapFvSolution(const NeoN::Dictionary& solverDict)
     return modSolverDict;
 }
 
+// Shared body for the relaxationFactors.<subDictName>.<field>[Final] lookup, used by both
+// lookupEqnRelaxation ("equations") and lookupFieldRelaxation ("fields"). File-local /
+// internal linkage only -> NOT declared in the header. Centralising the lookup here keeps the
+// int-tolerant asScalar and isDict-guard fixes in ONE place, exercised by both
+// the equations and the fields selectors.
+//
+// No relaxationFactors / <subDictName> sub-dict -> OpenFOAM "no entry, no relax" semantics:
+// returns nullopt so the caller uses 1.0 (a no-op blend). The isDict guards keep this permissive:
+// a malformed fvSolution where relaxationFactors (or the sub-dict) is present as a non-dictionary
+// value degrades to nullopt instead of throwing bad_any_cast out of subDict.
+//
+// equations and fields are INDEPENDENT dicts (OpenFOAM honors both if both are set) -> no
+// runtime guard couples them here; the no-double-relax convention is enforced by the caller
+// + the field-relax test, not by code in this function.
+static std::optional<NeoN::scalar> lookupRelaxation(
+    const NeoN::Dictionary& fvSolution,
+    const std::string& subDictName, // "equations" or "fields"
+    const std::string& field,
+    bool finalIter
+)
+{
+    if (!fvSolution.contains("relaxationFactors") || !fvSolution.isDict("relaxationFactors"))
+    {
+        return std::nullopt;
+    }
+    const auto& rf = fvSolution.subDict("relaxationFactors");
+    if (!rf.contains(subDictName) || !rf.isDict(subDictName))
+    {
+        return std::nullopt;
+    }
+    const auto& sub = rf.subDict(subDictName);
+
+    // OpenFOAM fvSolution commonly writes whole-number relaxation factors as bare
+    // integers (e.g. `UFinal 1;` / `pFinal 1;`), which `get<scalar>` would reject with
+    // bad_any_cast (no int->scalar coercion). Mirror updateCriteria's extractScalar pattern:
+    // coerce an int-typed entry to scalar, otherwise read it as scalar.
+    auto asScalar = [](const NeoN::Dictionary& d, const std::string& k) -> NeoN::scalar
+    { return d.isType<int>(k) ? NeoN::scalar(d.get<int>(k)) : d.get<NeoN::scalar>(k); };
+
+    // Final-suffix selection: prefer <field>Final on the final iteration, then fall
+    // back to the base <field> key (matches OpenFOAM's *Final relaxation convention).
+    const std::string key = finalIter ? field + "Final" : field;
+    if (sub.contains(key))
+    {
+        return asScalar(sub, key);
+    }
+    if (sub.contains(field))
+    {
+        return asScalar(sub, field);
+    }
+    return std::nullopt;
+}
+
+std::optional<NeoN::scalar>
+lookupEqnRelaxation(const NeoN::Dictionary& fvSolution, const std::string& field, bool finalIter)
+{
+    return lookupRelaxation(fvSolution, "equations", field, finalIter);
+}
+
+std::optional<NeoN::scalar>
+lookupFieldRelaxation(const NeoN::Dictionary& fvSolution, const std::string& field, bool finalIter)
+{
+    return lookupRelaxation(fvSolution, "fields", field, finalIter);
+}
+
 } // namespace NeoFOAM
