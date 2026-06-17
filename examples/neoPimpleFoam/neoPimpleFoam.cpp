@@ -216,7 +216,7 @@ int main(int argc, char* argv[])
                 // v1 is BDF1/BDF2 only — fail loud on steadyState ddt
                 // (it would silently produce garbage). adjustPhi/constrainPressure are v2 TODOs.
                 // NOTE: NF_ASSERT (abort + stack trace) is used instead of NF_ASSERT_THROW because
-                // the NeoN NF_ASSERT_THROW macro mis-composes its message (it wraps the assertion
+                // the NeoN NF_ASSERT_THROW macro miss-composes its message (it wraps the assertion
                 // text in std::string("..." << message), shifting two const char* operands, which
                 // does not compile) — and src/NeoN is treated as frozen here. NF_ASSERT gives the
                 // same fail-loud guarantee.

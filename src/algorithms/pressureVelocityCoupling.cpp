@@ -50,7 +50,7 @@ nnfvcc::VolumeField<scalar> computeRAU(const PDESolver<Vec3>& expr)
     // today. A proper O(1) `assembled` flag on PDESolver (the TODO at pdeSolver.hpp:23) is the
     // long-term fix; a per-call diagonal reduction was rejected to avoid a device->host sync on
     // GPU (GPU-friendly-by-design constraint). NF_ASSERT (abort + stack trace), NOT
-    // NF_ASSERT_THROW — the frozen-NeoN NF_ASSERT_THROW macro mis-composes its message and fails
+    // NF_ASSERT_THROW — the frozen-NeoN NF_ASSERT_THROW macro miss-composes its message and fails
     // to compile (see examples/neoPimpleFoam/neoPimpleFoam.cpp L150-158).
     NF_ASSERT(
         ls.matrix().values().size() > 0,
@@ -84,7 +84,7 @@ computeRAUandHByA(const PDESolver<Vec3>& expr)
     // mesh before assembly. The all-zero-diagonal V/0 = inf/nan corruption is ACCEPTED as
     // unreachable in the production PIMPLE loop because solve(rhs)/assemble() always precedes
     // computeRAUandHByA. A proper O(1) `assembled` flag on PDESolver (pdeSolver.hpp:23 TODO) is
-    // the long-term fix. NF_ASSERT, not NF_ASSERT_THROW (frozen-NeoN throw-macro mis-composes its
+    // the long-term fix. NF_ASSERT, not NF_ASSERT_THROW (frozen-NeoN throw-macro miss-composes its
     // message).
     NF_ASSERT(
         ls.matrix().values().size() > 0,
