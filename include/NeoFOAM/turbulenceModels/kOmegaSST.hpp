@@ -191,7 +191,6 @@ private:
     // would let ω_vis = 6ν/(β₁y²) explode).
     nnfvcc::VolumeField<scalar> nearWallDist_;
 
-
     // Cached face-interpolated nu (computed once in constructor)
     nnfvcc::SurfaceField<scalar> surfNu_;
 

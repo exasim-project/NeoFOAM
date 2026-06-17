@@ -6,7 +6,6 @@
 #include "NeoN/NeoN.hpp"
 
 #include "NeoFOAM/datastructures/pdeSolver.hpp"
-#include "NeoFOAM/turbulenceModels/turbulenceModel.hpp"
 
 namespace nnfvcc = NeoN::finiteVolume::cellCentred;
 using scalar = NeoN::scalar;
@@ -184,47 +183,6 @@ private:
 
     // Model coefficients
     Coefficients coeffs_;
-};
-
-/**
- * @brief TurbulenceModel-factory wrapper for k-epsilon.
- *
- * Owns k, epsilon and nut; reads them from disk in the constructor, delegates
- * physics to KEpsilon.  Registered as "kEpsilon" in the TurbulenceModel
- * factory so TurbulenceModel::create() can instantiate it from a RAS
- * turbulenceProperties block.
- */
-class KEpsilonModel : public TurbulenceModel::Register<KEpsilonModel>
-{
-public:
-
-    static std::string name() { return "kEpsilon"; }
-    static std::string doc() { return "k-epsilon turbulence model"; }
-    static std::string schema() { return "{}"; }
-
-    KEpsilonModel(RunTime& rt, const nnfvcc::VolumeField<scalar>& nu);
-
-    void validate(const nnfvcc::VolumeField<Vec3>& U) override;
-
-    void correct(const nnfvcc::VolumeField<Vec3>& U, nnfvcc::SurfaceField<scalar>& phi, RunTime& rt)
-        override;
-
-    nnfvcc::SurfaceField<scalar>& nuEff() override;
-    const nnfvcc::VolumeField<scalar>& nut() const override;
-    const nnfvcc::VolumeField<NeoN::Tensor>& gradU() const override;
-
-    void write(MeshAdapter& mesh) const override;
-
-    void rotateOldTimes() override;
-
-private:
-
-    const nnfvcc::VolumeField<scalar>& nu_;
-    nnfvcc::VolumeField<scalar> wallDist_;
-    nnfvcc::VolumeField<scalar>* k_ = nullptr;
-    nnfvcc::VolumeField<scalar>* epsilon_ = nullptr;
-    nnfvcc::VolumeField<scalar>* nut_ = nullptr;
-    KEpsilon model_;
 };
 
 } // namespace NeoFOAM

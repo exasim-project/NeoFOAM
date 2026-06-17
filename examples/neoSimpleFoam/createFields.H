@@ -60,16 +60,62 @@ Foam::volScalarField
         ),
         mesh);
 
+// Read the active RAS model name from constant/turbulenceProperties so we know
+// which secondary scalar field to expect on disk (omega for kOmegaSST,
+// epsilon for kEpsilon, etc.). The whole loop below branches on this string.
+const Foam::word rasModelName = Foam::IOdictionary(Foam::IOobject(
+                                                       "turbulenceProperties",
+                                                       runTime.constant(),
+                                                       mesh,
+                                                       Foam::IOobject::MUST_READ_IF_MODIFIED,
+                                                       Foam::IOobject::NO_WRITE,
+                                                       Foam::IOobject::NO_REGISTER
+                                                   ))
+                                    .subDict("RAS")
+                                    .get<Foam::word>("RASModel");
+
+Info << "RAS model: " << rasModelName << endl;
+
+const bool isKOmegaSST = (rasModelName == "kOmegaSST");
+const bool isKEpsilon = (rasModelName == "kEpsilon");
+if (!isKOmegaSST && !isKEpsilon)
+{
+    FatalErrorInFunction << "Unsupported RAS model '" << rasModelName << "'. "
+                         << "neoSimpleFoam currently supports: kOmegaSST, kEpsilon."
+                         << Foam::abort(Foam::FatalError);
+}
+
+// omega and epsilon are both attempted with READ_IF_PRESENT so the file that
+// matches the chosen model is read; the other is created as a placeholder
+// (won't be touched by the active turbulence model).
 Foam::volScalarField ofOmega(
     Foam::IOobject(
         "omega",
         runTime.timeName(),
         mesh,
-        Foam::IOobject::MUST_READ,
+        isKOmegaSST ? Foam::IOobject::MUST_READ : Foam::IOobject::READ_IF_PRESENT,
         Foam::IOobject::NO_WRITE,
         Foam::IOobject::NO_REGISTER
     ),
-    mesh
+    mesh,
+    Foam::dimensionedScalar("omega", Foam::dimless / Foam::dimTime, 1.0)
+);
+
+Foam::volScalarField ofEpsilon(
+    Foam::IOobject(
+        "epsilon",
+        runTime.timeName(),
+        mesh,
+        isKEpsilon ? Foam::IOobject::MUST_READ : Foam::IOobject::READ_IF_PRESENT,
+        Foam::IOobject::NO_WRITE,
+        Foam::IOobject::NO_REGISTER
+    ),
+    mesh,
+    Foam::dimensionedScalar(
+        "epsilon",
+        Foam::dimLength* Foam::dimLength / (Foam::dimTime * Foam::dimTime * Foam::dimTime),
+        1.0
+    )
 );
 
 Foam::volScalarField ofNut(
