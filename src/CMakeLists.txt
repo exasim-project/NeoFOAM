@@ -19,6 +19,7 @@ target_sources(
           "datastructures/databaseWrapper.cpp"
           "compatibility/fvSchemes.cpp"
           "compatibility/fvSolution.cpp"
+          "solutionControl/pimpleControl.cpp"
           "turbulenceModels/spalartAllmarasDDES.cpp"
           "fvcc/operators/viscousStressOperator.cpp"
           "functionObjects/functionObjectIO.cpp"
