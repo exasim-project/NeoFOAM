@@ -98,9 +98,9 @@ TEST_CASE("Momentum")
         // This section asserts BASE (un-relaxed) momentum parity. The shared fixture carries
         // relaxationFactors.equations.U=0.7 (added in 2c586b21 for the relaxedRAU/solver02 sections
         // of test_pressureVelocityCoupling), but the OF reference here is NOT relaxed. Select the
-        // final-iteration path so NeoN looks up UFinal=1 -> applyMatrixRelaxation is a bitwise no-op,
-        // making both sides un-relaxed (apples-to-apples). Equation under-relaxation OF-parity is
-        // covered by test_pressureVelocityCoupling (relaxedRAU/solver02), not here.
+        // final-iteration path so NeoN looks up UFinal=1 -> applyMatrixRelaxation is a bitwise
+        // no-op, making both sides un-relaxed (apples-to-apples). Equation under-relaxation
+        // OF-parity is covered by test_pressureVelocityCoupling (relaxedRAU/solver02), not here.
         nfUEqn.setFinalIter(true);
         nfUEqn.solve();
 
