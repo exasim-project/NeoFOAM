@@ -10,3 +10,4 @@ endfunction()
 
 add_subdirectory(neoIcoFoam)
 add_subdirectory(neoPisoFoam)
+add_subdirectory(neoPimpleFoam)
