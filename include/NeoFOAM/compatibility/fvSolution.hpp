@@ -7,7 +7,11 @@
  */
 #pragma once
 
+#include <optional>
+#include <string>
+
 #include "NeoN/core/dictionary.hpp"
+#include "NeoN/core/primitives/scalar.hpp"
 
 
 namespace NeoFOAM
@@ -16,6 +20,44 @@ namespace NeoFOAM
 void updateSolver(NeoN::Dictionary& solverDict);
 
 void updatePreconditioner(NeoN::Dictionary& solverDict);
+
+/* @brief Look up the equation under-relaxation factor for a field from fvSolution.
+ *
+ * Parses the OpenFOAM `relaxationFactors.equations` sub-dictionary and returns the
+ * scalar relaxation factor for the given field. When `finalIter` is true the
+ * `<field>Final` key is preferred (Final-suffix seam), falling back to the base
+ * `<field>` key. Returns std::nullopt when no entry exists -> the caller uses 1.0 ->
+ * the kernel is a no-op (matches OpenFOAM's "no entry, no relax" semantics).
+ *
+ * Keeping this parsing in NeoFOAM means NeoN's applyMatrixRelaxation only ever
+ * sees a plain scalar; NeoN stays OpenFOAM-dictionary-agnostic.
+ *
+ * @param fvSolution  The parsed fvSolution dictionary (e.g. RunTime::fvSolutionDict).
+ * @param field       The field name (e.g. "U").
+ * @param finalIter   Whether the final outer iteration is active (selects the *Final key).
+ */
+std::optional<NeoN::scalar>
+lookupEqnRelaxation(const NeoN::Dictionary& fvSolution, const std::string& field, bool finalIter);
+
+/* @brief Look up the explicit field under-relaxation factor for a field from fvSolution.
+ *
+ * Parses the OpenFOAM `relaxationFactors.fields` sub-dictionary and returns the scalar
+ * relaxation factor for the given field. When `finalIter` is true the `<field>Final` key is
+ * preferred (Final-suffix seam), falling back to the base `<field>` key. Returns
+ * std::nullopt when no entry exists -> the caller uses 1.0 -> the kernel is a no-op (matches
+ * OpenFOAM's "no entry, no relax" semantics).
+ *
+ * `relaxationFactors.equations` and `relaxationFactors.fields` are independent dicts:
+ * a field present only under `equations` (e.g. momentum `U`) returns nullopt here, so
+ * field-URF is a no-op on it and momentum is never double-relaxed. Shares the int-tolerant,
+ * isDict-guarded lookup body with lookupEqnRelaxation.
+ *
+ * @param fvSolution  The parsed fvSolution dictionary (e.g. RunTime::fvSolutionDict).
+ * @param field       The field name (e.g. "p").
+ * @param finalIter   Whether the final outer iteration is active (selects the *Final key).
+ */
+std::optional<NeoN::scalar>
+lookupFieldRelaxation(const NeoN::Dictionary& fvSolution, const std::string& field, bool finalIter);
 
 /* @brief Map an OpenFOAM fvSolution sub-dictionary to NeoN/Ginkgo settings.
  *

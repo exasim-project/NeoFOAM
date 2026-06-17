@@ -651,6 +651,13 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
         nfU,
         rt
     );
+    // The shared setup_pressureVelocityCoupling fixture carries relaxationFactors.equations.U=0.7
+    // (added in 2c586b21 for the pvc relaxedRAU/solver02 sections). This section asserts BASE
+    // (un-relaxed) momentum parity against an un-relaxed OF reference (Foam::solve below, no .relax()),
+    // so select the [Final] subdict (UFinal=1 -> applyMatrixRelaxation is a bitwise no-op) to keep the
+    // NeoN solve un-relaxed too. Mirrors test_momentum.cpp; equation under-relaxation OF-parity is
+    // covered by test_pressureVelocityCoupling (relaxedRAU/solver02), not here.
+    UEqn.setFinalIter(true);
     UEqn.solve(-1.0 * dsl::exp::grad(nfP));
     nfU.correctBoundaryConditions();
 
@@ -817,6 +824,10 @@ TEST_CASE("SA-DDES: NeoFOAM wrapper validate() + correct() matches OpenFOAM")
         rt
     );
 
+    // Un-relaxed parity: the shared fixture carries relaxationFactors.equations.U=0.7; select the
+    // [Final] subdict (UFinal=1 -> bitwise no-op) so this NeoN solve matches the un-relaxed OF
+    // reference below, apples-to-apples (mirrors test_momentum.cpp).
+    UEqn.setFinalIter(true);
     UEqn.solve(-1.0 * dsl::exp::grad(nfP));
     nfU.correctBoundaryConditions();
 
