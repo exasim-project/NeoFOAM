@@ -50,10 +50,10 @@ namespace NeoFOAM
  *   Cl(f) = 0.5*Cl + CmPitch;  Cl(r) = 0.5*Cl - CmPitch
  *   Cs(f) = 0.5*Cs + CmYaw;    Cs(r) = 0.5*Cs - CmYaw
  *
- * @note Viscous force contributions are not yet implemented; only pressure forces are used.
- *       OpenFOAM's forces object includes viscous contributions — these will be zero here.
- * @note MPI parallel execution is not supported; a FatalError is raised in execute() if
- *       Pstream::parRun() is true.
+ * @note Coefficients include both pressure and viscous force/moment contributions, matching
+ *       OpenFOAM's forceCoeffs.
+ * @note MPI parallel execution is supported: each rank integrates its local patch slice and
+ *       execute() globally reduces the forces/moments, so every rank holds the total.
  * @note write() produces coefficient.dat only — force.dat and moment.dat are written
  *       exclusively by the neoForces function object.
  */
