@@ -104,6 +104,16 @@ TEST_CASE("Distributed Ginkgo Cache")
 
         for (int step = 0; step < 5; ++step)
         {
+            // Reset the pressure field to a fixed initial guess so every solve is the
+            // identical linear problem (same matrix, same RHS, same x0). The skeleton is
+            // built on step 0 (cache miss) and reused on steps 1..4 (cache hits); an
+            // identical iteration count across all steps then proves the value-refresh
+            // path is bit-identical to the fresh build (SOLVER-03). Without this reset
+            // each solve would warm-start from the previous solution, so the cold step-0
+            // solve legitimately takes one extra iteration than the warm steps 1..4.
+            NeoN::fill(nfP.internalVector(), 0.0);
+            nfP.correctBoundaryConditions();
+
             nf::PDESolver<NeoN::scalar> pEqn(
                 dsl::imp::laplacian(nfrAUf, nfP) - dsl::exp::div(nfPhi),
                 nfP,
@@ -169,6 +179,10 @@ TEST_CASE("Distributed Ginkgo Cache")
     // This limitation is documented in 12-03-SUMMARY.md.
     SECTION("SOLVER-03: key identity stable + build_count invariant on " + execName)
     {
+        // Reset to a fixed initial guess so both solves below are the identical problem.
+        NeoN::fill(nfP.internalVector(), 0.0);
+        nfP.correctBoundaryConditions();
+
         // First solve: pressure (scalar laplacian)
         nf::PDESolver<NeoN::scalar> pEqnA(
             dsl::imp::laplacian(nfrAUf, nfP) - dsl::exp::div(nfPhi),
@@ -182,6 +196,12 @@ TEST_CASE("Distributed Ginkgo Cache")
         const void* spKeyA = pEqnA.linearSystem().matrix().sparsity().get();
         REQUIRE(spKeyA != nullptr);
         REQUIRE(NeoN::la::ginkgo::getSkeletonBuildCount(spKeyA) == 1);
+
+        // Reset to the same fixed initial guess so pEqnB solves the identical problem as
+        // pEqnA — an equal iteration count then proves the cached (reused) skeleton path
+        // is bit-identical to pEqnA's path (both are cache hits on the same matrix).
+        NeoN::fill(nfP.internalVector(), 0.0);
+        nfP.correctBoundaryConditions();
 
         // Second solve: a fresh pEqn on the same mesh — must reuse the cached skeleton
         nf::PDESolver<NeoN::scalar> pEqnB(
