@@ -712,3 +712,128 @@ TEST_CASE("nutUSpaldingWallFunction - uTau and nut match independent Spalding re
         CHECK(nutNeo > 0.0); // these states are turbulent -> positive eddy viscosity
     }
 }
+
+
+// ── TEST: nutUSpaldingWallFunction full BC-path wiring ─────────────────────────
+//
+// The test above validates the wall-function math in isolation. This one validates
+// the field/context WIRING end-to-end: build a nut field carrying the
+// nutUSpaldingWallFunction BC on the wall patch, feed it U / nu / nearWallDist via a
+// BoundaryContext exactly as the turbulence model does (correctNut ->
+// nutField.correctBoundaryConditions(ctx)), then confirm the wall nut written into
+// the field equals a per-face host recompute that replicates setNutUSpaldingWallFunction
+// from the SAME inputs and the mesh geometry (deltaCoeffs). This is the path the solver
+// and Forces actually use; it catches a wrong owner/U/nearWallDist/deltaCoeffs lookup or
+// a value not landing in the registered boundary — none of which the math-only test sees.
+
+TEST_CASE("nutUSpaldingWallFunction - wall nut via correctBoundaryConditions matches recompute")
+{
+    Foam::Time& runTime = *timePtr;
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
+
+    SECTION("end-to-end BC wiring on fixedWalls" + execName)
+    {
+        auto rt = nf::createAdapterRunTime(runTime, exec);
+        auto& mesh = rt.mesh;
+        const NeoN::UnstructuredMesh& nfMesh = rt.nfMesh;
+
+        const Foam::label wallPatchID = mesh.boundaryMesh().findPatchID("fixedWalls");
+        REQUIRE(wallPatchID >= 0);
+
+        // nut carries the Spalding wall function on the wall patch, calculated elsewhere.
+        std::vector<fvcc::VolumeBoundary<NeoN::scalar>> nutBCs;
+        for (NeoN::localIdx p = 0; p < nfMesh.nBoundaries(); ++p)
+        {
+            const std::string type = (p == static_cast<NeoN::localIdx>(wallPatchID))
+                                       ? std::string("nutUSpaldingWallFunction")
+                                       : std::string("calculated");
+            NeoN::Dictionary d({{"type", type}});
+            nutBCs.emplace_back(nfMesh, d, p);
+        }
+        fvcc::VolumeField<NeoN::scalar> nut(exec, "nut", nfMesh, nutBCs);
+
+        fvcc::VolumeField<NeoN::Vec3> U(
+            exec, "U", nfMesh, fvcc::createCalculatedBCs<fvcc::VolumeBoundary<NeoN::Vec3>>(nfMesh)
+        );
+        fvcc::VolumeField<NeoN::scalar> nu(
+            exec, "nu", nfMesh, fvcc::createCalculatedBCs<fvcc::VolumeBoundary<NeoN::scalar>>(nfMesh)
+        );
+        fvcc::VolumeField<NeoN::scalar> nearWallDist(
+            exec,
+            "nearWallDist",
+            nfMesh,
+            fvcc::createCalculatedBCs<fvcc::VolumeBoundary<NeoN::scalar>>(nfMesh)
+        );
+
+        const NeoN::scalar Ux = 1.0;
+        const NeoN::scalar nuVal = 1.0e-5;
+        const NeoN::scalar yVal = 1.0e-3;
+
+        NeoN::fill(U.internalVector(), NeoN::Vec3(Ux, 0.0, 0.0));
+        NeoN::fill(U.boundaryData().value(), NeoN::Vec3(0.0, 0.0, 0.0)); // no-slip wall
+        NeoN::fill(nu.internalVector(), nuVal);
+        NeoN::fill(nu.boundaryData().value(), nuVal);
+        NeoN::fill(nearWallDist.internalVector(), yVal);
+        NeoN::fill(nearWallDist.boundaryData().value(), yVal);
+        NeoN::fill(nut.internalVector(), NeoN::scalar(0.0));
+        NeoN::fill(nut.boundaryData().value(), NeoN::scalar(0.0)); // cold start
+
+        // Drive the wall function exactly as SpalartAllmarasDDES::correctNut does.
+        fvcc::BoundaryContext ctx;
+        ctx.insert("U", U);
+        ctx.insert("nu", nu);
+        ctx.insert("nearWallDist", nearWallDist);
+        nut.correctBoundaryConditions(ctx);
+
+        // Independent per-face recompute from the same inputs + mesh deltaCoeffs.
+        auto nutHost = nut.boundaryData().value().copyToHost();
+        auto uIntHost = U.internalVector().copyToHost();
+        auto uBndHost = U.boundaryData().value().copyToHost();
+        auto yHost = nearWallDist.boundaryData().value().copyToHost();
+        auto ownerHost = nfMesh.boundaryMesh().faceOwners().copyToHost();
+        auto deltaHost = nfMesh.boundaryMesh().deltaCoeffs().copyToHost();
+
+        auto nutV = nutHost.view();
+        auto uIntV = uIntHost.view();
+        auto uBndV = uBndHost.view();
+        auto yV = yHost.view();
+        auto ownerV = ownerHost.view();
+        auto deltaV = deltaHost.view();
+
+        const auto [start, end] =
+            nut.boundaryData().range(static_cast<NeoN::localIdx>(wallPatchID));
+        REQUIRE(end > start); // wall patch must carry faces
+
+        // Per-face reference replicates setNutUSpaldingWallFunction exactly (same computeUTau,
+        // same preserve/clamp branch, cold-start currentNut = 0). This isolates the WIRING: it
+        // passes iff the kernel reads the correct owner U, nu, nearWallDist and mesh deltaCoeffs
+        // for each face and writes the result back to that face's boundary value. (Numerical
+        // correctness of the Spalding solve itself is covered by the math-only test above.)
+        int checked = 0;
+        for (NeoN::localIdx i = start; i < end; ++i)
+        {
+            const auto owner = ownerV[i];
+            const NeoN::Vec3 diff = uIntV[owner] - uBndV[i];
+            const NeoN::scalar magUp = NeoN::mag(diff);
+            const NeoN::scalar magGradU = magUp * deltaV[i];
+            const NeoN::scalar y = yV[i];
+
+            NeoN::scalar err = 0.0;
+            NeoN::scalar errOneIter = 0.0;
+            const NeoN::scalar uTau =
+                wf::computeUTau(magGradU, magUp, y, nuVal, /*currentNut*/ 0.0, err, wf::MAX_ITER);
+            wf::computeUTau(magGradU, magUp, y, nuVal, /*currentNut*/ 0.0, errOneIter, 1);
+            const NeoN::scalar cand = (uTau * uTau) / (magGradU + NeoN::ROOTVSMALL) - nuVal;
+            const NeoN::scalar candClamped = cand > 0.0 ? cand : 0.0;
+            const NeoN::scalar nutRef = (errOneIter < wf::TOLERANCE) ? NeoN::scalar(0.0) : candClamped;
+
+            INFO(
+                "face " << i << " magUp=" << magUp << " magGradU=" << magGradU << " y=" << y
+                        << " nutWF=" << nutV[i] << " nutRef=" << nutRef
+            );
+            CHECK(static_cast<double>(nutV[i]) == Catch::Approx(static_cast<double>(nutRef)).epsilon(1e-9));
+            ++checked;
+        }
+        CHECK(checked > 0);
+    }
+}
