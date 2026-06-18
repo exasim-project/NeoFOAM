@@ -21,8 +21,9 @@ namespace NeoFOAM
  * @struct ForceResult
  * @brief Accumulated force and moment vectors from a Forces execution.
  *
- * Currently only pressure forces/moments are populated; viscous slots are reserved
- * for future implementation.
+ * Both pressure and viscous force/moment slots are populated by execute(): the pressure
+ * contribution from the boundary pressure field and the viscous contribution from the
+ * wall shear stress (gradU-based, including turbulent nut when present).
  */
 struct ForceResult
 {
