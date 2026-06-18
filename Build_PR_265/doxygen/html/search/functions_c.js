@@ -5,5 +5,6 @@ var searchData=
   ['readorcreate_2',['readOrCreate',['../namespaceNeoFOAM.html#ae3448b9356abfd01a14f812c7acffc7c',1,'NeoFOAM']]],
   ['readsurfaceboundaryconditions_3',['readSurfaceBoundaryConditions',['../namespaceNeoFOAM.html#adb365cf8e725db6dbfc0a758c392e2b1',1,'NeoFOAM']]],
   ['readvolboundaryconditions_4',['readVolBoundaryConditions',['../namespaceNeoFOAM.html#a6cb4d89d1e44667e5a66f5119bad9206',1,'NeoFOAM']]],
-  ['resolvemesh_5',['resolveMesh',['../classNeoFOAM_1_1Forces.html#af835251b826a633fce525e08d8716535',1,'NeoFOAM::Forces']]]
+  ['reportcontinuityerror_5',['reportContinuityError',['../namespaceNeoFOAM.html#a216c99c971b9acb00fbd8ff36d9f2ee9',1,'NeoFOAM']]],
+  ['resolvemesh_6',['resolveMesh',['../classNeoFOAM_1_1Forces.html#af835251b826a633fce525e08d8716535',1,'NeoFOAM::Forces']]]
 ];

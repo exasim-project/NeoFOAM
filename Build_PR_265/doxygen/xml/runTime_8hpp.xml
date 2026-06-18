@@ -6,6 +6,7 @@
     <includes local="yes">fvMesh.H</includes>
     <includes refid="meshAdapter_8hpp" local="yes">NeoFOAM/datastructures/meshAdapter.hpp</includes>
     <includes refid="databaseWrapper_8hpp" local="yes">NeoFOAM/datastructures/databaseWrapper.hpp</includes>
+    <includedby refid="continuityError_8hpp" local="yes">/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/continuityError.hpp</includedby>
     <includedby refid="readers_8hpp" local="yes">/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp</includedby>
     <includedby refid="setup_8hpp" local="yes">/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/setup.hpp</includedby>
     <includedby refid="pdeSolver_8hpp" local="yes">/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pdeSolver.hpp</includedby>
@@ -59,24 +60,28 @@
       </node>
     </incdepgraph>
     <invincdepgraph>
-      <node id="5">
+      <node id="6">
         <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/pressureVelocityCoupling.hpp</label>
         <link refid="pressureVelocityCoupling_8hpp"/>
       </node>
       <node id="2">
+        <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/continuityError.hpp</label>
+        <link refid="continuityError_8hpp"/>
+      </node>
+      <node id="3">
         <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp</label>
         <link refid="readers_8hpp"/>
       </node>
-      <node id="3">
+      <node id="4">
         <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/setup.hpp</label>
         <link refid="setup_8hpp"/>
       </node>
-      <node id="4">
+      <node id="5">
         <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pdeSolver.hpp</label>
         <link refid="pdeSolver_8hpp"/>
-        <childnode refid="5" relation="include">
-        </childnode>
         <childnode refid="6" relation="include">
+        </childnode>
+        <childnode refid="7" relation="include">
         </childnode>
       </node>
       <node id="1">
@@ -88,8 +93,10 @@
         </childnode>
         <childnode refid="4" relation="include">
         </childnode>
+        <childnode refid="5" relation="include">
+        </childnode>
       </node>
-      <node id="6">
+      <node id="7">
         <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/turbulenceModels/spalartAllmarasDDES.hpp</label>
         <link refid="spalartAllmarasDDES_8hpp"/>
       </node>
@@ -133,21 +140,22 @@
 <codeline lineno="30" refid="structNeoFOAM_1_1RunTime_1a4c146e57d9c3841741e71c6b6bc1b432" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::Dictionary<sp/><ref refid="structNeoFOAM_1_1RunTime_1a4c146e57d9c3841741e71c6b6bc1b432" kindref="member">controlDict</ref>;</highlight></codeline>
 <codeline lineno="31" refid="structNeoFOAM_1_1RunTime_1aa1b497275ede724281d9a6a8540e5080" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::Dictionary<sp/><ref refid="structNeoFOAM_1_1RunTime_1aa1b497275ede724281d9a6a8540e5080" kindref="member">fvSolutionDict</ref>;</highlight></codeline>
 <codeline lineno="32" refid="structNeoFOAM_1_1RunTime_1a3e0ee1aef295de02e8758811e0099923" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::Dictionary<sp/><ref refid="structNeoFOAM_1_1RunTime_1a3e0ee1aef295de02e8758811e0099923" kindref="member">fvSchemesDict</ref>;</highlight></codeline>
-<codeline lineno="33" refid="structNeoFOAM_1_1RunTime_1a35b205143c8185e6c5d5ca0ffc8ce787" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>std::unique_ptr&lt;DatabaseWrapper&gt;<sp/><ref refid="structNeoFOAM_1_1RunTime_1a35b205143c8185e6c5d5ca0ffc8ce787" kindref="member">dbWrapper</ref>;<sp/></highlight></codeline>
-<codeline lineno="34"><highlight class="normal">};</highlight></codeline>
-<codeline lineno="35"><highlight class="normal"></highlight></codeline>
+<codeline lineno="33" refid="structNeoFOAM_1_1RunTime_1ad5773d54934f9c502a84a00e4e2248fd" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::mpi::Environment<sp/><ref refid="structNeoFOAM_1_1RunTime_1ad5773d54934f9c502a84a00e4e2248fd" kindref="member">mpiEnvironment</ref>;</highlight></codeline>
+<codeline lineno="34" refid="structNeoFOAM_1_1RunTime_1a35b205143c8185e6c5d5ca0ffc8ce787" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>std::unique_ptr&lt;DatabaseWrapper&gt;<sp/><ref refid="structNeoFOAM_1_1RunTime_1a35b205143c8185e6c5d5ca0ffc8ce787" kindref="member">dbWrapper</ref>;<sp/></highlight></codeline>
+<codeline lineno="35"><highlight class="normal">};</highlight></codeline>
 <codeline lineno="36"><highlight class="normal"></highlight></codeline>
-<codeline lineno="38"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>RegisteredType,<sp/></highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>InitializerType&gt;</highlight></codeline>
-<codeline lineno="39" refid="namespaceNeoFOAM_1ae3448b9356abfd01a14f812c7acffc7c" refkind="member"><highlight class="normal">RegisteredType&amp;<sp/><ref refid="namespaceNeoFOAM_1ae3448b9356abfd01a14f812c7acffc7c" kindref="member">readOrCreate</ref>(<ref refid="structNeoFOAM_1_1RunTime" kindref="compound">RunTime</ref>&amp;<sp/>runTime,<sp/>std::string<sp/>name,<sp/>InitializerType<sp/>init)</highlight></codeline>
-<codeline lineno="40"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="41"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(!runTime.<ref refid="structNeoFOAM_1_1RunTime_1a4c146e57d9c3841741e71c6b6bc1b432" kindref="member">controlDict</ref>.contains(name))</highlight></codeline>
-<codeline lineno="42"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="43"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>runTime.<ref refid="structNeoFOAM_1_1RunTime_1a4c146e57d9c3841741e71c6b6bc1b432" kindref="member">controlDict</ref>.insert(std::string(name),<sp/>init());</highlight></codeline>
-<codeline lineno="44"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="45"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>runTime.<ref refid="structNeoFOAM_1_1RunTime_1a4c146e57d9c3841741e71c6b6bc1b432" kindref="member">controlDict</ref>.get&lt;RegisteredType&gt;(name);</highlight></codeline>
-<codeline lineno="46"><highlight class="normal">}</highlight></codeline>
-<codeline lineno="47"><highlight class="normal"></highlight></codeline>
-<codeline lineno="48"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>End<sp/>namespace<sp/>NeoFOAM</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="37"><highlight class="normal"></highlight></codeline>
+<codeline lineno="39"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>RegisteredType,<sp/></highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>InitializerType&gt;</highlight></codeline>
+<codeline lineno="40" refid="namespaceNeoFOAM_1ae3448b9356abfd01a14f812c7acffc7c" refkind="member"><highlight class="normal">RegisteredType&amp;<sp/><ref refid="namespaceNeoFOAM_1ae3448b9356abfd01a14f812c7acffc7c" kindref="member">readOrCreate</ref>(<ref refid="structNeoFOAM_1_1RunTime" kindref="compound">RunTime</ref>&amp;<sp/>runTime,<sp/>std::string<sp/>name,<sp/>InitializerType<sp/>init)</highlight></codeline>
+<codeline lineno="41"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="42"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(!runTime.<ref refid="structNeoFOAM_1_1RunTime_1a4c146e57d9c3841741e71c6b6bc1b432" kindref="member">controlDict</ref>.contains(name))</highlight></codeline>
+<codeline lineno="43"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="44"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>runTime.<ref refid="structNeoFOAM_1_1RunTime_1a4c146e57d9c3841741e71c6b6bc1b432" kindref="member">controlDict</ref>.insert(std::string(name),<sp/>init());</highlight></codeline>
+<codeline lineno="45"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="46"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>runTime.<ref refid="structNeoFOAM_1_1RunTime_1a4c146e57d9c3841741e71c6b6bc1b432" kindref="member">controlDict</ref>.get&lt;RegisteredType&gt;(name);</highlight></codeline>
+<codeline lineno="47"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="48"><highlight class="normal"></highlight></codeline>
+<codeline lineno="49"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>End<sp/>namespace<sp/>NeoFOAM</highlight><highlight class="normal"></highlight></codeline>
     </programlisting>
     <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/runTime.hpp"/>
   </compounddef>

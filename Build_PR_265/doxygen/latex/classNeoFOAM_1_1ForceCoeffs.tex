@@ -181,9 +181,9 @@ Registered as {\ttfamily neo\+Force\+Coeffs} in Open\+FOAM\textquotesingle{}s ru
 The front/rear axle split follows Open\+FOAM\textquotesingle{}s convention\+: Cd(f) = 0.\+5\texorpdfstring{$\ast$}{*}\+Cd + Cm\+Roll; Cd(r) = 0.\+5\texorpdfstring{$\ast$}{*}\+Cd -\/ Cm\+Roll Cl(f) = 0.\+5\texorpdfstring{$\ast$}{*}\+Cl + Cm\+Pitch; Cl(r) = 0.\+5\texorpdfstring{$\ast$}{*}\+Cl -\/ Cm\+Pitch Cs(f) = 0.\+5\texorpdfstring{$\ast$}{*}\+Cs + Cm\+Yaw; Cs(r) = 0.\+5\texorpdfstring{$\ast$}{*}\+Cs -\/ Cm\+Yaw
 
 \begin{DoxyNote}{Note}
-Viscous force contributions are not yet implemented; only pressure forces are used. Open\+FOAM\textquotesingle{}s forces object includes viscous contributions — these will be zero here. 
+Coefficients include both pressure and viscous force/moment contributions, matching Open\+FOAM\textquotesingle{}s force\+Coeffs. 
 
-MPI parallel execution is not supported; a Fatal\+Error is raised in \doxylink{classNeoFOAM_1_1ForceCoeffs_ae7a9c66f7f457bfb2fd3c775877fa5d9}{execute()} if Pstream\+::par\+Run() is true. 
+MPI parallel execution is supported\+: each rank integrates its local patch slice and \doxylink{classNeoFOAM_1_1ForceCoeffs_ae7a9c66f7f457bfb2fd3c775877fa5d9}{execute()} globally reduces the forces/moments, so every rank holds the total. 
 
 \doxylink{classNeoFOAM_1_1ForceCoeffs_a2a0cd7640588acb26c8f92c67862bb95}{write()} produces coefficient.\+dat only — force.\+dat and moment.\+dat are written exclusively by the neo\+Forces function object. 
 \end{DoxyNote}

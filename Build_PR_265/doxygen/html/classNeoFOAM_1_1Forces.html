@@ -225,12 +225,12 @@ Additional Inherited Members</h2></td></tr>
 <div class="line">        CofR      (0 0 0);</div>
 <div class="line">    }</div>
 <div class="line">}</div>
-<div class="ttc" id="aclassNeoFOAM_1_1Forces_html_a304be0e6fcd89e0dcdb722b003d78f5c"><div class="ttname"><a href="classNeoFOAM_1_1Forces.html#a304be0e6fcd89e0dcdb722b003d78f5c">NeoFOAM::Forces::type</a></div><div class="ttdeci">virtual const Foam::word &amp; type() const override</div><div class="ttdef"><b>Definition</b> <a href="forces_8hpp_source.html#l00078">forces.hpp:78</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1Forces_html_a304be0e6fcd89e0dcdb722b003d78f5c"><div class="ttname"><a href="classNeoFOAM_1_1Forces.html#a304be0e6fcd89e0dcdb722b003d78f5c">NeoFOAM::Forces::type</a></div><div class="ttdeci">virtual const Foam::word &amp; type() const override</div><div class="ttdef"><b>Definition</b> <a href="forces_8hpp_source.html#l00082">forces.hpp:82</a></div></div>
 <div class="ttc" id="anamespaceNeoFOAM_html"><div class="ttname"><a href="namespaceNeoFOAM.html">NeoFOAM</a></div><div class="ttdef"><b>Definition</b> <a href="pressureVelocityCoupling_8hpp_source.html#l00014">pressureVelocityCoupling.hpp:15</a></div></div>
 </div><!-- fragment --><dl class="section user"><dt>GPU I/O strategy</dt><dd><a class="el" href="classNeoFOAM_1_1Forces.html#ad9ae38e7170e3b4a121fb1a0a46d5e2e" title="Run the GPU force-integral computation.">execute()</a> runs a <code>parallelFor</code> kernel over the boundary patch faces using <code>NeoN::atomic_add</code> into a 6-element device buffer. Only those 6 scalars (96 bytes) are copied to host — the full pressure field is never transferred. <a class="el" href="classNeoFOAM_1_1Forces.html#ab2664062354c5f34078252d7f22dc4ca" title="Write the last computed result to postProcessing/.">write()</a> appends one row each to <code>postProcessing/</code> &lt;name&gt;/&lt;startTime&gt;/force.dat and <code>postProcessing/</code> &lt;name&gt;/&lt;startTime&gt;/moment.dat.</dd></dl>
-<dl class="section note"><dt>Note</dt><dd>MPI parallel execution is not supported; a FatalError is raised in <a class="el" href="classNeoFOAM_1_1Forces.html#ad9ae38e7170e3b4a121fb1a0a46d5e2e" title="Run the GPU force-integral computation.">execute()</a> if Pstream::parRun() is true. </dd></dl>
+<dl class="section user"><dt>MPI parallel execution</dt><dd>Supported. On a decomposed mesh each rank integrates its local slice of the wall patches (patches with no local faces contribute zero); <a class="el" href="classNeoFOAM_1_1Forces.html#ad9ae38e7170e3b4a121fb1a0a46d5e2e" title="Run the GPU force-integral computation.">execute()</a> then globally sums the force/moment contributions so every rank holds the total, and <a class="el" href="classNeoFOAM_1_1Forces.html#ab2664062354c5f34078252d7f22dc4ca" title="Write the last computed result to postProcessing/.">write()</a> emits the shared output files from the master rank only. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00068">68</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00072">72</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="abc9349c436f25c5dfd37556dfc21a54d" name="abc9349c436f25c5dfd37556dfc21a54d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#abc9349c436f25c5dfd37556dfc21a54d">&#9670;&#160;</a></span>Forces()</h2>
@@ -459,7 +459,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00113">113</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00117">117</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
@@ -545,7 +545,7 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Reimplemented in <a class="el" href="classNeoFOAM_1_1ForceCoeffs.html#a8fdde200ae77b634953cf6ffe11f14bf">NeoFOAM::ForceCoeffs</a>.</p>
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00078">78</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00082">82</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
@@ -602,7 +602,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00162">162</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00166">166</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
@@ -626,7 +626,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00077">77</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00081">81</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
@@ -650,7 +650,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00165">165</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00169">169</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
@@ -674,7 +674,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00166">166</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00170">170</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
@@ -700,7 +700,7 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Lazily resolved on first <a class="el" href="classNeoFOAM_1_1Forces.html#ad9ae38e7170e3b4a121fb1a0a46d5e2e" title="Run the GPU force-integral computation.">execute()</a> — null until <a class="el" href="classNeoFOAM_1_1MeshAdapter.html">MeshAdapter</a> is registered. </p>
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00152">152</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00156">156</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
@@ -724,7 +724,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00163">163</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00167">167</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
@@ -748,7 +748,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00159">159</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00163">163</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
@@ -774,7 +774,7 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Resolved from patchNames_ on first <a class="el" href="classNeoFOAM_1_1Forces.html#ad9ae38e7170e3b4a121fb1a0a46d5e2e" title="Run the GPU force-integral computation.">execute()</a> </p>
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00155">155</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00159">159</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
@@ -800,7 +800,7 @@ Additional Inherited Members</h2></td></tr>
 
 <p>Stored from dict; resolved to indices lazily. </p>
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00154">154</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00158">158</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
@@ -824,7 +824,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00157">157</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00161">161</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
@@ -848,7 +848,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00161">161</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00165">165</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
@@ -872,7 +872,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00168">168</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00172">172</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
@@ -896,7 +896,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00160">160</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00164">164</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
@@ -920,7 +920,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00076">76</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00080">80</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>
@@ -944,7 +944,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00158">158</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="forces_8hpp_source.html#l00162">162</a> of file <a class="el" href="forces_8hpp_source.html">forces.hpp</a>.</p>
 
 </div>
 </div>

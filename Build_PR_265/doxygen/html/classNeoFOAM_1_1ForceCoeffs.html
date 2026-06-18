@@ -239,9 +239,9 @@ Additional Inherited Members</h2></td></tr>
 </div><!-- fragment --><dl class="section user"><dt>Output file: coefficient.dat</dt><dd>12 scalar columns in alphabetical order (matches OpenFOAM): <div class="fragment"><div class="line"><span class="preprocessor"># Time  Cd  Cd(f)  Cd(r)  Cl  Cl(f)  Cl(r)  CmPitch  CmRoll  CmYaw  Cs  Cs(f)  Cs(r)</span></div>
 </div><!-- fragment --></dd></dl>
 <p>The front/rear axle split follows OpenFOAM's convention: Cd(f) = 0.5*Cd + CmRoll; Cd(r) = 0.5*Cd - CmRoll Cl(f) = 0.5*Cl + CmPitch; Cl(r) = 0.5*Cl - CmPitch Cs(f) = 0.5*Cs + CmYaw; Cs(r) = 0.5*Cs - CmYaw</p>
-<dl class="section note"><dt>Note</dt><dd>Viscous force contributions are not yet implemented; only pressure forces are used. OpenFOAM's forces object includes viscous contributions — these will be zero here. </dd>
+<dl class="section note"><dt>Note</dt><dd>Coefficients include both pressure and viscous force/moment contributions, matching OpenFOAM's forceCoeffs. </dd>
 <dd>
-MPI parallel execution is not supported; a FatalError is raised in <a class="el" href="classNeoFOAM_1_1ForceCoeffs.html#ae7a9c66f7f457bfb2fd3c775877fa5d9" title="Run Forces::execute() then project forces/moments onto direction vectors.">execute()</a> if Pstream::parRun() is true. </dd>
+MPI parallel execution is supported: each rank integrates its local patch slice and <a class="el" href="classNeoFOAM_1_1ForceCoeffs.html#ae7a9c66f7f457bfb2fd3c775877fa5d9" title="Run Forces::execute() then project forces/moments onto direction vectors.">execute()</a> globally reduces the forces/moments, so every rank holds the total. </dd>
 <dd>
 <a class="el" href="classNeoFOAM_1_1ForceCoeffs.html#a2a0cd7640588acb26c8f92c67862bb95" title="Write normalised coefficients to coefficient.dat.">write()</a> produces coefficient.dat only — force.dat and moment.dat are written exclusively by the neoForces function object. </dd></dl>
 

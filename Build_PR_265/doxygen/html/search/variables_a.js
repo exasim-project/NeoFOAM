@@ -4,8 +4,6 @@ var searchData=
   ['patchnames_5f_1',['patchNames_',['../classNeoFOAM_1_1Forces.html#aa9bc2a0ad5d0d9b689ed644a03abe2c8',1,'NeoFOAM::Forces']]],
   ['pname_5f_2',['pName_',['../classNeoFOAM_1_1Forces.html#aa9f46c8adb157e16c05dda009b12a9e5',1,'NeoFOAM::Forces']]],
   ['pref_5f_3',['pRef_',['../classNeoFOAM_1_1Forces.html#a5e4a1da57cca4dccd6b38bf956c6630c',1,'NeoFOAM::Forces']]],
-  ['prefcell_5f_4',['pRefCell_',['../structNeoFOAM_1_1PDESolver_1_1SetReference.html#a312bf19b6c97dcb123a125e2be3c9bc4',1,'NeoFOAM::PDESolver::SetReference']]],
-  ['prefvalue_5f_5',['pRefValue_',['../structNeoFOAM_1_1PDESolver_1_1SetReference.html#a3c95dcddaa8f9c91c6a660df2f75312b',1,'NeoFOAM::PDESolver::SetReference']]],
-  ['pressureforce_6',['pressureForce',['../structNeoFOAM_1_1ForceResult.html#a6af32dd16d16d1c8b93b66b9ed736018',1,'NeoFOAM::ForceResult']]],
-  ['pressuremoment_7',['pressureMoment',['../structNeoFOAM_1_1ForceResult.html#a1c34a1ca43886bcae820eb5f5ec03797',1,'NeoFOAM::ForceResult']]]
+  ['pressureforce_4',['pressureForce',['../structNeoFOAM_1_1ForceResult.html#a6af32dd16d16d1c8b93b66b9ed736018',1,'NeoFOAM::ForceResult']]],
+  ['pressuremoment_5',['pressureMoment',['../structNeoFOAM_1_1ForceResult.html#a1c34a1ca43886bcae820eb5f5ec03797',1,'NeoFOAM::ForceResult']]]
 ];
