@@ -8,10 +8,12 @@
 #include "NeoFOAM/functionObjects/forces.hpp"
 #include "NeoFOAM/functionObjects/forceCoeffs.hpp"
 #include "NeoFOAM/auxiliary/readers.hpp"
+#include "NeoFOAM/fvcc/boundary/volume/nutWallFunction.hpp"
 
 #include "forces.H"
 #include "forceCoeffs.H"
 
+#include <cmath>
 #include <filesystem>
 #include <fstream>
 #include <sstream>
@@ -609,5 +611,104 @@ TEST_CASE("ForceCoeffs - normalised coefficients match OpenFOAM reference")
 
         fs::remove_all("postProcessing/neoForceCoeffs");
         fs::remove_all("postProcessing/ofForceCoeffs");
+    }
+}
+
+
+// ── TEST: nutUSpaldingWallFunction (viscous-force input) ───────────────────────
+//
+// The viscous part of the force integral is driven by the wall eddy viscosity nut,
+// which on wall patches is set by the Spalding wall function. The existing viscous
+// tests above feed Forces a uniform/constant nut and never run the wall function, so
+// a regression in the Spalding nut would silently corrupt viscous (skin-friction)
+// drag while leaving pressure forces correct. This test validates the wall-function
+// math that produces that nut, independently of any mesh / turbulence model.
+//
+// Reference: solve Spalding's law of the wall for the friction velocity uTau,
+//   y+ = u+ + (1/E) * ( exp(K u+) - 1 - K u+ - (K u+)^2/2 - (K u+)^3/6 )
+// with u+ = magUp/uTau and y+ = uTau*y/nu, using an independent bisection (the NeoN
+// implementation uses Newton). Then nut = uTau^2 / magGradU - nu, exactly as
+// setNutUSpaldingWallFunction assigns it (magGradU = magUp * deltaCoeff, and at a
+// wall face deltaCoeff = 1/y, so magGradU = magUp/y).
+
+namespace
+{
+namespace wf = NeoN::finiteVolume::cellCentred::volumeBoundary::detail;
+
+// Independent Spalding solve for uTau. f(uTau) = y+ - spalding(u+) is monotonically
+// increasing in uTau (y+ rises, spalding falls), so a single root exists; bisect it.
+// K and E must match the constants in nutWallFunction.hpp (KAPPA = 0.41, E = 9.8).
+double spaldingUTauReference(double magUp, double y, double nu)
+{
+    constexpr double K = 0.41;
+    constexpr double E = 9.8;
+    auto f = [&](double uTau)
+    {
+        const double up = magUp / uTau;
+        const double yp = uTau * y / nu;
+        const double kup = K * up;
+        const double spald =
+            up + (1.0 / E) * (std::exp(kup) - 1.0 - kup - 0.5 * kup * kup - kup * kup * kup / 6.0);
+        return yp - spald;
+    };
+    double lo = 1e-9; // f(lo) < 0  (y+ -> 0, spalding -> +inf)
+    double hi = 1e3;  // f(hi) > 0  (y+ -> large, spalding -> 0)
+    for (int it = 0; it < 100; ++it)
+    {
+        const double mid = 0.5 * (lo + hi);
+        if (f(mid) > 0.0)
+        {
+            hi = mid;
+        }
+        else
+        {
+            lo = mid;
+        }
+    }
+    return 0.5 * (lo + hi);
+}
+}
+
+TEST_CASE("nutUSpaldingWallFunction - uTau and nut match independent Spalding reference")
+{
+    struct Case
+    {
+        double magUp; // |U_cell - U_wall|  [m/s]
+        double y;     // nearWallDist        [m]
+        double nu;    // laminar viscosity   [m2/s]
+    };
+
+    // Spread of near-wall states from the buffer layer up into the log layer.
+    const std::vector<Case> cases = {
+        {0.10, 1.0e-3, 1.0e-5},
+        {0.50, 1.0e-3, 1.0e-5},
+        {1.00, 5.0e-4, 1.0e-5},
+        {2.00, 1.0e-4, 1.0e-5},
+        {5.00, 2.0e-4, 1.5e-5},
+    };
+
+    for (const auto& c : cases)
+    {
+        const double magGradU = c.magUp / c.y; // = magUp * deltaCoeff, deltaCoeff = 1/y at the wall
+
+        NeoN::scalar err = 0.0;
+        const NeoN::scalar utNeo =
+            wf::computeUTau(magGradU, c.magUp, c.y, c.nu, /*nutw0*/ 0.0, err, 50);
+        const double utRef = spaldingUTauReference(c.magUp, c.y, c.nu);
+
+        INFO(
+            "magUp=" << c.magUp << " y=" << c.y << " nu=" << c.nu << " y+=" << utRef * c.y / c.nu
+                     << " utNeo=" << utNeo << " utRef=" << utRef
+        );
+
+        // Newton (NeoN) vs bisection (reference) on the same Spalding equation.
+        CHECK(static_cast<double>(utNeo) == Catch::Approx(utRef).epsilon(1e-6));
+
+        // nut assignment, exactly as setNutUSpaldingWallFunction computes it.
+        const double nutNeo = static_cast<double>(utNeo) * static_cast<double>(utNeo) / magGradU
+                            - static_cast<double>(c.nu);
+        const double nutRef = utRef * utRef / magGradU - c.nu;
+        CHECK(nutNeo == Catch::Approx(nutRef).epsilon(1e-6));
+        CHECK(nutNeo > 0.0); // these states are turbulent -> positive eddy viscosity
     }
 }
