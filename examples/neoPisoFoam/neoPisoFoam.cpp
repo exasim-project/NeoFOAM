@@ -62,7 +62,7 @@ int main(int argc, char* argv[])
         auto& p = nf::constructAndRegister(vectorCollection, rt, ofP, false);
         auto& U = nf::constructAndRegister(vectorCollection, rt, ofU, false);
         auto& nuTilda = nf::constructAndRegister(vectorCollection, rt, ofNuTilda, false);
-        auto nut = nf::constructAndRegister(vectorCollection, rt, ofNut, false);
+        auto& nut = nf::constructAndRegister(vectorCollection, rt, ofNut, false);
 
         NeoN::Logging::info("Creating phi");
         auto& phi = nf::constructAndRegister(vectorCollection, rt, ofPhi, false);
