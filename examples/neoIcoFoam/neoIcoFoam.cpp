@@ -28,9 +28,14 @@ int main(int argc, char* argv[])
 {
 #include "addCheckCaseOptions.H"
 #include "setRootCase.H"
-#include "createTime.H"
     NeoN::initialize(argc, argv);
     {
+// createTime.H is included INSIDE the NeoN init/finalize bracket so Foam::Time --
+// which owns the controlDict function objects (e.g. neoForceCoeffs) and therefore any
+// NeoN/Kokkos memory they hold -- is destroyed before NeoN::finalize() calls
+// Kokkos::finalize(). Otherwise ~Time() runs after finalize and aborts with
+// "Kokkos allocation ... deallocated after Kokkos::finalize was called".
+#include "createTime.H"
         auto rt = nf::createAdapterRunTime(runTime);
         auto& mesh = rt.mesh;
 
