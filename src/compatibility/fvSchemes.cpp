@@ -83,6 +83,10 @@ NeoN::Dictionary mapFvSchemes(const NeoN::Dictionary& schemesDict)
     stripBoundedDivSchemes(modSchemesDict);
     // snGrad scheme names (corrected, uncorrected, limited [corrected] <coeff>)
     // are accepted by NeoN's factories directly — no remapping required.
+    // gradSchemes likewise need no remapping: OpenFOAM's "Gauss <interp>" and
+    // "cellLimited Gauss <interp> <coeff>" token lists are consumed verbatim by
+    // NeoN's GradOperatorFactory (the cellLimited factory wraps the base scheme
+    // and reads the trailing limiter coefficient).
 
     return modSchemesDict;
 }
