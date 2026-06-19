@@ -49,6 +49,30 @@
       </memberdef>
     </sectiondef>
     <sectiondef kind="func">
+      <memberdef kind="function" id="namespaceNeoFOAM_1_1detail_1a2f0eec60b1c730f1f28d6bf8bd1fbf0f" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>NeoN::scalar</type>
+        <definition>NeoN::scalar NeoFOAM::detail::tokenAsScalar</definition>
+        <argsstring>(NeoN::TokenList &amp;tokenList, std::size_t idx)</argsstring>
+        <name>tokenAsScalar</name>
+        <qualifiedname>NeoFOAM::detail::tokenAsScalar</qualifiedname>
+        <param>
+          <type>NeoN::TokenList &amp;</type>
+          <declname>tokenList</declname>
+        </param>
+        <param>
+          <type>std::size_t</type>
+          <declname>idx</declname>
+        </param>
+        <briefdescription>
+<para>Promote a single TokenList entry to a NeoN::scalar regardless of whether OpenFOAM&apos;s lexer classified it as a SCALAR (double) or a LABEL (int). </para>
+        </briefdescription>
+        <detaileddescription>
+<para>OpenFOAM tokenizes numeric primitives per token: a literal with a decimal point (e.g. <computeroutput>0.1</computeroutput>) becomes a SCALAR while a bare integer (e.g. <computeroutput>0</computeroutput>) becomes a LABEL. The components of a single vector value can therefore have different stored types — <computeroutput>uniform (0.1 0 0)</computeroutput> yields [scalar, label, label]. A strict <computeroutput>TokenList::get&lt;NeoN::scalar&gt;</computeroutput> throws <computeroutput>bad_any_cast</computeroutput> on the label components, so each component must be probed and promoted independently. </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="35" column="21" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="35" bodyend="44"/>
+      </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1_1detail_1aaf277cdfa64f90d5470e3b9d751249af" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
           <param>
@@ -77,7 +101,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/writers.hpp" line="22" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/writers.hpp" bodystart="22" bodyend="31"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/writers.hpp" line="23" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/writers.hpp" bodystart="23" bodyend="32"/>
       </memberdef>
     </sectiondef>
     <briefdescription>
