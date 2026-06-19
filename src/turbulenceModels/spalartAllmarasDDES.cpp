@@ -255,6 +255,12 @@ SpalartAllmarasDDES::SpalartAllmarasDDES(
           fvcc::createCalculatedProcBCs<nnfvcc::VolumeBoundary<Tensor>>(mesh)
       )
     , nuEff_(exec, "nuEff", mesh, fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh))
+    , nuTildaEff_(
+          exec,
+          "DnuTildaEff",
+          mesh,
+          fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh)
+      )
     , gradOp_(exec, mesh)
     , surfInterp_(exec, mesh, NeoN::TokenList({std::string("linear")}))
     , coeffs_()
@@ -281,18 +287,21 @@ void SpalartAllmarasDDES::validate(
     // Function-local intermediates (see header note): live only for this update so they do not
     // occupy device memory between calls / during the pressure-solve peak.
     nnfvcc::SurfaceField<scalar> surfNut(
-        exec_, "surfNut", mesh_, fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh_)
-    );
-    nnfvcc::SurfaceField<scalar> surfNuTilda(
-        exec_, "surfNuTilda", mesh_,
+        exec_,
+        "surfNut",
+        mesh_,
         fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh_)
     );
-    nnfvcc::SurfaceField<scalar> nuTildaEff(
-        exec_, "DnuTildaEff", mesh_,
+    nnfvcc::SurfaceField<scalar> surfNuTilda(
+        exec_,
+        "surfNuTilda",
+        mesh_,
         fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh_)
     );
 
-    calcNuTildaDiffusionCoeff(nuTilda, surfNu_, surfNuTilda, nuTildaEff);
+    // nuTildaEff_ is a persistent member (see header): writing it here seeds the coefficient that
+    // the first correct()'s nuTilda solve will read.
+    calcNuTildaDiffusionCoeff(nuTilda, surfNu_, surfNuTilda, nuTildaEff_);
     correctNut(nut, surfNut, nuEff_, nuTilda, nu_, surfNu_, U, nearWallDist_);
 }
 
@@ -312,30 +321,41 @@ void SpalartAllmarasDDES::correct(
     // so they are not resident during the pressure-solve peak (the run's high-water mark).
     // gradNuTilda is a pure throwaway used solely to form the scalar magSqrGradNuTilda.
     nnfvcc::VolumeField<Vec3> gradNuTilda(
-        exec_, "gradNuTilda", mesh_, fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<Vec3>>(mesh_)
+        exec_,
+        "gradNuTilda",
+        mesh_,
+        fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<Vec3>>(mesh_)
     );
     nnfvcc::VolumeField<scalar> magSqrGradNuTilda(
-        exec_, "magSqrGradNuTilda", mesh_,
+        exec_,
+        "magSqrGradNuTilda",
+        mesh_,
         fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh_)
     );
     nnfvcc::VolumeField<scalar> production(
-        exec_, "production", mesh_, fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh_)
+        exec_,
+        "production",
+        mesh_,
+        fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh_)
     );
     nnfvcc::VolumeField<scalar> spCoeff(
-        exec_, "spCoeff", mesh_, fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh_)
+        exec_,
+        "spCoeff",
+        mesh_,
+        fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh_)
     );
     nnfvcc::SurfaceField<scalar> surfNut(
-        exec_, "surfNut", mesh_, fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh_)
+        exec_,
+        "surfNut",
+        mesh_,
+        fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh_)
     );
     nnfvcc::SurfaceField<scalar> surfNuTilda(
-        exec_, "surfNuTilda", mesh_,
+        exec_,
+        "surfNuTilda",
+        mesh_,
         fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh_)
     );
-    nnfvcc::SurfaceField<scalar> nuTildaEff(
-        exec_, "DnuTildaEff", mesh_,
-        fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh_)
-    );
-
     gradOp_.grad(nuTilda, gradNuTilda);
     calcMagSqrVec(magSqrGradNuTilda, gradNuTilda);
 
@@ -352,7 +372,7 @@ void SpalartAllmarasDDES::correct(
 
     PDESolver<scalar> nuTildaEqn(
         dsl::imp::ddt(nuTilda) + dsl::imp::div(phi, nuTilda)
-            - dsl::imp::laplacian(nuTildaEff, nuTilda) + dsl::imp::source(spCoeff, nuTilda)
+            - dsl::imp::laplacian(nuTildaEff_, nuTilda) + dsl::imp::source(spCoeff, nuTilda)
             - dsl::exp::source(production),
         nuTilda,
         rt
@@ -371,7 +391,7 @@ void SpalartAllmarasDDES::correct(
         nuTilda.correctBoundaryConditions();
     }
 
-    calcNuTildaDiffusionCoeff(nuTilda, surfNu_, surfNuTilda, nuTildaEff);
+    calcNuTildaDiffusionCoeff(nuTilda, surfNu_, surfNuTilda, nuTildaEff_);
     correctNut(nut, surfNut, nuEff_, nuTilda, nu_, surfNu_, U, nearWallDist_);
 }
 
