@@ -1,0 +1,87 @@
+\doxysection{pimple\+Control.\+hpp}
+\hypertarget{pimpleControl_8hpp_source}{}\label{pimpleControl_8hpp_source}\index{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/solutionControl/pimpleControl.hpp@{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/solutionControl/pimpleControl.hpp}}
+\mbox{\hyperlink{pimpleControl_8hpp}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00001}00001\ \textcolor{comment}{//\ SPDX-\/License-\/Identifier:\ GPL-\/3.0-\/or-\/later}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00002}00002\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00003}00003\ \textcolor{comment}{//\ SPDX-\/FileCopyrightText:\ 2026\ NeoFOAM\ authors}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00004}00004\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00005}00005\ }
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00006}00006\ \textcolor{preprocessor}{\#include\ <map>}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00007}00007\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00008}00008\ \textcolor{preprocessor}{\#include\ <utility>}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00009}00009\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00010}00010\ }
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00011}00011\ \textcolor{preprocessor}{\#include\ "{}NeoN/core/dictionary.hpp"{}}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00012}00012\ \textcolor{preprocessor}{\#include\ "{}NeoN/core/primitives/scalar.hpp"{}}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00013}00013\ \textcolor{preprocessor}{\#include\ "{}NeoN/core/primitives/label.hpp"{}}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00014}00014\ }
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00015}00015\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceNeoFOAM}{NeoFOAM}}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00016}00016\ \{}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00017}00017\ }
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00018}00018\ \textcolor{comment}{//\ Per-\/field\ residual\ the\ outer\ loop\ is\ fed\ each\ pass:\ \{initResNorm,\ finalResNorm\}.}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00019}00019\ \textcolor{comment}{//\ The\ native\ control\ mirrors\ OpenFOAM\ pimpleControl::criteriaSatisfied():\ the}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00020}00020\ \textcolor{comment}{//\ absolute\ criterion\ compares\ the\ FINAL\ residual,\ the\ relative\ criterion\ compares}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00021}00021\ \textcolor{comment}{//\ finalResNorm\ /\ storedInitial.\ Feeding\ both\ makes\ both\ checks\ available\ without}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00022}00022\ \textcolor{comment}{//\ a\ Foam::solverPerformance\ /\ solverPerformanceDict\ round-\/trip.}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00023}\mbox{\hyperlink{namespaceNeoFOAM_a72ecdf875c1b4d9e941284f6f5351752}{00023}}\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespaceNeoFOAM_a72ecdf875c1b4d9e941284f6f5351752}{FieldResidual}}\ =\ std::pair<NeoN::scalar,\ NeoN::scalar>;}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00024}\mbox{\hyperlink{namespaceNeoFOAM_ad7da788dc1fc4af69c98dea808d84073}{00024}}\ \textcolor{keyword}{using\ }\mbox{\hyperlink{namespaceNeoFOAM_ad7da788dc1fc4af69c98dea808d84073}{ResidualMap}}\ =\ std::map<std::string,\ FieldResidual>;}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00025}00025\ }
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00026}00026\ \textcolor{comment}{/*\ @brief\ NeoFOAM-\/native\ outer\ PIMPLE\ loop\ control\ (does\ NOT\ reuse\ OpenFOAM's\ pimpleControl).}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00027}00027\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00028}00028\ \textcolor{comment}{\ *\ Owns\ the\ corr\_\ /\ converged\_\ state\ machine\ that\ drives\ the\ outer\ corrector\ loop.\ It\ mirrors}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00029}00029\ \textcolor{comment}{\ *\ OpenFOAM\ pimpleControl::loop()\ (pimpleControl.C:200-\/265)\ and\ criteriaSatisfied()}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00030}00030\ \textcolor{comment}{\ *\ (pimpleControl.C:61-\/126)\ byte-\/for-\/byte\ on\ the\ case\ side:\ it\ reads\ the\ SAME}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00031}00031\ \textcolor{comment}{\ *\ fvSolution.PIMPLE\ subdict\ a\ stock\ pimpleFoam\ case\ uses\ (nOuterCorrectors,}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00032}00032\ \textcolor{comment}{\ *\ residualControl\{\ p\{\ tolerance;\ relTol;\ \}\ U\{\ ...\ \}\ \})\ and\ applies\ per-\/field\ abs-\/OR-\/rel}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00033}00033\ \textcolor{comment}{\ *\ convergence\ with\ no\ check\ on\ the\ first\ outer\ iteration\ and\ a\ two-\/phase\ converged\_\ exit}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00034}00034\ \textcolor{comment}{\ *\ (an\ extra\ final\ pass\ after\ the\ criteria\ are\ met,\ so\ *Final\ factors/tolerances\ fire).}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00035}00035\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00036}00036\ \textcolor{comment}{\ *\ Unlike\ OpenFOAM's\ pimpleControl\ it\ is\ FED\ NeoN\ scalar\ residuals\ directly\ via\ loop(residuals)\ —}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00037}00037\ \textcolor{comment}{\ *\ there\ is\ no\ mesh\_.data().solverPerformanceDict()\ round-\/trip\ (rationale:\ the\ loop\ is\ not}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00038}00038\ \textcolor{comment}{\ *\ a\ hot\ path,\ so\ "{}performant"{}\ means\ lean\ /\ decoupled\ /\ portable).}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00039}00039\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00040}\mbox{\hyperlink{classNeoFOAM_1_1PimpleControl}{00040}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classNeoFOAM_1_1PimpleControl}{PimpleControl}}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00041}00041\ \{}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00042}00042\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00043}00043\ }
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00044}00044\ \ \ \ \ \textcolor{comment}{//\ Reads\ the\ PIMPLE\ subdict\ from\ fvSolution\ (nOuterCorrectors,\ residualControl\{\}).}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00045}00045\ \ \ \ \ \textcolor{comment}{//\ A\ missing\ /\ malformed\ PIMPLE\ block\ degrades\ to\ nOuterCorrectors\ ==\ 1\ and\ an\ empty}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00046}00046\ \ \ \ \ \textcolor{comment}{//\ residualControl\ (OpenFOAM\ defaults)\ —\ never\ throws.}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00047}\mbox{\hyperlink{classNeoFOAM_1_1PimpleControl_a64a14f955ef306f87b131076ea63a3b7}{00047}}\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classNeoFOAM_1_1PimpleControl_a64a14f955ef306f87b131076ea63a3b7}{PimpleControl}}(\textcolor{keyword}{const}\ NeoN::Dictionary\&\ fvSolution);}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00048}00048\ }
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00049}00049\ \ \ \ \ \textcolor{comment}{//\ True\ on\ the\ last\ outer\ pass:\ converged\_\ ||\ (corr\_\ ==\ nOuterCorr\_).\ Drives\ *Final}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00050}00050\ \ \ \ \ \textcolor{comment}{//\ relaxation\ factors\ +\ <field>Final\ solver\ subdict\ selection\ (pimpleControlI.H:92-\/95).}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00051}\mbox{\hyperlink{classNeoFOAM_1_1PimpleControl_ac660bdfb39e8b40006e90747c3344340}{00051}}\ \ \ \ \ [[nodiscard]]\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classNeoFOAM_1_1PimpleControl_ac660bdfb39e8b40006e90747c3344340}{finalIter}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00052}00052\ }
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00053}00053\ \ \ \ \ \textcolor{comment}{//\ True\ on\ the\ first\ outer\ pass\ (corr\_\ ==\ 1)\ —\ convergence\ is\ never\ checked\ here.}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00054}\mbox{\hyperlink{classNeoFOAM_1_1PimpleControl_a677d00c48cd57069d5be20311c63b985}{00054}}\ \ \ \ \ [[nodiscard]]\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classNeoFOAM_1_1PimpleControl_a677d00c48cd57069d5be20311c63b985}{firstIter}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00055}00055\ }
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00056}00056\ \ \ \ \ \textcolor{comment}{//\ Call\ once\ per\ outer\ pass.\ \`{}residuals`\ holds\ the\ \{init,final\}\ residuals\ from\ the\ PREVIOUS}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00057}00057\ \ \ \ \ \textcolor{comment}{//\ pass.\ Returns\ true\ while\ another\ outer\ corrector\ should\ run;\ false\ when\ the\ loop\ is\ done}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00058}00058\ \ \ \ \ \textcolor{comment}{//\ (count\ exhausted\ OR\ residual\ criteria\ satisfied\ after\ the\ extra\ final\ pass).}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00059}\mbox{\hyperlink{classNeoFOAM_1_1PimpleControl_a8a9e4057eb5c5f0aa8092abbcf206f08}{00059}}\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classNeoFOAM_1_1PimpleControl_a8a9e4057eb5c5f0aa8092abbcf206f08}{loop}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_ad7da788dc1fc4af69c98dea808d84073}{ResidualMap}}\&\ residuals);}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00060}00060\ }
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00061}\mbox{\hyperlink{classNeoFOAM_1_1PimpleControl_aac1eb191e38541183d21cfd0dce539bb}{00061}}\ \ \ \ \ [[nodiscard]]\ NeoN::label\ \mbox{\hyperlink{classNeoFOAM_1_1PimpleControl_aac1eb191e38541183d21cfd0dce539bb}{nOuterCorrectors}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ nOuterCorr\_;\ \}}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00062}00062\ }
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00063}00063\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00064}00064\ }
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00065}00065\ \ \ \ \ \textcolor{keywordtype}{bool}\ criteriaSatisfied(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceNeoFOAM_ad7da788dc1fc4af69c98dea808d84073}{ResidualMap}}\&\ residuals);}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00066}00066\ }
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00067}00067\ \ \ \ \ \textcolor{keyword}{struct\ }FieldCtrl}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00068}00068\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00069}00069\ \ \ \ \ \ \ \ \ std::string\ name;}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00070}00070\ \ \ \ \ \ \ \ \ NeoN::scalar\ absTol;}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00071}00071\ \ \ \ \ \ \ \ \ NeoN::scalar\ relTol;}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00072}00072\ \ \ \ \ \ \ \ \ NeoN::scalar\ initialResidual;}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00073}00073\ \ \ \ \ \};}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00074}00074\ }
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00075}00075\ \ \ \ \ NeoN::label\ nOuterCorr\_\ =\ 1;}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00076}00076\ \ \ \ \ NeoN::label\ corr\_\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00077}00077\ \ \ \ \ \textcolor{keywordtype}{bool}\ converged\_\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00078}00078\ \ \ \ \ std::vector<FieldCtrl>\ residualControl\_;}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00079}00079\ \};}
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00080}00080\ }
+\DoxyCodeLine{\Hypertarget{pimpleControl_8hpp_source_l00081}00081\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
+
+\end{DoxyCode}
