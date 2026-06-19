@@ -105,9 +105,6 @@ public:
     /// @brief Effective viscosity on faces: nu + nut (for momentum equation laplacian)
     nnfvcc::SurfaceField<scalar>& nuEff();
 
-    /// @brief Effective nuTilda diffusion coefficient on faces: (nu + nuTilda)/sigmaNut
-    nnfvcc::SurfaceField<scalar>& nuTildaEff();
-
     /// @brief Velocity gradient tensor (updated each correct() call, for viscousStress term)
     const nnfvcc::VolumeField<NeoN::Tensor>& gradU() const;
 
@@ -173,14 +170,18 @@ private:
     // Cached face-interpolated nu (computed once in constructor)
     nnfvcc::SurfaceField<scalar> surfNu_;
 
-    // Owned intermediate fields
+    // Persistent intermediate fields that must outlive a single turbulence update. Each carries
+    // state across calls: it is computed at the END of one validate()/correct() and consumed at
+    // the START of the next, so it cannot be a function-local.
+    //  - gradU_      : next step's momentum predictor (viscousStress) and devRhoReff
+    //  - nuEff_      : next step's momentum laplacian coefficient
+    //  - nuTildaEff_ : the nuTilda laplacian coefficient consumed by the nuTilda solve at the
+    //                  start of the NEXT correct() (lagged exactly as OpenFOAM computes DnuTildaEff
+    //                  from the incoming nuTilda — nuTilda is unchanged between calls)
+    // The remaining SA-DDES intermediates (gradNuTilda, magSqrGradNuTilda, production, spCoeff,
+    // surfNut, surfNuTilda) are function-local to validate()/correct() so they do not occupy
+    // device memory during the pressure-solve peak (the run's high-water mark).
     nnfvcc::VolumeField<NeoN::Tensor> gradU_;
-    nnfvcc::VolumeField<Vec3> gradNuTilda_;
-    nnfvcc::VolumeField<scalar> magSqrGradNuTilda_;
-    nnfvcc::VolumeField<scalar> production_;
-    nnfvcc::VolumeField<scalar> spCoeff_;
-    nnfvcc::SurfaceField<scalar> surfNut_;
-    nnfvcc::SurfaceField<scalar> surfNuTilda_;
     nnfvcc::SurfaceField<scalar> nuEff_;
     nnfvcc::SurfaceField<scalar> nuTildaEff_;
 
