@@ -474,9 +474,9 @@ TEST_CASE("PressureVelocityCoupling")
         // (6) POSITIVE + NEGATIVE per-cell pair: a manual per-cell host
         //     loop with REQUIRE(Catch::Approx) — expresses BOTH the positive Approx and the
         //     negative !Approx cleanly and lets the negative fire per boundary-touching cell). rAU
-        //     is U-INDEPENDENT (V/diag), so step (3)'s solve updating nfU does not affect this.
+        //     is U-INDEPENDENT (v/diag), so step (3)'s solve updating nfU does not affect this.
         auto cellVolsH = rt.nfMesh.cellVolumes().copyToHost();
-        auto V = cellVolsH.view();
+        auto v = cellVolsH.view();
         auto diagAugH = nfUEqn.linearSystem().matrix().diag().copyToHost(); // augmented + relaxed
         auto dAug = diagAugH.view();
         auto diagIntH = NeoN::la::removeBoundaryContributions(nfUEqn.linearSystem())
@@ -489,14 +489,14 @@ TEST_CASE("PressureVelocityCoupling")
         bool sawBoundaryDiff = false;
         for (NeoN::localIdx c = 0; c < rAU.size(); ++c)
         {
-            // POSITIVE: rAU[c] == V[c]/diagAug[c] @1e-12 — the augmented-relaxed read.
-            REQUIRE(rAU[c] == Catch::Approx(V[c] / dAug[c]).margin(1e-12));
+            // POSITIVE: rAU[c] == v[c]/diagAug[c] @1e-12 — the augmented-relaxed read.
+            REQUIRE(rAU[c] == Catch::Approx(v[c] / dAug[c]).margin(1e-12));
             // NEGATIVE: on boundary-touching cells dAug[c] != dInt[c], so rAU[c] differs
-            // from V[c]/dInt[c] — this REQUIRE FAILS if a regression wired the read to the
+            // from v[c]/dInt[c] — this REQUIRE FAILS if a regression wired the read to the
             // internal-only diagonal (an actual assertion on the inequality).
             if (Foam::mag(dAug[c] - dInt[c]) > 1e-30)
             {
-                REQUIRE(rAU[c] != Catch::Approx(V[c] / dInt[c]).margin(1e-12));
+                REQUIRE(rAU[c] != Catch::Approx(v[c] / dInt[c]).margin(1e-12));
                 sawBoundaryDiff = true;
             }
         }
