@@ -142,6 +142,18 @@ void updateFaceVelocity(
     auto values = ls.matrix().values().view();
     auto [iPhi, iPredPhi] = views(phi.internalVector(), predictedPhi.internalVector());
 
+    // Deferred non-orthogonal correction flux (OpenFOAM fvMatrix::faceFluxCorrectionPtr_).
+    // The Laplacian assembly stashed the exact per-face correction it deferred to the RHS — using
+    // the field as it stood at assembly time — so adding it back here gives
+    // pEqn.flux() = orthogonal matrix-coefficient flux + faceFluxCorrection and div(phi) closes on
+    // non-orthogonal meshes. Reusing the stored value (rather than recomputing from the post-solve
+    // p) is what makes the closure exact, and avoids an extra snGrad evaluation. Null pointer ⇒
+    // orthogonal / uncorrected scheme ⇒ no correction.
+    const auto& ffcPtr = ls.faceFluxCorrection();
+    const bool hasCorrection = (ffcPtr != nullptr) && (ffcPtr->size() == nInternalFaces);
+    NeoN::Vector<scalar> noCorrection(exec, 0);
+    const auto ffc = hasCorrection ? ffcPtr->view() : noCorrection.view();
+
     // TODO add to NEON
     NeoN::parallelFor(
         exec,
@@ -156,7 +168,9 @@ void updateFaceVelocity(
             auto upper = values[rowNeiStart + neiOffs[facei]];
             auto lower = values[rowOwnStart + ownOffs[facei]];
 
-            iPhi[facei] = iPredPhi[facei] - (upper * internalP[nei] - lower * internalP[own]);
+            scalar corrFlux = hasCorrection ? ffc[facei] : scalar(0);
+            iPhi[facei] =
+                iPredPhi[facei] - (upper * internalP[nei] - lower * internalP[own]) - corrFlux;
         }
     );
 
