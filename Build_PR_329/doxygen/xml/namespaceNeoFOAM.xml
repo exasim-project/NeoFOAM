@@ -547,6 +547,41 @@
         </inbodydescription>
         <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/convert.hpp" line="80" column="14" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/convert.hpp" declline="80" declcolumn="14"/>
       </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1a7abcd1d6e565197e8e96d0b16e3c1c63" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>bool &amp;</type>
+        <definition>bool &amp; NeoFOAM::useImplicitTransformBC</definition>
+        <argsstring>()</argsstring>
+        <name>useImplicitTransformBC</name>
+        <qualifiedname>NeoFOAM::useImplicitTransformBC</qualifiedname>
+        <briefdescription>
+<para>Process-global toggle selecting the IMPLICIT slip/symmetry normal-damping mode for vector-field transform patches (vs the upstream-default DEFERRED mode). </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Set ONCE at solver startup via readImplicitTransformBC(rt.fvSolutionDict); read in readVolBoundaryConditions when a vector field&apos;s boundary conditions are built. A single global is used deliberately: implicit-vs-deferred is one solver-wide discretisation policy, the per-field BC reader has no access to the run-time configuration, and OpenFOAM&apos;s constraint patch fields strip an unknown per-patch <computeroutput>implicit</computeroutput> keyword on the read/write round-trip the reader relies on (so it cannot be carried in the field&apos;s boundaryField). Default false (deferred) preserves upstream behaviour and the neoIcoFoam/neoPisoFoam-without-symmetry paths. </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="32" column="13" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="32" bodyend="36"/>
+      </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1a1c190519eafff0cdc2ab2d37fc3e5243" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>void</type>
+        <definition>void NeoFOAM::readImplicitTransformBC</definition>
+        <argsstring>(const NeoN::Dictionary &amp;fvSolution)</argsstring>
+        <name>readImplicitTransformBC</name>
+        <qualifiedname>NeoFOAM::readImplicitTransformBC</qualifiedname>
+        <param>
+          <type>const NeoN::Dictionary &amp;</type>
+          <declname>fvSolution</declname>
+        </param>
+        <briefdescription>
+<para>Set <ref refid="namespaceNeoFOAM_1a7abcd1d6e565197e8e96d0b16e3c1c63" kindref="member">useImplicitTransformBC()</ref> from a (<ref refid="namespaceNeoN" kindref="compound">NeoN</ref>) fvSolution dictionary&apos;s top-level <computeroutput>implicitTransformBC</computeroutput> switch. Tolerant of bool/int/word spellings (an OpenFOAM <computeroutput>true</computeroutput> arrives as a word/string, mirroring the l1ScaledResidual / under-relaxation parsing); absent -&gt; false. OpenFOAM/SPUMA ignores this unknown top-level fvSolution entry, so the same case runs unchanged under pimpleFoam/pisoFoam. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="44" column="13" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="44" bodyend="65"/>
+      </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1a1dfe753898e56c3e2e7b5c6f00bd2a4f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
           <param>
@@ -572,7 +607,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="49" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="49" bodyend="59"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="95" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="95" bodyend="105"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1a6cb4d89d1e44667e5a66f5119bad9206" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
@@ -599,7 +634,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="62" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="62" bodyend="212"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="108" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="108" bodyend="271"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1adb365cf8e725db6dbfc0a758c392e2b1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
@@ -626,7 +661,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="215" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="215" bodyend="298"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="274" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="274" bodyend="357"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1ab7276ff683225b6140acfa56618926b5" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
@@ -657,7 +692,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="301" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="301" bodyend="410"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="360" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="360" bodyend="469"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1a999cf2f9840de1da0b4265f93d4a6006" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
@@ -703,7 +738,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="478" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="478" bodyend="481"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="537" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="537" bodyend="540"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1a48fbbbb3755e34d928cf0d189532d93c" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
@@ -740,7 +775,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="485" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="485" bodyend="507"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="544" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="544" bodyend="566"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1a39bc76acefb5a1dd3074b0feba5864eb" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>void</type>

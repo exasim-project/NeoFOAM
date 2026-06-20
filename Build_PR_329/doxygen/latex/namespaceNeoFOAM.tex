@@ -90,6 +90,10 @@ Neo\+N\+::\+Dictionary \mbox{\hyperlink{namespaceNeoFOAM_a75a914fbbb00d2f6a71272
 \item 
 Foam\+::vector \mbox{\hyperlink{namespaceNeoFOAM_ae5529700fe31e6531dc129ac14ad3966}{convert}} (const Neo\+N\+::\+Vec3 \&in)
 \item 
+bool \& \mbox{\hyperlink{namespaceNeoFOAM_a7abcd1d6e565197e8e96d0b16e3c1c63}{use\+Implicit\+Transform\+BC}} ()
+\begin{DoxyCompactList}\small\item\em Process-\/global toggle selecting the IMPLICIT slip/symmetry normal-\/damping mode for vector-\/field transform patches (vs the upstream-\/default DEFERRED mode). \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{namespaceNeoFOAM_a1c190519eafff0cdc2ab2d37fc3e5243}{read\+Implicit\+Transform\+BC}} (const Neo\+N\+::\+Dictionary \&fv\+Solution)
+\begin{DoxyCompactList}\small\item\em Set \doxylink{namespaceNeoFOAM_a7abcd1d6e565197e8e96d0b16e3c1c63}{use\+Implicit\+Transform\+BC()} from a (\doxylink{namespaceNeoN}{NeoN}) fv\+Solution dictionary\textquotesingle{}s top-\/level {\ttfamily implicit\+Transform\+BC} switch. Tolerant of bool/int/word spellings (an Open\+FOAM {\ttfamily true} arrives as a word/string, mirroring the l1\+Scaled\+Residual / under-\/relaxation parsing); absent -\/\texorpdfstring{$>$}{>} false. Open\+FOAM/\+SPUMA ignores this unknown top-\/level fv\+Solution entry, so the same case runs unchanged under pimple\+Foam/piso\+Foam. \end{DoxyCompactList}\item 
 {\footnotesize template$<$typename Foam\+Type $>$ }\\auto \mbox{\hyperlink{namespaceNeoFOAM_a1dfe753898e56c3e2e7b5c6f00bd2a4f}{from\+Foam\+Field}} (const Neo\+N\+::\+Executor \&exec, const Foam\+Type \&field)
 \item 
 {\footnotesize template$<$typename Foam\+Type $>$ }\\auto \mbox{\hyperlink{namespaceNeoFOAM_a6cb4d89d1e44667e5a66f5119bad9206}{read\+Vol\+Boundary\+Conditions}} (const Neo\+N\+::\+Unstructured\+Mesh \&nf\+Mesh, const Foam\+Type \&of\+Vol\+Field)
@@ -290,7 +294,7 @@ Tuple containing the fields
 \end{DoxyReturn}
 
 
-Definition at line \mbox{\hyperlink{readers_8hpp_source_l00478}{478}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
+Definition at line \mbox{\hyperlink{readers_8hpp_source_l00537}{537}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_a386425b9e39dc89773b9248909cf4139}\label{namespaceNeoFOAM_a386425b9e39dc89773b9248909cf4139} 
 \index{NeoFOAM@{NeoFOAM}!constrainHbyA@{constrainHbyA}}
@@ -311,7 +315,7 @@ construct an NF field from a given OF field and register
 
 
 
-Definition at line \mbox{\hyperlink{readers_8hpp_source_l00485}{485}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
+Definition at line \mbox{\hyperlink{readers_8hpp_source_l00544}{544}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_ab7276ff683225b6140acfa56618926b5}\label{namespaceNeoFOAM_ab7276ff683225b6140acfa56618926b5} 
 \index{NeoFOAM@{NeoFOAM}!constructFrom@{constructFrom}}
@@ -322,7 +326,7 @@ auto Neo\+FOAM\+::construct\+From (\begin{DoxyParamCaption}\item[{const Neo\+N\+
 
 
 
-Definition at line \mbox{\hyperlink{readers_8hpp_source_l00301}{301}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
+Definition at line \mbox{\hyperlink{readers_8hpp_source_l00360}{360}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_a75a914fbbb00d2f6a71272c9a1b85b43}\label{namespaceNeoFOAM_a75a914fbbb00d2f6a71272c9a1b85b43} 
 \index{NeoFOAM@{NeoFOAM}!convert@{convert}}
@@ -424,7 +428,7 @@ auto Neo\+FOAM\+::from\+Foam\+Field (\begin{DoxyParamCaption}\item[{const Neo\+N
 
 
 
-Definition at line \mbox{\hyperlink{readers_8hpp_source_l00049}{49}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
+Definition at line \mbox{\hyperlink{readers_8hpp_source_l00095}{95}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_af3b37c9dbbd37df8a0849a0f383f06d9}\label{namespaceNeoFOAM_af3b37c9dbbd37df8a0849a0f383f06d9} 
 \index{NeoFOAM@{NeoFOAM}!insert@{insert}}
@@ -493,6 +497,20 @@ bool Neo\+FOAM\+::operator== (\begin{DoxyParamCaption}\item[{const Neo\+N\+::\+V
 {\footnotesize\ttfamily template$<$typename NT , typename OT $>$ \\
 bool Neo\+FOAM\+::operator== (\begin{DoxyParamCaption}\item[{fvcc\+::\+Volume\+Field$<$ NT $>$ \&}]{nf,  }\item[{const Foam\+::\+Geometric\+Field$<$ OT, Foam\+::fv\+Patch\+Field, Foam\+::vol\+Mesh $>$ \&}]{of }\end{DoxyParamCaption})}
 
+\Hypertarget{namespaceNeoFOAM_a1c190519eafff0cdc2ab2d37fc3e5243}\label{namespaceNeoFOAM_a1c190519eafff0cdc2ab2d37fc3e5243} 
+\index{NeoFOAM@{NeoFOAM}!readImplicitTransformBC@{readImplicitTransformBC}}
+\index{readImplicitTransformBC@{readImplicitTransformBC}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{readImplicitTransformBC()}{readImplicitTransformBC()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::read\+Implicit\+Transform\+BC (\begin{DoxyParamCaption}\item[{const Neo\+N\+::\+Dictionary \&}]{fv\+Solution }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Set \doxylink{namespaceNeoFOAM_a7abcd1d6e565197e8e96d0b16e3c1c63}{use\+Implicit\+Transform\+BC()} from a (\doxylink{namespaceNeoN}{NeoN}) fv\+Solution dictionary\textquotesingle{}s top-\/level {\ttfamily implicit\+Transform\+BC} switch. Tolerant of bool/int/word spellings (an Open\+FOAM {\ttfamily true} arrives as a word/string, mirroring the l1\+Scaled\+Residual / under-\/relaxation parsing); absent -\/\texorpdfstring{$>$}{>} false. Open\+FOAM/\+SPUMA ignores this unknown top-\/level fv\+Solution entry, so the same case runs unchanged under pimple\+Foam/piso\+Foam. 
+
+
+
+Definition at line \mbox{\hyperlink{readers_8hpp_source_l00044}{44}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
+
 \Hypertarget{namespaceNeoFOAM_afb828727f0f7b23418e94e1c464d9dae}\label{namespaceNeoFOAM_afb828727f0f7b23418e94e1c464d9dae} 
 \index{NeoFOAM@{NeoFOAM}!readOpenFOAMMesh@{readOpenFOAMMesh}}
 \index{readOpenFOAMMesh@{readOpenFOAMMesh}!NeoFOAM@{NeoFOAM}}
@@ -536,7 +554,7 @@ auto Neo\+FOAM\+::read\+Surface\+Boundary\+Conditions (\begin{DoxyParamCaption}\
 
 
 
-Definition at line \mbox{\hyperlink{readers_8hpp_source_l00215}{215}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
+Definition at line \mbox{\hyperlink{readers_8hpp_source_l00274}{274}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_a6cb4d89d1e44667e5a66f5119bad9206}\label{namespaceNeoFOAM_a6cb4d89d1e44667e5a66f5119bad9206} 
 \index{NeoFOAM@{NeoFOAM}!readVolBoundaryConditions@{readVolBoundaryConditions}}
@@ -547,7 +565,7 @@ auto Neo\+FOAM\+::read\+Vol\+Boundary\+Conditions (\begin{DoxyParamCaption}\item
 
 
 
-Definition at line \mbox{\hyperlink{readers_8hpp_source_l00062}{62}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
+Definition at line \mbox{\hyperlink{readers_8hpp_source_l00108}{108}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_a216c99c971b9acb00fbd8ff36d9f2ee9}\label{namespaceNeoFOAM_a216c99c971b9acb00fbd8ff36d9f2ee9} 
 \index{NeoFOAM@{NeoFOAM}!reportContinuityError@{reportContinuityError}}
@@ -613,6 +631,20 @@ Definition at line \mbox{\hyperlink{continuityError_8hpp_source_l00102}{102}} of
 \index{updateVelocity@{updateVelocity}!NeoFOAM@{NeoFOAM}}
 \doxysubsubsection{\texorpdfstring{updateVelocity()}{updateVelocity()}}
 {\footnotesize\ttfamily void Neo\+FOAM\+::update\+Velocity (\begin{DoxyParamCaption}\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&}]{h\+ByA,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{r\+AU,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{p,  }\item[{nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&}]{U }\end{DoxyParamCaption})}
+
+\Hypertarget{namespaceNeoFOAM_a7abcd1d6e565197e8e96d0b16e3c1c63}\label{namespaceNeoFOAM_a7abcd1d6e565197e8e96d0b16e3c1c63} 
+\index{NeoFOAM@{NeoFOAM}!useImplicitTransformBC@{useImplicitTransformBC}}
+\index{useImplicitTransformBC@{useImplicitTransformBC}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{useImplicitTransformBC()}{useImplicitTransformBC()}}
+{\footnotesize\ttfamily bool \& Neo\+FOAM\+::use\+Implicit\+Transform\+BC (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Process-\/global toggle selecting the IMPLICIT slip/symmetry normal-\/damping mode for vector-\/field transform patches (vs the upstream-\/default DEFERRED mode). 
+
+Set ONCE at solver startup via read\+Implicit\+Transform\+BC(rt.\+fv\+Solution\+Dict); read in read\+Vol\+Boundary\+Conditions when a vector field\textquotesingle{}s boundary conditions are built. A single global is used deliberately\+: implicit-\/vs-\/deferred is one solver-\/wide discretisation policy, the per-\/field BC reader has no access to the run-\/time configuration, and Open\+FOAM\textquotesingle{}s constraint patch fields strip an unknown per-\/patch {\ttfamily implicit} keyword on the read/write round-\/trip the reader relies on (so it cannot be carried in the field\textquotesingle{}s boundary\+Field). Default false (deferred) preserves upstream behaviour and the neo\+Ico\+Foam/neo\+Piso\+Foam-\/without-\/symmetry paths. 
+
+Definition at line \mbox{\hyperlink{readers_8hpp_source_l00032}{32}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_a83dd7a8c4cb9a0c13d825e8ca93d8587}\label{namespaceNeoFOAM_a83dd7a8c4cb9a0c13d825e8ca93d8587} 
 \index{NeoFOAM@{NeoFOAM}!write@{write}}
