@@ -153,6 +153,10 @@ int main(int argc, char* argv[])
                         rt
                     );
 
+                    // updateFaceVelocity reconstructs phi from this pressure system; keep the
+                    // non-orthogonal faceFluxCorrection so the reconstruction can add it back.
+                    pEqn.linearSystem().keepFaceFluxCorrection(true);
+
                     if (ofP.needReference() && pRefCell >= 0)
                     {
                         pEqn.setReference(pRefCell, pRefValue);

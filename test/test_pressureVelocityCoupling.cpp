@@ -184,6 +184,9 @@ TEST_CASE("PressureVelocityCoupling")
             rt
         );
 
+        // updateFaceVelocity below reconstructs phi from this system; keep the faceFluxCorrection.
+        pEqn.linearSystem().keepFaceFluxCorrection(true);
+
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
         solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
 
