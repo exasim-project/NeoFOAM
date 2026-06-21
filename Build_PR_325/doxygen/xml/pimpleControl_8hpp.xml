@@ -1,0 +1,145 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.8" xml:lang="en-US">
+  <compounddef id="pimpleControl_8hpp" kind="file" language="C++">
+    <compoundname>pimpleControl.hpp</compoundname>
+    <includes local="no">map</includes>
+    <includes local="no">string</includes>
+    <includes local="no">utility</includes>
+    <includes local="no">vector</includes>
+    <includes local="yes">NeoN/core/dictionary.hpp</includes>
+    <includes local="yes">NeoN/core/primitives/scalar.hpp</includes>
+    <includes local="yes">NeoN/core/primitives/label.hpp</includes>
+    <incdepgraph>
+      <node id="1">
+        <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/solutionControl/pimpleControl.hpp</label>
+        <link refid="pimpleControl_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+        <childnode refid="5" relation="include">
+        </childnode>
+        <childnode refid="6" relation="include">
+        </childnode>
+        <childnode refid="7" relation="include">
+        </childnode>
+        <childnode refid="8" relation="include">
+        </childnode>
+      </node>
+      <node id="6">
+        <label>NeoN/core/dictionary.hpp</label>
+      </node>
+      <node id="8">
+        <label>NeoN/core/primitives/label.hpp</label>
+      </node>
+      <node id="7">
+        <label>NeoN/core/primitives/scalar.hpp</label>
+      </node>
+      <node id="2">
+        <label>map</label>
+      </node>
+      <node id="3">
+        <label>string</label>
+      </node>
+      <node id="4">
+        <label>utility</label>
+      </node>
+      <node id="5">
+        <label>vector</label>
+      </node>
+    </incdepgraph>
+    <innerclass refid="classNeoFOAM_1_1PimpleControl" prot="public">NeoFOAM::PimpleControl</innerclass>
+    <innerclass refid="structNeoFOAM_1_1PimpleControl_1_1FieldCtrl" prot="private">NeoFOAM::PimpleControl::FieldCtrl</innerclass>
+    <innernamespace refid="namespaceNeoFOAM">NeoFOAM</innernamespace>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="comment">//<sp/>SPDX-License-Identifier:<sp/>GPL-3.0-or-later</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight><highlight class="comment">//</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="3"><highlight class="normal"></highlight><highlight class="comment">//<sp/>SPDX-FileCopyrightText:<sp/>2026<sp/>NeoFOAM<sp/>authors</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="4"><highlight class="normal"></highlight><highlight class="preprocessor">#pragma<sp/>once</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="5"><highlight class="normal"></highlight></codeline>
+<codeline lineno="6"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;map&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="7"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;string&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="8"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;utility&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="9"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;vector&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="10"><highlight class="normal"></highlight></codeline>
+<codeline lineno="11"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;NeoN/core/dictionary.hpp&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="12"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;NeoN/core/primitives/scalar.hpp&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="13"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;NeoN/core/primitives/label.hpp&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="14"><highlight class="normal"></highlight></codeline>
+<codeline lineno="15"><highlight class="normal"></highlight><highlight class="keyword">namespace<sp/></highlight><highlight class="normal"><ref refid="namespaceNeoFOAM" kindref="compound">NeoFOAM</ref></highlight></codeline>
+<codeline lineno="16"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="17"><highlight class="normal"></highlight></codeline>
+<codeline lineno="18"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Per-field<sp/>residual<sp/>the<sp/>outer<sp/>loop<sp/>is<sp/>fed<sp/>each<sp/>pass:<sp/>{initResNorm,<sp/>finalResNorm}.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="19"><highlight class="normal"></highlight><highlight class="comment">//<sp/>The<sp/>native<sp/>control<sp/>mirrors<sp/>OpenFOAM<sp/>pimpleControl::criteriaSatisfied():<sp/>the</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="20"><highlight class="normal"></highlight><highlight class="comment">//<sp/>absolute<sp/>criterion<sp/>compares<sp/>the<sp/>FINAL<sp/>residual,<sp/>the<sp/>relative<sp/>criterion<sp/>compares</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="21"><highlight class="normal"></highlight><highlight class="comment">//<sp/>finalResNorm<sp/>/<sp/>storedInitial.<sp/>Feeding<sp/>both<sp/>makes<sp/>both<sp/>checks<sp/>available<sp/>without</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="22"><highlight class="normal"></highlight><highlight class="comment">//<sp/>a<sp/>Foam::solverPerformance<sp/>/<sp/>solverPerformanceDict<sp/>round-trip.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="23" refid="namespaceNeoFOAM_1a72ecdf875c1b4d9e941284f6f5351752" refkind="member"><highlight class="normal"></highlight><highlight class="keyword">using<sp/></highlight><highlight class="normal"><ref refid="namespaceNeoFOAM_1a72ecdf875c1b4d9e941284f6f5351752" kindref="member">FieldResidual</ref><sp/>=<sp/>std::pair&lt;NeoN::scalar,<sp/>NeoN::scalar&gt;;</highlight></codeline>
+<codeline lineno="24" refid="namespaceNeoFOAM_1ad7da788dc1fc4af69c98dea808d84073" refkind="member"><highlight class="normal"></highlight><highlight class="keyword">using<sp/></highlight><highlight class="normal"><ref refid="namespaceNeoFOAM_1ad7da788dc1fc4af69c98dea808d84073" kindref="member">ResidualMap</ref><sp/>=<sp/>std::map&lt;std::string,<sp/>FieldResidual&gt;;</highlight></codeline>
+<codeline lineno="25"><highlight class="normal"></highlight></codeline>
+<codeline lineno="26"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>NeoFOAM-native<sp/>outer<sp/>PIMPLE<sp/>loop<sp/>control<sp/>(does<sp/>NOT<sp/>reuse<sp/>OpenFOAM&apos;s<sp/>pimpleControl).</highlight></codeline>
+<codeline lineno="27"><highlight class="comment"><sp/>*</highlight></codeline>
+<codeline lineno="28"><highlight class="comment"><sp/>*<sp/>Owns<sp/>the<sp/>corr_<sp/>/<sp/>converged_<sp/>state<sp/>machine<sp/>that<sp/>drives<sp/>the<sp/>outer<sp/>corrector<sp/>loop.<sp/>It<sp/>mirrors</highlight></codeline>
+<codeline lineno="29"><highlight class="comment"><sp/>*<sp/>OpenFOAM<sp/>pimpleControl::loop()<sp/>(pimpleControl.C:200-265)<sp/>and<sp/>criteriaSatisfied()</highlight></codeline>
+<codeline lineno="30"><highlight class="comment"><sp/>*<sp/>(pimpleControl.C:61-126)<sp/>byte-for-byte<sp/>on<sp/>the<sp/>case<sp/>side:<sp/>it<sp/>reads<sp/>the<sp/>SAME</highlight></codeline>
+<codeline lineno="31"><highlight class="comment"><sp/>*<sp/>fvSolution.PIMPLE<sp/>subdict<sp/>a<sp/>stock<sp/>pimpleFoam<sp/>case<sp/>uses<sp/>(nOuterCorrectors,</highlight></codeline>
+<codeline lineno="32"><highlight class="comment"><sp/>*<sp/>residualControl{<sp/>p{<sp/>tolerance;<sp/>relTol;<sp/>}<sp/>U{<sp/>...<sp/>}<sp/>})<sp/>and<sp/>applies<sp/>per-field<sp/>abs-OR-rel</highlight></codeline>
+<codeline lineno="33"><highlight class="comment"><sp/>*<sp/>convergence<sp/>with<sp/>no<sp/>check<sp/>on<sp/>the<sp/>first<sp/>outer<sp/>iteration<sp/>and<sp/>a<sp/>two-phase<sp/>converged_<sp/>exit</highlight></codeline>
+<codeline lineno="34"><highlight class="comment"><sp/>*<sp/>(an<sp/>extra<sp/>final<sp/>pass<sp/>after<sp/>the<sp/>criteria<sp/>are<sp/>met,<sp/>so<sp/>*Final<sp/>factors/tolerances<sp/>fire).</highlight></codeline>
+<codeline lineno="35"><highlight class="comment"><sp/>*</highlight></codeline>
+<codeline lineno="36"><highlight class="comment"><sp/>*<sp/>Unlike<sp/>OpenFOAM&apos;s<sp/>pimpleControl<sp/>it<sp/>is<sp/>FED<sp/>NeoN<sp/>scalar<sp/>residuals<sp/>directly<sp/>via<sp/>loop(residuals)<sp/>—</highlight></codeline>
+<codeline lineno="37"><highlight class="comment"><sp/>*<sp/>there<sp/>is<sp/>no<sp/>mesh_.data().solverPerformanceDict()<sp/>round-trip<sp/>(rationale:<sp/>the<sp/>loop<sp/>is<sp/>not</highlight></codeline>
+<codeline lineno="38"><highlight class="comment"><sp/>*<sp/>a<sp/>hot<sp/>path,<sp/>so<sp/>&quot;performant&quot;<sp/>means<sp/>lean<sp/>/<sp/>decoupled<sp/>/<sp/>portable).</highlight></codeline>
+<codeline lineno="39"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="40" refid="classNeoFOAM_1_1PimpleControl" refkind="compound"><highlight class="normal"></highlight><highlight class="keyword">class<sp/></highlight><highlight class="normal"><ref refid="classNeoFOAM_1_1PimpleControl" kindref="compound">PimpleControl</ref></highlight></codeline>
+<codeline lineno="41"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="42"><highlight class="normal"></highlight><highlight class="keyword">public</highlight><highlight class="normal">:</highlight></codeline>
+<codeline lineno="43"><highlight class="normal"></highlight></codeline>
+<codeline lineno="44"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Reads<sp/>the<sp/>PIMPLE<sp/>subdict<sp/>from<sp/>fvSolution<sp/>(nOuterCorrectors,<sp/>residualControl{}).</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="45"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>A<sp/>missing<sp/>/<sp/>malformed<sp/>PIMPLE<sp/>block<sp/>degrades<sp/>to<sp/>nOuterCorrectors<sp/>==<sp/>1<sp/>and<sp/>an<sp/>empty</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="46"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>residualControl<sp/>(OpenFOAM<sp/>defaults)<sp/>—<sp/>never<sp/>throws.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="47" refid="classNeoFOAM_1_1PimpleControl_1a64a14f955ef306f87b131076ea63a3b7" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">explicit</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1PimpleControl_1a64a14f955ef306f87b131076ea63a3b7" kindref="member">PimpleControl</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::Dictionary&amp;<sp/>fvSolution);</highlight></codeline>
+<codeline lineno="48"><highlight class="normal"></highlight></codeline>
+<codeline lineno="49"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>True<sp/>on<sp/>the<sp/>last<sp/>outer<sp/>pass:<sp/>converged_<sp/>||<sp/>(corr_<sp/>==<sp/>nOuterCorr_).<sp/>Drives<sp/>*Final</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="50"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>relaxation<sp/>factors<sp/>+<sp/>&lt;field&gt;Final<sp/>solver<sp/>subdict<sp/>selection<sp/>(pimpleControlI.H:92-95).</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="51" refid="classNeoFOAM_1_1PimpleControl_1ac660bdfb39e8b40006e90747c3344340" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>[[nodiscard]]<sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1PimpleControl_1ac660bdfb39e8b40006e90747c3344340" kindref="member">finalIter</ref>()<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="52"><highlight class="normal"></highlight></codeline>
+<codeline lineno="53"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>True<sp/>on<sp/>the<sp/>first<sp/>outer<sp/>pass<sp/>(corr_<sp/>==<sp/>1)<sp/>—<sp/>convergence<sp/>is<sp/>never<sp/>checked<sp/>here.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="54" refid="classNeoFOAM_1_1PimpleControl_1a677d00c48cd57069d5be20311c63b985" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>[[nodiscard]]<sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1PimpleControl_1a677d00c48cd57069d5be20311c63b985" kindref="member">firstIter</ref>()<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="55"><highlight class="normal"></highlight></codeline>
+<codeline lineno="56"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Call<sp/>once<sp/>per<sp/>outer<sp/>pass.<sp/>`residuals`<sp/>holds<sp/>the<sp/>{init,final}<sp/>residuals<sp/>from<sp/>the<sp/>PREVIOUS</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="57"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>pass.<sp/>Returns<sp/>true<sp/>while<sp/>another<sp/>outer<sp/>corrector<sp/>should<sp/>run;<sp/>false<sp/>when<sp/>the<sp/>loop<sp/>is<sp/>done</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="58"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>(count<sp/>exhausted<sp/>OR<sp/>residual<sp/>criteria<sp/>satisfied<sp/>after<sp/>the<sp/>extra<sp/>final<sp/>pass).</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="59" refid="classNeoFOAM_1_1PimpleControl_1a8a9e4057eb5c5f0aa8092abbcf206f08" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1PimpleControl_1a8a9e4057eb5c5f0aa8092abbcf206f08" kindref="member">loop</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1ad7da788dc1fc4af69c98dea808d84073" kindref="member">ResidualMap</ref>&amp;<sp/>residuals);</highlight></codeline>
+<codeline lineno="60"><highlight class="normal"></highlight></codeline>
+<codeline lineno="61" refid="classNeoFOAM_1_1PimpleControl_1aac1eb191e38541183d21cfd0dce539bb" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>[[nodiscard]]<sp/>NeoN::label<sp/><ref refid="classNeoFOAM_1_1PimpleControl_1aac1eb191e38541183d21cfd0dce539bb" kindref="member">nOuterCorrectors</ref>()</highlight><highlight class="keyword"><sp/>const<sp/></highlight><highlight class="normal">{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>nOuterCorr_;<sp/>}</highlight></codeline>
+<codeline lineno="62"><highlight class="normal"></highlight></codeline>
+<codeline lineno="63"><highlight class="normal"></highlight><highlight class="keyword">private</highlight><highlight class="normal">:</highlight></codeline>
+<codeline lineno="64"><highlight class="normal"></highlight></codeline>
+<codeline lineno="65"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>criteriaSatisfied(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1ad7da788dc1fc4af69c98dea808d84073" kindref="member">ResidualMap</ref>&amp;<sp/>residuals);</highlight></codeline>
+<codeline lineno="66"><highlight class="normal"></highlight></codeline>
+<codeline lineno="67"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">FieldCtrl</highlight></codeline>
+<codeline lineno="68"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="69"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>std::string<sp/>name;</highlight></codeline>
+<codeline lineno="70"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>NeoN::scalar<sp/>absTol;</highlight></codeline>
+<codeline lineno="71"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>NeoN::scalar<sp/>relTol;</highlight></codeline>
+<codeline lineno="72"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>NeoN::scalar<sp/>initialResidual;</highlight></codeline>
+<codeline lineno="73"><highlight class="normal"><sp/><sp/><sp/><sp/>};</highlight></codeline>
+<codeline lineno="74"><highlight class="normal"></highlight></codeline>
+<codeline lineno="75"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::label<sp/>nOuterCorr_<sp/>=<sp/>1;</highlight></codeline>
+<codeline lineno="76"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::label<sp/>corr_<sp/>=<sp/>0;</highlight></codeline>
+<codeline lineno="77"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>converged_<sp/>=<sp/></highlight><highlight class="keyword">false</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="78"><highlight class="normal"><sp/><sp/><sp/><sp/>std::vector&lt;FieldCtrl&gt;<sp/>residualControl_;</highlight></codeline>
+<codeline lineno="79"><highlight class="normal">};</highlight></codeline>
+<codeline lineno="80"><highlight class="normal"></highlight></codeline>
+<codeline lineno="81"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>NeoFOAM</highlight><highlight class="normal"></highlight></codeline>
+    </programlisting>
+    <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/solutionControl/pimpleControl.hpp"/>
+  </compounddef>
+</doxygen>

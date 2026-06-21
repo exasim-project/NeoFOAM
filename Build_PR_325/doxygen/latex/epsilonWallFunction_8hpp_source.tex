@@ -1,0 +1,166 @@
+\doxysection{epsilon\+Wall\+Function.\+hpp}
+\hypertarget{epsilonWallFunction_8hpp_source}{}\label{epsilonWallFunction_8hpp_source}\index{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fvcc/boundary/volume/epsilonWallFunction.hpp@{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fvcc/boundary/volume/epsilonWallFunction.hpp}}
+\mbox{\hyperlink{epsilonWallFunction_8hpp}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00001}00001\ \textcolor{comment}{//\ SPDX-\/FileCopyrightText:\ 2026\ NeoFOAM\ authors}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00002}00002\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00003}00003\ \textcolor{comment}{//\ SPDX-\/License-\/Identifier:\ MIT}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00004}00004\ }
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00005}00005\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00006}00006\ }
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00007}00007\ \textcolor{preprocessor}{\#include\ "{}NeoN/fields/field.hpp"{}}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00008}00008\ \textcolor{preprocessor}{\#include\ "{}NeoN/finiteVolume/cellCentred/boundary/boundaryContext.hpp"{}}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00009}00009\ \textcolor{preprocessor}{\#include\ "{}NeoN/finiteVolume/cellCentred/boundary/volumeBoundaryFactory.hpp"{}}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00010}00010\ \textcolor{preprocessor}{\#include\ "{}NeoN/finiteVolume/cellCentred/fields/volumeField.hpp"{}}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00011}00011\ \textcolor{preprocessor}{\#include\ "{}NeoN/mesh/unstructured/unstructuredMesh.hpp"{}}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00012}00012\ \textcolor{preprocessor}{\#include\ "{}NeoN/core/parallelAlgorithms.hpp"{}}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00013}00013\ }
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00014}\mbox{\hyperlink{namespaceNeoN}{00014}}\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary}{NeoN::finiteVolume::cellCentred::volumeBoundary}}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00015}00015\ \{}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00016}00016\ }
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00017}00017\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred}{fvcc}}\ =\ \mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred}{NeoN::finiteVolume::cellCentred}};}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00018}00018\ }
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00019}\mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail}{00019}}\ \textcolor{keyword}{namespace\ }detail}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00020}00020\ \{}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00021}00021\ }
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00022}00022\ \textcolor{comment}{//\ Defaults\ match\ OpenFOAM's\ wallFunctionCoefficients}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00023}00023\ \textcolor{comment}{//\ \ (src/TurbulenceModels/turbulenceModels/derivedFvPatchFields/wallFunctions/}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00024}00024\ \textcolor{comment}{//\ \ \ wallFunction/wallFunctionCoefficients/wallFunctionCoefficients.C:61-\/63).}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00025}\mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_ac4267beb89012123297bdde36c1dd3e5}{00025}}\ \textcolor{keyword}{inline}\ \textcolor{keyword}{constexpr}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ \mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_ac4267beb89012123297bdde36c1dd3e5}{EPSILON\_WF\_DEFAULT\_CMU}}\ =\ 0.09;}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00026}\mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_a89aef11d96966f503aacd3f56379a13b}{00026}}\ \textcolor{keyword}{inline}\ \textcolor{keyword}{constexpr}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ \mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_a89aef11d96966f503aacd3f56379a13b}{EPSILON\_WF\_DEFAULT\_KAPPA}}\ =\ 0.41;}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00027}00027\ }
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00028}00028\ \textcolor{comment}{//\ Applies\ the\ epsilonWallFunction\ kernel\ face-\/by-\/face.}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00029}00029\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00030}00030\ \textcolor{comment}{//\ Mirrors\ Foam::epsilonWallFunctionFvPatchScalarField::calculate()\ for\ the}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00031}00031\ \textcolor{comment}{//\ BINOMIAL\ n=2\ blender\ (the\ upstream\ default)\ and\ updateCoeffs()'s}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00032}00032\ \textcolor{comment}{//\ write-\/back\ step:\ each\ wall\ face\ gets\ a\ blended\ ε\ computed\ from\ the\ adjacent}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00033}00033\ \textcolor{comment}{//\ cell's\ k,\ the\ patch\ face's\ ν,\ and\ the\ cell-\/to-\/wall\ distance\ y.}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00034}00034\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00035}00035\ \textcolor{comment}{//\ \ \ ε\_vis\ =\ 2\ ·\ k\ ·\ ν\ /\ y²\ \ \ \ \ \ \ \ \ \ \ \ \ \ (viscous-\/sublayer\ estimate)}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00036}00036\ \textcolor{comment}{//\ \ \ ε\_log\ =\ C\_µ\string^0.75\ ·\ k\string^1.5\ /\ (κ\ ·\ y)\ \ (log-\/layer\ estimate)}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00037}00037\ \textcolor{comment}{//\ \ \ ε\_w\ \ \ =\ √(ε\_vis²\ +\ ε\_log²)\ \ \ \ \ \ \ \ \ \ (BINOMIAL\ n=2\ blend)}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00038}00038\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00039}00039\ \textcolor{comment}{//\ Only\ sets\ the\ wall\ face\ value;\ does\ NOT\ stomp\ epsilon.internal[wall\_cell].}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00040}00040\ \textcolor{comment}{//\ See\ the\ longer\ note\ in\ omegaWallFunction.hpp\ on\ why\ an\ internal-\/cell\ write}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00041}00041\ \textcolor{comment}{//\ without\ OF's\ setValues\ hook\ would\ only\ do\ harm.}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00042}\mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_a120167fa099bf5cc1dacc7367e1cc66e}{00042}}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_a120167fa099bf5cc1dacc7367e1cc66e}{setEpsilonWallFunction}}(}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00043}00043\ \ \ \ \ Field<scalar>\&\ epsilon,}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00044}00044\ \ \ \ \ \textcolor{keyword}{const}\ fvcc::VolumeField<scalar>\&\ k,}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00045}00045\ \ \ \ \ \textcolor{keyword}{const}\ fvcc::VolumeField<scalar>\&\ nu,}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00046}00046\ \ \ \ \ \textcolor{keyword}{const}\ fvcc::VolumeField<scalar>\&\ nearWallDist,}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00047}00047\ \ \ \ \ \textcolor{keyword}{const}\ UnstructuredMesh\&\ mesh,}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00048}00048\ \ \ \ \ std::pair<localIdx,\ localIdx>\ range,}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00049}00049\ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ Cmu,}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00050}00050\ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ kappa}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00051}00051\ )}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00052}00052\ \{}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00053}00053\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ Cmu75\ =\ Kokkos::pow(Cmu,\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}(0.75));}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00054}00054\ }
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00055}00055\ \ \ \ \ \textcolor{keyword}{auto}\ kInternal\ =\ k.internalVector().view();}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00056}00056\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ nuBoundary\ =\ nu.boundaryData().value().view();}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00057}00057\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ nearWallBoundary\ =\ nearWallDist.boundaryData().value().view();}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00058}00058\ }
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00059}00059\ \ \ \ \ \textcolor{keyword}{auto}\ [refGrad,\ value,\ valueFraction,\ refValue,\ faceOwners]\ =\ views(}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00060}00060\ \ \ \ \ \ \ \ \ epsilon.boundaryData().refGrad(),}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00061}00061\ \ \ \ \ \ \ \ \ epsilon.boundaryData().value(),}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00062}00062\ \ \ \ \ \ \ \ \ epsilon.boundaryData().valueFraction(),}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00063}00063\ \ \ \ \ \ \ \ \ epsilon.boundaryData().refValue(),}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00064}00064\ \ \ \ \ \ \ \ \ mesh.boundaryMesh().faceOwners()}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00065}00065\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00066}00066\ }
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00067}00067\ \ \ \ \ NeoN::parallelFor(}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00068}00068\ \ \ \ \ \ \ \ \ epsilon.exec(),}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00069}00069\ \ \ \ \ \ \ \ \ range,}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00070}00070\ \ \ \ \ \ \ \ \ NEON\_LAMBDA(\textcolor{keyword}{const}\ localIdx\ i)\ \{}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00071}00071\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ localIdx\ owner\ =\ faceOwners[i];}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00072}00072\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ y\ =\ nearWallBoundary[i];}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00073}00073\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ nuw\ =\ nuBoundary[i];}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00074}00074\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ kw\ =\ Kokkos::max(kInternal[owner],\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}(0));}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00075}00075\ }
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00076}00076\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ eVis\ =\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}(2)\ *\ kw\ *\ nuw\ /\ (y\ *\ y);}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00077}00077\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ eLog\ =\ Cmu75\ *\ Kokkos::pow(kw,\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}(1.5))\ /\ (kappa\ *\ y);}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00078}00078\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ eOmega\ =\ Kokkos::sqrt(eVis\ *\ eVis\ +\ eLog\ *\ eLog);}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00079}00079\ }
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00080}00080\ \ \ \ \ \ \ \ \ \ \ \ \ value[i]\ =\ eOmega;}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00081}00081\ \ \ \ \ \ \ \ \ \ \ \ \ refValue[i]\ =\ eOmega;}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00082}00082\ \ \ \ \ \ \ \ \ \ \ \ \ valueFraction[i]\ =\ 1.0;}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00083}00083\ \ \ \ \ \ \ \ \ \ \ \ \ refGrad[i]\ =\ 0.0;}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00084}00084\ \ \ \ \ \ \ \ \ \},}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00085}00085\ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}setEpsilonWallFunction"{}}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00086}00086\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00087}00087\ \}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00088}00088\ }
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00089}00089\ \}\ \textcolor{comment}{//\ namespace\ detail}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00090}00090\ }
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00091}00091\ \textcolor{comment}{//\ Mirrors\ Foam::epsilonWallFunctionFvPatchScalarField}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00092}00092\ \textcolor{comment}{//\ \ \ (src/TurbulenceModels/turbulenceModels/derivedFvPatchFields/wallFunctions/}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00093}00093\ \textcolor{comment}{//\ \ \ \ epsilonWallFunctions/epsilonWallFunction/epsilonWallFunctionFvPatchScalarField.\{H,C\}).}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00094}00094\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00095}00095\ \textcolor{comment}{//\ Single-\/patch-\/corner\ only:\ each\ wall\ cell\ is\ assumed\ to\ see\ at\ most\ one}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00096}00096\ \textcolor{comment}{//\ wall-\/function\ face\ (cornerWeights\ ==\ 1).\ The\ G\ production-\/term\ feedback\ that}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00097}00097\ \textcolor{comment}{//\ upstream's\ updateCoeffs()\ also\ performs\ is\ not\ handled\ here\ —\ the\ parent}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00098}00098\ \textcolor{comment}{//\ kEpsilon\ model\ writes\ that\ source\ via\ its\ own\ G-\/feedback\ step,\ mirroring}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00099}00099\ \textcolor{comment}{//\ the\ same\ pattern\ KOmegaSST\ uses\ for\ omegaWallFunction.}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00100}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction}{00100}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction}{EpsilonWallFunction}}\ :}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00101}00101\ \ \ \ \ \textcolor{keyword}{public}\ VolumeBoundaryFactory<scalar>::template\ Register<EpsilonWallFunction>}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00102}00102\ \{}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00103}00103\ \ \ \ \ \textcolor{keyword}{using\ }Base\ =\ VolumeBoundaryFactory<scalar>::template\ Register<EpsilonWallFunction>;}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00104}00104\ }
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00105}00105\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00106}00106\ }
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00107}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_a66584fed9edc0d4e67a28f786a6b0688}{00107}}\ \ \ \ \ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_a66584fed9edc0d4e67a28f786a6b0688}{EpsilonWallFunction}}(\textcolor{keyword}{const}\ UnstructuredMesh\&\ mesh,\ \textcolor{keyword}{const}\ Dictionary\&\ dict,\ localIdx\ patchID)}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00108}00108\ \ \ \ \ \ \ \ \ :\ Base(mesh,\ dict,\ patchID,\ \{.assignable\ =\ \textcolor{keyword}{false},\ .fixesValue\ =\ \textcolor{keyword}{true}\})}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00109}00109\ \ \ \ \ \ \ \ \ ,\ mesh\_(mesh)}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00110}00110\ \ \ \ \ \ \ \ \ ,\ Cmu\_(dict.contains(\textcolor{stringliteral}{"{}Cmu"{}})\ ?\ dict.get<\mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}>(\textcolor{stringliteral}{"{}Cmu"{}})\ :\ detail::EPSILON\_WF\_DEFAULT\_CMU)}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00111}00111\ \ \ \ \ \ \ \ \ ,\ kappa\_(}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00112}00112\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dict.contains(\textcolor{stringliteral}{"{}kappa"{}})\ ?\ dict.get<\mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}>(\textcolor{stringliteral}{"{}kappa"{}})\ :\ detail::EPSILON\_WF\_DEFAULT\_KAPPA}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00113}00113\ \ \ \ \ \ \ \ \ \ \ )}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00114}00114\ \ \ \ \ \{\}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00115}00115\ }
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00116}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_a21b56c23d368f4a3946661ebc3c999ec}{00116}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_a21b56c23d368f4a3946661ebc3c999ec}{correctBoundaryCondition}}(Field<scalar>\&\ \textcolor{comment}{/*domainVector*/})\ \textcolor{keyword}{final}\ \{\}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00117}00117\ }
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00118}00118\ \ \ \ \ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00119}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_ac881a0673c9824b0d1d571a410ff3974}{00119}}\ \ \ \ \ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_ac881a0673c9824b0d1d571a410ff3974}{correctBoundaryCondition}}(Field<scalar>\&\ domainVector,\ \textcolor{keyword}{const}\ fvcc::BoundaryContext\&\ ctx)\ \textcolor{keyword}{final}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00120}00120\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00121}00121\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_a120167fa099bf5cc1dacc7367e1cc66e}{detail::setEpsilonWallFunction}}(}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00122}00122\ \ \ \ \ \ \ \ \ \ \ \ \ domainVector,}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00123}00123\ \ \ \ \ \ \ \ \ \ \ \ \ ctx.scalarFieldPtr(\textcolor{stringliteral}{"{}k"{}}),}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00124}00124\ \ \ \ \ \ \ \ \ \ \ \ \ ctx.scalarFieldPtr(\textcolor{stringliteral}{"{}nu"{}}),}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00125}00125\ \ \ \ \ \ \ \ \ \ \ \ \ ctx.scalarFieldPtr(\textcolor{stringliteral}{"{}nearWallDist"{}}),}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00126}00126\ \ \ \ \ \ \ \ \ \ \ \ \ mesh\_,}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00127}00127\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>range(),}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00128}00128\ \ \ \ \ \ \ \ \ \ \ \ \ Cmu\_,}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00129}00129\ \ \ \ \ \ \ \ \ \ \ \ \ kappa\_}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00130}00130\ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00131}00131\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00132}00132\ }
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00133}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_a627e2ba4083335bc6ce5364db8071cc9}{00133}}\ \ \ \ \ \textcolor{keyword}{static}\ std::string\ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_a627e2ba4083335bc6ce5364db8071cc9}{name}}()\ \{\ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}epsilonWallFunction"{}};\ \}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00134}00134\ }
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00135}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_aaa6fc5a70d6d70cae3216e5175130668}{00135}}\ \ \ \ \ std::string\ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_aaa6fc5a70d6d70cae3216e5175130668}{getName}}()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_a627e2ba4083335bc6ce5364db8071cc9}{name}}();\ \}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00136}00136\ }
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00137}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_a1fd258b17e01ac9b36e63d3f68b5ad97}{00137}}\ \ \ \ \ \textcolor{keyword}{static}\ std::string\ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_a1fd258b17e01ac9b36e63d3f68b5ad97}{doc}}()}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00138}00138\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00139}00139\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}Dissipation\ rate\ wall\ function.\ Blends\ viscous\ "{}}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00140}00140\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}(2νk/y²)\ and\ log-\/layer\ (C\_µ\string^0.75·k\string^1.5/(κ·y))\ ε\ contributions\ "{}}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00141}00141\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}with\ the\ BINOMIAL\ n=2\ blender\ (upstream\ default)\ and\ sets\ the\ "{}}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00142}00142\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}wall\ face\ value.\ Does\ NOT\ overwrite\ the\ wall\ cell\ internal\ "{}}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00143}00143\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}value.\ Single-\/patch-\/corner\ only;\ G\ is\ fed\ back\ through\ kEpsilon."{}};}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00144}00144\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00145}00145\ }
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00146}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_a4307a8fbf0f0201117e37f779fe40897}{00146}}\ \ \ \ \ \textcolor{keyword}{static}\ std::string\ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_a4307a8fbf0f0201117e37f779fe40897}{schema}}()\ \{\ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}none"{}};\ \}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00147}00147\ }
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00148}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_a39c1d2d68c637fdc71dad61705f893df}{00148}}\ \ \ \ \ std::unique\_ptr<VolumeBoundaryFactory<scalar>>\ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_a39c1d2d68c637fdc71dad61705f893df}{clone}}()\ const\ final}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00149}00149\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00150}00150\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::make\_unique<EpsilonWallFunction>(*\textcolor{keyword}{this});}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00151}00151\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00152}00152\ }
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00153}00153\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00154}00154\ }
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00155}00155\ \ \ \ \ \textcolor{keyword}{const}\ UnstructuredMesh\&\ mesh\_;}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00156}00156\ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ Cmu\_;}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00157}00157\ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ kappa\_;}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00158}00158\ \};}
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00159}00159\ }
+\DoxyCodeLine{\Hypertarget{epsilonWallFunction_8hpp_source_l00160}00160\ \}\ \textcolor{comment}{//\ namespace\ NeoN::finiteVolume::cellCentred::volumeBoundary}}
+
+\end{DoxyCode}

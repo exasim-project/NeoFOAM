@@ -1,0 +1,149 @@
+\doxysection{k\+Omega\+SST.\+hpp}
+\hypertarget{kOmegaSST_8hpp_source}{}\label{kOmegaSST_8hpp_source}\index{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/turbulenceModels/kOmegaSST.hpp@{/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/turbulenceModels/kOmegaSST.hpp}}
+\mbox{\hyperlink{kOmegaSST_8hpp}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00001}00001\ \textcolor{comment}{//\ SPDX-\/License-\/Identifier:\ GPL-\/3.0-\/or-\/later}}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00002}00002\ \textcolor{comment}{//\ SPDX-\/FileCopyrightText:\ 2025\ NeoFOAM\ authors}}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00003}00003\ }
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00004}00004\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00005}00005\ }
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00006}00006\ \textcolor{preprocessor}{\#include\ "{}NeoN/NeoN.hpp"{}}}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00007}00007\ }
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00008}00008\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{pdeSolver_8hpp}{NeoFOAM/datastructures/pdeSolver.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00009}00009\ }
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00010}00010\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred}{nnfvcc}}\ =\ \mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred}{NeoN::finiteVolume::cellCentred}};}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00011}\mbox{\hyperlink{kOmegaSST_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{00011}}\ \textcolor{keyword}{using\ }\mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ =\ NeoN::scalar;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00012}\mbox{\hyperlink{kOmegaSST_8hpp_ae261b7f2859c508a432e8a334ad179d2}{00012}}\ \textcolor{keyword}{using\ }\mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}}\ =\ NeoN::Vec3;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00013}00013\ }
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00014}00014\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceNeoFOAM}{NeoFOAM}}}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00015}00015\ \{}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00016}00016\ }
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00029}\mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST}{00029}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST}{KOmegaSST}}}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00030}00030\ \{}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00031}00031\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00032}00032\ }
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00033}\mbox{\hyperlink{structNeoFOAM_1_1KOmegaSST_1_1Coefficients}{00033}}\ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structNeoFOAM_1_1KOmegaSST_1_1Coefficients}{Coefficients}}}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00034}00034\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00035}\mbox{\hyperlink{structNeoFOAM_1_1KOmegaSST_1_1Coefficients_a191acdd48b1cc889261ff8d5b73a7ead}{00035}}\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ \mbox{\hyperlink{structNeoFOAM_1_1KOmegaSST_1_1Coefficients_a191acdd48b1cc889261ff8d5b73a7ead}{alphaK1}}\ =\ 0.85;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00036}\mbox{\hyperlink{structNeoFOAM_1_1KOmegaSST_1_1Coefficients_aca01f7c6d3579cfe15badd94525ea923}{00036}}\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ \mbox{\hyperlink{structNeoFOAM_1_1KOmegaSST_1_1Coefficients_aca01f7c6d3579cfe15badd94525ea923}{alphaK2}}\ =\ 1.0;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00037}\mbox{\hyperlink{structNeoFOAM_1_1KOmegaSST_1_1Coefficients_ab5f7fc45a3778316b3f7f581a57595bc}{00037}}\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ \mbox{\hyperlink{structNeoFOAM_1_1KOmegaSST_1_1Coefficients_ab5f7fc45a3778316b3f7f581a57595bc}{alphaOmega1}}\ =\ 0.5;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00038}\mbox{\hyperlink{structNeoFOAM_1_1KOmegaSST_1_1Coefficients_a943434a37d0a4e1473892ec638a1789e}{00038}}\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ \mbox{\hyperlink{structNeoFOAM_1_1KOmegaSST_1_1Coefficients_a943434a37d0a4e1473892ec638a1789e}{alphaOmega2}}\ =\ 0.856;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00039}\mbox{\hyperlink{structNeoFOAM_1_1KOmegaSST_1_1Coefficients_af8054138f1e7fd205e9f7b6460c42fe8}{00039}}\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ \mbox{\hyperlink{structNeoFOAM_1_1KOmegaSST_1_1Coefficients_af8054138f1e7fd205e9f7b6460c42fe8}{gamma1}}\ =\ 5.0\ /\ 9.0;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00040}\mbox{\hyperlink{structNeoFOAM_1_1KOmegaSST_1_1Coefficients_a74767f9bf9d4c21837c064086551aa73}{00040}}\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ \mbox{\hyperlink{structNeoFOAM_1_1KOmegaSST_1_1Coefficients_a74767f9bf9d4c21837c064086551aa73}{gamma2}}\ =\ 0.44;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00041}\mbox{\hyperlink{structNeoFOAM_1_1KOmegaSST_1_1Coefficients_a594cd2c4f78d290ae6d075ad8db51bb5}{00041}}\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ \mbox{\hyperlink{structNeoFOAM_1_1KOmegaSST_1_1Coefficients_a594cd2c4f78d290ae6d075ad8db51bb5}{beta1}}\ =\ 0.075;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00042}\mbox{\hyperlink{structNeoFOAM_1_1KOmegaSST_1_1Coefficients_a8671e355704d5b197767e10cd016b8de}{00042}}\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ \mbox{\hyperlink{structNeoFOAM_1_1KOmegaSST_1_1Coefficients_a8671e355704d5b197767e10cd016b8de}{beta2}}\ =\ 0.0828;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00043}\mbox{\hyperlink{structNeoFOAM_1_1KOmegaSST_1_1Coefficients_a256cfe04c9f7c6662ba0d43c28ee33ea}{00043}}\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ \mbox{\hyperlink{structNeoFOAM_1_1KOmegaSST_1_1Coefficients_a256cfe04c9f7c6662ba0d43c28ee33ea}{betaStar}}\ =\ 0.09;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00044}\mbox{\hyperlink{structNeoFOAM_1_1KOmegaSST_1_1Coefficients_a8fe91d4dec0b7fddee66e45e54c464d6}{00044}}\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ \mbox{\hyperlink{structNeoFOAM_1_1KOmegaSST_1_1Coefficients_a8fe91d4dec0b7fddee66e45e54c464d6}{a1}}\ =\ 0.31;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00045}\mbox{\hyperlink{structNeoFOAM_1_1KOmegaSST_1_1Coefficients_a2f38982582836f0936bab3b218a46753}{00045}}\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ \mbox{\hyperlink{structNeoFOAM_1_1KOmegaSST_1_1Coefficients_a2f38982582836f0936bab3b218a46753}{b1}}\ =\ 1.0;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00046}\mbox{\hyperlink{structNeoFOAM_1_1KOmegaSST_1_1Coefficients_a31516dcc69d6cfc8a6a18d3a99d90383}{00046}}\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ \mbox{\hyperlink{structNeoFOAM_1_1KOmegaSST_1_1Coefficients_a31516dcc69d6cfc8a6a18d3a99d90383}{c1}}\ =\ 10.0;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00047}00047\ \ \ \ \ \};}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00048}00048\ }
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00057}\mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_abbf17dd80fdb2a06824694d5f4ba9154}{00057}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_abbf17dd80fdb2a06824694d5f4ba9154}{KOmegaSST}}(}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00058}00058\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ NeoN::Executor\&\ exec,}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00059}00059\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ NeoN::UnstructuredMesh\&\ mesh,}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00060}00060\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<scalar>\&\ nu,}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00061}00061\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<scalar>\&\ wallDist}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00062}00062\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00063}00063\ }
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00074}\mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_a8731bdfb6db9771ba813d4ee039da8e9}{00074}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_a8731bdfb6db9771ba813d4ee039da8e9}{validate}}(}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00075}00075\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<Vec3>\&\ U,}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00076}00076\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<scalar>\&\ k,}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00077}00077\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<scalar>\&\ omega,}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00078}00078\ \ \ \ \ \ \ \ \ nnfvcc::VolumeField<scalar>\&\ nut}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00079}00079\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00080}00080\ }
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00093}\mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_a700c93859285ffe8fced126b0d3006f5}{00093}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_a700c93859285ffe8fced126b0d3006f5}{correct}}(}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00094}00094\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<Vec3>\&\ U,}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00095}00095\ \ \ \ \ \ \ \ \ nnfvcc::SurfaceField<scalar>\&\ phi,}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00096}00096\ \ \ \ \ \ \ \ \ nnfvcc::VolumeField<scalar>\&\ k,}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00097}00097\ \ \ \ \ \ \ \ \ nnfvcc::VolumeField<scalar>\&\ omega,}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00098}00098\ \ \ \ \ \ \ \ \ nnfvcc::VolumeField<scalar>\&\ nut,}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00099}00099\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{RunTime}}\&\ rt}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00100}00100\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00101}00101\ }
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00103}\mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_af2a6a40c34f11192d96a8fc190c3c870}{00103}}\ \ \ \ \ nnfvcc::SurfaceField<scalar>\&\ \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_af2a6a40c34f11192d96a8fc190c3c870}{nuEff}}();}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00104}00104\ }
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00106}\mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_a5828f34c8e7ddb31c6afb57dc80050a8}{00106}}\ \ \ \ \ nnfvcc::SurfaceField<scalar>\&\ \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_a5828f34c8e7ddb31c6afb57dc80050a8}{DkEff}}();}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00107}00107\ }
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00109}\mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_ab15ec83e211de72fd0930c6425802ebc}{00109}}\ \ \ \ \ nnfvcc::SurfaceField<scalar>\&\ \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_ab15ec83e211de72fd0930c6425802ebc}{DomegaEff}}();}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00110}00110\ }
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00112}\mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_a59eba8a7042ff85269b2d8205f108b7a}{00112}}\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<NeoN::Tensor>\&\ \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_a59eba8a7042ff85269b2d8205f108b7a}{gradU}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00113}00113\ }
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00119}\mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_a39f6d28bbbf7655ba369911d6f90709c}{00119}}\ \ \ \ \ NeoN::Vector<NeoN::SymmTensor>\ \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_a39f6d28bbbf7655ba369911d6f90709c}{devRhoReff}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00120}00120\ }
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00122}\mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_aaa26f6b2ff0a0cf362d3338233cee39d}{00122}}\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structNeoFOAM_1_1KOmegaSST_1_1Coefficients}{Coefficients}}\&\ \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_aaa26f6b2ff0a0cf362d3338233cee39d}{coeffs}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ coeffs\_;\ \}}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00123}00123\ }
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00124}00124\ \ \ \ \ \textcolor{comment}{//\ Internal\ result\ fields\ —\ read-\/only\ access\ for\ testing/inspection}}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00125}\mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_acd952a5b2fe2f35c4c449a94e8d6a9be}{00125}}\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<scalar>\&\ \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_acd952a5b2fe2f35c4c449a94e8d6a9be}{F1Field}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ F1\_;\ \}}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00126}\mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_a00c5b263a4d923e68d01767a5a2f6cfd}{00126}}\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<scalar>\&\ \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_a00c5b263a4d923e68d01767a5a2f6cfd}{PkField}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ Pk\_;\ \}}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00127}\mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_ab9773af332df7754762363eef11381a5}{00127}}\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<scalar>\&\ \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_ab9773af332df7754762363eef11381a5}{spKField}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ spK\_;\ \}}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00128}\mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_a4575863206a00bd6bde5e2c0ebf839b4}{00128}}\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<scalar>\&\ \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_a4575863206a00bd6bde5e2c0ebf839b4}{omegaSourceField}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ omegaSource\_;\ \}}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00129}\mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_aa662abe259d497281375c1dfe233792a}{00129}}\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<scalar>\&\ \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_aa662abe259d497281375c1dfe233792a}{spOmegaField}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ spOmega\_;\ \}}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00130}00130\ }
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00131}00131\ \ \ \ \ \textcolor{comment}{//\ Physics\ kernels\ —\ public\ to\ allow\ unit-\/testing\ of\ individual\ steps}}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00132}00132\ }
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00139}\mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_a016a735a33d7a93e62ccd0e566d507d7}{00139}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_a016a735a33d7a93e62ccd0e566d507d7}{computeF1AndSources}}(}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00140}00140\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<scalar>\&\ k,}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00141}00141\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<scalar>\&\ omega,}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00142}00142\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<scalar>\&\ nut,}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00143}00143\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<Vec3>\&\ gradK,}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00144}00144\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<Vec3>\&\ gradOmega,}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00145}00145\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<NeoN::Tensor>\&\ \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_a59eba8a7042ff85269b2d8205f108b7a}{gradU}}}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00146}00146\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00147}00147\ }
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00153}\mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_a2ee8df7bd15c58d68c63a5506708e571}{00153}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_a2ee8df7bd15c58d68c63a5506708e571}{correctNutInternal}}(}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00154}00154\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<scalar>\&\ k,}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00155}00155\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<scalar>\&\ omega,}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00156}00156\ \ \ \ \ \ \ \ \ nnfvcc::VolumeField<scalar>\&\ nut}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00157}00157\ \ \ \ \ )\ \textcolor{keyword}{const};}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00158}00158\ }
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00165}\mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_a51802407e31708f1d17d7f5a82dde61f}{00165}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_a51802407e31708f1d17d7f5a82dde61f}{calcDiffusivities}}(\textcolor{keyword}{const}\ nnfvcc::VolumeField<scalar>\&\ nut);}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00166}00166\ }
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00167}00167\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00168}00168\ }
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00169}00169\ \ \ \ \ NeoN::Executor\ exec\_;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00170}00170\ \ \ \ \ \textcolor{keyword}{const}\ NeoN::UnstructuredMesh\&\ mesh\_;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00171}00171\ }
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00172}00172\ \ \ \ \ \textcolor{comment}{//\ Constant\ physics\ inputs\ (held\ by\ reference\ —\ must\ outlive\ this\ object)}}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00173}00173\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<scalar>\&\ nu\_;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00174}00174\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<scalar>\&\ wallDist\_;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00175}00175\ }
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00176}00176\ \ \ \ \ \textcolor{comment}{//\ Per-\/boundary-\/face\ cell-\/to-\/wall\ distance\ —\ populated\ in\ the\ constructor}}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00177}00177\ \ \ \ \ \textcolor{comment}{//\ by\ copying\ wallDist\_'s\ owner-\/cell\ internal\ value\ into\ each\ boundary}}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00178}00178\ \ \ \ \ \textcolor{comment}{//\ face's\ slot.\ Inserted\ into\ BoundaryContext\ under\ the\ name\ "{}nearWallDist"{}}}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00179}00179\ \ \ \ \ \textcolor{comment}{//\ so\ omegaWallFunction\ /\ nutUSpaldingWallFunction\ get\ a\ non-\/zero\ y\ at\ the}}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00180}00180\ \ \ \ \ \textcolor{comment}{//\ wall\ (wallDist\_'s\ own\ boundary\ values\ are\ ≈\ 0\ on\ a\ wall\ patch,\ which}}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00181}00181\ \ \ \ \ \textcolor{comment}{//\ would\ let\ ω\_vis\ =\ 6ν/(β₁y²)\ explode).}}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00182}00182\ \ \ \ \ nnfvcc::VolumeField<scalar>\ nearWallDist\_;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00183}00183\ }
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00184}00184\ \ \ \ \ \textcolor{comment}{//\ Cached\ face-\/interpolated\ nu\ (computed\ once\ in\ constructor)}}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00185}00185\ \ \ \ \ nnfvcc::SurfaceField<scalar>\ surfNu\_;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00186}00186\ }
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00187}00187\ \ \ \ \ \textcolor{comment}{//\ Intermediate\ volume\ fields}}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00188}00188\ \ \ \ \ nnfvcc::VolumeField<NeoN::Tensor>\ gradU\_;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00189}00189\ \ \ \ \ nnfvcc::VolumeField<Vec3>\ gradK\_;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00190}00190\ \ \ \ \ nnfvcc::VolumeField<Vec3>\ gradOmega\_;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00191}00191\ \ \ \ \ nnfvcc::VolumeField<scalar>\ F1\_;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00192}00192\ \ \ \ \ nnfvcc::VolumeField<scalar>\ Pk\_;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00193}00193\ \ \ \ \ nnfvcc::VolumeField<scalar>\ spK\_;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00194}00194\ \ \ \ \ nnfvcc::VolumeField<scalar>\ omegaSource\_;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00195}00195\ \ \ \ \ nnfvcc::VolumeField<scalar>\ spOmega\_;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00196}00196\ }
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00197}00197\ \ \ \ \ \textcolor{comment}{//\ Surface\ fields}}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00198}00198\ \ \ \ \ nnfvcc::SurfaceField<scalar>\ surfNut\_;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00199}00199\ \ \ \ \ nnfvcc::SurfaceField<scalar>\ surfF1\_;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00200}00200\ \ \ \ \ nnfvcc::SurfaceField<scalar>\ nuEff\_;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00201}00201\ \ \ \ \ nnfvcc::SurfaceField<scalar>\ DkEffF\_;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00202}00202\ \ \ \ \ nnfvcc::SurfaceField<scalar>\ DomegaEffF\_;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00203}00203\ }
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00204}00204\ \ \ \ \ \textcolor{comment}{//\ Cached\ operators\ (constructed\ once)}}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00205}00205\ \ \ \ \ nnfvcc::GaussGreenGrad\ gradOp\_;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00206}00206\ \ \ \ \ nnfvcc::SurfaceInterpolation<scalar>\ surfInterp\_;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00207}00207\ }
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00208}00208\ \ \ \ \ \textcolor{comment}{//\ Model\ coefficients}}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00209}00209\ \ \ \ \ \mbox{\hyperlink{structNeoFOAM_1_1KOmegaSST_1_1Coefficients}{Coefficients}}\ coeffs\_;}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00210}00210\ \};}
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00211}00211\ }
+\DoxyCodeLine{\Hypertarget{kOmegaSST_8hpp_source_l00212}00212\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
+
+\end{DoxyCode}
