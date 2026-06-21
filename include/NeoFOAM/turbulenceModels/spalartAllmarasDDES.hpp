@@ -6,6 +6,7 @@
 #include "NeoN/NeoN.hpp"
 
 #include "NeoFOAM/datastructures/pdeSolver.hpp"
+#include "NeoFOAM/turbulenceModels/turbulenceModel.hpp"
 
 namespace nnfvcc = NeoN::finiteVolume::cellCentred;
 using scalar = NeoN::scalar;
@@ -15,21 +16,27 @@ namespace NeoFOAM
 {
 
 /**
- * @brief NeoFOAM-level wrapper for the Spalart-Allmaras DDES turbulence model.
+ * @brief Spalart-Allmaras DDES turbulence model.
  *
- * Mirrors the OpenFOAM turbulence->validate() / turbulence->correct() interface.
- * Owns all intermediate fields and cached operators so the solver only needs to
- * manage the primary fields (nuTilda, nut) and call validate() once at setup and
- * correct() after each momentum solve.
+ * Registered under the key "SpalartAllmarasDDES" in the TurbulenceModel factory.
  *
- * Two wall-distance fields are required (they are distinct):
- *  - wallDist     : cell-centred distances from Foam::wallDist::y(), used in DDES shielding
- *  - nearWallDist : boundary-face distances from turbulenceModel::y()[patchi], used by
- *                   the nutUSpaldingWallFunction boundary condition
+ * Two distinct wall-distance fields are required:
+ *  - wallDist     : cell-centred distances (Foam::wallDist::y()), for DDES shielding
+ *  - nearWallDist : boundary-face distances (turbulenceModel::y()[patchi]), for wall BCs
+ *
+ * The model owns nuTilda and nut internally.  Call initialize() with disk-read
+ * NeoN fields before the first validate() to seed non-zero initial conditions.
+ * The backward-compatible three-argument validate(U, nuTilda, nut) and
+ * correct(U, phi, nuTilda, nut, rt) overloads are retained for callers that
+ * manage those fields externally (e.g. neoPisoFoam).
  */
-class SpalartAllmarasDDES
+class SpalartAllmarasDDES : public TurbulenceModel::Register<SpalartAllmarasDDES>
 {
 public:
+
+    static std::string name() { return "SpalartAllmarasDDES"; }
+    static std::string doc() { return "Spalart-Allmaras DDES turbulence model"; }
+    static std::string schema() { return "{}"; }
 
     struct Coefficients
     {
@@ -49,14 +56,35 @@ public:
     };
 
     /**
-     * @brief Construct the turbulence model wrapper.
+     * @brief Factory constructor — reads all turbulence infrastructure from RunTime.
      *
-     * @param exec       Kokkos executor (Serial/CPU/GPU)
-     * @param mesh       NeoN unstructured mesh
-     * @param nu         Laminar kinematic viscosity (cell-centred)
-     * @param wallDist   Cell-centred wall distances (Foam::wallDist::y())
-     * @param nearWallDist Boundary-face wall distances (turbulenceModel::y()[patchi])
-     * @param delta      LES filter width (from LESModel::delta())
+     * Maps the nuTilda solver subdict, then computes wallDist/nearWallDist/delta
+     * from the OpenFOAM mesh and reads the initial nuTilda/nut from the current
+     * time directory.
+     */
+    SpalartAllmarasDDES(RunTime& rt, const nnfvcc::VolumeField<scalar>& nu);
+
+    /**
+     * @brief Construct from an explicit MeshAdapter (no RunTime/fvSolution access).
+     *
+     * Computes wallDist, nearWallDist, and delta internally from the mesh, and reads
+     * the initial nuTilda/nut fields from the current time directory.
+     */
+    SpalartAllmarasDDES(
+        const NeoN::Executor& exec,
+        MeshAdapter& mesh,
+        const nnfvcc::VolumeField<scalar>& nu
+    );
+
+    /**
+     * @brief Backward-compatible constructor for callers that supply prebuilt NeoN fields.
+     *
+     * @param exec         Kokkos executor (Serial/CPU/GPU)
+     * @param mesh         NeoN unstructured mesh
+     * @param nu           Laminar kinematic viscosity (cell-centred)
+     * @param wallDist     Cell-centred wall distances (Foam::wallDist::y())
+     * @param nearWallDist Boundary-face wall distances (nearWallDist::y()[patchi])
+     * @param delta        LES filter width (cube root of cell volume or LESModel::delta())
      */
     SpalartAllmarasDDES(
         const NeoN::Executor& exec,
@@ -103,10 +131,27 @@ public:
     );
 
     /// @brief Effective viscosity on faces: nu + nut (for momentum equation laplacian)
-    nnfvcc::SurfaceField<scalar>& nuEff();
+    nnfvcc::SurfaceField<scalar>& nuEff() override;
+
+    /// @brief Turbulent viscosity (model-owned; seeded by initialize())
+    const nnfvcc::VolumeField<scalar>& nut() const override;
 
     /// @brief Velocity gradient tensor (updated each correct() call, for viscousStress term)
-    const nnfvcc::VolumeField<NeoN::Tensor>& gradU() const;
+    const nnfvcc::VolumeField<NeoN::Tensor>& gradU() const override;
+
+    void initialize(
+        const nnfvcc::VolumeField<scalar>& nuTildaInit,
+        const nnfvcc::VolumeField<scalar>& nutInit
+    ) override;
+
+    void validate(const nnfvcc::VolumeField<Vec3>& U) override;
+
+    void correct(const nnfvcc::VolumeField<Vec3>& U, nnfvcc::SurfaceField<scalar>& phi, RunTime& rt)
+        override;
+
+    void rotateOldTimes() override;
+
+    void write(MeshAdapter& mesh) const override;
 
     /**
      * @brief Returns the deviatoric stress at all boundary faces as Vector<SymmTensor>.
@@ -161,26 +206,24 @@ private:
     NeoN::Executor exec_;
     const NeoN::UnstructuredMesh& mesh_;
 
-    // Constant physics inputs (held by reference — must outlive this object)
+    // Laminar viscosity: held by reference — must outlive this object
     const nnfvcc::VolumeField<scalar>& nu_;
-    const nnfvcc::VolumeField<scalar>& wallDist_;
-    const nnfvcc::VolumeField<scalar>& nearWallDist_;
-    const nnfvcc::VolumeField<scalar>& delta_;
+    // Physics inputs owned by the model (copy-constructed from caller or computed from OF mesh)
+    nnfvcc::VolumeField<scalar> wallDist_;
+    nnfvcc::VolumeField<scalar> nearWallDist_;
+    nnfvcc::VolumeField<scalar> delta_;
+
+    // Model-owned transport scalars; seeded by initialize() or default-constructed to zero
+    nnfvcc::VolumeField<scalar> nuTilda_;
+    nnfvcc::VolumeField<scalar> nut_;
 
     // Cached face-interpolated nu (computed once in constructor)
     nnfvcc::SurfaceField<scalar> surfNu_;
 
-    // Persistent intermediate fields that must outlive a single turbulence update. Each carries
-    // state across calls: it is computed at the END of one validate()/correct() and consumed at
-    // the START of the next, so it cannot be a function-local.
-    //  - gradU_      : next step's momentum predictor (viscousStress) and devRhoReff
-    //  - nuEff_      : next step's momentum laplacian coefficient
-    //  - nuTildaEff_ : the nuTilda laplacian coefficient consumed by the nuTilda solve at the
-    //                  start of the NEXT correct() (lagged exactly as OpenFOAM computes DnuTildaEff
-    //                  from the incoming nuTilda — nuTilda is unchanged between calls)
-    // The remaining SA-DDES intermediates (gradNuTilda, magSqrGradNuTilda, production, spCoeff,
-    // surfNut, surfNuTilda) are function-local to validate()/correct() so they do not occupy
-    // device memory during the pressure-solve peak (the run's high-water mark).
+    // Persistent fields carrying state from one correct() call to the next:
+    //  - gradU_      : consumed by the momentum predictor before the next correct() runs
+    //  - nuEff_      : consumed by the momentum laplacian before the next correct() runs
+    //  - nuTildaEff_ : consumed by the nuTilda laplacian at the start of the next correct()
     nnfvcc::VolumeField<NeoN::Tensor> gradU_;
     nnfvcc::SurfaceField<scalar> nuEff_;
     nnfvcc::SurfaceField<scalar> nuTildaEff_;

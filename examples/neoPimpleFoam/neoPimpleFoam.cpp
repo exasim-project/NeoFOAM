@@ -8,33 +8,17 @@ Application
 Description
     Transient incompressible PIMPLE solver (PISO inner correctors inside an outer
     under-relaxed PIMPLE loop), the NeoFOAM/NeoN port of OpenFOAM's pimpleFoam.
-
-    v1 validity envelope:
-
-    IN (supported / validated):
-      - Closed-domain setReference cases (e.g. lid-driven cavity)
-      - Fixed-pressure-outlet cases
-      - Transient BDF1 / BDF2 ddt schemes
-      - CPU-serial execution
-
-    OUT (not supported in v1; deferred to v2):
-      - adjustPhi (fixed-flux inlet/outlet continuity)
-      - constrainPressure (non-orthogonal / rotating pressure BCs)
-      - steadyState / Crank-Nicolson ddt schemes
-      - GPU + MPI distributed parity
 \*---------------------------------------------------------------------------*/
 
 #include "NeoN/NeoN.hpp"
 
 #include "NeoFOAM/NeoFOAM.hpp"
 #include "NeoFOAM/solutionControl/pimpleControl.hpp"
+#include "NeoFOAM/turbulenceModels/turbulenceModel.hpp"
 
 #include "fvCFD.H"
 #include "pisoControl.H"
 #include "singlePhaseTransportModel.H"
-#include "turbulentTransportModel.H"
-#include "wallDist.H"
-#include "LESModel.H"
 
 #include <algorithm>
 #include <cmath>
@@ -47,9 +31,6 @@ using Foam::Info;
 using Foam::endl;
 using Foam::nl;
 
-// NOTE about namespace usage
-// here the namespaces are used deliberately verbose to
-// demonstrate where things are implemented
 namespace fvc = Foam::fvc;
 namespace dsl = NeoN::dsl;
 namespace fvcc = NeoN::finiteVolume::cellCentred;
@@ -59,8 +40,6 @@ namespace nf = NeoFOAM;
 
 int main(int argc, char* argv[])
 {
-// Bring up OpenFOAM (and MPI) before NeoN, matching neoIcoFoam/neoPisoFoam, so the rank
-// is known when NeoN configures logging and the rank-0 muting engages immediately.
 #include "addCheckCaseOptions.H"
 #include "setRootCase.H"
 #include "createTime.H"
@@ -69,39 +48,13 @@ int main(int argc, char* argv[])
         auto rt = nf::createAdapterRunTime(runTime);
         auto& mesh = rt.mesh;
 
-        // Inner pressure-corrector / non-orthogonal corrector counting stays on
-        // Foam::pisoControl: the native-loop rationale is specific to the
-        // residual-fed OUTER loop; the inner loop is pure counting with no residual round-trip.
-        //
-        // MUST read the inner-corrector counts from the "PIMPLE" subdict, NOT the default
-        // "PISO" subdict: OpenFOAM's pimpleFoam puts nCorrectors / nNonOrthogonalCorrectors /
-        // momentumPredictor in PIMPLE (via pimpleControl), and a stock pimpleFoam case (like the
-        // parity fixtures) has no PISO block. With the default "PISO" name pisoControl reads an
-        // absent dict and nCorrectors silently defaults to 1 -> only ONE pressure correction per
-        // step -> the velocity projection is incomplete, continuity grows geometrically, and the
-        // run diverges on a case where pimpleFoam is stable. pisoControl forwards the dictName to
-        // pimpleControl, whose correct() uses nCorrPISO_ = PIMPLE.nCorrectors and resets cleanly
-        // per inner loop, so it composes correctly with the nf::PimpleControl outer loop below.
+        // Inner-loop counting (nCorrectors, nNonOrthogonalCorrectors) lives in the "PIMPLE"
+        // subdict; read from there so a stock pimpleFoam case with no "PISO" block works.
         Foam::pisoControl piso(mesh, "PIMPLE");
 
 #include "createFields.H"
 
-        // Map the base solver subdicts AND any *Final subdicts so the final-pass
-        // <field>Final selection in PDESolver reads a converted (NeoN-format) dict. isDict-guard
-        // the *Final mapping — a missing pFinal/UFinal degrades to the base entry.
-        auto& solverDict = rt.fvSolutionDict.subDict("solvers");
-        solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
-        solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
-        // The nuTilda solve inside turb.correct() needs its solver subdict converted too.
-        solverDict.subDict("nuTilda") = nf::mapFvSolution(solverDict.subDict("nuTilda"));
-        if (solverDict.isDict("pFinal"))
-        {
-            solverDict.subDict("pFinal") = nf::mapFvSolution(solverDict.subDict("pFinal"));
-        }
-        if (solverDict.isDict("UFinal"))
-        {
-            solverDict.subDict("UFinal") = nf::mapFvSolution(solverDict.subDict("UFinal"));
-        }
+        nf::createMappedFvSolutionDicts(rt);
         auto& schemesDict = rt.fvSchemesDict;
         schemesDict = nf::mapFvSchemes(rt.fvSchemesDict);
 
@@ -110,47 +63,27 @@ int main(int argc, char* argv[])
 
         auto& p = nf::constructAndRegister(vectorCollection, rt, ofP, false);
         auto& U = nf::constructAndRegister(vectorCollection, rt, ofU, false);
-        auto& nuTilda = nf::constructAndRegister(vectorCollection, rt, ofNuTilda, false);
-        auto nut = nf::constructAndRegister(vectorCollection, rt, ofNut, false);
 
         // Gauss-Green gradient operator for the explicit deviatoric viscous-stress term.
-        // OpenFOAM's pimpleFoam momentum equation is
-        //   ddt(U) + div(phi,U) + divDevReff(U)
-        //     = ddt(U) + div(phi,U) - laplacian(nuEff,U) - div(nuEff*dev2(T(grad U))),
-        // so the implicit laplacian alone is only PART of the viscous term. The explicit dev2
-        // stress div((nuEff*dev2(T(grad(U))))) must be added for OF parity — it is non-zero
-        // wherever the reconstructed cell velocity has non-zero divergence.
-        //
-        // The dev2 stress tracks the CURRENT U. On the FIRST outer corrector U is still U^n — the
-        // exact field turb.gradU() was last computed from in the previous step's turb.correct() —
-        // so we reuse turb.gradU() there (no extra grad(U), no tensor-field allocation), exactly as
-        // neoPisoFoam does. Only the 2nd+ outer correctors solve against an updated U and recompute
-        // the gradient IN PLACE into localGradU, a buffer hoisted out of the time loop so no
-        // VolumeField<Tensor> is allocated per corrector.
+        // The full viscous term is div(nuEff*(grad(U) + grad(U)^T)) = laplacian(nuEff,U)
+        // + div(nuEff*dev2(T(grad(U)))); the implicit laplacian alone is not sufficient.
         fvcc::GaussGreenGrad gradOp(rt.exec, rt.nfMesh);
 
         NeoN::Logging::info("Creating phi");
         auto& phi = nf::constructAndRegister(vectorCollection, rt, ofPhi, false);
 
-        // Turbulence model setup (SA-DDES). nu is the laminar viscosity from the OF transport
-        // model; wallDist / nearWallDist / delta feed the DDES shielding + wall functions.
         auto nu = nf::constructFrom(rt.exec, rt.nfMesh, tnu());
-        auto wallDist = nf::constructFrom(rt.exec, rt.nfMesh, y.y());
-        auto nearWallDist = nf::constructFrom(rt.exec, rt.nfMesh, ofNearWallDist);
-        auto delta = nf::constructFrom(rt.exec, rt.nfMesh, lesModel.delta());
-        nf::SpalartAllmarasDDES turb(rt.exec, rt.nfMesh, nu, wallDist, nearWallDist, delta);
 
-        // Calculate prerequisite variables for the turbulence model (gradU, diffusion coeff,
-        // and an initial correctNut). Mirrors OpenFOAM's turbulence->validate().
-        turb.validate(U, nuTilda, nut);
+        auto turb = nf::TurbulenceModel::create(rt, nu);
+
+        turb->validate(U);
 
         // Hoisted reuse buffer for the 2nd+ outer correctors' current-U velocity gradient,
         // allocated ONCE here and refilled in place via gradTensor(U, localGradU) when needed —
         // so no VolumeField<Tensor> (~nCells*9 scalars) is allocated per outer corrector.
         auto localGradU = gradOp.gradTensor(U);
 
-        // Hoist the surface interpolation once (constructed per inner corrector otherwise),
-        // mirroring neoPisoFoam.cpp:77-81.
+        // Hoist the surface interpolation once to avoid re-constructing it per inner corrector.
         auto surfInterpol = fvcc::SurfaceInterpolation<NeoN::scalar>(
             rt.exec,
             rt.nfMesh,
@@ -159,13 +92,9 @@ int main(int argc, char* argv[])
 
         NeoN::scalar cumulativeContErr = 0.0;
 
-        // Construct the native outer-loop control ONCE before the time loop. It reads the
-        // PIMPLE subdict (nOuterCorrectors, residualControl) from fvSolution.
         nf::PimpleControl pimpleLoop(rt.fvSolutionDict);
 
-        // reduce the segregated Vec3 U solver stats (Ux/Uy/Uz entries) to a single
-        // {init, final} residual pair via MAX-COMPONENT, mirroring OpenFOAM's maxResidual.
-        // Degenerates to the single entry when stats.entries.size() == 1.
+        // Max-component reduction: reduce Ux/Uy/Uz entries to a single {init, final} pair.
         auto reduceU = [](const NeoN::la::SolverStats& s) -> std::pair<NeoN::scalar, NeoN::scalar>
         {
             NeoN::scalar mi = 0.0;
@@ -183,20 +112,16 @@ int main(int argc, char* argv[])
         NeoN::Logging::info("Starting time loop");
         while (runTime.loop())
         {
-            // Logging supports string formatting
             NeoN::Logging::info("Time = {}", rt.t);
 
             fvcc::rotateOldTimes(U);
             fvcc::rotateOldTimes(phi);
-            fvcc::rotateOldTimes(nuTilda);
+            turb->rotateOldTimes();
 
             auto [maxCoNum, meanCoNum] = fvcc::computeCoNum(phi, rt.dt);
             NeoN::Logging::info("Courant Number mean: {} max: {}", meanCoNum, maxCoNum);
             nf::syncRunTimes(runTime, rt, maxCoNum);
 
-            // --- Outer PIMPLE corrector loop. `residuals` carries the
-            // {initResNorm, finalResNorm} per field from the PREVIOUS outer pass; the
-            // control checks them (skipping the first pass) to decide an early exit.
             nf::ResidualMap residuals;
             while (pimpleLoop.loop(residuals))
             {
@@ -207,17 +132,12 @@ int main(int argc, char* argv[])
                 // the internal vector) so we can blend against it after the pressure solve.
                 auto prevP = NeoN::dsl::fieldRelaxationSnapshot(p);
 
-                // Momentum predictor. The dev2 viscous stress is explicit (evaluated at assembly,
-                // like OpenFOAM's divDevReff) and needs grad of the CURRENT U. On the first outer
-                // corrector U == U^n, so turb.gradU() (computed from U^n in the previous step's
-                // turb.correct()) is reused verbatim — identical value in serial, but skips a full
-                // grad(U) tensor and a per-corrector VolumeField<Tensor> allocation, exactly as
-                // neoPisoFoam does. Later outer correctors solve against an updated U and recompute
-                // the gradient in place into the hoisted localGradU buffer.
+                // On the first outer corrector reuse turb->gradU() (already at U^n) to avoid
+                // an extra grad(U) allocation; later correctors update localGradU in place.
                 const fvcc::VolumeField<NeoN::Tensor>* gradUPtr = nullptr;
                 if (pimpleLoop.firstIter())
                 {
-                    gradUPtr = &turb.gradU();
+                    gradUPtr = &turb->gradU();
                 }
                 else
                 {
@@ -226,49 +146,30 @@ int main(int argc, char* argv[])
                 }
                 const auto& gradU = *gradUPtr;
 
-                // The implicit laplacian uses the SA-DDES effective surface viscosity turb.nuEff()
-                // (nu + nut, nut no longer zero); the explicit dev2 stress uses the turbulence
-                // volume nu/nut coefficients with the gradU selected above.
                 nf::PDESolver<NeoN::Vec3> UEqn(
-                    dsl::imp::ddt(U) + dsl::imp::div(phi, U) - dsl::imp::laplacian(turb.nuEff(), U)
-                        + dsl::exp::viscousStress(nu, nut, gradU),
+                    dsl::imp::ddt(U) + dsl::imp::div(phi, U) - dsl::imp::laplacian(turb->nuEff(), U)
+                        + dsl::exp::viscousStress(nu, turb->nut(), gradU),
                     U,
                     rt
                 );
 
                 const auto ddtScheme = UEqn.ddtScheme();
-                // v1 is BDF1/BDF2 only — fail loud on steadyState ddt
-                // (it would silently produce garbage). adjustPhi/constrainPressure are v2 TODOs.
-                // NOTE: NF_ASSERT (abort + stack trace) is used instead of NF_ASSERT_THROW because
-                // the NeoN NF_ASSERT_THROW macro miss-composes its message (it wraps the assertion
-                // text in std::string("..." << message), shifting two const char* operands, which
-                // does not compile) — and src/NeoN is treated as frozen here. NF_ASSERT gives the
-                // same fail-loud guarantee.
                 NF_ASSERT(
                     ddtScheme != fvcc::DdtScheme::None,
                     "neoPimpleFoam: steadyState ddt unsupported in v1 (BDF1/BDF2 only)"
                 );
 
-                // Drive the final-pass *Final relaxation + <field>Final solver subdict.
                 UEqn.setFinalIter(finalIter);
 
                 if (piso.momentumPredictor())
                 {
-                    // this solve(rhs) overload applies momentum eqn-URF +
-                    // UFinal solver-subdict selection.
                     auto statsU = UEqn.solve(-1.0 * dsl::exp::grad(p));
-                    residuals["U"] = reduceU(statsU); // max-component reduction
+                    residuals["U"] = reduceU(statsU);
                 }
                 else
                 {
-                    // OF-parity: OpenFOAM's pimpleFoam applies UEqn.relax()
-                    // UNCONDITIONALLY, including the `momentumPredictor no` path.
-                    // assembleAndRelax() assembles AND relaxes the owned ls_ in place (the same
-                    // lookup+relax solve(rhs) runs internally) so computeRAUandHByA reads the
-                    // RELAXED augmented diagonal in BOTH configs (the rAU/HbyA read invariant), not
-                    // just when the predictor solves. With no U eqn-URF configured, alpha==1 makes
-                    // this a bitwise no-op (identical to a bare assemble()), so
-                    // neoIcoFoam/neoPisoFoam semantics are unchanged.
+                    // Relax unconditionally so computeRAUandHByA reads the relaxed diagonal
+                    // regardless of whether the momentum predictor runs.
                     UEqn.assembleAndRelax();
                 }
 
@@ -288,9 +189,9 @@ int main(int argc, char* argv[])
                     auto phiHbyA =
                         nf::flux(hByA) + rAU * fvcc::ddtFluxCorr(U, phi, rt.dt, ddtScheme);
 
-                    // TODO additionally missing
-                    // TODO adjustPhi(phiHbyA, U, p);            // v2 — not yet in NeoN
-                    // TODO constrainPressure(p, U, phiHbyA, rAU); // v2 — not yet in NeoN
+                    // TODO additionally missing:
+                    // TODO adjustPhi(phiHbyA, U, p);
+                    // TODO constrainPressure(p, U, phiHbyA, rAU);
 
                     // Non-orthogonal pressure corrector loop
                     while (piso.correctNonOrthogonal())
@@ -304,9 +205,6 @@ int main(int argc, char* argv[])
 
                         pEqn.setFinalIter(finalIter);
 
-                        // re-apply the setReference pin on EVERY pressure solve. The
-                        // rank-0 guard lives in PDESolver::setReference (preserve, do NOT
-                        // refactor).
                         if (ofP.needReference() && pRefCell >= 0)
                         {
                             pEqn.setReference(pRefCell, pRefValue);
@@ -315,7 +213,6 @@ int main(int argc, char* argv[])
                         auto statsP = pEqn.solve();
                         if (!havePRes)
                         {
-                            // feed the FIRST pressure solve's residual into the NEXT loop().
                             pRes = {statsP.entries[0].initResNorm, statsP.entries[0].finalResNorm};
                             havePRes = true;
                         }
@@ -327,9 +224,6 @@ int main(int argc, char* argv[])
                         }
                     }
 
-                    // relax p AFTER the pressure solve +
-                    // correctBoundaryConditions, internal-only blend. The final pass falls back to
-                    // alpha=1 via the *Final key (a bitwise no-op).
                     NeoN::dsl::applyFieldRelaxation(
                         p,
                         prevP,
@@ -346,13 +240,11 @@ int main(int argc, char* argv[])
 
                 if (havePRes)
                 {
-                    residuals["p"] = pRes; // fed into the NEXT loop() call
+                    residuals["p"] = pRes;
                 }
             }
 
-            // Turbulence update: solve the nuTilda PDE + refresh nut ONCE PER STEP, after
-            // the outer PIMPLE loop has closed (turbOnFinalIterOnly=true semantics).
-            turb.correct(U, phi, nuTilda, nut, rt);
+            turb->correct(U, phi, rt);
 
             runTime.write();
             if (runTime.outputTime())
@@ -362,8 +254,7 @@ int main(int argc, char* argv[])
                 NeoN::Logging::info("Writing U");
                 write(U, mesh);
                 NeoN::Logging::info("Writing turbulence variables");
-                write(nuTilda, mesh);
-                write(nut, mesh);
+                turb->write(mesh);
             }
 
             runTime.printExecutionTime(Info);

@@ -13,6 +13,8 @@
 #include "NeoN/core/dictionary.hpp"
 #include "NeoN/core/primitives/scalar.hpp"
 
+#include "NeoFOAM/datastructures/runTime.hpp"
+
 
 namespace NeoFOAM
 {
@@ -68,5 +70,13 @@ lookupFieldRelaxation(const NeoN::Dictionary& fvSolution, const std::string& fie
  * @param solverDict  The OpenFOAM solver sub-dictionary (e.g. solvers/p).
  */
 NeoN::Dictionary mapFvSolution(const NeoN::Dictionary& solverDict);
+
+/**
+ * @brief Map the p, U, pFinal, and UFinal solver subdicts in rt.fvSolutionDict to NeoN/Ginkgo
+ * format.
+ *
+ * pFinal and UFinal are skipped when absent (not all cases define Final subdicts).
+ */
+void createMappedFvSolutionDicts(RunTime& rt);
 
 } // namespace NeoFOAM

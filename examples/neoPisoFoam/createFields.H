@@ -43,62 +43,6 @@ Foam::surfaceScalarField ofPhi(
 Foam::singlePhaseTransportModel laminarTransport(ofU, ofPhi);
 auto tnu = laminarTransport.nu();
 
-Foam::autoPtr<Foam::incompressible::turbulenceModel>
-    turbulence(Foam::incompressible::turbulenceModel::New(ofU, ofPhi, laminarTransport));
-
-const Foam::incompressible::LESModel& lesModel =
-    Foam::refCast<const Foam::incompressible::LESModel>(turbulence());
-
-Foam::wallDist y(mesh);
-
-// nearWallDist: boundary-face distances from turbulence model (distinct from wallDist)
-Foam::volScalarField ofNearWallDist(
-    Foam::IOobject(
-        "nearWallDist",
-        runTime.timeName(),
-        mesh,
-        Foam::IOobject::NO_READ,
-        Foam::IOobject::NO_WRITE
-    ),
-    mesh,
-    Foam::dimensionedScalar("zero", Foam::dimLength, Foam::scalar(0.0))
-);
-for (Foam::label patchi = 0; patchi < mesh.boundary().size(); ++patchi)
-{
-    const Foam::scalarField& ofY = turbulence().y()[patchi];
-    Foam::fvPatchScalarField& yPatch = ofNearWallDist.boundaryFieldRef()[patchi];
-    for (Foam::label facei = 0; facei < yPatch.size(); ++facei)
-    {
-        yPatch[facei] = ofY[facei];
-    }
-}
-
-Info << "Reading turbulence fields\n" << endl;
-Foam::volScalarField ofNuTilda(
-    Foam::IOobject(
-        "nuTilda",
-        runTime.timeName(),
-        mesh,
-        Foam::IOobject::MUST_READ,
-        Foam::IOobject::NO_WRITE,
-        Foam::IOobject::NO_REGISTER
-    ),
-    mesh
-);
-
-Foam::volScalarField ofNut(
-    Foam::IOobject(
-        "nut",
-        runTime.timeName(),
-        mesh,
-        Foam::IOobject::MUST_READ,
-        Foam::IOobject::NO_WRITE,
-        Foam::IOobject::NO_REGISTER
-    ),
-    mesh
-);
-
 Foam::label pRefCell = 0;
 Foam::scalar pRefValue = 0.0;
 setRefCell(ofP, mesh.solutionDict().subDict("PISO"), pRefCell, pRefValue);
-// mesh.setFluxRequired(p.name());
