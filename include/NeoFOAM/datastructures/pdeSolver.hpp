@@ -134,11 +134,7 @@ public:
         }
     }
 
-    /** @brief Select the final-iteration relaxation factor (the <field>Final key).
-     *
-     * Defaults to false (base <field> key). The PIMPLE driver sets it from
-     * pimpleControl.finalIter() so the final outer corrector uses the *Final factor.
-     */
+    /** @brief When true, selects the <field>Final relaxation factor and solver subdict. */
     void setFinalIter(bool finalIter) { finalIter_ = finalIter; }
 
     /** @brief assemble the linear system owned by the solver based on the current expression */
@@ -149,16 +145,10 @@ public:
         return ls_;
     }
 
-    /** @brief assemble the OWNED ls_ and relax it in place (no rhs term, no solve).
+    /** @brief Assemble and relax the owned ls_ without solving.
      *
-     * OF-parity: mirrors the assemble()+relax() prefix of solve(rhs) so the owned
-     * ls_ carries the RELAXED augmented diagonal that computeRAUandHByA reads (the rAU/HbyA
-     * read invariant). OpenFOAM applies UEqn.relax() UNCONDITIONALLY; this lets the
-     * `momentumPredictor no` path leave ls_ relaxed exactly as the predictor path does, instead
-     * of leaving a bare (un-relaxed) assemble(). The lookup+relax is shared verbatim with
-     * solve(rhs) via relaxOwnedLs(), so the two paths cannot drift. alpha==1 (no U-URF) is a
-     * bitwise no-op (NeoN kernel early-returns), so neoIcoFoam/neoPisoFoam semantics are
-     * unchanged.
+     * Ensures computeRAUandHByA reads the relaxed diagonal even when the momentum
+     * predictor is disabled. With no relaxation factor configured, this is a no-op.
      */
     LinearSystem& assembleAndRelax()
     {
@@ -198,41 +188,17 @@ public:
      */
     NeoN::la::SolverStats solve(dsl::SpatialOperator<NeoN::Vec3>&& rhs)
     {
-        // Read-path fix: relax the OWNED ls_ IN PLACE so computeRAUandHByA — which reads
-        // ls_ (pressureVelocityCoupling.cpp) — sees the RELAXED augmented diagonal, mirroring
-        // OpenFOAM's UEqn.relax() boosting A() ~1/alpha in place. The system actually SOLVED stays
-        // identical to today's (relaxed-diag + relax-source + (-grad p)) to machine precision:
-        // today adds -grad p to the copy THEN relaxes the copy; here ls_ is relaxed BEFORE the
-        // copy+add. Matrix-URF touches only diag + relax-source (not the explicit -grad p rhs
-        // source), so nfU is unchanged → test_momentum stays green. The ONLY new behavior: ls_ now
-        // carries the relaxed diagonal for the rAU/HbyA read.
-
-        // 1) Assemble the OWNED ls_ (raw momentum predictor, no rhs term yet) and relax it in
-        // place. The lookup+relax is factored into relaxOwnedLs() so the no-predictor path
-        // (assembleAndRelax()) shares the SAME alpha lookup and relaxation and the two
-        // cannot drift. A missing factor -> 1.0 -> applyMatrixRelaxation early-returns (bitwise
-        // no-op for cases without U relax, i.e. neoIcoFoam/neoPisoFoam). Relaxation runs on the
-        // RAW assembled diagonal (relax before setReference), exactly as solveImpl.
+        // Assemble and relax the owned ls_ so computeRAUandHByA reads the relaxed diagonal.
+        // Apply -grad p to ls_.rhs() in place (avoids copying the matrix), snapshot the rhs
+        // beforehand and restore it after solve so ls_ retains the H-system for computeRAUandHByA.
         assemble();
         relaxOwnedLs();
 
-        // 2) (perf) Apply -grad p to the OWNED ls_'s rhs IN PLACE for
-        // the solve instead of DEEP-COPYING the whole momentum LinearSystem. The matrix is the
-        // heavy part (~nnz Vec3 entries, ~1 GB at 6.3M cells) and is NOT modified by adding the
-        // pressure gradient — assembleExplicitSource touches rhs only, and Solver::solve takes the
-        // system as const — so solving ls_ here is byte-identical to solving the old copy. Only the
-        // rhs differs (O(nCells)), so we snapshot the rhs-free relaxed-momentum ("H") rhs, apply
-        // the source, solve ls_, then RESTORE the snapshot. After restore, ls_ holds exactly what
-        // it did before (relaxed diagonal + bare momentum rhs, no -grad p) so the subsequent
-        // computeRAUandHByA reads the H-system (the rAU/HbyA read invariant). ls_ is relaxed once
-        // (step 1); not re-relaxed.
         auto rhsExpr = dsl::Expression<ValueType>(-1.0 * rhs);
         rhsExpr.read(runTime_.fvSchemesDict);
         auto savedRhs = NeoN::Vector<ValueType>(ls_.rhs());
         rhsExpr.assembleExplicitSource(ls_, psi_.mesh());
 
-        // 3) select the <field>Final solver subdict on the final outer pass;
-        // isDict-guarded fallback to the base subdict, identical to solveImpl.
         auto solverDict = runTime_.fvSolutionDict.subDict("solvers");
         const std::string finalKey = psi_.name + "Final";
         auto fvSolution = (finalIter_ && solverDict.isDict(finalKey))
@@ -246,8 +212,6 @@ public:
         // NF_ASSERT(ls.exec() == solution.exec(), "Executors are not the same");
         auto stats = solver.solve(ls_, psi_.internalVector());
 
-        // Restore the rhs-free momentum rhs so computeRAUandHByA reads the H-system, not H - grad
-        // p.
         ls_.rhs() = savedRhs;
 
         reportSolverStats(stats, fvSolution);
@@ -266,19 +230,8 @@ public:
         // object slicing that silently disables virtual overrides.
         expr.assemble(runTime_.t, runTime_.dt, ls, psi_.mesh());
 
-        // Equation (matrix) under-relaxation, applied directly here mirroring the
-        // SetReference direct call, NOT via a PostAssemblyBase ps vector. The
-        // factor is parsed from fvSolution in NeoFOAM; NeoN only sees a scalar.
-        // alpha is a plain scalar, so this runs for both scalar and Vec3 fields and lives
-        // OUTSIDE the SetReference `if constexpr` guard. A missing entry -> 1.0 -> the
-        // kernel early-returns (bitwise no-op). psi_ supplies psi_prev (internalVector)
-        // AND the mesh (faceOwners() for the boundary-diagonal owner).
-        //
-        // Relaxation MUST run on the raw assembled diagonal, BEFORE SetReference
-        // (OpenFOAM order: fvMatrix::relax() precedes setReference). SetReference doubles the
-        // ref cell's diagonal and adds diag*refVal to rhs; relaxing afterwards would
-        // reconstruct/clamp the already-doubled diagonal and corrupt the pin if a field ever
-        // carried both a reference cell and a relaxation factor.
+        // Relaxation MUST precede SetReference: SetReference doubles the ref-cell diagonal,
+        // and relaxing afterwards would corrupt the pin.
         const auto alpha =
             lookupEqnRelaxation(runTime_.fvSolutionDict, psi_.name, finalIter_).value_or(1.0);
         NeoN::dsl::applyMatrixRelaxation(ls, psi_, alpha);
@@ -293,10 +246,6 @@ public:
             }
         }
 
-        // select the <field>Final solver subdict on the final outer pass (tighter
-        // pimpleFoam final-pass tolerances); isDict-guarded fallback to the base
-        // subdict (a missing/non-dict <field>Final degrades to the base entry instead
-        // of throwing out of subDict).
         auto solverDict = runTime_.fvSolutionDict.subDict("solvers");
         const std::string finalKey = psi_.name + "Final";
         auto fieldSolverDict = (finalIter_ && solverDict.isDict(finalKey))
@@ -316,14 +265,9 @@ public:
         return stats;
     }
 
-    // Relax the OWNED ls_ in place using the production equation-URF lookup
-    // (relaxationFactors.equations.<field>[Final]). Shared verbatim by solve(rhs)
-    // and assembleAndRelax() so the predictor and no-predictor paths cannot diverge.
-    // alpha defaults to 1.0 (missing factor) -> applyMatrixRelaxation early-returns: a bitwise
-    // no-op preserving neoIcoFoam/neoPisoFoam semantics. Mirrors UEqn.relax() and MUST run on
-    // the raw assembled diagonal BEFORE any SetReference. Only CALLS the free
-    // function applyMatrixRelaxation (which owns the NEON_LAMBDA) — no extended lambda is defined
-    // in this member body, so the NVCC private-member-lambda restriction does not apply.
+    // Relax the owned ls_ in place. Shared by solve(rhs) and assembleAndRelax() so both
+    // paths use the same alpha lookup. Must run before SetReference (see solveImpl).
+    // Only calls the free function applyMatrixRelaxation — no NEON_LAMBDA in this body.
     void relaxOwnedLs()
     {
         const auto alpha =
@@ -391,8 +335,6 @@ private:
     bool needReference_ = false;
     NeoN::localIdx pRefCell_ = 0;
     NeoN::scalar pRefValue_ = 0.0;
-    // finalIter seam: selects the <field>Final relaxation key when true. Defaults to false
-    // (base key); the PIMPLE driver drives it from pimpleControl.finalIter().
     bool finalIter_ = false;
 };
 

@@ -352,4 +352,18 @@ lookupFieldRelaxation(const NeoN::Dictionary& fvSolution, const std::string& fie
     return lookupRelaxation(fvSolution, "fields", field, finalIter);
 }
 
+void createMappedFvSolutionDicts(RunTime& rt)
+{
+    auto& solverDict = rt.fvSolutionDict.subDict("solvers");
+    solverDict.subDict("p") = mapFvSolution(solverDict.subDict("p"));
+    solverDict.subDict("U") = mapFvSolution(solverDict.subDict("U"));
+    for (const std::string key : {"pFinal", "UFinal"})
+    {
+        if (solverDict.isDict(key))
+        {
+            solverDict.subDict(key) = mapFvSolution(solverDict.subDict(key));
+        }
+    }
+}
+
 } // namespace NeoFOAM

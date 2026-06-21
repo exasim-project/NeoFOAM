@@ -20,6 +20,8 @@ target_sources(
           "compatibility/fvSchemes.cpp"
           "compatibility/fvSolution.cpp"
           "solutionControl/pimpleControl.cpp"
+          "turbulenceModels/turbulenceModel.cpp"
+          "turbulenceModels/laminar.cpp"
           "turbulenceModels/spalartAllmarasDDES.cpp"
           "fvcc/operators/viscousStressOperator.cpp"
           "functionObjects/functionObjectIO.cpp"
