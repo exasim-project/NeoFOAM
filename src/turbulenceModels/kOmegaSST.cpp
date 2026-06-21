@@ -749,9 +749,14 @@ nnfvcc::VolumeField<scalar> buildWallDistKOmega(const NeoN::Executor& exec, Mesh
     return NeoFOAM::constructFrom(exec, mesh.nfMesh(), y.y());
 }
 
-Foam::volScalarField readOFScalarField(MeshAdapter& mesh, const std::string& fieldName)
+nnfvcc::VolumeField<scalar> readScalarFieldKOmega(
+    const NeoN::Executor& exec,
+    MeshAdapter& mesh,
+    const NeoN::UnstructuredMesh& nfMesh,
+    const std::string& fieldName
+)
 {
-    return Foam::volScalarField(
+    Foam::volScalarField ofField(
         Foam::IOobject(
             fieldName,
             mesh.time().timeName(),
@@ -762,6 +767,7 @@ Foam::volScalarField readOFScalarField(MeshAdapter& mesh, const std::string& fie
         ),
         mesh
     );
+    return NeoFOAM::constructFrom(exec, nfMesh, ofField);
 }
 
 } // namespace
@@ -769,14 +775,11 @@ Foam::volScalarField readOFScalarField(MeshAdapter& mesh, const std::string& fie
 KOmegaSSTModel::KOmegaSSTModel(RunTime& rt, const nnfvcc::VolumeField<scalar>& nu)
     : nu_(nu)
     , wallDist_(buildWallDistKOmega(rt.exec, rt.mesh))
+    , k_(readScalarFieldKOmega(rt.exec, rt.mesh, rt.nfMesh, "k"))
+    , omega_(readScalarFieldKOmega(rt.exec, rt.mesh, rt.nfMesh, "omega"))
+    , nut_(readScalarFieldKOmega(rt.exec, rt.mesh, rt.nfMesh, "nut"))
     , model_(rt.exec, rt.nfMesh, nu_, wallDist_)
 {
-    auto& vc = fvcc::VectorCollection::instance(rt.db, "VectorCollection");
-
-    k_ = &NeoFOAM::constructAndRegister(vc, rt, readOFScalarField(rt.mesh, "k"), true);
-    omega_ = &NeoFOAM::constructAndRegister(vc, rt, readOFScalarField(rt.mesh, "omega"), true);
-    nut_ = &NeoFOAM::constructAndRegister(vc, rt, readOFScalarField(rt.mesh, "nut"), false);
-
     auto& solverDict = rt.fvSolutionDict.subDict("solvers");
     for (const auto* f : {"k", "omega", "kFinal", "omegaFinal"})
     {
@@ -789,7 +792,7 @@ KOmegaSSTModel::KOmegaSSTModel(RunTime& rt, const nnfvcc::VolumeField<scalar>& n
 
 void KOmegaSSTModel::validate(const nnfvcc::VolumeField<Vec3>& U)
 {
-    model_.validate(U, *k_, *omega_, *nut_);
+    model_.validate(U, k_, omega_, nut_);
 }
 
 void KOmegaSSTModel::correct(
@@ -798,12 +801,12 @@ void KOmegaSSTModel::correct(
     RunTime& rt
 )
 {
-    model_.correct(U, phi, *k_, *omega_, *nut_, rt);
+    model_.correct(U, phi, k_, omega_, nut_, rt);
 }
 
 nnfvcc::SurfaceField<scalar>& KOmegaSSTModel::nuEff() { return model_.nuEff(); }
 
-const nnfvcc::VolumeField<scalar>& KOmegaSSTModel::nut() const { return *nut_; }
+const nnfvcc::VolumeField<scalar>& KOmegaSSTModel::nut() const { return nut_; }
 
 const nnfvcc::VolumeField<NeoN::Tensor>& KOmegaSSTModel::gradU() const { return model_.gradU(); }
 
@@ -811,15 +814,16 @@ void KOmegaSSTModel::updateGradU(const nnfvcc::VolumeField<Vec3>& U) { model_.up
 
 void KOmegaSSTModel::rotateOldTimes()
 {
-    fvcc::rotateOldTimes(*k_);
-    fvcc::rotateOldTimes(*omega_);
+    fvcc::rotateOldTimes(k_);
+    fvcc::rotateOldTimes(omega_);
 }
+
 
 void KOmegaSSTModel::write(MeshAdapter& mesh) const
 {
-    NeoFOAM::write(*k_, mesh);
-    NeoFOAM::write(*omega_, mesh);
-    NeoFOAM::write(*nut_, mesh);
+    NeoFOAM::write(k_, mesh);
+    NeoFOAM::write(omega_, mesh);
+    NeoFOAM::write(nut_, mesh);
 }
 
 

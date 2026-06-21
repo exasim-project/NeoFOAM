@@ -327,7 +327,7 @@ neofoam_unit_test(residual setup_pressureVelocityCoupling)
 neofoam_unit_test(spalartAllmarasDDES setup_pressureVelocityCoupling)
 neofoam_unit_test(kOmegaSST setup_kOmegaSST)
 neofoam_unit_test(kqRWallFunction setup_operator)
-neofoam_unit_test(omegaWallFunction setup_omegaWallFunction)
+neofoam_unit_test(omegaWallFunction setup_kOmegaSST)
 neofoam_unit_test(continuityError setup_pressureVelocityCoupling)
 neofoam_unit_test(forceCoeffs setup_pressureVelocityCoupling SOURCE test_forceCoeffs.cpp)
 

@@ -274,19 +274,16 @@ public:
     /** @brief Recompute gradU in place at the given velocity. */
     void updateGradU(const nnfvcc::VolumeField<Vec3>& U) override;
 
-    /** @brief Write k, omega and nut fields to disk. */
     void write(MeshAdapter& mesh) const override;
-
-    /** @brief Rotate k, omega and nut old-time levels for BDF2. */
     void rotateOldTimes() override;
 
 private:
 
     const nnfvcc::VolumeField<scalar>& nu_;
     nnfvcc::VolumeField<scalar> wallDist_;
-    nnfvcc::VolumeField<scalar>* k_ = nullptr;
-    nnfvcc::VolumeField<scalar>* omega_ = nullptr;
-    nnfvcc::VolumeField<scalar>* nut_ = nullptr;
+    nnfvcc::VolumeField<scalar> k_;
+    nnfvcc::VolumeField<scalar> omega_;
+    nnfvcc::VolumeField<scalar> nut_;
     KOmegaSST model_;
 };
 

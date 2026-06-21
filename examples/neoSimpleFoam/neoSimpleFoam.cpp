@@ -4,13 +4,10 @@
 #include "NeoN/NeoN.hpp"
 
 #include "NeoFOAM/NeoFOAM.hpp"
-#include "NeoFOAM/turbulenceModels/kEpsilon.hpp"
 
 #include "fvCFD.H"
 #include "simpleControl.H"
 #include "singlePhaseTransportModel.H"
-#include "turbulentTransportModel.H"
-#include "wallDist.H"
 
 #include <memory>
 
@@ -24,6 +21,7 @@ using Foam::nl;
 namespace fvc = Foam::fvc;
 namespace dsl = NeoN::dsl;
 namespace fvcc = NeoN::finiteVolume::cellCentred;
+namespace nnfvcc = NeoN::finiteVolume::cellCentred;
 namespace nf = NeoFOAM;
 
 namespace
@@ -52,7 +50,6 @@ readFieldRelaxationFactor(const NeoN::Dictionary& fvSolutionDict, const std::str
 
 int main(int argc, char* argv[])
 {
-// TODO move the whole omega/epsilon logic out of the solver
 // Bring up OpenFOAM (and MPI) before NeoN, matching neoIcoFoam, so the rank is
 // known when NeoN configures logging and the rank-0 muting engages immediately.
 #include "addCheckCaseOptions.H"
@@ -70,12 +67,6 @@ int main(int argc, char* argv[])
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
         solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
         solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
-        solverDict.subDict("k") = nf::mapFvSolution(solverDict.subDict("k"));
-        // Map the active secondary-equation solver entry; see createFields.H
-        // for the rasModelName / isKOmegaSST / isKEpsilon switches.
-        const std::string secondaryFieldName = isKOmegaSST ? "omega" : "epsilon";
-        solverDict.subDict(secondaryFieldName) =
-            nf::mapFvSolution(solverDict.subDict(secondaryFieldName));
         auto& schemesDict = rt.fvSchemesDict;
         schemesDict = nf::mapFvSchemes(rt.fvSchemesDict);
 
@@ -84,46 +75,15 @@ int main(int argc, char* argv[])
 
         auto& p = nf::constructAndRegister(vectorCollection, rt, ofP, false);
         auto& U = nf::constructAndRegister(vectorCollection, rt, ofU, false);
-        auto& k = nf::constructAndRegister(vectorCollection, rt, ofK, true);
-        auto& nut = nf::constructAndRegister(vectorCollection, rt, ofNut, false);
-
-        // TODO this shouldn't be part of the solver
-        // The secondary turbulence-equation field is `omega` for kOmegaSST
-        // and `epsilon` for kEpsilon. Only the active one is registered.
-        auto& omega = isKOmegaSST ? nf::constructAndRegister(vectorCollection, rt, ofOmega, true)
-                                  : nf::constructAndRegister(vectorCollection, rt, ofOmega, false);
-        auto& epsilon = isKEpsilon
-                          ? nf::constructAndRegister(vectorCollection, rt, ofEpsilon, true)
-                          : nf::constructAndRegister(vectorCollection, rt, ofEpsilon, false);
 
         NeoN::Logging::info("Creating phi");
         auto& phi = nf::constructAndRegister(vectorCollection, rt, ofPhi, false);
 
-        // Turbulence model setup — branch on RAS model name read from
-        // constant/turbulenceProperties in createFields.H.
         auto nu = nf::constructFrom(rt.exec, rt.nfMesh, tnu());
-        auto wallDist = nf::constructFrom(rt.exec, rt.nfMesh, y.y());
 
-        // TODO use a base class for turbulence here
-        std::optional<nf::KOmegaSST> turbKOmegaSST;
-        std::optional<nf::KEpsilon> turbKEpsilon;
-        if (isKOmegaSST)
-        {
-            turbKOmegaSST.emplace(rt.exec, rt.nfMesh, nu, wallDist);
-            turbKOmegaSST->validate(U, k, omega, nut);
-        }
-        else
-        {
-            turbKEpsilon.emplace(rt.exec, rt.nfMesh, nu, wallDist);
-            turbKEpsilon->validate(U, k, epsilon, nut);
-        }
+        auto turb = nf::TurbulenceModel::create(rt, nu);
 
-        // TODO use base class
-        // Unified accessors for the U-equation diffusivity and gradU.
-        auto turbNuEff = [&]() -> nnfvcc::SurfaceField<NeoN::scalar>&
-        { return isKOmegaSST ? turbKOmegaSST->nuEff() : turbKEpsilon->nuEff(); };
-        auto turbGradU = [&]() -> const nnfvcc::VolumeField<NeoN::Tensor>&
-        { return isKOmegaSST ? turbKOmegaSST->gradU() : turbKEpsilon->gradU(); };
+        turb->validate(U);
 
         // TODO: surface interpolation also instantiated in turbulence model -> doubled?!
         auto surfInterpol = fvcc::SurfaceInterpolation<NeoN::scalar>(
@@ -145,8 +105,8 @@ int main(int argc, char* argv[])
 
             // Momentum predictor (no ddt for steady-state SIMPLE)
             nf::PDESolver<NeoN::Vec3> UEqn(
-                dsl::imp::div(phi, U) - dsl::imp::laplacian(turbNuEff(), U)
-                    + dsl::exp::viscousStress(nu, nut, turbGradU()),
+                dsl::imp::div(phi, U) - dsl::imp::laplacian(turb->nuEff(), U)
+                    + dsl::exp::viscousStress(nu, turb->nut(), turb->gradU()),
                 U,
                 rt
             );
@@ -264,15 +224,7 @@ int main(int argc, char* argv[])
                 U.correctBoundaryConditions();
             }
 
-            // Turbulence update
-            if (isKOmegaSST)
-            {
-                turbKOmegaSST->correct(U, phi, k, omega, nut, rt);
-            }
-            else
-            {
-                turbKEpsilon->correct(U, phi, k, epsilon, nut, rt);
-            }
+            turb->correct(U, phi, rt);
 
             runTime.write();
             if (runTime.outputTime())
@@ -282,16 +234,7 @@ int main(int argc, char* argv[])
                 NeoN::Logging::info("Writing U");
                 write(U, mesh);
                 NeoN::Logging::info("Writing turbulence variables");
-                write(k, mesh);
-                if (isKOmegaSST)
-                {
-                    write(omega, mesh);
-                }
-                else
-                {
-                    write(epsilon, mesh);
-                }
-                write(nut, mesh);
+                turb->write(mesh);
             }
 
             runTime.printExecutionTime(Info);
