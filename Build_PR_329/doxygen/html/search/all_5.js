@@ -4,6 +4,9 @@ var searchData=
   ['getconfig_1',['getConfig',['../classNeoN_1_1finiteVolume_1_1cellCentred_1_1ViscousStressOperator.html#a051c4a4725982ff404d411dd65f5a978',1,'NeoN::finiteVolume::cellCentred::ViscousStressOperator']]],
   ['getfield_2',['getfield',['../classNeoFOAM_1_1PDESolver.html#a9442eb0b96e8eb5f2127d1be711345ae',1,'NeoFOAM::PDESolver::getField()'],['../classNeoFOAM_1_1PDESolver.html#af8477ea2262ae6b89ba19fe8d03fd551',1,'NeoFOAM::PDESolver::getField() const']]],
   ['getname_3',['getname',['../classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutUSpaldingWallFunction.html#a6641864e0da1a6f96422528bccf90d2d',1,'NeoN::finiteVolume::cellCentred::volumeBoundary::NutUSpaldingWallFunction::getName()'],['../classNeoN_1_1finiteVolume_1_1cellCentred_1_1ViscousStressOperator.html#a7a1aef0657d4cec1f51f1750871ffb51',1,'NeoN::finiteVolume::cellCentred::ViscousStressOperator::getName()']]],
-  ['global_4',['global',['../structNeoFOAM_1_1ContinuityErrors.html#affa671e9188fd540af4ef772bc500368',1,'NeoFOAM::ContinuityErrors']]],
-  ['gradu_5',['gradu',['../classNeoFOAM_1_1Laminar.html#a233c808400e5b0970c6c13276fba07ca',1,'NeoFOAM::Laminar::gradU()'],['../classNeoFOAM_1_1SpalartAllmarasDDES.html#a8f2b6292ee3033e967c70004d7dc1fa9',1,'NeoFOAM::SpalartAllmarasDDES::gradU()'],['../classNeoFOAM_1_1TurbulenceModel.html#aef72cb4809fc873b080a0d4ae3f00d4b',1,'NeoFOAM::TurbulenceModel::gradU()']]]
+  ['getorcreatefile_4',['getOrCreateFile',['../classNeoFOAM_1_1FunctionObjectIO.html#ab980cc03b1aece6d2610f18a0e8504d0',1,'NeoFOAM::FunctionObjectIO']]],
+  ['global_5',['global',['../structNeoFOAM_1_1ContinuityErrors.html#affa671e9188fd540af4ef772bc500368',1,'NeoFOAM::ContinuityErrors']]],
+  ['gradop_5f_6',['gradOp_',['../classNeoFOAM_1_1Forces.html#a493c86861911949e90562c3ae67e917a',1,'NeoFOAM::Forces']]],
+  ['gradu_7',['gradu',['../classNeoFOAM_1_1Laminar.html#a233c808400e5b0970c6c13276fba07ca',1,'NeoFOAM::Laminar::gradU()'],['../classNeoFOAM_1_1SpalartAllmarasDDES.html#a8f2b6292ee3033e967c70004d7dc1fa9',1,'NeoFOAM::SpalartAllmarasDDES::gradU()'],['../classNeoFOAM_1_1TurbulenceModel.html#aef72cb4809fc873b080a0d4ae3f00d4b',1,'NeoFOAM::TurbulenceModel::gradU()']]],
+  ['gradu_5f_8',['gradU_',['../classNeoFOAM_1_1Forces.html#a586aa2dacbe44c0570efb9d94f994bc2',1,'NeoFOAM::Forces']]]
 ];
