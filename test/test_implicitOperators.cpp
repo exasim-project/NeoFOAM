@@ -161,7 +161,8 @@ TEST_CASE("matrix multiplication")
     {
         // OpenFOAM's fvmDiv with a corrected scheme builds the upwind matrix and adds the gradient
         // correction to matrix.source() (fvm += fvc::surfaceIntegrate(faceFlux*correction)). The
-        // NeoN implicit div must reproduce the same operator action: applyOperator(ls,x) == (M & x)*V.
+        // NeoN implicit div must reproduce the same operator action: applyOperator(ls,x) == (M &
+        // x)*V.
         auto ofT = NeoFOAM::randomScalarField(runTime, mesh, "T");
         auto ofPhi = NeoFOAM::randDimField<Foam::surfaceScalarField>(mesh, Foam::dimless, "phi");
 
