@@ -534,14 +534,9 @@ nnfvcc::VolumeField<scalar> buildWallDistKEps(const NeoN::Executor& exec, MeshAd
     return NeoFOAM::constructFrom(exec, mesh.nfMesh(), y.y());
 }
 
-nnfvcc::VolumeField<scalar> readScalarFieldKEps(
-    const NeoN::Executor& exec,
-    MeshAdapter& mesh,
-    const NeoN::UnstructuredMesh& nfMesh,
-    const std::string& fieldName
-)
+Foam::volScalarField readOFScalarFieldKEps(MeshAdapter& mesh, const std::string& fieldName)
 {
-    Foam::volScalarField ofField(
+    return Foam::volScalarField(
         Foam::IOobject(
             fieldName,
             mesh.time().timeName(),
@@ -552,7 +547,6 @@ nnfvcc::VolumeField<scalar> readScalarFieldKEps(
         ),
         mesh
     );
-    return NeoFOAM::constructFrom(exec, nfMesh, ofField);
 }
 
 } // namespace
@@ -560,11 +554,15 @@ nnfvcc::VolumeField<scalar> readScalarFieldKEps(
 KEpsilonModel::KEpsilonModel(RunTime& rt, const nnfvcc::VolumeField<scalar>& nu)
     : nu_(nu)
     , wallDist_(buildWallDistKEps(rt.exec, rt.mesh))
-    , k_(readScalarFieldKEps(rt.exec, rt.mesh, rt.nfMesh, "k"))
-    , epsilon_(readScalarFieldKEps(rt.exec, rt.mesh, rt.nfMesh, "epsilon"))
-    , nut_(readScalarFieldKEps(rt.exec, rt.mesh, rt.nfMesh, "nut"))
     , model_(rt.exec, rt.nfMesh, nu_, wallDist_)
 {
+    auto& vc = fvcc::VectorCollection::instance(rt.db, "VectorCollection");
+
+    k_ = &NeoFOAM::constructAndRegister(vc, rt, readOFScalarFieldKEps(rt.mesh, "k"), true);
+    epsilon_ =
+        &NeoFOAM::constructAndRegister(vc, rt, readOFScalarFieldKEps(rt.mesh, "epsilon"), true);
+    nut_ = &NeoFOAM::constructAndRegister(vc, rt, readOFScalarFieldKEps(rt.mesh, "nut"), false);
+
     auto& solverDict = rt.fvSolutionDict.subDict("solvers");
     for (const auto* f : {"k", "epsilon", "kFinal", "epsilonFinal"})
     {
@@ -577,7 +575,7 @@ KEpsilonModel::KEpsilonModel(RunTime& rt, const nnfvcc::VolumeField<scalar>& nu)
 
 void KEpsilonModel::validate(const nnfvcc::VolumeField<Vec3>& U)
 {
-    model_.validate(U, k_, epsilon_, nut_);
+    model_.validate(U, *k_, *epsilon_, *nut_);
 }
 
 void KEpsilonModel::correct(
@@ -586,20 +584,26 @@ void KEpsilonModel::correct(
     RunTime& rt
 )
 {
-    model_.correct(U, phi, k_, epsilon_, nut_, rt);
+    model_.correct(U, phi, *k_, *epsilon_, *nut_, rt);
 }
 
 nnfvcc::SurfaceField<scalar>& KEpsilonModel::nuEff() { return model_.nuEff(); }
 
-const nnfvcc::VolumeField<scalar>& KEpsilonModel::nut() const { return nut_; }
+const nnfvcc::VolumeField<scalar>& KEpsilonModel::nut() const { return *nut_; }
 
 const nnfvcc::VolumeField<NeoN::Tensor>& KEpsilonModel::gradU() const { return model_.gradU(); }
 
+void KEpsilonModel::rotateOldTimes()
+{
+    fvcc::rotateOldTimes(*k_);
+    fvcc::rotateOldTimes(*epsilon_);
+}
+
 void KEpsilonModel::write(MeshAdapter& mesh) const
 {
-    NeoFOAM::write(k_, mesh);
-    NeoFOAM::write(epsilon_, mesh);
-    NeoFOAM::write(nut_, mesh);
+    NeoFOAM::write(*k_, mesh);
+    NeoFOAM::write(*epsilon_, mesh);
+    NeoFOAM::write(*nut_, mesh);
 }
 
 } // namespace NeoFOAM
