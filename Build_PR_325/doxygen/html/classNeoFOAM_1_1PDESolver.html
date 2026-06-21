@@ -108,13 +108,13 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a3db786d08d6d3d64a682094fea34ea82" id="r_a3db786d08d6d3d64a682094fea34ea82"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1PDESolver.html#a3db786d08d6d3d64a682094fea34ea82">setReference</a> (NeoN::localIdx pRefCell, NeoN::scalar pRefValue)</td></tr>
 <tr class="separator:a3db786d08d6d3d64a682094fea34ea82"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a115b62e9ee4225fdf24173d7bb6b009e" id="r_a115b62e9ee4225fdf24173d7bb6b009e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1PDESolver.html#a115b62e9ee4225fdf24173d7bb6b009e">setFinalIter</a> (bool finalIter)</td></tr>
-<tr class="memdesc:a115b62e9ee4225fdf24173d7bb6b009e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Select the final-iteration relaxation factor (the &lt;field&gt;Final key).  <br /></td></tr>
+<tr class="memdesc:a115b62e9ee4225fdf24173d7bb6b009e"><td class="mdescLeft">&#160;</td><td class="mdescRight">When true, selects the &lt;field&gt;Final relaxation factor and solver subdict.  <br /></td></tr>
 <tr class="separator:a115b62e9ee4225fdf24173d7bb6b009e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a428ead04185bd650a91cd4ff3c573a24" id="r_a428ead04185bd650a91cd4ff3c573a24"><td class="memItemLeft" align="right" valign="top">LinearSystem &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1PDESolver.html#a428ead04185bd650a91cd4ff3c573a24">assemble</a> ()</td></tr>
 <tr class="memdesc:a428ead04185bd650a91cd4ff3c573a24"><td class="mdescLeft">&#160;</td><td class="mdescRight">assemble the linear system owned by the solver based on the current expression  <br /></td></tr>
 <tr class="separator:a428ead04185bd650a91cd4ff3c573a24"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7456cb2e7942cbbc3f04c1c664eb09f4" id="r_a7456cb2e7942cbbc3f04c1c664eb09f4"><td class="memItemLeft" align="right" valign="top">LinearSystem &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1PDESolver.html#a7456cb2e7942cbbc3f04c1c664eb09f4">assembleAndRelax</a> ()</td></tr>
-<tr class="memdesc:a7456cb2e7942cbbc3f04c1c664eb09f4"><td class="mdescLeft">&#160;</td><td class="mdescRight">assemble the OWNED ls_ and relax it in place (no rhs term, no solve).  <br /></td></tr>
+<tr class="memdesc:a7456cb2e7942cbbc3f04c1c664eb09f4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Assemble and relax the owned ls_ without solving.  <br /></td></tr>
 <tr class="separator:a7456cb2e7942cbbc3f04c1c664eb09f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad47450a4caf56d16843a3e70481eee0b" id="r_ad47450a4caf56d16843a3e70481eee0b"><td class="memItemLeft" align="right" valign="top">LinearSystem&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1PDESolver.html#ad47450a4caf56d16843a3e70481eee0b">assemble</a> (dsl::SpatialOperator&lt; NeoN::Vec3 &gt; &amp;&amp;rhs)</td></tr>
 <tr class="memdesc:ad47450a4caf56d16843a3e70481eee0b"><td class="mdescLeft">&#160;</td><td class="mdescRight">assemble the linear system with an additional rhs term  <br /></td></tr>
@@ -265,7 +265,7 @@ template&lt;typename ValueType , typename MatrixValueType  = NeoN::scalar, typen
 
 <p>assemble the linear system owned by the solver based on the current expression </p>
 
-<p class="definition">Definition at line <a class="el" href="pdeSolver_8hpp_source.html#l00145">145</a> of file <a class="el" href="pdeSolver_8hpp_source.html">pdeSolver.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pdeSolver_8hpp_source.html#l00141">141</a> of file <a class="el" href="pdeSolver_8hpp_source.html">pdeSolver.hpp</a>.</p>
 
 </div>
 </div>
@@ -302,7 +302,7 @@ template&lt;typename ValueType , typename MatrixValueType  = NeoN::scalar, typen
 <li>the new linear system with rhs is returned </li>
 </ol>
 
-<p class="definition">Definition at line <a class="el" href="pdeSolver_8hpp_source.html#l00177">177</a> of file <a class="el" href="pdeSolver_8hpp_source.html">pdeSolver.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pdeSolver_8hpp_source.html#l00167">167</a> of file <a class="el" href="pdeSolver_8hpp_source.html">pdeSolver.hpp</a>.</p>
 
 </div>
 </div>
@@ -331,10 +331,10 @@ template&lt;typename ValueType , typename MatrixValueType  = NeoN::scalar, typen
 </table>
 </div><div class="memdoc">
 
-<p>assemble the OWNED ls_ and relax it in place (no rhs term, no solve). </p>
-<p>OF-parity: mirrors the <a class="el" href="classNeoFOAM_1_1PDESolver.html#a428ead04185bd650a91cd4ff3c573a24" title="assemble the linear system owned by the solver based on the current expression">assemble()</a>+relax() prefix of solve(rhs) so the owned ls_ carries the RELAXED augmented diagonal that computeRAUandHByA reads (the rAU/HbyA read invariant). OpenFOAM applies UEqn.relax() UNCONDITIONALLY; this lets the <code>momentumPredictor no</code> path leave ls_ relaxed exactly as the predictor path does, instead of leaving a bare (un-relaxed) <a class="el" href="classNeoFOAM_1_1PDESolver.html#a428ead04185bd650a91cd4ff3c573a24" title="assemble the linear system owned by the solver based on the current expression">assemble()</a>. The lookup+relax is shared verbatim with solve(rhs) via <a class="el" href="classNeoFOAM_1_1PDESolver.html#a5bf63a2b300465377c937bda5d52f5f5">relaxOwnedLs()</a>, so the two paths cannot drift. alpha==1 (no U-URF) is a bitwise no-op (<a class="el" href="namespaceNeoN.html">NeoN</a> kernel early-returns), so neoIcoFoam/neoPisoFoam semantics are unchanged. </p>
+<p>Assemble and relax the owned ls_ without solving. </p>
+<p>Ensures computeRAUandHByA reads the relaxed diagonal even when the momentum predictor is disabled. With no relaxation factor configured, this is a no-op. </p>
 
-<p class="definition">Definition at line <a class="el" href="pdeSolver_8hpp_source.html#l00163">163</a> of file <a class="el" href="pdeSolver_8hpp_source.html">pdeSolver.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pdeSolver_8hpp_source.html#l00153">153</a> of file <a class="el" href="pdeSolver_8hpp_source.html">pdeSolver.hpp</a>.</p>
 
 </div>
 </div>
@@ -566,7 +566,7 @@ template&lt;typename ValueType , typename MatrixValueType  = NeoN::scalar, typen
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pdeSolver_8hpp_source.html#l00327">327</a> of file <a class="el" href="pdeSolver_8hpp_source.html">pdeSolver.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pdeSolver_8hpp_source.html#l00271">271</a> of file <a class="el" href="pdeSolver_8hpp_source.html">pdeSolver.hpp</a>.</p>
 
 </div>
 </div>
@@ -596,10 +596,9 @@ template&lt;typename ValueType , typename MatrixValueType  = NeoN::scalar, typen
 </table>
 </div><div class="memdoc">
 
-<p>Select the final-iteration relaxation factor (the &lt;field&gt;Final key). </p>
-<p>Defaults to false (base &lt;field&gt; key). The PIMPLE driver sets it from pimpleControl.finalIter() so the final outer corrector uses the *Final factor. </p>
+<p>When true, selects the &lt;field&gt;Final relaxation factor and solver subdict. </p>
 
-<p class="definition">Definition at line <a class="el" href="pdeSolver_8hpp_source.html#l00142">142</a> of file <a class="el" href="pdeSolver_8hpp_source.html">pdeSolver.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pdeSolver_8hpp_source.html#l00138">138</a> of file <a class="el" href="pdeSolver_8hpp_source.html">pdeSolver.hpp</a>.</p>
 
 </div>
 </div>
@@ -668,7 +667,7 @@ template&lt;typename ValueType , typename MatrixValueType  = NeoN::scalar, typen
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pdeSolver_8hpp_source.html#l00187">187</a> of file <a class="el" href="pdeSolver_8hpp_source.html">pdeSolver.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pdeSolver_8hpp_source.html#l00177">177</a> of file <a class="el" href="pdeSolver_8hpp_source.html">pdeSolver.hpp</a>.</p>
 
 </div>
 </div>
@@ -704,7 +703,7 @@ template&lt;typename ValueType , typename MatrixValueType  = NeoN::scalar, typen
 <li>a temporary linear system with rhs assembled and solved </li>
 </ol>
 
-<p class="definition">Definition at line <a class="el" href="pdeSolver_8hpp_source.html#l00199">199</a> of file <a class="el" href="pdeSolver_8hpp_source.html">pdeSolver.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pdeSolver_8hpp_source.html#l00189">189</a> of file <a class="el" href="pdeSolver_8hpp_source.html">pdeSolver.hpp</a>.</p>
 
 </div>
 </div>
@@ -744,7 +743,7 @@ template&lt;typename ValueType , typename MatrixValueType  = NeoN::scalar, typen
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="pdeSolver_8hpp_source.html#l00259">259</a> of file <a class="el" href="pdeSolver_8hpp_source.html">pdeSolver.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="pdeSolver_8hpp_source.html#l00223">223</a> of file <a class="el" href="pdeSolver_8hpp_source.html">pdeSolver.hpp</a>.</p>
 
 </div>
 </div>

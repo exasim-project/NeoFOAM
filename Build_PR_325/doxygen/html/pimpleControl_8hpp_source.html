@@ -99,81 +99,57 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceNeoFOAM.html">NeoFOAM</a></div>
 <div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span>{</div>
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span> </div>
-<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="comment">// Per-field residual the outer loop is fed each pass: {initResNorm, finalResNorm}.</span></div>
-<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="comment">// The native control mirrors OpenFOAM pimpleControl::criteriaSatisfied(): the</span></div>
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="comment">// absolute criterion compares the FINAL residual, the relative criterion compares</span></div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><span class="comment">// finalResNorm / storedInitial. Feeding both makes both checks available without</span></div>
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span><span class="comment">// a Foam::solverPerformance / solverPerformanceDict round-trip.</span></div>
-<div class="line"><a id="l00023" name="l00023"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#a72ecdf875c1b4d9e941284f6f5351752">   23</a></span><span class="keyword">using </span><a class="code hl_typedef" href="namespaceNeoFOAM.html#a72ecdf875c1b4d9e941284f6f5351752">FieldResidual</a> = std::pair&lt;NeoN::scalar, NeoN::scalar&gt;;</div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#ad7da788dc1fc4af69c98dea808d84073">   24</a></span><span class="keyword">using </span><a class="code hl_typedef" href="namespaceNeoFOAM.html#ad7da788dc1fc4af69c98dea808d84073">ResidualMap</a> = std::map&lt;std::string, FieldResidual&gt;;</div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span> </div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="comment">/* @brief NeoFOAM-native outer PIMPLE loop control (does NOT reuse OpenFOAM&#39;s pimpleControl).</span></div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span><span class="comment"> * Owns the corr_ / converged_ state machine that drives the outer corrector loop. It mirrors</span></div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span><span class="comment"> * OpenFOAM pimpleControl::loop() (pimpleControl.C:200-265) and criteriaSatisfied()</span></div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span><span class="comment"> * (pimpleControl.C:61-126) byte-for-byte on the case side: it reads the SAME</span></div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span><span class="comment"> * fvSolution.PIMPLE subdict a stock pimpleFoam case uses (nOuterCorrectors,</span></div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span><span class="comment"> * residualControl{ p{ tolerance; relTol; } U{ ... } }) and applies per-field abs-OR-rel</span></div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span><span class="comment"> * convergence with no check on the first outer iteration and a two-phase converged_ exit</span></div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span><span class="comment"> * (an extra final pass after the criteria are met, so *Final factors/tolerances fire).</span></div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span><span class="comment"> * Unlike OpenFOAM&#39;s pimpleControl it is FED NeoN scalar residuals directly via loop(residuals) —</span></div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span><span class="comment"> * there is no mesh_.data().solverPerformanceDict() round-trip (rationale: the loop is not</span></div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span><span class="comment"> * a hot path, so &quot;performant&quot; means lean / decoupled / portable).</span></div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span><span class="comment"> */</span></div>
-<div class="foldopen" id="foldopen00040" data-start="{" data-end="};">
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PimpleControl.html">   40</a></span><span class="keyword">class </span><a class="code hl_class" href="classNeoFOAM_1_1PimpleControl.html">PimpleControl</a></div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>{</div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="comment">// Per-field residual fed to the outer loop each pass: {initResNorm, finalResNorm}.</span></div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#a72ecdf875c1b4d9e941284f6f5351752">   19</a></span><span class="keyword">using </span><a class="code hl_typedef" href="namespaceNeoFOAM.html#a72ecdf875c1b4d9e941284f6f5351752">FieldResidual</a> = std::pair&lt;NeoN::scalar, NeoN::scalar&gt;;</div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#ad7da788dc1fc4af69c98dea808d84073">   20</a></span><span class="keyword">using </span><a class="code hl_typedef" href="namespaceNeoFOAM.html#ad7da788dc1fc4af69c98dea808d84073">ResidualMap</a> = std::map&lt;std::string, FieldResidual&gt;;</div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span> </div>
+<div class="foldopen" id="foldopen00029" data-start="{" data-end="};">
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PimpleControl.html">   29</a></span><span class="keyword">class </span><a class="code hl_class" href="classNeoFOAM_1_1PimpleControl.html">PimpleControl</a></div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>{</div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span> </div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>    <span class="comment">// A missing PIMPLE subdict degrades to nOuterCorrectors == 1 with no residual control.</span></div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PimpleControl.html#a64a14f955ef306f87b131076ea63a3b7">   34</a></span>    <span class="keyword">explicit</span> <a class="code hl_function" href="classNeoFOAM_1_1PimpleControl.html#a64a14f955ef306f87b131076ea63a3b7">PimpleControl</a>(<span class="keyword">const</span> NeoN::Dictionary&amp; fvSolution);</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span> </div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>    <span class="comment">// True on the last outer pass, enabling *Final relaxation factors and solver subdicts.</span></div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PimpleControl.html#ac660bdfb39e8b40006e90747c3344340">   37</a></span>    [[nodiscard]] <span class="keywordtype">bool</span> <a class="code hl_function" href="classNeoFOAM_1_1PimpleControl.html#ac660bdfb39e8b40006e90747c3344340">finalIter</a>() <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span> </div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PimpleControl.html#a677d00c48cd57069d5be20311c63b985">   39</a></span>    [[nodiscard]] <span class="keywordtype">bool</span> <a class="code hl_function" href="classNeoFOAM_1_1PimpleControl.html#a677d00c48cd57069d5be20311c63b985">firstIter</a>() <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span> </div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>    <span class="comment">// Returns true while another outer corrector should run.</span></div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PimpleControl.html#a8a9e4057eb5c5f0aa8092abbcf206f08">   42</a></span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="classNeoFOAM_1_1PimpleControl.html#a8a9e4057eb5c5f0aa8092abbcf206f08">loop</a>(<span class="keyword">const</span> <a class="code hl_typedef" href="namespaceNeoFOAM.html#ad7da788dc1fc4af69c98dea808d84073">ResidualMap</a>&amp; residuals);</div>
 <div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span> </div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    <span class="comment">// Reads the PIMPLE subdict from fvSolution (nOuterCorrectors, residualControl{}).</span></div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    <span class="comment">// A missing / malformed PIMPLE block degrades to nOuterCorrectors == 1 and an empty</span></div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    <span class="comment">// residualControl (OpenFOAM defaults) — never throws.</span></div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PimpleControl.html#a64a14f955ef306f87b131076ea63a3b7">   47</a></span>    <span class="keyword">explicit</span> <a class="code hl_function" href="classNeoFOAM_1_1PimpleControl.html#a64a14f955ef306f87b131076ea63a3b7">PimpleControl</a>(<span class="keyword">const</span> NeoN::Dictionary&amp; fvSolution);</div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span> </div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    <span class="comment">// True on the last outer pass: converged_ || (corr_ == nOuterCorr_). Drives *Final</span></div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    <span class="comment">// relaxation factors + &lt;field&gt;Final solver subdict selection (pimpleControlI.H:92-95).</span></div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PimpleControl.html#ac660bdfb39e8b40006e90747c3344340">   51</a></span>    [[nodiscard]] <span class="keywordtype">bool</span> <a class="code hl_function" href="classNeoFOAM_1_1PimpleControl.html#ac660bdfb39e8b40006e90747c3344340">finalIter</a>() <span class="keyword">const</span>;</div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span> </div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    <span class="comment">// True on the first outer pass (corr_ == 1) — convergence is never checked here.</span></div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PimpleControl.html#a677d00c48cd57069d5be20311c63b985">   54</a></span>    [[nodiscard]] <span class="keywordtype">bool</span> <a class="code hl_function" href="classNeoFOAM_1_1PimpleControl.html#a677d00c48cd57069d5be20311c63b985">firstIter</a>() <span class="keyword">const</span>;</div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span> </div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>    <span class="comment">// Call once per outer pass. `residuals` holds the {init,final} residuals from the PREVIOUS</span></div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>    <span class="comment">// pass. Returns true while another outer corrector should run; false when the loop is done</span></div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>    <span class="comment">// (count exhausted OR residual criteria satisfied after the extra final pass).</span></div>
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PimpleControl.html#a8a9e4057eb5c5f0aa8092abbcf206f08">   59</a></span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="classNeoFOAM_1_1PimpleControl.html#a8a9e4057eb5c5f0aa8092abbcf206f08">loop</a>(<span class="keyword">const</span> <a class="code hl_typedef" href="namespaceNeoFOAM.html#ad7da788dc1fc4af69c98dea808d84073">ResidualMap</a>&amp; residuals);</div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span> </div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PimpleControl.html#aac1eb191e38541183d21cfd0dce539bb">   61</a></span>    [[nodiscard]] NeoN::label <a class="code hl_function" href="classNeoFOAM_1_1PimpleControl.html#aac1eb191e38541183d21cfd0dce539bb">nOuterCorrectors</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> nOuterCorr_; }</div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span> </div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span><span class="keyword">private</span>:</div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span> </div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>    <span class="keywordtype">bool</span> criteriaSatisfied(<span class="keyword">const</span> <a class="code hl_typedef" href="namespaceNeoFOAM.html#ad7da788dc1fc4af69c98dea808d84073">ResidualMap</a>&amp; residuals);</div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span> </div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>    <span class="keyword">struct </span>FieldCtrl</div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>    {</div>
-<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>        std::string name;</div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>        NeoN::scalar absTol;</div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>        NeoN::scalar relTol;</div>
-<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>        NeoN::scalar initialResidual;</div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>    };</div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span> </div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>    NeoN::label nOuterCorr_ = 1;</div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>    NeoN::label corr_ = 0;</div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>    <span class="keywordtype">bool</span> converged_ = <span class="keyword">false</span>;</div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>    std::vector&lt;FieldCtrl&gt; residualControl_;</div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>};</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1PimpleControl.html#aac1eb191e38541183d21cfd0dce539bb">   44</a></span>    [[nodiscard]] NeoN::label <a class="code hl_function" href="classNeoFOAM_1_1PimpleControl.html#aac1eb191e38541183d21cfd0dce539bb">nOuterCorrectors</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> nOuterCorr_; }</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span> </div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span> </div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>    <span class="keywordtype">bool</span> criteriaSatisfied(<span class="keyword">const</span> <a class="code hl_typedef" href="namespaceNeoFOAM.html#ad7da788dc1fc4af69c98dea808d84073">ResidualMap</a>&amp; residuals);</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span> </div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    <span class="keyword">struct </span>FieldCtrl</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>    {</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>        std::string name;</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>        NeoN::scalar absTol;</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>        NeoN::scalar relTol;</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>        NeoN::scalar initialResidual;</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>    };</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span> </div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>    NeoN::label nOuterCorr_ = 1;</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>    NeoN::label corr_ = 0;</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>    <span class="keywordtype">bool</span> converged_ = <span class="keyword">false</span>;</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>    std::vector&lt;FieldCtrl&gt; residualControl_;</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>};</div>
 </div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span> </div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>} <span class="comment">// namespace NeoFOAM</span></div>
-<div class="ttc" id="aclassNeoFOAM_1_1PimpleControl_html"><div class="ttname"><a href="classNeoFOAM_1_1PimpleControl.html">NeoFOAM::PimpleControl</a></div><div class="ttdef"><b>Definition</b> <a href="pimpleControl_8hpp_source.html#l00040">pimpleControl.hpp:41</a></div></div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span> </div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>} <span class="comment">// namespace NeoFOAM</span></div>
+<div class="ttc" id="aclassNeoFOAM_1_1PimpleControl_html"><div class="ttname"><a href="classNeoFOAM_1_1PimpleControl.html">NeoFOAM::PimpleControl</a></div><div class="ttdoc">NeoFOAM-native outer PIMPLE loop control.</div><div class="ttdef"><b>Definition</b> <a href="pimpleControl_8hpp_source.html#l00029">pimpleControl.hpp:30</a></div></div>
 <div class="ttc" id="aclassNeoFOAM_1_1PimpleControl_html_a64a14f955ef306f87b131076ea63a3b7"><div class="ttname"><a href="classNeoFOAM_1_1PimpleControl.html#a64a14f955ef306f87b131076ea63a3b7">NeoFOAM::PimpleControl::PimpleControl</a></div><div class="ttdeci">PimpleControl(const NeoN::Dictionary &amp;fvSolution)</div></div>
 <div class="ttc" id="aclassNeoFOAM_1_1PimpleControl_html_a677d00c48cd57069d5be20311c63b985"><div class="ttname"><a href="classNeoFOAM_1_1PimpleControl.html#a677d00c48cd57069d5be20311c63b985">NeoFOAM::PimpleControl::firstIter</a></div><div class="ttdeci">bool firstIter() const</div></div>
 <div class="ttc" id="aclassNeoFOAM_1_1PimpleControl_html_a8a9e4057eb5c5f0aa8092abbcf206f08"><div class="ttname"><a href="classNeoFOAM_1_1PimpleControl.html#a8a9e4057eb5c5f0aa8092abbcf206f08">NeoFOAM::PimpleControl::loop</a></div><div class="ttdeci">bool loop(const ResidualMap &amp;residuals)</div></div>
-<div class="ttc" id="aclassNeoFOAM_1_1PimpleControl_html_aac1eb191e38541183d21cfd0dce539bb"><div class="ttname"><a href="classNeoFOAM_1_1PimpleControl.html#aac1eb191e38541183d21cfd0dce539bb">NeoFOAM::PimpleControl::nOuterCorrectors</a></div><div class="ttdeci">NeoN::label nOuterCorrectors() const</div><div class="ttdef"><b>Definition</b> <a href="pimpleControl_8hpp_source.html#l00061">pimpleControl.hpp:61</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1PimpleControl_html_aac1eb191e38541183d21cfd0dce539bb"><div class="ttname"><a href="classNeoFOAM_1_1PimpleControl.html#aac1eb191e38541183d21cfd0dce539bb">NeoFOAM::PimpleControl::nOuterCorrectors</a></div><div class="ttdeci">NeoN::label nOuterCorrectors() const</div><div class="ttdef"><b>Definition</b> <a href="pimpleControl_8hpp_source.html#l00044">pimpleControl.hpp:44</a></div></div>
 <div class="ttc" id="aclassNeoFOAM_1_1PimpleControl_html_ac660bdfb39e8b40006e90747c3344340"><div class="ttname"><a href="classNeoFOAM_1_1PimpleControl.html#ac660bdfb39e8b40006e90747c3344340">NeoFOAM::PimpleControl::finalIter</a></div><div class="ttdeci">bool finalIter() const</div></div>
 <div class="ttc" id="anamespaceNeoFOAM_html"><div class="ttname"><a href="namespaceNeoFOAM.html">NeoFOAM</a></div><div class="ttdef"><b>Definition</b> <a href="pressureVelocityCoupling_8hpp_source.html#l00014">pressureVelocityCoupling.hpp:15</a></div></div>
-<div class="ttc" id="anamespaceNeoFOAM_html_a72ecdf875c1b4d9e941284f6f5351752"><div class="ttname"><a href="namespaceNeoFOAM.html#a72ecdf875c1b4d9e941284f6f5351752">NeoFOAM::FieldResidual</a></div><div class="ttdeci">std::pair&lt; NeoN::scalar, NeoN::scalar &gt; FieldResidual</div><div class="ttdef"><b>Definition</b> <a href="pimpleControl_8hpp_source.html#l00023">pimpleControl.hpp:23</a></div></div>
-<div class="ttc" id="anamespaceNeoFOAM_html_ad7da788dc1fc4af69c98dea808d84073"><div class="ttname"><a href="namespaceNeoFOAM.html#ad7da788dc1fc4af69c98dea808d84073">NeoFOAM::ResidualMap</a></div><div class="ttdeci">std::map&lt; std::string, FieldResidual &gt; ResidualMap</div><div class="ttdef"><b>Definition</b> <a href="pimpleControl_8hpp_source.html#l00024">pimpleControl.hpp:24</a></div></div>
+<div class="ttc" id="anamespaceNeoFOAM_html_a72ecdf875c1b4d9e941284f6f5351752"><div class="ttname"><a href="namespaceNeoFOAM.html#a72ecdf875c1b4d9e941284f6f5351752">NeoFOAM::FieldResidual</a></div><div class="ttdeci">std::pair&lt; NeoN::scalar, NeoN::scalar &gt; FieldResidual</div><div class="ttdef"><b>Definition</b> <a href="pimpleControl_8hpp_source.html#l00019">pimpleControl.hpp:19</a></div></div>
+<div class="ttc" id="anamespaceNeoFOAM_html_ad7da788dc1fc4af69c98dea808d84073"><div class="ttname"><a href="namespaceNeoFOAM.html#ad7da788dc1fc4af69c98dea808d84073">NeoFOAM::ResidualMap</a></div><div class="ttdeci">std::map&lt; std::string, FieldResidual &gt; ResidualMap</div><div class="ttdef"><b>Definition</b> <a href="pimpleControl_8hpp_source.html#l00020">pimpleControl.hpp:20</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

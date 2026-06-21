@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['spalartallmarasddes_0',['SpalartAllmarasDDES',['../classNeoFOAM_1_1SpalartAllmarasDDES.html',1,'NeoFOAM']]]
+  ['omegawallfunction_0',['OmegaWallFunction',['../classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1OmegaWallFunction.html',1,'NeoN::finiteVolume::cellCentred::volumeBoundary']]]
 ];
