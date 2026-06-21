@@ -1,0 +1,147 @@
+\doxysection{Neo\+FOAM\+::KEpsilon\+Model Class Reference}
+\hypertarget{classNeoFOAM_1_1KEpsilonModel}{}\label{classNeoFOAM_1_1KEpsilonModel}\index{NeoFOAM::KEpsilonModel@{NeoFOAM::KEpsilonModel}}
+
+
+Turbulence\+Model-\/factory wrapper for k-\/epsilon.  
+
+
+
+
+{\ttfamily \#include $<$k\+Epsilon.\+hpp$>$}
+
+Inheritance diagram for Neo\+FOAM\+::KEpsilon\+Model\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classNeoFOAM_1_1KEpsilonModel}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classNeoFOAM_1_1KEpsilonModel_ac49be3df6bd744bd61560c8a01b0ee74}{KEpsilon\+Model}} (\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&rt, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&nu)
+\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1KEpsilonModel_a93edec2bd44567d1d25c4264d647fb7b}{validate}} (const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&U) override
+\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1KEpsilonModel_a7e635aceb3beaf77497cc339563b8493}{correct}} (const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&U, nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&phi, \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&rt) override
+\item 
+nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \& \mbox{\hyperlink{classNeoFOAM_1_1KEpsilonModel_ae03360a5c30f32d904133133bb89a1b4}{nu\+Eff}} () override
+\item 
+const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \& \mbox{\hyperlink{classNeoFOAM_1_1KEpsilonModel_ad1abdf39959d54c02a3768d2efaadfab}{nut}} () const override
+\item 
+const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Tensor $>$ \& \mbox{\hyperlink{classNeoFOAM_1_1KEpsilonModel_aa54a489f48cd572a1ca96c7d7197a0b2}{gradU}} () const override
+\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1KEpsilonModel_a00304067c26e23ed40d25d3b9ccafced}{rotate\+Old\+Times}} () override
+\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1KEpsilonModel_a2e800ed3faaf880b86855cd920b807c0}{write}} (\mbox{\hyperlink{classNeoFOAM_1_1MeshAdapter}{Mesh\+Adapter}} \&mesh) const override
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static std\+::string \mbox{\hyperlink{classNeoFOAM_1_1KEpsilonModel_a230954a8ac76009c56110d8b128e2bca}{name}} ()
+\item 
+static std\+::string \mbox{\hyperlink{classNeoFOAM_1_1KEpsilonModel_ade71484c4ac72e9067deb435e47bbe85}{doc}} ()
+\item 
+static std\+::string \mbox{\hyperlink{classNeoFOAM_1_1KEpsilonModel_ae4c147b850afc2d3c584c78beff51ad0}{schema}} ()
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Turbulence\+Model-\/factory wrapper for k-\/epsilon. 
+
+Owns k, epsilon and nut; reads them from disk in the constructor, delegates physics to \doxylink{classNeoFOAM_1_1KEpsilon}{KEpsilon}. Registered as "{}k\+Epsilon"{} in the \doxylink{classNeoFOAM_1_1TurbulenceModel}{Turbulence\+Model} factory so \doxylink{classNeoFOAM_1_1TurbulenceModel_a49dee8641d6055c7fa2b88be94e8448a}{Turbulence\+Model\+::create()} can instantiate it from a RAS turbulence\+Properties block. 
+
+Definition at line \mbox{\hyperlink{kEpsilon_8hpp_source_l00188}{188}} of file \mbox{\hyperlink{kEpsilon_8hpp_source}{k\+Epsilon.\+hpp}}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{classNeoFOAM_1_1KEpsilonModel_ac49be3df6bd744bd61560c8a01b0ee74}\label{classNeoFOAM_1_1KEpsilonModel_ac49be3df6bd744bd61560c8a01b0ee74} 
+\index{NeoFOAM::KEpsilonModel@{NeoFOAM::KEpsilonModel}!KEpsilonModel@{KEpsilonModel}}
+\index{KEpsilonModel@{KEpsilonModel}!NeoFOAM::KEpsilonModel@{NeoFOAM::KEpsilonModel}}
+\doxysubsubsection{\texorpdfstring{KEpsilonModel()}{KEpsilonModel()}}
+{\footnotesize\ttfamily Neo\+FOAM\+::\+KEpsilon\+Model\+::\+KEpsilon\+Model (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&}]{rt,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{nu }\end{DoxyParamCaption})}
+
+
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{classNeoFOAM_1_1KEpsilonModel_a7e635aceb3beaf77497cc339563b8493}\label{classNeoFOAM_1_1KEpsilonModel_a7e635aceb3beaf77497cc339563b8493} 
+\index{NeoFOAM::KEpsilonModel@{NeoFOAM::KEpsilonModel}!correct@{correct}}
+\index{correct@{correct}!NeoFOAM::KEpsilonModel@{NeoFOAM::KEpsilonModel}}
+\doxysubsubsection{\texorpdfstring{correct()}{correct()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::\+KEpsilon\+Model\+::correct (\begin{DoxyParamCaption}\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&}]{U,  }\item[{nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{phi,  }\item[{\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&}]{rt }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}}
+
+\Hypertarget{classNeoFOAM_1_1KEpsilonModel_ade71484c4ac72e9067deb435e47bbe85}\label{classNeoFOAM_1_1KEpsilonModel_ade71484c4ac72e9067deb435e47bbe85} 
+\index{NeoFOAM::KEpsilonModel@{NeoFOAM::KEpsilonModel}!doc@{doc}}
+\index{doc@{doc}!NeoFOAM::KEpsilonModel@{NeoFOAM::KEpsilonModel}}
+\doxysubsubsection{\texorpdfstring{doc()}{doc()}}
+{\footnotesize\ttfamily static std\+::string Neo\+FOAM\+::\+KEpsilon\+Model\+::doc (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Definition at line \mbox{\hyperlink{kEpsilon_8hpp_source_l00193}{193}} of file \mbox{\hyperlink{kEpsilon_8hpp_source}{k\+Epsilon.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1KEpsilonModel_aa54a489f48cd572a1ca96c7d7197a0b2}\label{classNeoFOAM_1_1KEpsilonModel_aa54a489f48cd572a1ca96c7d7197a0b2} 
+\index{NeoFOAM::KEpsilonModel@{NeoFOAM::KEpsilonModel}!gradU@{gradU}}
+\index{gradU@{gradU}!NeoFOAM::KEpsilonModel@{NeoFOAM::KEpsilonModel}}
+\doxysubsubsection{\texorpdfstring{gradU()}{gradU()}}
+{\footnotesize\ttfamily const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Tensor $>$ \& Neo\+FOAM\+::\+KEpsilon\+Model\+::gradU (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [override]}}
+
+\Hypertarget{classNeoFOAM_1_1KEpsilonModel_a230954a8ac76009c56110d8b128e2bca}\label{classNeoFOAM_1_1KEpsilonModel_a230954a8ac76009c56110d8b128e2bca} 
+\index{NeoFOAM::KEpsilonModel@{NeoFOAM::KEpsilonModel}!name@{name}}
+\index{name@{name}!NeoFOAM::KEpsilonModel@{NeoFOAM::KEpsilonModel}}
+\doxysubsubsection{\texorpdfstring{name()}{name()}}
+{\footnotesize\ttfamily static std\+::string Neo\+FOAM\+::\+KEpsilon\+Model\+::name (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Definition at line \mbox{\hyperlink{kEpsilon_8hpp_source_l00192}{192}} of file \mbox{\hyperlink{kEpsilon_8hpp_source}{k\+Epsilon.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1KEpsilonModel_ae03360a5c30f32d904133133bb89a1b4}\label{classNeoFOAM_1_1KEpsilonModel_ae03360a5c30f32d904133133bb89a1b4} 
+\index{NeoFOAM::KEpsilonModel@{NeoFOAM::KEpsilonModel}!nuEff@{nuEff}}
+\index{nuEff@{nuEff}!NeoFOAM::KEpsilonModel@{NeoFOAM::KEpsilonModel}}
+\doxysubsubsection{\texorpdfstring{nuEff()}{nuEff()}}
+{\footnotesize\ttfamily nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \& Neo\+FOAM\+::\+KEpsilon\+Model\+::nu\+Eff (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}}
+
+\Hypertarget{classNeoFOAM_1_1KEpsilonModel_ad1abdf39959d54c02a3768d2efaadfab}\label{classNeoFOAM_1_1KEpsilonModel_ad1abdf39959d54c02a3768d2efaadfab} 
+\index{NeoFOAM::KEpsilonModel@{NeoFOAM::KEpsilonModel}!nut@{nut}}
+\index{nut@{nut}!NeoFOAM::KEpsilonModel@{NeoFOAM::KEpsilonModel}}
+\doxysubsubsection{\texorpdfstring{nut()}{nut()}}
+{\footnotesize\ttfamily const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \& Neo\+FOAM\+::\+KEpsilon\+Model\+::nut (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [override]}}
+
+\Hypertarget{classNeoFOAM_1_1KEpsilonModel_a00304067c26e23ed40d25d3b9ccafced}\label{classNeoFOAM_1_1KEpsilonModel_a00304067c26e23ed40d25d3b9ccafced} 
+\index{NeoFOAM::KEpsilonModel@{NeoFOAM::KEpsilonModel}!rotateOldTimes@{rotateOldTimes}}
+\index{rotateOldTimes@{rotateOldTimes}!NeoFOAM::KEpsilonModel@{NeoFOAM::KEpsilonModel}}
+\doxysubsubsection{\texorpdfstring{rotateOldTimes()}{rotateOldTimes()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::\+KEpsilon\+Model\+::rotate\+Old\+Times (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}}
+
+
+
+Definition at line \mbox{\hyperlink{kEpsilon_8hpp_source_l00207}{207}} of file \mbox{\hyperlink{kEpsilon_8hpp_source}{k\+Epsilon.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1KEpsilonModel_ae4c147b850afc2d3c584c78beff51ad0}\label{classNeoFOAM_1_1KEpsilonModel_ae4c147b850afc2d3c584c78beff51ad0} 
+\index{NeoFOAM::KEpsilonModel@{NeoFOAM::KEpsilonModel}!schema@{schema}}
+\index{schema@{schema}!NeoFOAM::KEpsilonModel@{NeoFOAM::KEpsilonModel}}
+\doxysubsubsection{\texorpdfstring{schema()}{schema()}}
+{\footnotesize\ttfamily static std\+::string Neo\+FOAM\+::\+KEpsilon\+Model\+::schema (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Definition at line \mbox{\hyperlink{kEpsilon_8hpp_source_l00194}{194}} of file \mbox{\hyperlink{kEpsilon_8hpp_source}{k\+Epsilon.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1KEpsilonModel_a93edec2bd44567d1d25c4264d647fb7b}\label{classNeoFOAM_1_1KEpsilonModel_a93edec2bd44567d1d25c4264d647fb7b} 
+\index{NeoFOAM::KEpsilonModel@{NeoFOAM::KEpsilonModel}!validate@{validate}}
+\index{validate@{validate}!NeoFOAM::KEpsilonModel@{NeoFOAM::KEpsilonModel}}
+\doxysubsubsection{\texorpdfstring{validate()}{validate()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::\+KEpsilon\+Model\+::validate (\begin{DoxyParamCaption}\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&}]{U }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}}
+
+\Hypertarget{classNeoFOAM_1_1KEpsilonModel_a2e800ed3faaf880b86855cd920b807c0}\label{classNeoFOAM_1_1KEpsilonModel_a2e800ed3faaf880b86855cd920b807c0} 
+\index{NeoFOAM::KEpsilonModel@{NeoFOAM::KEpsilonModel}!write@{write}}
+\index{write@{write}!NeoFOAM::KEpsilonModel@{NeoFOAM::KEpsilonModel}}
+\doxysubsubsection{\texorpdfstring{write()}{write()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::\+KEpsilon\+Model\+::write (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classNeoFOAM_1_1MeshAdapter}{Mesh\+Adapter}} \&}]{mesh }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [override]}}
+
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/runner/work/\+Neo\+FOAM/\+Neo\+FOAM/include/\+Neo\+FOAM/turbulence\+Models/\mbox{\hyperlink{kEpsilon_8hpp}{k\+Epsilon.\+hpp}}\end{DoxyCompactItemize}

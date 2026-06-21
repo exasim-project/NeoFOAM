@@ -1,0 +1,147 @@
+\doxysection{Neo\+FOAM\+::KOmega\+SSTModel Class Reference}
+\hypertarget{classNeoFOAM_1_1KOmegaSSTModel}{}\label{classNeoFOAM_1_1KOmegaSSTModel}\index{NeoFOAM::KOmegaSSTModel@{NeoFOAM::KOmegaSSTModel}}
+
+
+Turbulence\+Model-\/factory wrapper for k-\/omega SST.  
+
+
+
+
+{\ttfamily \#include $<$k\+Omega\+SST.\+hpp$>$}
+
+Inheritance diagram for Neo\+FOAM\+::KOmega\+SSTModel\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classNeoFOAM_1_1KOmegaSSTModel}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classNeoFOAM_1_1KOmegaSSTModel_aa8fe7e1df42075a950c87c3031cd9e7b}{KOmega\+SSTModel}} (\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&rt, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&nu)
+\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSSTModel_a5bcbfdbbec842401c83e6d228e48e4eb}{validate}} (const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&U) override
+\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSSTModel_ab2f3809b0456fa9b51de6941d4272cfa}{correct}} (const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&U, nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&phi, \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&rt) override
+\item 
+nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \& \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSSTModel_a33d859ebd6773e0be182cd1ab57696ae}{nu\+Eff}} () override
+\item 
+const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \& \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSSTModel_a7860f69eea89329f9cc68b1b5a383a50}{nut}} () const override
+\item 
+const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Tensor $>$ \& \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSSTModel_adff9d9cf49cc663230517be883740a88}{gradU}} () const override
+\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSSTModel_a8ed36f464c90ef237eb1ce45d39d20da}{rotate\+Old\+Times}} () override
+\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSSTModel_ac017de6008e41c7ae741f5b22c3283d3}{write}} (\mbox{\hyperlink{classNeoFOAM_1_1MeshAdapter}{Mesh\+Adapter}} \&mesh) const override
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static std\+::string \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSSTModel_a49a35609a6ffff662c928c4691496c3b}{name}} ()
+\item 
+static std\+::string \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSSTModel_a8a040b8c4d7e43fbb39fcff10128bae6}{doc}} ()
+\item 
+static std\+::string \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSSTModel_ab15c351750e09115bf6db7b621adc7be}{schema}} ()
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Turbulence\+Model-\/factory wrapper for k-\/omega SST. 
+
+Owns k, omega and nut; reads them from disk in the constructor, delegates physics to \doxylink{classNeoFOAM_1_1KOmegaSST}{KOmega\+SST}. Registered as "{}k\+Omega\+SST"{} in the \doxylink{classNeoFOAM_1_1TurbulenceModel}{Turbulence\+Model} factory so \doxylink{classNeoFOAM_1_1TurbulenceModel_a49dee8641d6055c7fa2b88be94e8448a}{Turbulence\+Model\+::create()} can instantiate it from a RAS turbulence\+Properties block. 
+
+Definition at line \mbox{\hyperlink{kOmegaSST_8hpp_source_l00221}{221}} of file \mbox{\hyperlink{kOmegaSST_8hpp_source}{k\+Omega\+SST.\+hpp}}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{classNeoFOAM_1_1KOmegaSSTModel_aa8fe7e1df42075a950c87c3031cd9e7b}\label{classNeoFOAM_1_1KOmegaSSTModel_aa8fe7e1df42075a950c87c3031cd9e7b} 
+\index{NeoFOAM::KOmegaSSTModel@{NeoFOAM::KOmegaSSTModel}!KOmegaSSTModel@{KOmegaSSTModel}}
+\index{KOmegaSSTModel@{KOmegaSSTModel}!NeoFOAM::KOmegaSSTModel@{NeoFOAM::KOmegaSSTModel}}
+\doxysubsubsection{\texorpdfstring{KOmegaSSTModel()}{KOmegaSSTModel()}}
+{\footnotesize\ttfamily Neo\+FOAM\+::\+KOmega\+SSTModel\+::\+KOmega\+SSTModel (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&}]{rt,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{nu }\end{DoxyParamCaption})}
+
+
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{classNeoFOAM_1_1KOmegaSSTModel_ab2f3809b0456fa9b51de6941d4272cfa}\label{classNeoFOAM_1_1KOmegaSSTModel_ab2f3809b0456fa9b51de6941d4272cfa} 
+\index{NeoFOAM::KOmegaSSTModel@{NeoFOAM::KOmegaSSTModel}!correct@{correct}}
+\index{correct@{correct}!NeoFOAM::KOmegaSSTModel@{NeoFOAM::KOmegaSSTModel}}
+\doxysubsubsection{\texorpdfstring{correct()}{correct()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::\+KOmega\+SSTModel\+::correct (\begin{DoxyParamCaption}\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&}]{U,  }\item[{nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{phi,  }\item[{\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&}]{rt }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}}
+
+\Hypertarget{classNeoFOAM_1_1KOmegaSSTModel_a8a040b8c4d7e43fbb39fcff10128bae6}\label{classNeoFOAM_1_1KOmegaSSTModel_a8a040b8c4d7e43fbb39fcff10128bae6} 
+\index{NeoFOAM::KOmegaSSTModel@{NeoFOAM::KOmegaSSTModel}!doc@{doc}}
+\index{doc@{doc}!NeoFOAM::KOmegaSSTModel@{NeoFOAM::KOmegaSSTModel}}
+\doxysubsubsection{\texorpdfstring{doc()}{doc()}}
+{\footnotesize\ttfamily static std\+::string Neo\+FOAM\+::\+KOmega\+SSTModel\+::doc (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Definition at line \mbox{\hyperlink{kOmegaSST_8hpp_source_l00226}{226}} of file \mbox{\hyperlink{kOmegaSST_8hpp_source}{k\+Omega\+SST.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1KOmegaSSTModel_adff9d9cf49cc663230517be883740a88}\label{classNeoFOAM_1_1KOmegaSSTModel_adff9d9cf49cc663230517be883740a88} 
+\index{NeoFOAM::KOmegaSSTModel@{NeoFOAM::KOmegaSSTModel}!gradU@{gradU}}
+\index{gradU@{gradU}!NeoFOAM::KOmegaSSTModel@{NeoFOAM::KOmegaSSTModel}}
+\doxysubsubsection{\texorpdfstring{gradU()}{gradU()}}
+{\footnotesize\ttfamily const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Tensor $>$ \& Neo\+FOAM\+::\+KOmega\+SSTModel\+::gradU (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [override]}}
+
+\Hypertarget{classNeoFOAM_1_1KOmegaSSTModel_a49a35609a6ffff662c928c4691496c3b}\label{classNeoFOAM_1_1KOmegaSSTModel_a49a35609a6ffff662c928c4691496c3b} 
+\index{NeoFOAM::KOmegaSSTModel@{NeoFOAM::KOmegaSSTModel}!name@{name}}
+\index{name@{name}!NeoFOAM::KOmegaSSTModel@{NeoFOAM::KOmegaSSTModel}}
+\doxysubsubsection{\texorpdfstring{name()}{name()}}
+{\footnotesize\ttfamily static std\+::string Neo\+FOAM\+::\+KOmega\+SSTModel\+::name (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Definition at line \mbox{\hyperlink{kOmegaSST_8hpp_source_l00225}{225}} of file \mbox{\hyperlink{kOmegaSST_8hpp_source}{k\+Omega\+SST.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1KOmegaSSTModel_a33d859ebd6773e0be182cd1ab57696ae}\label{classNeoFOAM_1_1KOmegaSSTModel_a33d859ebd6773e0be182cd1ab57696ae} 
+\index{NeoFOAM::KOmegaSSTModel@{NeoFOAM::KOmegaSSTModel}!nuEff@{nuEff}}
+\index{nuEff@{nuEff}!NeoFOAM::KOmegaSSTModel@{NeoFOAM::KOmegaSSTModel}}
+\doxysubsubsection{\texorpdfstring{nuEff()}{nuEff()}}
+{\footnotesize\ttfamily nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \& Neo\+FOAM\+::\+KOmega\+SSTModel\+::nu\+Eff (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}}
+
+\Hypertarget{classNeoFOAM_1_1KOmegaSSTModel_a7860f69eea89329f9cc68b1b5a383a50}\label{classNeoFOAM_1_1KOmegaSSTModel_a7860f69eea89329f9cc68b1b5a383a50} 
+\index{NeoFOAM::KOmegaSSTModel@{NeoFOAM::KOmegaSSTModel}!nut@{nut}}
+\index{nut@{nut}!NeoFOAM::KOmegaSSTModel@{NeoFOAM::KOmegaSSTModel}}
+\doxysubsubsection{\texorpdfstring{nut()}{nut()}}
+{\footnotesize\ttfamily const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \& Neo\+FOAM\+::\+KOmega\+SSTModel\+::nut (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [override]}}
+
+\Hypertarget{classNeoFOAM_1_1KOmegaSSTModel_a8ed36f464c90ef237eb1ce45d39d20da}\label{classNeoFOAM_1_1KOmegaSSTModel_a8ed36f464c90ef237eb1ce45d39d20da} 
+\index{NeoFOAM::KOmegaSSTModel@{NeoFOAM::KOmegaSSTModel}!rotateOldTimes@{rotateOldTimes}}
+\index{rotateOldTimes@{rotateOldTimes}!NeoFOAM::KOmegaSSTModel@{NeoFOAM::KOmegaSSTModel}}
+\doxysubsubsection{\texorpdfstring{rotateOldTimes()}{rotateOldTimes()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::\+KOmega\+SSTModel\+::rotate\+Old\+Times (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}}
+
+
+
+Definition at line \mbox{\hyperlink{kOmegaSST_8hpp_source_l00240}{240}} of file \mbox{\hyperlink{kOmegaSST_8hpp_source}{k\+Omega\+SST.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1KOmegaSSTModel_ab15c351750e09115bf6db7b621adc7be}\label{classNeoFOAM_1_1KOmegaSSTModel_ab15c351750e09115bf6db7b621adc7be} 
+\index{NeoFOAM::KOmegaSSTModel@{NeoFOAM::KOmegaSSTModel}!schema@{schema}}
+\index{schema@{schema}!NeoFOAM::KOmegaSSTModel@{NeoFOAM::KOmegaSSTModel}}
+\doxysubsubsection{\texorpdfstring{schema()}{schema()}}
+{\footnotesize\ttfamily static std\+::string Neo\+FOAM\+::\+KOmega\+SSTModel\+::schema (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Definition at line \mbox{\hyperlink{kOmegaSST_8hpp_source_l00227}{227}} of file \mbox{\hyperlink{kOmegaSST_8hpp_source}{k\+Omega\+SST.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1KOmegaSSTModel_a5bcbfdbbec842401c83e6d228e48e4eb}\label{classNeoFOAM_1_1KOmegaSSTModel_a5bcbfdbbec842401c83e6d228e48e4eb} 
+\index{NeoFOAM::KOmegaSSTModel@{NeoFOAM::KOmegaSSTModel}!validate@{validate}}
+\index{validate@{validate}!NeoFOAM::KOmegaSSTModel@{NeoFOAM::KOmegaSSTModel}}
+\doxysubsubsection{\texorpdfstring{validate()}{validate()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::\+KOmega\+SSTModel\+::validate (\begin{DoxyParamCaption}\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&}]{U }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}}
+
+\Hypertarget{classNeoFOAM_1_1KOmegaSSTModel_ac017de6008e41c7ae741f5b22c3283d3}\label{classNeoFOAM_1_1KOmegaSSTModel_ac017de6008e41c7ae741f5b22c3283d3} 
+\index{NeoFOAM::KOmegaSSTModel@{NeoFOAM::KOmegaSSTModel}!write@{write}}
+\index{write@{write}!NeoFOAM::KOmegaSSTModel@{NeoFOAM::KOmegaSSTModel}}
+\doxysubsubsection{\texorpdfstring{write()}{write()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::\+KOmega\+SSTModel\+::write (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classNeoFOAM_1_1MeshAdapter}{Mesh\+Adapter}} \&}]{mesh }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [override]}}
+
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/runner/work/\+Neo\+FOAM/\+Neo\+FOAM/include/\+Neo\+FOAM/turbulence\+Models/\mbox{\hyperlink{kOmegaSST_8hpp}{k\+Omega\+SST.\+hpp}}\end{DoxyCompactItemize}
