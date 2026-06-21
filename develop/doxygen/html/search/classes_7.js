@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['spalartallmarasddes_0',['SpalartAllmarasDDES',['../classNeoFOAM_1_1SpalartAllmarasDDES.html',1,'NeoFOAM']]]
+  ['pdesolver_0',['PDESolver',['../classNeoFOAM_1_1PDESolver.html',1,'NeoFOAM']]]
 ];
