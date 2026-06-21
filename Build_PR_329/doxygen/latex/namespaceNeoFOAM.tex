@@ -12,16 +12,20 @@ struct \mbox{\hyperlink{structNeoFOAM_1_1ContinuityErrors}{Continuity\+Errors}}
 \item 
 class \mbox{\hyperlink{classNeoFOAM_1_1CreateFromFoamField}{Create\+From\+Foam\+Field}}
 \begin{DoxyCompactList}\small\item\em Creates a Vector\+Document from an existing Foam Field. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classNeoFOAM_1_1Laminar}{Laminar}}
+\begin{DoxyCompactList}\small\item\em No-\/op turbulence model for laminar flow. \end{DoxyCompactList}\item 
 class \mbox{\hyperlink{classNeoFOAM_1_1MeshAdapter}{Mesh\+Adapter}}
 \item 
 class \mbox{\hyperlink{classNeoFOAM_1_1PDESolver}{PDESolver}}
 \item 
 class \mbox{\hyperlink{classNeoFOAM_1_1PimpleControl}{Pimple\+Control}}
-\item 
+\begin{DoxyCompactList}\small\item\em Neo\+FOAM-\/native outer PIMPLE loop control. \end{DoxyCompactList}\item 
 struct \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}}
 \item 
 class \mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES}{Spalart\+Allmaras\+DDES}}
-\begin{DoxyCompactList}\small\item\em Neo\+FOAM-\/level wrapper for the Spalart-\/\+Allmaras DDES turbulence model. \end{DoxyCompactList}\item 
+\begin{DoxyCompactList}\small\item\em Spalart-\/\+Allmaras DDES turbulence model. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel}{Turbulence\+Model}}
+\begin{DoxyCompactList}\small\item\em Abstract base for \doxylink{namespaceNeoFOAM}{Neo\+FOAM} turbulence models with runtime selection. \end{DoxyCompactList}\item 
 struct \mbox{\hyperlink{structNeoFOAM_1_1TypeMap}{Type\+Map}}
 \item 
 struct \mbox{\hyperlink{structNeoFOAM_1_1TypeMap_3_01Foam_1_1Field_3_01Foam_1_1scalar_01_4_01_4}{Type\+Map$<$ Foam\+::\+Field$<$ Foam\+::scalar $>$ $>$}}
@@ -140,6 +144,8 @@ std\+::optional$<$ Neo\+N\+::scalar $>$ \mbox{\hyperlink{namespaceNeoFOAM_a10696
 \item 
 Neo\+N\+::\+Dictionary \mbox{\hyperlink{namespaceNeoFOAM_a809d8c49b332a3c4eb473b770d901e5b}{map\+Fv\+Solution}} (const Neo\+N\+::\+Dictionary \&solver\+Dict)
 \item 
+void \mbox{\hyperlink{namespaceNeoFOAM_afa00770785106f67fddae9d945e9e9d0}{create\+Mapped\+Fv\+Solution\+Dicts}} (\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&rt)
+\begin{DoxyCompactList}\small\item\em Map the p, U, p\+Final, and UFinal solver subdicts in rt.\+fv\+Solution\+Dict to Neo\+N/\+Ginkgo format. \end{DoxyCompactList}\item 
 std\+::vector$<$ Neo\+N\+::local\+Idx $>$ \mbox{\hyperlink{namespaceNeoFOAM_a62f928cde50543e956837887cd78fc2e}{compute\+Offset}} (const Foam\+::fv\+Mesh \&mesh)
 \item 
 int32\+\_\+t \mbox{\hyperlink{namespaceNeoFOAM_ace35b46c775da4f108a8badb0e6186da}{compute\+NBoundary\+Faces}} (const Foam\+::fv\+Mesh \&mesh)
@@ -173,7 +179,7 @@ std\+::unique\+\_\+ptr$<$ Foam\+::fv\+Mesh $>$ \mbox{\hyperlink{namespaceNeoFOAM
 
 
 
-Definition at line \mbox{\hyperlink{pimpleControl_8hpp_source_l00023}{23}} of file \mbox{\hyperlink{pimpleControl_8hpp_source}{pimple\+Control.\+hpp}}.
+Definition at line \mbox{\hyperlink{pimpleControl_8hpp_source_l00019}{19}} of file \mbox{\hyperlink{pimpleControl_8hpp_source}{pimple\+Control.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_ad7da788dc1fc4af69c98dea808d84073}\label{namespaceNeoFOAM_ad7da788dc1fc4af69c98dea808d84073} 
 \index{NeoFOAM@{NeoFOAM}!ResidualMap@{ResidualMap}}
@@ -183,7 +189,7 @@ Definition at line \mbox{\hyperlink{pimpleControl_8hpp_source_l00023}{23}} of fi
 
 
 
-Definition at line \mbox{\hyperlink{pimpleControl_8hpp_source_l00024}{24}} of file \mbox{\hyperlink{pimpleControl_8hpp_source}{pimple\+Control.\+hpp}}.
+Definition at line \mbox{\hyperlink{pimpleControl_8hpp_source_l00020}{20}} of file \mbox{\hyperlink{pimpleControl_8hpp_source}{pimple\+Control.\+hpp}}.
 
 
 
@@ -197,7 +203,7 @@ Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Value\+Type $>$ 
 
 
 
-Definition at line \mbox{\hyperlink{pdeSolver_8hpp_source_l00401}{401}} of file \mbox{\hyperlink{pdeSolver_8hpp_source}{pde\+Solver.\+hpp}}.
+Definition at line \mbox{\hyperlink{pdeSolver_8hpp_source_l00343}{343}} of file \mbox{\hyperlink{pdeSolver_8hpp_source}{pde\+Solver.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_a59b79053c26ad967a2ac57d1e4d0b9bb}\label{namespaceNeoFOAM_a59b79053c26ad967a2ac57d1e4d0b9bb} 
 \index{NeoFOAM@{NeoFOAM}!checkEntryType@{checkEntryType}}
@@ -390,7 +396,17 @@ Definition at line \mbox{\hyperlink{readers_8hpp_source_l00301}{301}} of file \m
 \doxysubsubsection{\texorpdfstring{createExecutor()}{createExecutor()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
 {\footnotesize\ttfamily Neo\+N\+::\+Executor Neo\+FOAM\+::create\+Executor (\begin{DoxyParamCaption}\item[{const Foam\+::word \&}]{exec\+Name }\end{DoxyParamCaption})}
 
-\Hypertarget{namespaceNeoFOAM_a70f3fbdfd753d2672cd8c017f759e7f8}\label{namespaceNeoFOAM_a70f3fbdfd753d2672cd8c017f759e7f8} 
+\Hypertarget{namespaceNeoFOAM_afa00770785106f67fddae9d945e9e9d0}\label{namespaceNeoFOAM_afa00770785106f67fddae9d945e9e9d0} 
+\index{NeoFOAM@{NeoFOAM}!createMappedFvSolutionDicts@{createMappedFvSolutionDicts}}
+\index{createMappedFvSolutionDicts@{createMappedFvSolutionDicts}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{createMappedFvSolutionDicts()}{createMappedFvSolutionDicts()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::create\+Mapped\+Fv\+Solution\+Dicts (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&}]{rt }\end{DoxyParamCaption})}
+
+
+
+Map the p, U, p\+Final, and UFinal solver subdicts in rt.\+fv\+Solution\+Dict to Neo\+N/\+Ginkgo format. 
+
+p\+Final and UFinal are skipped when absent (not all cases define Final subdicts). \Hypertarget{namespaceNeoFOAM_a70f3fbdfd753d2672cd8c017f759e7f8}\label{namespaceNeoFOAM_a70f3fbdfd753d2672cd8c017f759e7f8} 
 \index{NeoFOAM@{NeoFOAM}!createMesh@{createMesh}}
 \index{createMesh@{createMesh}!NeoFOAM@{NeoFOAM}}
 \doxysubsubsection{\texorpdfstring{createMesh()}{createMesh()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
@@ -470,7 +486,7 @@ Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Value\+Type $>$ 
 
 
 
-Definition at line \mbox{\hyperlink{pdeSolver_8hpp_source_l00420}{420}} of file \mbox{\hyperlink{pdeSolver_8hpp_source}{pde\+Solver.\+hpp}}.
+Definition at line \mbox{\hyperlink{pdeSolver_8hpp_source_l00362}{362}} of file \mbox{\hyperlink{pdeSolver_8hpp_source}{pde\+Solver.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_aa63d77fd599301dc114f8358d866b805}\label{namespaceNeoFOAM_aa63d77fd599301dc114f8358d866b805} 
 \index{NeoFOAM@{NeoFOAM}!operator==@{operator==}}

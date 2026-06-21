@@ -17,62 +17,66 @@
 \DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00013}00013\ \textcolor{preprocessor}{\#include\ "{}NeoN/core/dictionary.hpp"{}}}
 \DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00014}00014\ \textcolor{preprocessor}{\#include\ "{}NeoN/core/primitives/scalar.hpp"{}}}
 \DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00015}00015\ }
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00016}00016\ }
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00017}00017\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceNeoFOAM}{NeoFOAM}}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00018}00018\ \{}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00019}00019\ }
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00020}\mbox{\hyperlink{namespaceNeoFOAM_ab68574263e9c80758820191001d6d256}{00020}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_ab68574263e9c80758820191001d6d256}{updateSolver}}(NeoN::Dictionary\&\ solverDict);}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00016}00016\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{runTime_8hpp}{NeoFOAM/datastructures/runTime.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00017}00017\ }
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00018}00018\ }
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00019}00019\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceNeoFOAM}{NeoFOAM}}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00020}00020\ \{}
 \DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00021}00021\ }
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00022}\mbox{\hyperlink{namespaceNeoFOAM_a8c1ca67d102991ab4a3c1bc3a2a8fb03}{00022}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_a8c1ca67d102991ab4a3c1bc3a2a8fb03}{updatePreconditioner}}(NeoN::Dictionary\&\ solverDict);}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00022}\mbox{\hyperlink{namespaceNeoFOAM_ab68574263e9c80758820191001d6d256}{00022}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_ab68574263e9c80758820191001d6d256}{updateSolver}}(NeoN::Dictionary\&\ solverDict);}
 \DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00023}00023\ }
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00024}00024\ \textcolor{comment}{/*\ @brief\ Look\ up\ the\ equation\ under-\/relaxation\ factor\ for\ a\ field\ from\ fvSolution.}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00025}00025\ \textcolor{comment}{\ *}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00026}00026\ \textcolor{comment}{\ *\ Parses\ the\ OpenFOAM\ \`{}relaxationFactors.equations`\ sub-\/dictionary\ and\ returns\ the}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00027}00027\ \textcolor{comment}{\ *\ scalar\ relaxation\ factor\ for\ the\ given\ field.\ When\ \`{}finalIter`\ is\ true\ the}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00028}00028\ \textcolor{comment}{\ *\ \`{}<field>Final`\ key\ is\ preferred\ (Final-\/suffix\ seam),\ falling\ back\ to\ the\ base}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00029}00029\ \textcolor{comment}{\ *\ \`{}<field>`\ key.\ Returns\ std::nullopt\ when\ no\ entry\ exists\ -\/>\ the\ caller\ uses\ 1.0\ -\/>}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00030}00030\ \textcolor{comment}{\ *\ the\ kernel\ is\ a\ no-\/op\ (matches\ OpenFOAM's\ "{}no\ entry,\ no\ relax"{}\ semantics).}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00031}00031\ \textcolor{comment}{\ *}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00032}00032\ \textcolor{comment}{\ *\ Keeping\ this\ parsing\ in\ NeoFOAM\ means\ NeoN's\ applyMatrixRelaxation\ only\ ever}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00033}00033\ \textcolor{comment}{\ *\ sees\ a\ plain\ scalar;\ NeoN\ stays\ OpenFOAM-\/dictionary-\/agnostic.}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00034}00034\ \textcolor{comment}{\ *}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00035}00035\ \textcolor{comment}{\ *\ @param\ fvSolution\ \ The\ parsed\ fvSolution\ dictionary\ (e.g.\ RunTime::fvSolutionDict).}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00036}00036\ \textcolor{comment}{\ *\ @param\ field\ \ \ \ \ \ \ The\ field\ name\ (e.g.\ "{}U"{}).}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00037}00037\ \textcolor{comment}{\ *\ @param\ finalIter\ \ \ Whether\ the\ final\ outer\ iteration\ is\ active\ (selects\ the\ *Final\ key).}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00038}00038\ \textcolor{comment}{\ */}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00039}00039\ std::optional<NeoN::scalar>}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00040}\mbox{\hyperlink{namespaceNeoFOAM_a26d70bfdefea0c104b27867a553012d2}{00040}}\ \mbox{\hyperlink{namespaceNeoFOAM_a26d70bfdefea0c104b27867a553012d2}{lookupEqnRelaxation}}(\textcolor{keyword}{const}\ NeoN::Dictionary\&\ fvSolution,\ \textcolor{keyword}{const}\ std::string\&\ field,\ \textcolor{keywordtype}{bool}\ finalIter);}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00041}00041\ }
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00042}00042\ \textcolor{comment}{/*\ @brief\ Look\ up\ the\ explicit\ field\ under-\/relaxation\ factor\ for\ a\ field\ from\ fvSolution.}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00043}00043\ \textcolor{comment}{\ *}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00044}00044\ \textcolor{comment}{\ *\ Parses\ the\ OpenFOAM\ \`{}relaxationFactors.fields`\ sub-\/dictionary\ and\ returns\ the\ scalar}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00045}00045\ \textcolor{comment}{\ *\ relaxation\ factor\ for\ the\ given\ field.\ When\ \`{}finalIter`\ is\ true\ the\ \`{}<field>Final`\ key\ is}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00046}00046\ \textcolor{comment}{\ *\ preferred\ (Final-\/suffix\ seam),\ falling\ back\ to\ the\ base\ \`{}<field>`\ key.\ Returns}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00047}00047\ \textcolor{comment}{\ *\ std::nullopt\ when\ no\ entry\ exists\ -\/>\ the\ caller\ uses\ 1.0\ -\/>\ the\ kernel\ is\ a\ no-\/op\ (matches}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00048}00048\ \textcolor{comment}{\ *\ OpenFOAM's\ "{}no\ entry,\ no\ relax"{}\ semantics).}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00049}00049\ \textcolor{comment}{\ *}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00050}00050\ \textcolor{comment}{\ *\ \`{}relaxationFactors.equations`\ and\ \`{}relaxationFactors.fields`\ are\ independent\ dicts:}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00051}00051\ \textcolor{comment}{\ *\ a\ field\ present\ only\ under\ \`{}equations`\ (e.g.\ momentum\ \`{}U`)\ returns\ nullopt\ here,\ so}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00052}00052\ \textcolor{comment}{\ *\ field-\/URF\ is\ a\ no-\/op\ on\ it\ and\ momentum\ is\ never\ double-\/relaxed.\ Shares\ the\ int-\/tolerant,}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00053}00053\ \textcolor{comment}{\ *\ isDict-\/guarded\ lookup\ body\ with\ lookupEqnRelaxation.}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00054}00054\ \textcolor{comment}{\ *}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00055}00055\ \textcolor{comment}{\ *\ @param\ fvSolution\ \ The\ parsed\ fvSolution\ dictionary\ (e.g.\ RunTime::fvSolutionDict).}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00056}00056\ \textcolor{comment}{\ *\ @param\ field\ \ \ \ \ \ \ The\ field\ name\ (e.g.\ "{}p"{}).}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00057}00057\ \textcolor{comment}{\ *\ @param\ finalIter\ \ \ Whether\ the\ final\ outer\ iteration\ is\ active\ (selects\ the\ *Final\ key).}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00058}00058\ \textcolor{comment}{\ */}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00059}00059\ std::optional<NeoN::scalar>}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00060}\mbox{\hyperlink{namespaceNeoFOAM_a10696ee81bee18fb95ff3175e368d99a}{00060}}\ \mbox{\hyperlink{namespaceNeoFOAM_a10696ee81bee18fb95ff3175e368d99a}{lookupFieldRelaxation}}(\textcolor{keyword}{const}\ NeoN::Dictionary\&\ fvSolution,\ \textcolor{keyword}{const}\ std::string\&\ field,\ \textcolor{keywordtype}{bool}\ finalIter);}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00061}00061\ }
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00062}00062\ \textcolor{comment}{/*\ @brief\ Map\ an\ OpenFOAM\ fvSolution\ sub-\/dictionary\ to\ NeoN/Ginkgo\ settings.}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00063}00063\ \textcolor{comment}{\ *}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00064}00064\ \textcolor{comment}{\ *\ The\ returned\ dictionary\ additionally\ carries\ a\ "{}reportName"{}\ meta\ key\ holding}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00065}00065\ \textcolor{comment}{\ *\ the\ Ginkgo\ solver/preconditioner\ label\ (e.g.\ "{}Ic+Cg"{})\ used\ by\ the\ per-\/solve}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00066}00066\ \textcolor{comment}{\ *\ residual\ report.\ The\ Ginkgo\ backend's\ config\ parser\ ignores\ that\ key.}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00067}00067\ \textcolor{comment}{\ *}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00068}00068\ \textcolor{comment}{\ *\ @param\ solverDict\ \ The\ OpenFOAM\ solver\ sub-\/dictionary\ (e.g.\ solvers/p).}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00069}00069\ \textcolor{comment}{\ */}}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00070}\mbox{\hyperlink{namespaceNeoFOAM_a809d8c49b332a3c4eb473b770d901e5b}{00070}}\ NeoN::Dictionary\ \mbox{\hyperlink{namespaceNeoFOAM_a809d8c49b332a3c4eb473b770d901e5b}{mapFvSolution}}(\textcolor{keyword}{const}\ NeoN::Dictionary\&\ solverDict);}
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00071}00071\ }
-\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00072}00072\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00024}\mbox{\hyperlink{namespaceNeoFOAM_a8c1ca67d102991ab4a3c1bc3a2a8fb03}{00024}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_a8c1ca67d102991ab4a3c1bc3a2a8fb03}{updatePreconditioner}}(NeoN::Dictionary\&\ solverDict);}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00025}00025\ }
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00026}00026\ \textcolor{comment}{/*\ @brief\ Look\ up\ the\ equation\ under-\/relaxation\ factor\ for\ a\ field\ from\ fvSolution.}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00027}00027\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00028}00028\ \textcolor{comment}{\ *\ Parses\ the\ OpenFOAM\ \`{}relaxationFactors.equations`\ sub-\/dictionary\ and\ returns\ the}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00029}00029\ \textcolor{comment}{\ *\ scalar\ relaxation\ factor\ for\ the\ given\ field.\ When\ \`{}finalIter`\ is\ true\ the}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00030}00030\ \textcolor{comment}{\ *\ \`{}<field>Final`\ key\ is\ preferred\ (Final-\/suffix\ seam),\ falling\ back\ to\ the\ base}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00031}00031\ \textcolor{comment}{\ *\ \`{}<field>`\ key.\ Returns\ std::nullopt\ when\ no\ entry\ exists\ -\/>\ the\ caller\ uses\ 1.0\ -\/>}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00032}00032\ \textcolor{comment}{\ *\ the\ kernel\ is\ a\ no-\/op\ (matches\ OpenFOAM's\ "{}no\ entry,\ no\ relax"{}\ semantics).}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00033}00033\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00034}00034\ \textcolor{comment}{\ *\ Keeping\ this\ parsing\ in\ NeoFOAM\ means\ NeoN's\ applyMatrixRelaxation\ only\ ever}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00035}00035\ \textcolor{comment}{\ *\ sees\ a\ plain\ scalar;\ NeoN\ stays\ OpenFOAM-\/dictionary-\/agnostic.}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00036}00036\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00037}00037\ \textcolor{comment}{\ *\ @param\ fvSolution\ \ The\ parsed\ fvSolution\ dictionary\ (e.g.\ RunTime::fvSolutionDict).}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00038}00038\ \textcolor{comment}{\ *\ @param\ field\ \ \ \ \ \ \ The\ field\ name\ (e.g.\ "{}U"{}).}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00039}00039\ \textcolor{comment}{\ *\ @param\ finalIter\ \ \ Whether\ the\ final\ outer\ iteration\ is\ active\ (selects\ the\ *Final\ key).}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00040}00040\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00041}00041\ std::optional<NeoN::scalar>}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00042}\mbox{\hyperlink{namespaceNeoFOAM_a26d70bfdefea0c104b27867a553012d2}{00042}}\ \mbox{\hyperlink{namespaceNeoFOAM_a26d70bfdefea0c104b27867a553012d2}{lookupEqnRelaxation}}(\textcolor{keyword}{const}\ NeoN::Dictionary\&\ fvSolution,\ \textcolor{keyword}{const}\ std::string\&\ field,\ \textcolor{keywordtype}{bool}\ finalIter);}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00043}00043\ }
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00044}00044\ \textcolor{comment}{/*\ @brief\ Look\ up\ the\ explicit\ field\ under-\/relaxation\ factor\ for\ a\ field\ from\ fvSolution.}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00045}00045\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00046}00046\ \textcolor{comment}{\ *\ Parses\ the\ OpenFOAM\ \`{}relaxationFactors.fields`\ sub-\/dictionary\ and\ returns\ the\ scalar}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00047}00047\ \textcolor{comment}{\ *\ relaxation\ factor\ for\ the\ given\ field.\ When\ \`{}finalIter`\ is\ true\ the\ \`{}<field>Final`\ key\ is}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00048}00048\ \textcolor{comment}{\ *\ preferred\ (Final-\/suffix\ seam),\ falling\ back\ to\ the\ base\ \`{}<field>`\ key.\ Returns}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00049}00049\ \textcolor{comment}{\ *\ std::nullopt\ when\ no\ entry\ exists\ -\/>\ the\ caller\ uses\ 1.0\ -\/>\ the\ kernel\ is\ a\ no-\/op\ (matches}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00050}00050\ \textcolor{comment}{\ *\ OpenFOAM's\ "{}no\ entry,\ no\ relax"{}\ semantics).}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00051}00051\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00052}00052\ \textcolor{comment}{\ *\ \`{}relaxationFactors.equations`\ and\ \`{}relaxationFactors.fields`\ are\ independent\ dicts:}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00053}00053\ \textcolor{comment}{\ *\ a\ field\ present\ only\ under\ \`{}equations`\ (e.g.\ momentum\ \`{}U`)\ returns\ nullopt\ here,\ so}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00054}00054\ \textcolor{comment}{\ *\ field-\/URF\ is\ a\ no-\/op\ on\ it\ and\ momentum\ is\ never\ double-\/relaxed.\ Shares\ the\ int-\/tolerant,}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00055}00055\ \textcolor{comment}{\ *\ isDict-\/guarded\ lookup\ body\ with\ lookupEqnRelaxation.}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00056}00056\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00057}00057\ \textcolor{comment}{\ *\ @param\ fvSolution\ \ The\ parsed\ fvSolution\ dictionary\ (e.g.\ RunTime::fvSolutionDict).}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00058}00058\ \textcolor{comment}{\ *\ @param\ field\ \ \ \ \ \ \ The\ field\ name\ (e.g.\ "{}p"{}).}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00059}00059\ \textcolor{comment}{\ *\ @param\ finalIter\ \ \ Whether\ the\ final\ outer\ iteration\ is\ active\ (selects\ the\ *Final\ key).}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00060}00060\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00061}00061\ std::optional<NeoN::scalar>}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00062}\mbox{\hyperlink{namespaceNeoFOAM_a10696ee81bee18fb95ff3175e368d99a}{00062}}\ \mbox{\hyperlink{namespaceNeoFOAM_a10696ee81bee18fb95ff3175e368d99a}{lookupFieldRelaxation}}(\textcolor{keyword}{const}\ NeoN::Dictionary\&\ fvSolution,\ \textcolor{keyword}{const}\ std::string\&\ field,\ \textcolor{keywordtype}{bool}\ finalIter);}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00063}00063\ }
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00064}00064\ \textcolor{comment}{/*\ @brief\ Map\ an\ OpenFOAM\ fvSolution\ sub-\/dictionary\ to\ NeoN/Ginkgo\ settings.}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00065}00065\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00066}00066\ \textcolor{comment}{\ *\ The\ returned\ dictionary\ additionally\ carries\ a\ "{}reportName"{}\ meta\ key\ holding}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00067}00067\ \textcolor{comment}{\ *\ the\ Ginkgo\ solver/preconditioner\ label\ (e.g.\ "{}Ic+Cg"{})\ used\ by\ the\ per-\/solve}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00068}00068\ \textcolor{comment}{\ *\ residual\ report.\ The\ Ginkgo\ backend's\ config\ parser\ ignores\ that\ key.}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00069}00069\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00070}00070\ \textcolor{comment}{\ *\ @param\ solverDict\ \ The\ OpenFOAM\ solver\ sub-\/dictionary\ (e.g.\ solvers/p).}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00071}00071\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00072}\mbox{\hyperlink{namespaceNeoFOAM_a809d8c49b332a3c4eb473b770d901e5b}{00072}}\ NeoN::Dictionary\ \mbox{\hyperlink{namespaceNeoFOAM_a809d8c49b332a3c4eb473b770d901e5b}{mapFvSolution}}(\textcolor{keyword}{const}\ NeoN::Dictionary\&\ solverDict);}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00073}00073\ }
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00080}\mbox{\hyperlink{namespaceNeoFOAM_afa00770785106f67fddae9d945e9e9d0}{00080}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_afa00770785106f67fddae9d945e9e9d0}{createMappedFvSolutionDicts}}(\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{RunTime}}\&\ rt);}
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00081}00081\ }
+\DoxyCodeLine{\Hypertarget{fvSolution_8hpp_source_l00082}00082\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
 
 \end{DoxyCode}
