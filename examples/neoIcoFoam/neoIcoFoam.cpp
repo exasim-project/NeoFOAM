@@ -138,6 +138,7 @@ int main(int argc, char* argv[])
 
                     // updateFaceVelocity reconstructs phi from this pressure system; keep the
                     // non-orthogonal faceFluxCorrection so the reconstruction can add it back.
+                    // TODO find a more suitable spot
                     pEqn.linearSystem().keepFaceFluxCorrection(true);
 
                     if (ofP.needReference() && pRefCell >= 0)
