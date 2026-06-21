@@ -12,9 +12,14 @@
 // ApproxScalar/ApproxVector. Linear-solver tolerances in fvSolution are set tighter than the
 // parity epsilon and L1Stop is activated config-only so NeoN's residual matches OF's.
 //
-// CPU-serial only (validates CPU-serial parity; the assertion is executor-
-// independent; a single MeshAdapter avoids the documented second-MeshAdapter teardown SIGSEGV).
-// This is a NeoFOAM/case-config-only test.
+// CPU-serial only for structural reasons, NOT because the NeoFOAM compute is executor-dependent:
+//   1. GENERATE(allAvailableExecutors()) re-runs the full test body per executor, including
+//      STEP 1 (pimpleFoam). On the 2nd+ executor pass pimpleFoam finds a case directory already
+//      modified by the NeoFOAM time loop of the previous pass, producing wrong reference fields.
+//   2. runTime is shared state; after the time loop it sits at endTime — a 2nd pass would start
+//      from there, not from t=0.
+// Executor-independence of the PISO loop is covered by test_pressureVelocityCoupling which uses
+// allAvailableExecutors. This test is the end-to-end OF-parity acceptance bar on Serial.
 
 #define CATCH_CONFIG_RUNNER
 
@@ -59,6 +64,7 @@ TEST_CASE("neoPimpleFoam converges to OpenFOAM pimpleFoam on the cavity", "[pimp
                            "$(foamListTimes -latestTime 2>/dev/null | tail -1)/U endTime_OF/");
     REQUIRE(cpRc == 0); // sidecar holds the untouchable converged OF p/U
 
+    // Serial: see file-level comment — pimpleFoam + shared runTime prevent allAvailableExecutors.
     auto exec = NeoN::Executor(NeoN::SerialExecutor {});
     auto rt = nf::createAdapterRunTime(runTime, exec);
     auto& mesh = rt.mesh;
