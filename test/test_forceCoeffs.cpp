@@ -640,15 +640,15 @@ namespace wf = NeoN::finiteVolume::cellCentred::volumeBoundary::detail;
 // K and E must match the constants in nutWallFunction.hpp (KAPPA = 0.41, E = 9.8).
 double spaldingUTauReference(double magUp, double y, double nu)
 {
-    constexpr double K = 0.41;
-    constexpr double E = 9.8;
+    constexpr double k = 0.41;
+    constexpr double e = 9.8;
     auto f = [&](double uTau)
     {
         const double up = magUp / uTau;
         const double yp = uTau * y / nu;
-        const double kup = K * up;
+        const double kup = k * up;
         const double spald =
-            up + (1.0 / E) * (std::exp(kup) - 1.0 - kup - 0.5 * kup * kup - kup * kup * kup / 6.0);
+            up + (1.0 / e) * (std::exp(kup) - 1.0 - kup - 0.5 * kup * kup - kup * kup * kup / 6.0);
         return yp - spald;
     };
     double lo = 1e-9; // f(lo) < 0  (y+ -> 0, spalding -> +inf)
@@ -753,10 +753,16 @@ TEST_CASE("nutUSpaldingWallFunction - wall nut via correctBoundaryConditions mat
         fvcc::VolumeField<NeoN::scalar> nut(exec, "nut", nfMesh, nutBCs);
 
         fvcc::VolumeField<NeoN::Vec3> U(
-            exec, "U", nfMesh, fvcc::createCalculatedBCs<fvcc::VolumeBoundary<NeoN::Vec3>>(nfMesh)
+            exec,
+            "U",
+            nfMesh,
+            fvcc::createCalculatedBCs<fvcc::VolumeBoundary<NeoN::Vec3>>(nfMesh)
         );
         fvcc::VolumeField<NeoN::scalar> nu(
-            exec, "nu", nfMesh, fvcc::createCalculatedBCs<fvcc::VolumeBoundary<NeoN::scalar>>(nfMesh)
+            exec,
+            "nu",
+            nfMesh,
+            fvcc::createCalculatedBCs<fvcc::VolumeBoundary<NeoN::scalar>>(nfMesh)
         );
         fvcc::VolumeField<NeoN::scalar> nearWallDist(
             exec,
@@ -825,13 +831,17 @@ TEST_CASE("nutUSpaldingWallFunction - wall nut via correctBoundaryConditions mat
             wf::computeUTau(magGradU, magUp, y, nuVal, /*currentNut*/ 0.0, errOneIter, 1);
             const NeoN::scalar cand = (uTau * uTau) / (magGradU + NeoN::ROOTVSMALL) - nuVal;
             const NeoN::scalar candClamped = cand > 0.0 ? cand : 0.0;
-            const NeoN::scalar nutRef = (errOneIter < wf::TOLERANCE) ? NeoN::scalar(0.0) : candClamped;
+            const NeoN::scalar nutRef =
+                (errOneIter < wf::TOLERANCE) ? NeoN::scalar(0.0) : candClamped;
 
             INFO(
                 "face " << i << " magUp=" << magUp << " magGradU=" << magGradU << " y=" << y
                         << " nutWF=" << nutV[i] << " nutRef=" << nutRef
             );
-            CHECK(static_cast<double>(nutV[i]) == Catch::Approx(static_cast<double>(nutRef)).epsilon(1e-9));
+            CHECK(
+                static_cast<double>(nutV[i])
+                == Catch::Approx(static_cast<double>(nutRef)).epsilon(1e-9)
+            );
             ++checked;
         }
         CHECK(checked > 0);
