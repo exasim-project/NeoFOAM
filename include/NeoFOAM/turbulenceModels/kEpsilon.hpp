@@ -217,6 +217,8 @@ public:
     void rotateOldTimes() override;
 
 
+    void rotateOldTimes() override;
+
 private:
 
     const nnfvcc::VolumeField<scalar>& nu_;

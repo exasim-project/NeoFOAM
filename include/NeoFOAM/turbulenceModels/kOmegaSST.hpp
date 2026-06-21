@@ -271,19 +271,20 @@ public:
     const nnfvcc::VolumeField<scalar>& nut() const override;
     /** @brief Velocity gradient tensor (updated each correct()). */
     const nnfvcc::VolumeField<NeoN::Tensor>& gradU() const override;
-    /** @brief Recompute gradU in place at the given velocity. */
     void updateGradU(const nnfvcc::VolumeField<Vec3>& U) override;
 
     void write(MeshAdapter& mesh) const override;
+    void rotateOldTimes() override;
+
     void rotateOldTimes() override;
 
 private:
 
     const nnfvcc::VolumeField<scalar>& nu_;
     nnfvcc::VolumeField<scalar> wallDist_;
-    nnfvcc::VolumeField<scalar> k_;
-    nnfvcc::VolumeField<scalar> omega_;
-    nnfvcc::VolumeField<scalar> nut_;
+    nnfvcc::VolumeField<scalar>* k_ = nullptr;
+    nnfvcc::VolumeField<scalar>* omega_ = nullptr;
+    nnfvcc::VolumeField<scalar>* nut_ = nullptr;
     KOmegaSST model_;
 };
 
