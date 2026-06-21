@@ -107,11 +107,6 @@ TEST_CASE("DistributedMomentum")
         solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
 
         Foam::solve(ofUEqn);
-        // The shared fixture carries relaxationFactors.equations.U=0.7, but the OF reference
-        // here is NOT relaxed (bare Foam::solve, no UEqn.relax()). Select the final-iteration
-        // path so NeoN looks up UFinal=1 -> applyMatrixRelaxation is a bitwise no-op, making both
-        // sides un-relaxed (apples-to-apples). Equation under-relaxation OF-parity is covered by
-        // test_pressureVelocityCoupling, not here. Mirrors test_momentum.
         nfUEqn.setFinalIter(true);
         auto solverStatsDist = nfUEqn.solve();
 

@@ -197,13 +197,6 @@ TEST_CASE("L1 scaled residual matches OpenFOAM")
         Foam::SolverPerformance<Foam::vector> ofPerf = Foam::solve(ofUEqn);
         const Foam::vector ofInitRes = ofPerf.initialResidual();
 
-        // The shared fixture carries relaxationFactors.equations.U=0.7, but the OF reference above
-        // is NOT relaxed (bare Foam::solve, no UEqn.relax()), so its initialResidual() is the
-        // residual of the UN-relaxed system. Select the final-iteration path so NeoN looks up
-        // UFinal=1 -> applyMatrixRelaxation is a bitwise no-op and the initial residual is computed
-        // on the same un-relaxed matrix as OF. There is no solvers.UFinal subdict, so the solver
-        // config falls back to solvers.U (this fixture's l1ScaledResidual + iteration cap are
-        // preserved). Mirrors test_momentum.
         nfUEqn.setFinalIter(true);
         auto stats = nfUEqn.solve();
         REQUIRE(stats.entries.size() == 3);

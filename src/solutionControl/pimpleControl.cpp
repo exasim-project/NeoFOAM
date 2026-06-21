@@ -108,8 +108,7 @@ bool PimpleControl::criteriaSatisfied(const ResidualMap& residuals)
         {
             fc.initialResidual = ini;
         }
-        // +1e-37 guards against division by zero (mirrors OpenFOAM's ROOTVSMALL).
-        const NeoN::scalar rel = storeIni ? 1.0 : fin / (fc.initialResidual + 1e-37);
+        const NeoN::scalar rel = storeIni ? 1.0 : fin / (fc.initialResidual + NeoN::ROOTVSMALL);
         const bool relCheck = !storeIni && rel < fc.relTol;
 
         achieved = achieved && (absCheck || relCheck);
