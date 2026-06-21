@@ -365,12 +365,8 @@ SpalartAllmarasDDES::SpalartAllmarasDDES(
     , wallDist_(wallDist)
     , nearWallDist_(nearWallDist)
     , delta_(delta)
-    , nuTilda_(
-          exec,
-          "nuTilda",
-          mesh,
-          fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh)
-      )
+    , turbDb_()
+    , nuTilda_(registerNuTilda(turbDb_, exec, mesh))
     , nut_(exec, "nut", mesh, fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh))
     , surfNu_(
           exec,
@@ -400,6 +396,28 @@ SpalartAllmarasDDES::SpalartAllmarasDDES(
     , cw1_(coeffs_.Cb1 / (coeffs_.kappa * coeffs_.kappa) + (1.0 + coeffs_.Cb2) / coeffs_.sigmaNut)
 {
     surfInterp_.interpolate(nu_, surfNu_);
+}
+
+nnfvcc::VolumeField<scalar>& SpalartAllmarasDDES::registerNuTilda(
+    NeoN::Database& db, const NeoN::Executor& exec, const NeoN::UnstructuredMesh& mesh
+)
+{
+    auto& vectorCollection = fvcc::VectorCollection::instance(db, "VectorCollection");
+    // Zero-initialised seed carrying the calculated BCs; registerVector copies it into the
+    // collection and stamps the registration key. The registered copy (returned by reference) is
+    // the one ddt/rotateOldTimes operate on; initialize() overwrites its data with the disk field.
+    nnfvcc::VolumeField<scalar> seed(
+        exec, "nuTilda", mesh, fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh)
+    );
+    return vectorCollection.registerVector<nnfvcc::VolumeField<scalar>>(
+        fvcc::CreateFromExistingVector<nnfvcc::VolumeField<scalar>> {
+            .name = "nuTilda",
+            .field = seed,
+            .timeIndex = 0,
+            .iterationIndex = 0,
+            .subCycleIndex = 0
+        }
+    );
 }
 
 // ============================================================
