@@ -56,6 +56,13 @@ public:
 
     LinearSystemType& assemble(PDESolverType& pde) { return pde.assemble(field_, rt_); }
 
+    LinearSystemType& assembleAndRelax(PDESolverType& pde)
+    {
+        pde.assemble(field_, rt_);
+        pde.relaxOwnedLs();
+        return pde.linearSystem();
+    }
+
 private:
 
     static NeoN::la::Solver createCachedSolver(VolumeField& field, RunTime& rt)

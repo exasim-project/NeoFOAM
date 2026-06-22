@@ -93,6 +93,9 @@ int main(int argc, char* argv[])
 
         NeoN::scalar cumulativeContErr = 0.0;
 
+        auto uSolver = nf::Solver(U, rt);
+        auto pSolver = nf::Solver(p, rt);
+
         nf::PimpleControl pimpleLoop(rt.fvSolutionDict);
 
         // Max-component reduction: reduce Ux/Uy/Uz entries to a single {init, final} pair.
@@ -149,9 +152,7 @@ int main(int argc, char* argv[])
 
                 nf::PDESolver<NeoN::Vec3> UEqn(
                     dsl::imp::ddt(U) + dsl::imp::div(phi, U) - dsl::imp::laplacian(turb->nuEff(), U)
-                        + dsl::exp::viscousStress(nu, turb->nut(), gradU),
-                    U,
-                    rt
+                        + dsl::exp::viscousStress(nu, turb->nut(), gradU)
                 );
 
                 const auto ddtScheme = UEqn.ddtScheme();
@@ -164,14 +165,14 @@ int main(int argc, char* argv[])
 
                 if (piso.momentumPredictor())
                 {
-                    auto statsU = UEqn.solve(-1.0 * dsl::exp::grad(p));
+                    auto statsU = uSolver.solve(UEqn, -1.0 * dsl::exp::grad(p));
                     residuals["U"] = reduceU(statsU);
                 }
                 else
                 {
                     // Relax unconditionally so computeRAUandHByA reads the relaxed diagonal
                     // regardless of whether the momentum predictor runs.
-                    UEqn.assembleAndRelax();
+                    uSolver.assembleAndRelax(UEqn);
                 }
 
                 std::pair<NeoN::scalar, NeoN::scalar> pRes {};
@@ -199,9 +200,7 @@ int main(int argc, char* argv[])
                     {
                         // Pressure corrector
                         nf::PDESolver<NeoN::scalar> pEqn(
-                            NeoN::dsl::imp::laplacian(rAU, p) - NeoN::dsl::exp::div(phiHbyA),
-                            p,
-                            rt
+                            NeoN::dsl::imp::laplacian(rAU, p) - NeoN::dsl::exp::div(phiHbyA)
                         );
 
                         pEqn.setFinalIter(finalIter);
@@ -211,7 +210,7 @@ int main(int argc, char* argv[])
                             pEqn.setReference(pRefCell, pRefValue);
                         }
 
-                        auto statsP = pEqn.solve();
+                        auto statsP = pSolver.solve(pEqn);
                         if (!havePRes)
                         {
                             pRes = {statsP.entries[0].initResNorm, statsP.entries[0].finalResNorm};
