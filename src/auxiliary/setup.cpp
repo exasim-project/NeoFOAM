@@ -103,9 +103,25 @@ NeoN::Executor createExecutor(const Foam::dictionary& dict)
     return createExecutor(execName, std::make_unique<NeoN::DefaultAllocator>());
 }
 
+NeoN::Executor createExecutor(const Foam::argList& args, const Foam::dictionary& dict)
+{
+    if (args.found("executor"))
+    {
+        auto execName = args.get<Foam::word>("executor");
+        return createExecutor(std::string(execName), std::make_unique<NeoN::DefaultAllocator>());
+    }
+    return createExecutor(dict);
+}
+
 NeoFOAM::RunTime createAdapterRunTime(const Foam::Time& in)
 {
     auto exec = createExecutor(in.controlDict());
+    return createAdapterRunTime(in, exec);
+}
+
+NeoFOAM::RunTime createAdapterRunTime(const Foam::Time& in, const Foam::argList& args)
+{
+    auto exec = createExecutor(args, in.controlDict());
     return createAdapterRunTime(in, exec);
 }
 

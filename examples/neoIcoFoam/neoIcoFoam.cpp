@@ -26,6 +26,7 @@ namespace nf = NeoFOAM;
 
 int main(int argc, char* argv[])
 {
+    Foam::argList::addOption("executor", "word", "NeoN executor type (Serial/CPU/GPU/default)");
 #include "addCheckCaseOptions.H"
 #include "setRootCase.H"
     NeoN::initialize(argc, argv);
@@ -36,7 +37,7 @@ int main(int argc, char* argv[])
 // Kokkos::finalize(). Otherwise ~Time() runs after finalize and aborts with
 // "Kokkos allocation ... deallocated after Kokkos::finalize was called".
 #include "createTime.H"
-        auto rt = nf::createAdapterRunTime(runTime);
+        auto rt = nf::createAdapterRunTime(runTime, args);
         auto& mesh = rt.mesh;
 
         Foam::pisoControl piso(mesh);

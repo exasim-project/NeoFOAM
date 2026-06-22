@@ -120,3 +120,18 @@ if [[ "$SKIP_VALIDATION" != "true" ]]; then
 else
     echo "=== Skipping validation (skip-validation label set) ==="
 fi
+
+# -----------------------------
+# Step 5: Smoke-test neoPisoFoam (pitzDaily, 10 timesteps)
+# -----------------------------
+SKIP_PISO_SMOKETEST=${SKIP_PISO_SMOKETEST:-false}
+if [[ "$SKIP_PISO_SMOKETEST" != "true" ]]; then
+    pushd tutorials/neoPisoFoam/pitzDaily >/dev/null
+    blockMesh > log.blockMesh 2>&1
+    foamDictionary -entry endTime -set 1e-04 system/controlDict
+    solver="../../../build/$PRESET/bin/neoPisoFoam"
+    "$solver" > log.neoPisoFoam 2>&1
+    popd >/dev/null
+else
+    echo "=== Skipping neoPisoFoam smoke test (SKIP_PISO_SMOKETEST set) ==="
+fi
