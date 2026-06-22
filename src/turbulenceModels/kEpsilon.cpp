@@ -243,18 +243,21 @@ KEpsilon::KEpsilon(
 
     // Populate nearWallDist_'s boundary face values by copying wallDist_'s
     // adjacent-cell internal value. Same pattern as KOmegaSST.
-    {
-        const auto wdInternal = wallDist_.internalVector().view();
-        const auto faceOwners = mesh_.boundaryMesh().faceOwners().view();
-        auto nwdBoundary = nearWallDist_.boundaryData().value().view();
-        const auto nBoundaryFaces = static_cast<NeoN::localIdx>(nwdBoundary.size());
-        NeoN::parallelFor(
-            exec_,
-            {0, nBoundaryFaces},
-            NEON_LAMBDA(const NeoN::localIdx i) { nwdBoundary[i] = wdInternal[faceOwners[i]]; },
-            "kEpsilon::initNearWallDistBoundary"
-        );
-    }
+    initNearWallDistBoundary();
+}
+
+void KEpsilon::initNearWallDistBoundary()
+{
+    const auto wdInternal = wallDist_.internalVector().view();
+    const auto faceOwners = mesh_.boundaryMesh().faceOwners().view();
+    auto nwdBoundary = nearWallDist_.boundaryData().value().view();
+    const auto nBoundaryFaces = static_cast<NeoN::localIdx>(nwdBoundary.size());
+    NeoN::parallelFor(
+        exec_,
+        {0, nBoundaryFaces},
+        NEON_LAMBDA(const NeoN::localIdx i) { nwdBoundary[i] = wdInternal[faceOwners[i]]; },
+        "kEpsilon::initNearWallDistBoundary"
+    );
 }
 
 // ============================================================

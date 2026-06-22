@@ -402,18 +402,21 @@ KOmegaSST::KOmegaSST(
     // OpenFOAM's turbulenceModel::y()[patchi] exposes (and what the
     // wall-function unit tests construct explicitly). Mesh is static, so
     // doing it once at construction is sufficient.
-    {
-        const auto wdInternal = wallDist_.internalVector().view();
-        const auto faceOwners = mesh_.boundaryMesh().faceOwners().view();
-        auto nwdBoundary = nearWallDist_.boundaryData().value().view();
-        const auto nBoundaryFaces = static_cast<NeoN::localIdx>(nwdBoundary.size());
-        NeoN::parallelFor(
-            exec_,
-            {0, nBoundaryFaces},
-            NEON_LAMBDA(const NeoN::localIdx i) { nwdBoundary[i] = wdInternal[faceOwners[i]]; },
-            "kOmegaSST::initNearWallDistBoundary"
-        );
-    }
+    initNearWallDistBoundary();
+}
+
+void KOmegaSST::initNearWallDistBoundary()
+{
+    const auto wdInternal = wallDist_.internalVector().view();
+    const auto faceOwners = mesh_.boundaryMesh().faceOwners().view();
+    auto nwdBoundary = nearWallDist_.boundaryData().value().view();
+    const auto nBoundaryFaces = static_cast<NeoN::localIdx>(nwdBoundary.size());
+    NeoN::parallelFor(
+        exec_,
+        {0, nBoundaryFaces},
+        NEON_LAMBDA(const NeoN::localIdx i) { nwdBoundary[i] = wdInternal[faceOwners[i]]; },
+        "kOmegaSST::initNearWallDistBoundary"
+    );
 }
 
 // ============================================================

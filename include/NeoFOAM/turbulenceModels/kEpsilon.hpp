@@ -139,6 +139,15 @@ public:
      */
     void calcDiffusivities(const nnfvcc::VolumeField<scalar>& nut);
 
+    /**
+     * @brief Populate nearWallDist_'s boundary face values from wallDist_.
+     *
+     * Copies each wall face's adjacent-cell internal value. Extracted into a
+     * member function (rather than inlined in the constructor) because CUDA
+     * forbids extended __host__ __device__ lambdas inside constructors.
+     */
+    void initNearWallDistBoundary();
+
 private:
 
     NeoN::Executor exec_;
