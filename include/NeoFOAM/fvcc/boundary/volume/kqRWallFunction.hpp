@@ -13,12 +13,8 @@ namespace NeoN::finiteVolume::cellCentred::volumeBoundary
 {
 
 /**
- * @brief Zero-gradient wall BC for turbulent kinetic energy k (and q, R).
- *
- * Mirrors OpenFOAM's kqRWallFunctionFvPatchField, which upstream derives from
- * zeroGradientFvPatchField and explicitly states it is not a wall-function.
- * Registered under the name @c "kqRWallFunction" so OpenFOAM dictionaries with
- * that type string work unchanged.
+ * Zero-gradient boundary condition for turbulent kinetic energy k (and q, R) at walls.
+ * Applies a zero gradient; equivalent to fixedGradient with gradient = 0.
  */
 class KqRWallFunction : public VolumeBoundaryFactory<scalar>::template Register<KqRWallFunction>
 {

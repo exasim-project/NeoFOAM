@@ -19,20 +19,17 @@ namespace fvcc = NeoN::finiteVolume::cellCentred;
 namespace detail
 {
 
-/// Default coefficients matching OpenFOAM's wallFunctionCoefficients defaults.
 inline constexpr scalar EPSILON_WF_DEFAULT_CMU = 0.09;
 inline constexpr scalar EPSILON_WF_DEFAULT_KAPPA = 0.41;
 
 /**
- * @brief Apply the epsilonWallFunction kernel face-by-face.
+ * Applies the epsilonWallFunction kernel face-by-face.
  *
- * Mirrors Foam::epsilonWallFunctionFvPatchScalarField::calculate() for the
- * BINOMIAL n=2 blender:
- *   - ε_vis = 2·k·ν/y²            (viscous-sublayer)
- *   - ε_log = C_µ^0.75·k^1.5/(κ·y) (log-layer)
- *   - ε_w   = √(ε_vis² + ε_log²)  (blend)
+ *   ε_vis = 2 · k · ν / y²              (viscous-sublayer estimate)
+ *   ε_log = C_µ^0.75 · k^1.5 / (κ · y)  (log-layer estimate)
+ *   ε_w   = √(ε_vis² + ε_log²)          (BINOMIAL n=2 blend)
  *
- * Only sets the wall face value; does NOT write to epsilon.internal[wall_cell].
+ * Sets the wall face value only; does not modify the internal field.
  */
 inline void setEpsilonWallFunction(
     Field<scalar>& epsilon,
@@ -84,18 +81,13 @@ inline void setEpsilonWallFunction(
 } // namespace detail
 
 /**
- * @brief Turbulent dissipation rate wall function BC.
+ * Epsilon wall function boundary condition.
  *
- * Mirrors Foam::epsilonWallFunctionFvPatchScalarField: blends viscous and
- * log-layer ε estimates (BINOMIAL n=2) and sets the wall face value.
- *
- * Required BoundaryContext fields:
- *   - @c "k"            VolumeField<scalar> — turbulent kinetic energy
- *   - @c "nu"           VolumeField<scalar> — laminar viscosity, boundary values
- *   - @c "nearWallDist" VolumeField<scalar> — cell-to-wall distance y, boundary values
- *
- * Single-patch-corner only (cornerWeights == 1). G feedback is handled by
- * the parent KEpsilon model, not by this BC.
+ * Known limitations:
+ *  - Single-patch-corner only: each wall cell is assumed to see at most one
+ *    wall-function face.
+ *  - G production-term feedback is not handled here; it is written by the
+ *    parent kEpsilon model.
  */
 class EpsilonWallFunction :
     public VolumeBoundaryFactory<scalar>::template Register<EpsilonWallFunction>

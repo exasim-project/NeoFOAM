@@ -19,22 +19,19 @@ namespace fvcc = NeoN::finiteVolume::cellCentred;
 namespace detail
 {
 
-/// Default coefficients matching OpenFOAM's wallFunctionCoefficients (Cmu=0.09, κ=0.41, E=9.8).
 inline constexpr scalar NUTK_WF_DEFAULT_CMU = 0.09;
 inline constexpr scalar NUTK_WF_DEFAULT_KAPPA = 0.41;
 inline constexpr scalar NUTK_WF_DEFAULT_E = 9.8;
 
 /**
- * @brief Apply the nutkWallFunction kernel face-by-face.
+ * Applies the nutkWallFunction kernel face-by-face.
  *
- * Mirrors Foam::nutkWallFunctionFvPatchScalarField::calcNut() for the BINOMIAL n=2 blender:
- *   - y⁺       = C_µ^0.25·y·√k/ν
- *   - ν_t,log  = ν·y⁺·κ/log(max(E·y⁺, 1+1e-4))
- *   - ν_t,vis  = ν   (viscous sublayer)
- *   - ν_t,w    = √(ν_t,vis² + ν_t,log²)
+ *   y+      = C_µ^0.25 · y · √k / ν              (per face)
+ *   ν_t,log = ν · y+ · κ / log(max(E·y+, 1+1e-4))
+ *   ν_t,vis = ν                                   (viscous-sublayer estimate)
+ *   ν_t,w   = √(ν_t,vis² + ν_t,log²)              (BINOMIAL n=2 blend)
  *
- * k is read from the BoundaryContext; the boundary face value is written,
- * no internal-cell stomp.
+ * Sets the boundary face value only; does not modify the internal field.
  */
 inline void setNutkWallFunction(
     Field<scalar>& domainVector,
@@ -89,17 +86,11 @@ inline void setNutkWallFunction(
 
 
 /**
- * @brief k-based turbulent viscosity wall function BC.
+ * k-based turbulent viscosity wall function boundary condition.
  *
- * Mirrors Foam::nutkWallFunctionFvPatchScalarField: derives y⁺ from k rather
- * than |∂U/∂n|, making it the companion to kqRWallFunction for kEpsilon flows.
- *
- * Required BoundaryContext fields:
- *   - @c "k"            VolumeField<scalar> — turbulent kinetic energy
- *   - @c "nu"           VolumeField<scalar> — laminar viscosity, boundary values
- *   - @c "nearWallDist" VolumeField<scalar> — cell-to-wall distance y, boundary values
- *
- * Single-patch-corner only.
+ * Known limitations:
+ *  - Single-patch-corner only: each wall cell is assumed to see at most one
+ *    wall-function face.
  */
 class NutkWallFunction : public VolumeBoundaryFactory<scalar>::template Register<NutkWallFunction>
 {
