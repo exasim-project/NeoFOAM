@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['c1_0',['c1',['../structNeoFOAM_1_1KEpsilon_1_1Coefficients.html#a18970a36a04c7510282918b7590e08c8',1,'NeoFOAM::KEpsilon::Coefficients::C1'],['../structNeoFOAM_1_1KOmegaSST_1_1Coefficients.html#a31516dcc69d6cfc8a6a18d3a99d90383',1,'NeoFOAM::KOmegaSST::Coefficients::c1']]],
+  ['c1_0',['c1',['../structNeoFOAM_1_1KOmegaSST_1_1Coefficients.html#a31516dcc69d6cfc8a6a18d3a99d90383',1,'NeoFOAM::KOmegaSST::Coefficients::c1'],['../structNeoFOAM_1_1KEpsilon_1_1Coefficients.html#a18970a36a04c7510282918b7590e08c8',1,'NeoFOAM::KEpsilon::Coefficients::C1']]],
   ['c2_1',['C2',['../structNeoFOAM_1_1KEpsilon_1_1Coefficients.html#a00e03e97d6b63998bc5435713eed70fd',1,'NeoFOAM::KEpsilon::Coefficients']]],
   ['calcdiffusivities_2',['calcdiffusivities',['../classNeoFOAM_1_1KOmegaSST.html#a51802407e31708f1d17d7f5a82dde61f',1,'NeoFOAM::KOmegaSST::calcDiffusivities()'],['../classNeoFOAM_1_1KEpsilon.html#a5c2ac35e716fe181f3092e68e63d7c0c',1,'NeoFOAM::KEpsilon::calcDiffusivities()']]],
   ['calcmagsqrvec_3',['calcMagSqrVec',['../classNeoFOAM_1_1SpalartAllmarasDDES.html#a133b9e8bdac102261ee8dd1ee9f64444',1,'NeoFOAM::SpalartAllmarasDDES']]],
