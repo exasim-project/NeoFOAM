@@ -280,10 +280,10 @@ nnfvcc::VolumeField<scalar> buildDelta(const NeoN::Executor& exec, MeshAdapter& 
         mesh,
         Foam::dimensionedScalar("delta", Foam::dimLength, Foam::scalar(0.0))
     );
-    const Foam::scalarField& V = mesh.V();
-    forAll(V, celli)
+    const Foam::scalarField& v = mesh.V();
+    forAll(v, celli)
     {
-        ofField.ref()[celli] = std::cbrt(V[celli]);
+        ofField.ref()[celli] = std::cbrt(v[celli]);
     }
     return NeoFOAM::constructFrom(exec, mesh.nfMesh(), ofField);
 }

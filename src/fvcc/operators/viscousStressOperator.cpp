@@ -137,17 +137,18 @@ void divDevReff(
     const UnstructuredMesh& mesh = tau.mesh();
     const auto exec = tau.exec();
 
-    // Interpolate stress tensor to faces
-    auto calcSurfBC = createCalculatedBCs<SurfaceBoundary<Tensor>>(mesh);
-    SurfaceField<Tensor> tauF(exec, "tauF", mesh, calcSurfBC);
-    surfInterp.interpolate(tau, tauF);
+    // Inline the linear face interpolation into the flux loops so the full SurfaceField<Tensor> is
+    // never materialised; only the scalar interpolation weights are needed.
+    const auto weightsF = surfInterp.weight(tau);
 
     const auto [owner, neighbour, faceCells] =
         views(mesh.faceOwners(), mesh.faceNeighbors(), mesh.boundaryMesh().faceOwners());
 
-    const auto [Sf, tauFV, vol, rhsV] =
-        views(mesh.faceNormals(), tauF.internalVector(), mesh.cellVolumes(), rhs);
-    const auto tauFB = tauF.boundaryData().value().view();
+    const auto [Sf, tauV, vol, rhsV] =
+        views(mesh.faceNormals(), tau.internalVector(), mesh.cellVolumes(), rhs);
+    const auto tauB = tau.boundaryData().value().view();
+    const auto wV = weightsF.internalVector().view();
+    const auto wB = weightsF.boundaryData().value().view();
 
     const localIdx nIF = mesh.nInternalFaces();
     const localIdx nBnd = mesh.nBoundaryFaces();
@@ -156,7 +157,9 @@ void divDevReff(
         exec,
         {0, nIF},
         NEON_LAMBDA(const localIdx f) {
-            const Vec3 flux = scalar(-1.0) * (tauFV[f] & Sf[f]);
+            const scalar w = wV[f];
+            const Tensor tauFace = w * tauV[owner[f]] + (scalar(1) - w) * tauV[neighbour[f]];
+            const Vec3 flux = scalar(-1.0) * (tauFace & Sf[f]);
             atomicAddVec3(&rhsV[owner[f]], flux);
             atomicSubVec3(&rhsV[neighbour[f]], flux);
         },
@@ -167,7 +170,10 @@ void divDevReff(
         exec,
         {0, nBnd},
         NEON_LAMBDA(const localIdx bfi) {
-            const Vec3 flux = scalar(-1.0) * (tauFB[bfi] & Sf[nIF + bfi]);
+            // Boundary face: linear interpolation reduces to wB * tau_boundary (see
+            // computeLinearInterpolation boundary kernel).
+            const Tensor tauFace = wB[bfi] * tauB[bfi];
+            const Vec3 flux = scalar(-1.0) * (tauFace & Sf[nIF + bfi]);
             atomicAddVec3(&rhsV[faceCells[bfi]], flux);
         },
         "divDevReff::boundary"
@@ -176,8 +182,9 @@ void divDevReff(
     // Processor faces: the viscous-stress flux across a rank boundary, added to the owner cell
     // (the neighbour cell is updated on its own rank). Proc faces are the compressed tail of the
     // boundary arrays at [nBnd, nBnd + nProcFaces); use the boundary mesh's own face normals — the
-    // OF-full mesh.faceNormals() does not index proc faces. tauF's proc tail is the interpolated
-    // face stress, which carries the neighbour cell gradient via gradU's processor BC.
+    // OF-full mesh.faceNormals() does not index proc faces. The proc-face stress carries the
+    // neighbour cell gradient via gradU's processor BC stored in tau's boundary tail, interpolated
+    // here exactly as computeLinearInterpolation's proc kernel: w*tau[own] + (1-w)*tau_boundary.
     const localIdx nProcFaces = mesh.nProcBoundaryFaces();
     if (nProcFaces > 0)
     {
@@ -187,7 +194,9 @@ void divDevReff(
             {0, nProcFaces},
             NEON_LAMBDA(const localIdx proci) {
                 const localIdx bfi = nBnd + proci;
-                const Vec3 flux = scalar(-1.0) * (tauFB[bfi] & bSf[bfi]);
+                const scalar w = wB[bfi];
+                const Tensor tauFace = w * tauV[faceCells[bfi]] + (scalar(1) - w) * tauB[bfi];
+                const Vec3 flux = scalar(-1.0) * (tauFace & bSf[bfi]);
                 atomicAddVec3(&rhsV[faceCells[bfi]], flux);
             },
             "divDevReff::proc"
