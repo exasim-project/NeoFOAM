@@ -5,7 +5,7 @@
 
 #include "NeoN/NeoN.hpp"
 
-#include "NeoFOAM/datastructures/pdeSolver.hpp"
+#include "NeoFOAM/datastructures/pde.hpp"
 #include "NeoFOAM/turbulenceModels/turbulenceModel.hpp"
 
 namespace nnfvcc = NeoN::finiteVolume::cellCentred;
@@ -112,6 +112,9 @@ public:
     /// @brief Velocity gradient tensor (updated each correct() call)
     const nnfvcc::VolumeField<NeoN::Tensor>& gradU() const;
 
+    /// @brief Recompute gradU_ in place at the given velocity (internal + boundary).
+    void updateGradU(const nnfvcc::VolumeField<Vec3>& U);
+
     /**
      * @brief Returns the deviatoric stress at all boundary faces as Vector<SymmTensor>.
      *
@@ -208,6 +211,32 @@ private:
 
     // Model coefficients
     Coefficients coeffs_;
+
+    // Per-cell omega wall-function constraint, rebuilt each correct(): omegaWallMask_[c] != 0
+    // marks a wall-adjacent cell whose omega is hard-pinned to omegaWallValue_[c] (the blended
+    // viscous/log value) when solving the omega equation — the equivalent of OpenFOAM's
+    // omegaWallFunction::manipulateMatrix(setValues). Without this pin near-wall omega stays
+    // too small and nut blows up. Sized nCells, owned here (passed by ref to PDE::setConstraints).
+    NeoN::Vector<scalar> omegaWallValue_;
+    NeoN::Vector<scalar> omegaWallMask_;
+
+    // Per-cell corner weight 1/(number of omegaWallFunction faces touching the cell), 0 for
+    // non-wall cells. Mirrors OpenFOAM omegaWallFunction::createAveragingWeights: a cell touched
+    // by N wall faces averages its N per-face omega/G contributions (weight 1/N each) instead of
+    // the previous nondeterministic "last face wins". Built once (the wall topology is static);
+    // the gate below guards that one-time fill.
+    NeoN::Vector<scalar> cornerWeight_;
+    bool cornerWeightsBuilt_ = false;
+
+    // Scratch + cache for the smoother lower-bound repair on omega/k (mirrors OpenFOAM's
+    // Foam::bound()): boundFloored_/surfBoundFloored_ hold max(field, lowerBound) and its face
+    // interpolation; sumFaceArea_ caches the per-cell sum of face areas (the fvc::average
+    // denominator surfaceSum(magSf), which is mesh-static so it is built once). Reused by both the
+    // omega and k bound() calls in correct().
+    nnfvcc::VolumeField<scalar> boundFloored_;
+    nnfvcc::SurfaceField<scalar> surfBoundFloored_;
+    NeoN::Vector<scalar> sumFaceArea_;
+    bool sumFaceAreaBuilt_ = false;
 };
 
 /**
@@ -226,19 +255,29 @@ public:
     static std::string doc() { return "k-omega SST turbulence model"; }
     static std::string schema() { return "{}"; }
 
+    /** @brief Read k, omega, nut from RunTime and construct the KOmegaSST physics object. */
     KOmegaSSTModel(RunTime& rt, const nnfvcc::VolumeField<scalar>& nu);
 
+    /** @brief Initialise nut and diffusivities from the on-disk k/omega. */
     void validate(const nnfvcc::VolumeField<Vec3>& U) override;
 
+    /** @brief Solve the k and omega PDEs and update nut. */
     void correct(const nnfvcc::VolumeField<Vec3>& U, nnfvcc::SurfaceField<scalar>& phi, RunTime& rt)
         override;
 
+    /** @brief Surface effective viscosity (ν + ν_t). */
     nnfvcc::SurfaceField<scalar>& nuEff() override;
+    /** @brief Cell-centred turbulent viscosity. */
     const nnfvcc::VolumeField<scalar>& nut() const override;
+    /** @brief Velocity gradient tensor (updated each correct()). */
     const nnfvcc::VolumeField<NeoN::Tensor>& gradU() const override;
+    /** @brief Recompute gradU in place at the given velocity. */
+    void updateGradU(const nnfvcc::VolumeField<Vec3>& U) override;
 
+    /** @brief Write k, omega and nut fields to disk. */
     void write(MeshAdapter& mesh) const override;
 
+    /** @brief Rotate k, omega and nut old-time levels for BDF2. */
     void rotateOldTimes() override;
 
 private:
@@ -250,5 +289,6 @@ private:
     nnfvcc::VolumeField<scalar>* nut_ = nullptr;
     KOmegaSST model_;
 };
+
 
 } // namespace NeoFOAM

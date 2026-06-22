@@ -17,6 +17,7 @@ target_sources(
           "auxiliary/comparison.cpp"
           "datastructures/meshAdapter.cpp"
           "datastructures/databaseWrapper.cpp"
+          "datastructures/pde.cpp"
           "compatibility/fvSchemes.cpp"
           "compatibility/fvSolution.cpp"
           "solutionControl/pimpleControl.cpp"

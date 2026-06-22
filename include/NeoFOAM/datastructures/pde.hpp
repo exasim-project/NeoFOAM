@@ -152,6 +152,14 @@ public:
     /** @brief When true, selects the <field>Final relaxation factor and solver subdict. */
     void setFinalIter(bool finalIter) { finalIter_ = finalIter; }
 
+    /** @brief Hard-pin a set of cells to prescribed values after assembly (omega wall function). */
+    void
+    setConstraints(const NeoN::Vector<NeoN::scalar>& mask, const NeoN::Vector<ValueType>& values)
+    {
+        constraintMask_ = &mask;
+        constraintValues_ = &values;
+    }
+
     /** @brief assemble the linear system owned by the solver based on the current expression */
     LinearSystem& assemble()
     {
@@ -364,6 +372,20 @@ public:
             }
         }
 
+        if constexpr (std::is_same_v<ValueType, NeoN::scalar>)
+        {
+            if (constraintMask_ != nullptr)
+            {
+                const NeoN::localIdx nCells = psi_->mesh().nCells();
+                NeoN::dsl::FixedValueConstraints<ValueType> pin(
+                    constraintMask_->view(),
+                    constraintValues_->view(),
+                    nCells
+                );
+                pin(ls);
+            }
+        }
+
         auto solverDict = runTime_->fvSolutionDict.subDict("solvers");
         const std::string finalKey = psi_->name + "Final";
         auto fieldSolverDict = (finalIter_ && solverDict.isDict(finalKey))
@@ -498,8 +520,13 @@ private:
     NeoN::localIdx pRefCell_ = 0;
     NeoN::scalar pRefValue_ = 0.0;
     bool finalIter_ = false;
+    const NeoN::Vector<NeoN::scalar>* constraintMask_ = nullptr;
+    const NeoN::Vector<ValueType>* constraintValues_ = nullptr;
 };
 
+
+template<typename ValueType>
+using PDESolver = PDE<ValueType>;
 
 template<typename ValueType, typename IndexType = NeoN::localIdx>
 NeoN::finiteVolume::cellCentred::VolumeField<ValueType> applyOperator(
@@ -528,5 +555,13 @@ NeoN::finiteVolume::cellCentred::VolumeField<ValueType> operator&(
 {
     return applyOperator(expr.linearSystem(), psi);
 }
+
+// Explicit instantiation declarations: PDE<scalar> and PDE<Vec3> member functions
+// are compiled only in src/datastructures/pde.cpp. This keeps the large SYCL kernel
+// set (FixedValueConstraints, SetReference, dsl operators) out of turbulence-model
+// translation units such as kOmegaSST.cpp, which already carry 22+ physics kernels
+// and would otherwise exceed Intel PVC's per-TU AOT compilation limit (3 passes).
+extern template class PDE<NeoN::scalar>;
+extern template class PDE<NeoN::Vec3>;
 
 }

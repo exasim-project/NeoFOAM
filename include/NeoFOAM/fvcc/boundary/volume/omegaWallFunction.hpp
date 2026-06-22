@@ -19,32 +19,30 @@ namespace fvcc = NeoN::finiteVolume::cellCentred;
 namespace detail
 {
 
-// Default coefficients matching OpenFOAM's wallFunctionCoefficients defaults
-// (src/TurbulenceModels/turbulenceModels/derivedFvPatchFields/wallFunctions/
-//  wallFunction/wallFunctionCoefficients/wallFunctionCoefficients.C:61-63).
+/// Default coefficients matching OpenFOAM's wallFunctionCoefficients defaults
+/// (src/TurbulenceModels/turbulenceModels/derivedFvPatchFields/wallFunctions/
+///  wallFunction/wallFunctionCoefficients/wallFunctionCoefficients.C:61-63).
 inline constexpr scalar OMEGA_WF_DEFAULT_BETA1 = 0.075;
 inline constexpr scalar OMEGA_WF_DEFAULT_CMU = 0.09;
 inline constexpr scalar OMEGA_WF_DEFAULT_KAPPA = 0.41;
 
-// Applies the omegaWallFunction kernel face-by-face.
-//
-// Matches Foam::omegaWallFunctionFvPatchScalarField::calculate() for the
-// default blender (BINOMIAL, n=2) and updateCoeffs()'s write-back step
-// (omega.C:485-527): each wall face contributes a blended omega to its
-// owner cell and the BC face value is the same blended omega.
-//
-// Limitations vs upstream:
-//  - Single-patch corner only: we assume each wall cell sees at most one
-//    wall-function face, i.e. cornerWeights == 1. Multi-patch corner
-//    averaging (omega.C:71-126) is not modelled — for typical meshes where
-//    interior cells are bounded by ≤1 wall face this is exact; meshes with
-//    re-entrant corners shared by two wall patches will diverge.
-//  - G (production) accumulation is not applied here. Upstream's
-//    calculate() adds (νₜ+ν)·|∇U_w|·C_µ^0.25·√k/(κ·y) into the turbulence
-//    model's G field; NeoFOAM's kOmegaSST computes G internally from
-//    nut·GbyNu0 and does not yet route it through boundary BCs. The
-//    momentum/k near-wall production therefore won't match upstream
-//    exactly even when omega values agree.
+/// Upper clamp on the blended wall omega so that ω_vis = 6ν/(β₁y²) cannot
+/// overflow to Inf on degenerate near-wall cells.  Shared between the BC and
+/// kOmegaSST's matrix pin so both paths produce the same value.
+inline constexpr scalar OMEGA_WF_OMEGA_MAX = scalar(1e12);
+
+/**
+ * @brief Apply the omegaWallFunction kernel face-by-face.
+ *
+ * Matches Foam::omegaWallFunctionFvPatchScalarField::calculate() for the
+ * default BINOMIAL n=2 blender and the updateCoeffs() write-back step:
+ * each wall face gets ω = √(ω_vis² + ω_log²) clamped to OMEGA_WF_OMEGA_MAX.
+ *
+ * Limitations vs upstream:
+ *  - Single-patch corner only (cornerWeights == 1).
+ *  - G production accumulation is not applied; kOmegaSST feeds that back
+ *    internally from nut·GbyNu0.
+ */
 inline void setOmegaWallFunction(
     Field<scalar>& omega,
     const fvcc::VolumeField<scalar>& k,
@@ -58,6 +56,9 @@ inline void setOmegaWallFunction(
 )
 {
     const scalar Cmu25 = Kokkos::pow(Cmu, scalar(0.25));
+    // Function-local copy: a namespace-scope constexpr cannot be referenced inside a
+    // __host__ __device__ lambda (it is "undefined in device code"); bind it here first.
+    const scalar omegaMax = OMEGA_WF_OMEGA_MAX;
 
     auto kInternal = k.internalVector().view();
     const auto nuBoundary = nu.boundaryData().value().view();
@@ -87,8 +88,9 @@ inline void setOmegaWallFunction(
             const scalar wLog = Kokkos::sqrt(kw) / (Cmu25 * kappa * y);
 
             // BINOMIAL blender, n = 2 (upstream default at omega.C:396) —
-            // closed form: ω = √(ωᵥᵢₛ² + ωₗₒg²).
-            const scalar wOmega = Kokkos::sqrt(wVis * wVis + wLog * wLog);
+            // closed form: ω = √(ωᵥᵢₛ² + ωₗₒg²). Clamped to OMEGA_WF_OMEGA_MAX so this face
+            // value matches the kOmegaSST cell pin exactly (both use the same clamp).
+            const scalar wOmega = Kokkos::min(Kokkos::sqrt(wVis * wVis + wLog * wLog), omegaMax);
 
             // Set the wall face value only. Upstream also writes
             // omega_internal[wall_cell] via manipulateMatrix(setValues) — a
@@ -110,24 +112,20 @@ inline void setOmegaWallFunction(
 } // namespace detail
 
 
-// Mirrors Foam::omegaWallFunctionFvPatchScalarField
-// (src/TurbulenceModels/turbulenceModels/derivedFvPatchFields/wallFunctions/
-//  omegaWallFunctions/omegaWallFunction/omegaWallFunctionFvPatchScalarField.{H,C}).
-//
-// Upstream is a fixedValueFvPatchField<scalar> whose updateCoeffs() blends a
-// viscous-sublayer and a log-layer estimate of omega and also overwrites the
-// adjacent wall cell's omega in the internal field. We replicate that here
-// inside correctBoundaryCondition(ctx).
-//
-// Context fields required:
-//   - "k"            VolumeField<scalar>  — to evaluate √k at the wall cell
-//   - "nu"           VolumeField<scalar>  — laminar viscosity, boundary face values
-//   - "nearWallDist" VolumeField<scalar>  — y for the wall cell, boundary face values
-//
-// Mirroring NutUSpaldingWallFunction (nutWallFunction.hpp:142-153), the no-arg
-// correctBoundaryCondition() overload is a no-op: this BC must be driven from
-// kOmegaSST::correct() (or equivalent) with a BoundaryContext that supplies
-// the three fields above.
+/**
+ * @brief Specific dissipation rate wall function BC.
+ *
+ * Mirrors Foam::omegaWallFunctionFvPatchScalarField: blends a viscous-sublayer
+ * and log-layer ω estimate (BINOMIAL n=2) and sets the wall face value.
+ *
+ * Required BoundaryContext fields:
+ *   - @c "k"            VolumeField<scalar> — √k at the wall-adjacent cell
+ *   - @c "nu"           VolumeField<scalar> — laminar viscosity, boundary values
+ *   - @c "nearWallDist" VolumeField<scalar> — cell-to-wall distance y, boundary values
+ *
+ * The no-arg correctBoundaryCondition() overload is a no-op; this BC must be
+ * driven via correctBoundaryCondition(ctx) from kOmegaSST::correct().
+ */
 class OmegaWallFunction : public VolumeBoundaryFactory<scalar>::template Register<OmegaWallFunction>
 {
     using Base = VolumeBoundaryFactory<scalar>::template Register<OmegaWallFunction>;

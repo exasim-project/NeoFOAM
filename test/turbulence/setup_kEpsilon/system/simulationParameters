@@ -7,36 +7,18 @@
 \*---------------------------------------------------------------------------*/
 FoamFile
 {
-    version     2.0;
-    format      ascii;
-    class       volScalarField;
-    object      omega;
+    version         2;
+    format          ascii;
+    class           dictionary;
+    object          simulationParameters;
 }
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dimensions      [0 0 -1 0 0 0 0];
+NX              3;
 
-// omega = sqrt(k) / (Cmu^0.25 * L) with L=0.1 m, Cmu=betaStar=0.09
-internalField   uniform 100;
+GRADSCHEME      Gauss linear;
 
-boundaryField
-{
-    fixedWalls
-    {
-        type            omegaWallFunction;
-        value           uniform 100;
-    }
+DIVSCHEME       Gauss upwind;
 
-    inlet
-    {
-        type            fixedValue;
-        value           uniform 100;
-    }
-
-    outlet
-    {
-        type            zeroGradient;
-    }
-}
+LAPSCHEME       Gauss linear uncorrected;
 
 // ************************************************************************* //

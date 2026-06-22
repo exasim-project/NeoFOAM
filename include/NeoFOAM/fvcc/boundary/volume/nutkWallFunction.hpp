@@ -19,25 +19,23 @@ namespace fvcc = NeoN::finiteVolume::cellCentred;
 namespace detail
 {
 
-// Defaults match OpenFOAM's wallFunctionCoefficients
-//  (Cmu = 0.09, kappa = 0.41, E = 9.8).
+/// Default coefficients matching OpenFOAM's wallFunctionCoefficients (Cmu=0.09, κ=0.41, E=9.8).
 inline constexpr scalar NUTK_WF_DEFAULT_CMU = 0.09;
 inline constexpr scalar NUTK_WF_DEFAULT_KAPPA = 0.41;
 inline constexpr scalar NUTK_WF_DEFAULT_E = 9.8;
 
-// Applies the nutkWallFunction kernel face-by-face.
-//
-// Mirrors Foam::nutkWallFunctionFvPatchScalarField::calcNut() for the
-// BINOMIAL n=2 blender (the upstream default):
-//
-//   y+      = C_µ^0.25 · y · √k / ν              (per face)
-//   ν_t,log = ν · y+ · κ / log(max(E·y+, 1+1e-4))
-//   ν_t,vis = ν                                   (viscous-sublayer estimate)
-//   ν_t,w   = √(ν_t,vis² + ν_t,log²)              (BINOMIAL n=2 blend)
-//
-// Reads k from the BoundaryContext (used by kEpsilon to drive ν_t at walls
-// without depending on |∂U/∂n| like the Spalding form). The boundary face
-// value is written; no internal stomp.
+/**
+ * @brief Apply the nutkWallFunction kernel face-by-face.
+ *
+ * Mirrors Foam::nutkWallFunctionFvPatchScalarField::calcNut() for the BINOMIAL n=2 blender:
+ *   - y⁺       = C_µ^0.25·y·√k/ν
+ *   - ν_t,log  = ν·y⁺·κ/log(max(E·y⁺, 1+1e-4))
+ *   - ν_t,vis  = ν   (viscous sublayer)
+ *   - ν_t,w    = √(ν_t,vis² + ν_t,log²)
+ *
+ * k is read from the BoundaryContext; the boundary face value is written,
+ * no internal-cell stomp.
+ */
 inline void setNutkWallFunction(
     Field<scalar>& domainVector,
     const fvcc::VolumeField<scalar>& k,
@@ -90,12 +88,19 @@ inline void setNutkWallFunction(
 } // namespace detail
 
 
-// Mirrors Foam::nutkWallFunctionFvPatchScalarField
-//   (src/TurbulenceModels/turbulenceModels/derivedFvPatchFields/wallFunctions/
-//    nutWallFunctions/nutkWallFunction/nutkWallFunctionFvPatchScalarField.{H,C}).
-//
-// The k-based ν_t wall function used by kEpsilon (kqRWallFunction's companion
-// on the nut side). Single-patch-corner only.
+/**
+ * @brief k-based turbulent viscosity wall function BC.
+ *
+ * Mirrors Foam::nutkWallFunctionFvPatchScalarField: derives y⁺ from k rather
+ * than |∂U/∂n|, making it the companion to kqRWallFunction for kEpsilon flows.
+ *
+ * Required BoundaryContext fields:
+ *   - @c "k"            VolumeField<scalar> — turbulent kinetic energy
+ *   - @c "nu"           VolumeField<scalar> — laminar viscosity, boundary values
+ *   - @c "nearWallDist" VolumeField<scalar> — cell-to-wall distance y, boundary values
+ *
+ * Single-patch-corner only.
+ */
 class NutkWallFunction : public VolumeBoundaryFactory<scalar>::template Register<NutkWallFunction>
 {
     using Base = VolumeBoundaryFactory<scalar>::template Register<NutkWallFunction>;

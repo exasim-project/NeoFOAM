@@ -19,26 +19,21 @@ namespace fvcc = NeoN::finiteVolume::cellCentred;
 namespace detail
 {
 
-// Defaults match OpenFOAM's wallFunctionCoefficients
-//  (src/TurbulenceModels/turbulenceModels/derivedFvPatchFields/wallFunctions/
-//   wallFunction/wallFunctionCoefficients/wallFunctionCoefficients.C:61-63).
+/// Default coefficients matching OpenFOAM's wallFunctionCoefficients defaults.
 inline constexpr scalar EPSILON_WF_DEFAULT_CMU = 0.09;
 inline constexpr scalar EPSILON_WF_DEFAULT_KAPPA = 0.41;
 
-// Applies the epsilonWallFunction kernel face-by-face.
-//
-// Mirrors Foam::epsilonWallFunctionFvPatchScalarField::calculate() for the
-// BINOMIAL n=2 blender (the upstream default) and updateCoeffs()'s
-// write-back step: each wall face gets a blended ε computed from the adjacent
-// cell's k, the patch face's ν, and the cell-to-wall distance y.
-//
-//   ε_vis = 2 · k · ν / y²              (viscous-sublayer estimate)
-//   ε_log = C_µ^0.75 · k^1.5 / (κ · y)  (log-layer estimate)
-//   ε_w   = √(ε_vis² + ε_log²)          (BINOMIAL n=2 blend)
-//
-// Only sets the wall face value; does NOT stomp epsilon.internal[wall_cell].
-// See the longer note in omegaWallFunction.hpp on why an internal-cell write
-// without OF's setValues hook would only do harm.
+/**
+ * @brief Apply the epsilonWallFunction kernel face-by-face.
+ *
+ * Mirrors Foam::epsilonWallFunctionFvPatchScalarField::calculate() for the
+ * BINOMIAL n=2 blender:
+ *   - ε_vis = 2·k·ν/y²            (viscous-sublayer)
+ *   - ε_log = C_µ^0.75·k^1.5/(κ·y) (log-layer)
+ *   - ε_w   = √(ε_vis² + ε_log²)  (blend)
+ *
+ * Only sets the wall face value; does NOT write to epsilon.internal[wall_cell].
+ */
 inline void setEpsilonWallFunction(
     Field<scalar>& epsilon,
     const fvcc::VolumeField<scalar>& k,
@@ -88,15 +83,20 @@ inline void setEpsilonWallFunction(
 
 } // namespace detail
 
-// Mirrors Foam::epsilonWallFunctionFvPatchScalarField
-//   (src/TurbulenceModels/turbulenceModels/derivedFvPatchFields/wallFunctions/
-//    epsilonWallFunctions/epsilonWallFunction/epsilonWallFunctionFvPatchScalarField.{H,C}).
-//
-// Single-patch-corner only: each wall cell is assumed to see at most one
-// wall-function face (cornerWeights == 1). The G production-term feedback that
-// upstream's updateCoeffs() also performs is not handled here — the parent
-// kEpsilon model writes that source via its own G-feedback step, mirroring
-// the same pattern KOmegaSST uses for omegaWallFunction.
+/**
+ * @brief Turbulent dissipation rate wall function BC.
+ *
+ * Mirrors Foam::epsilonWallFunctionFvPatchScalarField: blends viscous and
+ * log-layer ε estimates (BINOMIAL n=2) and sets the wall face value.
+ *
+ * Required BoundaryContext fields:
+ *   - @c "k"            VolumeField<scalar> — turbulent kinetic energy
+ *   - @c "nu"           VolumeField<scalar> — laminar viscosity, boundary values
+ *   - @c "nearWallDist" VolumeField<scalar> — cell-to-wall distance y, boundary values
+ *
+ * Single-patch-corner only (cornerWeights == 1). G feedback is handled by
+ * the parent KEpsilon model, not by this BC.
+ */
 class EpsilonWallFunction :
     public VolumeBoundaryFactory<scalar>::template Register<EpsilonWallFunction>
 {

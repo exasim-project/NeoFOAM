@@ -9,34 +9,66 @@ FoamFile
 {
     version     2.0;
     format      ascii;
-    class       volScalarField;
-    object      omega;
+    class       dictionary;
+    object      blockMeshDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dimensions      [0 0 -1 0 0 0 0];
+#include "simulationParameters"
+scale   1;
 
-// omega = sqrt(k) / (Cmu^0.25 * L) with L=0.1 m, Cmu=betaStar=0.09
-internalField   uniform 100;
+vertices
+(
+    (0 0 0)
+    (1 0 0)
+    (1 1 0)
+    (0 1 0)
+    (0 0 1)
+    (1 0 1)
+    (1 1 1)
+    (0 1 1)
+);
 
-boundaryField
-{
+blocks
+(
+    hex (0 1 2 3 4 5 6 7) ($NX $NX $NX) simpleGrading (1 1 1)
+);
+
+edges
+(
+);
+
+boundary
+(
     fixedWalls
     {
-        type            omegaWallFunction;
-        value           uniform 100;
+        type wall;
+        faces
+        (
+            (3 7 6 2)
+            (1 5 4 0)
+            (0 3 2 1)
+            (4 5 6 7)
+        );
     }
 
     inlet
     {
-        type            fixedValue;
-        value           uniform 100;
+        type patch;
+        faces
+        (
+            (2 6 5 1)
+        );
     }
 
     outlet
     {
-        type            zeroGradient;
+        type patch;
+        faces
+        (
+            (0 4 7 3)
+        );
     }
-}
+);
 
 // ************************************************************************* //

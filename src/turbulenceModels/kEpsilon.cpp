@@ -3,6 +3,7 @@
 
 #include "NeoN/NeoN.hpp"
 
+#include "NeoFOAM/fvcc/boundary/volume/kqRWallFunction.hpp"
 #include "NeoFOAM/turbulenceModels/kEpsilon.hpp"
 #include "NeoFOAM/auxiliary/readers.hpp"
 #include "NeoFOAM/auxiliary/writers.hpp"
@@ -173,6 +174,29 @@ void kernelDevRhoReff(
     );
 }
 
+// Populate nearWallDist's boundary face values from wallDist's owner-cell internal value.
+// Kept as a free function (not a constructor body / member) because NVCC forbids extended
+// __host__ __device__ lambdas (NEON_LAMBDA) inside functions whose address can't be taken
+// (constructors) or inside private/protected members.
+void initNearWallDistBoundary(
+    const NeoN::Executor& exec,
+    const nnfvcc::VolumeField<scalar>& wallDist,
+    const NeoN::UnstructuredMesh& mesh,
+    nnfvcc::VolumeField<scalar>& nearWallDist
+)
+{
+    const auto wdInternal = wallDist.internalVector().view();
+    const auto faceOwners = mesh.boundaryMesh().faceOwners().view();
+    auto nwdBoundary = nearWallDist.boundaryData().value().view();
+    const auto nBoundaryFaces = static_cast<NeoN::localIdx>(nwdBoundary.size());
+    NeoN::parallelFor(
+        exec,
+        {0, nBoundaryFaces},
+        NEON_LAMBDA(const NeoN::localIdx i) { nwdBoundary[i] = wdInternal[faceOwners[i]]; },
+        "kEpsilon::initNearWallDistBoundary"
+    );
+}
+
 } // namespace
 
 // ============================================================
@@ -242,19 +266,9 @@ KEpsilon::KEpsilon(
     surfInterp_.interpolate(nu_, surfNu_);
 
     // Populate nearWallDist_'s boundary face values by copying wallDist_'s
-    // adjacent-cell internal value. Same pattern as KOmegaSST.
-    {
-        const auto wdInternal = wallDist_.internalVector().view();
-        const auto faceOwners = mesh_.boundaryMesh().faceOwners().view();
-        auto nwdBoundary = nearWallDist_.boundaryData().value().view();
-        const auto nBoundaryFaces = static_cast<NeoN::localIdx>(nwdBoundary.size());
-        NeoN::parallelFor(
-            exec_,
-            {0, nBoundaryFaces},
-            NEON_LAMBDA(const NeoN::localIdx i) { nwdBoundary[i] = wdInternal[faceOwners[i]]; },
-            "kEpsilon::initNearWallDistBoundary"
-        );
-    }
+    // adjacent-cell internal value. Same pattern as KOmegaSST. Done via a free function
+    // because NVCC forbids NEON_LAMBDA in a constructor body.
+    initNearWallDistBoundary(exec_, wallDist_, mesh_, nearWallDist_);
 }
 
 // ============================================================
@@ -369,7 +383,7 @@ void KEpsilon::correct(
     // ----- epsilon equation -----
     // Solved BEFORE k so spK can be updated from the new ε to match OF's
     // sequencing (kEpsilon.C:251-291: ε first, then k).
-    PDESolver<scalar> epsEqn(
+    auto epsEqn = PDESolver<scalar>(
         dsl::imp::ddt(epsilon) + dsl::imp::div(phi, epsilon)
             - dsl::imp::laplacian(DepsilonEffF_, epsilon) + dsl::imp::source(spEpsilon_, epsilon)
             - dsl::exp::source(epsilonSource_),
@@ -408,7 +422,7 @@ void KEpsilon::correct(
     }
 
     // ----- k equation -----
-    PDESolver<scalar> kEqn(
+    auto kEqn = PDESolver<scalar>(
         dsl::imp::ddt(k) + dsl::imp::div(phi, k) - dsl::imp::laplacian(DkEffF_, k)
             + dsl::imp::source(spK_, k) - dsl::exp::source(Pk_),
         k,
@@ -443,6 +457,12 @@ nnfvcc::SurfaceField<scalar>& KEpsilon::DkEff() { return DkEffF_; }
 nnfvcc::SurfaceField<scalar>& KEpsilon::DepsilonEff() { return DepsilonEffF_; }
 
 const nnfvcc::VolumeField<Tensor>& KEpsilon::gradU() const { return gradU_; }
+
+void KEpsilon::updateGradU(const nnfvcc::VolumeField<Vec3>& U)
+{
+    gradOp_.gradTensor(U, gradU_);
+    gradU_.correctBoundaryConditions();
+}
 
 NeoN::Vector<SymmTensor> KEpsilon::devRhoReff() const
 {
@@ -589,6 +609,8 @@ nnfvcc::SurfaceField<scalar>& KEpsilonModel::nuEff() { return model_.nuEff(); }
 const nnfvcc::VolumeField<scalar>& KEpsilonModel::nut() const { return *nut_; }
 
 const nnfvcc::VolumeField<NeoN::Tensor>& KEpsilonModel::gradU() const { return model_.gradU(); }
+
+void KEpsilonModel::updateGradU(const nnfvcc::VolumeField<Vec3>& U) { model_.updateGradU(U); }
 
 void KEpsilonModel::rotateOldTimes()
 {

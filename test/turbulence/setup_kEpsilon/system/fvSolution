@@ -9,34 +9,59 @@ FoamFile
 {
     version     2.0;
     format      ascii;
-    class       volScalarField;
-    object      omega;
+    class       dictionary;
+    object      fvSolution;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dimensions      [0 0 -1 0 0 0 0];
-
-// omega = sqrt(k) / (Cmu^0.25 * L) with L=0.1 m, Cmu=betaStar=0.09
-internalField   uniform 100;
-
-boundaryField
+solvers
 {
-    fixedWalls
+    p
     {
-        type            omegaWallFunction;
-        value           uniform 100;
+        solver          PCG;
+        preconditioner  diagonal;
+        tolerance       0.0;
+        relTol          1e-5;
     }
 
-    inlet
+    U
     {
-        type            fixedValue;
-        value           uniform 100;
+        solver          PBiCGStab;
+        preconditioner  none;
+        tolerance       1e-18;
+        relTol          0.0;
     }
 
-    outlet
+    k
     {
-        type            zeroGradient;
+        solver          PBiCGStab;
+        preconditioner  diagonal;
+        tolerance       0;
+        relTol          1e-10;
     }
+
+    kFinal
+    {
+        $k;
+    }
+
+    epsilon
+    {
+        solver          PBiCGStab;
+        preconditioner  diagonal;
+        tolerance       0;
+        relTol          1e-10;
+    }
+
+    epsilonFinal
+    {
+        $epsilon;
+    }
+}
+
+SIMPLE
+{
+    nNonOrthogonalCorrectors 0;
 }
 
 // ************************************************************************* //
