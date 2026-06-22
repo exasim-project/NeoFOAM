@@ -34,6 +34,13 @@ struct TypeMap<Foam::GeometricField<Foam::vector, Foam::fvPatchField, Foam::volM
 };
 
 template<>
+struct TypeMap<Foam::GeometricField<Foam::tensor, Foam::fvPatchField, Foam::volMesh>>
+{
+    using container_type = fvcc::VolumeField<NeoN::Tensor>;
+    using mapped_type = NeoN::Tensor;
+};
+
+template<>
 struct TypeMap<Foam::GeometricField<Foam::scalar, Foam::fvsPatchField, Foam::surfaceMesh>>
 {
     using container_type = fvcc::SurfaceField<NeoN::scalar>;
@@ -61,6 +68,15 @@ struct TypeMap<Foam::Field<Foam::vector>>
 {
     using container_type = NeoN::Vector<NeoN::Vec3>;
     using mapped_type = NeoN::Vec3;
+};
+
+// Foam::tensor and NeoN::Tensor are both nine contiguous row-major scalars, so the
+// reinterpret_cast in fromFoamField is layout-compatible (as for scalar/vector).
+template<>
+struct TypeMap<Foam::Field<Foam::tensor>>
+{
+    using container_type = NeoN::Vector<NeoN::Tensor>;
+    using mapped_type = NeoN::Tensor;
 };
 
 // Specializations of TypeMap for specific type mappings.

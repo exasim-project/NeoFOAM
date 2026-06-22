@@ -8,6 +8,12 @@
 #include "common.hpp"
 
 #include "fvCFD.H"
+#include "singlePhaseTransportModel.H"
+#include "turbulentTransportModel.H"
+#include "wallDist.H"
+#include "LESModel.H"
+#include "surfaceInterpolationScheme.H"
+#include "blendedSchemeBase.H"
 
 namespace fvcc = NeoN::finiteVolume::cellCentred;
 namespace nf = NeoFOAM;
@@ -237,4 +243,118 @@ TEST_CASE("readDEShybridCoefficients parses the OpenFOAM div-scheme spec")
     const nf::DEShybridCoefficients c2 = nf::readDEShybridCoefficients(noNutLim);
     REQUIRE(c2.nutLim == Catch::Approx(1.0));
     REQUIRE(c2.OmegaLim == Catch::Approx(1.0e-3));
+}
+
+// Cross-checks the NeoFOAM blending factor against OpenFOAM's own DEShybrid::blendingFactor() on the
+// same case, feeding the kernel OpenFOAM's exact fvc::grad(U), nut, nu and LES delta so the only
+// thing under test is the sigma formula + cell->face interpolation.
+TEST_CASE("DEShybrid sigma matches OpenFOAM's DEShybrid::blendingFactor")
+{
+    Foam::Time& runTime = *timePtr;
+    auto [execName, exec] = GENERATE(allAvailableExecutor());
+    INFO("executor: " << execName);
+
+    auto rt = nf::createAdapterRunTime(runTime, exec);
+    auto meshAdapter = NeoFOAM::createMesh(exec, runTime);
+    NeoFOAM::MeshAdapter& mesh = *meshAdapter; // also usable as a Foam::fvMesh
+    const auto& nfMesh = mesh.nfMesh();
+
+    // Make OpenFOAM's blended turbulence-model schemes (DEShybrid) available via runtime selection.
+    // A by-name RTS use adds no link symbol, so load explicitly rather than rely on link order.
+    runTime.libs().open(Foam::fileName("libturbulenceModelSchemes.so"));
+
+    // --- OpenFOAM turbulence setup (LES SpalartAllmarasDDES, per the shared fixture) ---
+    Foam::volVectorField U(
+        Foam::IOobject("U", runTime.timeName(), mesh, Foam::IOobject::MUST_READ, Foam::IOobject::NO_WRITE),
+        mesh
+    );
+    Foam::surfaceScalarField phi(
+        Foam::IOobject("phi", runTime.timeName(), mesh, Foam::IOobject::MUST_READ, Foam::IOobject::NO_WRITE),
+        Foam::fvc::flux(U)
+    );
+    Foam::singlePhaseTransportModel transport(U, phi);
+    Foam::IOdictionary transportProperties(Foam::IOobject(
+        "transportProperties",
+        runTime.constant(),
+        mesh,
+        Foam::IOobject::MUST_READ_IF_MODIFIED,
+        Foam::IOobject::NO_WRITE
+    ));
+    Foam::dimensionedScalar viscosity("nu", Foam::dimViscosity, transportProperties);
+
+    Foam::autoPtr<Foam::incompressible::turbulenceModel> foamTurb(
+        Foam::incompressible::turbulenceModel::New(U, phi, transport)
+    );
+    foamTurb->validate();
+    const Foam::volScalarField& ofNut = mesh.lookupObject<Foam::volScalarField>("nut");
+    const Foam::incompressible::LESModel& lesModel =
+        Foam::refCast<const Foam::incompressible::LESModel>(foamTurb());
+    const Foam::volScalarField& delta = lesModel.delta();
+
+    // --- OpenFOAM reference sigma via DEShybrid::blendingFactor ---
+    const std::string spec =
+        "DEShybrid linear linearUpwind grad(U) " + delta.name() + " 0.05 30 2 0 1 1e-3 1.0";
+    Foam::IStringStream is(spec);
+    // Use the faceFlux overload: DEShybrid is a div scheme, so its sub-schemes (linearUpwind)
+    // need the flux. The no-flux New would make linearUpwind read "grad(U)" as a flux field name.
+    Foam::tmp<Foam::surfaceInterpolationScheme<Foam::vector>> tScheme(
+        Foam::surfaceInterpolationScheme<Foam::vector>::New(mesh, phi, is)
+    );
+    const auto& blended = Foam::refCast<const Foam::blendedSchemeBase<Foam::vector>>(tScheme());
+    Foam::tmp<Foam::surfaceScalarField> tOfSigma(blended.blendingFactor(U));
+    const Foam::surfaceScalarField& ofSigma = tOfSigma();
+
+    // --- NeoFOAM sigma fed OpenFOAM's exact inputs (isolates the formula) ---
+    Foam::tmp<Foam::volTensorField> tGradU(Foam::fvc::grad(U));
+    const Foam::volTensorField& ofGradU = tGradU();
+
+    VolTensor nfGradU(
+        exec, "gradU", nfMesh, fvcc::createCalculatedBCs<fvcc::VolumeBoundary<Tensor>>(nfMesh)
+    );
+    nfGradU.internalVector() = NeoFOAM::fromFoamField(exec, ofGradU.primitiveField());
+
+    auto [nfNut, nfDelta] = NeoFOAM::constFromMany(exec, nfMesh, ofNut, delta);
+
+    VolScalar nfNu(exec, "nu", nfMesh, fvcc::createCalculatedBCs<fvcc::VolumeBoundary<Scalar>>(nfMesh));
+    fill(nfNu.internalVector(), viscosity.value());
+    fill(nfNu.boundaryData().value(), viscosity.value());
+
+    nf::DEShybridCoefficients coeffs;
+    // CDES is reduced from the physical 0.65 so that, on this case's flow, sigma lands in the
+    // tanh transition band (the formula's sensitive region) rather than saturating at sigmaMax.
+    // Both OpenFOAM and NeoFOAM use the same value, so this still validates exact agreement.
+    coeffs.CDES = 0.05;
+    coeffs.U0 = 30.0;
+    coeffs.L0 = 2.0;
+    coeffs.sigmaMin = 0.0;
+    coeffs.sigmaMax = 1.0;
+    coeffs.OmegaLim = 1.0e-3;
+    coeffs.nutLim = 1.0;
+
+    auto surfInterp = fvcc::SurfaceInterpolation<Scalar>(
+        exec, nfMesh, NeoN::Input(NeoN::TokenList({std::string("linear")}))
+    );
+    SurfScalar nfSigma(
+        exec, "nfSigma", nfMesh, fvcc::createCalculatedBCs<fvcc::SurfaceBoundary<Scalar>>(nfMesh)
+    );
+    nf::computeDEShybridBlendingFactor(nfGradU, nfNut, nfNu, nfDelta, coeffs, surfInterp, nfSigma);
+
+    // --- compare on internal faces (boundary-face interpolation differs by construction) ---
+    auto nfH = nfSigma.internalVector().copyToHost();
+    Scalar maxDiff = 0.0, sigMin = 1.0e30, sigMax = -1.0e30;
+    for (NeoN::localIdx f = 0; f < nfMesh.nInternalFaces(); ++f)
+    {
+        const Scalar nfv = nfH.view()[f];
+        const Scalar ofv = ofSigma.primitiveField()[static_cast<Foam::label>(f)];
+        maxDiff = std::max(maxDiff, std::abs(nfv - ofv));
+        sigMin = std::min(sigMin, ofv);
+        sigMax = std::max(sigMax, ofv);
+        REQUIRE(nfv == Catch::Approx(ofv).margin(1e-10));
+    }
+    INFO("max|nf-of| = " << maxDiff << ", OF sigma range = [" << sigMin << ", " << sigMax << "]");
+    REQUIRE(maxDiff < 1e-10);
+    // Ensure the comparison exercised the tanh transition rather than a saturated bound: sigma must
+    // be strictly inside (sigmaMin, sigmaMax) somewhere, so neither all-at-floor nor all-at-ceiling.
+    REQUIRE(sigMax > coeffs.sigmaMin + 1e-3);
+    REQUIRE(sigMin < coeffs.sigmaMax - 1e-3);
 }

@@ -70,6 +70,12 @@ importoflibrary(incompressibleTransportModels INCLUDE_ROOT transportModels INCLU
                 transportModels/incompressible)
 importoflibrary(turbulenceModels INCLUDE_LN TurbulenceModels/turbulenceModels)
 importoflibrary(incompressibleTurbulenceModels INCLUDE_LN TurbulenceModels/incompressible)
+# DEShybrid and the other blended turbulence-model convection schemes. Exposes
+# TurbulenceModels/schemes/lnInclude (DEShybrid.H). The scheme registers via the
+# surfaceInterpolationScheme runtime-selection table; consumers that select it by name should
+# also ensure the library is loaded (e.g. controlDict `libs` or dlLibraryTable::open), since a
+# pure runtime-selection use adds no link-time symbol reference.
+importoflibrary(turbulenceModelSchemes INCLUDE_LN TurbulenceModels/schemes)
 importoflibrary(
   Pstream
   INCLUDE
