@@ -6,6 +6,12 @@
     <includes refid="pdeSolver_8hpp" local="yes">NeoFOAM/datastructures/pdeSolver.hpp</includes>
     <includes refid="turbulenceModel_8hpp" local="yes">NeoFOAM/turbulenceModels/turbulenceModel.hpp</includes>
     <incdepgraph>
+      <node id="18">
+        <label>NeoFOAM/compatibility/fvSchemes.hpp</label>
+        <link refid="fvSchemes_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+      </node>
       <node id="14">
         <label>NeoFOAM/compatibility/fvSolution.hpp</label>
         <link refid="fvSolution_8hpp"/>
@@ -55,6 +61,8 @@
         </childnode>
         <childnode refid="14" relation="include">
         </childnode>
+        <childnode refid="18" relation="include">
+        </childnode>
       </node>
       <node id="7">
         <label>NeoFOAM/datastructures/runTime.hpp</label>
@@ -75,10 +83,10 @@
         </childnode>
         <childnode refid="3" relation="include">
         </childnode>
-        <childnode refid="18" relation="include">
+        <childnode refid="19" relation="include">
         </childnode>
       </node>
-      <node id="18">
+      <node id="19">
         <label>NeoFOAM/turbulenceModels/turbulenceModel.hpp</label>
         <link refid="turbulenceModel_8hpp"/>
         <childnode refid="2" relation="include">
@@ -290,41 +298,59 @@
 <codeline lineno="203"><highlight class="normal"></highlight></codeline>
 <codeline lineno="204"><highlight class="normal"></highlight><highlight class="keyword">private</highlight><highlight class="normal">:</highlight></codeline>
 <codeline lineno="205"><highlight class="normal"></highlight></codeline>
-<codeline lineno="206"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::Executor<sp/>exec_;</highlight></codeline>
-<codeline lineno="207"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::UnstructuredMesh&amp;<sp/>mesh_;</highlight></codeline>
-<codeline lineno="208"><highlight class="normal"></highlight></codeline>
-<codeline lineno="209"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Laminar<sp/>viscosity:<sp/>held<sp/>by<sp/>reference<sp/>—<sp/>must<sp/>outlive<sp/>this<sp/>object</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="210"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;scalar&gt;&amp;<sp/>nu_;</highlight></codeline>
-<codeline lineno="211"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Physics<sp/>inputs<sp/>owned<sp/>by<sp/>the<sp/>model<sp/>(copy-constructed<sp/>from<sp/>caller<sp/>or<sp/>computed<sp/>from<sp/>OF<sp/>mesh)</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="212"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::VolumeField&lt;scalar&gt;<sp/>wallDist_;</highlight></codeline>
-<codeline lineno="213"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::VolumeField&lt;scalar&gt;<sp/>nearWallDist_;</highlight></codeline>
-<codeline lineno="214"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::VolumeField&lt;scalar&gt;<sp/>delta_;</highlight></codeline>
+<codeline lineno="206"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Registers<sp/>a<sp/>zero-seeded<sp/>&quot;nuTilda&quot;<sp/>field<sp/>in<sp/>db&apos;s<sp/>VectorCollection<sp/>and<sp/>returns<sp/>a<sp/>reference<sp/>to</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="207"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>the<sp/>registered<sp/>copy.<sp/>initialize()<sp/>later<sp/>overwrites<sp/>it<sp/>with<sp/>the<sp/>disk-read<sp/>initial<sp/>condition.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="208"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Registration<sp/>is<sp/>required<sp/>so<sp/>the<sp/>implicit<sp/>ddt<sp/>term<sp/>(oldTime<sp/>lookup)<sp/>and<sp/>rotateOldTimes()<sp/>can</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="209"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>allocate<sp/>and<sp/>rotate<sp/>nuTilda&apos;s<sp/>old-time<sp/>buffers.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="210"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">static</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;scalar&gt;&amp;<sp/>registerNuTilda(</highlight></codeline>
+<codeline lineno="211"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>NeoN::Database&amp;<sp/>db,</highlight></codeline>
+<codeline lineno="212"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::Executor&amp;<sp/>exec,</highlight></codeline>
+<codeline lineno="213"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::UnstructuredMesh&amp;<sp/>mesh</highlight></codeline>
+<codeline lineno="214"><highlight class="normal"><sp/><sp/><sp/><sp/>);</highlight></codeline>
 <codeline lineno="215"><highlight class="normal"></highlight></codeline>
-<codeline lineno="216"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Model-owned<sp/>transport<sp/>scalars;<sp/>seeded<sp/>by<sp/>initialize()<sp/>or<sp/>default-constructed<sp/>to<sp/>zero</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="217"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::VolumeField&lt;scalar&gt;<sp/>nuTilda_;</highlight></codeline>
-<codeline lineno="218"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::VolumeField&lt;scalar&gt;<sp/>nut_;</highlight></codeline>
-<codeline lineno="219"><highlight class="normal"></highlight></codeline>
-<codeline lineno="220"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Cached<sp/>face-interpolated<sp/>nu<sp/>(computed<sp/>once<sp/>in<sp/>constructor)</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="221"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::SurfaceField&lt;scalar&gt;<sp/>surfNu_;</highlight></codeline>
-<codeline lineno="222"><highlight class="normal"></highlight></codeline>
-<codeline lineno="223"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Persistent<sp/>fields<sp/>carrying<sp/>state<sp/>from<sp/>one<sp/>correct()<sp/>call<sp/>to<sp/>the<sp/>next:</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="224"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/><sp/>-<sp/>gradU_<sp/><sp/><sp/><sp/><sp/><sp/>:<sp/>consumed<sp/>by<sp/>the<sp/>momentum<sp/>predictor<sp/>before<sp/>the<sp/>next<sp/>correct()<sp/>runs</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="225"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/><sp/>-<sp/>nuEff_<sp/><sp/><sp/><sp/><sp/><sp/>:<sp/>consumed<sp/>by<sp/>the<sp/>momentum<sp/>laplacian<sp/>before<sp/>the<sp/>next<sp/>correct()<sp/>runs</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="226"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/><sp/>-<sp/>nuTildaEff_<sp/>:<sp/>consumed<sp/>by<sp/>the<sp/>nuTilda<sp/>laplacian<sp/>at<sp/>the<sp/>start<sp/>of<sp/>the<sp/>next<sp/>correct()</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="227"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::VolumeField&lt;NeoN::Tensor&gt;<sp/>gradU_;</highlight></codeline>
-<codeline lineno="228"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::SurfaceField&lt;scalar&gt;<sp/>nuEff_;</highlight></codeline>
-<codeline lineno="229"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::SurfaceField&lt;scalar&gt;<sp/>nuTildaEff_;</highlight></codeline>
-<codeline lineno="230"><highlight class="normal"></highlight></codeline>
-<codeline lineno="231"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Cached<sp/>operators<sp/>(constructed<sp/>once)</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="232"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::GaussGreenGrad<sp/>gradOp_;</highlight></codeline>
-<codeline lineno="233"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::SurfaceInterpolation&lt;scalar&gt;<sp/>surfInterp_;</highlight></codeline>
-<codeline lineno="234"><highlight class="normal"></highlight></codeline>
-<codeline lineno="235"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>SA-DDES<sp/>model<sp/>coefficients</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="236"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="structNeoFOAM_1_1SpalartAllmarasDDES_1_1Coefficients" kindref="compound">Coefficients</ref><sp/>coeffs_;</highlight></codeline>
-<codeline lineno="237"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="pressureVelocityCoupling_8hpp_1acc912e7a5a44b028589fda3fd76ba7ea" kindref="member">scalar</ref><sp/>cw1_;</highlight></codeline>
-<codeline lineno="238"><highlight class="normal">};</highlight></codeline>
-<codeline lineno="239"><highlight class="normal"></highlight></codeline>
-<codeline lineno="240"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>NeoFOAM</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="216"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::Executor<sp/>exec_;</highlight></codeline>
+<codeline lineno="217"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::UnstructuredMesh&amp;<sp/>mesh_;</highlight></codeline>
+<codeline lineno="218"><highlight class="normal"></highlight></codeline>
+<codeline lineno="219"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Laminar<sp/>viscosity:<sp/>held<sp/>by<sp/>reference<sp/>—<sp/>must<sp/>outlive<sp/>this<sp/>object</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="220"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;scalar&gt;&amp;<sp/>nu_;</highlight></codeline>
+<codeline lineno="221"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Physics<sp/>inputs<sp/>owned<sp/>by<sp/>the<sp/>model<sp/>(copy-constructed<sp/>from<sp/>caller<sp/>or<sp/>computed<sp/>from<sp/>OF<sp/>mesh)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="222"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::VolumeField&lt;scalar&gt;<sp/>wallDist_;</highlight></codeline>
+<codeline lineno="223"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::VolumeField&lt;scalar&gt;<sp/>nearWallDist_;</highlight></codeline>
+<codeline lineno="224"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::VolumeField&lt;scalar&gt;<sp/>delta_;</highlight></codeline>
+<codeline lineno="225"><highlight class="normal"></highlight></codeline>
+<codeline lineno="226"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Model-owned<sp/>database<sp/>hosting<sp/>nuTilda<sp/>and<sp/>its<sp/>old-time<sp/>buffers.<sp/>nuTilda<sp/>carries<sp/>an<sp/>implicit</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="227"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>ddt<sp/>term<sp/>and<sp/>is<sp/>rotated<sp/>every<sp/>step,<sp/>so<sp/>it<sp/>MUST<sp/>be<sp/>registered:<sp/>oldTime()/rotateOldTimes()</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="228"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>look<sp/>the<sp/>field<sp/>up<sp/>through<sp/>field.db()/fieldCollectionName.<sp/>Registering<sp/>it<sp/>in<sp/>a<sp/>model-private</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="229"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>database<sp/>keeps<sp/>the<sp/>&quot;model<sp/>owns<sp/>nuTilda&quot;<sp/>contract<sp/>without<sp/>depending<sp/>on<sp/>the<sp/>solver&apos;s<sp/>field</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="230"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>collection.<sp/>Declared<sp/>before<sp/>nuTilda_<sp/>so<sp/>it<sp/>is<sp/>alive<sp/>when<sp/>nuTilda_<sp/>binds<sp/>to<sp/>it.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="231"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::Database<sp/>turbDb_;</highlight></codeline>
+<codeline lineno="232"><highlight class="normal"></highlight></codeline>
+<codeline lineno="233"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Model-owned<sp/>transport<sp/>scalars.<sp/>nuTilda_<sp/>references<sp/>the<sp/>registered<sp/>field<sp/>living<sp/>in<sp/>turbDb_&apos;s</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="234"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>VectorCollection;<sp/>nut_<sp/>is<sp/>a<sp/>plain<sp/>value<sp/>(never<sp/>rotated,<sp/>no<sp/>ddt<sp/>term).<sp/>Seeded<sp/>by<sp/>initialize().</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="235"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::VolumeField&lt;scalar&gt;&amp;<sp/>nuTilda_;</highlight></codeline>
+<codeline lineno="236"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::VolumeField&lt;scalar&gt;<sp/>nut_;</highlight></codeline>
+<codeline lineno="237"><highlight class="normal"></highlight></codeline>
+<codeline lineno="238"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Cached<sp/>face-interpolated<sp/>nu<sp/>(computed<sp/>once<sp/>in<sp/>constructor)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="239"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::SurfaceField&lt;scalar&gt;<sp/>surfNu_;</highlight></codeline>
+<codeline lineno="240"><highlight class="normal"></highlight></codeline>
+<codeline lineno="241"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Persistent<sp/>fields<sp/>carrying<sp/>state<sp/>from<sp/>one<sp/>correct()<sp/>call<sp/>to<sp/>the<sp/>next:</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="242"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/><sp/>-<sp/>gradU_<sp/><sp/><sp/><sp/><sp/><sp/>:<sp/>consumed<sp/>by<sp/>the<sp/>momentum<sp/>predictor<sp/>before<sp/>the<sp/>next<sp/>correct()<sp/>runs</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="243"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/><sp/>-<sp/>nuEff_<sp/><sp/><sp/><sp/><sp/><sp/>:<sp/>consumed<sp/>by<sp/>the<sp/>momentum<sp/>laplacian<sp/>before<sp/>the<sp/>next<sp/>correct()<sp/>runs</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="244"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/><sp/>-<sp/>nuTildaEff_<sp/>:<sp/>consumed<sp/>by<sp/>the<sp/>nuTilda<sp/>laplacian<sp/>at<sp/>the<sp/>start<sp/>of<sp/>the<sp/>next<sp/>correct()</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="245"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::VolumeField&lt;NeoN::Tensor&gt;<sp/>gradU_;</highlight></codeline>
+<codeline lineno="246"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::SurfaceField&lt;scalar&gt;<sp/>nuEff_;</highlight></codeline>
+<codeline lineno="247"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::SurfaceField&lt;scalar&gt;<sp/>nuTildaEff_;</highlight></codeline>
+<codeline lineno="248"><highlight class="normal"></highlight></codeline>
+<codeline lineno="249"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Cached<sp/>operators<sp/>(constructed<sp/>once)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="250"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::GaussGreenGrad<sp/>gradOp_;</highlight></codeline>
+<codeline lineno="251"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::SurfaceInterpolation&lt;scalar&gt;<sp/>surfInterp_;</highlight></codeline>
+<codeline lineno="252"><highlight class="normal"></highlight></codeline>
+<codeline lineno="253"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>SA-DDES<sp/>model<sp/>coefficients</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="254"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="structNeoFOAM_1_1SpalartAllmarasDDES_1_1Coefficients" kindref="compound">Coefficients</ref><sp/>coeffs_;</highlight></codeline>
+<codeline lineno="255"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="pressureVelocityCoupling_8hpp_1acc912e7a5a44b028589fda3fd76ba7ea" kindref="member">scalar</ref><sp/>cw1_;</highlight></codeline>
+<codeline lineno="256"><highlight class="normal">};</highlight></codeline>
+<codeline lineno="257"><highlight class="normal"></highlight></codeline>
+<codeline lineno="258"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>NeoFOAM</highlight><highlight class="normal"></highlight></codeline>
     </programlisting>
     <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/turbulenceModels/spalartAllmarasDDES.hpp"/>
   </compounddef>
