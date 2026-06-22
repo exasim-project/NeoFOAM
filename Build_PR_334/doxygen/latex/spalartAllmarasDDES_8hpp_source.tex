@@ -141,51 +141,53 @@
 \DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00208}00208\ \ \ \ \ \textcolor{comment}{//\ Registration\ is\ required\ so\ the\ implicit\ ddt\ term\ (oldTime\ lookup)\ and\ rotateOldTimes()\ can}}
 \DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00209}00209\ \ \ \ \ \textcolor{comment}{//\ allocate\ and\ rotate\ nuTilda's\ old-\/time\ buffers.}}
 \DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00210}00210\ \ \ \ \ \textcolor{keyword}{static}\ nnfvcc::VolumeField<scalar>\&\ registerNuTilda(}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00211}00211\ \ \ \ \ \ \ \ \ NeoN::Database\&\ db,\ \textcolor{keyword}{const}\ NeoN::Executor\&\ exec,\ \textcolor{keyword}{const}\ NeoN::UnstructuredMesh\&\ mesh}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00212}00212\ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00213}00213\ }
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00214}00214\ \ \ \ \ NeoN::Executor\ exec\_;}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00215}00215\ \ \ \ \ \textcolor{keyword}{const}\ NeoN::UnstructuredMesh\&\ mesh\_;}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00216}00216\ }
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00217}00217\ \ \ \ \ \textcolor{comment}{//\ Laminar\ viscosity:\ held\ by\ reference\ —\ must\ outlive\ this\ object}}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00218}00218\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<scalar>\&\ nu\_;}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00219}00219\ \ \ \ \ \textcolor{comment}{//\ Physics\ inputs\ owned\ by\ the\ model\ (copy-\/constructed\ from\ caller\ or\ computed\ from\ OF\ mesh)}}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00220}00220\ \ \ \ \ nnfvcc::VolumeField<scalar>\ wallDist\_;}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00221}00221\ \ \ \ \ nnfvcc::VolumeField<scalar>\ nearWallDist\_;}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00222}00222\ \ \ \ \ nnfvcc::VolumeField<scalar>\ delta\_;}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00223}00223\ }
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00224}00224\ \ \ \ \ \textcolor{comment}{//\ Model-\/owned\ database\ hosting\ nuTilda\ and\ its\ old-\/time\ buffers.\ nuTilda\ carries\ an\ implicit}}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00225}00225\ \ \ \ \ \textcolor{comment}{//\ ddt\ term\ and\ is\ rotated\ every\ step,\ so\ it\ MUST\ be\ registered:\ oldTime()/rotateOldTimes()}}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00226}00226\ \ \ \ \ \textcolor{comment}{//\ look\ the\ field\ up\ through\ field.db()/fieldCollectionName.\ Registering\ it\ in\ a\ model-\/private}}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00227}00227\ \ \ \ \ \textcolor{comment}{//\ database\ keeps\ the\ "{}model\ owns\ nuTilda"{}\ contract\ without\ depending\ on\ the\ solver's\ field}}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00228}00228\ \ \ \ \ \textcolor{comment}{//\ collection.\ Declared\ before\ nuTilda\_\ so\ it\ is\ alive\ when\ nuTilda\_\ binds\ to\ it.}}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00229}00229\ \ \ \ \ NeoN::Database\ turbDb\_;}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00230}00230\ }
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00231}00231\ \ \ \ \ \textcolor{comment}{//\ Model-\/owned\ transport\ scalars.\ nuTilda\_\ references\ the\ registered\ field\ living\ in\ turbDb\_'s}}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00232}00232\ \ \ \ \ \textcolor{comment}{//\ VectorCollection;\ nut\_\ is\ a\ plain\ value\ (never\ rotated,\ no\ ddt\ term).\ Seeded\ by\ initialize().}}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00233}00233\ \ \ \ \ nnfvcc::VolumeField<scalar>\&\ nuTilda\_;}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00234}00234\ \ \ \ \ nnfvcc::VolumeField<scalar>\ nut\_;}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00235}00235\ }
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00236}00236\ \ \ \ \ \textcolor{comment}{//\ Cached\ face-\/interpolated\ nu\ (computed\ once\ in\ constructor)}}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00237}00237\ \ \ \ \ nnfvcc::SurfaceField<scalar>\ surfNu\_;}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00238}00238\ }
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00239}00239\ \ \ \ \ \textcolor{comment}{//\ Persistent\ fields\ carrying\ state\ from\ one\ correct()\ call\ to\ the\ next:}}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00240}00240\ \ \ \ \ \textcolor{comment}{//\ \ -\/\ gradU\_\ \ \ \ \ \ :\ consumed\ by\ the\ momentum\ predictor\ before\ the\ next\ correct()\ runs}}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00241}00241\ \ \ \ \ \textcolor{comment}{//\ \ -\/\ nuEff\_\ \ \ \ \ \ :\ consumed\ by\ the\ momentum\ laplacian\ before\ the\ next\ correct()\ runs}}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00242}00242\ \ \ \ \ \textcolor{comment}{//\ \ -\/\ nuTildaEff\_\ :\ consumed\ by\ the\ nuTilda\ laplacian\ at\ the\ start\ of\ the\ next\ correct()}}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00243}00243\ \ \ \ \ nnfvcc::VolumeField<NeoN::Tensor>\ gradU\_;}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00244}00244\ \ \ \ \ nnfvcc::SurfaceField<scalar>\ nuEff\_;}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00245}00245\ \ \ \ \ nnfvcc::SurfaceField<scalar>\ nuTildaEff\_;}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00246}00246\ }
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00247}00247\ \ \ \ \ \textcolor{comment}{//\ Cached\ operators\ (constructed\ once)}}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00248}00248\ \ \ \ \ nnfvcc::GaussGreenGrad\ gradOp\_;}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00249}00249\ \ \ \ \ nnfvcc::SurfaceInterpolation<scalar>\ surfInterp\_;}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00250}00250\ }
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00251}00251\ \ \ \ \ \textcolor{comment}{//\ SA-\/DDES\ model\ coefficients}}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00252}00252\ \ \ \ \ \mbox{\hyperlink{structNeoFOAM_1_1SpalartAllmarasDDES_1_1Coefficients}{Coefficients}}\ coeffs\_;}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00253}00253\ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ cw1\_;}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00254}00254\ \};}
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00255}00255\ }
-\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00256}00256\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00211}00211\ \ \ \ \ \ \ \ \ NeoN::Database\&\ db,}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00212}00212\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ NeoN::Executor\&\ exec,}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00213}00213\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ NeoN::UnstructuredMesh\&\ mesh}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00214}00214\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00215}00215\ }
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00216}00216\ \ \ \ \ NeoN::Executor\ exec\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00217}00217\ \ \ \ \ \textcolor{keyword}{const}\ NeoN::UnstructuredMesh\&\ mesh\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00218}00218\ }
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00219}00219\ \ \ \ \ \textcolor{comment}{//\ Laminar\ viscosity:\ held\ by\ reference\ —\ must\ outlive\ this\ object}}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00220}00220\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<scalar>\&\ nu\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00221}00221\ \ \ \ \ \textcolor{comment}{//\ Physics\ inputs\ owned\ by\ the\ model\ (copy-\/constructed\ from\ caller\ or\ computed\ from\ OF\ mesh)}}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00222}00222\ \ \ \ \ nnfvcc::VolumeField<scalar>\ wallDist\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00223}00223\ \ \ \ \ nnfvcc::VolumeField<scalar>\ nearWallDist\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00224}00224\ \ \ \ \ nnfvcc::VolumeField<scalar>\ delta\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00225}00225\ }
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00226}00226\ \ \ \ \ \textcolor{comment}{//\ Model-\/owned\ database\ hosting\ nuTilda\ and\ its\ old-\/time\ buffers.\ nuTilda\ carries\ an\ implicit}}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00227}00227\ \ \ \ \ \textcolor{comment}{//\ ddt\ term\ and\ is\ rotated\ every\ step,\ so\ it\ MUST\ be\ registered:\ oldTime()/rotateOldTimes()}}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00228}00228\ \ \ \ \ \textcolor{comment}{//\ look\ the\ field\ up\ through\ field.db()/fieldCollectionName.\ Registering\ it\ in\ a\ model-\/private}}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00229}00229\ \ \ \ \ \textcolor{comment}{//\ database\ keeps\ the\ "{}model\ owns\ nuTilda"{}\ contract\ without\ depending\ on\ the\ solver's\ field}}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00230}00230\ \ \ \ \ \textcolor{comment}{//\ collection.\ Declared\ before\ nuTilda\_\ so\ it\ is\ alive\ when\ nuTilda\_\ binds\ to\ it.}}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00231}00231\ \ \ \ \ NeoN::Database\ turbDb\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00232}00232\ }
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00233}00233\ \ \ \ \ \textcolor{comment}{//\ Model-\/owned\ transport\ scalars.\ nuTilda\_\ references\ the\ registered\ field\ living\ in\ turbDb\_'s}}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00234}00234\ \ \ \ \ \textcolor{comment}{//\ VectorCollection;\ nut\_\ is\ a\ plain\ value\ (never\ rotated,\ no\ ddt\ term).\ Seeded\ by\ initialize().}}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00235}00235\ \ \ \ \ nnfvcc::VolumeField<scalar>\&\ nuTilda\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00236}00236\ \ \ \ \ nnfvcc::VolumeField<scalar>\ nut\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00237}00237\ }
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00238}00238\ \ \ \ \ \textcolor{comment}{//\ Cached\ face-\/interpolated\ nu\ (computed\ once\ in\ constructor)}}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00239}00239\ \ \ \ \ nnfvcc::SurfaceField<scalar>\ surfNu\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00240}00240\ }
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00241}00241\ \ \ \ \ \textcolor{comment}{//\ Persistent\ fields\ carrying\ state\ from\ one\ correct()\ call\ to\ the\ next:}}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00242}00242\ \ \ \ \ \textcolor{comment}{//\ \ -\/\ gradU\_\ \ \ \ \ \ :\ consumed\ by\ the\ momentum\ predictor\ before\ the\ next\ correct()\ runs}}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00243}00243\ \ \ \ \ \textcolor{comment}{//\ \ -\/\ nuEff\_\ \ \ \ \ \ :\ consumed\ by\ the\ momentum\ laplacian\ before\ the\ next\ correct()\ runs}}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00244}00244\ \ \ \ \ \textcolor{comment}{//\ \ -\/\ nuTildaEff\_\ :\ consumed\ by\ the\ nuTilda\ laplacian\ at\ the\ start\ of\ the\ next\ correct()}}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00245}00245\ \ \ \ \ nnfvcc::VolumeField<NeoN::Tensor>\ gradU\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00246}00246\ \ \ \ \ nnfvcc::SurfaceField<scalar>\ nuEff\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00247}00247\ \ \ \ \ nnfvcc::SurfaceField<scalar>\ nuTildaEff\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00248}00248\ }
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00249}00249\ \ \ \ \ \textcolor{comment}{//\ Cached\ operators\ (constructed\ once)}}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00250}00250\ \ \ \ \ nnfvcc::GaussGreenGrad\ gradOp\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00251}00251\ \ \ \ \ nnfvcc::SurfaceInterpolation<scalar>\ surfInterp\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00252}00252\ }
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00253}00253\ \ \ \ \ \textcolor{comment}{//\ SA-\/DDES\ model\ coefficients}}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00254}00254\ \ \ \ \ \mbox{\hyperlink{structNeoFOAM_1_1SpalartAllmarasDDES_1_1Coefficients}{Coefficients}}\ coeffs\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00255}00255\ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ cw1\_;}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00256}00256\ \};}
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00257}00257\ }
+\DoxyCodeLine{\Hypertarget{spalartAllmarasDDES_8hpp_source_l00258}00258\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
 
 \end{DoxyCode}

@@ -278,7 +278,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>        <a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#a5bf63a2b300465377c937bda5d52f5f5">relaxOwnedLs</a>();</div>
 <div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span> </div>
 <div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span>        <span class="keyword">auto</span> rhsExpr = dsl::Expression&lt;ValueType&gt;(-1.0 * rhs);</div>
-<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>        rhsExpr.read(runTime_.<a class="code hl_variable" href="structNeoFOAM_1_1RunTime.html#a3e0ee1aef295de02e8758811e0099923">fvSchemesDict</a>);</div>
+<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>        rhsExpr.read(<a class="code hl_function" href="namespaceNeoFOAM.html#a3b70b9ee03711e99853bb30615bbccf7">NeoFOAM::expandSchemeDefaults</a>(runTime_.<a class="code hl_variable" href="structNeoFOAM_1_1RunTime.html#a3e0ee1aef295de02e8758811e0099923">fvSchemesDict</a>, rhsExpr, psi_.name));</div>
 <div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span>        <span class="keyword">auto</span> savedRhs = NeoN::Vector&lt;ValueType&gt;(ls_.rhs());</div>
 <div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>        rhsExpr.assembleExplicitSource(ls_, psi_.mesh());</div>
 <div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span> </div>
