@@ -12,6 +12,7 @@
 
 #include "NeoFOAM/datastructures/runTime.hpp"
 #include "NeoFOAM/compatibility/fvSolution.hpp"
+#include "NeoFOAM/compatibility/fvSchemes.hpp"
 
 namespace dsl = NeoN::dsl;
 
@@ -82,7 +83,7 @@ public:
             expr_ = NeoN::dsl::optimize(expr_);
         };
 
-        expr_.read(runTime_.fvSchemesDict);
+        expr_.read(NeoFOAM::expandSchemeDefaults(runTime_.fvSchemesDict, expr_, psi_.name));
     };
 
     PDESolver(const PDESolver& expr)
@@ -167,7 +168,7 @@ public:
     LinearSystem assemble(dsl::SpatialOperator<NeoN::Vec3>&& rhs)
     {
         auto rhsExpr = dsl::Expression<ValueType>(-1.0 * rhs);
-        rhsExpr.read(runTime_.fvSchemesDict);
+        rhsExpr.read(NeoFOAM::expandSchemeDefaults(runTime_.fvSchemesDict, rhsExpr, psi_.name));
         auto ls = LinearSystem(assemble());
         rhsExpr.assembleExplicitSource(ls, psi_.mesh());
 
@@ -195,7 +196,7 @@ public:
         relaxOwnedLs();
 
         auto rhsExpr = dsl::Expression<ValueType>(-1.0 * rhs);
-        rhsExpr.read(runTime_.fvSchemesDict);
+        rhsExpr.read(NeoFOAM::expandSchemeDefaults(runTime_.fvSchemesDict, rhsExpr, psi_.name));
         auto savedRhs = NeoN::Vector<ValueType>(ls_.rhs());
         rhsExpr.assembleExplicitSource(ls_, psi_.mesh());
 
@@ -223,7 +224,7 @@ public:
     NeoN::la::SolverStats solveImpl(dsl::Expression<ValueType>& expr, LinearSystem& ls)
     {
         // Re-read schemes (idempotent with the constructor read)
-        expr.read(runTime_.fvSchemesDict);
+        expr.read(NeoFOAM::expandSchemeDefaults(runTime_.fvSchemesDict, expr, psi_.name));
 
         // Assemble without post-assembly functors; we apply SetReference separately below
         // to ensure correct polymorphic dispatch — storing PostAssemblyBase by value causes

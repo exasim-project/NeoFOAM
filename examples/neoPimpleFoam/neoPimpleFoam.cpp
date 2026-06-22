@@ -40,12 +40,13 @@ namespace nf = NeoFOAM;
 
 int main(int argc, char* argv[])
 {
+    Foam::argList::addOption("executor", "word", "NeoN executor type (Serial/CPU/GPU/default)");
 #include "addCheckCaseOptions.H"
 #include "setRootCase.H"
 #include "createTime.H"
     NeoN::initialize(argc, argv);
     {
-        auto rt = nf::createAdapterRunTime(runTime);
+        auto rt = nf::createAdapterRunTime(runTime, args);
         auto& mesh = rt.mesh;
 
         // Inner-loop counting (nCorrectors, nNonOrthogonalCorrectors) lives in the "PIMPLE"

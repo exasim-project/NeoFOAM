@@ -203,6 +203,16 @@ public:
 
 private:
 
+    // Registers a zero-seeded "nuTilda" field in db's VectorCollection and returns a reference to
+    // the registered copy. initialize() later overwrites it with the disk-read initial condition.
+    // Registration is required so the implicit ddt term (oldTime lookup) and rotateOldTimes() can
+    // allocate and rotate nuTilda's old-time buffers.
+    static nnfvcc::VolumeField<scalar>& registerNuTilda(
+        NeoN::Database& db,
+        const NeoN::Executor& exec,
+        const NeoN::UnstructuredMesh& mesh
+    );
+
     NeoN::Executor exec_;
     const NeoN::UnstructuredMesh& mesh_;
 
@@ -213,8 +223,16 @@ private:
     nnfvcc::VolumeField<scalar> nearWallDist_;
     nnfvcc::VolumeField<scalar> delta_;
 
-    // Model-owned transport scalars; seeded by initialize() or default-constructed to zero
-    nnfvcc::VolumeField<scalar> nuTilda_;
+    // Model-owned database hosting nuTilda and its old-time buffers. nuTilda carries an implicit
+    // ddt term and is rotated every step, so it MUST be registered: oldTime()/rotateOldTimes()
+    // look the field up through field.db()/fieldCollectionName. Registering it in a model-private
+    // database keeps the "model owns nuTilda" contract without depending on the solver's field
+    // collection. Declared before nuTilda_ so it is alive when nuTilda_ binds to it.
+    NeoN::Database turbDb_;
+
+    // Model-owned transport scalars. nuTilda_ references the registered field living in turbDb_'s
+    // VectorCollection; nut_ is a plain value (never rotated, no ddt term). Seeded by initialize().
+    nnfvcc::VolumeField<scalar>& nuTilda_;
     nnfvcc::VolumeField<scalar> nut_;
 
     // Cached face-interpolated nu (computed once in constructor)
