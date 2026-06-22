@@ -89,6 +89,7 @@ neofoam_unit_test(momentum setup_pressureVelocityCoupling)
 neofoam_unit_test(snGrad setup_snGrad)
 neofoam_unit_test(residual setup_pressureVelocityCoupling)
 neofoam_unit_test(spalartAllmarasDDES setup_pressureVelocityCoupling)
+neofoam_unit_test(deShybrid setup_pressureVelocityCoupling)
 neofoam_unit_test(continuityError setup_pressureVelocityCoupling)
 neofoam_unit_test(forceCoeffs setup_pressureVelocityCoupling SOURCE test_forceCoeffs.cpp)
 
