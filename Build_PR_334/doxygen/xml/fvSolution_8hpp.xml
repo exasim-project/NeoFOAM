@@ -1,0 +1,195 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.8" xml:lang="en-US">
+  <compounddef id="fvSolution_8hpp" kind="file" language="C++">
+    <compoundname>fvSolution.hpp</compoundname>
+    <includes local="no">optional</includes>
+    <includes local="no">string</includes>
+    <includes local="yes">NeoN/core/dictionary.hpp</includes>
+    <includes local="yes">NeoN/core/primitives/scalar.hpp</includes>
+    <includes refid="runTime_8hpp" local="yes">NeoFOAM/datastructures/runTime.hpp</includes>
+    <includedby refid="pdeSolver_8hpp" local="yes">/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pdeSolver.hpp</includedby>
+    <incdepgraph>
+      <node id="1">
+        <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/compatibility/fvSolution.hpp</label>
+        <link refid="fvSolution_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+        <childnode refid="5" relation="include">
+        </childnode>
+        <childnode refid="6" relation="include">
+        </childnode>
+      </node>
+      <node id="12">
+        <label>NeoFOAM/datastructures/databaseWrapper.hpp</label>
+        <link refid="databaseWrapper_8hpp"/>
+        <childnode refid="7" relation="include">
+        </childnode>
+        <childnode refid="13" relation="include">
+        </childnode>
+      </node>
+      <node id="9">
+        <label>NeoFOAM/datastructures/meshAdapter.hpp</label>
+        <link refid="meshAdapter_8hpp"/>
+        <childnode refid="10" relation="include">
+        </childnode>
+        <childnode refid="11" relation="include">
+        </childnode>
+        <childnode refid="7" relation="include">
+        </childnode>
+        <childnode refid="8" relation="include">
+        </childnode>
+      </node>
+      <node id="6">
+        <label>NeoFOAM/datastructures/runTime.hpp</label>
+        <link refid="runTime_8hpp"/>
+        <childnode refid="7" relation="include">
+        </childnode>
+        <childnode refid="8" relation="include">
+        </childnode>
+        <childnode refid="9" relation="include">
+        </childnode>
+        <childnode refid="12" relation="include">
+        </childnode>
+      </node>
+      <node id="7">
+        <label>NeoN/NeoN.hpp</label>
+      </node>
+      <node id="4">
+        <label>NeoN/core/dictionary.hpp</label>
+      </node>
+      <node id="5">
+        <label>NeoN/core/primitives/scalar.hpp</label>
+      </node>
+      <node id="10">
+        <label>functional</label>
+      </node>
+      <node id="8">
+        <label>fvMesh.H</label>
+      </node>
+      <node id="11">
+        <label>memory</label>
+      </node>
+      <node id="2">
+        <label>optional</label>
+      </node>
+      <node id="13">
+        <label>regIOobject.H</label>
+      </node>
+      <node id="3">
+        <label>string</label>
+      </node>
+    </incdepgraph>
+    <invincdepgraph>
+      <node id="3">
+        <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/pressureVelocityCoupling.hpp</label>
+        <link refid="pressureVelocityCoupling_8hpp"/>
+      </node>
+      <node id="1">
+        <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/compatibility/fvSolution.hpp</label>
+        <link refid="fvSolution_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pdeSolver.hpp</label>
+        <link refid="pdeSolver_8hpp"/>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+      </node>
+      <node id="4">
+        <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/turbulenceModels/spalartAllmarasDDES.hpp</label>
+        <link refid="spalartAllmarasDDES_8hpp"/>
+      </node>
+    </invincdepgraph>
+    <innernamespace refid="namespaceNeoFOAM">NeoFOAM</innernamespace>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="comment">//<sp/>SPDX-License-Identifier:<sp/>GPL-3.0-or-later</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight><highlight class="comment">//</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="3"><highlight class="normal"></highlight><highlight class="comment">//<sp/>SPDX-FileCopyrightText:<sp/>2023<sp/>NeoFOAM<sp/>authors</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="4"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>This<sp/>file<sp/>implements<sp/>comparison<sp/>operator<sp/>to<sp/>compare<sp/>OpenFOAM<sp/>and<sp/>corresponding<sp/>NeoFOAM<sp/>fields</highlight></codeline>
+<codeline lineno="5"><highlight class="comment"><sp/>*<sp/>TODO<sp/>the<sp/>comparison<sp/>operator<sp/>only<sp/>make<sp/>sense<sp/>for<sp/>testing<sp/>purposes</highlight></codeline>
+<codeline lineno="6"><highlight class="comment"><sp/>*<sp/>so<sp/>this<sp/>should<sp/>be<sp/>part<sp/>of<sp/>the<sp/>tests</highlight></codeline>
+<codeline lineno="7"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="8"><highlight class="normal"></highlight><highlight class="preprocessor">#pragma<sp/>once</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="9"><highlight class="normal"></highlight></codeline>
+<codeline lineno="10"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;optional&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="11"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;string&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="12"><highlight class="normal"></highlight></codeline>
+<codeline lineno="13"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;NeoN/core/dictionary.hpp&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="14"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;NeoN/core/primitives/scalar.hpp&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="15"><highlight class="normal"></highlight></codeline>
+<codeline lineno="16"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;<ref refid="runTime_8hpp" kindref="compound">NeoFOAM/datastructures/runTime.hpp</ref>&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="17"><highlight class="normal"></highlight></codeline>
+<codeline lineno="18"><highlight class="normal"></highlight></codeline>
+<codeline lineno="19"><highlight class="normal"></highlight><highlight class="keyword">namespace<sp/></highlight><highlight class="normal"><ref refid="namespaceNeoFOAM" kindref="compound">NeoFOAM</ref></highlight></codeline>
+<codeline lineno="20"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="21"><highlight class="normal"></highlight></codeline>
+<codeline lineno="22" refid="namespaceNeoFOAM_1ab68574263e9c80758820191001d6d256" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1ab68574263e9c80758820191001d6d256" kindref="member">updateSolver</ref>(NeoN::Dictionary&amp;<sp/>solverDict);</highlight></codeline>
+<codeline lineno="23"><highlight class="normal"></highlight></codeline>
+<codeline lineno="24" refid="namespaceNeoFOAM_1a8c1ca67d102991ab4a3c1bc3a2a8fb03" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1a8c1ca67d102991ab4a3c1bc3a2a8fb03" kindref="member">updatePreconditioner</ref>(NeoN::Dictionary&amp;<sp/>solverDict);</highlight></codeline>
+<codeline lineno="25"><highlight class="normal"></highlight></codeline>
+<codeline lineno="26"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>Look<sp/>up<sp/>the<sp/>equation<sp/>under-relaxation<sp/>factor<sp/>for<sp/>a<sp/>field<sp/>from<sp/>fvSolution.</highlight></codeline>
+<codeline lineno="27"><highlight class="comment"><sp/>*</highlight></codeline>
+<codeline lineno="28"><highlight class="comment"><sp/>*<sp/>Parses<sp/>the<sp/>OpenFOAM<sp/>`relaxationFactors.equations`<sp/>sub-dictionary<sp/>and<sp/>returns<sp/>the</highlight></codeline>
+<codeline lineno="29"><highlight class="comment"><sp/>*<sp/>scalar<sp/>relaxation<sp/>factor<sp/>for<sp/>the<sp/>given<sp/>field.<sp/>When<sp/>`finalIter`<sp/>is<sp/>true<sp/>the</highlight></codeline>
+<codeline lineno="30"><highlight class="comment"><sp/>*<sp/>`&lt;field&gt;Final`<sp/>key<sp/>is<sp/>preferred<sp/>(Final-suffix<sp/>seam),<sp/>falling<sp/>back<sp/>to<sp/>the<sp/>base</highlight></codeline>
+<codeline lineno="31"><highlight class="comment"><sp/>*<sp/>`&lt;field&gt;`<sp/>key.<sp/>Returns<sp/>std::nullopt<sp/>when<sp/>no<sp/>entry<sp/>exists<sp/>-&gt;<sp/>the<sp/>caller<sp/>uses<sp/>1.0<sp/>-&gt;</highlight></codeline>
+<codeline lineno="32"><highlight class="comment"><sp/>*<sp/>the<sp/>kernel<sp/>is<sp/>a<sp/>no-op<sp/>(matches<sp/>OpenFOAM&apos;s<sp/>&quot;no<sp/>entry,<sp/>no<sp/>relax&quot;<sp/>semantics).</highlight></codeline>
+<codeline lineno="33"><highlight class="comment"><sp/>*</highlight></codeline>
+<codeline lineno="34"><highlight class="comment"><sp/>*<sp/>Keeping<sp/>this<sp/>parsing<sp/>in<sp/>NeoFOAM<sp/>means<sp/>NeoN&apos;s<sp/>applyMatrixRelaxation<sp/>only<sp/>ever</highlight></codeline>
+<codeline lineno="35"><highlight class="comment"><sp/>*<sp/>sees<sp/>a<sp/>plain<sp/>scalar;<sp/>NeoN<sp/>stays<sp/>OpenFOAM-dictionary-agnostic.</highlight></codeline>
+<codeline lineno="36"><highlight class="comment"><sp/>*</highlight></codeline>
+<codeline lineno="37"><highlight class="comment"><sp/>*<sp/>@param<sp/>fvSolution<sp/><sp/>The<sp/>parsed<sp/>fvSolution<sp/>dictionary<sp/>(e.g.<sp/>RunTime::fvSolutionDict).</highlight></codeline>
+<codeline lineno="38"><highlight class="comment"><sp/>*<sp/>@param<sp/>field<sp/><sp/><sp/><sp/><sp/><sp/><sp/>The<sp/>field<sp/>name<sp/>(e.g.<sp/>&quot;U&quot;).</highlight></codeline>
+<codeline lineno="39"><highlight class="comment"><sp/>*<sp/>@param<sp/>finalIter<sp/><sp/><sp/>Whether<sp/>the<sp/>final<sp/>outer<sp/>iteration<sp/>is<sp/>active<sp/>(selects<sp/>the<sp/>*Final<sp/>key).</highlight></codeline>
+<codeline lineno="40"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="41"><highlight class="normal">std::optional&lt;NeoN::scalar&gt;</highlight></codeline>
+<codeline lineno="42" refid="namespaceNeoFOAM_1a26d70bfdefea0c104b27867a553012d2" refkind="member"><highlight class="normal"><ref refid="namespaceNeoFOAM_1a26d70bfdefea0c104b27867a553012d2" kindref="member">lookupEqnRelaxation</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::Dictionary&amp;<sp/>fvSolution,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::string&amp;<sp/>field,<sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>finalIter);</highlight></codeline>
+<codeline lineno="43"><highlight class="normal"></highlight></codeline>
+<codeline lineno="44"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>Look<sp/>up<sp/>the<sp/>explicit<sp/>field<sp/>under-relaxation<sp/>factor<sp/>for<sp/>a<sp/>field<sp/>from<sp/>fvSolution.</highlight></codeline>
+<codeline lineno="45"><highlight class="comment"><sp/>*</highlight></codeline>
+<codeline lineno="46"><highlight class="comment"><sp/>*<sp/>Parses<sp/>the<sp/>OpenFOAM<sp/>`relaxationFactors.fields`<sp/>sub-dictionary<sp/>and<sp/>returns<sp/>the<sp/>scalar</highlight></codeline>
+<codeline lineno="47"><highlight class="comment"><sp/>*<sp/>relaxation<sp/>factor<sp/>for<sp/>the<sp/>given<sp/>field.<sp/>When<sp/>`finalIter`<sp/>is<sp/>true<sp/>the<sp/>`&lt;field&gt;Final`<sp/>key<sp/>is</highlight></codeline>
+<codeline lineno="48"><highlight class="comment"><sp/>*<sp/>preferred<sp/>(Final-suffix<sp/>seam),<sp/>falling<sp/>back<sp/>to<sp/>the<sp/>base<sp/>`&lt;field&gt;`<sp/>key.<sp/>Returns</highlight></codeline>
+<codeline lineno="49"><highlight class="comment"><sp/>*<sp/>std::nullopt<sp/>when<sp/>no<sp/>entry<sp/>exists<sp/>-&gt;<sp/>the<sp/>caller<sp/>uses<sp/>1.0<sp/>-&gt;<sp/>the<sp/>kernel<sp/>is<sp/>a<sp/>no-op<sp/>(matches</highlight></codeline>
+<codeline lineno="50"><highlight class="comment"><sp/>*<sp/>OpenFOAM&apos;s<sp/>&quot;no<sp/>entry,<sp/>no<sp/>relax&quot;<sp/>semantics).</highlight></codeline>
+<codeline lineno="51"><highlight class="comment"><sp/>*</highlight></codeline>
+<codeline lineno="52"><highlight class="comment"><sp/>*<sp/>`relaxationFactors.equations`<sp/>and<sp/>`relaxationFactors.fields`<sp/>are<sp/>independent<sp/>dicts:</highlight></codeline>
+<codeline lineno="53"><highlight class="comment"><sp/>*<sp/>a<sp/>field<sp/>present<sp/>only<sp/>under<sp/>`equations`<sp/>(e.g.<sp/>momentum<sp/>`U`)<sp/>returns<sp/>nullopt<sp/>here,<sp/>so</highlight></codeline>
+<codeline lineno="54"><highlight class="comment"><sp/>*<sp/>field-URF<sp/>is<sp/>a<sp/>no-op<sp/>on<sp/>it<sp/>and<sp/>momentum<sp/>is<sp/>never<sp/>double-relaxed.<sp/>Shares<sp/>the<sp/>int-tolerant,</highlight></codeline>
+<codeline lineno="55"><highlight class="comment"><sp/>*<sp/>isDict-guarded<sp/>lookup<sp/>body<sp/>with<sp/>lookupEqnRelaxation.</highlight></codeline>
+<codeline lineno="56"><highlight class="comment"><sp/>*</highlight></codeline>
+<codeline lineno="57"><highlight class="comment"><sp/>*<sp/>@param<sp/>fvSolution<sp/><sp/>The<sp/>parsed<sp/>fvSolution<sp/>dictionary<sp/>(e.g.<sp/>RunTime::fvSolutionDict).</highlight></codeline>
+<codeline lineno="58"><highlight class="comment"><sp/>*<sp/>@param<sp/>field<sp/><sp/><sp/><sp/><sp/><sp/><sp/>The<sp/>field<sp/>name<sp/>(e.g.<sp/>&quot;p&quot;).</highlight></codeline>
+<codeline lineno="59"><highlight class="comment"><sp/>*<sp/>@param<sp/>finalIter<sp/><sp/><sp/>Whether<sp/>the<sp/>final<sp/>outer<sp/>iteration<sp/>is<sp/>active<sp/>(selects<sp/>the<sp/>*Final<sp/>key).</highlight></codeline>
+<codeline lineno="60"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="61"><highlight class="normal">std::optional&lt;NeoN::scalar&gt;</highlight></codeline>
+<codeline lineno="62" refid="namespaceNeoFOAM_1a10696ee81bee18fb95ff3175e368d99a" refkind="member"><highlight class="normal"><ref refid="namespaceNeoFOAM_1a10696ee81bee18fb95ff3175e368d99a" kindref="member">lookupFieldRelaxation</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::Dictionary&amp;<sp/>fvSolution,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::string&amp;<sp/>field,<sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>finalIter);</highlight></codeline>
+<codeline lineno="63"><highlight class="normal"></highlight></codeline>
+<codeline lineno="64"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>Map<sp/>an<sp/>OpenFOAM<sp/>fvSolution<sp/>sub-dictionary<sp/>to<sp/>NeoN/Ginkgo<sp/>settings.</highlight></codeline>
+<codeline lineno="65"><highlight class="comment"><sp/>*</highlight></codeline>
+<codeline lineno="66"><highlight class="comment"><sp/>*<sp/>The<sp/>returned<sp/>dictionary<sp/>additionally<sp/>carries<sp/>a<sp/>&quot;reportName&quot;<sp/>meta<sp/>key<sp/>holding</highlight></codeline>
+<codeline lineno="67"><highlight class="comment"><sp/>*<sp/>the<sp/>Ginkgo<sp/>solver/preconditioner<sp/>label<sp/>(e.g.<sp/>&quot;Ic+Cg&quot;)<sp/>used<sp/>by<sp/>the<sp/>per-solve</highlight></codeline>
+<codeline lineno="68"><highlight class="comment"><sp/>*<sp/>residual<sp/>report.<sp/>The<sp/>Ginkgo<sp/>backend&apos;s<sp/>config<sp/>parser<sp/>ignores<sp/>that<sp/>key.</highlight></codeline>
+<codeline lineno="69"><highlight class="comment"><sp/>*</highlight></codeline>
+<codeline lineno="70"><highlight class="comment"><sp/>*<sp/>@param<sp/>solverDict<sp/><sp/>The<sp/>OpenFOAM<sp/>solver<sp/>sub-dictionary<sp/>(e.g.<sp/>solvers/p).</highlight></codeline>
+<codeline lineno="71"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="72" refid="namespaceNeoFOAM_1a809d8c49b332a3c4eb473b770d901e5b" refkind="member"><highlight class="normal">NeoN::Dictionary<sp/><ref refid="namespaceNeoFOAM_1a809d8c49b332a3c4eb473b770d901e5b" kindref="member">mapFvSolution</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::Dictionary&amp;<sp/>solverDict);</highlight></codeline>
+<codeline lineno="73"><highlight class="normal"></highlight></codeline>
+<codeline lineno="80" refid="namespaceNeoFOAM_1afa00770785106f67fddae9d945e9e9d0" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1afa00770785106f67fddae9d945e9e9d0" kindref="member">createMappedFvSolutionDicts</ref>(<ref refid="structNeoFOAM_1_1RunTime" kindref="compound">RunTime</ref>&amp;<sp/>rt);</highlight></codeline>
+<codeline lineno="81"><highlight class="normal"></highlight></codeline>
+<codeline lineno="82"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>NeoFOAM</highlight><highlight class="normal"></highlight></codeline>
+    </programlisting>
+    <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/compatibility/fvSolution.hpp"/>
+  </compounddef>
+</doxygen>
