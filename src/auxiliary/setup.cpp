@@ -105,12 +105,23 @@ NeoN::Executor createExecutor(const Foam::dictionary& dict)
 
 NeoN::Executor createExecutor(const Foam::argList& args, const Foam::dictionary& dict)
 {
-    if (args.found("executor"))
+    std::string execName = args.found("executor")
+                             ? std::string(args.get<Foam::word>("executor"))
+                             : std::string(dict.getOrDefault<Foam::word>("executor", "Serial"));
+
+    if (dict.found("allocator"))
     {
-        auto execName = args.get<Foam::word>("executor");
-        return createExecutor(std::string(execName), std::make_unique<NeoN::DefaultAllocator>());
+        auto allocator = std::string(dict.get<Foam::word>("allocator"));
+        if (allocator == "Umpire")
+            return createExecutor(execName, std::make_unique<NeoN::UmpireAllocator>());
+        if (allocator == "UmpirePool")
+        {
+            auto poolSizeGB = Foam::scalar(dict.get<Foam::scalar>("memPoolSize"));
+            NeoN::UmpireMempoolHandler::setupUmpirePool(NeoN::MemorySpace::GPU, poolSizeGB * 1e9);
+            return createExecutor(execName, std::make_unique<NeoN::UmpirePoolAllocator>());
+        }
     }
-    return createExecutor(dict);
+    return createExecutor(execName, std::make_unique<NeoN::DefaultAllocator>());
 }
 
 NeoFOAM::RunTime createAdapterRunTime(const Foam::Time& in)

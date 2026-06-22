@@ -196,7 +196,7 @@ public:
         relaxOwnedLs();
 
         auto rhsExpr = dsl::Expression<ValueType>(-1.0 * rhs);
-        rhsExpr.read(runTime_.fvSchemesDict);
+        rhsExpr.read(NeoFOAM::expandSchemeDefaults(runTime_.fvSchemesDict, rhsExpr, psi_.name));
         auto savedRhs = NeoN::Vector<ValueType>(ls_.rhs());
         rhsExpr.assembleExplicitSource(ls_, psi_.mesh());
 
