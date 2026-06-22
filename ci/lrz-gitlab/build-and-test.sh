@@ -106,7 +106,35 @@ echo "=== Running NeoFOAM tests ==="
 ctest --preset $PRESET -R neofoam --output-on-failure
 
 # -----------------------------
-# Step 4: Validate neoIcoFoam
+# Step 4: Smoke-test neoPisoFoam (pitzDaily, 10 timesteps)
+# -----------------------------
+SKIP_PISO_SMOKETEST=${SKIP_PISO_SMOKETEST:-false}
+if [[ "$SKIP_PISO_SMOKETEST" != "true" ]]; then
+    pushd tutorials/neoPisoFoam/pitzDaily >/dev/null
+    blockMesh > log.blockMesh 2>&1
+    foamDictionary -entry endTime -set 1e-04 system/controlDict
+    "../../../build/$PRESET/bin/neoPisoFoam" -executor GPU > log.neoPisoFoam 2>&1
+    popd >/dev/null
+else
+    echo "=== Skipping neoPisoFoam smoke test (SKIP_PISO_SMOKETEST set) ==="
+fi
+
+# -----------------------------
+# Step 5: Smoke-test neoPimpleFoam (pitzDaily, 10 timesteps)
+# -----------------------------
+SKIP_PIMPLE_SMOKETEST=${SKIP_PIMPLE_SMOKETEST:-false}
+if [[ "$SKIP_PIMPLE_SMOKETEST" != "true" ]]; then
+    pushd tutorials/neoPimpleFoam/pitzDaily >/dev/null
+    blockMesh > log.blockMesh 2>&1
+    foamDictionary -entry endTime -set 1e-03 system/controlDict
+    "../../../build/$PRESET/bin/neoPimpleFoam" -executor GPU > log.neoPimpleFoam 2>&1
+    popd >/dev/null
+else
+    echo "=== Skipping neoPimpleFoam smoke test (SKIP_PIMPLE_SMOKETEST set) ==="
+fi
+
+# -----------------------------
+# Step 6: Validate neoIcoFoam
 # -----------------------------
 SKIP_VALIDATION=${SKIP_VALIDATION:-false}
 if [[ "$SKIP_VALIDATION" != "true" ]]; then
@@ -119,34 +147,4 @@ if [[ "$SKIP_VALIDATION" != "true" ]]; then
     popd >/dev/null
 else
     echo "=== Skipping validation (skip-validation label set) ==="
-fi
-
-# -----------------------------
-# Step 5: Smoke-test neoPisoFoam (pitzDaily, 10 timesteps)
-# -----------------------------
-SKIP_PISO_SMOKETEST=${SKIP_PISO_SMOKETEST:-false}
-if [[ "$SKIP_PISO_SMOKETEST" != "true" ]]; then
-    pushd tutorials/neoPisoFoam/pitzDaily >/dev/null
-    blockMesh > log.blockMesh 2>&1
-    foamDictionary -entry endTime -set 1e-04 system/controlDict
-    solver="../../../build/$PRESET/bin/neoPisoFoam"
-    "$solver -executor GPU" > log.neoPisoFoam 2>&1
-    popd >/dev/null
-else
-    echo "=== Skipping neoPisoFoam smoke test (SKIP_PISO_SMOKETEST set) ==="
-fi
-
-# -----------------------------
-# Step 6: Smoke-test neoPimpleFoam (pitzDaily, 10 timesteps)
-# -----------------------------
-SKIP_PIMPLE_SMOKETEST=${SKIP_PIMPLE_SMOKETEST:-false}
-if [[ "$SKIP_PIMPLE_SMOKETEST" != "true" ]]; then
-    pushd tutorials/neoPimpleFoam/pitzDaily >/dev/null
-    blockMesh > log.blockMesh 2>&1
-    foamDictionary -entry endTime -set 1e-03 system/controlDict
-    solver="../../../build/$PRESET/bin/neoPimpleFoam"
-    "$solver -executor GPU" > log.neoPimpleFoam 2>&1
-    popd >/dev/null
-else
-    echo "=== Skipping neoPimpleFoam smoke test (SKIP_PIMPLE_SMOKETEST set) ==="
 fi
