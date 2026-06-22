@@ -51,9 +51,13 @@ Definition at line \mbox{\hyperlink{nutWallFunction_8hpp_source_l00025}{25}} of 
 \doxysubsubsection{\texorpdfstring{setEpsilonWallFunction()}{setEpsilonWallFunction()}}
 {\footnotesize\ttfamily void Neo\+N\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::detail\+::set\+Epsilon\+Wall\+Function (\begin{DoxyParamCaption}\item[{Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{epsilon,  }\item[{const fvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{k,  }\item[{const fvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{nu,  }\item[{const fvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{near\+Wall\+Dist,  }\item[{const Unstructured\+Mesh \&}]{mesh,  }\item[{std\+::pair$<$ local\+Idx, local\+Idx $>$}]{range,  }\item[{\mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}}]{Cmu,  }\item[{\mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}}]{kappa }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
 
+Applies the epsilon\+Wall\+Function kernel face-\/by-\/face.
 
+ε\+\_\+vis = 2 · k · ν / y² (viscous-\/sublayer estimate) ε\+\_\+log = C\+\_\+µ\texorpdfstring{$^\wedge$}{\string^}0.75 · k\texorpdfstring{$^\wedge$}{\string^}1.5 / (κ · y) (log-\/layer estimate) ε\+\_\+w = √(ε\+\_\+vis² + ε\+\_\+log²) (BINOMIAL n=2 blend)
 
-Definition at line \mbox{\hyperlink{epsilonWallFunction_8hpp_source_l00042}{42}} of file \mbox{\hyperlink{epsilonWallFunction_8hpp_source}{epsilon\+Wall\+Function.\+hpp}}.
+Sets the wall face value only; does not modify the internal field. 
+
+Definition at line \mbox{\hyperlink{epsilonWallFunction_8hpp_source_l00034}{34}} of file \mbox{\hyperlink{epsilonWallFunction_8hpp_source}{epsilon\+Wall\+Function.\+hpp}}.
 
 \Hypertarget{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_a87f4e12c3134a79f464aeb051efba390}\label{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_a87f4e12c3134a79f464aeb051efba390} 
 \index{NeoN::finiteVolume::cellCentred::volumeBoundary::detail@{NeoN::finiteVolume::cellCentred::volumeBoundary::detail}!setNutkWallFunction@{setNutkWallFunction}}
@@ -61,9 +65,13 @@ Definition at line \mbox{\hyperlink{epsilonWallFunction_8hpp_source_l00042}{42}}
 \doxysubsubsection{\texorpdfstring{setNutkWallFunction()}{setNutkWallFunction()}}
 {\footnotesize\ttfamily void Neo\+N\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::detail\+::set\+Nutk\+Wall\+Function (\begin{DoxyParamCaption}\item[{Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{domain\+Vector,  }\item[{const fvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{k,  }\item[{const fvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{nu,  }\item[{const fvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{near\+Wall\+Dist,  }\item[{const Unstructured\+Mesh \&}]{mesh,  }\item[{std\+::pair$<$ local\+Idx, local\+Idx $>$}]{range,  }\item[{\mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}}]{Cmu,  }\item[{\mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}}]{kappa,  }\item[{\mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}}]{E }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
 
+Applies the nutk\+Wall\+Function kernel face-\/by-\/face.
 
+y+ = C\+\_\+µ\texorpdfstring{$^\wedge$}{\string^}0.25 · y · √k / ν (per face) ν\+\_\+t,log = ν · y+ · κ / log(max(E·y+, 1+1e-\/4)) ν\+\_\+t,vis = ν (viscous-\/sublayer estimate) ν\+\_\+t,w = √(ν\+\_\+t,vis² + ν\+\_\+t,log²) (BINOMIAL n=2 blend)
 
-Definition at line \mbox{\hyperlink{nutkWallFunction_8hpp_source_l00041}{41}} of file \mbox{\hyperlink{nutkWallFunction_8hpp_source}{nutk\+Wall\+Function.\+hpp}}.
+Sets the boundary face value only; does not modify the internal field. 
+
+Definition at line \mbox{\hyperlink{nutkWallFunction_8hpp_source_l00036}{36}} of file \mbox{\hyperlink{nutkWallFunction_8hpp_source}{nutk\+Wall\+Function.\+hpp}}.
 
 \Hypertarget{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_aae1a87a0c4d00386db2c7df821ec128f}\label{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_aae1a87a0c4d00386db2c7df821ec128f} 
 \index{NeoN::finiteVolume::cellCentred::volumeBoundary::detail@{NeoN::finiteVolume::cellCentred::volumeBoundary::detail}!setNutUSpaldingWallFunction@{setNutUSpaldingWallFunction}}
@@ -81,9 +89,17 @@ Definition at line \mbox{\hyperlink{nutWallFunction_8hpp_source_l00063}{63}} of 
 \doxysubsubsection{\texorpdfstring{setOmegaWallFunction()}{setOmegaWallFunction()}}
 {\footnotesize\ttfamily void Neo\+N\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::detail\+::set\+Omega\+Wall\+Function (\begin{DoxyParamCaption}\item[{Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{omega,  }\item[{const fvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{k,  }\item[{const fvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{nu,  }\item[{const fvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{near\+Wall\+Dist,  }\item[{const Unstructured\+Mesh \&}]{mesh,  }\item[{std\+::pair$<$ local\+Idx, local\+Idx $>$}]{range,  }\item[{\mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}}]{beta1,  }\item[{\mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}}]{Cmu,  }\item[{\mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}}]{kappa }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
 
+Applies the omega\+Wall\+Function kernel face-\/by-\/face.
 
+ω\+\_\+vis = 6ν / (β₁·y²) (viscous-\/sublayer estimate) ω\+\_\+log = √k / (C\+\_\+µ\texorpdfstring{$^\wedge$}{\string^}0.25·κ·y) (log-\/layer estimate) ω\+\_\+w = √(ω\+\_\+vis² + ω\+\_\+log²) (BINOMIAL n=2 blend)
 
-Definition at line \mbox{\hyperlink{omegaWallFunction_8hpp_source_l00048}{48}} of file \mbox{\hyperlink{omegaWallFunction_8hpp_source}{omega\+Wall\+Function.\+hpp}}.
+Known limitations\+:
+\begin{DoxyItemize}
+\item Single-\/patch-\/corner only\+: each wall cell is assumed to see at most one wall-\/function face. Meshes with re-\/entrant corners shared by two wall patches will diverge from multi-\/patch corner averaging.
+\item G (production) accumulation is not applied here; k\+Omega\+SST computes G internally from nut·\+Gby\+Nu0. 
+\end{DoxyItemize}
+
+Definition at line \mbox{\hyperlink{omegaWallFunction_8hpp_source_l00040}{40}} of file \mbox{\hyperlink{omegaWallFunction_8hpp_source}{omega\+Wall\+Function.\+hpp}}.
 
 
 
@@ -96,7 +112,7 @@ Definition at line \mbox{\hyperlink{omegaWallFunction_8hpp_source_l00048}{48}} o
 
 
 
-Definition at line \mbox{\hyperlink{epsilonWallFunction_8hpp_source_l00025}{25}} of file \mbox{\hyperlink{epsilonWallFunction_8hpp_source}{epsilon\+Wall\+Function.\+hpp}}.
+Definition at line \mbox{\hyperlink{epsilonWallFunction_8hpp_source_l00022}{22}} of file \mbox{\hyperlink{epsilonWallFunction_8hpp_source}{epsilon\+Wall\+Function.\+hpp}}.
 
 \Hypertarget{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_a89aef11d96966f503aacd3f56379a13b}\label{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_a89aef11d96966f503aacd3f56379a13b} 
 \index{NeoN::finiteVolume::cellCentred::volumeBoundary::detail@{NeoN::finiteVolume::cellCentred::volumeBoundary::detail}!EPSILON\_WF\_DEFAULT\_KAPPA@{EPSILON\_WF\_DEFAULT\_KAPPA}}
@@ -106,7 +122,7 @@ Definition at line \mbox{\hyperlink{epsilonWallFunction_8hpp_source_l00025}{25}}
 
 
 
-Definition at line \mbox{\hyperlink{epsilonWallFunction_8hpp_source_l00026}{26}} of file \mbox{\hyperlink{epsilonWallFunction_8hpp_source}{epsilon\+Wall\+Function.\+hpp}}.
+Definition at line \mbox{\hyperlink{epsilonWallFunction_8hpp_source_l00023}{23}} of file \mbox{\hyperlink{epsilonWallFunction_8hpp_source}{epsilon\+Wall\+Function.\+hpp}}.
 
 \Hypertarget{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_acb03a362847e0c2e922921b998a9941d}\label{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_acb03a362847e0c2e922921b998a9941d} 
 \index{NeoN::finiteVolume::cellCentred::volumeBoundary::detail@{NeoN::finiteVolume::cellCentred::volumeBoundary::detail}!NUTK\_WF\_DEFAULT\_CMU@{NUTK\_WF\_DEFAULT\_CMU}}
@@ -116,7 +132,7 @@ Definition at line \mbox{\hyperlink{epsilonWallFunction_8hpp_source_l00026}{26}}
 
 
 
-Definition at line \mbox{\hyperlink{nutkWallFunction_8hpp_source_l00024}{24}} of file \mbox{\hyperlink{nutkWallFunction_8hpp_source}{nutk\+Wall\+Function.\+hpp}}.
+Definition at line \mbox{\hyperlink{nutkWallFunction_8hpp_source_l00022}{22}} of file \mbox{\hyperlink{nutkWallFunction_8hpp_source}{nutk\+Wall\+Function.\+hpp}}.
 
 \Hypertarget{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_a09691d453a095807d1864e353e53f0ff}\label{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_a09691d453a095807d1864e353e53f0ff} 
 \index{NeoN::finiteVolume::cellCentred::volumeBoundary::detail@{NeoN::finiteVolume::cellCentred::volumeBoundary::detail}!NUTK\_WF\_DEFAULT\_E@{NUTK\_WF\_DEFAULT\_E}}
@@ -126,7 +142,7 @@ Definition at line \mbox{\hyperlink{nutkWallFunction_8hpp_source_l00024}{24}} of
 
 
 
-Definition at line \mbox{\hyperlink{nutkWallFunction_8hpp_source_l00026}{26}} of file \mbox{\hyperlink{nutkWallFunction_8hpp_source}{nutk\+Wall\+Function.\+hpp}}.
+Definition at line \mbox{\hyperlink{nutkWallFunction_8hpp_source_l00024}{24}} of file \mbox{\hyperlink{nutkWallFunction_8hpp_source}{nutk\+Wall\+Function.\+hpp}}.
 
 \Hypertarget{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_abb0457670dde5061929b896c535b6936}\label{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_abb0457670dde5061929b896c535b6936} 
 \index{NeoN::finiteVolume::cellCentred::volumeBoundary::detail@{NeoN::finiteVolume::cellCentred::volumeBoundary::detail}!NUTK\_WF\_DEFAULT\_KAPPA@{NUTK\_WF\_DEFAULT\_KAPPA}}
@@ -136,7 +152,7 @@ Definition at line \mbox{\hyperlink{nutkWallFunction_8hpp_source_l00026}{26}} of
 
 
 
-Definition at line \mbox{\hyperlink{nutkWallFunction_8hpp_source_l00025}{25}} of file \mbox{\hyperlink{nutkWallFunction_8hpp_source}{nutk\+Wall\+Function.\+hpp}}.
+Definition at line \mbox{\hyperlink{nutkWallFunction_8hpp_source_l00023}{23}} of file \mbox{\hyperlink{nutkWallFunction_8hpp_source}{nutk\+Wall\+Function.\+hpp}}.
 
 \Hypertarget{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_ad063cfa67b2773d26f52ba8fd7b21f99}\label{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_ad063cfa67b2773d26f52ba8fd7b21f99} 
 \index{NeoN::finiteVolume::cellCentred::volumeBoundary::detail@{NeoN::finiteVolume::cellCentred::volumeBoundary::detail}!OMEGA\_WF\_DEFAULT\_BETA1@{OMEGA\_WF\_DEFAULT\_BETA1}}
@@ -146,7 +162,7 @@ Definition at line \mbox{\hyperlink{nutkWallFunction_8hpp_source_l00025}{25}} of
 
 
 
-Definition at line \mbox{\hyperlink{omegaWallFunction_8hpp_source_l00025}{25}} of file \mbox{\hyperlink{omegaWallFunction_8hpp_source}{omega\+Wall\+Function.\+hpp}}.
+Definition at line \mbox{\hyperlink{omegaWallFunction_8hpp_source_l00022}{22}} of file \mbox{\hyperlink{omegaWallFunction_8hpp_source}{omega\+Wall\+Function.\+hpp}}.
 
 \Hypertarget{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_ab568652eabda3484f1230e9d70eff55b}\label{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_ab568652eabda3484f1230e9d70eff55b} 
 \index{NeoN::finiteVolume::cellCentred::volumeBoundary::detail@{NeoN::finiteVolume::cellCentred::volumeBoundary::detail}!OMEGA\_WF\_DEFAULT\_CMU@{OMEGA\_WF\_DEFAULT\_CMU}}
@@ -156,7 +172,7 @@ Definition at line \mbox{\hyperlink{omegaWallFunction_8hpp_source_l00025}{25}} o
 
 
 
-Definition at line \mbox{\hyperlink{omegaWallFunction_8hpp_source_l00026}{26}} of file \mbox{\hyperlink{omegaWallFunction_8hpp_source}{omega\+Wall\+Function.\+hpp}}.
+Definition at line \mbox{\hyperlink{omegaWallFunction_8hpp_source_l00023}{23}} of file \mbox{\hyperlink{omegaWallFunction_8hpp_source}{omega\+Wall\+Function.\+hpp}}.
 
 \Hypertarget{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_a79b05a3da39e7e171857cfb014a6f530}\label{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_a79b05a3da39e7e171857cfb014a6f530} 
 \index{NeoN::finiteVolume::cellCentred::volumeBoundary::detail@{NeoN::finiteVolume::cellCentred::volumeBoundary::detail}!OMEGA\_WF\_DEFAULT\_KAPPA@{OMEGA\_WF\_DEFAULT\_KAPPA}}
@@ -166,5 +182,5 @@ Definition at line \mbox{\hyperlink{omegaWallFunction_8hpp_source_l00026}{26}} o
 
 
 
-Definition at line \mbox{\hyperlink{omegaWallFunction_8hpp_source_l00027}{27}} of file \mbox{\hyperlink{omegaWallFunction_8hpp_source}{omega\+Wall\+Function.\+hpp}}.
+Definition at line \mbox{\hyperlink{omegaWallFunction_8hpp_source_l00024}{24}} of file \mbox{\hyperlink{omegaWallFunction_8hpp_source}{omega\+Wall\+Function.\+hpp}}.
 

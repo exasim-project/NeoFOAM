@@ -243,8 +243,11 @@ Variables</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+<p>Applies the epsilonWallFunction kernel face-by-face.</p>
+<p>ε_vis = 2 · k · ν / y² (viscous-sublayer estimate) ε_log = C_µ^0.75 · k^1.5 / (κ · y) (log-layer estimate) ε_w = √(ε_vis² + ε_log²) (BINOMIAL n=2 blend)</p>
+<p>Sets the wall face value only; does not modify the internal field. </p>
 
-<p class="definition">Definition at line <a class="el" href="epsilonWallFunction_8hpp_source.html#l00042">42</a> of file <a class="el" href="epsilonWallFunction_8hpp_source.html">epsilonWallFunction.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="epsilonWallFunction_8hpp_source.html#l00034">34</a> of file <a class="el" href="epsilonWallFunction_8hpp_source.html">epsilonWallFunction.hpp</a>.</p>
 
 </div>
 </div>
@@ -323,8 +326,11 @@ Variables</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+<p>Applies the nutkWallFunction kernel face-by-face.</p>
+<p>y+ = C_µ^0.25 · y · √k / ν (per face) ν_t,log = ν · y+ · κ / log(max(E·y+, 1+1e-4)) ν_t,vis = ν (viscous-sublayer estimate) ν_t,w = √(ν_t,vis² + ν_t,log²) (BINOMIAL n=2 blend)</p>
+<p>Sets the boundary face value only; does not modify the internal field. </p>
 
-<p class="definition">Definition at line <a class="el" href="nutkWallFunction_8hpp_source.html#l00041">41</a> of file <a class="el" href="nutkWallFunction_8hpp_source.html">nutkWallFunction.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="nutkWallFunction_8hpp_source.html#l00036">36</a> of file <a class="el" href="nutkWallFunction_8hpp_source.html">nutkWallFunction.hpp</a>.</p>
 
 </div>
 </div>
@@ -465,8 +471,14 @@ Variables</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+<p>Applies the omegaWallFunction kernel face-by-face.</p>
+<p>ω_vis = 6ν / (β₁·y²) (viscous-sublayer estimate) ω_log = √k / (C_µ^0.25·κ·y) (log-layer estimate) ω_w = √(ω_vis² + ω_log²) (BINOMIAL n=2 blend)</p>
+<p>Known limitations:</p><ul>
+<li>Single-patch-corner only: each wall cell is assumed to see at most one wall-function face. Meshes with re-entrant corners shared by two wall patches will diverge from multi-patch corner averaging.</li>
+<li>G (production) accumulation is not applied here; kOmegaSST computes G internally from nut·GbyNu0. </li>
+</ul>
 
-<p class="definition">Definition at line <a class="el" href="omegaWallFunction_8hpp_source.html#l00048">48</a> of file <a class="el" href="omegaWallFunction_8hpp_source.html">omegaWallFunction.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="omegaWallFunction_8hpp_source.html#l00040">40</a> of file <a class="el" href="omegaWallFunction_8hpp_source.html">omegaWallFunction.hpp</a>.</p>
 
 </div>
 </div>
@@ -491,7 +503,7 @@ Variables</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="epsilonWallFunction_8hpp_source.html#l00025">25</a> of file <a class="el" href="epsilonWallFunction_8hpp_source.html">epsilonWallFunction.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="epsilonWallFunction_8hpp_source.html#l00022">22</a> of file <a class="el" href="epsilonWallFunction_8hpp_source.html">epsilonWallFunction.hpp</a>.</p>
 
 </div>
 </div>
@@ -515,7 +527,7 @@ Variables</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="epsilonWallFunction_8hpp_source.html#l00026">26</a> of file <a class="el" href="epsilonWallFunction_8hpp_source.html">epsilonWallFunction.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="epsilonWallFunction_8hpp_source.html#l00023">23</a> of file <a class="el" href="epsilonWallFunction_8hpp_source.html">epsilonWallFunction.hpp</a>.</p>
 
 </div>
 </div>
@@ -539,7 +551,7 @@ Variables</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="nutkWallFunction_8hpp_source.html#l00024">24</a> of file <a class="el" href="nutkWallFunction_8hpp_source.html">nutkWallFunction.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="nutkWallFunction_8hpp_source.html#l00022">22</a> of file <a class="el" href="nutkWallFunction_8hpp_source.html">nutkWallFunction.hpp</a>.</p>
 
 </div>
 </div>
@@ -563,7 +575,7 @@ Variables</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="nutkWallFunction_8hpp_source.html#l00026">26</a> of file <a class="el" href="nutkWallFunction_8hpp_source.html">nutkWallFunction.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="nutkWallFunction_8hpp_source.html#l00024">24</a> of file <a class="el" href="nutkWallFunction_8hpp_source.html">nutkWallFunction.hpp</a>.</p>
 
 </div>
 </div>
@@ -587,7 +599,7 @@ Variables</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="nutkWallFunction_8hpp_source.html#l00025">25</a> of file <a class="el" href="nutkWallFunction_8hpp_source.html">nutkWallFunction.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="nutkWallFunction_8hpp_source.html#l00023">23</a> of file <a class="el" href="nutkWallFunction_8hpp_source.html">nutkWallFunction.hpp</a>.</p>
 
 </div>
 </div>
@@ -611,7 +623,7 @@ Variables</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="omegaWallFunction_8hpp_source.html#l00025">25</a> of file <a class="el" href="omegaWallFunction_8hpp_source.html">omegaWallFunction.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="omegaWallFunction_8hpp_source.html#l00022">22</a> of file <a class="el" href="omegaWallFunction_8hpp_source.html">omegaWallFunction.hpp</a>.</p>
 
 </div>
 </div>
@@ -635,7 +647,7 @@ Variables</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="omegaWallFunction_8hpp_source.html#l00026">26</a> of file <a class="el" href="omegaWallFunction_8hpp_source.html">omegaWallFunction.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="omegaWallFunction_8hpp_source.html#l00023">23</a> of file <a class="el" href="omegaWallFunction_8hpp_source.html">omegaWallFunction.hpp</a>.</p>
 
 </div>
 </div>
@@ -659,7 +671,7 @@ Variables</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="omegaWallFunction_8hpp_source.html#l00027">27</a> of file <a class="el" href="omegaWallFunction_8hpp_source.html">omegaWallFunction.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="omegaWallFunction_8hpp_source.html#l00024">24</a> of file <a class="el" href="omegaWallFunction_8hpp_source.html">omegaWallFunction.hpp</a>.</p>
 
 </div>
 </div>
