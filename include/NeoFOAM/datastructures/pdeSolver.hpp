@@ -73,11 +73,9 @@ public:
         // TODO run NeoN expr_ = NeoN::dsl::optimize(expr); if optimize is set in fvSolution
         // NOTE OpenFOAM tokenizes a switch like 'optimize true;' as a word, so it is stored
         // as a std::string in the NeoN dictionary; reading it as bool throws bad_any_cast.
-        auto optimize =
-            runTime_->fvSolutionDict.subDict("solvers").subDict(psi_->name).template get<std::string>(
-                "optimize",
-                "false"
-            );
+        auto optimize = runTime_->fvSolutionDict.subDict("solvers")
+                            .subDict(psi_->name)
+                            .template get<std::string>("optimize", "false");
         if (optimize == "true" || optimize == "yes" || optimize == "on" || optimize == "1")
         {
             expr_ = NeoN::dsl::optimize(expr_);
@@ -268,13 +266,22 @@ public:
 
         auto solverDict = rt.fvSolutionDict.subDict("solvers");
         const std::string finalKey = psi.name + "Final";
-        auto fieldSolverDict = (finalIter_ && solverDict.isDict(finalKey))
-                                 ? solverDict.subDict(finalKey)
-                                 : solverDict.subDict(psi.name);
+        const bool useFinal = finalIter_ && solverDict.isDict(finalKey);
+        auto fieldSolverDict =
+            useFinal ? solverDict.subDict(finalKey) : solverDict.subDict(psi.name);
         stripNeoFOAMKeys(fieldSolverDict);
         NeoN::fence(psi.exec());
         NF_ASSERT(ls_->exec() == psi.exec(), "Executors are not the same");
-        auto stats = solver.solve(*ls_, psi.internalVector());
+        NeoN::la::SolverStats stats;
+        if (useFinal)
+        {
+            NeoN::la::Solver finalSolver(psi.exec(), fieldSolverDict);
+            stats = finalSolver.solve(*ls_, psi.internalVector());
+        }
+        else
+        {
+            stats = solver.solve(*ls_, psi.internalVector());
+        }
 
         reportSolverStats(stats, fieldSolverDict);
         return stats;
@@ -306,12 +313,22 @@ public:
 
         auto solverDict = rt.fvSolutionDict.subDict("solvers");
         const std::string finalKey = psi.name + "Final";
-        auto fieldSolverDict = (finalIter_ && solverDict.isDict(finalKey))
-                                 ? solverDict.subDict(finalKey)
-                                 : solverDict.subDict(psi.name);
+        const bool useFinal = finalIter_ && solverDict.isDict(finalKey);
+        auto fieldSolverDict =
+            useFinal ? solverDict.subDict(finalKey) : solverDict.subDict(psi.name);
         stripNeoFOAMKeys(fieldSolverDict);
         NeoN::fence(psi.exec());
-        auto stats = solver.solve(*ls_, psi.internalVector());
+        NF_ASSERT(ls_->exec() == psi.exec(), "Executors are not the same");
+        NeoN::la::SolverStats stats;
+        if (useFinal)
+        {
+            NeoN::la::Solver finalSolver(psi.exec(), fieldSolverDict);
+            stats = finalSolver.solve(*ls_, psi.internalVector());
+        }
+        else
+        {
+            stats = solver.solve(*ls_, psi.internalVector());
+        }
 
         ls_->rhs() = savedRhs;
 
@@ -429,7 +446,8 @@ private:
                 }
                 else
                 {
-                    return NeoN::la::createEmptyLinearSystem<MatrixValueType, ValueType>(psi.mesh());
+                    return NeoN::la::createEmptyLinearSystem<MatrixValueType, ValueType>(psi.mesh()
+                    );
                 }
             }
         ));
