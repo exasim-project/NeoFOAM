@@ -396,10 +396,13 @@ void updateVelocity(
     const nnfvcc::VolumeField<Vec3>& hByA,
     const nnfvcc::VolumeField<scalar>& rAU,
     const nnfvcc::VolumeField<scalar>& p,
-    nnfvcc::VolumeField<Vec3>& u
+    nnfvcc::VolumeField<Vec3>& u,
+    const nnfvcc::GradOperatorFactory<NeoN::Vec3>& gradPScheme
 )
 {
-    auto gradP = nnfvcc::GaussGreenGrad(p.exec(), p.mesh()).grad(p);
+    // grad(p) for the velocity reconstruction honours the configured gradSchemes
+    // entry for grad(p) (e.g. cellLimited); the operator is built once by the solver.
+    auto gradP = gradPScheme.grad(p, NeoN::dsl::Coeff {});
     auto [iHbyA, iRAU, iGradP] =
         views(hByA.internalVector(), rAU.internalVector(), gradP.internalVector());
 

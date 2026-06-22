@@ -6,6 +6,7 @@
 #include "NeoFOAM/compatibility/fvSchemes.hpp"
 
 #include <map>
+#include <memory>
 
 #include <NeoN/core/logging.hpp>
 
@@ -89,6 +90,39 @@ NeoN::Dictionary mapFvSchemes(const NeoN::Dictionary& schemesDict)
     // and reads the trailing limiter coefficient).
 
     return modSchemesDict;
+}
+
+std::unique_ptr<fvcc::GradOperatorFactory<NeoN::Vec3>> makeGradOperator(
+    const NeoN::Executor& exc,
+    const NeoN::UnstructuredMesh& mesh,
+    const NeoN::Dictionary& fvSchemes,
+    const std::string& gradEntry
+)
+{
+    NeoN::TokenList tokens;
+    bool found = false;
+    if (fvSchemes.contains("gradSchemes"))
+    {
+        const auto& gradSchemes = fvSchemes.subDict("gradSchemes");
+        if (gradSchemes.contains(gradEntry) && !gradSchemes.isType<std::string>(gradEntry))
+        {
+            tokens = gradSchemes.get<NeoN::TokenList>(gradEntry);
+            found = true;
+        }
+        else if (gradSchemes.contains("default") && !gradSchemes.isType<std::string>("default"))
+        {
+            tokens = gradSchemes.get<NeoN::TokenList>("default");
+            found = true;
+        }
+    }
+    if (!found)
+    {
+        tokens = NeoN::TokenList({std::string("Gauss"), std::string("linear")});
+    }
+    // Rewind the read cursor: the dictionary's stored TokenList may have been
+    // advanced by a previous create(), and create() reads from the cursor.
+    tokens.reset();
+    return fvcc::GradOperatorFactory<NeoN::Vec3>::create(exc, mesh, tokens);
 }
 
 } // namespace NeoFOAM

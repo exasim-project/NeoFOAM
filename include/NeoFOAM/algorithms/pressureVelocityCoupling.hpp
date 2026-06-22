@@ -91,7 +91,8 @@ void updateVelocity(
     const nnfvcc::VolumeField<Vec3>& hByA,
     const nnfvcc::VolumeField<scalar>& rAU,
     const nnfvcc::VolumeField<scalar>& p,
-    nnfvcc::VolumeField<Vec3>& U
+    nnfvcc::VolumeField<Vec3>& U,
+    const nnfvcc::GradOperatorFactory<NeoN::Vec3>& gradPScheme
 );
 
 
