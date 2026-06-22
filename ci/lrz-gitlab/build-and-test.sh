@@ -113,7 +113,9 @@ if [[ "$SKIP_PISO_SMOKETEST" != "true" ]]; then
     pushd tutorials/neoPisoFoam/pitzDaily >/dev/null
     blockMesh > log.blockMesh 2>&1
     foamDictionary -entry endTime -set 1e-04 system/controlDict
-    "../../../build/$PRESET/bin/neoPisoFoam" -executor GPU > log.neoPisoFoam 2>&1
+    if ! "../../../build/$PRESET/bin/neoPisoFoam" -executor GPU > log.neoPisoFoam 2>&1; then
+        cat log.neoPisoFoam; exit 1
+    fi
     popd >/dev/null
 else
     echo "=== Skipping neoPisoFoam smoke test (SKIP_PISO_SMOKETEST set) ==="
@@ -127,7 +129,9 @@ if [[ "$SKIP_PIMPLE_SMOKETEST" != "true" ]]; then
     pushd tutorials/neoPimpleFoam/pitzDaily >/dev/null
     blockMesh > log.blockMesh 2>&1
     foamDictionary -entry endTime -set 1e-03 system/controlDict
-    "../../../build/$PRESET/bin/neoPimpleFoam" -executor GPU > log.neoPimpleFoam 2>&1
+    if ! "../../../build/$PRESET/bin/neoPimpleFoam" -executor GPU > log.neoPimpleFoam 2>&1; then
+        cat log.neoPimpleFoam; exit 1
+    fi
     popd >/dev/null
 else
     echo "=== Skipping neoPimpleFoam smoke test (SKIP_PIMPLE_SMOKETEST set) ==="
