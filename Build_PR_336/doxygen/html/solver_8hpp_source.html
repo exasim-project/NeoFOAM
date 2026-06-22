@@ -134,28 +134,38 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span> </div>
 <div class="line"><a id="l00057" name="l00057"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Solver.html#ac1506d0720b994242fe7f3a04d2ba46f">   57</a></span>    LinearSystemType&amp; <a class="code hl_function" href="classNeoFOAM_1_1Solver.html#ac1506d0720b994242fe7f3a04d2ba46f">assemble</a>(PDESolverType&amp; pde) { <span class="keywordflow">return</span> pde.assemble(field_, rt_); }</div>
 <div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span> </div>
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span><span class="keyword">private</span>:</div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span> </div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>    <span class="keyword">static</span> NeoN::la::Solver createCachedSolver(VolumeField&amp; field, <a class="code hl_struct" href="structNeoFOAM_1_1RunTime.html">RunTime</a>&amp; rt)</div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>    {</div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>        <span class="keyword">auto</span> solverDict = rt.<a class="code hl_variable" href="structNeoFOAM_1_1RunTime.html#aa1b497275ede724281d9a6a8540e5080">fvSolutionDict</a>.subDict(<span class="stringliteral">&quot;solvers&quot;</span>).subDict(field.name);</div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>        <a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#ae4a2c9b3fa4bc2a9904981d2c5ed69b5">PDESolverType::stripNeoFOAMKeys</a>(solverDict);</div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>        <span class="keywordflow">return</span> NeoN::la::Solver(field.exec(), solverDict);</div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>    }</div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span> </div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>    VolumeField&amp; field_;</div>
-<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>    RunTime&amp; rt_;</div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>    NeoN::la::Solver cachedSolver_;</div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>};</div>
+<div class="foldopen" id="foldopen00059" data-start="{" data-end="}">
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno"><a class="line" href="classNeoFOAM_1_1Solver.html#a046295740e957f5b21e863b47d03ab06">   59</a></span>    LinearSystemType&amp; <a class="code hl_function" href="classNeoFOAM_1_1Solver.html#a046295740e957f5b21e863b47d03ab06">assembleAndRelax</a>(PDESolverType&amp; pde)</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>    {</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>        pde.assemble(field_, rt_);</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>        pde.relaxOwnedLs();</div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>        <span class="keywordflow">return</span> pde.linearSystem();</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>    }</div>
 </div>
-<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span> </div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span><span class="comment">// Deduction guide: Solver(field, rt) deduces ValueType from the VolumeField argument.</span></div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> ValueType&gt;</div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#aecef654291f22551aa7a3b014e46cb67">   75</a></span><a class="code hl_class" href="classNeoFOAM_1_1Solver.html">Solver</a>(NeoN::finiteVolume::cellCentred::VolumeField&lt;ValueType&gt;&amp;, <a class="code hl_struct" href="structNeoFOAM_1_1RunTime.html">RunTime</a>&amp;) -&gt; <a class="code hl_class" href="classNeoFOAM_1_1Solver.html">Solver&lt;ValueType&gt;</a>;</div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span> </div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>} <span class="comment">// namespace NeoFOAM</span></div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span> </div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span> </div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>    <span class="keyword">static</span> NeoN::la::Solver createCachedSolver(VolumeField&amp; field, <a class="code hl_struct" href="structNeoFOAM_1_1RunTime.html">RunTime</a>&amp; rt)</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>    {</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>        <span class="keyword">auto</span> solverDict = rt.<a class="code hl_variable" href="structNeoFOAM_1_1RunTime.html#aa1b497275ede724281d9a6a8540e5080">fvSolutionDict</a>.subDict(<span class="stringliteral">&quot;solvers&quot;</span>).subDict(field.name);</div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>        <a class="code hl_function" href="classNeoFOAM_1_1PDESolver.html#ae4a2c9b3fa4bc2a9904981d2c5ed69b5">PDESolverType::stripNeoFOAMKeys</a>(solverDict);</div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>        <span class="keywordflow">return</span> NeoN::la::Solver(field.exec(), solverDict);</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>    }</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span> </div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>    VolumeField&amp; field_;</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>    RunTime&amp; rt_;</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>    NeoN::la::Solver cachedSolver_;</div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>};</div>
+</div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span> </div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span><span class="comment">// Deduction guide: Solver(field, rt) deduces ValueType from the VolumeField argument.</span></div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span><span class="keyword">template</span>&lt;<span class="keyword">typename</span> ValueType&gt;</div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno"><a class="line" href="namespaceNeoFOAM.html#aecef654291f22551aa7a3b014e46cb67">   82</a></span><a class="code hl_class" href="classNeoFOAM_1_1Solver.html">Solver</a>(NeoN::finiteVolume::cellCentred::VolumeField&lt;ValueType&gt;&amp;, <a class="code hl_struct" href="structNeoFOAM_1_1RunTime.html">RunTime</a>&amp;) -&gt; <a class="code hl_class" href="classNeoFOAM_1_1Solver.html">Solver&lt;ValueType&gt;</a>;</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span> </div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>} <span class="comment">// namespace NeoFOAM</span></div>
 <div class="ttc" id="aclassNeoFOAM_1_1PDESolver_html_ae4a2c9b3fa4bc2a9904981d2c5ed69b5"><div class="ttname"><a href="classNeoFOAM_1_1PDESolver.html#ae4a2c9b3fa4bc2a9904981d2c5ed69b5">NeoFOAM::PDESolver::stripNeoFOAMKeys</a></div><div class="ttdeci">static void stripNeoFOAMKeys(NeoN::Dictionary &amp;dict)</div><div class="ttdef"><b>Definition</b> <a href="pdeSolver_8hpp_source.html#l00382">pdeSolver.hpp:382</a></div></div>
 <div class="ttc" id="aclassNeoFOAM_1_1Solver_html"><div class="ttname"><a href="classNeoFOAM_1_1Solver.html">NeoFOAM::Solver</a></div><div class="ttdoc">Caches a NeoN::la::Solver instance for a given field to avoid reconstructing it (and re-parsing the s...</div><div class="ttdef"><b>Definition</b> <a href="solver_8hpp_source.html#l00033">solver.hpp:34</a></div></div>
+<div class="ttc" id="aclassNeoFOAM_1_1Solver_html_a046295740e957f5b21e863b47d03ab06"><div class="ttname"><a href="classNeoFOAM_1_1Solver.html#a046295740e957f5b21e863b47d03ab06">NeoFOAM::Solver::assembleAndRelax</a></div><div class="ttdeci">LinearSystemType &amp; assembleAndRelax(PDESolverType &amp;pde)</div><div class="ttdef"><b>Definition</b> <a href="solver_8hpp_source.html#l00059">solver.hpp:59</a></div></div>
 <div class="ttc" id="aclassNeoFOAM_1_1Solver_html_a7cee277e3519d7032661d9b02cde4935"><div class="ttname"><a href="classNeoFOAM_1_1Solver.html#a7cee277e3519d7032661d9b02cde4935">NeoFOAM::Solver::solve</a></div><div class="ttdeci">NeoN::la::SolverStats solve(PDESolverType &amp;pde, dsl::SpatialOperator&lt; ValueType &gt; &amp;&amp;rhs)</div><div class="ttdef"><b>Definition</b> <a href="solver_8hpp_source.html#l00052">solver.hpp:52</a></div></div>
 <div class="ttc" id="aclassNeoFOAM_1_1Solver_html_a7e149f5f8ef1bf707337280339966cd6"><div class="ttname"><a href="classNeoFOAM_1_1Solver.html#a7e149f5f8ef1bf707337280339966cd6">NeoFOAM::Solver::solve</a></div><div class="ttdeci">NeoN::la::SolverStats solve(PDESolverType &amp;pde)</div><div class="ttdef"><b>Definition</b> <a href="solver_8hpp_source.html#l00047">solver.hpp:47</a></div></div>
 <div class="ttc" id="aclassNeoFOAM_1_1Solver_html_ac1506d0720b994242fe7f3a04d2ba46f"><div class="ttname"><a href="classNeoFOAM_1_1Solver.html#ac1506d0720b994242fe7f3a04d2ba46f">NeoFOAM::Solver::assemble</a></div><div class="ttdeci">LinearSystemType &amp; assemble(PDESolverType &amp;pde)</div><div class="ttdef"><b>Definition</b> <a href="solver_8hpp_source.html#l00057">solver.hpp:57</a></div></div>

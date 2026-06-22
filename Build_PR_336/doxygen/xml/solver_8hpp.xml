@@ -174,25 +174,32 @@
 <codeline lineno="56"><highlight class="normal"></highlight></codeline>
 <codeline lineno="57" refid="classNeoFOAM_1_1Solver_1ac1506d0720b994242fe7f3a04d2ba46f" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>LinearSystemType&amp;<sp/><ref refid="classNeoFOAM_1_1Solver_1ac1506d0720b994242fe7f3a04d2ba46f" kindref="member">assemble</ref>(PDESolverType&amp;<sp/>pde)<sp/>{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>pde.assemble(field_,<sp/>rt_);<sp/>}</highlight></codeline>
 <codeline lineno="58"><highlight class="normal"></highlight></codeline>
-<codeline lineno="59"><highlight class="normal"></highlight><highlight class="keyword">private</highlight><highlight class="normal">:</highlight></codeline>
-<codeline lineno="60"><highlight class="normal"></highlight></codeline>
-<codeline lineno="61"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">static</highlight><highlight class="normal"><sp/>NeoN::la::Solver<sp/>createCachedSolver(VolumeField&amp;<sp/>field,<sp/><ref refid="structNeoFOAM_1_1RunTime" kindref="compound">RunTime</ref>&amp;<sp/>rt)</highlight></codeline>
-<codeline lineno="62"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="63"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>solverDict<sp/>=<sp/>rt.<ref refid="structNeoFOAM_1_1RunTime_1aa1b497275ede724281d9a6a8540e5080" kindref="member">fvSolutionDict</ref>.subDict(</highlight><highlight class="stringliteral">&quot;solvers&quot;</highlight><highlight class="normal">).subDict(field.name);</highlight></codeline>
-<codeline lineno="64"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1PDESolver_1ae4a2c9b3fa4bc2a9904981d2c5ed69b5" kindref="member">PDESolverType::stripNeoFOAMKeys</ref>(solverDict);</highlight></codeline>
-<codeline lineno="65"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NeoN::la::Solver(field.exec(),<sp/>solverDict);</highlight></codeline>
-<codeline lineno="66"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="59" refid="classNeoFOAM_1_1Solver_1a046295740e957f5b21e863b47d03ab06" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>LinearSystemType&amp;<sp/><ref refid="classNeoFOAM_1_1Solver_1a046295740e957f5b21e863b47d03ab06" kindref="member">assembleAndRelax</ref>(PDESolverType&amp;<sp/>pde)</highlight></codeline>
+<codeline lineno="60"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="61"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pde.assemble(field_,<sp/>rt_);</highlight></codeline>
+<codeline lineno="62"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>pde.relaxOwnedLs();</highlight></codeline>
+<codeline lineno="63"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>pde.linearSystem();</highlight></codeline>
+<codeline lineno="64"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="65"><highlight class="normal"></highlight></codeline>
+<codeline lineno="66"><highlight class="normal"></highlight><highlight class="keyword">private</highlight><highlight class="normal">:</highlight></codeline>
 <codeline lineno="67"><highlight class="normal"></highlight></codeline>
-<codeline lineno="68"><highlight class="normal"><sp/><sp/><sp/><sp/>VolumeField&amp;<sp/>field_;</highlight></codeline>
-<codeline lineno="69"><highlight class="normal"><sp/><sp/><sp/><sp/>RunTime&amp;<sp/>rt_;</highlight></codeline>
-<codeline lineno="70"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::la::Solver<sp/>cachedSolver_;</highlight></codeline>
-<codeline lineno="71"><highlight class="normal">};</highlight></codeline>
-<codeline lineno="72"><highlight class="normal"></highlight></codeline>
-<codeline lineno="73"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Deduction<sp/>guide:<sp/>Solver(field,<sp/>rt)<sp/>deduces<sp/>ValueType<sp/>from<sp/>the<sp/>VolumeField<sp/>argument.</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="74"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>ValueType&gt;</highlight></codeline>
-<codeline lineno="75" refid="namespaceNeoFOAM_1aecef654291f22551aa7a3b014e46cb67" refkind="member"><highlight class="normal"><ref refid="classNeoFOAM_1_1Solver" kindref="compound">Solver</ref>(NeoN::finiteVolume::cellCentred::VolumeField&lt;ValueType&gt;&amp;,<sp/><ref refid="structNeoFOAM_1_1RunTime" kindref="compound">RunTime</ref>&amp;)<sp/>-&gt;<sp/><ref refid="classNeoFOAM_1_1Solver" kindref="compound">Solver&lt;ValueType&gt;</ref>;</highlight></codeline>
-<codeline lineno="76"><highlight class="normal"></highlight></codeline>
-<codeline lineno="77"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>NeoFOAM</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="68"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">static</highlight><highlight class="normal"><sp/>NeoN::la::Solver<sp/>createCachedSolver(VolumeField&amp;<sp/>field,<sp/><ref refid="structNeoFOAM_1_1RunTime" kindref="compound">RunTime</ref>&amp;<sp/>rt)</highlight></codeline>
+<codeline lineno="69"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="70"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>solverDict<sp/>=<sp/>rt.<ref refid="structNeoFOAM_1_1RunTime_1aa1b497275ede724281d9a6a8540e5080" kindref="member">fvSolutionDict</ref>.subDict(</highlight><highlight class="stringliteral">&quot;solvers&quot;</highlight><highlight class="normal">).subDict(field.name);</highlight></codeline>
+<codeline lineno="71"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1PDESolver_1ae4a2c9b3fa4bc2a9904981d2c5ed69b5" kindref="member">PDESolverType::stripNeoFOAMKeys</ref>(solverDict);</highlight></codeline>
+<codeline lineno="72"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>NeoN::la::Solver(field.exec(),<sp/>solverDict);</highlight></codeline>
+<codeline lineno="73"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="74"><highlight class="normal"></highlight></codeline>
+<codeline lineno="75"><highlight class="normal"><sp/><sp/><sp/><sp/>VolumeField&amp;<sp/>field_;</highlight></codeline>
+<codeline lineno="76"><highlight class="normal"><sp/><sp/><sp/><sp/>RunTime&amp;<sp/>rt_;</highlight></codeline>
+<codeline lineno="77"><highlight class="normal"><sp/><sp/><sp/><sp/>NeoN::la::Solver<sp/>cachedSolver_;</highlight></codeline>
+<codeline lineno="78"><highlight class="normal">};</highlight></codeline>
+<codeline lineno="79"><highlight class="normal"></highlight></codeline>
+<codeline lineno="80"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Deduction<sp/>guide:<sp/>Solver(field,<sp/>rt)<sp/>deduces<sp/>ValueType<sp/>from<sp/>the<sp/>VolumeField<sp/>argument.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="81"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keyword">typename</highlight><highlight class="normal"><sp/>ValueType&gt;</highlight></codeline>
+<codeline lineno="82" refid="namespaceNeoFOAM_1aecef654291f22551aa7a3b014e46cb67" refkind="member"><highlight class="normal"><ref refid="classNeoFOAM_1_1Solver" kindref="compound">Solver</ref>(NeoN::finiteVolume::cellCentred::VolumeField&lt;ValueType&gt;&amp;,<sp/><ref refid="structNeoFOAM_1_1RunTime" kindref="compound">RunTime</ref>&amp;)<sp/>-&gt;<sp/><ref refid="classNeoFOAM_1_1Solver" kindref="compound">Solver&lt;ValueType&gt;</ref>;</highlight></codeline>
+<codeline lineno="83"><highlight class="normal"></highlight></codeline>
+<codeline lineno="84"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>NeoFOAM</highlight><highlight class="normal"></highlight></codeline>
     </programlisting>
     <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/solver.hpp"/>
   </compounddef>
