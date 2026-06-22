@@ -130,7 +130,7 @@ if [[ "$SKIP_PISO_SMOKETEST" != "true" ]]; then
     blockMesh > log.blockMesh 2>&1
     foamDictionary -entry endTime -set 1e-04 system/controlDict
     solver="../../../build/$PRESET/bin/neoPisoFoam"
-    "$solver" > log.neoPisoFoam 2>&1
+    "$solver -executor GPU" > log.neoPisoFoam 2>&1
     popd >/dev/null
 else
     echo "=== Skipping neoPisoFoam smoke test (SKIP_PISO_SMOKETEST set) ==="
@@ -145,7 +145,7 @@ if [[ "$SKIP_PIMPLE_SMOKETEST" != "true" ]]; then
     blockMesh > log.blockMesh 2>&1
     foamDictionary -entry endTime -set 1e-03 system/controlDict
     solver="../../../build/$PRESET/bin/neoPimpleFoam"
-    "$solver" > log.neoPimpleFoam 2>&1
+    "$solver -executor GPU" > log.neoPimpleFoam 2>&1
     popd >/dev/null
 else
     echo "=== Skipping neoPimpleFoam smoke test (SKIP_PIMPLE_SMOKETEST set) ==="
