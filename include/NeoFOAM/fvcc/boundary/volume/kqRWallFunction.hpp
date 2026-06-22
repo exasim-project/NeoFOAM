@@ -12,22 +12,14 @@
 namespace NeoN::finiteVolume::cellCentred::volumeBoundary
 {
 
-// Mirrors OpenFOAM's kqRWallFunctionFvPatchField<scalar>
-// (src/TurbulenceModels/turbulenceModels/derivedFvPatchFields/wallFunctions/
-//  kqRWallFunctions/kqRWallFunction/kqRWallFunctionFvPatchField.{H,C}).
-//
-// Upstream the class derives from zeroGradientFvPatchField<Type> and overrides
-// nothing — its own docstring states "It is not a wall-function condition.".
-// We mirror that here: correctBoundaryCondition() applies the same kernel as
-// FixedGradient<scalar> with a zero gradient.
-//
-// Kept as a distinct dispatched class (not a string-level alias of
-// fixedGradient) so OpenFOAM dictionaries authored with `type kqRWallFunction;`
-// flow through the runtime-selection factory unchanged. This also leaves the
-// door open for future wall functions (omegaWallFunction, nutkWallFunction)
-// that *do* need a real wall-distance-based kernel — they can be registered
-// alongside this class and consume BoundaryContext::scalarFieldPtr("nearWallDist")
-// the way NutUSpaldingWallFunction already does.
+/**
+ * @brief Zero-gradient wall BC for turbulent kinetic energy k (and q, R).
+ *
+ * Mirrors OpenFOAM's kqRWallFunctionFvPatchField, which upstream derives from
+ * zeroGradientFvPatchField and explicitly states it is not a wall-function.
+ * Registered under the name @c "kqRWallFunction" so OpenFOAM dictionaries with
+ * that type string work unchanged.
+ */
 class KqRWallFunction : public VolumeBoundaryFactory<scalar>::template Register<KqRWallFunction>
 {
     using Base = VolumeBoundaryFactory<scalar>::template Register<KqRWallFunction>;

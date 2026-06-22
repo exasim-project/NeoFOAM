@@ -9,39 +9,35 @@ FoamFile
 {
     version     2.0;
     format      ascii;
-    class       dictionary;
-    object      controlDict;
+    class       volScalarField;
+    object      nut;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-application     simpleFoam;
+dimensions      [0 2 -1 0 0 0 0];
 
-startFrom       startTime;
+// nut = Cmu * k^2 / epsilon = 0.09 * (9.375e-4)^2 / 8.44e-3 = 9.375e-6
+internalField   uniform 9.375e-6;
 
-startTime       0;
+boundaryField
+{
+    fixedWalls
+    {
+        type            kqRWallFunction;
+        value           $internalField;
+    }
 
-stopAt          endTime;
+    inlet
+    {
+        type            calculated;
+        value           $internalField;
+    }
 
-endTime         1;
-
-deltaT          0.01;
-
-writeControl    runTime;
-
-writeInterval   10000;
-
-purgeWrite      0;
-
-writeFormat     ascii;
-
-writePrecision  16;
-
-writeCompression off;
-
-timeFormat      general;
-
-timePrecision   16;
-
-runTimeModifiable true;
+    outlet
+    {
+        type            calculated;
+        value           $internalField;
+    }
+}
 
 // ************************************************************************* //

@@ -435,10 +435,7 @@ void SpalartAllmarasDDES::validate(
     nnfvcc::VolumeField<scalar>& nut
 )
 {
-    gradOp_.gradTensor(U, gradU_);
-    // Exchange the neighbour-cell gradient into gradU's processor tail (proc patches carry the
-    // processor BC; physical patches are 'calculated' no-ops, so their boundary gradient is kept).
-    gradU_.correctBoundaryConditions();
+    updateGradU(U);
 
     nnfvcc::SurfaceField<scalar> surfNut(
         exec_,
@@ -465,9 +462,7 @@ void SpalartAllmarasDDES::correct(
     RunTime& rt
 )
 {
-    gradOp_.gradTensor(U, gradU_);
-    // Exchange the neighbour-cell gradient into gradU's processor tail (see validate()).
-    gradU_.correctBoundaryConditions();
+    updateGradU(U);
 
     nnfvcc::VolumeField<Vec3> gradNuTilda(
         exec_,
@@ -549,6 +544,14 @@ nnfvcc::SurfaceField<scalar>& SpalartAllmarasDDES::nuEff() { return nuEff_; }
 const nnfvcc::VolumeField<scalar>& SpalartAllmarasDDES::nut() const { return nut_; }
 
 const nnfvcc::VolumeField<Tensor>& SpalartAllmarasDDES::gradU() const { return gradU_; }
+
+void SpalartAllmarasDDES::updateGradU(const nnfvcc::VolumeField<Vec3>& U)
+{
+    gradOp_.gradTensor(U, gradU_);
+    // Exchange the neighbour-cell gradient into gradU's processor tail (proc patches carry the
+    // processor BC; physical patches are 'calculated' no-ops, so their boundary gradient is kept).
+    gradU_.correctBoundaryConditions();
+}
 
 void SpalartAllmarasDDES::initialize(
     const nnfvcc::VolumeField<scalar>& nuTildaInit,

@@ -9,28 +9,26 @@ FoamFile
 {
     version     2.0;
     format      ascii;
-    class       volScalarField;
-    object      omega;
+    class       volVectorField;
+    object      U;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dimensions      [0 0 -1 0 0 0 0];
+dimensions      [0 1 -1 0 0 0 0];
 
-// omega = sqrt(k) / (Cmu^0.25 * L) with L=0.1 m, Cmu=betaStar=0.09
-internalField   uniform 100;
+internalField   uniform (0.5 0.1 0.0);
 
 boundaryField
 {
     fixedWalls
     {
-        type            omegaWallFunction;
-        value           uniform 100;
+        type            noSlip;
     }
 
     inlet
     {
         type            fixedValue;
-        value           uniform 100;
+        value           uniform (0.5 0.1 0.0);
     }
 
     outlet
