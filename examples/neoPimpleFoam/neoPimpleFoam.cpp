@@ -65,10 +65,12 @@ int main(int argc, char* argv[])
         auto& p = nf::constructAndRegister(vectorCollection, rt, ofP, false);
         auto& U = nf::constructAndRegister(vectorCollection, rt, ofU, false);
 
-        // Gauss-Green gradient operator for the explicit deviatoric viscous-stress term.
+        // Gradient operator for the explicit deviatoric viscous-stress term.
         // The full viscous term is div(nuEff*(grad(U) + grad(U)^T)) = laplacian(nuEff,U)
         // + div(nuEff*dev2(T(grad(U)))); the implicit laplacian alone is not sufficient.
-        fvcc::GaussGreenGrad gradOp(rt.exec, rt.nfMesh);
+        // grad(U) and grad(p) honour the configured gradSchemes (e.g. cellLimited).
+        auto gradOp = nf::makeGradOperator(rt.exec, rt.nfMesh, rt.fvSchemesDict, "grad(U)");
+        auto gradPOp = nf::makeGradOperator(rt.exec, rt.nfMesh, rt.fvSchemesDict, "grad(p)");
 
         NeoN::Logging::info("Creating phi");
         auto& phi = nf::constructAndRegister(vectorCollection, rt, ofPhi, false);
@@ -82,7 +84,14 @@ int main(int argc, char* argv[])
         // Hoisted reuse buffer for the 2nd+ outer correctors' current-U velocity gradient,
         // allocated ONCE here and refilled in place via gradTensor(U, localGradU) when needed —
         // so no VolumeField<Tensor> (~nCells*9 scalars) is allocated per outer corrector.
-        auto localGradU = gradOp.gradTensor(U);
+        fvcc::VolumeField<NeoN::Tensor> localGradU(
+            rt.exec,
+            "gradU",
+            rt.nfMesh,
+            fvcc::createCalculatedProcBCs<fvcc::VolumeBoundary<NeoN::Tensor>>(rt.nfMesh)
+        );
+        NeoN::fill(localGradU.internalVector(), NeoN::zero<NeoN::Tensor>());
+        gradOp->gradTensor(U, localGradU, dsl::Coeff {});
 
         // Hoist the surface interpolation once to avoid re-constructing it per inner corrector.
         auto surfInterpol = fvcc::SurfaceInterpolation<NeoN::scalar>(
@@ -145,7 +154,7 @@ int main(int argc, char* argv[])
                 }
                 else
                 {
-                    gradOp.gradTensor(U, localGradU);
+                    gradOp->gradTensor(U, localGradU, dsl::Coeff {});
                     gradUPtr = &localGradU;
                 }
                 const auto& gradU = *gradUPtr;
@@ -234,7 +243,7 @@ int main(int argc, char* argv[])
 
                     nf::reportContinuityError(phi, rt, cumulativeContErr);
 
-                    nf::updateVelocity(hByA, crAU, p, U);
+                    nf::updateVelocity(hByA, crAU, p, U, *gradPOp);
                     U.correctBoundaryConditions();
                 }
 
