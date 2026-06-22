@@ -208,7 +208,9 @@ private:
     // Registration is required so the implicit ddt term (oldTime lookup) and rotateOldTimes() can
     // allocate and rotate nuTilda's old-time buffers.
     static nnfvcc::VolumeField<scalar>& registerNuTilda(
-        NeoN::Database& db, const NeoN::Executor& exec, const NeoN::UnstructuredMesh& mesh
+        NeoN::Database& db,
+        const NeoN::Executor& exec,
+        const NeoN::UnstructuredMesh& mesh
     );
 
     NeoN::Executor exec_;

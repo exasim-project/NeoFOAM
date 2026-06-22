@@ -399,7 +399,9 @@ SpalartAllmarasDDES::SpalartAllmarasDDES(
 }
 
 nnfvcc::VolumeField<scalar>& SpalartAllmarasDDES::registerNuTilda(
-    NeoN::Database& db, const NeoN::Executor& exec, const NeoN::UnstructuredMesh& mesh
+    NeoN::Database& db,
+    const NeoN::Executor& exec,
+    const NeoN::UnstructuredMesh& mesh
 )
 {
     auto& vectorCollection = fvcc::VectorCollection::instance(db, "VectorCollection");
@@ -407,7 +409,10 @@ nnfvcc::VolumeField<scalar>& SpalartAllmarasDDES::registerNuTilda(
     // collection and stamps the registration key. The registered copy (returned by reference) is
     // the one ddt/rotateOldTimes operate on; initialize() overwrites its data with the disk field.
     nnfvcc::VolumeField<scalar> seed(
-        exec, "nuTilda", mesh, fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh)
+        exec,
+        "nuTilda",
+        mesh,
+        fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh)
     );
     return vectorCollection.registerVector<nnfvcc::VolumeField<scalar>>(
         fvcc::CreateFromExistingVector<nnfvcc::VolumeField<scalar>> {
