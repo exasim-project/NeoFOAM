@@ -140,6 +140,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a51802407e31708f1d17d7f5a82dde61f" id="r_a51802407e31708f1d17d7f5a82dde61f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1KOmegaSST.html#a51802407e31708f1d17d7f5a82dde61f">calcDiffusivities</a> (const nnfvcc::VolumeField&lt; <a class="el" href="pressureVelocityCoupling_8hpp.html#acc912e7a5a44b028589fda3fd76ba7ea">scalar</a> &gt; &amp;nut)</td></tr>
 <tr class="memdesc:a51802407e31708f1d17d7f5a82dde61f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Recompute surface diffusivity fields from current nut and F1_.  <br /></td></tr>
 <tr class="separator:a51802407e31708f1d17d7f5a82dde61f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a24948125c13ba9f2918a3c4de32853d6" id="r_a24948125c13ba9f2918a3c4de32853d6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1KOmegaSST.html#a24948125c13ba9f2918a3c4de32853d6">initNearWallDistBoundary</a> ()</td></tr>
+<tr class="memdesc:a24948125c13ba9f2918a3c4de32853d6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Populate nearWallDist_'s boundary face values from wallDist_.  <br /></td></tr>
+<tr class="separator:a24948125c13ba9f2918a3c4de32853d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>NeoFOAM-level wrapper for the k-omega SST turbulence model (Menter 1993/2003). </p>
@@ -509,6 +512,26 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Velocity gradient tensor (updated each <a class="el" href="classNeoFOAM_1_1KOmegaSST.html#a700c93859285ffe8fced126b0d3006f5" title="Full turbulence update: solve k and omega PDEs, update nut.">correct()</a> call) </p>
+
+</div>
+</div>
+<a id="a24948125c13ba9f2918a3c4de32853d6" name="a24948125c13ba9f2918a3c4de32853d6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a24948125c13ba9f2918a3c4de32853d6">&#9670;&#160;</a></span>initNearWallDistBoundary()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void NeoFOAM::KOmegaSST::initNearWallDistBoundary </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Populate nearWallDist_'s boundary face values from wallDist_. </p>
+<p>Copies each wall face's adjacent-cell internal value. Extracted into a member function (rather than inlined in the constructor) because CUDA forbids extended <b>host</b> <b>device</b> lambdas inside constructors. </p>
 
 </div>
 </div>

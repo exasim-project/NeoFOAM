@@ -48,7 +48,9 @@ void \mbox{\hyperlink{classNeoFOAM_1_1KEpsilon_a34035f6d3333e85a487eb7f0a6830a4d
 void \mbox{\hyperlink{classNeoFOAM_1_1KEpsilon_a87cacbac58e89ed5fae3e2ac586257ff}{correct\+Nut\+Internal}} (const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&k, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&epsilon, nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&nut) const
 \begin{DoxyCompactList}\small\item\em Update ν\+\_\+t internal vector from new k, ε\+: ν\+\_\+t = Cμ·k²/ε. \end{DoxyCompactList}\item 
 void \mbox{\hyperlink{classNeoFOAM_1_1KEpsilon_a5c2ac35e716fe181f3092e68e63d7c0c}{calc\+Diffusivities}} (const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&nut)
-\begin{DoxyCompactList}\small\item\em Recompute surface diffusivity fields from current ν\+\_\+t. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{DoxyCompactList}\small\item\em Recompute surface diffusivity fields from current ν\+\_\+t. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1KEpsilon_a07fe92a470e336250076b3fef8646034}{init\+Near\+Wall\+Dist\+Boundary}} ()
+\begin{DoxyCompactList}\small\item\em Populate near\+Wall\+Dist\+\_\+\textquotesingle{}s boundary face values from wall\+Dist\+\_\+. \end{DoxyCompactList}\end{DoxyCompactItemize}
 
 
 \doxysubsection{Detailed Description}
@@ -197,7 +199,17 @@ Definition at line \mbox{\hyperlink{kEpsilon_8hpp_source_l00108}{108}} of file \
 
 Velocity gradient tensor (updated each \doxylink{classNeoFOAM_1_1KEpsilon_ad020d2f72910e94b9ee5a42dbf3e86fd}{correct()} call) 
 
-\Hypertarget{classNeoFOAM_1_1KEpsilon_ae797e81021694a7be2ce54fc1b3ecc17}\label{classNeoFOAM_1_1KEpsilon_ae797e81021694a7be2ce54fc1b3ecc17} 
+\Hypertarget{classNeoFOAM_1_1KEpsilon_a07fe92a470e336250076b3fef8646034}\label{classNeoFOAM_1_1KEpsilon_a07fe92a470e336250076b3fef8646034} 
+\index{NeoFOAM::KEpsilon@{NeoFOAM::KEpsilon}!initNearWallDistBoundary@{initNearWallDistBoundary}}
+\index{initNearWallDistBoundary@{initNearWallDistBoundary}!NeoFOAM::KEpsilon@{NeoFOAM::KEpsilon}}
+\doxysubsubsection{\texorpdfstring{initNearWallDistBoundary()}{initNearWallDistBoundary()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::\+KEpsilon\+::init\+Near\+Wall\+Dist\+Boundary (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+Populate near\+Wall\+Dist\+\_\+\textquotesingle{}s boundary face values from wall\+Dist\+\_\+. 
+
+Copies each wall face\textquotesingle{}s adjacent-\/cell internal value. Extracted into a member function (rather than inlined in the constructor) because CUDA forbids extended {\bfseries{host}} {\bfseries{device}} lambdas inside constructors. \Hypertarget{classNeoFOAM_1_1KEpsilon_ae797e81021694a7be2ce54fc1b3ecc17}\label{classNeoFOAM_1_1KEpsilon_ae797e81021694a7be2ce54fc1b3ecc17} 
 \index{NeoFOAM::KEpsilon@{NeoFOAM::KEpsilon}!nuEff@{nuEff}}
 \index{nuEff@{nuEff}!NeoFOAM::KEpsilon@{NeoFOAM::KEpsilon}}
 \doxysubsubsection{\texorpdfstring{nuEff()}{nuEff()}}
