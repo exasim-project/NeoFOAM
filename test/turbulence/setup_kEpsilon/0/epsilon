@@ -2,52 +2,41 @@
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
 |  \\    /   O peration     |                                                 |
-|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|   \\  /    A nd           |                                                 |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
 FoamFile
 {
     version     2.0;
     format      ascii;
-    class       dictionary;
-    object      controlDict;
+    class       volScalarField;
+    object      epsilon;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-application     laplacianFoam;
+dimensions      [0 2 -3 0 0 0 0];
 
-startFrom       startTime;
+// epsilon = Cmu * k^2 / nut = 0.09 * (9.375e-4)^2 / 9.375e-6 = 8.44e-3 m^2/s^3
+internalField   uniform 8.44e-3;
 
-startTime       0;
-
-stopAt          endTime;
-
-endTime         1;
-
-deltaT          1;
-
-writeControl    timeStep;
-
-writeInterval   1;
-
-writeFormat     ascii;
-
-writePrecision  16;
-
-writeCompression off;
-
-timeFormat      general;
-
-timePrecision   16;
-
-runTimeModifiable true;
-
-profiling
+boundaryField
 {
-    active      true;
-    cpuInfo     true;
-    memInfo     true;
-    sysInfo     true;
+    fixedWalls
+    {
+        type            fixedValue;
+        value           uniform 8.44e-3;
+    }
+
+    inlet
+    {
+        type            fixedValue;
+        value           uniform 8.44e-3;
+    }
+
+    outlet
+    {
+        type            zeroGradient;
+    }
 }
 
 // ************************************************************************* //
