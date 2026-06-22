@@ -23,8 +23,9 @@ TurbulenceModel::create(RunTime& rt, const nnfvcc::VolumeField<NeoN::scalar>& nu
     const Foam::word simulationType(turbProps.get<Foam::word>("simulationType"));
 
     const std::string modelKey =
-        (simulationType == "laminar")
-            ? "laminar"
+        (simulationType == "laminar") ? "laminar"
+        : (simulationType == "RAS")
+            ? std::string(turbProps.subDict("RAS").get<Foam::word>("RASModel"))
             : std::string(turbProps.subDict("LES").get<Foam::word>("LESModel"));
 
     using Factory = NeoN::RuntimeSelectionFactory<

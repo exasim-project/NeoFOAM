@@ -23,6 +23,8 @@ target_sources(
           "turbulenceModels/turbulenceModel.cpp"
           "turbulenceModels/laminar.cpp"
           "turbulenceModels/spalartAllmarasDDES.cpp"
+          "turbulenceModels/kOmegaSST.cpp"
+          "turbulenceModels/kEpsilon.cpp"
           "fvcc/operators/viscousStressOperator.cpp"
           "functionObjects/functionObjectIO.cpp"
           "functionObjects/forces.cpp"
