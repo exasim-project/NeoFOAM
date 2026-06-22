@@ -16,341 +16,342 @@
 \DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00012}00012\ }
 \DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00013}00013\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{runTime_8hpp}{NeoFOAM/datastructures/runTime.hpp}}"{}}}
 \DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00014}00014\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{fvSolution_8hpp}{NeoFOAM/compatibility/fvSolution.hpp}}"{}}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00015}00015\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00016}00016\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceNeoN_1_1dsl}{dsl}}\ =\ \mbox{\hyperlink{namespaceNeoN_1_1dsl}{NeoN::dsl}};}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00017}00017\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00018}00018\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceNeoFOAM}{NeoFOAM}}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00019}00019\ \{}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00020}00020\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00021}00021\ \textcolor{comment}{/*@brief\ extends\ expression\ by\ giving\ access\ to\ assembled\ matrix}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00022}00022\ \textcolor{comment}{\ *\ @note\ used\ in\ neoIcoFOAM\ directly\ instead\ of\ dsl::expression}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00023}00023\ \textcolor{comment}{\ *\ TODO:\ implement\ flag\ if\ matrix\ is\ assembled\ or\ not\ -\/>\ if\ not\ assembled\ call\ assemble}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00024}00024\ \textcolor{comment}{\ *\ for\ dependent\ operations\ like\ discrete\ momentum\ fields}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00025}00025\ \textcolor{comment}{\ *\ needs\ storage\ for\ assembled\ matrix?\ and\ whether\ update\ is\ needed\ like\ for\ rAU\ and\ HbyA}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00026}00026\ \textcolor{comment}{\ */}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00027}00027\ \textcolor{keyword}{template}<}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00028}00028\ \ \ \ \ \textcolor{keyword}{typename}\ ValueType,}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00029}00029\ \ \ \ \ \textcolor{keyword}{typename}\ MatrixValueType\ =\ NeoN::scalar,}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00030}00030\ \ \ \ \ \textcolor{keyword}{typename}\ IndexType\ =\ NeoN::localIdx>}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00031}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver}{00031}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classNeoFOAM_1_1PDESolver}{PDESolver}}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00032}00032\ \{}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00033}00033\ \ \ \ \ \textcolor{keyword}{using\ }VolumeField\ =\ NeoN::finiteVolume::cellCentred::VolumeField<ValueType>;}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00034}00034\ \ \ \ \ \textcolor{comment}{//\ Matrix\ coefficients\ use\ MatrixValueType\ (scalar\ by\ default,\ giving\ the\ segregated}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00035}00035\ \ \ \ \ \textcolor{comment}{//\ vector-\/solve\ form\ for\ Vec3\ fields);\ the\ rhs/solution\ use\ the\ field's\ ValueType.}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00036}00036\ \ \ \ \ \textcolor{comment}{//\ TODO:\ future\ work\ selects\ MatrixValueType\ ==\ ValueType\ (the\ coupled\ Vec3\ matrix)}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00037}00037\ \ \ \ \ \textcolor{comment}{//\ based\ on\ the\ presence\ of\ boundary\ conditions\ that\ require\ the\ full\ block-\/coupled\ form.}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00038}00038\ \ \ \ \ \textcolor{keyword}{using\ }LinearSystem\ =\ NeoN::la::LinearSystem<MatrixValueType,\ ValueType>;}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00039}00039\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00040}00040\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00041}00041\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00042}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_ac58eba37b07d5663ada204a9f8e9a2e9}{00042}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_ac58eba37b07d5663ada204a9f8e9a2e9}{PDESolver}}(dsl::Expression<ValueType>\ expr,\ VolumeField\&\ psi,\ \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{RunTime}}\&\ runTime)}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00043}00043\ \ \ \ \ \ \ \ \ :\ psi\_(psi)}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00044}00044\ \ \ \ \ \ \ \ \ ,\ expr\_(expr)}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00045}00045\ \ \ \ \ \ \ \ \ ,\ runTime\_(runTime)}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00046}00046\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00047}00047\ \ \ \ \ \ \ \ \ ,\ ls\_(\mbox{\hyperlink{namespaceNeoFOAM_ae3448b9356abfd01a14f812c7acffc7c}{readOrCreate}}<LinearSystem>(}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00048}00048\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ runTime,}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00049}00049\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}linearSystem"{}}\ +\ psi.name,}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00050}00050\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ FIXME\ find\ a\ proper\ place}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00051}00051\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\&psi,\ \&runTime]()}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00052}00052\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00053}00053\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (runTime.fvSolutionDict.subDict(\textcolor{stringliteral}{"{}solvers"{}})}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00054}00054\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .subDict(psi.name)}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00055}00055\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .template\ get<std::string>(\textcolor{stringliteral}{"{}assemblyStrategy"{}},\ \textcolor{stringliteral}{"{}face-\/based"{}})}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00056}00056\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ==\ \textcolor{stringliteral}{"{}cell-\/based"{}})}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00057}00057\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00058}00058\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ cellIterator\ =\ std::make\_shared<NeoN::la::CellBasedIterator>();}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00059}00059\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NeoN::la::createEmptyLinearSystem<MatrixValueType,\ ValueType>(}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00060}00060\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ psi.mesh(),}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00061}00061\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cellIterator}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00062}00062\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00063}00063\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00064}00064\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00065}00065\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00066}00066\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NeoN::la::createEmptyLinearSystem<MatrixValueType,\ ValueType>(psi.mesh(}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00067}00067\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ));}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00068}00068\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00069}00069\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00070}00070\ \ \ \ \ \ \ \ \ \ \ ))}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00071}00071\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00072}00072\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ TODO\ run\ NeoN\ expr\_\ =\ NeoN::dsl::optimize(expr);\ if\ optimize\ is\ set\ in\ fvSolution}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00073}00073\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ NOTE\ OpenFOAM\ tokenizes\ a\ switch\ like\ 'optimize\ true;'\ as\ a\ word,\ so\ it\ is\ stored}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00074}00074\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ as\ a\ std::string\ in\ the\ NeoN\ dictionary;\ reading\ it\ as\ bool\ throws\ bad\_any\_cast.}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00075}00075\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ optimize\ =}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00076}00076\ \ \ \ \ \ \ \ \ \ \ \ \ runTime\_.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_aa1b497275ede724281d9a6a8540e5080}{fvSolutionDict}}.subDict(\textcolor{stringliteral}{"{}solvers"{}}).subDict(psi\_.name).template\ get<std::string>(}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00077}00077\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}optimize"{}},}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00078}00078\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}false"{}}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00079}00079\ \ \ \ \ \ \ \ \ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00080}00080\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (optimize\ ==\ \textcolor{stringliteral}{"{}true"{}}\ ||\ optimize\ ==\ \textcolor{stringliteral}{"{}yes"{}}\ ||\ optimize\ ==\ \textcolor{stringliteral}{"{}on"{}}\ ||\ optimize\ ==\ \textcolor{stringliteral}{"{}1"{}})}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00081}00081\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00082}00082\ \ \ \ \ \ \ \ \ \ \ \ \ expr\_\ =\ NeoN::dsl::optimize(expr\_);}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00083}00083\ \ \ \ \ \ \ \ \ \};}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00084}00084\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00085}00085\ \ \ \ \ \ \ \ \ expr\_.read(runTime\_.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_a3e0ee1aef295de02e8758811e0099923}{fvSchemesDict}});}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00086}00086\ \ \ \ \ \};}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00087}00087\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00088}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a52a3890fadd78797f6a72878edca5272}{00088}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a52a3890fadd78797f6a72878edca5272}{PDESolver}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver}{PDESolver}}\&\ expr)}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00089}00089\ \ \ \ \ \ \ \ \ :\ psi\_(expr.psi\_)}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00090}00090\ \ \ \ \ \ \ \ \ ,\ expr\_(expr.expr\_)}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00091}00091\ \ \ \ \ \ \ \ \ ,\ runTime\_(expr.runTime\_)}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00092}00092\ \ \ \ \ \ \ \ \ ,\ ls\_(expr.ls\_)\ \{\};}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00093}00093\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00094}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_aba46a7bfc9046b90329791854c06cf58}{00094}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_aba46a7bfc9046b90329791854c06cf58}{\string~PDESolver}}()\ =\ \textcolor{keywordflow}{default};}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00095}00095\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00096}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a9442eb0b96e8eb5f2127d1be711345ae}{00096}}\ \ \ \ \ VolumeField\&\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a9442eb0b96e8eb5f2127d1be711345ae}{getField}}()\ \{\ \textcolor{keywordflow}{return}\ this-\/>psi\_;\ \}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00097}00097\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00098}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_af8477ea2262ae6b89ba19fe8d03fd551}{00098}}\ \ \ \ \ \textcolor{keyword}{const}\ VolumeField\&\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_af8477ea2262ae6b89ba19fe8d03fd551}{getField}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ this-\/>psi\_;\ \}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00099}00099\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00100}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a9f20d87932308426ad7f1e8ac3c48385}{00100}}\ \ \ \ \ [[nodiscard]]\ LinearSystem\&\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a9f20d87932308426ad7f1e8ac3c48385}{linearSystem}}()\ \{\ \textcolor{keywordflow}{return}\ ls\_;\ \}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00101}00101\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00102}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a8df9f17bc9064319e747c9412842335b}{00102}}\ \ \ \ \ [[nodiscard]]\ \textcolor{keyword}{const}\ LinearSystem\&\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a8df9f17bc9064319e747c9412842335b}{linearSystem}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ ls\_;\ \}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00103}00103\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00104}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a0be0db3a3113fe9cc11f034221c29538}{00104}}\ \ \ \ \ NeoN::dsl::Expression<ValueType>\&\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a0be0db3a3113fe9cc11f034221c29538}{expression}}()\ \{\ \textcolor{keywordflow}{return}\ expr\_;\ \}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00105}00105\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00106}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_acb2d73ff3e20e7309f84400b13b9b53f}{00106}}\ \ \ \ \ \textcolor{keyword}{const}\ NeoN::Executor\&\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_acb2d73ff3e20e7309f84400b13b9b53f}{exec}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ ls\_.exec();\ \}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00107}00107\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00015}00015\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{fvSchemes_8hpp}{NeoFOAM/compatibility/fvSchemes.hpp}}"{}}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00016}00016\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00017}00017\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceNeoN_1_1dsl}{dsl}}\ =\ \mbox{\hyperlink{namespaceNeoN_1_1dsl}{NeoN::dsl}};}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00018}00018\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00019}00019\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceNeoFOAM}{NeoFOAM}}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00020}00020\ \{}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00021}00021\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00022}00022\ \textcolor{comment}{/*@brief\ extends\ expression\ by\ giving\ access\ to\ assembled\ matrix}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00023}00023\ \textcolor{comment}{\ *\ @note\ used\ in\ neoIcoFOAM\ directly\ instead\ of\ dsl::expression}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00024}00024\ \textcolor{comment}{\ *\ TODO:\ implement\ flag\ if\ matrix\ is\ assembled\ or\ not\ -\/>\ if\ not\ assembled\ call\ assemble}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00025}00025\ \textcolor{comment}{\ *\ for\ dependent\ operations\ like\ discrete\ momentum\ fields}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00026}00026\ \textcolor{comment}{\ *\ needs\ storage\ for\ assembled\ matrix?\ and\ whether\ update\ is\ needed\ like\ for\ rAU\ and\ HbyA}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00027}00027\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00028}00028\ \textcolor{keyword}{template}<}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00029}00029\ \ \ \ \ \textcolor{keyword}{typename}\ ValueType,}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00030}00030\ \ \ \ \ \textcolor{keyword}{typename}\ MatrixValueType\ =\ NeoN::scalar,}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00031}00031\ \ \ \ \ \textcolor{keyword}{typename}\ IndexType\ =\ NeoN::localIdx>}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00032}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver}{00032}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classNeoFOAM_1_1PDESolver}{PDESolver}}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00033}00033\ \{}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00034}00034\ \ \ \ \ \textcolor{keyword}{using\ }VolumeField\ =\ NeoN::finiteVolume::cellCentred::VolumeField<ValueType>;}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00035}00035\ \ \ \ \ \textcolor{comment}{//\ Matrix\ coefficients\ use\ MatrixValueType\ (scalar\ by\ default,\ giving\ the\ segregated}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00036}00036\ \ \ \ \ \textcolor{comment}{//\ vector-\/solve\ form\ for\ Vec3\ fields);\ the\ rhs/solution\ use\ the\ field's\ ValueType.}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00037}00037\ \ \ \ \ \textcolor{comment}{//\ TODO:\ future\ work\ selects\ MatrixValueType\ ==\ ValueType\ (the\ coupled\ Vec3\ matrix)}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00038}00038\ \ \ \ \ \textcolor{comment}{//\ based\ on\ the\ presence\ of\ boundary\ conditions\ that\ require\ the\ full\ block-\/coupled\ form.}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00039}00039\ \ \ \ \ \textcolor{keyword}{using\ }LinearSystem\ =\ NeoN::la::LinearSystem<MatrixValueType,\ ValueType>;}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00040}00040\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00041}00041\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00042}00042\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00043}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_ac58eba37b07d5663ada204a9f8e9a2e9}{00043}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_ac58eba37b07d5663ada204a9f8e9a2e9}{PDESolver}}(dsl::Expression<ValueType>\ expr,\ VolumeField\&\ psi,\ \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{RunTime}}\&\ runTime)}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00044}00044\ \ \ \ \ \ \ \ \ :\ psi\_(psi)}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00045}00045\ \ \ \ \ \ \ \ \ ,\ expr\_(expr)}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00046}00046\ \ \ \ \ \ \ \ \ ,\ runTime\_(runTime)}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00047}00047\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00048}00048\ \ \ \ \ \ \ \ \ ,\ ls\_(\mbox{\hyperlink{namespaceNeoFOAM_ae3448b9356abfd01a14f812c7acffc7c}{readOrCreate}}<LinearSystem>(}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00049}00049\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ runTime,}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00050}00050\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}linearSystem"{}}\ +\ psi.name,}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00051}00051\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ FIXME\ find\ a\ proper\ place}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00052}00052\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [\&psi,\ \&runTime]()}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00053}00053\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00054}00054\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (runTime.fvSolutionDict.subDict(\textcolor{stringliteral}{"{}solvers"{}})}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00055}00055\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .subDict(psi.name)}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00056}00056\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .template\ get<std::string>(\textcolor{stringliteral}{"{}assemblyStrategy"{}},\ \textcolor{stringliteral}{"{}face-\/based"{}})}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00057}00057\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ==\ \textcolor{stringliteral}{"{}cell-\/based"{}})}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00058}00058\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00059}00059\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ cellIterator\ =\ std::make\_shared<NeoN::la::CellBasedIterator>();}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00060}00060\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NeoN::la::createEmptyLinearSystem<MatrixValueType,\ ValueType>(}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00061}00061\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ psi.mesh(),}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00062}00062\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cellIterator}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00063}00063\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00064}00064\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00065}00065\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00066}00066\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00067}00067\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NeoN::la::createEmptyLinearSystem<MatrixValueType,\ ValueType>(psi.mesh(}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00068}00068\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ));}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00069}00069\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00070}00070\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00071}00071\ \ \ \ \ \ \ \ \ \ \ ))}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00072}00072\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00073}00073\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ TODO\ run\ NeoN\ expr\_\ =\ NeoN::dsl::optimize(expr);\ if\ optimize\ is\ set\ in\ fvSolution}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00074}00074\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ NOTE\ OpenFOAM\ tokenizes\ a\ switch\ like\ 'optimize\ true;'\ as\ a\ word,\ so\ it\ is\ stored}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00075}00075\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ as\ a\ std::string\ in\ the\ NeoN\ dictionary;\ reading\ it\ as\ bool\ throws\ bad\_any\_cast.}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00076}00076\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ optimize\ =}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00077}00077\ \ \ \ \ \ \ \ \ \ \ \ \ runTime\_.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_aa1b497275ede724281d9a6a8540e5080}{fvSolutionDict}}.subDict(\textcolor{stringliteral}{"{}solvers"{}}).subDict(psi\_.name).template\ get<std::string>(}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00078}00078\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}optimize"{}},}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00079}00079\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}false"{}}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00080}00080\ \ \ \ \ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00081}00081\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (optimize\ ==\ \textcolor{stringliteral}{"{}true"{}}\ ||\ optimize\ ==\ \textcolor{stringliteral}{"{}yes"{}}\ ||\ optimize\ ==\ \textcolor{stringliteral}{"{}on"{}}\ ||\ optimize\ ==\ \textcolor{stringliteral}{"{}1"{}})}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00082}00082\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00083}00083\ \ \ \ \ \ \ \ \ \ \ \ \ expr\_\ =\ NeoN::dsl::optimize(expr\_);}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00084}00084\ \ \ \ \ \ \ \ \ \};}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00085}00085\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00086}00086\ \ \ \ \ \ \ \ \ expr\_.read(\mbox{\hyperlink{namespaceNeoFOAM_a3b70b9ee03711e99853bb30615bbccf7}{NeoFOAM::expandSchemeDefaults}}(runTime\_.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_a3e0ee1aef295de02e8758811e0099923}{fvSchemesDict}},\ expr\_,\ psi\_.name));}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00087}00087\ \ \ \ \ \};}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00088}00088\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00089}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a52a3890fadd78797f6a72878edca5272}{00089}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a52a3890fadd78797f6a72878edca5272}{PDESolver}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver}{PDESolver}}\&\ expr)}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00090}00090\ \ \ \ \ \ \ \ \ :\ psi\_(expr.psi\_)}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00091}00091\ \ \ \ \ \ \ \ \ ,\ expr\_(expr.expr\_)}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00092}00092\ \ \ \ \ \ \ \ \ ,\ runTime\_(expr.runTime\_)}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00093}00093\ \ \ \ \ \ \ \ \ ,\ ls\_(expr.ls\_)\ \{\};}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00094}00094\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00095}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_aba46a7bfc9046b90329791854c06cf58}{00095}}\ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_aba46a7bfc9046b90329791854c06cf58}{\string~PDESolver}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00096}00096\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00097}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a9442eb0b96e8eb5f2127d1be711345ae}{00097}}\ \ \ \ \ VolumeField\&\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a9442eb0b96e8eb5f2127d1be711345ae}{getField}}()\ \{\ \textcolor{keywordflow}{return}\ this-\/>psi\_;\ \}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00098}00098\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00099}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_af8477ea2262ae6b89ba19fe8d03fd551}{00099}}\ \ \ \ \ \textcolor{keyword}{const}\ VolumeField\&\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_af8477ea2262ae6b89ba19fe8d03fd551}{getField}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ this-\/>psi\_;\ \}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00100}00100\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00101}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a9f20d87932308426ad7f1e8ac3c48385}{00101}}\ \ \ \ \ [[nodiscard]]\ LinearSystem\&\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a9f20d87932308426ad7f1e8ac3c48385}{linearSystem}}()\ \{\ \textcolor{keywordflow}{return}\ ls\_;\ \}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00102}00102\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00103}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a8df9f17bc9064319e747c9412842335b}{00103}}\ \ \ \ \ [[nodiscard]]\ \textcolor{keyword}{const}\ LinearSystem\&\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a8df9f17bc9064319e747c9412842335b}{linearSystem}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ ls\_;\ \}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00104}00104\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00105}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a0be0db3a3113fe9cc11f034221c29538}{00105}}\ \ \ \ \ NeoN::dsl::Expression<ValueType>\&\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a0be0db3a3113fe9cc11f034221c29538}{expression}}()\ \{\ \textcolor{keywordflow}{return}\ expr\_;\ \}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00106}00106\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00107}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_acb2d73ff3e20e7309f84400b13b9b53f}{00107}}\ \ \ \ \ \textcolor{keyword}{const}\ NeoN::Executor\&\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_acb2d73ff3e20e7309f84400b13b9b53f}{exec}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ ls\_.exec();\ \}}
 \DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00108}00108\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00109}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a577b2534bdc16547869ed719bd03d879}{00109}}\ \ \ \ \ NeoN::finiteVolume::cellCentred::DdtScheme\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a577b2534bdc16547869ed719bd03d879}{ddtScheme}}()\textcolor{keyword}{\ const}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00110}00110\ \textcolor{keyword}{\ \ \ \ }\{}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00111}00111\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ op\ :\ expr\_.temporalOperators())}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00112}00112\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00113}00113\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ s\ =\ op.ddtScheme();}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00114}00114\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (s\ !=\ NeoN::finiteVolume::cellCentred::DdtScheme::None)}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00115}00115\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00116}00116\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ s;}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00117}00117\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00118}00118\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00119}00119\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NeoN::finiteVolume::cellCentred::DdtScheme::None;}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00120}00120\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00121}00121\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00122}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a3db786d08d6d3d64a682094fea34ea82}{00122}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a3db786d08d6d3d64a682094fea34ea82}{setReference}}(NeoN::localIdx\ pRefCell,\ NeoN::scalar\ pRefValue)}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00123}00123\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00124}00124\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Accept\ the\ call\ in\ serial\ (MPI\ not\ initialised\ —\ mpiRank\ is\ the}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00125}00125\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ sentinel\ -\/1,\ which\ would\ compare\ unequal\ to\ 0\ if\ cast\ to\ size\_t)}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00126}00126\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ and\ on\ rank\ 0\ in\ parallel.\ SetReference::operator()\ further\ guards}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00127}00127\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ matrix\ mutation\ against\ non-\/rank-\/0\ in\ initialised\ MPI.}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00128}00128\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ mpiEnv\ =\ runTime\_.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_ad5773d54934f9c502a84a00e4e2248fd}{mpiEnvironment}};}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00129}00129\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!mpiEnv.isInitialized()\ ||\ mpiEnv.rank()\ ==\ 0)}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00130}00130\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00131}00131\ \ \ \ \ \ \ \ \ \ \ \ \ needReference\_\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00132}00132\ \ \ \ \ \ \ \ \ \ \ \ \ pRefCell\_\ =\ pRefCell;}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00133}00133\ \ \ \ \ \ \ \ \ \ \ \ \ pRefValue\_\ =\ pRefValue;}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00134}00134\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00135}00135\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00136}00136\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00138}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a115b62e9ee4225fdf24173d7bb6b009e}{00138}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a115b62e9ee4225fdf24173d7bb6b009e}{setFinalIter}}(\textcolor{keywordtype}{bool}\ finalIter)\ \{\ finalIter\_\ =\ finalIter;\ \}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00139}00139\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00141}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a428ead04185bd650a91cd4ff3c573a24}{00141}}\ \ \ \ \ LinearSystem\&\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a428ead04185bd650a91cd4ff3c573a24}{assemble}}()}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00142}00142\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00143}00143\ \ \ \ \ \ \ \ \ ls\_.reset();}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00144}00144\ \ \ \ \ \ \ \ \ expr\_.assemble(runTime\_.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_a43ea3a95d27b0e78910e30e6cd8796c7}{t}},\ runTime\_.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_a6a3e375c6054e387635ba04bdfe76c6d}{dt}},\ ls\_,\ psi\_.mesh());}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00145}00145\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ls\_;}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00146}00146\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00147}00147\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00153}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a7456cb2e7942cbbc3f04c1c664eb09f4}{00153}}\ \ \ \ \ LinearSystem\&\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a7456cb2e7942cbbc3f04c1c664eb09f4}{assembleAndRelax}}()}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00154}00154\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00155}00155\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a428ead04185bd650a91cd4ff3c573a24}{assemble}}();}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00156}00156\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a5bf63a2b300465377c937bda5d52f5f5}{relaxOwnedLs}}();}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00157}00157\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ls\_;}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00158}00158\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00159}00159\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00167}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_ad47450a4caf56d16843a3e70481eee0b}{00167}}\ \ \ \ \ LinearSystem\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_ad47450a4caf56d16843a3e70481eee0b}{assemble}}(dsl::SpatialOperator<NeoN::Vec3>\&\&\ rhs)}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00168}00168\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00169}00169\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ rhsExpr\ =\ dsl::Expression<ValueType>(-\/1.0\ *\ rhs);}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00170}00170\ \ \ \ \ \ \ \ \ rhsExpr.read(runTime\_.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_a3e0ee1aef295de02e8758811e0099923}{fvSchemesDict}});}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00171}00171\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ ls\ =\ LinearSystem(\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a428ead04185bd650a91cd4ff3c573a24}{assemble}}());}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00172}00172\ \ \ \ \ \ \ \ \ rhsExpr.assembleExplicitSource(ls,\ psi\_.mesh());}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00173}00173\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00174}00174\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ls;}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00175}00175\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00176}00176\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00177}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_acbca826c19c4aa6b697c7edfaf37a345}{00177}}\ \ \ \ \ NeoN::la::SolverStats\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_acbca826c19c4aa6b697c7edfaf37a345}{solve}}()}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00178}00178\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00179}00179\ \ \ \ \ \ \ \ \ ls\_.reset();}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00180}00180\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a622965ca71ef93753b57325cdc38aa37}{solveImpl}}(expr\_,\ ls\_);}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00181}00181\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00182}00182\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00189}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a48b43b9781b885bcb67be4b7c3144689}{00189}}\ \ \ \ \ NeoN::la::SolverStats\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a48b43b9781b885bcb67be4b7c3144689}{solve}}(dsl::SpatialOperator<NeoN::Vec3>\&\&\ rhs)}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00190}00190\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00191}00191\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Assemble\ and\ relax\ the\ owned\ ls\_\ so\ computeRAUandHByA\ reads\ the\ relaxed\ diagonal.}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00192}00192\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Apply\ -\/grad\ p\ to\ ls\_.rhs()\ in\ place\ (avoids\ copying\ the\ matrix),\ snapshot\ the\ rhs}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00193}00193\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ beforehand\ and\ restore\ it\ after\ solve\ so\ ls\_\ retains\ the\ H-\/system\ for\ computeRAUandHByA.}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00194}00194\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a428ead04185bd650a91cd4ff3c573a24}{assemble}}();}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00195}00195\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a5bf63a2b300465377c937bda5d52f5f5}{relaxOwnedLs}}();}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00196}00196\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00197}00197\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ rhsExpr\ =\ dsl::Expression<ValueType>(-\/1.0\ *\ rhs);}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00198}00198\ \ \ \ \ \ \ \ \ rhsExpr.read(runTime\_.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_a3e0ee1aef295de02e8758811e0099923}{fvSchemesDict}});}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00199}00199\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ savedRhs\ =\ NeoN::Vector<ValueType>(ls\_.rhs());}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00200}00200\ \ \ \ \ \ \ \ \ rhsExpr.assembleExplicitSource(ls\_,\ psi\_.mesh());}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00201}00201\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00202}00202\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ solverDict\ =\ runTime\_.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_aa1b497275ede724281d9a6a8540e5080}{fvSolutionDict}}.subDict(\textcolor{stringliteral}{"{}solvers"{}});}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00203}00203\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\ finalKey\ =\ psi\_.name\ +\ \textcolor{stringliteral}{"{}Final"{}};}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00204}00204\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ fvSolution\ =\ (finalIter\_\ \&\&\ solverDict.isDict(finalKey))}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00205}00205\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ solverDict.subDict(finalKey)}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00206}00206\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ solverDict.subDict(psi\_.name);}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00207}00207\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Drop\ NeoFOAM-\/only\ keys\ before\ handing\ the\ dict\ to\ NeoN/Ginkgo,\ whose}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00208}00208\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ config\ parser\ rejects\ unknown\ keys\ (e.g.\ assemblyStrategy,\ optimize).}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00209}00209\ \ \ \ \ \ \ \ \ stripNeoFOAMKeys(fvSolution);}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00210}00210\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ solver\ =\ NeoN::la::Solver(psi\_.exec(),\ fvSolution);}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00211}00211\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Do\ some\ sanity\ checks\ before\ trying\ to\ solve}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00212}00212\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ NF\_ASSERT(ls.exec()\ ==\ solution.exec(),\ "{}Executors\ are\ not\ the\ same"{});}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00213}00213\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ stats\ =\ solver.solve(ls\_,\ psi\_.internalVector());}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00214}00214\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00215}00215\ \ \ \ \ \ \ \ \ ls\_.rhs()\ =\ savedRhs;}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00216}00216\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00217}00217\ \ \ \ \ \ \ \ \ reportSolverStats(stats,\ fvSolution);}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00218}00218\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ stats;}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00219}00219\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00220}00220\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00221}00221\ \ \ \ \ \textcolor{comment}{//\ Public\ because\ NVCC\ forbids\ extended\ \_\_host\_\_\ \_\_device\_\_\ lambdas}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00222}00222\ \ \ \ \ \textcolor{comment}{//\ (NEON\_LAMBDA)\ inside\ private\ or\ protected\ member\ functions.}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00223}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a622965ca71ef93753b57325cdc38aa37}{00223}}\ \ \ \ \ NeoN::la::SolverStats\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a622965ca71ef93753b57325cdc38aa37}{solveImpl}}(dsl::Expression<ValueType>\&\ expr,\ LinearSystem\&\ ls)}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00224}00224\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00225}00225\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Re-\/read\ schemes\ (idempotent\ with\ the\ constructor\ read)}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00226}00226\ \ \ \ \ \ \ \ \ expr.read(runTime\_.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_a3e0ee1aef295de02e8758811e0099923}{fvSchemesDict}});}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00227}00227\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00228}00228\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Assemble\ without\ post-\/assembly\ functors;\ we\ apply\ SetReference\ separately\ below}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00229}00229\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ to\ ensure\ correct\ polymorphic\ dispatch\ —\ storing\ PostAssemblyBase\ by\ value\ causes}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00230}00230\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ object\ slicing\ that\ silently\ disables\ virtual\ overrides.}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00231}00231\ \ \ \ \ \ \ \ \ expr.assemble(runTime\_.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_a43ea3a95d27b0e78910e30e6cd8796c7}{t}},\ runTime\_.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_a6a3e375c6054e387635ba04bdfe76c6d}{dt}},\ ls,\ psi\_.mesh());}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00232}00232\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00233}00233\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Relaxation\ MUST\ precede\ SetReference:\ SetReference\ doubles\ the\ ref-\/cell\ diagonal,}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00234}00234\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ and\ relaxing\ afterwards\ would\ corrupt\ the\ pin.}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00235}00235\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ alpha\ =}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00236}00236\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_a26d70bfdefea0c104b27867a553012d2}{lookupEqnRelaxation}}(runTime\_.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_aa1b497275ede724281d9a6a8540e5080}{fvSolutionDict}},\ psi\_.name,\ finalIter\_).value\_or(1.0);}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00237}00237\ \ \ \ \ \ \ \ \ NeoN::dsl::applyMatrixRelaxation(ls,\ psi\_,\ alpha);}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00238}00238\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00239}00239\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Apply\ reference-\/cell\ pinning\ directly\ (avoids\ object-\/slicing\ issue)}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00240}00240\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (std::is\_same\_v<ValueType,\ NeoN::scalar>)}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00241}00241\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00242}00242\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (needReference\_)}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00243}00243\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00244}00244\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NeoN::dsl::SetReference<ValueType>\ refFunct(pRefCell\_,\ pRefValue\_);}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00245}00245\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ refFunct(ls);}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00246}00246\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00247}00247\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00248}00248\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00249}00249\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ solverDict\ =\ runTime\_.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_aa1b497275ede724281d9a6a8540e5080}{fvSolutionDict}}.subDict(\textcolor{stringliteral}{"{}solvers"{}});}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00250}00250\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\ finalKey\ =\ psi\_.name\ +\ \textcolor{stringliteral}{"{}Final"{}};}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00251}00251\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ fieldSolverDict\ =\ (finalIter\_\ \&\&\ solverDict.isDict(finalKey))}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00252}00252\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ solverDict.subDict(finalKey)}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00253}00253\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ solverDict.subDict(psi\_.name);}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00254}00254\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Drop\ NeoFOAM-\/only\ keys\ before\ handing\ the\ dict\ to\ NeoN/Ginkgo,\ whose}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00255}00255\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ config\ parser\ rejects\ unknown\ keys\ (e.g.\ assemblyStrategy,\ optimize).}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00256}00256\ \ \ \ \ \ \ \ \ stripNeoFOAMKeys(fieldSolverDict);}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00257}00257\ \ \ \ \ \ \ \ \ NeoN::fence(psi\_.exec());}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00258}00258\ \ \ \ \ \ \ \ \ NF\_ASSERT(ls.exec()\ ==\ psi\_.exec(),\ \textcolor{stringliteral}{"{}Executors\ are\ not\ the\ same"{}});}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00259}00259\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00260}00260\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ solver\ =\ NeoN::la::Solver(psi\_.exec(),\ fieldSolverDict);}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00261}00261\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ stats\ =\ solver.solve(ls,\ psi\_.internalVector());}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00262}00262\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00263}00263\ \ \ \ \ \ \ \ \ reportSolverStats(stats,\ fieldSolverDict);}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00264}00264\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00265}00265\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ stats;}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00266}00266\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00267}00267\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00268}00268\ \ \ \ \ \textcolor{comment}{//\ Relax\ the\ owned\ ls\_\ in\ place.\ Shared\ by\ solve(rhs)\ and\ assembleAndRelax()\ so\ both}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00269}00269\ \ \ \ \ \textcolor{comment}{//\ paths\ use\ the\ same\ alpha\ lookup.\ Must\ run\ before\ SetReference\ (see\ solveImpl).}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00270}00270\ \ \ \ \ \textcolor{comment}{//\ Only\ calls\ the\ free\ function\ applyMatrixRelaxation\ —\ no\ NEON\_LAMBDA\ in\ this\ body.}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00271}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a5bf63a2b300465377c937bda5d52f5f5}{00271}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a5bf63a2b300465377c937bda5d52f5f5}{relaxOwnedLs}}()}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00272}00272\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00273}00273\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ alpha\ =}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00274}00274\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_a26d70bfdefea0c104b27867a553012d2}{lookupEqnRelaxation}}(runTime\_.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_aa1b497275ede724281d9a6a8540e5080}{fvSolutionDict}},\ psi\_.name,\ finalIter\_).value\_or(1.0);}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00275}00275\ \ \ \ \ \ \ \ \ NeoN::dsl::applyMatrixRelaxation(ls\_,\ psi\_,\ alpha);}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00276}00276\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00277}00277\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00278}00278\ \textcolor{keyword}{private}:}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00279}00279\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00280}00280\ \ \ \ \ \textcolor{comment}{//\ Remove\ NeoFOAM-\/specific\ control\ keys\ from\ a\ per-\/field\ solver\ dict\ before\ it}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00281}00281\ \ \ \ \ \textcolor{comment}{//\ is\ passed\ to\ NeoN/Ginkgo.\ Ginkgo's\ config\ parser\ is\ strict\ and\ aborts\ on\ any}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00282}00282\ \ \ \ \ \textcolor{comment}{//\ unrecognised\ key,\ so\ these\ must\ be\ popped\ here\ rather\ than\ left\ in\ place.}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00283}00283\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ stripNeoFOAMKeys(NeoN::Dictionary\&\ dict)}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00284}00284\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00285}00285\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ key\ :\ \{\textcolor{stringliteral}{"{}assemblyStrategy"{}},\ \textcolor{stringliteral}{"{}optimize"{}}\})}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00286}00286\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00287}00287\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (dict.contains(key))}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00288}00288\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00289}00289\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dict.remove(key);}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00290}00290\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00291}00291\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00292}00292\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00293}00293\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00294}00294\ \ \ \ \ \textcolor{comment}{//\ Per-\/component\ name\ (Ux/Uy/Uz)\ when\ a\ vector\ field\ is\ solved\ as\ separate}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00295}00295\ \ \ \ \ \textcolor{comment}{//\ component\ systems;\ the\ plain\ field\ name\ otherwise\ (scalar\ or\ coupled\ solve).}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00296}00296\ \ \ \ \ \textcolor{keyword}{static}\ std::string\ componentName(\textcolor{keyword}{const}\ std::string\&\ base,\ std::size\_t\ i,\ std::size\_t\ n)}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00297}00297\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00298}00298\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (n\ <=\ 1)\ \textcolor{keywordflow}{return}\ base;}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00299}00299\ \ \ \ \ \ \ \ \ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ suffix[3]\ =\ \{\textcolor{stringliteral}{"{}x"{}},\ \textcolor{stringliteral}{"{}y"{}},\ \textcolor{stringliteral}{"{}z"{}}\};}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00300}00300\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ i\ <\ 3\ ?\ base\ +\ suffix[i]\ :\ base\ +\ \textcolor{stringliteral}{"{}["{}}\ +\ std::to\_string(i)\ +\ \textcolor{stringliteral}{"{}]"{}};}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00301}00301\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00302}00302\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00303}00303\ \ \ \ \ \textcolor{comment}{//\ OpenFOAM-\/style\ per-\/solve\ residual\ report:\ "{}<precond><solver>:\ \ Solving\ for}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00304}00304\ \ \ \ \ \textcolor{comment}{//\ <field>,\ Initial\ residual\ =\ ...,\ Final\ residual\ =\ ...,\ No\ Iterations\ N"{}.}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00305}00305\ \ \ \ \ \textcolor{comment}{//\ The\ "{}<precond><solver>"{}\ label\ (e.g.\ DICPCG)\ is\ read\ from\ the\ solver\ dict's}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00306}00306\ \ \ \ \ \textcolor{comment}{//\ reportName\ meta\ key\ stashed\ by\ mapFvSolution\ -\/>\ no\ recomputation\ per\ solve.}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00307}00307\ \ \ \ \ \textcolor{comment}{//\ Logging\ is\ rank-\/aware\ and\ skips\ formatting\ on\ muted\ ranks\ (NeoN\ shouldLog).}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00308}00308\ \ \ \ \ \textcolor{keywordtype}{void}\ reportSolverStats(}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00309}00309\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ NeoN::la::SolverStats\&\ stats,}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00310}00310\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ NeoN::Dictionary\&\ fieldSolverDict}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00311}00311\ \ \ \ \ )\textcolor{keyword}{\ const}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00312}00312\ \textcolor{keyword}{\ \ \ \ }\{}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00313}00313\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\ label\ =\ fieldSolverDict.contains(\textcolor{stringliteral}{"{}reportName"{}})}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00314}00314\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ fieldSolverDict.get<std::string>(\textcolor{stringliteral}{"{}reportName"{}})}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00315}00315\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ std::string(\textcolor{stringliteral}{"{}Ginkgo"{}});}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00316}00316\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::size\_t\ n\ =\ stats.entries.size();}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00317}00317\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (std::size\_t\ i\ =\ 0;\ i\ <\ n;\ ++i)}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00318}00318\ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00319}00319\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ stat\ =\ stats.entries[i];}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00320}00320\ \ \ \ \ \ \ \ \ \ \ \ \ NeoN::Logging::info(}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00321}00321\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}\{\}:\ \ Solving\ for\ \{\},\ Initial\ residual\ =\ \{\},\ Final\ residual\ =\ \{\},\ No\ Iterations\ \{\}"{}},}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00322}00322\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ label,}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00323}00323\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ componentName(psi\_.name,\ i,\ n),}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00324}00324\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ stat.initResNorm,}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00325}00325\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ stat.finalResNorm,}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00326}00326\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ stat.numIter}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00327}00327\ \ \ \ \ \ \ \ \ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00328}00328\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00329}00329\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00330}00330\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00331}00331\ \ \ \ \ VolumeField\&\ psi\_;}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00332}00332\ \ \ \ \ dsl::Expression<ValueType>\ expr\_;}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00333}00333\ \ \ \ \ \textcolor{keyword}{const}\ RunTime\&\ runTime\_;}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00334}00334\ \ \ \ \ LinearSystem\ ls\_;}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00335}00335\ \ \ \ \ \textcolor{keywordtype}{bool}\ needReference\_\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00336}00336\ \ \ \ \ NeoN::localIdx\ pRefCell\_\ =\ 0;}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00337}00337\ \ \ \ \ NeoN::scalar\ pRefValue\_\ =\ 0.0;}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00338}00338\ \ \ \ \ \textcolor{keywordtype}{bool}\ finalIter\_\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00339}00339\ \};}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00340}00340\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00109}00109\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00110}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a577b2534bdc16547869ed719bd03d879}{00110}}\ \ \ \ \ NeoN::finiteVolume::cellCentred::DdtScheme\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a577b2534bdc16547869ed719bd03d879}{ddtScheme}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00111}00111\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00112}00112\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ op\ :\ expr\_.temporalOperators())}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00113}00113\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00114}00114\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ s\ =\ op.ddtScheme();}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00115}00115\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (s\ !=\ NeoN::finiteVolume::cellCentred::DdtScheme::None)}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00116}00116\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00117}00117\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ s;}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00118}00118\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00119}00119\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00120}00120\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NeoN::finiteVolume::cellCentred::DdtScheme::None;}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00121}00121\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00122}00122\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00123}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a3db786d08d6d3d64a682094fea34ea82}{00123}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a3db786d08d6d3d64a682094fea34ea82}{setReference}}(NeoN::localIdx\ pRefCell,\ NeoN::scalar\ pRefValue)}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00124}00124\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00125}00125\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Accept\ the\ call\ in\ serial\ (MPI\ not\ initialised\ —\ mpiRank\ is\ the}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00126}00126\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ sentinel\ -\/1,\ which\ would\ compare\ unequal\ to\ 0\ if\ cast\ to\ size\_t)}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00127}00127\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ and\ on\ rank\ 0\ in\ parallel.\ SetReference::operator()\ further\ guards}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00128}00128\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ matrix\ mutation\ against\ non-\/rank-\/0\ in\ initialised\ MPI.}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00129}00129\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ mpiEnv\ =\ runTime\_.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_ad5773d54934f9c502a84a00e4e2248fd}{mpiEnvironment}};}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00130}00130\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!mpiEnv.isInitialized()\ ||\ mpiEnv.rank()\ ==\ 0)}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00131}00131\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00132}00132\ \ \ \ \ \ \ \ \ \ \ \ \ needReference\_\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00133}00133\ \ \ \ \ \ \ \ \ \ \ \ \ pRefCell\_\ =\ pRefCell;}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00134}00134\ \ \ \ \ \ \ \ \ \ \ \ \ pRefValue\_\ =\ pRefValue;}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00135}00135\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00136}00136\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00137}00137\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00139}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a115b62e9ee4225fdf24173d7bb6b009e}{00139}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a115b62e9ee4225fdf24173d7bb6b009e}{setFinalIter}}(\textcolor{keywordtype}{bool}\ finalIter)\ \{\ finalIter\_\ =\ finalIter;\ \}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00140}00140\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00142}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a428ead04185bd650a91cd4ff3c573a24}{00142}}\ \ \ \ \ LinearSystem\&\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a428ead04185bd650a91cd4ff3c573a24}{assemble}}()}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00143}00143\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00144}00144\ \ \ \ \ \ \ \ \ ls\_.reset();}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00145}00145\ \ \ \ \ \ \ \ \ expr\_.assemble(runTime\_.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_a43ea3a95d27b0e78910e30e6cd8796c7}{t}},\ runTime\_.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_a6a3e375c6054e387635ba04bdfe76c6d}{dt}},\ ls\_,\ psi\_.mesh());}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00146}00146\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ls\_;}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00147}00147\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00148}00148\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00154}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a7456cb2e7942cbbc3f04c1c664eb09f4}{00154}}\ \ \ \ \ LinearSystem\&\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a7456cb2e7942cbbc3f04c1c664eb09f4}{assembleAndRelax}}()}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00155}00155\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00156}00156\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a428ead04185bd650a91cd4ff3c573a24}{assemble}}();}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00157}00157\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a5bf63a2b300465377c937bda5d52f5f5}{relaxOwnedLs}}();}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00158}00158\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ls\_;}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00159}00159\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00160}00160\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00168}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_ad47450a4caf56d16843a3e70481eee0b}{00168}}\ \ \ \ \ LinearSystem\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_ad47450a4caf56d16843a3e70481eee0b}{assemble}}(dsl::SpatialOperator<NeoN::Vec3>\&\&\ rhs)}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00169}00169\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00170}00170\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ rhsExpr\ =\ dsl::Expression<ValueType>(-\/1.0\ *\ rhs);}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00171}00171\ \ \ \ \ \ \ \ \ rhsExpr.read(\mbox{\hyperlink{namespaceNeoFOAM_a3b70b9ee03711e99853bb30615bbccf7}{NeoFOAM::expandSchemeDefaults}}(runTime\_.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_a3e0ee1aef295de02e8758811e0099923}{fvSchemesDict}},\ rhsExpr,\ psi\_.name));}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00172}00172\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ ls\ =\ LinearSystem(\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a428ead04185bd650a91cd4ff3c573a24}{assemble}}());}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00173}00173\ \ \ \ \ \ \ \ \ rhsExpr.assembleExplicitSource(ls,\ psi\_.mesh());}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00174}00174\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00175}00175\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ls;}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00176}00176\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00177}00177\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00178}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_acbca826c19c4aa6b697c7edfaf37a345}{00178}}\ \ \ \ \ NeoN::la::SolverStats\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_acbca826c19c4aa6b697c7edfaf37a345}{solve}}()}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00179}00179\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00180}00180\ \ \ \ \ \ \ \ \ ls\_.reset();}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00181}00181\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a622965ca71ef93753b57325cdc38aa37}{solveImpl}}(expr\_,\ ls\_);}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00182}00182\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00183}00183\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00190}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a48b43b9781b885bcb67be4b7c3144689}{00190}}\ \ \ \ \ NeoN::la::SolverStats\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a48b43b9781b885bcb67be4b7c3144689}{solve}}(dsl::SpatialOperator<NeoN::Vec3>\&\&\ rhs)}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00191}00191\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00192}00192\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Assemble\ and\ relax\ the\ owned\ ls\_\ so\ computeRAUandHByA\ reads\ the\ relaxed\ diagonal.}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00193}00193\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Apply\ -\/grad\ p\ to\ ls\_.rhs()\ in\ place\ (avoids\ copying\ the\ matrix),\ snapshot\ the\ rhs}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00194}00194\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ beforehand\ and\ restore\ it\ after\ solve\ so\ ls\_\ retains\ the\ H-\/system\ for\ computeRAUandHByA.}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00195}00195\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a428ead04185bd650a91cd4ff3c573a24}{assemble}}();}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00196}00196\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a5bf63a2b300465377c937bda5d52f5f5}{relaxOwnedLs}}();}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00197}00197\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00198}00198\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ rhsExpr\ =\ dsl::Expression<ValueType>(-\/1.0\ *\ rhs);}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00199}00199\ \ \ \ \ \ \ \ \ rhsExpr.read(\mbox{\hyperlink{namespaceNeoFOAM_a3b70b9ee03711e99853bb30615bbccf7}{NeoFOAM::expandSchemeDefaults}}(runTime\_.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_a3e0ee1aef295de02e8758811e0099923}{fvSchemesDict}},\ rhsExpr,\ psi\_.name));}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00200}00200\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ savedRhs\ =\ NeoN::Vector<ValueType>(ls\_.rhs());}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00201}00201\ \ \ \ \ \ \ \ \ rhsExpr.assembleExplicitSource(ls\_,\ psi\_.mesh());}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00202}00202\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00203}00203\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ solverDict\ =\ runTime\_.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_aa1b497275ede724281d9a6a8540e5080}{fvSolutionDict}}.subDict(\textcolor{stringliteral}{"{}solvers"{}});}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00204}00204\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\ finalKey\ =\ psi\_.name\ +\ \textcolor{stringliteral}{"{}Final"{}};}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00205}00205\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ fvSolution\ =\ (finalIter\_\ \&\&\ solverDict.isDict(finalKey))}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00206}00206\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ solverDict.subDict(finalKey)}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00207}00207\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ solverDict.subDict(psi\_.name);}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00208}00208\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Drop\ NeoFOAM-\/only\ keys\ before\ handing\ the\ dict\ to\ NeoN/Ginkgo,\ whose}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00209}00209\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ config\ parser\ rejects\ unknown\ keys\ (e.g.\ assemblyStrategy,\ optimize).}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00210}00210\ \ \ \ \ \ \ \ \ stripNeoFOAMKeys(fvSolution);}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00211}00211\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ solver\ =\ NeoN::la::Solver(psi\_.exec(),\ fvSolution);}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00212}00212\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Do\ some\ sanity\ checks\ before\ trying\ to\ solve}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00213}00213\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ NF\_ASSERT(ls.exec()\ ==\ solution.exec(),\ "{}Executors\ are\ not\ the\ same"{});}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00214}00214\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ stats\ =\ solver.solve(ls\_,\ psi\_.internalVector());}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00215}00215\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00216}00216\ \ \ \ \ \ \ \ \ ls\_.rhs()\ =\ savedRhs;}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00217}00217\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00218}00218\ \ \ \ \ \ \ \ \ reportSolverStats(stats,\ fvSolution);}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00219}00219\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ stats;}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00220}00220\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00221}00221\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00222}00222\ \ \ \ \ \textcolor{comment}{//\ Public\ because\ NVCC\ forbids\ extended\ \_\_host\_\_\ \_\_device\_\_\ lambdas}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00223}00223\ \ \ \ \ \textcolor{comment}{//\ (NEON\_LAMBDA)\ inside\ private\ or\ protected\ member\ functions.}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00224}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a622965ca71ef93753b57325cdc38aa37}{00224}}\ \ \ \ \ NeoN::la::SolverStats\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a622965ca71ef93753b57325cdc38aa37}{solveImpl}}(dsl::Expression<ValueType>\&\ expr,\ LinearSystem\&\ ls)}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00225}00225\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00226}00226\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Re-\/read\ schemes\ (idempotent\ with\ the\ constructor\ read)}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00227}00227\ \ \ \ \ \ \ \ \ expr.read(\mbox{\hyperlink{namespaceNeoFOAM_a3b70b9ee03711e99853bb30615bbccf7}{NeoFOAM::expandSchemeDefaults}}(runTime\_.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_a3e0ee1aef295de02e8758811e0099923}{fvSchemesDict}},\ expr,\ psi\_.name));}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00228}00228\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00229}00229\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Assemble\ without\ post-\/assembly\ functors;\ we\ apply\ SetReference\ separately\ below}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00230}00230\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ to\ ensure\ correct\ polymorphic\ dispatch\ —\ storing\ PostAssemblyBase\ by\ value\ causes}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00231}00231\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ object\ slicing\ that\ silently\ disables\ virtual\ overrides.}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00232}00232\ \ \ \ \ \ \ \ \ expr.assemble(runTime\_.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_a43ea3a95d27b0e78910e30e6cd8796c7}{t}},\ runTime\_.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_a6a3e375c6054e387635ba04bdfe76c6d}{dt}},\ ls,\ psi\_.mesh());}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00233}00233\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00234}00234\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Relaxation\ MUST\ precede\ SetReference:\ SetReference\ doubles\ the\ ref-\/cell\ diagonal,}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00235}00235\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ and\ relaxing\ afterwards\ would\ corrupt\ the\ pin.}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00236}00236\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ alpha\ =}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00237}00237\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_a26d70bfdefea0c104b27867a553012d2}{lookupEqnRelaxation}}(runTime\_.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_aa1b497275ede724281d9a6a8540e5080}{fvSolutionDict}},\ psi\_.name,\ finalIter\_).value\_or(1.0);}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00238}00238\ \ \ \ \ \ \ \ \ NeoN::dsl::applyMatrixRelaxation(ls,\ psi\_,\ alpha);}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00239}00239\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00240}00240\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Apply\ reference-\/cell\ pinning\ directly\ (avoids\ object-\/slicing\ issue)}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00241}00241\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (std::is\_same\_v<ValueType,\ NeoN::scalar>)}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00242}00242\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00243}00243\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (needReference\_)}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00244}00244\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00245}00245\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NeoN::dsl::SetReference<ValueType>\ refFunct(pRefCell\_,\ pRefValue\_);}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00246}00246\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ refFunct(ls);}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00247}00247\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00248}00248\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00249}00249\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00250}00250\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ solverDict\ =\ runTime\_.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_aa1b497275ede724281d9a6a8540e5080}{fvSolutionDict}}.subDict(\textcolor{stringliteral}{"{}solvers"{}});}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00251}00251\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\ finalKey\ =\ psi\_.name\ +\ \textcolor{stringliteral}{"{}Final"{}};}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00252}00252\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ fieldSolverDict\ =\ (finalIter\_\ \&\&\ solverDict.isDict(finalKey))}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00253}00253\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ solverDict.subDict(finalKey)}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00254}00254\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ solverDict.subDict(psi\_.name);}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00255}00255\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Drop\ NeoFOAM-\/only\ keys\ before\ handing\ the\ dict\ to\ NeoN/Ginkgo,\ whose}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00256}00256\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ config\ parser\ rejects\ unknown\ keys\ (e.g.\ assemblyStrategy,\ optimize).}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00257}00257\ \ \ \ \ \ \ \ \ stripNeoFOAMKeys(fieldSolverDict);}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00258}00258\ \ \ \ \ \ \ \ \ NeoN::fence(psi\_.exec());}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00259}00259\ \ \ \ \ \ \ \ \ NF\_ASSERT(ls.exec()\ ==\ psi\_.exec(),\ \textcolor{stringliteral}{"{}Executors\ are\ not\ the\ same"{}});}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00260}00260\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00261}00261\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ solver\ =\ NeoN::la::Solver(psi\_.exec(),\ fieldSolverDict);}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00262}00262\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ stats\ =\ solver.solve(ls,\ psi\_.internalVector());}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00263}00263\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00264}00264\ \ \ \ \ \ \ \ \ reportSolverStats(stats,\ fieldSolverDict);}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00265}00265\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00266}00266\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ stats;}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00267}00267\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00268}00268\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00269}00269\ \ \ \ \ \textcolor{comment}{//\ Relax\ the\ owned\ ls\_\ in\ place.\ Shared\ by\ solve(rhs)\ and\ assembleAndRelax()\ so\ both}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00270}00270\ \ \ \ \ \textcolor{comment}{//\ paths\ use\ the\ same\ alpha\ lookup.\ Must\ run\ before\ SetReference\ (see\ solveImpl).}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00271}00271\ \ \ \ \ \textcolor{comment}{//\ Only\ calls\ the\ free\ function\ applyMatrixRelaxation\ —\ no\ NEON\_LAMBDA\ in\ this\ body.}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00272}\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a5bf63a2b300465377c937bda5d52f5f5}{00272}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a5bf63a2b300465377c937bda5d52f5f5}{relaxOwnedLs}}()}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00273}00273\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00274}00274\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ alpha\ =}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00275}00275\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceNeoFOAM_a26d70bfdefea0c104b27867a553012d2}{lookupEqnRelaxation}}(runTime\_.\mbox{\hyperlink{structNeoFOAM_1_1RunTime_aa1b497275ede724281d9a6a8540e5080}{fvSolutionDict}},\ psi\_.name,\ finalIter\_).value\_or(1.0);}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00276}00276\ \ \ \ \ \ \ \ \ NeoN::dsl::applyMatrixRelaxation(ls\_,\ psi\_,\ alpha);}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00277}00277\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00278}00278\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00279}00279\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00280}00280\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00281}00281\ \ \ \ \ \textcolor{comment}{//\ Remove\ NeoFOAM-\/specific\ control\ keys\ from\ a\ per-\/field\ solver\ dict\ before\ it}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00282}00282\ \ \ \ \ \textcolor{comment}{//\ is\ passed\ to\ NeoN/Ginkgo.\ Ginkgo's\ config\ parser\ is\ strict\ and\ aborts\ on\ any}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00283}00283\ \ \ \ \ \textcolor{comment}{//\ unrecognised\ key,\ so\ these\ must\ be\ popped\ here\ rather\ than\ left\ in\ place.}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00284}00284\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ stripNeoFOAMKeys(NeoN::Dictionary\&\ dict)}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00285}00285\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00286}00286\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ key\ :\ \{\textcolor{stringliteral}{"{}assemblyStrategy"{}},\ \textcolor{stringliteral}{"{}optimize"{}}\})}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00287}00287\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00288}00288\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (dict.contains(key))}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00289}00289\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00290}00290\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dict.remove(key);}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00291}00291\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00292}00292\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00293}00293\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00294}00294\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00295}00295\ \ \ \ \ \textcolor{comment}{//\ Per-\/component\ name\ (Ux/Uy/Uz)\ when\ a\ vector\ field\ is\ solved\ as\ separate}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00296}00296\ \ \ \ \ \textcolor{comment}{//\ component\ systems;\ the\ plain\ field\ name\ otherwise\ (scalar\ or\ coupled\ solve).}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00297}00297\ \ \ \ \ \textcolor{keyword}{static}\ std::string\ componentName(\textcolor{keyword}{const}\ std::string\&\ base,\ std::size\_t\ i,\ std::size\_t\ n)}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00298}00298\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00299}00299\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (n\ <=\ 1)\ \textcolor{keywordflow}{return}\ base;}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00300}00300\ \ \ \ \ \ \ \ \ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ suffix[3]\ =\ \{\textcolor{stringliteral}{"{}x"{}},\ \textcolor{stringliteral}{"{}y"{}},\ \textcolor{stringliteral}{"{}z"{}}\};}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00301}00301\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ i\ <\ 3\ ?\ base\ +\ suffix[i]\ :\ base\ +\ \textcolor{stringliteral}{"{}["{}}\ +\ std::to\_string(i)\ +\ \textcolor{stringliteral}{"{}]"{}};}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00302}00302\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00303}00303\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00304}00304\ \ \ \ \ \textcolor{comment}{//\ OpenFOAM-\/style\ per-\/solve\ residual\ report:\ "{}<precond><solver>:\ \ Solving\ for}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00305}00305\ \ \ \ \ \textcolor{comment}{//\ <field>,\ Initial\ residual\ =\ ...,\ Final\ residual\ =\ ...,\ No\ Iterations\ N"{}.}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00306}00306\ \ \ \ \ \textcolor{comment}{//\ The\ "{}<precond><solver>"{}\ label\ (e.g.\ DICPCG)\ is\ read\ from\ the\ solver\ dict's}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00307}00307\ \ \ \ \ \textcolor{comment}{//\ reportName\ meta\ key\ stashed\ by\ mapFvSolution\ -\/>\ no\ recomputation\ per\ solve.}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00308}00308\ \ \ \ \ \textcolor{comment}{//\ Logging\ is\ rank-\/aware\ and\ skips\ formatting\ on\ muted\ ranks\ (NeoN\ shouldLog).}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00309}00309\ \ \ \ \ \textcolor{keywordtype}{void}\ reportSolverStats(}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00310}00310\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ NeoN::la::SolverStats\&\ stats,}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00311}00311\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ NeoN::Dictionary\&\ fieldSolverDict}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00312}00312\ \ \ \ \ )\textcolor{keyword}{\ const}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00313}00313\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00314}00314\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\ label\ =\ fieldSolverDict.contains(\textcolor{stringliteral}{"{}reportName"{}})}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00315}00315\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ fieldSolverDict.get<std::string>(\textcolor{stringliteral}{"{}reportName"{}})}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00316}00316\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ std::string(\textcolor{stringliteral}{"{}Ginkgo"{}});}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00317}00317\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::size\_t\ n\ =\ stats.entries.size();}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00318}00318\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (std::size\_t\ i\ =\ 0;\ i\ <\ n;\ ++i)}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00319}00319\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00320}00320\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ stat\ =\ stats.entries[i];}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00321}00321\ \ \ \ \ \ \ \ \ \ \ \ \ NeoN::Logging::info(}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00322}00322\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}\{\}:\ \ Solving\ for\ \{\},\ Initial\ residual\ =\ \{\},\ Final\ residual\ =\ \{\},\ No\ Iterations\ \{\}"{}},}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00323}00323\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ label,}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00324}00324\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ componentName(psi\_.name,\ i,\ n),}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00325}00325\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ stat.initResNorm,}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00326}00326\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ stat.finalResNorm,}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00327}00327\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ stat.numIter}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00328}00328\ \ \ \ \ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00329}00329\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00330}00330\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00331}00331\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00332}00332\ \ \ \ \ VolumeField\&\ psi\_;}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00333}00333\ \ \ \ \ dsl::Expression<ValueType>\ expr\_;}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00334}00334\ \ \ \ \ \textcolor{keyword}{const}\ RunTime\&\ runTime\_;}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00335}00335\ \ \ \ \ LinearSystem\ ls\_;}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00336}00336\ \ \ \ \ \textcolor{keywordtype}{bool}\ needReference\_\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00337}00337\ \ \ \ \ NeoN::localIdx\ pRefCell\_\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00338}00338\ \ \ \ \ NeoN::scalar\ pRefValue\_\ =\ 0.0;}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00339}00339\ \ \ \ \ \textcolor{keywordtype}{bool}\ finalIter\_\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00340}00340\ \};}
 \DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00341}00341\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00342}00342\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType,\ \textcolor{keyword}{typename}\ IndexType\ =\ NeoN::localIdx>}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00343}\mbox{\hyperlink{namespaceNeoFOAM_a1a20de9aeea93a39b256d91014ce9039}{00343}}\ NeoN::finiteVolume::cellCentred::VolumeField<ValueType>\ \mbox{\hyperlink{namespaceNeoFOAM_a1a20de9aeea93a39b256d91014ce9039}{applyOperator}}(}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00344}00344\ \ \ \ \ \textcolor{keyword}{const}\ la::LinearSystem<ValueType>\&\ ls,}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00345}00345\ \ \ \ \ \textcolor{keyword}{const}\ NeoN::finiteVolume::cellCentred::VolumeField<ValueType>\&\ psi}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00346}00346\ )}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00347}00347\ \{}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00348}00348\ \ \ \ \ NeoN::finiteVolume::cellCentred::VolumeField<ValueType>\ res(}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00349}00349\ \ \ \ \ \ \ \ \ psi.exec(),}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00350}00350\ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}ls\_"{}}\ +\ psi.name,}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00351}00351\ \ \ \ \ \ \ \ \ psi.mesh(),}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00352}00352\ \ \ \ \ \ \ \ \ psi.internalVector(),}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00353}00353\ \ \ \ \ \ \ \ \ psi.boundaryData(),}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00354}00354\ \ \ \ \ \ \ \ \ psi.boundaryConditions()}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00355}00355\ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00356}00356\ \ \ \ \ NeoN::la::computeResidual(ls.matrix(),\ ls.rhs(),\ psi.internalVector(),\ res.internalVector());}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00357}00357\ \ \ \ \ \textcolor{keywordflow}{return}\ res;}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00358}00358\ \}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00359}00359\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00342}00342\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00343}00343\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType,\ \textcolor{keyword}{typename}\ IndexType\ =\ NeoN::localIdx>}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00344}\mbox{\hyperlink{namespaceNeoFOAM_a1a20de9aeea93a39b256d91014ce9039}{00344}}\ NeoN::finiteVolume::cellCentred::VolumeField<ValueType>\ \mbox{\hyperlink{namespaceNeoFOAM_a1a20de9aeea93a39b256d91014ce9039}{applyOperator}}(}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00345}00345\ \ \ \ \ \textcolor{keyword}{const}\ la::LinearSystem<ValueType>\&\ ls,}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00346}00346\ \ \ \ \ \textcolor{keyword}{const}\ NeoN::finiteVolume::cellCentred::VolumeField<ValueType>\&\ psi}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00347}00347\ )}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00348}00348\ \{}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00349}00349\ \ \ \ \ NeoN::finiteVolume::cellCentred::VolumeField<ValueType>\ res(}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00350}00350\ \ \ \ \ \ \ \ \ psi.exec(),}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00351}00351\ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}ls\_"{}}\ +\ psi.name,}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00352}00352\ \ \ \ \ \ \ \ \ psi.mesh(),}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00353}00353\ \ \ \ \ \ \ \ \ psi.internalVector(),}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00354}00354\ \ \ \ \ \ \ \ \ psi.boundaryData(),}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00355}00355\ \ \ \ \ \ \ \ \ psi.boundaryConditions()}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00356}00356\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00357}00357\ \ \ \ \ NeoN::la::computeResidual(ls.matrix(),\ ls.rhs(),\ psi.internalVector(),\ res.internalVector());}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00358}00358\ \ \ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00359}00359\ \}}
 \DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00360}00360\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00361}00361\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00362}\mbox{\hyperlink{namespaceNeoFOAM_a5632c3b06d59dbeabc41aba73af8d95d}{00362}}\ NeoN::finiteVolume::cellCentred::VolumeField<ValueType>\ \mbox{\hyperlink{namespaceNeoFOAM_a5632c3b06d59dbeabc41aba73af8d95d}{operator\&}}(}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00363}00363\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver}{PDESolver<ValueType>}}\&\ expr,}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00364}00364\ \ \ \ \ \textcolor{keyword}{const}\ NeoN::finiteVolume::cellCentred::VolumeField<ValueType>\&\ psi}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00365}00365\ )}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00366}00366\ \{}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00367}00367\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceNeoFOAM_a1a20de9aeea93a39b256d91014ce9039}{applyOperator}}(expr.\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a9f20d87932308426ad7f1e8ac3c48385}{linearSystem}}(),\ psi);}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00368}00368\ \}}
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00369}00369\ }
-\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00370}00370\ \}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00361}00361\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00362}00362\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ValueType>}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00363}\mbox{\hyperlink{namespaceNeoFOAM_a5632c3b06d59dbeabc41aba73af8d95d}{00363}}\ NeoN::finiteVolume::cellCentred::VolumeField<ValueType>\ \mbox{\hyperlink{namespaceNeoFOAM_a5632c3b06d59dbeabc41aba73af8d95d}{operator\&}}(}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00364}00364\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1PDESolver}{PDESolver<ValueType>}}\&\ expr,}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00365}00365\ \ \ \ \ \textcolor{keyword}{const}\ NeoN::finiteVolume::cellCentred::VolumeField<ValueType>\&\ psi}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00366}00366\ )}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00367}00367\ \{}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00368}00368\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceNeoFOAM_a1a20de9aeea93a39b256d91014ce9039}{applyOperator}}(expr.\mbox{\hyperlink{classNeoFOAM_1_1PDESolver_a9f20d87932308426ad7f1e8ac3c48385}{linearSystem}}(),\ psi);}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00369}00369\ \}}
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00370}00370\ }
+\DoxyCodeLine{\Hypertarget{pdeSolver_8hpp_source_l00371}00371\ \}}
 
 \end{DoxyCode}
