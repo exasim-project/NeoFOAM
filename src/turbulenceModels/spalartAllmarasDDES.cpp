@@ -550,6 +550,19 @@ const nnfvcc::VolumeField<scalar>& SpalartAllmarasDDES::nut() const { return nut
 
 const nnfvcc::VolumeField<Tensor>& SpalartAllmarasDDES::gradU() const { return gradU_; }
 
+nnfvcc::SurfaceField<scalar>
+SpalartAllmarasDDES::blendingFactor(const DEShybridCoefficients& coeffs) const
+{
+    nnfvcc::SurfaceField<scalar> sigmaFace(
+        exec_,
+        "DEShybridBlendingFactor",
+        mesh_,
+        fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh_)
+    );
+    computeDEShybridBlendingFactor(gradU_, nut_, nu_, delta_, coeffs, surfInterp_, sigmaFace);
+    return sigmaFace;
+}
+
 void SpalartAllmarasDDES::initialize(
     const nnfvcc::VolumeField<scalar>& nuTildaInit,
     const nnfvcc::VolumeField<scalar>& nutInit

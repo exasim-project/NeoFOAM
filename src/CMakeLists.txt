@@ -24,6 +24,7 @@ target_sources(
           "turbulenceModels/laminar.cpp"
           "turbulenceModels/spalartAllmarasDDES.cpp"
           "fvcc/operators/viscousStressOperator.cpp"
+          "fvcc/surfaceInterpolation/deShybridBlendingFactor.cpp"
           "functionObjects/functionObjectIO.cpp"
           "functionObjects/forces.cpp"
           "functionObjects/forceCoeffs.cpp")

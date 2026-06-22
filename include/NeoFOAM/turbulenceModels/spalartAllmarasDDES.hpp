@@ -7,6 +7,7 @@
 
 #include "NeoFOAM/datastructures/pdeSolver.hpp"
 #include "NeoFOAM/turbulenceModels/turbulenceModel.hpp"
+#include "NeoFOAM/fvcc/surfaceInterpolation/deShybridBlendingFactor.hpp"
 
 namespace nnfvcc = NeoN::finiteVolume::cellCentred;
 using scalar = NeoN::scalar;
@@ -138,6 +139,17 @@ public:
 
     /// @brief Velocity gradient tensor (updated each correct() call, for viscousStress term)
     const nnfvcc::VolumeField<NeoN::Tensor>& gradU() const override;
+
+    /**
+     * @brief Per-face DEShybrid blending factor sigma (Travin et al.), the field NeoN's DEShybrid
+     * interpolation scheme consumes. Computed from the current gradU, nut, nu and LES delta and
+     * interpolated to faces, so call after validate()/correct() has updated gradU/nut. The solver
+     * registers the returned field in the momentum field's database as
+     * "<U>DEShybridBlendingFactor" each step.
+     *
+     * @param coeffs DEShybrid coefficients (from the fvSchemes div spec)
+     */
+    nnfvcc::SurfaceField<scalar> blendingFactor(const DEShybridCoefficients& coeffs) const;
 
     void initialize(
         const nnfvcc::VolumeField<scalar>& nuTildaInit,
