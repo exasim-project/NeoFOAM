@@ -77,18 +77,15 @@ public:
     /** @brief Velocity gradient tensor updated each correct() call. */
     virtual const nnfvcc::VolumeField<NeoN::Tensor>& gradU() const = 0;
 
-    /**
-     * @brief Recompute the model-owned gradU in place at the given velocity.
-     *
-     * Includes internal, boundary, and proc-halo exchange.  Lets the PIMPLE
-     * outer loop refresh gradU for its 2nd+ correctors by reusing this one
-     * buffer instead of allocating a separate VolumeField<Tensor> per solver.
-     * Safe because correct() recomputes gradU afterwards; the first corrector
-     * reads the U^n gradU() left by the previous step's correct().
-     */
+    // Recompute the model-owned gradU in place at the given velocity (internal + boundary +
+    // proc-halo exchange). Lets the PIMPLE outer loop refresh gradU for its 2nd+ correctors by
+    // reusing this one buffer instead of allocating a separate VolumeField<Tensor> (~nCells*9
+    // scalars) per solver. Safe because correct() recomputes gradU afterwards, so no turbulence
+    // state is corrupted, and the first corrector still reads the U^n gradU() left by the previous
+    // step's correct().
     virtual void updateGradU(const nnfvcc::VolumeField<NeoN::Vec3>& U) = 0;
 
-    /** @brief Rotate time-dependent fields for BDF2 time advancement. */
+    // Rotate time-dependent fields for BDF2 time advancement.
     virtual void rotateOldTimes() = 0;
 
     /** @brief Write model-owned fields (nuTilda, nut, …) to disk. */

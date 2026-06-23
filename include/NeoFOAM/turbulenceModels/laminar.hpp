@@ -44,10 +44,9 @@ public:
     /** @brief Velocity gradient tensor (updated each correct()). */
     const nnfvcc::VolumeField<NeoN::Tensor>& gradU() const override;
 
-    /** @brief Recompute gradU in place at the given velocity. */
     void updateGradU(const nnfvcc::VolumeField<NeoN::Vec3>& U) override;
 
-    /** @brief No-op: laminar model has no time-dependent fields. */
+
     void rotateOldTimes() override {}
 
     /** @brief No-op: laminar model owns no fields to write. */
