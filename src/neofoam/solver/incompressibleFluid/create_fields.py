@@ -221,9 +221,15 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         )
 
         # PIMPLE is passed to add_core_models so it lands in models.pressure_velocity.
-        # Its lazy field/model InitSteps come from pimple._build_func directly —
-        # the ModelSpec is used here as both spec and "runtime" (no instantiate).
+        # Its lazy field/model InitSteps come straight from the ModelSpec (used here
+        # as both spec and "runtime", no instantiate). Mirror ModelRuntime.run_build:
+        # synthesise the ``pimple.field(...)`` declarations (``U`` / ``p``) *first*,
+        # then the ``@build`` steps (``phi``, pimpleControl, …) which depend on them.
+        from neofoam.fields.synthesis import synthesize_init_step
+
         builder.add_core_models([("pressure_velocity", pressure_model)])
+        for decl in pressure_model.field_decls:
+            builder.add(synthesize_init_step(decl))
         if pressure_model._build_func is not None:
             builder.extend(pressure_model._build_func(pressure_model))
 
