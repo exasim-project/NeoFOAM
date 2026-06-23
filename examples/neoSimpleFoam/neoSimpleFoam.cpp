@@ -9,6 +9,10 @@
 #include "simpleControl.H"
 #include "singlePhaseTransportModel.H"
 
+#if NF_WITH_UMPIRE
+#include "NeoN/core/memory/umpire.hpp"
+#endif
+
 #include <memory>
 
 using Foam::Info;
@@ -93,6 +97,33 @@ int main(int argc, char* argv[])
         );
         NeoN::scalar cumulativeContErr = 0.0;
 
+        // TEMP diagnostic: report the shared Umpire DEVICE_POOL footprint at each phase so we can
+        // tell a true leak (current/live bytes grow across timesteps) from QuickPool fragmentation
+        // (actual/reserved bytes balloon while current stays flat). Ginkgo and NeoN draw from this
+        // same pool. Remove once the OOM is understood.
+        auto logGpuMem = [](const char* tag)
+        {
+#if NF_WITH_UMPIRE && defined(KOKKOS_ENABLE_CUDA)
+            try
+            {
+                auto pool = NeoN::UmpireMempoolHandler::getUmpirePool(NeoN::MemorySpace::GPU);
+                NeoN::Logging::info(
+                    "[mem] {}: DEVICE_POOL current={} MB  actual(reserved)={} MB  highWater={} MB",
+                    tag,
+                    pool.getCurrentSize() >> 20,
+                    pool.getActualSize() >> 20,
+                    pool.getHighWatermark() >> 20
+                );
+            }
+            catch (...)
+            {
+                // pool not created yet (no device allocation has happened) — ignore
+            }
+#else
+            static_cast<void>(tag);
+#endif
+        };
+
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
         NeoN::Logging::info("Starting time loop");
@@ -100,6 +131,7 @@ int main(int argc, char* argv[])
         {
             rt.t = runTime.time().value();
             NeoN::Logging::info("Time = {}", rt.t);
+            logGpuMem("step-start");
 
             // Steady-state: no rotateOldTimes, no Courant number, no syncRunTimes
 
@@ -119,6 +151,7 @@ int main(int argc, char* argv[])
             {
                 UEqn.assemble();
             }
+            logGpuMem("after-UEqn");
 
             // SIMPLE / SIMPLEC pressure-velocity coupling (single pass, no inner PISO loop)
             {
@@ -242,8 +275,10 @@ int main(int argc, char* argv[])
                 nf::updateVelocity(hByA, crAtU, p, U);
                 U.correctBoundaryConditions();
             }
+            logGpuMem("after-pEqn");
 
             turb->correct(U, phi, rt);
+            logGpuMem("after-turb");
 
             runTime.write();
             if (runTime.outputTime())
