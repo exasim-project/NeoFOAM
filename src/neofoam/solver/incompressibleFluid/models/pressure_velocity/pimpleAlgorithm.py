@@ -68,6 +68,12 @@ pimple = Model("Pimple")
 PimpleFvSchemes = pimple.config(fvSchemes)
 PimpleFvSolution = pimple.config(fvSolution)
 
+# Optional PIMPLE control keys read straight from ``system/fvSolution`` by
+# ``setRefCell`` (see ``create_pressure_reference``). A closed domain (no
+# fixed-pressure BC) needs a pressure reference; an open domain doesn't, so
+# these stay optional and only serialise when the case author sets them.
+PimpleFvSolution.add_controls("PIMPLE", pRefCell=int, pRefValue=float)
+
 # 0/<name> field declarations PIMPLE owns. The framework auto-synthesises
 # the matching read_field InitStep (see
 # :func:`neofoam.fields.synthesis.synthesize_init_step`) and surfaces
@@ -209,7 +215,12 @@ def inner_loop(ctx: Context) -> bool:
 
 @pimple.operation(operation_number="2.1")
 @PimpleFvSchemes.add(
-    ddt="ddt(U)", div="div(phi,U)", grad="grad(U)", laplacian="laplacian(nuEff,U)"
+    ddt="ddt(U)",
+    # ``div(phi,U)`` (convection) + the viscous-stress divergence emitted by
+    # ``divDevReff(U)`` — both required for the momentum predictor.
+    div=["div(phi,U)", "div((nuEff*dev2(T(grad(U)))))"],
+    grad="grad(U)",
+    laplacian="laplacian(nuEff,U)",
 )
 @PimpleFvSolution.add("U")
 def momentum(
@@ -291,7 +302,7 @@ def continuity(
 @pimple.operation(operation_number="2.1")
 @PimpleFvSchemes.add(
     ddt="ddt(U)",
-    div="div(phi,U)",
+    div=["div(phi,U)", "div((nuEff*dev2(T(grad(U)))))"],
     grad="grad(U)",
     laplacian="laplacian(nuEff,U)",
     snGrad="snGrad(rhok)",
