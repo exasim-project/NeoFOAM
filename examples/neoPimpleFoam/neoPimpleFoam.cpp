@@ -65,11 +65,6 @@ int main(int argc, char* argv[])
         auto& p = nf::constructAndRegister(vectorCollection, rt, ofP, false);
         auto& U = nf::constructAndRegister(vectorCollection, rt, ofU, false);
 
-        // Gauss-Green gradient operator for the explicit deviatoric viscous-stress term.
-        // The full viscous term is div(nuEff*(grad(U) + grad(U)^T)) = laplacian(nuEff,U)
-        // + div(nuEff*dev2(T(grad(U)))); the implicit laplacian alone is not sufficient.
-        fvcc::GaussGreenGrad gradOp(rt.exec, rt.nfMesh);
-
         NeoN::Logging::info("Creating phi");
         auto& phi = nf::constructAndRegister(vectorCollection, rt, ofPhi, false);
 
@@ -78,11 +73,6 @@ int main(int argc, char* argv[])
         auto turb = nf::TurbulenceModel::create(rt, nu);
 
         turb->validate(U);
-
-        // Hoisted reuse buffer for the 2nd+ outer correctors' current-U velocity gradient,
-        // allocated ONCE here and refilled in place via gradTensor(U, localGradU) when needed —
-        // so no VolumeField<Tensor> (~nCells*9 scalars) is allocated per outer corrector.
-        auto localGradU = gradOp.gradTensor(U);
 
         // Hoist the surface interpolation once to avoid re-constructing it per inner corrector.
         auto surfInterpol = fvcc::SurfaceInterpolation<NeoN::scalar>(
@@ -136,19 +126,17 @@ int main(int argc, char* argv[])
                 // the internal vector) so we can blend against it after the pressure solve.
                 auto prevP = NeoN::dsl::fieldRelaxationSnapshot(p);
 
-                // On the first outer corrector reuse turb->gradU() (already at U^n) to avoid
-                // an extra grad(U) allocation; later correctors update localGradU in place.
-                const fvcc::VolumeField<NeoN::Tensor>* gradUPtr = nullptr;
-                if (pimpleLoop.firstIter())
+                // First outer corrector: reuse turb->gradU() (already grad(U^n) from the previous
+                // step's turb->correct(), proc-halo exchanged) — no recompute. Later correctors:
+                // refresh the turbulence model's single gradU buffer in place at the current U via
+                // updateGradU(), instead of allocating a separate VolumeField<Tensor> (~nCells*9
+                // scalars). Safe because turb->correct() recomputes gradU after the loop, so no
+                // turbulence state is corrupted.
+                if (!pimpleLoop.firstIter())
                 {
-                    gradUPtr = &turb->gradU();
+                    turb->updateGradU(U);
                 }
-                else
-                {
-                    gradOp.gradTensor(U, localGradU);
-                    gradUPtr = &localGradU;
-                }
-                const auto& gradU = *gradUPtr;
+                const auto& gradU = turb->gradU();
 
                 nf::PDE<NeoN::Vec3> UEqn(
                     dsl::imp::ddt(U) + dsl::imp::div(phi, U) - dsl::imp::laplacian(turb->nuEff(), U)
