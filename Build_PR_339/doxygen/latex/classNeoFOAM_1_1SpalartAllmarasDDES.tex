@@ -1,0 +1,345 @@
+\doxysection{Neo\+FOAM\+::Spalart\+Allmaras\+DDES Class Reference}
+\hypertarget{classNeoFOAM_1_1SpalartAllmarasDDES}{}\label{classNeoFOAM_1_1SpalartAllmarasDDES}\index{NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}}
+
+
+Spalart-\/\+Allmaras DDES turbulence model.  
+
+
+
+
+{\ttfamily \#include $<$spalart\+Allmaras\+DDES.\+hpp$>$}
+
+Inheritance diagram for Neo\+FOAM\+::Spalart\+Allmaras\+DDES\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classNeoFOAM_1_1SpalartAllmarasDDES}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \mbox{\hyperlink{structNeoFOAM_1_1SpalartAllmarasDDES_1_1Coefficients}{Coefficients}}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_aede00b7d4e4000554fe8818cea9aa091}{Spalart\+Allmaras\+DDES}} (\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&rt, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&nu)
+\begin{DoxyCompactList}\small\item\em Factory constructor — reads all turbulence infrastructure from \doxylink{structNeoFOAM_1_1RunTime}{Run\+Time}. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_a6815d845eec277bb568ef90ab66fecb1}{Spalart\+Allmaras\+DDES}} (const Neo\+N\+::\+Executor \&exec, \mbox{\hyperlink{classNeoFOAM_1_1MeshAdapter}{Mesh\+Adapter}} \&mesh, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&nu)
+\begin{DoxyCompactList}\small\item\em Construct from an explicit \doxylink{classNeoFOAM_1_1MeshAdapter}{Mesh\+Adapter} (no Run\+Time/fv\+Solution access). \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_aeb3ae19e8acb36b656d547de8837c33f}{Spalart\+Allmaras\+DDES}} (const Neo\+N\+::\+Executor \&exec, const Neo\+N\+::\+Unstructured\+Mesh \&mesh, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&nu, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&wall\+Dist, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&near\+Wall\+Dist, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&delta)
+\begin{DoxyCompactList}\small\item\em Backward-\/compatible constructor for callers that supply prebuilt \doxylink{namespaceNeoN}{NeoN} fields. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_a3c0ce97c52d3cc20099747f4728acda0}{validate}} (const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&U, nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&nu\+Tilda, nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&\mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_acee656603eee86c991995030845fc555}{nut}})
+\begin{DoxyCompactList}\small\item\em Initialise nut from the current nu\+Tilda. Call once at setup. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_a17ab835e02aad16cbe7ddd1d7cf05f4c}{correct}} (const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&U, nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&phi, nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&nu\+Tilda, nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&\mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_acee656603eee86c991995030845fc555}{nut}}, \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&rt)
+\begin{DoxyCompactList}\small\item\em Full turbulence update\+: compute sources, solve nu\+Tilda PDE, update nut. \end{DoxyCompactList}\item 
+nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \& \mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_a2e91793073c08869c9e7be21fb86dcc0}{nu\+Eff}} () override
+\begin{DoxyCompactList}\small\item\em Effective viscosity on faces\+: nu + nut (for momentum equation laplacian) \end{DoxyCompactList}\item 
+const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \& \mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_acee656603eee86c991995030845fc555}{nut}} () const override
+\begin{DoxyCompactList}\small\item\em Turbulent viscosity (model-\/owned; seeded by \doxylink{classNeoFOAM_1_1SpalartAllmarasDDES_ac43050c3c177a80bad14cf5a56284c6c}{initialize()}) \end{DoxyCompactList}\item 
+const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Tensor $>$ \& \mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_a8f2b6292ee3033e967c70004d7dc1fa9}{gradU}} () const override
+\begin{DoxyCompactList}\small\item\em Velocity gradient tensor (updated each \doxylink{classNeoFOAM_1_1SpalartAllmarasDDES_a17ab835e02aad16cbe7ddd1d7cf05f4c}{correct()} call, for viscous\+Stress term) \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_ac43050c3c177a80bad14cf5a56284c6c}{initialize}} (const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&nu\+Tilda\+Init, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&nut\+Init) override
+\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_af5f4e186e51eec77994b00457ef13486}{validate}} (const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&U) override
+\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_ab3d3d7a530d66278cdb1acfb7f3075a5}{correct}} (const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&U, nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&phi, \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&rt) override
+\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_ad151a477a7928654ac8116f7865165d0}{rotate\+Old\+Times}} () override
+\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_a7afbd70108d9b3f1086ce7ec5352fa37}{write}} (\mbox{\hyperlink{classNeoFOAM_1_1MeshAdapter}{Mesh\+Adapter}} \&mesh) const override
+\item 
+Neo\+N\+::\+Vector$<$ Neo\+N\+::\+Symm\+Tensor $>$ \mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_ac253c51b5267125370b87ac879bb96b9}{dev\+Rho\+Reff}} () const
+\begin{DoxyCompactList}\small\item\em Returns the deviatoric stress at all boundary faces as Vector$<$\+Symm\+Tensor$>$. \end{DoxyCompactList}\item 
+const \mbox{\hyperlink{structNeoFOAM_1_1SpalartAllmarasDDES_1_1Coefficients}{Coefficients}} \& \mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_a9ae39524a1d6f531ef27edac5c92d8f3}{coeffs}} () const
+\begin{DoxyCompactList}\small\item\em Read-\/only access to model coefficients (for testing/inspection) \end{DoxyCompactList}\item 
+\mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} \mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_ab3d0eda637080e405dc9aa39f88448e1}{cw1}} () const
+\begin{DoxyCompactList}\small\item\em Computed cw1 coefficient (for testing/inspection) \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_a79da919da2b00c0d070c4b1cf47c0213}{correct\+Nut}} (nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&nut\+Field, nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&nutF, nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&nu\+EffF, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&nu\+Tilde, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&nu, const nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&nuF, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&u, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&near\+Wall\+Dist) const
+\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_a520e6cc703a8262875e5f41595c3ddea}{calc\+Nu\+Tilda\+Diffusion\+Coeff}} (nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&nu\+Tilde, const nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&nuF, nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&surf\+Nu\+Tilde, nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&nu\+Tilde\+EffF) const
+\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_a133b9e8bdac102261ee8dd1ee9f64444}{calc\+Mag\+Sqr\+Vec}} (nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&mag\+Sqr, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&in) const
+\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_ab9f6ab154a6e1f6fbaff7ba190464a83}{compute\+Prod\+Sp\+DDES}} (nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&production\+Field, nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&sp\+Coeff\+Field, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&nu\+Tilde\+Field, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&nu\+Field, const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Tensor $>$ \&grad\+UField, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&wall\+Distance\+Field, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&delta\+Field, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&grad\+Nu\+Tilde\+Mag\+Sqr\+Field) const
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static std\+::string \mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_a4cd2d4de6d663ee2e33871d38685bb19}{name}} ()
+\item 
+static std\+::string \mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_a67fb74d672fb84ed340af5d367fc0981}{doc}} ()
+\item 
+static std\+::string \mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES_a3b7d53d1f35e409b3828d1e2990c4e32}{schema}} ()
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Spalart-\/\+Allmaras DDES turbulence model. 
+
+Registered under the key "{}\+Spalart\+Allmaras\+DDES"{} in the \doxylink{classNeoFOAM_1_1TurbulenceModel}{Turbulence\+Model} factory.
+
+Two distinct wall-\/distance fields are required\+:
+\begin{DoxyItemize}
+\item wall\+Dist \+: cell-\/centred distances (Foam\+::wall\+Dist\+::y()), for DDES shielding
+\item near\+Wall\+Dist \+: boundary-\/face distances (turbulence\+Model\+::y()\mbox{[}patchi\mbox{]}), for wall BCs
+\end{DoxyItemize}
+
+The model owns nu\+Tilda and nut internally. Call \doxylink{classNeoFOAM_1_1SpalartAllmarasDDES_ac43050c3c177a80bad14cf5a56284c6c}{initialize()} with disk-\/read \doxylink{namespaceNeoN}{NeoN} fields before the first \doxylink{classNeoFOAM_1_1SpalartAllmarasDDES_a3c0ce97c52d3cc20099747f4728acda0}{validate()} to seed non-\/zero initial conditions. The backward-\/compatible three-\/argument validate(\+U, nu\+Tilda, nut) and correct(\+U, phi, nu\+Tilda, nut, rt) overloads are retained for callers that manage those fields externally (e.\+g. neo\+Piso\+Foam). 
+
+Definition at line \mbox{\hyperlink{spalartAllmarasDDES_8hpp_source_l00033}{33}} of file \mbox{\hyperlink{spalartAllmarasDDES_8hpp_source}{spalart\+Allmaras\+DDES.\+hpp}}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{classNeoFOAM_1_1SpalartAllmarasDDES_aede00b7d4e4000554fe8818cea9aa091}\label{classNeoFOAM_1_1SpalartAllmarasDDES_aede00b7d4e4000554fe8818cea9aa091} 
+\index{NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}!SpalartAllmarasDDES@{SpalartAllmarasDDES}}
+\index{SpalartAllmarasDDES@{SpalartAllmarasDDES}!NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}}
+\doxysubsubsection{\texorpdfstring{SpalartAllmarasDDES()}{SpalartAllmarasDDES()}\hspace{0.1cm}{\footnotesize\ttfamily [1/3]}}
+{\footnotesize\ttfamily Neo\+FOAM\+::\+Spalart\+Allmaras\+DDES\+::\+Spalart\+Allmaras\+DDES (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&}]{rt,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{nu }\end{DoxyParamCaption})}
+
+
+
+Factory constructor — reads all turbulence infrastructure from \doxylink{structNeoFOAM_1_1RunTime}{Run\+Time}. 
+
+Maps the nu\+Tilda solver subdict, then computes wall\+Dist/near\+Wall\+Dist/delta from the Open\+FOAM mesh and reads the initial nu\+Tilda/nut from the current time directory. \Hypertarget{classNeoFOAM_1_1SpalartAllmarasDDES_a6815d845eec277bb568ef90ab66fecb1}\label{classNeoFOAM_1_1SpalartAllmarasDDES_a6815d845eec277bb568ef90ab66fecb1} 
+\index{NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}!SpalartAllmarasDDES@{SpalartAllmarasDDES}}
+\index{SpalartAllmarasDDES@{SpalartAllmarasDDES}!NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}}
+\doxysubsubsection{\texorpdfstring{SpalartAllmarasDDES()}{SpalartAllmarasDDES()}\hspace{0.1cm}{\footnotesize\ttfamily [2/3]}}
+{\footnotesize\ttfamily Neo\+FOAM\+::\+Spalart\+Allmaras\+DDES\+::\+Spalart\+Allmaras\+DDES (\begin{DoxyParamCaption}\item[{const Neo\+N\+::\+Executor \&}]{exec,  }\item[{\mbox{\hyperlink{classNeoFOAM_1_1MeshAdapter}{Mesh\+Adapter}} \&}]{mesh,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{nu }\end{DoxyParamCaption})}
+
+
+
+Construct from an explicit \doxylink{classNeoFOAM_1_1MeshAdapter}{Mesh\+Adapter} (no Run\+Time/fv\+Solution access). 
+
+Computes wall\+Dist, near\+Wall\+Dist, and delta internally from the mesh, and reads the initial nu\+Tilda/nut fields from the current time directory. \Hypertarget{classNeoFOAM_1_1SpalartAllmarasDDES_aeb3ae19e8acb36b656d547de8837c33f}\label{classNeoFOAM_1_1SpalartAllmarasDDES_aeb3ae19e8acb36b656d547de8837c33f} 
+\index{NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}!SpalartAllmarasDDES@{SpalartAllmarasDDES}}
+\index{SpalartAllmarasDDES@{SpalartAllmarasDDES}!NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}}
+\doxysubsubsection{\texorpdfstring{SpalartAllmarasDDES()}{SpalartAllmarasDDES()}\hspace{0.1cm}{\footnotesize\ttfamily [3/3]}}
+{\footnotesize\ttfamily Neo\+FOAM\+::\+Spalart\+Allmaras\+DDES\+::\+Spalart\+Allmaras\+DDES (\begin{DoxyParamCaption}\item[{const Neo\+N\+::\+Executor \&}]{exec,  }\item[{const Neo\+N\+::\+Unstructured\+Mesh \&}]{mesh,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{nu,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{wall\+Dist,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{near\+Wall\+Dist,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{delta }\end{DoxyParamCaption})}
+
+
+
+Backward-\/compatible constructor for callers that supply prebuilt \doxylink{namespaceNeoN}{NeoN} fields. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em exec} & Kokkos executor (Serial/\+CPU/\+GPU) \\
+\hline
+{\em mesh} & \doxylink{namespaceNeoN}{NeoN} unstructured mesh \\
+\hline
+{\em nu} & \doxylink{classNeoFOAM_1_1Laminar}{Laminar} kinematic viscosity (cell-\/centred) \\
+\hline
+{\em wall\+Dist} & Cell-\/centred wall distances (Foam\+::wall\+Dist\+::y()) \\
+\hline
+{\em near\+Wall\+Dist} & Boundary-\/face wall distances (near\+Wall\+Dist\+::y()\mbox{[}patchi\mbox{]}) \\
+\hline
+{\em delta} & LES filter width (cube root of cell volume or LESModel\+::delta()) \\
+\hline
+\end{DoxyParams}
+
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{classNeoFOAM_1_1SpalartAllmarasDDES_a133b9e8bdac102261ee8dd1ee9f64444}\label{classNeoFOAM_1_1SpalartAllmarasDDES_a133b9e8bdac102261ee8dd1ee9f64444} 
+\index{NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}!calcMagSqrVec@{calcMagSqrVec}}
+\index{calcMagSqrVec@{calcMagSqrVec}!NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}}
+\doxysubsubsection{\texorpdfstring{calcMagSqrVec()}{calcMagSqrVec()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::\+Spalart\+Allmaras\+DDES\+::calc\+Mag\+Sqr\+Vec (\begin{DoxyParamCaption}\item[{nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{mag\+Sqr,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&}]{in }\end{DoxyParamCaption}) const}
+
+\Hypertarget{classNeoFOAM_1_1SpalartAllmarasDDES_a520e6cc703a8262875e5f41595c3ddea}\label{classNeoFOAM_1_1SpalartAllmarasDDES_a520e6cc703a8262875e5f41595c3ddea} 
+\index{NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}!calcNuTildaDiffusionCoeff@{calcNuTildaDiffusionCoeff}}
+\index{calcNuTildaDiffusionCoeff@{calcNuTildaDiffusionCoeff}!NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}}
+\doxysubsubsection{\texorpdfstring{calcNuTildaDiffusionCoeff()}{calcNuTildaDiffusionCoeff()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::\+Spalart\+Allmaras\+DDES\+::calc\+Nu\+Tilda\+Diffusion\+Coeff (\begin{DoxyParamCaption}\item[{nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{nu\+Tilde,  }\item[{const nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{nuF,  }\item[{nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{surf\+Nu\+Tilde,  }\item[{nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{nu\+Tilde\+EffF }\end{DoxyParamCaption}) const}
+
+\Hypertarget{classNeoFOAM_1_1SpalartAllmarasDDES_a9ae39524a1d6f531ef27edac5c92d8f3}\label{classNeoFOAM_1_1SpalartAllmarasDDES_a9ae39524a1d6f531ef27edac5c92d8f3} 
+\index{NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}!coeffs@{coeffs}}
+\index{coeffs@{coeffs}!NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}}
+\doxysubsubsection{\texorpdfstring{coeffs()}{coeffs()}}
+{\footnotesize\ttfamily const \mbox{\hyperlink{structNeoFOAM_1_1SpalartAllmarasDDES_1_1Coefficients}{Coefficients}} \& Neo\+FOAM\+::\+Spalart\+Allmaras\+DDES\+::coeffs (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Read-\/only access to model coefficients (for testing/inspection) 
+
+
+
+Definition at line \mbox{\hyperlink{spalartAllmarasDDES_8hpp_source_l00166}{166}} of file \mbox{\hyperlink{spalartAllmarasDDES_8hpp_source}{spalart\+Allmaras\+DDES.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1SpalartAllmarasDDES_ab9f6ab154a6e1f6fbaff7ba190464a83}\label{classNeoFOAM_1_1SpalartAllmarasDDES_ab9f6ab154a6e1f6fbaff7ba190464a83} 
+\index{NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}!computeProdSpDDES@{computeProdSpDDES}}
+\index{computeProdSpDDES@{computeProdSpDDES}!NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}}
+\doxysubsubsection{\texorpdfstring{computeProdSpDDES()}{computeProdSpDDES()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::\+Spalart\+Allmaras\+DDES\+::compute\+Prod\+Sp\+DDES (\begin{DoxyParamCaption}\item[{nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{production\+Field,  }\item[{nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{sp\+Coeff\+Field,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{nu\+Tilde\+Field,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{nu\+Field,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Tensor $>$ \&}]{grad\+UField,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{wall\+Distance\+Field,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{delta\+Field,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{grad\+Nu\+Tilde\+Mag\+Sqr\+Field }\end{DoxyParamCaption}) const}
+
+\Hypertarget{classNeoFOAM_1_1SpalartAllmarasDDES_a17ab835e02aad16cbe7ddd1d7cf05f4c}\label{classNeoFOAM_1_1SpalartAllmarasDDES_a17ab835e02aad16cbe7ddd1d7cf05f4c} 
+\index{NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}!correct@{correct}}
+\index{correct@{correct}!NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}}
+\doxysubsubsection{\texorpdfstring{correct()}{correct()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::\+Spalart\+Allmaras\+DDES\+::correct (\begin{DoxyParamCaption}\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&}]{U,  }\item[{nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{phi,  }\item[{nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{nu\+Tilda,  }\item[{nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{nut,  }\item[{\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&}]{rt }\end{DoxyParamCaption})}
+
+
+
+Full turbulence update\+: compute sources, solve nu\+Tilda PDE, update nut. 
+
+Equivalent to Open\+FOAM\textquotesingle{}s turbulence-\/\texorpdfstring{$>$}{>}\doxylink{classNeoFOAM_1_1SpalartAllmarasDDES_a17ab835e02aad16cbe7ddd1d7cf05f4c}{correct()}. Call after each momentum/\+PISO iteration.
+
+
+\begin{DoxyParams}{Parameters}
+{\em U} & Current velocity field \\
+\hline
+{\em phi} & Face flux field \\
+\hline
+{\em nu\+Tilda} & Transported SA variable (updated in place) \\
+\hline
+{\em nut} & Turbulent viscosity (updated in place) \\
+\hline
+{\em rt} & \doxylink{namespaceNeoFOAM}{Neo\+FOAM} \doxylink{structNeoFOAM_1_1RunTime}{Run\+Time} (provides time step, scheme dicts) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{classNeoFOAM_1_1SpalartAllmarasDDES_ab3d3d7a530d66278cdb1acfb7f3075a5}\label{classNeoFOAM_1_1SpalartAllmarasDDES_ab3d3d7a530d66278cdb1acfb7f3075a5} 
+\index{NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}!correct@{correct}}
+\index{correct@{correct}!NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}}
+\doxysubsubsection{\texorpdfstring{correct()}{correct()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::\+Spalart\+Allmaras\+DDES\+::correct (\begin{DoxyParamCaption}\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&}]{U,  }\item[{nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{phi,  }\item[{\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&}]{rt }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}}
+
+\Hypertarget{classNeoFOAM_1_1SpalartAllmarasDDES_a79da919da2b00c0d070c4b1cf47c0213}\label{classNeoFOAM_1_1SpalartAllmarasDDES_a79da919da2b00c0d070c4b1cf47c0213} 
+\index{NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}!correctNut@{correctNut}}
+\index{correctNut@{correctNut}!NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}}
+\doxysubsubsection{\texorpdfstring{correctNut()}{correctNut()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::\+Spalart\+Allmaras\+DDES\+::correct\+Nut (\begin{DoxyParamCaption}\item[{nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{nut\+Field,  }\item[{nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{nutF,  }\item[{nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{nu\+EffF,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{nu\+Tilde,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{nu,  }\item[{const nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{nuF,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&}]{u,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{near\+Wall\+Dist }\end{DoxyParamCaption}) const}
+
+\Hypertarget{classNeoFOAM_1_1SpalartAllmarasDDES_ab3d0eda637080e405dc9aa39f88448e1}\label{classNeoFOAM_1_1SpalartAllmarasDDES_ab3d0eda637080e405dc9aa39f88448e1} 
+\index{NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}!cw1@{cw1}}
+\index{cw1@{cw1}!NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}}
+\doxysubsubsection{\texorpdfstring{cw1()}{cw1()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} Neo\+FOAM\+::\+Spalart\+Allmaras\+DDES\+::cw1 (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Computed cw1 coefficient (for testing/inspection) 
+
+
+
+Definition at line \mbox{\hyperlink{spalartAllmarasDDES_8hpp_source_l00169}{169}} of file \mbox{\hyperlink{spalartAllmarasDDES_8hpp_source}{spalart\+Allmaras\+DDES.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1SpalartAllmarasDDES_ac253c51b5267125370b87ac879bb96b9}\label{classNeoFOAM_1_1SpalartAllmarasDDES_ac253c51b5267125370b87ac879bb96b9} 
+\index{NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}!devRhoReff@{devRhoReff}}
+\index{devRhoReff@{devRhoReff}!NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}}
+\doxysubsubsection{\texorpdfstring{devRhoReff()}{devRhoReff()}}
+{\footnotesize\ttfamily Neo\+N\+::\+Vector$<$ Neo\+N\+::\+Symm\+Tensor $>$ Neo\+FOAM\+::\+Spalart\+Allmaras\+DDES\+::dev\+Rho\+Reff (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+
+
+Returns the deviatoric stress at all boundary faces as Vector$<$\+Symm\+Tensor$>$. 
+
+Computes -\/nu\+Eff \texorpdfstring{$\ast$}{*} symm(two\+Symm(grad\+U)).dev2() at each boundary face. Slice per-\/patch using mesh\+\_\+.\+boundary\+Mesh().patch\+Range(patchi). Used by forces function\+Object to integrate viscous forces over patches. \Hypertarget{classNeoFOAM_1_1SpalartAllmarasDDES_a67fb74d672fb84ed340af5d367fc0981}\label{classNeoFOAM_1_1SpalartAllmarasDDES_a67fb74d672fb84ed340af5d367fc0981} 
+\index{NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}!doc@{doc}}
+\index{doc@{doc}!NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}}
+\doxysubsubsection{\texorpdfstring{doc()}{doc()}}
+{\footnotesize\ttfamily static std\+::string Neo\+FOAM\+::\+Spalart\+Allmaras\+DDES\+::doc (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Definition at line \mbox{\hyperlink{spalartAllmarasDDES_8hpp_source_l00038}{38}} of file \mbox{\hyperlink{spalartAllmarasDDES_8hpp_source}{spalart\+Allmaras\+DDES.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1SpalartAllmarasDDES_a8f2b6292ee3033e967c70004d7dc1fa9}\label{classNeoFOAM_1_1SpalartAllmarasDDES_a8f2b6292ee3033e967c70004d7dc1fa9} 
+\index{NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}!gradU@{gradU}}
+\index{gradU@{gradU}!NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}}
+\doxysubsubsection{\texorpdfstring{gradU()}{gradU()}}
+{\footnotesize\ttfamily const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Tensor $>$ \& Neo\+FOAM\+::\+Spalart\+Allmaras\+DDES\+::gradU (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [override]}}
+
+
+
+Velocity gradient tensor (updated each \doxylink{classNeoFOAM_1_1SpalartAllmarasDDES_a17ab835e02aad16cbe7ddd1d7cf05f4c}{correct()} call, for viscous\+Stress term) 
+
+\Hypertarget{classNeoFOAM_1_1SpalartAllmarasDDES_ac43050c3c177a80bad14cf5a56284c6c}\label{classNeoFOAM_1_1SpalartAllmarasDDES_ac43050c3c177a80bad14cf5a56284c6c} 
+\index{NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}!initialize@{initialize}}
+\index{initialize@{initialize}!NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}}
+\doxysubsubsection{\texorpdfstring{initialize()}{initialize()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::\+Spalart\+Allmaras\+DDES\+::initialize (\begin{DoxyParamCaption}\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{nu\+Tilda\+Init,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{nut\+Init }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}}
+
+\Hypertarget{classNeoFOAM_1_1SpalartAllmarasDDES_a4cd2d4de6d663ee2e33871d38685bb19}\label{classNeoFOAM_1_1SpalartAllmarasDDES_a4cd2d4de6d663ee2e33871d38685bb19} 
+\index{NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}!name@{name}}
+\index{name@{name}!NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}}
+\doxysubsubsection{\texorpdfstring{name()}{name()}}
+{\footnotesize\ttfamily static std\+::string Neo\+FOAM\+::\+Spalart\+Allmaras\+DDES\+::name (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Definition at line \mbox{\hyperlink{spalartAllmarasDDES_8hpp_source_l00037}{37}} of file \mbox{\hyperlink{spalartAllmarasDDES_8hpp_source}{spalart\+Allmaras\+DDES.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1SpalartAllmarasDDES_a2e91793073c08869c9e7be21fb86dcc0}\label{classNeoFOAM_1_1SpalartAllmarasDDES_a2e91793073c08869c9e7be21fb86dcc0} 
+\index{NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}!nuEff@{nuEff}}
+\index{nuEff@{nuEff}!NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}}
+\doxysubsubsection{\texorpdfstring{nuEff()}{nuEff()}}
+{\footnotesize\ttfamily nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \& Neo\+FOAM\+::\+Spalart\+Allmaras\+DDES\+::nu\+Eff (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}}
+
+
+
+Effective viscosity on faces\+: nu + nut (for momentum equation laplacian) 
+
+\Hypertarget{classNeoFOAM_1_1SpalartAllmarasDDES_acee656603eee86c991995030845fc555}\label{classNeoFOAM_1_1SpalartAllmarasDDES_acee656603eee86c991995030845fc555} 
+\index{NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}!nut@{nut}}
+\index{nut@{nut}!NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}}
+\doxysubsubsection{\texorpdfstring{nut()}{nut()}}
+{\footnotesize\ttfamily const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \& Neo\+FOAM\+::\+Spalart\+Allmaras\+DDES\+::nut (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [override]}}
+
+
+
+Turbulent viscosity (model-\/owned; seeded by \doxylink{classNeoFOAM_1_1SpalartAllmarasDDES_ac43050c3c177a80bad14cf5a56284c6c}{initialize()}) 
+
+\Hypertarget{classNeoFOAM_1_1SpalartAllmarasDDES_ad151a477a7928654ac8116f7865165d0}\label{classNeoFOAM_1_1SpalartAllmarasDDES_ad151a477a7928654ac8116f7865165d0} 
+\index{NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}!rotateOldTimes@{rotateOldTimes}}
+\index{rotateOldTimes@{rotateOldTimes}!NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}}
+\doxysubsubsection{\texorpdfstring{rotateOldTimes()}{rotateOldTimes()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::\+Spalart\+Allmaras\+DDES\+::rotate\+Old\+Times (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}}
+
+\Hypertarget{classNeoFOAM_1_1SpalartAllmarasDDES_a3b7d53d1f35e409b3828d1e2990c4e32}\label{classNeoFOAM_1_1SpalartAllmarasDDES_a3b7d53d1f35e409b3828d1e2990c4e32} 
+\index{NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}!schema@{schema}}
+\index{schema@{schema}!NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}}
+\doxysubsubsection{\texorpdfstring{schema()}{schema()}}
+{\footnotesize\ttfamily static std\+::string Neo\+FOAM\+::\+Spalart\+Allmaras\+DDES\+::schema (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Definition at line \mbox{\hyperlink{spalartAllmarasDDES_8hpp_source_l00039}{39}} of file \mbox{\hyperlink{spalartAllmarasDDES_8hpp_source}{spalart\+Allmaras\+DDES.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1SpalartAllmarasDDES_af5f4e186e51eec77994b00457ef13486}\label{classNeoFOAM_1_1SpalartAllmarasDDES_af5f4e186e51eec77994b00457ef13486} 
+\index{NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}!validate@{validate}}
+\index{validate@{validate}!NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}}
+\doxysubsubsection{\texorpdfstring{validate()}{validate()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::\+Spalart\+Allmaras\+DDES\+::validate (\begin{DoxyParamCaption}\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&}]{U }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}}
+
+\Hypertarget{classNeoFOAM_1_1SpalartAllmarasDDES_a3c0ce97c52d3cc20099747f4728acda0}\label{classNeoFOAM_1_1SpalartAllmarasDDES_a3c0ce97c52d3cc20099747f4728acda0} 
+\index{NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}!validate@{validate}}
+\index{validate@{validate}!NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}}
+\doxysubsubsection{\texorpdfstring{validate()}{validate()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::\+Spalart\+Allmaras\+DDES\+::validate (\begin{DoxyParamCaption}\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&}]{U,  }\item[{nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{nu\+Tilda,  }\item[{nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{nut }\end{DoxyParamCaption})}
+
+
+
+Initialise nut from the current nu\+Tilda. Call once at setup. 
+
+Equivalent to Open\+FOAM\textquotesingle{}s turbulence-\/\texorpdfstring{$>$}{>}\doxylink{classNeoFOAM_1_1SpalartAllmarasDDES_a3c0ce97c52d3cc20099747f4728acda0}{validate()}.
+
+
+\begin{DoxyParams}{Parameters}
+{\em U} & Initial velocity field (needed for wall-\/function BCs on nut) \\
+\hline
+{\em nu\+Tilda} & Initial SA transported variable \\
+\hline
+{\em nut} & Turbulent viscosity (updated in place) \\
+\hline
+\end{DoxyParams}
+\Hypertarget{classNeoFOAM_1_1SpalartAllmarasDDES_a7afbd70108d9b3f1086ce7ec5352fa37}\label{classNeoFOAM_1_1SpalartAllmarasDDES_a7afbd70108d9b3f1086ce7ec5352fa37} 
+\index{NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}!write@{write}}
+\index{write@{write}!NeoFOAM::SpalartAllmarasDDES@{NeoFOAM::SpalartAllmarasDDES}}
+\doxysubsubsection{\texorpdfstring{write()}{write()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::\+Spalart\+Allmaras\+DDES\+::write (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classNeoFOAM_1_1MeshAdapter}{Mesh\+Adapter}} \&}]{mesh }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [override]}}
+
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/runner/work/\+Neo\+FOAM/\+Neo\+FOAM/include/\+Neo\+FOAM/turbulence\+Models/\mbox{\hyperlink{spalartAllmarasDDES_8hpp}{spalart\+Allmaras\+DDES.\+hpp}}\end{DoxyCompactItemize}
