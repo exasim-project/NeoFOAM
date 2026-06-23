@@ -172,27 +172,14 @@ def save_case(
 ) -> list[Path]:
     """Write every populated config in ``case_spec`` to ``target_case``.
 
-    Save errors are caught per-config and emitted as warnings rather than
-    raising — so a single schema-vs-file mismatch can't take down a whole
-    fill run; the static-asset copy step in :func:`fill_case` left a usable
-    source file in place for cases like that to fall back on.
+    Delegates to :func:`neofoam.io.write_configs`, which groups configs that
+    target the same file (e.g. ``TransportProperties`` + ``Boussinesq``) and
+    writes each file once, so co-owners don't clobber each other.
     """
-    import warnings
+    from neofoam.io import write_configs
 
-    written: list[Path] = []
-    for cfg in case_spec_to_configs(case_spec):
-        path = type(cfg).get_default_path(target_case)
-        try:
-            cfg.save(case_dir=target_case)
-        except (KeyError, TypeError, ValueError) as exc:
-            warnings.warn(
-                f"Could not save {type(cfg).__name__} via {type(cfg).__name__}"
-                f".save: {exc}. Leaving any pre-existing file untouched.",
-                stacklevel=2,
-            )
-            continue
-        written.append(path)
-    return written
+    report = write_configs(case_spec_to_configs(case_spec), target_case)
+    return [Path(target_case) / file for file in report]
 
 
 def _copy_static_assets(source_case: Path, target_case: Path) -> None:

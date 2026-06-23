@@ -69,6 +69,24 @@ WRITE_DISPATCH: dict[type, Callable[[Any, str, Any], None]] = {
 }
 
 
+def foam_header(path: Path) -> dict[str, str]:
+    """A minimal ``FoamFile`` header for a plain OpenFOAM dictionary file.
+
+    Field configs synthesise their own header (``class`` = ``volVectorField``
+    etc., see :mod:`neofoam.fields.schema`); generic dict configs
+    (``controlDict``, ``fvSchemes``, ``transportProperties``, …) carry no
+    header field, so the writer injects this one — ``class dictionary`` with
+    ``object`` taken from the file name — making a from-scratch case readable
+    by OpenFOAM without copying a template.
+    """
+    return {
+        "version": "2.0",
+        "format": "ascii",
+        "class": "dictionary",
+        "object": path.stem,
+    }
+
+
 def _to_python(foam_dict: Any) -> dict[str, Any]:
     """Convert a pybFoam dictionary into a plain ``dict`` of strings/sub-dicts."""
     out: dict[str, Any] = {}
@@ -87,6 +105,11 @@ def _unwrap_type(tp: Any) -> Any:
         tp = get_args(tp)[0]
     if get_origin(tp) in (Optional, Union):
         args = [a for a in get_args(tp) if a is not type(None)]
+        # A union that accepts ``str`` can hold the raw OpenFOAM text (e.g.
+        # ``FieldValue`` = ``float | list | str | NonUniform``, whose on-disk form
+        # is ``"uniform (0 0 0)"``); leave it uncoerced and let Pydantic validate.
+        if str in args:
+            return str
         if args:
             tp = args[0]
     if get_origin(tp) is Literal:
@@ -189,7 +212,15 @@ class OpenFOAMStrategy(SubdictMixin):
         # ``by_alias=True`` so synthesised sections (``fv_configs._rebuild_sections``
         # registers OpenFOAM keys like ``"div(phi,U)"`` as the ``Field.alias`` on a
         # sanitised attribute) emit data keyed by the alias the writer looks up.
-        data = instance.model_dump(mode="python", exclude_none=False, by_alias=True)
+        # ``context={"format": "openfoam"}`` drives the field-value types
+        # (:data:`neofoam.fields.value_types.FieldValue`) to emit OpenFOAM
+        # ``uniform`` / ``nonuniform`` literals; other writers leave values raw.
+        data = instance.model_dump(
+            mode="python",
+            exclude_none=False,
+            by_alias=True,
+            context={"format": "openfoam"},
+        )
         path.parent.mkdir(parents=True, exist_ok=True)
 
         if self.subdict_path:
@@ -208,7 +239,18 @@ class OpenFOAMStrategy(SubdictMixin):
         root_dict = (
             pyf.dictionary.read(str(path)) if path.exists() else pyf.dictionary()
         )
+        # Clear and rewrite the full file: a single config owns its file's
+        # content, so re-saving must drop keys it no longer carries (e.g. a BC
+        # flipped from fixedValue to zeroGradient must not leave a stale
+        # ``value``). Multiple configs that *share* a file are combined up front
+        # by :func:`neofoam.io.write_configs.write_configs` and handed here as one
+        # merged payload, so clearing never loses a co-owner's keys.
         root_dict.clear()
+        # Inject a FoamFile header for headerless dict configs; field configs
+        # already carry their own ``FoamFile`` (with the right ``class``).
+        # Written first so it lands at the top of the file.
+        if "FoamFile" not in data:
+            self._write(root_dict, {"FoamFile": foam_header(path)})
         self._write(root_dict, data)
         root_dict.write(str(path))
 

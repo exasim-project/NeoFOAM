@@ -77,7 +77,7 @@ class Configurations:
 
         The complement of :attr:`fields`. Useful when the caller wants
         to keep the original ``configurations(solver)`` semantics
-        (multi-owner dict files merged via ``save_merged``).
+        (multi-owner dict files merged via ``write_configs``).
         """
         return [cls for cls in self.classes if not _is_field_schema(cls)]
 
