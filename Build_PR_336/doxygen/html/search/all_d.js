@@ -7,12 +7,13 @@ var searchData=
   ['readsurfaceboundaryconditions_4',['readSurfaceBoundaryConditions',['../namespaceNeoFOAM.html#adb365cf8e725db6dbfc0a758c392e2b1',1,'NeoFOAM']]],
   ['readvolboundaryconditions_5',['readVolBoundaryConditions',['../namespaceNeoFOAM.html#a6cb4d89d1e44667e5a66f5119bad9206',1,'NeoFOAM']]],
   ['registryname_6',['registryName',['../classNeoFOAM_1_1DatabaseWrapper.html#a294a3f7e57e3700663a52e4ef2afe71f',1,'NeoFOAM::DatabaseWrapper']]],
-  ['reportcontinuityerror_7',['reportContinuityError',['../namespaceNeoFOAM.html#a216c99c971b9acb00fbd8ff36d9f2ee9',1,'NeoFOAM']]],
-  ['residualmap_8',['ResidualMap',['../namespaceNeoFOAM.html#ad7da788dc1fc4af69c98dea808d84073',1,'NeoFOAM']]],
-  ['resolvemesh_9',['resolveMesh',['../classNeoFOAM_1_1Forces.html#af835251b826a633fce525e08d8716535',1,'NeoFOAM::Forces']]],
-  ['result_5f_10',['result_',['../classNeoFOAM_1_1Forces.html#a91834387ab747d791018d412341b3e98',1,'NeoFOAM::Forces']]],
-  ['rhoref_5f_11',['rhoRef_',['../classNeoFOAM_1_1Forces.html#a05985b1ca791ec6a86dd589f708a3233',1,'NeoFOAM::Forces']]],
-  ['rotateoldtimes_12',['rotateoldtimes',['../classNeoFOAM_1_1SpalartAllmarasDDES.html#ad151a477a7928654ac8116f7865165d0',1,'NeoFOAM::SpalartAllmarasDDES::rotateOldTimes()'],['../classNeoFOAM_1_1TurbulenceModel.html#a6af2db926d7eb7d289a1afc6b8df18e9',1,'NeoFOAM::TurbulenceModel::rotateOldTimes()'],['../classNeoFOAM_1_1Laminar.html#a995332ed6034abe073d56dcf2578d26e',1,'NeoFOAM::Laminar::rotateOldTimes()']]],
-  ['runtime_13',['RunTime',['../structNeoFOAM_1_1RunTime.html',1,'NeoFOAM']]],
-  ['runtime_2ehpp_14',['runTime.hpp',['../runTime_8hpp.html',1,'']]]
+  ['relaxownedls_7',['relaxOwnedLs',['../classNeoFOAM_1_1PDE.html#adb2db6a18334f46d42794e5b5aef0fdb',1,'NeoFOAM::PDE']]],
+  ['reportcontinuityerror_8',['reportContinuityError',['../namespaceNeoFOAM.html#a216c99c971b9acb00fbd8ff36d9f2ee9',1,'NeoFOAM']]],
+  ['residualmap_9',['ResidualMap',['../namespaceNeoFOAM.html#ad7da788dc1fc4af69c98dea808d84073',1,'NeoFOAM']]],
+  ['resolvemesh_10',['resolveMesh',['../classNeoFOAM_1_1Forces.html#af835251b826a633fce525e08d8716535',1,'NeoFOAM::Forces']]],
+  ['result_5f_11',['result_',['../classNeoFOAM_1_1Forces.html#a91834387ab747d791018d412341b3e98',1,'NeoFOAM::Forces']]],
+  ['rhoref_5f_12',['rhoRef_',['../classNeoFOAM_1_1Forces.html#a05985b1ca791ec6a86dd589f708a3233',1,'NeoFOAM::Forces']]],
+  ['rotateoldtimes_13',['rotateoldtimes',['../classNeoFOAM_1_1SpalartAllmarasDDES.html#ad151a477a7928654ac8116f7865165d0',1,'NeoFOAM::SpalartAllmarasDDES::rotateOldTimes()'],['../classNeoFOAM_1_1TurbulenceModel.html#a6af2db926d7eb7d289a1afc6b8df18e9',1,'NeoFOAM::TurbulenceModel::rotateOldTimes()'],['../classNeoFOAM_1_1Laminar.html#a995332ed6034abe073d56dcf2578d26e',1,'NeoFOAM::Laminar::rotateOldTimes()']]],
+  ['runtime_14',['RunTime',['../structNeoFOAM_1_1RunTime.html',1,'NeoFOAM']]],
+  ['runtime_2ehpp_15',['runTime.hpp',['../runTime_8hpp.html',1,'']]]
 ];

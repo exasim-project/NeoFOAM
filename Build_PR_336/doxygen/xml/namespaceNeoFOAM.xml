@@ -11,6 +11,7 @@
     <innerclass refid="classNeoFOAM_1_1FunctionObjectIO" prot="public">NeoFOAM::FunctionObjectIO</innerclass>
     <innerclass refid="classNeoFOAM_1_1Laminar" prot="public">NeoFOAM::Laminar</innerclass>
     <innerclass refid="classNeoFOAM_1_1MeshAdapter" prot="public">NeoFOAM::MeshAdapter</innerclass>
+    <innerclass refid="classNeoFOAM_1_1PDE" prot="public">NeoFOAM::PDE</innerclass>
     <innerclass refid="classNeoFOAM_1_1PimpleControl" prot="public">NeoFOAM::PimpleControl</innerclass>
     <innerclass refid="structNeoFOAM_1_1RunTime" prot="public">NeoFOAM::RunTime</innerclass>
     <innerclass refid="classNeoFOAM_1_1Solver" prot="public">NeoFOAM::Solver</innerclass>
@@ -90,7 +91,7 @@
         <name>computeRAU</name>
         <qualifiedname>NeoFOAM::computeRAU</qualifiedname>
         <param>
-          <type>const PDE&lt; <ref refid="pressureVelocityCoupling_8hpp_1ae261b7f2859c508a432e8a334ad179d2" kindref="member">Vec3</ref> &gt; &amp;</type>
+          <type>const <ref refid="classNeoFOAM_1_1PDE" kindref="compound">PDE</ref>&lt; <ref refid="pressureVelocityCoupling_8hpp_1ae261b7f2859c508a432e8a334ad179d2" kindref="member">Vec3</ref> &gt; &amp;</type>
           <declname>expr</declname>
         </param>
         <briefdescription>
@@ -108,7 +109,7 @@
         <name>computeRAUandHByA</name>
         <qualifiedname>NeoFOAM::computeRAUandHByA</qualifiedname>
         <param>
-          <type>const PDE&lt; <ref refid="pressureVelocityCoupling_8hpp_1ae261b7f2859c508a432e8a334ad179d2" kindref="member">Vec3</ref> &gt; &amp;</type>
+          <type>const <ref refid="classNeoFOAM_1_1PDE" kindref="compound">PDE</ref>&lt; <ref refid="pressureVelocityCoupling_8hpp_1ae261b7f2859c508a432e8a334ad179d2" kindref="member">Vec3</ref> &gt; &amp;</type>
           <declname>expr</declname>
         </param>
         <briefdescription>
@@ -130,7 +131,7 @@
           <declname>predictedPhi</declname>
         </param>
         <param>
-          <type>const PDE&lt; <ref refid="pressureVelocityCoupling_8hpp_1acc912e7a5a44b028589fda3fd76ba7ea" kindref="member">scalar</ref> &gt; &amp;</type>
+          <type>const <ref refid="classNeoFOAM_1_1PDE" kindref="compound">PDE</ref>&lt; <ref refid="pressureVelocityCoupling_8hpp_1acc912e7a5a44b028589fda3fd76ba7ea" kindref="member">scalar</ref> &gt; &amp;</type>
           <declname>expr</declname>
         </param>
         <param>
@@ -1476,6 +1477,64 @@
         <inbodydescription>
         </inbodydescription>
         <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/meshAdapter.hpp" line="110" column="17" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/meshAdapter.hpp" declline="110" declcolumn="17"/>
+      </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1a1a20de9aeea93a39b256d91014ce9039" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename ValueType</type>
+          </param>
+          <param>
+            <type>typename IndexType</type>
+            <defval>NeoN::localIdx</defval>
+          </param>
+        </templateparamlist>
+        <type>NeoN::finiteVolume::cellCentred::VolumeField&lt; ValueType &gt;</type>
+        <definition>NeoN::finiteVolume::cellCentred::VolumeField&lt; ValueType &gt; NeoFOAM::applyOperator</definition>
+        <argsstring>(const la::LinearSystem&lt; ValueType &gt; &amp;ls, const NeoN::finiteVolume::cellCentred::VolumeField&lt; ValueType &gt; &amp;psi)</argsstring>
+        <name>applyOperator</name>
+        <qualifiedname>NeoFOAM::applyOperator</qualifiedname>
+        <param>
+          <type>const la::LinearSystem&lt; ValueType &gt; &amp;</type>
+          <declname>ls</declname>
+        </param>
+        <param>
+          <type>const NeoN::finiteVolume::cellCentred::VolumeField&lt; ValueType &gt; &amp;</type>
+          <declname>psi</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp" line="505" column="46" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp" bodystart="505" bodyend="520"/>
+      </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1a999e61dc6e0868f9fe6cd7e4ea91f917" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename ValueType</type>
+          </param>
+        </templateparamlist>
+        <type>NeoN::finiteVolume::cellCentred::VolumeField&lt; ValueType &gt;</type>
+        <definition>NeoN::finiteVolume::cellCentred::VolumeField&lt; ValueType &gt; NeoFOAM::operator&amp;</definition>
+        <argsstring>(const PDE&lt; ValueType &gt; &amp;expr, const NeoN::finiteVolume::cellCentred::VolumeField&lt; ValueType &gt; &amp;psi)</argsstring>
+        <name>operator&amp;</name>
+        <qualifiedname>NeoFOAM::operator&amp;</qualifiedname>
+        <param>
+          <type>const <ref refid="classNeoFOAM_1_1PDE" kindref="compound">PDE</ref>&lt; ValueType &gt; &amp;</type>
+          <declname>expr</declname>
+        </param>
+        <param>
+          <type>const NeoN::finiteVolume::cellCentred::VolumeField&lt; ValueType &gt; &amp;</type>
+          <declname>psi</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp" line="524" column="46" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp" bodystart="524" bodyend="530"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1ae3448b9356abfd01a14f812c7acffc7c" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
