@@ -11,7 +11,7 @@ Three explicit steps, no ``fill_case`` wrapper:
 2. prompt an Anthropic agent with the upstream
    ``buoyantBoussinesqPimpleFoam/hotRoom`` dictionary text and let it
    return a populated ``CaseSpec``;
-3. write every populated config through :func:`save_merged`, which groups
+3. write every populated config through :func:`write_configs`, which groups
    contributors by ``io_config.file`` and merges them — Boussinesq and
    Transport both land in ``constant/transportProperties`` without
    clobbering each other.
@@ -30,8 +30,7 @@ from neofoam.agent.case_fill import (
     build_case_agent,
     case_spec_to_configs,
 )
-
-from save_merged import save_merged
+from neofoam.io import write_configs
 
 SOURCE = Path(
     "/home/henning/OpenFOAM/develop/openfoam/tutorials/heatTransfer/"
@@ -58,7 +57,7 @@ if __name__ == "__main__":
 
     # 1) Tell the agent to fill the configs.
     agent = build_case_agent(model_name="claude-haiku-4-5")
-    prompt = "fill out the config files that match the schema and dont select the Boussinesq model"
+    prompt = "fill out the config files that match the schema and select the Boussinesq model the boundary names are top bottom left right front back and kEpsilon"
     # prompt = _agent_prompt_from_source(SOURCE, incompressibleFluid)
     print("=== prompt ===")
     print(prompt)
@@ -71,7 +70,7 @@ if __name__ == "__main__":
     # every contribution. Per-instance ``cfg.save()`` would lose all but
     # the last writer (OpenFOAMStrategy.write clears before emitting).
     configs = case_spec_to_configs(case_spec)
-    report = save_merged(configs, case_dir=TARGET)
+    report = write_configs(configs, case_dir=TARGET)
     for file, contribs in report.items():
         print(f"WRITE {file} ← {', '.join(contribs)}")
 

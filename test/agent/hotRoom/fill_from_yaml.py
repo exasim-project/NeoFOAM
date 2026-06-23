@@ -25,8 +25,8 @@ from pprint import pformat
 import yaml
 
 from neofoam.framework.solver.configurations import configurations
+from neofoam.io import write_configs
 from neofoam.solver.incompressibleFluid.incompressibleFluid import incompressibleFluid
-from save_merged import save_merged
 
 OUT = Path(__file__).resolve().parent
 CONFIGS = OUT / "configs"
@@ -67,9 +67,9 @@ with_io = [
     inst for inst in instances.values() if getattr(type(inst), "io_config", None)
 ]
 try:
-    report = save_merged(with_io, case_dir=OUT)
+    report = write_configs(with_io, case_dir=OUT)
 except Exception as e:  # noqa: BLE001
-    print(f"FAIL  save_merged: {type(e).__name__}: {e}")
+    print(f"FAIL  write_configs: {type(e).__name__}: {e}")
     failed.extend(type(c).__name__ for c in with_io)
     report = {}
 
