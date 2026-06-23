@@ -6,6 +6,8 @@ add_subdirectory(catch2)
 set(TEST_CATCH2_DIR ${CMAKE_CURRENT_LIST_DIR}/catch2)
 list(APPEND CMAKE_MODULE_PATH ${Catch2_SOURCE_DIR}/extras)
 set(CASES_BASEDIR /storage/home/lupeterm/nobackup/julia/view/base/mesh)
+set(DRIVAER /tmp/driveAerLukas/occDrivAerStaticMesh)
+set(WINDSOR /storage/home/lupeterm/micro_benchmarks/WindsorBody/basicSetup)
 function(neofoam_unit_test TEST SETUP_DIRECTORY)
   set(options "")
   set(oneValueKeywords "MPI_SIZE" "COMMAND" "WORKING_DIRECTORY")
@@ -92,9 +94,183 @@ function(neofoam_unit_test TEST SETUP_DIRECTORY)
   endif()
 endfunction()
 
+function(drivaer TEST SETUP_DIRECTORY)
+  set(options "")
+  set(oneValueKeywords "MPI_SIZE" "COMMAND" "WORKING_DIRECTORY")
+  set(multiValueKeywords "")
+  cmake_parse_arguments("NEOFOAM" "${options}" "${oneValueKeywords}" "${multiValueKeywords}"
+                        ${ARGN})
+  if(NOT DEFINED "NEOFOAM_WORKING_DIRECTORY")
+    set(NEOFOAM_WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tests)
+  endif()
+  if(NOT DEFINED "NEOFOAM_COMMAND")
+    set(NEOFOAM_COMMAND neofoam_test_drivaer)
+  else()
+    message(Warning "NEOFOAM_command already defined ${NEOFOAM_COMMAND}")
+  endif()
+
+  add_executable("${NEOFOAM_COMMAND}" "test_drivaer.cpp")
+  install(TARGETS ${NEOFOAM_COMMAND})
+
+  target_include_directories(${NEOFOAM_COMMAND} PRIVATE "${TEST_CATCH2_DIR}")
+  set_target_properties(${NEOFOAM_COMMAND} PROPERTIES OUTPUT_NAME drivaer)
+  target_compile_definitions(${NEOFOAM_COMMAND} PUBLIC OMPI_SKIP_MPICXX)
+
+  if(NeoN_WITH_JULIA)
+
+    execute_process(
+      COMMAND julialauncher +1.11 -e "print(rsplit(Sys.BINDIR, '/', limit=2)[1])"
+      OUTPUT_VARIABLE JULIA_DIR
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    execute_process(
+      COMMAND echo "JULIA_DIR: --------> '${JULIA_DIR}'"
+    )
+    target_include_directories(${NEOFOAM_COMMAND} PRIVATE "${JULIA_DIR}/include/julia")
+    target_link_libraries(${NEOFOAM_COMMAND} PRIVATE
+        "${JULIA_DIR}/lib/libjulia.so"
+    )
+    target_compile_definitions(${NEOFOAM_COMMAND} PRIVATE
+        JULIA_MODULE_INIT="${JULIA_MODULE_INIT}"
+    )
+    target_link_options(${NEOFOAM_COMMAND} PRIVATE "-Wl,-rpath,${JULIA_DIR}/lib")
+  endif()
+
+  target_link_libraries(
+    ${NEOFOAM_COMMAND}
+    PUBLIC NeoFOAM_public_api OpenFOAM Catch2::Catch2
+    PRIVATE NeoN NeoFOAM)
+
+  if(NOT NEOFOAM_MPI_SIZE)
+    target_link_libraries(${NEOFOAM_COMMAND} PRIVATE neofoam_catch_main)
+  else()
+    target_link_libraries(${NEOFOAM_COMMAND} PRIVATE neofoam_catch_main_mpi)
+  endif()
+
+  if(WIN32)
+    set_target_properties(
+      ${NEOFOAM_COMMAND}
+      PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${NEOFOAM_WORKING_DIRECTORY}/$<0:>
+                 LIBRARY_OUTPUT_DIRECTORY ${NEOFOAM_WORKING_DIRECTORY}/$<0:>
+                 ARCHIVE_OUTPUT_DIRECTORY ${NEOFOAM_WORKING_DIRECTORY}/$<0:>)
+  else()
+    # cmake-lint: disable=C0307
+    set_target_properties(${NEOFOAM_COMMAND} PROPERTIES RUNTIME_OUTPUT_DIRECTORY
+                                                        ${NEOFOAM_WORKING_DIRECTORY})
+  endif()
+
+  if(NOT NEOFOAM_MPI_SIZE)
+    add_test(
+      NAME drivaer
+      COMMAND ${NEOFOAM_COMMAND}
+      WORKING_DIRECTORY ${SETUP_DIRECTORY})
+  else()
+    add_test(
+      NAME drivaer
+      COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${NEOFOAM_MPI_SIZE}
+              ${NEOFOAM_WORKING_DIRECTORY}/${NEOFOAM_COMMAND} -parallel
+      WORKING_DIRECTORY ${SETUP_DIRECTORY})
+    set_tests_properties(${TEST} PROPERTIES TIMEOUT 10)
+    set_tests_properties(${TEST} PROPERTIES PROCESSORS ${NEOFOAM_MPI_SIZE})
+    if(${MPIEXEC_MAX_NUMPROCS} LESS NEOFOAM_MPI_SIZE)
+      message(WARNING "Test <drivaer> requested <${NEOFOAM_MPI_SIZE}> processors, "
+                      "but only <${MPIEXEC_MAX_NUMPROCS}> are available. Disabling test "
+                      "<drivaer>")
+    endif()
+  endif()
+endfunction()
+
+
+function(windsor TEST SETUP_DIRECTORY)
+  set(options "")
+  set(oneValueKeywords "MPI_SIZE" "COMMAND" "WORKING_DIRECTORY")
+  set(multiValueKeywords "")
+  cmake_parse_arguments("NEOFOAM" "${options}" "${oneValueKeywords}" "${multiValueKeywords}"
+                        ${ARGN})
+  if(NOT DEFINED "NEOFOAM_WORKING_DIRECTORY")
+    set(NEOFOAM_WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tests)
+  endif()
+  if(NOT DEFINED "NEOFOAM_COMMAND")
+    set(NEOFOAM_COMMAND neofoam_test_windsor)
+  else()
+    message(Warning "NEOFOAM_command already defined ${NEOFOAM_COMMAND}")
+  endif()
+
+  add_executable("${NEOFOAM_COMMAND}" "test_strats.cpp")
+  install(TARGETS ${NEOFOAM_COMMAND})
+
+  target_include_directories(${NEOFOAM_COMMAND} PRIVATE "${TEST_CATCH2_DIR}")
+  set_target_properties(${NEOFOAM_COMMAND} PROPERTIES OUTPUT_NAME windsor)
+  target_compile_definitions(${NEOFOAM_COMMAND} PUBLIC OMPI_SKIP_MPICXX)
+
+  if(NeoN_WITH_JULIA)
+
+    execute_process(
+      COMMAND julialauncher +1.11 -e "print(rsplit(Sys.BINDIR, '/', limit=2)[1])"
+      OUTPUT_VARIABLE JULIA_DIR
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    execute_process(
+      COMMAND echo "JULIA_DIR: --------> '${JULIA_DIR}'"
+    )
+    target_include_directories(${NEOFOAM_COMMAND} PRIVATE "${JULIA_DIR}/include/julia")
+    target_link_libraries(${NEOFOAM_COMMAND} PRIVATE
+        "${JULIA_DIR}/lib/libjulia.so"
+    )
+    target_compile_definitions(${NEOFOAM_COMMAND} PRIVATE
+        JULIA_MODULE_INIT="${JULIA_MODULE_INIT}"
+    )
+    target_link_options(${NEOFOAM_COMMAND} PRIVATE "-Wl,-rpath,${JULIA_DIR}/lib")
+  endif()
+
+  target_link_libraries(
+    ${NEOFOAM_COMMAND}
+    PUBLIC NeoFOAM_public_api OpenFOAM Catch2::Catch2
+    PRIVATE NeoN NeoFOAM)
+
+  if(NOT NEOFOAM_MPI_SIZE)
+    target_link_libraries(${NEOFOAM_COMMAND} PRIVATE neofoam_catch_main)
+  else()
+    target_link_libraries(${NEOFOAM_COMMAND} PRIVATE neofoam_catch_main_mpi)
+  endif()
+
+  if(WIN32)
+    set_target_properties(
+      ${NEOFOAM_COMMAND}
+      PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${NEOFOAM_WORKING_DIRECTORY}/$<0:>
+                 LIBRARY_OUTPUT_DIRECTORY ${NEOFOAM_WORKING_DIRECTORY}/$<0:>
+                 ARCHIVE_OUTPUT_DIRECTORY ${NEOFOAM_WORKING_DIRECTORY}/$<0:>)
+  else()
+    # cmake-lint: disable=C0307
+    set_target_properties(${NEOFOAM_COMMAND} PROPERTIES RUNTIME_OUTPUT_DIRECTORY
+                                                        ${NEOFOAM_WORKING_DIRECTORY})
+  endif()
+
+  if(NOT NEOFOAM_MPI_SIZE)
+    add_test(
+      NAME windsor
+      COMMAND ${NEOFOAM_COMMAND}
+      WORKING_DIRECTORY ${SETUP_DIRECTORY})
+  else()
+    add_test(
+      NAME windsor
+      COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${NEOFOAM_MPI_SIZE}
+              ${NEOFOAM_WORKING_DIRECTORY}/${NEOFOAM_COMMAND} -parallel
+      WORKING_DIRECTORY ${SETUP_DIRECTORY})
+    set_tests_properties(${TEST} PROPERTIES TIMEOUT 10)
+    set_tests_properties(${TEST} PROPERTIES PROCESSORS ${NEOFOAM_MPI_SIZE})
+    if(${MPIEXEC_MAX_NUMPROCS} LESS NEOFOAM_MPI_SIZE)
+      message(WARNING "Test <windsor> requested <${NEOFOAM_MPI_SIZE}> processors, "
+                      "but only <${MPIEXEC_MAX_NUMPROCS}> are available. Disabling test "
+                      "<windsor>")
+    endif()
+  endif()
+endfunction()
+
 
 #neofoam_unit_test(readDict setup_operator)
-#neofoam_unit_test(unstructuredMesh setup_compatibility)
+neofoam_unit_test(unstructuredMesh setup_compatibility)
+neofoam_unit_test(strats 200)
 #neofoam_unit_test(geometricFields setup_operator)
 #neofoam_unit_test(operators setup_operator)
 #neofoam_unit_test(stencils setup_backwardDdt)
@@ -113,6 +289,8 @@ endfunction()
 
 if(NeoN_WITH_JULIA)
 
+  drivaer(drivaer ${DRIVAER})
+  windsor(strats ${WINDSOR})
   neofoam_unit_test(fused 10)
   neofoam_unit_test(fused 20)
   neofoam_unit_test(fused 30)

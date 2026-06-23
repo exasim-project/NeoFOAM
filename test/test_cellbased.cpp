@@ -105,11 +105,11 @@ TEST_CASE("Julia Momentum")
     std::cout << "cells: "<< mesh.nCells() << std::endl;
     SECTION("Interfaced Cellbased Assembly creates the same LS as NeoN")
     {
-        auto lsFaceBased = NeoN::la::createEmptyLinearSystem<NeoN::Vec3>(rt.nfMesh);
+        auto lsFaceBased = NeoN::la::createEmptyLinearSystem<NeoN::Vec3, NeoN::Vec3>(rt.nfMesh);
 
         auto cellIterator = std::make_shared<NeoN::la::CellBasedIterator>();
-        auto lsCellBased = NeoN::la::createEmptyLinearSystem<NeoN::Vec3>(rt.nfMesh, cellIterator);
-        nf::PDESolver<NeoN::Vec3> nfUEqn_c(
+        auto lsCellBased = NeoN::la::createEmptyLinearSystem<NeoN::Vec3, NeoN::Vec3>(rt.nfMesh, cellIterator);
+        nf::PDESolver<NeoN::Vec3, NeoN::Vec3> nfUEqn_c(
             // dsl::imp::ddt(phi) + 
             dsl::imp::div(faceFlux, phi)+
             dsl::imp::laplacian(gamma, phi), // expr
@@ -117,7 +117,7 @@ TEST_CASE("Julia Momentum")
             rt,                                         // runtime
             lsCellBased
         );
-        nf::PDESolver<NeoN::Vec3> nfUEqn_f(
+        nf::PDESolver<NeoN::Vec3, NeoN::Vec3> nfUEqn_f(
             // dsl::imp::ddt(phi) + 
             dsl::imp::div(faceFlux, phi)+
             dsl::imp::laplacian(gamma, phi), // expr
@@ -126,7 +126,7 @@ TEST_CASE("Julia Momentum")
             lsFaceBased
         );
 
-        nf::PDESolver<NeoN::Vec3> juliaUEqn_c(
+        nf::PDESolver<NeoN::Vec3, NeoN::Vec3> juliaUEqn_c(
         //    dsl::imp::ddt(phi) +
             dsl::imp::div(faceFlux, phi)+
             dsl::imp::laplacian(gamma, phi), // expr
@@ -134,7 +134,7 @@ TEST_CASE("Julia Momentum")
             rt,                                         // runtime
             lsCellBased
         );
-        nf::PDESolver<NeoN::Vec3> juliaUEqn_f(
+        nf::PDESolver<NeoN::Vec3, NeoN::Vec3> juliaUEqn_f(
         //    dsl::imp::ddt(phi) +
             dsl::imp::div(faceFlux, phi)+
             dsl::imp::laplacian(gamma, phi), // expr
@@ -170,37 +170,37 @@ TEST_CASE("Julia Momentum")
         //     ); 
         //     std::cout << result << std::endl;
         // }
-        for(size_t i = 0; i < 3; i++){
-            std::chrono::steady_clock::time_point beginj2 = std::chrono::steady_clock::now();
-            juliaUEqn_c.juliaCellbased(faceFlux, phi, gamma);
-            std::chrono::steady_clock::time_point endj2 = std::chrono::steady_clock::now();
-            auto result = fmt::format(
-                fmt::runtime("Assembly time (JULIACELL{}) = {}[ns]"),
-                i,
-                std::chrono::duration_cast<std::chrono::microseconds>(endj2 - beginj2).count()
-            ); 
-            std::cout << result << std::endl;
+        // for(size_t i = 0; i < 3; i++){
+        //     std::chrono::steady_clock::time_point beginj2 = std::chrono::steady_clock::now();
+        //     juliaUEqn_c.juliaCellbased(faceFlux, phi, gamma);
+        //     std::chrono::steady_clock::time_point endj2 = std::chrono::steady_clock::now();
+        //     auto result = fmt::format(
+        //         fmt::runtime("Assembly time (JULIACELL{}) = {}[ns]"),
+        //         i,
+        //         std::chrono::duration_cast<std::chrono::microseconds>(endj2 - beginj2).count()
+        //     ); 
+        //     std::cout << result << std::endl;
 
-            beginj2 = std::chrono::steady_clock::now();
-            juliaUEqn_f.juliaFaceBased(faceFlux, phi, gamma, true);
-            endj2 = std::chrono::steady_clock::now();
-            result = fmt::format(
-                fmt::runtime("Assembly time (JULIAGLOBAL{}) = {}[ns]"),
-                i,
-                std::chrono::duration_cast<std::chrono::microseconds>(endj2 - beginj2).count()
-            ); 
-            std::cout << result << std::endl;
+        //     beginj2 = std::chrono::steady_clock::now();
+        //     juliaUEqn_f.juliaFaceBased(faceFlux, phi, gamma, true);
+        //     endj2 = std::chrono::steady_clock::now();
+        //     result = fmt::format(
+        //         fmt::runtime("Assembly time (JULIAGLOBAL{}) = {}[ns]"),
+        //         i,
+        //         std::chrono::duration_cast<std::chrono::microseconds>(endj2 - beginj2).count()
+        //     ); 
+        //     std::cout << result << std::endl;
 
-            beginj2 = std::chrono::steady_clock::now();
-            juliaUEqn_f.juliaFaceBased(faceFlux, phi, gamma, false);
-            endj2 = std::chrono::steady_clock::now();
-            result = fmt::format(
-                fmt::runtime("Assembly time (JULIAFACE{}) = {}[ns]"),
-                i,
-                std::chrono::duration_cast<std::chrono::microseconds>(endj2 - beginj2).count()
-            ); 
-            std::cout << result << std::endl;
-        }
+        //     beginj2 = std::chrono::steady_clock::now();
+        //     juliaUEqn_f.juliaFaceBased(faceFlux, phi, gamma, false);
+        //     endj2 = std::chrono::steady_clock::now();
+        //     result = fmt::format(
+        //         fmt::runtime("Assembly time (JULIAFACE{}) = {}[ns]"),
+        //         i,
+        //         std::chrono::duration_cast<std::chrono::microseconds>(endj2 - beginj2).count()
+        //     ); 
+        //     std::cout << result << std::endl;
+        // }
         REQUIRE(!jl_exception_occurred());
     }
     jl_atexit_hook(0);

@@ -173,6 +173,10 @@ public:
 
     Dictionary getConfig() const { return {}; }
 
+    std::string juliaOP() { return ""; }
+
+    std::string juliaOP() const { return ""; }
+
 private:
 
     const VolumeField<scalar>& nu_;
