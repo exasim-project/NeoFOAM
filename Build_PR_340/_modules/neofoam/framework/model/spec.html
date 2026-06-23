@@ -370,6 +370,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">enabled</span> <span class="o">=</span> <span class="kc">True</span>
 
+        <span class="c1"># UI hint: an *optional* model flagged via :meth:`as_toggle` is shown as</span>
+        <span class="c1"># a simple on/off switch (e.g. buoyancy). See</span>
+        <span class="c1"># :func:`neofoam.framework.solver.configurations.toggle_models`.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">toggle</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">toggle_label</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">_config_classes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">type</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_field_decls</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">FieldDecl</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
@@ -725,6 +731,21 @@
                 <span class="sa">f</span><span class="s2">&quot;Plugin interface &#39;</span><span class="si">{</span><span class="n">plugin_interface</span><span class="si">}</span><span class="s2">&#39; does not have a &#39;register&#39; method&quot;</span>
             <span class="p">)</span>
         <span class="n">plugin_interface</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">wrapper_class</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<div class="viewcode-block" id="ModelSpec.as_toggle">
+<a class="viewcode-back" href="../../../../reference/model/spec.html#neofoam.framework.model.spec.ModelSpec.as_toggle">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">as_toggle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ModelSpec&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Flag this optional model as a simple on/off toggle in UIs.</span>
+
+<span class="sd">        Chainable after :meth:`register_with`. ``label`` is the human-readable</span>
+<span class="sd">        switch label (defaults to the model name). The case wizard renders one</span>
+<span class="sd">        switch per flagged optional model and includes/excludes the model&#39;s</span>
+<span class="sd">        configs + fields based on it.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">toggle</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">toggle_label</span> <span class="o">=</span> <span class="n">label</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
 
