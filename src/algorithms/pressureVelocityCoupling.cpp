@@ -35,12 +35,12 @@ void constrainHbyA(
     }
 }
 
-nnfvcc::VolumeField<scalar> computeRAU(const PDESolver<Vec3>& expr)
+nnfvcc::VolumeField<scalar> computeRAU(const PDE<Vec3>& expr)
 {
     const auto& ls = expr.linearSystem();
     NF_ASSERT(
         ls.matrix().values().size() > 0,
-        "computeRAU: linear system not assembled - call PDESolver::assemble() before reading rAU"
+        "computeRAU: linear system not assembled - call PDE::assemble() before reading rAU"
     );
     const auto& mesh = expr.getField().mesh();
 
@@ -58,14 +58,14 @@ nnfvcc::VolumeField<scalar> computeRAU(const PDESolver<Vec3>& expr)
 }
 
 std::tuple<nnfvcc::VolumeField<scalar>, nnfvcc::VolumeField<Vec3>>
-computeRAUandHByA(const PDESolver<Vec3>& expr)
+computeRAUandHByA(const PDE<Vec3>& expr)
 {
     const auto& u = expr.getField();
     const auto& mesh = u.mesh();
     const auto& ls = expr.linearSystem();
     NF_ASSERT(
         ls.matrix().values().size() > 0,
-        "computeRAUandHByA: linear system not assembled - call PDESolver::assemble() before "
+        "computeRAUandHByA: linear system not assembled - call PDE::assemble() before "
         "reading rAU/HbyA"
     );
 
@@ -130,7 +130,7 @@ computeRAUandHByA(const PDESolver<Vec3>& expr)
 
 void updateFaceVelocity(
     const nnfvcc::SurfaceField<scalar>& predictedPhi,
-    const PDESolver<scalar>& expr,
+    const PDE<scalar>& expr,
     nnfvcc::SurfaceField<scalar>& phi
 )
 {

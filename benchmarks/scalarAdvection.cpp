@@ -99,7 +99,7 @@ TEST_CASE("scalarAdvection")
 
             BENCHMARK(std::string(execName))
             {
-                auto eqn = nf::PDESolver(
+                auto eqn = nf::PDE(
                     dsl::imp::ddt(nfT) + dsl::exp::div(nfPhi, nfT)
                         - dsl::exp::laplacian(nfGamma, nfT),
                     nfT,
@@ -119,7 +119,7 @@ TEST_CASE("scalarAdvection")
 
             BENCHMARK(std::string(execName))
             {
-                auto eqn = nf::PDESolver(
+                auto eqn = nf::PDE(
                     dsl::imp::ddt(nfT) + dsl::imp::div(nfPhi, nfT)
                         - dsl::imp::laplacian(nfGamma, nfT),
                     nfT,

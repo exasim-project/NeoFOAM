@@ -77,7 +77,7 @@ TEST_CASE("PressureVelocityCoupling")
     NeoN::fill(nfOldU.internalVector(), NeoN::Vec3(0.0, 0.0, 0.0));
     nfOldU.correctBoundaryConditions();
 
-    nf::PDESolver<NeoN::Vec3> nfUEqn(
+    nf::PDE<NeoN::Vec3> nfUEqn(
         dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(nfNu, nfU),
         nfU,
         rt
@@ -578,7 +578,7 @@ TEST_CASE("PressureVelocityCoupling")
         Foam::fvScalarMatrix ofpEqn(fvm::laplacian(forAUf, ofp) == fvc::div(ofPhi));
         ofPhi0 = ofPhi - ofpEqn.flux();
 
-        nf::PDESolver<NeoN::scalar> pEqn(
+        nf::PDE<NeoN::scalar> pEqn(
             dsl::imp::laplacian(nfrAUf, nfP) - dsl::exp::div(nfPhi),
             nfP,
             rt
@@ -622,7 +622,7 @@ TEST_CASE("PressureVelocityCoupling")
         solve(ofpEqn);
 
 
-        nf::PDESolver<NeoN::scalar> pEqn(
+        nf::PDE<NeoN::scalar> pEqn(
             dsl::imp::laplacian(nfrAUf, nfP) - dsl::exp::div(nfPhi),
             nfP,
             rt
@@ -657,7 +657,7 @@ TEST_CASE("PressureVelocityCoupling")
         solve(ofpEqn);
 
 
-        nf::PDESolver<NeoN::scalar> pEqn(
+        nf::PDE<NeoN::scalar> pEqn(
             dsl::imp::laplacian(nfrAUf, nfP) - dsl::exp::div(nfPhi),
             nfP,
             rt

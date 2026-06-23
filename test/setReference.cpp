@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-// Dedicated test for the setReference / setRefCell logic in PDESolver.
+// Dedicated test for the setReference / setRefCell logic in PDE.
 // Uses setup_ddtCorr which has all-Neumann pressure BCs (movingWall and
 // fixedWalls are zeroGradient; frontAndBack is empty) so `p.needReference()`
 // is true and the setRefCell -> setReference path must be exercised for the
@@ -92,7 +92,7 @@ TEST_CASE("PressureSetReference")
         }
         solve(ofpEqn);
 
-        nf::PDESolver<NeoN::scalar> pEqn(
+        nf::PDE<NeoN::scalar> pEqn(
             dsl::imp::laplacian(nfrAUf, nfP) - dsl::exp::div(nfPhi),
             nfP,
             rt

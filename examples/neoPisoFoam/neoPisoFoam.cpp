@@ -72,6 +72,9 @@ int main(int argc, char* argv[])
         );
         NeoN::scalar cumulativeContErr = 0.0;
 
+        auto uSolver = nf::Solver(U, rt);
+        auto pSolver = nf::Solver(p, rt);
+
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
         NeoN::Logging::info("Starting time loop");
@@ -94,22 +97,20 @@ int main(int argc, char* argv[])
             nf::syncRunTimes(runTime, rt, maxCoNum);
 
             // Momentum predictor
-            nf::PDESolver<NeoN::Vec3> UEqn(
+            nf::PDE<NeoN::Vec3> UEqn(
                 dsl::imp::ddt(U) + dsl::imp::div(phi, U) - dsl::imp::laplacian(turb->nuEff(), U)
-                    + dsl::exp::viscousStress(nu, turb->nut(), turb->gradU()),
-                U,
-                rt
+                + dsl::exp::viscousStress(nu, turb->nut(), turb->gradU())
             );
 
             const auto ddtScheme = UEqn.ddtScheme();
 
             if (piso.momentumPredictor())
             {
-                UEqn.solve(-1.0 * dsl::exp::grad(p));
+                uSolver.solve(UEqn, -1.0 * dsl::exp::grad(p));
             }
             else
             {
-                UEqn.assemble();
+                uSolver.assemble(UEqn);
             }
 
             // --- PISO loop
@@ -133,7 +134,7 @@ int main(int argc, char* argv[])
                 while (piso.correctNonOrthogonal())
                 {
                     // Pressure corrector
-                    nf::PDESolver<NeoN::scalar> pEqn(
+                    nf::PDE<NeoN::scalar> pEqn(
                         NeoN::dsl::imp::laplacian(rAU, p) - NeoN::dsl::exp::div(phiHbyA),
                         p,
                         rt
@@ -149,7 +150,7 @@ int main(int argc, char* argv[])
                         pEqn.setReference(pRefCell, pRefValue);
                     }
 
-                    auto stats = pEqn.solve();
+                    pSolver.solve(pEqn);
                     p.correctBoundaryConditions();
 
                     if (piso.finalNonOrthogonalIter())

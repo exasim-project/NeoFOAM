@@ -140,7 +140,7 @@ TEST_CASE("ddtCorr: OpenFOAM Euler vs NeoN (BDF1)")
     SurfScalar nuNF(exec, "nu", nfMesh, nuBCs);
     NeoN::fill(nuNF.internalVector(), scalar(0.01));
     NeoN::fill(nuNF.boundaryData().value(), scalar(0.01));
-    NeoFOAM::PDESolver<NeoN::Vec3> UEqnNF(
+    NeoFOAM::PDE<NeoN::Vec3> UEqnNF(
         NeoN::dsl::imp::ddt(nfU) + NeoN::dsl::imp::div(nfPhi, nfU)
             - NeoN::dsl::imp::laplacian(nuNF, nfU),
         nfU,

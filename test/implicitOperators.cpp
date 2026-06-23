@@ -135,7 +135,7 @@ TEST_CASE("matrix multiplication")
         auto divV = divT * mesh.V();
 
         auto [nfT, nfPhi] = NeoFOAM::constFromMany(exec, rt.nfMesh, ofT, ofPhi);
-        auto nfPDE = NeoFOAM::PDESolver<NeoN::scalar>(
+        auto nfPDE = NeoFOAM::PDE<NeoN::scalar>(
             NeoN::dsl::Expression<NeoN::scalar>(NeoN::dsl::imp::div(nfPhi, nfT)),
             nfT,
             rt
@@ -194,7 +194,7 @@ TEST_CASE("matrix multiplication")
         auto lapV = laplacian * mesh.V();
 
         auto [nfT, nfNuf] = NeoFOAM::constFromMany(exec, rt.nfMesh, ofT, ofNuf);
-        auto nfPDE = NeoFOAM::PDESolver<NeoN::scalar>(
+        auto nfPDE = NeoFOAM::PDE<NeoN::scalar>(
             NeoN::dsl::Expression<NeoN::scalar>(NeoN::dsl::imp::laplacian(nfNuf, nfT)),
             nfT,
             rt

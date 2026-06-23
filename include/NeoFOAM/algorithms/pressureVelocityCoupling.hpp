@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "NeoFOAM/datastructures/pdeSolver.hpp"
+#include "NeoFOAM/datastructures/pde.hpp"
 
 #include "NeoN/NeoN.hpp"
 
@@ -43,9 +43,9 @@ void constrainHbyA(
  *
  * @return a tuple containing rAU and HbyA
  */
-nnfvcc::VolumeField<scalar> computeRAU(const PDESolver<Vec3>& expr);
+nnfvcc::VolumeField<scalar> computeRAU(const PDE<Vec3>& expr);
 
-/* @brief given access to a PDESolver this function computes rAU and HbyA
+/* @brief given access to a PDE this function computes rAU and HbyA
  * from the assembled system
  *
  * where rAU  - inverse of the system matrix diagonal
@@ -54,7 +54,7 @@ nnfvcc::VolumeField<scalar> computeRAU(const PDESolver<Vec3>& expr);
  * @return a tuple containing rAU and HbyA
  */
 std::tuple<nnfvcc::VolumeField<scalar>, nnfvcc::VolumeField<Vec3>>
-computeRAUandHByA(const PDESolver<Vec3>& expr);
+computeRAUandHByA(const PDE<Vec3>& expr);
 
 /* @brief computes phi = phiHbyA - pEqn.flux();
  * where pEqn.flux() = (orthogonal matrix-coefficient flux) + faceFluxCorrection
@@ -70,7 +70,7 @@ computeRAUandHByA(const PDESolver<Vec3>& expr);
  */
 void updateFaceVelocity(
     const nnfvcc::SurfaceField<scalar>& predictedPhi,
-    const PDESolver<scalar>& expr,
+    const PDE<scalar>& expr,
     nnfvcc::SurfaceField<scalar>& phi
 );
 

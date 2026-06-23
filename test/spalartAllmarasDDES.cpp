@@ -645,7 +645,7 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
     REQUIRE_THAT(nfViscousStress, EqualsInternal(ofViscousStress, ApproxVector(1e-9)));
     REQUIRE_THAT(nfU, EqualsInternal(U, ApproxVector(1e-12)));
     REQUIRE_THAT(nfU.boundaryData(), EqualsBoundary(U, ApproxVector(1e-12)));
-    nf::PDESolver<NeoN::Vec3> UEqn(
+    nf::PDE<NeoN::Vec3> UEqn(
         dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(nfSurfNuEff, nfU)
             + dsl::exp::viscousStress(nfNu, nut, nfGradU),
         nfU,
@@ -676,7 +676,7 @@ TEST_CASE("SA-DDES: NeoN component chain + (optional) OpenFOAM nut cross-check")
         magSqrGradNuTilda
     );
 
-    nf::PDESolver<NeoN::scalar> nuTildaEqn(
+    nf::PDE<NeoN::scalar> nuTildaEqn(
         dsl::imp::ddt(nfNuTilda) + dsl::imp::div(nfPhi, nfNuTilda)
             - dsl::imp::laplacian(nuTildaEff, nfNuTilda)
             + dsl::imp::source(nfFusedSpCoeff, nfNuTilda) - dsl::exp::source(nfFusedProduction),
@@ -818,7 +818,7 @@ TEST_CASE("SA-DDES: NeoFOAM wrapper validate() + correct() matches OpenFOAM")
     fvcc::rotateOldTimes(nfPhi);
     fvcc::rotateOldTimes(nfNuTilda);
 
-    nf::PDESolver<NeoN::Vec3> UEqn(
+    nf::PDE<NeoN::Vec3> UEqn(
         dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(turbNF.nuEff(), nfU)
             + dsl::exp::viscousStress(nfNu, nut, turbNF.gradU()),
         nfU,

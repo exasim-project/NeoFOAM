@@ -66,6 +66,8 @@ int main(int argc, char* argv[])
         auto& phi = nf::constructAndRegister(vectorCollection, rt, ofPhi, false);
         NeoN::scalar cumulativeContErr = 0.0;
 
+        auto uSolver = nf::Solver(U, rt);
+        auto pSolver = nf::Solver(p, rt);
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
         NeoN::Logging::info("Starting time loop");
@@ -88,25 +90,23 @@ int main(int argc, char* argv[])
             nf::syncRunTimes(runTime, rt, maxCoNum);
 
             // Momentum predictor
-            nf::PDESolver<NeoN::Vec3> UEqn(
-                dsl::imp::ddt(U) + dsl::imp::div(phi, U) - dsl::imp::laplacian(nu, U),
-                U,
-                rt
+            nf::PDE<NeoN::Vec3> UEqn(
+                dsl::imp::ddt(U) + dsl::imp::div(phi, U) - dsl::imp::laplacian(nu, U)
             );
 
             const auto ddtScheme = UEqn.ddtScheme();
 
             if (piso.momentumPredictor())
             {
-                // NOTE solve on a temporary clone of UEqn
+                // NOTE solve on a temporary clone of UEqn; owned LS stores assembly without rhs
                 // TODO use a free function here
-                UEqn.solve(-1.0 * dsl::exp::grad(p));
+                uSolver.solve(UEqn, -1.0 * dsl::exp::grad(p));
             }
             else
             {
                 // NOTE since computing rAU and HbyA requires an assembled system matrix we
                 // explicitly trigger assembly here.
-                UEqn.assemble();
+                uSolver.assemble(UEqn);
             }
 
             // --- PISO loop
@@ -136,10 +136,8 @@ int main(int argc, char* argv[])
                 while (piso.correctNonOrthogonal())
                 {
                     // Pressure corrector
-                    nf::PDESolver<NeoN::scalar> pEqn(
-                        NeoN::dsl::imp::laplacian(rAU, p) - NeoN::dsl::exp::div(phiHbyA),
-                        p,
-                        rt
+                    nf::PDE<NeoN::scalar> pEqn(
+                        NeoN::dsl::imp::laplacian(rAU, p) - NeoN::dsl::exp::div(phiHbyA)
                     );
 
                     // updateFaceVelocity reconstructs phi from this pressure system; keep the
@@ -152,7 +150,7 @@ int main(int argc, char* argv[])
                         pEqn.setReference(pRefCell, pRefValue);
                     }
 
-                    auto stats = pEqn.solve();
+                    pSolver.solve(pEqn);
                     p.correctBoundaryConditions();
 
                     if (piso.finalNonOrthogonalIter())

@@ -42,7 +42,7 @@ TEST_CASE("L1 scaled residual matches OpenFOAM")
         // Build the matching NeoN system from the SAME initial field, before the
         // OpenFOAM solve below evaluates its residual.
         auto [nfP, nfGamma] = nf::constFromMany(exec, rt.nfMesh, ofP, ofGamma);
-        auto nfPDE = nf::PDESolver<NeoN::scalar>(
+        auto nfPDE = nf::PDE<NeoN::scalar>(
             NeoN::dsl::Expression<NeoN::scalar>(NeoN::dsl::imp::laplacian(nfGamma, nfP)),
             nfP,
             rt
@@ -107,7 +107,7 @@ TEST_CASE("L1 scaled residual matches OpenFOAM")
         auto ofGamma = nf::randDimField<Foam::surfaceScalarField>(mesh, Foam::dimless, "Gamma");
 
         auto [nfP, nfGamma] = nf::constFromMany(exec, rt.nfMesh, ofP, ofGamma);
-        auto nfPDE = nf::PDESolver<NeoN::scalar>(
+        auto nfPDE = nf::PDE<NeoN::scalar>(
             NeoN::dsl::Expression<NeoN::scalar>(NeoN::dsl::imp::laplacian(nfGamma, nfP)),
             nfP,
             rt
@@ -176,7 +176,7 @@ TEST_CASE("L1 scaled residual matches OpenFOAM")
             fvm::ddt(ofU) + fvm::div(ofPhi, ofU) - fvm::laplacian(ofNu, ofU)
         );
 
-        nf::PDESolver<NeoN::Vec3> nfUEqn(
+        nf::PDE<NeoN::Vec3> nfUEqn(
             dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(nfNu, nfU),
             nfU,
             rt
