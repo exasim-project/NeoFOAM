@@ -114,7 +114,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a3c0ce97c52d3cc20099747f4728acda0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialise nut from the current nuTilda. Call once at setup.  <br /></td></tr>
 <tr class="separator:a3c0ce97c52d3cc20099747f4728acda0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a17ab835e02aad16cbe7ddd1d7cf05f4c" id="r_a17ab835e02aad16cbe7ddd1d7cf05f4c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1SpalartAllmarasDDES.html#a17ab835e02aad16cbe7ddd1d7cf05f4c">correct</a> (const nnfvcc::VolumeField&lt; <a class="el" href="pressureVelocityCoupling_8hpp.html#ae261b7f2859c508a432e8a334ad179d2">Vec3</a> &gt; &amp;U, nnfvcc::SurfaceField&lt; <a class="el" href="pressureVelocityCoupling_8hpp.html#acc912e7a5a44b028589fda3fd76ba7ea">scalar</a> &gt; &amp;phi, nnfvcc::VolumeField&lt; <a class="el" href="pressureVelocityCoupling_8hpp.html#acc912e7a5a44b028589fda3fd76ba7ea">scalar</a> &gt; &amp;nuTilda, nnfvcc::VolumeField&lt; <a class="el" href="pressureVelocityCoupling_8hpp.html#acc912e7a5a44b028589fda3fd76ba7ea">scalar</a> &gt; &amp;<a class="el" href="classNeoFOAM_1_1SpalartAllmarasDDES.html#acee656603eee86c991995030845fc555">nut</a>, <a class="el" href="structNeoFOAM_1_1RunTime.html">RunTime</a> &amp;rt)</td></tr>
-<tr class="memdesc:a17ab835e02aad16cbe7ddd1d7cf05f4c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Full turbulence update: compute sources, solve nuTilda PDE, update nut.  <br /></td></tr>
+<tr class="memdesc:a17ab835e02aad16cbe7ddd1d7cf05f4c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Full turbulence update: compute sources, solve nuTilda <a class="el" href="classNeoFOAM_1_1PDE.html">PDE</a>, update nut.  <br /></td></tr>
 <tr class="separator:a17ab835e02aad16cbe7ddd1d7cf05f4c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2e91793073c08869c9e7be21fb86dcc0" id="r_a2e91793073c08869c9e7be21fb86dcc0"><td class="memItemLeft" align="right" valign="top">nnfvcc::SurfaceField&lt; <a class="el" href="pressureVelocityCoupling_8hpp.html#acc912e7a5a44b028589fda3fd76ba7ea">scalar</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1SpalartAllmarasDDES.html#a2e91793073c08869c9e7be21fb86dcc0">nuEff</a> () override</td></tr>
 <tr class="memdesc:a2e91793073c08869c9e7be21fb86dcc0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Effective viscosity on faces: nu + nut (for momentum equation laplacian)  <br /></td></tr>
@@ -125,6 +125,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a8f2b6292ee3033e967c70004d7dc1fa9" id="r_a8f2b6292ee3033e967c70004d7dc1fa9"><td class="memItemLeft" align="right" valign="top">const nnfvcc::VolumeField&lt; NeoN::Tensor &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1SpalartAllmarasDDES.html#a8f2b6292ee3033e967c70004d7dc1fa9">gradU</a> () const override</td></tr>
 <tr class="memdesc:a8f2b6292ee3033e967c70004d7dc1fa9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Velocity gradient tensor (updated each <a class="el" href="classNeoFOAM_1_1SpalartAllmarasDDES.html#a17ab835e02aad16cbe7ddd1d7cf05f4c" title="Full turbulence update: compute sources, solve nuTilda PDE, update nut.">correct()</a> call, for viscousStress term)  <br /></td></tr>
 <tr class="separator:a8f2b6292ee3033e967c70004d7dc1fa9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a316db482bfe204437861a82182f17c30" id="r_a316db482bfe204437861a82182f17c30"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1SpalartAllmarasDDES.html#a316db482bfe204437861a82182f17c30">updateGradU</a> (const nnfvcc::VolumeField&lt; NeoN::Vec3 &gt; &amp;U) override</td></tr>
+<tr class="memdesc:a316db482bfe204437861a82182f17c30"><td class="mdescLeft">&#160;</td><td class="mdescRight">Recompute gradU_ in place at U (+ proc-halo exchange); see <a class="el" href="classNeoFOAM_1_1TurbulenceModel.html" title="Abstract base for NeoFOAM turbulence models with runtime selection.">TurbulenceModel</a>.  <br /></td></tr>
+<tr class="separator:a316db482bfe204437861a82182f17c30"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac43050c3c177a80bad14cf5a56284c6c" id="r_ac43050c3c177a80bad14cf5a56284c6c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1SpalartAllmarasDDES.html#ac43050c3c177a80bad14cf5a56284c6c">initialize</a> (const nnfvcc::VolumeField&lt; <a class="el" href="pressureVelocityCoupling_8hpp.html#acc912e7a5a44b028589fda3fd76ba7ea">scalar</a> &gt; &amp;nuTildaInit, const nnfvcc::VolumeField&lt; <a class="el" href="pressureVelocityCoupling_8hpp.html#acc912e7a5a44b028589fda3fd76ba7ea">scalar</a> &gt; &amp;nutInit) override</td></tr>
 <tr class="separator:ac43050c3c177a80bad14cf5a56284c6c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af5f4e186e51eec77994b00457ef13486" id="r_af5f4e186e51eec77994b00457ef13486"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1SpalartAllmarasDDES.html#af5f4e186e51eec77994b00457ef13486">validate</a> (const nnfvcc::VolumeField&lt; <a class="el" href="pressureVelocityCoupling_8hpp.html#ae261b7f2859c508a432e8a334ad179d2">Vec3</a> &gt; &amp;U) override</td></tr>
@@ -400,7 +403,7 @@ Static Public Member Functions</h2></td></tr>
 
 <p>Read-only access to model coefficients (for testing/inspection) </p>
 
-<p class="definition">Definition at line <a class="el" href="spalartAllmarasDDES_8hpp_source.html#l00166">166</a> of file <a class="el" href="spalartAllmarasDDES_8hpp_source.html">spalartAllmarasDDES.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="spalartAllmarasDDES_8hpp_source.html#l00169">169</a> of file <a class="el" href="spalartAllmarasDDES_8hpp_source.html">spalartAllmarasDDES.hpp</a>.</p>
 
 </div>
 </div>
@@ -512,7 +515,7 @@ Static Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Full turbulence update: compute sources, solve nuTilda PDE, update nut. </p>
+<p>Full turbulence update: compute sources, solve nuTilda <a class="el" href="classNeoFOAM_1_1PDE.html">PDE</a>, update nut. </p>
 <p>Equivalent to OpenFOAM's turbulence-&gt;<a class="el" href="classNeoFOAM_1_1SpalartAllmarasDDES.html#a17ab835e02aad16cbe7ddd1d7cf05f4c" title="Full turbulence update: compute sources, solve nuTilda PDE, update nut.">correct()</a>. Call after each momentum/PISO iteration.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -658,7 +661,7 @@ Static Public Member Functions</h2></td></tr>
 
 <p>Computed cw1 coefficient (for testing/inspection) </p>
 
-<p class="definition">Definition at line <a class="el" href="spalartAllmarasDDES_8hpp_source.html#l00169">169</a> of file <a class="el" href="spalartAllmarasDDES_8hpp_source.html">spalartAllmarasDDES.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="spalartAllmarasDDES_8hpp_source.html#l00172">172</a> of file <a class="el" href="spalartAllmarasDDES_8hpp_source.html">spalartAllmarasDDES.hpp</a>.</p>
 
 </div>
 </div>
@@ -902,6 +905,34 @@ Static Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p class="definition">Definition at line <a class="el" href="spalartAllmarasDDES_8hpp_source.html#l00039">39</a> of file <a class="el" href="spalartAllmarasDDES_8hpp_source.html">spalartAllmarasDDES.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a316db482bfe204437861a82182f17c30" name="a316db482bfe204437861a82182f17c30"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a316db482bfe204437861a82182f17c30">&#9670;&#160;</a></span>updateGradU()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void NeoFOAM::SpalartAllmarasDDES::updateGradU </td>
+          <td>(</td>
+          <td class="paramtype">const nnfvcc::VolumeField&lt; NeoN::Vec3 &gt; &amp;&#160;</td>
+          <td class="paramname"><em>U</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Recompute gradU_ in place at U (+ proc-halo exchange); see <a class="el" href="classNeoFOAM_1_1TurbulenceModel.html" title="Abstract base for NeoFOAM turbulence models with runtime selection.">TurbulenceModel</a>. </p>
 
 </div>
 </div>
