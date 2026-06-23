@@ -37,7 +37,13 @@ from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_valid
 
 from neofoam.fields.bc import build_bc_union
 from neofoam.fields.decl import FieldDecl
-from neofoam.fields.value_types import Scalar, Tensor, Vector, zero_uniform
+from neofoam.fields.value_types import (
+    FieldValue,
+    Scalar,
+    Tensor,
+    Vector,
+    zero_uniform,
+)
 from neofoam.io.base import BaseConfig
 from neofoam.io.decorator import IOStrategy, OF
 
@@ -166,7 +172,11 @@ def schema_for(decl: FieldDecl) -> type[BaseConfig]:
         "__annotations__": {
             "FoamFile": _FoamFileHeader,
             "dimensions": list[int],
-            "internalField": str,
+            # internalField is typed for *this* field's element kind (scalar /
+            # vector), so a Vector field accepts ``[0,0,0]`` and a Scalar ``0``.
+            # (runtime metaprogramming: decl.value_type is a value, not a static
+            # type, so mypy can't follow the subscription)
+            "internalField": FieldValue[decl.value_type],  # type: ignore[name-defined]
             "boundaryField": dict[str, bc_union],
         },
         "FoamFile": default_header,

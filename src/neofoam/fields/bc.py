@@ -30,7 +30,20 @@ from __future__ import annotations
 
 from typing import Annotated, Any, Literal, Optional, Sequence, Union
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    SerializationInfo,
+    model_serializer,
+)
+
+from neofoam.fields.value_types import (
+    FieldValue,
+    Scalar,
+    Vector,
+    to_uniform_literal,
+)
 
 
 class NoSlipBC(BaseModel):
@@ -52,7 +65,7 @@ class FixedValueBC(BaseModel):
     """
 
     type: Literal["fixedValue"] = "fixedValue"
-    value: Union[float, list[float], str]
+    value: FieldValue[Any]
 
 
 class ZeroGradientBC(BaseModel):
@@ -111,7 +124,7 @@ class CyclicAMIBC(BaseModel):
     placeholder some tutorials use to seed the AMI's initial state."""
 
     type: Literal["cyclicAMI"] = "cyclicAMI"
-    value: Optional[Union[float, list[float], str]] = None
+    value: Optional[FieldValue[Any]] = None
 
 
 # ---------------------------------------------------------------------------
@@ -126,7 +139,7 @@ class CalculatedBC(BaseModel):
     on-disk placeholder keeps the patch read/writeable."""
 
     type: Literal["calculated"] = "calculated"
-    value: Union[float, list[float], str]
+    value: FieldValue[Any]
 
 
 class InletOutletBC(BaseModel):
@@ -136,8 +149,8 @@ class InletOutletBC(BaseModel):
     or an OpenFOAM uniform / ``$internalField`` literal."""
 
     type: Literal["inletOutlet"] = "inletOutlet"
-    inletValue: Union[float, list[float], str]
-    value: Union[float, list[float], str]
+    inletValue: FieldValue[Any]
+    value: FieldValue[Any]
 
 
 class FixedFluxPressureBC(BaseModel):
@@ -147,7 +160,7 @@ class FixedFluxPressureBC(BaseModel):
     the density field (e.g. ``"rhok"``) when needed."""
 
     type: Literal["fixedFluxPressure"] = "fixedFluxPressure"
-    value: Union[float, str]
+    value: FieldValue[Scalar]
     rho: Optional[str] = None
 
 
@@ -157,8 +170,8 @@ class PressureInletOutletVelocityBC(BaseModel):
     zero-gradient on outflow. Vector-only."""
 
     type: Literal["pressureInletOutletVelocity"] = "pressureInletOutletVelocity"
-    value: Union[list[float], str]
-    inletValue: Optional[Union[list[float], str]] = None
+    value: FieldValue[Vector]
+    inletValue: Optional[FieldValue[Vector]] = None
 
 
 class MovingWallVelocityBC(BaseModel):
@@ -169,7 +182,7 @@ class MovingWallVelocityBC(BaseModel):
     every time step from the mesh velocity."""
 
     type: Literal["movingWallVelocity"] = "movingWallVelocity"
-    value: Union[list[float], str]
+    value: FieldValue[Vector]
 
 
 # ---------------------------------------------------------------------------
@@ -203,7 +216,7 @@ class WallFunctionBC(BaseModel):
         "epsilonWallFunction",
         "omegaWallFunction",
     ]
-    value: Union[float, str]
+    value: FieldValue[Scalar]
 
 
 class AlphatWallFunctionBC(BaseModel):
@@ -221,7 +234,7 @@ class AlphatWallFunctionBC(BaseModel):
         "compressible::alphatWallFunction",
         "alphatJayatillekeWallFunction",
     ]
-    value: Union[float, str]
+    value: FieldValue[Scalar]
     Prt: Optional[float] = None
 
 
@@ -246,7 +259,7 @@ class TurbulentIntensityKineticEnergyInletBC(BaseModel):
         "turbulentIntensityKineticEnergyInlet"
     )
     intensity: float
-    value: Union[float, str]
+    value: FieldValue[Scalar]
 
 
 class TurbulentMixingLengthDissipationRateInletBC(BaseModel):
@@ -262,7 +275,7 @@ class TurbulentMixingLengthDissipationRateInletBC(BaseModel):
         "turbulentMixingLengthDissipationRateInlet"
     )
     mixingLength: float
-    value: Union[float, str]
+    value: FieldValue[Scalar]
 
 
 class TurbulentMixingLengthFrequencyInletBC(BaseModel):
@@ -277,7 +290,7 @@ class TurbulentMixingLengthFrequencyInletBC(BaseModel):
         "turbulentMixingLengthFrequencyInlet"
     )
     mixingLength: float
-    value: Union[float, str]
+    value: FieldValue[Scalar]
 
 
 class GenericBC(BaseModel):
@@ -295,6 +308,21 @@ class GenericBC(BaseModel):
 
     model_config = ConfigDict(extra="allow")
     type: str
+
+    @model_serializer(mode="wrap")
+    def _serialize(self, handler: Any, info: SerializationInfo) -> dict[str, Any]:
+        """Map open-set values to OpenFOAM literals when writing OpenFOAM.
+
+        ``GenericBC``'s payload is untyped ``extra`` keys, so the per-field
+        :data:`FieldValue` serializer can't reach them; mirror it here — render
+        any list/number value as a ``uniform`` literal under the ``openfoam``
+        format context, pass everything else (incl. ``type`` and string values)
+        through. Plain ``model_dump`` is unchanged.
+        """
+        data: dict[str, Any] = handler(self)
+        if (info.context or {}).get("format") == "openfoam":
+            return {key: to_uniform_literal(val) for key, val in data.items()}
+        return data
 
 
 #: Public union type alias for typing call sites that want the open set.

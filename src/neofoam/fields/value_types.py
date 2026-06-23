@@ -22,7 +22,9 @@ crosses the disk boundary.
 from __future__ import annotations
 
 import re
-from typing import Any, Final
+from typing import Annotated, Any, Final, Generic, TypeVar, Union
+
+from pydantic import BaseModel, SerializationInfo, WrapSerializer
 
 
 class Scalar:
@@ -136,3 +138,92 @@ def zero_uniform(value_type: type) -> str:
     if value_type is Vector:
         return "uniform (0 0 0)"
     raise TypeError(f"zero_uniform: unsupported value_type {value_type!r}")
+
+
+# ---------------------------------------------------------------------------
+# FieldValue: one type for every field-value slot (BC value / inletValue,
+# internalField, GenericBC extras). It carries the *meaning* of the value
+# (uniform scalar/vector, or non-uniform per-element list, or an already
+# on-disk literal string); how it is *encoded* is decided per writer by the
+# format in the serialization context — so JSON/YAML keep raw structured data
+# and only OpenFOAM emits ``uniform`` / ``nonuniform List<…>`` text. This
+# replaces the ad-hoc ``normalize_field_bcs`` write-boundary pass.
+# ---------------------------------------------------------------------------
+
+
+class NonUniform(BaseModel):
+    """Per-element field data: a list of scalars or a list of 3-vectors.
+
+    Tagged explicitly (rather than inferred from shape) so a bare ``[1, 0, 0]``
+    stays an unambiguous *uniform vector* while ``NonUniform(nonuniform=[...])``
+    is the *non-uniform* field.
+    """
+
+    nonuniform: list[Union[float, list[float]]]
+
+
+def to_uniform_literal(value: Any) -> Any:
+    """Render a uniform field value as an OpenFOAM literal.
+
+    ``float`` → ``"uniform <n>"``, 3-sequence → ``"uniform (x y z)"``; strings
+    (already on-disk literals) and other types pass through unchanged.
+    """
+    if isinstance(value, bool) or isinstance(value, str):
+        return value
+    if isinstance(value, (int, float)):
+        return f"uniform {float(value)}"
+    if isinstance(value, (list, tuple)):
+        return "uniform (" + " ".join(str(float(x)) for x in value) + ")"
+    return value
+
+
+def to_nonuniform_literal(items: list[Any]) -> str:
+    """Render per-element data as an OpenFOAM ``nonuniform List<…>`` literal."""
+    if items and isinstance(items[0], (list, tuple)):
+        kind = "vector"
+        body = " ".join("(" + " ".join(str(float(x)) for x in v) + ")" for v in items)
+    else:
+        kind = "scalar"
+        body = " ".join(str(float(x)) for x in items)
+    return f"nonuniform List<{kind}> {len(items)} ({body})"
+
+
+def _serialize_field_value(value: Any, handler: Any, info: SerializationInfo) -> Any:
+    """Per-writer mapping for :data:`FieldValue`.
+
+    Only ``format == "openfoam"`` in the serialization context produces OpenFOAM
+    text; every other writer (JSON, YAML, plain ``model_dump`` for forms / tests)
+    gets the raw structured value via ``handler``.
+    """
+    if (info.context or {}).get("format") != "openfoam":
+        return handler(value)
+    if isinstance(value, NonUniform):
+        return to_nonuniform_literal(value.nonuniform)
+    return to_uniform_literal(value)
+
+
+_ElementT = TypeVar("_ElementT")
+
+
+class FieldValue(Generic[_ElementT]):
+    """Generic field-value type — parameterise with the element marker.
+
+    ``FieldValue[Scalar]`` accepts ``float`` (uniform) / ``"uniform 0"`` /
+    :class:`NonUniform`; ``FieldValue[Vector]`` accepts ``list[float]`` (uniform)
+    / literal / :class:`NonUniform`; ``FieldValue[Any]`` accepts either (used by
+    BC arms shared across scalar and vector fields). All variants share the
+    per-writer serializer: raw structured data for forms / JSON / YAML, OpenFOAM
+    ``uniform`` / ``nonuniform`` text under ``context={"format": "openfoam"}``.
+
+    It is not instantiated; subscription returns the corresponding
+    ``Annotated[Union[...], WrapSerializer]`` for use as a Pydantic field type.
+    """
+
+    def __class_getitem__(cls, element: Any) -> Any:
+        if element is Scalar:
+            members: Any = Union[float, str, NonUniform]
+        elif element is Vector:
+            members = Union[list[float], str, NonUniform]
+        else:  # Any / Tensor / unknown → accept both scalar and vector forms
+            members = Union[float, list[float], str, NonUniform]
+        return Annotated[members, WrapSerializer(_serialize_field_value)]
