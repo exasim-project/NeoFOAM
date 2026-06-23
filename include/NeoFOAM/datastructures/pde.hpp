@@ -517,12 +517,14 @@ private:
         {
             const auto& stat = stats.entries[i];
             NeoN::Logging::info(
-                "{}:  Solving for {}, Initial residual = {}, Final residual = {}, No Iterations {}",
+                "{}:  Solving for {}, Initial residual = {}, Final residual = {}, No Iterations {}, "
+                "Solve time = {} ms",
                 label,
                 componentName(psi_->name, i, n),
                 stat.initResNorm,
                 stat.finalResNorm,
-                stat.numIter
+                stat.numIter,
+                stat.solveTime
             );
         }
     }

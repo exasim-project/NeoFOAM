@@ -119,6 +119,29 @@ TEST_CASE("PressureVelocityCoupling")
         REQUIRE_THAT(nfrAU.boundaryData(), EqualsBoundary(forAU, ApproxScalar(1e-15)));
     }
 
+    SECTION("rAtU" + execName)
+    {
+        // SIMPLEC consistent diagonal OF-parity: computeRAtU must reproduce OpenFOAM's
+        // rAtU = 1/(1/rAU - UEqn.H1()) (simpleFoam/pEqn.H, `consistent yes`). H1() is the
+        // negated row off-diagonal sum / V (+ coupled-patch coupling, none in this serial
+        // single-domain fixture), so this exercises the off-diagonal accumulation against OF's
+        // lduMatrix::H1. The unrelaxed matrix is used on both sides (no relax() here), matching
+        // the rAU section's unrelaxed reference; the upper()==ofUEqn.upper() @1e-15 assertion in
+        // that section is what makes this off-diagonal-sum comparison meaningful.
+        nfUEqn.assemble();
+
+        Foam::volScalarField forAU("rAU", 1.0 / ofUEqn.A());
+        Foam::volScalarField rAtURef("rAtU", 1.0 / (1.0 / forAU - ofUEqn.H1()));
+
+        auto nfrAU = nf::computeRAU(nfUEqn);
+        auto nfrAtU = nf::computeRAtU(nfUEqn, nfrAU);
+
+        // Internal field only: NeoFOAM extrapolates rAtU to the boundary AFTER forming it,
+        // whereas OF's field algebra extrapolates 1/rAU and H1 separately then combines, so the
+        // two boundary values legitimately differ (both are extrapolations of the same internal).
+        REQUIRE_THAT(nfrAtU, EqualsInternal(rAtURef, ApproxScalar(1e-12)));
+    }
+
     SECTION("relaxedRAU" + execName)
     {
         // OF-parity for the matrix-under-relaxed momentum system.

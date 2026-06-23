@@ -208,6 +208,10 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
         {"empty", [](auto& dict) { dict.insert("type", std::string("empty")); }},
         {"symmetryPlane", [](auto& dict) { dict.insert("type", std::string("symmetry")); }},
         {"symmetry", [](auto& dict) { dict.insert("type", std::string("symmetry")); }},
+        // Frictionless wall. NeoN's slip BC mirrors OpenFOAM's slipFvPatchField:
+        // scalar -> zero-gradient, vector -> tangential projection with the wall-
+        // normal component removed. Shares the symmetry kernel under the hood.
+        {"slip", [](auto& dict) { dict.insert("type", std::string("slip")); }},
         {"nutUSpaldingWallFunction",
          [](auto& dict) { dict.insert("type", std::string("nutUSpaldingWallFunction")); }},
         {"omegaWallFunction",

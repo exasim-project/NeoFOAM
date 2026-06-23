@@ -120,16 +120,32 @@ int main(int argc, char* argv[])
                 UEqn.assemble();
             }
 
-            // SIMPLE pressure-velocity coupling (single pass, no inner PISO loop)
+            // SIMPLE / SIMPLEC pressure-velocity coupling (single pass, no inner PISO loop)
             {
                 auto [crAU, hByA] = nf::computeRAUandHByA(UEqn);
                 nf::constrainHbyA(U, p, hByA);
 
-                nnfvcc::SurfaceField<NeoN::scalar> rAU = surfInterpol.interpolate(crAU);
+                // SIMPLEC ("consistent" in fvSolution.SIMPLE): use the consistent diagonal
+                // rAtU = 1/(1/rAU - H1) which folds the neighbour coupling that plain SIMPLE
+                // drops. crAtU aliases crAU for plain SIMPLE so the rest of the block is shared.
+                const bool consistent = simple.consistent();
+                nnfvcc::VolumeField<NeoN::scalar> crAtU =
+                    consistent ? nf::computeRAtU(UEqn, crAU) : crAU;
+
+                // Pressure Laplacian coefficient: rAtU (== rAU for plain SIMPLE) on the faces.
+                nnfvcc::SurfaceField<NeoN::scalar> rAU = surfInterpol.interpolate(crAtU);
                 rAU.name = "rAUf";
 
                 // No ddtFluxCorr: SIMPLE is steady-state
                 auto phiHbyA = nf::flux(hByA);
+
+                if (consistent)
+                {
+                    // phiHbyA += interpolate(rAtU - rAU)*snGrad(p)*magSf
+                    nf::addConsistentFluxCorrection(phiHbyA, crAU, crAtU, p);
+                    // HbyA -= (rAU - rAtU)*grad(p)   (used by the velocity corrector below)
+                    nf::subtractConsistentHbyA(hByA, crAU, crAtU, p);
+                }
 
                 // TODO additionally missing
                 // Foam::adjustPhi(phiHbyA, U, p);
@@ -220,7 +236,10 @@ int main(int argc, char* argv[])
                 );
                 p.correctBoundaryConditions();
 
-                nf::updateVelocity(hByA, crAU, p, U);
+                // Momentum corrector: U = HbyA - rAtU*grad(p) (rAtU == rAU for plain SIMPLE).
+                // With the SIMPLEC HbyA correction above this reproduces the plain-SIMPLE
+                // reconstruction U = HbyA0 - rAU*grad(p) once p has converged.
+                nf::updateVelocity(hByA, crAtU, p, U);
                 U.correctBoundaryConditions();
             }
 
