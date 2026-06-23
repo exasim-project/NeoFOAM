@@ -248,7 +248,7 @@ TEST_CASE("neoPimpleFoam converges to OpenFOAM pimpleFoam on the cavity", "[pimp
             auto prevP = NeoN::dsl::fieldRelaxationSnapshot(p);
 
             auto gradU = gradOp.gradTensor(U);
-            nf::PDESolver<NeoN::Vec3> UEqn(
+            nf::PDE<NeoN::Vec3> UEqn(
                 dsl::imp::ddt(U) + dsl::imp::div(phi, U) - dsl::imp::laplacian(nu, U)
                     + dsl::exp::viscousStress(nuVol, nutVol, gradU),
                 U,
@@ -288,7 +288,7 @@ TEST_CASE("neoPimpleFoam converges to OpenFOAM pimpleFoam on the cavity", "[pimp
 
                 while (piso.correctNonOrthogonal())
                 {
-                    nf::PDESolver<NeoN::scalar> pEqn(
+                    nf::PDE<NeoN::scalar> pEqn(
                         NeoN::dsl::imp::laplacian(rAU, p) - NeoN::dsl::exp::div(phiHbyA),
                         p,
                         rt

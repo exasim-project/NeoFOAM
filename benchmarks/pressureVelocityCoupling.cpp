@@ -73,7 +73,7 @@ TEST_CASE("pressureVelocityCoupling")
         auto [nfP, nfPhi, nfGamma] =
             NeoFOAM::constFromMany(rt.exec, rt.nfMesh, ofP, ofPhi, ofGamma);
 
-        nf::PDESolver<NeoN::Vec3> nfUEqn(
+        nf::PDE<NeoN::Vec3> nfUEqn(
             dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(nfGamma, nfU),
             nfU,
             rt

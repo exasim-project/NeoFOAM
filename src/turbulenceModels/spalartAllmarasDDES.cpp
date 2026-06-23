@@ -519,7 +519,7 @@ void SpalartAllmarasDDES::correct(
         magSqrGradNuTilda
     );
 
-    PDESolver<scalar> nuTildaEqn(
+    PDE<scalar> nuTildaEqn(
         dsl::imp::ddt(nuTilda) + dsl::imp::div(phi, nuTilda)
             - dsl::imp::laplacian(nuTildaEff_, nuTilda) + dsl::imp::source(spCoeff, nuTilda)
             - dsl::exp::source(production),

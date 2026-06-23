@@ -97,9 +97,9 @@ int main(int argc, char* argv[])
             nf::syncRunTimes(runTime, rt, maxCoNum);
 
             // Momentum predictor
-            nf::PDESolver<NeoN::Vec3> UEqn(
+            nf::PDE<NeoN::Vec3> UEqn(
                 dsl::imp::ddt(U) + dsl::imp::div(phi, U) - dsl::imp::laplacian(turb->nuEff(), U)
-                    + dsl::exp::viscousStress(nu, turb->nut(), turb->gradU())
+                + dsl::exp::viscousStress(nu, turb->nut(), turb->gradU())
             );
 
             const auto ddtScheme = UEqn.ddtScheme();
@@ -134,7 +134,7 @@ int main(int argc, char* argv[])
                 while (piso.correctNonOrthogonal())
                 {
                     // Pressure corrector
-                    nf::PDESolver<NeoN::scalar> pEqn(
+                    nf::PDE<NeoN::scalar> pEqn(
                         NeoN::dsl::imp::laplacian(rAU, p) - NeoN::dsl::exp::div(phiHbyA),
                         p,
                         rt

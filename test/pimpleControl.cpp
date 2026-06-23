@@ -230,10 +230,7 @@ TEST_CASE("PimpleControl finalIter", "[pimpleControl][finaliter]")
 // inequality with no floating-point margin, so it does not depend on solver-convergence
 // nondeterminism. setup_pimple is the closed-domain all-Neumann fixture (p.needReference() == true,
 // ref cell read from the PIMPLE subdict, mirroring neoPimpleFoam).
-TEST_CASE(
-    "PDESolver finalIter selects field-Final solver subdict",
-    "[pimpleControl][finaliterselect]"
-)
+TEST_CASE("PDE finalIter selects field-Final solver subdict", "[pimpleControl][finaliterselect]")
 {
     Foam::Time& runTime = *timePtr;
     // Serial executor only: the count-difference observable is deterministic and the assertion is
@@ -285,7 +282,7 @@ TEST_CASE(
     // A fresh solver per pass guarantees the only difference between passes is finalIter_.
     auto solvePass = [&](bool finalIter) -> int
     {
-        nf::PDESolver<NeoN::scalar> pEqn(
+        nf::PDE<NeoN::scalar> pEqn(
             dsl::imp::laplacian(nfrAUf, nfP) - dsl::exp::div(nfPhi),
             nfP,
             rt
@@ -364,7 +361,7 @@ TEST_CASE(
 // mirrors test_setReference.cpp's construction but resolves the reference cell from the PIMPLE
 // subdict (neoPimpleFoam reads PIMPLE, not PISO) and gates on the pinned cell holding
 // pRefValue after the solve. setup_pimple is the all-Neumann lid-driven cavity (p.needReference()
-// == true). The rank-0 guard in PDESolver::setReference is PRESERVED (not refactored).
+// == true). The rank-0 guard in PDE::setReference is PRESERVED (not refactored).
 TEST_CASE("neoPimpleFoam closed-domain setReference pin", "[pimpleControl][setref]")
 {
     Foam::Time& runTime = *timePtr;
@@ -429,7 +426,7 @@ TEST_CASE("neoPimpleFoam closed-domain setReference pin", "[pimpleControl][setre
         Foam::scalar pRefValue = 0.0;
         Foam::setRefCell(ofp, ofp.mesh().solutionDict().subDict("PIMPLE"), pRefCell, pRefValue);
 
-        nf::PDESolver<NeoN::scalar> pEqn(
+        nf::PDE<NeoN::scalar> pEqn(
             dsl::imp::laplacian(nfrAUf, nfP) - dsl::exp::div(nfPhi),
             nfP,
             rt

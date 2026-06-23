@@ -5,7 +5,7 @@
 
 #include "NeoN/NeoN.hpp"
 
-#include "NeoFOAM/datastructures/pdeSolver.hpp"
+#include "NeoFOAM/datastructures/pde.hpp"
 #include "NeoFOAM/turbulenceModels/turbulenceModel.hpp"
 
 namespace nnfvcc = NeoN::finiteVolume::cellCentred;
