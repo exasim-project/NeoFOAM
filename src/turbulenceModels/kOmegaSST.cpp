@@ -811,8 +811,8 @@ void KOmegaSSTModel::updateGradU(const nnfvcc::VolumeField<Vec3>& U) { model_.up
 
 void KOmegaSSTModel::rotateOldTimes()
 {
-    fvcc::rotateOldTimes(k_);
-    fvcc::rotateOldTimes(omega_);
+    fvcc::rotateOldTimes(*k_);
+    fvcc::rotateOldTimes(*omega_);
 }
 
 

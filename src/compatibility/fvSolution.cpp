@@ -105,7 +105,7 @@ void updateSolver(NeoN::Dictionary& solverDict)
         {"PCG", {"Ginkgo", "solver::Cg"}},
         {"PBiCG", {"Ginkgo", "solver::Bicg"}},
         {"PBiCGStab", {"Ginkgo", "solver::Bicgstab"}},
-        {"smoothSolver", {"Ginkgo", "solver::Bicgstab"}},
+        {"smoothSolver", {"Ginkgo", "solver::Ir"}},
         {"GAMG", {"Ginkgo", "solver::Multigrid"}},
     };
 
@@ -209,12 +209,14 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
     const bool distributed = mpiEnv.isInitialized() && mpiEnv.sizeRank() > 1;
     const auto& activeMap = distributed ? distributedPreconditionerMap : preconditionerMap;
 
-    // A smoother (e.g. symGaussSeidel) with no explicit preconditioner maps the solver to BiCGStab
-    // (see solverMap). BiCGStab is used for NON-symmetric systems such as the momentum matrix, so
-    // the defaulted preconditioner must be valid for non-symmetric matrices. Incomplete-Cholesky
-    // (DIC -> preconditioner::Ic) is symmetric-positive-definite only: on a non-SPD momentum block
-    // its factorisation hits a negative pivot and SIGFPEs (sqrt of a negative diagonal). Default to
-    // diagonal (block-Jacobi) instead, which is always defined and matches the intended behaviour.
+    // A smoother (e.g. symGaussSeidel) with no explicit preconditioner maps the solver to
+    // iterative refinement (solver::Ir, see solverMap), giving a stationary Jacobi smoother
+    // (IR + point-Jacobi == damped Jacobi/Richardson). Default the inner operator to diagonal
+    // (block-Jacobi), which is always defined and symmetric-agnostic — unlike incomplete-Cholesky
+    // (DIC -> preconditioner::Ic) which is SPD-only and SIGFPEs on a non-SPD block. This block is
+    // written under the "preconditioner" key; NeoN's Ginkgo parse() renames it to "solver" for
+    // solver::Ir (Ginkgo names IR's inner factory "solver", which would otherwise collide with the
+    // top-level "solver: Ginkgo" backend-dispatch key).
     if (!solverDict.contains("preconditioner") && solverDict.contains("smoother"))
     {
         solverDict.insert("preconditioner", activeMap.at("diagonal"));

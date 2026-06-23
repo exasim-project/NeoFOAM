@@ -541,6 +541,15 @@ private:
     const NeoN::Vector<ValueType>* constraintValues_ = nullptr;
 };
 
+// Backward-compatibility alias: PDE was previously named PDESolver. Existing consumers
+// (turbulence models, pressureVelocityCoupling, neoSimpleFoam) still spell it PDESolver; keep this
+// alias so they compile against the renamed class. Prefer PDE in new code.
+template<
+    typename ValueType,
+    typename MatrixValueType = NeoN::scalar,
+    typename IndexType = NeoN::localIdx>
+using PDESolver = PDE<ValueType, MatrixValueType, IndexType>;
+
 
 template<typename ValueType>
 using PDESolver = PDE<ValueType>;

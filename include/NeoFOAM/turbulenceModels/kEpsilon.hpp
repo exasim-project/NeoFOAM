@@ -216,9 +216,6 @@ public:
     void write(MeshAdapter& mesh) const override;
     void rotateOldTimes() override;
 
-
-    void rotateOldTimes() override;
-
 private:
 
     const nnfvcc::VolumeField<scalar>& nu_;
