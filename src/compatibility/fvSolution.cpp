@@ -212,6 +212,101 @@ void updateCriteria(NeoN::Dictionary& solverDict)
 namespace
 {
 
+// int-tolerant readers: OpenFOAM commonly writes whole numbers as bare ints, which
+// get<scalar>/get<label> would reject with bad_any_cast (no int coercion).
+NeoN::scalar readScalarOr(const NeoN::Dictionary& d, const std::string& key, NeoN::scalar fallback)
+{
+    if (!d.contains(key)) return fallback;
+    if (d.isType<int>(key)) return NeoN::scalar(d.get<int>(key));
+    return d.get<NeoN::scalar>(key);
+}
+
+NeoN::label readLabelOr(const NeoN::Dictionary& d, const std::string& key, NeoN::label fallback)
+{
+    if (!d.contains(key)) return fallback;
+    if (d.isType<int>(key)) return NeoN::label(d.get<int>(key));
+    if (d.isType<NeoN::scalar>(key)) return NeoN::label(d.get<NeoN::scalar>(key));
+    return d.get<NeoN::label>(key);
+}
+
+// Build the Ginkgo preconditioner that recovers OpenFOAM/SPUMA's twoStageGaussSeidel smoother: a
+// forward Gauss-Seidel whose lower-triangular solve is approximated by `nInnerIter` damped
+// (relaxation = omega) Jacobi iterations. Substituting a few Jacobi sweeps for the exact (and on a
+// GPU inherently sequential) LowerTrs is the "two-stage" idea of Berger-Vergiat et al. 2021
+// (DOI:10.48550/arXiv.2104.01196). Gauss-Seidel's `symmetric` defaults to false -> forward only.
+NeoN::Dictionary
+buildTwoStageGaussSeidel(NeoN::label nInnerIter, NeoN::scalar omega, bool distributed)
+{
+    // inner: nInnerIter damped-Jacobi sweeps approximating the triangular solve
+    NeoN::Dictionary innerSolver(
+        {{std::string("type"), std::string("solver::Ir")},
+         {std::string("relaxation_factor"), omega},
+         {std::string("solver"),
+          NeoN::Dictionary(
+              {{std::string("type"), std::string("preconditioner::Jacobi")},
+               {std::string("max_block_size"), 1}}
+          )},
+         {std::string("criteria"),
+          NeoN::Dictionary({{std::string("iteration"), static_cast<int>(nInnerIter)}})}}
+    );
+
+    NeoN::Dictionary gaussSeidel(
+        {{std::string("type"), std::string("preconditioner::GaussSeidel")},
+         {std::string("l_solver"), innerSolver}}
+    );
+
+    if (!distributed)
+    {
+        return gaussSeidel;
+    }
+
+    // Distributed: triangular solves cannot span ranks -> apply Gauss-Seidel per rank via additive
+    // Schwarz (same pattern as the Ic/Ilu/Jacobi mappings in updatePreconditioner).
+    return NeoN::Dictionary(
+        {{std::string("type"), std::string("preconditioner::Schwarz")},
+         {std::string("local_solver"), gaussSeidel}}
+    );
+}
+
+// Map 'solver smoothSolver; smoother twoStageGaussSeidel;' to a Ginkgo IR(Richardson) driver over
+// the two-stage Gauss-Seidel preconditioner. smoothSolver applies the smoother and checks the
+// residual == preconditioned Richardson == solver::Ir (default relaxation 1.0) with the smoother as
+// its inner solver. nInnerIter (default 1) and omega (default 0.9) mirror the OpenFOAM smoother
+// controls; nSweeps is accepted but unused (the IR driver checks the residual every application).
+NeoN::Dictionary mapTwoStageGaussSeidel(NeoN::Dictionary dict)
+{
+    NeoN::Logging::warn("Mapping smoothSolver/twoStageGaussSeidel to a Ginkgo IR(Gauss-Seidel) "
+                        "two-stage smoother.\n");
+
+    const NeoN::label nInnerIter = readLabelOr(dict, "nInnerIter", 1);
+    const NeoN::scalar omega = readScalarOr(dict, "omega", 0.9);
+
+    // Distributed detection mirrors updatePreconditioner (Schwarz wrap only for real MPI runs).
+    NeoN::mpi::Environment mpiEnv;
+    const bool distributed = mpiEnv.isInitialized() && mpiEnv.sizeRank() > 1;
+
+    // Outer IR criteria from the OpenFOAM tolerance/relTol/maxIter controls.
+    NeoFOAM::updateCriteria(dict);
+
+    // Outer driver: solver::Ir (Richardson, default relaxation 1.0). Its inner "solver" is the
+    // two-stage Gauss-Seidel preconditioner; a dictionary-valued "solver" also selects the Ginkgo
+    // backend in SolverFactory::create.
+    dict.insert("type", std::string("solver::Ir"));
+    dict.insert("solver", buildTwoStageGaussSeidel(nInnerIter, omega, distributed));
+    dict.insert("reportName", std::string("twoStageGaussSeidel"));
+
+    // Keep only valid Ginkgo solver::Ir keys (plus the reportName meta key); drop every
+    // OpenFOAM-only control (smoother, nSweeps, nInnerIter, omega, optimize, the original solver
+    // string, ...) so Ginkgo's strict config check does not reject the configuration.
+    const auto keep = [](const std::string& k)
+    { return k == "type" || k == "solver" || k == "criteria" || k == "reportName"; };
+    for (const auto& key : dict.keys())
+    {
+        if (!keep(key)) dict.remove(key);
+    }
+    return dict;
+}
+
 // Strip a Ginkgo "namespace::Name" identifier down to "Name" (e.g.
 // "solver::Cg" -> "Cg", "preconditioner::Ic" -> "Ic").
 std::string stripNamespace(const std::string& s)
@@ -269,6 +364,43 @@ NeoN::Dictionary mapFvSolution(const NeoN::Dictionary& solverDict)
     {
         modSolverDict.insert("reportName", std::string("configFile"));
         return modSolverDict;
+    }
+
+    // The twoStageGaussSeidel smoother is supported only with smoothSolver (-> IR/Richardson) or
+    // GAMG (-> Multigrid). smoothSolver in turn supports only this smoother. Any other pairing is
+    // rejected rather than silently degraded; use a configFile for arbitrary Ginkgo setups.
+    const std::string solver = modSolverDict.isType<std::string>("solver")
+                                   ? modSolverDict.get<std::string>("solver")
+                                   : std::string();
+    const std::string smoother = modSolverDict.isType<std::string>("smoother")
+                                     ? modSolverDict.get<std::string>("smoother")
+                                     : std::string();
+    const bool twoStage = (smoother == "twoStageGaussSeidel");
+    if (solver == "smoothSolver")
+    {
+        if (!twoStage)
+        {
+            throw std::runtime_error(
+                "\nUnsupported smoothSolver smoother '" + smoother
+                + "'.\nsmoothSolver is only supported with 'smoother twoStageGaussSeidel'.\n"
+                  "Use a configFile for any other Ginkgo solver/smoother setup.\n"
+            );
+        }
+        return mapTwoStageGaussSeidel(modSolverDict);
+    }
+    if (twoStage)
+    {
+        // GAMG + twoStageGaussSeidel (-> Ginkgo solver::Multigrid with Pgm coarsening and
+        // IR(Gauss-Seidel) pre/post smoothers) is a planned follow-up; route there once
+        // implemented. For now fail clearly rather than mis-mapping the GAMG controls.
+        throw std::runtime_error(
+            "\nThe twoStageGaussSeidel smoother is only supported with 'solver smoothSolver' or "
+            "'solver GAMG'.\n"
+            + (solver == "GAMG"
+                   ? std::string("GAMG + twoStageGaussSeidel is not yet supported via a dictionary "
+                                 "entry; use a configFile (solver::Multigrid) for now.\n")
+                   : std::string("Got 'solver " + solver + "'.\n"))
+        );
     }
 
     NeoN::Logging::warn("Mapping OpenFOAM solver settings to NeoN settings.\n"
