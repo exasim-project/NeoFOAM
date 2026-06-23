@@ -33,6 +33,17 @@ from neofoam.agent.case_fill import (
     read_case_text,
     save_case,
 )
+from neofoam.agent.case_forms import (
+    INPUT_KEYS,
+    field_name,
+    is_scheme_config,
+    merge_field_config,
+    split_field_dump,
+)
+from neofoam.agent.wizard_template import (
+    NOTEBOOK_TEMPLATE,
+    write_wizard_notebook,
+)
 
 __all__ = [
     # generic scaffold
@@ -50,4 +61,13 @@ __all__ = [
     "load_case_from_disk",
     "read_case_text",
     "save_case",
+    # case form wiring
+    "INPUT_KEYS",
+    "field_name",
+    "is_scheme_config",
+    "merge_field_config",
+    "split_field_dump",
+    # notebook scaffolding
+    "NOTEBOOK_TEMPLATE",
+    "write_wizard_notebook",
 ]

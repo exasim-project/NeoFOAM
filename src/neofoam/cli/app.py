@@ -72,6 +72,39 @@ def agent_fill(
     typer.echo(f"Wrote configs to {target}: {', '.join(written)}")
 
 
+@agent_app.command("wizard")
+def agent_wizard(
+    target: str = typer.Argument(
+        ".", help="Directory to scaffold the wizard notebook into (default: cwd)."
+    ),
+    name: str = typer.Option(
+        "case_wizard.py", "--name", help="Notebook file name to write."
+    ),
+    force: bool = typer.Option(
+        False, "--force", help="Overwrite an existing notebook file."
+    ),
+) -> None:
+    """Scaffold a marimo *case wizard* notebook into TARGET.
+
+    Writes a self-contained notebook that renders the ``incompressibleFluid``
+    configs as forms (Models / Schemes / BCs / Initial values) with an AI chat
+    that fills and saves the case. The notebook operates on the directory it is
+    written to, so run it from there::
+
+        neofoam agent wizard my_case
+        marimo edit my_case/case_wizard.py
+    """
+    from neofoam.agent import write_wizard_notebook
+
+    try:
+        path = write_wizard_notebook(target, filename=name, force=force)
+    except FileExistsError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=1) from exc
+    typer.echo(f"Wrote case wizard to {path}")
+    typer.echo(f"Run it with:  marimo edit {path}")
+
+
 @solver_app.command(
     context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
 )
