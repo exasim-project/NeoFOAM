@@ -49,7 +49,10 @@ def _():
         merge_field_config,
         split_field_dump,
     )
-    from neofoam.framework.solver.configurations import configurations
+    from neofoam.framework.solver.configurations import (
+        configurations,
+        toggle_models,
+    )
     from neofoam.io import default_values, rjsf_uischema, write_configs, slice_schema
     from neofoam.solver.incompressibleFluid.incompressibleFluid import (
         incompressibleFluid,
@@ -71,6 +74,7 @@ def _():
         merge_field_config,
         mo,
         rjsf_uischema,
+        toggle_models,
         write_configs,
         slice_schema,
         split_field_dump,
@@ -84,11 +88,13 @@ def _(mo):
 
     0. **Chat** — describe the case below and the AI fills the tabs and writes the
        case to disk. Then review/edit and **Save case** to re-write after edits.
-    1. **Models** — pick the physics models for the case.
-    2. **Schemes** — the numerical schemes / linear solvers (what they need
-       depends on the models chosen above).
-    3. **BCs** — give every field its boundary conditions.
-    4. **Initial values** — set each field's `internalField`.
+    1. **Setup** — select the optional models you need (e.g. buoyancy); models
+       not selected are hidden everywhere below and left out of the saved case.
+    2. **Models** — fill the physics models' configuration.
+    3. **Schemes** — the numerical schemes / linear solvers (what they need
+       depends on the models chosen).
+    4. **BCs** — give every field its boundary conditions.
+    5. **Initial values** — set each field's `internalField`.
 
     Expand a section, fill its form, and click that form's **Submit** to push the
     edits back to Python. When you are done, click **Save case** at the bottom to
@@ -113,8 +119,14 @@ def _(
     mo,
     rjsf_uischema,
     slice_schema,
+    toggle_models,
 ):
     cfgs = configurations(incompressibleFluid)
+
+    # Optional models flagged as on/off toggles (e.g. buoyancy). Each owns a set
+    # of dict configs + 0/ fields that the Setup tab gates — derived from the
+    # solver's types, no hardcoding.
+    toggles = toggle_models(incompressibleFluid)
 
     def _make(schema, value, title):
         # Build the raw anywidget once and return both it and the marimo wrapper.
@@ -181,6 +193,7 @@ def _(
         raw_input_widgets,
         setup_models,
         setup_schemes,
+        toggles,
     )
 
 
@@ -285,36 +298,145 @@ def _(
 
 
 @app.cell
+def _(mo):
+    # Selected optional-model names. Plain state so the Add/Remove buttons can
+    # mutate it; the buttons live in cells that read only the *stable* Available
+    # table (below), never this state at definition time — that keeps them
+    # reliable (the earlier per-row remove buttons failed because their cell both
+    # read and set the state, tripping marimo's loop guard).
+    get_sel, set_sel = mo.state(set())
+    return get_sel, set_sel
+
+
+@app.cell
+def _(mo, toggles):
+    # Transfer list — Available: a selectable ``mo.ui.table`` (scales: search +
+    # pagination as more optional models are registered). Stable: depends only on
+    # ``toggles``, so the Add/Remove buttons that read its selection stay live.
+    catalog_table = mo.ui.table(
+        [{"Model": t.label} for t in toggles],
+        selection="multi",
+        label="Available",
+        pagination=False,
+    )
+    return (catalog_table,)
+
+
+@app.cell
+def _(catalog_table, get_sel, mo, set_sel, toggles):
+    # Add the rows currently selected in the Available table to the selection.
+    _l2n = {t.label: t.name for t in toggles}
+
+    def _add(_v):
+        set_sel(get_sel() | {_l2n[r["Model"]] for r in catalog_table.value})
+
+    add_btn = mo.ui.button(label="Add →", on_change=_add)
+    return (add_btn,)
+
+
+@app.cell
+def _(catalog_table, get_sel, mo, set_sel, toggles):
+    # Remove the rows selected in the Available table from the selection.
+    _l2n = {t.label: t.name for t in toggles}
+
+    def _remove(_v):
+        set_sel(get_sel() - {_l2n[r["Model"]] for r in catalog_table.value})
+
+    remove_btn = mo.ui.button(label="← Remove", on_change=_remove)
+    return (remove_btn,)
+
+
+@app.cell
+def _(get_sel, mo, toggles):
+    # Transfer list — Selected: a read-only table of the chosen models.
+    _n2l = {t.name: t.label for t in toggles}
+    selected_table = mo.ui.table(
+        [{"Model": _n2l[_n]} for _n in sorted(get_sel())],
+        selection=None,
+        label="Selected",
+        pagination=False,
+    )
+    return (selected_table,)
+
+
+@app.cell
 def _(
+    add_btn,
     bc_widgets,
+    catalog_table,
     dict_widgets,
     field_label,
     field_names,
+    get_sel,
     input_widgets,
     mo,
+    remove_btn,
+    selected_table,
     setup_models,
     setup_schemes,
+    toggles,
 ):
-    # Build the tabs once, reading no selector state, so switching tabs is stable
-    # (a reactive selector feeding this cell would reset the active tab on edit).
-    models_items = {_name: dict_widgets[_name] for _name in setup_models}
+    # Setup tab: pick the optional models this case uses. A model not selected
+    # has its configs + fields hidden across the other tabs (and skipped on save).
+    _selected_types = set(get_sel())
+    _hidden_dicts = {
+        _c.__name__
+        for _t in toggles
+        if _t.name not in _selected_types
+        for _c in _t.dicts
+    }
+    _hidden_fields = {
+        _c.__name__
+        for _t in toggles
+        if _t.name not in _selected_types
+        for _c in _t.fields
+    }
 
-    # Schemes/solution get their own tab: the entries they need depend on the
-    # models chosen in the Models tab.
-    schemes_items = {_name: dict_widgets[_name] for _name in setup_schemes}
+    setup_panel = mo.vstack(
+        [
+            mo.md(
+                "### Optional models\n"
+                "Select rows under **Available**, then **Add →** to enable them "
+                "(or **← Remove** to disable). Unselected models stay hidden and "
+                "are left out of the saved case."
+            ),
+            mo.hstack(
+                [
+                    mo.vstack([catalog_table, add_btn]),
+                    mo.vstack([selected_table, remove_btn]),
+                ],
+                justify="start",
+                gap=3,
+            )
+            if toggles
+            else mo.md("_No optional models._"),
+        ]
+    )
 
+    models_items = {
+        _name: dict_widgets[_name]
+        for _name in setup_models
+        if _name not in _hidden_dicts
+    }
+    schemes_items = {
+        _name: dict_widgets[_name]
+        for _name in setup_schemes
+        if _name not in _hidden_dicts
+    }
     bcs_items = {
         f"{field_label[_name]} — boundary conditions": bc_widgets[_name]
         for _name in field_names
+        if _name not in _hidden_fields
     }
-
     initial_items = {
         f"{field_label[_name]} — initial value": input_widgets[_name]
         for _name in field_names
+        if _name not in _hidden_fields
     }
 
     wizard = mo.ui.tabs(
         {
+            "Setup": setup_panel,
             "Models": mo.accordion(models_items),
             "Schemes": mo.accordion(schemes_items),
             "BCs": mo.accordion(bcs_items),
@@ -339,10 +461,12 @@ def _(
     cfgs,
     dict_widgets,
     field_names,
+    get_sel,
     input_widgets,
     merge_field_config,
     mo,
     save_btn,
+    toggles,
     write_configs,
 ):
     mo.stop(
@@ -350,11 +474,22 @@ def _(
         mo.md("_Click **Save case** to write the submitted configs to disk._"),
     )
 
+    # Skip configs/fields owned by an optional model that isn't selected.
+    _selected_types = set(get_sel())
+    _skip = {
+        _c.__name__
+        for _t in toggles
+        if _t.name not in _selected_types
+        for _c in (*_t.dicts, *_t.fields)
+    }
+
     _field_set = set(field_names)
     _instances = []
     _errors: dict[str, str] = {}
     for _cls in cfgs:
         _name = _cls.__name__
+        if _name in _skip:
+            continue
         try:
             if _name in _field_set:
                 # A field with neither half submitted is skipped; otherwise its

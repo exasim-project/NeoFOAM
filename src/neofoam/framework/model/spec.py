@@ -48,6 +48,12 @@ class ModelSpec:
         self.name = name
         self.enabled = True
 
+        # UI hint: an *optional* model flagged via :meth:`as_toggle` is shown as
+        # a simple on/off switch (e.g. buoyancy). See
+        # :func:`neofoam.framework.solver.configurations.toggle_models`.
+        self.toggle: bool = False
+        self.toggle_label: Optional[str] = None
+
         self._config_classes: list[type] = []
         self._field_decls: list[FieldDecl] = []
 
@@ -371,6 +377,18 @@ class ModelSpec:
                 f"Plugin interface '{plugin_interface}' does not have a 'register' method"
             )
         plugin_interface.register(wrapper_class)
+        return self
+
+    def as_toggle(self, label: Optional[str] = None) -> "ModelSpec":
+        """Flag this optional model as a simple on/off toggle in UIs.
+
+        Chainable after :meth:`register_with`. ``label`` is the human-readable
+        switch label (defaults to the model name). The case wizard renders one
+        switch per flagged optional model and includes/excludes the model's
+        configs + fields based on it.
+        """
+        self.toggle = True
+        self.toggle_label = label or self.name
         return self
 
     # ------------------------------------------------------------------

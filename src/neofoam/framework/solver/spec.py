@@ -133,6 +133,16 @@ class SolverSpec:
             specs.extend(family.all_specs())
         return specs
 
+    @property
+    def optional_model_specs(self) -> list[Any]:
+        """The bound *optional* model families (case-free, no detection).
+
+        Each family's members are optional models; some may flag themselves as
+        a UI toggle (e.g. buoyancy) — see
+        :func:`neofoam.framework.solver.configurations.toggle_models`.
+        """
+        return list(self._optional_model_specs)
+
     def detect_core_models(self, case_dir: Optional[Any] = None) -> list[Any]:
         """Select the single active member of each bound core family."""
         return [family.detect_and_create() for family in self._core_model_specs]

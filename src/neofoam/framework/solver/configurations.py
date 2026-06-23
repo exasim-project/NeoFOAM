@@ -138,3 +138,45 @@ def configurations(solver: Any) -> Configurations:
     return Configurations(
         solver=solver, classes=cast("list[type[BaseConfig]]", classes)
     )
+
+
+@dataclass(frozen=True)
+class ToggleModel:
+    """An optional model flagged as an on/off UI toggle (e.g. buoyancy).
+
+    ``dicts`` / ``fields`` are the config classes the model owns — what a UI
+    shows (and a case writes) only while the toggle is on.
+    """
+
+    name: str
+    label: str
+    dicts: list[type[BaseConfig]]
+    fields: list[type[BaseConfig]]
+
+
+def toggle_models(solver: Any) -> list[ToggleModel]:
+    """Optional models of ``solver`` flagged as toggles (``spec.as_toggle(...)``).
+
+    Each entry carries the model's owned config classes split into dict configs
+    and ``0/`` field schemas, derived from the model spec itself — no
+    name-matching. Case-free; runs no detection.
+    """
+    from neofoam.io import collect_config_classes
+
+    out: list[ToggleModel] = []
+    for family in solver.optional_model_specs:
+        for spec in family.all_specs():
+            if not getattr(spec, "toggle", False):
+                continue
+            owned = cast(
+                "list[type[BaseConfig]]", collect_config_classes([spec])
+            )
+            out.append(
+                ToggleModel(
+                    name=spec.name,
+                    label=spec.toggle_label or spec.name,
+                    dicts=[c for c in owned if not _is_field_schema(c)],
+                    fields=[c for c in owned if _is_field_schema(c)],
+                )
+            )
+    return out

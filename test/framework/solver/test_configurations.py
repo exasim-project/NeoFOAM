@@ -132,3 +132,76 @@ def test_detect_core_and_optional_models() -> None:
     spec = _solver()
     assert spec.detect_core_models() == [core_member]
     assert spec.detect_optional_models(Path(".")) == [optional_member]
+
+
+# -- toggle models ----------------------------------------------------
+
+
+def test_as_toggle_sets_flag_and_label() -> None:
+    m = Model("buoyancy").as_toggle("Buoyancy")
+    assert m.toggle is True
+    assert m.toggle_label == "Buoyancy"
+    # Defaults to the model name when no label is given.
+    assert Model("plain").as_toggle().toggle_label == "plain"
+    # Unflagged models default to off.
+    assert Model("off").toggle is False
+
+
+def test_toggle_models_lists_flagged_optional_with_owned_configs() -> None:
+    from neofoam.framework.solver.configurations import ToggleModel, toggle_models
+
+    class ToggleCfg(BaseConfig):
+        on: bool = True
+
+    member = Model("Buoyancy").as_toggle("Buoyancy")
+    member.config(ToggleCfg)
+
+    class ToggleFamily:
+        @classmethod
+        def all_specs(cls) -> list[Any]:
+            return [member]
+
+        @classmethod
+        def detect_models(cls, case_dir: Any = None) -> list[Any]:
+            return [member]
+
+    spec = Solver("toggle_solver")
+    spec.optional_models(ToggleFamily)
+
+    tms = toggle_models(spec)
+    assert len(tms) == 1
+    t = tms[0]
+    assert isinstance(t, ToggleModel)
+    assert (t.name, t.label) == ("Buoyancy", "Buoyancy")
+    assert [c.__name__ for c in t.dicts] == ["ToggleCfg"]
+    assert t.fields == []
+
+
+def test_toggle_models_skips_unflagged_optional() -> None:
+    from neofoam.framework.solver.configurations import toggle_models
+
+    # _solver()'s optional member is not flagged → no toggles.
+    assert toggle_models(_solver()) == []
+
+
+def test_incompressible_fluid_buoyancy_is_a_toggle() -> None:
+    pytest.importorskip("pybFoam")
+    from neofoam.framework.solver.configurations import toggle_models
+    from neofoam.solver.incompressibleFluid.incompressibleFluid import (
+        incompressibleFluid,
+    )
+
+    tms = {t.name: t for t in toggle_models(incompressibleFluid)}
+    assert "boussinesq" in tms
+    bouss = tms["boussinesq"]
+    assert bouss.label == "Buoyancy (Boussinesq)"
+    assert {c.__name__ for c in bouss.dicts} == {
+        "BoussinesqConfig",
+        "boussinesq_fvSchemes",
+        "boussinesq_fvSolution",
+    }
+    assert {c.__name__ for c in bouss.fields} == {
+        "p_rghFieldConfig",
+        "TFieldConfig",
+        "alphatFieldConfig",
+    }
