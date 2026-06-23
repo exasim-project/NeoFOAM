@@ -4,6 +4,13 @@
 #include "NeoN/NeoN.hpp"
 
 #include "NeoFOAM/turbulenceModels/spalartAllmarasDDES.hpp"
+#include "NeoFOAM/auxiliary/writers.hpp"
+#include "NeoFOAM/auxiliary/readers.hpp"
+#include "NeoFOAM/compatibility/fvSolution.hpp"
+
+#include "wallDist.H"
+#include "nearWallDist.H"
+#include "dimensionedScalar.H"
 
 namespace dsl = NeoN::dsl;
 namespace fvcc = NeoN::finiteVolume::cellCentred;
@@ -222,8 +229,127 @@ void kernelDevRhoReff(
 } // namespace
 
 // ============================================================
-// Constructor
+// Private helpers: build NeoN fields from the OpenFOAM mesh
 // ============================================================
+
+namespace
+{
+
+nnfvcc::VolumeField<scalar> buildWallDist(const NeoN::Executor& exec, MeshAdapter& mesh)
+{
+    Foam::wallDist y(mesh);
+    return NeoFOAM::constructFrom(exec, mesh.nfMesh(), y.y());
+}
+
+nnfvcc::VolumeField<scalar> buildNearWallDist(const NeoN::Executor& exec, MeshAdapter& mesh)
+{
+    Foam::nearWallDist nwd(mesh);
+    Foam::volScalarField ofField(
+        Foam::IOobject(
+            "nearWallDist",
+            mesh.time().timeName(),
+            mesh,
+            Foam::IOobject::NO_READ,
+            Foam::IOobject::NO_WRITE
+        ),
+        mesh,
+        Foam::dimensionedScalar("zero", Foam::dimLength, Foam::scalar(0.0))
+    );
+    forAll(mesh.boundary(), patchi)
+    {
+        const Foam::scalarField& yf = nwd.y()[patchi];
+        Foam::fvPatchScalarField& pf = ofField.boundaryFieldRef()[patchi];
+        forAll(pf, facei)
+        {
+            pf[facei] = yf[facei];
+        }
+    }
+    return NeoFOAM::constructFrom(exec, mesh.nfMesh(), ofField);
+}
+
+nnfvcc::VolumeField<scalar> buildDelta(const NeoN::Executor& exec, MeshAdapter& mesh)
+{
+    Foam::volScalarField ofField(
+        Foam::IOobject(
+            "delta",
+            mesh.time().timeName(),
+            mesh,
+            Foam::IOobject::NO_READ,
+            Foam::IOobject::NO_WRITE
+        ),
+        mesh,
+        Foam::dimensionedScalar("delta", Foam::dimLength, Foam::scalar(0.0))
+    );
+    const Foam::scalarField& v = mesh.V();
+    forAll(v, celli)
+    {
+        ofField.ref()[celli] = std::cbrt(v[celli]);
+    }
+    return NeoFOAM::constructFrom(exec, mesh.nfMesh(), ofField);
+}
+
+} // anonymous namespace
+
+// ============================================================
+// Constructors
+// ============================================================
+
+SpalartAllmarasDDES::SpalartAllmarasDDES(RunTime& rt, const nnfvcc::VolumeField<scalar>& nu)
+    : SpalartAllmarasDDES(rt.exec, rt.mesh, nu)
+{
+    auto& solverDict = rt.fvSolutionDict.subDict("solvers");
+    if (solverDict.isDict("nuTilda"))
+    {
+        solverDict.subDict("nuTilda") = mapFvSolution(solverDict.subDict("nuTilda"));
+    }
+    if (solverDict.isDict("nuTildaFinal"))
+    {
+        solverDict.subDict("nuTildaFinal") = mapFvSolution(solverDict.subDict("nuTildaFinal"));
+    }
+}
+
+SpalartAllmarasDDES::SpalartAllmarasDDES(
+    const NeoN::Executor& exec,
+    MeshAdapter& meshAdapter,
+    const nnfvcc::VolumeField<scalar>& nu
+)
+    : SpalartAllmarasDDES(
+        exec,
+        meshAdapter.nfMesh(),
+        nu,
+        buildWallDist(exec, meshAdapter),
+        buildNearWallDist(exec, meshAdapter),
+        buildDelta(exec, meshAdapter)
+    )
+{
+    // Read initial nuTilda and nut from the current time directory.
+    const NeoN::UnstructuredMesh& nfMesh = mesh_;
+    Foam::volScalarField ofNuTilda(
+        Foam::IOobject(
+            "nuTilda",
+            meshAdapter.time().timeName(),
+            meshAdapter,
+            Foam::IOobject::MUST_READ,
+            Foam::IOobject::NO_WRITE,
+            Foam::IOobject::NO_REGISTER
+        ),
+        meshAdapter
+    );
+    Foam::volScalarField ofNut(
+        Foam::IOobject(
+            "nut",
+            meshAdapter.time().timeName(),
+            meshAdapter,
+            Foam::IOobject::MUST_READ,
+            Foam::IOobject::NO_WRITE,
+            Foam::IOobject::NO_REGISTER
+        ),
+        meshAdapter
+    );
+    auto nuTildaInit = NeoFOAM::constructFrom(exec_, nfMesh, ofNuTilda);
+    auto nutInit = NeoFOAM::constructFrom(exec_, nfMesh, ofNut);
+    initialize(nuTildaInit, nutInit);
+}
 
 SpalartAllmarasDDES::SpalartAllmarasDDES(
     const NeoN::Executor& exec,
@@ -239,6 +365,9 @@ SpalartAllmarasDDES::SpalartAllmarasDDES(
     , wallDist_(wallDist)
     , nearWallDist_(nearWallDist)
     , delta_(delta)
+    , turbDb_()
+    , nuTilda_(registerNuTilda(turbDb_, exec, mesh))
+    , nut_(exec, "nut", mesh, fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh))
     , surfNu_(
           exec,
           "surfNu",
@@ -253,42 +382,6 @@ SpalartAllmarasDDES::SpalartAllmarasDDES(
           // (filled by correctBoundaryConditions after gradTensor) so the proc-face viscous stress
           // in divDevReff interpolates the correct far-side gradient across the rank boundary.
           fvcc::createCalculatedProcBCs<nnfvcc::VolumeBoundary<Tensor>>(mesh)
-      )
-    , gradNuTilda_(
-          exec,
-          "gradNuTilda",
-          mesh,
-          fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<Vec3>>(mesh)
-      )
-    , magSqrGradNuTilda_(
-          exec,
-          "magSqrGradNuTilda",
-          mesh,
-          fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh)
-      )
-    , production_(
-          exec,
-          "production",
-          mesh,
-          fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh)
-      )
-    , spCoeff_(
-          exec,
-          "spCoeff",
-          mesh,
-          fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh)
-      )
-    , surfNut_(
-          exec,
-          "surfNut",
-          mesh,
-          fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh)
-      )
-    , surfNuTilda_(
-          exec,
-          "surfNuTilda",
-          mesh,
-          fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh)
       )
     , nuEff_(exec, "nuEff", mesh, fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh))
     , nuTildaEff_(
@@ -305,6 +398,33 @@ SpalartAllmarasDDES::SpalartAllmarasDDES(
     surfInterp_.interpolate(nu_, surfNu_);
 }
 
+nnfvcc::VolumeField<scalar>& SpalartAllmarasDDES::registerNuTilda(
+    NeoN::Database& db,
+    const NeoN::Executor& exec,
+    const NeoN::UnstructuredMesh& mesh
+)
+{
+    auto& vectorCollection = fvcc::VectorCollection::instance(db, "VectorCollection");
+    // Zero-initialised seed carrying the calculated BCs; registerVector copies it into the
+    // collection and stamps the registration key. The registered copy (returned by reference) is
+    // the one ddt/rotateOldTimes operate on; initialize() overwrites its data with the disk field.
+    nnfvcc::VolumeField<scalar> seed(
+        exec,
+        "nuTilda",
+        mesh,
+        fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh)
+    );
+    return vectorCollection.registerVector<nnfvcc::VolumeField<scalar>>(
+        fvcc::CreateFromExistingVector<nnfvcc::VolumeField<scalar>> {
+            .name = "nuTilda",
+            .field = seed,
+            .timeIndex = 0,
+            .iterationIndex = 0,
+            .subCycleIndex = 0
+        }
+    );
+}
+
 // ============================================================
 // Public interface
 // ============================================================
@@ -319,8 +439,22 @@ void SpalartAllmarasDDES::validate(
     // Exchange the neighbour-cell gradient into gradU's processor tail (proc patches carry the
     // processor BC; physical patches are 'calculated' no-ops, so their boundary gradient is kept).
     gradU_.correctBoundaryConditions();
-    calcNuTildaDiffusionCoeff(nuTilda, surfNu_, surfNuTilda_, nuTildaEff_);
-    correctNut(nut, surfNut_, nuEff_, nuTilda, nu_, surfNu_, U, nearWallDist_);
+
+    nnfvcc::SurfaceField<scalar> surfNut(
+        exec_,
+        "surfNut",
+        mesh_,
+        fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh_)
+    );
+    nnfvcc::SurfaceField<scalar> surfNuTilda(
+        exec_,
+        "surfNuTilda",
+        mesh_,
+        fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh_)
+    );
+
+    calcNuTildaDiffusionCoeff(nuTilda, surfNu_, surfNuTilda, nuTildaEff_);
+    correctNut(nut, surfNut, nuEff_, nuTilda, nu_, surfNu_, U, nearWallDist_);
 }
 
 void SpalartAllmarasDDES::correct(
@@ -334,24 +468,61 @@ void SpalartAllmarasDDES::correct(
     gradOp_.gradTensor(U, gradU_);
     // Exchange the neighbour-cell gradient into gradU's processor tail (see validate()).
     gradU_.correctBoundaryConditions();
-    gradOp_.grad(nuTilda, gradNuTilda_);
-    calcMagSqrVec(magSqrGradNuTilda_, gradNuTilda_);
+
+    nnfvcc::VolumeField<Vec3> gradNuTilda(
+        exec_,
+        "gradNuTilda",
+        mesh_,
+        fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<Vec3>>(mesh_)
+    );
+    nnfvcc::VolumeField<scalar> magSqrGradNuTilda(
+        exec_,
+        "magSqrGradNuTilda",
+        mesh_,
+        fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh_)
+    );
+    nnfvcc::VolumeField<scalar> production(
+        exec_,
+        "production",
+        mesh_,
+        fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh_)
+    );
+    nnfvcc::VolumeField<scalar> spCoeff(
+        exec_,
+        "spCoeff",
+        mesh_,
+        fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh_)
+    );
+    nnfvcc::SurfaceField<scalar> surfNut(
+        exec_,
+        "surfNut",
+        mesh_,
+        fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh_)
+    );
+    nnfvcc::SurfaceField<scalar> surfNuTilda(
+        exec_,
+        "surfNuTilda",
+        mesh_,
+        fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh_)
+    );
+    gradOp_.grad(nuTilda, gradNuTilda);
+    calcMagSqrVec(magSqrGradNuTilda, gradNuTilda);
 
     computeProdSpDDES(
-        production_,
-        spCoeff_,
+        production,
+        spCoeff,
         nuTilda,
         nu_,
         gradU_,
         wallDist_,
         delta_,
-        magSqrGradNuTilda_
+        magSqrGradNuTilda
     );
 
     PDESolver<scalar> nuTildaEqn(
         dsl::imp::ddt(nuTilda) + dsl::imp::div(phi, nuTilda)
-            - dsl::imp::laplacian(nuTildaEff_, nuTilda) + dsl::imp::source(spCoeff_, nuTilda)
-            - dsl::exp::source(production_),
+            - dsl::imp::laplacian(nuTildaEff_, nuTilda) + dsl::imp::source(spCoeff, nuTilda)
+            - dsl::exp::source(production),
         nuTilda,
         rt
     );
@@ -369,15 +540,48 @@ void SpalartAllmarasDDES::correct(
         nuTilda.correctBoundaryConditions();
     }
 
-    calcNuTildaDiffusionCoeff(nuTilda, surfNu_, surfNuTilda_, nuTildaEff_);
-    correctNut(nut, surfNut_, nuEff_, nuTilda, nu_, surfNu_, U, nearWallDist_);
+    calcNuTildaDiffusionCoeff(nuTilda, surfNu_, surfNuTilda, nuTildaEff_);
+    correctNut(nut, surfNut, nuEff_, nuTilda, nu_, surfNu_, U, nearWallDist_);
 }
 
 nnfvcc::SurfaceField<scalar>& SpalartAllmarasDDES::nuEff() { return nuEff_; }
 
-nnfvcc::SurfaceField<scalar>& SpalartAllmarasDDES::nuTildaEff() { return nuTildaEff_; }
+const nnfvcc::VolumeField<scalar>& SpalartAllmarasDDES::nut() const { return nut_; }
 
 const nnfvcc::VolumeField<Tensor>& SpalartAllmarasDDES::gradU() const { return gradU_; }
+
+void SpalartAllmarasDDES::initialize(
+    const nnfvcc::VolumeField<scalar>& nuTildaInit,
+    const nnfvcc::VolumeField<scalar>& nutInit
+)
+{
+    nuTilda_.internalVector() = nuTildaInit.internalVector();
+    nuTilda_.correctBoundaryConditions();
+    nut_.internalVector() = nutInit.internalVector();
+    nut_.correctBoundaryConditions();
+}
+
+void SpalartAllmarasDDES::validate(const nnfvcc::VolumeField<Vec3>& U)
+{
+    validate(U, nuTilda_, nut_);
+}
+
+void SpalartAllmarasDDES::correct(
+    const nnfvcc::VolumeField<Vec3>& U,
+    nnfvcc::SurfaceField<scalar>& phi,
+    RunTime& rt
+)
+{
+    correct(U, phi, nuTilda_, nut_, rt);
+}
+
+void SpalartAllmarasDDES::rotateOldTimes() { fvcc::rotateOldTimes(nuTilda_); }
+
+void SpalartAllmarasDDES::write(MeshAdapter& mesh) const
+{
+    NeoFOAM::write(nuTilda_, mesh);
+    NeoFOAM::write(nut_, mesh);
+}
 
 NeoN::Vector<SymmTensor> SpalartAllmarasDDES::devRhoReff() const
 {

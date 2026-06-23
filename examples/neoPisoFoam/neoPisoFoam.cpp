@@ -4,13 +4,11 @@
 #include "NeoN/NeoN.hpp"
 
 #include "NeoFOAM/NeoFOAM.hpp"
+#include "NeoFOAM/turbulenceModels/turbulenceModel.hpp"
 
 #include "fvCFD.H"
 #include "pisoControl.H"
 #include "singlePhaseTransportModel.H"
-#include "turbulentTransportModel.H"
-#include "wallDist.H"
-#include "LESModel.H"
 
 #include <memory>
 
@@ -18,9 +16,6 @@ using Foam::Info;
 using Foam::endl;
 using Foam::nl;
 
-// NOTE about namespace usage
-// here the namespaces are used deliberately verbose to
-// demonstrate where things are implemented
 namespace fvc = Foam::fvc;
 namespace dsl = NeoN::dsl;
 namespace fvcc = NeoN::finiteVolume::cellCentred;
@@ -30,24 +25,27 @@ namespace nf = NeoFOAM;
 
 int main(int argc, char* argv[])
 {
-// Bring up OpenFOAM (and MPI) before NeoN, matching neoIcoFoam, so the rank is
-// known when NeoN configures logging and the rank-0 muting engages immediately.
+    // Bring up OpenFOAM (and MPI) before NeoN, matching neoIcoFoam, so the rank is
+    // known when NeoN configures logging and the rank-0 muting engages immediately.
+    Foam::argList::addOption("executor", "word", "NeoN executor type (Serial/CPU/GPU/default)");
 #include "addCheckCaseOptions.H"
 #include "setRootCase.H"
-#include "createTime.H"
     NeoN::initialize(argc, argv);
     {
-        auto rt = nf::createAdapterRunTime(runTime);
+// createTime.H is included INSIDE the NeoN init/finalize bracket so Foam::Time --
+// which owns the controlDict function objects (e.g. neoForceCoeffs) and therefore any
+// NeoN/Kokkos memory they hold -- is destroyed before NeoN::finalize() calls
+// Kokkos::finalize(). Otherwise ~Time() runs after finalize and aborts with
+// "Kokkos allocation ... deallocated after Kokkos::finalize was called".
+#include "createTime.H"
+        auto rt = nf::createAdapterRunTime(runTime, args);
         auto& mesh = rt.mesh;
 
         Foam::pisoControl piso(mesh);
 
 #include "createFields.H"
 
-        auto& solverDict = rt.fvSolutionDict.subDict("solvers");
-        solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
-        solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
-        solverDict.subDict("nuTilda") = nf::mapFvSolution(solverDict.subDict("nuTilda"));
+        nf::createMappedFvSolutionDicts(rt);
         auto& schemesDict = rt.fvSchemesDict;
         schemesDict = nf::mapFvSchemes(rt.fvSchemesDict);
 
@@ -56,22 +54,15 @@ int main(int argc, char* argv[])
 
         auto& p = nf::constructAndRegister(vectorCollection, rt, ofP, false);
         auto& U = nf::constructAndRegister(vectorCollection, rt, ofU, false);
-        auto& nuTilda = nf::constructAndRegister(vectorCollection, rt, ofNuTilda, false);
-        auto nut = nf::constructAndRegister(vectorCollection, rt, ofNut, false);
 
         NeoN::Logging::info("Creating phi");
         auto& phi = nf::constructAndRegister(vectorCollection, rt, ofPhi, false);
 
-        // Turbulence model setup
         auto nu = nf::constructFrom(rt.exec, rt.nfMesh, tnu());
-        auto wallDist = nf::constructFrom(rt.exec, rt.nfMesh, y.y());
-        auto nearWallDist = nf::constructFrom(rt.exec, rt.nfMesh, ofNearWallDist);
-        auto delta = nf::constructFrom(rt.exec, rt.nfMesh, lesModel.delta());
-        nf::SpalartAllmarasDDES turb(rt.exec, rt.nfMesh, nu, wallDist, nearWallDist, delta);
 
-        // Calculate prerequisite variables for turbulence model
-        // e.g. gradU, diffusion coeff and calls correctNut
-        turb.validate(U, nuTilda, nut);
+        auto turb = nf::TurbulenceModel::create(rt, nu);
+
+        turb->validate(U);
 
         // TODO: surface interpolation also instantiated in turbulence model -> doubled?!
         auto surfInterpol = fvcc::SurfaceInterpolation<NeoN::scalar>(
@@ -86,12 +77,17 @@ int main(int argc, char* argv[])
         NeoN::Logging::info("Starting time loop");
         while (runTime.loop())
         {
-            // Logging supports string formatting
+            // runTime.loop() has already advanced OpenFOAM to the current step. Mirror that into
+            // the adapter time before logging: rt.t is set to startTime at construction and only
+            // refreshed later in syncRunTimes, so logging it here would report the previous step's
+            // time -- making NeoFOAM's time column start at 0 and lag OpenFOAM by one step when
+            // comparing per-step timings. syncRunTimes still runs below for the dt adjustment.
+            rt.t = runTime.time().value();
             NeoN::Logging::info("Time = {}", rt.t);
 
             fvcc::rotateOldTimes(U);
             fvcc::rotateOldTimes(phi);
-            fvcc::rotateOldTimes(nuTilda);
+            turb->rotateOldTimes();
 
             auto [maxCoNum, meanCoNum] = fvcc::computeCoNum(phi, rt.dt);
             NeoN::Logging::info("Courant Number mean: {} max: {}", meanCoNum, maxCoNum);
@@ -99,8 +95,8 @@ int main(int argc, char* argv[])
 
             // Momentum predictor
             nf::PDESolver<NeoN::Vec3> UEqn(
-                dsl::imp::ddt(U) + dsl::imp::div(phi, U) - dsl::imp::laplacian(turb.nuEff(), U)
-                    + dsl::exp::viscousStress(nu, nut, turb.gradU()),
+                dsl::imp::ddt(U) + dsl::imp::div(phi, U) - dsl::imp::laplacian(turb->nuEff(), U)
+                    + dsl::exp::viscousStress(nu, turb->nut(), turb->gradU()),
                 U,
                 rt
             );
@@ -109,14 +105,10 @@ int main(int argc, char* argv[])
 
             if (piso.momentumPredictor())
             {
-                // NOTE solve on a temporary clone of UEqn
-                // TODO use a free function here
                 UEqn.solve(-1.0 * dsl::exp::grad(p));
             }
             else
             {
-                // NOTE since computing rAU and HbyA requires an assembled system matrix we
-                // explicitly trigger assembly here.
                 UEqn.assemble();
             }
 
@@ -147,6 +139,11 @@ int main(int argc, char* argv[])
                         rt
                     );
 
+                    // updateFaceVelocity reconstructs phi from this pressure system; keep the
+                    // non-orthogonal faceFluxCorrection so the reconstruction can add it back.
+                    // TODO find a more suitable spot
+                    pEqn.linearSystem().keepFaceFluxCorrection(true);
+
                     if (ofP.needReference() && pRefCell >= 0)
                     {
                         pEqn.setReference(pRefCell, pRefValue);
@@ -165,8 +162,8 @@ int main(int argc, char* argv[])
                 nf::updateVelocity(hByA, crAU, p, U);
                 U.correctBoundaryConditions();
             }
-            // Turbulence update
-            turb.correct(U, phi, nuTilda, nut, rt);
+
+            turb->correct(U, phi, rt);
 
             runTime.write();
             if (runTime.outputTime())
@@ -176,8 +173,7 @@ int main(int argc, char* argv[])
                 NeoN::Logging::info("Writing U");
                 write(U, mesh);
                 NeoN::Logging::info("Writing turbulence variables");
-                write(nuTilda, mesh);
-                write(nut, mesh);
+                turb->write(mesh);
             }
 
             runTime.printExecutionTime(Info);

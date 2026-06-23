@@ -57,7 +57,15 @@ std::tuple<nnfvcc::VolumeField<scalar>, nnfvcc::VolumeField<Vec3>>
 computeRAUandHByA(const PDESolver<Vec3>& expr);
 
 /* @brief computes phi = phiHbyA - pEqn.flux();
- * where pEqn.flux
+ * where pEqn.flux() = (orthogonal matrix-coefficient flux) + faceFluxCorrection
+ *
+ * @detail The pressure Laplacian defers its non-orthogonal snGrad correction to the matrix
+ * RHS (deferred correction) and stashes the per-face correction flux in the linear system
+ * (LinearSystem::faceFluxCorrection(), the OpenFOAM fvMatrix::faceFluxCorrectionPtr_ analogue).
+ * This reconstruction adds it back; the orthogonal-only reconstruction would otherwise leave
+ * div(phi) = div(correctionFlux) != 0, inflating the continuity error on non-orthogonal meshes
+ * while orthogonal / uncorrected meshes stay correct.
+ *
  * @note assumes an assembled system matrix
  */
 void updateFaceVelocity(

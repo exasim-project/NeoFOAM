@@ -6,6 +6,7 @@
 #include "NeoN/NeoN.hpp"
 
 #include "NeoFOAM/datastructures/pdeSolver.hpp"
+#include "NeoFOAM/turbulenceModels/turbulenceModel.hpp"
 
 namespace nnfvcc = NeoN::finiteVolume::cellCentred;
 using scalar = NeoN::scalar;
@@ -15,21 +16,27 @@ namespace NeoFOAM
 {
 
 /**
- * @brief NeoFOAM-level wrapper for the Spalart-Allmaras DDES turbulence model.
+ * @brief Spalart-Allmaras DDES turbulence model.
  *
- * Mirrors the OpenFOAM turbulence->validate() / turbulence->correct() interface.
- * Owns all intermediate fields and cached operators so the solver only needs to
- * manage the primary fields (nuTilda, nut) and call validate() once at setup and
- * correct() after each momentum solve.
+ * Registered under the key "SpalartAllmarasDDES" in the TurbulenceModel factory.
  *
- * Two wall-distance fields are required (they are distinct):
- *  - wallDist     : cell-centred distances from Foam::wallDist::y(), used in DDES shielding
- *  - nearWallDist : boundary-face distances from turbulenceModel::y()[patchi], used by
- *                   the nutUSpaldingWallFunction boundary condition
+ * Two distinct wall-distance fields are required:
+ *  - wallDist     : cell-centred distances (Foam::wallDist::y()), for DDES shielding
+ *  - nearWallDist : boundary-face distances (turbulenceModel::y()[patchi]), for wall BCs
+ *
+ * The model owns nuTilda and nut internally.  Call initialize() with disk-read
+ * NeoN fields before the first validate() to seed non-zero initial conditions.
+ * The backward-compatible three-argument validate(U, nuTilda, nut) and
+ * correct(U, phi, nuTilda, nut, rt) overloads are retained for callers that
+ * manage those fields externally (e.g. neoPisoFoam).
  */
-class SpalartAllmarasDDES
+class SpalartAllmarasDDES : public TurbulenceModel::Register<SpalartAllmarasDDES>
 {
 public:
+
+    static std::string name() { return "SpalartAllmarasDDES"; }
+    static std::string doc() { return "Spalart-Allmaras DDES turbulence model"; }
+    static std::string schema() { return "{}"; }
 
     struct Coefficients
     {
@@ -49,14 +56,35 @@ public:
     };
 
     /**
-     * @brief Construct the turbulence model wrapper.
+     * @brief Factory constructor — reads all turbulence infrastructure from RunTime.
      *
-     * @param exec       Kokkos executor (Serial/CPU/GPU)
-     * @param mesh       NeoN unstructured mesh
-     * @param nu         Laminar kinematic viscosity (cell-centred)
-     * @param wallDist   Cell-centred wall distances (Foam::wallDist::y())
-     * @param nearWallDist Boundary-face wall distances (turbulenceModel::y()[patchi])
-     * @param delta      LES filter width (from LESModel::delta())
+     * Maps the nuTilda solver subdict, then computes wallDist/nearWallDist/delta
+     * from the OpenFOAM mesh and reads the initial nuTilda/nut from the current
+     * time directory.
+     */
+    SpalartAllmarasDDES(RunTime& rt, const nnfvcc::VolumeField<scalar>& nu);
+
+    /**
+     * @brief Construct from an explicit MeshAdapter (no RunTime/fvSolution access).
+     *
+     * Computes wallDist, nearWallDist, and delta internally from the mesh, and reads
+     * the initial nuTilda/nut fields from the current time directory.
+     */
+    SpalartAllmarasDDES(
+        const NeoN::Executor& exec,
+        MeshAdapter& mesh,
+        const nnfvcc::VolumeField<scalar>& nu
+    );
+
+    /**
+     * @brief Backward-compatible constructor for callers that supply prebuilt NeoN fields.
+     *
+     * @param exec         Kokkos executor (Serial/CPU/GPU)
+     * @param mesh         NeoN unstructured mesh
+     * @param nu           Laminar kinematic viscosity (cell-centred)
+     * @param wallDist     Cell-centred wall distances (Foam::wallDist::y())
+     * @param nearWallDist Boundary-face wall distances (nearWallDist::y()[patchi])
+     * @param delta        LES filter width (cube root of cell volume or LESModel::delta())
      */
     SpalartAllmarasDDES(
         const NeoN::Executor& exec,
@@ -103,13 +131,27 @@ public:
     );
 
     /// @brief Effective viscosity on faces: nu + nut (for momentum equation laplacian)
-    nnfvcc::SurfaceField<scalar>& nuEff();
+    nnfvcc::SurfaceField<scalar>& nuEff() override;
 
-    /// @brief Effective nuTilda diffusion coefficient on faces: (nu + nuTilda)/sigmaNut
-    nnfvcc::SurfaceField<scalar>& nuTildaEff();
+    /// @brief Turbulent viscosity (model-owned; seeded by initialize())
+    const nnfvcc::VolumeField<scalar>& nut() const override;
 
     /// @brief Velocity gradient tensor (updated each correct() call, for viscousStress term)
-    const nnfvcc::VolumeField<NeoN::Tensor>& gradU() const;
+    const nnfvcc::VolumeField<NeoN::Tensor>& gradU() const override;
+
+    void initialize(
+        const nnfvcc::VolumeField<scalar>& nuTildaInit,
+        const nnfvcc::VolumeField<scalar>& nutInit
+    ) override;
+
+    void validate(const nnfvcc::VolumeField<Vec3>& U) override;
+
+    void correct(const nnfvcc::VolumeField<Vec3>& U, nnfvcc::SurfaceField<scalar>& phi, RunTime& rt)
+        override;
+
+    void rotateOldTimes() override;
+
+    void write(MeshAdapter& mesh) const override;
 
     /**
      * @brief Returns the deviatoric stress at all boundary faces as Vector<SymmTensor>.
@@ -161,26 +203,46 @@ public:
 
 private:
 
+    // Registers a zero-seeded "nuTilda" field in db's VectorCollection and returns a reference to
+    // the registered copy. initialize() later overwrites it with the disk-read initial condition.
+    // Registration is required so the implicit ddt term (oldTime lookup) and rotateOldTimes() can
+    // allocate and rotate nuTilda's old-time buffers.
+    static nnfvcc::VolumeField<scalar>& registerNuTilda(
+        NeoN::Database& db,
+        const NeoN::Executor& exec,
+        const NeoN::UnstructuredMesh& mesh
+    );
+
     NeoN::Executor exec_;
     const NeoN::UnstructuredMesh& mesh_;
 
-    // Constant physics inputs (held by reference — must outlive this object)
+    // Laminar viscosity: held by reference — must outlive this object
     const nnfvcc::VolumeField<scalar>& nu_;
-    const nnfvcc::VolumeField<scalar>& wallDist_;
-    const nnfvcc::VolumeField<scalar>& nearWallDist_;
-    const nnfvcc::VolumeField<scalar>& delta_;
+    // Physics inputs owned by the model (copy-constructed from caller or computed from OF mesh)
+    nnfvcc::VolumeField<scalar> wallDist_;
+    nnfvcc::VolumeField<scalar> nearWallDist_;
+    nnfvcc::VolumeField<scalar> delta_;
+
+    // Model-owned database hosting nuTilda and its old-time buffers. nuTilda carries an implicit
+    // ddt term and is rotated every step, so it MUST be registered: oldTime()/rotateOldTimes()
+    // look the field up through field.db()/fieldCollectionName. Registering it in a model-private
+    // database keeps the "model owns nuTilda" contract without depending on the solver's field
+    // collection. Declared before nuTilda_ so it is alive when nuTilda_ binds to it.
+    NeoN::Database turbDb_;
+
+    // Model-owned transport scalars. nuTilda_ references the registered field living in turbDb_'s
+    // VectorCollection; nut_ is a plain value (never rotated, no ddt term). Seeded by initialize().
+    nnfvcc::VolumeField<scalar>& nuTilda_;
+    nnfvcc::VolumeField<scalar> nut_;
 
     // Cached face-interpolated nu (computed once in constructor)
     nnfvcc::SurfaceField<scalar> surfNu_;
 
-    // Owned intermediate fields
+    // Persistent fields carrying state from one correct() call to the next:
+    //  - gradU_      : consumed by the momentum predictor before the next correct() runs
+    //  - nuEff_      : consumed by the momentum laplacian before the next correct() runs
+    //  - nuTildaEff_ : consumed by the nuTilda laplacian at the start of the next correct()
     nnfvcc::VolumeField<NeoN::Tensor> gradU_;
-    nnfvcc::VolumeField<Vec3> gradNuTilda_;
-    nnfvcc::VolumeField<scalar> magSqrGradNuTilda_;
-    nnfvcc::VolumeField<scalar> production_;
-    nnfvcc::VolumeField<scalar> spCoeff_;
-    nnfvcc::SurfaceField<scalar> surfNut_;
-    nnfvcc::SurfaceField<scalar> surfNuTilda_;
     nnfvcc::SurfaceField<scalar> nuEff_;
     nnfvcc::SurfaceField<scalar> nuTildaEff_;
 

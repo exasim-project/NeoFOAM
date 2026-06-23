@@ -197,6 +197,7 @@ TEST_CASE("L1 scaled residual matches OpenFOAM")
         Foam::SolverPerformance<Foam::vector> ofPerf = Foam::solve(ofUEqn);
         const Foam::vector ofInitRes = ofPerf.initialResidual();
 
+        nfUEqn.setFinalIter(true);
         auto stats = nfUEqn.solve();
         REQUIRE(stats.entries.size() == 3);
 

@@ -26,12 +26,18 @@ namespace nf = NeoFOAM;
 
 int main(int argc, char* argv[])
 {
+    Foam::argList::addOption("executor", "word", "NeoN executor type (Serial/CPU/GPU/default)");
 #include "addCheckCaseOptions.H"
 #include "setRootCase.H"
-#include "createTime.H"
     NeoN::initialize(argc, argv);
     {
-        auto rt = nf::createAdapterRunTime(runTime);
+// createTime.H is included INSIDE the NeoN init/finalize bracket so Foam::Time --
+// which owns the controlDict function objects (e.g. neoForceCoeffs) and therefore any
+// NeoN/Kokkos memory they hold -- is destroyed before NeoN::finalize() calls
+// Kokkos::finalize(). Otherwise ~Time() runs after finalize and aborts with
+// "Kokkos allocation ... deallocated after Kokkos::finalize was called".
+#include "createTime.H"
+        auto rt = nf::createAdapterRunTime(runTime, args);
         auto& mesh = rt.mesh;
 
         Foam::pisoControl piso(mesh);
@@ -65,6 +71,12 @@ int main(int argc, char* argv[])
         NeoN::Logging::info("Starting time loop");
         while (runTime.loop())
         {
+            // runTime.loop() has already advanced OpenFOAM to the current step. Mirror that into
+            // the adapter time before logging: rt.t is set to startTime at construction and only
+            // refreshed later in syncRunTimes, so logging it here would report the previous step's
+            // time -- making NeoFOAM's time column start at 0 and lag OpenFOAM by one step when
+            // comparing per-step timings. syncRunTimes still runs below for the dt adjustment.
+            rt.t = runTime.time().value();
             // Logging supports string formatting
             NeoN::Logging::info("Time = {}", rt.t);
 
@@ -129,6 +141,11 @@ int main(int argc, char* argv[])
                         p,
                         rt
                     );
+
+                    // updateFaceVelocity reconstructs phi from this pressure system; keep the
+                    // non-orthogonal faceFluxCorrection so the reconstruction can add it back.
+                    // TODO find a more suitable spot
+                    pEqn.linearSystem().keepFaceFluxCorrection(true);
 
                     if (ofP.needReference() && pRefCell >= 0)
                     {

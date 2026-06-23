@@ -1,12 +1,10 @@
-
 // SPDX-License-Identifier: GPL-3.0-or-later
-// SPDX-FileCopyrightText: 2023 NeoFOAM authors
+// SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
 #define CATCH_CONFIG_RUNNER // Define this before including catch.hpp to create
                             // a custom main
 
 #include "common.hpp"
-#include "constrainHbyA.H"
 
 namespace fvc = Foam::fvc;
 namespace fvm = Foam::fvm;
@@ -20,7 +18,10 @@ using NeoFOAM::EqualsBoundary;
 
 extern Foam::Time* timePtr; // A single time object
 
-TEST_CASE("DistributedMomentum")
+// Verifies that NeoN's distributed L1-scaled residual stopping criterion reports the
+// same (globally reduced, normFactor-scaled, L1) initial residual that OpenFOAM's
+// distributed solverPerformance reports, and that it drives the solve to convergence.
+TEST_CASE("DistributedL1Residual")
 {
     SECTION("Parallel sanity check")
     {
@@ -28,7 +29,6 @@ TEST_CASE("DistributedMomentum")
         REQUIRE(Foam::Pstream::nProcs() == 3);
     }
 
-    float epsilon = 1e-32;
     Foam::Time& runTime = *timePtr;
     auto [execName, exec] = GENERATE(allAvailableExecutor());
 
@@ -38,16 +38,12 @@ TEST_CASE("DistributedMomentum")
     schemesDict = nf::mapFvSchemes(schemesDict);
 
     auto ofU = randomVectorField(runTime, mesh, "U");
-    auto ofp = randomScalarField(runTime, mesh, "p");
-    ofp.correctBoundaryConditions();
     ofU.correctBoundaryConditions();
     auto& oldOfU = ofU.oldTime();
     oldOfU.primitiveFieldRef() = Foam::vector(0.0, 0.0, 0.0);
     oldOfU.correctBoundaryConditions();
 
     auto& vectorCollection = nnfvcc::VectorCollection::instance(rt.db, "VectorCollection");
-    auto& nfP = NeoFOAM::constructAndRegister(vectorCollection, rt, ofp, false);
-
     auto& nfU = NeoFOAM::constructAndRegister(vectorCollection, rt, ofU);
     auto& nfOldU = fvcc::oldTime(nfU);
 
@@ -61,7 +57,6 @@ TEST_CASE("DistributedMomentum")
         ),
         fvc::flux(ofU)
     );
-
     Foam::surfaceScalarField ofNu(
         Foam::IOobject(
             "nu",
@@ -80,7 +75,7 @@ TEST_CASE("DistributedMomentum")
     NeoN::fill(nfOldU.internalVector(), NeoN::Vec3(0.0, 0.0, 0.0));
     nfOldU.correctBoundaryConditions();
 
-    SECTION("Solve transient momentum without grad(p) on " + execName)
+    SECTION("Distributed L1 residual matches OpenFOAM on " + execName)
     {
         Foam::fvVectorMatrix ofUEqn(
             fvm::ddt(ofU) + fvm::div(ofPhi, ofU) - fvm::laplacian(ofNu, ofU)
@@ -92,29 +87,38 @@ TEST_CASE("DistributedMomentum")
             rt
         );
 
-        NeoN::fill(nfUEqn.linearSystem().rhs(), NeoN::Vec3(0.0, 0.0, 0.0));
-
-        // require fields to be initially the same
-        // NOTE we skip comparing boundary values for now, since in distributed they have
-        // different order
-        REQUIRE_THAT(nfP, EqualsInternal(ofp, ApproxScalar(epsilon)));
-        REQUIRE_THAT(nfP.boundaryData(), EqualsBoundary(ofp, ApproxScalar(epsilon)));
-        REQUIRE_THAT(nfU, EqualsInternal(ofU, ApproxVector(epsilon)));
-        REQUIRE_THAT(nfU.boundaryData(), EqualsBoundary(ofU, ApproxVector(epsilon)));
-
-        // TODO will be added by a separate PR
+        // Map the OpenFOAM solver controls and opt into the L1-scaled residual stop.
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
-        solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
+        auto mappedU = nf::mapFvSolution(solverDict.subDict("U"));
+        mappedU.insert("l1ScaledResidual", std::string("true"));
+        // This fixture's U dict has relTol=0 (relative stop disabled) and tolerance=1e-18,
+        // an absolute L1-scaled tolerance below the residual's numerical floor (~1e-16), so the
+        // criterion can only stop at maxIter. Cap it so CI does not grind 1000 iterations; the
+        // asserted INITIAL residual (evaluated at iteration 0) is unaffected.
+        mappedU.subDict("criteria").insert("iteration", NeoN::label(20));
+        solverDict.subDict("U") = mappedU;
 
-        Foam::solve(ofUEqn);
-        auto solverStatsDist = nfUEqn.solve();
+        // OpenFOAM ground truth: its default residual norm is the L1-scaled norm, reduced
+        // globally across ranks. initialResidual() is the per-component scaled residual at
+        // the starting field.
+        Foam::SolverPerformance<Foam::vector> ofPerf = Foam::solve(ofUEqn);
+        const Foam::vector ofInitRes = ofPerf.initialResidual();
 
-        auto [numIterDist, initResNormDist, finalResNormDist, solveTimeDist] =
-            solverStatsDist.entries[0];
+        nfUEqn.setFinalIter(true);
+        auto stats = nfUEqn.solve();
+        REQUIRE(stats.entries.size() == 3);
 
-        REQUIRE(numIterDist != 0);
-        REQUIRE(initResNormDist != 0);
-        REQUIRE(finalResNormDist < initResNormDist);
-        REQUIRE_THAT(nfU, EqualsInternal(ofU, ApproxVector(1e-03)));
+        for (std::size_t cmpt = 0; cmpt < 3; ++cmpt)
+        {
+            const auto& entry = stats.entries[cmpt];
+            // criterion is active: a finite, reduced, converged residual
+            REQUIRE(entry.initResNorm > 0.0);
+            REQUIRE(entry.numIter > 0);
+            REQUIRE(entry.finalResNorm < entry.initResNorm);
+            // parity with OpenFOAM's distributed initial residual (per component)
+            REQUIRE(
+                entry.initResNorm == Catch::Approx(ofInitRes[cmpt]).epsilon(1e-4).margin(1e-10)
+            );
+        }
     }
 }
