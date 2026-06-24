@@ -48,7 +48,7 @@ function(neofoam_unit_test TEST SETUP_DIRECTORY)
         "${JULIA_DIR}/lib/libjulia.so"
     )
     target_compile_definitions(${NEOFOAM_COMMAND} PRIVATE
-        JULIA_MODULE_INIT="${JULIA_MODULE_INIT}"
+        JUNE_MODULE_INIT="${JUNE_MODULE_INIT}"
     )
     target_link_options(${NEOFOAM_COMMAND} PRIVATE "-Wl,-rpath,${JULIA_DIR}/lib")
   endif()
@@ -134,7 +134,7 @@ function(drivaer TEST SETUP_DIRECTORY)
         "${JULIA_DIR}/lib/libjulia.so"
     )
     target_compile_definitions(${NEOFOAM_COMMAND} PRIVATE
-        JULIA_MODULE_INIT="${JULIA_MODULE_INIT}"
+        JUNE_MODULE_INIT="${JUNE_MODULE_INIT}"
     )
     target_link_options(${NEOFOAM_COMMAND} PRIVATE "-Wl,-rpath,${JULIA_DIR}/lib")
   endif()
@@ -221,7 +221,7 @@ function(windsor TEST SETUP_DIRECTORY)
         "${JULIA_DIR}/lib/libjulia.so"
     )
     target_compile_definitions(${NEOFOAM_COMMAND} PRIVATE
-        JULIA_MODULE_INIT="${JULIA_MODULE_INIT}"
+        JUNE_MODULE_INIT="${JUNE_MODULE_INIT}"
     )
     target_link_options(${NEOFOAM_COMMAND} PRIVATE "-Wl,-rpath,${JULIA_DIR}/lib")
   endif()
@@ -278,7 +278,7 @@ neofoam_unit_test(strats 200)
 if(NeoN_WITH_JULIA)
 
   drivaer(drivaer ${DRIVAER})
-  windsor(strats ${WINDSOR})
+  windsor(drivaer ${WINDSOR})
   # neofoam_unit_test(fused 10)
   # neofoam_unit_test(fused 20)
   # neofoam_unit_test(fused 30)
@@ -359,8 +359,8 @@ endif()
 # neofoam_unit_test(momentum setup_pressureVelocityCoupling)
 # neofoam_unit_test(snGrad setup_snGrad)
 # neofoam_unit_test(residual setup_pressureVelocityCoupling)
-# neofoam_unit_test(spalartAllmarasDDES setup_pressureVelocityCoupling)
 # neofoam_unit_test(continuityError setup_pressureVelocityCoupling)
-# neofoam_unit_test(forceCoeffs setup_pressureVelocityCoupling SOURCE test_forceCoeffs.cpp)
+# neofoam_unit_test(forceCoeffs setup_pressureVelocityCoupling SOURCE forceCoeffs.cpp)
 
-add_subdirectory(distributed)
+# add_subdirectory(distributed)
+# add_subdirectory(turbulence)

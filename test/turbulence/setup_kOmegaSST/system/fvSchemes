@@ -1,0 +1,76 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     |                                                 |
+|   \\  /    A nd           |                                                 |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSchemes;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#include "simulationParameters"
+
+ddtSchemes
+{
+    default         none;
+    ddt(U)          Euler;
+    ddt(k)          Euler;
+    ddt(omega)      Euler;
+}
+
+gradSchemes
+{
+    default         none;
+    grad(p)         $GRADSCHEME;
+    grad(U)         $GRADSCHEME;
+    grad(k)         $GRADSCHEME;
+    grad(omega)     $GRADSCHEME;
+}
+
+divSchemes
+{
+    default                         none;
+    div(phi,U)                      $DIVSCHEME;
+    div(phi,k)                      $DIVSCHEME;
+    div(phi,omega)                  $DIVSCHEME;
+    div((nuEff*dev2(T(grad(U)))))   Gauss linear;
+}
+
+laplacianSchemes
+{
+    default             none;
+    laplacian(nu,U)     $LAPSCHEME;
+    laplacian(rAUf,p)   $LAPSCHEME;
+    laplacian(nuEff,U)  $LAPSCHEME;
+    laplacian(DkEff,k)       $LAPSCHEME;
+    laplacian(DomegaEff,omega) $LAPSCHEME;
+}
+
+interpolationSchemes
+{
+    default     linear;
+    flux(U)     linear;
+}
+
+snGradSchemes
+{
+    default     uncorrected;
+}
+
+fluxRequired
+{
+    p;
+}
+
+wallDist
+{
+    method      meshWave;
+}
+
+// ************************************************************************* //

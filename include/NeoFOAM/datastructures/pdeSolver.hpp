@@ -660,6 +660,26 @@ public:
 
 private:
 
+    // Resolve the equation under-relaxation factor (alpha) for the given field
+    // from fvSolution.relaxationFactors.equations.<fieldName>. Returns 1.0 if
+    // the block, the equations subdict, or the field entry is absent — which
+    // applyMatrixRelaxation short-circuits as a bitwise no-op. Tolerates the
+    // entry being typed as either NeoN::scalar (e.g. `U 0.9;`) or int (`U 1;`).
+    static NeoN::scalar
+    readEqnRelaxationFactor(const NeoN::Dictionary& fvSolutionDict, const std::string& fieldName)
+    {
+        if (!fvSolutionDict.contains("relaxationFactors")) return NeoN::scalar(1);
+        const auto& rf = fvSolutionDict.subDict("relaxationFactors");
+        if (!rf.contains("equations")) return NeoN::scalar(1);
+        const auto& eqs = rf.subDict("equations");
+        if (!eqs.contains(fieldName)) return NeoN::scalar(1);
+        if (eqs.isType<int>(fieldName))
+        {
+            return NeoN::scalar(eqs.get<int>(fieldName));
+        }
+        return eqs.get<NeoN::scalar>(fieldName);
+    }
+
     // Remove NeoFOAM-specific control keys from a per-field solver dict before it
     // is passed to NeoN/Ginkgo. Ginkgo's config parser is strict and aborts on any
     // unrecognised key, so these must be popped here rather than left in place.

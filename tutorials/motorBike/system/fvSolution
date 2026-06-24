@@ -1,0 +1,109 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+solvers
+{
+    // p
+    // {
+    //     // Unquoted: NeoFOAM's convert(ITstream) handles `word` tokens but
+    //     // not `string` tokens, so a quoted path becomes an empty TokenList
+    //     // and ginkgoSolver's TokenList rebuild underflows.
+    //     configFile        system/gko/p-multigrid.json;
+    //     tolerance         1e-8;
+    //     relTol            0.01;
+    //     l1ScaledResidual  true;
+    // }
+    // Fallback: plain PCG + diagonal preconditioner. Use this if the
+    // configFile multigrid above hits the distributed Pgm SIGFPE we observed
+    // on the snappy-refined parallel motorBike. Serial / smaller cases
+    // converge fine with multigrid; for parallel runs this PCG block has been
+    // verified to run to Time = 500 on this case.
+    //
+    p
+    {
+        solver            PCG;
+        preconditioner    diagonal;
+        tolerance         1e-8;
+        relTol            0.01;
+	maxIter           1500;
+        l1ScaledResidual  true;
+    }
+
+    Phi
+    {
+        $p;
+    }
+
+    U
+    {
+        solver          smoothSolver;
+        smoother        GaussSeidel;
+        tolerance       1e-8;
+        relTol          0.1;
+        l1ScaledResidual true;
+    }
+
+    k
+    {
+        solver          smoothSolver;
+        smoother        GaussSeidel;
+        tolerance       1e-8;
+        relTol          0.1;
+        l1ScaledResidual true;
+    }
+
+    omega
+    {
+        solver          smoothSolver;
+        smoother        GaussSeidel;
+        tolerance       1e-8;
+        relTol          0.1;
+        l1ScaledResidual true;
+    }
+}
+
+SIMPLE
+{
+    nNonOrthogonalCorrectors 0;
+    consistent yes;
+}
+
+potentialFlow
+{
+    nNonOrthogonalCorrectors 10;
+}
+
+relaxationFactors
+{
+    fields
+    {
+        p               0.3;
+    }
+    equations
+    {
+        U               0.7;
+        k               0.7;
+        omega           0.7;
+    }
+}
+
+cache
+{
+    grad(U);
+}
+
+
+// ************************************************************************* //
