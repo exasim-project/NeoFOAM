@@ -2,7 +2,6 @@
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
 |  \\    /   O peration     | Version:  v2412                                 |
-|   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
 FoamFile
@@ -13,28 +12,18 @@ FoamFile
     object      fvSolution;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// PARAM STUDY case3: p = configFile (Ginkgo scale-corrected multigrid)
+//                    U,k,omega = smoothSolver/GaussSeidel
+// The configFile carries the full Ginkgo solver/preconditioner/stopping config;
+// fvSolution.cpp injects "solver Ginkgo" and reads no other keys for p. Path is
+// UNQUOTED so the OpenFOAM tokenizer keeps it as a single word, and is relative
+// to the case directory.
 
 solvers
 {
     p
     {
-        // Single-level Krylov cannot converge the 65M-cell pressure Poisson:
-        // Jacobi-CG diverged at step ~7, Schwarz(Ic)-CG diverged at step 1
-        // (non-SPD preconditioner), and BiCGStab+DIC only cut the residual ~17%
-        // in 1500 iters. Use a Ginkgo scale-corrected algebraic multigrid (Pgm
-        // coarsening) V-cycle preconditioned Fcg via configFile. Path must be
-        // UNQUOTED so the OpenFOAM tokenizer keeps it as a single word; the
-        // configFile carries the full Ginkgo config (solver, preconditioner and
-        // stopping criteria), so no other keys are read for this field.
-        // Requires the scale-corrected Ginkgo (NeoN_GINKGO_TAG b17780da8b,
-        // branch reuse_pgm_update_rebase) which adds solver::Ir scale_correction.
-        //configFile        system/gko/p-multigrid.json;
-        solver           PCG;
-        preconditioner   diagonal;
-	tolerance       1e-7;
-	relTol          0.01;
-        l1ScaledResidual true;
-	maxIter 3000;
+        configFile       system/gko/p-multigrid.json;
     }
 
     Phi

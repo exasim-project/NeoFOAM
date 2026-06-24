@@ -200,6 +200,13 @@ int main(int argc, char* argv[])
                         rt
                     );
 
+                    // Keep the non-orthogonal faceFluxCorrection so updateFaceVelocity can subtract
+                    // it from phi (the deferred correction is otherwise in the RHS only, leaving phi
+                    // inconsistent — continuity leaks on non-orthogonal meshes with 'corrected'
+                    // snGrad). neoIcoFoam/neoPisoFoam already do this; neoSimpleFoam previously did
+                    // not and masked it with an (incorrect) explicit add-back.
+                    pEqn.linearSystem().keepFaceFluxCorrection(true);
+
                     if (ofP.needReference() && pRefCell >= 0)
                     {
                         pEqn.setReference(pRefCell, pRefValue);
@@ -212,50 +219,17 @@ int main(int argc, char* argv[])
                     {
                         nf::updateFaceVelocity(phiHbyA, pEqn, phi);
 
-                        // Add back the deferred non-orthogonal correction the
-                        // Laplacian assembly moved to the RHS. Mirrors OF's
-                        // `fieldFlux += *faceFluxCorrectionPtr_` in
-                        // fvMatrix::flux() (fvMatrix.C:1516-1519) — without
-                        // this, phi carries leftover div(correctionFlux) on
-                        // non-orthogonal meshes and continuity errors diverge
-                        // by ~step 13 on the motorBike snappy mesh. No-op when
-                        // fvSchemes selects 'uncorrected' snGrad.
-                        {
-                            NeoN::Input snGradInput = NeoN::TokenList({std::string("corrected")});
-                            fvcc::FaceNormalGradient<NeoN::scalar> sng(
-                                rt.exec,
-                                rt.nfMesh,
-                                snGradInput
-                            );
-                            if (sng.hasImplicitCorrection())
-                            {
-                                nnfvcc::SurfaceField<NeoN::scalar> snGradCorr(
-                                    rt.exec,
-                                    "snGradCorr",
-                                    rt.nfMesh,
-                                    fvcc::createCalculatedBCs<
-                                        nnfvcc::SurfaceBoundary<NeoN::scalar>>(rt.nfMesh)
-                                );
-                                sng.implicitCorrection(pSnapshot, snGradCorr);
 
-                                const auto nInt = rt.nfMesh.nInternalFaces();
-                                const auto snGradCorrV = snGradCorr.internalVector().view();
-                                const auto rAUV = rAU.internalVector().view();
-                                const auto magSf = rt.nfMesh.faceAreas().view();
-                                auto phiV = phi.internalVector().view();
-                                NeoN::parallelFor(
-                                    rt.exec,
-                                    {0, nInt},
-                                    NEON_LAMBDA(const NeoN::localIdx i) {
-                                        phiV[i] += snGradCorrV[i] * rAUV[i] * magSf[i];
-                                    },
-                                    "addNonOrthCorrToPhi"
-                                );
-                            }
-                        }
+                        // The non-orthogonal correction is owned by updateFaceVelocity, which
+                        // subtracts the Laplacian's stored faceFluxCorrection (ffc) from phi. The
+                        // previous explicit add-back here was redundant (double-counting on the
+                        // 'corrected' scheme) and, because it hardcoded a 'corrected' snGrad, it also
+                        // injected a spurious correction on non-orthogonal meshes even under an
+                        // 'uncorrected' laplacian — corrupting continuity. Removed.
                     }
                 }
                 nf::reportContinuityError(phi, rt, cumulativeContErr);
+
 
                 // Explicit pressure field under-relaxation — mirrors p.relax()
                 // in OpenFOAM's simpleFoam. Blends p with the pre-solve

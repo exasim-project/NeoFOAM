@@ -17,12 +17,5 @@ export NEON_DEVICE=nvidia_h200
 #export CUDA_VISIBLE_DEVICES=${OMPI_COMM_WORLD_LOCAL_RANK:-0}
 export CUDA_VISIBLE_DEVICES=1,2,3,4
 
-echo; echo "potentialFoam"
-time mpirun -np 4  potentialFoam -initialiseUBCs -parallel $fileHandler > $logDir/30_potentialFoam.log 2>&1 || exit 1
-
-echo; echo "applyBoundaryLayer"
-time mpirun -np 4 applyBoundaryLayer -ybl "0.0450244" -parallel $fileHandler > $logDir/40_applyBoundaryLayer.log 2>&1 || exit 1
-
-
-mpirun -np 4 /storage/home/greole/code/NeoFOAM/build/profiling$NEON_DEVICE/bin/neoSimpleFoam -parallel  > run_$NEON_DEVICE.pcg.simplec.steadyState.laminar.log 2>&1
+mpirun -np 4 /storage/home/greole/code/NeoFOAM/build/profiling$NEON_DEVICE/bin/neoSimpleFoam -parallel  > run_$NEON_DEVICE.kOmegaSST.pcg.simplec.steadyState.log 2>&1
 

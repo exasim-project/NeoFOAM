@@ -1,67 +1,60 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2412                                 |
+|  \\    /   O peration     | Version:  2506                                  |
 |   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 FoamFile
 {
-    version     2.0;
-    format      ascii;
-    class       dictionary;
-    object      controlDict;
+    version         2;
+    format          ascii;
+    class           dictionary;
+    object          controlDict;
 }
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include          "include/caseDefinition"
 
-application       neoSimpleFoam;
+application     neoSimpleFoam;
 
-// neoSimpleFoam reads the NeoN executor from controlDict (not the -executor
-// CLI flag). One MPI rank per GPU.
-executor          GPU;
-allocator         Umpire;
-memPoolSize       120;
+executor        GPU;
 
+allocator       Umpire;
 
-// Needed so the OpenFOAM field reader can construct the turbulence wall-function
-// patch types (nutUSpaldingWallFunction, omegaWallFunction, kqRWallFunction)
-// in both decomposePar and neoSimpleFoam.
-libs
-(
-    "libturbulenceModels.so"
-);
+memPoolSize     120;
 
-startFrom         latestTime;
-startTime         0;
+libs            ( "libturbulenceModels.so" );
 
-stopAt            endTime;
-// Short smoke run; raise once convergence behaviour is confirmed.
-endTime           50;
+startFrom       startTime;
 
-deltaT            1;
+startTime       0;
 
-writeControl      timeStep;
-writeInterval     25;
+stopAt          endTime;
 
-purgeWrite        2;
+endTime         100;
 
-writeFormat       binary;
-writePrecision    16;
-writeCompression  off;
+deltaT          1;
 
-timeFormat        general;
-timePrecision     7;
+writeControl    timeStep;
+
+writeInterval   100;
+
+purgeWrite      2;
+
+writeFormat     binary;
+
+writePrecision  16;
+
+writeCompression off;
+
+timeFormat      general;
+
+timePrecision   7;
 
 runTimeModifiable yes;
+
 adjustableRunTime no;
 
-// NOTE (neoSimpleFoam): the OpenFOAM function objects (probes, forceCoeffsAll,
-// calc_cp, wallShearStress, fieldMinMax, solverInfo, ...) are intentionally
-// dropped here. neoSimpleFoam stores its solution in NeoN fields and does not
-// populate the OpenFOAM object registry those function objects read from, so
-// they would either fail or silently do nothing. Re-introduce equivalents via
-// NeoFOAM's own functionObjects once the base run is validated.
 
 // ************************************************************************* //

@@ -44,11 +44,6 @@ divSchemes
 {
     default         none;
 
-    // linearUpwindV reconstructs the face value from the cell-limited (minmod, k=1)
-    // velocity gradient, so extrapolated face values stay within the neighbour
-    // cell-value range — this bounds the convection on the skewed/refined DrivAer
-    // mesh. The plain linearUpwind variant uses an unlimited Gauss-Green gradient
-    // internally and was the source of the unbounded overshoot / divergence.
     div(phi,U)      bounded Gauss linearUpwindV grad(U);
 
     turbulence      bounded Gauss upwind;

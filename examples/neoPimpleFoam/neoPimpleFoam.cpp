@@ -191,6 +191,12 @@ int main(int argc, char* argv[])
                             NeoN::dsl::imp::laplacian(rAU, p) - NeoN::dsl::exp::div(phiHbyA)
                         );
 
+                        // Keep the non-orthogonal faceFluxCorrection so updateFaceVelocity can
+                        // subtract it from phi (otherwise the deferred correction lives in the RHS
+                        // only and phi leaks continuity on non-orthogonal meshes with 'corrected'
+                        // snGrad). Mirrors neoPisoFoam/neoIcoFoam.
+                        pEqn.linearSystem().keepFaceFluxCorrection(true);
+
                         pEqn.setFinalIter(finalIter);
 
                         if (ofP.needReference() && pRefCell >= 0)

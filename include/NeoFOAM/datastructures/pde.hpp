@@ -168,6 +168,19 @@ public:
         }
     }
 
+    /** @brief Hard-pin a set of cells to prescribed values during the solve — the equivalent
+     *  of OpenFOAM's fvMatrix::setValues, used by omega/epsilon wall functions. @p mask and
+     *  @p values are nCells-sized and owned by the caller (must outlive the solve); a cell is
+     *  pinned iff mask[cell] != 0, to value[cell]. Applied in solveImpl after relaxation, via
+     *  NeoN::dsl::FixedValueConstraints. Scalar fields only (no-op for vector fields). */
+    void setConstraints(
+        const NeoN::Vector<NeoN::scalar>& mask, const NeoN::Vector<ValueType>& values
+    )
+    {
+        constraintMask_ = &mask;
+        constraintValues_ = &values;
+    }
+
     /** @brief When true, selects the <field>Final relaxation factor and solver subdict. */
     void setFinalIter(bool finalIter) { finalIter_ = finalIter; }
 
@@ -403,6 +416,17 @@ public:
                     nCells
                 );
             }
+            // Hard-pin wall-function cells (omega/epsilon setValues equivalent). Must run after
+            // relaxation, like SetReference: it overwrites each pinned row's diagonal-scaled rhs.
+            if (constraintMask_ != nullptr)
+            {
+                NeoN::dsl::FixedValueConstraints<ValueType> constraints(
+                    constraintMask_->view(),
+                    constraintValues_->view(),
+                    static_cast<NeoN::localIdx>(constraintMask_->size())
+                );
+                constraints(ls);
+            }
         }
 
         auto solverDict = runTime_->fvSolutionDict.subDict("solvers");
@@ -595,6 +619,10 @@ private:
     bool needReference_ = false;
     NeoN::localIdx pRefCell_ = 0;
     NeoN::scalar pRefValue_ = 0.0;
+    // Non-owning views to caller-held wall-function cell constraints (mask + target values,
+    // both nCells-sized). Null unless setConstraints() was called. See solveImpl.
+    const NeoN::Vector<NeoN::scalar>* constraintMask_ = nullptr;
+    const NeoN::Vector<ValueType>* constraintValues_ = nullptr;
     bool finalIter_ = false;
     const NeoN::Vector<NeoN::scalar>* constraintMask_ = nullptr;
     const NeoN::Vector<ValueType>* constraintValues_ = nullptr;
