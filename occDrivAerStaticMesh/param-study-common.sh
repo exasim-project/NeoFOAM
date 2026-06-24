@@ -1,0 +1,109 @@
+#!/bin/bash
+#
+# Shared infrastructure for the occDrivAer parameter studies. SOURCED by
+# param-study.sh (linear-solver caseN comparison) and param-study-mg.sh (Ginkgo
+# multigrid-pressure sweep) — not run directly.
+#
+# Provides: environment + MPI/GPU binding, BIN/NP/STEPS/paths, controlDict
+# run-window pinning with restore-on-exit, reset_to_t0, run_one, print_summary,
+# and the RUNS[] accumulator that drives the summary table. Every run marches the
+# identical 0 -> STEPS window from the same initial fields so comparisons are
+# apples-to-apples. Mirrors run.sh for the environment.
+
+cd "$(dirname "${BASH_SOURCE[0]}")" || exit 1
+
+# ---------------------------------------------------------------- environment
+module purge
+module load gcc/13.3.0
+module load cuda/13.0.2
+module load cmake
+module load openmpi
+source "$HOME/OpenFOAM/openfoam/etc/bashrc"
+export NEON_DEVICE=nvidia_h200
+export CUDA_VISIBLE_DEVICES=1,2,3,4
+
+BIN="/storage/home/greole/code/NeoFOAM/build/profiling${NEON_DEVICE}/bin/neoSimpleFoam"
+NP=4
+STEPS=100
+CFGDIR="system/paramStudy"
+RESULTS="paramStudy/results"
+# Temp fvSolution written by the mg sweep (declared here so restore() cleans it
+# up regardless of which study sourced this file).
+TMP_FVSOL="$CFGDIR/.fvSolution.mgtmp"
+
+mkdir -p "$RESULTS"
+
+# -------------------------------------------------- pin the run window to STEPS
+# Back up the dictionaries we touch and restore them on exit (even on Ctrl-C).
+# turbulenceProperties is included because the mg study's laminar variant toggles
+# its simulationType; backing it up here keeps the case pristine even on interrupt.
+cp system/controlDict           "system/controlDict.studybak"
+cp system/fvSolution            "system/fvSolution.studybak"
+cp constant/turbulenceProperties "constant/turbulenceProperties.studybak"
+restore() {
+    [ -f system/controlDict.studybak ] && mv system/controlDict.studybak system/controlDict
+    [ -f system/fvSolution.studybak  ] && mv system/fvSolution.studybak  system/fvSolution
+    [ -f constant/turbulenceProperties.studybak ] \
+        && mv constant/turbulenceProperties.studybak constant/turbulenceProperties
+    [ -f "$TMP_FVSOL" ] && rm -f "$TMP_FVSOL"
+}
+trap restore EXIT INT TERM
+
+foamDictionary -entry startFrom     -set startTime -disableFunctionEntries system/controlDict >/dev/null
+foamDictionary -entry startTime     -set 0         -disableFunctionEntries system/controlDict >/dev/null
+foamDictionary -entry endTime       -set "$STEPS"  -disableFunctionEntries system/controlDict >/dev/null
+foamDictionary -entry writeInterval -set "$STEPS"  -disableFunctionEntries system/controlDict >/dev/null
+
+reset_to_t0() {
+    # Drop every written time directory except 0 across all processors, so each
+    # run marches the identical 0 -> STEPS window from the same initial fields.
+    for p in processor*; do
+        find "$p" -mindepth 1 -maxdepth 1 -type d -name '[0-9]*' ! -name '0' \
+            -exec rm -rf {} + 2>/dev/null
+    done
+}
+
+RUNS=()   # names of runs that actually executed, drives the summary table
+
+run_one() {
+    # $1 = run name (log/summary key)   $2 = fvSolution to install   $3 = desc
+    local name="$1" src="$2" desc="$3" log="$RESULTS/$1.log"
+    echo "================================================================"
+    echo " $name${desc:+ : $desc}"
+    echo "   -> $log"
+    echo "================================================================"
+
+    cp "$src" system/fvSolution
+    reset_to_t0
+
+    local t0=$SECONDS
+    mpirun -np "$NP" "$BIN" -parallel > "$log" 2>&1
+    local rc=$?
+    echo "   exit=$rc  wall=$((SECONDS - t0))s  steps=$(grep -c '^Time = ' "$log")"
+    RUNS+=("$name")
+}
+
+print_summary() {
+    echo
+    echo "######################## SUMMARY ########################"
+    printf "%-22s %6s %12s %14s %10s %12s\n" run steps "p_iters/it" "p_ms/solve" "cont" "exec_s"
+    local c log steps cont exec_s pit pms
+    for c in "${RUNS[@]}"; do
+        log="$RESULTS/$c.log"
+        [ -f "$log" ] || continue
+        steps=$(grep -c '^Time = ' "$log")
+        cont=$(grep 'sum local' "$log" | tail -1 | sed -E 's/.*sum local = ([0-9.eE+-]+),.*/\1/')
+        exec_s=$(grep 'ExecutionTime' "$log" | tail -1 | sed -E 's/.*ExecutionTime = ([0-9.]+) s.*/\1/')
+        read -r pit pms < <(awk '
+            /Solving for p,/ {
+                if (match($0, /No Iterations [0-9]+/)) { sit += substr($0, RSTART+14, RLENGTH-14) }
+                if (match($0, /Solve time = [0-9.]+/))  { sst += substr($0, RSTART+13, RLENGTH-13) }
+                n++
+            }
+            END { if (n) printf "%.0f %.0f", sit/n, sst/n; else printf "- -" }' "$log")
+        printf "%-22s %6s %12s %14s %10s %12s\n" \
+            "$c" "${steps:-0}" "${pit:--}" "${pms:--}" "${cont:--}" "${exec_s:--}"
+    done
+    echo "#########################################################"
+    echo "per-run logs under: $RESULTS/"
+}
