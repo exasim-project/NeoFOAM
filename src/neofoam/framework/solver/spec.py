@@ -143,6 +143,15 @@ class SolverSpec:
         """
         return list(self._optional_model_specs)
 
+    @property
+    def core_model_specs(self) -> list[Any]:
+        """The bound *core* (required) model families (case-free, no detection).
+
+        Each family contributes its active member as a required model — see
+        :func:`neofoam.framework.solver.configurations.model_catalog`.
+        """
+        return list(self._core_model_specs)
+
     def detect_core_models(self, case_dir: Optional[Any] = None) -> list[Any]:
         """Select the single active member of each bound core family."""
         return [family.detect_and_create() for family in self._core_model_specs]
