@@ -227,10 +227,13 @@ def _(
     agent_error,
     case_spec_to_configs,
     field_names,
+    get_sel,
     mo,
+    optional_models,
     raw_bc_widgets,
     raw_dict_widgets,
     raw_input_widgets,
+    set_sel,
     write_configs,
     split_field_dump,
 ):
@@ -256,6 +259,20 @@ def _(
             # at write time, so the configs go straight to the widgets + disk.
             configs = case_spec_to_configs(result.output)
 
+            # Sync the Setup selection with what the agent supplied: any optional
+            # model it produced configs/fields for becomes "selected", so it shows
+            # under Selected, its forms unhide, and a later manual Save keeps it.
+            # (Without this the AI's choice and the wizard's UI go out of sync —
+            # the agent fills Boussinesq but the Setup tab never reflects it.)
+            _names = {type(c).__name__ for c in configs}
+            _active_opt = {
+                e.name
+                for e in optional_models
+                if any(c.__name__ in _names for c in (*e.dicts, *e.fields))
+            }
+            if _active_opt:
+                set_sel(get_sel() | _active_opt)
+
             filled = []
             for cfg in configs:
                 name = type(cfg).__name__
@@ -278,6 +295,9 @@ def _(
             lines = [
                 "**Filled:** " + (", ".join(sorted(filled)) if filled else "_nothing_")
             ]
+            if _active_opt:
+                _labels = [e.label for e in optional_models if e.name in _active_opt]
+                lines.append("**Selected models:** " + ", ".join(sorted(_labels)))
             if report:
                 lines += ["", f"**Wrote to** `{TARGET}`:"]
                 lines += [f"- `{f}` ← {', '.join(c)}" for f, c in report.items()]
