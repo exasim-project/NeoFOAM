@@ -1,0 +1,186 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | www.openfoam.com
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+    Copyright (C) 2025 Sergey Lesnik, Wikki GmbH
+-------------------------------------------------------------------------------
+License
+    This file is part of OpenFOAM.
+
+    OpenFOAM is free software: you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
+    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+    FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+    for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
+
+File
+    Coded function object
+
+Description
+    Measure wall-clock time per time step and write it with the accumulated
+    value to a file.  Provide an estimate of the minimum number of time steps
+    required by the statistical analysis.  Warn if this minimum is not achieved
+    during the current run.
+
+\*---------------------------------------------------------------------------*/
+
+wallClockTimeStatistics
+{
+    type coded;
+    name wallClockTimeStatistics;
+    libs ( utilityFunctionObjects );
+
+    // Additional context for code execute/write
+    codeContext
+    {
+        verbose true;
+    }
+
+    codeInclude
+    #{
+        #include "clockValue.H"
+        #include "OFstream.H"
+        #include "writeFile.H"
+    #};
+
+    codeData
+    #{
+        //- Sum of the measured times
+        double sum_ = 0.0;
+
+        //- Statistical error threshold for the final evaluation
+        const double error_ = 0.02;
+
+        //- Identifier of the first time step
+        bool firstTimeStep_ = true;
+
+        //- High-precision wall-clock timer
+        clockValue wallClock_;
+
+        //- List with times per time step
+        DynamicList<double> times_;
+
+        // A wrapper that enables usage of the protected members of writeFile
+        class writeFileClock
+        :
+            public functionObjects::writeFile
+        {
+            public:
+
+                using functionObjects::writeFile::writeFile;
+
+                virtual autoPtr<OFstream> newFileAtStartTime
+                (
+                    const word& name
+                ) const
+                {
+                    return functionObjects::writeFile::newFileAtStartTime(name);
+                }
+        };
+
+        // Coded FO provides no access to constructors.  Use autoPtr and
+        // initialise later.
+        autoPtr<writeFileClock> writeFilePtr_;
+        autoPtr<OFstream> filePtr_;
+    #};
+
+    codeExecute
+    #{
+        // Exclude the first time step from the statistics since no correct
+        // measurement may be executed
+        if (firstTimeStep_)
+        {
+            firstTimeStep_ = false;
+
+            // Create file for writing
+            if (Pstream::master())
+            {
+                writeFilePtr_.reset(new writeFileClock(mesh(), name()));
+                writeFileClock& wfc = writeFilePtr_();
+                filePtr_ = wfc.newFileAtStartTime("wallClockTime");
+                OFstream& os = filePtr_();
+                wfc.writeHeader(os, "Wall-clock time (WCT)");
+                wfc.writeCommented(os, "Time");
+                wfc.writeTabbed(os, "accumulatedWCT");
+                wfc.writeTabbed(os, "timeStepWCT");
+                os << endl;
+            }
+        }
+        else
+        {
+            const double dt = wallClock_.elapsedTime();
+            Info<< "Wall-clock time elapsed during the current time step = "
+                << dt << " s" << nl << endl;
+            times_.append(dt);
+            sum_ += dt;
+        }
+        wallClock_.update();
+    #};
+
+    codeWrite
+    #{
+        if (Pstream::master())
+        {
+            if (times_.size())
+            {
+                OFstream& os = filePtr_();
+                writeFileClock& wfc = writeFilePtr_();
+                wfc.writeCurrentTime(os);
+                os << tab << sum_;
+                os << tab << times_.back();
+                os << endl;
+            }
+        }
+    #};
+
+    codeEnd
+    #{
+        const auto n = static_cast<scalar>(times_.size());
+        const double mean = sum_/n;
+
+        // Compute standard deviation
+        double stdDev = 0.0;
+        forAll(times_, i)
+        {
+            stdDev += (times_[i] - mean)*(times_[i] - mean);
+        }
+        stdDev = sqrt(stdDev/n);
+
+        // Compute number of time steps needed for statistical time measurement
+        // with error "error_" at 95% confidence level.
+        const label minN = round(sqr(1.96*stdDev/(error_*mean)));
+
+        Info<< "Statistics:" << nl
+            << "    Number of measured time steps = "
+            << times_.size() << nl
+            << "    Average wall-clock time per time step = "
+            << mean << nl
+            << "    Standard deviation of wall-clock time per time step = "
+            << stdDev << nl
+            << "    Minimum number of measured time steps for " << error_*100
+            << "% error at 95% confidence level = "
+            << minN << nl << endl;
+
+        if (times_.size() < minN)
+        {
+            WarningInFunction
+                << "Number of time steps of the current run is smaller than"
+                << " the calculated one by the statistical analysis."
+                << " Consider to raise endTime in controlDict."
+                << nl << endl;
+        }
+    #};
+}
+
+
+// ************************************************************************* //

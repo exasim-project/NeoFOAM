@@ -1,0 +1,75 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2412                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#include          "include/caseDefinition"
+
+application       simpleFoam;
+
+startFrom         latestTime;
+startTime         0;
+
+stopAt            endTime;
+endTime           4000;
+
+deltaT            1;
+
+writeControl      timeStep;
+writeInterval     250;
+
+purgeWrite        2;
+
+writeFormat       binary;
+writePrecision    16;
+writeCompression  off;
+
+timeFormat        general;
+timePrecision     7;
+
+runTimeModifiable yes;
+adjustableRunTime no;
+
+libs
+(
+    "libOpenFOAM.so"
+    "libdistributed.so"
+    "libturbulenceModelSchemes.so"
+    "libfieldFunctionObjects.so"
+);
+
+functions
+{
+    #include "FOwallClockTimeStatistics"
+    #include "fieldMinMax"
+    #include "solverInfo"
+    #include "forceCoeffsAll"
+    #include "calc_cp"
+    #include "probes/probes_600"
+    #include "probes/probes_601"
+    #include "probes/probes_602"
+    #include "probes/probes_603"
+    #include "probes/probes_604"
+    #include "probes/probes_610"
+    #include "probes/probes_611"
+    #include "probes/probes_612"
+    #include "probes/probes_613"
+    #include "probes/probes_614"
+    #include "probes/probes_615"
+    #include "probes/probes_624"
+    #include "probes/probes_625"
+    #include "wallShearStress"
+}
+
+// ************************************************************************* //

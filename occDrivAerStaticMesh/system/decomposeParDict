@@ -1,0 +1,32 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2412                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      decomposeParDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// 2-domain decomposition for neoSimpleFoam (one rank per GPU). Hierarchical
+// split along x (streamwise); kahip is avoided per the upstream note that it
+// is incompatible with the exactDistance wall-distance method.
+
+numberOfSubdomains  4;
+
+method              hierarchical;
+
+hierarchicalCoeffs
+{
+    n               (2 2 1);
+    delta           0.001;
+    order           xyz;
+}
+
+// ************************************************************************* //

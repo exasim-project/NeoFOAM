@@ -1,0 +1,67 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2412                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#include          "include/caseDefinition"
+
+application       neoSimpleFoam;
+
+// neoSimpleFoam reads the NeoN executor from controlDict (not the -executor
+// CLI flag). One MPI rank per GPU.
+executor          GPU;
+allocator         Umpire;
+memPoolSize       120;
+
+
+// Needed so the OpenFOAM field reader can construct the turbulence wall-function
+// patch types (nutUSpaldingWallFunction, omegaWallFunction, kqRWallFunction)
+// in both decomposePar and neoSimpleFoam.
+libs
+(
+    "libturbulenceModels.so"
+);
+
+startFrom         latestTime;
+startTime         0;
+
+stopAt            endTime;
+// Short smoke run; raise once convergence behaviour is confirmed.
+endTime           50;
+
+deltaT            1;
+
+writeControl      timeStep;
+writeInterval     25;
+
+purgeWrite        2;
+
+writeFormat       binary;
+writePrecision    16;
+writeCompression  off;
+
+timeFormat        general;
+timePrecision     7;
+
+runTimeModifiable yes;
+adjustableRunTime no;
+
+// NOTE (neoSimpleFoam): the OpenFOAM function objects (probes, forceCoeffsAll,
+// calc_cp, wallShearStress, fieldMinMax, solverInfo, ...) are intentionally
+// dropped here. neoSimpleFoam stores its solution in NeoN fields and does not
+// populate the OpenFOAM object registry those function objects read from, so
+// they would either fail or silently do nothing. Re-introduce equivalents via
+// NeoFOAM's own functionObjects once the base run is validated.
+
+// ************************************************************************* //
