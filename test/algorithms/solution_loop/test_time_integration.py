@@ -7,25 +7,13 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from neofoam.algorithms.constraints.time_step import MaxDeltaTConstraint
 from neofoam.core.plugin_system import PluginSystem
-from neofoam.algorithms.solution_loop.config import TimeControlConfig
 from neofoam.algorithms.solution_loop.time_integration import (
     SteadyIntegration,
     TimeIntegration,
     TransientIntegration,
     integration_from_ddt,
 )
-
-
-def _config(*, adjust: bool, max_delta_t: float = 2.0) -> TimeControlConfig:
-    return TimeControlConfig(
-        endTime=1.0,
-        deltaT=0.1,
-        adjustTimeStep=adjust,
-        maxCo=0.5 if adjust else None,
-        maxDeltaT=max_delta_t,
-    )
 
 
 def test_integration_from_ddt_selects_regime() -> None:
@@ -55,19 +43,6 @@ def test_transient_step_name_is_general_float() -> None:
 
 def test_steady_step_name_is_integer_iteration_index() -> None:
     assert SteadyIntegration().step_name(3.0, 3, 6) == "3"
-
-
-def test_transient_constraints_gate_on_adjust_time_step() -> None:
-    assert TransientIntegration().constraints(_config(adjust=False)) == []
-
-    cons = TransientIntegration().constraints(_config(adjust=True, max_delta_t=2.0))
-    assert len(cons) == 1
-    assert isinstance(cons[0], MaxDeltaTConstraint)
-    assert cons[0].maxDeltaT == 2.0
-
-
-def test_steady_constraints_are_empty() -> None:
-    assert SteadyIntegration().constraints(_config(adjust=True)) == []
 
 
 def test_selectable_through_discriminated_union() -> None:

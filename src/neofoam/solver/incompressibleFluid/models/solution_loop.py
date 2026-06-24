@@ -20,13 +20,15 @@ object); here we only:
 
 * :func:`loop_backend_steps` — init steps that construct the ``FoamTime`` backend
   from the injected ``pybFoam.Time`` and inject it into the framework-built engine,
-  and register the ``courant_provider`` (CFL on the live ``phi``) and
-  ``loop_logger`` (``pybFoam.Info``) the framework operations consult.
+  and register the ``loop_logger`` (``pybFoam.Info``) the framework operations
+  consult. The CFL ``measurement_provider.courant`` is no longer registered here —
+  it belongs to the opt-in ``adaptiveTimeStep`` model, so the measurement exists
+  only when adaptive stepping is selected.
 """
 
 from typing import Any
 
-from pybFoam import Info, computeCFLNumber
+from pybFoam import Info
 
 from neofoam.algorithms.solution_loop.foam_time import FoamTime  # re-exported
 from neofoam.algorithms.solution_loop.solution_loop import (  # re-exported for the solver
@@ -58,8 +60,6 @@ def loop_backend_steps() -> list[InitStep]:
 
     * injects the :class:`FoamTime` backend into the framework-built engine
       (which defaults to a no-op ``NullLoopBackend``);
-    * registers ``courant_provider`` — CFL on the live ``phi``, pushed into the
-      engine by ``set_time_step`` when stability constraints are present;
     * registers ``loop_logger`` — ``pybFoam.Info`` for the per-step time print.
     """
 
@@ -67,9 +67,6 @@ def loop_backend_steps() -> list[InitStep]:
         backend = FoamTime(ctx["_foam_time"])
         ctx["models.solution_loop"].set_backend(backend)
         return backend
-
-    def make_courant_provider(ctx: dict[str, Any]) -> Any:
-        return lambda c: computeCFLNumber(c.fields["phi"])[0]
 
     def make_logger(ctx: dict[str, Any]) -> Any:
         return Info
@@ -80,6 +77,5 @@ def loop_backend_steps() -> list[InitStep]:
             inject_backend,
             depends_on=["models.solution_loop", "_foam_time"],
         ),
-        model("courant_provider", make_courant_provider),
         model("loop_logger", make_logger),
     ]

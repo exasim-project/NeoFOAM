@@ -184,6 +184,66 @@ def test_toggle_models_skips_unflagged_optional() -> None:
     assert toggle_models(_solver()) == []
 
 
+def test_model_catalog_splits_required_and_optional() -> None:
+    from neofoam.framework.solver.configurations import ModelEntry, model_catalog
+
+    class CoreCfg(BaseConfig):
+        c: int = 1
+
+    class OptCfg(BaseConfig):
+        o: int = 2
+
+    core = Model("CoreModel")
+    core.config(CoreCfg)
+    opt = Model("OptModel").as_toggle("Opt")
+    opt.config(OptCfg)
+
+    class CoreFam:
+        @classmethod
+        def all_specs(cls) -> list[Any]:
+            return [core]
+
+        @classmethod
+        def detect_and_create(cls) -> Any:
+            return core
+
+    class OptFam:
+        @classmethod
+        def all_specs(cls) -> list[Any]:
+            return [opt]
+
+        @classmethod
+        def detect_models(cls, case_dir: Any = None) -> list[Any]:
+            return [opt]
+
+    spec = Solver("catalog_solver")
+    spec.core_models(CoreFam)
+    spec.optional_models(OptFam)
+
+    cat = {e.name: e for e in model_catalog(spec)}
+    assert isinstance(cat["CoreModel"], ModelEntry)
+    assert cat["CoreModel"].required is True
+    assert [c.__name__ for c in cat["CoreModel"].dicts] == ["CoreCfg"]
+    assert cat["OptModel"].required is False
+    assert cat["OptModel"].label == "Opt"
+    assert [c.__name__ for c in cat["OptModel"].dicts] == ["OptCfg"]
+
+
+def test_incompressible_fluid_models_required_vs_optional() -> None:
+    pytest.importorskip("pybFoam")
+    from neofoam.framework.solver.configurations import model_catalog
+    from neofoam.solver.incompressibleFluid.incompressibleFluid import (
+        incompressibleFluid,
+    )
+
+    cat = {e.name: e for e in model_catalog(incompressibleFluid)}
+    # Core families are required; buoyancy + adaptive stepping are optional.
+    assert cat["Pimple"].required and cat["Newtonian"].required
+    assert cat["laminar"].required
+    assert cat["boussinesq"].required is False
+    assert cat["adaptiveTimeStep"].required is False
+
+
 def test_incompressible_fluid_buoyancy_is_a_toggle() -> None:
     pytest.importorskip("pybFoam")
     from neofoam.framework.solver.configurations import toggle_models
@@ -205,3 +265,19 @@ def test_incompressible_fluid_buoyancy_is_a_toggle() -> None:
         "TFieldConfig",
         "alphatFieldConfig",
     }
+
+
+def test_incompressible_fluid_adaptive_time_step_is_a_toggle() -> None:
+    pytest.importorskip("pybFoam")
+    from neofoam.framework.solver.configurations import toggle_models
+    from neofoam.solver.incompressibleFluid.incompressibleFluid import (
+        incompressibleFluid,
+    )
+
+    tms = {t.name: t for t in toggle_models(incompressibleFluid)}
+    assert "adaptiveTimeStep" in tms
+    cfl = tms["adaptiveTimeStep"]
+    assert cfl.label == "Adaptive time step (Courant)"
+    # owns only the controlDict slice; no 0/ fields
+    assert {c.__name__ for c in cfl.dicts} == {"CourantControlConfig"}
+    assert cfl.fields == []

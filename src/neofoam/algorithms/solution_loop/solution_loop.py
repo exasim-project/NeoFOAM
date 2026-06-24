@@ -34,9 +34,7 @@ from pathlib import Path
 from typing import Any, Optional, Protocol, runtime_checkable
 
 from neofoam.algorithms.constraints.time_step import (
-    CourantConstraint,
     DeltaTConstraint,
-    MaxDeltaTConstraint,
     next_delta_t,
 )
 from neofoam.algorithms.solution_loop.config import (
@@ -92,7 +90,7 @@ class SolutionLoop:
     Canonical drive (steady and unsteady alike)::
 
         while loop.running():
-            loop.set_courant(measured_Co)   # if a model measures it
+            loop.publish("courant", measured_Co)   # if a model measures it
             loop.adjust_delta_t()
             loop.advance()
             ...solve...
@@ -118,7 +116,7 @@ class SolutionLoop:
         )
         self._constraints: list[DeltaTConstraint] = list(constraints or [])
         self._growth_cap = growth_cap
-        self._courant = 0.0
+        self._measured: dict[str, float] = {}
         self._backend: LoopBackend = (
             backend if backend is not None else NullLoopBackend()
         )
@@ -135,13 +133,21 @@ class SolutionLoop:
         self._backend = backend
         self._backend.update(self._state)
 
-    def set_courant(self, courant: float) -> None:
-        """Publish the current Courant number (measured on the live fields)."""
-        self._courant = float(courant)
+    def publish(self, name: str, value: float) -> None:
+        """Publish a measured quantity (e.g. ``"courant"``) for constraints to read.
+
+        A time-step model measures a quantity on the live fields each step and
+        publishes it under a name; the :class:`DeltaTConstraint` that declares
+        ``measures = name`` reads it back via :meth:`measured`. This is the
+        open seam that lets a new stability rule carry its own measurement
+        without the engine knowing the quantity.
+        """
+        self._measured[name] = float(value)
 
     # -- constraint context: what a DeltaTConstraint reads ----------------
-    def max_courant(self) -> float:
-        return self._courant
+    def measured(self, name: str, default: float = 0.0) -> float:
+        """The last value published under ``name`` (``default`` if never set)."""
+        return self._measured.get(name, default)
 
     def current_delta_t(self) -> float:
         return self._state.delta_t
@@ -285,26 +291,49 @@ def make_solution_loop(
     integration: Optional[TimeIntegration] = None,
     control: Optional[Any] = None,
 ) -> SolutionLoop:
-    """Wrap the state in the loop engine, seeding deltaT constraints from config.
+    """Wrap the state in a **bare** loop engine — no stability constraints.
 
-    A transient adjustable run gets a :class:`CourantConstraint` (and a
-    ``maxDeltaT`` cap when set), min-aggregated by the engine; a steady run gets
-    none (fixed pseudo-step). ``residualControl`` is an fvSolution concern, so
-    steady convergence is wired by passing a configured ``control``.
+    Time-step constraints are no longer baked into the core loop: each is owned
+    by an opt-in time-step model that installs its
+    :class:`~neofoam.algorithms.constraints.time_step.DeltaTConstraint` into the
+    built engine (see :func:`install_constraints_step`) and publishes any measured
+    quantity it needs. A run with no such model selected keeps a fixed step; the
+    engine's min-aggregation leaves an empty constraint list unchanged.
+    ``residualControl`` is an fvSolution concern, so steady convergence is wired
+    by passing a configured ``control``.
     """
     if integration is None:
         integration = TransientIntegration()
-    loop = SolutionLoop(
+    return SolutionLoop(
         state=state,
         integration=integration,
         control=control if control is not None else SolutionControl(),
     )
-    if isinstance(integration, TransientIntegration) and config.adjustTimeStep:
-        if config.maxCo:
-            loop.add_constraint(CourantConstraint(maxCo=float(config.maxCo)))
-        if config.maxDeltaT:
-            loop.add_constraint(MaxDeltaTConstraint(maxDeltaT=float(config.maxDeltaT)))
-    return loop
+
+
+def install_constraints_step(
+    name: str,
+    build_constraints: Any,
+    *,
+    depends_on: tuple[str, ...] = (),
+) -> InitStep:
+    """An :class:`InitStep` that adds a model's deltaT constraints to the engine.
+
+    ``build_constraints(ctx)`` returns the
+    :class:`~neofoam.algorithms.constraints.time_step.DeltaTConstraint`\\ s to
+    install (it may read the build ``ctx``). The step depends on the built
+    ``models.solution_loop`` so it runs after the engine exists, mirroring how
+    ``loop_backend_steps`` injects the backend. This is the one-liner a time-step
+    model's ``@build`` uses so a new stability rule never edits the core loop.
+    """
+
+    def _install(ctx: dict[str, Any]) -> SolutionLoop:
+        loop: SolutionLoop = ctx["models.solution_loop"]
+        for constraint in build_constraints(ctx):
+            loop.add_constraint(constraint)
+        return loop
+
+    return model(name, _install, depends_on=["models.solution_loop", *depends_on])
 
 
 # -- build: LoopState (ctx.time) + engine are this model's runtime state ---
@@ -346,14 +375,15 @@ def set_time_step(self: Any, ctx: Context) -> None:
 
     No steady/transient branch: a fixed-step run has no constraints, so the
     engine's min-aggregation leaves the step unchanged. When constraints are
-    present and a ``courant_provider`` is injected, the measured Courant number
-    is pushed into the engine for the CFL constraint to read.
+    present, every registered ``measurement_provider.<name>`` model is consulted
+    and its value published under ``<name>`` for the constraints to read — so a
+    new time-step rule supplies its own measurement without the loop knowing it.
     """
     loop = _engine(ctx)
     if loop.constraints:
-        provider = ctx.models.get("courant_provider")
-        if provider is not None:
-            loop.set_courant(float(provider(ctx)))
+        for key, provider in ctx.models.items():
+            if key.startswith("measurement_provider."):
+                loop.publish(key[len("measurement_provider.") :], float(provider(ctx)))
     loop.adjust_delta_t()
 
 

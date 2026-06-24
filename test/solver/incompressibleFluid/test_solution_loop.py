@@ -11,7 +11,6 @@ from __future__ import annotations
 
 from typing import cast
 
-from neofoam.algorithms.constraints.time_step import CourantConstraint
 from neofoam.algorithms.solution_loop.loop_state import LoopState
 from neofoam.algorithms.solution_loop.solution_loop import SolutionLoop
 from neofoam.framework.context import Context
@@ -61,7 +60,7 @@ def test_modelspec_is_a_full_model() -> None:
 
 
 def test_build_emits_state_then_engine() -> None:
-    config = _config(adjustTimeStep=True, maxCo=1.0, maxDeltaT=0.5)
+    config = _config()
     steps = build(config)
     assert [s.name for s in steps] == ["time", "models.solution_loop"]
 
@@ -69,46 +68,19 @@ def test_build_emits_state_then_engine() -> None:
     state = steps[0].initializer({})
     assert isinstance(state, LoopState)
 
-    # engine step wraps that state and seeds constraints from config
+    # engine step wraps that state in a *bare* loop — constraints come from
+    # opt-in time-step models (see test_adaptive_time_step), not the core config
     assert "time" in steps[1].depends_on
     loop = steps[1].initializer({"time": state})
     assert isinstance(loop, SolutionLoop)
     assert loop.state is state
-    assert {type(c).__name__ for c in loop.constraints} == {
-        "CourantConstraint",
-        "MaxDeltaTConstraint",
-    }
-
-
-# --- constraint seeding from config (make_solution_loop) ------------------
-
-
-def test_adjustable_config_injects_courant_and_maxdeltat() -> None:
-    config = _config(adjustTimeStep=True, maxCo=1.0, maxDeltaT=0.5)
-    loop = make_solution_loop(config, make_loop_state(config))
-    assert {type(c).__name__ for c in loop.constraints} == {
-        "CourantConstraint",
-        "MaxDeltaTConstraint",
-    }
-
-
-def test_adjustable_without_maxdeltat_injects_only_courant() -> None:
-    config = _config(adjustTimeStep=True, maxCo=1.0)
-    loop = make_solution_loop(config, make_loop_state(config))
-    assert {type(c) for c in loop.constraints} == {CourantConstraint}
-
-
-def test_fixed_step_config_injects_no_constraints() -> None:
-    loop = make_solution_loop(_config(adjustTimeStep=False), make_loop_state(_config()))
     assert loop.constraints == []
 
 
-def test_courant_constraint_shrinks_step() -> None:
-    config = _config(adjustTimeStep=True, maxCo=1.0, maxDeltaT=10.0)
+def test_make_solution_loop_is_bare() -> None:
+    config = _config()
     loop = make_solution_loop(config, make_loop_state(config))
-    loop.set_courant(2.0)
-    loop.adjust_delta_t()
-    assert loop.state.delta_t == 0.05  # 0.1 * 1.0 / 2.0
+    assert loop.constraints == []
 
 
 # --- FoamTime LoopBackend: mirror the LoopState onto pybFoam.Time ---------
@@ -124,14 +96,15 @@ def test_foam_time_backend_reconciles_pyf_time() -> None:
     assert rt.steps == 1  # advanced the backend by one step to match index 1
 
 
-def test_loop_backend_steps_inject_backend_courant_and_logger() -> None:
+def test_loop_backend_steps_inject_backend_and_logger() -> None:
     rt = FakeRuntime()
     loop = make_solution_loop(_config(deltaT=0.1), make_loop_state(_config(deltaT=0.1)))
     steps = loop_backend_steps()
     by_name = {s.name: s for s in steps}
+    # the CFL measurement provider is no longer here — it belongs to the opt-in
+    # adaptiveTimeStep model, so loop_backend_steps only wires backend + logger
     assert set(by_name) == {
         "models.loop_backend",
-        "models.courant_provider",
         "models.loop_logger",
     }
 
@@ -142,8 +115,6 @@ def test_loop_backend_steps_inject_backend_courant_and_logger() -> None:
     assert rt.steps == 1
     assert rt.delta_t == loop.state.delta_t
 
-    provider = by_name["models.courant_provider"].initializer(ctx)
-    assert callable(provider)
     logger = by_name["models.loop_logger"].initializer(ctx)
     assert callable(logger)
 

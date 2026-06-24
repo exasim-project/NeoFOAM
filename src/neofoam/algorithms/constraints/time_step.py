@@ -14,7 +14,7 @@ stability criterion by registering a ``@DeltaTConstraint.register`` class
 
 from __future__ import annotations
 
-from typing import Any, Iterable, Literal
+from typing import Any, ClassVar, Iterable, Literal, Optional
 
 from pydantic import Field
 
@@ -32,8 +32,13 @@ class DeltaTConstraint(BaseConfig):
     """Plugin interface: largest deltaT a model permits (``VGREAT`` = no limit).
 
     Concrete constraints register with :meth:`DeltaTConstraint.register`; the
-    ``constraint_type`` literal discriminates them.
+    ``constraint_type`` literal discriminates them. ``measures`` names the live
+    quantity the constraint reads back via ``ctx.measured(<name>)`` — published
+    each step by the matching ``measurement_provider.<name>`` model. ``None``
+    means the constraint needs no measurement (e.g. a constant cap).
     """
+
+    measures: ClassVar[Optional[str]] = None
 
     def max_delta_t(self, ctx: Any) -> float:
         raise NotImplementedError
@@ -55,10 +60,11 @@ class CourantConstraint(DeltaTConstraint):
     """Flow stability: ``deltaT * maxCo / Co`` (the classic CFL limit)."""
 
     constraint_type: Literal["courant"] = "courant"
+    measures: ClassVar[Optional[str]] = "courant"
     maxCo: float = Field(gt=0.0)
 
     def max_delta_t(self, ctx: Any) -> float:
-        co = float(ctx.max_courant())
+        co = float(ctx.measured("courant"))
         if co <= SMALL:
             return VGREAT
         return float(ctx.current_delta_t()) * (self.maxCo / co)

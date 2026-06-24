@@ -21,14 +21,14 @@ from neofoam.algorithms.constraints.time_step import (
 
 
 class _Ctx:
-    """Minimal context a constraint reads: current Courant + current deltaT."""
+    """Minimal context a constraint reads: published measurements + current deltaT."""
 
     def __init__(self, *, co: float, dt: float) -> None:
-        self._co = co
+        self._measured = {"courant": co}
         self._dt = dt
 
-    def max_courant(self) -> float:
-        return self._co
+    def measured(self, name: str, default: float = 0.0) -> float:
+        return self._measured.get(name, default)
 
     def current_delta_t(self) -> float:
         return self._dt

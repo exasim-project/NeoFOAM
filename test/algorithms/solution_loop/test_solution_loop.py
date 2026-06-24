@@ -6,15 +6,17 @@
 Engine — the pure-Python main iteration loop unifying steady and unsteady; it
 advances a :class:`LoopState` and mirrors it onto an optional :class:`LoopBackend`::
 
-    while loop.running():        # SolutionControl: advance / stop on convergence
-        loop.set_courant(Co)     # a flow model pushes the measured Courant number
-        loop.adjust_delta_t()    # min over injected DeltaTConstraints (CFL, maxDeltaT)
-        loop.advance()           # ++ the LoopState
+    while loop.running():            # SolutionControl: advance / stop on convergence
+        loop.publish("courant", Co)  # a flow model publishes the measured Courant
+        loop.adjust_delta_t()        # min over injected DeltaTConstraints (CFL, …)
+        loop.advance()               # ++ the LoopState
         ...solve...
 
-Model — the backend-agnostic wrapper: builds the LoopState (ctx.time) + engine,
-exposes the loop body as operations, and injects the Courant provider / logger /
-LoopBackend via ``ctx.models`` seams (no-op defaults). No OpenFOAM needed.
+Model — the backend-agnostic wrapper: builds the LoopState (ctx.time) + a *bare*
+engine (no constraints), exposes the loop body as operations, and injects the
+measurement providers / logger / LoopBackend via ``ctx.models`` seams (no-op
+defaults). Stability constraints are installed by opt-in time-step models, not the
+core loop. No OpenFOAM needed.
 """
 
 from __future__ import annotations
@@ -133,7 +135,7 @@ def test_courant_constraint_shrinks_step() -> None:
     loop = SolutionLoop(
         state=_state(dt=0.1), constraints=[CourantConstraint(maxCo=1.0)]
     )
-    loop.set_courant(2.0)  # too fast
+    loop.publish("courant", 2.0)  # too fast
     loop.adjust_delta_t()
     assert loop.state.delta_t == 0.05  # 0.1 * 1.0 / 2.0
 
@@ -144,7 +146,7 @@ def test_growth_cap_limits_increase() -> None:
         constraints=[CourantConstraint(maxCo=1.0)],
         growth_cap=1.2,
     )
-    loop.set_courant(0.1)  # plenty of headroom -> would grow 10x
+    loop.publish("courant", 0.1)  # plenty of headroom -> would grow 10x
     loop.adjust_delta_t()
     assert abs(loop.state.delta_t - 0.12) < 1e-12
 
@@ -158,14 +160,14 @@ def test_min_over_multiple_constraints() -> None:
         ],
         growth_cap=10.0,
     )
-    loop.set_courant(0.1)
+    loop.publish("courant", 0.1)
     loop.adjust_delta_t()
     assert abs(loop.state.delta_t - 0.11) < 1e-12
 
 
 def test_add_constraint_injection() -> None:
     loop = SolutionLoop(state=_state(dt=0.1))
-    loop.set_courant(2.0)
+    loop.publish("courant", 2.0)
     loop.adjust_delta_t()
     assert loop.state.delta_t == 0.1  # no constraint yet
     loop.add_constraint(CourantConstraint(maxCo=1.0))
@@ -196,7 +198,7 @@ def test_engine_mirrors_state_to_backend() -> None:
         constraints=[CourantConstraint(maxCo=1.0)],
         backend=backend,
     )
-    loop.set_courant(0.5)
+    loop.publish("courant", 0.5)
     while loop.running():
         loop.adjust_delta_t()  # -> backend.update
         loop.advance()  # -> backend.update
@@ -239,7 +241,7 @@ def test_modelspec_is_a_full_core_model() -> None:
 
 
 def test_build_emits_state_then_engine() -> None:
-    config = _config(adjustTimeStep=True, maxCo=1.0, maxDeltaT=0.5)
+    config = _config()
     steps = build(config)
     assert [s.name for s in steps] == ["time", "models.solution_loop"]
 
@@ -250,35 +252,35 @@ def test_build_emits_state_then_engine() -> None:
     loop = steps[1].initializer({"time": state})
     assert isinstance(loop, SolutionLoop)
     assert loop.state is state
-    assert {type(c).__name__ for c in loop.constraints} == {
-        "CourantConstraint",
-        "MaxDeltaTConstraint",
-    }
-
-
-# --- constraint seeding from config (make_solution_loop) ------------------
-
-
-def test_adjustable_config_injects_courant_and_maxdeltat() -> None:
-    config = _config(adjustTimeStep=True, maxCo=1.0, maxDeltaT=0.5)
-    loop = make_solution_loop(config, make_loop_state(config))
-    assert {type(c).__name__ for c in loop.constraints} == {
-        "CourantConstraint",
-        "MaxDeltaTConstraint",
-    }
-
-
-def test_fixed_step_config_injects_no_constraints() -> None:
-    loop = make_solution_loop(_config(adjustTimeStep=False), make_loop_state(_config()))
+    # The core engine is bare — stability constraints come from opt-in models.
     assert loop.constraints == []
 
 
-# --- injected Courant provider seam ---------------------------------------
+# --- make_solution_loop builds a bare engine ------------------------------
 
 
-def test_set_time_step_pushes_courant_from_injected_provider() -> None:
-    config = _config(adjustTimeStep=True, maxCo=1.0, maxDeltaT=10.0)
+def test_make_solution_loop_is_bare() -> None:
+    config = _config()
     loop = make_solution_loop(config, make_loop_state(config))
+    assert loop.constraints == []
+
+
+# --- measurement registry + generic provider push -------------------------
+
+
+def test_publish_and_measured_round_trip() -> None:
+    loop = SolutionLoop(state=_state(dt=0.1))
+    assert loop.measured("courant") == 0.0  # default before any publish
+    assert loop.measured("courant", default=-1.0) == -1.0
+    loop.publish("courant", 3.0)
+    assert loop.measured("courant") == 3.0
+
+
+def test_set_time_step_pushes_all_measurement_providers() -> None:
+    # A constraint declares it needs "courant"; the matching provider is consulted
+    # only because the loop carries a constraint, and its value is published.
+    loop = make_solution_loop(_config(), make_loop_state(_config()))
+    loop.add_constraint(CourantConstraint(maxCo=1.0))
     seen: list[Any] = []
 
     def provider(ctx: Any) -> float:
@@ -287,18 +289,29 @@ def test_set_time_step_pushes_courant_from_injected_provider() -> None:
 
     ctx = cast(
         Context,
-        FakeContext({"solution_loop": loop, "courant_provider": provider}),
+        FakeContext({"solution_loop": loop, "measurement_provider.courant": provider}),
     )
     set_time_step(None, ctx)
     assert seen  # provider was consulted
+    assert loop.measured("courant") == 2.0
     assert loop.state.delta_t == 0.05  # 0.1 * 1.0 / 2.0 (CFL-limited)
 
 
-def test_set_time_step_without_provider_just_adjusts() -> None:
-    # no courant_provider injected: fixed step is left unchanged, no crash
-    loop = make_solution_loop(_config(adjustTimeStep=False), make_loop_state(_config()))
-    ctx = cast(Context, FakeContext({"solution_loop": loop}))
+def test_set_time_step_without_constraints_skips_providers() -> None:
+    # No constraint -> providers are not consulted and the step is unchanged.
+    loop = make_solution_loop(_config(), make_loop_state(_config()))
+    called: list[Any] = []
+    ctx = cast(
+        Context,
+        FakeContext(
+            {
+                "solution_loop": loop,
+                "measurement_provider.courant": lambda c: called.append(c) or 9.0,
+            }
+        ),
+    )
     set_time_step(None, ctx)
+    assert called == []  # bare loop -> no measurement pushed
     assert loop.state.delta_t == 0.1
 
 
