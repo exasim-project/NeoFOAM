@@ -2,6 +2,7 @@
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
 |  \\    /   O peration     | Version:  v2412                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
 FoamFile
@@ -12,18 +13,19 @@ FoamFile
     object      fvSolution;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-// PARAM STUDY case3: p = configFile (Ginkgo scale-corrected multigrid)
-//                    U,k,omega = smoothSolver/GaussSeidel
-// The configFile carries the full Ginkgo solver/preconditioner/stopping config;
-// fvSolution.cpp injects "solver Ginkgo" and reads no other keys for p. Path is
-// UNQUOTED so the OpenFOAM tokenizer keeps it as a single word, and is relative
-// to the case directory.
+// Stable production setup: p = PCG/diagonal, U/k/omega = smoothSolver/GaussSeidel,
+// SIMPLEC (consistent). The combination that ran 100 steps cleanly (pPCG-ukoSmooth).
 
 solvers
 {
     p
     {
-        configFile       system/gko/p-multigrid.L10.sc0.json;
+        solver           PCG;
+        preconditioner   diagonal;
+        tolerance        1e-7;
+        relTol           0.01;
+        l1ScaledResidual true;
+        maxIter          3000;
     }
 
     Phi
