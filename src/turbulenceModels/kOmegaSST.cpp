@@ -539,12 +539,6 @@ void KOmegaSST::updateGradU(const nnfvcc::VolumeField<Vec3>& U)
     gradUTmp_.correctBoundaryConditions();
 }
 
-void KOmegaSST::updateGradU(const nnfvcc::VolumeField<Vec3>& U)
-{
-    gradOp_.gradTensor(U, gradU_);
-    gradU_.correctBoundaryConditions();
-}
-
 NeoN::Vector<SymmTensor> KOmegaSST::devRhoReff() const
 {
     const localIdx nBF = static_cast<localIdx>(gradUTmp_.boundaryData().value().size());
