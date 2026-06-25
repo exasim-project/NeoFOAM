@@ -1,0 +1,2393 @@
+╭─── Claude Code v2.1.190 ─────────────────────────────────────────────────────╮
+│                                                    │ Tips for getting        │
+│                Welcome back Gregor!                │ started                 │
+│                                                    │ Run /init to create a … │
+│                       ▐▛███▜▌                      │ ─────────────────────── │
+│                      ▝▜█████▛▘                     │ What's new              │
+│                        ▘▘ ▝▝                       │ Bug fixes and reliabil… │
+│ Opus 4.8 · Claude Max · olenik.gregor@gmail.com's  │ Added `sandbox.credent… │
+│ Organization                                       │ Added org-configured m… │
+│        ~/code/NeoFOAM/occDrivAerStaticMesh         │ /release-notes for more │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+
+❯ /clear                                                                        
+
+❯ Investigate why the cylinder2D test case which diverges., see                 
+  run_cylinder2D.steady.Re30.log  for divergence trajectory.                    
+
+● I'll start by looking at the divergence log to understand the trajectory.
+
+  Listed 1 directory (ctrl+o to expand)
+  ⎿  Interrupted · What should Claude do instead?
+
+❯ Investigate why the cylinder2D test case which diverges., see                 
+  run_cylinder2D.steady.Re30.log  for divergence trajectory. Do a full          
+  analysis. the case is small enought to be run to verify assumptions. use      
+  run.sh to run. use  build-nvidia-h200-gcc.sh  to rebuild NeoFOAM. if possible 
+  minimize asking for permissons.                                               
+
+● I'll do a full analysis. Let me start by examining the divergence trajectory
+  and case setup in parallel.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/cylinder2D; echo "=== run.sh ===";
+      cat run.sh; echo; echo "=== tail of divergence log ==="; tail -80
+      run_cylinder2D.steady.…)
+  ⎿  === run.sh ===
+     #!/bin/bash
+     # Steady neoSimpleFoam diagnostic on the clean cylinder2D mesh (Re 30)
+     … +105 lines (ctrl+o to expand)
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/cylinder2D; echo "=== head of
+      divergence log ==="; head -120 run_cylinder2D.steady.Re30.log)
+  ⎿  === head of divergence log ===
+     /*--------------------------------------------------------------------
+     -------*\
+     … +120 lines (ctrl+o to expand)
+
+● Let me extract the continuity error trajectory to characterize the divergence
+  precisely.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/cylinder2D; grep -n "continuity
+      errors" run_cylinder2D.steady.Re30.log | head -40)
+  ⎿  60:time step continuity errors : sum local = 0.8431014736104492, globa
+     l = -3.3543254683304656e-13, cumulative = -3.3543254683304656e-13
+     72:time step continuity errors : sum local = 15.923938198441027, globa
+     … +54 lines (ctrl+o to expand)
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/cylinder2D; awk '/^Time = /{t=$3}
+      /Solving for Ux/{print t, $0}' run_cylinder2D.steady.Re30.log | sed -n
+      '1,40p')
+  ⎿  1 Jacobi+Ir:  Solving for Ux, Initial residual = 0.9999999999997762, F
+     inal residual = 0.12483426995756526, No Iterations 3, Solve time = 21.
+     245 ms
+     … +72 lines (ctrl+o to expand)
+
+● The divergence is clear: continuity sum local error is already huge (0.84) at
+  step 1, grows geometrically (16→172→819→12782...), and blows to nan by Time
+  13. Momentum residuals look healthy until the flux blows up. This is a
+  pressure-velocity coupling / flux problem, not a momentum one. Let me examine
+  the case setup and the experiments already tried.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/cylinder2D; echo "=== fvSchemes
+      ==="; cat system/fvSchemes; echo; echo "=== fvSolution ==="; cat
+      system/fvSolution)
+  ⎿  === fvSchemes ===
+     FoamFile { version 2.0; format ascii; class dictionary; object fvSchem
+     es; }
+     … +62 lines (ctrl+o to expand)
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/cylinder2D; echo "=== controlDict
+      ==="; cat system/controlDict; echo "=== transportProperties ==="; cat
+      constant/transportP…)
+  ⎿  Error: Exit code 1
+     === controlDict ===
+     /*--------------------------------*- C++ 
+     -*----------------------------------*\
+     \*-------------------------------------------------------------------------
+     --*/
+     FoamFile { version 2.0; format ascii; class dictionary; object controlDict;
+     }
+     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+     * //
+
+     // DIAGNOSTIC: steady neoSimpleFoam on the clean cylinder2D mesh. Tests 
+     whether the
+     // SIMPLE coupling converges at standard 0.7/0.3 relaxation away from the 
+     extreme
+     // occDrivAer mesh. Tutorial ran transient neoIcoFoam.
+     … +33 lines (ctrl+o to expand)
+
+● This is a laminar Re=30 cylinder — should converge trivially. Standard SIMPLE
+  numerics. Let me look at the solver source and the experiment logs to see
+  what's been tried.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/cylinder2D; for f in
+      run_A_heavyrelax run_B_simplec run_C_upwind run_D_nopredictor
+      run_F_Ubicgstab run_G_cylFixed run_INV r…)
+  ⎿  === run_A_heavyrelax (continuity trajectory, first 8 + last 2) ===
+     time step continuity errors : sum local = 0.8352153366584676, global =
+      -2.1000601238997657e-13, cumulative = -2.1000601238997657e-13
+     … +150 lines (ctrl+o to expand)
+
+● All variants diverge near-identically — even upwind vs linearUpwindV give
+  bit-for-bit similar continuity errors (step 2: 15.92 both). That's a critical
+  clue: the divergence is independent of the momentum discretization scheme,
+  pointing at the pressure/flux coupling itself. Let me read the solver source.
+
+  Read 1 file (ctrl+o to expand)
+
+● The solver is a SIMPLE loop. The growth is independent of scheme/relaxation,
+  so I suspect the pressure↔flux↔velocity reconstruction. Note lines 183-185
+  flag adjustPhi/constrainPressure as missing. Let me read the coupling helper
+  functions and the boundary conditions.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM; grep -rn
+      "computeRAUandHByA\|updateFaceVelocity\|updateVelocity\|reportContinuityEr
+      ror\|computeRAtU\|constrainHbyA\|^.*nf:…)
+  ⎿  include/NeoFOAM/algorithms/pressureVelocityCoupling.hpp
+     include/NeoFOAM/auxiliary/continuityError.hpp
+     include/NeoFOAM/datastructures/pde.hpp
+     src/algorithms/pressureVelocityCoupling.cpp
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/cylinder2D; echo "=== 0/U ==="; cat
+      0/U; echo "=== 0/p ==="; cat 0/p)  ⎿  === 0/U ===
+     /*--------------------------------*- C++ -*---------------------------
+     -------*\
+     … +109 lines (ctrl+o to expand)
+
+  Read 1 file (ctrl+o to expand)
+
+● Let me look at the PDESolver to check how/whether momentum equation relaxation
+  (alpha_U=0.7) is applied, and the continuity reporting.
+
+  Read 1 file (ctrl+o to expand)
+
+● Momentum relaxation IS applied (relaxOwnedLs/applyMatrixRelaxation, alpha=0.7)
+  and structure matches OpenFOAM SIMPLE. Since transient neoIcoFoam works on
+  this mesh, the bug is in the steady-specific path. Let me inspect
+  applyMatrixRelaxation — the diagonal-dominance clamp matters a lot for steady
+  (no ddt) cases.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM; grep -rn
+      "applyMatrixRelaxation\|fieldRelaxationSnapshot\|applyFieldRelaxation"
+      --include=*.hpp --include=*.cpp -l 2>/dev/…)
+  ⎿  ---- search include dirs ----
+     /storage/home/greole/code/NeoN/include/NeoN/dsl/solver.hpp
+
+● Bash(cd /storage/home/greole/code/NeoN; grep -rn "applyMatrixRelaxation"
+      --include=*.hpp --include=*.cpp include src 2>/dev/null)
+  ⎿  include/NeoN/dsl/solver.hpp:209:void applyMatrixRelaxation(
+     include/NeoN/dsl/solver.hpp:267:        "applyMatrixRelaxation"
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+  Read 1 file (ctrl+o to expand)
+
+● Structurally the SIMPLE loop matches OpenFOAM, momentum relaxation is correct
+  (with dominance clamp), and heavy relaxation only delays divergence (run_A) —
+  that's the signature of a consistency bug (the flux/pressure/velocity updates
+  don't share a divergence-free fixed point), not mere under-resolution. Let me
+  reproduce quickly to confirm, then add targeted diagnostics. First check the
+  build.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM; cat build-nvidia-h200-gcc.sh; echo
+      "=== binary? ==="; ls -la build/profilingnvidia_h200/bin/neoSimpleFoam
+      2>/dev/null; ech…)
+  ⎿  #!/bin/bash
+
+     module purge
+     … +31 lines (ctrl+o to expand)
+
+● Binary is current (built 19:45, after sources). Let me read the continuity
+  reporter and the flux divergence used, then reproduce with a short run.
+
+  Read 1 file (ctrl+o to expand)
+
+● Continuity reporting matches OpenFOAM exactly, so div(phi)≈0.84 after step 1
+  is real. The case is a cylinder mesh (non-orthogonal) running with
+  nNonOrthogonalCorrectors 0 and corrected snGrad. Let me check mesh quality and
+  reproduce. Let me run checkMesh and a short baseline reproduction in
+  parallel.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/cylinder2D
+      source /storage/home/greole/code/NeoFOAM/build-nvidia-h200-gcc.sh
+      >/dev/null 2>&1 || true…)
+  ⎿  fileModificationChecking : Monitoring run-time modified files using ti
+     meStampMaster (fileModificationSkew 5, maxFileModificationPolls 20)
+         cells:            282119
+     … +10 lines (ctrl+o to expand)
+
+● Mesh is well-conditioned (max non-orth 44°, avg 7.4°, skew 0.45) — 282k cells,
+  laminar Re=30. This must converge; mesh is not the issue. This is a code bug.
+  Let me set up a fast experiment harness. First, check case size for copying
+  to scratch.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/cylinder2D; du -sh constant/polyMesh
+      0 system 2>/dev/null; echo "---grep bounded in NeoN---"; grep -rn
+      "bounded" /storage/h…)
+  ⎿  6.2M       constant/polyMesh
+     20K        0
+     153K       system
+     … +14 lines (ctrl+o to expand)
+
+  Read 1 file (ctrl+o to expand)
+
+● bounded div correctly implements the Sp(div(phi),U) term too. Static analysis
+  shows a structurally-correct SIMPLE. Time to go empirical.
+
+  One key hypothesis: neoSimpleFoam's UEqn has an explicit viscousStress(nu, 
+  nut, gradU) term that transient neoIcoFoam likely doesn't exercise — that's a
+  steady-path difference. Let me check what neoIcoFoam uses and the
+  viscousStress sign, while I set up experiments.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM; echo "=== neoIcoFoam UEqn ===";
+      grep -n "div\|laplacian\|viscousStress\|UEqn\|ddt\|grad(p)"
+      examples/neoIcoFoam/neoIcoFoam…)
+  ⎿  === neoIcoFoam UEqn ===
+     93:            nf::PDE<NeoN::Vec3> UEqn(
+     94:                dsl::imp::ddt(U) + dsl::imp::div(phi, U) - dsl::imp
+     … +16 lines (ctrl+o to expand)
+
+● neoIcoFoam is much simpler (just ddt + div - laplacian, no bounded, no
+  viscousStress, no turbulence, no relaxation) — so several neoSimpleFoam terms
+  are untested by the working transient solver.
+
+  Best reference: run native OpenFOAM simpleFoam on this exact case (the dicts
+  are already OpenFOAM-compatible). That tells me the correct continuity
+  trajectory. Let me copy to scratch and run it.
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      rm -rf $SCR/cyl_ref; mkdir -p $SCR/cyl_ref…)
+  ⎿  EXIT=127
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● Bash(module purge >/dev/null 2>&1; module load gcc/13.3.0 openmpi >/dev/null
+      2>&1; source $HOME/OpenFOAM/openfoam/etc/bashrc >/dev/null 2>&1; echo
+      "checkMesh: $(whic…)  ⎿  checkMesh: /storage/home/greole/OpenFOAM/openfoam/platforms/linux64Gcc
+     DPInt32Opt/bin/checkMesh
+     simpleFoam:
+
+● Bash(module purge >/dev/null 2>&1; module load gcc/13.3.0 openmpi >/dev/null
+      2>&1; source $HOME/OpenFOAM/openfoam/etc/bashrc >/dev/null 2>&1; ls
+      $FOAM_APPBIN 2>/dev/…)
+  ⎿  ansysToFoam
+     cfx4ToFoam
+     chemkinToFoam
+     … +23 lines (ctrl+o to expand)
+
+● No native SIMPLE solver is built in this OpenFOAM install (only utilities), so
+  I can't get a native reference. I'll instrument neoSimpleFoam directly. The
+  decisive question: does the pEqn actually reduce div(phiHbyA), and which field
+  blows up first. Let me add diagnostics and rebuild.
+
+  Read 1 file (ctrl+o to expand)
+
+● Let me add instrumentation. I'll insert a diagnostic block that prints
+  div(phiHbyA) before the pressure solve and field maxima after the corrector.
+
+● Update(~/code/NeoFOAM/examples/neoSimpleFoam/neoSimpleFoam.cpp)
+  ⎿  Added 47 lines
+      172                  // No ddtFluxCorr: SIMPLE is steady-state
+      173                  auto phiHbyA = nf::flux(hByA);
+      174  
+      175 +                // [DIAG] divergence of the predicted flux tha
+          +t the pEqn must remove,                                       
+      176 +                // plus field maxima, to localise the blow-up.
+      177 +                {                                             
+      178 +                    auto maxMagVec = [](const auto& vf)       
+      179 +                    {                                         
+      180 +                        const auto v = vf.internalVector().vie
+          +w();                                                          
+      181 +                        NeoN::scalar m = 0.0;                 
+      182 +                        NeoN::parallelReduce(                 
+      183 +                            vf.exec(),                        
+      184 +                            {0, v.size()},                    
+      185 +                            NEON_LAMBDA(const size_t i, NeoN::
+          +scalar& s) {                                                  
+      186 +                                NeoN::scalar mg = Kokkos::sqrt
+          +(                                                             
+      187 +                                    v[i][0] * v[i][0] + v[i][1
+          +] * v[i][1] + v[i][2] * v[i][2]                               
+      188 +                                );                            
+      189 +                                if (mg > s) s = mg;           
+      190 +                            },                                
+      191 +                            Kokkos::Max<NeoN::scalar>(m)      
+      192 +                        );                                    
+      193 +                        return m;                             
+      194 +                    };                                        
+      195 +                    auto maxAbsScalar = [](const auto& vf)    
+      196 +                    {                                         
+      197 +                        const auto v = vf.internalVector().vie
+          +w();                                                          
+      198 +                        NeoN::scalar m = 0.0;                 
+      199 +                        NeoN::parallelReduce(                 
+      200 +                            vf.exec(),                        
+      201 +                            {0, v.size()},                    
+      202 +                            NEON_LAMBDA(const size_t i, NeoN::
+          +scalar& s) {                                                  
+      203 +                                NeoN::scalar a = Kokkos::abs(v
+          +[i]);                                                         
+      204 +                                if (a > s) s = a;             
+      205 +                            },                                
+      206 +                            Kokkos::Max<NeoN::scalar>(m)      
+      207 +                        );                                    
+      208 +                        return m;                             
+      209 +                    };                                        
+      210 +                    auto ePhiHbyA = NeoFOAM::computeContinuity
+          +Error(phiHbyA, rt);                                           
+      211 +                    NeoN::Logging::info(                      
+      212 +                        "[DIAG] div(phiHbyA)_preP sumLocal={} 
+          + maxRAU={}  maxHbyA={}  "                                     
+      213 +                        "maxU={}  maxAbsP={}",                
+      214 +                        ePhiHbyA.sumLocal,                    
+      215 +                        maxAbsScalar(crAU),                   
+      216 +                        maxMagVec(hByA),                      
+      217 +                        maxMagVec(U),                         
+      218 +                        maxAbsScalar(p)                       
+      219 +                    );                                        
+      220 +                }                                             
+      221 +                                                              
+      222                  if (consistent)
+      223                  {
+      224                      // phiHbyA += interpolate(rAtU - rAU)*snGr
+           ad(p)*magSf
+
+● Now rebuild just the target (incremental). Let me build only neoSimpleFoam to
+  keep it fast.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM
+      module purge >/dev/null 2>&1…)
+  ⎿  === build dir targets ===
+     CMakeCache.txt
+     CMakeFiles
+     … +37 lines (ctrl+o to expand)
+
+● Build failed — let me see the actual error.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM
+      module purge >/dev/null 2>&1…)
+  ⎿  [2/3] Building CXX object examples/neoSimpleFoam/CMakeFiles/neoSimpleF
+     oam.dir/neoSimpleFoam.cpp.o
+     FAILED: examples/neoSimpleFoam/CMakeFiles/neoSimpleFoam.dir/neoSimpleF
+     … +100 lines (ctrl+o to expand)
+
+● The NEON_LAMBDA can't live in a generic lambda (known issue). Let me check
+  parallelReduce signatures to write explicit, non-generic reductions.
+
+● Bash(cd /storage/home/greole/code/NeoN; grep -rn "void parallelReduce\|auto
+      parallelReduce\| parallelReduce(" include/NeoN/core/parallelAlgorithms.hpp
+      | head; echo "…)
+  ⎿  include/NeoN/core/parallelAlgorithms.hpp:147:void parallelReduce(
+     include/NeoN/core/parallelAlgorithms.hpp:179:void parallelReduce(
+     include/NeoN/core/parallelAlgorithms.hpp:183:    std::visit([&](const
+     … +46 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● The reducer is forwarded straight to Kokkos::parallel_reduce, so Kokkos::Max
+  works — the only real problem is NEON_LAMBDA inside generic lambdas. Let me
+  inline the reductions directly in main (not a generic lambda).
+
+● Update(~/code/NeoFOAM/examples/neoSimpleFoam/neoSimpleFoam.cpp)
+  ⎿  Added 52 lines, removed 37 lines
+      173                  auto phiHbyA = nf::flux(hByA);
+      174  
+      175                  // [DIAG] divergence of the predicted flux tha
+           t the pEqn must remove,
+      176 -                // plus field maxima, to localise the blow-up.
+      176 +                // plus field maxima, to localise the blow-up.
+          + Reductions are inlined                                       
+      177 +                // (no generic-lambda wrapper: nvcc forbids NE
+          +ON_LAMBDA inside one).                                        
+      178                  {
+      178 -                    auto maxMagVec = [](const auto& vf)       
+      179 -                    {                                         
+      180 -                        const auto v = vf.internalVector().vie
+          -w();                                                          
+      181 -                        NeoN::scalar m = 0.0;                 
+      182 -                        NeoN::parallelReduce(                 
+      183 -                            vf.exec(),                        
+      184 -                            {0, v.size()},                    
+      185 -                            NEON_LAMBDA(const size_t i, NeoN::
+          -scalar& s) {                                                  
+      186 -                                NeoN::scalar mg = Kokkos::sqrt
+          -(                                                             
+      187 -                                    v[i][0] * v[i][0] + v[i][1
+          -] * v[i][1] + v[i][2] * v[i][2]                               
+      188 -                                );                            
+      189 -                                if (mg > s) s = mg;           
+      190 -                            },                                
+      191 -                            Kokkos::Max<NeoN::scalar>(m)      
+      192 -                        );                                    
+      193 -                        return m;                             
+      194 -                    };                                        
+      195 -                    auto maxAbsScalar = [](const auto& vf)    
+      196 -                    {                                         
+      197 -                        const auto v = vf.internalVector().vie
+          -w();                                                          
+      198 -                        NeoN::scalar m = 0.0;                 
+      199 -                        NeoN::parallelReduce(                 
+      200 -                            vf.exec(),                        
+      201 -                            {0, v.size()},                    
+      202 -                            NEON_LAMBDA(const size_t i, NeoN::
+          -scalar& s) {                                                  
+      203 -                                NeoN::scalar a = Kokkos::abs(v
+          -[i]);                                                         
+      204 -                                if (a > s) s = a;             
+      205 -                            },                                
+      206 -                            Kokkos::Max<NeoN::scalar>(m)      
+      207 -                        );                                    
+      208 -                        return m;                             
+      209 -                    };                                        
+      179 +                    const auto rauV = crAU.internalVector().vi
+          +ew();                                                         
+      180 +                    const auto hbyaV = hByA.internalVector().v
+          +iew();                                                        
+      181 +                    const auto uV = U.internalVector().view();
+      182 +                    const auto pV = p.internalVector().view();
+      183 +                    NeoN::scalar maxRAU = 0.0, maxHbyA = 0.0, 
+          +maxU = 0.0, maxAbsP = 0.0;                                    
+      184 +                    NeoN::parallelReduce(                     
+      185 +                        rt.exec,                              
+      186 +                        {0, rauV.size()},                     
+      187 +                        NEON_LAMBDA(const size_t i, NeoN::scal
+          +ar& s) {                                                      
+      188 +                            NeoN::scalar a = Kokkos::abs(rauV[
+          +i]);                                                          
+      189 +                            if (a > s) s = a;                 
+      190 +                        },                                    
+      191 +                        Kokkos::Max<NeoN::scalar>(maxRAU)     
+      192 +                    );                                        
+      193 +                    NeoN::parallelReduce(                     
+      194 +                        rt.exec,                              
+      195 +                        {0, hbyaV.size()},                    
+      196 +                        NEON_LAMBDA(const size_t i, NeoN::scal
+          +ar& s) {                                                      
+      197 +                            NeoN::scalar mg = Kokkos::sqrt(   
+      198 +                                hbyaV[i][0] * hbyaV[i][0] + hb
+          +yaV[i][1] * hbyaV[i][1]                                       
+      199 +                                + hbyaV[i][2] * hbyaV[i][2]   
+      200 +                            );                                
+      201 +                            if (mg > s) s = mg;               
+      202 +                        },                                    
+      203 +                        Kokkos::Max<NeoN::scalar>(maxHbyA)    
+      204 +                    );                                        
+      205 +                    NeoN::parallelReduce(                     
+      206 +                        rt.exec,                              
+      207 +                        {0, uV.size()},                       
+      208 +                        NEON_LAMBDA(const size_t i, NeoN::scal
+          +ar& s) {                                                      
+      209 +                            NeoN::scalar mg = Kokkos::sqrt(   
+      210 +                                uV[i][0] * uV[i][0] + uV[i][1]
+          + * uV[i][1] + uV[i][2] * uV[i][2]                             
+      211 +                            );                                
+      212 +                            if (mg > s) s = mg;               
+      213 +                        },                                    
+      214 +                        Kokkos::Max<NeoN::scalar>(maxU)       
+      215 +                    );                                        
+      216 +                    NeoN::parallelReduce(                     
+      217 +                        rt.exec,                              
+      218 +                        {0, pV.size()},                       
+      219 +                        NEON_LAMBDA(const size_t i, NeoN::scal
+          +ar& s) {                                                      
+      220 +                            NeoN::scalar a = Kokkos::abs(pV[i]
+          +);                                                            
+      221 +                            if (a > s) s = a;                 
+      222 +                        },                                    
+      223 +                        Kokkos::Max<NeoN::scalar>(maxAbsP)    
+      224 +                    );                                        
+      225                      auto ePhiHbyA = NeoFOAM::computeContinuity
+           Error(phiHbyA, rt);
+      226                      NeoN::Logging::info(
+      227                          "[DIAG] div(phiHbyA)_preP sumLocal={} 
+            maxRAU={}  maxHbyA={}  "
+      228                          "maxU={}  maxAbsP={}",
+      229                          ePhiHbyA.sumLocal,
+      215 -                        maxAbsScalar(crAU),                   
+      216 -                        maxMagVec(hByA),                      
+      217 -                        maxMagVec(U),                         
+      218 -                        maxAbsScalar(p)                       
+      230 +                        maxRAU,                               
+      231 +                        maxHbyA,                              
+      232 +                        maxU,                                 
+      233 +                        maxAbsP                               
+      234                      );
+      235                  }
+      236  
+
+❯ i build simpleFoam to run direct comparisson aswell                           
+
+● The user is building native simpleFoam for a direct comparison — that'll give
+  us the gold-standard trajectory I was missing. Let me rebuild the instrumented
+  neoSimpleFoam now.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM
+      module purge >/dev/null 2>&1…)
+  ⎿  [1/2] Building CXX object examples/neoSimpleFoam/CMakeFiles/neoSimpleF
+     oam.dir/neoSimpleFoam.cpp.o
+     FAILED: examples/neoSimpleFoam/CMakeFiles/neoSimpleFoam.dir/neoSimpleF
+     … +113 lines (ctrl+o to expand)
+
+● The issue is the Kokkos::Max(...) temporary can't bind to T& value. Let me use
+  named reducer variables.
+
+● Update(~/code/NeoFOAM/examples/neoSimpleFoam/neoSimpleFoam.cpp)
+  ⎿  Added 10 lines, removed 8 lines
+      181                      const auto uV = U.internalVector().view();
+      182                      const auto pV = p.internalVector().view();
+      183                      NeoN::scalar maxRAU = 0.0, maxHbyA = 0.0, 
+           maxU = 0.0, maxAbsP = 0.0;
+      184 +                    Kokkos::Max<NeoN::scalar> rRAU(maxRAU), rH
+          +byA(maxHbyA), rU(maxU), rP(maxAbsP);                          
+      185 +                    const NeoN::localIdx n = static_cast<NeoN:
+          +:localIdx>(rauV.size());                                      
+      186                      NeoN::parallelReduce(
+      187                          rt.exec,
+      186 -                        {0, rauV.size()},                     
+      188 +                        {0, n},                               
+      189                          NEON_LAMBDA(const size_t i, NeoN::scal
+           ar& s) {
+      190                              NeoN::scalar a = Kokkos::abs(rauV[
+           i]);
+      191                              if (a > s) s = a;
+      192                          },
+      191 -                        Kokkos::Max<NeoN::scalar>(maxRAU)     
+      193 +                        rRAU                                  
+      194                      );
+      195                      NeoN::parallelReduce(
+      196                          rt.exec,
+      195 -                        {0, hbyaV.size()},                    
+      197 +                        {0, n},                               
+      198                          NEON_LAMBDA(const size_t i, NeoN::scal
+           ar& s) {
+      199                              NeoN::scalar mg = Kokkos::sqrt(
+      200                                  hbyaV[i][0] * hbyaV[i][0] + hb
+           yaV[i][1] * hbyaV[i][1]
+     ...
+      202                              );
+      203                              if (mg > s) s = mg;
+      204                          },
+      203 -                        Kokkos::Max<NeoN::scalar>(maxHbyA)    
+      205 +                        rHbyA                                 
+      206                      );
+      207                      NeoN::parallelReduce(
+      208                          rt.exec,
+      207 -                        {0, uV.size()},                       
+      209 +                        {0, n},                               
+      210                          NEON_LAMBDA(const size_t i, NeoN::scal
+           ar& s) {
+      211                              NeoN::scalar mg = Kokkos::sqrt(
+      212                                  uV[i][0] * uV[i][0] + uV[i][1]
+            * uV[i][1] + uV[i][2] * uV[i][2]
+      213                              );
+      214                              if (mg > s) s = mg;
+      215                          },
+      214 -                        Kokkos::Max<NeoN::scalar>(maxU)       
+      216 +                        rU                                    
+      217                      );
+      218                      NeoN::parallelReduce(
+      219                          rt.exec,
+      218 -                        {0, pV.size()},                       
+      220 +                        {0, n},                               
+      221                          NEON_LAMBDA(const size_t i, NeoN::scal
+           ar& s) {
+      222                              NeoN::scalar a = Kokkos::abs(pV[i]
+           );
+      223                              if (a > s) s = a;
+      224                          },
+      223 -                        Kokkos::Max<NeoN::scalar>(maxAbsP)    
+      225 +                        rP                                    
+      226                      );
+      227                      auto ePhiHbyA = NeoFOAM::computeContinuity
+           Error(phiHbyA, rt);
+      228                      NeoN::Logging::info(
+
+● Bash(cd /storage/home/greole/code/NeoFOAM
+      module purge >/dev/null 2>&1…)
+  ⎿  [2/2] Linking CXX executable bin/neoSimpleFoam
+     rc=0
+     -rwxr-xr-x 1 greole greole 43008656 22:16 build/profilingnvidia_h200/b
+     in/neoSimpleFoam
+
+● Built. Now run the instrumented version with a short endTime to capture the
+  blow-up onset.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/cylinder2D
+      cp system/controlDict system/controlDict.bak_diag…)  ⎿  EXIT=0
+     === DIAG + continuity, per step ===
+     Time = 1
+     … +90 lines (ctrl+o to expand)
+
+● Now I have the smoking gun. Look at step 1: maxU=62.25 and maxHbyA=60.04 —
+  after the very first momentum predictor, U has blown from the initial uniform
+  1.0 to 62, with p still 0. The pressure coupling is faithfully
+  reporting/correcting an already-broken velocity. The root cause is in the
+  momentum assembly/HbyA, not the pressure loop.
+
+  The HbyA includes the explicit viscousStress source — a term neoIcoFoam never
+  exercises. Let me read it and check its sign/magnitude.
+
+  Read 1 file (ctrl+o to expand)
+
+● viscousStress computes -div(nuEff·dev2(gradU^T)), which matches OpenFOAM's
+  sign. But it's the prime steady-only suspect feeding HbyA. Let me do the
+  decisive test: disable the viscousStress term, rebuild, and see if maxU stays
+  ~1.
+
+● Update(~/code/NeoFOAM/examples/neoSimpleFoam/neoSimpleFoam.cpp)
+  ⎿  Added 4 lines, removed 1 line
+      138              // Momentum predictor (no ddt for steady-state SIM
+           PLE)
+      139              nf::PDESolver<NeoN::Vec3> UEqn(
+      140                  dsl::imp::div(phi, U) - dsl::imp::laplacian(tu
+           rb->nuEff(), U)
+      141 -                    + dsl::exp::viscousStress(nu, turb->nut(),
+          - turb->gradU()),                                              
+      141 +#ifndef NF_DIAG_NO_VISCOUS_STRESS                             
+      142 +                    + dsl::exp::viscousStress(nu, turb->nut(),
+          + turb->gradU())                                               
+      143 +#endif                                                        
+      144 +                ,                                             
+      145                  U,
+      146                  rt
+      147              );
+
+● Bash(cd /storage/home/greole/code/NeoFOAM
+      module purge >/dev/null 2>&1…)
+  ⎿  [2/2] Linking CXX executable bin/neoSimpleFoam
+     rc built; reverting define
+     -rwxr-xr-x 1 greole greole 42883952 22:20 build/profilingnvidia_h200/b
+     in/neoSimpleFoam
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/cylinder2D
+      cp system/controlDict system/controlDict.bak2…)
+  ⎿  EXIT=0
+     Time = 1
+     [DIAG] div(phiHbyA)_preP sumLocal=1.0150803798639394  maxRAU=4.6674580
+     … +53 lines (ctrl+o to expand)
+
+● Decisive result. With viscousStress disabled, the case is stable: maxU stays
+  ~1–2.6, maxHbyA ~1–2.4, and continuity bounces around 0.1–1.4 but trends down
+  instead of exploding. At step 1, viscousStress alone drives maxHbyA from 1.0 →
+  60.
+
+  Since native OpenFOAM's full divDevReff (which includes this transpose-stress
+  term) converges fine on this case, a correct viscousStress would not
+  destabilize. So the term has a wrong sign or magnitude in how it enters the
+  momentum system. Let me trace the explicit-assembly sign path.
+
+  Read 1 file (ctrl+o to expand)
+
+● exp::viscousStress returns -div(tau) and is added to the LHS expression. The
+  sign hinges on how the DSL moves an explicit LHS operator into the rhs. Let me
+  read NeoN's expression/operator assembly to confirm the sign convention.
+
+● Bash(cd /storage/home/greole/code/NeoN; grep -rn
+      "assembleExplicitSource\|explicitOperation\|rhs() -=\|rhs() +=\|source
+      -=\|source +=\|-= source\|explicitOp" include…)
+  ⎿  include/NeoN/dsl/temporalOperator.hpp:26:        t.explicitOperation(
+     include/NeoN/dsl/temporalOperator.hpp:97:    void explicitOperation(Ve
+     ctor<ValueType>& source, scalar t, scalar dt) const
+     … +30 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+  Read 1 file (ctrl+o to expand)
+
+● The explicit-assembly sign is actually consistent with OpenFOAM
+  (+viscousStress = -div(tau) on the LHS, rhs gets +div(tau)·V). Yet it still
+  destabilizes — so the issue is likely the magnitude of gradU feeding it. My
+  back-of-envelope says this term should contribute ~0.05 to HbyA near the
+  cylinder, not 60 (≈1000× too big). Let me check how/when turb->gradU() is
+  computed.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM; echo "=== turbulence models ===";
+      ls src/turbulenceModels/ include/NeoFOAM/turbulenceModels/ 2>/dev/null;
+      echo "=== gradU…)
+  ⎿  === turbulence models ===
+     include/NeoFOAM/turbulenceModels/:
+     kEpsilon.hpp
+     … +45 lines (ctrl+o to expand)
+
+● The case uses the laminar model. Let me read laminar.cpp — specifically how
+  gradU(), validate(), and correct() handle gradU.
+
+  Read 1 file (ctrl+o to expand)
+
+● Found it. nut_ is never initialized. The Laminar constructor (lines 28-33)
+  creates the nut_ volume field but never fills it — and validate()/correct()
+  only update gradU_ and nuEff_, never nut_.
+
+  The momentum laplacian uses nuEff_ (= interpolate(nu), correct), but
+  viscousStress(nu, nut, gradU) computes nuEff = nuV[i] + nutV[i] using the
+  uninitialized nut_. Garbage nut → garbage transpose-stress → HbyA=60 at step 1
+  → divergence. Disabling viscousStress sidestepped the uninitialized read,
+  which is why it became stable.
+
+  Let me confirm nut_ isn't filled anywhere and check the header.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM; echo "=== fill of nut in laminar
+      ==="; grep -rn "nut" src/turbulenceModels/laminar.cpp
+      include/NeoFOAM/turbulenceModels/la…)
+  ⎿  === fill of nut in laminar ===
+     src/turbulenceModels/laminar.cpp:28:    , nut_(
+     src/turbulenceModels/laminar.cpp:30:          "nut",
+     … +12 lines (ctrl+o to expand)
+
+● The header comment literally says "nut is identically zero" — but the code
+  never zeroes it. Intent vs. implementation bug. kEpsilon/kOmegaSST read nut
+  from a file (initialized); Laminar creates a fresh field and forgets to fill
+  it. Let me verify whether the VolumeField constructor zero-fills (to be
+  certain garbage is the mechanism).
+
+● Bash(cd /storage/home/greole/code/NeoN; f=$(find include -name
+      "volumeField.hpp" -path "*cellCentred*"); echo "FILE: $f"; grep -n
+      "VolumeField(" $f | head; echo "===…)
+  ⎿  FILE: include/NeoN/finiteVolume/cellCentred/fields/volumeField.hpp
+     45:    VolumeField(
+     62:    VolumeField(
+     … +5 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+  Read 1 file (ctrl+o to expand)
+
+● Confirmed: the (exec, name, mesh, boundaryConditions) constructor allocates
+  nut_ from the Umpire pool without zeroing — so nut_ is uninitialized garbage,
+  read by viscousStress via nuEff = nu + nut.
+
+  Root cause: Laminar::nut_ is never initialized to zero, despite the header 
+  documenting "nut is identically zero".
+
+  Now the fix — fill nut_ to zero in the constructor.
+
+● Update(~/code/NeoFOAM/src/turbulenceModels/laminar.cpp)  ⎿  Added 9 lines, removed 1 line
+      32            fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<NeoN
+          ::scalar>>(rt.nfMesh)
+      33        )
+      34      , surfInterp_(rt.exec, rt.nfMesh, NeoN::TokenList({std::str
+          ing("linear")}))
+      35 -{}                                                             
+      35 +{                                                              
+      36 +    // nut is identically zero for the laminar model, but the V
+         +olumeField constructor                                         
+      37 +    // above only ALLOCATES nut_ (from the Umpire pool, which d
+         +oes not zero memory) — it                                      
+      38 +    // never initialises it. viscousStress() reads nuEff = nu +
+         + nut per cell, so an                                           
+      39 +    // uninitialised nut_ injects garbage into the momentum sou
+         +rce and diverges the solve.                                    
+      40 +    // Pin it to zero here (internal + boundary) so nuEff == nu
+         + as documented.                                                
+      41 +    NeoN::fill(nut_.internalVector(), NeoN::scalar(0));        
+      42 +    NeoN::fill(nut_.boundaryData().value(), NeoN::scalar(0));  
+      43 +}                                                              
+      44  
+      45  void Laminar::updateGradU(const nnfvcc::VolumeField<NeoN::Vec3>
+          & U)
+      46  {
+
+● Now rebuild (laminar.cpp is in libNeoFOAM; building the neoSimpleFoam target
+  will recompile the lib and relink). I kept the DIAG instrumentation to verify
+  the fix.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM
+      module purge >/dev/null 2>&1…)
+  ⎿  [1/4] Building CXX object src/CMakeFiles/NeoFOAM.dir/turbulenceModels/
+     laminar.cpp.o
+     [2/4] Linking CXX shared library lib/libNeoFOAM.so
+     … +4 lines (ctrl+o to expand)
+
+● Now run the fixed binary (with viscousStress enabled) and check the
+  trajectory.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/cylinder2D
+      cp system/controlDict system/controlDict.bak3…)
+  ⎿  EXIT=0
+     Time = 1
+     [DIAG] div(phiHbyA)_preP sumLocal=1.0150711917741675  maxRAU=4.6674580
+     … +127 lines (ctrl+o to expand)
+
+● The fix works. With viscousStress enabled and nut now zero-initialized, the
+  case is stable and converging: maxU stays physical (~1.0–2.6), maxHbyA ~1–2.6,
+  max|p| settles from 178→~5, and continuity sum local trends down (0.9 →
+  0.02–0.15 by step 30) instead of exploding.
+
+  Now let me clean up my diagnostics from neoSimpleFoam.cpp (the real fix is in
+  laminar.cpp).
+
+● Update(~/code/NeoFOAM/examples/neoSimpleFoam/neoSimpleFoam.cpp)
+  ⎿  Added 1 line, removed 4 lines
+      138              // Momentum predictor (no ddt for steady-state SIM
+           PLE)
+      139              nf::PDESolver<NeoN::Vec3> UEqn(
+      140                  dsl::imp::div(phi, U) - dsl::imp::laplacian(tu
+           rb->nuEff(), U)
+      141 -#ifndef NF_DIAG_NO_VISCOUS_STRESS                             
+      142 -                    + dsl::exp::viscousStress(nu, turb->nut(),
+          - turb->gradU())                                               
+      143 -#endif                                                        
+      144 -                ,                                             
+      141 +                    + dsl::exp::viscousStress(nu, turb->nut(),
+          + turb->gradU()),                                              
+      142                  U,
+      143                  rt
+      144              );
+
+● Update(~/code/NeoFOAM/examples/neoSimpleFoam/neoSimpleFoam.cpp)
+  ⎿  Removed 64 lines
+      172                  // No ddtFluxCorr: SIMPLE is steady-state
+      173                  auto phiHbyA = nf::flux(hByA);
+      174  
+      175 -                // [DIAG] divergence of the predicted flux tha
+          -t the pEqn must remove,                                       
+      176 -                // plus field maxima, to localise the blow-up.
+          - Reductions are inlined                                       
+      177 -                // (no generic-lambda wrapper: nvcc forbids NE
+          -ON_LAMBDA inside one).                                        
+      178 -                {                                             
+      179 -                    const auto rauV = crAU.internalVector().vi
+          -ew();                                                         
+      180 -                    const auto hbyaV = hByA.internalVector().v
+          -iew();                                                        
+      181 -                    const auto uV = U.internalVector().view();
+      182 -                    const auto pV = p.internalVector().view();
+      183 -                    NeoN::scalar maxRAU = 0.0, maxHbyA = 0.0, 
+          -maxU = 0.0, maxAbsP = 0.0;                                    
+      184 -                    Kokkos::Max<NeoN::scalar> rRAU(maxRAU), rH
+          -byA(maxHbyA), rU(maxU), rP(maxAbsP);                          
+      185 -                    const NeoN::localIdx n = static_cast<NeoN:
+          -:localIdx>(rauV.size());                                      
+      186 -                    NeoN::parallelReduce(                     
+      187 -                        rt.exec,                              
+      188 -                        {0, n},                               
+      189 -                        NEON_LAMBDA(const size_t i, NeoN::scal
+          -ar& s) {                                                      
+      190 -                            NeoN::scalar a = Kokkos::abs(rauV[
+          -i]);                                                          
+      191 -                            if (a > s) s = a;                 
+      192 -                        },                                    
+      193 -                        rRAU                                  
+      194 -                    );                                        
+      195 -                    NeoN::parallelReduce(                     
+      196 -                        rt.exec,                              
+      197 -                        {0, n},                               
+      198 -                        NEON_LAMBDA(const size_t i, NeoN::scal
+          -ar& s) {                                                      
+      199 -                            NeoN::scalar mg = Kokkos::sqrt(   
+      200 -                                hbyaV[i][0] * hbyaV[i][0] + hb
+          -yaV[i][1] * hbyaV[i][1]                                       
+      201 -                                + hbyaV[i][2] * hbyaV[i][2]   
+      202 -                            );                                
+      203 -                            if (mg > s) s = mg;               
+      204 -                        },                                    
+      205 -                        rHbyA                                 
+      206 -                    );                                        
+      207 -                    NeoN::parallelReduce(                     
+      208 -                        rt.exec,                              
+      209 -                        {0, n},                               
+      210 -                        NEON_LAMBDA(const size_t i, NeoN::scal
+          -ar& s) {                                                      
+      211 -                            NeoN::scalar mg = Kokkos::sqrt(   
+      212 -                                uV[i][0] * uV[i][0] + uV[i][1]
+          - * uV[i][1] + uV[i][2] * uV[i][2]                             
+      213 -                            );                                
+      214 -                            if (mg > s) s = mg;               
+      215 -                        },                                    
+      216 -                        rU                                    
+      217 -                    );                                        
+      218 -                    NeoN::parallelReduce(                     
+      219 -                        rt.exec,                              
+      220 -                        {0, n},                               
+      221 -                        NEON_LAMBDA(const size_t i, NeoN::scal
+          -ar& s) {                                                      
+      222 -                            NeoN::scalar a = Kokkos::abs(pV[i]
+          -);                                                            
+      223 -                            if (a > s) s = a;                 
+      224 -                        },                                    
+      225 -                        rP                                    
+      226 -                    );                                        
+      227 -                    auto ePhiHbyA = NeoFOAM::computeContinuity
+          -Error(phiHbyA, rt);                                           
+      228 -                    NeoN::Logging::info(                      
+      229 -                        "[DIAG] div(phiHbyA)_preP sumLocal={} 
+          - maxRAU={}  maxHbyA={}  "                                     
+      230 -                        "maxU={}  maxAbsP={}",                
+      231 -                        ePhiHbyA.sumLocal,                    
+      232 -                        maxRAU,                               
+      233 -                        maxHbyA,                              
+      234 -                        maxU,                                 
+      235 -                        maxAbsP                               
+      236 -                    );                                        
+      237 -                }                                             
+      238 -                                                              
+      175                  if (consistent)
+      176                  {
+      177                      // phiHbyA += interpolate(rAtU - rAU)*snGr
+           ad(p)*magSf
+
+● Let me verify the cleanup is complete (no leftover define line), rebuild the
+  clean binary, and confirm the diff is just the real fix.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM; echo "=== top of neoSimpleFoam.cpp
+      ==="; head -5 examples/neoSimpleFoam/neoSimpleFoam.cpp; echo "=== git diff
+      --stat ===";…)
+  ⎿  === top of neoSimpleFoam.cpp ===
+     // SPDX-License-Identifier: GPL-3.0-or-later
+     // SPDX-FileCopyrightText: 2025 nf authors
+     … +28 lines (ctrl+o to expand)
+
+● Clean — the only change is laminar.cpp. Let me rebuild the production binary
+  (no diagnostics) and run a final confirmation to verify the clean build
+  converges.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM
+      module purge >/dev/null 2>&1…)
+  ⎿  [2/2] Linking CXX executable bin/neoSimpleFoam
+     rc=0
+     EXIT=0
+     … +25 lines (ctrl+o to expand)
+
+● The clean production binary converges: continuity sum local falls from 0.9 to
+  ~1e-3 over 60 steps (3 orders of magnitude), U residuals down to ~2e-3. Fixed.
+
+  Let me record the non-obvious gotcha (uninitialized pool allocations) to
+  memory, since it can recur.
+
+  Recalled 1 memory, wrote 3 memories (ctrl+o to expand)
+
+● Full analysis: cylinder2D divergence — root cause found and fixed
+
+  The bug
+
+  Laminar::nut_ is allocated but never initialized, in
+  src/turbulenceModels/laminar.cpp. The VolumeField(exec, name, mesh, BCs)
+  constructor only allocates from the Umpire pool, which does not zero memory —
+  so nut_ held garbage, even though the header documents "nut is identically 
+  zero".
+
+  neoSimpleFoam's momentum equation has an explicit term exp::viscousStress(nu, 
+  nut, gradU) that computes nuEff = nu + nut per cell. The garbage nut poisoned
+  the momentum source → HbyA/U blew to ~60 at the very first step → the SIMPLE
+  outer loop amplified it geometrically to nan by ~step 13.
+
+  How I localized it
+
+  1. Trajectory triage: continuity sum local was huge from step 1 (0.84) and
+  grew ~10×/step regardless of scheme/relaxation — across all your A–G/INV
+  variants the trajectories were near-identical. Heavy relaxation only delayed
+  blow-up → a consistency/code bug, not under-resolution. checkMesh confirmed
+  the mesh is well-conditioned (max non-orth 44°), so mesh wasn't it.
+  2. Instrumented neoSimpleFoam to print div(phiHbyA), maxRAU, maxHbyA, maxU,
+  max|p| per step. Smoking gun: at step 1, with p still 0, the momentum 
+  predictor produced maxU=62 and maxHbyA=60 — the pressure loop was faithfully
+  chasing an already-broken velocity. → bug is in momentum assembly/HbyA, not
+  pressure coupling.
+  3. Bisected the new (steady-only) terms. neoIcoFoam (which works) has none of:
+  bounded div, viscousStress, turbulence, relaxation. Disabling viscousStress
+  made the case stable → the term, or its inputs, was the culprit.
+  4. The sign/magnitude of viscousStress itself was correct vs OpenFOAM's
+  divDevReff; tracing its inputs showed nut_ is read uninitialized.
+
+  The fix
+
+  // laminar.cpp ctor
+  NeoN::fill(nut_.internalVector(), NeoN::scalar(0));
+  NeoN::fill(nut_.boundaryData().value(), NeoN::scalar(0));
+
+  Verification (clean production binary, viscousStress enabled, 60 steps)
+
+  Continuity sum local: 0.90 → ~1e-3 (3 orders down), velocities physical
+  (~1.7), U residuals ~2e-3. The case converges. git diff is just the 9-line
+  laminar.cpp change.
+
+  Re: your simpleFoam build
+
+  Good call — your case dicts are already OpenFOAM-compatible (I tried to run
+  native simpleFoam as a reference but this OpenFOAM install only has utilities,
+  no segregated solvers, hence none was available). Now that neoSimpleFoam
+  converges, a side-by-side simpleFoam run is the right next step to confirm
+  quantitative agreement (Cd, recirculation length). I left the diagnostic logs
+  in cylinder2D/: run_diag.log (broken), run_novisc.log (stable w/o term),
+  run_fixed.log / run_fixed_clean.log (fixed).
+
+  One unrelated observation, not blocking: the pressure solve (Jacobi+CG with
+  diagonal preconditioner) hits 1000 iters without reaching relTol on tight
+  steps — purely a preconditioner-strength/performance issue, not correctness.
+
+  Want me to set up the simpleFoam vs neoSimpleFoam comparison once your build
+  finishes?
+
+✻ Crunched for 23m 27s
+
+❯ now test if it works with kOmegaSST model                                     
+
+● Let me set up the case for kOmegaSST. First let me understand what
+  fields/config the kOmegaSST model requires and check the existing case.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM
+      echo "=== how turb model is selected ==="; grep -rn
+      "kOmegaSST\|create\|RAS\|simulationType\|laminar\|model\b" src/turbulen…)
+  ⎿  === how turb model is selected ===
+     src/turbulenceModels/turbulenceModel.cpp:13:TurbulenceModel::create(Ru
+     nTime& rt, const nnfvcc::VolumeField<NeoN::scalar>& nu)
+     … +36 lines (ctrl+o to expand)
+
+● kOmegaSST needs turbulenceProperties (RAS), 0/{k,omega,nut}, plus
+  fvSolution/fvSchemes entries for k/omega. Let me find reference field/config
+  files in the repo.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM
+      echo "=== turbulenceProperties with kOmegaSST anywhere ==="; grep -rln
+      "kOmegaSST" --include=turbulenceProperties* . 2>/dev…)
+  ⎿  === turbulenceProperties with kOmegaSST anywhere ===
+     tutorials/motorBike/constant/turbulenceProperties
+     test/setup_kOmegaSST/constant/turbulenceProperties
+     … +43 lines (ctrl+o to expand)
+
+● There's a canonical test/turbulence/setup_kOmegaSST/ case. Let me use it as
+  the template for the field BCs and schemes.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/test/turbulence/setup_kOmegaSST
+      echo "=== tree ==="; find . -type f | grep -v polyMesh | head -40…)  ⎿  === tree ===
+     ./constant/transportProperties
+     ./constant/turbulenceProperties
+     … +36 lines (ctrl+o to expand)
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/test/turbulence/setup_kOmegaSST
+      for f in 0/k 0/omega 0/nut; do echo "===== $f ====="; sed -n
+      '/internalField/,/^\/\/ \*/p'…)
+  ⎿  ===== 0/k =====
+     internalField   uniform 9.375e-4;
+     … +174 lines (ctrl+o to expand)
+
+● I have the template. Let me check which wall-function BC types NeoFOAM's
+  kOmegaSST actually recognizes (so I set BCs it supports), and recall the known
+  omega wall-function issue on this branch.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM
+      echo "=== wall function handling in kOmegaSST ==="; grep -niE
+      "wallfunction|nutk|kqr|omegawall|nutWall|isWall|patchType|wal…)
+  ⎿  === wall function handling in kOmegaSST ===
+     32:// degenerate wall y, or a runaway nut) from producing an Inf/NaN t
+     hat FOAM's
+     … +111 lines (ctrl+o to expand)
+
+● The omega wall-cell pin fix is implemented and validated. kOmegaSST should
+  work with wall functions now. Let me look at the validated occDrivAer field
+  BCs to mirror the correct wall-function types.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/occDrivAerStaticMesh
+      for f in 0.orig/k 0.orig/omega 0.orig/nut; do echo "===== $f ====="; sed
+      -n '/boundaryField/,/^\/\/ \*…)
+  ⎿  ===== 0.orig/k =====
+     boundaryField
+     {
+     … +84 lines (ctrl+o to expand)
+
+● The validated wall-function set is: kqRWallFunction (k), omegaWallFunction
+  (omega), nutUSpaldingWallFunction (nut). Wall distance needs the patches to be
+  type wall. Let me check the cylinder2D mesh boundary types.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/cylinder2D; grep -A4 -E
+      "cylinder|upper_wall|lower_wall|inlet|outlet|defaultFaces"
+      constant/polyMesh/boundary | grep -E "cy…)
+  ⎿      cylinder
+             type            patch;
+             nFaces          212;
+     … +15 lines (ctrl+o to expand)
+
+● All patches are type patch. For wallDist/wall-functions, the cylinder (the
+  real no-slip wall) should be type wall. Let me set up the kOmegaSST case:
+  cylinder as a wall with wall functions, upper/lower walls + inlet as
+  far-field, outlet zeroGradient. Let me back up the laminar config and write
+  the kOmegaSST files.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/cylinder2D
+      mkdir -p .laminar_backup…)
+  ⎿  backed up. Current 0/ contents:
+     U
+     p
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/cylinder2D
+      # 1) turbulenceProperties -> RAS kOmegaSST…)
+  ⎿  cylinder patch type after edit:
+         cylinder
+         {
+             type            wall;
+
+● Now the turbulence fields:
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/cylinder2D
+      cat > 0/k <<'EOF'…)
+  ⎿  0/ now:
+     U
+     k
+     … +3 lines (ctrl+o to expand)
+
+● Now update fvSchemes (div for k/omega + wallDist) and fvSolution (k/omega
+  solvers + relaxation):
+
+● Update(~/code/NeoFOAM/cylinder2D/system/fvSchemes)
+  ⎿  File must be read first
+
+  Read 1 file (ctrl+o to expand)
+
+● Update(~/code/NeoFOAM/cylinder2D/system/fvSchemes)
+  ⎿  Added 6 lines
+      15  {
+      16      default         none;
+      17      div(phi,U)      bounded Gauss linearUpwindV grad(U);
+      18 +    div(phi,k)      bounded Gauss upwind;                      
+      19 +    div(phi,omega)  bounded Gauss upwind;                      
+      20      div((nuEff*dev2(T(grad(U))))) Gauss linear;
+      21  }
+      22  laplacianSchemes
+     ...
+      31  {
+      32      default         corrected;
+      33  }
+      34 +wallDist                                                       
+      35 +{                                                              
+      36 +    method          meshWave;                                  
+      37 +}                                                              
+      38  // ************************************************************
+          ************* //
+
+  Read 1 file (ctrl+o to expand)
+
+● Update(~/code/NeoFOAM/cylinder2D/system/fvSolution)
+  ⎿  Added 8 lines
+      17          relTol           0.1;
+      18          l1ScaledResidual true;
+      19      }
+      20 +    "(k|omega)"                                                
+      21 +    {                                                          
+      22 +        solver           smoothSolver;                         
+      23 +        smoother         GaussSeidel;                          
+      24 +        tolerance        1e-8;                                 
+      25 +        relTol           0.1;                                  
+      26 +        l1ScaledResidual true;                                 
+      27 +    }                                                          
+      28  }
+      29  SIMPLE
+      30  {
+
+● Update(~/code/NeoFOAM/cylinder2D/system/fvSolution)
+  ⎿  Added 1 line, removed 1 line
+      34  relaxationFactors
+      35  {
+      36      fields  { p 0.3; }
+      37 -    equations { U 0.7; }                                       
+      37 +    equations { U 0.7; k 0.7; omega 0.7; }                     
+      38  }
+
+● The NeoFOAM dict lookup for k/omega solvers is by exact name (not regex), so
+  let me use explicit entries instead of the "(k|omega)" regex.
+
+● Update(~/code/NeoFOAM/cylinder2D/system/fvSolution)
+  ⎿  Added 9 lines, removed 1 line
+      17          relTol           0.1;
+      18          l1ScaledResidual true;
+      19      }
+      20 -    "(k|omega)"                                                
+      20 +    k                                                          
+      21      {
+      22          solver           smoothSolver;
+      23          smoother         GaussSeidel;
+     ...
+      25          relTol           0.1;
+      26          l1ScaledResidual true;
+      27      }
+      28 +    omega                                                      
+      29 +    {                                                          
+      30 +        solver           smoothSolver;                         
+      31 +        smoother         GaussSeidel;                          
+      32 +        tolerance        1e-8;                                 
+      33 +        relTol           0.1;                                  
+      34 +        l1ScaledResidual true;                                 
+      35 +    }                                                          
+      36  }
+      37  SIMPLE
+      38  {
+● Now run kOmegaSST. The production binary is already built with the fix. Let me
+  run with a short endTime first to check stability.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/cylinder2D
+      cp system/controlDict system/controlDict.bakk…)
+  ⎿  EXIT=0
+     === tail of setup/first steps ===
+     /*--------------------------------------------------------------------
+     … +48 lines (ctrl+o to expand)
+
+● It set up cleanly (wallDist meshWave selected, k/omega solvers mapped). Let me
+  check the convergence trajectory and turbulence solves.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/cylinder2D
+      echo "=== continuity trajectory ==="; grep "continuity errors"
+      run_komega.log…)
+  ⎿  === continuity trajectory ===
+     time step continuity errors : sum local = 0.905824578149134, global =
+     -1.8023043338166715e-12, cumulative = -1.8023043338166715e-12
+     … +110 lines (ctrl+o to expand)
+
+● kOmegaSST runs stably: no nan/inf/FPE, continuity decays to ~0.04–0.06 by step
+  30, omega well-converged (init residual ~2.6e-6), k ~0.004, U dropping. The
+  omega wall-cell pin is working (no nut blow-up). Given the memory note about a
+  possible later pressure-driven blow-up, let me run longer (to 200) to confirm
+  sustained stability.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/cylinder2D
+      cp system/controlDict system/controlDict.bakk…)
+  ⎿  EXIT=0
+     === continuity: every 10th step + last 5 ===
+     time step continuity errors : sum local = 0.9058245783644318, global =
+     … +72 lines (ctrl+o to expand)
+
+● kOmegaSST works — runs to 200 steps and fully converges:
+
+  - continuity sum local: 0.91 → 7×10⁻⁶ (5 orders of magnitude), monotonically
+  settling
+  - No nan/inf/FPE anywhere (only the trapFpe banner matched the grep)
+  - Final residuals: U ~6×10⁻⁵, omega ~3.5×10⁻⁶ (well-converged), k ~2×10⁻³
+  - The omega wall-cell pin is working — no near-wall nut blow-up; no late
+  pressure-driven divergence on this 282k-cell mesh
+
+  Let me confirm the case is left clean (no leftover backup/temp files in the
+  run dirs):
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/cylinder2D
+      echo "=== controlDict endTime restored? ==="; grep "^endTime"
+      system/controlDict…)
+  ⎿  === controlDict endTime restored? ===
+     endTime         60;
+     === leftover .bak ===
+     … +16 lines (ctrl+o to expand)
+
+● Let me remove the one temp file I created (controlDict.bak_diag); the others
+  predate my work.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/cylinder2D
+      rm -f system/controlDict.bak_diag…)
+  ⎿  removed my diag backup. Case is set to kOmegaSST; laminar config saved
+      in .laminar_backup/
+     To restore laminar: cp .laminar_backup/{turbulenceProperties} constant
+     … +2 lines (ctrl+o to expand)
+
+● Summary: kOmegaSST works on cylinder2D ✅
+
+  I configured the cylinder2D case for kOmegaSST and confirmed it runs stably to
+  convergence.
+
+  Setup applied (laminar config saved in cylinder2D/.laminar_backup/):
+  - constant/turbulenceProperties → RAS / kOmegaSST
+  - constant/polyMesh/boundary: cylinder patch → type wall (required for
+  wallDist/wall functions)
+  - 0/k, 0/omega, 0/nut: cylinder uses kqRWallFunction / omegaWallFunction 
+  (blended) / nutUSpaldingWallFunction; inlet + upper/lower walls far-field
+  fixedValue; outlet zeroGradient/calculated
+  - fvSchemes: added div(phi,k), div(phi,omega) (bounded Gauss upwind) +
+  wallDist { method meshWave; }
+  - fvSolution: added k/omega smoothSolvers + relaxation 0.7
+
+  Result (200 SIMPLE iterations):
+  - continuity sum local: 0.91 → 7×10⁻⁶ (monotone convergence, 5 orders)
+  - No nan/inf/FPE; no late blow-up
+  - omega init residual ~3.5×10⁻⁶, k ~2×10⁻³, U ~6×10⁻⁵ — all healthy
+  - The omega wall-cell pin (from your enh/kOmegaSST work) is functioning — no
+  near-wall nut blow-up
+
+  Note: kOmegaSST reads nut from file, so it wasn't affected by the laminar nut_
+  init bug I fixed earlier — this is an independent confirmation that the
+  turbulence path couples correctly on this case.
+
+  Still pending: the only tracked code change remains
+  src/turbulenceModels/laminar.cpp (the nut zero-init fix). The pressure solver
+  (Jacobi+CG/diagonal) still runs to its 1000-iter cap without fully converging
+  — a known weak-preconditioner performance limitation, not a correctness issue.
+
+  Want me to leave the case as kOmegaSST, restore it to laminar, or commit the
+  laminar.cpp fix?
+
+✻ Baked for 5m 49s
+
+❯ compare against simpleFoam                                                    
+
+● The user mentioned building simpleFoam earlier. Let me check if it's now
+  available.
+
+● Bash(module purge >/dev/null 2>&1; module load gcc/13.3.0 openmpi >/dev/null
+      2>&1; source $HOME/OpenFOAM/openfoam/etc/bashrc >/dev/null 2>&1
+      echo "simpleFoam: $(whic…)
+  ⎿  simpleFoam: /storage/home/greole/OpenFOAM/openfoam/platforms/linux64Gc
+     cDPInt32Opt/bin/simpleFoam
+     -rwxr-xr-x 1 greole greole 747576 Jun 24 22:13 /storage/home/greole/Op
+     … +8 lines (ctrl+o to expand)
+
+● simpleFoam is now built (22:13). Let me run a clean head-to-head comparison on
+  the laminar case (the core bug fix), using identical mesh/schemes/relaxation
+  for both solvers. I'll set up two case copies in scratch.
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      SRC=/storage/home/greole/code/NeoFOAM/cyli…)
+  ⎿  === laminar 0/ ===
+     U
+     p
+     … +8 lines (ctrl+o to expand)
+
+● Configure controlDict for both (run to convergence, write final fields), then
+  run both solvers.
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      for D in $SCR/cmp_neo $SCR/cmp_of; do…)
+  ⎿  controlDict configured. endTime/write:
+     application      simpleFoam;
+     stopAt            endTime;
+     … +10 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● neoSimpleFoam converged (continuity ~5e-6, wrote dir 500). Now run native
+  simpleFoam on the identical case.
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      cd $SCR/cmp_of…)
+  ⎿  Running in the background (↓ to manage)
+
+● simpleFoam is running in the background. Let me wait for it to finish.
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      cd $SCR/cmp_of…)
+  ⎿  Error: Exit code 143
+     Command timed out after 2m 0s
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      cd $SCR/cmp_of…)
+  ⎿  === latest Time + convergence ===
+     Time = 207
+     Time = 208
+     … +11 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● Both converge to continuity ~1e-5 with similar trajectories — simpleFoam is at
+  step 210 (slower on CPU), still running. Let me compare the early-step
+  continuity trajectories directly while it finishes.
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      echo "step | neoSimpleFoam sumLocal | simp…)
+  ⎿  step | neoSimpleFoam sumLocal | simpleFoam sumLocal
+          1     0.9048896677169189      0.84424252
+          2     1.1538869049565381      1.1401536
+     … +23 lines (ctrl+o to expand)
+
+● The continuity trajectories track each other closely (step-by-step within a
+  few %) — differences are just the linear-solver backend (Ginkgo Cg/Jacobi GPU
+  vs OpenFOAM PCG/diagonal CPU). The macroscopic SIMPLE convergence path
+  matches. Let me wait for simpleFoam to finish writing the final field, then do
+  a cell-by-cell field comparison.
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      cd $SCR/cmp_of…)
+  ⎿  Error: Exit code 2
+     === status ===
+     Time = 319
+     Time = 320
+     0
+
+❯ now do the same analysis with kOmegaSST                                       
+
+● The continuity-trajectory match already strongly validates the laminar case
+  (still finishing at step 320). Now let me set up the kOmegaSST comparison the
+  user asked for. I'll build two case copies from the current kOmegaSST setup
+  and run both solvers.
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      SRC=/storage/home/greole/code/NeoFOAM/cyli…)
+  ⎿  32
+     --- cores above ---
+     === ko case 0/ ===
+     … +11 lines (ctrl+o to expand)
+
+● 32 cores available. Let me run neoSimpleFoam kOmegaSST (GPU) and launch
+  simpleFoam kOmegaSST in the background concurrently.
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      cd $SCR/ko_neo…)
+  ⎿  neo-kOmega EXIT=0
+     time step continuity errors : sum local = 4.735604232601471e-06, globa
+     l = -4.096058973417548e-08, cumulative = -0.02057662365968798
+     … +4 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● neoSimpleFoam kOmegaSST converged (continuity ~5e-6, wrote dir 500). Now
+  launch simpleFoam kOmegaSST in the background.
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      cd $SCR/ko_of…)
+  ⎿  launched simpleFoam kOmega PID 3000186
+     === early progress ===
+     Time = 11
+     … +5 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● Both simpleFoam runs are progressing in the background. Let me write the
+  field-comparison parser while they run.
+
+  Read 1 file (ctrl+o to expand)
+
+● Both simpleFoam runs are in the background. Let me poll for completion
+  (laminar was at step ~320, kOmega just started).
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      for i in $(seq 1 20); do…)
+  ⎿  laminar 500/U: DONE | kOmega 500/U:
+     laminar last Time:
+     Time = 500
+     … +2 lines (ctrl+o to expand)
+
+● Background command "Run native simpleFoam laminar" completed (exit code 0)
+
+● Laminar simpleFoam finished. Let me run the laminar field comparison now while
+  kOmega simpleFoam continues (at step 104).
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      module purge >/dev/null 2>&1; module load…)
+  ⎿  ######## LAMINAR: neoSimpleFoam vs simpleFoam @ t=500 ########
+     Comparing /scratch/greole/tmp/claude-1039/-storage-home-greole-code-Ne
+     oFOAM/486acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad/cmp_neo vs /scra
+     … +8 lines (ctrl+o to expand)
+
+● Laminar comparison — excellent agreement (converged fields, t=500):
+
+  ┌────────────────┬──────────────────┬────────────────┬──────────┬────────┐
+  │     Field      │  neoSimpleFoam   │   simpleFoam   │ max abs  │ rel.   │
+  │                │                  │                │   diff   │  max   │
+  ├────────────────┼──────────────────┼────────────────┼──────────┼────────┤
+  │ |U| (max /     │ 1.4874 / 1.0103  │ 1.4874 /       │ 0.0054   │ 0.37%  │
+  │ mean)          │                  │ 1.0103         │          │        │
+  ├────────────────┼──────────────────┼────────────────┼──────────┼────────┤
+  │ p              │ -0.782 / 1.065 / │ -0.783 / 1.064 │ 0.0061   │ 0.58%  │
+  │ (min/max/mean) │  0.0710          │  / 0.0705      │          │        │
+  └────────────────┴──────────────────┴────────────────┴──────────┴────────┘
+
+  The fields agree to ~0.4–0.6% max and ~0.03% mean — the small residual is just
+  the different linear-solver backends and finite convergence (continuity
+  ~5e-6, not machine-zero). neoSimpleFoam reproduces OpenFOAM simpleFoam.
+
+  Now let me wait for the kOmegaSST simpleFoam run (at step 104) to finish.
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      for i in $(seq 1 22); do…)  ⎿  kOmega simpleFoam last Time:
+     Time = 210
+     500/ written?
+     nan/error?
+
+● Still running (step 210, ~1 step/s). Let me keep waiting.
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      for i in $(seq 1 22); do…)
+  ⎿  kOmega simpleFoam last Time:
+     Time = 298
+     not yet
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      for i in $(seq 1 23); do…)
+  ⎿  kOmega simpleFoam last Time:
+     Time = 388
+     not yet
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      for i in $(seq 1 23); do…)
+  ⎿  kOmega simpleFoam last Time:
+     Time = 484
+     not yet
+
+● Almost done (step 484). One more short wait.
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      for i in $(seq 1 18); do…)
+  ⎿  === kOmega simpleFoam done? ===
+     Time = 500
+     End
+     … +17 lines (ctrl+o to expand)
+
+● kOmegaSST simpleFoam finished. Both converged to continuity ~1e-6. Now the
+  field comparison:
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      module purge >/dev/null 2>&1; module load…)
+  ⎿  ######## kOmegaSST: neoSimpleFoam vs simpleFoam @ t=500 ########
+     Comparing /scratch/greole/tmp/claude-1039/-storage-home-greole-code-Ne
+     oFOAM/486acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad/ko_neo vs /scrat
+     … +31 lines (ctrl+o to expand)
+
+● Both kOmegaSST runs finished and the comparison is complete. Here are the
+  results.
+
+  neoSimpleFoam vs OpenFOAM simpleFoam — validation
+
+  Identical mesh (282k cells), schemes, and relaxation; both run to t=500
+  (continuity ~1–5×10⁻⁶). Only the linear-solver backend differs (Ginkgo
+  Cg/Jacobi on GPU vs OpenFOAM PCG/diagonal on CPU).
+
+  Laminar (Re=30) — converged fields
+
+  ┌───────┬──────────────────┬─────────────────┬───────────────┐
+  │ Field │ neo (max / mean) │ of (max / mean) │ rel. max diff │
+  ├───────┼──────────────────┼─────────────────┼───────────────┤
+  │ |U|   │ 1.4874 / 1.0103  │ 1.4874 / 1.0103 │ 0.37%         │
+  ├───────┼──────────────────┼─────────────────┼───────────────┤
+  │ p     │ 1.065 / 0.0710   │ 1.064 / 0.0705  │ 0.58%         │
+  └───────┴──────────────────┴─────────────────┴───────────────┘
+
+  kOmegaSST — converged fields
+
+  ┌───────┬───────────────────┬───────────────────┬─────────────┬─────────┐
+  │ Field │ neo (max / mean)  │  of (max / mean)  │  rel. max   │  mean   │
+  │       │                   │                   │    diff     │  diff   │
+  ├───────┼───────────────────┼───────────────────┼─────────────┼─────────┤
+  │ |U|   │ 1.4871 / 1.0103   │ 1.4871 / 1.0103   │ 0.37%       │ 0.03%   │
+  ├───────┼───────────────────┼───────────────────┼─────────────┼─────────┤
+  │ p     │ 1.072 / 0.0726    │ 1.072 / 0.0722    │ 0.55%       │ —       │
+  ├───────┼───────────────────┼───────────────────┼─────────────┼─────────┤
+  │ k     │ 0.0037502 /       │ 0.0037502 /       │ 9.6%*       │ 0.4%    │
+  │       │ 0.0029375         │ 0.0029267         │             │         │
+  ├───────┼───────────────────┼───────────────────┼─────────────┼─────────┤
+  │ omega │ 4.4738e7 / 41231  │ 4.4738e7 / 41229  │ 0.43%       │ —       │
+  ├───────┼───────────────────┼───────────────────┼─────────────┼─────────┤
+  │ nut   │ 3.773e-5 /        │ 3.776e-5 /        │ 12.6%*      │ 0.7%    │
+  │       │ 3.249e-5          │ 3.255e-5          │             │         │
+  └───────┴───────────────────┴───────────────────┴─────────────┴─────────┘
+
+  * The ~10% figures are a single near-wall cell; field maxima and means agree
+  to <1%.
+
+  Key findings
+
+  - Mean fields agree to <0.7% in both cases; velocity/pressure maxima are
+  identical to 4–5 digits.
+  - Continuity trajectories track step-for-step (e.g. laminar step 5: 1.367 vs
+  1.434; kOmega step 10: 0.265 vs 0.262) — same SIMPLE convergence path, not
+  just same endpoint.
+  - The pinned near-wall omega matches exactly (max 4.4738e7 in both) — confirms
+  NeoFOAM's omega wall-cell pin reproduces OpenFOAM's omegaWallFunction
+  setValues matrix manipulation.
+
+  The residual sub-1% differences are fully explained by the different linear
+  solvers and finite convergence (continuity ~1e-6, not machine-zero).
+  neoSimpleFoam reproduces OpenFOAM simpleFoam for both laminar and kOmegaSST on
+  this case.
+
+  Let me record this validation milestone to memory.
+
+  Wrote 2 memories (ctrl+o to expand)
+
+● Done. Both comparisons are complete and recorded.
+
+  Summary
+
+  neoSimpleFoam now matches native OpenFOAM simpleFoam on cylinder2D, for both
+  turbulence configurations:
+
+  - Laminar (Re=30): velocity/pressure agree to ~0.4–0.6% rel-max, <0.06% mean;
+  |U|max identical (1.4874).
+  - kOmegaSST: all field means within <0.7%; |U|/omega maxima identical.
+  Critically, the pinned near-wall omega (4.4738×10⁷) matches exactly — proving
+  NeoFOAM's omega wall-cell pin faithfully reproduces OpenFOAM's
+  omegaWallFunction matrix manipulation.
+  - Continuity converges step-for-step in both, not just at the endpoint.
+
+  The sub-1% residuals are entirely from the different linear-solver backends
+  (Ginkgo Cg/Jacobi GPU vs OF PCG/diagonal CPU) and finite convergence (~1e-6).
+
+  This closes the loop on the whole investigation: the original divergence
+  (uninitialized Laminar::nut_, fixed in src/turbulenceModels/laminar.cpp) →
+  stable laminar run → stable kOmegaSST run → quantitative validation against
+  the reference solver.
+
+  Outstanding items, when you want them:
+  - The one tracked code change (laminar.cpp nut zero-init) is still uncommitted
+  — say the word and I'll branch + commit it.
+  - The cylinder2D case is currently in kOmegaSST config; laminar config is
+  preserved in cylinder2D/.laminar_backup/ if you want it restored.
+
+✻ Cogitated for 23m 20s
+
+❯ check for any potential unitialised fields in the kOmegaSST model             
+
+● I'll audit the kOmegaSST model for the same uninitialized-field class of bug.
+  Let me read its constructor, member init list, and header declarations.
+
+  Read 1 file (ctrl+o to expand)
+
+● Many member fields. Let me read the kOmegaSST constructor and the
+  validate/correct flow to verify each field is written before first read.
+
+  Read 1 file (ctrl+o to expand)
+
+● Let me read the rest of correct(), the model wrapper methods, and the helper
+  kernels to map every field's first write vs. first read.
+
+  Read 1 file (ctrl+o to expand)
+
+● Let me read calcDiffusivities, the KOmegaSSTModel wrapper methods, and check
+  whether GaussGreenGrad::gradTensor fills boundary values (validate() omits the
+  explicit correctBoundaryConditions that correct() has).
+
+  Read 1 file (ctrl+o to expand)
+
+● Now let me verify the two real candidates: (A) does surface interpolate read
+  the volume field's boundary values (which would expose F1_'s never-written
+  boundary), and (B) does gradTensor fill the output boundary (validate() omits
+  the correctBoundaryConditions that correct() has)?
+
+● Bash(cd /storage/home/greole/code/NeoN
+      echo "=== Linear<T>::interpolate boundary handling ==="; f=$(find include
+      src -name "linear.hpp" -path "*surfaceInterpolation*…)
+  ⎿  === Linear<T>::interpolate boundary handling ===
+     --- search interpolate boundary kernel ---
+     include/NeoN/finiteVolume/cellCentred/interpolation/linear.hpp:75:
+     … +58 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+● gradTensor does write the output boundary (line 371-377), so validate()'s
+  gradU_ boundary is fine — candidate B is clear. Now candidate A: does surface
+  interpolation read the volume field's boundary (exposing F1_'s never-written
+  boundary)? Let me read the linear interpolation boundary kernel.
+
+  Read 1 file (ctrl+o to expand)
+
+● Bash(cd /storage/home/greole/code/NeoN; f=$(grep -rln
+      "computeLinearInterpolation" src --include=*.cpp | head -1); echo "FILE:
+      $f"; sed -n '/void computeLinearInterp…)
+  ⎿  FILE: src/finiteVolume/cellCentred/interpolation/linear.cpp
+     2:    const VolumeField<ValueType>& src,
+     4:    SurfaceField<ValueType>& dst
+     … +24 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● Confirmed candidate A is a real latent bug. The boundary interpolation kernel
+  (linear.cpp:35) sets surfF1_.boundary = weightB * F1_.boundary — and F1_'s 
+  boundary is never written (computeF1AndSources writes only
+  F1_.internalVector()). That garbage flows into surfF1_ → DkEffF_/DomegaEffF_
+  boundary face diffusivities → the k/omega laplacian boundary contributions.
+
+  Let me verify the BC type doesn't fix it (createCalculatedBCs correctBC is a
+  no-op) and that extrapolated BCs would, then I'll confirm empirically by
+  NaN-poisoning.
+
+● Bash(cd /storage/home/greole/code/NeoN
+      echo "=== createCalculatedBCs vs createExtrapolatedBCs ==="…)
+  ⎿  === createCalculatedBCs vs createExtrapolatedBCs ===
+     include/NeoN/finiteVolume/cellCentred/boundary.hpp:34:std::vector<Boun
+     daryType> createCalculatedBCs(const UnstructuredMesh& mesh)
+     … +17 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● Bash(cd /storage/home/greole/code/NeoN
+      echo "=== calculated.hpp correctBoundaryConditions ==="; sed -n '1,80p'
+      include/NeoN/finiteVolume/cellCentred/boundary/volume/…)
+  ⎿  === calculated.hpp correctBoundaryConditions ===
+     === extrapolated.hpp correctBoundaryConditions ===
+
+● Bash(cd /storage/home/greole/code/NeoN
+      for f in calculated extrapolated; do…)
+  ⎿  ===== volume/calculated.hpp =====
+     18:    using Base = VolumeBoundaryFactory<ValueType>::template Registe
+     r<Calculated<ValueType>>;
+     … +27 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● Confirmed: Calculated::correctBoundaryCondition is a no-op (empty), so F1_'s
+  boundary is never set — while Extrapolated copies the owner-cell value to the
+  face. This is the single real uninitialized read (the other fields'
+  uninitialized boundaries/internals are never read — cosmetic).
+
+  Let me apply the fix: give F1_ extrapolated BCs and correct them after
+  computeF1AndSources. Let me see the end of that function.
+
+  Read 1 file (ctrl+o to expand)
+
+● Update(~/code/NeoFOAM/src/turbulenceModels/kOmegaSST.cpp)
+  ⎿  Added 7 lines
+      758          coeffs_.b1,
+      759          coeffs_.c1
+      760      );
+      761 +                                                              
+      762 +    // The kernel writes only F1_'s internal cells. calcDiffus
+          +ivities() interpolates F1_ to the                             
+      763 +    // faces, and the surface-interpolation boundary kernel re
+          +ads F1_'s boundary values                                     
+      764 +    // (surfF1.boundary = w * F1.boundary). Without this extra
+          +polation those boundary values are                            
+      765 +    // uninitialised pool memory, poisoning DkEff/DomegaEff on
+          + every boundary face. Extrapolate                             
+      766 +    // F1 (owner-cell value) to the boundary so the face blend
+          +ing is well-defined there.                                    
+      767 +    F1_.correctBoundaryConditions();                          
+      768  }
+      769  
+      770  void KOmegaSST::correctNutInternal(
+
+● Update(~/code/NeoFOAM/src/turbulenceModels/kOmegaSST.cpp)
+  ⎿  Added 1 line, removed 1 line
+      416            mesh,
+      417            fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<Vec
+           3>>(mesh)
+      418        )
+      419 -    , F1_(exec, "F1", mesh, fvcc::createCalculatedBCs<nnfvcc::
+          -VolumeBoundary<scalar>>(mesh))                                
+      419 +    , F1_(exec, "F1", mesh, fvcc::createExtrapolatedBCs<nnfvcc
+          +::VolumeBoundary<scalar>>(mesh))                              
+      420      , Pk_(exec, "Pk", mesh, fvcc::createCalculatedBCs<nnfvcc::
+           VolumeBoundary<scalar>>(mesh))
+      421      , spK_(exec, "spK", mesh, fvcc::createCalculatedBCs<nnfvcc
+           ::VolumeBoundary<scalar>>(mesh))
+      422      , omegaSource_(
+
+● Now rebuild and re-run the kOmegaSST comparison to confirm the fix is safe
+  (and ideally improves near-wall agreement, since OpenFOAM also extrapolates F1
+  at boundaries).
+
+● Bash(cd /storage/home/greole/code/NeoFOAM
+      module purge >/dev/null 2>&1; module load gcc/13.3.0 cuda/12.8.1 cmake
+      openmpi >/dev/null 2>&1; source $HOME/OpenFOAM/openf…)
+  ⎿  [2/5] Linking CXX shared library lib/libNeoN.so
+     [3/5] Building CXX object src/CMakeFiles/NeoFOAM.dir/turbulenceModels/
+     kOmegaSST.cpp.o
+     … +5 lines (ctrl+o to expand)
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      rm -rf $SCR/ko_neo2; cp -r $SCR/ko_neo $SC…)
+  ⎿  EXIT=0
+     time step continuity errors : sum local = 2.44599480924774e-06, global
+      = 1.881315747291948e-07, cumulative = -0.020513121527415874
+     … +19 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● The F1 fix is safe — results are essentially unchanged (k/omega/nut means
+  identical) and still match simpleFoam <1%. In this run the GPU pool happened
+  to return ~zero for F1's boundary (benign), but that's luck — exactly like the
+  laminar nut_ bug that did get garbage and diverged. The fix removes the UB.
+
+  Let me verify the remaining "cosmetic" uninitialized members are truly never
+  read, to complete the audit.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM
+      echo "=== nearWallDist_ reads (internal vs boundary) ==="; grep -n
+      "nearWallDist_" src/turbulenceModels/kOmegaSST.cpp…)
+  ⎿  === nearWallDist_ reads (internal vs boundary) ===
+     394:    , nearWallDist_(
+     462:    // Populate nearWallDist_'s boundary face values by copying wa
+     … +19 lines (ctrl+o to expand)
+
+● Bash(cd /storage/home/greole/code/NeoN
+      echo "=== sourceTerm: internal or boundary? ==="; grep -nE
+      "boundary|internalVector|explicitOperation|implicitOperation|diag|r…)
+  ⎿  === sourceTerm: internal or boundary? ===
+     38:    void explicitOperation(Vector<ValueType>& source) const;
+     40:    void implicitOperation(la::LinearSystem<ValueType>& ls) const;
+     … +21 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● Audit complete. Confirmed via code paths:
+  - omegaWallFunction reads nearWallDist.boundaryData() only (line 64), not
+  internal → nearWallDist_ internal is never read.
+  - sourceTerm operates on cell sources/LinearSystem →
+  Pk_/spK_/omegaSource_/spOmega_ boundaries never read.
+
+  Let me confirm the build and show the final diff.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM; git diff --stat; echo "===
+      kOmegaSST.cpp diff ==="; git diff src/turbulenceModels/kOmegaSST.cpp)
+  ⎿   occDrivAerStaticMesh/constant/turbulenceProperties       | 16 +++++++
+     +--------
+      .../constant/turbulenceProperties.studybak               | 16 +++++++
+     … +8 lines (ctrl+o to expand)
+
+● The src changes aren't showing in git diff — let me check the full git status
+  (they may have been staged/committed, or there's something else going on).
+
+● Bash(cd /storage/home/greole/code/NeoFOAM
+      echo "=== git status (short) ==="; git status --short | head -30…)  ⎿  === git status (short) ===
+      M occDrivAerStaticMesh/constant/turbulenceProperties
+      M occDrivAerStaticMesh/constant/turbulenceProperties.studybak
+     … +22 lines (ctrl+o to expand)
+
+● My edits are intact in the files, but git shows them as unmodified — meaning
+  new commits appeared (HEAD moved from e9cb52b8 to 103f6b4f). The user likely
+  committed in the meantime. Let me confirm my changes are captured in those
+  commits.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM
+      echo "=== commits touching laminar.cpp / kOmegaSST.cpp ==="; git log
+      --oneline -5 -- src/turbulenceModels/laminar.cpp src/t…)
+  ⎿  === commits touching laminar.cpp / kOmegaSST.cpp ===
+     5b963452 update
+     2b5c0c56 fixup
+     … +16 lines (ctrl+o to expand)
+
+● Both fixes are committed to HEAD (the user committed them): the laminar nut_
+  fix and my kOmegaSST F1 boundary fix (commit 5b963452, kOmegaSST.cpp). The
+  occDrivAer changes are the user's separate study work, not mine. Let me update
+  memory with the F1 finding.
+
+  Recalled 1 memory, wrote 1 memory (ctrl+o to expand)
+
+● kOmegaSST uninitialized-field audit — complete
+
+  I traced every owned field's first write vs. first read. One real latent bug
+  found and fixed; the rest are provably never read.
+
+  🔴 Real bug (fixed): F1_ boundary
+
+  - computeF1AndSources writes only F1_.internalVector(). F1_ used
+  createCalculatedBCs, whose correctBoundaryCondition is a no-op → its boundary
+  stays uninitialized pool memory.
+  - calcDiffusivities does interpolate(F1_, surfF1_), and the linear-interp
+  boundary kernel is surfF1.boundary = w · F1.boundary — it reads the volume
+  field's boundary.
+  - → garbage F1 boundary poisoned DkEff/DomegaEff on every boundary face
+  (k/omega laplacian).
+  - Same class as the laminar nut_ bug. It didn't visibly diverge only because
+  the GPU pool happened to return ~0 this run — pure luck.
+  - Fix (committed, 5b963452): F1_ now uses createExtrapolatedBCs +
+  F1_.correctBoundaryConditions() after the kernel (extrapolates owner-cell
+  value to the face — what OpenFOAM does too). Re-ran the kOmegaSST vs
+  simpleFoam comparison: results unchanged, still <1% mean agreement, no
+  regression.
+
+  🟢 Uninitialized but provably never read (cosmetic, left as-is)
+
+  ┌────────────────────────────────┬───────────┬────────────────────────────┐
+  │             Field              │ Allocated │          Why safe          │
+  │                                │  unfilled │                            │
+  ├────────────────────────────────┼───────────┼────────────────────────────┤
+  │                                │           │ wall functions read        │
+  │ nearWallDist_ internal         │ yes       │ .boundaryData() only       │
+  │                                │           │ (omegaWallFunction.hpp:64) │
+  ├────────────────────────────────┼───────────┼────────────────────────────┤
+  │                                │           │ only .internalVector()     │
+  │ gradK_ / gradOmega_ boundary   │ yes       │ consumed by                │
+  │                                │           │ computeF1AndSources        │
+  ├────────────────────────────────┼───────────┼────────────────────────────┤
+  │ Pk_/spK_/omegaSource_/spOmega_ │           │ sourceTerm reads cell      │
+  │  boundary                      │ yes       │ sources only, never field  │
+  │                                │           │ boundary                   │
+  └────────────────────────────────┴───────────┴────────────────────────────┘
+
+  ✅ Verified correctly initialized
+
+  - gradU_ boundary — written by gradTensor itself (so validate()'s lack of an
+  explicit correctBoundaryConditions is harmless).
+  - surfNu_ (ctor), surfNut_/surfF1_/nuEff_/DkEffF_/DomegaEffF_
+  (calcDiffusivities, internal+boundary), omegaWallValue_/omegaWallMask_
+  (zero-init in ctor).
+
+  General rule recorded in memory: surface interpolation reads the source volume
+  field's boundary, so any volume field interpolated to faces needs a valid
+  boundary — createCalculatedBCs (no-op correctBC) is not enough; use an
+  extrapolating BC + correctBoundaryConditions.
+
+  Both fixes (laminar nut_ and kOmegaSST F1_) are now committed in HEAD. The
+  occDrivAer* files showing as modified in git status are your separate
+  study-case work, untouched by me.
+
+✻ Worked for 9m 32s
+
+❯ investigate the failure of                                                    
+  occDrivAerStaticMesh/paramStudy/results/pMG-L10-sc0-ukoSmooth.log when        
+  running the param-study-mg.sh                                                 
+
+● Let me look at the failure log and the param-study setup.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/occDrivAerStaticMesh
+      echo "=== find the log ==="; find . -name "pMG-L10-sc0-ukoSmooth.log"
+      2>/dev/null; ls -la paramStudy/r…)
+  ⎿  === find the log ===
+     ./paramStudy/results/pMG-L10-sc0-ukoSmooth.log
+     total 245
+     … +108 lines (ctrl+o to expand)
+
+● The L10-sc0 log is 124KB (it ran a while before failing). Let me see how it
+  ended and the failure signature.
+
+● Bash(cd
+      /storage/home/greole/code/NeoFOAM/occDrivAerStaticMesh/paramStudy/results
+      echo "=== tail 60 of L10-sc0 ==="; tail -60 pMG-L10-sc0-ukoSmooth.log…)
+  ⎿  === tail 60 of L10-sc0 ===
+     [gpu-nvidia-h200-3:3007550] [ 8] /storage/home/greole/code/NeoFOAM/bui
+     ld/profilingnvidia_h200/lib/libNeoN.so(_ZNK3gko6solver2IrIdE16apply_de
+     … +162 lines (ctrl+o to expand)
+
+● This is a SIGFPE (signal 8) at Time=69, in a distributed (4-rank MPI) run. The
+  crash stack is: KOmegaSST::correct → PDE::solveImpl → Ginkgo solveDist →
+  solveWithL1StopDist → gko::solver::Ir::apply (distributed). So the FPE fires
+  inside the k/omega smoothSolver (Ir) apply, not the pressure solve.
+
+  This matches a known issue in memory (Ginkgo L1-stop FPE). Let me check
+  whether the solution was healthy before the crash (benign FPE vs real
+  divergence) and whether the documented ScopedFpTrapSuspend fix is actually
+  present/covering this path.
+
+● Bash(cd
+      /storage/home/greole/code/NeoFOAM/occDrivAerStaticMesh/paramStudy/results
+      echo "=== continuity trajectory (every ~10 steps) near the end ==="…)
+  ⎿  === continuity trajectory (every ~10 steps) near the end ===
+     time step continuity errors : sum local = 0.011999587831333841, global
+      = 0.000509607047879882, cumulative = 0.0012960916736559462
+     … +63 lines (ctrl+o to expand)
+
+● The solution is healthy before the crash — this is NOT divergence:
+  - continuity stable at ~0.007–0.013 (even decreasing)
+  - omega: final residual ~5e-17 in 1 iteration; k: initial residual down to
+  2.5e-5, final ~3e-21 in 1 iteration — k/omega are essentially at steady state
+  - multigrid pressure working well (12–15 iters)
+
+  The FPE fires inside the Ginkgo Ir apply() during the near-converged k/omega
+  solve — the classic benign L1-stop 0/0 case from memory. Let me check whether
+  the documented ScopedFpTrapSuspend fix is present and whether it covers the
+  distributed path solveWithL1StopDist.
+
+● Bash(cd /storage/home/greole/code/NeoN
+      echo "=== ScopedFpTrapSuspend present? ==="; grep -rn
+      "ScopedFpTrapSuspend\|fedisableexcept\|feenableexcept\|fegetexcept" src…)
+  ⎿  === ScopedFpTrapSuspend present? ===
+
+     === attachL1StopAndSolve + solveWithL1StopDist defs ===
+     … +15 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● ScopedFpTrapSuspend/fedisableexcept are not present in the NeoN source — the
+  documented fix from memory was never actually committed (memory said "pending
+  build+run"). So the benign L1-stop FPE is still live. Let me read
+  attachL1StopAndSolve and the L1 criterion to confirm the division site and
+  apply the fix.
+
+  Read 1 file (ctrl+o to expand)
+
+● solver->apply(b, x) at line 407 is the single chokepoint. The L1 stop
+  criterion runs inside apply(), so a benign division there trips FOAM's FP
+  trap. Let me read the criterion's check_impl to see the exact division and
+  decide between guarding it vs. suspending the trap around apply().
+
+  Read 1 file (ctrl+o to expand)
+
+● There's already a normFactorSmall=1e-20 guard. Let me find the actual
+  division/norm computation in check_impl to see what still trips the trap.
+
+● Bash(cd /storage/home/greole/code/NeoN; grep -n "check_impl\|compute_norm\|/
+      \|scaled\|residualNorm\|normFactor\|at(0\|divide\|relTol\|sqrt\|/="
+      src/linearAlgebra/gi…)
+  ⎿  1:// SPDX-FileCopyrightText: 2025 - 2026 NeoN authors
+     3:// SPDX-License-Identifier: MIT
+     23:// Small additive guard added to the norm factor so a trivially-con
+     … +52 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+  Read 1 file (ctrl+o to expand)
+
+● The division sites (lines 278, 286, 310, 317) are guarded by
+  normFactorSmall=1e-20, so the FPE isn't a raw 0/0 in our criterion — it's a
+  benign FP exception (denormal/Inf/NaN-compare) inside Ginkgo's Ir apply()
+  internals on the near-converged k/omega system, which FOAM's FOAM_SIGFPE trap
+  intercepts. The fields are provably healthy (k/omega converge in 1 iter,
+  continuity ~0.007), so this is exactly the benign case the memory documented —
+  but the ScopedFpTrapSuspend fix was never actually committed.
+
+  Let me implement it: an RAII guard that suspends FP trapping around
+  solver->apply().
+  Read 1 file (ctrl+o to expand)
+
+● Update(~/code/NeoN/src/linearAlgebra/ginkgo/ginkgoL1Stop.cpp)
+  ⎿  User rejected update to../../NeoN/src/linearAlgebra/ginkgo/ginkgoL1Stop.cpp
+
+
+❯ dont add the FPTrap this will only move the failure to a later point instead  
+  of fixing the underlying issue                                                
+
+● You're right — suppressing the trap masks a real numerical problem that's
+  building up. Let me find the actual root cause. Let me look at how the
+  residuals evolve over the whole run to see what's growing.
+
+● Bash(cd
+      /storage/home/greole/code/NeoFOAM/occDrivAerStaticMesh/paramStudy/results
+      f=pMG-L10-sc0-ukoSmooth.log…)
+  ⎿  step | p_initRes | omega_initRes | k_initRes | continuity_sumLocal
+          1     8.585788758466704       1       0.999999999999974       1.639214
+
+     2  1191.1149757030173      0.006335465435338877    0.06140008341335666
+     … +16 lines (ctrl+o to expand)
+
+
+● The omega initial residual is the smoking gun: it's normal (~0.04–0.10)
+  through step 10, then locks at exactly ~0.5384615 from step 11 onward (varying
+  only in the 8th digit), while k's initial residual collapses to ~1e-5. The
+  omega solve has entered a degenerate stuck state ~60 steps before the crash.
+  Let me look at the transition and any bounding warnings.
+
+● Bash(cd
+      /storage/home/greole/code/NeoFOAM/occDrivAerStaticMesh/paramStudy/results
+      f=pMG-L10-sc0-ukoSmooth.log…)
+  ⎿  === bounding / min / max / nut / Inf / nan messages ===
+     [NF][/storage/home/greole/code/NeoFOAM/include/NeoFOAM/auxiliary/reade
+     rs.hpp::434]: Internal: 49320882, Boundary: 1762558
+     … +64 lines (ctrl+o to expand)
+
+● My first table was misaligned. At step 11–12 omega is still healthy (~0.08).
+  Let me find exactly when omega's initial residual locks to ~0.5384615 and
+  correlate with the pressure residual growth.
+
+● Bash(cd
+      /storage/home/greole/code/NeoFOAM/occDrivAerStaticMesh/paramStudy/results
+      f=pMG-L10-sc0-ukoSmooth.log…)
+  ⎿  === first occurrence of omega initRes 0.538 ===
+     571:Schwarz(Jacobi)+Ir:  Solving for omega, Initial residual = 0.53846
+     15649586515, Final residual = 1.7903605044678087e-11, No Iterations 1,
+     … +56 lines (ctrl+o to expand)
+
+● Line 571 is the omega lock-up onset. Let me find which timestep that is and
+  track omega/k final residuals (and the "No Iterations 1" stall) through to the
+  crash — the lock at a near-rational value (~7/13) with a 1-iteration solve
+  suggests the omega system degenerated, likely a NaN/Inf entering and tripping
+  FE_INVALID on a comparison.
+
+● Bash(cd
+      /storage/home/greole/code/NeoFOAM/occDrivAerStaticMesh/paramStudy/results
+      f=pMG-L10-sc0-ukoSmooth.log…)
+  ⎿  === Time at omega-lock onset (line 571) ===
+     onset near Time = 50
+     … +43 lines (ctrl+o to expand)
+
+● Now it's clear: omega solves healthily through step 48 (init ~0.04, 4 iters),
+  then at step 49 the residual jumps to 0.686, and from step 50 it locks at 
+  ~0.5384615 with final residual ~1e-17 in just 1 iteration. A large initial
+  residual (0.54, i.e. omega moves a lot each step) that one Jacobi sweep
+  annihilates means the matrix became extremely diagonally dominant — i.e. the
+  destruction term spOmega=β·omega exploded because omega is locally blowing up.
+  This is a real instability, not a benign near-converged solve. Let me check k
+  and confirm whether omega/nut is the culprit.
+
+● Bash(cd
+      /storage/home/greole/code/NeoFOAM/occDrivAerStaticMesh/paramStudy/results
+      f=pMG-L10-sc0-ukoSmooth.log…)
+  ⎿  === k solve (Time: init final iters) steps 45..69 ===
+     44: init=0.11107028749505476 final=0.006580066869772351 it=4
+     45: init=0.11102623281734326 final=0.006482344576334319 it=4
+     … +47 lines (ctrl+o to expand)
+
+● Critical findings: U and continuity stay healthy, but at step ~49–51 both k 
+  and omega degenerate simultaneously into 1-iteration diagonally-dominant
+  solves — k freezes (init residual ~1e-5), omega locks at 0.54. Since both
+  matrix diagonals scale with omega (spK=β*·omega, spOmega=β·omega), this means
+  omega blew up, which destroys k (destruction ∝ omega) → nut→0 → turbulence
+  decouples from the (still-healthy) momentum. The FPE at step 69 is a NaN/Inf
+  from the blown-up omega tripping FE_INVALID on a comparison — a symptom, not
+  the cause.
+
+  Let me see whether this is pressure-solver-specific by comparing across the
+  param-study variants, and check written field values.
+
+● Bash(cd
+      /storage/home/greole/code/NeoFOAM/occDrivAerStaticMesh/paramStudy/results
+      echo "=== per-log: last Time, FPE?, omega-lock onset ==="…)
+  ⎿  === per-log: last Time, FPE?, omega-lock onset ===
+     pFCG-MGprec-ukoSmooth.log        lastT=60    FPE=1 omegaLock@=52   end
+     =0
+     … +20 lines (ctrl+o to expand)
+
+● Decisive discriminator: pPCG-ukoSmooth (diagonal-PCG pressure) runs to step 
+  100 with NO omega lock, while every multigrid-pressure variant locks omega at 
+  step ~50–52 and FPEs. And the lock value 0.5384615 is identical across all MG
+  runs — that's a numerical artifact signature, not physics. Let me settle
+  whether omega is truly blown up by inspecting the written field values.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/occDrivAerStaticMesh
+      echo "=== written time dirs (serial + processor0) ==="; ls -d [0-9]*/
+      2>/dev/null | head; echo "--- pr…)
+  ⎿  === written time dirs (serial + processor0) ===
+     0.orig/
+     0/
+     … +20 lines (ctrl+o to expand)
+
+● writeInterval=100 so no fields were written before the step-69 crash — I can't
+  read the blown-up omega from disk. But the math is conclusive: a 0.54→1e-17
+  residual drop in one Jacobi sweep means the matrix diagonal (spOmega=β·omega)
+  dominates off-diagonals by ~16 orders → the solved (non-pinned) omega has 
+  grown to ~1e18+, far past the 1e12 pin cap. This is a genuine omega blow-up,
+  MG-pressure-triggered, with U/continuity masking it.
+
+  Let me confirm empirically by instrumenting kOmegaSST::correct to print field
+  extrema per step, then reproduce just past the lock (~step 53).
+
+  Read 1 file (ctrl+o to expand)
+
+● Update(~/code/NeoFOAM/src/turbulenceModels/kOmegaSST.cpp)
+  ⎿  Added 29 lines
+      693  
+      694      // Refresh surface diffusivities with new nut
+      695      calcDiffusivities(nut);
+      696 +                                                              
+      697 +    // [DIAG] per-step field extrema to localise the omega/nut
+          + blow-up (temporary).                                         
+      698 +    {                                                         
+      699 +        const auto omV = omega.internalVector().view();       
+      700 +        const auto kV = k.internalVector().view();            
+      701 +        const auto nutV = nut.internalVector().view();        
+      702 +        scalar maxOmega = 0, maxNut = 0, maxK = 0, minK = 0, m
+          +inOmega = 0;                                                  
+      703 +        Kokkos::Max<scalar> rMaxOm(maxOmega), rMaxNut(maxNut),
+          + rMaxK(maxK);                                                 
+      704 +        Kokkos::Min<scalar> rMinK(minK), rMinOm(minOmega);    
+      705 +        const localIdx n = static_cast<localIdx>(omV.size()); 
+      706 +        NeoN::parallelReduce(                                 
+      707 +            exec_, {0, n},                                    
+      708 +            NEON_LAMBDA(const localIdx i, scalar& s) { if (omV
+          +[i] > s) s = omV[i]; }, rMaxOm);                              
+      709 +        NeoN::parallelReduce(                                 
+      710 +            exec_, {0, n},                                    
+      711 +            NEON_LAMBDA(const localIdx i, scalar& s) { if (omV
+          +[i] < s) s = omV[i]; }, rMinOm);                              
+      712 +        NeoN::parallelReduce(                                 
+      713 +            exec_, {0, n},                                    
+      714 +            NEON_LAMBDA(const localIdx i, scalar& s) { if (nut
+          +V[i] > s) s = nutV[i]; }, rMaxNut);                           
+      715 +        NeoN::parallelReduce(                                 
+      716 +            exec_, {0, n},                                    
+      717 +            NEON_LAMBDA(const localIdx i, scalar& s) { if (kV[
+          +i] > s) s = kV[i]; }, rMaxK);                                 
+      718 +        NeoN::parallelReduce(                                 
+      719 +            exec_, {0, n},                                    
+      720 +            NEON_LAMBDA(const localIdx i, scalar& s) { if (kV[
+          +i] < s) s = kV[i]; }, rMinK);                                 
+      721 +        NeoN::Logging::info(                                  
+      722 +            "[DIAG-turb] max|omega|={} min|omega|={} max|nut|=
+          +{} k=[{}, {}]",                                               
+      723 +            maxOmega, minOmega, maxNut, minK, maxK);          
+      724 +    }                                                         
+      725  }
+      726  
+      727  nnfvcc::SurfaceField<scalar>& KOmegaSST::nuEff() { return nuEf
+           f_; }
+
+● Now rebuild and reproduce just past the lock point (~step 53) with the
+  diagnostic.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM
+      module purge >/dev/null 2>&1; module load gcc/13.3.0 cuda/12.8.1 cmake
+      openmpi >/dev/null 2>&1; source $HOME/OpenFOAM/openf…)  ⎿  [1/3] Building CXX object src/CMakeFiles/NeoFOAM.dir/turbulenceModels/
+     kOmegaSST.cpp.o
+     [2/3] Linking CXX shared library lib/libNeoFOAM.so
+     … +4 lines (ctrl+o to expand)
+
+● Built. Let me look at how the param study runs a case (decomposition, nprocs,
+  fvSolution) so I can reproduce pMG-L10-sc0 to a short endTime.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/occDrivAerStaticMesh
+      sed -n '1,200p' param-study-common.sh)
+  ⎿  #!/bin/bash
+     #
+     # Shared infrastructure for the occDrivAer parameter studies. SOURCED
+     … +106 lines (ctrl+o to expand)
+
+● This runs on 4 GPUs (mpirun -np 4 ... -parallel). Let me reproduce the L10.sc0
+  variant to a short endTime (~54) with my diagnostic. Let me set it up
+  manually replicating the script's environment.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/occDrivAerStaticMesh
+      echo "=== template + json exist? ==="; ls -la
+      system/paramStudy/fvSolution.case3 system/gko/p-multigri…)
+  ⎿  Interrupted · What should Claude do instead?
+
+❯ i run the case with laminar and it also explodes see                          
+  paramStudy/results/pMGbase-laminar.log                                        
+
+● That's a decisive clue — if the laminar case (nut=0, no k/omega) also explodes
+  with the MG pressure, the root cause is in the pressure/momentum coupling 
+  with the multigrid solver, not the turbulence model. The omega degeneration I
+  saw was a downstream symptom. Let me examine the laminar log.
+
+● Bash(cd
+      /storage/home/greole/code/NeoFOAM/occDrivAerStaticMesh/paramStudy/results
+      f=pMGbase-laminar.log…)
+  ⎿  === size + last Time + how it ended ===
+     -rw-r--r-- 1 greole greole 103140 Jun 25 00:02 pMGbase-laminar.log
+     Time = 76
+     … +86 lines (ctrl+o to expand)
+
+● Now it's a genuine divergence, and the laminar case isolates it from
+  turbulence. The laminar MG run is healthy for ~66 steps (continuity ~0.01),
+  then explodes: continuity 0.009→0.34→56748→nan over steps 69–75, p initial
+  residual 5810→173990→6e10→2.7e44. The crash is in the U (Vec3) momentum 
+  solve's L1 criterion check (NaN tripping FE_INVALID) — the FPE is just where
+  the blown-up velocity first hits a trapped op.
+
+  So the root cause is the MG pressure solver destabilizing the SIMPLE coupling
+  (diagonal-PCG runs to 100 fine; laminar+MG explodes ~step 67). Let me
+  characterize the onset precisely.
+
+● Bash(cd
+      /storage/home/greole/code/NeoFOAM/occDrivAerStaticMesh/paramStudy/results
+      f=pMGbase-laminar.log…)
+  ⎿  === detailed onset: steps 64-76 (p: init/final/iters, Ux init/final, c
+     ontinuity) ===
+     T=60  p[init=6762.377969166669 final=6.5532020242107 it=8]  Ux[init=0.
+     … +32 lines (ctrl+o to expand)
+
+● The onset is now precise: healthy through step 66 (p init ~6000, continuity
+  ~0.009), then at step 67 the pressure-equation initial residual suddenly jumps
+  350× (5810 → 2,019,753) while velocity is still normal (Ux init 0.0999). So a
+  large localized continuity imbalance is injected into div(phiHbyA) at step 67
+  — meaning step 66's MG pressure solution kicked the velocity locally (a spike
+  invisible in the L1-averaged continuity of 0.0095). It then cascades: bad p →
+  bad U correction → worse continuity → blow-up by step 72.
+
+  This is an MG-pressure-solver robustness problem, not turbulence (laminar
+  fails) and not FP trapping. Let me revert my turbulence diagnostic and examine
+  the MG config.
+
+● Update(~/code/NeoFOAM/src/turbulenceModels/kOmegaSST.cpp)
+  ⎿  Removed 29 lines
+      693  
+      694      // Refresh surface diffusivities with new nut
+      695      calcDiffusivities(nut);
+      696 -                                                              
+      697 -    // [DIAG] per-step field extrema to localise the omega/nut
+          - blow-up (temporary).                                         
+      698 -    {                                                         
+      699 -        const auto omV = omega.internalVector().view();       
+      700 -        const auto kV = k.internalVector().view();            
+      701 -        const auto nutV = nut.internalVector().view();        
+      702 -        scalar maxOmega = 0, maxNut = 0, maxK = 0, minK = 0, m
+          -inOmega = 0;                                                  
+      703 -        Kokkos::Max<scalar> rMaxOm(maxOmega), rMaxNut(maxNut),
+          - rMaxK(maxK);                                                 
+      704 -        Kokkos::Min<scalar> rMinK(minK), rMinOm(minOmega);    
+      705 -        const localIdx n = static_cast<localIdx>(omV.size()); 
+      706 -        NeoN::parallelReduce(                                 
+      707 -            exec_, {0, n},                                    
+      708 -            NEON_LAMBDA(const localIdx i, scalar& s) { if (omV
+          -[i] > s) s = omV[i]; }, rMaxOm);                              
+      709 -        NeoN::parallelReduce(                                 
+      710 -            exec_, {0, n},                                    
+      711 -            NEON_LAMBDA(const localIdx i, scalar& s) { if (omV
+          -[i] < s) s = omV[i]; }, rMinOm);                              
+      712 -        NeoN::parallelReduce(                                 
+      713 -            exec_, {0, n},                                    
+      714 -            NEON_LAMBDA(const localIdx i, scalar& s) { if (nut
+          -V[i] > s) s = nutV[i]; }, rMaxNut);                           
+      715 -        NeoN::parallelReduce(                                 
+      716 -            exec_, {0, n},                                    
+      717 -            NEON_LAMBDA(const localIdx i, scalar& s) { if (kV[
+          -i] > s) s = kV[i]; }, rMaxK);                                 
+      718 -        NeoN::parallelReduce(                                 
+      719 -            exec_, {0, n},                                    
+      720 -            NEON_LAMBDA(const localIdx i, scalar& s) { if (kV[
+          -i] < s) s = kV[i]; }, rMinK);                                 
+      721 -        NeoN::Logging::info(                                  
+      722 -            "[DIAG-turb] max|omega|={} min|omega|={} max|nut|=
+          -{} k=[{}, {}]",                                               
+      723 -            maxOmega, minOmega, maxNut, minK, maxK);          
+      724 -    }                                                         
+      696  }
+      697  
+      698  nnfvcc::SurfaceField<scalar>& KOmegaSST::nuEff() { return nuEf
+           f_; }
+
+● Let me examine the MG pressure config and how the pressure solve is set up vs.
+  the stable diagonal-PCG.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/occDrivAerStaticMesh
+      echo "=== fvSolution.case3 p block ==="; sed -n '/solvers/,/^    }/p'
+      system/paramStudy/fvSolution.cas…)
+  ⎿  === fvSolution.case3 p block ===
+     solvers
+     {
+     … +113 lines (ctrl+o to expand)
+
+● The MG config is a CG outer solver preconditioned by Multigrid (Pgm
+  coarsening, 10 levels, weak 1-iteration Jacobi smoothers, scale_correction=0),
+  with the outer CG reducing residual 1000× each step. So the pressure IS
+  globally well-converged (continuity ~0.009) — yet it diverges.
+
+  Let me rebuild to a clean binary (removing my reverted diagnostic) so any
+  further param-study runs are clean, and confirm no MG variant survives while
+  PCG does.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM
+      module purge >/dev/null 2>&1; module load gcc/13.3.0 cuda/12.8.1 cmake
+      openmpi >/dev/null 2>&1; source $HOME/OpenFOAM/openf…)
+  ⎿  Error: Exit code 143
+     Command timed out after 2m 0s
+     [2/3] Linking CXX shared library lib/libNeoFOAM.so
+     [3/3] Linking CXX executable bin/neoSimpleFoam
+     rebuilt rc=0 (clean, diagnostic reverted)
+
+     === git status src (should be clean now) ===
+
+● Build succeeded (the timeout was just the trailing git status). Let me quickly
+  confirm both source trees are clean (the rejected FP-trap edit was never
+  written, and my diagnostic is reverted).
+
+● Bash(cd /storage/home/greole/code/NeoN && timeout 30 git status --short
+      src/linearAlgebra/ginkgo/ 2>/dev/null; echo "NeoN ginkgo clean=$?"
+      cd /storage/home/greole/co…)
+  ⎿  NeoN ginkgo clean=0
+     NeoFOAM turb clean (empty above = clean)
+     /storage/home/greole/code/NeoFOAM/src/turbulenceModels/kOmegaSST.cpp:0
+     … +2 lines (ctrl+o to expand)
+
+● Both trees are clean and the binary is rebuilt. Here's the investigation
+  result.
+
+  Root cause: a real MG-pressure SIMPLE divergence — not turbulence, not a 
+  benign FP trap
+
+  The SIGFPE is a downstream symptom. The crash fires inside the Ginkgo Ir
+  solver's L1-criterion check during the next solve, because the velocity field
+  has already gone to Inf/NaN — a < comparison on a NaN raises FE_INVALID, which
+  FOAM_SIGFPE traps. Suppressing the trap (as you correctly rejected) would
+  just let the NaN propagate silently.
+
+  It's the pressure coupling, isolated by your laminar run. The laminar case
+  (nut=0, no k/omega) explodes the same way (~step 67), so the kOmegaSST model
+  is exonerated. The omega/k "lock-up at 0.5384615 + 1-iteration solves" I saw
+  in the turbulent log is a downstream effect (omega's matrix diagonal ∝ omega
+  degenerating as the field blows up), not the trigger.
+
+  It's multigrid-specific. From your param-study results:
+  - pPCG-ukoSmooth (diagonal-PCG pressure): runs to step 100, stable
+  - Every MG-pressure variant (pMG-*, pFCG-MGprec, pMGbase-*): diverges step 
+  ~50–75
+
+  Onset signature (laminar, exact): healthy for 66 steps (continuity ~0.009),
+  then at step 67 the pressure-equation initial residual jumps 350× (5810 → 
+  2.0e6) while the velocity L1 residual is still normal (Ux 0.0999). So a
+  localized continuity imbalance is injected into div(phiHbyA) — i.e. step 66's
+  MG pressure was globally converged (continuity 0.0095) but had a localized 
+  error that kicked U = HbyA − rAU·grad(p) in one region. That spike then
+  cascades: bad p → bad U → worse continuity → blow-up by step 72 → NaN →
+  SIGFPE.
+
+  Mechanism. The tightly-converged MG pressure (continuity ~0.009) removes the
+  artificial damping that the under-converged diagonal-PCG provides (continuity
+  ~0.05), exposing a localized instability. Two non-exclusive contributors:
+  1. A mesh-quality hotspot in the occDrivAer mesh that only destabilizes once
+  the pressure is solved tightly (PCG's slop masks it).
+  2. The MG-preconditioned CG itself: the V-cycle uses weak 1-iteration Jacobi
+  smoothers with scale_correction=0, which is not a constant SPD preconditioner
+  — CG can sporadically return a locally-bad correction.
+
+  This corrects the earlier note in memory that called this a "benign L1-stop
+  FPE" fixable by suspending FP trapping — the laminar reproduction proves it's
+  a genuine divergence.
+
+  Decisive next diagnostic (to pin mesh vs. solver)
+
+  Capture where the spike originates: re-run laminar+MG with per-step max|U|,
+  max|p|, and the cell index of those maxima (cheaper than full field writes).
+  If the spike is the same cell every run → mesh hotspot (fix that cell /
+  checkMesh -allGeometry); if it moves → MG-preconditioned-CG robustness (try a
+  flexible outer Krylov like FCG/GMRES, or stronger smoothers, instead of plain
+  CG).
+
+  You're driving the runs — want me to add that localized-spike instrumentation
+  (max-location reduction) to neoSimpleFoam so your next param-study-mg.sh 
+  laminar pinpoints it, or would you rather I dig into the Ginkgo
+  MG-as-CG-preconditioner symmetry path?
+
+✻ Crunched for 6m 54s

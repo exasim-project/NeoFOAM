@@ -65,9 +65,40 @@ reset_to_t0() {
 
 RUNS=()   # names of runs that actually executed, drives the summary table
 
+WINDOW=10   # number of trailing log lines kept on screen during a run
+
+tail_window() {
+    # Live "last $WINDOW lines" display: while $1 (the solver pid) is alive, redraw
+    # the tail of $2 (the log) in place, overwriting the previous block each tick so
+    # only the most recent $WINDOW lines are ever shown. Falls back to a single tail
+    # when stdout is not a terminal (no cursor control available).
+    local pid="$1" log="$2" drawn=0 block
+    if [ ! -t 1 ]; then
+        wait "$pid" 2>/dev/null
+        tail -n "$WINDOW" "$log" | sed 's/^/   | /'
+        return
+    fi
+    printf '\033[?25l'   # hide cursor
+    _draw() {
+        [ "$drawn" -gt 0 ] && printf '\033[%dA' "$drawn"   # move up over old block
+        printf '\033[J'                                    # clear from here down
+        block=$(tail -n "$WINDOW" "$log" | sed 's/^/   | /')
+        printf '%s\n' "$block"
+        drawn=$(printf '%s\n' "$block" | wc -l)
+    }
+    while kill -0 "$pid" 2>/dev/null; do
+        _draw
+        sleep 0.5
+    done
+    _draw   # final redraw so the very last output is on screen
+    printf '\033[?25h'   # show cursor
+}
+
 run_one() {
     # $1 = run name (log/summary key)   $2 = fvSolution to install   $3 = desc
-    local name="$1" src="$2" desc="$3" log="$RESULTS/$1.log"
+    # $4 = solver binary (optional, defaults to $BIN / neoSimpleFoam) — set to e.g.
+    #      "simpleFoam" for the native-OpenFOAM baseline run.
+    local name="$1" src="$2" desc="$3" bin="${4:-$BIN}" log="$RESULTS/$1.log"
     echo "================================================================"
     echo " $name${desc:+ : $desc}"
     echo "   -> $log"
@@ -77,8 +108,11 @@ run_one() {
     reset_to_t0
 
     local t0=$SECONDS
-    mpirun -np "$NP" "$BIN" -parallel > "$log" 2>&1
-    local rc=$?
+    : > "$log"
+    mpirun -np "$NP" "$bin" -parallel > "$log" 2>&1 &
+    local pid=$!
+    tail_window "$pid" "$log"
+    wait "$pid"; local rc=$?
     echo "   exit=$rc  wall=$((SECONDS - t0))s  steps=$(grep -c '^Time = ' "$log")"
     RUNS+=("$name")
 }

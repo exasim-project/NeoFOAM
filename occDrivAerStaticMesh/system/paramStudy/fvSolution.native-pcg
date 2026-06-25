@@ -2,7 +2,6 @@
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
 |  \\    /   O peration     | Version:  v2412                                 |
-|   \\  /    A nd           | Website:  www.openfoam.com                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
 FoamFile
@@ -13,18 +12,21 @@ FoamFile
     object      fvSolution;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-// PARAM STUDY case1: p = PCG/diagonal | U,k,omega = PBiCGStab/diagonal
+// PARAM STUDY native-pcg: native OpenFOAM simpleFoam baseline.
+//   p = PCG/diagonal, U/k/omega = PBiCGStab/diagonal.
+// Run by param-study-mg.sh's "native-pcg" variant with the simpleFoam binary (not
+// neoSimpleFoam). The PCG/diagonal counterpart of the GAMG native run (fvSolution.native)
+// and the OpenFOAM reference for the Ginkgo CG p-solver variants.
 
 solvers
 {
     p
     {
-        solver           PCG;
-        preconditioner   diagonal;
-        tolerance        1e-7;
-        relTol           0.01;
-        l1ScaledResidual true;
-        maxIter          3000;
+        solver          PCG;
+        preconditioner  diagonal;
+        tolerance       1e-7;
+        relTol          0.01;
+        maxIter         2000;
     }
 
     Phi
@@ -34,29 +36,26 @@ solvers
 
     U
     {
-        solver           PBiCGStab;
-        preconditioner   diagonal;
-        tolerance        1e-8;
-        relTol           0.1;
-        l1ScaledResidual true;
+        solver          PBiCGStab;
+        preconditioner  diagonal;
+        tolerance       1e-8;
+        relTol          0.1;
     }
 
     k
     {
-        solver           PBiCGStab;
-        preconditioner   diagonal;
-        tolerance        1e-8;
-        relTol           0.1;
-        l1ScaledResidual true;
+        solver          PBiCGStab;
+        preconditioner  diagonal;
+        tolerance       1e-8;
+        relTol          0.1;
     }
 
     omega
     {
-        solver           PBiCGStab;
-        preconditioner   diagonal;
-        tolerance        1e-8;
-        relTol           0.1;
-        l1ScaledResidual true;
+        solver          PBiCGStab;
+        preconditioner  diagonal;
+        tolerance       1e-8;
+        relTol          0.1;
     }
 }
 
@@ -73,15 +72,11 @@ potentialFlow
 
 relaxationFactors
 {
-    fields
-    {
-        p               0.3;
-    }
     equations
     {
-        U               0.7;
-        k               0.7;
-        omega           0.7;
+        U               0.9;
+        k               0.6;
+        omega           0.6;
     }
 }
 

@@ -13,7 +13,7 @@ FoamFile
     object      fvSolution;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-// PARAM STUDY case1: p = PCG/diagonal | U,k,omega = smoothSolver/GaussSeidel
+// PARAM STUDY case1: p = PCG/diagonal | U,k,omega = PBiCGStab/diagonal
 
 solvers
 {
@@ -34,8 +34,8 @@ solvers
 
     U
     {
-        solver           smoothSolver;
-        smoother         GaussSeidel;
+        solver           PBiCGStab;
+        preconditioner   diagonal;
         tolerance        1e-8;
         relTol           0.1;
         l1ScaledResidual true;
@@ -43,8 +43,8 @@ solvers
 
     k
     {
-        solver           smoothSolver;
-        smoother         GaussSeidel;
+        solver           PBiCGStab;
+        preconditioner   diagonal;
         tolerance        1e-8;
         relTol           0.1;
         l1ScaledResidual true;
@@ -52,8 +52,8 @@ solvers
 
     omega
     {
-        solver           smoothSolver;
-        smoother         GaussSeidel;
+        solver           PBiCGStab;
+        preconditioner   diagonal;
         tolerance        1e-8;
         relTol           0.1;
         l1ScaledResidual true;

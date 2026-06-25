@@ -1,0 +1,17 @@
+{
+    "type": "solver::Cg",
+    "preconditioner": {
+        "type": "preconditioner::Schwarz",
+        "local_solver": {
+            "type": "preconditioner::Jacobi",
+            "max_block_size": 1
+        }
+    },
+    "criteria": [
+        {
+            "type": "Iteration",
+            "max_iters": 3000
+        },
+        "neon::l1ScaledResidual"
+    ]
+}

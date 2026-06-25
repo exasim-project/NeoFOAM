@@ -13,7 +13,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 // PARAM STUDY case3: p = configFile (Ginkgo scale-corrected multigrid)
-//                    U,k,omega = smoothSolver/GaussSeidel
+//                    U,k,omega = PBiCGStab/diagonal
 // The configFile carries the full Ginkgo solver/preconditioner/stopping config;
 // fvSolution.cpp injects "solver Ginkgo" and reads no other keys for p. Path is
 // UNQUOTED so the OpenFOAM tokenizer keeps it as a single word, and is relative
@@ -24,6 +24,12 @@ solvers
     p
     {
         configFile       system/gko/p-multigrid.json;
+        // Opt the Ginkgo configFile solver into NeoN's L1-scaled residual stop. The
+        // configFile's criteria array references it by name ("neon::l1ScaledResidual");
+        // these keys supply the absolute tolerance / relTol the named criterion uses.
+        l1ScaledResidual true;
+        tolerance        1e-7;
+        relTol           0.01;
     }
 
     Phi
@@ -33,8 +39,8 @@ solvers
 
     U
     {
-        solver           smoothSolver;
-        smoother         GaussSeidel;
+        solver           PBiCGStab;
+        preconditioner   diagonal;
         tolerance        1e-8;
         relTol           0.1;
         l1ScaledResidual true;
@@ -42,8 +48,8 @@ solvers
 
     k
     {
-        solver           smoothSolver;
-        smoother         GaussSeidel;
+        solver           PBiCGStab;
+        preconditioner   diagonal;
         tolerance        1e-8;
         relTol           0.1;
         l1ScaledResidual true;
@@ -51,8 +57,8 @@ solvers
 
     omega
     {
-        solver           smoothSolver;
-        smoother         GaussSeidel;
+        solver           PBiCGStab;
+        preconditioner   diagonal;
         tolerance        1e-8;
         relTol           0.1;
         l1ScaledResidual true;
