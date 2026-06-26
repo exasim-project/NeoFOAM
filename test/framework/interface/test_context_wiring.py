@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Tests for ctx.interfaces placement, active-contribution gating,
+"""Tests for ctx.interfaces placement, owner-gated contribution folding,
 consumer injection by spec-typed param, and spec.collect(ctx)."""
 
 # NOTE: Do NOT add `from __future__ import annotations` to this module.
@@ -16,11 +16,12 @@ from neofoam.framework.context import Context
 from neofoam.framework.dependency_resolver import DependencyResolver
 from neofoam.framework.initialization import execute_initialization, interface_step
 from neofoam.framework.interface.spec import BoundInterface
+from neofoam.framework.model import Model
 from framework.interface._helpers import VGREAT, _make_min_spec, _make_sum_spec
 
 
 # ---------------------------------------------------------------------------
-# Task B — interface_step + ctx.interfaces routing
+# interface_step + ctx.interfaces routing
 # ---------------------------------------------------------------------------
 
 
@@ -38,62 +39,7 @@ def test_interface_step_value_lands_in_ctx_interfaces() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Task C — _active_contributions and activate/deactivate
-# ---------------------------------------------------------------------------
-
-
-def test_all_contributions_active_by_default() -> None:
-    spec = _make_min_spec("default_active")
-
-    @spec.contribute
-    def c1(x: float) -> float:
-        return x
-
-    assert c1 in spec._active_contributions
-
-
-def test_deactivate_excludes_contribution_from_collect_contributions() -> None:
-    spec = _make_min_spec("deactivate")
-
-    @spec.contribute
-    def small(x: float) -> float:
-        return x
-
-    @spec.contribute
-    def large(y: float) -> float:
-        return y
-
-    spec.deactivate(small)
-    result = spec._collect_contributions({"x": 1.0, "y": 100.0})
-    # small is inactive — only large folds, so result is min([100.0]) = 100.0
-    assert result == pytest.approx(100.0)
-
-
-def test_activate_re_enables_deactivated_contribution() -> None:
-    spec = _make_min_spec("reactivate")
-
-    @spec.contribute
-    def c(x: float) -> float:
-        return x
-
-    spec.deactivate(c)
-    spec.activate(c)
-    result = spec._collect_contributions({"x": 3.0})
-    assert result == pytest.approx(3.0)
-
-
-def test_activate_unknown_fn_raises_value_error() -> None:
-    spec = _make_min_spec("activate_unknown")
-
-    def not_registered(x: float) -> float:
-        return x
-
-    with pytest.raises(ValueError, match="activate"):
-        spec.activate(not_registered)
-
-
-# ---------------------------------------------------------------------------
-# Task C — collect(ctx) resolves params from Context.fields
+# collect(ctx) resolves params from Context.fields
 # ---------------------------------------------------------------------------
 
 
@@ -110,27 +56,8 @@ def test_collect_with_context_resolves_annotated_field_param() -> None:
     assert result == pytest.approx(2.0)
 
 
-def test_collect_with_inactive_contribution_excluded() -> None:
-    spec = _make_min_spec("ctx_inactive")
-
-    def big(dt: float) -> float:
-        return dt * 10.0
-
-    def small(dt: float) -> float:
-        return dt * 0.1
-
-    spec.contribute(big)
-    spec.contribute(small)
-    spec.deactivate(big)
-
-    ctx = Context(fields={"dt": 2.0}, models={})
-    result = spec.collect(ctx)
-    # only small is active: 2.0 * 0.1 = 0.2
-    assert result == pytest.approx(0.2)
-
-
-def test_spec_collect_with_no_active_contributions_returns_empty_fold() -> None:
-    """collect(ctx) with zero active contributions returns the combine's empty-iterable result."""
+def test_spec_collect_with_no_contributions_returns_empty_fold() -> None:
+    """collect(ctx) with zero contributions returns the combine's empty-iterable result."""
     spec = _make_min_spec("empty_collect")
     ctx = Context(fields={}, models={})
     result = spec.collect(ctx)
@@ -138,7 +65,41 @@ def test_spec_collect_with_no_active_contributions_returns_empty_fold() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Task D — DependencyResolver injects BoundInterface for spec-annotated params
+# Owner-gating on collect(ctx)
+# ---------------------------------------------------------------------------
+
+
+def test_collect_excludes_owned_contribution_when_owner_inactive() -> None:
+    spec = _make_min_spec("owner_inactive")
+    gated = Model("gatedModel")
+
+    @spec.contribute
+    def always(dt: float) -> float:
+        return dt * 10.0
+
+    @spec.contribute(model=gated)
+    def gated_small(dt: float) -> float:
+        return dt * 0.1  # would win the min fold if it folded
+
+    ctx = Context(fields={"dt": 2.0}, models={})  # gatedModel absent
+    # gated_small excluded -> only `always` folds -> 20.0
+    assert spec.collect(ctx) == pytest.approx(20.0)
+
+
+def test_collect_includes_owned_contribution_when_owner_active() -> None:
+    spec = _make_min_spec("owner_active")
+    gated = Model("gatedModel")
+
+    @spec.contribute(model=gated)
+    def gated_small(dt: float) -> float:
+        return dt * 0.1
+
+    ctx = Context(fields={"dt": 2.0}, models={"gatedModel": object()})
+    assert spec.collect(ctx) == pytest.approx(0.2)
+
+
+# ---------------------------------------------------------------------------
+# DependencyResolver injects BoundInterface for spec-annotated params
 # ---------------------------------------------------------------------------
 
 
@@ -222,7 +183,7 @@ def test_resolver_raises_when_interface_not_in_ctx() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Task E — End-to-end: interface_step + collect + inactive-contribution gating
+# End-to-end: interface_step + collect + owner gating
 # ---------------------------------------------------------------------------
 
 
@@ -234,15 +195,12 @@ def test_collect_via_init_graph_and_interface_step() -> None:
     def cfl(dt: float) -> float:
         return dt * 0.5
 
-    # Init graph: place the spec in ctx.interfaces
     step = interface_step("e2e_tsc", create=lambda _ctx: spec)
     ctx = execute_initialization([step])
 
-    # Verify spec landed in ctx.interfaces
     assert "e2e_tsc" in ctx.interfaces
     assert ctx.interfaces["e2e_tsc"] is spec
 
-    # spec.collect(ctx) with fields populated
     ctx_with_fields = Context(
         fields={"dt": 4.0},
         models={},
@@ -252,20 +210,19 @@ def test_collect_via_init_graph_and_interface_step() -> None:
     assert result == pytest.approx(2.0)
 
 
-def test_inactive_model_contribution_excluded_via_deactivate() -> None:
-    """Deactivating a contribution before collect excludes it from the fold."""
-    spec = _make_min_spec("if13_gate")
+def test_inactive_model_contribution_excluded_via_owner_gate() -> None:
+    """A contribution whose owning model is absent from ctx.models is excluded."""
+    spec = _make_min_spec("owner_gate_e2e")
+    gated = Model("gatedModel")
 
     @spec.contribute
     def active_contrib(dt: float) -> float:
         return dt
 
-    @spec.contribute
+    @spec.contribute(model=gated)
     def inactive_contrib(dt: float) -> float:
-        return dt * 0.001  # would be smallest if active
+        return dt * 0.001  # would be smallest if it folded
 
-    spec.deactivate(inactive_contrib)
-    ctx = Context(fields={"dt": 5.0}, models={})
+    ctx = Context(fields={"dt": 5.0}, models={})  # gatedModel absent
     result = spec.collect(ctx)
-    # inactive_contrib excluded → only active_contrib folds → 5.0
     assert result == pytest.approx(5.0)

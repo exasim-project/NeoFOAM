@@ -10,15 +10,16 @@ Solver-side (pybFoam): the contribution injects the live ``phi`` surface flux an
 computes the classic CFL limit ``deltaT * maxCo / Co``. It lives under the solver,
 not the framework, so ``neofoam.algorithms.solution_loop`` stays pure-Python.
 
-Interim gating (until the interface mechanism auto-gates a contribution from its
-owning model's config-presence): the contribution is registered but deactivated at
-import, so a run without this model stays fixed-step; participation is toggled via
-``timeStepConstraint.activate`` / ``deactivate``. (No interim detect here — gating
-is deferred to the auto-gating cutover, and the module is not wired into
-``models/__init__`` yet.)
+The model registers with the family (so it is discoverable case-free) and the
+contribution is **bound to the model** via ``@timeStepConstraint.contribute(model=courant)``.
+Folding is automatic: the contribution participates iff the ``courant`` model is
+active for the running case (its name is a key in ``ctx.models``). No import-time
+activation toggle.
 """
 
-from pybFoam import computeCFLNumber, surfaceScalarField
+import os
+
+from pybFoam import computeCFLNumber, dictionary, surfaceScalarField
 from pydantic import Field
 
 from neofoam.algorithms.solution_loop.interfaces import VGREAT, timeStepConstraint
@@ -40,7 +41,19 @@ courant = Model("courant").register_with(incompressibleFluidModel)
 courant.config(CourantConfig)
 
 
-@timeStepConstraint.contribute
+@courant.detect
+def detect_model() -> bool:
+    """Active iff ``system/controlDict`` declares a ``maxCo`` entry.
+
+    Read relative to the run's working directory (like the other solver-local
+    detects); inactive when the file or the entry is absent.
+    """
+    if not os.path.isfile("system/controlDict"):
+        return False
+    return bool(dictionary.read("system/controlDict").found("maxCo"))
+
+
+@timeStepConstraint.contribute(model=courant)
 def courant_limit(phi: surfaceScalarField, deltaT: float, cfg: CourantConfig) -> float:
     """Largest deltaT the CFL condition permits on the live ``phi``.
 
@@ -51,8 +64,3 @@ def courant_limit(phi: surfaceScalarField, deltaT: float, cfg: CourantConfig) ->
     if co <= SMALL:
         return VGREAT
     return float(deltaT) * cfg.maxCo / co
-
-
-# Interim explicit gating (see module docstring): registered but inactive so a run
-# without this model is fixed-step; the model/test activates it explicitly.
-timeStepConstraint.deactivate(courant_limit)

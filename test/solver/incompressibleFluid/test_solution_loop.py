@@ -11,11 +11,25 @@ from __future__ import annotations
 
 from typing import cast
 
+import pytest
+
 from neofoam.algorithms.constraints.time_step import CourantConstraint
+from neofoam.algorithms.solution_loop.interfaces import (
+    loopCondition,
+    timeStepConstraint,
+)
 from neofoam.algorithms.solution_loop.loop_state import LoopState
-from neofoam.algorithms.solution_loop.solution_loop import SolutionLoop
+from neofoam.algorithms.solution_loop.solution_loop import (
+    SolutionLoop,
+    update_loop_controls,
+)
 from neofoam.framework.context import Context
+from neofoam.framework.dependency_resolver import (
+    DependencyResolver,
+    wrap_with_dependency_resolution,
+)
 from neofoam.solver.incompressibleFluid.configs import ControlDictConfig
+from neofoam.solver.incompressibleFluid.models.max_delta_t import MaxDeltaTConfig
 from neofoam.solver.incompressibleFluid.models.solution_loop import (
     FoamTime,
     SolutionLoopPredicate,
@@ -176,3 +190,25 @@ def test_increment_time_advances_state() -> None:
     ctx = cast(Context, FakeContext(loop))
     increment_time(None, ctx)
     assert loop.state.index == 1
+
+
+def test_active_optional_model_limit_flows_through_update_loop_controls() -> None:
+    # Mirrors the live wiring create_fields installs: an active optional model keyed
+    # BY NAME in ctx.models lets its owned contribution fold through
+    # update_loop_controls into the engine's next_dt. With the model absent the
+    # same fold is the empty-default (covered elsewhere); here it is present.
+    loop = make_solution_loop(_config(), make_loop_state(_config()))
+    loop.next_dt = 999.0  # sentinel distinct from the fold result
+    ctx = Context(
+        fields={"cfg": MaxDeltaTConfig(maxDeltaT=0.5)},
+        models={"solution_loop": loop, "maxDeltaT": object()},
+        interfaces={
+            "timeStepConstraint": timeStepConstraint,
+            "loopCondition": loopCondition,
+        },
+    )
+    wrapped = wrap_with_dependency_resolution(
+        update_loop_controls, instance=None, dependency_resolver=DependencyResolver()
+    )
+    wrapped(ctx)
+    assert loop.next_dt == pytest.approx(0.5)

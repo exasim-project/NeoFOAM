@@ -116,6 +116,19 @@ def _add_turbulence_model(builder: InitializerBuilder, case_dir: Path) -> None:
     )
 
 
+def _optional_models_by_name(optional_models: list[Any]) -> dict[str, Any]:
+    """Map each active optional model to its model name.
+
+    This is the projection the solution-loop interface gate reads: a
+    ``@timeStepConstraint.contribute(model=<spec>)`` contribution folds in
+    ``InterfaceSpec.collect(ctx)`` iff ``<spec>.name`` is a key in
+    ``ctx.models``. Keying the detected runtimes by ``rt.name`` (rather than
+    stashing them under one opaque ``"optional_models"`` list) makes that gate
+    match in a live run.
+    """
+    return {m.name: m for m in optional_models}
+
+
 def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
     """Build a fresh :class:`StagedInitRunner` for incompressibleFluid.
 
@@ -251,7 +264,11 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         _add_turbulence_model(builder, resolved_case_dir)
 
         builder.add_optional_models(optional_models)
-        builder.add_model("optional_models", optional_models)
+        # Register each active optional model BY NAME so its interface
+        # contribution gates on ``owner.name in ctx.models`` in a live run
+        # (see ``InterfaceSpec.collect``), instead of a single opaque list.
+        for name, opt in _optional_models_by_name(optional_models).items():
+            builder.add_model(name, opt)
 
         return builder.build()
 

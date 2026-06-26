@@ -8,6 +8,12 @@ InterfaceSpec — the fold-kernel for a named gather point.
 it returns an ``InterfaceSpec`` that owns a ``@combine`` fold function and a
 ``@contribute`` registration decorator.
 
+Contributions are gated by **ownership**: ``@<iface>.contribute(model=<spec>)``
+binds a contribution to a model; :meth:`collect` folds it only when that model's
+name is a key in ``ctx.models``. A contribution registered without a ``model=``
+is unowned and always folds. There is no mutable active-set — gating is a pure
+function of the registered contributions and the live Context.
+
 Convention note: ``Interface`` is a module-level factory function with a
 capital letter to match the ``Model(name)`` pattern — it is not a class.
 """
@@ -16,7 +22,7 @@ from __future__ import annotations
 
 import inspect
 import typing
-from typing import Any, Callable, Generic, Iterable, Optional, TypeVar
+from typing import Any, Callable, Generic, Iterable, Optional, TypeVar, overload
 
 from neofoam.framework.dependency_resolver import DependencyResolver
 
@@ -37,7 +43,7 @@ class BoundInterface(Generic[T]):
 
     Produced by :class:`~neofoam.framework.dependency_resolver.DependencyResolver`
     when it encounters a parameter annotated with an :class:`InterfaceSpec` instance.
-    Calling it returns ``spec.collect(ctx)`` over the currently active contributions.
+    Calling it returns ``spec.collect(ctx)``.
     """
 
     def __init__(self, spec: "InterfaceSpec[T]", ctx: Any) -> None:
@@ -45,6 +51,12 @@ class BoundInterface(Generic[T]):
         self._ctx = ctx
 
     def __call__(self) -> T:
+        """Return ``spec.collect(self._ctx)``.
+
+        The fold runs over every contribution whose owning model is active in the
+        bound Context (its ``name`` is a key in ``ctx.models``); unowned
+        contributions always fold.
+        """
         return self._spec.collect(self._ctx)
 
 
@@ -53,32 +65,26 @@ class InterfaceSpec(Generic[T]):
     Immutable definition of a named gather point.
 
     Holds exactly one ``@combine`` fold function (registered once at module
-    import), a list of ``@contribute`` contribution functions, and exposes
-    ``_collect_values`` (fold over zero-argument callables) and
-    ``_collect_contributions`` (fold over DI-resolved contribution functions).
+    import), a list of ``@contribute`` contribution functions, and an owner map
+    binding each contribution to the model that gates it (``None`` for an
+    unowned, always-active contribution).
 
     ``_collect_contributions`` accepts a ``providers: dict[str, Any]`` mapping
     parameter names to values and delegates resolution to
     :class:`~neofoam.framework.dependency_resolver.DependencyResolver` — the
-    same resolver used by ``@model.operation``.  ``Depends``-annotated params
-    are resolved via the resolver; plain params are matched by name from
-    *providers*.  If any plain parameter has no matching entry a ``ValueError``
-    is raised immediately (never a silent skip).
+    same resolver used by ``@model.operation``.  It is the Context-free path and
+    folds **every** registered contribution (it has no active-model set to read).
 
-    ``_collect_values`` is a lower-level helper retained for tests and for
-    callers that already have zero-argument callables.
-
-    All registered contributions are active by default.  Use :meth:`deactivate`
-    to exclude a contribution from folds without unregistering it, and
-    :meth:`activate` to re-enable it.  :meth:`collect` folds only the active
-    contributions using the full Context-backed resolver path.
+    :meth:`collect` is the Context-backed path: it folds a contribution only when
+    its owning model's name is a key in ``ctx.models`` (unowned contributions
+    always fold).
     """
 
     def __init__(self, name: str) -> None:
         self.name = name
         self._combine_func: Optional[Callable[[Iterable[T]], T]] = None
         self._contributions: list[Callable[..., T]] = []
-        self._active_contributions: set[Callable[..., T]] = set()
+        self._owner: dict[Callable[..., T], Any] = {}
 
     def combine(self, func: Callable[[Iterable[T]], T]) -> Callable[[Iterable[T]], T]:
         """Register the aggregation fold (single registration only).
@@ -94,20 +100,56 @@ class InterfaceSpec(Generic[T]):
         self._combine_func = func
         return func
 
-    def contribute(self, func: Callable[..., T]) -> Callable[..., T]:
-        """Register a contribution function (operation-style; deps inferred from params).
+    @overload
+    def contribute(
+        self, func: Callable[..., T], *, model: Any = None
+    ) -> Callable[..., T]: ...
 
-        The contribution must not declare a parameter typed ``Context``.  Its
-        parameters are resolved at fold time via
-        :class:`~neofoam.framework.dependency_resolver.DependencyResolver`,
-        using the same annotation-based injection path as ``@model.operation``.
+    @overload
+    def contribute(
+        self, func: None = None, *, model: Any = None
+    ) -> Callable[[Callable[..., T]], Callable[..., T]]: ...
 
-        The contribution is added to ``_active_contributions`` by default.
+    def contribute(
+        self,
+        func: Optional[Callable[..., T]] = None,
+        *,
+        model: Any = None,
+    ) -> Any:
+        """Register a contribution (operation-style; deps inferred from params).
+
+        Usage::
+
+            @iface.contribute                    # unowned -> always folds
+            @iface.contribute(model=<ModelSpec>) # gated by that model
+
+        An owned contribution folds in :meth:`collect` only when its owning
+        model's ``name`` is a key in ``ctx.models``; an unowned one always folds.
+        The contribution must not declare a parameter typed ``Context``.
 
         Raises:
             ValueError: if *func* declares a parameter typed ``Context``.
         """
+        if func is None:
+
+            def decorator(f: Callable[..., T]) -> Callable[..., T]:
+                return self._register_contribution(f, model)
+
+            return decorator
+        return self._register_contribution(func, model)
+
+    def _register_contribution(
+        self, func: Callable[..., T], model: Any
+    ) -> Callable[..., T]:
         from neofoam.framework.context import Context as _Context
+
+        if model is not None and not hasattr(model, "name"):
+            raise TypeError(
+                f"Interface '{self.name}': contribution '{func.__name__}' was given "
+                f"model={model!r}, which has no '.name' attribute. The owning model "
+                "must be a ModelSpec (or expose '.name') so collect() can gate it "
+                "against ctx.models."
+            )
 
         # Use get_type_hints to handle `from __future__ import annotations`
         # (which stores annotations as strings rather than live types).
@@ -126,28 +168,8 @@ class InterfaceSpec(Generic[T]):
                     "Contributions must not receive a Context object."
                 )
         self._contributions.append(func)
-        self._active_contributions.add(func)
+        self._owner[func] = model
         return func
-
-    def activate(self, func: Callable[..., T]) -> None:
-        """Mark a registered contribution as active (included in folds).
-
-        Raises:
-            ValueError: if *func* is not registered on this spec.
-        """
-        if func not in self._contributions:
-            raise ValueError(
-                f"Interface '{self.name}': cannot activate unregistered function "
-                f"'{func.__name__}'"
-            )
-        self._active_contributions.add(func)
-
-    def deactivate(self, func: Callable[..., T]) -> None:
-        """Mark a registered contribution as inactive (excluded from folds).
-
-        No-op if *func* is already inactive or not registered.
-        """
-        self._active_contributions.discard(func)
 
     def _collect_values(self, providers: Iterable[Callable[[], T]]) -> T:
         """Call the registered ``@combine`` fold over values from *providers*.
@@ -167,19 +189,24 @@ class InterfaceSpec(Generic[T]):
         return self._combine_func(p() for p in providers)
 
     def _collect_contributions(self, providers: dict[str, Any]) -> T:
-        """Resolve each active contribution against *providers* and fold.
+        """Resolve every registered contribution against *providers* and fold.
 
-        Each contribution function's parameters are resolved by
+        Intentionally **ungated**: it ignores ownership and folds *all* registered
+        contributions. It exists only for Context-free unit testing of the
+        resolve+fold mechanism; :meth:`collect` is the gated production path that
+        respects model ownership. Do not call this from solver code.
+
+        This is the Context-free path (no active-model set to read); it folds
+        all registered contributions.  Each function's parameters are resolved by
         :class:`~neofoam.framework.dependency_resolver.DependencyResolver`
         (the same resolver used by ``@model.operation``):
 
         - ``Depends(callable)`` markers are called at resolution time.
         - Plain unannotated parameters are matched by name against *providers*.
         - ``"self"`` / ``"cls"`` are skipped automatically by the resolver.
-        - Contributions not in ``_active_contributions`` are skipped.
 
         If any plain parameter remains unresolved after the resolver runs, a
-        ``ValueError`` is raised immediately — never a silent skip (IF12).
+        ``ValueError`` is raised immediately — never a silent skip.
 
         Raises:
             ValueError: if a contribution parameter cannot be resolved.
@@ -188,14 +215,9 @@ class InterfaceSpec(Generic[T]):
         resolver = DependencyResolver()
         bound: list[Callable[[], T]] = []
         for fn in self._contributions:
-            if fn not in self._active_contributions:
-                continue
             kwargs = resolver.resolve_arguments(fn, ctx=None, **providers)
             sig = inspect.signature(fn)
             fn_params = set(sig.parameters.keys()) - {"self", "cls"}
-            # Post-check: plain params not handled by the resolver (no Depends
-            # marker, not in providers) must raise explicitly — never a silent
-            # skip.
             for param_name in fn_params:
                 if param_name not in kwargs:
                     raise ValueError(
@@ -204,12 +226,7 @@ class InterfaceSpec(Generic[T]):
                         f"but no provider supplies it. "
                         f"Available providers: {sorted(providers.keys())}"
                     )
-            # Pass only the params the function actually declares, not all
-            # providers (extras would cause a TypeError).
             fn_kwargs = {k: kwargs[k] for k in fn_params if k in kwargs}
-            # An unbound contribution may still declare a leading "self"/"cls"
-            # parameter; it is not a provider but must be supplied to call the
-            # function. Pass None — the value is ignored by such contributions.
             for skipped in ("self", "cls"):
                 if skipped in sig.parameters and skipped not in fn_kwargs:
                     fn_kwargs[skipped] = None
@@ -217,27 +234,28 @@ class InterfaceSpec(Generic[T]):
         return self._collect_values(bound)
 
     def collect(self, ctx: Any) -> T:
-        """Fold the currently active contributions, resolving params via *ctx*.
+        """Fold the contributions whose owning model is active in *ctx*.
 
-        Uses the same :class:`~neofoam.framework.dependency_resolver.DependencyResolver`
-        path as ``@model.operation``.  Only contributions that are active
-        (all by default; see :meth:`deactivate`) are included in the fold.
-
-        The lazy import of :class:`~neofoam.framework.dependency_resolver.DependencyResolver`
-        is already at module top-level; ``Context`` is imported lazily inside
-        :meth:`contribute` to keep the circular-import chain clean.
+        A contribution folds iff it is unowned (``self._owner[fn] is None``) or
+        its owning model's ``name`` is a key in ``ctx.models``.  Parameters are
+        resolved via the same
+        :class:`~neofoam.framework.dependency_resolver.DependencyResolver`
+        path as ``@model.operation``.  No activation state is stored — two
+        Contexts folded in one process do not leak into each other.
 
         Args:
             ctx: A live :class:`~neofoam.framework.context.Context` instance.
 
         Raises:
-            ValueError: if a contribution parameter cannot be resolved from *ctx*.
+            ValueError: if a folded contribution's parameter cannot be resolved.
             RuntimeError: if no ``@combine`` function has been registered.
         """
+        active_models = ctx.models if ctx is not None else {}
         resolver = DependencyResolver()
         bound: list[Callable[[], T]] = []
         for fn in self._contributions:
-            if fn not in self._active_contributions:
+            owner = self._owner.get(fn)
+            if owner is not None and owner.name not in active_models:
                 continue
             kwargs = resolver.resolve_arguments(fn, ctx=ctx)
             sig = inspect.signature(fn)

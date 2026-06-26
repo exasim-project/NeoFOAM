@@ -33,8 +33,8 @@ def _temporary_contributions(
         yield
     finally:
         for fn in fns:
-            spec.deactivate(fn)
             spec._contributions.remove(fn)
+            spec._owner.pop(fn, None)
 
 
 def _ctx() -> Context:
