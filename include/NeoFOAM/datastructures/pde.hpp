@@ -430,17 +430,33 @@ public:
 
         auto solverDict = runTime_->fvSolutionDict.subDict("solvers");
         const std::string finalKey = psi_->name + "Final";
-        auto fieldSolverDict = (finalIter_ && solverDict.isDict(finalKey))
-                                 ? solverDict.subDict(finalKey)
-                                 : solverDict.subDict(psi_->name);
+        const bool useFinal = finalIter_ && solverDict.isDict(finalKey);
+        auto fieldSolverDict =
+            useFinal ? solverDict.subDict(finalKey) : solverDict.subDict(psi_->name);
         // Drop NeoFOAM-only keys before handing the dict to NeoN/Ginkgo, whose
         // config parser rejects unknown keys (e.g. assemblyStrategy, optimize).
         stripNeoFOAMKeys(fieldSolverDict);
         NeoN::fence(psi_->exec());
         NF_ASSERT(ls.exec() == psi_->exec(), "Executors are not the same");
 
-        auto solver = NeoN::la::Solver(psi_->exec(), fieldSolverDict);
-        auto stats = solver.solve(ls, psi_->internalVector());
+        // Persist the NeoN solver across iterations (Strategy 1a): keep the underlying solver
+        // instance alive in the RunTime controlDict (like ls_ above), keyed by field (and its Final
+        // variant). This is what lets a Ginkgo solver with cacheSolver=true reuse its cached
+        // (multigrid) preconditioner via update_matrix_value across successive solves instead of
+        // rebuilding the whole hierarchy every time -- a fresh per-solve solver would defeat the
+        // cache. The initializer runs once, on the first solve for this key.
+        //
+        // Stored as a shared_ptr, NOT a bare Solver: Dictionary::insert copies the std::any, and a
+        // Solver copy invokes NeoN::la::Solver's copy ctor (solverInstance_->clone(), which the
+        // Ginkgo backend does not support). Copying the shared_ptr only bumps a refcount, so the
+        // Solver itself -- and its cache -- is never cloned.
+        const std::string solverKey = "solver:" + (useFinal ? finalKey : psi_->name);
+        auto& solver = readOrCreate<std::shared_ptr<NeoN::la::Solver>>(
+            *runTime_,
+            solverKey,
+            [&] { return std::make_shared<NeoN::la::Solver>(psi_->exec(), fieldSolverDict); }
+        );
+        auto stats = solver->solve(ls, psi_->internalVector());
 
         reportSolverStats(stats, fieldSolverDict);
 

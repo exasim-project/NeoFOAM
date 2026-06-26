@@ -10,11 +10,15 @@
 #include "NeoFOAM/compatibility/fvSolution.hpp"
 
 #include <map>
+#include <cctype>
+#include <fstream>
+#include <iterator>
 
 #include <NeoN/core/logging.hpp>
 #include <NeoN/core/mpi/environment.hpp>
 #include <NeoN/core/primitives/scalar.hpp>
 #include <NeoN/core/primitives/label.hpp>
+#include <NeoN/core/tokenList.hpp>
 
 
 namespace NeoFOAM
@@ -319,12 +323,171 @@ std::string stripNamespace(const std::string& s)
     return pos == std::string::npos ? s : s.substr(pos + 2);
 }
 
+// --- Minimal brace-aware JSON scanning, used ONLY to name a configFile solver in the
+// per-solve report (e.g. "config(Cg+Multigrid)"). nlohmann/json is not on this target's
+// include path and we only need a couple of top-level "type" strings, so a tiny
+// depth-tracking scanner is enough. Run once per field when mapFvSolution stashes
+// reportName -> never on the per-solve hot path; on any malformed/missing file the caller
+// falls back to the literal "configFile" label.
+
+// Index just past the closing quote of the JSON string literal at text[i] == '"'.
+std::size_t skipJsonString(const std::string& t, std::size_t i)
+{
+    for (++i; i < t.size(); ++i)
+    {
+        if (t[i] == '\\') { ++i; continue; }   // skip the escaped char
+        if (t[i] == '"') return i + 1;
+    }
+    return i;
+}
+
+// Index of the brace/bracket that matches the one at text[open]; t.size() if unbalanced.
+std::size_t matchJsonBrace(const std::string& t, std::size_t open)
+{
+    int depth = 0;
+    for (std::size_t i = open; i < t.size(); ++i)
+    {
+        const char c = t[i];
+        if (c == '"') { i = skipJsonString(t, i) - 1; continue; }
+        if (c == '{' || c == '[') ++depth;
+        else if (c == '}' || c == ']')
+        {
+            if (--depth == 0) return i;
+        }
+    }
+    return t.size();
+}
+
+// Within the object spanning [open, close], find the IMMEDIATE-child member `key` and return
+// the index of the first non-space char of its value (npos if absent). Nested members and
+// string values are skipped so only top-level keys of this object match.
+std::size_t findJsonMember(
+    const std::string& t, std::size_t open, std::size_t close, const std::string& key
+)
+{
+    const std::string pat = "\"" + key + "\"";
+    int depth = 0;
+    for (std::size_t i = open; i < close; ++i)
+    {
+        const char c = t[i];
+        if (c == '"')
+        {
+            if (depth == 1 && t.compare(i, pat.size(), pat) == 0)
+            {
+                std::size_t j = i + pat.size();
+                while (j < close && std::isspace(static_cast<unsigned char>(t[j]))) ++j;
+                if (j < close && t[j] == ':')
+                {
+                    for (++j; j < close && std::isspace(static_cast<unsigned char>(t[j])); ++j)
+                        ;
+                    return j;
+                }
+            }
+            i = skipJsonString(t, i) - 1;
+            continue;
+        }
+        if (c == '{' || c == '[') ++depth;
+        else if (c == '}' || c == ']') --depth;
+    }
+    return std::string::npos;
+}
+
+// Value of the string literal starting at text[p] (p must point at '"'); empty otherwise.
+std::string readJsonString(const std::string& t, std::size_t p)
+{
+    if (p >= t.size() || t[p] != '"') return "";
+    const std::size_t end = skipJsonString(t, p);
+    return t.substr(p + 1, end - p - 2);
+}
+
+// stripNamespace'd value of the immediate-child "type" of the object spanning [open, close].
+std::string jsonTypeName(const std::string& t, std::size_t open, std::size_t close)
+{
+    const std::size_t p = findJsonMember(t, open, close, "type");
+    return p == std::string::npos ? "" : stripNamespace(readJsonString(t, p));
+}
+
+// Label for one solver block: its "type", with an additive-Schwarz block unwrapped to its
+// local_solver type (e.g. "Schwarz(Multigrid)") so the meaningful per-rank op is visible.
+std::string jsonBlockLabel(const std::string& t, std::size_t open, std::size_t close)
+{
+    std::string ty = jsonTypeName(t, open, close);
+    if (ty == "Schwarz")
+    {
+        const std::size_t lp = findJsonMember(t, open, close, "local_solver");
+        if (lp != std::string::npos && lp < t.size() && t[lp] == '{')
+        {
+            const std::string inner = jsonTypeName(t, lp, matchJsonBrace(t, lp));
+            if (!inner.empty()) ty += "(" + inner + ")";
+        }
+    }
+    return ty;
+}
+
+// Read the configFile path out of a (mapped) solver dict. A path that parses as a single token
+// is stored as a std::string, but one with '/' separators arrives as a NeoN::TokenList of the
+// slash-separated components (e.g. {"system","gko","p-multigrid.json"}) -- a bare
+// get<std::string>("configFile") would then throw bad_any_cast. Reconstruct the path either way,
+// mirroring how the NeoN Ginkgo backend reads it (src/linearAlgebra/ginkgo/ginkgo.cpp).
+std::string configFilePath(const NeoN::Dictionary& dict)
+{
+    const std::any& fn = dict["configFile"];
+    if (fn.type() == typeid(std::string))
+    {
+        return std::any_cast<std::string>(fn);
+    }
+    auto tokens = std::any_cast<NeoN::TokenList>(fn);
+    std::string path;
+    for (std::size_t i = 0; i < tokens.size(); ++i)
+    {
+        if (i != 0) path += "/";
+        path += tokens.next<std::string>();
+    }
+    return path;
+}
+
+// Build a report label from a Ginkgo configFile, e.g. "config(Cg+Multigrid)",
+// "config(Cg+Schwarz(Multigrid))" or "config(Ir+Multigrid)". Reads the outer solver "type"
+// plus its preconditioner (or, for IR/Richardson wrappers that carry the inner solver under
+// "solver", that nested solver). Falls back to "configFile" on any read/parse problem.
+std::string configFileLabel(const std::string& path)
+{
+    std::ifstream in(path);
+    if (!in) return "configFile";
+    const std::string t(
+        (std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>()
+    );
+
+    const std::size_t open = t.find('{');
+    if (open == std::string::npos) return "configFile";
+    const std::size_t close = matchJsonBrace(t, open);
+
+    // jsonBlockLabel (not jsonTypeName) so a top-level Schwarz solver -- the localized MG
+    // promoted to the global solver -- is unwrapped to "Schwarz(Multigrid)" too.
+    const std::string solver = jsonBlockLabel(t, open, close);
+    if (solver.empty()) return "configFile";
+
+    std::string secondary;
+    for (const char* key : {"preconditioner", "solver"})
+    {
+        const std::size_t p = findJsonMember(t, open, close, key);
+        if (p != std::string::npos && p < t.size() && t[p] == '{')
+        {
+            secondary = jsonBlockLabel(t, p, matchJsonBrace(t, p));
+            break;
+        }
+    }
+
+    const std::string label = secondary.empty() ? solver : solver + "+" + secondary;
+    return "config(" + label + ")";
+}
+
 // Build a label from the Ginkgo solver/preconditioner ACTUALLY selected after
 // mapping (e.g. "Ic+Cg", or "Schwarz(Ic)+Cg" for a distributed run). Reads the
 // post-mapping dictionary, so it reflects exactly what NeoN/Ginkgo will run.
 std::string ginkgoSolverLabel(const NeoN::Dictionary& mapped)
 {
-    if (mapped.contains("configFile")) return "configFile";
+    if (mapped.contains("configFile")) return configFileLabel(configFilePath(mapped));
 
     std::string solver =
         mapped.contains("type") ? stripNamespace(mapped.get<std::string>("type")) : "Ginkgo";
@@ -374,7 +537,11 @@ NeoN::Dictionary mapFvSolution(const NeoN::Dictionary& solverDict)
         {
             modSolverDict.insert("solver", std::string("Ginkgo"));
         }
-        modSolverDict.insert("reportName", std::string("configFile"));
+        // Name the configFile solver stack in the per-solve report by reading the JSON
+        // (e.g. "config(Cg+Multigrid)") instead of the opaque literal "configFile".
+        modSolverDict.insert(
+            "reportName", configFileLabel(configFilePath(solverDict))
+        );
         return modSolverDict;
     }
 
