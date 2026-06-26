@@ -16,8 +16,10 @@ Three collaborating pieces of one concern:
   write-time decision all live here), takes the ``min`` over injectable
   :class:`~neofoam.algorithms.constraints.time_step.DeltaTConstraint`s for the next
   ``deltaT``, and delegates the outer-loop predicate to a ``control``
-  (:class:`~neofoam.algorithms.solution_loop.control.SolutionControl`). The Courant
-  number is *pushed in* via :meth:`set_courant`.
+  (:class:`~neofoam.algorithms.solution_loop.control.SolutionControl`). Stability
+  limits are folded per step from the model-owned ``timeStepConstraint`` interface
+  (the active ``courant``/``maxDeltaT`` contributors) — there is no ``set_courant``
+  drive.
 * :class:`LoopBackend` — an optional backend (default :class:`NullLoopBackend`,
   a no-op) that mirrors the advanced ``LoopState`` onto a real backend clock. The
   solver's pybFoam ``FoamTime`` implements it to keep ``Foam::Time`` in step so
@@ -34,9 +36,7 @@ from pathlib import Path
 from typing import Any, Callable, Optional, Protocol, runtime_checkable
 
 from neofoam.algorithms.constraints.time_step import (
-    CourantConstraint,
     DeltaTConstraint,
-    MaxDeltaTConstraint,
     next_delta_t,
 )
 from neofoam.algorithms.solution_loop.interfaces import (
@@ -101,8 +101,7 @@ class SolutionLoop:
     Canonical drive (steady and unsteady alike)::
 
         while loop.running():
-            loop.set_courant(measured_Co)   # if a model measures it
-            loop.adjust_delta_t()
+            loop.constrain_delta_t(timeStepConstraint())  # folded model limits
             loop.advance()
             ...solve...
             # the fieldWriter Model persists fields — not the loop's job
@@ -130,8 +129,9 @@ class SolutionLoop:
         self._conditions: list[Callable[["SolutionLoop"], bool]] = list(
             conditions or []
         )
-        # latest interface folds, written by the update_loop_controls operation;
-        # consumed by the stepping cutover in a later iteration.
+        # latest interface folds, written by the set_time_step operation: next_dt
+        # is the folded timeStepConstraint limit and keep_running the loopCondition
+        # fold, which the outer-loop predicate ANDs with running() to stop the run.
         self.next_dt: float = VGREAT
         self.keep_running: bool = True
         self._growth_cap = growth_cap
@@ -223,6 +223,18 @@ class SolutionLoop:
         )
         self.set_delta_t(dt)
 
+    def constrain_delta_t(self, limit: float) -> None:
+        """Set the next ``deltaT`` from a folded ``timeStepConstraint`` limit.
+
+        ``VGREAT`` = no active opinion -> the step is unchanged (fixed step);
+        otherwise the step is the limit, clamped to ``growth_cap * current`` and
+        snapped onto the next write time. Mirrors the legacy ``next_delta_t`` clamp
+        but reads the fold instead of the injected constraint list.
+        """
+        current = self._state.delta_t
+        dt = current if limit >= VGREAT else min(limit, self._growth_cap * current)
+        self.set_delta_t(dt)
+
     def advance(self) -> None:
         """``Foam::Time::operator++`` — advance, roll the old time, set writeTime,
         then mirror onto the backend."""
@@ -311,26 +323,20 @@ def make_solution_loop(
     integration: Optional[TimeIntegration] = None,
     control: Optional[Any] = None,
 ) -> SolutionLoop:
-    """Wrap the state in the loop engine, seeding deltaT constraints from config.
+    """Wrap the state in the loop engine.
 
-    A transient adjustable run gets a :class:`CourantConstraint` (and a
-    ``maxDeltaT`` cap when set), min-aggregated by the engine; a steady run gets
-    none (fixed pseudo-step). ``residualControl`` is an fvSolution concern, so
-    steady convergence is wired by passing a configured ``control``.
+    Stability limits are no longer seeded here: they are folded per step from the
+    model-owned ``timeStepConstraint`` interface (the active ``courant``/``maxDeltaT``
+    contributors). ``residualControl`` is an fvSolution concern, so steady
+    convergence is wired by passing a configured ``control``.
     """
     if integration is None:
         integration = TransientIntegration()
-    loop = SolutionLoop(
+    return SolutionLoop(
         state=state,
         integration=integration,
         control=control if control is not None else SolutionControl(),
     )
-    if isinstance(integration, TransientIntegration) and config.adjustTimeStep:
-        if config.maxCo:
-            loop.add_constraint(CourantConstraint(maxCo=float(config.maxCo)))
-        if config.maxDeltaT:
-            loop.add_constraint(MaxDeltaTConstraint(maxDeltaT=float(config.maxDeltaT)))
-    return loop
 
 
 # -- build: LoopState (ctx.time) + engine are this model's runtime state ---
@@ -358,29 +364,39 @@ class SolutionLoopPredicate:
 
     The engine's :class:`SolutionControl` advances a transient run to
     ``endTime`` and ends a steady run on residual convergence, so the solver
-    never special-cases steady vs unsteady.
+    never special-cases steady vs unsteady. The run also ends when the folded
+    ``loopCondition`` (recorded as ``keep_running`` by ``set_time_step``,
+    default ``True``) votes to stop.
     """
 
     def __call__(self, ctx: Context) -> bool:
-        return bool(_engine(ctx).running())
+        loop = _engine(ctx)
+        return bool(loop.running() and loop.keep_running)
 
 
 # -- operations: the loop body --------------------------------------------
 @solutionLoop.operation()
-def set_time_step(self: Any, ctx: Context) -> None:
-    """Set the next ``deltaT`` from the injected stability constraints.
+def set_time_step(
+    self: Any,
+    ctx: Context,
+    constraints: timeStepConstraint,  # type: ignore[valid-type]
+    conditions: loopCondition,  # type: ignore[valid-type]
+) -> None:
+    """Set the next ``deltaT`` from the folded ``timeStepConstraint`` and record the
+    loop continue-flag from ``loopCondition``.
 
-    No steady/transient branch: a fixed-step run has no constraints, so the
-    engine's min-aggregation leaves the step unchanged. When constraints are
-    present and a ``courant_provider`` is injected, the measured Courant number
-    is pushed into the engine for the CFL constraint to read.
+    Publishes the loop's current step as ``ctx.fields["deltaT"]`` so a contribution
+    can inject ``deltaT`` without reading the Context, then **calls** each injected
+    interface with the **live** Context so the active contributing models resolve
+    their fields/config at this step. No active constraint -> ``min`` default
+    ``VGREAT`` -> the step is unchanged (fixed step).
     """
     loop = _engine(ctx)
-    if loop.constraints:
-        provider = ctx.models.get("courant_provider")
-        if provider is not None:
-            loop.set_courant(float(provider(ctx)))
-    loop.adjust_delta_t()
+    ctx.fields["deltaT"] = loop.current_delta_t()
+    loop.keep_running = conditions(ctx)  # type: ignore[misc]
+    limit = constraints(ctx)  # type: ignore[misc]
+    loop.next_dt = limit
+    loop.constrain_delta_t(limit)
 
 
 @solutionLoop.operation()
@@ -390,22 +406,3 @@ def increment_time(self: Any, ctx: Context) -> None:
     logger = ctx.models.get("loop_logger")
     (logger if logger is not None else print)(f"Time = {loop.timeName()}")
     loop.advance()
-
-
-@solutionLoop.operation()
-def update_loop_controls(
-    self: Any,
-    ctx: Context,
-    constraints: timeStepConstraint,  # type: ignore[valid-type]
-    conditions: loopCondition,  # type: ignore[valid-type]
-) -> None:
-    """Record the folded next-deltaT limit and the loop continue-flag.
-
-    Injects the two gather-point interfaces (typed with the spec instances) and
-    **calls** them. With no active contribution the constraint fold is ``VGREAT``
-    (fixed step) and the condition fold is ``True`` (keep running). The recorded
-    values are wired into actual stepping by a later iteration's cutover.
-    """
-    loop = _engine(ctx)
-    loop.next_dt = constraints()  # type: ignore[misc]
-    loop.keep_running = conditions()  # type: ignore[misc]

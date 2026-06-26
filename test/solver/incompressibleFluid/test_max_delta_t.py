@@ -127,3 +127,22 @@ def test_model_inactive_when_no_control_dict_is_present(
 ) -> None:
     monkeypatch.chdir(tmp_path)
     assert maxDeltaT.run_detect() is False
+
+
+def test_max_delta_t_inactive_when_adjust_time_step_is_off(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # maxDeltaT present but adjustTimeStep no: OpenFOAM keeps a fixed step, so the
+    # contribution must stay inactive (the symmetric guard to courant's no-adjust arm).
+    monkeypatch.chdir(_CASES / "maxDeltaT_no_adjust")
+    detected = {rt.name for rt in incompressibleFluidModel.detect_models(Path("."))}
+    assert "maxDeltaT" not in detected
+
+
+def test_max_delta_t_inactive_when_adjust_time_step_key_is_absent(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # The adjustTimeStep key omitted entirely short-circuits detection -> inactive.
+    monkeypatch.chdir(_CASES / "no_adjust_key")
+    detected = {rt.name for rt in incompressibleFluidModel.detect_models(Path("."))}
+    assert "maxDeltaT" not in detected

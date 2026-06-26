@@ -60,15 +60,17 @@ def test_solution_loop_step_binds_owned_interface_onto_owner_runtime(
     bound = owner_runtime.bound_interfaces["timeStepConstraint"]
     assert isinstance(bound, BoundModelInterface)
     # loopCondition is owned + bound by the same step.
-    assert isinstance(
-        owner_runtime.bound_interfaces["loopCondition"], BoundModelInterface
-    )
+    condition = owner_runtime.bound_interfaces["loopCondition"]
+    assert isinstance(condition, BoundModelInterface)
 
-    # The handle is stored-not-folded this iteration, so it is bound against an
-    # EMPTY Context — capturing the live pybFoam fields/models here would create a
-    # mesh-bound reference cycle that segfaults at GC across in-process solver runs.
-    # Pin "no live capture" with a unit assertion so a regression to live-snapshot
-    # is caught here, not only by the integration SIGBUS. (_ctx is white-box; the
-    # empty-Context contract is the point.)
+    # The owner is bound against an EMPTY Context — the GC-safe no-capture contract:
+    # capturing the live pybFoam fields/models here would create a mesh-bound
+    # reference cycle that segfaults at GC across in-process solver runs. The live
+    # fold happens at CALL time with a Context passed by set_time_step (proven in
+    # test_interface.py / test_courant.py). Pin "no live capture" with a unit
+    # assertion so a regression to live-snapshot is caught here, not only by the
+    # integration SIGBUS. (_ctx is white-box; the empty-Context contract is the point.)
     assert bound._ctx.fields == {}
     assert bound._ctx.models == {}
+    assert condition._ctx.fields == {}
+    assert condition._ctx.models == {}

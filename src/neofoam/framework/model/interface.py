@@ -150,17 +150,25 @@ class BoundModelInterface(Generic[T]):
         self._interface = interface
         self._runtimes = list(contributing_runtimes)
         self._ctx = ctx
+        self._runtime_by_spec = {rt.spec: rt for rt in self._runtimes}
 
-    def __call__(self) -> T:
-        runtime_by_spec = {rt.spec: rt for rt in self._runtimes}
+    def __call__(self, ctx: Any = None) -> T:
+        """Fold the active contributions against the **call-time** Context.
+
+        *ctx* (the live Context for this step) overrides the bind-time Context so
+        the owner runtime can be wired with an empty Context (no mesh-bound pybFoam
+        capture -> no cross-run GC cycle) and still fold against live fields/models.
+        With no *ctx* the bind-time Context is used (the original call form).
+        """
+        live_ctx = ctx if ctx is not None else self._ctx
         values: list[T] = []
         for func in self._interface.contributions:
             owner_spec = self._interface.owner_of(func)
-            runtime = runtime_by_spec.get(owner_spec)
+            runtime = self._runtime_by_spec.get(owner_spec)
             if runtime is None:
                 continue  # contributing model not active for this case
             kwargs = _resolve_contribution_kwargs(
-                self._interface.name, func, runtime, self._ctx
+                self._interface.name, func, runtime, live_ctx
             )
             values.append(func(**kwargs))
         return self._interface.fold(values)

@@ -733,6 +733,31 @@ def test_defaulted_contribution_parameter_still_requires_a_provider() -> None:
         bound()
 
 
+def test_bound_interface_folds_against_the_call_time_context() -> None:
+    # The handle is bound with an EMPTY Context (no live capture — the GC-safe
+    # contract); the live Context is supplied at CALL time and is what the
+    # contributions resolve against.
+    loop = Model("solutionLoop")
+
+    @loop.interface
+    def timeStepConstraint(limits: Iterable[float]) -> float:
+        return min(limits, default=VGREAT)
+
+    contributor = Model("capper")
+
+    @contributor.contributes(timeStepConstraint)
+    def cap(deltaT: float) -> float:
+        return deltaT
+
+    rt = ModelRuntime(spec=contributor, name="capper", config=None)
+    bound = BoundModelInterface(timeStepConstraint, [rt], Context(fields={}, models={}))
+
+    live = Context(fields={"deltaT": 0.25}, models={})
+    assert bound(live) == pytest.approx(0.25)  # folds against the passed ctx
+    with pytest.raises(ValueError, match="no provider supplies it"):
+        bound()  # empty bound ctx -> unresolved
+
+
 def test_two_same_named_contributions_both_fold() -> None:
     accumulator = Model("accumulator")
 

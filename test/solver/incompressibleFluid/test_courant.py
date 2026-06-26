@@ -85,6 +85,34 @@ def test_config_presence_drives_detection(monkeypatch: pytest.MonkeyPatch) -> No
     off = {rt.name for rt in incompressibleFluidModel.detect_models(Path("."))}
     assert "courant" not in off
 
+    # maxCo present but adjustTimeStep no: OpenFOAM keeps a fixed step, so courant
+    # must stay inactive (preserves the hotRoom/cavity/cylinder2D fixed-step parity).
+    monkeypatch.chdir(_CASES / "maxCo_no_adjust")
+    fixed = {rt.name for rt in incompressibleFluidModel.detect_models(Path("."))}
+    assert "courant" not in fixed
+
+    # adjustTimeStep key omitted entirely: the short-circuit on a missing key -> inactive.
+    monkeypatch.chdir(_CASES / "no_adjust_key")
+    no_key = {rt.name for rt in incompressibleFluidModel.detect_models(Path("."))}
+    assert "courant" not in no_key
+
+
+def test_contribution_resolves_live_phi_and_config_at_call_time(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Bound against an EMPTY ctx (no live capture); the live ctx is passed at call
+    # time and is where phi + deltaT resolve, while cfg comes from the runtime.
+    monkeypatch.setattr(courant_mod, "computeCFLNumber", lambda phi: [2.0])
+    bound = BoundModelInterface(
+        timeStepConstraint,
+        [_courant_runtime(max_co=1.0)],
+        Context(fields={}, models={}),
+    )
+    live = Context(fields={"phi": object(), "deltaT": 0.1}, models={})
+    assert bound(live) == pytest.approx(0.05)  # 0.1 * 1.0 / 2.0
+    with pytest.raises(ValueError, match="no provider supplies it"):
+        bound()  # empty bound ctx -> phi/deltaT absent
+
 
 def test_model_inactive_when_no_control_dict_is_present(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path

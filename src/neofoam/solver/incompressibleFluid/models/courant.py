@@ -44,14 +44,17 @@ courant.config(CourantConfig)
 
 @courant.detect
 def detect_model() -> bool:
-    """Active iff ``system/controlDict`` declares a ``maxCo`` entry.
+    """Active iff ``system/controlDict`` enables adaptive stepping with a ``maxCo``.
 
-    Read relative to the run's working directory (like the other solver-local
-    detects); inactive when the file or the entry is absent.
+    OpenFOAM only honours ``maxCo`` when ``adjustTimeStep`` is on; mirror that so a
+    fixed-step case (``adjustTimeStep no``) keeps a fixed step. Read relative to the
+    run's working directory; inactive when the file or the entries are absent.
     """
     if not os.path.isfile("system/controlDict"):
         return False
-    return bool(dictionary.read("system/controlDict").found("maxCo"))
+    cd = dictionary.read("system/controlDict")
+    adaptive = cd.found("adjustTimeStep") and cd.get[bool]("adjustTimeStep")
+    return bool(adaptive and cd.found("maxCo"))
 
 
 @courant.contributes(timeStepConstraint)
