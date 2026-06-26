@@ -122,6 +122,33 @@ def lazy(
     return _make_lazy(None, "resource", name, create, depends_on)
 
 
+def interface_step(
+    name: str,
+    create: Callable[[dict[str, Any]], Any],
+    depends_on: Optional[List[str]] = None,
+) -> InitStep:
+    """Helper for creating interface lazy initializers.
+
+    Automatically prefixes name with "interfaces." and sets category to
+    "interfaces".  The created value is placed in ``ctx.interfaces[name]``
+    by the router registered in
+    :func:`~neofoam.framework.initialization.execution.context_builder.default_router`.
+
+    Args:
+        name: Interface name (e.g., "timeStepConstraint")
+        create: Function that creates the interface value (receives the
+            in-progress context dict)
+        depends_on: List of dependencies (default: [])
+
+    Returns:
+        InitStep for the interface
+
+    Example:
+        interface_step("timeStepConstraint", create=lambda _ctx: my_spec)
+    """
+    return _make_lazy("interfaces", "interfaces", name, create, depends_on)
+
+
 def model(
     name: str,
     create: Callable[[dict[str, Any]], Any],

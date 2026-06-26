@@ -40,6 +40,7 @@ class ContextBuilder:
     mesh: Any = None
     time: Any = None
     write_fields: set[str] = field(default_factory=set)
+    interfaces: dict[str, Any] = field(default_factory=dict)
 
     def to_context(self) -> Context:
         return Context(
@@ -48,6 +49,7 @@ class ContextBuilder:
             mesh=self.mesh,
             time=self.time,
             write_fields=self.write_fields,
+            interfaces=self.interfaces,
         )
 
 
@@ -73,6 +75,10 @@ def _route_resource(builder: ContextBuilder, name: str, value: Any) -> None:
         builder.time = value
     else:
         _fallback_to_models(builder, name, value)
+
+
+def _route_interfaces(builder: ContextBuilder, name: str, value: Any) -> None:
+    builder.interfaces[_strip_prefix(name, "interfaces")] = value
 
 
 def _fallback_to_models(builder: ContextBuilder, name: str, value: Any) -> None:
@@ -106,12 +112,13 @@ class CategoryRouter:
 
 
 def default_router() -> CategoryRouter:
-    """Router populated with the four built-in category handlers."""
+    """Router populated with the five built-in category handlers."""
     router = CategoryRouter()
     router.register("fields", _route_fields)
     router.register("models", _route_models)
     router.register("operators", _route_operators)
     router.register("resource", _route_resource)
+    router.register("interfaces", _route_interfaces)
     return router
 
 

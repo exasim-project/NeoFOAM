@@ -37,3 +37,5 @@ class Context(BaseModel):
     # names of fields (keys of ``fields``) flagged for persistence via
     # ``field(..., write=True)``; a per-field write backend writes exactly these.
     write_fields: set[str] = Field(default_factory=set)
+    # named gather-point specs/callables placed by interface_step init steps.
+    interfaces: dict[str, Any] = Field(default_factory=dict)

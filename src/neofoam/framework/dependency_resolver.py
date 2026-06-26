@@ -53,6 +53,29 @@ class DependencyResolver:
                     kwargs[param_name] = ctx
                     continue
 
+                # Lazy import to break the circular chain:
+                # dependency_resolver → interface.spec → dependency_resolver
+                from .interface.spec import (  # noqa: PLC0415
+                    BoundInterface as _BoundInterface,
+                    InterfaceSpec as _InterfaceSpec,
+                )
+
+                if isinstance(param.annotation, _InterfaceSpec):
+                    if ctx is None:
+                        raise ValueError(
+                            f"Parameter '{param_name}' is typed as an InterfaceSpec "
+                            "but no Context was provided to the resolver."
+                        )
+                    iface_spec = ctx.interfaces.get(param.annotation.name)
+                    if iface_spec is None:
+                        raise ValueError(
+                            f"Interface '{param.annotation.name}' not found in "
+                            f"ctx.interfaces. Available: "
+                            f"{sorted(ctx.interfaces.keys())}"
+                        )
+                    kwargs[param_name] = _BoundInterface(param.annotation, ctx)
+                    continue
+
                 if get_origin(param.annotation) is Annotated:
                     args = get_args(param.annotation)
                     if len(args) > 1 and isinstance(args[1], str):

@@ -37,7 +37,7 @@ and stage semantics.
 
 from .config_context import ConfigContext
 from .init_step import InitCategory, InitStep, InitStepExecutionError
-from .helpers import field, operator, lazy, model, InitializerBuilder
+from .helpers import field, operator, lazy, model, interface_step, InitializerBuilder
 from .execution import (
     CategoryRouter,
     InitResult,
@@ -65,6 +65,7 @@ __all__ = [
     "operator",
     "lazy",
     "model",
+    "interface_step",
     "InitializerBuilder",
     "execute_initialization",
     "execute_step",
