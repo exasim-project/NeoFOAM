@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Parameter study for occDrivAerStaticMesh — linear-solver configurations.
+# Parameter study for occDrivAreStaticMesh — linear-solver configurations.
 # Runs STEPS SIMPLE iterations for each case, every case starting from time 0 so
 # the comparison is apples-to-apples.
 #

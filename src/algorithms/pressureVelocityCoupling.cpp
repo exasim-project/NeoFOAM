@@ -150,8 +150,11 @@ computeRAtU(const PDESolver<Vec3>& expr, const nnfvcc::VolumeField<scalar>& rAU)
     // off-diagonal sum here and form rAtU = 1/(1/rAU - H1) below.
     auto sumOff = NeoN::Vector<scalar>(expr.exec(), nRows, scalar(0));
 
-    const auto [rowOffsV, colIdxV, matrixV] =
-        views(ls.matrix().sparsity()->rowOffs(), ls.matrix().sparsity()->colIdxs(), ls.matrix().values());
+    const auto [rowOffsV, colIdxV, matrixV] = views(
+        ls.matrix().sparsity()->rowOffs(),
+        ls.matrix().sparsity()->colIdxs(),
+        ls.matrix().values()
+    );
     auto sumOffV = sumOff.view();
 
     NeoN::parallelFor(
@@ -236,14 +239,12 @@ void addConsistentFluxCorrection(
     drAU.correctBoundaryConditions();
 
     // interpolate(rAtU - rAU) to the faces and snGrad(p) (corrected: keep non-orthogonality)
-    auto linear = nnfvcc::SurfaceInterpolation<scalar>(
-        exec, mesh, NeoN::TokenList({std::string("linear")})
-    );
+    auto linear =
+        nnfvcc::SurfaceInterpolation<scalar>(exec, mesh, NeoN::TokenList({std::string("linear")}));
     auto drAUf = linear.interpolate(drAU);
 
-    auto sng = nnfvcc::FaceNormalGradient<scalar>(
-        exec, mesh, NeoN::TokenList({std::string("corrected")})
-    );
+    auto sng =
+        nnfvcc::FaceNormalGradient<scalar>(exec, mesh, NeoN::TokenList({std::string("corrected")}));
     auto snGradP = sng.faceNormalGrad(p);
 
     const auto nInternalFaces = mesh.nInternalFaces();
@@ -290,8 +291,12 @@ void subtractConsistentHbyA(
 )
 {
     auto gradP = nnfvcc::GaussGreenGrad(p.exec(), p.mesh()).grad(p);
-    const auto [iHbyA, iRAU, iRAtU, iGradP] =
-        views(hByA.internalVector(), rAU.internalVector(), rAtU.internalVector(), gradP.internalVector());
+    const auto [iHbyA, iRAU, iRAtU, iGradP] = views(
+        hByA.internalVector(),
+        rAU.internalVector(),
+        rAtU.internalVector(),
+        gradP.internalVector()
+    );
     hByA.internalVector().apply(NEON_LAMBDA(const std::size_t celli) {
         return iHbyA[celli] - (iRAU[celli] - iRAtU[celli]) * iGradP[celli];
     });

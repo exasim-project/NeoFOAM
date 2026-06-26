@@ -23,4 +23,3 @@ time mpirun -np 4  potentialFoam -initialiseUBCs -parallel $fileHandler > 30_pot
 
 echo; echo "applyBoundaryLayer"
 time mpirun -np 4 applyBoundaryLayer -ybl "0.0450244" -parallel $fileHandler > 40_applyBoundaryLayer.log 2>&1 || exit 1
-

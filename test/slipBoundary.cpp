@@ -7,7 +7,7 @@
 // condition type"). This exercises the production reader path
 // (constructFrom -> readVolBoundaryConditions -> VolumeBoundaryFactory) for
 // both scalar and vector fields and checks the corrected boundary values match
-// OpenFOAM's slipFvPatchField. The DrivAer case needs slip on its ground patch
+// OpenFOAM's slipFvPatchField. The DrivAre case needs slip on its ground patch
 // for U/p/k/omega/nut, so this guards that the whole case fails to construct.
 
 #define CATCH_CONFIG_RUNNER

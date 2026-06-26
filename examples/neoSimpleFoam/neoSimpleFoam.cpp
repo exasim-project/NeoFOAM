@@ -201,8 +201,8 @@ int main(int argc, char* argv[])
                     );
 
                     // Keep the non-orthogonal faceFluxCorrection so updateFaceVelocity can subtract
-                    // it from phi (the deferred correction is otherwise in the RHS only, leaving phi
-                    // inconsistent — continuity leaks on non-orthogonal meshes with 'corrected'
+                    // it from phi (the deferred correction is otherwise in the RHS only, leaving
+                    // phi inconsistent — continuity leaks on non-orthogonal meshes with 'corrected'
                     // snGrad). neoIcoFoam/neoPisoFoam already do this; neoSimpleFoam previously did
                     // not and masked it with an (incorrect) explicit add-back.
                     pEqn.linearSystem().keepFaceFluxCorrection(true);
@@ -223,9 +223,9 @@ int main(int argc, char* argv[])
                         // The non-orthogonal correction is owned by updateFaceVelocity, which
                         // subtracts the Laplacian's stored faceFluxCorrection (ffc) from phi. The
                         // previous explicit add-back here was redundant (double-counting on the
-                        // 'corrected' scheme) and, because it hardcoded a 'corrected' snGrad, it also
-                        // injected a spurious correction on non-orthogonal meshes even under an
-                        // 'uncorrected' laplacian — corrupting continuity. Removed.
+                        // 'corrected' scheme) and, because it hardcoded a 'corrected' snGrad, it
+                        // also injected a spurious correction on non-orthogonal meshes even under
+                        // an 'uncorrected' laplacian — corrupting continuity. Removed.
                     }
                 }
                 nf::reportContinuityError(phi, rt, cumulativeContErr);

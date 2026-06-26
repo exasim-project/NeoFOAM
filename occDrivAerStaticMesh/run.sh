@@ -18,4 +18,3 @@ export NEON_DEVICE=nvidia_h200
 export CUDA_VISIBLE_DEVICES=1,2,3,4
 
 mpirun -np 4 /storage/home/greole/code/NeoFOAM/build/profiling$NEON_DEVICE/bin/neoSimpleFoam -parallel  > run_$NEON_DEVICE.kOmegaSST.pcg.simplec.steadyState.log 2>&1
-

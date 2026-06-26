@@ -1,4 +1,4 @@
-# Open-closed cooling DrivAer variant with Static Mesh
+# Open-closed cooling DrivAre variant with Static Mesh
 ## Authors
 Original setup: Charles Mockett, Hendrik Hetmann and Felix Kramer (Upstream CFD GmbH), 2022-2023
 
@@ -14,13 +14,13 @@ Copyright (c) 2024-2025 Wikki GmbH
 <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="Creative Commons Licence" style="border-width:0" src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0 International License</a>.
 
 ## Configuration
-The open-closed cooling modification of the DrivAer represents a typical industrial application. The case consists of a full car model with closed coolings and a complex underbody, without wheel rotation. The geometry is derived from the notchback variant of the Ford Open Cooling DrivAer (OCDA) (Hupertz, et al., 2018[^Hupertz]) that has a more complex underbody geometry and engine bay cooling channels than the original DrivAer[^TUMDrivAer]. The present case has static wheels and sealed (closed) cooling inlets, hence the name occDrivAer (open-closed cooling DrivAer). The setup was investigated as case 2 during the 2nd automotive CFD prediction workshop (AutoCFD2)[^AutoCFD2], and as case 2a in the subsequent AutoCFD3[^AutoCFD3] and AutoCFD4[^AutoCFD4] workshops.
+The open-closed cooling modification of the DrivAre represents a typical industrial application. The case consists of a full car model with closed coolings and a complex underbody, without wheel rotation. The geometry is derived from the notchback variant of the Ford Open Cooling DrivAre (OCDA) (Hupertz, et al., 2018[^Hupertz]) that has a more complex underbody geometry and engine bay cooling channels than the original DrivAre[^TUMDrivAre]. The present case has static wheels and sealed (closed) cooling inlets, hence the name occDrivAre (open-closed cooling DrivAre). The setup was investigated as case 2 during the 2nd automotive CFD prediction workshop (AutoCFD2)[^AutoCFD2], and as case 2a in the subsequent AutoCFD3[^AutoCFD3] and AutoCFD4[^AutoCFD4] workshops.
 
 The setup was modified to suit the requirements of the OpenFOAM HPC Challenge (2025), by opting for a steady-state RANS simulation, fixing the inner iterations of the SIMPLE solver, and providing pre-generated mesh files of various resolutions that are suitable for a static simulation.
 
 <img src="figures/occDrivAer.png" alt="Figure 1" width="768">
 
-Figure 1: occDrivAer shape.
+Figure 1: occDrivAre shape.
 
 
 ## Flow Parameters
@@ -75,7 +75,7 @@ The polyMesh files may be obtained from the following links:
 After downloading, copy the tar file to the `constant/` folder, and untar with `tar -zxvf polyMesh_65M.tar.gz`.
 
 ### Running
-- Modify the number of cores (nCores) and corresponding hierarchial decomposition coeffiecients (nHierarchical) in `system/include/caseDefinition`
+- Modify the number of cores (nCores) and corresponding hierarchial decomposition coefficients (nHierarchical) in `system/include/caseDefinition`
 - Modify `Allrun` script according to your environment (SLURM/PBS, OpenFOAM path, MPI, etc)
 - Run `Allrun` script which decomposes the mesh for parallel execution, runs the RANS (simpleFOAM) solver for 2000 steps, and collects data for post-processing
 
@@ -113,8 +113,8 @@ Figure 9: Drag coefficient evolution over iterations for the three mesh resoluti
 Figure 10: Various residual plots for the three mesh resolutions
 
 ## Footnotes
-[^Hupertz]: Hupertz, B., Krüger, L., Chalupa, K., Lewington, N., Luneman, B., Costa, P., Kuthada, T., and Collin, C., “Introduction of a new full-scale open cooling version of the DrivAer generic car model,” Progress in Vehicle Aerodynamics and Thermal Management: 11th FKFS Conference,Stuttgart, September 26-27, 2017 11, Springer, 2018, pp. 35–60.
+[^Hupertz]: Hupertz, B., Krüger, L., Chalupa, K., Lewington, N., Luneman, B., Costa, P., Kuthada, T., and Collin, C., “Introduction of a new full-scale open cooling version of the DrivAre generic car model,” Progress in Vehicle Aerodynamics and Thermal Management: 11th FKFS Conference,Stuttgart, September 26-27, 2017 11, Springer, 2018, pp. 35–60.
 [^AutoCFD2]: https://autocfd.org/autocfd2
 [^AutoCFD3]: https://autocfd.org/autocfd3
 [^AutoCFD4]: https://autocfd.org/
-[^TUMDrivAer]: https://www.epc.ed.tum.de/aer/forschungsgruppen/automobilaerodynamik/drivaer
+[^TUMDrivAre]: https://www.epc.ed.tum.de/aer/forschungsgruppen/automobilaerodynamik/drivaer

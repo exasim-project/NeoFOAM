@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Shared infrastructure for the occDrivAer parameter studies. SOURCED by
+# Shared infrastructure for the occDrivAre parameter studies. SOURCED by
 # param-study.sh (linear-solver caseN comparison) and param-study-mg.sh (Ginkgo
 # multigrid-pressure sweep) — not run directly.
 #

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Multigrid-pressure parameter study for occDrivAerStaticMesh.
+# Multigrid-pressure parameter study for occDrivAreStaticMesh.
 #
 # Sweeps the Ginkgo multigrid p-solver over system/gko/p-multigrid.L*.sc*.json
 # (8 variants: max_levels {2,4,10,15} x scale_correction {0,2}), regenerated from

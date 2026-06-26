@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Summary-table generator for the occDrivAer parameter studies.
+# Summary-table generator for the occDrivAre parameter studies.
 #
 # Scans every per-run log under paramStudy/results/ (written by param-study.sh and
 # param-study-mg.sh via param-study-common.sh) and prints one consolidated table:

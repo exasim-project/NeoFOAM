@@ -6,4 +6,3 @@ Fine - <a rel="fine" href="https://zenodo.org/records/15012221/files/polyMesh_23
 * There is no requirement to download all three sets of mesh files
 
 After downloading, copy the tar file to the `constant/` folder, and untar with `tar -zxvf polyMesh_65M.tar.gz`.
-

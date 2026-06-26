@@ -1,88 +1,88 @@
 {
-    "type": "solver::Cg",
-    "preconditioner": {
-        "type": "solver::Multigrid",
-        "max_levels": 10,
-        "min_coarse_rows": 64,
-        "cycle": "v",
-        "default_initial_guess": "zero",
-        "post_uses_pre": false,
-        "mg_level": [
-            {
-                "type": "multigrid::Pgm",
-                "deterministic": true
-            }
-        ],
-        "pre_smoother": [
-            {
-                "type": "solver::Ir",
-                "relaxation_factor": 0.9,
-                "scale_correction": 2,
-                "solver": {
-                    "type": "preconditioner::Schwarz",
-                    "local_solver": {
-                        "type": "preconditioner::Jacobi",
-                        "max_block_size": 1
-                    }
-                },
-                "criteria": [
-                    {
-                        "type": "Iteration",
-                        "max_iters": 2
-                    }
-                ]
-            }
-        ],
-        "post_smoother": [
-            {
-                "type": "solver::Ir",
-                "relaxation_factor": 0.9,
-                "scale_correction": 2,
-                "solver": {
-                    "type": "preconditioner::Schwarz",
-                    "local_solver": {
-                        "type": "preconditioner::Jacobi",
-                        "max_block_size": 1
-                    }
-                },
-                "criteria": [
-                    {
-                        "type": "Iteration",
-                        "max_iters": 2
-                    }
-                ]
-            }
-        ],
-        "coarsest_solver": {
-            "type": "solver::Ir",
-            "relaxation_factor": 0.9,
-            "scale_correction": 1,
-            "solver": {
-                "type": "preconditioner::Schwarz",
-                "local_solver": {
-                    "type": "preconditioner::Jacobi",
-                    "max_block_size": 1
-                }
-            },
-            "criteria": [
-                {
-                    "type": "Iteration",
-                    "max_iters": 8
-                }
-            ]
+  "type": "solver::Cg",
+  "preconditioner": {
+    "type": "solver::Multigrid",
+    "max_levels": 10,
+    "min_coarse_rows": 64,
+    "cycle": "v",
+    "default_initial_guess": "zero",
+    "post_uses_pre": false,
+    "mg_level": [
+      {
+        "type": "multigrid::Pgm",
+        "deterministic": true
+      }
+    ],
+    "pre_smoother": [
+      {
+        "type": "solver::Ir",
+        "relaxation_factor": 0.9,
+        "scale_correction": 2,
+        "solver": {
+          "type": "preconditioner::Schwarz",
+          "local_solver": {
+            "type": "preconditioner::Jacobi",
+            "max_block_size": 1
+          }
         },
         "criteria": [
-            {
-                "type": "Iteration",
-                "max_iters": 1
-            }
+          {
+            "type": "Iteration",
+            "max_iters": 2
+          }
         ]
+      }
+    ],
+    "post_smoother": [
+      {
+        "type": "solver::Ir",
+        "relaxation_factor": 0.9,
+        "scale_correction": 2,
+        "solver": {
+          "type": "preconditioner::Schwarz",
+          "local_solver": {
+            "type": "preconditioner::Jacobi",
+            "max_block_size": 1
+          }
+        },
+        "criteria": [
+          {
+            "type": "Iteration",
+            "max_iters": 2
+          }
+        ]
+      }
+    ],
+    "coarsest_solver": {
+      "type": "solver::Ir",
+      "relaxation_factor": 0.9,
+      "scale_correction": 1,
+      "solver": {
+        "type": "preconditioner::Schwarz",
+        "local_solver": {
+          "type": "preconditioner::Jacobi",
+          "max_block_size": 1
+        }
+      },
+      "criteria": [
+        {
+          "type": "Iteration",
+          "max_iters": 8
+        }
+      ]
     },
     "criteria": [
-        {
-            "type": "Iteration",
-            "max_iters": 150
-        },
-        "neon::l1ScaledResidual"
+      {
+        "type": "Iteration",
+        "max_iters": 1
+      }
     ]
+  },
+  "criteria": [
+    {
+      "type": "Iteration",
+      "max_iters": 150
+    },
+    "neon::l1ScaledResidual"
+  ]
 }

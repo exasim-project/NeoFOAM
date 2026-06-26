@@ -173,9 +173,8 @@ public:
      *  @p values are nCells-sized and owned by the caller (must outlive the solve); a cell is
      *  pinned iff mask[cell] != 0, to value[cell]. Applied in solveImpl after relaxation, via
      *  NeoN::dsl::FixedValueConstraints. Scalar fields only (no-op for vector fields). */
-    void setConstraints(
-        const NeoN::Vector<NeoN::scalar>& mask, const NeoN::Vector<ValueType>& values
-    )
+    void
+    setConstraints(const NeoN::Vector<NeoN::scalar>& mask, const NeoN::Vector<ValueType>& values)
     {
         constraintMask_ = &mask;
         constraintValues_ = &values;
@@ -587,7 +586,8 @@ private:
         {
             const auto& stat = stats.entries[i];
             NeoN::Logging::info(
-                "{}:  Solving for {}, Initial residual = {}, Final residual = {}, No Iterations {}, "
+                "{}:  Solving for {}, Initial residual = {}, Final residual = {}, No Iterations "
+                "{}, "
                 "Solve time = {} ms",
                 label,
                 componentName(psi_->name, i, n),

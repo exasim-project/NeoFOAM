@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate Ginkgo multigrid-preconditioner variants for the occDrivAer p-solver
+"""Generate Ginkgo multigrid-preconditioner variants for the occDrivAre p-solver
 parameter study, from the production p-multigrid.json base.
 
 Grid:
