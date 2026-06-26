@@ -160,9 +160,11 @@ TEST_CASE("Advection Equation")
     std::string timeIntegration = "backwardEuler";
     NeoN::Dictionary fvSolutionDict {
         {{"solver", std::string {"Ginkgo"}},
-         {"type", "solver::Bicgstab"},
+         {"type", std::string {"solver::Bicgstab"}},
          {"preconditioner",
-          NeoN::Dictionary {{{"type", "preconditioner::Jacobi"}, {"max_block_size", 1}}}},
+          NeoN::Dictionary {
+              {{"type", std::string {"preconditioner::Jacobi"}}, {"max_block_size", 1}}
+          }},
          {"criteria", NeoN::Dictionary {{{"iteration", 20}, {"relative_residual_norm", 1e-14}}}}}
     };
 
