@@ -10,7 +10,7 @@
 
 // NeoFOAM headers
 #include "NeoFOAM/algorithms/pressureVelocityCoupling.hpp"
-#include "NeoFOAM/datastructures/pdeSolver.hpp"
+#include "NeoFOAM/datastructures/pde.hpp"
 
 #include "bindings.hpp"
 
@@ -30,7 +30,7 @@ void registerPressureVelocityCoupling(nb::module_& m)
     // -------------------------------------------------------------------
     m.def(
         "compute_rau_and_hbya",
-        [](const nf::PDESolver<NeoN::Vec3>& UEqn) { return nf::computeRAUandHByA(UEqn); },
+        [](const nf::PDE<NeoN::Vec3>& UEqn) { return nf::computeRAUandHByA(UEqn); },
         "UEqn"_a,
         "Compute rAU and HbyA from the assembled momentum equation"
     );
@@ -56,7 +56,7 @@ void registerPressureVelocityCoupling(nb::module_& m)
     m.def(
         "update_face_velocity",
         [](const fvcc::SurfaceField<NeoN::scalar>& phiHbyA,
-           const nf::PDESolver<NeoN::scalar>& pEqn,
+           const nf::PDE<NeoN::scalar>& pEqn,
            fvcc::SurfaceField<NeoN::scalar>& phi) { nf::updateFaceVelocity(phiHbyA, pEqn, phi); },
         "phi_hbya"_a,
         "pEqn"_a,
