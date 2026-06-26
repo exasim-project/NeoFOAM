@@ -1,0 +1,18 @@
+#!/bin/sh
+cd "${0%/*}" || exit                                # Run from this directory
+. ${WM_PROJECT_DIR:?}/bin/tools/RunFunctions        # Tutorial run functions
+#------------------------------------------------------------------------------
+# Generate the tilted-cube snappyHexMesh (background block + STL + 2 layers).
+
+# 1. tilted-cube STL
+( cd constant/triSurface && python3 makeTiltedCube.py )
+
+# 2. background mesh + features + snap + layers
+runApplication blockMesh
+runApplication surfaceFeatureExtract
+runApplication snappyHexMesh -overwrite
+
+# 3. report mesh size / quality
+runApplication checkMesh -allTopology -allGeometry
+
+#------------------------------------------------------------------------------

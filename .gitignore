@@ -110,14 +110,22 @@ benchmark/matrixAssembly/results
 */0/
 constant/polyMesh
 
+# Generated on the fly by the test_main blockMesh fallback
+test/setup_snGrad/constant/polyMesh/
+test/*/log.blockMesh
+
 # benchmark intermediate files
 benchmarks/benchmarkSuite/explicitOperators/Cases
 benchmarks/benchmarkSuite/implicitOperators/Cases
 benchmarks/benchmarkSuite/dsl/Cases
 
 *.log
+*log.*
+*.foam
 
-tutorials/cylinder2D/0.*
+tutorials/cylinder2D/0.[0-9]*
+tutorials/*/processor*
+test/setup_*/processor*
 build-*/
 
 #python
@@ -131,3 +139,12 @@ lib
 _skbuild
 
 benchmarks/benchmarkSuite/**
+CLAUDE.md
+.planning
+.claude
+
+test/*/constant/polyMesh/
+tutorials/*/processor*/
+tutorials/*/*/processor*/
+*/constant/polyMesh/
+test/*/processor*/

@@ -76,7 +76,7 @@ TEST_CASE("momentum")
         {
             BENCHMARK(std::string(execName))
             {
-                nf::PDESolver<NeoN::Vec3> eqn(
+                nf::PDE<NeoN::Vec3> eqn(
                     dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU)
                         - dsl::imp::laplacian(nfGamma, nfU),
                     nfU,
@@ -92,16 +92,14 @@ TEST_CASE("momentum")
         {
             BENCHMARK(std::string(execName))
             {
-                nf::PDESolver<NeoN::Vec3> eqn(
+                nf::PDE<NeoN::Vec3> eqn(
                     dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU)
                         - dsl::imp::laplacian(nfGamma, nfU),
                     nfU,
                     rt
                 );
                 auto expr = dsl::Expression<NeoN::Vec3>(eqn.expression());
-                auto ls = NeoN::la::LinearSystem<
-                    NeoN::Vec3,
-                    NeoN::la::CSRMatrix<NeoN::Vec3, NeoN::localIdx>>(eqn.linearSystem());
+                auto ls = eqn.linearSystem();
                 expr.addOperator(-1.0 * dsl::exp::grad(nfP));
                 eqn.assemble();
                 expr.assemble(rt.t, rt.dt, ls);

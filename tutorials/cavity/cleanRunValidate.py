@@ -25,7 +25,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
 # =========================================================
 #  Utility: Run shell commands
 # =========================================================
@@ -36,7 +35,6 @@ def run(cmd: list[str], cwd: Path = None) -> None:
     except subprocess.CalledProcessError as e:
         logger.error(f"Command failed: {' '.join(cmd)}")
         sys.exit(e.returncode)
-
 
 # =========================================================
 #  Clean Functionality
@@ -53,14 +51,13 @@ def rm_path(p: Path) -> None:
     except Exception as e:
         logger.error(f"Failed to remove {p}: {e}")
 
-
 def clean_case(case_path: Path) -> None:
     logger.info("Cleaning case (Allclean equivalent)...")
     # Remove time dirs
     for d in case_path.iterdir():
         if d.is_dir():
             try:
-                float(d.name)  # test if folder is a time directory
+                float(d.name)   # test if folder is a time directory
                 rm_path(d)
             except ValueError:
                 pass
@@ -81,7 +78,6 @@ def clean_case(case_path: Path) -> None:
 
     logger.info("Allclean complete.")
 
-
 # =========================================================
 #  Allrun Functionality
 # =========================================================
@@ -95,8 +91,7 @@ def restore0_dir(case_path: Path) -> None:
     shutil.copytree(zero_orig, zero)
     logger.info("Restored 0/ from 0.orig/")
 
-
-def run_case(case_path: Path, preset: str = "develop") -> None:
+def run_case(case_path: Path, preset: str = "develop", mode: str = "serial") -> None:
     logger.info("Starting Allrun workflow...")
 
     foamfile = case_path / "cavity.foam"
@@ -106,14 +101,25 @@ def run_case(case_path: Path, preset: str = "develop") -> None:
     blockmesh_log = open(case_path / "log.blockMesh", "w")
     logger.info("Running blockMesh")
     try:
-        subprocess.check_call(
-            ["blockMesh"], cwd=case_path, stdout=blockmesh_log, stderr=subprocess.STDOUT
-        )
+        subprocess.check_call(["blockMesh"], cwd=case_path,
+                              stdout=blockmesh_log, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         logger.error("blockMesh failed.")
         sys.exit(e.returncode)
     finally:
         blockmesh_log.close()
+
+    if mode == "parallel":
+        decompose_log = open(case_path / "log.decomposePar", "w")
+        logger.info("Running decomposePar")
+        try:
+            subprocess.check_call(["decomposePar"], cwd=case_path,
+                                  stdout=decompose_log, stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as e:
+            logger.error("decomposePar failed.")
+            sys.exit(e.returncode)
+        finally:
+            decompose_log.close()
 
     solver = case_path / f"../../build/{preset}/bin/neoIcoFoam"
     if not solver.exists():
@@ -123,17 +129,32 @@ def run_case(case_path: Path, preset: str = "develop") -> None:
     neo_log = open(case_path / "log.neoIcoFoam", "w")
     logger.info("Running neoIcoFoam")
     try:
-        subprocess.check_call(
-            [str(solver)], cwd=case_path, stdout=neo_log, stderr=subprocess.STDOUT
-        )
+        if mode == "parallel":
+            run_args = ["mpirun", "-n", "4", str(solver), "-parallel"]
+        else:
+            run_args = [str(solver)]
+
+        subprocess.check_call(run_args, cwd=case_path,
+                              stdout=neo_log, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         logger.error("neoIcoFoam failed.")
+        print(e)
         sys.exit(e.returncode)
     finally:
         neo_log.close()
+    if mode == "parallel":
+        reconstruct_log = open(case_path / "log.reconstructPar", "w")
+        logger.info("Running recontsructPar")
+        try:
+            subprocess.check_call(["reconstructPar"], cwd=case_path,
+                                  stdout=reconstruct_log, stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as e:
+            logger.error("reconstructPar failed.")
+            sys.exit(e.returncode)
+        finally:
+            reconstruct_log.close()
 
     logger.info("Allrun completed.")
-
 
 # =========================================================
 #  Data Extraction
@@ -144,7 +165,6 @@ def computeRe(case: FoamCase) -> Tuple[float, float]:
     Re = 1.0 / nu
     logger.info(f"nu = {nu:.6g}; Computed Re = {Re:.3f}")
     return nu, Re
-
 
 def detect_latest_time(case_path: Path) -> float:
     times = []
@@ -158,7 +178,6 @@ def detect_latest_time(case_path: Path) -> float:
         raise RuntimeError("No time directories found!")
     return max(times)
 
-
 def load_ghia_header(filename: Path) -> np.ndarray:
     with open(filename, "r") as f:
         for line in f:
@@ -170,13 +189,11 @@ def load_ghia_header(filename: Path) -> np.ndarray:
                     return np.array(nums)
     raise RuntimeError("Could not extract Re header from Ghia file.")
 
-
 def select_ghia_column(GHIA_RE_VALUES: np.ndarray, Re: float) -> Tuple[int, int]:
     Re_rounded = GHIA_RE_VALUES[np.argmin(np.abs(GHIA_RE_VALUES - Re))]
     col_index = np.where(GHIA_RE_VALUES == Re_rounded)[0][0] + 1
     logger.info(f"-> Selecting Ghia Re={Re_rounded}, column={col_index}")
     return Re_rounded, col_index
-
 
 # =========================================================
 #  Centreline Extraction
@@ -209,25 +226,18 @@ def extract_centreline(x, y, U_int, line_value, is_vertical=True):
         idx = np.argsort(vals)
         return np.array(vals)[idx], np.array(comp)[idx]
 
-
 # =========================================================
 #  Main
 # =========================================================
 def main() -> None:
     start_time = time.perf_counter()
     try:
-        parser = argparse.ArgumentParser(
-            description="Run cavity test + validate results."
-        )
+        parser = argparse.ArgumentParser(description="Run cavity test + validate results.")
         parser.add_argument("--clean", action="store_true", help="Clean case only")
         parser.add_argument("--run", action="store_true", help="Run solver only")
         parser.add_argument("--case", type=str, default=".", help="Case directory")
-        parser.add_argument(
-            "--preset",
-            type=str,
-            default="develop",
-            help="CMake preset name (used in build/<preset>/bin/)",
-        )
+        parser.add_argument("--mode", type=str, default="serial", help="Case directory")
+        parser.add_argument("--preset", type=str, default="develop", help="CMake preset name (used in build/<preset>/bin/)")
         parser.add_argument("--tol-u", type=float, default=5e-2)
         parser.add_argument("--tol-v", type=float, default=5e-2)
         args = parser.parse_args()
@@ -245,7 +255,7 @@ def main() -> None:
 
         # Default: clean + run + validate
         clean_case(case_path)
-        run_case(case_path, args.preset)
+        run_case(case_path, args.preset, args.mode)
 
         case = FoamCase(case_path)
         nu, Re = computeRe(case)
@@ -296,7 +306,6 @@ def main() -> None:
     finally:
         elapsed = time.perf_counter() - start_time
         logger.info(f"Total runtime: {elapsed:.2f} seconds")
-
 
 if __name__ == "__main__":
     main()
