@@ -1,0 +1,151 @@
+\doxysection{Neo\+FOAM\+::Laminar Class Reference}
+\hypertarget{classNeoFOAM_1_1Laminar}{}\label{classNeoFOAM_1_1Laminar}\index{NeoFOAM::Laminar@{NeoFOAM::Laminar}}
+
+
+No-\/op turbulence model for laminar flow.  
+
+
+
+
+{\ttfamily \#include $<$laminar.\+hpp$>$}
+
+Inheritance diagram for Neo\+FOAM\+::Laminar\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classNeoFOAM_1_1Laminar}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classNeoFOAM_1_1Laminar_a77e8c0f6fc163e3fc4bf2a8e8c58c1dd}{Laminar}} (\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&rt, const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::scalar $>$ \&nu)
+\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1Laminar_aa9b5b6a81ebad82fdda5767eb459a3da}{validate}} (const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Vec3 $>$ \&U) override
+\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1Laminar_a4a3ef51d2f64b3c925facf9f413020c9}{correct}} (const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Vec3 $>$ \&U, nnfvcc\+::\+Surface\+Field$<$ Neo\+N\+::scalar $>$ \&phi, \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&rt) override
+\item 
+nnfvcc\+::\+Surface\+Field$<$ Neo\+N\+::scalar $>$ \& \mbox{\hyperlink{classNeoFOAM_1_1Laminar_a81ab1672334a331df04298072c9d5589}{nu\+Eff}} () override
+\item 
+const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::scalar $>$ \& \mbox{\hyperlink{classNeoFOAM_1_1Laminar_affd3601ee536b0eadd45e006e8b84882}{nut}} () const override
+\item 
+const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Tensor $>$ \& \mbox{\hyperlink{classNeoFOAM_1_1Laminar_a233c808400e5b0970c6c13276fba07ca}{gradU}} () const override
+\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1Laminar_a995332ed6034abe073d56dcf2578d26e}{rotate\+Old\+Times}} () override
+\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1Laminar_a71a647bb466a1b82993b726ac2da302d}{write}} (\mbox{\hyperlink{classNeoFOAM_1_1MeshAdapter}{Mesh\+Adapter}} \&) const override
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static std\+::string \mbox{\hyperlink{classNeoFOAM_1_1Laminar_a6b4ae8b1041995e92e40ed71e32ec647}{name}} ()
+\item 
+static std\+::string \mbox{\hyperlink{classNeoFOAM_1_1Laminar_a3464b55bf9a401d0ae0729b8cca0410e}{doc}} ()
+\item 
+static std\+::string \mbox{\hyperlink{classNeoFOAM_1_1Laminar_a576ec012ba4d4d98728438f4431cbcaa}{schema}} ()
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+No-\/op turbulence model for laminar flow. 
+
+nut is identically zero; \doxylink{classNeoFOAM_1_1Laminar_a81ab1672334a331df04298072c9d5589}{nu\+Eff()} returns the surface-\/interpolated laminar nu. gradU is recomputed each \doxylink{classNeoFOAM_1_1Laminar_aa9b5b6a81ebad82fdda5767eb459a3da}{validate()}/correct() for use in the viscous\+Stress term. 
+
+Definition at line \mbox{\hyperlink{laminar_8hpp_source_l00017}{17}} of file \mbox{\hyperlink{laminar_8hpp_source}{laminar.\+hpp}}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{classNeoFOAM_1_1Laminar_a77e8c0f6fc163e3fc4bf2a8e8c58c1dd}\label{classNeoFOAM_1_1Laminar_a77e8c0f6fc163e3fc4bf2a8e8c58c1dd} 
+\index{NeoFOAM::Laminar@{NeoFOAM::Laminar}!Laminar@{Laminar}}
+\index{Laminar@{Laminar}!NeoFOAM::Laminar@{NeoFOAM::Laminar}}
+\doxysubsubsection{\texorpdfstring{Laminar()}{Laminar()}}
+{\footnotesize\ttfamily Neo\+FOAM\+::\+Laminar\+::\+Laminar (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&}]{rt,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::scalar $>$ \&}]{nu }\end{DoxyParamCaption})}
+
+
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{classNeoFOAM_1_1Laminar_a4a3ef51d2f64b3c925facf9f413020c9}\label{classNeoFOAM_1_1Laminar_a4a3ef51d2f64b3c925facf9f413020c9} 
+\index{NeoFOAM::Laminar@{NeoFOAM::Laminar}!correct@{correct}}
+\index{correct@{correct}!NeoFOAM::Laminar@{NeoFOAM::Laminar}}
+\doxysubsubsection{\texorpdfstring{correct()}{correct()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::\+Laminar\+::correct (\begin{DoxyParamCaption}\item[{const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Vec3 $>$ \&}]{U,  }\item[{nnfvcc\+::\+Surface\+Field$<$ Neo\+N\+::scalar $>$ \&}]{phi,  }\item[{\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&}]{rt }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}}
+
+\Hypertarget{classNeoFOAM_1_1Laminar_a3464b55bf9a401d0ae0729b8cca0410e}\label{classNeoFOAM_1_1Laminar_a3464b55bf9a401d0ae0729b8cca0410e} 
+\index{NeoFOAM::Laminar@{NeoFOAM::Laminar}!doc@{doc}}
+\index{doc@{doc}!NeoFOAM::Laminar@{NeoFOAM::Laminar}}
+\doxysubsubsection{\texorpdfstring{doc()}{doc()}}
+{\footnotesize\ttfamily static std\+::string Neo\+FOAM\+::\+Laminar\+::doc (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Definition at line \mbox{\hyperlink{laminar_8hpp_source_l00022}{22}} of file \mbox{\hyperlink{laminar_8hpp_source}{laminar.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1Laminar_a233c808400e5b0970c6c13276fba07ca}\label{classNeoFOAM_1_1Laminar_a233c808400e5b0970c6c13276fba07ca} 
+\index{NeoFOAM::Laminar@{NeoFOAM::Laminar}!gradU@{gradU}}
+\index{gradU@{gradU}!NeoFOAM::Laminar@{NeoFOAM::Laminar}}
+\doxysubsubsection{\texorpdfstring{gradU()}{gradU()}}
+{\footnotesize\ttfamily const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Tensor $>$ \& Neo\+FOAM\+::\+Laminar\+::gradU (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [override]}}
+
+\Hypertarget{classNeoFOAM_1_1Laminar_a6b4ae8b1041995e92e40ed71e32ec647}\label{classNeoFOAM_1_1Laminar_a6b4ae8b1041995e92e40ed71e32ec647} 
+\index{NeoFOAM::Laminar@{NeoFOAM::Laminar}!name@{name}}
+\index{name@{name}!NeoFOAM::Laminar@{NeoFOAM::Laminar}}
+\doxysubsubsection{\texorpdfstring{name()}{name()}}
+{\footnotesize\ttfamily static std\+::string Neo\+FOAM\+::\+Laminar\+::name (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Definition at line \mbox{\hyperlink{laminar_8hpp_source_l00021}{21}} of file \mbox{\hyperlink{laminar_8hpp_source}{laminar.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1Laminar_a81ab1672334a331df04298072c9d5589}\label{classNeoFOAM_1_1Laminar_a81ab1672334a331df04298072c9d5589} 
+\index{NeoFOAM::Laminar@{NeoFOAM::Laminar}!nuEff@{nuEff}}
+\index{nuEff@{nuEff}!NeoFOAM::Laminar@{NeoFOAM::Laminar}}
+\doxysubsubsection{\texorpdfstring{nuEff()}{nuEff()}}
+{\footnotesize\ttfamily nnfvcc\+::\+Surface\+Field$<$ Neo\+N\+::scalar $>$ \& Neo\+FOAM\+::\+Laminar\+::nu\+Eff (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}}
+
+\Hypertarget{classNeoFOAM_1_1Laminar_affd3601ee536b0eadd45e006e8b84882}\label{classNeoFOAM_1_1Laminar_affd3601ee536b0eadd45e006e8b84882} 
+\index{NeoFOAM::Laminar@{NeoFOAM::Laminar}!nut@{nut}}
+\index{nut@{nut}!NeoFOAM::Laminar@{NeoFOAM::Laminar}}
+\doxysubsubsection{\texorpdfstring{nut()}{nut()}}
+{\footnotesize\ttfamily const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::scalar $>$ \& Neo\+FOAM\+::\+Laminar\+::nut (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [override]}}
+
+\Hypertarget{classNeoFOAM_1_1Laminar_a995332ed6034abe073d56dcf2578d26e}\label{classNeoFOAM_1_1Laminar_a995332ed6034abe073d56dcf2578d26e} 
+\index{NeoFOAM::Laminar@{NeoFOAM::Laminar}!rotateOldTimes@{rotateOldTimes}}
+\index{rotateOldTimes@{rotateOldTimes}!NeoFOAM::Laminar@{NeoFOAM::Laminar}}
+\doxysubsubsection{\texorpdfstring{rotateOldTimes()}{rotateOldTimes()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::\+Laminar\+::rotate\+Old\+Times (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}}
+
+
+
+Definition at line \mbox{\hyperlink{laminar_8hpp_source_l00041}{41}} of file \mbox{\hyperlink{laminar_8hpp_source}{laminar.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1Laminar_a576ec012ba4d4d98728438f4431cbcaa}\label{classNeoFOAM_1_1Laminar_a576ec012ba4d4d98728438f4431cbcaa} 
+\index{NeoFOAM::Laminar@{NeoFOAM::Laminar}!schema@{schema}}
+\index{schema@{schema}!NeoFOAM::Laminar@{NeoFOAM::Laminar}}
+\doxysubsubsection{\texorpdfstring{schema()}{schema()}}
+{\footnotesize\ttfamily static std\+::string Neo\+FOAM\+::\+Laminar\+::schema (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Definition at line \mbox{\hyperlink{laminar_8hpp_source_l00023}{23}} of file \mbox{\hyperlink{laminar_8hpp_source}{laminar.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1Laminar_aa9b5b6a81ebad82fdda5767eb459a3da}\label{classNeoFOAM_1_1Laminar_aa9b5b6a81ebad82fdda5767eb459a3da} 
+\index{NeoFOAM::Laminar@{NeoFOAM::Laminar}!validate@{validate}}
+\index{validate@{validate}!NeoFOAM::Laminar@{NeoFOAM::Laminar}}
+\doxysubsubsection{\texorpdfstring{validate()}{validate()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::\+Laminar\+::validate (\begin{DoxyParamCaption}\item[{const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Vec3 $>$ \&}]{U }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}}
+
+\Hypertarget{classNeoFOAM_1_1Laminar_a71a647bb466a1b82993b726ac2da302d}\label{classNeoFOAM_1_1Laminar_a71a647bb466a1b82993b726ac2da302d} 
+\index{NeoFOAM::Laminar@{NeoFOAM::Laminar}!write@{write}}
+\index{write@{write}!NeoFOAM::Laminar@{NeoFOAM::Laminar}}
+\doxysubsubsection{\texorpdfstring{write()}{write()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::\+Laminar\+::write (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classNeoFOAM_1_1MeshAdapter}{Mesh\+Adapter}} \&}]{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}}
+
+
+
+Definition at line \mbox{\hyperlink{laminar_8hpp_source_l00043}{43}} of file \mbox{\hyperlink{laminar_8hpp_source}{laminar.\+hpp}}.
+
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/runner/work/\+Neo\+FOAM/\+Neo\+FOAM/include/\+Neo\+FOAM/turbulence\+Models/\mbox{\hyperlink{laminar_8hpp}{laminar.\+hpp}}\end{DoxyCompactItemize}
