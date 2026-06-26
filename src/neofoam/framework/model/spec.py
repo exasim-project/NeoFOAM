@@ -285,7 +285,18 @@ class ModelSpec:
     # ------------------------------------------------------------------
 
     def register_with(self, plugin_interface: type) -> "ModelSpec":
-        """Register this ModelSpec with a PluginSystem interface."""
+        """Register this ModelSpec with a PluginSystem interface (idempotent by name)."""
+        from neofoam.core.plugin_system import PluginSystem
+
+        registry = PluginSystem.get_registered(plugin_interface.__name__)
+        if registry is not None and self.name in {
+            plugin_cls.__name__ for plugin_cls in registry.plugin_registry
+        }:
+            # Already registered (e.g. a module re-import): keep a single catalog
+            # entry so the discriminated union does not collide on the model_type
+            # literal.
+            return self
+
         wrapper_class = type(
             self.name,
             (BaseModel,),

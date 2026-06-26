@@ -57,13 +57,18 @@ def test_modelspec_is_a_full_model() -> None:
     assert solutionLoop._build_func is not None
     op_names = {meta["name"] for _, meta in solutionLoop._operations}
     # writing is the fieldWriter Model's concern, not the loop's
-    assert op_names == {"set_time_step", "increment_time"}
+    assert op_names == {"set_time_step", "increment_time", "update_loop_controls"}
 
 
 def test_build_emits_state_then_engine() -> None:
     config = _config(adjustTimeStep=True, maxCo=1.0, maxDeltaT=0.5)
     steps = build(config)
-    assert [s.name for s in steps] == ["time", "models.solution_loop"]
+    assert [s.name for s in steps] == [
+        "time",
+        "models.solution_loop",
+        "interfaces.timeStepConstraint",
+        "interfaces.loopCondition",
+    ]
 
     # the "time" step builds the pure-Python LoopState (ctx.time)
     state = steps[0].initializer({})

@@ -31,13 +31,18 @@ engine, and exposes the loop body as ``@operation``s plus the predicate.
 """
 
 from pathlib import Path
-from typing import Any, Optional, Protocol, runtime_checkable
+from typing import Any, Callable, Optional, Protocol, runtime_checkable
 
 from neofoam.algorithms.constraints.time_step import (
     CourantConstraint,
     DeltaTConstraint,
     MaxDeltaTConstraint,
     next_delta_t,
+)
+from neofoam.algorithms.solution_loop.interfaces import (
+    VGREAT,
+    loopCondition,
+    timeStepConstraint,
 )
 from neofoam.algorithms.solution_loop.config import (
     LABEL_MAX,
@@ -56,7 +61,7 @@ from neofoam.algorithms.solution_loop.time_integration import (
     TransientIntegration,
 )
 from neofoam.framework.context import Context
-from neofoam.framework.initialization import InitStep, lazy, model
+from neofoam.framework.initialization import InitStep, interface_step, lazy, model
 from neofoam.framework.model import Model
 
 
@@ -106,6 +111,7 @@ class SolutionLoop:
         integration: Optional[TimeIntegration] = None,
         control: Optional[LoopControl] = None,
         constraints: Optional[list[DeltaTConstraint]] = None,
+        conditions: Optional[list[Callable[["SolutionLoop"], bool]]] = None,
         growth_cap: float = 1.2,
         backend: Optional[LoopBackend] = None,
     ) -> None:
@@ -117,6 +123,13 @@ class SolutionLoop:
             control if control is not None else SolutionControl()
         )
         self._constraints: list[DeltaTConstraint] = list(constraints or [])
+        self._conditions: list[Callable[["SolutionLoop"], bool]] = list(
+            conditions or []
+        )
+        # latest interface folds, written by the update_loop_controls operation;
+        # consumed by the stepping cutover in a later iteration.
+        self.next_dt: float = VGREAT
+        self.keep_running: bool = True
         self._growth_cap = growth_cap
         self._courant = 0.0
         self._backend: LoopBackend = (
@@ -246,6 +259,14 @@ class SolutionLoop:
     def constraints(self) -> list[DeltaTConstraint]:
         return list(self._constraints)
 
+    @property
+    def conditions(self) -> list[Callable[["SolutionLoop"], bool]]:
+        return list(self._conditions)
+
+    def all_conditions_hold(self) -> bool:
+        """Fold the constructor-injected conditions with ``all`` (empty → True)."""
+        return all(c(self) for c in self._conditions)
+
 
 # =========================================================================
 # The core Model wrapping the engine
@@ -319,6 +340,8 @@ def build(config: TimeControlConfig) -> list[InitStep]:
     return [
         lazy("time", create_state),
         model("solution_loop", create_engine, depends_on=["time"]),
+        interface_step("timeStepConstraint", lambda _ctx: timeStepConstraint),
+        interface_step("loopCondition", lambda _ctx: loopCondition),
     ]
 
 
@@ -364,3 +387,22 @@ def increment_time(self: Any, ctx: Context) -> None:
     logger = ctx.models.get("loop_logger")
     (logger if logger is not None else print)(f"Time = {loop.timeName()}")
     loop.advance()
+
+
+@solutionLoop.operation()
+def update_loop_controls(
+    self: Any,
+    ctx: Context,
+    constraints: timeStepConstraint,  # type: ignore[valid-type]
+    conditions: loopCondition,  # type: ignore[valid-type]
+) -> None:
+    """Record the folded next-deltaT limit and the loop continue-flag.
+
+    Injects the two gather-point interfaces (typed with the spec instances) and
+    **calls** them. With no active contribution the constraint fold is ``VGREAT``
+    (fixed step) and the condition fold is ``True`` (keep running). The recorded
+    values are wired into actual stepping by a later iteration's cutover.
+    """
+    loop = _engine(ctx)
+    loop.next_dt = constraints()  # type: ignore[misc]
+    loop.keep_running = conditions()  # type: ignore[misc]

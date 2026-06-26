@@ -19,14 +19,24 @@ LoopBackend via ``ctx.models`` seams (no-op defaults). No OpenFOAM needed.
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any, cast
 
+import pytest
+
+import neofoam.algorithms.solution_loop as loop_pkg
+import neofoam.algorithms.solution_loop.solution_loop as engine_mod
 from neofoam.algorithms.constraints.time_step import (
     CourantConstraint,
     MaxDeltaTConstraint,
 )
 from neofoam.algorithms.solution_loop.config import TimeControlConfig
 from neofoam.algorithms.solution_loop.control import SolutionControl
+from neofoam.algorithms.solution_loop.interfaces import (
+    VGREAT,
+    loopCondition,
+    timeStepConstraint,
+)
 from neofoam.algorithms.solution_loop.loop_state import LoopState
 from neofoam.algorithms.solution_loop.solution_loop import (
     SolutionLoop,
@@ -37,8 +47,14 @@ from neofoam.algorithms.solution_loop.solution_loop import (
     make_solution_loop,
     set_time_step,
     solutionLoop,
+    update_loop_controls,
 )
 from neofoam.framework.context import Context
+from neofoam.framework.dependency_resolver import (
+    DependencyResolver,
+    wrap_with_dependency_resolution,
+)
+from neofoam.framework.initialization import execute_initialization
 
 
 class FakeBackend:
@@ -235,13 +251,18 @@ def test_modelspec_is_a_full_core_model() -> None:
     assert solutionLoop._load_func is not None
     assert solutionLoop._build_func is not None
     op_names = {meta["name"] for _, meta in solutionLoop._operations}
-    assert op_names == {"set_time_step", "increment_time"}
+    assert op_names == {"set_time_step", "increment_time", "update_loop_controls"}
 
 
 def test_build_emits_state_then_engine() -> None:
     config = _config(adjustTimeStep=True, maxCo=1.0, maxDeltaT=0.5)
     steps = build(config)
-    assert [s.name for s in steps] == ["time", "models.solution_loop"]
+    assert [s.name for s in steps] == [
+        "time",
+        "models.solution_loop",
+        "interfaces.timeStepConstraint",
+        "interfaces.loopCondition",
+    ]
 
     state = steps[0].initializer({})
     assert isinstance(state, LoopState)
@@ -334,3 +355,91 @@ def test_predicate_delegates_to_engine_running() -> None:
         SolutionLoopPredicate()(cast(Context, FakeContext({"solution_loop": off})))
         is False
     )
+
+
+# --- constructor DI for loop conditions (folded with `all`) ---------------
+
+
+@pytest.mark.parametrize(
+    "conds, expected",
+    [
+        ([lambda lp: False], False),
+        ([], True),
+        ([lambda lp: True, lambda lp: lp.current_delta_t() > 0.0], True),
+    ],
+)
+def test_constructor_folds_conditions_with_all(
+    conds: list[Any], expected: bool
+) -> None:
+    loop = SolutionLoop(state=_state(), conditions=conds)
+    assert loop.all_conditions_hold() is expected
+    assert loop.conditions == loop._conditions  # public getter mirrors the backing list
+
+
+def test_constructor_still_accepts_constraints() -> None:
+    loop = SolutionLoop(
+        state=_state(), constraints=[MaxDeltaTConstraint(maxDeltaT=0.5)]
+    )
+    assert [type(c).__name__ for c in loop.constraints] == ["MaxDeltaTConstraint"]
+
+
+# --- both interfaces placed in ctx.interfaces via build -------------------
+
+
+def test_build_places_both_interfaces_in_context() -> None:
+    ctx = execute_initialization(build(_config(adjustTimeStep=False)))
+    assert ctx.interfaces["timeStepConstraint"] is timeStepConstraint
+    assert ctx.interfaces["loopCondition"] is loopCondition
+
+
+# --- the interface-consuming loop-body operation --------------------------
+
+
+def test_loop_module_keeps_live_interface_annotations() -> None:
+    # Proves the module did NOT stringify annotations: the param annotations are
+    # the live spec objects, not strings.
+    ann = update_loop_controls.__annotations__
+    assert ann["constraints"] is timeStepConstraint
+    assert ann["conditions"] is loopCondition
+
+
+def test_operation_with_no_contributions_is_fixed_step_and_running() -> None:
+    ctx = execute_initialization(build(_config(adjustTimeStep=False)))
+    loop = ctx.models["solution_loop"]
+    # Pre-set sentinels distinct from the empty-fold result so the assertion
+    # proves update_loop_controls actually folded and wrote the engine.
+    loop.next_dt = 123.0
+    loop.keep_running = False
+    wrapped = wrap_with_dependency_resolution(
+        update_loop_controls, instance=None, dependency_resolver=DependencyResolver()
+    )
+    wrapped(ctx)
+    assert loop.next_dt == VGREAT
+    assert loop.keep_running is True
+
+
+@pytest.mark.parametrize("missing", ["timeStepConstraint", "loopCondition"])
+def test_operation_raises_when_interface_absent_from_context(missing: str) -> None:
+    loop = SolutionLoop(state=_state())
+    present = {
+        "timeStepConstraint": timeStepConstraint,
+        "loopCondition": loopCondition,
+    }
+    del present[missing]
+    ctx = Context(fields={}, models={"solution_loop": loop}, interfaces=present)
+    resolver = DependencyResolver()
+    with pytest.raises(ValueError, match=missing):
+        resolver.resolve_arguments(update_loop_controls, ctx=ctx)
+
+
+# --- legacy stepping symbols stay gone ------------------------------------
+
+
+def test_install_constraints_step_is_absent() -> None:
+    assert "install_constraints_step" not in dir(engine_mod)
+
+
+def test_no_measurement_provider_nodes_in_the_loop_package() -> None:
+    pkg_dir = Path(loop_pkg.__file__).parent
+    sources = "\n".join(p.read_text() for p in pkg_dir.glob("*.py"))
+    assert "measurement_provider" not in sources
