@@ -97,6 +97,24 @@ if(DEFINED SKBUILD AND TARGET _neon)
   set_target_properties(_neon PROPERTIES INSTALL_RPATH "$ORIGIN/../neofoam/lib;$ORIGIN/../lib")
 endif()
 
+# Umpire/camp are CPM deps added inside src/NeoN, where NeoN sets CMAKE_INSTALL_RPATH to the
+# absolute install prefix /lib (the wheel-staging temp dir under SKBUILD). That path is gone after
+# install, so libumpire.so cannot find its direct dependency libcamp.so at import (camp/cpptrace
+# "leak" to the site-packages root lib/). Re-point them at the installed layout with $ORIGIN-
+# relative entries: from neofoam/lib, $ORIGIN reaches its siblings and $ORIGIN/../../lib reaches the
+# site-packages root lib/ where camp lives. This only rewrites the install RPATH (a relink), so it
+# does not trigger a recompile.
+if(DEFINED SKBUILD)
+  foreach(_leaked_dep umpire camp)
+    if(TARGET ${_leaked_dep})
+      set_target_properties(
+        ${_leaked_dep}
+        PROPERTIES INSTALL_RPATH "$ORIGIN;$ORIGIN/lib;$ORIGIN/../lib;$ORIGIN/../../lib"
+                   INSTALL_RPATH_USE_LINK_PATH FALSE)
+    endif()
+  endforeach()
+endif()
+
 add_subdirectory(include)
 add_subdirectory(src)
 
