@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['applyoperator_0',['applyOperator',['../namespaceNeoFOAM.html#ac5f785f34f3c207b2c484ad3a70c0694',1,'NeoFOAM']]],
-  ['assemble_1',['assemble',['../classNeoFOAM_1_1PDESolver.html#a8aef9ec9ddbd7e1dcb0f283cb6ad2dba',1,'NeoFOAM::PDESolver::assemble()'],['../classNeoFOAM_1_1PDESolver.html#a94ed687e58cbf43e4cd8154b2344182b',1,'NeoFOAM::PDESolver::assemble(dsl::SpatialOperator&lt; NeoN::Vec3 &gt; &amp;&amp;rhs)']]]
+  ['applyoperator_0',['applyOperator',['../namespaceNeoFOAM.html#a1a20de9aeea93a39b256d91014ce9039',1,'NeoFOAM']]],
+  ['assemble_1',['assemble',['../classNeoFOAM_1_1PDE.html#a56dc3d06d1616cf7726cee7c009fa756',1,'NeoFOAM::PDE::assemble()'],['../classNeoFOAM_1_1PDE.html#aed5b3fe4bae15d1c14be3b651f750f9c',1,'NeoFOAM::PDE::assemble(VolumeField &amp;psi, RunTime &amp;rt)'],['../classNeoFOAM_1_1PDE.html#a609089ce3754f0e97385b3824ed0acca',1,'NeoFOAM::PDE::assemble(dsl::SpatialOperator&lt; NeoN::Vec3 &gt; &amp;&amp;rhs)'],['../classNeoFOAM_1_1Solver.html#a7a7ea1bc3bdbe2616189eaaca665b22f',1,'NeoFOAM::Solver::assemble()']]],
+  ['assembleandrelax_2',['assembleandrelax',['../classNeoFOAM_1_1PDE.html#a8fd8c810990be74009144741fe40dced',1,'NeoFOAM::PDE::assembleAndRelax()'],['../classNeoFOAM_1_1Solver.html#ac1b779d09de38cf1d2beff2f4ea2436b',1,'NeoFOAM::Solver::assembleAndRelax()']]]
 ];

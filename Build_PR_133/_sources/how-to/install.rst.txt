@@ -53,4 +53,4 @@ Notes
 -----
 
 - For C++/CMake-level build options (alternate NeoN sources, GPU flags,
-  CMake presets) see ``gettingStarted.rst`` in the repo root.
+  CMake presets) see the project README.

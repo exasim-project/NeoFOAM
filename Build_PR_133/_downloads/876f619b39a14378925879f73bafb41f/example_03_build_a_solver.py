@@ -39,8 +39,8 @@ from pybFoam import (
     volVectorField,
 )
 
-from neofoam import Depends, FieldUpdates, Solver, StagedInit, field
-from neofoam.foam.initialization import create_time_mesh
+from neofoam import Depends, FieldUpdates, Solver, field
+
 from neofoam.framework.context import Context
 from neofoam.framework.graph import DAGResolver
 from neofoam.framework.initialization import (
@@ -48,8 +48,13 @@ from neofoam.framework.initialization import (
     InitializerBuilder,
     InitStep,
     LoadResult,
+    StagedInitRunner,
+    StagedInitSpec,
+    lazy,
 )
-from neofoam.framework.initialization.execution import topological_sort
+from neofoam.framework.initialization.execution.ordering import (
+    _topological_sort as topological_sort,
+)
 from neofoam.framework.operations import (
     IterativeOp,
     Operation,
@@ -70,16 +75,71 @@ from neofoam.tutorial import clone_case
 
 class TimeLoop:
     def __call__(self, ctx: Context) -> bool:
-        return bool(ctx.runtime.run())
+        return bool(ctx.time.run())
 
 
 scalar_transport = Solver("scalar_transport")
-init = StagedInit("scalar_transport")
 
 
-def create_init(case_dir: Optional[Any] = None) -> StagedInit:
-    init._case_dir = case_dir  # type: ignore[attr-defined]
-    return init
+# %%
+# Build the staged initializer
+# ----------------------------
+# ``create_init`` returns a ``StagedInitRunner``. Its three stages are
+# registered as decorators on a per-call ``StagedInitSpec`` builder and
+# defined as closures so ``build`` can read ``runner.argv`` (the
+# framework sets ``runner.argv`` after ``create_init`` returns but
+# before ``runner.run()``).
+#
+# This solver has no plugin models, so LOAD and RESOLVE are trivial.
+# BUILD creates the time object + mesh, then registers one ``field(...)``
+# per object with ``depends_on`` listing prerequisite step names.
+# ``create_phi`` reads ``ctx["fields.U"]`` (the prefixed name) because
+# ``field("U", ...)`` produces an ``InitStep`` named ``fields.U``.
+
+
+def create_init(case_dir: Optional[Any] = None) -> StagedInitRunner:
+    spec_builder = StagedInitSpec.build("scalar_transport")
+
+    @spec_builder.load
+    def load_config() -> LoadResult:
+        return LoadResult(core_models=[], optional_models=[])
+
+    @spec_builder.resolve
+    def resolve_models(config: ConfigContext) -> None:
+        pass
+
+    @spec_builder.build
+    def build_lazy(
+        core_models: list[Any], optional_models: list[Any]
+    ) -> list[InitStep]:
+        argv = runner.argv
+        builder = InitializerBuilder()
+        builder.add(lazy("time", lambda _ctx: pyf.Time(pyf.argList(argv))))
+        builder.add(
+            lazy("mesh", lambda ctx: pyf.fvMesh(ctx["time"]), depends_on=["time"])
+        )
+
+        def create_T(ctx: dict[str, Any]) -> volScalarField:
+            return volScalarField.read_field(ctx["mesh"], "T")
+
+        def create_U(ctx: dict[str, Any]) -> volVectorField:
+            return volVectorField.read_field(ctx["mesh"], "U")
+
+        def create_D(ctx: dict[str, Any]) -> volScalarField:
+            return volScalarField.read_field(ctx["mesh"], "D")
+
+        def create_phi(ctx: dict[str, Any]) -> surfaceScalarField:
+            return pyf.createPhi(ctx["fields.U"])
+
+        builder.add(field("T", create_T, depends_on=["mesh"]))
+        builder.add(field("U", create_U, depends_on=["mesh"]))
+        builder.add(field("D", create_D, depends_on=["mesh"]))
+        builder.add(field("phi", create_phi, depends_on=["fields.U"]))
+
+        return builder.build()
+
+    runner = StagedInitRunner(spec_builder.finalize())
+    return runner
 
 
 # %%
@@ -93,7 +153,7 @@ def create_init(case_dir: Optional[Any] = None) -> StagedInit:
 @scalar_transport.initializer
 def initialize(
     self: Any,
-    init_obj: Annotated[StagedInit, Depends(create_init)],
+    init_obj: Annotated[StagedInitRunner, Depends(create_init)],
 ) -> Context:
     return init_obj.run()
 
@@ -136,8 +196,8 @@ def execution_graph(
 
 @scalar_transport.operation()
 def increment_time(self: Any, ctx: Context) -> None:
-    Info(f"Time = {ctx.runtime.timeName()}")
-    ctx.runtime.increment()
+    Info(f"Time = {ctx.time.timeName()}")
+    ctx.time.increment()
 
 
 @scalar_transport.operation(depends_on=["increment_time"])
@@ -155,53 +215,8 @@ def solve_T(
 
 @scalar_transport.operation(depends_on=["solve_T"])
 def write_output(self: Any, ctx: Context) -> None:
-    ctx.runtime.write(True)
-    ctx.runtime.printExecutionTime()
-
-
-# %%
-# Wire up StagedInit (LOAD / RESOLVE / BUILD)
-# -------------------------------------------
-# This solver has no plugin models, so LOAD and RESOLVE are trivial.
-# BUILD registers one ``field(...)`` per object, with ``depends_on``
-# listing prerequisite step names. ``create_phi`` reads
-# ``ctx["fields.U"]`` (the prefixed name) because ``field("U", ...)``
-# produces an ``InitStep`` named ``fields.U``.
-
-
-@init.load
-def load_config() -> LoadResult:
-    return LoadResult(core_models=[], optional_models=[])
-
-
-@init.resolve
-def resolve_models(config: ConfigContext) -> None:
-    pass
-
-
-@init.build
-def build_lazy(core_models: list[Any], optional_models: list[Any]) -> list[InitStep]:
-    builder = InitializerBuilder()
-    builder.extend(create_time_mesh(init.argv))
-
-    def create_T(ctx: dict[str, Any]) -> volScalarField:
-        return volScalarField.read_field(ctx["mesh"], "T")
-
-    def create_U(ctx: dict[str, Any]) -> volVectorField:
-        return volVectorField.read_field(ctx["mesh"], "U")
-
-    def create_D(ctx: dict[str, Any]) -> volScalarField:
-        return volScalarField.read_field(ctx["mesh"], "D")
-
-    def create_phi(ctx: dict[str, Any]) -> surfaceScalarField:
-        return pyf.createPhi(ctx["fields.U"])
-
-    builder.add(field("T", create_T, depends_on=["mesh"]))
-    builder.add(field("U", create_U, depends_on=["mesh"]))
-    builder.add(field("D", create_D, depends_on=["mesh"]))
-    builder.add(field("phi", create_phi, depends_on=["fields.U"]))
-
-    return builder.build()
+    ctx.time.write(True)
+    ctx.time.printExecutionTime()
 
 
 # %%

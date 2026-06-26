@@ -1,10 +1,19 @@
 var searchData=
 [
-  ['scalar_0',['scalar',['../pressureVelocityCoupling_8hpp.html#acc912e7a5a44b028589fda3fd76ba7ea',1,'pressureVelocityCoupling.hpp']]],
-  ['setdeltat_1',['setDeltaT',['../namespaceNeoFOAM.html#a39bc76acefb5a1dd3074b0feba5864eb',1,'NeoFOAM']]],
-  ['setreference_2',['setreference',['../structNeoFOAM_1_1PDESolver_1_1SetReference.html',1,'NeoFOAM::PDESolver&lt; ValueType, IndexType &gt;::SetReference&lt; FunctorValueType &gt;'],['../structNeoFOAM_1_1PDESolver_1_1SetReference.html#a8871e71d55b49e4309d2acc9207825dd',1,'NeoFOAM::PDESolver::SetReference::SetReference()'],['../classNeoFOAM_1_1PDESolver.html#aa632d298feb601ef802ba3b85b2dc8ed',1,'NeoFOAM::PDESolver::setReference()']]],
-  ['setup_2ehpp_3',['setup.hpp',['../setup_8hpp.html',1,'']]],
-  ['solve_4',['solve',['../classNeoFOAM_1_1PDESolver.html#a0464b266cbae77cbfa7f4ffec79e6acb',1,'NeoFOAM::PDESolver::solve()'],['../classNeoFOAM_1_1PDESolver.html#a7f4464b4305040de5ace88df987c05df',1,'NeoFOAM::PDESolver::solve(dsl::SpatialOperator&lt; NeoN::Vec3 &gt; &amp;&amp;rhs)']]],
-  ['subcycleindex_5',['subCycleIndex',['../classNeoFOAM_1_1CreateFromFoamField.html#a0b659c2eb72285147dd9d0622203c9c7',1,'NeoFOAM::CreateFromFoamField']]],
-  ['syncruntimes_6',['syncRunTimes',['../namespaceNeoFOAM.html#aff116721405a6ad86fee9675a3cc3156',1,'NeoFOAM']]]
+  ['read_0',['read',['../classNeoFOAM_1_1ForceCoeffs.html#abbba342c427c240bd52734b9e59dbeff',1,'NeoFOAM::ForceCoeffs::read()'],['../classNeoFOAM_1_1Forces.html#ac695a2319f5af5b5708707bbff6f02b0',1,'NeoFOAM::Forces::read()'],['../classNeoFOAM_1_1FunctionObjectIO.html#a0ac7b890d28e6afcf30c37c052a499a8',1,'NeoFOAM::FunctionObjectIO::read()'],['../classNeoN_1_1finiteVolume_1_1cellCentred_1_1ViscousStressOperator.html#ac82afed643409ea721268ebaf58e38cb',1,'NeoN::finiteVolume::cellCentred::ViscousStressOperator::read()']]],
+  ['readers_2ehpp_1',['readers.hpp',['../readers_8hpp.html',1,'']]],
+  ['readopenfoammesh_2',['readOpenFOAMMesh',['../namespaceNeoFOAM.html#afb828727f0f7b23418e94e1c464d9dae',1,'NeoFOAM']]],
+  ['readorcreate_3',['readOrCreate',['../namespaceNeoFOAM.html#ae3448b9356abfd01a14f812c7acffc7c',1,'NeoFOAM']]],
+  ['readsurfaceboundaryconditions_4',['readSurfaceBoundaryConditions',['../namespaceNeoFOAM.html#adb365cf8e725db6dbfc0a758c392e2b1',1,'NeoFOAM']]],
+  ['readvolboundaryconditions_5',['readVolBoundaryConditions',['../namespaceNeoFOAM.html#a6cb4d89d1e44667e5a66f5119bad9206',1,'NeoFOAM']]],
+  ['registryname_6',['registryName',['../classNeoFOAM_1_1DatabaseWrapper.html#a294a3f7e57e3700663a52e4ef2afe71f',1,'NeoFOAM::DatabaseWrapper']]],
+  ['relaxownedls_7',['relaxOwnedLs',['../classNeoFOAM_1_1PDE.html#adb2db6a18334f46d42794e5b5aef0fdb',1,'NeoFOAM::PDE']]],
+  ['reportcontinuityerror_8',['reportContinuityError',['../namespaceNeoFOAM.html#a216c99c971b9acb00fbd8ff36d9f2ee9',1,'NeoFOAM']]],
+  ['residualmap_9',['ResidualMap',['../namespaceNeoFOAM.html#ad7da788dc1fc4af69c98dea808d84073',1,'NeoFOAM']]],
+  ['resolvemesh_10',['resolveMesh',['../classNeoFOAM_1_1Forces.html#af835251b826a633fce525e08d8716535',1,'NeoFOAM::Forces']]],
+  ['result_5f_11',['result_',['../classNeoFOAM_1_1Forces.html#a91834387ab747d791018d412341b3e98',1,'NeoFOAM::Forces']]],
+  ['rhoref_5f_12',['rhoRef_',['../classNeoFOAM_1_1Forces.html#a05985b1ca791ec6a86dd589f708a3233',1,'NeoFOAM::Forces']]],
+  ['rotateoldtimes_13',['rotateoldtimes',['../classNeoFOAM_1_1SpalartAllmarasDDES.html#ad151a477a7928654ac8116f7865165d0',1,'NeoFOAM::SpalartAllmarasDDES::rotateOldTimes()'],['../classNeoFOAM_1_1TurbulenceModel.html#a6af2db926d7eb7d289a1afc6b8df18e9',1,'NeoFOAM::TurbulenceModel::rotateOldTimes()'],['../classNeoFOAM_1_1Laminar.html#a995332ed6034abe073d56dcf2578d26e',1,'NeoFOAM::Laminar::rotateOldTimes()']]],
+  ['runtime_14',['RunTime',['../structNeoFOAM_1_1RunTime.html',1,'NeoFOAM']]],
+  ['runtime_2ehpp_15',['runTime.hpp',['../runTime_8hpp.html',1,'']]]
 ];
