@@ -53,27 +53,30 @@ class DependencyResolver:
                     kwargs[param_name] = ctx
                     continue
 
-                # Lazy import to break the circular chain:
-                # dependency_resolver → interface.spec → dependency_resolver
-                from .interface.spec import (  # noqa: PLC0415
-                    BoundInterface as _BoundInterface,
-                    InterfaceSpec as _InterfaceSpec,
-                )
+                # Model-owned interface: a param annotated with a ModelInterface
+                # handle is injected as the owning runtime's per-case bound handle.
+                from .model.interface import ModelInterface as _ModelInterface  # noqa: PLC0415
+                from .model.runtime import ModelRuntime as _ModelRuntime  # noqa: PLC0415
 
-                if isinstance(param.annotation, _InterfaceSpec):
+                if isinstance(param.annotation, _ModelInterface):
+                    iface = param.annotation
                     if ctx is None:
                         raise ValueError(
-                            f"Parameter '{param_name}' is typed as an InterfaceSpec "
+                            f"Parameter '{param_name}' is typed as a ModelInterface "
                             "but no Context was provided to the resolver."
                         )
-                    iface_spec = ctx.interfaces.get(param.annotation.name)
-                    if iface_spec is None:
+                    owner_runtime = ctx.models.get(iface.owner.name)
+                    if (
+                        not isinstance(owner_runtime, _ModelRuntime)
+                        or iface.name not in owner_runtime.bound_interfaces
+                    ):
                         raise ValueError(
-                            f"Interface '{param.annotation.name}' not found in "
-                            f"ctx.interfaces. Available: "
-                            f"{sorted(ctx.interfaces.keys())}"
+                            f"Interface '{iface.name}' (owned by model "
+                            f"'{iface.owner.name}') is not bound for this case; "
+                            "expected a BoundModelInterface on the owning "
+                            "ModelRuntime."
                         )
-                    kwargs[param_name] = _BoundInterface(param.annotation, ctx)
+                    kwargs[param_name] = owner_runtime.bound_interfaces[iface.name]
                     continue
 
                 if get_origin(param.annotation) is Annotated:

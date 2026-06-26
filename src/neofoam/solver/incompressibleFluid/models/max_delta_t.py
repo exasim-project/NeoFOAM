@@ -10,10 +10,11 @@ pybFoam field) — the field-free half of the CFL/maxDeltaT migration; only the
 activation detect reads the case dictionary.
 
 The model registers with the family (so it is discoverable case-free) and the
-contribution is **bound to the model** via ``@timeStepConstraint.contribute(model=maxDeltaT)``.
-Folding is automatic: the contribution participates iff the ``maxDeltaT`` model is
-active for the running case (its name is a key in ``ctx.models``). No import-time
-activation toggle.
+contribution is **bound to the model** via ``@maxDeltaT.contributes(timeStepConstraint)``.
+Folding is automatic: the contribution participates iff the ``maxDeltaT`` model is active
+for the case — gating is intrinsic to the bound contributor runtimes, matched to the
+owning ``timeStepConstraint`` interface by ``ModelSpec`` identity, not a name lookup in
+``ctx.models``. No import-time activation toggle.
 """
 
 import os
@@ -50,7 +51,7 @@ def detect_model() -> bool:
     return bool(dictionary.read("system/controlDict").found("maxDeltaT"))
 
 
-@timeStepConstraint.contribute(model=maxDeltaT)
+@maxDeltaT.contributes(timeStepConstraint)
 def max_delta_t_limit(cfg: MaxDeltaTConfig) -> float:
     """The largest deltaT this model permits — the constant cap (config only)."""
     return cfg.maxDeltaT

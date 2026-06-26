@@ -14,10 +14,6 @@ from typing import cast
 import pytest
 
 from neofoam.algorithms.constraints.time_step import CourantConstraint
-from neofoam.algorithms.solution_loop.interfaces import (
-    loopCondition,
-    timeStepConstraint,
-)
 from neofoam.algorithms.solution_loop.loop_state import LoopState
 from neofoam.algorithms.solution_loop.solution_loop import (
     SolutionLoop,
@@ -28,8 +24,12 @@ from neofoam.framework.dependency_resolver import (
     DependencyResolver,
     wrap_with_dependency_resolution,
 )
+from neofoam.framework.model import ModelRuntime, bind_owned_interfaces
 from neofoam.solver.incompressibleFluid.configs import ControlDictConfig
-from neofoam.solver.incompressibleFluid.models.max_delta_t import MaxDeltaTConfig
+from neofoam.solver.incompressibleFluid.models.max_delta_t import (
+    MaxDeltaTConfig,
+    maxDeltaT,
+)
 from neofoam.solver.incompressibleFluid.models.solution_loop import (
     FoamTime,
     SolutionLoopPredicate,
@@ -80,8 +80,6 @@ def test_build_emits_state_then_engine() -> None:
     assert [s.name for s in steps] == [
         "time",
         "models.solution_loop",
-        "interfaces.timeStepConstraint",
-        "interfaces.loopCondition",
     ]
 
     # the "time" step builds the pure-Python LoopState (ctx.time)
@@ -193,20 +191,20 @@ def test_increment_time_advances_state() -> None:
 
 
 def test_active_optional_model_limit_flows_through_update_loop_controls() -> None:
-    # Mirrors the live wiring create_fields installs: an active optional model keyed
-    # BY NAME in ctx.models lets its owned contribution fold through
-    # update_loop_controls into the engine's next_dt. With the model absent the
-    # same fold is the empty-default (covered elsewhere); here it is present.
+    # Mirrors the live wiring create_fields installs: the solutionLoop owner runtime
+    # has the case's active maxDeltaT contributor bound onto it, so that owned
+    # contribution folds through update_loop_controls into the engine's next_dt.
     loop = make_solution_loop(_config(), make_loop_state(_config()))
     loop.next_dt = 999.0  # sentinel distinct from the fold result
-    ctx = Context(
-        fields={"cfg": MaxDeltaTConfig(maxDeltaT=0.5)},
-        models={"solution_loop": loop, "maxDeltaT": object()},
-        interfaces={
-            "timeStepConstraint": timeStepConstraint,
-            "loopCondition": loopCondition,
-        },
+    loop_rt = ModelRuntime(spec=solutionLoop, name="solutionLoop", config=None)
+    max_rt = ModelRuntime(
+        spec=maxDeltaT, name="maxDeltaT", config=MaxDeltaTConfig(maxDeltaT=0.5)
     )
+    ctx = Context(
+        fields={},
+        models={"solution_loop": loop, "solutionLoop": loop_rt, "maxDeltaT": max_rt},
+    )
+    bind_owned_interfaces(loop_rt, [max_rt], ctx)
     wrapped = wrap_with_dependency_resolution(
         update_loop_controls, instance=None, dependency_resolver=DependencyResolver()
     )

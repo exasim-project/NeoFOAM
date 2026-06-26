@@ -25,7 +25,8 @@ from neofoam.framework.initialization import (
     lazy,
     model as init_model,
 )
-from neofoam.framework.model import ModelSpec
+from neofoam.framework.context import Context
+from neofoam.framework.model import ModelRuntime, ModelSpec, bind_owned_interfaces
 from neofoam.turbulence import (
     OpenFOAMTurbulenceModel,
     SpecMomentumTransport,
@@ -119,12 +120,11 @@ def _add_turbulence_model(builder: InitializerBuilder, case_dir: Path) -> None:
 def _optional_models_by_name(optional_models: list[Any]) -> dict[str, Any]:
     """Map each active optional model to its model name.
 
-    This is the projection the solution-loop interface gate reads: a
-    ``@timeStepConstraint.contribute(model=<spec>)`` contribution folds in
-    ``InterfaceSpec.collect(ctx)`` iff ``<spec>.name`` is a key in
-    ``ctx.models``. Keying the detected runtimes by ``rt.name`` (rather than
-    stashing them under one opaque ``"optional_models"`` list) makes that gate
-    match in a live run.
+    Registering each detected optional-model runtime under ``rt.name`` keeps it
+    discoverable in ``ctx.models`` (instead of stashing them under one opaque
+    ``"optional_models"`` list). Gating of interface contributions is no longer a
+    name lookup: it is intrinsic to the bound contributor runtimes that the MI7
+    auto-wiring step binds onto the solutionLoop owner runtime.
     """
     return {m.name: m for m in optional_models}
 
@@ -190,7 +190,7 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             return next(
                 m
                 for m in core_models
-                if getattr(getattr(m, "spec", None), "name", None) == spec_name
+                if isinstance(m, ModelRuntime) and m.spec.name == spec_name
             )
 
         solution_loop_model = _by_spec("solutionLoop")
@@ -264,11 +264,32 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         _add_turbulence_model(builder, resolved_case_dir)
 
         builder.add_optional_models(optional_models)
-        # Register each active optional model BY NAME so its interface
-        # contribution gates on ``owner.name in ctx.models`` in a live run
-        # (see ``InterfaceSpec.collect``), instead of a single opaque list.
+        # Register each active optional model BY NAME so it stays discoverable in
+        # ``ctx.models`` for a live run, instead of a single opaque list.
         for name, opt in _optional_models_by_name(optional_models).items():
             builder.add_model(name, opt)
+
+        # MI7 auto-wiring: bind the solutionLoop runtime's owned interfaces
+        # (timeStepConstraint / loopCondition) to the case's active contributing
+        # optional-model runtimes, and register the owner runtime under its spec
+        # name so the resolver finds ctx.models["solutionLoop"]. The bound
+        # interfaces are stored, not folded this iteration — the live deltaT drive
+        # stays deferred, so they are bound against an EMPTY Context. Capturing the
+        # live pybFoam fields/models here would create a reference cycle holding
+        # mesh-bound pybFoam objects that segfaults at GC across in-process solver
+        # runs; the future live drive re-binds against the live Context at call time.
+        def wire_loop_interfaces(_work: dict[str, Any]) -> Any:
+            return bind_owned_interfaces(
+                solution_loop_model, optional_models, Context(fields={}, models={})
+            )
+
+        builder.add(
+            init_model(
+                "solutionLoop",
+                wire_loop_interfaces,
+                depends_on=["models.solution_loop"],
+            )
+        )
 
         return builder.build()
 

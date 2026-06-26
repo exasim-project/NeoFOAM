@@ -11,10 +11,11 @@ computes the classic CFL limit ``deltaT * maxCo / Co``. It lives under the solve
 not the framework, so ``neofoam.algorithms.solution_loop`` stays pure-Python.
 
 The model registers with the family (so it is discoverable case-free) and the
-contribution is **bound to the model** via ``@timeStepConstraint.contribute(model=courant)``.
-Folding is automatic: the contribution participates iff the ``courant`` model is
-active for the running case (its name is a key in ``ctx.models``). No import-time
-activation toggle.
+contribution is **bound to the model** via ``@courant.contributes(timeStepConstraint)``.
+Folding is automatic: the contribution participates iff the ``courant`` model is active
+for the case — gating is intrinsic to the bound contributor runtimes, matched to the
+owning ``timeStepConstraint`` interface by ``ModelSpec`` identity, not a name lookup in
+``ctx.models``. No import-time activation toggle.
 """
 
 import os
@@ -53,7 +54,7 @@ def detect_model() -> bool:
     return bool(dictionary.read("system/controlDict").found("maxCo"))
 
 
-@timeStepConstraint.contribute(model=courant)
+@courant.contributes(timeStepConstraint)
 def courant_limit(phi: surfaceScalarField, deltaT: float, cfg: CourantConfig) -> float:
     """Largest deltaT the CFL condition permits on the live ``phi``.
 

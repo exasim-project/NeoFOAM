@@ -44,6 +44,11 @@ from neofoam.algorithms.solution_loop.interfaces import (
     loopCondition,
     timeStepConstraint,
 )
+
+# Re-export the solutionLoop Model declared in interfaces.py (the leaf module);
+# the explicit alias marks it as a public re-export for the solver-side module
+# that imports it from here (mypy strict no_implicit_reexport).
+from neofoam.algorithms.solution_loop.interfaces import solutionLoop as solutionLoop
 from neofoam.algorithms.solution_loop.config import (
     LABEL_MAX,
     SMALL,
@@ -61,8 +66,7 @@ from neofoam.algorithms.solution_loop.time_integration import (
     TransientIntegration,
 )
 from neofoam.framework.context import Context
-from neofoam.framework.initialization import InitStep, interface_step, lazy, model
-from neofoam.framework.model import Model
+from neofoam.framework.initialization import InitStep, lazy, model
 
 
 @runtime_checkable
@@ -271,8 +275,9 @@ class SolutionLoop:
 # =========================================================================
 # The core Model wrapping the engine
 # =========================================================================
-
-solutionLoop = Model("solutionLoop")
+#
+# ``solutionLoop`` is declared in ``interfaces.py`` (the leaf module that also owns
+# its two model-owned interfaces); the decorators below mutate that imported object.
 
 
 # -- load: the controlDict parameterises the loop -------------------------
@@ -340,8 +345,6 @@ def build(config: TimeControlConfig) -> list[InitStep]:
     return [
         lazy("time", create_state),
         model("solution_loop", create_engine, depends_on=["time"]),
-        interface_step("timeStepConstraint", lambda _ctx: timeStepConstraint),
-        interface_step("loopCondition", lambda _ctx: loopCondition),
     ]
 
 

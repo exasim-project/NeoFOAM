@@ -54,7 +54,7 @@ from neofoam.framework.dependency_resolver import (
     DependencyResolver,
     wrap_with_dependency_resolution,
 )
-from neofoam.framework.initialization import execute_initialization
+from neofoam.framework.model import ModelRuntime, bind_owned_interfaces
 
 
 class FakeBackend:
@@ -260,8 +260,6 @@ def test_build_emits_state_then_engine() -> None:
     assert [s.name for s in steps] == [
         "time",
         "models.solution_loop",
-        "interfaces.timeStepConstraint",
-        "interfaces.loopCondition",
     ]
 
     state = steps[0].initializer({})
@@ -383,13 +381,12 @@ def test_constructor_still_accepts_constraints() -> None:
     assert [type(c).__name__ for c in loop.constraints] == ["MaxDeltaTConstraint"]
 
 
-# --- both interfaces placed in ctx.interfaces via build -------------------
+# --- the loop model owns both interfaces ----------------------------------
 
 
-def test_build_places_both_interfaces_in_context() -> None:
-    ctx = execute_initialization(build(_config(adjustTimeStep=False)))
-    assert ctx.interfaces["timeStepConstraint"] is timeStepConstraint
-    assert ctx.interfaces["loopCondition"] is loopCondition
+def test_loop_model_owns_both_interfaces() -> None:
+    assert solutionLoop.declared_interfaces["timeStepConstraint"] is timeStepConstraint
+    assert solutionLoop.declared_interfaces["loopCondition"] is loopCondition
 
 
 # --- the interface-consuming loop-body operation --------------------------
@@ -403,32 +400,33 @@ def test_loop_module_keeps_live_interface_annotations() -> None:
     assert ann["conditions"] is loopCondition
 
 
-def test_operation_with_no_contributions_is_fixed_step_and_running() -> None:
-    ctx = execute_initialization(build(_config(adjustTimeStep=False)))
-    loop = ctx.models["solution_loop"]
+def test_update_loop_controls_records_default_fold_when_no_contributors() -> None:
+    loop = SolutionLoop(state=_state())
     # Pre-set sentinels distinct from the empty-fold result so the assertion
     # proves update_loop_controls actually folded and wrote the engine.
     loop.next_dt = 123.0
     loop.keep_running = False
+    loop_rt = ModelRuntime(spec=solutionLoop, name="solutionLoop", config=None)
+    ctx = Context(
+        fields={},
+        models={"solution_loop": loop, "solutionLoop": loop_rt},
+    )
+    bind_owned_interfaces(loop_rt, [], ctx)
     wrapped = wrap_with_dependency_resolution(
-        update_loop_controls, instance=None, dependency_resolver=DependencyResolver()
+        update_loop_controls,
+        instance=None,
+        dependency_resolver=DependencyResolver(),
     )
     wrapped(ctx)
     assert loop.next_dt == VGREAT
     assert loop.keep_running is True
 
 
-@pytest.mark.parametrize("missing", ["timeStepConstraint", "loopCondition"])
-def test_operation_raises_when_interface_absent_from_context(missing: str) -> None:
+def test_update_loop_controls_raises_when_owner_not_bound() -> None:
     loop = SolutionLoop(state=_state())
-    present = {
-        "timeStepConstraint": timeStepConstraint,
-        "loopCondition": loopCondition,
-    }
-    del present[missing]
-    ctx = Context(fields={}, models={"solution_loop": loop}, interfaces=present)
+    ctx = Context(fields={}, models={"solution_loop": loop})  # no "solutionLoop"
     resolver = DependencyResolver()
-    with pytest.raises(ValueError, match=missing):
+    with pytest.raises(ValueError, match="is not bound for this case"):
         resolver.resolve_arguments(update_loop_controls, ctx=ctx)
 
 
