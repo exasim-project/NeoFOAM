@@ -32,14 +32,103 @@ export CUDA_VISIBLE_DEVICES=1,2,3,4
 NEON_BUILD="${NEON_BUILD:-profiling}"
 BIN="/storage/home/greole/code/NeoFOAM/build/${NEON_BUILD}${NEON_DEVICE}/bin/neoSimpleFoam"
 NP=4
-STEPS=100
+STEPS=30
 CFGDIR="system/paramStudy"
-RESULTS="paramStudy/results"
+# Per-study results live under paramStudyResults/<type>/, one timestamped log per run:
+# paramStudyResults/<STUDY_TYPE>/<run-name>-<YYYYmmdd-HHMMSS>.log. Each leaf study sets
+# STUDY_TYPE before sourcing this file; "misc" is a fallback for direct/ad-hoc sourcing.
+STUDY_TYPE="${STUDY_TYPE:-misc}"
+RESULTS="paramStudyResults/${STUDY_TYPE}"
 # Temp fvSolution written by the mg sweep (declared here so restore() cleans it
 # up regardless of which study sourced this file).
 TMP_FVSOL="$CFGDIR/.fvSolution.mgtmp"
 
 mkdir -p "$RESULTS"
+
+# ---------------------------------------------- optional Kokkos-Tools profiler
+# Set KOKKOS_TOOL=<name> to load a kokkos-tools connector for every solver launch (param-study-best.sh,
+# the mg sweeps, param-study-production.sh -- anything that runs through run_one or kokkos_launch).
+# Off (empty) by default. The connectors are built into the active build's kokkos_tools_build when the
+# binary was configured with NEOFOAM_ENABLE_KOKKOS_TOOLS=ON; names mirror profile-and-debug/
+# run_with_kokkos_tool.sh. All profiler output is collected next to the run log under
+# paramStudyResults/<type>/ by collect_kokkos_output: stdout tools (space-time-stack, the memory-*
+# tools) land in the per-run <name>-<ts>.log, and the space-time-stack report is additionally copied
+# to a standalone <name>-<ts>.kokkos-profile.txt; file tools (simple-kernel-timer .dat, perfetto/json)
+# are moved to <name>-<ts>.<file>. (Sidecars are .txt/.dat, never .log, so param-study-table.sh's
+# *.log glob ignores them.) Read a simple-kernel-timer .dat with the kp_reader next to the connector.
+#   simple-kernel-timer  space-time-stack  memory-high-water-mark  memory-usage  memory-events
+#   chrome-tracing  perfetto-connector  kernel-logger
+KOKKOS_TOOL="${KOKKOS_TOOL:-}"
+# Connector root: .../build/${NEON_BUILD}${NEON_DEVICE}/kokkos_tools_build (two dirs above BIN).
+KTOOLS_ROOT="$(dirname "$(dirname "$BIN")")/kokkos_tools_build"
+
+kokkos_tool_lib() {
+    # Echo the connector .so path for tool name $1 (empty if unknown).
+    case "$1" in
+        simple-kernel-timer)               echo "$KTOOLS_ROOT/profiling/simple-kernel-timer/libkp_kernel_timer.so" ;;
+        space-time-stack)                  echo "$KTOOLS_ROOT/profiling/space-time-stack/libkp_space_time_stack.so" ;;
+        memory-high-water-mark|memory-hwm) echo "$KTOOLS_ROOT/profiling/memory-hwm/libkp_hwm.so" ;;
+        memory-usage)                      echo "$KTOOLS_ROOT/profiling/memory-usage/libkp_memory_usage.so" ;;
+        memory-events)                     echo "$KTOOLS_ROOT/profiling/memory-events/libkp_memory_events.so" ;;
+        chrome-tracing)                    echo "$KTOOLS_ROOT/profiling/chrome-tracing/libkp_chrome_tracing.so" ;;
+        perfetto-connector)                echo "$KTOOLS_ROOT/profiling/perfetto-connector/libkp_perfetto_connector.so" ;;
+        kernel-logger)                     echo "$KTOOLS_ROOT/debugging/kernel-logger/libkp_kernel_logger.so" ;;
+        *)                                 echo "" ;;
+    esac
+}
+
+# Resolve KOKKOS_TOOLS_LIBS once (empty => profiler off / lib missing). The launchers forward it to
+# the MPI ranks via `mpirun -x KOKKOS_TOOLS_LIBS` (see kokkos_launch).
+KOKKOS_TOOLS_LIBS=""
+if [ -n "$KOKKOS_TOOL" ]; then
+    _ktlib="$(kokkos_tool_lib "$KOKKOS_TOOL")"
+    if [ -n "$_ktlib" ] && [ -f "$_ktlib" ]; then
+        KOKKOS_TOOLS_LIBS="$_ktlib"
+        echo "kokkos-tools profiler ENABLED: $KOKKOS_TOOL -> $KOKKOS_TOOLS_LIBS"
+    else
+        echo "!! KOKKOS_TOOL='$KOKKOS_TOOL': no connector at '${_ktlib:-<unknown tool>}'"
+        echo "   (rebuild with NEOFOAM_ENABLE_KOKKOS_TOOLS=ON, or pick a valid tool) -- running WITHOUT profiler"
+    fi
+fi
+export KOKKOS_TOOLS_LIBS
+
+kokkos_launch() {
+    # mpirun wrapper that forwards KOKKOS_TOOLS_LIBS to the ranks when the profiler is enabled.
+    # Usage: kokkos_launch <bin> [args...]   (adds -np $NP -parallel). Used by run_one and the
+    # production launcher so both honour KOKKOS_TOOL.
+    local bin="$1"; shift
+    if [ -n "$KOKKOS_TOOLS_LIBS" ]; then
+        mpirun -x KOKKOS_TOOLS_LIBS -np "$NP" "$bin" -parallel "$@"
+    else
+        mpirun -np "$NP" "$bin" -parallel "$@"
+    fi
+}
+
+collect_kokkos_output() {
+    # After a profiled run, gather the kokkos-tools output next to the run log so it follows the
+    # paramStudyResults/<type>/<run-name>-<timestamp> layout. No-op unless a profiler is active.
+    #   $1 = run log path   $2 = run cwd (default .)   $3 = pre-run marker file (optional)
+    # - STDOUT connectors (space-time-stack, memory-hwm/usage, kernel-logger) print INTO the run log
+    #   already; the self-contained space-time-stack report is ALSO copied to <stem>.kokkos-profile.txt
+    #   so it is a standalone per-run artifact. NB: NOT a .log file -- param-study-table.sh globs
+    #   $RESULTS/*.log and must not pick the profile up as a run.
+    # - FILE connectors (simple-kernel-timer .dat, KOKKOS_PROFILE_EXPORT_JSON noname.json, perfetto
+    #   traces) drop files in the run cwd; those are moved to <stem>.<file>. The marker (when given)
+    #   scopes the move to files THIS run created, so a stray pre-existing .dat in the case dir is
+    #   left alone.
+    [ -n "$KOKKOS_TOOLS_LIBS" ] || return 0
+    local log="$1" dir="${2:-.}" marker="$3" stem="${1%.log}" f base
+    if grep -q 'BEGIN KOKKOS PROFILING REPORT' "$log" 2>/dev/null; then
+        sed -n '/BEGIN KOKKOS PROFILING REPORT/,/END KOKKOS PROFILING REPORT/p' "$log" \
+            > "${stem}.kokkos-profile.txt"
+        echo "   kokkos-tools profile -> ${stem}.kokkos-profile.txt"
+    fi
+    while IFS= read -r -d '' f; do
+        base="$(basename "$f")"
+        mv "$f" "${stem}.${base}" && echo "   kokkos-tools output -> ${stem}.${base}"
+    done < <(find "$dir" -maxdepth 1 -type f ${marker:+-newer "$marker"} \
+        \( -name '*.dat' -o -name 'noname.json' -o -name '*.perfetto-trace' \) -print0 2>/dev/null)
+}
 
 # -------------------------------------------------- pin the run window to STEPS
 # Back up the dictionaries we touch and restore them on exit (even on Ctrl-C).
@@ -71,7 +160,8 @@ reset_to_t0() {
     done
 }
 
-RUNS=()   # names of runs that actually executed, drives the summary table
+RUNS=()           # names of runs that actually executed, drives the summary table
+declare -A RUN_LOG  # run name -> its actual (timestamped) log path, for print_summary/report_cache_reuse
 
 WINDOW=10   # number of trailing log lines kept on screen during a run
 
@@ -106,7 +196,20 @@ run_one() {
     # $1 = run name (log/summary key)   $2 = fvSolution to install   $3 = desc
     # $4 = solver binary (optional, defaults to $BIN / neoSimpleFoam) — set to e.g.
     #      "simpleFoam" for the native-OpenFOAM baseline run.
-    local name="$1" src="$2" desc="$3" bin="${4:-$BIN}" log="$RESULTS/$1.log"
+    local name="$1" src="$2" desc="$3" bin="${4:-$BIN}"
+    # Resolve the per-run log path. On a gap-fill re-invocation reuse the newest existing
+    # $RESULTS/<name>-<ts>.log for this run (so completed cases skip but still show in the
+    # summary); otherwise mint a fresh timestamped path. FORCE=1 always writes a new log.
+    # The trailing "-" before the timestamp anchors the glob so prefix names don't collide
+    # (e.g. ...-rebuild10- never matches ...-rebuild100-).
+    local existing log
+    existing=$(ls -1t "$RESULTS/${name}"-*.log 2>/dev/null | head -1)
+    if [ -n "${FORCE:-}" ] || [ -z "$existing" ]; then
+        log="$RESULTS/${name}-$(date +%Y%m%d-%H%M%S).log"
+    else
+        log="$existing"
+    fi
+    RUN_LOG["$name"]="$log"
     echo "================================================================"
     echo " $name${desc:+ : $desc}"
     echo "   -> $log"
@@ -114,8 +217,8 @@ run_one() {
 
     # Skip a case whose log already exists, so a re-invocation only fills in the
     # missing runs. The existing log is still added to RUNS so it appears in the
-    # summary table. Override with FORCE=1 to re-run (and overwrite) every case.
-    if [ -z "${FORCE:-}" ] && [ -f "$log" ]; then
+    # summary table. Override with FORCE=1 to re-run (writing a new timestamped log).
+    if [ -z "${FORCE:-}" ] && [ -n "$existing" ]; then
         echo "   (skip: log exists — set FORCE=1 to re-run)"
         RUNS+=("$name")
         return
@@ -126,10 +229,16 @@ run_one() {
 
     local t0=$SECONDS
     : > "$log"
-    mpirun -np "$NP" "$bin" -parallel > "$log" 2>&1 &
+    # Marker to scope any kokkos-tools file output (e.g. simple-kernel-timer .dat) to THIS run when
+    # collecting it afterwards. Created just before launch; empty/no-op when the profiler is off.
+    local ktmark=""
+    [ -n "$KOKKOS_TOOLS_LIBS" ] && ktmark="$(mktemp)"
+    kokkos_launch "$bin" > "$log" 2>&1 &
     local pid=$!
     tail_window "$pid" "$log"
     wait "$pid"; local rc=$?
+    collect_kokkos_output "$log" "." "$ktmark"
+    [ -n "$ktmark" ] && rm -f "$ktmark"
     echo "   exit=$rc  wall=$((SECONDS - t0))s  steps=$(grep -c '^Time = ' "$log")"
     RUNS+=("$name")
 }
@@ -140,8 +249,8 @@ print_summary() {
     printf "%-22s %6s %12s %14s %10s %12s\n" run steps "p_iters/it" "p_ms/solve" "cont" "exec_s"
     local c log steps cont exec_s pit pms
     for c in "${RUNS[@]}"; do
-        log="$RESULTS/$c.log"
-        [ -f "$log" ] || continue
+        log="${RUN_LOG[$c]}"
+        [ -n "$log" ] && [ -f "$log" ] || continue
         steps=$(grep -c '^Time = ' "$log")
         cont=$(grep 'sum local' "$log" | tail -1 | sed -E 's/.*sum local = ([0-9.eE+-]+),.*/\1/')
         exec_s=$(grep 'ExecutionTime' "$log" | tail -1 | sed -E 's/.*ExecutionTime = ([0-9.]+) s.*/\1/')

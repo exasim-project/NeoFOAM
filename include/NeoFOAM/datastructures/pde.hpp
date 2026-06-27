@@ -265,16 +265,26 @@ public:
 
         auto solverDict = runTime_->fvSolutionDict.subDict("solvers");
         const std::string finalKey = psi_->name + "Final";
-        auto fvSolution = (finalIter_ && solverDict.isDict(finalKey))
-                            ? solverDict.subDict(finalKey)
-                            : solverDict.subDict(psi_->name);
+        const bool useFinal = finalIter_ && solverDict.isDict(finalKey);
+        auto fvSolution = useFinal ? solverDict.subDict(finalKey) : solverDict.subDict(psi_->name);
         // Drop NeoFOAM-only keys before handing the dict to NeoN/Ginkgo, whose
         // config parser rejects unknown keys (e.g. assemblyStrategy, optimize).
         stripNeoFOAMKeys(fvSolution);
-        auto solver = NeoN::la::Solver(psi_->exec(), fvSolution);
-        // Do some sanity checks before trying to solve
-        // NF_ASSERT(ls.exec() == solution.exec(), "Executors are not the same");
-        auto stats = solver.solve(*ls_, psi_->internalVector());
+        // Persist the NeoN solver across iterations (Strategy 1a), exactly like solveImpl does for
+        // the scalar (pressure) path. The momentum predictor previously created a FRESH
+        // NeoN::la::Solver every step here, which discarded the GinkgoSolver's distributed-topology
+        // caches (index_map / non-local Coo) and forced them to be rebuilt 3x per step (once per Ux,
+        // Uy, Uz) -- the dominant cost in the profiled momentumPredictor region (~34% of wall, while
+        // the actual velocity solve is only ~3%). Keeping one solver alive per field lets those
+        // caches (and any solver/workspace reuse) survive across timesteps. Stored as a shared_ptr
+        // so Dictionary's std::any copy never clones the Solver (GinkgoSolver::clone aborts).
+        const std::string solverKey = "solver:" + (useFinal ? finalKey : psi_->name);
+        auto& solver = readOrCreate<std::shared_ptr<NeoN::la::Solver>>(
+            *runTime_,
+            solverKey,
+            [&] { return std::make_shared<NeoN::la::Solver>(psi_->exec(), fvSolution); }
+        );
+        auto stats = solver->solve(*ls_, psi_->internalVector());
 
         ls_->rhs() = savedRhs;
 

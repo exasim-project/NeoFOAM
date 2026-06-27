@@ -9,15 +9,18 @@
 
 #include "NeoFOAM/compatibility/fvSolution.hpp"
 
+#include <algorithm>
 #include <map>
 #include <cctype>
 #include <fstream>
 #include <iterator>
+#include <sstream>
 
 #include <NeoN/core/logging.hpp>
 #include <NeoN/core/mpi/environment.hpp>
 #include <NeoN/core/primitives/scalar.hpp>
 #include <NeoN/core/primitives/label.hpp>
+#include <NeoN/core/primitives/vec3.hpp>
 #include <NeoN/core/tokenList.hpp>
 
 
@@ -521,6 +524,94 @@ std::string ginkgoSolverLabel(const NeoN::Dictionary& mapped)
     return precond.empty() ? solver : precond + "+" + solver;
 }
 
+// Render a single std::any value held by a NeoN::Dictionary as a readable string.
+// The dictionary stores values type-erased; probe the concrete types produced by the
+// OpenFOAM -> NeoN conversion (word = std::string, scalar, label, Vec3) plus the
+// int/bool/float literals the mapping code inserts. Unknown types degrade to their
+// demangled type name instead of throwing, so logging the config never aborts a run.
+std::string anyToString(const std::any& value)
+{
+    if (const auto* p = std::any_cast<std::string>(&value)) return *p;
+    if (const auto* p = std::any_cast<NeoN::scalar>(&value)) return std::to_string(*p);
+    if (const auto* p = std::any_cast<NeoN::label>(&value)) return std::to_string(*p);
+    if (const auto* p = std::any_cast<int>(&value)) return std::to_string(*p);
+    if (const auto* p = std::any_cast<bool>(&value)) return *p ? "true" : "false";
+    if (const auto* p = std::any_cast<float>(&value)) return std::to_string(*p);
+    if (const auto* p = std::any_cast<double>(&value)) return std::to_string(*p);
+    if (const auto* p = std::any_cast<NeoN::Vec3>(&value))
+    {
+        std::ostringstream os;
+        os << *p;
+        return os.str();
+    }
+    return "<" + NeoN::demangle(value.type().name()) + ">";
+}
+
+// Pretty-print a NeoN::Dictionary as an indented block (sub-dictionaries nested
+// recursively). Keys are sorted so the output is stable across the unordered_map's
+// arbitrary iteration order, which makes successive runs / log diffs comparable.
+std::string dictToString(const NeoN::Dictionary& dict, int indent = 0)
+{
+    const std::string pad(static_cast<std::size_t>(indent) * 4, ' ');
+    std::string out = "{\n";
+    std::vector<std::string> keys = dict.keys();
+    std::sort(keys.begin(), keys.end());
+    for (const auto& key : keys)
+    {
+        out += pad + "    " + key + ": ";
+        if (dict.isDict(key))
+        {
+            out += dictToString(dict.subDict(key), indent + 1);
+        }
+        else
+        {
+            out += anyToString(dict.getMap().at(key));
+        }
+        out += "\n";
+    }
+    out += pad + "}";
+    return out;
+}
+
+// Effective `optimize` flag (DSL expression optimization). Mirrors the default/parse
+// rule of the PDE assembly path (pde.hpp): an absent key reads as "false". OpenFOAM
+// tokenizes the switch (`optimize true;`) as a word, hence the std::string lookup.
+std::string effectiveOptimize(const NeoN::Dictionary& dict)
+{
+    return dict.isType<std::string>("optimize") ? dict.get<std::string>("optimize") : "false";
+}
+
+// Effective `checkFrequency` (how often the L1 criterion evaluates the true residual),
+// using the same default the Ginkgo control seeds (ginkgo.hpp): 1. OpenFOAM stores it
+// as a label after conversion; tolerate int/scalar too, matching readInt's coercion.
+long effectiveCheckFrequency(const NeoN::Dictionary& dict)
+{
+    if (dict.isType<int>("checkFrequency")) return dict.get<int>("checkFrequency");
+    if (dict.isType<NeoN::label>("checkFrequency"))
+        return static_cast<long>(dict.get<NeoN::label>("checkFrequency"));
+    if (dict.isType<NeoN::scalar>("checkFrequency"))
+        return static_cast<long>(dict.get<NeoN::scalar>("checkFrequency"));
+    return 1;
+}
+
+// Emit the resolved solver configuration NeoN/Ginkgo will run for one field, so the
+// OpenFOAM-derived settings are visible in the log. Prints the full (post-mapping)
+// dictionary plus the effective values of the easy-to-miss tuning keys `optimize`
+// and `checkFrequency`, which are shown even when defaulted.
+void logSolverConfig(const NeoN::Dictionary& mapped, const std::string& origin)
+{
+    NeoN::Logging::info(
+        "NeoFOAM solver config ({}) for '{}':\n{}\n    effective optimize: {}\n    effective "
+        "checkFrequency: {}",
+        origin,
+        mapped.isType<std::string>("reportName") ? mapped.get<std::string>("reportName")
+                                                 : std::string("?"),
+        dictToString(mapped),
+        effectiveOptimize(mapped),
+        effectiveCheckFrequency(mapped)
+    );
+}
+
 } // namespace
 
 NeoN::Dictionary mapFvSolution(const NeoN::Dictionary& solverDict)
@@ -542,6 +633,7 @@ NeoN::Dictionary mapFvSolution(const NeoN::Dictionary& solverDict)
         modSolverDict.insert(
             "reportName", configFileLabel(configFilePath(solverDict))
         );
+        logSolverConfig(modSolverDict, "from fvSolution configFile");
         return modSolverDict;
     }
 
@@ -557,6 +649,11 @@ NeoN::Dictionary mapFvSolution(const NeoN::Dictionary& solverDict)
     // dict so it reflects what Ginkgo runs; the Ginkgo backend's parse() ignores
     // this meta key. Computed once here -> no per-solve / hot-path cost.
     modSolverDict.insert("reportName", ginkgoSolverLabel(modSolverDict));
+
+    // Echo the fully-mapped solver settings NeoN/Ginkgo will run, so the
+    // OpenFOAM-derived config is visible in the log (this is the post-mapping
+    // dict -> reflects exactly what the linear solver receives).
+    logSolverConfig(modSolverDict, "mapped from fvSolution");
 
     return modSolverDict;
 }

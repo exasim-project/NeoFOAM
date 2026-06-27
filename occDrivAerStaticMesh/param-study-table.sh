@@ -2,7 +2,7 @@
 #
 # Summary-table generator for the occDrivAre parameter studies.
 #
-# Scans every per-run log under paramStudy/results/ (written by param-study.sh,
+# Scans every per-run log under paramStudyResults/<type>/ (written by param-study.sh,
 # param-study-mg.sh and param-study-mg-tuning.sh via param-study-common.sh) and prints one
 # consolidated table:
 #
@@ -44,7 +44,9 @@ while [ $# -gt 0 ]; do
 done
 set -- "${positional[@]}"
 
-RESULTS="${results_opt:-${RESULTS:-paramStudy/results}}"
+# Default to the paramStudyResults/ base: the loop globs both the base and its per-type
+# subdirs, so this works whether RESULTS points at the base or a single <type> dir.
+RESULTS="${results_opt:-${RESULTS:-paramStudyResults}}"
 PROJECT_STEPS="${PROJECT_STEPS:-${1:-3000}}"
 AGE_MIN="${AGE_MIN:-60}"          # logs newer than this (minutes) are tagged CURR
 
@@ -54,7 +56,8 @@ now=$(date +%s)
 
 # Pull every metric for a single log; echoes one tab-separated record.
 row_for() {
-    local f="$1" name; name="$(basename "$f" .log)"
+    # Strip the trailing -<YYYYmmdd-HHMMSS> timestamp from the filename for a clean run label.
+    local f="$1" name; name="$(basename "$f" .log)"; name="${name%-[0-9]*-[0-9]*}"
     local steps stp_status pit clkstep clktot avgglob lastloc proj when mt age
 
     steps=$(grep -c '^Time = ' "$f")
@@ -146,7 +149,7 @@ sort_key() {
 {
     printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
         run steps status p_it/slv clk_s/st clk_tot p_solve% 'avg|glob|' last_local "$hdr_proj" when
-    for f in "$RESULTS"/*.log; do
+    for f in "$RESULTS"/*.log "$RESULTS"/*/*.log; do
         [ -f "$f" ] || continue
         rec=$(row_for "$f")
         status=$(printf '%s' "$rec" | cut -f3)

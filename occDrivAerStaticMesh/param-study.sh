@@ -26,6 +26,7 @@
 #
 # Shared env / run-window pinning / run_one / summary: param-study-common.sh.
 
+STUDY_TYPE="${STUDY_TYPE:-solver-cases}"
 source "$(dirname "$0")/param-study-common.sh"
 
 # Self-documenting log/summary name for each caseN (p-solver + U/k/omega solver).

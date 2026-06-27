@@ -53,6 +53,7 @@
 #          ./param-study-mg-tuning.sh laminar         # only the laminar baseline
 #          (any headline keyword also works here, e.g. ./param-study-mg-tuning.sh base)
 
+STUDY_TYPE="${STUDY_TYPE:-mg-tuning}"
 source "$(dirname "$0")/param-study-mg-common.sh"
 
 ensure_mg_variants

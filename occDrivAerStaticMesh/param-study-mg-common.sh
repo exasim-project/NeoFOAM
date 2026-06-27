@@ -238,8 +238,8 @@ report_cache_reuse() {
     local log rb ru tot pct
     for c in "${RUNS[@]}"; do
         case "$c" in pMG-*-cache-rebuild*) ;; *) continue ;; esac
-        log="$RESULTS/$c.log"
-        [ -f "$log" ] || continue
+        log="${RUN_LOG[$c]}"
+        [ -n "$log" ] && [ -f "$log" ] || continue
         rb=$(grep -c 'p-cache: rebuild' "$log" 2>/dev/null); rb=${rb:-0}
         ru=$(grep -c 'p-cache: reuse'   "$log" 2>/dev/null); ru=${ru:-0}
         tot=$((rb + ru))

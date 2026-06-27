@@ -5,6 +5,13 @@
 
 #include "NeoFOAM/NeoFOAM.hpp"
 
+// Kokkos profiling regions (Kokkos::Profiling::ScopedRegion / push/popRegion). These hooks are part
+// of Kokkos core and are a NO-OP unless a kokkos-tools connector is loaded at runtime via
+// KOKKOS_TOOLS_LIBS -- so the annotations below are independent of the NEOFOAM_ENABLE_KOKKOS_TOOLS
+// CMake option (which only controls whether the connector libraries are built). The solver compiles
+// and runs identically whether that option is ON or OFF.
+#include <Kokkos_Profiling_ScopedRegion.hpp>
+
 #include "fvCFD.H"
 #include "simpleControl.H"
 #include "singlePhaseTransportModel.H"
@@ -61,6 +68,10 @@ int main(int argc, char* argv[])
 #include "createTime.H"
     NeoN::initialize(argc, argv);
     {
+        // One-time setup phase (mesh adapter, field creation, scheme/solver mapping, turbulence
+        // model). push/popRegion rather than a ScopedRegion because the objects created here outlive
+        // the phase -- they are used throughout the time loop below.
+        Kokkos::Profiling::pushRegion("neoSimpleFoam.setup");
         auto rt = nf::createAdapterRunTime(runTime);
         auto& mesh = rt.mesh;
 
@@ -126,16 +137,24 @@ int main(int argc, char* argv[])
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+        Kokkos::Profiling::popRegion(); // end neoSimpleFoam.setup
+
         NeoN::Logging::info("Starting time loop");
         while (runTime.loop())
         {
+            // Per-timestep region. The phase regions below nest under it in the profiler output.
+            Kokkos::Profiling::ScopedRegion timeStepRegion("neoSimpleFoam.timeStep");
+
             rt.t = runTime.time().value();
             NeoN::Logging::info("Time = {}", rt.t);
             logGpuMem("step-start");
 
             // Steady-state: no rotateOldTimes, no Courant number, no syncRunTimes
 
-            // Momentum predictor (no ddt for steady-state SIMPLE)
+            // Momentum predictor (no ddt for steady-state SIMPLE). push/popRegion (not a
+            // ScopedRegion) because UEqn outlives this phase -- the pressure corrector below reuses
+            // it via computeRAUandHByA(UEqn).
+            Kokkos::Profiling::pushRegion("neoSimpleFoam.momentumPredictor");
             nf::PDESolver<NeoN::Vec3> UEqn(
                 dsl::imp::div(phi, U) - dsl::imp::laplacian(turb->nuEff(), U)
                     + dsl::exp::viscousStress(nu, turb->nut(), turb->gradU()),
@@ -151,10 +170,12 @@ int main(int argc, char* argv[])
             {
                 UEqn.assemble();
             }
+            Kokkos::Profiling::popRegion(); // end neoSimpleFoam.momentumPredictor
             logGpuMem("after-UEqn");
 
             // SIMPLE / SIMPLEC pressure-velocity coupling (single pass, no inner PISO loop)
             {
+                Kokkos::Profiling::ScopedRegion pressureRegion("neoSimpleFoam.pressureCorrector");
                 auto [crAU, hByA] = nf::computeRAUandHByA(UEqn);
                 nf::constrainHbyA(U, p, hByA);
 
@@ -194,6 +215,9 @@ int main(int argc, char* argv[])
                 // Non-orthogonal pressure corrector loop
                 while (simple.correctNonOrthogonal())
                 {
+                    Kokkos::Profiling::ScopedRegion pEqnRegion(
+                        "neoSimpleFoam.pressureCorrector.pEqn"
+                    );
                     nf::PDESolver<NeoN::scalar> pEqn(
                         NeoN::dsl::imp::laplacian(rAU, p) - NeoN::dsl::exp::div(phiHbyA),
                         p,
@@ -251,18 +275,24 @@ int main(int argc, char* argv[])
             }
             logGpuMem("after-pEqn");
 
-            turb->correct(U, phi, rt);
+            {
+                Kokkos::Profiling::ScopedRegion turbRegion("neoSimpleFoam.turbulenceCorrect");
+                turb->correct(U, phi, rt);
+            }
             logGpuMem("after-turb");
 
-            runTime.write();
-            if (runTime.outputTime())
             {
-                NeoN::Logging::info("Writing p");
-                write(p, mesh);
-                NeoN::Logging::info("Writing U");
-                write(U, mesh);
-                NeoN::Logging::info("Writing turbulence variables");
-                turb->write(mesh);
+                Kokkos::Profiling::ScopedRegion writeRegion("neoSimpleFoam.write");
+                runTime.write();
+                if (runTime.outputTime())
+                {
+                    NeoN::Logging::info("Writing p");
+                    write(p, mesh);
+                    NeoN::Logging::info("Writing U");
+                    write(U, mesh);
+                    NeoN::Logging::info("Writing turbulence variables");
+                    turb->write(mesh);
+                }
             }
 
             runTime.printExecutionTime(Info);

@@ -6,13 +6,15 @@ cd "$(dirname "$0")/../.." || exit 1
 
 module purge
 module load gcc/13.3.0
-module load cuda/12.8.1
+module load cuda/13.1.1 
 module load cmake
 module load openmpi
 
 #rm -rf build
 #source /storage/home/greole/code/NeoFOAM/.venv/bin/activate
 source $HOME/OpenFOAM/openfoam/etc/bashrc
+
+cd $HOME/code/NeoFOAM
 
 export PRESET=profiling
 export NEON_DEVICE=nvidia_h200
@@ -31,4 +33,4 @@ cmake --preset $PRESET \
 	-DNEOFOAM_NEON_DIR=../NeoN \
        	> config-gcc-$NEON_DEVICE.log 2>&1
 
-cmake --build --preset $PRESET > build-$PRESET-gcc-$NEON_DEVICE.log 2>&1 
+cmake --build   --preset $PRESET > build-$PRESET-gcc-$NEON_DEVICE.log 2>&1 

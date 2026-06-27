@@ -54,6 +54,7 @@
 #          MP_CACHE=false ./param-study-mp.sh  # same sweep, solver cache OFF (regenerate each solve)
 #          FORCE=1 ./param-study-mp.sh         # re-run and overwrite existing logs
 
+STUDY_TYPE="${STUDY_TYPE:-mixed-precision}"
 source "$(dirname "$0")/param-study-mg-common.sh"
 
 MP_CFG="p-multigrid-localized-mp.json"

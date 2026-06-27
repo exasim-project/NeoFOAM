@@ -48,6 +48,7 @@
 #          (any tuning keyword also works here, e.g. ./param-study-mg.sh L4.sc0 -- see
 #           param-study-mg-tuning.sh)
 
+STUDY_TYPE="${STUDY_TYPE:-mg-headline}"
 source "$(dirname "$0")/param-study-mg-common.sh"
 
 ensure_mg_variants
