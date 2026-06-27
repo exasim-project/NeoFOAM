@@ -215,7 +215,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../auto_how-to/example_collect_and_save_configs.html">Collect and save all of a solver’s configs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../auto_how-to/example_visualize_the_operation_dag.html">Visualize the operation DAG</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../auto_how-to/example_use_depends_for_injection.html">Inject dependencies into operations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../auto_how-to/example_use_an_interface.html">Gather contributions from many models with an Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../auto_how-to/example_use_an_interface.html">Gather contributions from many models with a model-owned interface</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul>
@@ -450,36 +450,6 @@
 <span class="sd">        lazy(&quot;mesh&quot;, create=lambda ctx: mesh)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">_make_lazy</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;resource&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">create</span><span class="p">,</span> <span class="n">depends_on</span><span class="p">)</span></div>
-
-
-
-<div class="viewcode-block" id="interface_step">
-<a class="viewcode-back" href="../../../../reference/initialization/helpers.html#neofoam.framework.initialization.helpers.interface_step">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">interface_step</span><span class="p">(</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">create</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">Any</span><span class="p">],</span>
-    <span class="n">depends_on</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">InitStep</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper for creating interface lazy initializers.</span>
-
-<span class="sd">    Automatically prefixes name with &quot;interfaces.&quot; and sets category to</span>
-<span class="sd">    &quot;interfaces&quot;.  The created value is placed in ``ctx.interfaces[name]``</span>
-<span class="sd">    by the router registered in</span>
-<span class="sd">    :func:`~neofoam.framework.initialization.execution.context_builder.default_router`.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        name: Interface name (e.g., &quot;timeStepConstraint&quot;)</span>
-<span class="sd">        create: Function that creates the interface value (receives the</span>
-<span class="sd">            in-progress context dict)</span>
-<span class="sd">        depends_on: List of dependencies (default: [])</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        InitStep for the interface</span>
-
-<span class="sd">    Example:</span>
-<span class="sd">        interface_step(&quot;timeStepConstraint&quot;, create=lambda _ctx: my_spec)</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">_make_lazy</span><span class="p">(</span><span class="s2">&quot;interfaces&quot;</span><span class="p">,</span> <span class="s2">&quot;interfaces&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">create</span><span class="p">,</span> <span class="n">depends_on</span><span class="p">)</span></div>
 
 
 

@@ -7,7 +7,7 @@
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/auto_how-to/example_use_an_interface.html">
 
     <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
-        <title>Gather contributions from many models with an Interface - NeoFOAM documentation</title>
+        <title>Gather contributions from many models with a model-owned interface - NeoFOAM documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -216,7 +216,7 @@
 <li class="toctree-l1"><a class="reference internal" href="example_collect_and_save_configs.html">Collect and save all of a solver’s configs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_visualize_the_operation_dag.html">Visualize the operation DAG</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_use_depends_for_injection.html">Inject dependencies into operations</a></li>
-<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Gather contributions from many models with an Interface</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Gather contributions from many models with a model-owned interface</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul>
@@ -328,86 +328,103 @@
 <p><a class="reference internal" href="#sphx-glr-download-auto-how-to-example-use-an-interface-py"><span class="std std-ref">Go to the end</span></a>
 to download the full example code.</p>
 </div>
-<section class="sphx-glr-example-title" id="gather-contributions-from-many-models-with-an-interface">
-<span id="sphx-glr-auto-how-to-example-use-an-interface-py"></span><h1>Gather contributions from many models with an Interface<a class="headerlink" href="#gather-contributions-from-many-models-with-an-interface" title="Link to this heading">¶</a></h1>
+<section class="sphx-glr-example-title" id="gather-contributions-from-many-models-with-a-model-owned-interface">
+<span id="sphx-glr-auto-how-to-example-use-an-interface-py"></span><h1>Gather contributions from many models with a model-owned interface<a class="headerlink" href="#gather-contributions-from-many-models-with-a-model-owned-interface" title="Link to this heading">¶</a></h1>
 <p>Many physics models each want to add a term to the <em>same</em> place — a source
-term in an equation, a limit on the time step, a flag that stops the run.
-An <code class="docutils literal notranslate"><span class="pre">Interface</span></code> is that shared <strong>gather point</strong>: each model registers a
-small <code class="docutils literal notranslate"><span class="pre">&#64;contribute</span></code> function, one <code class="docutils literal notranslate"><span class="pre">&#64;combine</span></code> fold decides how the pieces
-combine, and a consumer <strong>injects the interface and calls it</strong> to get the
-single combined result. New models plug in without the consumer or the other
-models changing.</p>
+term in an equation, a limit on the time step, a flag that stops the run. A
+<strong>model-owned interface</strong> is that shared gather point: one model <em>owns</em> it via
+<code class="docutils literal notranslate"><span class="pre">&#64;&lt;owner&gt;.interface</span></code> (the fold that decides how the pieces combine), other
+models plug in with <code class="docutils literal notranslate"><span class="pre">&#64;&lt;model&gt;.contributes(&lt;interface&gt;)</span></code>, and a consumer
+<strong>injects the interface and calls it</strong> to get the single combined result. New
+models plug in without the owner, the consumer, or the other models changing.</p>
 <p>This page uses the easiest possible example — <strong>a total source term that is
-the sum of per-model contributions</strong> — and shows the three things you do with
-an interface: build one, gather several models into it, and use it inside an
-operation. <code class="docutils literal notranslate"><span class="pre">Interface(name)</span></code> mirrors <code class="docutils literal notranslate"><span class="pre">Model(name)</span></code>.</p>
-<section id="build-the-interface-a-name-plus-a-fold">
-<h2>1. Build the interface: a name plus a fold<a class="headerlink" href="#build-the-interface-a-name-plus-a-fold" title="Link to this heading">¶</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">Interface(name)</span></code> is the gather point. <code class="docutils literal notranslate"><span class="pre">&#64;&lt;iface&gt;.combine</span></code> registers the
-<em>one</em> function that combines all contributions — here a plain <code class="docutils literal notranslate"><span class="pre">sum</span></code>, so
-the interface means “total source term”. The fold also defines the empty
-case: no contributions ⇒ <code class="docutils literal notranslate"><span class="pre">0.0</span></code> (no source). Only one <code class="docutils literal notranslate"><span class="pre">&#64;combine</span></code> is
-allowed per interface.</p>
+the sum of per-model contributions</strong> — and shows the things you do with an
+interface: declare one on a model, gather a case’s active contributors, and use
+it inside an operation. <code class="docutils literal notranslate"><span class="pre">Model(name)</span></code> is the same factory you already use for
+physics models.</p>
+<section id="declare-the-interface-on-its-owning-model-a-name-plus-a-fold">
+<h2>1. Declare the interface on its owning model: a name plus a fold<a class="headerlink" href="#declare-the-interface-on-its-owning-model-a-name-plus-a-fold" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">&#64;&lt;owner&gt;.interface</span></code> decorates the <em>one</em> fold function that combines all
+contributions — here a plain <code class="docutils literal notranslate"><span class="pre">sum</span></code>, so the interface means “total source
+term”. The decorated name (<code class="docutils literal notranslate"><span class="pre">source</span></code>) is the interface name, and the body
+defines the empty case: no contributions =&gt; <code class="docutils literal notranslate"><span class="pre">0.0</span></code> (no source). The decorator
+returns a <code class="docutils literal notranslate"><span class="pre">ModelInterface</span></code> handle that doubles as a <code class="docutils literal notranslate"><span class="pre">&#64;&lt;model&gt;.contributes</span></code>
+target and as an operation-parameter annotation.</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.dependency_resolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">DependencyResolver</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">Interface</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span><span class="p">,</span> <span class="n">ModelRuntime</span><span class="p">,</span> <span class="n">bind_owned_interfaces</span>
 
-<span class="n">source</span> <span class="o">=</span> <span class="n">Interface</span><span class="p">(</span><span class="s2">&quot;source&quot;</span><span class="p">)</span>
+<span class="n">equation</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;equation&quot;</span><span class="p">)</span>
 
 
-<span class="nd">@source</span><span class="o">.</span><span class="n">combine</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">total</span><span class="p">(</span><span class="n">parts</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="nd">@equation</span><span class="o">.</span><span class="n">interface</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">source</span><span class="p">(</span><span class="n">parts</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
     <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">parts</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>  <span class="c1"># no contribution -&gt; 0.0</span>
 
 
-<span class="nb">print</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;fold of [] =&quot;</span><span class="p">,</span> <span class="n">total</span><span class="p">([]))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;empty fold =&quot;</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">fold</span><span class="p">([]))</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>source fold of [] = 0.0
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>source empty fold = 0.0
 </pre></div>
 </div>
 </section>
-<section id="gather-several-models-each-adds-one-contribute">
-<h2>2. Gather several models: each adds one <code class="docutils literal notranslate"><span class="pre">&#64;contribute</span></code><a class="headerlink" href="#gather-several-models-each-adds-one-contribute" title="Link to this heading">¶</a></h2>
+<section id="gather-several-models-each-adds-one-contributes">
+<h2>2. Gather several models: each adds one <code class="docutils literal notranslate"><span class="pre">&#64;contributes</span></code><a class="headerlink" href="#gather-several-models-each-adds-one-contributes" title="Link to this heading">¶</a></h2>
 <p>Every model registers an <strong>operation-style</strong> contribution: it declares the
 fields it needs as typed parameters (resolved from the
 <a class="reference internal" href="../reference/framework/context.html#neofoam.framework.context.Context" title="neofoam.framework.context.Context"><code class="xref py py-class docutils literal notranslate"><span class="pre">Context</span></code></a> exactly like <code class="docutils literal notranslate"><span class="pre">&#64;model.operation</span></code>)
-and returns its one contribution to the sum. The three functions below stand
-in for three independent models — <strong>none knows the others exist</strong>, and none
-touches <code class="docutils literal notranslate"><span class="pre">ctx</span></code> directly. A contribution may <em>not</em> declare a <code class="docutils literal notranslate"><span class="pre">Context</span></code>
-parameter.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@source</span><span class="o">.</span><span class="n">contribute</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">gravity</span><span class="p">(</span><span class="n">rho</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+and returns its one contribution to the sum. The three models below stand in
+for three independent physics models — <strong>none knows the others exist</strong>, and
+none touches <code class="docutils literal notranslate"><span class="pre">ctx</span></code> directly.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">gravity</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;gravity&quot;</span><span class="p">)</span>
+<span class="n">drag</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;drag&quot;</span><span class="p">)</span>
+<span class="n">buoyancy</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;buoyancy&quot;</span><span class="p">)</span>
+
+
+<span class="nd">@gravity</span><span class="o">.</span><span class="n">contributes</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">gravity_force</span><span class="p">(</span><span class="n">rho</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">rho</span> <span class="o">*</span> <span class="o">-</span><span class="mf">9.81</span>  <span class="c1"># body force</span>
 
 
-<span class="nd">@source</span><span class="o">.</span><span class="n">contribute</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">drag</span><span class="p">(</span><span class="n">U</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="nd">@drag</span><span class="o">.</span><span class="n">contributes</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">drag_force</span><span class="p">(</span><span class="n">U</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
     <span class="k">return</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">U</span>  <span class="c1"># linear resistance</span>
 
 
-<span class="nd">@source</span><span class="o">.</span><span class="n">contribute</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">buoyancy</span><span class="p">(</span><span class="n">T</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="nd">@buoyancy</span><span class="o">.</span><span class="n">contributes</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">buoyancy_force</span><span class="p">(</span><span class="n">T</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
     <span class="k">return</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="p">(</span><span class="n">T</span> <span class="o">-</span> <span class="mf">300.0</span><span class="p">)</span>  <span class="c1"># thermal source</span>
 
 
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;models contributing to &#39;source&#39;:&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">source</span><span class="o">.</span><span class="n">_contributions</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;models contributing to &#39;source&#39;:&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">source</span><span class="o">.</span><span class="n">contributions</span><span class="p">])</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>models contributing to &#39;source&#39;: [&#39;gravity&#39;, &#39;drag&#39;, &#39;buoyancy&#39;]
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>models contributing to &#39;source&#39;: [&#39;gravity_force&#39;, &#39;drag_force&#39;, &#39;buoyancy_force&#39;]
 </pre></div>
 </div>
 </section>
-<section id="combine-them-collect-ctx-folds-over-a-context">
-<h2>3. Combine them: <code class="docutils literal notranslate"><span class="pre">collect(ctx)</span></code> folds over a Context<a class="headerlink" href="#combine-them-collect-ctx-folds-over-a-context" title="Link to this heading">¶</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">collect(ctx)</span></code> resolves each contribution’s parameters from the Context,
-calls it, and runs them through the fold. The parameter <em>name</em> is the lookup
-key into <code class="docutils literal notranslate"><span class="pre">ctx.fields</span></code>. With the values below: gravity <code class="docutils literal notranslate"><span class="pre">=</span> <span class="pre">-9.81</span></code>, drag
-<code class="docutils literal notranslate"><span class="pre">=</span> <span class="pre">-1.0</span></code>, buoyancy <code class="docutils literal notranslate"><span class="pre">=</span> <span class="pre">0.1*(320-300)</span> <span class="pre">=</span> <span class="pre">2.0</span></code> — summed to <code class="docutils literal notranslate"><span class="pre">-8.81</span></code>.</p>
+<section id="bind-a-case-s-active-contributors-onto-the-owner-runtime">
+<h2>3. Bind a case’s active contributors onto the owner runtime<a class="headerlink" href="#bind-a-case-s-active-contributors-onto-the-owner-runtime" title="Link to this heading">¶</a></h2>
+<p>At runtime each active model has a <code class="docutils literal notranslate"><span class="pre">ModelRuntime</span></code>. <code class="docutils literal notranslate"><span class="pre">bind_owned_interfaces</span></code>
+is the per-case auto-wiring seam: it takes the owner runtime plus the case’s
+candidate runtimes, binds the active contributors for every interface the
+owner declares, and stores each <code class="xref py py-class docutils literal notranslate"><span class="pre">BoundModelInterface</span></code> on
+<code class="docutils literal notranslate"><span class="pre">owner_runtime.bound_interfaces</span></code>. A bound interface is callable: calling it
+folds exactly the contributions whose model is active for this case. The
+parameter <em>name</em> (<code class="docutils literal notranslate"><span class="pre">rho</span></code>/<code class="docutils literal notranslate"><span class="pre">U</span></code>/<code class="docutils literal notranslate"><span class="pre">T</span></code>) is the lookup key into <code class="docutils literal notranslate"><span class="pre">ctx.fields</span></code>.</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">ctx</span> <span class="o">=</span> <span class="n">Context</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;U&quot;</span><span class="p">:</span> <span class="mf">2.0</span><span class="p">,</span> <span class="s2">&quot;rho&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="mf">320.0</span><span class="p">},</span> <span class="n">models</span><span class="o">=</span><span class="p">{})</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;total source =&quot;</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">collect</span><span class="p">(</span><span class="n">ctx</span><span class="p">))</span>
+<span class="n">equation_rt</span> <span class="o">=</span> <span class="n">ModelRuntime</span><span class="p">(</span><span class="n">spec</span><span class="o">=</span><span class="n">equation</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;equation&quot;</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<span class="n">gravity_rt</span> <span class="o">=</span> <span class="n">ModelRuntime</span><span class="p">(</span><span class="n">spec</span><span class="o">=</span><span class="n">gravity</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;gravity&quot;</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<span class="n">drag_rt</span> <span class="o">=</span> <span class="n">ModelRuntime</span><span class="p">(</span><span class="n">spec</span><span class="o">=</span><span class="n">drag</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;drag&quot;</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<span class="n">buoyancy_rt</span> <span class="o">=</span> <span class="n">ModelRuntime</span><span class="p">(</span><span class="n">spec</span><span class="o">=</span><span class="n">buoyancy</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;buoyancy&quot;</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+<span class="n">bind_owned_interfaces</span><span class="p">(</span><span class="n">equation_rt</span><span class="p">,</span> <span class="p">[</span><span class="n">gravity_rt</span><span class="p">,</span> <span class="n">drag_rt</span><span class="p">,</span> <span class="n">buoyancy_rt</span><span class="p">],</span> <span class="n">ctx</span><span class="p">)</span>
+<span class="n">bound_source</span> <span class="o">=</span> <span class="n">equation_rt</span><span class="o">.</span><span class="n">bound_interfaces</span><span class="p">[</span><span class="s2">&quot;source&quot;</span><span class="p">]</span>
+<span class="c1"># gravity = -9.81, drag = -1.0, buoyancy = 0.1*(320-300) = 2.0 -&gt; summed -8.81</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;total source =&quot;</span><span class="p">,</span> <span class="n">bound_source</span><span class="p">())</span>
 </pre></div>
 </div>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>total source = -8.81
@@ -416,28 +433,24 @@ key into <code class="docutils literal notranslate"><span class="pre">ctx.fields
 </section>
 <section id="use-it-in-an-operation-inject-the-interface-and-call-it">
 <h2>4. Use it in an operation: inject the interface and <em>call</em> it<a class="headerlink" href="#use-it-in-an-operation-inject-the-interface-and-call-it" title="Link to this heading">¶</a></h2>
-<p>A consumer never reads <code class="docutils literal notranslate"><span class="pre">ctx</span></code> for the interface — it <strong>types a parameter
-with the interface itself</strong>, and the framework injects a <code class="docutils literal notranslate"><span class="pre">BoundInterface</span></code>
-whose call runs <code class="docutils literal notranslate"><span class="pre">collect(ctx)</span></code>. In a real solver the function below is
-decorated <code class="docutils literal notranslate"><span class="pre">&#64;&lt;model&gt;.operation</span></code> and the framework resolves + calls it every
-step; here we do that by hand with the
-<a class="reference internal" href="../reference/framework/dependency_resolver.html#neofoam.framework.dependency_resolver.DependencyResolver" title="neofoam.framework.dependency_resolver.DependencyResolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">DependencyResolver</span></code></a> to show
-the same thing. The interface must sit in <code class="docutils literal notranslate"><span class="pre">ctx.interfaces</span></code> under its name,
-and this module must <strong>not</strong> use <code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">__future__</span> <span class="pre">import</span> <span class="pre">annotations</span></code> (it
-would stringify the annotation and hide the spec from the resolver).</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">ctx</span> <span class="o">=</span> <span class="n">Context</span><span class="p">(</span>
-    <span class="n">fields</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;U&quot;</span><span class="p">:</span> <span class="mf">2.0</span><span class="p">,</span> <span class="s2">&quot;rho&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="mf">320.0</span><span class="p">},</span>
-    <span class="n">models</span><span class="o">=</span><span class="p">{},</span>
-    <span class="n">interfaces</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;source&quot;</span><span class="p">:</span> <span class="n">source</span><span class="p">},</span>  <span class="c1"># keyed by the interface&#39;s name</span>
-<span class="p">)</span>
+<p>A consumer never reads <code class="docutils literal notranslate"><span class="pre">ctx</span></code> for the interface — it <strong>types a parameter with
+the interface handle itself</strong>, and the framework injects the owner runtime’s
+bound interface. The resolver finds it via <code class="docutils literal notranslate"><span class="pre">ctx.models[&lt;owner&gt;.name]</span></code>, so the
+owner runtime must be registered under its model name. In a real solver the
+function below is decorated <code class="docutils literal notranslate"><span class="pre">&#64;&lt;model&gt;.operation</span></code> and the framework resolves +
+calls it every step; here we do that by hand with the
+<a class="reference internal" href="../reference/framework/dependency_resolver.html#neofoam.framework.dependency_resolver.DependencyResolver" title="neofoam.framework.dependency_resolver.DependencyResolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">DependencyResolver</span></code></a>. This module
+must <strong>not</strong> use <code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">__future__</span> <span class="pre">import</span> <span class="pre">annotations</span></code> (it would stringify the
+annotation and hide the handle from the resolver).</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">&quot;equation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">equation_rt</span>  <span class="c1"># the resolver looks up ctx.models[&quot;equation&quot;]</span>
 <span class="n">resolver</span> <span class="o">=</span> <span class="n">DependencyResolver</span><span class="p">()</span>
 
 <span class="n">DT</span> <span class="o">=</span> <span class="mf">0.01</span>
 
 
 <span class="c1"># In a solver: @momentum.operation</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">advance_velocity</span><span class="p">(</span><span class="n">U</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">src</span><span class="p">:</span> <span class="n">source</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-    <span class="c1"># src() gathers every model&#39;s contribution into one total source term</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">advance_velocity</span><span class="p">(</span><span class="n">U</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">src</span><span class="p">:</span> <span class="n">source</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>  <span class="c1"># type: ignore[valid-type]</span>
+    <span class="c1"># src() gathers every active model&#39;s contribution into one total source term</span>
     <span class="k">return</span> <span class="n">U</span> <span class="o">+</span> <span class="n">DT</span> <span class="o">*</span> <span class="n">src</span><span class="p">()</span>
 
 
@@ -446,70 +459,74 @@ would stringify the annotation and hide the spec from the resolver).</p>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;advance_velocity(**resolved) =&quot;</span><span class="p">,</span> <span class="n">advance_velocity</span><span class="p">(</span><span class="o">**</span><span class="n">resolved</span><span class="p">))</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>injected BoundInterface -&gt; src() = -8.81
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>injected BoundModelInterface -&gt; src() = -8.81
 advance_velocity(**resolved) = 1.9119
 </pre></div>
 </div>
 </section>
 <section id="add-a-model-with-zero-changes-elsewhere-the-whole-point">
 <h2>5. Add a model with zero changes elsewhere (the whole point)<a class="headerlink" href="#add-a-model-with-zero-changes-elsewhere-the-whole-point" title="Link to this heading">¶</a></h2>
-<p>Adding a new physics model is <em>only</em> a new <code class="docutils literal notranslate"><span class="pre">&#64;contribute</span></code> — the fold, the
-operation, and the existing models are untouched. Register a porous
-resistance and the same <code class="docutils literal notranslate"><span class="pre">advance_velocity</span></code> now sees the new term, because
+<p>Adding a new physics model is <em>only</em> a new <code class="docutils literal notranslate"><span class="pre">&#64;contributes</span></code> plus including its
+runtime in the case — the fold, the operation, and the existing models are
+untouched. Register a porous resistance and re-bind the owner runtime with the
+new candidate; the same <code class="docutils literal notranslate"><span class="pre">advance_velocity</span></code> now sees the extra term, because
 it asked the interface for “the total”, not for specific models.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@source</span><span class="o">.</span><span class="n">contribute</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">porous</span><span class="p">(</span><span class="n">U</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">porous</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;porous&quot;</span><span class="p">)</span>
+
+
+<span class="nd">@porous</span><span class="o">.</span><span class="n">contributes</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">porous_force</span><span class="p">(</span><span class="n">U</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
     <span class="k">return</span> <span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">U</span>
 
 
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;total source after adding &#39;porous&#39; =&quot;</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">collect</span><span class="p">(</span><span class="n">ctx</span><span class="p">))</span>
-<span class="n">resolved</span> <span class="o">=</span> <span class="n">resolver</span><span class="o">.</span><span class="n">resolve_arguments</span><span class="p">(</span><span class="n">advance_velocity</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;advance_velocity now =&quot;</span><span class="p">,</span> <span class="n">advance_velocity</span><span class="p">(</span><span class="o">**</span><span class="n">resolved</span><span class="p">))</span>
+<span class="n">porous_rt</span> <span class="o">=</span> <span class="n">ModelRuntime</span><span class="p">(</span><span class="n">spec</span><span class="o">=</span><span class="n">porous</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;porous&quot;</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<span class="n">bind_owned_interfaces</span><span class="p">(</span><span class="n">equation_rt</span><span class="p">,</span> <span class="p">[</span><span class="n">gravity_rt</span><span class="p">,</span> <span class="n">drag_rt</span><span class="p">,</span> <span class="n">buoyancy_rt</span><span class="p">,</span> <span class="n">porous_rt</span><span class="p">],</span> <span class="n">ctx</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;total source after adding &#39;porous&#39; =&quot;</span><span class="p">,</span> <span class="n">equation_rt</span><span class="o">.</span><span class="n">bound_interfaces</span><span class="p">[</span><span class="s2">&quot;source&quot;</span><span class="p">]())</span>
 </pre></div>
 </div>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>total source after adding &#39;porous&#39; = -12.81
-advance_velocity now = 1.8719
 </pre></div>
 </div>
 </section>
-<section id="turn-a-model-off">
-<h2>6. Turn a model off<a class="headerlink" href="#turn-a-model-off" title="Link to this heading">¶</a></h2>
-<p>Contributions are active by default. <code class="docutils literal notranslate"><span class="pre">deactivate</span></code> drops one from the fold
-without unregistering it (e.g. a model whose config is absent); <code class="docutils literal notranslate"><span class="pre">activate</span></code>
-restores it. This is how an optional model that is switched off simply stops
-contributing.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">source</span><span class="o">.</span><span class="n">deactivate</span><span class="p">(</span><span class="n">porous</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;with &#39;porous&#39; off  =&quot;</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">collect</span><span class="p">(</span><span class="n">ctx</span><span class="p">))</span>
-<span class="n">source</span><span class="o">.</span><span class="n">activate</span><span class="p">(</span><span class="n">porous</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;with &#39;porous&#39; on   =&quot;</span><span class="p">,</span> <span class="n">source</span><span class="o">.</span><span class="n">collect</span><span class="p">(</span><span class="n">ctx</span><span class="p">))</span>
+<section id="turn-a-model-off-leave-its-runtime-out-of-the-case">
+<h2>6. Turn a model off: leave its runtime out of the case<a class="headerlink" href="#turn-a-model-off-leave-its-runtime-out-of-the-case" title="Link to this heading">¶</a></h2>
+<p>A model contributes iff its runtime is among the case’s active contributors.
+There is no global active-set to toggle: re-bind with a candidate list that
+omits <code class="docutils literal notranslate"><span class="pre">porous</span></code> and its term simply drops out of the fold — exactly how an
+optional model whose config is absent stops contributing.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">bind_owned_interfaces</span><span class="p">(</span><span class="n">equation_rt</span><span class="p">,</span> <span class="p">[</span><span class="n">gravity_rt</span><span class="p">,</span> <span class="n">drag_rt</span><span class="p">,</span> <span class="n">buoyancy_rt</span><span class="p">],</span> <span class="n">ctx</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;with &#39;porous&#39; off =&quot;</span><span class="p">,</span> <span class="n">equation_rt</span><span class="o">.</span><span class="n">bound_interfaces</span><span class="p">[</span><span class="s2">&quot;source&quot;</span><span class="p">]())</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>with &#39;porous&#39; off  = -8.81
-with &#39;porous&#39; on   = -12.81
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>with &#39;porous&#39; off = -8.81
 </pre></div>
 </div>
 </section>
 <section id="what-if-a-model-needs-something-the-case-doesn-t-have">
 <h2>What if a model needs something the case doesn’t have?<a class="headerlink" href="#what-if-a-model-needs-something-the-case-doesn-t-have" title="Link to this heading">¶</a></h2>
 <p>The interface fails <strong>loudly</strong> rather than silently dropping a term: a
-contribution whose parameter nothing supplies raises a <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> when
-the interface is folded, naming the interface, the contribution, and the
-missing parameter. A misconfigured model can never silently vanish from the
-sum.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@source</span><span class="o">.</span><span class="n">contribute</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">needs_phi</span><span class="p">(</span><span class="n">phi</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>  <span class="c1"># &#39;phi&#39; is not in ctx.fields</span>
+contribution whose parameter nothing supplies raises a <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> when the
+interface is folded, naming the interface, the contribution, and the missing
+parameter. A misconfigured model can never silently vanish from the sum.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">needs_phi</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;needsPhi&quot;</span><span class="p">)</span>
+
+
+<span class="nd">@needs_phi</span><span class="o">.</span><span class="n">contributes</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">needs_phi_force</span><span class="p">(</span><span class="n">phi</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>  <span class="c1"># &#39;phi&#39; is not in ctx.fields</span>
     <span class="k">return</span> <span class="n">phi</span>
 
 
+<span class="n">needs_phi_rt</span> <span class="o">=</span> <span class="n">ModelRuntime</span><span class="p">(</span><span class="n">spec</span><span class="o">=</span><span class="n">needs_phi</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;needsPhi&quot;</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<span class="n">bind_owned_interfaces</span><span class="p">(</span>
+    <span class="n">equation_rt</span><span class="p">,</span> <span class="p">[</span><span class="n">gravity_rt</span><span class="p">,</span> <span class="n">drag_rt</span><span class="p">,</span> <span class="n">buoyancy_rt</span><span class="p">,</span> <span class="n">needs_phi_rt</span><span class="p">],</span> <span class="n">ctx</span>
+<span class="p">)</span>
 <span class="k">try</span><span class="p">:</span>
-    <span class="n">source</span><span class="o">.</span><span class="n">collect</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
+    <span class="n">equation_rt</span><span class="o">.</span><span class="n">bound_interfaces</span><span class="p">[</span><span class="s2">&quot;source&quot;</span><span class="p">]()</span>
 <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;collect raised:&quot;</span><span class="p">,</span> <span class="n">err</span><span class="p">)</span>
-<span class="k">finally</span><span class="p">:</span>
-    <span class="n">source</span><span class="o">.</span><span class="n">deactivate</span><span class="p">(</span><span class="n">needs_phi</span><span class="p">)</span>  <span class="c1"># keep re-runs of this page green</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;fold raised:&quot;</span><span class="p">,</span> <span class="n">err</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>collect raised: Interface &#39;source&#39;: contribution &#39;needs_phi&#39; declares parameter &#39;phi&#39; but no provider supplies it. Available context fields: [&#39;T&#39;, &#39;U&#39;, &#39;rho&#39;]
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>fold raised: interface &#39;source&#39;: contribution &#39;needs_phi_force&#39; (model &#39;needsPhi&#39;) declares parameter &#39;phi&#39; but no provider supplies it. Available context fields: [&#39;T&#39;, &#39;U&#39;, &#39;rho&#39;]
 </pre></div>
 </div>
 </section>
@@ -520,8 +537,8 @@ sum.</p>
 are resolved from the Context.</p></li>
 <li><p><a class="reference internal" href="example_use_depends_for_injection.html"><span class="doc">Inject dependencies into operations</span></a> — every injection
 pattern a contribution can use (fields, models, <code class="docutils literal notranslate"><span class="pre">Depends</span></code>).</p></li>
-<li><p><a class="reference internal" href="example_register_a_model.html"><span class="doc">Register a new model</span></a> — the <code class="docutils literal notranslate"><span class="pre">Model(name)</span></code> pattern
-that <code class="docutils literal notranslate"><span class="pre">Interface(name)</span></code> mirrors, and how models are registered.</p></li>
+<li><p><a class="reference internal" href="example_register_a_model.html"><span class="doc">Register a new model</span></a> — the <code class="docutils literal notranslate"><span class="pre">Model(name)</span></code> pattern,
+and how models are registered.</p></li>
 </ul>
 <p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.004 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-how-to-example-use-an-interface-py">
@@ -594,13 +611,13 @@ that <code class="docutils literal notranslate"><span class="pre">Interface(name
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">Gather contributions from many models with an Interface</a><ul>
-<li><a class="reference internal" href="#build-the-interface-a-name-plus-a-fold">1. Build the interface: a name plus a fold</a></li>
-<li><a class="reference internal" href="#gather-several-models-each-adds-one-contribute">2. Gather several models: each adds one <code class="docutils literal notranslate"><span class="pre">&#64;contribute</span></code></a></li>
-<li><a class="reference internal" href="#combine-them-collect-ctx-folds-over-a-context">3. Combine them: <code class="docutils literal notranslate"><span class="pre">collect(ctx)</span></code> folds over a Context</a></li>
+<li><a class="reference internal" href="#">Gather contributions from many models with a model-owned interface</a><ul>
+<li><a class="reference internal" href="#declare-the-interface-on-its-owning-model-a-name-plus-a-fold">1. Declare the interface on its owning model: a name plus a fold</a></li>
+<li><a class="reference internal" href="#gather-several-models-each-adds-one-contributes">2. Gather several models: each adds one <code class="docutils literal notranslate"><span class="pre">&#64;contributes</span></code></a></li>
+<li><a class="reference internal" href="#bind-a-case-s-active-contributors-onto-the-owner-runtime">3. Bind a case’s active contributors onto the owner runtime</a></li>
 <li><a class="reference internal" href="#use-it-in-an-operation-inject-the-interface-and-call-it">4. Use it in an operation: inject the interface and <em>call</em> it</a></li>
 <li><a class="reference internal" href="#add-a-model-with-zero-changes-elsewhere-the-whole-point">5. Add a model with zero changes elsewhere (the whole point)</a></li>
-<li><a class="reference internal" href="#turn-a-model-off">6. Turn a model off</a></li>
+<li><a class="reference internal" href="#turn-a-model-off-leave-its-runtime-out-of-the-case">6. Turn a model off: leave its runtime out of the case</a></li>
 <li><a class="reference internal" href="#what-if-a-model-needs-something-the-case-doesn-t-have">What if a model needs something the case doesn’t have?</a></li>
 <li><a class="reference internal" href="#see-also">See also</a></li>
 </ul>

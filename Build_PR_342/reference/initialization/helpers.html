@@ -216,7 +216,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_collect_and_save_configs.html">Collect and save all of a solver’s configs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_visualize_the_operation_dag.html">Visualize the operation DAG</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_use_depends_for_injection.html">Inject dependencies into operations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_use_an_interface.html">Gather contributions from many models with an Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_use_an_interface.html">Gather contributions from many models with a model-owned interface</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul class="current">
@@ -504,29 +504,6 @@ fields to write to disk.</p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="neofoam.framework.initialization.helpers.interface_step">
-<span class="sig-prename descclassname"><span class="pre">neofoam.framework.initialization.helpers.</span></span><span class="sig-name descname"><span class="pre">interface_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depends_on</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="init_step.html#neofoam.framework.initialization.init_step.InitStep" title="neofoam.framework.initialization.init_step.InitStep"><span class="pre">InitStep</span></a></span></span><a class="reference internal" href="../../_modules/neofoam/framework/initialization/helpers.html#interface_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.initialization.helpers.interface_step" title="Link to this definition">¶</a></dt>
-<dd><p>Helper for creating interface lazy initializers.</p>
-<p>Automatically prefixes name with “interfaces.” and sets category to
-“interfaces”.  The created value is placed in <code class="docutils literal notranslate"><span class="pre">ctx.interfaces[name]</span></code>
-by the router registered in
-<a class="reference internal" href="execution/context_builder.html#neofoam.framework.initialization.execution.context_builder.default_router" title="neofoam.framework.initialization.execution.context_builder.default_router"><code class="xref py py-func docutils literal notranslate"><span class="pre">default_router()</span></code></a>.</p>
-<dl>
-<dt>Args:</dt><dd><p>name: Interface name (e.g., “timeStepConstraint”)
-create: Function that creates the interface value (receives the</p>
-<blockquote>
-<div><p>in-progress context dict)</p>
-</div></blockquote>
-<p>depends_on: List of dependencies (default: [])</p>
-</dd>
-<dt>Returns:</dt><dd><p>InitStep for the interface</p>
-</dd>
-<dt>Example:</dt><dd><p>interface_step(“timeStepConstraint”, create=lambda _ctx: my_spec)</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="neofoam.framework.initialization.helpers.lazy">
 <span class="sig-prename descclassname"><span class="pre">neofoam.framework.initialization.helpers.</span></span><span class="sig-name descname"><span class="pre">lazy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depends_on</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="init_step.html#neofoam.framework.initialization.init_step.InitStep" title="neofoam.framework.initialization.init_step.InitStep"><span class="pre">InitStep</span></a></span></span><a class="reference internal" href="../../_modules/neofoam/framework/initialization/helpers.html#lazy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.initialization.helpers.lazy" title="Link to this definition">¶</a></dt>
 <dd><p>General-purpose helper for creating lazy initializers.</p>
@@ -650,7 +627,6 @@ depends_on: List of dependencies</p>
 </ul>
 </li>
 <li><a class="reference internal" href="#neofoam.framework.initialization.helpers.field"><code class="docutils literal notranslate"><span class="pre">field()</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.framework.initialization.helpers.interface_step"><code class="docutils literal notranslate"><span class="pre">interface_step()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.initialization.helpers.lazy"><code class="docutils literal notranslate"><span class="pre">lazy()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.initialization.helpers.model"><code class="docutils literal notranslate"><span class="pre">model()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.initialization.helpers.operator"><code class="docutils literal notranslate"><span class="pre">operator()</span></code></a></li>

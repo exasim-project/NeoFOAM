@@ -216,7 +216,7 @@
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Collect and save all of a solver’s configs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_visualize_the_operation_dag.html">Visualize the operation DAG</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_use_depends_for_injection.html">Inject dependencies into operations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="example_use_an_interface.html">Gather contributions from many models with an Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_use_an_interface.html">Gather contributions from many models with a model-owned interface</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul>
@@ -392,7 +392,7 @@ works for any solver, because the classes are declared on its spec.</p>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">:</span><span class="s2">28s</span><span class="si">}</span><span class="s2"> fields: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">model_fields</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>config classes: [&#39;ControlDictConfig&#39;, &#39;Pimple_fvSchemes&#39;, &#39;Pimple_fvSolution&#39;, &#39;TransportPropertiesConfig&#39;, &#39;TurbulencePropertiesConfig&#39;, &#39;BoussinesqConfig&#39;, &#39;boussinesq_fvSchemes&#39;, &#39;boussinesq_fvSolution&#39;]
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>config classes: [&#39;ControlDictConfig&#39;, &#39;Pimple_fvSchemes&#39;, &#39;Pimple_fvSolution&#39;, &#39;TransportPropertiesConfig&#39;, &#39;TurbulencePropertiesConfig&#39;, &#39;BoussinesqConfig&#39;, &#39;boussinesq_fvSchemes&#39;, &#39;boussinesq_fvSolution&#39;, &#39;CourantConfig&#39;, &#39;MaxDeltaTConfig&#39;]
 ControlDictConfig            fields: [&#39;adjustTimeStep&#39;, &#39;application&#39;, &#39;deltaT&#39;, &#39;endTime&#39;, &#39;maxCo&#39;, &#39;maxDeltaT&#39;, &#39;startTime&#39;, &#39;writeBackend&#39;, &#39;writeControl&#39;, &#39;writeInterval&#39;]
 Pimple_fvSchemes             fields: [&#39;ddtSchemes&#39;, &#39;divSchemes&#39;, &#39;gradSchemes&#39;, &#39;interpolationSchemes&#39;, &#39;laplacianSchemes&#39;, &#39;snGradSchemes&#39;]
 Pimple_fvSolution            fields: [&#39;solvers&#39;]
@@ -401,6 +401,8 @@ TurbulencePropertiesConfig   fields: [&#39;LES&#39;, &#39;RAS&#39;, &#39;simulat
 BoussinesqConfig             fields: [&#39;Pr&#39;, &#39;Prt&#39;, &#39;TRef&#39;, &#39;beta&#39;, &#39;hRef&#39;]
 boussinesq_fvSchemes         fields: [&#39;ddtSchemes&#39;, &#39;divSchemes&#39;, &#39;laplacianSchemes&#39;]
 boussinesq_fvSolution        fields: [&#39;solvers&#39;]
+CourantConfig                fields: [&#39;maxCo&#39;]
+MaxDeltaTConfig              fields: [&#39;maxDeltaT&#39;]
 </pre></div>
 </div>
 </section>
@@ -430,7 +432,7 @@ JSON Schema of every class — the form most agent / UI tooling consumes.</p>
 </pre></div>
 </div>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>ControlDictConfig fields: [&#39;adjustTimeStep&#39;, &#39;application&#39;, &#39;deltaT&#39;, &#39;endTime&#39;, &#39;maxCo&#39;, &#39;maxDeltaT&#39;, &#39;startTime&#39;, &#39;writeBackend&#39;, &#39;writeControl&#39;, &#39;writeInterval&#39;]
-JSON schema keys        : [&#39;ControlDictConfig&#39;, &#39;Pimple_fvSchemes&#39;, &#39;Pimple_fvSolution&#39;, &#39;TransportPropertiesConfig&#39;, &#39;TurbulencePropertiesConfig&#39;, &#39;BoussinesqConfig&#39;, &#39;boussinesq_fvSchemes&#39;, &#39;boussinesq_fvSolution&#39;]
+JSON schema keys        : [&#39;ControlDictConfig&#39;, &#39;Pimple_fvSchemes&#39;, &#39;Pimple_fvSolution&#39;, &#39;TransportPropertiesConfig&#39;, &#39;TurbulencePropertiesConfig&#39;, &#39;BoussinesqConfig&#39;, &#39;boussinesq_fvSchemes&#39;, &#39;boussinesq_fvSolution&#39;, &#39;CourantConfig&#39;, &#39;MaxDeltaTConfig&#39;]
 </pre></div>
 </div>
 </section>
@@ -445,8 +447,8 @@ a plain turbulent case — PIMPLE only, no optional models.</p>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;classes  :&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">pitz_result</span><span class="o">.</span><span class="n">config_classes</span><span class="p">])</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>instances: [&#39;TimeControlConfig&#39;, &#39;WriteControlConfig&#39;, &#39;ControlDictConfig&#39;, &#39;TransportPropertiesConfig&#39;]
-classes  : [&#39;Pimple_fvSchemes&#39;, &#39;Pimple_fvSolution&#39;, &#39;TimeControlConfig&#39;, &#39;WriteControlConfig&#39;, &#39;ControlDictConfig&#39;, &#39;TransportPropertiesConfig&#39;]
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>instances: [&#39;TimeControlConfig&#39;, &#39;WriteControlConfig&#39;, &#39;ControlDictConfig&#39;, &#39;TransportPropertiesConfig&#39;, &#39;CourantConfig&#39;]
+classes  : [&#39;Pimple_fvSchemes&#39;, &#39;Pimple_fvSolution&#39;, &#39;TimeControlConfig&#39;, &#39;WriteControlConfig&#39;, &#39;ControlDictConfig&#39;, &#39;TransportPropertiesConfig&#39;, &#39;CourantConfig&#39;]
 </pre></div>
 </div>
 </section>
@@ -473,6 +475,9 @@ ControlDictConfig  -&gt;  system/controlDict
 
 TransportPropertiesConfig  -&gt;  constant/transportProperties
   values : {&#39;transportModel&#39;: &#39;Newtonian&#39;, &#39;nu&#39;: 1e-05}
+
+CourantConfig  -&gt;  system/controlDict
+  values : {&#39;maxCo&#39;: 5.0}
 </pre></div>
 </div>
 </section>
@@ -493,6 +498,7 @@ TimeControlConfig            fields: [&#39;adjustTimeStep&#39;, &#39;deltaT&#39;
 WriteControlConfig           fields: [&#39;startTime&#39;, &#39;writeControl&#39;, &#39;writeInterval&#39;]
 ControlDictConfig            fields: [&#39;adjustTimeStep&#39;, &#39;application&#39;, &#39;deltaT&#39;, &#39;endTime&#39;, &#39;maxCo&#39;, &#39;maxDeltaT&#39;, &#39;startTime&#39;, &#39;writeBackend&#39;, &#39;writeControl&#39;, &#39;writeInterval&#39;]
 TransportPropertiesConfig    fields: [&#39;nu&#39;, &#39;transportModel&#39;]
+CourantConfig                fields: [&#39;maxCo&#39;]
 </pre></div>
 </div>
 </section>
@@ -514,6 +520,7 @@ an IO strategy are skipped with a warning rather than raising.</p>
    system/controlDict
    system/controlDict
    constant/transportProperties
+   system/controlDict
 </pre></div>
 </div>
 </section>
@@ -608,7 +615,7 @@ config file.</p></li>
     <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">_tmp</span><span class="p">,</span> <span class="n">ignore_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.041 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.035 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-how-to-example-collect-and-save-configs-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/acaee67517a3d144b2ef0c657aaccab9/example_collect_and_save_configs.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">example_collect_and_save_configs.ipynb</span></code></a></p>

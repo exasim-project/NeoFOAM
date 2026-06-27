@@ -216,7 +216,7 @@
 <li class="toctree-l1"><a class="reference internal" href="example_collect_and_save_configs.html">Collect and save all of a solver’s configs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_visualize_the_operation_dag.html">Visualize the operation DAG</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_use_depends_for_injection.html">Inject dependencies into operations</a></li>
-<li class="toctree-l1"><a class="reference internal" href="example_use_an_interface.html">Gather contributions from many models with an Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_use_an_interface.html">Gather contributions from many models with a model-owned interface</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul>
@@ -341,9 +341,6 @@ the <code class="docutils literal notranslate"><span class="pre">.py</span></cod
 </div><div class="sphx-glr-thumbcontainer" tooltip="Declare a ModelSpec at module import time, attach stage callbacks with decorators, and let a solver detect it via the plugin system or load it directly."><img alt="" src="../_images/sphx_glr_example_register_a_model_thumb.png" />
 <p><a class="reference internal" href="example_register_a_model.html"><span class="doc">Register a new model</span></a></p>
   <div class="sphx-glr-thumbnail-title">Register a new model</div>
-</div><div class="sphx-glr-thumbcontainer" tooltip="Many physics models each want to add a term to the same place — a source term in an equation, a limit on the time step, a flag that stops the run. An Interface is that shared gather point: each model registers a small @contribute function, one @combine fold decides how the pieces combine, and a consumer injects the interface and calls it to get the single combined result. New models plug in without the consumer or the other models changing."><img alt="" src="../_images/sphx_glr_example_use_an_interface_thumb.png" />
-<p><a class="reference internal" href="example_use_an_interface.html"><span class="doc">Gather contributions from many models with an Interface</span></a></p>
-  <div class="sphx-glr-thumbnail-title">Gather contributions from many models with an Interface</div>
 </div><div class="sphx-glr-thumbcontainer" tooltip="NeoFOAM configs are BaseConfig (Pydantic) subclasses tagged with an @IOStrategy decorator that binds a file and a format (YAML / JSON / OpenFOAM dictionary) to the class. The class then gains .load() / .save() / .collect_errors() methods that read and write that file with full type validation."><img alt="" src="../_images/sphx_glr_example_work_with_config_files_thumb.png" />
 <p><a class="reference internal" href="example_work_with_config_files.html"><span class="doc">Work with configuration files</span></a></p>
   <div class="sphx-glr-thumbnail-title">Work with configuration files</div>
@@ -356,6 +353,9 @@ the <code class="docutils literal notranslate"><span class="pre">.py</span></cod
 </div><div class="sphx-glr-thumbcontainer" tooltip="OpenFOAM solvers share two case-level dictionaries: system/fvSchemes (discretization options) and system/fvSolution (linear-solver controls). Each model that runs only needs a slice of those files — PIMPLE reads divSchemes.div(phi,U); the turbulence model reads divSchemes.div(phi,k); both share the file but care about different entries."><img alt="" src="../_images/sphx_glr_example_per_model_fvschemes_thumb.png" />
 <p><a class="reference internal" href="example_per_model_fvschemes.html"><span class="doc">Declare per-model fvSchemes / fvSolution slices</span></a></p>
   <div class="sphx-glr-thumbnail-title">Declare per-model fvSchemes / fvSolution slices</div>
+</div><div class="sphx-glr-thumbcontainer" tooltip="Many physics models each want to add a term to the same place — a source term in an equation, a limit on the time step, a flag that stops the run. A model-owned interface is that shared gather point: one model owns it via @&lt;owner&gt;.interface (the fold that decides how the pieces combine), other models plug in with @&lt;model&gt;.contributes(&lt;interface&gt;), and a consumer injects the interface and calls it to get the single combined result. New models plug in without the owner, the consumer, or the other models changing."><img alt="" src="../_images/sphx_glr_example_use_an_interface_thumb.png" />
+<p><a class="reference internal" href="example_use_an_interface.html"><span class="doc">Gather contributions from many models with a model-owned interface</span></a></p>
+  <div class="sphx-glr-thumbnail-title">Gather contributions from many models with a model-owned interface</div>
 </div><div class="sphx-glr-thumbcontainer" tooltip="After a solver&#x27;s LOAD and RESOLVE init stages, it knows every config it consumes. This page shows how to collect those configs from the /auto_tutorials/example_01_run_incompressible_fluid solver, print them, and save them back to disk as a fresh case directory."><img alt="" src="../_images/sphx_glr_example_collect_and_save_configs_thumb.png" />
 <p><a class="reference internal" href="example_collect_and_save_configs.html"><span class="doc">Collect and save all of a solver’s configs</span></a></p>
   <div class="sphx-glr-thumbnail-title">Collect and save all of a solver's configs</div>

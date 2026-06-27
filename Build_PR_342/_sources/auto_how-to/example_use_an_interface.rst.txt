@@ -18,33 +18,35 @@
 .. _sphx_glr_auto_how-to_example_use_an_interface.py:
 
 
-Gather contributions from many models with an Interface
-=======================================================
+Gather contributions from many models with a model-owned interface
+==================================================================
 
 Many physics models each want to add a term to the *same* place — a source
-term in an equation, a limit on the time step, a flag that stops the run.
-An ``Interface`` is that shared **gather point**: each model registers a
-small ``@contribute`` function, one ``@combine`` fold decides how the pieces
-combine, and a consumer **injects the interface and calls it** to get the
-single combined result. New models plug in without the consumer or the other
-models changing.
+term in an equation, a limit on the time step, a flag that stops the run. A
+**model-owned interface** is that shared gather point: one model *owns* it via
+``@<owner>.interface`` (the fold that decides how the pieces combine), other
+models plug in with ``@<model>.contributes(<interface>)``, and a consumer
+**injects the interface and calls it** to get the single combined result. New
+models plug in without the owner, the consumer, or the other models changing.
 
 This page uses the easiest possible example — **a total source term that is
-the sum of per-model contributions** — and shows the three things you do with
-an interface: build one, gather several models into it, and use it inside an
-operation. ``Interface(name)`` mirrors ``Model(name)``.
+the sum of per-model contributions** — and shows the things you do with an
+interface: declare one on a model, gather a case's active contributors, and use
+it inside an operation. ``Model(name)`` is the same factory you already use for
+physics models.
 
-.. GENERATED FROM PYTHON SOURCE LINES 20-27
+.. GENERATED FROM PYTHON SOURCE LINES 21-29
 
-1. Build the interface: a name plus a fold
-------------------------------------------
-``Interface(name)`` is the gather point. ``@<iface>.combine`` registers the
-*one* function that combines all contributions — here a plain ``sum``, so
-the interface means "total source term". The fold also defines the empty
-case: no contributions ⇒ ``0.0`` (no source). Only one ``@combine`` is
-allowed per interface.
+1. Declare the interface on its owning model: a name plus a fold
+---------------------------------------------------------------
+``@<owner>.interface`` decorates the *one* fold function that combines all
+contributions — here a plain ``sum``, so the interface means "total source
+term". The decorated name (``source``) is the interface name, and the body
+defines the empty case: no contributions => ``0.0`` (no source). The decorator
+returns a ``ModelInterface`` handle that doubles as a ``@<model>.contributes``
+target and as an operation-parameter annotation.
 
-.. GENERATED FROM PYTHON SOURCE LINES 27-45
+.. GENERATED FROM PYTHON SOURCE LINES 29-47
 
 .. code-block:: Python
 
@@ -53,17 +55,17 @@ allowed per interface.
 
     from neofoam.framework.context import Context
     from neofoam.framework.dependency_resolver import DependencyResolver
-    from neofoam.framework.interface import Interface
+    from neofoam.framework.model import Model, ModelRuntime, bind_owned_interfaces
 
-    source = Interface("source")
+    equation = Model("equation")
 
 
-    @source.combine
-    def total(parts: Iterable[float]) -> float:
+    @equation.interface
+    def source(parts: Iterable[float]) -> float:
         return sum(parts, 0.0)  # no contribution -> 0.0
 
 
-    print(source.name, "fold of [] =", total([]))
+    print(source.name, "empty fold =", source.fold([]))
 
 
 
@@ -74,45 +76,48 @@ allowed per interface.
 
  .. code-block:: none
 
-    source fold of [] = 0.0
+    source empty fold = 0.0
 
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 46-55
+.. GENERATED FROM PYTHON SOURCE LINES 48-56
 
-2. Gather several models: each adds one ``@contribute``
--------------------------------------------------------
+2. Gather several models: each adds one ``@contributes``
+--------------------------------------------------------
 Every model registers an **operation-style** contribution: it declares the
 fields it needs as typed parameters (resolved from the
 :class:`~neofoam.framework.context.Context` exactly like ``@model.operation``)
-and returns its one contribution to the sum. The three functions below stand
-in for three independent models — **none knows the others exist**, and none
-touches ``ctx`` directly. A contribution may *not* declare a ``Context``
-parameter.
+and returns its one contribution to the sum. The three models below stand in
+for three independent physics models — **none knows the others exist**, and
+none touches ``ctx`` directly.
 
-.. GENERATED FROM PYTHON SOURCE LINES 55-75
+.. GENERATED FROM PYTHON SOURCE LINES 56-80
 
 .. code-block:: Python
 
 
+    gravity = Model("gravity")
+    drag = Model("drag")
+    buoyancy = Model("buoyancy")
 
-    @source.contribute
-    def gravity(rho: float) -> float:
+
+    @gravity.contributes(source)
+    def gravity_force(rho: float) -> float:
         return rho * -9.81  # body force
 
 
-    @source.contribute
-    def drag(U: float) -> float:
+    @drag.contributes(source)
+    def drag_force(U: float) -> float:
         return -0.5 * U  # linear resistance
 
 
-    @source.contribute
-    def buoyancy(T: float) -> float:
+    @buoyancy.contributes(source)
+    def buoyancy_force(T: float) -> float:
         return 0.1 * (T - 300.0)  # thermal source
 
 
-    print("models contributing to 'source':", [c.__name__ for c in source._contributions])
+    print("models contributing to 'source':", [c.__name__ for c in source.contributions])
 
 
 
@@ -123,27 +128,38 @@ parameter.
 
  .. code-block:: none
 
-    models contributing to 'source': ['gravity', 'drag', 'buoyancy']
+    models contributing to 'source': ['gravity_force', 'drag_force', 'buoyancy_force']
 
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 76-82
+.. GENERATED FROM PYTHON SOURCE LINES 81-90
 
-3. Combine them: ``collect(ctx)`` folds over a Context
-------------------------------------------------------
-``collect(ctx)`` resolves each contribution's parameters from the Context,
-calls it, and runs them through the fold. The parameter *name* is the lookup
-key into ``ctx.fields``. With the values below: gravity ``= -9.81``, drag
-``= -1.0``, buoyancy ``= 0.1*(320-300) = 2.0`` — summed to ``-8.81``.
+3. Bind a case's active contributors onto the owner runtime
+-----------------------------------------------------------
+At runtime each active model has a ``ModelRuntime``. ``bind_owned_interfaces``
+is the per-case auto-wiring seam: it takes the owner runtime plus the case's
+candidate runtimes, binds the active contributors for every interface the
+owner declares, and stores each :class:`BoundModelInterface` on
+``owner_runtime.bound_interfaces``. A bound interface is callable: calling it
+folds exactly the contributions whose model is active for this case. The
+parameter *name* (``rho``/``U``/``T``) is the lookup key into ``ctx.fields``.
 
-.. GENERATED FROM PYTHON SOURCE LINES 82-87
+.. GENERATED FROM PYTHON SOURCE LINES 90-103
 
 .. code-block:: Python
 
 
     ctx = Context(fields={"U": 2.0, "rho": 1.0, "T": 320.0}, models={})
-    print("total source =", source.collect(ctx))
+    equation_rt = ModelRuntime(spec=equation, name="equation", config=None)
+    gravity_rt = ModelRuntime(spec=gravity, name="gravity", config=None)
+    drag_rt = ModelRuntime(spec=drag, name="drag", config=None)
+    buoyancy_rt = ModelRuntime(spec=buoyancy, name="buoyancy", config=None)
+
+    bind_owned_interfaces(equation_rt, [gravity_rt, drag_rt, buoyancy_rt], ctx)
+    bound_source = equation_rt.bound_interfaces["source"]
+    # gravity = -9.81, drag = -1.0, buoyancy = 0.1*(320-300) = 2.0 -> summed -8.81
+    print("total source =", bound_source())
 
 
 
@@ -159,38 +175,34 @@ key into ``ctx.fields``. With the values below: gravity ``= -9.81``, drag
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 88-99
+.. GENERATED FROM PYTHON SOURCE LINES 104-115
 
 4. Use it in an operation: inject the interface and *call* it
 -------------------------------------------------------------
-A consumer never reads ``ctx`` for the interface — it **types a parameter
-with the interface itself**, and the framework injects a ``BoundInterface``
-whose call runs ``collect(ctx)``. In a real solver the function below is
-decorated ``@<model>.operation`` and the framework resolves + calls it every
-step; here we do that by hand with the
-:class:`~neofoam.framework.dependency_resolver.DependencyResolver` to show
-the same thing. The interface must sit in ``ctx.interfaces`` under its name,
-and this module must **not** use ``from __future__ import annotations`` (it
-would stringify the annotation and hide the spec from the resolver).
+A consumer never reads ``ctx`` for the interface — it **types a parameter with
+the interface handle itself**, and the framework injects the owner runtime's
+bound interface. The resolver finds it via ``ctx.models[<owner>.name]``, so the
+owner runtime must be registered under its model name. In a real solver the
+function below is decorated ``@<model>.operation`` and the framework resolves +
+calls it every step; here we do that by hand with the
+:class:`~neofoam.framework.dependency_resolver.DependencyResolver`. This module
+must **not** use ``from __future__ import annotations`` (it would stringify the
+annotation and hide the handle from the resolver).
 
-.. GENERATED FROM PYTHON SOURCE LINES 99-121
+.. GENERATED FROM PYTHON SOURCE LINES 115-133
 
 .. code-block:: Python
 
 
-    ctx = Context(
-        fields={"U": 2.0, "rho": 1.0, "T": 320.0},
-        models={},
-        interfaces={"source": source},  # keyed by the interface's name
-    )
+    ctx.models["equation"] = equation_rt  # the resolver looks up ctx.models["equation"]
     resolver = DependencyResolver()
 
     DT = 0.01
 
 
     # In a solver: @momentum.operation
-    def advance_velocity(U: float, src: source) -> float:
-        # src() gathers every model's contribution into one total source term
+    def advance_velocity(U: float, src: source) -> float:  # type: ignore[valid-type]
+        # src() gathers every active model's contribution into one total source term
         return U + DT * src()
 
 
@@ -207,35 +219,38 @@ would stringify the annotation and hide the spec from the resolver).
 
  .. code-block:: none
 
-    injected BoundInterface -> src() = -8.81
+    injected BoundModelInterface -> src() = -8.81
     advance_velocity(**resolved) = 1.9119
 
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 122-128
+.. GENERATED FROM PYTHON SOURCE LINES 134-141
 
 5. Add a model with zero changes elsewhere (the whole point)
 ------------------------------------------------------------
-Adding a new physics model is *only* a new ``@contribute`` — the fold, the
-operation, and the existing models are untouched. Register a porous
-resistance and the same ``advance_velocity`` now sees the new term, because
+Adding a new physics model is *only* a new ``@contributes`` plus including its
+runtime in the case — the fold, the operation, and the existing models are
+untouched. Register a porous resistance and re-bind the owner runtime with the
+new candidate; the same ``advance_velocity`` now sees the extra term, because
 it asked the interface for "the total", not for specific models.
 
-.. GENERATED FROM PYTHON SOURCE LINES 128-140
+.. GENERATED FROM PYTHON SOURCE LINES 141-155
 
 .. code-block:: Python
 
 
+    porous = Model("porous")
 
-    @source.contribute
-    def porous(U: float) -> float:
+
+    @porous.contributes(source)
+    def porous_force(U: float) -> float:
         return -2.0 * U
 
 
-    print("total source after adding 'porous' =", source.collect(ctx))
-    resolved = resolver.resolve_arguments(advance_velocity, ctx)
-    print("advance_velocity now =", advance_velocity(**resolved))
+    porous_rt = ModelRuntime(spec=porous, name="porous", config=None)
+    bind_owned_interfaces(equation_rt, [gravity_rt, drag_rt, buoyancy_rt, porous_rt], ctx)
+    print("total source after adding 'porous' =", equation_rt.bound_interfaces["source"]())
 
 
 
@@ -247,29 +262,26 @@ it asked the interface for "the total", not for specific models.
  .. code-block:: none
 
     total source after adding 'porous' = -12.81
-    advance_velocity now = 1.8719
 
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 141-147
+.. GENERATED FROM PYTHON SOURCE LINES 156-162
 
-6. Turn a model off
--------------------
-Contributions are active by default. ``deactivate`` drops one from the fold
-without unregistering it (e.g. a model whose config is absent); ``activate``
-restores it. This is how an optional model that is switched off simply stops
-contributing.
+6. Turn a model off: leave its runtime out of the case
+------------------------------------------------------
+A model contributes iff its runtime is among the case's active contributors.
+There is no global active-set to toggle: re-bind with a candidate list that
+omits ``porous`` and its term simply drops out of the fold — exactly how an
+optional model whose config is absent stops contributing.
 
-.. GENERATED FROM PYTHON SOURCE LINES 147-154
+.. GENERATED FROM PYTHON SOURCE LINES 162-167
 
 .. code-block:: Python
 
 
-    source.deactivate(porous)
-    print("with 'porous' off  =", source.collect(ctx))
-    source.activate(porous)
-    print("with 'porous' on   =", source.collect(ctx))
+    bind_owned_interfaces(equation_rt, [gravity_rt, drag_rt, buoyancy_rt], ctx)
+    print("with 'porous' off =", equation_rt.bound_interfaces["source"]())
 
 
 
@@ -280,39 +292,41 @@ contributing.
 
  .. code-block:: none
 
-    with 'porous' off  = -8.81
-    with 'porous' on   = -12.81
+    with 'porous' off = -8.81
 
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 155-162
+.. GENERATED FROM PYTHON SOURCE LINES 168-174
 
 What if a model needs something the case doesn't have?
 ------------------------------------------------------
 The interface fails **loudly** rather than silently dropping a term: a
-contribution whose parameter nothing supplies raises a ``ValueError`` when
-the interface is folded, naming the interface, the contribution, and the
-missing parameter. A misconfigured model can never silently vanish from the
-sum.
+contribution whose parameter nothing supplies raises a ``ValueError`` when the
+interface is folded, naming the interface, the contribution, and the missing
+parameter. A misconfigured model can never silently vanish from the sum.
 
-.. GENERATED FROM PYTHON SOURCE LINES 162-177
+.. GENERATED FROM PYTHON SOURCE LINES 174-193
 
 .. code-block:: Python
 
 
+    needs_phi = Model("needsPhi")
 
-    @source.contribute
-    def needs_phi(phi: float) -> float:  # 'phi' is not in ctx.fields
+
+    @needs_phi.contributes(source)
+    def needs_phi_force(phi: float) -> float:  # 'phi' is not in ctx.fields
         return phi
 
 
+    needs_phi_rt = ModelRuntime(spec=needs_phi, name="needsPhi", config=None)
+    bind_owned_interfaces(
+        equation_rt, [gravity_rt, drag_rt, buoyancy_rt, needs_phi_rt], ctx
+    )
     try:
-        source.collect(ctx)
+        equation_rt.bound_interfaces["source"]()
     except ValueError as err:
-        print("collect raised:", err)
-    finally:
-        source.deactivate(needs_phi)  # keep re-runs of this page green
+        print("fold raised:", err)
 
 
 
@@ -323,12 +337,12 @@ sum.
 
  .. code-block:: none
 
-    collect raised: Interface 'source': contribution 'needs_phi' declares parameter 'phi' but no provider supplies it. Available context fields: ['T', 'U', 'rho']
+    fold raised: interface 'source': contribution 'needs_phi_force' (model 'needsPhi') declares parameter 'phi' but no provider supplies it. Available context fields: ['T', 'U', 'rho']
 
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 178-187
+.. GENERATED FROM PYTHON SOURCE LINES 194-203
 
 See also
 --------
@@ -337,8 +351,8 @@ See also
   are resolved from the Context.
 - :doc:`/auto_how-to/example_use_depends_for_injection` — every injection
   pattern a contribution can use (fields, models, ``Depends``).
-- :doc:`/auto_how-to/example_register_a_model` — the ``Model(name)`` pattern
-  that ``Interface(name)`` mirrors, and how models are registered.
+- :doc:`/auto_how-to/example_register_a_model` — the ``Model(name)`` pattern,
+  and how models are registered.
 
 
 .. rst-class:: sphx-glr-timing
