@@ -215,6 +215,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../auto_how-to/example_collect_and_save_configs.html">Collect and save all of a solver’s configs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../auto_how-to/example_visualize_the_operation_dag.html">Visualize the operation DAG</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../auto_how-to/example_use_depends_for_injection.html">Inject dependencies into operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../auto_how-to/example_use_an_interface.html">Gather contributions from many models with a model-owned interface</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul>
@@ -331,7 +332,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">types</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimpleNamespace</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">cast</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">cast</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span>
 
@@ -342,10 +343,12 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">Operation</span><span class="p">,</span> <span class="n">Operations</span><span class="p">,</span> <span class="n">SequentialOp</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">OperationMetadata</span><span class="p">,</span> <span class="n">OperationNumber</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">.interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelInterface</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.runtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelRuntime</span>
 
 
 <span class="n">_ConfigT</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;_ConfigT&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="nb">type</span><span class="p">)</span>
+<span class="n">_T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;_T&quot;</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_snake_case</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -376,6 +379,8 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_operations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_operation_collection_func</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_interfaces</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ModelInterface</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_dependency_resolver</span> <span class="o">=</span> <span class="n">DependencyResolver</span><span class="p">()</span>
 
@@ -537,6 +542,59 @@
 
 
     <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Interface ownership (model-owned extension points)</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="ModelSpec.interface">
+<a class="viewcode-back" href="../../../../reference/model/spec.html#neofoam.framework.model.spec.ModelSpec.interface">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fold</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Iterable</span><span class="p">[</span><span class="n">_T</span><span class="p">]],</span> <span class="n">_T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">ModelInterface</span><span class="p">[</span><span class="n">_T</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Declare an interface owned by this model.</span>
+
+<span class="sd">        The decorated function&#39;s ``__name__`` is the interface name and its body</span>
+<span class="sd">        is the single fold (defining the empty case). Returns a ``ModelInterface``</span>
+<span class="sd">        handle, also registered on this model so it is reachable from its owner.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">handle</span><span class="p">:</span> <span class="n">ModelInterface</span><span class="p">[</span><span class="n">_T</span><span class="p">]</span> <span class="o">=</span> <span class="n">ModelInterface</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">fold</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">owner</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">fold</span><span class="o">=</span><span class="n">fold</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">handle</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interfaces</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Model &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;: interface &#39;</span><span class="si">{</span><span class="n">handle</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; is already declared.&quot;</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_interfaces</span><span class="p">[</span><span class="n">handle</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">handle</span>
+        <span class="k">return</span> <span class="n">handle</span></div>
+
+
+<div class="viewcode-block" id="ModelSpec.contributes">
+<a class="viewcode-back" href="../../../../reference/model/spec.html#neofoam.framework.model.spec.ModelSpec.contributes">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">contributes</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">ModelInterface</span><span class="p">[</span><span class="n">_T</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">_T</span><span class="p">]],</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">_T</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Register an operation-style contribution to *target*, owned by self.</span>
+
+<span class="sd">        The function is recorded against *target* and tagged with this contributing</span>
+<span class="sd">        model, then returned unchanged. It participates in *target*&#39;s live fold</span>
+<span class="sd">        (``BoundModelInterface.__call__``) iff this model is active for the case.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">ModelInterface</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Model &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;: contributes(...) target must be a &quot;</span>
+                <span class="s2">&quot;ModelInterface declared via @&lt;model&gt;.interface, got &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">target</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">_T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">_T</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="n">target</span><span class="o">.</span><span class="n">_register_contribution</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">owner</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">decorator</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">declared_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ModelInterface</span><span class="p">[</span><span class="n">Any</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The interfaces this model owns, by name (reachable from the owner).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_interfaces</span><span class="p">)</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># Instantiation</span>
     <span class="c1"># ------------------------------------------------------------------</span>
 
@@ -634,7 +692,18 @@
 <div class="viewcode-block" id="ModelSpec.register_with">
 <a class="viewcode-back" href="../../../../reference/model/spec.html#neofoam.framework.model.spec.ModelSpec.register_with">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">register_with</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plugin_interface</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ModelSpec&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Register this ModelSpec with a PluginSystem interface.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Register this ModelSpec with a PluginSystem interface (idempotent by name).&quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.core.plugin_system</span><span class="w"> </span><span class="kn">import</span> <span class="n">PluginSystem</span>
+
+        <span class="n">registry</span> <span class="o">=</span> <span class="n">PluginSystem</span><span class="o">.</span><span class="n">get_registered</span><span class="p">(</span><span class="n">plugin_interface</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">registry</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="p">{</span>
+            <span class="n">plugin_cls</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="n">plugin_cls</span> <span class="ow">in</span> <span class="n">registry</span><span class="o">.</span><span class="n">plugin_registry</span>
+        <span class="p">}:</span>
+            <span class="c1"># Already registered (e.g. a module re-import): keep a single catalog</span>
+            <span class="c1"># entry so the discriminated union does not collide on the model_type</span>
+            <span class="c1"># literal.</span>
+            <span class="k">return</span> <span class="bp">self</span>
+
         <span class="n">wrapper_class</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
             <span class="p">(</span><span class="n">BaseModel</span><span class="p">,),</span>

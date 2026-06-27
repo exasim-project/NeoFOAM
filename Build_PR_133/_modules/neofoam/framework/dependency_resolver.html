@@ -215,6 +215,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../auto_how-to/example_collect_and_save_configs.html">Collect and save all of a solver’s configs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../auto_how-to/example_visualize_the_operation_dag.html">Visualize the operation DAG</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../auto_how-to/example_use_depends_for_injection.html">Inject dependencies into operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../auto_how-to/example_use_an_interface.html">Gather contributions from many models with a model-owned interface</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul>
@@ -373,6 +374,32 @@
             <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">annotation</span> <span class="o">!=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">Parameter</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">annotation</span> <span class="ow">is</span> <span class="n">Context</span><span class="p">:</span>
                     <span class="n">kwargs</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">ctx</span>
+                    <span class="k">continue</span>
+
+                <span class="c1"># Model-owned interface: a param annotated with a ModelInterface</span>
+                <span class="c1"># handle is injected as the owning runtime&#39;s per-case bound handle.</span>
+                <span class="kn">from</span><span class="w"> </span><span class="nn">.model.interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelInterface</span> <span class="k">as</span> <span class="n">_ModelInterface</span>  <span class="c1"># noqa: PLC0415</span>
+                <span class="kn">from</span><span class="w"> </span><span class="nn">.model.runtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelRuntime</span> <span class="k">as</span> <span class="n">_ModelRuntime</span>  <span class="c1"># noqa: PLC0415</span>
+
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">annotation</span><span class="p">,</span> <span class="n">_ModelInterface</span><span class="p">):</span>
+                    <span class="n">iface</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">annotation</span>
+                    <span class="k">if</span> <span class="n">ctx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;Parameter &#39;</span><span class="si">{</span><span class="n">param_name</span><span class="si">}</span><span class="s2">&#39; is typed as a ModelInterface &quot;</span>
+                            <span class="s2">&quot;but no Context was provided to the resolver.&quot;</span>
+                        <span class="p">)</span>
+                    <span class="n">owner_runtime</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">iface</span><span class="o">.</span><span class="n">owner</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="p">(</span>
+                        <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">owner_runtime</span><span class="p">,</span> <span class="n">_ModelRuntime</span><span class="p">)</span>
+                        <span class="ow">or</span> <span class="n">iface</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">owner_runtime</span><span class="o">.</span><span class="n">bound_interfaces</span>
+                    <span class="p">):</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;Interface &#39;</span><span class="si">{</span><span class="n">iface</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; (owned by model &quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">iface</span><span class="o">.</span><span class="n">owner</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;) is not bound for this case; &quot;</span>
+                            <span class="s2">&quot;expected a BoundModelInterface on the owning &quot;</span>
+                            <span class="s2">&quot;ModelRuntime.&quot;</span>
+                        <span class="p">)</span>
+                    <span class="n">kwargs</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">owner_runtime</span><span class="o">.</span><span class="n">bound_interfaces</span><span class="p">[</span><span class="n">iface</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
                     <span class="k">continue</span>
 
                 <span class="k">if</span> <span class="n">get_origin</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">annotation</span><span class="p">)</span> <span class="ow">is</span> <span class="n">Annotated</span><span class="p">:</span>

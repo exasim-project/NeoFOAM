@@ -216,6 +216,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_collect_and_save_configs.html">Collect and save all of a solver’s configs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_visualize_the_operation_dag.html">Visualize the operation DAG</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_use_depends_for_injection.html">Inject dependencies into operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_use_an_interface.html">Gather contributions from many models with a model-owned interface</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul class="current">
@@ -359,6 +360,21 @@ registration leaves <code class="docutils literal notranslate"><span class="pre"
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="neofoam.framework.model.spec.ModelSpec.contributes">
+<span class="sig-name descname"><span class="pre">contributes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ModelInterface</span><span class="p"><span class="pre">[</span></span><span class="pre">_T</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">_T</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">_T</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/model/spec.html#ModelSpec.contributes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.model.spec.ModelSpec.contributes" title="Link to this definition">¶</a></dt>
+<dd><p>Register an operation-style contribution to <em>target</em>, owned by self.</p>
+<p>The function is recorded against <em>target</em> and tagged with this contributing
+model, then returned unchanged. It participates in <em>target</em>’s live fold
+(<code class="docutils literal notranslate"><span class="pre">BoundModelInterface.__call__</span></code>) iff this model is active for the case.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neofoam.framework.model.spec.ModelSpec.declared_interfaces">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">declared_interfaces</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ModelInterface</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#neofoam.framework.model.spec.ModelSpec.declared_interfaces" title="Link to this definition">¶</a></dt>
+<dd><p>The interfaces this model owns, by name (reachable from the owner).</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="neofoam.framework.model.spec.ModelSpec.detect">
 <span class="sig-name descname"><span class="pre">detect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/model/spec.html#ModelSpec.detect"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.model.spec.ModelSpec.detect" title="Link to this definition">¶</a></dt>
 <dd><p>Register the DETECT predicate.</p>
@@ -376,6 +392,15 @@ class via its <code class="docutils literal notranslate"><span class="pre">&#64;
 <code class="docutils literal notranslate"><span class="pre">SimpleNamespace</span></code> when ≥ 2 are registered.</p></li>
 <li><p>Else → error.</p></li>
 </ol>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.framework.model.spec.ModelSpec.interface">
+<span class="sig-name descname"><span class="pre">interface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">_T</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">_T</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ModelInterface</span><span class="p"><span class="pre">[</span></span><span class="pre">_T</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/model/spec.html#ModelSpec.interface"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.model.spec.ModelSpec.interface" title="Link to this definition">¶</a></dt>
+<dd><p>Declare an interface owned by this model.</p>
+<p>The decorated function’s <code class="docutils literal notranslate"><span class="pre">__name__</span></code> is the interface name and its body
+is the single fold (defining the empty case). Returns a <code class="docutils literal notranslate"><span class="pre">ModelInterface</span></code>
+handle, also registered on this model so it is reachable from its owner.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -400,7 +425,7 @@ class via its <code class="docutils literal notranslate"><span class="pre">&#64;
 <dl class="py method">
 <dt class="sig sig-object py" id="neofoam.framework.model.spec.ModelSpec.register_with">
 <span class="sig-name descname"><span class="pre">register_with</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plugin_interface</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">type</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec" title="neofoam.framework.model.spec.ModelSpec"><span class="pre">ModelSpec</span></a></span></span><a class="reference internal" href="../../_modules/neofoam/framework/model/spec.html#ModelSpec.register_with"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.model.spec.ModelSpec.register_with" title="Link to this definition">¶</a></dt>
-<dd><p>Register this ModelSpec with a PluginSystem interface.</p>
+<dd><p>Register this ModelSpec with a PluginSystem interface (idempotent by name).</p>
 </dd></dl>
 
 <dl class="py method">
@@ -480,8 +505,11 @@ class via its <code class="docutils literal notranslate"><span class="pre">&#64;
 <li><a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec"><code class="docutils literal notranslate"><span class="pre">ModelSpec</span></code></a><ul>
 <li><a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec.build"><code class="docutils literal notranslate"><span class="pre">ModelSpec.build()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec.config"><code class="docutils literal notranslate"><span class="pre">ModelSpec.config()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec.contributes"><code class="docutils literal notranslate"><span class="pre">ModelSpec.contributes()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec.declared_interfaces"><code class="docutils literal notranslate"><span class="pre">ModelSpec.declared_interfaces</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec.detect"><code class="docutils literal notranslate"><span class="pre">ModelSpec.detect()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec.instantiate"><code class="docutils literal notranslate"><span class="pre">ModelSpec.instantiate()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec.interface"><code class="docutils literal notranslate"><span class="pre">ModelSpec.interface()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec.load"><code class="docutils literal notranslate"><span class="pre">ModelSpec.load()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec.operation"><code class="docutils literal notranslate"><span class="pre">ModelSpec.operation()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec.operation_collection"><code class="docutils literal notranslate"><span class="pre">ModelSpec.operation_collection()</span></code></a></li>
