@@ -1,192 +1,61 @@
 #!/bin/bash
 #
-# Multigrid-pressure parameter study for occDrivAreStaticMesh.
+# Multigrid-pressure parameter study for occDrivAreStaticMesh -- HEADLINE comparison.
 #
-# Sweeps the Ginkgo multigrid p-solver over system/gko/p-multigrid.L*.sc*.json
-# (8 variants: max_levels {2,4,10,15} x scale_correction {0,2}), regenerated from
-# system/gko/p-multigrid.json by gen-mg-variants.py at startup. Each run reuses
-# fvSolution.case3 as a template and only swaps the p-solver configFile path;
-# U/k/omega stay on smoothSolver/GaussSeidel. Runs/summary are named
-# pMG-L<levels>-sc<scale>-ukoSmooth.
+# Four multigrid USAGE modes, each a single STEPS-iteration run from time 0 (apples-to-apples):
+#   base      pMG-ukoSmooth             : PCG (Cg) + Multigrid as a PRECONDITIONER -- the
+#             canonical base config (system/gko/p-multigrid.json, max_levels=10).
+#   localized pMG-localized-ukoSmooth   : PCG + LOCALIZED Multigrid preconditioner -- the whole
+#             Multigrid runs on each rank's local block, coupled by one outer Schwarz, with a
+#             local-Jacobi smoother (Schwarz{MG(local)}); the config-file analog of OGL
+#             type_=="Schwarz" (system/gko/p-multigrid-localized.json).
+#   mgsolver  pMGsolver-ukoSmooth       : Multigrid as the TOP-LEVEL solver, no outer Krylov --
+#             V-cycles to convergence (system/gko/p-multigrid-solver.json).
+#   scalecorr pMG-scalecorr-ukoSmooth   : Multigrid with SCALE CORRECTION -- outer solver::Ir
+#             (scale_correction="backward") wrapping a solver::Multigrid with per-level
+#             scale_correction=true, one V-cycle/iter (system/gko/p-multigrid-scalecorr.json).
+#             Needs the scale_correction config keys from NeoN_GINKGO_TAG (241deca) -- the
+#             PRODUCTION build, which is the study default (NEON_BUILD=production), so it runs
+#             as-is. Do NOT run it with NEON_BUILD=profiling (older ginkgo aborts on the key).
+#   sclocal   pMG-scale-correction-localized-ukoSmooth : the scalecorr construction made
+#             LOCALIZED -- outer solver::Ir(scale_correction="backward") wrapping a
+#             Schwarz{Multigrid(local, scale_correction=true)} with a local-Jacobi smoother
+#             (system/gko/p-multigrid-scalecorr-localized.json). Combines scalecorr's Rayleigh
+#             correction with localized's per-rank V-cycle. Same PRODUCTION-build requirement
+#             as scalecorr -- do NOT run with NEON_BUILD=profiling.
 #
-# The full sweep also appends three extra runs (also requestable on their own):
-#   fcg       pFCG-MGprec-ukoSmooth : FCG outer solver + Multigrid preconditioner
-#             (system/gko/p-fcg-multigrid.json)
-#   mgsolver  pMGsolver-ukoSmooth         : Multigrid as the global solver, no outer Krylov
-#             (system/gko/p-multigrid-solver.json)
-#   directcoarse pMG-directcoarse-ukoSmooth: Cg+MG with a direct (LU) coarsest solver
-#             (system/gko/p-multigrid-directcoarse.json)
-#   smooth2   pMG-smooth2-ukoSmooth       : Cg+MG with a 2-iteration Jacobi V-cycle smoother
-#             (system/gko/p-multigrid-smooth2.json)
-#   cgcoarse  pMG-cgcoarse-ukoSmooth      : Cg+MG with a CG+Jacobi coarsest solver
-#             (system/gko/p-multigrid-cgcoarse.json)
-#   native    native-simpleFoam           : native OpenFOAM simpleFoam, GAMG p-solver
-#             (system/paramStudy/fvSolution.native) — the non-NeoFOAM reference run
-#   native-pcg native-pcg-simpleFoam       : native OpenFOAM simpleFoam, PCG/diagonal p-solver
-#             (system/paramStudy/fvSolution.native-pcg)
-#   laminar   pMGbase-laminar             : base multigrid p-solver, simulationType laminar
-# The fcg/mgsolver/directcoarse/smooth2/cgcoarse configs are derived from p-multigrid.json by gen-mg-variants.py.
-# (The SELL-P matrix-format study lives in param-study.sh: Sellp only applies to the plain
-#  Ginkgo CG solver, not the multigrid sweep here.)
+# The max_levels sweep and the smoother/coarse-solver/outer-Krylov TUNING variants (fcg,
+# directcoarse, smooth2, cgcoarse, localized-solver) plus the native/laminar baselines live in
+# param-study-mg-tuning.sh. Run helpers are shared via param-study-mg-common.sh.
 #
-# Usage:   ./param-study-mg.sh                 # full sweep + fcg + mgsolver + directcoarse + smooth2 + cgcoarse + native + laminar
-#          ./param-study-mg.sh L4.sc2          # a single variant
-#          ./param-study-mg.sh L4.sc2 L10.sc0  # selected variants (mg- prefix optional)
-#          ./param-study-mg.sh fcg mgsolver    # the FCG and standalone-Multigrid runs
-#          ./param-study-mg.sh directcoarse    # Cg+MG with direct coarsest solver
-#          ./param-study-mg.sh smooth2         # Cg+MG with a 2-iteration Jacobi smoother
-#          ./param-study-mg.sh cgcoarse        # Cg+MG with a CG+Jacobi coarsest solver
-#          ./param-study-mg.sh native          # native OpenFOAM simpleFoam (GAMG) baseline
-#          ./param-study-mg.sh native-pcg      # native OpenFOAM simpleFoam (PCG/diagonal) baseline
-#          ./param-study-mg.sh laminar         # only the laminar baseline
+# SOLVER-CACHE sweep (cache-sweep):
+#   Sweeps the Ginkgo solver's preconditionerRebuildInterval over 2,5,10,20,50,100 with
+#   cacheSolver=true, across THREE preconditioner configs: base (Cg + distributed Multigrid),
+#   localized (Cg + Schwarz{Multigrid(local)}), and scalecorr (Ir(scale_correction){Multigrid}).
+#   The generated solver + MG hierarchy are cached and reused across pressure solves via
+#   update_matrix_value, rebuilt from scratch only every Nth solve. After the runs a PRECONDITIONER
+#   CACHE REUSE table tallies the per-solve "[GinkgoSolver] p-cache: rebuild|reuse" log diagnostics
+#   so you can confirm the preconditioner is actually cached and reused per config (reuse% high; a
+#   0/0 row means that config's reuse path did not engage). The localized/scalecorr preconditioners
+#   are more staleness-sensitive, so their useful range is the small-interval end.
 #
-# Shared env / run-window pinning / run_one / summary: param-study-common.sh.
+# Usage:   ./param-study-mg.sh                 # all four headline runs
+#          ./param-study-mg.sh localized       # a single headline run
+#          ./param-study-mg.sh base scalecorr  # selected headline runs
+#          ./param-study-mg.sh mgsolver        # Multigrid as the top-level solver
+#          ./param-study-mg.sh cache-sweep     # {base,localized,scalecorr} x interval{2,5,10,20,50,100}
+#          ./param-study-mg.sh cache-localized # one cache config across all intervals
+#          (any tuning keyword also works here, e.g. ./param-study-mg.sh L4.sc0 -- see
+#           param-study-mg-tuning.sh)
 
-source "$(dirname "$0")/param-study-common.sh"
-
-MGGEN="system/gko/gen-mg-variants.py"
-MG_TEMPLATE="$CFGDIR/fvSolution.case3"
-
-_mg_generated=0
-ensure_mg_variants() {
-    [ "$_mg_generated" -eq 1 ] && return 0
-    if python3 "$MGGEN" >/dev/null 2>&1; then
-        echo "   (regenerated MG variants from system/gko/p-multigrid.json)"
-    else
-        echo "!! $MGGEN failed — using existing variant files"
-    fi
-    _mg_generated=1
-}
-
-run_pconfig() {
-    # $1 = run name   $2 = p-solver json basename (in system/gko/)   $3 = description
-    # Reuse case3's U/k/omega block; only swap the p-solver configFile path. Anchor to
-    # the indented entry line so the "configFile" mentions in the template's comment
-    # header are left untouched.
-    local name="$1" json="$2" desc="$3"
-    if [ ! -f "system/gko/$json" ]; then
-        echo "!! no p-config 'system/gko/$json' — skipping"; return
-    fi
-    sed -E "s#^([[:space:]]+configFile[[:space:]]+).*#\1system/gko/$json;#" "$MG_TEMPLATE" > "$TMP_FVSOL"
-    run_one "$name" "$TMP_FVSOL" "$desc"
-}
-
-run_mg_variant() {
-    # $1 = variant json basename, e.g. p-multigrid.L4.sc2.json
-    local json="$1"
-    local tag="${json#p-multigrid.}"; tag="${tag%.json}"   # L4.sc2
-    local lev="${tag#L}"; lev="${lev%%.*}"                 # 4
-    local sc="${tag##*sc}"                                 # 2
-    run_pconfig "pMG-L${lev}-sc${sc}-ukoSmooth" "$json" \
-        "p = Ginkgo MG (max_levels=$lev, scale_correction=$sc), U/k/omega=smoothSolver/GS"
-}
-
-run_fcg() {
-    # FCG (flexible CG) outer solver with the Multigrid block as preconditioner.
-    run_pconfig "pFCG-MGprec-ukoSmooth" "p-fcg-multigrid.json" \
-        "p = Ginkgo FCG + Multigrid preconditioner, U/k/omega=smoothSolver/GS"
-}
-
-run_mgsolver() {
-    # Multigrid as the global solver (no outer Krylov): V-cycles to convergence.
-    run_pconfig "pMGsolver-ukoSmooth" "p-multigrid-solver.json" \
-        "p = Ginkgo Multigrid as global solver, U/k/omega=smoothSolver/GS"
-}
-
-run_directcoarse() {
-    # Cg + Multigrid, but the coarsest level solved exactly by a direct LU solver.
-    run_pconfig "pMG-directcoarse-ukoSmooth" "p-multigrid-directcoarse.json" \
-        "p = Ginkgo Cg+MG, direct (LU) coarsest solver, U/k/omega=smoothSolver/GS"
-}
-
-run_smooth2() {
-    # Cg + Multigrid with a stronger V-cycle smoother: 2 Ir/Jacobi iterations per
-    # pre/post sweep instead of the base's weak single iteration.
-    run_pconfig "pMG-smooth2-ukoSmooth" "p-multigrid-smooth2.json" \
-        "p = Ginkgo Cg+MG, 2-iteration Jacobi smoother, U/k/omega=smoothSolver/GS"
-}
-
-run_cgcoarse() {
-    # Cg + Multigrid, but the coarsest level solved by an inner Jacobi-preconditioned CG.
-    run_pconfig "pMG-cgcoarse-ukoSmooth" "p-multigrid-cgcoarse.json" \
-        "p = Ginkgo Cg+MG, CG+Jacobi coarsest solver, U/k/omega=smoothSolver/GS"
-}
-
-run_native() {
-    # Native-OpenFOAM baseline: real simpleFoam (NOT neoSimpleFoam) with a GAMG
-    # p-solver and smoothSolver U/k/omega, from system/paramStudy/fvSolution.native.
-    # Reference point for the whole Ginkgo multigrid-pressure sweep.
-    local nat="$CFGDIR/fvSolution.native"
-    if [ ! -f "$nat" ]; then
-        echo "!! no native fvSolution '$nat' — skipping"; return
-    fi
-    run_one "native-simpleFoam" "$nat" \
-        "p = OpenFOAM GAMG/GS, U/k/omega = smoothSolver/GS (native simpleFoam)" \
-        "simpleFoam"
-}
-
-run_native_pcg() {
-    # Native-OpenFOAM baseline with a PCG/diagonal p-solver (the PCG counterpart of the
-    # GAMG run_native), from system/paramStudy/fvSolution.native-pcg, via real simpleFoam.
-    local nat="$CFGDIR/fvSolution.native-pcg"
-    if [ ! -f "$nat" ]; then
-        echo "!! no native fvSolution '$nat' — skipping"; return
-    fi
-    run_one "native-pcg-simpleFoam" "$nat" \
-        "p = OpenFOAM PCG/diagonal, U/k/omega = smoothSolver/GS (native simpleFoam)" \
-        "simpleFoam"
-}
-
-run_laminar() {
-    # Same multigrid p-solver (base p-multigrid.json via the case3 template) but with
-    # the turbulence model switched OFF (simulationType laminar -> NeoFOAM Laminar:
-    # nut=0, nuEff=nu). Isolates the pressure/momentum coupling from kOmegaSST and
-    # serves as a turbulence-free baseline for the multigrid-pressure comparison.
-    # turbulenceProperties is toggled here and restored right after (the exit trap in
-    # param-study-common.sh is the safety net if the run is interrupted).
-    foamDictionary -entry simulationType -set laminar \
-        -disableFunctionEntries constant/turbulenceProperties >/dev/null
-    run_one "pMGbase-laminar" "$MG_TEMPLATE" "p = Ginkgo MG (base), turbulence = laminar"
-    foamDictionary -entry simulationType -set RAS \
-        -disableFunctionEntries constant/turbulenceProperties >/dev/null
-}
+source "$(dirname "$0")/param-study-mg-common.sh"
 
 ensure_mg_variants
 
-VARIANTS=("$@")
-if [ ${#VARIANTS[@]} -eq 0 ]; then
-    # Full sweep over every generated variant, plus the laminar baseline.
-    found=0
-    for j in system/gko/p-multigrid.L*.sc*.json; do
-        [ -f "$j" ] || continue
-        run_mg_variant "$(basename "$j")"
-        found=1
-    done
-    [ "$found" -eq 0 ] && echo "!! no MG variant files found under system/gko/"
-    run_fcg          # FCG + Multigrid preconditioner
-    run_mgsolver     # Multigrid as the global solver
-    run_directcoarse # Cg+MG with direct (LU) coarsest solver
-    run_smooth2      # Cg+MG with a 2-iteration Jacobi smoother
-    run_cgcoarse     # Cg+MG with a CG+Jacobi coarsest solver
-    run_native       # native OpenFOAM simpleFoam (GAMG) baseline
-    run_native_pcg   # native OpenFOAM simpleFoam (PCG/diagonal) baseline
-    run_laminar
-else
-    # Selected runs; accept "L4.sc2", "mg-L4.sc2", "fcg", "mgsolver",
-    # "directcoarse", "smooth2", "cgcoarse", "native", "native-pcg", or "laminar".
-    for v in "${VARIANTS[@]}"; do
-        case "$v" in
-            laminar)      run_laminar ;;
-            fcg)          run_fcg ;;
-            mgsolver)     run_mgsolver ;;
-            directcoarse) run_directcoarse ;;
-            smooth2)      run_smooth2 ;;
-            cgcoarse)     run_cgcoarse ;;
-            native)       run_native ;;
-            native-pcg)   run_native_pcg ;;
-            *)            run_mg_variant "p-multigrid.${v#mg-}.json" ;;
-        esac
-    done
-fi
+VARIANTS=("$@"); [ ${#VARIANTS[@]} -eq 0 ] && VARIANTS=(base localized mgsolver scalecorr scalecorr-localized)
+for v in "${VARIANTS[@]}"; do
+    run_named "$v"
+done
 
 print_summary
+report_cache_reuse

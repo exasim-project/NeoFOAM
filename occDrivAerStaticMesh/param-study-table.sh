@@ -2,8 +2,9 @@
 #
 # Summary-table generator for the occDrivAre parameter studies.
 #
-# Scans every per-run log under paramStudy/results/ (written by param-study.sh and
-# param-study-mg.sh via param-study-common.sh) and prints one consolidated table:
+# Scans every per-run log under paramStudy/results/ (written by param-study.sh,
+# param-study-mg.sh and param-study-mg-tuning.sh via param-study-common.sh) and prints one
+# consolidated table:
 #
 #   steps      number of "Time = N" steps the run reached
 #   status     OK (finalised) | CRASH@<step> (signal 8 / FPE) | NaN@<step> |
@@ -20,12 +21,30 @@
 #
 # Usage:   ./param-study-table.sh              # N = 3000 projection
 #          ./param-study-table.sh 5000         # project to 5000 steps
+#          ./param-study-table.sh -r paramStudy2606/results   # pick results dir
+#          ./param-study-table.sh -r paramStudy2606/results 5000
 #          PROJECT_STEPS=10000 ./param-study-table.sh
 #          RESULTS=some/other/dir ./param-study-table.sh
 
 cd "$(dirname "${BASH_SOURCE[0]}")" || exit 1
 
-RESULTS="${RESULTS:-paramStudy/results}"
+# ---------------------------------------------------------------- CLI parsing
+# -r/--results DIR selects the results folder (overrides the RESULTS env var);
+# the lone positional argument stays PROJECT_STEPS for backward compatibility.
+results_opt=""
+positional=()
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -r|--results)   results_opt="$2"; shift 2 ;;
+        -r=*|--results=*) results_opt="${1#*=}"; shift ;;
+        -h|--help)      sed -n '21,26p' "$0"; exit 0 ;;
+        -*)             echo "!! unknown option '$1'"; exit 2 ;;
+        *)              positional+=("$1"); shift ;;
+    esac
+done
+set -- "${positional[@]}"
+
+RESULTS="${results_opt:-${RESULTS:-paramStudy/results}}"
 PROJECT_STEPS="${PROJECT_STEPS:-${1:-3000}}"
 AGE_MIN="${AGE_MIN:-60}"          # logs newer than this (minutes) are tagged CURR
 

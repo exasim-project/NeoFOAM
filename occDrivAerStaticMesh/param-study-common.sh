@@ -1,8 +1,9 @@
 #!/bin/bash
 #
 # Shared infrastructure for the occDrivAre parameter studies. SOURCED by
-# param-study.sh (linear-solver caseN comparison) and param-study-mg.sh (Ginkgo
-# multigrid-pressure sweep) — not run directly.
+# param-study.sh (linear-solver caseN comparison) and, via param-study-mg-common.sh, by
+# param-study-mg.sh (Ginkgo multigrid headline comparison) and param-study-mg-tuning.sh
+# (multigrid level/tuning sweep) — not run directly.
 #
 # Provides: environment + MPI/GPU binding, BIN/NP/STEPS/paths, controlDict
 # run-window pinning with restore-on-exit, reset_to_t0, run_one, print_summary,
@@ -22,7 +23,14 @@ source "$HOME/OpenFOAM/openfoam/etc/bashrc"
 export NEON_DEVICE=nvidia_h200
 export CUDA_VISIBLE_DEVICES=1,2,3,4
 
-BIN="/storage/home/greole/code/NeoFOAM/build/profiling${NEON_DEVICE}/bin/neoSimpleFoam"
+# Build type to take the neoSimpleFoam binary from. Default to the PROFILING (RelWithDebInfo)
+# build: it runs every variant reliably. The PRODUCTION (Release/-O3) build SEGFAULTS during
+# distributed Schwarz-preconditioner setup (before timestep 1) -- an optimization-sensitive bug
+# (build types are the only CMake difference) -- so it is NOT the default despite being the only
+# build with the NeoN_GINKGO_TAG (241deca) scale_correction config support the scalecorr variant
+# needs. Override with NEON_BUILD=production once that Release-build crash is fixed.
+NEON_BUILD="${NEON_BUILD:-profiling}"
+BIN="/storage/home/greole/code/NeoFOAM/build/${NEON_BUILD}${NEON_DEVICE}/bin/neoSimpleFoam"
 NP=4
 STEPS=100
 CFGDIR="system/paramStudy"
@@ -103,6 +111,15 @@ run_one() {
     echo " $name${desc:+ : $desc}"
     echo "   -> $log"
     echo "================================================================"
+
+    # Skip a case whose log already exists, so a re-invocation only fills in the
+    # missing runs. The existing log is still added to RUNS so it appears in the
+    # summary table. Override with FORCE=1 to re-run (and overwrite) every case.
+    if [ -z "${FORCE:-}" ] && [ -f "$log" ]; then
+        echo "   (skip: log exists — set FORCE=1 to re-run)"
+        RUNS+=("$name")
+        return
+    fi
 
     cp "$src" system/fvSolution
     reset_to_t0

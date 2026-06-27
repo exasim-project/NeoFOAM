@@ -9,8 +9,9 @@
 #   case3   p: configFile (multigrid)   | U,k,omega: smoothSolver / GaussSeidel
 #   sellp   p: Ginkgo CG, Sellp matrix  | U,k,omega: smoothSolver / GaussSeidel
 #
-# The Ginkgo multigrid-pressure SWEEP lives in param-study-mg.sh (case3 is the
-# single multigrid baseline kept here for reference against the PCG variants).
+# The Ginkgo multigrid-pressure runs live in param-study-mg.sh (headline usage modes) and
+# param-study-mg-tuning.sh (level/tuning sweep). case3 is the single multigrid baseline
+# kept here for reference against the PCG variants.
 # The SELL-P matrix-format run lives here, not in the mg sweep: localMatrixFormat
 # Sellp only applies to the plain Ginkgo CG solver (p-cg.json), not to multigrid.
 #

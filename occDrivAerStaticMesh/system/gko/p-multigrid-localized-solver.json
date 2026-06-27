@@ -1,6 +1,6 @@
 {
-    "type": "solver::Cg",
-    "preconditioner": {
+    "type": "preconditioner::Schwarz",
+    "local_solver": {
         "type": "solver::Multigrid",
         "max_levels": 10,
         "min_coarse_rows": 64,
@@ -19,11 +19,8 @@
                 "relaxation_factor": 0.9,
                 "scale_correction": "none",
                 "solver": {
-                    "type": "preconditioner::Schwarz",
-                    "local_solver": {
-                        "type": "preconditioner::Jacobi",
-                        "max_block_size": 1
-                    }
+                    "type": "preconditioner::Jacobi",
+                    "max_block_size": 1
                 },
                 "criteria": [
                     {
@@ -39,11 +36,8 @@
                 "relaxation_factor": 0.9,
                 "scale_correction": "none",
                 "solver": {
-                    "type": "preconditioner::Schwarz",
-                    "local_solver": {
-                        "type": "preconditioner::Jacobi",
-                        "max_block_size": 1
-                    }
+                    "type": "preconditioner::Jacobi",
+                    "max_block_size": 1
                 },
                 "criteria": [
                     {
@@ -54,10 +48,19 @@
             }
         ],
         "coarsest_solver": {
-            "type": "solver::Direct",
-            "factorization": {
-                "type": "factorization::Lu"
-            }
+            "type": "solver::Ir",
+            "relaxation_factor": 0.9,
+            "scale_correction": "forward",
+            "solver": {
+                "type": "preconditioner::Jacobi",
+                "max_block_size": 1
+            },
+            "criteria": [
+                {
+                    "type": "Iteration",
+                    "max_iters": 8
+                }
+            ]
         },
         "criteria": [
             {
