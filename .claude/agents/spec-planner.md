@@ -19,6 +19,9 @@ your markdown.
   `iter-<N-1>/4-test-review.md`) and **implementation** (`iter-<N-1>/2-implement.md`).
   Read them: they say what landed green and what the reviewers flagged. Carry every
   **Critical/Important** item into this plan before adding scope.
+- For `N > 1`: the **living architecture map** `loop/<feature>/architecture.md`
+  (the current public-interface + dependency map — the implementer reconciled it to
+  reality last iteration). Read it; it is your picture of what already exists.
 
 ## Read first
 
@@ -40,6 +43,27 @@ reviewers' findings, they don't re-slice it.) Where a requirement needs a heavy
 external dependency (a database, native backend, network), plan it behind the
 project's skip mechanism so the tests stay fast and hermetic.
 
+## Maintain the architecture map (`loop/<feature>/architecture.md`)
+
+A **single living document per feature** (NOT per iteration) — the canonical
+public-interface + dependency map. You author the target; the implementer reconciles
+it to reality each iteration; the reviewer verifies it isn't stale. **Create it in
+iteration 1; update it in place** every later iteration so it always reflects the
+intended end state. For the **most relevant** classes/modules only (not every helper),
+it holds:
+
+1. **Dependency graph** — a `mermaid` diagram of the classes/modules and the edges
+   between them (who calls/owns/depends on whom).
+2. **Public interface** — each relevant class/module with its public method/function
+   signatures (names, params, return types, decorators) + a one-line purpose each,
+   citing real `path:line`.
+3. **Key types** — the central dataclasses/types (fields + types).
+4. **Notes** — non-obvious dependency constraints (cycles broken by lazy import,
+   per-case vs. global lifetime, "no `from __future__` here", etc.).
+
+Keep it tight — it is a map, not the code. Write/update it BEFORE the plan, then have
+the plan's Architecture section point to it.
+
 ## Plan format (write to `loop/<feature>/iter-N/1-plan.md`)
 
 Create the folder if missing. Markdown with:
@@ -49,12 +73,11 @@ Create the folder if missing. Markdown with:
    row per spec requirement. This is the traceability spine the reviewer checks, and
    the **only** place requirement IDs appear — keep them out of all test code (names,
    comments, docstrings).
-3. **Proposed architecture** — the design the implementer builds to:
-   - a **mermaid** diagram of the components and their **dependencies**;
-   - **Public interface** — every public function/method/class signature the work
-     adds or changes;
-   - **Key dataclasses / types** — the most relevant data structures (fields + types);
-   - how it plugs into existing seams (cite real `file:line`).
+3. **Architecture delta** — the canonical design lives in
+   `loop/<feature>/architecture.md` (which you just authored/updated). Here, state
+   only what THIS iteration adds/changes in it: the new/changed public signatures and
+   dependency edges, and how they plug into existing seams (cite real `file:line`).
+   **Point to the map; do not restate it.**
 4. **Carried-over review items** (N>1) — the prior findings you resolve now.
 5. **Files** — exact `Create:` / `Modify: path:line` / `Test:` paths.
 6. **Tasks** — TDD steps (write failing test → minimal impl → it passes), with
@@ -74,6 +97,7 @@ headers) — discover them from its conventions file and the surrounding code.
 
 ```
 PLAN: loop/<feature>/iter-N/1-plan.md
+ARCHITECTURE: loop/<feature>/architecture.md (created|updated)
 TARGETS: <the requirement ids this plan covers>
 FILES: <create/modify count + the key paths>
 TEST SELECTOR: <the exact command the implementer should run>

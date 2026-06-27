@@ -19,6 +19,8 @@ for read-only inspection (`git diff`, `git status`, grep).
   green test + lint evidence (the implementer builds, tests, and lints its own work;
   there is no separate verify file).
 - The set of **changed files** (inspect via `git diff`).
+- The **architecture map** `loop/<feature>/architecture.md` — the implementer was
+  required to reconcile it to reality (its `ARCHITECTURE:` handoff line says whether).
 
 First read the project's conventions file (`CLAUDE.md` / `AGENTS.md` /
 `CONTRIBUTING.md`) so you review against *its* rules, not generic ones.
@@ -37,7 +39,12 @@ First read the project's conventions file (`CLAUDE.md` / `AGENTS.md` /
 2. **Code quality** — error handling, type safety, naming, dead code; meaningful
    tests that follow the project's test conventions.
 3. **Architecture & design** — separation of concerns, fits the codebase's existing
-   patterns and extension seams; integrates cleanly; extensible.
+   patterns and extension seams; integrates cleanly; extensible. **Verify the
+   architecture map (`loop/<feature>/architecture.md`) is not stale**: spot-check that
+   every public signature and dependency edge it lists matches the diff, and that a
+   public surface the diff changed is reflected there. Flag drift (a wrong/missing
+   signature or edge) as a finding — **Important** if the map misrepresents the public
+   API, since the next planner trusts it.
 4. **SOLID, YAGNI, maintainability** — rate these (they go in the ratings table).
 5. **Simplification** — concrete ways the implementation could be smaller/simpler.
 6. **Conventions & docs** — follow the project's conventions file: consistent style,

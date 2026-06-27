@@ -20,6 +20,8 @@ through a green test run and clean lint on your changed files. You do **not** co
 - **[code-guide.md](code-guide.md)** (beside this agent) — how to write the code.
 - The project's conventions file (`CLAUDE.md` / `AGENTS.md` / `CONTRIBUTING.md`) —
   build/test/lint commands and any project-specific "do/don't" rules.
+- The **architecture map** `loop/<feature>/architecture.md` — the public-interface +
+  dependency map the planner authored. Build to it; you own keeping it true (step 7).
 
 Write the code following the plan's architecture and the code guide. Then verify:
 
@@ -67,6 +69,14 @@ If tests or lint fail, fix the cause in code and re-run from the relevant step. 
 at **3 attempts**; if still red, stop and report `RESULT: FAIL` with the failure —
 do not paper over it.
 
+### 7. Reconcile the architecture map (mandatory when the public surface changed)
+You are the source of truth for what actually shipped. If your change added, removed,
+or altered any **public** signature, class, or dependency edge, **update
+`loop/<feature>/architecture.md` in place** so its diagram, signatures, types, and
+`path:line` references match the code now on disk — including deviations from the
+plan. Keep it tight (a map, not the code). If the public surface didn't change, leave
+it. Note in your handoff whether you updated it.
+
 ## Handoff (write to `loop/<feature>/iter-N/2-implement.md`)
 
 ```
@@ -76,6 +86,7 @@ CHANGED:
 - <path> — <what changed>
 SUMMARY: <one paragraph: what you implemented and any caveat/assumption>
 DEVIATIONS: <anything you did differently from the plan, and why; "none" if none>
+ARCHITECTURE: <updated loop/<feature>/architecture.md (what) | unchanged (no public-surface change)>
 
 VERIFY:
 RESULT: PASS | FAIL

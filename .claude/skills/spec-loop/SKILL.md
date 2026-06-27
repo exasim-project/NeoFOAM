@@ -29,6 +29,13 @@ in parallel** and are both read-only. The **planner's input is the spec(s) + the
 previous iteration's `3-review.md` AND `4-test-review.md`** — so the loop adapts to
 both design and coverage findings.
 
+One **living** file sits beside the iter folders: `loop/<feature>/architecture.md` —
+the public-interface + dependency map of the feature's key classes. The planner
+authors/updates it each iteration (the target), the implementer reconciles it to what
+actually shipped, and the design reviewer flags it if it drifts. It is the durable
+"what exists" picture the next planner reads — unlike the per-iteration handoffs, it
+is updated in place, not versioned per iter.
+
 ## Input
 
 `$ARGUMENTS` — path to the spec (e.g. `plans/interface-spec.md`). Derive the
