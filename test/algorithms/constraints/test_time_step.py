@@ -81,3 +81,9 @@ def test_next_delta_t_cap_can_bind_under_growth() -> None:
 
 def test_next_delta_t_no_constraints_keeps_current() -> None:
     assert next_delta_t([], _Ctx(co=1.0, dt=0.1), current_dt=0.1) == 0.1
+
+
+def test_delta_t_constraint_has_no_measures_attribute() -> None:
+    # the name-matched measures<->measurement_provider link was removed in favour
+    # of the interface fold; the attribute must not come back.
+    assert "measures" not in dir(DeltaTConstraint)

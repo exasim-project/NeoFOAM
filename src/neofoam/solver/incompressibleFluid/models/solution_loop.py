@@ -21,9 +21,8 @@ object); here we only:
 * :func:`loop_backend_steps` — init steps that construct the ``FoamTime`` backend
   from the injected ``pybFoam.Time`` and inject it into the framework-built engine,
   and register the ``loop_logger`` (``pybFoam.Info``) the framework operations
-  consult. The CFL ``measurement_provider.courant`` is no longer registered here —
-  it belongs to the opt-in ``adaptiveTimeStep`` model, so the measurement exists
-  only when adaptive stepping is selected.
+  consult. The CFL limit is now a ``timeStepConstraint`` contribution (the
+  ``courant`` model), folded by ``set_time_step`` — no Courant provider here.
 """
 
 from typing import Any
@@ -61,6 +60,9 @@ def loop_backend_steps() -> list[InitStep]:
     * injects the :class:`FoamTime` backend into the framework-built engine
       (which defaults to a no-op ``NullLoopBackend``);
     * registers ``loop_logger`` — ``pybFoam.Info`` for the per-step time print.
+
+    The CFL limit is no longer pushed in here: it is a ``timeStepConstraint``
+    contribution (the ``courant`` model) folded by ``set_time_step``.
     """
 
     def inject_backend(ctx: dict[str, Any]) -> FoamTime:

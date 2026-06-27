@@ -21,14 +21,23 @@ core loop. No OpenFOAM needed.
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any, cast
 
+import pytest
+
+import neofoam.algorithms.solution_loop as loop_pkg
+import neofoam.algorithms.solution_loop.solution_loop as engine_mod
 from neofoam.algorithms.constraints.time_step import (
     CourantConstraint,
     MaxDeltaTConstraint,
 )
 from neofoam.algorithms.solution_loop.config import TimeControlConfig
 from neofoam.algorithms.solution_loop.control import SolutionControl
+from neofoam.algorithms.solution_loop.interfaces import (
+    loopCondition,
+    timeStepConstraint,
+)
 from neofoam.algorithms.solution_loop.loop_state import LoopState
 from neofoam.algorithms.solution_loop.solution_loop import (
     SolutionLoop,
@@ -41,6 +50,11 @@ from neofoam.algorithms.solution_loop.solution_loop import (
     solutionLoop,
 )
 from neofoam.framework.context import Context
+from neofoam.framework.dependency_resolver import (
+    DependencyResolver,
+    wrap_with_dependency_resolution,
+)
+from neofoam.framework.model import Model, ModelRuntime, bind_owned_interfaces
 
 
 class FakeBackend:
@@ -243,7 +257,10 @@ def test_modelspec_is_a_full_core_model() -> None:
 def test_build_emits_state_then_engine() -> None:
     config = _config()
     steps = build(config)
-    assert [s.name for s in steps] == ["time", "models.solution_loop"]
+    assert [s.name for s in steps] == [
+        "time",
+        "models.solution_loop",
+    ]
 
     state = steps[0].initializer({})
     assert isinstance(state, LoopState)
@@ -252,67 +269,24 @@ def test_build_emits_state_then_engine() -> None:
     loop = steps[1].initializer({"time": state})
     assert isinstance(loop, SolutionLoop)
     assert loop.state is state
-    # The core engine is bare — stability constraints come from opt-in models.
-    assert loop.constraints == []
 
 
-# --- make_solution_loop builds a bare engine ------------------------------
+# --- constraint seeding from config (make_solution_loop) ------------------
 
 
-def test_make_solution_loop_is_bare() -> None:
-    config = _config()
-    loop = make_solution_loop(config, make_loop_state(config))
-    assert loop.constraints == []
-
-
-# --- measurement registry + generic provider push -------------------------
-
-
-def test_publish_and_measured_round_trip() -> None:
-    loop = SolutionLoop(state=_state(dt=0.1))
-    assert loop.measured("courant") == 0.0  # default before any publish
-    assert loop.measured("courant", default=-1.0) == -1.0
-    loop.publish("courant", 3.0)
-    assert loop.measured("courant") == 3.0
-
-
-def test_set_time_step_pushes_all_measurement_providers() -> None:
-    # A constraint declares it needs "courant"; the matching provider is consulted
-    # only because the loop carries a constraint, and its value is published.
-    loop = make_solution_loop(_config(), make_loop_state(_config()))
-    loop.add_constraint(CourantConstraint(maxCo=1.0))
-    seen: list[Any] = []
-
-    def provider(ctx: Any) -> float:
-        seen.append(ctx)
-        return 2.0
-
-    ctx = cast(
-        Context,
-        FakeContext({"solution_loop": loop, "measurement_provider.courant": provider}),
+def test_make_solution_loop_seeds_no_constraints() -> None:
+    # Stability limits are folded per step from the timeStepConstraint interface,
+    # not seeded here — so the engine starts with an empty constraint list for any
+    # config (adjustable or fixed).
+    adjustable = make_solution_loop(
+        _config(adjustTimeStep=True, maxCo=1.0, maxDeltaT=0.5),
+        make_loop_state(_config(adjustTimeStep=True, maxCo=1.0, maxDeltaT=0.5)),
     )
-    set_time_step(None, ctx)
-    assert seen  # provider was consulted
-    assert loop.measured("courant") == 2.0
-    assert loop.state.delta_t == 0.05  # 0.1 * 1.0 / 2.0 (CFL-limited)
-
-
-def test_set_time_step_without_constraints_skips_providers() -> None:
-    # No constraint -> providers are not consulted and the step is unchanged.
-    loop = make_solution_loop(_config(), make_loop_state(_config()))
-    called: list[Any] = []
-    ctx = cast(
-        Context,
-        FakeContext(
-            {
-                "solution_loop": loop,
-                "measurement_provider.courant": lambda c: called.append(c) or 9.0,
-            }
-        ),
+    fixed = make_solution_loop(
+        _config(adjustTimeStep=False), make_loop_state(_config())
     )
-    set_time_step(None, ctx)
-    assert called == []  # bare loop -> no measurement pushed
-    assert loop.state.delta_t == 0.1
+    assert adjustable.constraints == []
+    assert fixed.constraints == []
 
 
 # --- injected logger seam -------------------------------------------------
@@ -347,3 +321,177 @@ def test_predicate_delegates_to_engine_running() -> None:
         SolutionLoopPredicate()(cast(Context, FakeContext({"solution_loop": off})))
         is False
     )
+
+
+# --- constructor DI for loop conditions (folded with `all`) ---------------
+
+
+@pytest.mark.parametrize(
+    "conds, expected",
+    [
+        ([lambda lp: False], False),
+        ([], True),
+        ([lambda lp: True, lambda lp: lp.current_delta_t() > 0.0], True),
+    ],
+)
+def test_constructor_folds_conditions_with_all(
+    conds: list[Any], expected: bool
+) -> None:
+    loop = SolutionLoop(state=_state(), conditions=conds)
+    assert loop.all_conditions_hold() is expected
+    assert loop.conditions == loop._conditions  # public getter mirrors the backing list
+
+
+def test_constructor_still_accepts_constraints() -> None:
+    loop = SolutionLoop(
+        state=_state(), constraints=[MaxDeltaTConstraint(maxDeltaT=0.5)]
+    )
+    assert [type(c).__name__ for c in loop.constraints] == ["MaxDeltaTConstraint"]
+
+
+# --- the loop model owns both interfaces ----------------------------------
+
+
+def test_loop_model_owns_both_interfaces() -> None:
+    assert solutionLoop.declared_interfaces["timeStepConstraint"] is timeStepConstraint
+    assert solutionLoop.declared_interfaces["loopCondition"] is loopCondition
+
+
+# --- the interface-consuming loop-body operation --------------------------
+
+
+def test_loop_module_keeps_live_interface_annotations() -> None:
+    # Proves the module did NOT stringify annotations: the param annotations are
+    # the live spec objects, not strings.
+    ann = set_time_step.__annotations__
+    assert ann["constraints"] is timeStepConstraint
+    assert ann["conditions"] is loopCondition
+
+
+def _drive_set_time_step(
+    loop: SolutionLoop, contributors: list[ModelRuntime]
+) -> Context:
+    loop_rt = ModelRuntime(spec=solutionLoop, name="solutionLoop", config=None)
+    models: dict[str, Any] = {"solution_loop": loop, "solutionLoop": loop_rt}
+    for rt in contributors:
+        models[rt.name] = rt
+    ctx = Context(fields={}, models=models)
+    bind_owned_interfaces(loop_rt, contributors, ctx)
+    wrap_with_dependency_resolution(
+        set_time_step, instance=None, dependency_resolver=DependencyResolver()
+    )(ctx)
+    return ctx
+
+
+def test_set_time_step_is_fixed_step_with_no_contributors() -> None:
+    loop = SolutionLoop(state=_state(dt=0.1))
+    _drive_set_time_step(loop, [])
+    assert loop.state.delta_t == pytest.approx(0.1)  # min([], default=VGREAT) -> kept
+
+
+def test_set_time_step_records_keep_running_true_with_no_conditions() -> None:
+    loop = SolutionLoop(state=_state(dt=0.1))
+    loop.keep_running = False  # sentinel
+    _drive_set_time_step(loop, [])
+    assert loop.keep_running is True
+
+
+def test_set_time_step_publishes_current_step_as_injectable() -> None:
+    loop = SolutionLoop(state=_state(dt=0.2))
+    ctx = _drive_set_time_step(loop, [])
+    assert ctx.fields["deltaT"] == pytest.approx(0.2)
+
+
+# --- predicate ANDs the folded loopCondition (keep_running) ---------------
+
+
+def test_predicate_runs_when_keep_running_is_true() -> None:
+    loop = SolutionLoop(
+        state=_state(end=1.0, dt=0.1)
+    )  # mid-run, keep_running default True
+    ctx = cast(Context, FakeContext({"solution_loop": loop}))
+    assert SolutionLoopPredicate()(ctx) is True
+
+
+def test_predicate_stops_when_keep_running_is_false() -> None:
+    loop = SolutionLoop(
+        state=_state(end=1.0, dt=0.1)
+    )  # would otherwise still be running
+    loop.keep_running = False
+    ctx = cast(Context, FakeContext({"solution_loop": loop}))
+    assert SolutionLoopPredicate()(ctx) is False
+
+
+# --- the folded loopCondition reaches the predicate via set_time_step -----
+
+_loop_stopper = Model("loopStopper")
+
+
+@_loop_stopper.contributes(loopCondition)
+def _vote_stop() -> bool:
+    return False
+
+
+def _stopper_runtime() -> ModelRuntime:
+    return ModelRuntime(spec=_loop_stopper, name="loopStopper", config=None)
+
+
+def test_predicate_runs_when_no_condition_vetoes() -> None:
+    loop = SolutionLoop(state=_state(end=1.0, dt=0.1))
+    ctx = _drive_set_time_step(loop, [])
+    assert loop.keep_running is True
+    assert SolutionLoopPredicate()(ctx) is True
+
+
+def test_predicate_stops_when_a_condition_vetoes() -> None:
+    loop = SolutionLoop(state=_state(end=1.0, dt=0.1))
+    ctx = _drive_set_time_step(loop, [_stopper_runtime()])
+    assert loop.keep_running is False
+    assert SolutionLoopPredicate()(ctx) is False
+
+
+# --- the growth cap is the deciding term on the fold path -----------------
+
+
+def test_constrain_delta_t_clamps_growth_to_the_cap() -> None:
+    # A huge folded limit must be clamped to growth_cap * current, not applied raw.
+    loop = SolutionLoop(state=_state(dt=0.1), growth_cap=1.2)
+    loop.constrain_delta_t(10.0)
+    assert loop.state.delta_t == pytest.approx(0.12)  # 1.2 * 0.1, not 10.0
+
+
+# --- the published current step flows into a deltaT-taking contribution ----
+
+_half_stepper = Model("halfStepper")
+
+
+@_half_stepper.contributes(timeStepConstraint)
+def _half_of_step(deltaT: float) -> float:
+    return deltaT * 0.5
+
+
+def _half_runtime() -> ModelRuntime:
+    return ModelRuntime(spec=_half_stepper, name="halfStepper", config=None)
+
+
+def test_published_step_flows_into_a_delta_t_contribution() -> None:
+    # The driver publishes the loop's current step; a deltaT-taking contribution must
+    # receive THAT value (0.2), so its 0.5x limit halves the step to 0.1.
+    loop = SolutionLoop(state=_state(dt=0.2))
+    _drive_set_time_step(loop, [_half_runtime()])
+    assert loop.state.delta_t == pytest.approx(
+        0.1
+    )  # 0.5 * published 0.2, growth-cap ok
+
+
+# --- legacy stepping symbols stay gone ------------------------------------
+
+
+def test_install_constraints_step_is_absent() -> None:
+    assert "install_constraints_step" not in dir(engine_mod)
+
+
+def test_no_measurement_provider_nodes_in_the_loop_package() -> None:
+    pkg_dir = Path(loop_pkg.__file__).parent
+    sources = "\n".join(p.read_text() for p in pkg_dir.glob("*.py"))
+    assert "measurement_provider" not in sources

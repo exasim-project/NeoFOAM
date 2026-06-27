@@ -7,7 +7,7 @@
 #include "NeoN/NeoN.hpp"
 
 // NeoFOAM headers
-#include "NeoFOAM/datastructures/pdeSolver.hpp"
+#include "NeoFOAM/datastructures/pde.hpp"
 
 #include "bindings.hpp"
 
@@ -32,16 +32,15 @@ void registerPDESolver(nb::module_& m)
         .value("BDF2", fvcc::DdtScheme::BDF2);
 
     // -------------------------------------------------------------------
-    // PDESolver<scalar>
+    // PDE<scalar>
     // -------------------------------------------------------------------
-    nb::class_<nf::PDESolver<NeoN::scalar>>(m, "PDESolverScalar")
+    nb::class_<nf::PDE<NeoN::scalar>>(m, "PDESolverScalar")
         .def(
             "__init__",
-            [](nf::PDESolver<NeoN::scalar>& self,
+            [](nf::PDE<NeoN::scalar>& self,
                dsl::Expression<NeoN::scalar> expr,
                fvcc::VolumeField<NeoN::scalar>& psi,
-               nf::RunTime& rt)
-            { new (&self) nf::PDESolver<NeoN::scalar>(std::move(expr), psi, rt); },
+               nf::RunTime& rt) { new (&self) nf::PDE<NeoN::scalar>(std::move(expr), psi, rt); },
             "expr"_a,
             "psi"_a,
             "runtime"_a,
@@ -50,33 +49,32 @@ void registerPDESolver(nb::module_& m)
         )
         .def(
             "solve",
-            [](nf::PDESolver<NeoN::scalar>& self) { return self.solve(); },
+            [](nf::PDE<NeoN::scalar>& self) { return self.solve(); },
             "Solve the linear system"
         )
         .def(
             "assemble",
-            [](nf::PDESolver<NeoN::scalar>& self) -> void { self.assemble(); },
+            [](nf::PDE<NeoN::scalar>& self) -> void { self.assemble(); },
             "Assemble the linear system"
         )
         .def(
             "set_reference",
-            &nf::PDESolver<NeoN::scalar>::setReference,
+            &nf::PDE<NeoN::scalar>::setReference,
             "ref_cell"_a,
             "ref_value"_a,
             "Set pressure reference cell and value"
         );
 
     // -------------------------------------------------------------------
-    // PDESolver<Vec3>
+    // PDE<Vec3>
     // -------------------------------------------------------------------
-    nb::class_<nf::PDESolver<NeoN::Vec3>>(m, "PDESolverVec3")
+    nb::class_<nf::PDE<NeoN::Vec3>>(m, "PDESolverVec3")
         .def(
             "__init__",
-            [](nf::PDESolver<NeoN::Vec3>& self,
+            [](nf::PDE<NeoN::Vec3>& self,
                dsl::Expression<NeoN::Vec3> expr,
                fvcc::VolumeField<NeoN::Vec3>& psi,
-               nf::RunTime& rt)
-            { new (&self) nf::PDESolver<NeoN::Vec3>(std::move(expr), psi, rt); },
+               nf::RunTime& rt) { new (&self) nf::PDE<NeoN::Vec3>(std::move(expr), psi, rt); },
             "expr"_a,
             "psi"_a,
             "runtime"_a,
@@ -85,24 +83,24 @@ void registerPDESolver(nb::module_& m)
         )
         .def(
             "solve",
-            [](nf::PDESolver<NeoN::Vec3>& self) { return self.solve(); },
+            [](nf::PDE<NeoN::Vec3>& self) { return self.solve(); },
             "Solve the linear system"
         )
         .def(
             "solve_with_source",
-            [](nf::PDESolver<NeoN::Vec3>& self, dsl::SpatialOperator<NeoN::Vec3> rhs)
+            [](nf::PDE<NeoN::Vec3>& self, dsl::SpatialOperator<NeoN::Vec3> rhs)
             { return self.solve(std::move(rhs)); },
             "rhs"_a,
             "Solve with an explicit source term (e.g. -grad(p))"
         )
         .def(
             "assemble",
-            [](nf::PDESolver<NeoN::Vec3>& self) -> void { self.assemble(); },
+            [](nf::PDE<NeoN::Vec3>& self) -> void { self.assemble(); },
             "Assemble the linear system"
         )
         .def(
             "ddt_scheme",
-            &nf::PDESolver<NeoN::Vec3>::ddtScheme,
+            &nf::PDE<NeoN::Vec3>::ddtScheme,
             "Get the ddt scheme determined from fvSchemes"
         );
 }

@@ -3,20 +3,21 @@
 
 """incompressibleFluid solver-local model plugins.
 
-Exposes the plugin interface, the PressureVelocityAlgorithm dispatcher, and the
-optional models (boussinesq buoyancy, adaptive Courant time-stepping).
-SpalartAllmaras from the source branch is intentionally not ported in this
-minimal version.
+Exposes the plugin interface, the PressureVelocityAlgorithm dispatcher,
+and the boussinesq, courant, and maxDeltaT optional models. SpalartAllmaras
+from the source branch is intentionally not ported in this minimal version.
 """
 
 from .incompressibleFluidModel import incompressibleFluidModel
 from .pressure_velocity import PressureVelocityAlgorithm
 from .boussinesq import boussinesq
-from .adaptive_time_step import adaptiveTimeStep
+from .courant import courant
+from .max_delta_t import maxDeltaT
 
 __all__ = [
     "incompressibleFluidModel",
     "PressureVelocityAlgorithm",
     "boussinesq",
-    "adaptiveTimeStep",
+    "courant",
+    "maxDeltaT",
 ]

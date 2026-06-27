@@ -9,6 +9,7 @@
 #include "fvMesh.H"
 
 #include "NeoFOAM/datastructures/meshAdapter.hpp"
+#include "NeoFOAM/datastructures/databaseWrapper.hpp"
 
 namespace NeoFOAM
 {
@@ -29,6 +30,8 @@ struct RunTime
     NeoN::Dictionary controlDict;
     NeoN::Dictionary fvSolutionDict;
     NeoN::Dictionary fvSchemesDict;
+    NeoN::mpi::Environment mpiEnvironment;
+    std::unique_ptr<DatabaseWrapper> dbWrapper; ///< Registers db in Foam::Time objectRegistry
 };
 
 

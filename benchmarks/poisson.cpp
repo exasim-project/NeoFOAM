@@ -74,7 +74,7 @@ TEST_CASE("Poisson")
 
         SECTION(std::string("Poisson"))
         {
-            nf::PDESolver<NeoN::Vec3> nfUEqn(
+            nf::PDE<NeoN::Vec3> nfUEqn(
                 dsl::imp::ddt(nfU) + dsl::imp::div(nfPhi, nfU) - dsl::imp::laplacian(nfGamma, nfU),
                 nfU,
                 rt
@@ -93,7 +93,7 @@ TEST_CASE("Poisson")
 
             BENCHMARK(std::string(execName))
             {
-                nf::PDESolver<NeoN::scalar> pEqn(
+                nf::PDE<NeoN::scalar> pEqn(
                     NeoN::dsl::imp::laplacian(rAU, nfP) - NeoN::dsl::exp::div(phiHbyA),
                     nfP,
                     rt

@@ -21,6 +21,7 @@ ddtSchemes
     ddt(U)          Euler;
     ddt(rho,U)      Euler;
     ddt(rho,T)      Euler;
+    ddt(nuTilda)    Euler;
 }
 
 gradSchemes
@@ -29,6 +30,7 @@ gradSchemes
     grad(p)         $GRADSCHEME;
     grad(T)         $GRADSCHEME;
     grad(U)         $GRADSCHEME;
+    grad(nuTilda)   $GRADSCHEME;
     limited         cellLimited Gauss linear 1;
 }
 
@@ -36,32 +38,41 @@ divSchemes
 {
     default         none;
     div(phi,U)      $DIVSCHEME;
+    div(phi,nuTilda)              Gauss linear;
+    div((nuEff*dev2(T(grad(U))))) Gauss linear;
 }
 
 laplacianSchemes
 {
-    default           none;
-    laplacian(nu,U)   $LAPSCHEME;
-    laplacian(rAUf,p) $LAPSCHEME;
+    default                       none;
+    laplacian(nu,U)               $LAPSCHEME;
+    laplacian(rAUf,p)             $LAPSCHEME;
+    laplacian(Gamma,p)            $LAPSCHEME;
+    laplacian(nuEff,U)             $LAPSCHEME;
+    laplacian(nuEff,nuTilda)       $LAPSCHEME;
+    laplacian(DnuTildaEff,nuTilda)  $LAPSCHEME;
 }
 
 interpolationSchemes
 {
-    default         none;
+    default         linear;
     flux(U)         linear;
     flux(HbyA)      linear;
-    // default      linear;
 }
 
 snGradSchemes
 {
     default         uncorrected;
-    // default         corrected;
 }
 
 fluxRequired
 {
     p;
+}
+
+wallDist
+{
+    method          meshWave;
 }
 
 

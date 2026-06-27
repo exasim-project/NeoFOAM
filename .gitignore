@@ -44,6 +44,7 @@ platforms/
 
 # Top-level build directories
 build/
+review/
 /platforms/
 
 # Reinstate wmake rules that might look like build directories
@@ -110,14 +111,22 @@ benchmark/matrixAssembly/results
 */0/
 constant/polyMesh
 
+# Generated on the fly by the test_main blockMesh fallback
+test/setup_snGrad/constant/polyMesh/
+test/*/log.blockMesh
+
 # benchmark intermediate files
 benchmarks/benchmarkSuite/explicitOperators/Cases
 benchmarks/benchmarkSuite/implicitOperators/Cases
 benchmarks/benchmarkSuite/dsl/Cases
 
 *.log
+*log.*
+*.foam
 
-tutorials/cylinder2D/0.*
+tutorials/cylinder2D/0.[0-9]*
+tutorials/*/processor*
+test/setup_*/processor*
 build-*/
 
 #python
@@ -132,12 +141,18 @@ _skbuild
 
 benchmarks/benchmarkSuite/**
 
-# Claude Code worktree / agent state
-.claude/
+# spec-loop process artifacts (plan/implement/review handoffs + coverage)
+loop/
 
-# Generated wizard / case artifacts under the hotRoom demo
-test/agent/hotRoom/0/
-test/agent/hotRoom/constant/
-test/agent/hotRoom/system/
-test/agent/hotRoom/__marimo__/
-test/agent/hotRoom/schemas/
+# working specs (kept local, not part of the published tree)
+plans/
+reviews/
+
+# sphinx-gallery generated example artifacts
+examples/how-to/dag.html
+
+test/*/constant/polyMesh/
+tutorials/*/processor*/
+tutorials/*/*/processor*/
+*/constant/polyMesh/
+test/*/processor*/

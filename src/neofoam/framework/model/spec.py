@@ -13,7 +13,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, Callable, Literal, Optional, Sequence, TypeVar, cast
+from typing import Any, Callable, Iterable, Literal, Optional, TypeVar, cast
 
 from pydantic import BaseModel
 
@@ -25,10 +25,12 @@ from neofoam.framework.dependency_resolver import (
 from neofoam.framework.operations import Operation, Operations, SequentialOp
 from neofoam.framework.types import OperationMetadata, OperationNumber
 
+from .interface import ModelInterface
 from .runtime import ModelRuntime
 
 
 _ConfigT = TypeVar("_ConfigT", bound=type)
+_T = TypeVar("_T")
 
 
 def _snake_case(name: str) -> str:
@@ -64,6 +66,8 @@ class ModelSpec:
 
         self._operations: list[tuple[Any, dict[str, Any]]] = []
         self._operation_collection_func: Optional[Callable[..., Any]] = None
+
+        self._interfaces: dict[str, ModelInterface[Any]] = {}
 
         self._dependency_resolver = DependencyResolver()
 
@@ -268,6 +272,53 @@ class ModelSpec:
         return func
 
     # ------------------------------------------------------------------
+    # Interface ownership (model-owned extension points)
+    # ------------------------------------------------------------------
+
+    def interface(self, fold: Callable[[Iterable[_T]], _T]) -> ModelInterface[_T]:
+        """Declare an interface owned by this model.
+
+        The decorated function's ``__name__`` is the interface name and its body
+        is the single fold (defining the empty case). Returns a ``ModelInterface``
+        handle, also registered on this model so it is reachable from its owner.
+        """
+        handle: ModelInterface[_T] = ModelInterface(
+            name=fold.__name__, owner=self, fold=fold
+        )
+        if handle.name in self._interfaces:
+            raise RuntimeError(
+                f"Model '{self.name}': interface '{handle.name}' is already declared."
+            )
+        self._interfaces[handle.name] = handle
+        return handle
+
+    def contributes(
+        self, target: ModelInterface[_T]
+    ) -> Callable[[Callable[..., _T]], Callable[..., _T]]:
+        """Register an operation-style contribution to *target*, owned by self.
+
+        The function is recorded against *target* and tagged with this contributing
+        model, then returned unchanged. It participates in *target*'s live fold
+        (``BoundModelInterface.__call__``) iff this model is active for the case.
+        """
+        if not isinstance(target, ModelInterface):
+            raise TypeError(
+                f"Model '{self.name}': contributes(...) target must be a "
+                "ModelInterface declared via @<model>.interface, got "
+                f"{type(target).__name__}."
+            )
+
+        def decorator(func: Callable[..., _T]) -> Callable[..., _T]:
+            return target._register_contribution(func, owner=self)
+
+        return decorator
+
+    @property
+    def declared_interfaces(self) -> dict[str, ModelInterface[Any]]:
+        """The interfaces this model owns, by name (reachable from the owner)."""
+        return dict(self._interfaces)
+
+    # ------------------------------------------------------------------
     # Instantiation
     # ------------------------------------------------------------------
 
@@ -360,7 +411,18 @@ class ModelSpec:
     # ------------------------------------------------------------------
 
     def register_with(self, plugin_interface: type) -> "ModelSpec":
-        """Register this ModelSpec with a PluginSystem interface."""
+        """Register this ModelSpec with a PluginSystem interface (idempotent by name)."""
+        from neofoam.core.plugin_system import PluginSystem
+
+        registry = PluginSystem.get_registered(plugin_interface.__name__)
+        if registry is not None and self.name in {
+            plugin_cls.__name__ for plugin_cls in registry.plugin_registry
+        }:
+            # Already registered (e.g. a module re-import): keep a single catalog
+            # entry so the discriminated union does not collide on the model_type
+            # literal.
+            return self
+
         wrapper_class = type(
             self.name,
             (BaseModel,),

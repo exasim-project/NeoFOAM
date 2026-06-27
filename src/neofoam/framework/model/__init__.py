@@ -12,9 +12,21 @@ Public API:
 
 from .spec import ModelSpec, Model
 from .runtime import ModelRuntime
+from .interface import (
+    BoundModelInterface,
+    ModelInterface,
+    active_contributors,
+    bind_model_interface,
+    bind_owned_interfaces,
+)
 
 __all__ = [
     "ModelSpec",
     "ModelRuntime",
     "Model",
+    "ModelInterface",
+    "BoundModelInterface",
+    "active_contributors",
+    "bind_model_interface",
+    "bind_owned_interfaces",
 ]

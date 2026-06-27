@@ -9,7 +9,7 @@ Created by ModelSpec.instantiate(). Never shared between solver runs.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -31,6 +31,9 @@ class ModelRuntime:
     spec: "ModelSpec"
     name: str  # unique: "<spec.name>_<instance_id>"
     config: Any  # loaded config — updated during RESOLVE
+    # Per-case live interfaces this runtime owns, by interface name. Populated by
+    # bind_model_interface(...) (today from tests; from @build in a later iteration).
+    bound_interfaces: dict[str, Any] = field(default_factory=dict)
 
     def run_resolve(self, ctx: "ConfigContext") -> None:
         """Call spec's resolve func; store the returned updated config."""
