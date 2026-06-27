@@ -237,11 +237,12 @@ def test_incompressible_fluid_models_required_vs_optional() -> None:
     )
 
     cat = {e.name: e for e in model_catalog(incompressibleFluid)}
-    # Core families are required; buoyancy + adaptive stepping are optional.
+    # Core families are required; buoyancy + time-step contributions are optional.
     assert cat["Pimple"].required and cat["Newtonian"].required
     assert cat["laminar"].required
     assert cat["boussinesq"].required is False
-    assert cat["adaptiveTimeStep"].required is False
+    assert cat["courant"].required is False
+    assert cat["maxDeltaT"].required is False
 
 
 def test_incompressible_fluid_buoyancy_is_a_toggle() -> None:
@@ -265,19 +266,3 @@ def test_incompressible_fluid_buoyancy_is_a_toggle() -> None:
         "TFieldConfig",
         "alphatFieldConfig",
     }
-
-
-def test_incompressible_fluid_adaptive_time_step_is_a_toggle() -> None:
-    pytest.importorskip("pybFoam")
-    from neofoam.framework.solver.configurations import toggle_models
-    from neofoam.solver.incompressibleFluid.incompressibleFluid import (
-        incompressibleFluid,
-    )
-
-    tms = {t.name: t for t in toggle_models(incompressibleFluid)}
-    assert "adaptiveTimeStep" in tms
-    cfl = tms["adaptiveTimeStep"]
-    assert cfl.label == "Adaptive time step (Courant)"
-    # owns only the controlDict slice; no 0/ fields
-    assert {c.__name__ for c in cfl.dicts} == {"CourantControlConfig"}
-    assert cfl.fields == []

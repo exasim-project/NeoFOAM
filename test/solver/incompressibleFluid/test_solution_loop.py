@@ -127,7 +127,7 @@ def test_loop_backend_steps_inject_backend_and_logger() -> None:
     steps = loop_backend_steps()
     by_name = {s.name: s for s in steps}
     # the CFL measurement provider is no longer here — it belongs to the opt-in
-    # adaptiveTimeStep model, so loop_backend_steps only wires backend + logger
+    # courant time-step model, so loop_backend_steps only wires backend + logger
     assert set(by_name) == {
         "models.loop_backend",
         "models.loop_logger",

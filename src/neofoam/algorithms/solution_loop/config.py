@@ -53,10 +53,12 @@ class TimeControlConfig(WriteControlConfig):
     extends the loop by extending this schema.
 
     Adaptive time-stepping (``adjustTimeStep``/``maxCo``/``maxDeltaT``) is no
-    longer part of the core config: it is an opt-in time-step model
-    (:mod:`neofoam.solver.incompressibleFluid.models.adaptive_time_step`) that
-    installs its own deltaT constraints, so the core loop stays a fixed-step
-    advancer unless a stability model is selected.
+    longer part of the core config: it is provided by opt-in time-step
+    contribution models
+    (:mod:`neofoam.solver.incompressibleFluid.models.courant` and
+    :mod:`neofoam.solver.incompressibleFluid.models.max_delta_t`) that fold their
+    own deltaT constraints in, so the core loop stays a fixed-step advancer unless
+    such a model is active.
     """
 
     endTime: float = Field(gt=0)

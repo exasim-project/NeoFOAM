@@ -7,7 +7,7 @@ This is the contract the wizard / AI config-filling flows rely on: writing the
 predefined configs + ``0/`` fields (no copied files) yields a case the solver can
 actually run. We prove it by writing the preset, generating a *small* mesh
 in-process with pybFoam blockMesh, and running a **single** solver iteration — a
-missing or mis-wired config raises during init or the PIMPLE loop. Preset
+missing or misconfigured config raises during init or the PIMPLE loop. Preset
 parameters (nu, lid velocity, time control) flow through to the written configs.
 
 Gated on pybFoam (in-process meshing + the NeoN solver); no native OpenFOAM

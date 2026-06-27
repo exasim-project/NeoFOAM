@@ -26,9 +26,10 @@ class ControlDictConfig(TimeControlConfig):
     the solver-specific keys and binds the file via ``@IOStrategy``.
 
     Adaptive stepping (``adjustTimeStep``/``maxCo``/``maxDeltaT``) is **not** here:
-    it co-owns ``controlDict`` through the opt-in
-    :class:`~neofoam.solver.incompressibleFluid.models.adaptive_time_step.CourantControlConfig`,
-    written only when the adaptive time-step model is selected.
+    it co-owns ``controlDict`` through the opt-in time-step contribution models
+    :class:`~neofoam.solver.incompressibleFluid.models.courant.CourantConfig` and
+    :class:`~neofoam.solver.incompressibleFluid.models.max_delta_t.MaxDeltaTConfig`,
+    written only when those models are active.
     """
 
     application: str = "pimpleFoam"

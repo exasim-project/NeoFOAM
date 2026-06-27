@@ -13,7 +13,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, Callable, Iterable, Literal, Optional, TypeVar, cast
+from typing import Any, Callable, Iterable, Literal, Optional, Sequence, TypeVar, cast
 
 from pydantic import BaseModel
 

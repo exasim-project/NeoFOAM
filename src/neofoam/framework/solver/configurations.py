@@ -189,9 +189,7 @@ def model_catalog(solver: Any) -> list[ModelEntry]:
     ):
         for family in families:
             for spec in family.all_specs():
-                owned = cast(
-                    "list[type[BaseConfig]]", collect_config_classes([spec])
-                )
+                owned = cast("list[type[BaseConfig]]", collect_config_classes([spec]))
                 out.append(
                     ModelEntry(
                         name=spec.name,
@@ -218,9 +216,7 @@ def toggle_models(solver: Any) -> list[ToggleModel]:
         for spec in family.all_specs():
             if not getattr(spec, "toggle", False):
                 continue
-            owned = cast(
-                "list[type[BaseConfig]]", collect_config_classes([spec])
-            )
+            owned = cast("list[type[BaseConfig]]", collect_config_classes([spec]))
             out.append(
                 ToggleModel(
                     name=spec.name,
