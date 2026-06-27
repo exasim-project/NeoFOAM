@@ -9,3 +9,5 @@ function(foam_adapter_example NAME)
 endfunction()
 
 add_subdirectory(neoIcoFoam)
+add_subdirectory(neoPisoFoam)
+add_subdirectory(neoPimpleFoam)

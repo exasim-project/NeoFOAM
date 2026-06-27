@@ -1,5 +1,9 @@
-# Version 0.3.0 ()
-- Update submodule regularly by dependabot [#209](https://github.com/exasim-project/NeoFOAM/pull/209)
+# Version 0.3.0 (unreleased)
+- Enable mempool via controlDict [#246](https://github.com/exasim-project/NeoFOAM/pull/246)
+- Add SpalartAllmarasDDES turbulence model and integration test [#233](https://github.com/exasim-project/NeoFOAM/pull/233)
+- Added continuity error calculation [#306](https://github.com/exasim-project/NeoFOAM/pull/306)
+- Add distributed (processor-boundary) support for neoIcoFoam: processor-face geometry, non-orthogonal snGrad and viscous-stress correction with halo exchange, split-storage SurfaceField read/write with BC-preserving restart, and a tiltedCube distributed test case [#310](https://github.com/exasim-project/NeoFOAM/pull/310)
+- Added forceCoeffs functionObject and required infrastructure e.g. IO helpers [#265](https://github.com/exasim-project/NeoFOAM/pull/265)
 - Implement python framework [#133](https://github.com/exasim-project/NeoFOAM/pull/133)
 - Implement added icofoam.py and pimplefoam.py [#151](https://github.com/exasim-project/NeoFOAM/pull/151)
 - added input validation [#156](https://github.com/exasim-project/NeoFOAM/pull/156)
@@ -7,16 +11,20 @@
 - load, write and validate config files [#236](https://github.com/exasim-project/NeoFOAM/pull/236)
 - add openfoam reader and writer [#242](https://github.com/exasim-project/NeoFOAM/pull/242)
 - added neoicofoam [243](https://github.com/exasim-project/NeoFOAM/pull/243)
-- Allow auto grabbing version from submodule without initialization and update the documentation [#210](https://github.com/exasim-project/NeoFOAM/pull/210)
-- Refactor graph and init package  [#284](https://github.com/exasim-project/NeoFOAM/pull/284)
+- Refactor graph and init package [#284](https://github.com/exasim-project/NeoFOAM/pull/284)
 - Replace Model/Solver/Simulation with Spec/Runtime architecture [#285](https://github.com/exasim-project/NeoFOAM/pull/285)
 - Add incompressibleFluid solver [#299](https://github.com/exasim-project/NeoFOAM/pull/299)
 - added solutionLoop and Writer [#309](https://github.com/exasim-project/NeoFOAM/pull/309)
 - added turbulence and viscosity models [#313](https://github.com/exasim-project/NeoFOAM/pull/313)
+- Per-package install layout for incremental pip rebuilds (0 NeoN/NeoFOAM recompiles on a no-op install) [#343](https://github.com/exasim-project/NeoFOAM/pull/343)
+
+## Development
+- Update submodule regularly by dependabot [#209](https://github.com/exasim-project/NeoFOAM/pull/209)
+- Allow auto grabbing version from submodule without initialization and update the documentation [#210](https://github.com/exasim-project/NeoFOAM/pull/210)
 
 ## Fixes
 - Fix spurious bad_any_cast errors when reading fixedValue boundaries [#194](https://github.com/exasim-project/NeoFOAM/pull/194)
-
+- Distributed/restart robustness: preserve OpenFOAM BC types and promote vector BC components on read for restart; default the smoothSolver preconditioner to diagonal (avoids a ParIc FPE on the non-symmetric momentum matrix) [#310](https://github.com/exasim-project/NeoFOAM/pull/310)
 
 # Version 0.2.0 (2025.12.01)
 - Use NeoN logging functionality [#144](https://github.com/exasim-project/NeoFOAM/pull/144)

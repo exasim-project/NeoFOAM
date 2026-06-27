@@ -44,8 +44,22 @@ status_code=$(curl -s -o /dev/null -w "%{http_code}" \
 
 
 if [ "$status_code" -eq 200 ]; then
-  NEON_BRANCH="$BRANCH"
-  echo "NeoN branch '${BRANCH}' exists on LRZ GitLab."
+  echo "NeoN branch '${BRANCH}' exists on LRZ GitLab; checking whether it is already merged into develop..."
+  # Prefer the same-named NeoN branch only while it still has commits NOT yet in develop.
+  # A same-named branch already merged into develop is stale and would build against an
+  # outdated NeoN API, so fall back to develop in that case.
+  # Direct comparison develop..branch (straight=true): .commits are the commits in <branch>
+  # that are not reachable from develop; an empty list means the branch is fully merged.
+  compare_url="https://${HOST}/api/v4/projects/${GROUP}%2F${NEON_PROJECT}/repository/compare?from=develop&to=${ENCODED_BRANCH}&straight=true"
+  unmerged_commits=$(curl -s "$compare_url" | jq '.commits | length' 2>/dev/null || echo "")
+  echo "NeoN branch '${BRANCH}' has ${unmerged_commits:-<unknown>} commit(s) not in develop."
+  if [ "$unmerged_commits" = "0" ]; then
+    NEON_BRANCH="develop"
+    echo "NeoN branch '${BRANCH}' is already merged into develop. Using '${NEON_BRANCH}'."
+  else
+    NEON_BRANCH="$BRANCH"
+    echo "NeoN branch '${BRANCH}' has unmerged commits (or status unknown). Using '${NEON_BRANCH}'."
+  fi
 else
   NEON_BRANCH="develop"
   echo "NeoN branch '${BRANCH}' does not exist on LRZ GitLab. Using '${NEON_BRANCH}'."

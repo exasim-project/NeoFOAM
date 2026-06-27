@@ -1,0 +1,59 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     |                                                 |
+|   \\  /    A nd           | tutorials/tiltedCube background mesh             |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+scale   1;
+
+// Background box: channel 3 x 1.2 x 1.2 around a tilted cube at x~1.1.
+// Coarse on purpose -- snappy refinement adds the local resolution.
+vertices
+(
+    (0   0   0)
+    (3   0   0)
+    (3   1.2 0)
+    (0   1.2 0)
+    (0   0   1.2)
+    (3   0   1.2)
+    (3   1.2 1.2)
+    (0   1.2 1.2)
+);
+
+blocks
+(
+    hex (0 1 2 3 4 5 6 7) (20 8 8) simpleGrading (1 1 1)
+);
+
+edges ();
+
+boundary
+(
+    inlet  { type patch; faces ( (0 4 7 3) ); }
+    outlet { type patch; faces ( (1 2 6 5) ); }
+    walls
+    {
+        type wall;
+        faces
+        (
+            (0 1 5 4)
+            (3 7 6 2)
+            (0 3 2 1)
+            (4 5 6 7)
+        );
+    }
+);
+
+mergePatchPairs ();
+
+// ************************************************************************* //

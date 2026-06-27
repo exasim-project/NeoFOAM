@@ -35,11 +35,13 @@ void constrainHbyA(
     }
 }
 
-nnfvcc::VolumeField<scalar> computeRAU(const PDESolver<Vec3>& expr)
+nnfvcc::VolumeField<scalar> computeRAU(const PDE<Vec3>& expr)
 {
-    // TODO this assumes an assembled matrix
-    // force assembly if not assembled
     const auto& ls = expr.linearSystem();
+    NF_ASSERT(
+        ls.matrix().values().size() > 0,
+        "computeRAU: linear system not assembled - call PDE::assemble() before reading rAU"
+    );
     const auto& mesh = expr.getField().mesh();
 
     auto rABCs = nnfvcc::createExtrapolatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh);
@@ -56,11 +58,16 @@ nnfvcc::VolumeField<scalar> computeRAU(const PDESolver<Vec3>& expr)
 }
 
 std::tuple<nnfvcc::VolumeField<scalar>, nnfvcc::VolumeField<Vec3>>
-computeRAUandHByA(const PDESolver<Vec3>& expr)
+computeRAUandHByA(const PDE<Vec3>& expr)
 {
     const auto& u = expr.getField();
     const auto& mesh = u.mesh();
     const auto& ls = expr.linearSystem();
+    NF_ASSERT(
+        ls.matrix().values().size() > 0,
+        "computeRAUandHByA: linear system not assembled - call PDE::assemble() before "
+        "reading rAU/HbyA"
+    );
 
     auto rABCs = nnfvcc::createExtrapolatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh);
     auto rAU = nnfvcc::VolumeField<scalar>(expr.exec(), "rAU", mesh, rABCs);
@@ -77,6 +84,44 @@ computeRAUandHByA(const PDESolver<Vec3>& expr)
         hByA.internalVector()
     );
 
+    // Subtract processor ghost-cell contributions missing from the CSR pass above.
+    // The CSR matrix only contains internal-face off-diagonals; proc ghost coupling lives in
+    // offDiagonalMatrix (indexed by proc face, 0..nProcFaces-1).  Owner cell index comes from
+    // the mesh topology (boundaryMesh().faceOwners() at the proc-face tail), NOT from the
+    // offDiagonalMatrix sparsity which is never populated with cell indices.
+    const auto nProcFaces = mesh.nProcBoundaryFaces();
+    if (nProcFaces > 0)
+    {
+        const auto nBoundaryFaces = mesh.nBoundaryFaces();
+        const auto nlValues = ls.offDiagonalMatrix().values().view();
+        const auto bfOwners = mesh.boundaryMesh().faceOwners().view();
+        const auto uGhostV = u.boundaryData().value().view();
+        const auto rAUV = rAU.internalVector().view();
+        const auto volV = mesh.cellVolumes().view();
+        auto hByAV = hByA.internalVector().view();
+        const auto rowOrderV = mesh.boundaryMesh().getRowOrderWriteIndex().view();
+
+        NeoN::parallelFor(
+            expr.exec(),
+            {0, nProcFaces},
+            NEON_LAMBDA(const NeoN::localIdx procFacei) {
+                auto own = static_cast<std::size_t>(bfOwners[nBoundaryFaces + procFacei]);
+                // scalar off-diagonal coupling (segregated vector-solve form): the single
+                // coefficient applies to every velocity component. The future coupled Vec3
+                // matrix path would index coeff per component (coeff[0..2]).
+                // nlValues are stored in row-sorted order; use rowOrderV to map original
+                // proc-face index to its sorted position.
+                auto coeff = nlValues[rowOrderV[procFacei]];
+                auto uG = uGhostV[nBoundaryFaces + procFacei];
+                auto scale = rAUV[own] / volV[own];
+                Kokkos::atomic_sub(&hByAV[own][0], coeff * uG[0] * scale);
+                Kokkos::atomic_sub(&hByAV[own][1], coeff * uG[1] * scale);
+                Kokkos::atomic_sub(&hByAV[own][2], coeff * uG[2] * scale);
+            },
+            "computeHbyAProcBoundary"
+        );
+    }
+
     rAU.correctBoundaryConditions();
     hByA.correctBoundaryConditions();
     return {rAU, hByA};
@@ -85,16 +130,17 @@ computeRAUandHByA(const PDESolver<Vec3>& expr)
 
 void updateFaceVelocity(
     const nnfvcc::SurfaceField<scalar>& predictedPhi,
-    const PDESolver<scalar>& expr,
+    const PDE<scalar>& expr,
     nnfvcc::SurfaceField<scalar>& phi
 )
 {
     const auto& mesh = phi.mesh();
     const auto& p = expr.getField();
     const auto nInternalFaces = mesh.nInternalFaces();
+    const auto nBoundaryFaces = mesh.nBoundaryFaces();
     const auto exec = phi.exec();
     const auto [owner, neighbour, internalP] =
-        views(mesh.faceOwner(), mesh.faceNeighbour(), p.internalVector());
+        views(mesh.faceOwners(), mesh.faceNeighbors(), p.internalVector());
 
     const auto& ls = expr.linearSystem();
     const auto rowPtrs = ls.matrix().sparsity()->rowOffs().view();
@@ -102,6 +148,18 @@ void updateFaceVelocity(
     const auto ownOffs = ls.faceToMatrixAddress()->ownerOffset().view();
     auto values = ls.matrix().values().view();
     auto [iPhi, iPredPhi] = views(phi.internalVector(), predictedPhi.internalVector());
+
+    // Deferred non-orthogonal correction flux (OpenFOAM fvMatrix::faceFluxCorrectionPtr_).
+    // The Laplacian assembly stashed the exact per-face correction it deferred to the RHS — using
+    // the field as it stood at assembly time — so adding it back here gives
+    // pEqn.flux() = orthogonal matrix-coefficient flux + faceFluxCorrection and div(phi) closes on
+    // non-orthogonal meshes. Reusing the stored value (rather than recomputing from the post-solve
+    // p) is what makes the closure exact, and avoids an extra snGrad evaluation. Null pointer ⇒
+    // orthogonal / uncorrected scheme ⇒ no correction.
+    const auto& ffcPtr = ls.faceFluxCorrection();
+    const bool hasCorrection = (ffcPtr != nullptr) && (ffcPtr->size() == nInternalFaces);
+    NeoN::Vector<scalar> noCorrection(exec, 0);
+    const auto ffc = hasCorrection ? ffcPtr->view() : noCorrection.view();
 
     // TODO add to NEON
     NeoN::parallelFor(
@@ -117,29 +175,53 @@ void updateFaceVelocity(
             auto upper = values[rowNeiStart + neiOffs[facei]];
             auto lower = values[rowOwnStart + ownOffs[facei]];
 
-            iPhi[facei] = iPredPhi[facei] - (upper * internalP[nei] - lower * internalP[own]);
+            scalar corrFlux = hasCorrection ? ffc[facei] : scalar(0);
+            iPhi[facei] =
+                iPredPhi[facei] - (upper * internalP[nei] - lower * internalP[own]) - corrFlux;
         }
     );
 
     auto [bvalue, bPredValue, faceCells] = views(
         phi.boundaryData().value(),
         predictedPhi.boundaryData().value(),
-        mesh.boundaryMesh().faceCells()
+        mesh.boundaryMesh().faceOwners()
     );
 
     const auto [mValue, rhsValue] = views(ls.boundaryMatrix(), ls.boundaryRhs());
 
     NeoN::parallelFor(
         exec,
-        {nInternalFaces, iPhi.size()},
-        NEON_LAMBDA(const size_t facei) {
-            auto bfacei = facei - nInternalFaces;
+        {0, static_cast<size_t>(mesh.nBoundaryFaces())},
+        NEON_LAMBDA(const size_t bfacei) {
             scalar bflux =
                 (rhsValue[bfacei] - mValue.values[bfacei] * internalP[faceCells[bfacei]]);
-            iPhi[facei] = iPredPhi[facei] - bflux;
             bvalue[bfacei] = bPredValue[bfacei] - bflux;
         }
     );
+
+    // Processor-boundary faces: proc patch sits at the tail of boundaryData().value()
+    // starting at index nBoundaryFaces. Indexed directly as [0, nProcFaces) to stay
+    // within the boundary-data buffer (phi.internalVector() only covers internal faces).
+    const auto nProcFaces = mesh.nProcBoundaryFaces();
+    if (nProcFaces > 0)
+    {
+        const auto nlValues = ls.offDiagonalMatrix().values().view();
+        const auto pBoundV = p.boundaryData().value().view();
+        const auto rowOrderV = mesh.boundaryMesh().getRowOrderWriteIndex().view();
+
+        NeoN::parallelFor(
+            exec,
+            {0, nProcFaces},
+            NEON_LAMBDA(const size_t procFacei) {
+                auto bfacei = nBoundaryFaces + procFacei;
+                auto own = static_cast<std::size_t>(faceCells[bfacei]);
+                auto coupling = nlValues[rowOrderV[procFacei]];
+                auto pGhost = pBoundV[bfacei];
+                scalar pflux = coupling * (pGhost - internalP[own]);
+                bvalue[bfacei] = bPredValue[bfacei] - pflux;
+            }
+        );
+    }
 }
 
 void updateVelocity(
@@ -164,6 +246,7 @@ nnfvcc::SurfaceField<scalar> flux(const nnfvcc::VolumeField<Vec3>& volField)
 
     const auto& mesh = volField.mesh();
     const auto nInternalFaces = mesh.nInternalFaces();
+    const auto nBoundaryFaces = mesh.boundaryMesh().nBoundaryFaces();
     NeoN::Input input = NeoN::TokenList({std::string("linear")});
     auto linear = nnfvcc::SurfaceInterpolation<Vec3>(exec, mesh, input);
     const auto weight = linear.weight(volField);
@@ -173,14 +256,14 @@ nnfvcc::SurfaceField<scalar> flux(const nnfvcc::VolumeField<Vec3>& volField)
 
     NeoN::fill(faceFlux.internalVector(), NeoN::zero<scalar>());
     NeoN::fill(faceFlux.boundaryData().value(), NeoN::zero<scalar>());
-    const auto [owner, neighbour, weightIn, faceAreas, volFieldIn, volFieldBc, bSf] = views(
-        mesh.faceOwner(),
-        mesh.faceNeighbour(),
+    const auto [owner, neighbour, weightIn, faceNormals, volFieldIn, volFieldBc, bSf] = views(
+        mesh.faceOwners(),
+        mesh.faceNeighbors(),
         weight.internalVector(),
-        mesh.faceAreas(),
+        mesh.faceNormals(),
         volField.internalVector(),
         volField.boundaryData().value(),
-        mesh.boundaryMesh().sf()
+        mesh.boundaryMesh().faceNormals()
     );
 
     auto [faceFluxIn, bvalue] = views(faceFlux.internalVector(), faceFlux.boundaryData().value());
@@ -193,19 +276,32 @@ nnfvcc::SurfaceField<scalar> flux(const nnfvcc::VolumeField<Vec3>& volField)
             auto nei = static_cast<std::size_t>(neighbour[facei]);
 
             faceFluxIn[facei] =
-                faceAreas[facei]
+                faceNormals[facei]
                 & (weightIn[facei] * (volFieldIn[own] - volFieldIn[nei]) + volFieldIn[nei]);
         }
     );
 
     NeoN::parallelFor(
         exec,
-        {nInternalFaces, faceFluxIn.size()},
-        NEON_LAMBDA(const size_t facei) {
-            auto faceBCI = facei - nInternalFaces;
+        {0, nBoundaryFaces},
+        NEON_LAMBDA(const size_t faceBCI) { bvalue[faceBCI] = bSf[faceBCI] & volFieldBc[faceBCI]; }
+    );
 
-            faceFluxIn[facei] = bSf[faceBCI] & volFieldBc[faceBCI];
-            bvalue[faceBCI] = bSf[faceBCI] & volFieldBc[faceBCI];
+    // Processor-boundary faces.
+    // faceBCI = nBoundaryFaces + proci -> proc tail of boundaryData().value()
+    const auto nProcFaces = mesh.nProcBoundaryFaces();
+    const auto procFaceCells = mesh.boundaryMesh().faceOwners().view();
+    const auto bndWeights = mesh.boundaryMesh().weights().view();
+
+    NeoN::parallelFor(
+        exec,
+        {0, nProcFaces},
+        NEON_LAMBDA(const size_t proci) {
+            auto faceBCI = static_cast<size_t>(nBoundaryFaces) + proci;
+            auto own = static_cast<std::size_t>(procFaceCells[faceBCI]);
+            auto w = bndWeights[faceBCI];
+            auto faceVal = w * (volFieldIn[own] - volFieldBc[faceBCI]) + volFieldBc[faceBCI];
+            bvalue[faceBCI] = bSf[faceBCI] & faceVal;
         }
     );
 
