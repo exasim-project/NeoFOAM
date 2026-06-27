@@ -17,6 +17,8 @@
 - added solutionLoop and Writer [#309](https://github.com/exasim-project/NeoFOAM/pull/309)
 - added turbulence and viscosity models [#313](https://github.com/exasim-project/NeoFOAM/pull/313)
 - Per-package install layout for incremental pip rebuilds (0 NeoN/NeoFOAM recompiles on a no-op install) [#343](https://github.com/exasim-project/NeoFOAM/pull/343)
+- Add model-owned interfaces: extension points a model owns whose contributions are gated by owning-model activation; re-expresses time-step constraints and loop conditions as contributions and drives deltaT from the folded `timeStepConstraint` [#342](https://github.com/exasim-project/NeoFOAM/pull/342)
+- Add the spec-loop engineering workflow (`write-spec`/`spec-loop` skills + planner/implementer/reviewer agents) [#342](https://github.com/exasim-project/NeoFOAM/pull/342)
 
 ## Development
 - Update submodule regularly by dependabot [#209](https://github.com/exasim-project/NeoFOAM/pull/209)

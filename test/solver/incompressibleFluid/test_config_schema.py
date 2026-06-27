@@ -36,3 +36,7 @@ def test_config_classes_is_case_free() -> None:
     assert any("fvSolution" in n for n in names)
     # Optional boussinesq model is listed without running detection.
     assert "BoussinesqConfig" in names
+    # Optional time-step models are part of the case-free catalog too:
+    # registration makes them discoverable without running a case.
+    assert "CourantConfig" in names
+    assert "MaxDeltaTConfig" in names
