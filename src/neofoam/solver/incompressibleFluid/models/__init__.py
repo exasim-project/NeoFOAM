@@ -13,6 +13,7 @@ from .pressure_velocity import PressureVelocityAlgorithm
 from .boussinesq import boussinesq
 from .courant import courant
 from .max_delta_t import maxDeltaT
+from .run_time_control import residualControl, runTimeControl
 
 __all__ = [
     "incompressibleFluidModel",
@@ -20,4 +21,6 @@ __all__ = [
     "boussinesq",
     "courant",
     "maxDeltaT",
+    "runTimeControl",
+    "residualControl",
 ]

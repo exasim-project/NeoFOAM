@@ -1,0 +1,31 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+
+application     pimpleFoam;
+startFrom       startTime;
+startTime       0;
+stopAt          endTime;
+endTime         1;
+deltaT          0.1;
+writeControl    timeStep;
+writeInterval   100;
+
+functions
+{
+    runTimeControl1
+    {
+        type            runTimeControl;
+        libs            (utilityFunctionObjects);
+        conditions
+        {
+            divergence  { type minMax; mode maximum; fields (U); value 500; groupID -1; }
+            uResidual   { type equationInitialResidual; fields (U); value 1e-4; mode minimum; groupID 1; }
+        }
+        satisfiedAction abort;
+    }
+}

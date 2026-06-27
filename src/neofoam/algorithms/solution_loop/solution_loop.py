@@ -16,7 +16,9 @@ Three collaborating pieces of one concern:
   write-time decision all live here), takes the ``min`` over injectable
   :class:`~neofoam.algorithms.constraints.time_step.DeltaTConstraint`s for the next
   ``deltaT``, and delegates the outer-loop predicate to a ``control``
-  (:class:`~neofoam.algorithms.solution_loop.control.SolutionControl`). Stability
+  (:class:`~neofoam.algorithms.solution_loop.control.SolutionControl`, which now
+  governs advancement only — the run ends when the folded ``loopCondition`` is
+  satisfied). Stability
   limits are folded per step from the model-owned ``timeStepConstraint`` interface
   (the active ``courant``/``maxDeltaT`` contributors) — there is no ``set_courant``
   drive.
@@ -39,6 +41,7 @@ from neofoam.algorithms.constraints.time_step import (
     DeltaTConstraint,
     next_delta_t,
 )
+from neofoam.algorithms.solution_loop.conditions import Action, ConditionVote
 from neofoam.algorithms.solution_loop.interfaces import (
     VGREAT,
     loopCondition,
@@ -134,6 +137,9 @@ class SolutionLoop:
         # fold, which the outer-loop predicate ANDs with running() to stop the run.
         self.next_dt: float = VGREAT
         self.keep_running: bool = True
+        # The action of the latest folded loopCondition vote: "end" = clean stop,
+        # "abort" = failure stop. `failed` surfaces an abort to the caller.
+        self.stop_action: Action = "end"
         self._growth_cap = growth_cap
         self._courant = 0.0
         self._backend: LoopBackend = (
@@ -279,6 +285,14 @@ class SolutionLoop:
     def conditions(self) -> list[Callable[["SolutionLoop"], bool]]:
         return list(self._conditions)
 
+    @property
+    def failed(self) -> bool:
+        """True when the run was stopped by a satisfied ``abort`` condition.
+
+        A clean ``end`` stop (or a run still going) reports ``False``.
+        """
+        return (not self.keep_running) and self.stop_action == "abort"
+
     def all_conditions_hold(self) -> bool:
         """Fold the constructor-injected conditions with ``all`` (empty → True)."""
         return all(c(self) for c in self._conditions)
@@ -327,8 +341,8 @@ def make_solution_loop(
 
     Stability limits are no longer seeded here: they are folded per step from the
     model-owned ``timeStepConstraint`` interface (the active ``courant``/``maxDeltaT``
-    contributors). ``residualControl`` is an fvSolution concern, so steady
-    convergence is wired by passing a configured ``control``.
+    contributors). The run ends when the folded ``loopCondition`` is satisfied;
+    ``control`` governs advancement only.
     """
     if integration is None:
         integration = TransientIntegration()
@@ -362,11 +376,12 @@ def _engine(ctx: Context) -> SolutionLoop:
 class SolutionLoopPredicate:
     """Outer-loop predicate — delegates to the ``solution_loop`` engine.
 
-    The engine's :class:`SolutionControl` advances a transient run to
-    ``endTime`` and ends a steady run on residual convergence, so the solver
-    never special-cases steady vs unsteady. The run also ends when the folded
-    ``loopCondition`` (recorded as ``keep_running`` by ``set_time_step``,
-    default ``True``) votes to stop.
+    The engine's :class:`SolutionControl` advances the run; the run ends when the
+    folded ``loopCondition`` :class:`ConditionVote` is satisfied (residual
+    convergence and every other stop criterion flow through it, so the solver never
+    special-cases steady vs unsteady) — ``set_time_step`` records the continue-flag
+    as ``keep_running = not satisfied`` (default ``True``) and surfaces an ``abort``
+    verdict via ``loop.failed``.
     """
 
     def __call__(self, ctx: Context) -> bool:
@@ -390,10 +405,16 @@ def set_time_step(
     interface with the **live** Context so the active contributing models resolve
     their fields/config at this step. No active constraint -> ``min`` default
     ``VGREAT`` -> the step is unchanged (fixed step).
+
+    ``loopCondition`` folds to a :class:`ConditionVote` *stop* verdict: the loop
+    continue-flag is ``not result.satisfied`` (empty fold -> not satisfied -> keep
+    running), and an ``abort`` verdict is surfaced via ``loop.failed``.
     """
     loop = _engine(ctx)
     ctx.fields["deltaT"] = loop.current_delta_t()
-    loop.keep_running = conditions(ctx)  # type: ignore[misc]
+    result: ConditionVote = conditions(ctx)  # type: ignore[misc]
+    loop.keep_running = not result.satisfied
+    loop.stop_action = result.action
     limit = constraints(ctx)  # type: ignore[misc]
     loop.next_dt = limit
     loop.constrain_delta_t(limit)

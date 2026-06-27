@@ -42,3 +42,31 @@ def create_simple_control(_context: dict[str, Any]) -> SimpleControl:
         consistent=d.getOrDefault[bool]("consistent", False),
         useResidualConvergence=False,
     )
+
+
+def read_residual_control(algo_dict: Any) -> dict[str, float]:
+    """Read the ``residualControl`` of a PIMPLE/SIMPLE subdict.
+
+    Handles both OpenFOAM forms — the scalar shorthand (``U 1e-3``) and the
+    sub-dict form (``{ tolerance; relTol }``) — and returns ``{field: tolerance}``
+    keyed by the literal ``residualControl`` entry (regex keys like ``"(k|epsilon)"``
+    are kept verbatim). Only the absolute ``tolerance`` is honored; ``relTol`` is
+    ignored. An absent ``residualControl`` yields an empty mapping.
+    """
+    if not algo_dict.found("residualControl"):
+        return {}
+    rc = algo_dict.subDict("residualControl")
+    out: dict[str, float] = {}
+    for word in rc.toc():
+        name = str(word)
+        if rc.isDict(name):
+            sub = rc.subDict(name)
+            if not sub.found("tolerance"):
+                raise ValueError(
+                    f"residualControl entry '{name}' is a sub-dict without a "
+                    "'tolerance' entry"
+                )
+            out[name] = float(sub.get_scalar("tolerance"))
+        else:
+            out[name] = float(rc.get_scalar(name))
+    return out

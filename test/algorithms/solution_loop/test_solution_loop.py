@@ -30,6 +30,7 @@ from neofoam.algorithms.constraints.time_step import (
     CourantConstraint,
     MaxDeltaTConstraint,
 )
+from neofoam.algorithms.solution_loop.conditions import ConditionVote
 from neofoam.algorithms.solution_loop.config import TimeControlConfig
 from neofoam.algorithms.solution_loop.control import SolutionControl
 from neofoam.algorithms.solution_loop.interfaces import (
@@ -107,31 +108,6 @@ def test_transient_runs_to_end_time() -> None:
         steps += 1
     assert steps == 3
     assert abs(loop.state.value - 0.3) < 1e-12
-
-
-def test_running_delegates_to_solution_control() -> None:
-    control = SolutionControl()
-    control.store_residual("p", 0.0)
-    loop = SolutionLoop(state=_state(end=1.0, dt=0.1), control=control)
-    assert loop.running() is True
-
-
-def test_steady_stops_on_convergence() -> None:
-    control = SolutionControl(residualControl={"p": 1e-2, "U": 1e-3})
-    loop = SolutionLoop(state=_state(end=100.0, dt=1.0), control=control)
-    assert loop.running() is True
-    control.store_residual("p", 1e-3)
-    control.store_residual("U", 1e-4)
-    assert loop.running() is False  # converged -> run ended
-
-
-def test_convergence_stop_does_not_write() -> None:
-    # ending the run on convergence must not flip the state into a write step
-    control = SolutionControl(residualControl={"p": 1e-2})
-    loop = SolutionLoop(state=_state(end=100.0, dt=1.0), control=control)
-    control.store_residual("p", 1e-3)  # converged
-    assert loop.running() is False
-    assert loop.state.write_time is False
 
 
 # --- injectable stability criteria (Courant pushed in) -------------------
@@ -426,26 +402,55 @@ _loop_stopper = Model("loopStopper")
 
 
 @_loop_stopper.contributes(loopCondition)
-def _vote_stop() -> bool:
-    return False
+def _vote_stop() -> ConditionVote:
+    return ConditionVote(satisfied=True)
+
+
+_loop_aborter = Model("loopAborter")
+
+
+@_loop_aborter.contributes(loopCondition)
+def _vote_abort() -> ConditionVote:
+    return ConditionVote(satisfied=True, action="abort")
 
 
 def _stopper_runtime() -> ModelRuntime:
     return ModelRuntime(spec=_loop_stopper, name="loopStopper", config=None)
 
 
-def test_predicate_runs_when_no_condition_vetoes() -> None:
+def _aborter_runtime() -> ModelRuntime:
+    return ModelRuntime(spec=_loop_aborter, name="loopAborter", config=None)
+
+
+def test_predicate_runs_when_no_condition_is_satisfied() -> None:
     loop = SolutionLoop(state=_state(end=1.0, dt=0.1))
     ctx = _drive_set_time_step(loop, [])
     assert loop.keep_running is True
+    assert loop.failed is False
     assert SolutionLoopPredicate()(ctx) is True
 
 
-def test_predicate_stops_when_a_condition_vetoes() -> None:
+def test_predicate_stops_when_a_condition_is_satisfied() -> None:
     loop = SolutionLoop(state=_state(end=1.0, dt=0.1))
     ctx = _drive_set_time_step(loop, [_stopper_runtime()])
     assert loop.keep_running is False
+    assert loop.running() is True  # the loop stops even while running() is True
     assert SolutionLoopPredicate()(ctx) is False
+
+
+def test_clean_stop_does_not_flag_failure() -> None:
+    loop = SolutionLoop(state=_state(end=1.0, dt=0.1))
+    _drive_set_time_step(loop, [_stopper_runtime()])
+    assert loop.stop_action == "end"
+    assert loop.failed is False
+
+
+def test_abort_stop_flags_failure() -> None:
+    loop = SolutionLoop(state=_state(end=1.0, dt=0.1))
+    _drive_set_time_step(loop, [_aborter_runtime()])
+    assert loop.keep_running is False
+    assert loop.stop_action == "abort"
+    assert loop.failed is True
 
 
 # --- the growth cap is the deciding term on the fold path -----------------

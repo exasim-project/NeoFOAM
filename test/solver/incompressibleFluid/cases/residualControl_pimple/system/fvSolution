@@ -1,0 +1,28 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSolution;
+}
+
+solvers
+{
+    p { solver PCG; preconditioner DIC; tolerance 1e-06; relTol 0.05; }
+    U { solver smoothSolver; smoother symGaussSeidel; tolerance 1e-05; relTol 0.1; }
+}
+
+PIMPLE
+{
+    nOuterCorrectors    50;
+    nCorrectors         1;
+    nNonOrthogonalCorrectors 0;
+    residualControl
+    {
+        "(U|k|epsilon)"
+        {
+            relTol      0;
+            tolerance   1e-4;
+        }
+    }
+}

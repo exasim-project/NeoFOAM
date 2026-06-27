@@ -1,0 +1,20 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSolution;
+}
+
+solvers
+{
+    p { solver PCG; preconditioner DIC; tolerance 1e-06; relTol 0.05; }
+}
+
+SIMPLE
+{
+    residualControl
+    {
+        U { relTol 0; }   // sub-dict form WITHOUT a tolerance
+    }
+}

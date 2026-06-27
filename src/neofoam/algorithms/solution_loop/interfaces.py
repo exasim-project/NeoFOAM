@@ -5,16 +5,22 @@
 
 ``solutionLoop`` (the core loop Model) **owns** both interfaces: ``timeStepConstraint``
 folds float deltaT limits with ``min`` (empty -> VGREAT = no opinion / fixed step) and
-``loopCondition`` folds bool continue-flags with ``all`` (empty -> True = keep running).
-Models extend them with ``@<model>.contributes(<iface>)``; the loop consumes them by
-typing an ``@solutionLoop.operation`` parameter with the interface and calling it.
+``loopCondition`` folds :class:`ConditionVote` stop verdicts via
+:func:`fold_conditions` (empty -> not satisfied = keep running). Models extend them
+with ``@<model>.contributes(<iface>)``; the loop consumes them by typing an
+``@solutionLoop.operation`` parameter with the interface and calling it.
 
-Leaf module: imports only ``neofoam.framework.model`` so ``time_integration`` /
-``solution_loop`` can import ``VGREAT`` + the handles without a cycle.
+Leaf module: imports only ``neofoam.framework.model`` plus the stdlib-only
+``conditions`` leaf, so ``time_integration`` / ``solution_loop`` can import ``VGREAT``
++ the handles without a cycle and without pulling in pybFoam.
 """
 
 from typing import Iterable
 
+from neofoam.algorithms.solution_loop.conditions import (
+    ConditionVote,
+    fold_conditions,
+)
 from neofoam.framework.model import Model
 
 VGREAT = 1e300
@@ -28,5 +34,5 @@ def timeStepConstraint(limits: Iterable[float]) -> float:
 
 
 @solutionLoop.interface
-def loopCondition(flags: Iterable[bool]) -> bool:
-    return all(flags)
+def loopCondition(votes: Iterable[ConditionVote]) -> ConditionVote:
+    return fold_conditions(votes)

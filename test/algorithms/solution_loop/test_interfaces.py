@@ -11,6 +11,7 @@ from pathlib import Path
 import pytest
 
 import neofoam.algorithms.solution_loop as loop_pkg
+from neofoam.algorithms.solution_loop.conditions import ConditionVote
 from neofoam.algorithms.solution_loop.interfaces import (
     VGREAT,
     loopCondition,
@@ -39,12 +40,20 @@ def test_time_step_constraint_folds_with_min(
     assert timeStepConstraint.fold(limits) == expected
 
 
+def test_loop_condition_folds_empty_to_not_satisfied() -> None:
+    assert loopCondition.fold([]).satisfied is False
+
+
 @pytest.mark.parametrize(
-    "flags, expected",
-    [([], True), ([True, True], True), ([True, False], False)],
+    "votes, expected",
+    [
+        ([ConditionVote(satisfied=True)], True),
+        ([ConditionVote(satisfied=False)], False),
+        ([ConditionVote(satisfied=False), ConditionVote(satisfied=True)], True),
+    ],
 )
-def test_loop_condition_folds_with_all(flags: list[bool], expected: bool) -> None:
-    assert loopCondition.fold(flags) is expected
+def test_loop_condition_folds_votes(votes: list[ConditionVote], expected: bool) -> None:
+    assert loopCondition.fold(votes).satisfied is expected
 
 
 def _imported_names(source: str) -> set[str]:
