@@ -160,7 +160,7 @@ def schema_for(decl: FieldDecl) -> type[BaseConfig]:
 
     # Use a closure for the dimension validator so we can keep the parser /
     # formatter as module-level helpers (testable in isolation).
-    @field_validator("dimensions", mode="before")  # type: ignore[type-var]
+    @field_validator("dimensions", mode="before")
     def _validate_dimensions(value: Any) -> list[int]:
         return _parse_dimensions(value)
 
@@ -177,7 +177,9 @@ def schema_for(decl: FieldDecl) -> type[BaseConfig]:
             # (runtime metaprogramming: decl.value_type is a value, not a static
             # type, so mypy can't follow the subscription)
             "internalField": FieldValue[decl.value_type],  # type: ignore[name-defined]
-            "boundaryField": dict[str, bc_union],
+            # runtime metaprogramming: bc_union is a value (a built Union), not a
+            # static type, so mypy can't use it as a subscript here.
+            "boundaryField": dict[str, bc_union],  # type: ignore[valid-type]
         },
         "FoamFile": default_header,
         "internalField": default_internal,

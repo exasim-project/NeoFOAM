@@ -42,7 +42,7 @@ def _is_field_schema(cls: type[BaseConfig]) -> bool:
     io = getattr(cls, "io_config", None)
     if io is None:
         return False
-    return io.file.startswith("0/")
+    return bool(io.file.startswith("0/"))
 
 
 @dataclass(frozen=True)
