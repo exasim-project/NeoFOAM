@@ -29,6 +29,15 @@
 #   localized-levels pMG-localized-L<lev>-ukoSmooth : the LOCALIZED-MG max_levels sweep over
 #                {2,4,6,8,10,15,20} (system/gko/p-multigrid-localized.L*.json). A single level is
 #                requestable as localized-L<lev> (e.g. localized-L8).
+#   scale-correction  pMG-scalecorr-off-ukoSmooth + pMG-scalecorr-ukoSmooth : the scale-correction
+#                ON/OFF evaluation -- two structurally IDENTICAL runs (outer solver::Ir + one-V-cycle
+#                solver::Multigrid) that differ ONLY in scale correction: OFF (Ir[none]+MG[off],
+#                system/gko/p-multigrid-scalecorr-off.json) vs ON (Ir[backward]+MG[scale_correction],
+#                system/gko/p-multigrid-scalecorr.json), so the matched pair isolates its effect.
+#                Requestable on its own as `scalecorr-off` / `scalecorr` too. NEEDS the
+#                scale_correction config keys from NeoN_GINKGO_TAG (241deca): run with
+#                NEON_BUILD=production -- on the profiling build it is SKIPPED (printed how-to), since
+#                the older ginkgo aborts on the scale_correction key.
 #   laminar      pMGbase-laminar            : base multigrid p-solver, simulationType laminar
 #
 # Selectable-only (NOT in the default sweep; request explicitly):
@@ -48,6 +57,8 @@
 #          ./param-study-mg-tuning.sh localized-solver # LOCALIZED MG as the global solver
 #          ./param-study-mg-tuning.sh localized-levels # LOCALIZED MG max_levels sweep {2..20}
 #          ./param-study-mg-tuning.sh localized-L8     # a single localized level variant
+#          NEON_BUILD=production ./param-study-mg-tuning.sh scale-correction  # scale-correction ON vs OFF pair
+#          NEON_BUILD=production ./param-study-mg-tuning.sh scalecorr-off      # only the OFF control
 #          ./param-study-mg-tuning.sh native          # native OpenFOAM simpleFoam (GAMG) baseline
 #          ./param-study-mg-tuning.sh native-pcg      # native OpenFOAM simpleFoam (PCG/diagonal) baseline
 #          ./param-study-mg-tuning.sh laminar         # only the laminar baseline
@@ -75,6 +86,7 @@ if [ ${#VARIANTS[@]} -eq 0 ]; then
     run_smooth2          # Cg+MG with a 2-iteration Jacobi smoother
     run_cgcoarse         # Cg+MG with a CG+Jacobi coarsest solver
     run_localized_solver # LOCALIZED MG as the global solver
+    run_scale_correction_study # scale-correction ON vs OFF pair (runs only on NEON_BUILD=production; else prints how-to and skips)
     run_laminar
 else
     for v in "${VARIANTS[@]}"; do

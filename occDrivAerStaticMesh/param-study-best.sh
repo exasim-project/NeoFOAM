@@ -2,9 +2,12 @@
 #
 # BEST-PRACTICE run(s) for occDrivAreStaticMesh.
 #
-# Runs TWO configurations back to back over the same window:
+# Runs THREE configurations back to back over the same window:
 #   1. the best-practice pressure solver (pMG-localized-cache-rebuild100, below); and
-#   2. a reference Ginkgo PCG (solver::Cg) + DIAGONAL (Jacobi) preconditioner run --
+#   2. its FLOAT counterpart (pMG-localized-precfloat-best-cache-rebuild100) -- the same localized
+#      cached setup with the MG preconditioner in float32 (outer Cg + l1 stop stay fp64), for a
+#      like-for-like float-vs-fp64 best-practice comparison; and
+#   3. a reference Ginkgo PCG (solver::Cg) + DIAGONAL (Jacobi) preconditioner run --
 #      system/gko/p-cg.json (Schwarz{Jacobi} for the distributed solve), no MG, no solver cache --
 #      so the best-practice multigrid run has a plain-PCG baseline to compare against. Same case3
 #      U/k/omega block and l1ScaledResidual fp64 stop; only the p-solver configFile differs.
@@ -61,6 +64,7 @@ STUDY_TYPE="${STUDY_TYPE:-best-practice}"
 source "$(dirname "$0")/param-study-mg-common.sh"
 
 BEST_CFG="${BEST_CFG:-p-multigrid-localized.json}"
+BEST_PRECFLOAT_CFG="${BEST_PRECFLOAT_CFG:-p-multigrid-localized-precfloat.json}"
 BEST_REBUILD="${BEST_REBUILD:-100}"
 BEST_CACHE="${BEST_CACHE:-true}"
 BEST_PCG_CFG="${BEST_PCG_CFG:-p-cg.json}"
@@ -79,26 +83,11 @@ SUFFIX=""; [ -n "$KEYWORD" ] && SUFFIX="-${KEYWORD}"
 
 ensure_mg_variants
 
-# Enable the Ginkgo solver cache for the U/k/omega PBiCGStab solves too (not just pressure). The
-# slip/symmetry momentum predictor solves the three U components segregated through the per-component
-# solver-cache slots, so cacheSolver here lets that path reuse the solver (update_matrix_value when
-# the preconditioner is updatable, else Krylov-workspace reuse) instead of regenerating it every
-# solve. Injected after each `preconditioner   diagonal;` line (the U, k and omega blocks of the
-# case3 template); the pressure block carries its own cacheSolver via the configFile sed above.
-enable_diag_cache() {
-    sed -i -E 's/^([[:space:]]*)preconditioner([[:space:]]+)diagonal;[[:space:]]*$/&\n\1cacheSolver      true;/' "$1"
-}
-
-# Enable the DSL div+laplacian fusion for the equations that have BOTH an implicit div and an
-# implicit laplacian -- U (momentum) and k/omega (turbulence). Fusing is gated per-field on
-# `optimize true` (read in NeoFOAM PDE ctor): NeoN::dsl::optimize() runs DivLapOptimizer, which
-# replaces the separate DivOperator + LaplacianOperator with a single fused GaussGreenDivLaplacian
-# (one face/cell loop instead of two). The pressure equation has no implicit div, so it is left
-# untouched -- the key is injected after each `preconditioner diagonal;` (the U/k/omega blocks only).
-# Without this the runs are NOT fused regardless of the run-name label (default optimize=false).
-enable_fusing() {
-    sed -i -E 's/^([[:space:]]*)preconditioner([[:space:]]+)diagonal;[[:space:]]*$/&\n\1optimize         true;/' "$1"
-}
+# NOTE: the best-practice solver keys -- cacheSolver, optimize (div+laplacian fusion) and
+# l1ScaledResidual -- now live directly in the U/k/omega blocks of the shared template
+# system/paramStudy/fvSolution.case3 (so every param-study using it reflects best practice), and are
+# inherited by every run below. Only the PRESSURE block is configured per-run here (configFile swap +
+# its own cacheSolver/preconditionerRebuildInterval), since those are solver-config specific.
 
 # Preserve the exact generated fvSolution used for a run next to its log, as
 # paramStudyResults/best-practice/fvSolution-<run-name>-<timestamp> (timestamp matched to the run's
@@ -128,10 +117,33 @@ run_best() {
     else
         sed -E "s#^([[:space:]]+configFile[[:space:]]+).*#\1system/gko/$BEST_CFG;#" "$MG_TEMPLATE" > "$TMP_FVSOL"
     fi
-    enable_diag_cache "$TMP_FVSOL"
-    enable_fusing "$TMP_FVSOL"
     run_one "$name" "$TMP_FVSOL" \
         "BEST-PRACTICE: p = Ginkgo LOCALIZED MG ($BEST_CFG), cache=${BEST_CACHE}, rebuildInterval=${BEST_REBUILD}, fused, started ${STAMP}${KEYWORD:+, keyword=${KEYWORD}}"
+    save_run_fvsolution "$name" "$TMP_FVSOL"
+}
+
+run_precfloat_best() {
+    # Float counterpart of run_best: the SAME localized cached best-practice setup but with the
+    # MG preconditioner in float32 -- system/gko/p-multigrid-localized-precfloat.json (the localized
+    # Schwarz{Multigrid(local)} config with "value_type":"float32" on the preconditioner node). The
+    # outer solver::Cg, its Krylov vectors and the l1ScaledResidual fp64 stop stay double; only the
+    # MG preconditioner runs in float, with the residual converted at the Schwarz-apply boundary. Same
+    # cache keys as run_best (cacheSolver/preconditionerRebuildInterval), so this is a like-for-like
+    # float-vs-fp64 best-practice comparison. Needs the float distributed-Schwarz fix
+    # (ginkgo_schwarz_update_matrix_value.patch).
+    if [ ! -f "system/gko/$BEST_PRECFLOAT_CFG" ]; then
+        echo "!! no float best-practice config 'system/gko/$BEST_PRECFLOAT_CFG' -- skipping"; return
+    fi
+    local tag; if [ "$BEST_CACHE" = "true" ]; then tag="cache-rebuild${BEST_REBUILD}"; else tag="nocache"; fi
+    local name="pMG-localized-precfloat-best-${tag}${SUFFIX}"
+    if [ "$BEST_CACHE" = "true" ]; then
+        sed -E "s#^([[:space:]]+configFile[[:space:]]+).*#\1system/gko/$BEST_PRECFLOAT_CFG;\n        cacheSolver      true;\n        preconditionerRebuildInterval $BEST_REBUILD;#" \
+            "$MG_TEMPLATE" > "$TMP_FVSOL"
+    else
+        sed -E "s#^([[:space:]]+configFile[[:space:]]+).*#\1system/gko/$BEST_PRECFLOAT_CFG;#" "$MG_TEMPLATE" > "$TMP_FVSOL"
+    fi
+    run_one "$name" "$TMP_FVSOL" \
+        "BEST-PRACTICE (float): p = Ginkgo LOCALIZED MG, FLOAT preconditioner ($BEST_PRECFLOAT_CFG), cache=${BEST_CACHE}, rebuildInterval=${BEST_REBUILD}, fused, started ${STAMP}${KEYWORD:+, keyword=${KEYWORD}}"
     save_run_fvsolution "$name" "$TMP_FVSOL"
 }
 
@@ -148,14 +160,13 @@ run_pcg_diagonal() {
     local name="pPCG-diagonal-best${SUFFIX}"
     sed -E "s#^([[:space:]]+configFile[[:space:]]+).*#\1system/gko/$BEST_PCG_CFG;#" \
         "$MG_TEMPLATE" > "$TMP_FVSOL"
-    enable_diag_cache "$TMP_FVSOL"
-    enable_fusing "$TMP_FVSOL"
     run_one "$name" "$TMP_FVSOL" \
         "BEST-PRACTICE baseline: p = Ginkgo PCG (Cg) + diagonal (Jacobi) preconditioner ($BEST_PCG_CFG), fused, started ${STAMP}${KEYWORD:+, keyword=${KEYWORD}}"
     save_run_fvsolution "$name" "$TMP_FVSOL"
 }
 
 run_best
+run_precfloat_best
 run_pcg_diagonal
 
 print_summary

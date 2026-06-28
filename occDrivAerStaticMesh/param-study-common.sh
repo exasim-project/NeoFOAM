@@ -31,6 +31,22 @@ export CUDA_VISIBLE_DEVICES=1,2,3,4
 # needs. Override with NEON_BUILD=production once that Release-build crash is fixed.
 NEON_BUILD="${NEON_BUILD:-profiling}"
 BIN="/storage/home/greole/code/NeoFOAM/build/${NEON_BUILD}${NEON_DEVICE}/bin/neoSimpleFoam"
+# Robust BIN resolution: if the configured NEON_BUILD has no built binary (the cause of the failed
+# mixed-precision runs -- run-all-studies launched param-study-mp.sh against a profiling binary that
+# did not exist yet, so mpirun died with a cryptic "could not access an executable"), fall back to
+# the other h200 build that DOES have one, with a loud warning. Both builds carry the innerPrecision
+# plumbing the mp study needs, so either works. If neither exists, BIN is left as-is and run_one's
+# guard reports it clearly. Set NEON_BUILD explicitly to pin a build and skip the fallback search.
+if [ ! -x "$BIN" ]; then
+    for _alt in profiling production; do
+        _altbin="/storage/home/greole/code/NeoFOAM/build/${_alt}${NEON_DEVICE}/bin/neoSimpleFoam"
+        if [ "$_altbin" != "$BIN" ] && [ -x "$_altbin" ]; then
+            echo "!! NEON_BUILD='$NEON_BUILD' has no binary ($BIN)" >&2
+            echo "   -> falling back to the '$_alt' build: $_altbin" >&2
+            NEON_BUILD="$_alt"; BIN="$_altbin"; break
+        fi
+    done
+fi
 NP=4
 STEPS=30
 CFGDIR="system/paramStudy"
@@ -222,6 +238,15 @@ run_one() {
         echo "   (skip: log exists — set FORCE=1 to re-run)"
         RUNS+=("$name")
         return
+    fi
+
+    # Fail fast with a clear message if the solver binary is missing/not executable -- otherwise
+    # mpirun emits a cryptic "could not access an executable" into a tiny, confusing log (the cause
+    # of the failed mixed-precision runs). No fvSolution is installed and no log is written.
+    if [ ! -x "$bin" ]; then
+        echo "   !! solver binary not found/executable: $bin"
+        echo "      build it (or set NEON_BUILD to a built variant) -- skipping '$name'"
+        return 1
     fi
 
     cp "$src" system/fvSolution

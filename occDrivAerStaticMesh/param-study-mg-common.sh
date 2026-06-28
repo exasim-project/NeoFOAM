@@ -65,6 +65,40 @@ run_fcg() {
         "p = Ginkgo FCG + Multigrid preconditioner, U/k/omega=smoothSolver/GS"
 }
 
+run_precfloat() {
+    # PCG (Cg, fp64) outer solver with a FLOAT, NON-LOCALIZED Multigrid preconditioner --
+    # the base p-multigrid.json with "value_type": "float32" on the Multigrid node
+    # (system/gko/p-multigrid-precfloat.json, max_levels=10, 1 smoothing step). Outer Cg/stop stay
+    # fp64; only the global MG hierarchy (Pgm coarsening + Schwarz{Jacobi} smoothers) runs in float.
+    # Needs the float distributed-Schwarz fix (ginkgo_schwarz_update_matrix_value.patch).
+    run_pconfig "pMG-precfloat-ukoSmooth" "p-multigrid-precfloat.json" \
+        "p = Ginkgo Cg + FLOAT Multigrid preconditioner (non-localized, 1 smooth), U/k/omega=smoothSolver/GS"
+}
+
+run_precfloat_sc() {
+    # As run_precfloat but with SCALE CORRECTION on inside the Multigrid preconditioner: the
+    # scale-corrected MG block (per-level scale_correction=true, post_uses_pre=true so one
+    # Schwarz{Jacobi} sweep serves pre+post, coarsest 4 Jacobi iters) driven as a fp64 solver::Cg
+    # preconditioner in float32 (system/gko/p-multigrid-precfloat-sc.json, non-localized, 1 smooth).
+    # Outer Cg/stop stay fp64. Needs the scale_correction keys (NeoN_GINKGO_TAG 241deca, production
+    # build) AND the float distributed-Schwarz fix (ginkgo_schwarz_update_matrix_value.patch).
+    #
+    # SOLVER CACHE ON: cacheSolver=true with preconditionerRebuildInterval=PRECFLOAT_SC_REBUILD
+    # (default 100) -- the generated solver and its float MG hierarchy (the expensive Pgm
+    # aggregation) are cached and refreshed in place via gko::UpdateMatrixValue::update_matrix_value
+    # on later pressure solves, rebuilt from scratch only every Nth solve. Keys injected into the p{}
+    # block of the case3 template by sed (as run_cache_interval does); the "-cache-rebuild<N>" infix
+    # keeps the run in report_cache_reuse's reuse/rebuild tally.
+    local cfg="p-multigrid-precfloat-sc.json" n="${PRECFLOAT_SC_REBUILD:-100}"
+    if [ ! -f "system/gko/$cfg" ]; then
+        echo "!! no p-config 'system/gko/$cfg' -- skipping pMG-precfloat-sc"; return
+    fi
+    sed -E "s#^([[:space:]]+configFile[[:space:]]+).*#\1system/gko/$cfg;\n        cacheSolver      true;\n        preconditionerRebuildInterval $n;#" \
+        "$MG_TEMPLATE" > "$TMP_FVSOL"
+    run_one "pMG-precfloat-sc-cache-rebuild${n}-ukoSmooth" "$TMP_FVSOL" \
+        "p = Ginkgo Cg + FLOAT scale-corrected Multigrid preconditioner (non-localized, 1 smooth), cacheSolver=true, preconditionerRebuildInterval=$n, U/k/omega=smoothSolver/GS"
+}
+
 run_mgsolver() {
     # Multigrid as the global solver (no outer Krylov): V-cycles to convergence.
     run_pconfig "pMGsolver-ukoSmooth" "p-multigrid-solver.json" \
@@ -137,6 +171,30 @@ run_scalecorr() {
     # MG-level "scale_correction" key, so do NOT run this with NEON_BUILD=profiling.
     run_pconfig "pMG-scalecorr-ukoSmooth" "p-multigrid-scalecorr.json" \
         "p = Ginkgo scale-corrected MG (Ir[backward] + MG[scale_correction]), U/k/omega=smoothSolver/GS"
+}
+
+run_scalecorr_off() {
+    # SCALE-CORRECTION OFF control: structurally identical to run_scalecorr (same outer solver::Ir +
+    # one-V-cycle solver::Multigrid, same smoothers/coarse solver/criteria) but with scale correction
+    # DISABLED (Ir scale_correction="none", MG scale_correction=false). Pair it with run_scalecorr to
+    # isolate the effect of the backward scale correction with everything else fixed.
+    # NOTE: the scale_correction keys are still present (set off), so this needs the SAME
+    # NeoN_GINKGO_TAG (241deca) build as run_scalecorr -- do NOT run with NEON_BUILD=profiling.
+    run_pconfig "pMG-scalecorr-off-ukoSmooth" "p-multigrid-scalecorr-off.json" \
+        "p = Ginkgo MG, SAME structure as scalecorr but scale_correction OFF (Ir[none] + MG[no scale_correction])"
+}
+
+run_scale_correction_study() {
+    # The scale-correction ON/OFF evaluation: run the OFF control then the ON variant back to back so
+    # the summary table puts the matched pair side by side. Both need the NeoN_GINKGO_TAG (241deca)
+    # build (NEON_BUILD=production); on the profiling build they ABORT on the scale_correction key.
+    if [ "${NEON_BUILD:-profiling}" != "production" ]; then
+        echo "!! scale-correction on/off study needs NEON_BUILD=production (scale_correction config keys)."
+        echo "   re-run as: NEON_BUILD=production ./param-study-mg-tuning.sh scale-correction"
+        return
+    fi
+    run_scalecorr_off
+    run_scalecorr
 }
 
 run_scalecorr_localized() {
@@ -298,8 +356,12 @@ run_named() {
         localized)        run_localized ;;
         mgsolver)         run_mgsolver ;;
         scalecorr)        run_scalecorr ;;
+        scalecorr-off)    run_scalecorr_off ;;
+        scale-correction|scalecorr-onoff) run_scale_correction_study ;;
         scalecorr-localized|scale-correction-localized) run_scalecorr_localized ;;
         fcg)              run_fcg ;;
+        precfloat)        run_precfloat ;;
+        precfloat-sc)     run_precfloat_sc ;;
         directcoarse)     run_directcoarse ;;
         smooth2)          run_smooth2 ;;
         cgcoarse)         run_cgcoarse ;;

@@ -17,6 +17,16 @@
 #             Needs the scale_correction config keys from NeoN_GINKGO_TAG (241deca) -- the
 #             PRODUCTION build, which is the study default (NEON_BUILD=production), so it runs
 #             as-is. Do NOT run it with NEON_BUILD=profiling (older ginkgo aborts on the key).
+#   precfloat pMG-precfloat-ukoSmooth    : PCG (Cg, fp64) + a FLOAT, NON-LOCALIZED Multigrid
+#             preconditioner (base p-multigrid.json + "value_type":"float32" on the Multigrid node,
+#             1 smoothing step). Outer Cg/stop stay fp64; the whole global MG hierarchy runs in
+#             float (system/gko/p-multigrid-precfloat.json). Needs the float distributed-Schwarz
+#             fix (ginkgo_schwarz_update_matrix_value.patch).
+#   precfloat-sc pMG-precfloat-sc-ukoSmooth : as precfloat but with SCALE CORRECTION on inside the
+#             Multigrid preconditioner (per-level scale_correction=true, post_uses_pre, coarsest 4),
+#             still driven as a fp64 Cg preconditioner in float32
+#             (system/gko/p-multigrid-precfloat-sc.json). Needs the scale_correction keys (PRODUCTION
+#             build, NEON_BUILD=production) AND the float Schwarz fix.
 #   sclocal   pMG-scale-correction-localized-ukoSmooth : the scalecorr construction made
 #             LOCALIZED -- outer solver::Ir(scale_correction="backward") wrapping a
 #             Schwarz{Multigrid(local, scale_correction=true)} with a local-Jacobi smoother
@@ -53,7 +63,7 @@ source "$(dirname "$0")/param-study-mg-common.sh"
 
 ensure_mg_variants
 
-VARIANTS=("$@"); [ ${#VARIANTS[@]} -eq 0 ] && VARIANTS=(base localized mgsolver scalecorr scalecorr-localized)
+VARIANTS=("$@"); [ ${#VARIANTS[@]} -eq 0 ] && VARIANTS=(base localized mgsolver scalecorr scalecorr-localized precfloat precfloat-sc)
 for v in "${VARIANTS[@]}"; do
     run_named "$v"
 done

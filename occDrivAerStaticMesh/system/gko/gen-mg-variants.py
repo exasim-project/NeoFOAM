@@ -225,6 +225,22 @@ for value_type, suffix in (("float32", "precfloat"), ("bfloat16", "precbf16")):
         f.write("\n")
     written.append(name)
 
+# p-multigrid-precfloat.json: the NON-LOCALIZED (global) multigrid base (p-multigrid.json) with the
+# PRECONDITIONER subtree built in float32 -- the global-MG counterpart of
+# p-multigrid-localized-precfloat.json. The "value_type": "float32" override on the solver::Multigrid
+# preconditioner node drops the whole MG hierarchy (Pgm coarsening + the Schwarz{Jacobi} pre/post
+# smoothers, 1 sweep each as in the base) to float; the outer solver::Cg, its Krylov vectors and the
+# l1ScaledResidual stop stay fp64, so Ginkgo converts the residual at the preconditioner-apply
+# boundary. Unlike the localized variant the Multigrid is NOT Schwarz-wrapped, so the float conversion
+# is exercised at the Multigrid/Pgm level too, not only in the Schwarz smoothers. Run name
+# pMG-precfloat-ukoSmooth (param-study-mg.sh `precfloat`).
+base_precfloat = json.loads(json.dumps(base))
+base_precfloat["preconditioner"]["value_type"] = "float32"
+with open(os.path.join(HERE, "p-multigrid-precfloat.json"), "w") as f:
+    json.dump(base_precfloat, f, indent=4)
+    f.write("\n")
+written.append("p-multigrid-precfloat.json")
+
 # p-multigrid-localized-solver.json: the same LOCALIZED multigrid promoted to the GLOBAL
 # solver (no outer Krylov) -- the outer Schwarz{Multigrid(local)} block carrying the base's
 # outer convergence criteria instead of being a Cg preconditioner. Counterpart of
@@ -275,7 +291,10 @@ scalecorr = {
                 "type": "solver::Ir",
                 "relaxation_factor": 0.9,
                 "solver": json.loads(json.dumps(schwarz_jacobi)),
-                "criteria": [{"type": "Iteration", "max_iters": 2}],
+                # ONE smoother step (post_uses_pre=True applies it to the post-smoother too): the
+                # backward scale correction pre-conditions the residual before each V-cycle, so a
+                # single Jacobi/Ir sweep per level is used rather than two.
+                "criteria": [{"type": "Iteration", "max_iters": 1}],
             }
         ],
         "coarsest_solver": {
@@ -292,6 +311,42 @@ with open(os.path.join(HERE, "p-multigrid-scalecorr.json"), "w") as f:
     json.dump(scalecorr, f, indent=4)
     f.write("\n")
 written.append("p-multigrid-scalecorr.json")
+
+# p-multigrid-precfloat-sc.json: CG + a FLOAT, NON-LOCALIZED, SCALE-CORRECTED Multigrid
+# preconditioner. Reuses the scale-corrected Multigrid block (scalecorr["solver"]: per-level
+# scale_correction=true, post_uses_pre=true so one Schwarz{Jacobi} sweep serves pre+post, coarsest
+# 4 Jacobi iters) but drives it as a fp64 solver::Cg PRECONDITIONER (not the scalecorr outer Ir) and
+# overrides value_type=float32 so the whole MG runs in float -- the scale-corrected counterpart of
+# p-multigrid-precfloat.json (1 smoothing step). Outer Cg + l1 stop stay fp64. Like scalecorr it
+# needs the scale_correction keys (PRODUCTION build) plus the float distributed-Schwarz fix. Run name
+# pMG-precfloat-sc-ukoSmooth (param-study-mg.sh precfloat-sc).
+precfloat_sc = {
+    "type": "solver::Cg",
+    "preconditioner": json.loads(json.dumps(scalecorr["solver"])),
+    "criteria": json.loads(json.dumps(base["criteria"])),
+}
+precfloat_sc["preconditioner"]["value_type"] = "float32"
+with open(os.path.join(HERE, "p-multigrid-precfloat-sc.json"), "w") as f:
+    json.dump(precfloat_sc, f, indent=4)
+    f.write("\n")
+written.append("p-multigrid-precfloat-sc.json")
+
+# p-multigrid-scalecorr-off.json: the scale-correction OFF control for the on/off study. It is
+# STRUCTURALLY IDENTICAL to p-multigrid-scalecorr.json (same outer solver::Ir + one-V-cycle
+# solver::Multigrid, same Pgm levels / Schwarz{Jacobi} smoothers / coarsest solver / L1 criteria),
+# differing ONLY in that scale correction is DISABLED: the outer Ir's scale_correction is "none"
+# (no backward Rayleigh pre-correction of the residual) and the inner Multigrid's scale_correction
+# is False. Running pMG-scalecorr-ukoSmooth (on) against pMG-scalecorr-off-ukoSmooth (off) therefore
+# isolates the effect of the scale correction with everything else held fixed. The scale_correction
+# keys are still present (set to off), so this needs the SAME NeoN_GINKGO_TAG (241deca) / production
+# build as scalecorr -- the older ginkgo aborts on the key regardless of its value.
+scalecorr_off = json.loads(json.dumps(scalecorr))
+scalecorr_off["scale_correction"] = "none"
+scalecorr_off["solver"]["scale_correction"] = False
+with open(os.path.join(HERE, "p-multigrid-scalecorr-off.json"), "w") as f:
+    json.dump(scalecorr_off, f, indent=4)
+    f.write("\n")
+written.append("p-multigrid-scalecorr-off.json")
 
 # p-multigrid-scalecorr-localized.json: the SCALE-CORRECTED multigrid made LOCALIZED -- the
 # combination of p-multigrid-scalecorr.json and p-multigrid-localized.json. The outer
