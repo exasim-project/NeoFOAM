@@ -79,6 +79,39 @@ SUFFIX=""; [ -n "$KEYWORD" ] && SUFFIX="-${KEYWORD}"
 
 ensure_mg_variants
 
+# Enable the Ginkgo solver cache for the U/k/omega PBiCGStab solves too (not just pressure). The
+# slip/symmetry momentum predictor solves the three U components segregated through the per-component
+# solver-cache slots, so cacheSolver here lets that path reuse the solver (update_matrix_value when
+# the preconditioner is updatable, else Krylov-workspace reuse) instead of regenerating it every
+# solve. Injected after each `preconditioner   diagonal;` line (the U, k and omega blocks of the
+# case3 template); the pressure block carries its own cacheSolver via the configFile sed above.
+enable_diag_cache() {
+    sed -i -E 's/^([[:space:]]*)preconditioner([[:space:]]+)diagonal;[[:space:]]*$/&\n\1cacheSolver      true;/' "$1"
+}
+
+# Enable the DSL div+laplacian fusion for the equations that have BOTH an implicit div and an
+# implicit laplacian -- U (momentum) and k/omega (turbulence). Fusing is gated per-field on
+# `optimize true` (read in NeoFOAM PDE ctor): NeoN::dsl::optimize() runs DivLapOptimizer, which
+# replaces the separate DivOperator + LaplacianOperator with a single fused GaussGreenDivLaplacian
+# (one face/cell loop instead of two). The pressure equation has no implicit div, so it is left
+# untouched -- the key is injected after each `preconditioner diagonal;` (the U/k/omega blocks only).
+# Without this the runs are NOT fused regardless of the run-name label (default optimize=false).
+enable_fusing() {
+    sed -i -E 's/^([[:space:]]*)preconditioner([[:space:]]+)diagonal;[[:space:]]*$/&\n\1optimize         true;/' "$1"
+}
+
+# Preserve the exact generated fvSolution used for a run next to its log, as
+# paramStudyResults/best-practice/fvSolution-<run-name>-<timestamp> (timestamp matched to the run's
+# log so the two correspond). Call AFTER run_one so RUN_LOG[name] holds the timestamped log path.
+# The "fvSolution-" prefix (not a .log suffix) keeps it out of param-study-table.sh's *.log glob.
+save_run_fvsolution() {
+    local name="$1" src="$2" log="${RUN_LOG[$name]:-}"
+    [ -n "$log" ] && [ -f "$src" ] || return
+    local stem; stem="$(basename "${log%.log}")"   # <run-name>-<timestamp>
+    cp "$src" "$RESULTS/fvSolution-${stem}"
+    echo "   fvSolution -> $RESULTS/fvSolution-${stem}"
+}
+
 run_best() {
     # Build the p-block exactly like the cache study's run_cache_interval: swap the configFile path
     # and (when caching) append the cache keys, leaving the template's l1ScaledResidual/tolerance/
@@ -95,8 +128,11 @@ run_best() {
     else
         sed -E "s#^([[:space:]]+configFile[[:space:]]+).*#\1system/gko/$BEST_CFG;#" "$MG_TEMPLATE" > "$TMP_FVSOL"
     fi
+    enable_diag_cache "$TMP_FVSOL"
+    enable_fusing "$TMP_FVSOL"
     run_one "$name" "$TMP_FVSOL" \
-        "BEST-PRACTICE: p = Ginkgo LOCALIZED MG ($BEST_CFG), cache=${BEST_CACHE}, rebuildInterval=${BEST_REBUILD}, started ${STAMP}${KEYWORD:+, keyword=${KEYWORD}}"
+        "BEST-PRACTICE: p = Ginkgo LOCALIZED MG ($BEST_CFG), cache=${BEST_CACHE}, rebuildInterval=${BEST_REBUILD}, fused, started ${STAMP}${KEYWORD:+, keyword=${KEYWORD}}"
+    save_run_fvsolution "$name" "$TMP_FVSOL"
 }
 
 run_pcg_diagonal() {
@@ -112,8 +148,11 @@ run_pcg_diagonal() {
     local name="pPCG-diagonal-best${SUFFIX}"
     sed -E "s#^([[:space:]]+configFile[[:space:]]+).*#\1system/gko/$BEST_PCG_CFG;#" \
         "$MG_TEMPLATE" > "$TMP_FVSOL"
+    enable_diag_cache "$TMP_FVSOL"
+    enable_fusing "$TMP_FVSOL"
     run_one "$name" "$TMP_FVSOL" \
-        "BEST-PRACTICE baseline: p = Ginkgo PCG (Cg) + diagonal (Jacobi) preconditioner ($BEST_PCG_CFG), started ${STAMP}${KEYWORD:+, keyword=${KEYWORD}}"
+        "BEST-PRACTICE baseline: p = Ginkgo PCG (Cg) + diagonal (Jacobi) preconditioner ($BEST_PCG_CFG), fused, started ${STAMP}${KEYWORD:+, keyword=${KEYWORD}}"
+    save_run_fvsolution "$name" "$TMP_FVSOL"
 }
 
 run_best

@@ -482,6 +482,9 @@ public:
     // Only calls the free function applyMatrixRelaxation — no NEON_LAMBDA in this body.
     void relaxOwnedLs()
     {
+        // Matrix under-relaxation (a fused post-assembly kernel), inside the momentum.assemble
+        // region. Profiled separately so the assemble "remainder" can be split from relaxation.
+        Kokkos::Profiling::ScopedRegion region_("assemble.relax");
         const auto alpha =
             lookupEqnRelaxation(runTime_->fvSolutionDict, psi_->name, finalIter_).value_or(1.0);
         NeoN::dsl::applyMatrixRelaxation(*ls_, *psi_, alpha);
