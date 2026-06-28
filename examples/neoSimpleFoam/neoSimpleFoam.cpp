@@ -155,12 +155,17 @@ int main(int argc, char* argv[])
             // ScopedRegion) because UEqn outlives this phase -- the pressure corrector below reuses
             // it via computeRAUandHByA(UEqn).
             Kokkos::Profiling::pushRegion("neoSimpleFoam.momentumPredictor");
+            // Sub-region for the equation construction: builds the dsl expression and, notably,
+            // evaluates turb->gradU() (velocity gradient) + nuEff/nut. Brackets it separately from
+            // the assemble/solve so the profile attributes the momentumPredictor cost.
+            Kokkos::Profiling::pushRegion("momentum.construct");
             nf::PDESolver<NeoN::Vec3> UEqn(
                 dsl::imp::div(phi, U) - dsl::imp::laplacian(turb->nuEff(), U)
                     + dsl::exp::viscousStress(nu, turb->nut(), turb->gradU()),
                 U,
                 rt
             );
+            Kokkos::Profiling::popRegion(); // momentum.construct
 
             if (simple.momentumPredictor())
             {

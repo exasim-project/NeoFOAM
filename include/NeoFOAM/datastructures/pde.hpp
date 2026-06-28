@@ -6,6 +6,8 @@
 
 #include "NeoN/NeoN.hpp"
 
+#include <Kokkos_Profiling_ScopedRegion.hpp> // momentum.assemble sub-region (no-op without a tool)
+
 #include <algorithm>
 #include <cmath>
 #include <optional>
@@ -254,8 +256,10 @@ public:
         // Assemble and relax the owned ls_ so computeRAUandHByA reads the relaxed diagonal.
         // Apply -grad p to ls_->rhs() in place (avoids copying the matrix), snapshot the rhs
         // beforehand and restore it after solve so ls_ retains the H-system for computeRAUandHByA.
+        Kokkos::Profiling::pushRegion("momentum.assemble");
         assemble();
         relaxOwnedLs();
+        Kokkos::Profiling::popRegion();
 
 
         auto rhsExpr = dsl::Expression<ValueType>(-1.0 * rhs);

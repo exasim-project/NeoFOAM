@@ -23,9 +23,7 @@ solvers
 {
     p
     {
-        configFile       system/gko/p-multigrid-localized.json;
-        cacheSolver      true;
-        preconditionerRebuildInterval 100;
+        configFile       system/gko/p-cg.json;
         // Opt the Ginkgo configFile solver into NeoN's L1-scaled residual stop. The
         // configFile's criteria array references it by name ("neon::l1ScaledResidual");
         // these keys supply the absolute tolerance / relTol the named criterion uses.
@@ -46,6 +44,7 @@ solvers
         tolerance        1e-8;
         relTol           0.1;
         l1ScaledResidual true;
+        optimize         true;   // NeoFOAM: dsl::optimize the momentum expr to cut assembly cost
     }
 
     k

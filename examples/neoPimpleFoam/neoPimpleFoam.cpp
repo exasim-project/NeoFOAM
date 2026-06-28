@@ -188,7 +188,9 @@ int main(int argc, char* argv[])
                     {
                         // Pressure corrector
                         nf::PDE<NeoN::scalar> pEqn(
-                            NeoN::dsl::imp::laplacian(rAU, p) - NeoN::dsl::exp::div(phiHbyA)
+                            NeoN::dsl::imp::laplacian(rAU, p) - NeoN::dsl::exp::div(phiHbyA),
+                            p,
+                            rt
                         );
 
                         // Keep the non-orthogonal faceFluxCorrection so updateFaceVelocity can

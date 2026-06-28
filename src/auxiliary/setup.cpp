@@ -85,6 +85,26 @@ createExecutor(const std::string execName, std::unique_ptr<NeoN::AllocatorStrate
     return NeoN::SerialExecutor();
 }
 
+// Allocator selection (controlDict `allocator` key). The choice has a large
+// performance impact on the per-timestep assembly, which allocates and frees many
+// short-lived device temporaries (devStress tensor field, grad fields, deferred-
+// correction SurfaceFields, explicit-source Vectors -- see PDE::assemble):
+//
+//   "Umpire"     -> UmpireAllocator: Umpire's *un-pooled* "DEVICE" resource. Each
+//                   allocate()/deallocate() is a raw cudaMalloc/cudaFree, and BOTH
+//                   synchronize the CUDA device. With dozens of temporaries per
+//                   assemble this serializes the async stream and shows up as the
+//                   large host-side "remainder" in the momentum.assemble profile.
+//   "UmpirePool" -> UmpirePoolAllocator: a QuickPool of `memPoolSize` GB reserved up
+//                   front; allocations are served from the pool with no per-call
+//                   cudaMalloc/cudaFree and no device sync. Strongly preferred for
+//                   the steady assemble/solve loop (this is plan Strategy 2).
+//   (other)      -> DefaultAllocator == KokkosAllocator: raw Kokkos::kokkos_malloc/
+//                   kokkos_free, i.e. cudaMalloc/cudaFree -- also synchronizing.
+//
+// FOOTGUN: `memPoolSize` is read ONLY on the "UmpirePool" branch. Setting it with
+// allocator="Umpire" (or any other value) is silently ignored -- no pool is created
+// and every temporary still hits the synchronizing cudaMalloc/cudaFree path.
 NeoN::Executor createExecutor(const Foam::dictionary& dict)
 {
     auto execName = std::string(dict.get<Foam::word>("executor"));
