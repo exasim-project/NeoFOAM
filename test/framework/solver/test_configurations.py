@@ -72,7 +72,7 @@ class FakeOptionalFamily:
 
 
 class PreprocessMemberCfg(BaseConfig):
-    pipeline: list = []
+    tools: list = []
 
 
 preprocess_tool = Tool("PreprocessTool")

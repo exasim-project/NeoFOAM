@@ -38,7 +38,6 @@ from __future__ import annotations
 from ..init_step import InitStep
 from ...context import Context
 from .context_builder import (
-    MESH_STATS_CATEGORY,
     CategoryRouter,
     ContextBuilder,
     build_context_from_results,
@@ -72,7 +71,6 @@ def execute_initialization(
 
 
 __all__ = [
-    "MESH_STATS_CATEGORY",
     "CategoryRouter",
     "ContextBuilder",
     "InitResult",

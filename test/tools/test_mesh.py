@@ -108,11 +108,13 @@ def test_checkmesh_raises_on_failure(monkeypatch: pytest.MonkeyPatch) -> None:
     assert excinfo.value.step_name == "preprocess.checkMesh"
 
 
-def test_checkmesh_passes_returns_stats(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_checkmesh_passes_returns_prior_mesh(monkeypatch: pytest.MonkeyPatch) -> None:
     stats = {"passed": True, "total_errors": 0}
     monkeypatch.setattr(mesh, "checkMesh", lambda *a, **k: stats)
     step = _check_step(fail_on_error=True)
-    assert step.initializer({"_prev_mesh": object()}) is stats
+    prior = object()
+    # checkMesh only validates; it passes the prior mesh straight through.
+    assert step.initializer({"_prev_mesh": prior}) is prior
 
 
 def test_checkmesh_does_not_raise_when_fail_on_error_false(
@@ -121,7 +123,8 @@ def test_checkmesh_does_not_raise_when_fail_on_error_false(
     stats = {"passed": False, "total_errors": 5}
     monkeypatch.setattr(mesh, "checkMesh", lambda *a, **k: stats)
     step = _check_step(fail_on_error=False)
-    assert step.initializer({"_prev_mesh": object()}) is stats
+    prior = object()
+    assert step.initializer({"_prev_mesh": prior}) is prior
 
 
 def test_checkmesh_wraps_binding_failure(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -197,7 +200,68 @@ def test_pipeline_chain_threads_meshes_without_openfoam(
     assert calls[1][1] is block_mesh  # snappy refined the blockMesh result
     assert calls[2][1] is block_mesh  # checkMesh validated the threaded mesh
     assert ctx.mesh is block_mesh  # terminal alias publishes one mesh resource
-    assert ctx.mesh_stats == {"passed": True, "total_errors": 0}  # stats stored
+
+
+def test_scrambled_pipeline_publishes_sink_mesh(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import types
+
+    calls: list[str] = []
+    block_mesh = object()
+
+    monkeypatch.setattr(
+        mesh,
+        "pyf",
+        types.SimpleNamespace(dictionary=types.SimpleNamespace(read=lambda f: f)),
+    )
+
+    def fake_block(*a: Any, **k: Any) -> Any:
+        calls.append("block")
+        return block_mesh
+
+    def fake_snappy(*a: Any, **k: Any) -> None:
+        calls.append("snappy")
+
+    def fake_check(*a: Any, **k: Any) -> dict[str, Any]:
+        calls.append("check")
+        return {"passed": True, "total_errors": 0}
+
+    monkeypatch.setattr(mesh, "generate_blockmesh", fake_block)
+    monkeypatch.setattr(mesh, "generate_snappy_hex_mesh", fake_snappy)
+    monkeypatch.setattr(mesh, "checkMesh", fake_check)
+
+    # entries deliberately scrambled — order must come from depends_on
+    cfg = PreprocessConfig(
+        tools=[
+            {"tool": "checkMesh", "depends_on": ["snappyHexMesh"]},
+            {"tool": "snappyHexMesh", "depends_on": ["blockMesh"]},
+            {"tool": "blockMesh"},
+        ]
+    )
+    runtimes = resolve_pipeline(incompressibleFluid._tools, cfg)
+    steps = [lazy("_foam_time", lambda _ctx: "TIME")]
+    steps.extend(tool_init_steps(runtimes))
+    ctx = execute_initialization(steps)
+
+    assert calls == ["block", "snappy", "check"]  # DAG order from scrambled file
+    assert ctx.mesh is block_mesh  # sink (checkMesh) passes the block mesh through
+
+
+def test_meshstats_feature_fully_removed() -> None:
+    roots = [
+        Path(__file__).parents[2] / "src" / "neofoam",
+        Path(__file__).parents[2] / "test",
+    ]
+    needle_a = "mesh" + "_stats"
+    needle_b = "MESH" + "_STATS"
+    offenders = [
+        str(py)
+        for root in roots
+        for py in root.rglob("*.py")
+        if needle_a in py.read_text() or needle_b in py.read_text()
+    ]
+    assert offenders == []
 
 
 def test_pipeline_propagates_configured_options(
@@ -243,6 +307,7 @@ def test_pipeline_propagates_configured_options(
             config=SnappyHexMeshStep(
                 tool="snappyHexMesh", overwrite=False, verbose=True
             ),
+            depends_on=["blockMesh"],
         ),
         ToolRuntime(
             spec=checkMeshTool,
@@ -253,6 +318,7 @@ def test_pipeline_propagates_configured_options(
                 all_geometry=True,
                 check_quality=True,
             ),
+            depends_on=["snappyHexMesh"],
         ),
     ]
     steps = [lazy("_foam_time", lambda _ctx: "TIME")]

@@ -40,14 +40,14 @@ def test_tools_empty_without_registration() -> None:
 def test_detect_preprocess_tools_resolves_registered(tmp_path: Path) -> None:
     a = Tool("a")  # untyped build → raw mapping
     a.build(lambda cfg: [])
-    case = _enable_file(tmp_path, "pipeline:\n  - tool: a\n")
+    case = _enable_file(tmp_path, "tools:\n  - tool: a\n")
     spec = Solver("fake").tools(a)
     rts = spec.detect_preprocess_tools(case)
     assert [rt.name for rt in rts] == ["preprocess.a"]
 
 
 def test_detect_preprocess_tools_unknown_tool_raises(tmp_path: Path) -> None:
-    case = _enable_file(tmp_path, "pipeline:\n  - tool: a\n")
+    case = _enable_file(tmp_path, "tools:\n  - tool: a\n")
     spec = Solver("fake")  # did NOT register 'a'
     with pytest.raises(ValueError, match="a"):
         spec.detect_preprocess_tools(case)
@@ -56,7 +56,7 @@ def test_detect_preprocess_tools_unknown_tool_raises(tmp_path: Path) -> None:
 def test_same_tool_resolves_on_two_solvers(tmp_path: Path) -> None:
     a = Tool("a")
     a.build(lambda cfg: [])
-    case = _enable_file(tmp_path, "pipeline:\n  - tool: a\n")
+    case = _enable_file(tmp_path, "tools:\n  - tool: a\n")
     s1 = Solver("one").tools(a)
     s2 = Solver("two").tools(a)
     assert [r.name for r in s1.detect_preprocess_tools(case)] == ["preprocess.a"]

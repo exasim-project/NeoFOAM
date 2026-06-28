@@ -19,8 +19,3 @@ def test_context_time_attribute() -> None:
     ctx = Context(fields={}, models={}, time=sentinel)
 
     assert ctx.time is sentinel
-
-
-def test_mesh_stats_defaults_none() -> None:
-    ctx = Context(fields={}, models={})
-    assert ctx.mesh_stats is None

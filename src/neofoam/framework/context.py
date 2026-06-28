@@ -37,7 +37,3 @@ class Context(BaseModel):
     # names of fields (keys of ``fields``) flagged for persistence via
     # ``field(..., write=True)``; a per-field write backend writes exactly these.
     write_fields: set[str] = Field(default_factory=set)
-    # checkMesh stats from the preprocess pipeline (None when no checkMesh ran).
-    # Routed here from the ``mesh_stats`` init category; an explicit declared
-    # field (no dynamic attrs) so the stats survive on the built Context.
-    mesh_stats: dict[str, Any] | None = None

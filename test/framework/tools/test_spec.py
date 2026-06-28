@@ -83,6 +83,29 @@ def test_instantiate_typed_invalid_raises() -> None:
         t.instantiate({"tool": "x", "k": "notanint"})
 
 
+def test_instantiate_carries_depends_on() -> None:
+    t = Tool("x")
+
+    @t.build
+    def _b(cfg: SomeStep) -> list[InitStep]:
+        return []
+
+    rt = t.instantiate({"tool": "x", "depends_on": ["block"], "k": 1})
+    assert rt.depends_on == ["block"]
+    # the depends_on envelope key is ignored by the typed step config
+    assert rt.config.k == 1
+
+
+def test_instantiate_defaults_depends_on_empty() -> None:
+    t = Tool("x")
+
+    @t.build
+    def _b(cfg: SomeStep) -> list[InitStep]:
+        return []
+
+    assert t.instantiate({"tool": "x"}).depends_on == []
+
+
 def test_runtime_run_build_calls_build() -> None:
     t = Tool("x")
     step = lazy("preprocess.x", lambda ctx: "result")

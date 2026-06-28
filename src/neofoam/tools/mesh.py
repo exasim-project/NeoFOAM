@@ -16,7 +16,6 @@ from pybFoam.meshing import checkMesh, generate_blockmesh, generate_snappy_hex_m
 from pydantic import BaseModel
 
 from neofoam.framework.initialization import InitStep, InitStepExecutionError, lazy
-from neofoam.framework.initialization.execution import MESH_STATS_CATEGORY
 from neofoam.framework.tools import PreprocessConfig, Tool
 
 
@@ -105,12 +104,8 @@ def _build_check(cfg: CheckMeshStep) -> list[InitStep]:
                 [],
                 RuntimeError(f"mesh check failed: {stats['total_errors']} error(s)"),
             )
-        return stats
+        # checkMesh only validates; pass the mesh straight through so the
+        # pipeline treats this like any other mesh-advancing step.
+        return mesh
 
-    return [
-        InitStep(
-            name="preprocess.checkMesh",
-            initializer=run,
-            category=MESH_STATS_CATEGORY,
-        )
-    ]
+    return [InitStep(name="preprocess.checkMesh", initializer=run)]

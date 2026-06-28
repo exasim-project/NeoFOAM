@@ -71,14 +71,6 @@ def test_default_router_routing(init_results, check):
     assert check(ctx)
 
 
-def test_default_router_routes_mesh_stats() -> None:
-    stats = {"passed": True, "total_errors": 0}
-    ctx = build_context_from_results(
-        [InitResult("preprocess.checkMesh", "mesh_stats", stats)]
-    )
-    assert ctx.mesh_stats == stats
-
-
 def test_write_flag_collected_into_write_fields() -> None:
     ctx = build_context_from_results(
         [

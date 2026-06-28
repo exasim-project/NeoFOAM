@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Pipeline resolution + chaining (pure-Python, no mesh executed).
+"""Pipeline resolution + DAG chaining (pure-Python, no mesh executed).
 
 Uses in-test stub tools whose ``@build`` emits a single recording :class:`InitStep`,
-so the linear chain, ``_prev_mesh`` threading, and terminal ``mesh`` alias can be
-verified without pybFoam.
+so DAG ordering, ``_prev_mesh`` threading, and the terminal ``mesh`` sink alias can be
+verified without pybFoam. Execution order comes from each entry's ``depends_on``, never
+its list position.
 """
 
 from pathlib import Path
@@ -15,7 +16,7 @@ import pytest
 
 from neofoam.framework.initialization import InitStep, lazy
 from neofoam.framework.initialization.execution import (
-    MESH_STATS_CATEGORY,
+    InitializationGraphError,
     execute_initialization,
 )
 from neofoam.framework.tools import (
@@ -47,9 +48,9 @@ def _stub_tool(
     so threading and ordering are observable.
     """
     t = Tool(name)
-    # A stats-category step's result is routed onto Context.mesh_stats, which is
-    # validated as a dict; mesh-producing steps return an opaque sentinel.
-    out: Any = {} if category == MESH_STATS_CATEGORY else object()
+    # Every step advances the mesh; it returns an opaque sentinel so threading
+    # and ordering are observable.
+    out: Any = object()
     produced[name] = out
 
     @t.build
@@ -65,11 +66,27 @@ def _stub_tool(
     return t
 
 
+def _recording_tool(name: str, order: list[str]) -> Any:
+    """A tool whose build step appends its name to ``order`` when executed."""
+    t = Tool(name)
+    out: Any = object()
+
+    @t.build
+    def _b(cfg: Any) -> list[InitStep]:
+        def init(ctx: dict[str, Any]) -> Any:
+            order.append(name)
+            return out
+
+        return [InitStep(name=f"preprocess.{name}", initializer=init)]
+
+    return t
+
+
 def test_resolve_pipeline_resolves_registered_tool() -> None:
     seen: dict[str, Any] = {}
     produced: dict[str, Any] = {}
     a = _stub_tool("a", seen, produced)
-    rts = resolve_pipeline([a], PreprocessConfig(pipeline=[{"tool": "a"}]))
+    rts = resolve_pipeline([a], PreprocessConfig(tools=[{"tool": "a"}]))
     assert [rt.name for rt in rts] == ["preprocess.a"]
 
 
@@ -78,111 +95,219 @@ def test_resolve_pipeline_unknown_tool_raises() -> None:
     produced: dict[str, Any] = {}
     b = _stub_tool("b", seen, produced)
     with pytest.raises(ValueError, match="a"):
-        resolve_pipeline([], PreprocessConfig(pipeline=[{"tool": "a"}]))
+        resolve_pipeline([], PreprocessConfig(tools=[{"tool": "a"}]))
     with pytest.raises(ValueError, match="a"):
-        resolve_pipeline([b], PreprocessConfig(pipeline=[{"tool": "a"}]))
+        resolve_pipeline([b], PreprocessConfig(tools=[{"tool": "a"}]))
 
 
-def test_resolve_pipeline_preserves_order() -> None:
+def test_resolve_pipeline_carries_depends_on() -> None:
     seen: dict[str, Any] = {}
     produced: dict[str, Any] = {}
     a = _stub_tool("a", seen, produced)
     b = _stub_tool("b", seen, produced)
     rts = resolve_pipeline(
-        [a, b], PreprocessConfig(pipeline=[{"tool": "a"}, {"tool": "b"}])
+        [a, b],
+        PreprocessConfig(tools=[{"tool": "a"}, {"tool": "b", "depends_on": ["a"]}]),
     )
     assert [rt.name for rt in rts] == ["preprocess.a", "preprocess.b"]
+    assert rts[0].depends_on == []
+    assert rts[1].depends_on == ["a"]
 
 
 def test_resolve_pipeline_empty_is_empty() -> None:
-    assert resolve_pipeline([], PreprocessConfig(pipeline=[])) == []
+    assert resolve_pipeline([], PreprocessConfig(tools=[])) == []
 
 
-def test_tool_init_steps_follow_pipeline_order() -> None:
+def test_dependency_becomes_initstep_depends_on() -> None:
     seen: dict[str, Any] = {}
     produced: dict[str, Any] = {}
-    a = _stub_tool("a", seen, produced)
-    b = _stub_tool("b", seen, produced)
-    c = _stub_tool("c", seen, produced, category=MESH_STATS_CATEGORY)
-    runtimes = [
-        a.instantiate({"tool": "a"}),
-        b.instantiate({"tool": "b"}),
-        c.instantiate({"tool": "c"}),
+    block = _stub_tool("block", seen, produced)
+    snappy = _stub_tool("snappy", seen, produced)
+    steps = tool_init_steps(
+        [
+            block.instantiate({"tool": "block"}),
+            snappy.instantiate({"tool": "snappy", "depends_on": ["block"]}),
+        ]
+    )
+    by_name = {s.name: s for s in steps}
+    assert by_name["preprocess.block"].depends_on == ["_foam_time"]
+    assert by_name["preprocess.snappy"].depends_on == [
+        "_foam_time",
+        "preprocess.block",
     ]
-    steps = tool_init_steps(runtimes)
-    assert [s.name for s in steps] == [
-        "preprocess.a",
-        "preprocess.b",
-        "preprocess.c",
-        "mesh",
-    ]
-    assert [s.depends_on for s in steps] == [
-        ["_foam_time"],
-        ["preprocess.a"],
-        ["preprocess.b"],
-        ["preprocess.c"],
-    ]
+
+
+def test_entry_without_depends_on_is_root() -> None:
+    seen: dict[str, Any] = {}
+    produced: dict[str, Any] = {}
+    block = _stub_tool("block", seen, produced)
+    steps = tool_init_steps([block.instantiate({"tool": "block"})])
+    assert [s.name for s in steps] == ["preprocess.block", "mesh"]
+    assert steps[0].depends_on == ["_foam_time"]
+    assert steps[-1].depends_on == ["preprocess.block"]
     assert steps[-1].replaces == ["mesh"]
 
 
-def test_tool_init_steps_threads_prev_mesh() -> None:
+def test_scrambled_file_order_yields_dag_order() -> None:
+    order: list[str] = []
+    a = _recording_tool("a", order)
+    b = _recording_tool("b", order)
+    c = _recording_tool("c", order)
+    # scrambled file order: c (after b), b (after a), a (root)
+    rts = resolve_pipeline(
+        [a, b, c],
+        PreprocessConfig(
+            tools=[
+                {"tool": "c", "depends_on": ["b"]},
+                {"tool": "b", "depends_on": ["a"]},
+                {"tool": "a"},
+            ]
+        ),
+    )
+    steps = [lazy("_foam_time", lambda _ctx: "T0")]
+    steps.extend(tool_init_steps(rts))
+    execute_initialization(steps)
+    assert order == ["a", "b", "c"]  # DAG order, not file order
+
+
+def test_prev_mesh_sourced_from_declared_dependency() -> None:
     seen: dict[str, Any] = {}
     produced: dict[str, Any] = {}
     a = _stub_tool("a", seen, produced)
     b = _stub_tool("b", seen, produced)
-    c = _stub_tool("c", seen, produced, category=MESH_STATS_CATEGORY)
-    runtimes = [
-        a.instantiate({"tool": "a"}),
-        b.instantiate({"tool": "b"}),
-        c.instantiate({"tool": "c"}),
-    ]
+    c = _stub_tool("c", seen, produced)
+    rts = resolve_pipeline(
+        [a, b, c],
+        PreprocessConfig(
+            tools=[
+                {"tool": "c", "depends_on": ["b"]},
+                {"tool": "b", "depends_on": ["a"]},
+                {"tool": "a"},
+            ]
+        ),
+    )
     steps = [lazy("_foam_time", lambda _ctx: "T0")]
-    steps.extend(tool_init_steps(runtimes))
+    steps.extend(tool_init_steps(rts))
     ctx = execute_initialization(steps)
-
-    assert seen["a"] is None  # first step sees no prior mesh
-    assert seen["b"] is produced["a"]  # b refines a's result
-    assert seen["c"] is produced["b"]  # stats step consumes the last producer
-    # terminal alias publishes the producer (b), not the stats step (c)
-    assert ctx.mesh is produced["b"]
+    assert seen["a"] is None  # root threads no _prev_mesh
+    assert seen["b"] is produced["a"]  # b reads its declared dep a's output
+    assert seen["c"] is produced["b"]  # c reads its declared dep b's output
+    assert ctx.mesh is produced["c"]  # sink (c) published as the mesh
 
 
-def test_stats_only_pipeline_emits_no_mesh_alias() -> None:
+def test_absent_dependency_raises_graph_error() -> None:
     seen: dict[str, Any] = {}
     produced: dict[str, Any] = {}
-    c = _stub_tool("c", seen, produced, category=MESH_STATS_CATEGORY)
-    steps = tool_init_steps([c.instantiate({"tool": "c"})])
-    assert [s.name for s in steps] == ["preprocess.c"]
-    assert all(s.name != "mesh" for s in steps)
+    c = _stub_tool("c", seen, produced)
+    steps = [lazy("_foam_time", lambda _ctx: "T0")]
+    steps.extend(
+        tool_init_steps([c.instantiate({"tool": "c", "depends_on": ["nope"]})])
+    )
+    with pytest.raises(InitializationGraphError):
+        execute_initialization(steps)
+
+
+def test_dependency_cycle_raises_graph_error() -> None:
+    seen: dict[str, Any] = {}
+    produced: dict[str, Any] = {}
+    a = _stub_tool("a", seen, produced)
+    b = _stub_tool("b", seen, produced)
+    steps = [lazy("_foam_time", lambda _ctx: "T0")]
+    steps.extend(
+        tool_init_steps(
+            [
+                a.instantiate({"tool": "a", "depends_on": ["b"]}),
+                b.instantiate({"tool": "b", "depends_on": ["a"]}),
+            ]
+        )
+    )
+    with pytest.raises(InitializationGraphError):
+        execute_initialization(steps)
+
+
+def test_multiple_sinks_raise_valueerror() -> None:
+    # Two tools, neither depended on by the other → two pipeline sinks. There can be
+    # only one tool that owns the published mesh, so wiring must reject this clearly.
+    seen: dict[str, Any] = {}
+    produced: dict[str, Any] = {}
+    a = _stub_tool("a", seen, produced)
+    b = _stub_tool("b", seen, produced)
+    with pytest.raises(ValueError, match="exactly one sink"):
+        tool_init_steps([a.instantiate({"tool": "a"}), b.instantiate({"tool": "b"})])
+
+
+def test_multiple_depends_on_raises_valueerror() -> None:
+    # Mesh threading is single-predecessor by design: a tool declaring >1 dependency
+    # has no unambiguous _prev_mesh, so wiring rejects it with a clear error naming
+    # the tool and its deps rather than deferring to a bare KeyError in @build.
+    seen: dict[str, Any] = {}
+    produced: dict[str, Any] = {}
+    a = _stub_tool("a", seen, produced)
+    b = _stub_tool("b", seen, produced)
+    c = _stub_tool("c", seen, produced)
+    with pytest.raises(ValueError, match="single-predecessor"):
+        tool_init_steps(
+            [
+                a.instantiate({"tool": "a"}),
+                b.instantiate({"tool": "b"}),
+                c.instantiate({"tool": "c", "depends_on": ["a", "b"]}),
+            ]
+        )
+
+
+def test_tool_init_steps_raises_on_empty_build() -> None:
+    # A tool whose @build returns no steps must raise a clear error naming it,
+    # not a bare IndexError.
+    t = Tool("noop")
+
+    @t.build
+    def _b(cfg: Any) -> list[InitStep]:
+        return []
+
+    with pytest.raises(ValueError, match="noop"):
+        tool_init_steps([t.instantiate({"tool": "noop"})])
 
 
 def test_empty_pipeline_produces_no_steps() -> None:
     assert tool_init_steps([]) == []
 
 
-def test_untyped_tool_passes_raw_mapping_and_chains() -> None:
+def test_untyped_tool_with_depends_on_orders() -> None:
+    # Open-seam tool (untyped @build) resolves a raw mapping AND DAG-wires.
     seen: dict[str, Any] = {}
     produced: dict[str, Any] = {}
     a = _stub_tool("a", seen, produced)
     u = _stub_tool("u", seen, produced)
     rts = resolve_pipeline(
         [a, u],
-        PreprocessConfig(pipeline=[{"tool": "a"}, {"tool": "u", "extra": 1}]),
+        PreprocessConfig(
+            tools=[
+                {"tool": "u", "depends_on": ["a"], "extra": 1},
+                {"tool": "a"},
+            ]
+        ),
     )
-    assert rts[1].config == {"tool": "u", "extra": 1}  # raw mapping passthrough
-    steps = tool_init_steps(rts)
-    assert [s.name for s in steps] == ["preprocess.a", "preprocess.u", "mesh"]
+    assert rts[0].config == {"tool": "u", "depends_on": ["a"], "extra": 1}
+    assert rts[0].depends_on == ["a"]
+    steps = [lazy("_foam_time", lambda _ctx: "T0")]
+    steps.extend(tool_init_steps(rts))
+    ctx = execute_initialization(steps)
+    assert ctx.mesh is produced["u"]  # u is the sink
 
 
-def test_pipeline_loads_ordered_open_entries() -> None:
-    # The schema is open: each entry is a raw mapping keyed on ``tool`` (resolution
-    # turns it into a typed step config), so ordering is what matters.
+def test_pipeline_loads_open_entries_with_depends_on() -> None:
+    # The schema is open: each entry is a raw mapping keyed on ``tool`` carrying an
+    # optional ``depends_on`` envelope; the DAG (not list position) decides order.
     cfg = PreprocessConfig.load(case_dir=CASE)
-    assert [entry["tool"] for entry in cfg.pipeline] == [
+    assert [entry["tool"] for entry in cfg.tools] == [
         "blockMesh",
         "snappyHexMesh",
         "checkMesh",
     ]
+    by_tool = {entry["tool"]: entry for entry in cfg.tools}
+    assert "depends_on" not in by_tool["blockMesh"]
+    assert by_tool["snappyHexMesh"]["depends_on"] == ["blockMesh"]
+    assert by_tool["checkMesh"]["depends_on"] == ["snappyHexMesh"]
 
 
 def test_absent_file_raises_file_not_found(tmp_path: Path) -> None:
@@ -192,4 +317,4 @@ def test_absent_file_raises_file_not_found(tmp_path: Path) -> None:
 
 def test_empty_pipeline_is_empty_list() -> None:
     cfg = PreprocessConfig.load(case_dir=EMPTY_CASE)
-    assert cfg.pipeline == []
+    assert cfg.tools == []

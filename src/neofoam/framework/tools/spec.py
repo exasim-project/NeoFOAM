@@ -14,7 +14,7 @@ at init time. Tools live in shared packages and are registered on a solver via
 from __future__ import annotations
 
 import inspect
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Callable, Optional, TypeVar
 
 from pydantic import BaseModel
@@ -68,14 +68,23 @@ class ToolSpec:
         """Resolve one pipeline entry to a runtime.
 
         A typed tool validates ``entry`` against its step-config (defaults
-        applied); the open seam receives the raw mapping. ``instance_id`` is
-        accepted for ``ModelSpec`` parity but unused (one runtime per entry).
+        applied; the ``depends_on`` envelope key is ignored by pydantic — it is
+        not a tool option); the open seam receives the raw mapping. ``depends_on``
+        (bare names of other listed tools this entry runs after) is carried onto
+        the runtime. ``instance_id`` is accepted for ``ModelSpec`` parity but
+        unused (one runtime per entry).
         """
         config_type = self.step_config_type
         config: Any = (
             config_type.model_validate(entry) if config_type is not None else entry
         )
-        return ToolRuntime(spec=self, name=f"preprocess.{self.name}", config=config)
+        depends_on = entry.get("depends_on", [])
+        return ToolRuntime(
+            spec=self,
+            name=f"preprocess.{self.name}",
+            config=config,
+            depends_on=list(depends_on),
+        )
 
 
 def Tool(name: str) -> ToolSpec:
@@ -90,6 +99,7 @@ class ToolRuntime:
     spec: ToolSpec
     name: str  # "preprocess.<tool>"
     config: Any
+    depends_on: list[str] = field(default_factory=list)  # bare tool names run-after
 
     def run_build(self) -> list[InitStep]:
         """Call the spec's build func with this entry's config."""
