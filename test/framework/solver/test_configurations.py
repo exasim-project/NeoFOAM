@@ -21,6 +21,7 @@ import pytest
 
 from neofoam.framework.model import Model
 from neofoam.framework.solver import Configurations, Solver, configurations
+from neofoam.framework.tools import Tool
 from neofoam.io import BaseConfig
 
 
@@ -70,6 +71,14 @@ class FakeOptionalFamily:
         return [optional_member]
 
 
+class PreprocessMemberCfg(BaseConfig):
+    pipeline: list = []
+
+
+preprocess_tool = Tool("PreprocessTool")
+preprocess_tool.config(PreprocessMemberCfg)
+
+
 def _solver() -> Any:
     spec = Solver("fake")
     spec.config(SolverCfgA)
@@ -77,6 +86,13 @@ def _solver() -> Any:
     spec.core_models(FakeCoreFamily)
     spec.optional_models(FakeOptionalFamily)
     return spec
+
+
+def test_configurations_includes_preprocess_tool() -> None:
+    spec = _solver()
+    spec.tools(preprocess_tool)
+    cfg = configurations(spec)
+    assert "PreprocessMemberCfg" in cfg.names
 
 
 def test_core_and_optional_models_bind_once() -> None:

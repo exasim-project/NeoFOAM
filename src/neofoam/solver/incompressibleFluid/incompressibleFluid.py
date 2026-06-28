@@ -11,6 +11,7 @@ are omitted in this minimal version. The main iteration loop is owned by the
 injectable stability constraints, and the write decision.
 """
 
+from pathlib import Path
 from typing import Annotated, Any, Optional
 
 from pybFoam import Info
@@ -25,7 +26,9 @@ from neofoam.framework.operations import (
     StepBuilder,
 )
 from neofoam.framework.solver import Solver
+from neofoam.framework.tools import tool_init_steps
 from neofoam.framework.types import OperationMetadata
+from neofoam.tools.mesh import blockMeshTool, checkMeshTool, snappyHexMeshTool
 from neofoam.turbulence import momentumTransportModel
 from neofoam.viscosity import viscosityModel
 
@@ -61,6 +64,9 @@ incompressibleFluid.core_models(
     momentumTransportModel
 )  # nut + stress (turbulenceProperties)
 incompressibleFluid.optional_models(incompressibleFluidModel)  # zero or more
+incompressibleFluid.tools(
+    blockMeshTool, snappyHexMeshTool, checkMeshTool
+)  # mesh pipeline (pre-loop)
 
 
 @incompressibleFluid.initializer
@@ -130,6 +136,39 @@ def execution_graph(
         model_ops.add(opt.operations)
 
     return builder, model_ops
+
+
+def run_preprocess(argv: Optional[list[str]] = None) -> Context:
+    """Run ONLY the preprocessing pipeline (+ ``_foam_time``) and stop.
+
+    Builds ``_foam_time`` and the detected mesh-pipeline steps, executes the
+    init graph, and returns the populated Context. No fields, models, or time
+    loop run — this is the ``neofoam preprocess`` entrypoint.
+    """
+    import pybFoam as pyf
+
+    from neofoam.framework.initialization import lazy
+    from neofoam.framework.initialization.execution import execute_initialization
+
+    resolved_argv = argv or []
+
+    def create_foam_time(_ctx: dict[str, Any]) -> Any:
+        return pyf.Time(pyf.argList(resolved_argv))
+
+    case_dir = Path(_case_dir_from_argv(resolved_argv))
+    runtimes = incompressibleFluid.detect_preprocess_tools(case_dir)
+
+    steps = [lazy("_foam_time", create_foam_time)]
+    steps.extend(tool_init_steps(runtimes))
+    return execute_initialization(steps)
+
+
+def _case_dir_from_argv(argv: list[str]) -> str:
+    """Extract the ``-case <dir>`` value from argv, defaulting to ``.``."""
+    for i, token in enumerate(argv):
+        if token == "-case" and i + 1 < len(argv):
+            return argv[i + 1]
+    return "."
 
 
 def run(

@@ -71,6 +71,14 @@ def test_default_router_routing(init_results, check):
     assert check(ctx)
 
 
+def test_default_router_routes_mesh_stats() -> None:
+    stats = {"passed": True, "total_errors": 0}
+    ctx = build_context_from_results(
+        [InitResult("preprocess.checkMesh", "mesh_stats", stats)]
+    )
+    assert ctx.mesh_stats == stats
+
+
 def test_write_flag_collected_into_write_fields() -> None:
     ctx = build_context_from_results(
         [
@@ -220,6 +228,23 @@ def test_execute_initialization_raises_structured_graph_error():
     diag = report.diagnostics[0]
     assert diag.code == "missing_dependency"
     assert diag.node_name == "A"
+
+
+def test_execute_initialization_enforces_replaces_target():
+    # The replacement-target check must fire on the real executed path, not only
+    # inside ``_topological_sort`` (which the executed path skips by sorting with
+    # ``validate_graph=False``). A ``replaces=[X]`` naming no present step raises.
+    inits = [
+        InitStep(
+            "mesh",
+            depends_on=[],
+            initializer=lambda _ctx: "m",
+            replaces=["nonexistent"],
+        ),
+    ]
+
+    with pytest.raises(InitializationGraphError):
+        execute_initialization(inits)
 
 
 def test_execute_initialization_validates_only_once(monkeypatch):
