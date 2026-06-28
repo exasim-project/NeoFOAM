@@ -47,6 +47,7 @@ what you're trying to do:
    auto_how-to/example_collect_and_save_configs
    auto_how-to/example_visualize_the_operation_dag
    auto_how-to/example_use_depends_for_injection
+   auto_how-to/example_use_an_interface
 
 .. toctree::
    :maxdepth: 2

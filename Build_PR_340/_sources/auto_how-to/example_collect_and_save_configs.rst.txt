@@ -117,7 +117,7 @@ works for any solver, because the classes are declared on its spec.
 
  .. code-block:: none
 
-    config classes: ['ControlDictConfig', 'Pimple_fvSchemes', 'Pimple_fvSolution', 'UFieldConfig', 'pFieldConfig', 'TransportPropertiesConfig', 'TurbulencePropertiesConfig', 'BoussinesqConfig', 'boussinesq_fvSchemes', 'boussinesq_fvSolution', 'p_rghFieldConfig', 'TFieldConfig', 'alphatFieldConfig', 'CourantControlConfig']
+    config classes: ['ControlDictConfig', 'Pimple_fvSchemes', 'Pimple_fvSolution', 'UFieldConfig', 'pFieldConfig', 'TransportPropertiesConfig', 'TurbulencePropertiesConfig', 'BoussinesqConfig', 'boussinesq_fvSchemes', 'boussinesq_fvSolution', 'p_rghFieldConfig', 'TFieldConfig', 'alphatFieldConfig', 'CourantConfig', 'MaxDeltaTConfig']
     ControlDictConfig            fields: ['application', 'deltaT', 'endTime', 'startTime', 'writeBackend', 'writeControl', 'writeInterval']
     Pimple_fvSchemes             fields: ['ddtSchemes', 'divSchemes', 'gradSchemes', 'interpolationSchemes', 'laplacianSchemes', 'snGradSchemes']
     Pimple_fvSolution            fields: ['PIMPLE', 'solvers']
@@ -131,7 +131,8 @@ works for any solver, because the classes are declared on its spec.
     p_rghFieldConfig             fields: ['FoamFile', 'boundaryField', 'dimensions', 'internalField']
     TFieldConfig                 fields: ['FoamFile', 'boundaryField', 'dimensions', 'internalField']
     alphatFieldConfig            fields: ['FoamFile', 'boundaryField', 'dimensions', 'internalField']
-    CourantControlConfig         fields: ['adjustTimeStep', 'maxCo', 'maxDeltaT']
+    CourantConfig                fields: ['maxCo']
+    MaxDeltaTConfig              fields: ['maxDeltaT']
 
 
 
@@ -164,7 +165,7 @@ adds ``0/p_rgh`` / ``0/T`` / ``0/alphat``.
 
  .. code-block:: none
 
-    dict files: ['constant/transportProperties', 'constant/transportProperties', 'constant/turbulenceProperties', 'system/controlDict', 'system/controlDict', 'system/fvSchemes', 'system/fvSchemes', 'system/fvSolution', 'system/fvSolution']
+    dict files: ['constant/transportProperties', 'constant/transportProperties', 'constant/turbulenceProperties', 'system/controlDict', 'system/controlDict', 'system/controlDict', 'system/fvSchemes', 'system/fvSchemes', 'system/fvSolution', 'system/fvSolution']
     0/* fields: ['0/T', '0/U', '0/alphat', '0/p', '0/p_rgh']
 
 
@@ -212,7 +213,7 @@ JSON Schema of every class — the form most agent / UI tooling consumes.
  .. code-block:: none
 
     ControlDictConfig fields: ['application', 'deltaT', 'endTime', 'startTime', 'writeBackend', 'writeControl', 'writeInterval']
-    JSON schema keys        : ['ControlDictConfig', 'Pimple_fvSchemes', 'Pimple_fvSolution', 'UFieldConfig', 'pFieldConfig', 'TransportPropertiesConfig', 'TurbulencePropertiesConfig', 'BoussinesqConfig', 'boussinesq_fvSchemes', 'boussinesq_fvSolution', 'p_rghFieldConfig', 'TFieldConfig', 'alphatFieldConfig', 'CourantControlConfig']
+    JSON schema keys        : ['ControlDictConfig', 'Pimple_fvSchemes', 'Pimple_fvSolution', 'UFieldConfig', 'pFieldConfig', 'TransportPropertiesConfig', 'TurbulencePropertiesConfig', 'BoussinesqConfig', 'boussinesq_fvSchemes', 'boussinesq_fvSolution', 'p_rghFieldConfig', 'TFieldConfig', 'alphatFieldConfig', 'CourantConfig', 'MaxDeltaTConfig']
 
 
 
@@ -244,8 +245,8 @@ a plain turbulent case — PIMPLE only, no optional models.
 
  .. code-block:: none
 
-    instances: ['TimeControlConfig', 'WriteControlConfig', 'ControlDictConfig', 'TransportPropertiesConfig', 'CourantControlConfig']
-    classes  : ['Pimple_fvSchemes', 'Pimple_fvSolution', 'UFieldConfig', 'pFieldConfig', 'TimeControlConfig', 'WriteControlConfig', 'ControlDictConfig', 'TransportPropertiesConfig', 'CourantControlConfig']
+    instances: ['TimeControlConfig', 'WriteControlConfig', 'ControlDictConfig', 'TransportPropertiesConfig', 'CourantConfig']
+    classes  : ['Pimple_fvSchemes', 'Pimple_fvSolution', 'UFieldConfig', 'pFieldConfig', 'TimeControlConfig', 'WriteControlConfig', 'ControlDictConfig', 'TransportPropertiesConfig', 'CourantConfig']
 
 
 
@@ -291,8 +292,8 @@ validated content.
     TransportPropertiesConfig  ->  constant/transportProperties
       values : {'transportModel': 'Newtonian', 'nu': 1e-05}
 
-    CourantControlConfig  ->  system/controlDict
-      values : {'adjustTimeStep': True, 'maxCo': 5.0, 'maxDeltaT': None}
+    CourantConfig  ->  system/controlDict
+      values : {'maxCo': 5.0}
 
 
 
@@ -332,7 +333,7 @@ schema an agent fills to scaffold a case.
     WriteControlConfig           fields: ['startTime', 'writeControl', 'writeInterval']
     ControlDictConfig            fields: ['application', 'deltaT', 'endTime', 'startTime', 'writeBackend', 'writeControl', 'writeInterval']
     TransportPropertiesConfig    fields: ['nu', 'transportModel']
-    CourantControlConfig         fields: ['adjustTimeStep', 'maxCo', 'maxDeltaT']
+    CourantConfig                fields: ['maxCo']
 
 
 
@@ -579,7 +580,7 @@ See also
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 0.061 seconds)
+   **Total running time of the script:** (0 minutes 0.056 seconds)
 
 
 .. _sphx_glr_download_auto_how-to_example_collect_and_save_configs.py:
