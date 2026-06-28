@@ -18,6 +18,26 @@ agent_app = typer.Typer()
 
 app.add_typer(agent_app, name="agent", help="LLM-driven case scaffolding.")
 
+# MCP server command group
+mcp_app = typer.Typer()
+
+app.add_typer(mcp_app, name="mcp", help="Run the NeoFOAM MCP server.")
+
+
+@mcp_app.command("serve")
+def mcp_serve(
+    host: str = typer.Option("127.0.0.1", "--host", help="Bind host."),
+    port: int = typer.Option(8000, "--port", help="Bind port."),
+) -> None:
+    """Start the NeoFOAM MCP server (blocking, one process).
+
+    The server is solver-agnostic: each tool takes a ``solver`` argument
+    (default ``incompressibleFluid``) resolved per call.
+    """
+    from neofoam.mcp.app import serve
+
+    serve(host=host, port=port)
+
 
 @agent_app.command("fill")
 def agent_fill(

@@ -76,8 +76,16 @@ agent = [
     # Anthropic backend for hosted Claude models (e.g. Haiku).
     "pydantic-ai-slim[openai,anthropic]>=0.0.40",
 ]
+mcp = [
+    # MCP server: FastMCP v3 protocol layer (pulls the `mcp` SDK transitively)
+    # + FastAPI/uvicorn web server. httpx backs the FastAPI TestClient / MCP client.
+    "fastmcp>=3,<4",
+    "fastapi",
+    "uvicorn",
+    "httpx",
+]
 all = [
-    "neofoam[dev,docs,agent]",
+    "neofoam[dev,docs,agent,mcp]",
 ]
 
 [project.scripts]
