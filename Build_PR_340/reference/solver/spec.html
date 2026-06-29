@@ -354,35 +354,16 @@ registration leaves <code class="docutils literal notranslate"><span class="pre"
 <code class="docutils literal notranslate"><span class="pre">neofoam.foam.fvSchemes</span></code>) get a fresh per-spec subclass.</p>
 </dd></dl>
 
-<dl class="py property">
-<dt class="sig sig-object py" id="neofoam.framework.solver.spec.SolverSpec.core_model_specs">
-<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">core_model_specs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#neofoam.framework.solver.spec.SolverSpec.core_model_specs" title="Link to this definition">¶</a></dt>
-<dd><p>The bound <em>core</em> (required) model families (case-free, no detection).</p>
-<p>Each family contributes its active member as a required model — see
-<code class="xref py py-func docutils literal notranslate"><span class="pre">neofoam.framework.solver.configurations.model_catalog()</span></code>.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neofoam.framework.solver.spec.SolverSpec.core_models">
-<span class="sig-name descname"><span class="pre">core_models</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">family</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/solver/spec.html#SolverSpec.core_models"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.solver.spec.SolverSpec.core_models" title="Link to this definition">¶</a></dt>
-<dd><p>Bind a <em>required</em> model family (exactly one member runs per case).</p>
-<p><code class="docutils literal notranslate"><span class="pre">family</span></code> must expose <code class="docutils literal notranslate"><span class="pre">all_specs()</span></code> (member specs, case-free) and
-<code class="docutils literal notranslate"><span class="pre">detect_and_create()</span></code> (select the single member for a concrete
-case). Example: the pressure-velocity family (PIMPLE / SIMPLE /
-PISO). Every member’s configs join the case-free schema; detection
-picks which one runs.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neofoam.framework.solver.spec.SolverSpec.detect_core_models">
-<span class="sig-name descname"><span class="pre">detect_core_models</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/solver/spec.html#SolverSpec.detect_core_models"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.solver.spec.SolverSpec.detect_core_models" title="Link to this definition">¶</a></dt>
-<dd><p>Select the single active member of each bound core family.</p>
-</dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="neofoam.framework.solver.spec.SolverSpec.detect_optional_models">
 <span class="sig-name descname"><span class="pre">detect_optional_models</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/solver/spec.html#SolverSpec.detect_optional_models"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.solver.spec.SolverSpec.detect_optional_models" title="Link to this definition">¶</a></dt>
 <dd><p>Collect the active members of each bound optional family.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.framework.solver.spec.SolverSpec.detect_required_models">
+<span class="sig-name descname"><span class="pre">detect_required_models</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/solver/spec.html#SolverSpec.detect_required_models"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.solver.spec.SolverSpec.detect_required_models" title="Link to this definition">¶</a></dt>
+<dd><p>Select the single active member of each bound required family.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -407,8 +388,23 @@ picks which one runs.</p>
 <dt class="sig sig-object py" id="neofoam.framework.solver.spec.SolverSpec.model_specs">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">model_specs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#neofoam.framework.solver.spec.SolverSpec.model_specs" title="Link to this definition">¶</a></dt>
 <dd><p>Every member of every bound family, case-free (no detection).</p>
-<p>The union that — together with the solver’s own <code class="docutils literal notranslate"><span class="pre">_config_classes</span></code>
-— defines the full config schema returned by <code class="xref py py-func docutils literal notranslate"><span class="pre">configurations()</span></code>.</p>
+<p>Required families first, then optional, so the config-schema order from
+<code class="xref py py-func docutils literal notranslate"><span class="pre">configurations()</span></code> is stable. The union that — together with the
+solver’s own <code class="docutils literal notranslate"><span class="pre">_config_classes</span></code> — defines the full config schema.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.framework.solver.spec.SolverSpec.models">
+<span class="sig-name descname"><span class="pre">models</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">family</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">required</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/solver/spec.html#SolverSpec.models"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.solver.spec.SolverSpec.models" title="Link to this definition">¶</a></dt>
+<dd><p>Bind a model family.</p>
+<p><code class="docutils literal notranslate"><span class="pre">required=True</span></code> → exactly one member runs per case (pick-one, via
+<code class="docutils literal notranslate"><span class="pre">family.detect_and_create()</span></code>); <code class="docutils literal notranslate"><span class="pre">required=False</span></code> (default) → always
+optional, zero or more members run (via <code class="docutils literal notranslate"><span class="pre">family.detect_models(case_dir)</span></code>).
+<code class="docutils literal notranslate"><span class="pre">family</span></code> must expose <code class="docutils literal notranslate"><span class="pre">all_specs()</span></code> (member specs, case-free); every
+member’s configs join the case-free schema. Re-registering the same family
+with the same flag is an idempotent no-op; re-registering it with a
+conflicting <code class="docutils literal notranslate"><span class="pre">required</span></code> flag raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> (a family is either
+required or optional, never both). Returns <code class="docutils literal notranslate"><span class="pre">family</span></code> (chainable).</p>
 </dd></dl>
 
 <dl class="py method">
@@ -421,20 +417,17 @@ picks which one runs.</p>
 <dt class="sig sig-object py" id="neofoam.framework.solver.spec.SolverSpec.optional_model_specs">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">optional_model_specs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#neofoam.framework.solver.spec.SolverSpec.optional_model_specs" title="Link to this definition">¶</a></dt>
 <dd><p>The bound <em>optional</em> model families (case-free, no detection).</p>
-<p>Each family’s members are optional models; some may flag themselves as
-a UI toggle (e.g. buoyancy) — see
-<code class="xref py py-func docutils literal notranslate"><span class="pre">neofoam.framework.solver.configurations.toggle_models()</span></code>.</p>
+<p>Optional families are always optional; their members surface in
+<code class="xref py py-func docutils literal notranslate"><span class="pre">neofoam.framework.solver.configurations.model_catalog()</span></code> with
+<code class="docutils literal notranslate"><span class="pre">required=False</span></code>.</p>
 </dd></dl>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="neofoam.framework.solver.spec.SolverSpec.optional_models">
-<span class="sig-name descname"><span class="pre">optional_models</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">family</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/solver/spec.html#SolverSpec.optional_models"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.solver.spec.SolverSpec.optional_models" title="Link to this definition">¶</a></dt>
-<dd><p>Bind an <em>optional</em> model family (zero or more members per case).</p>
-<p><code class="docutils literal notranslate"><span class="pre">family</span></code> must expose <code class="docutils literal notranslate"><span class="pre">all_specs()</span></code> (member specs, case-free) and
-<code class="docutils literal notranslate"><span class="pre">detect_models(case_dir)</span></code> (the active members for a concrete case).
-Example: the <code class="docutils literal notranslate"><span class="pre">incompressibleFluidModel</span></code> family (boussinesq, …).
-Every member’s configs join the case-free schema; detection picks
-which (if any) are active.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="neofoam.framework.solver.spec.SolverSpec.required_model_specs">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">required_model_specs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#neofoam.framework.solver.spec.SolverSpec.required_model_specs" title="Link to this definition">¶</a></dt>
+<dd><p>The bound <em>required</em> model families (case-free, no detection).</p>
+<p>Each family contributes its active member as a required model — see
+<code class="xref py py-func docutils literal notranslate"><span class="pre">neofoam.framework.solver.configurations.model_catalog()</span></code>.</p>
 </dd></dl>
 
 </dd></dl>
@@ -500,17 +493,16 @@ which (if any) are active.</p>
 <li><a class="reference internal" href="#neofoam.framework.solver.spec.Solver"><code class="docutils literal notranslate"><span class="pre">Solver()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.solver.spec.SolverSpec"><code class="docutils literal notranslate"><span class="pre">SolverSpec</span></code></a><ul>
 <li><a class="reference internal" href="#neofoam.framework.solver.spec.SolverSpec.config"><code class="docutils literal notranslate"><span class="pre">SolverSpec.config()</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.framework.solver.spec.SolverSpec.core_model_specs"><code class="docutils literal notranslate"><span class="pre">SolverSpec.core_model_specs</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.framework.solver.spec.SolverSpec.core_models"><code class="docutils literal notranslate"><span class="pre">SolverSpec.core_models()</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.framework.solver.spec.SolverSpec.detect_core_models"><code class="docutils literal notranslate"><span class="pre">SolverSpec.detect_core_models()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.solver.spec.SolverSpec.detect_optional_models"><code class="docutils literal notranslate"><span class="pre">SolverSpec.detect_optional_models()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.solver.spec.SolverSpec.detect_required_models"><code class="docutils literal notranslate"><span class="pre">SolverSpec.detect_required_models()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.solver.spec.SolverSpec.execution_graph_step"><code class="docutils literal notranslate"><span class="pre">SolverSpec.execution_graph_step()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.solver.spec.SolverSpec.initializer"><code class="docutils literal notranslate"><span class="pre">SolverSpec.initializer()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.solver.spec.SolverSpec.instantiate"><code class="docutils literal notranslate"><span class="pre">SolverSpec.instantiate()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.solver.spec.SolverSpec.model_specs"><code class="docutils literal notranslate"><span class="pre">SolverSpec.model_specs</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.solver.spec.SolverSpec.models"><code class="docutils literal notranslate"><span class="pre">SolverSpec.models()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.solver.spec.SolverSpec.operation"><code class="docutils literal notranslate"><span class="pre">SolverSpec.operation()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.solver.spec.SolverSpec.optional_model_specs"><code class="docutils literal notranslate"><span class="pre">SolverSpec.optional_model_specs</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.framework.solver.spec.SolverSpec.optional_models"><code class="docutils literal notranslate"><span class="pre">SolverSpec.optional_models()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.solver.spec.SolverSpec.required_model_specs"><code class="docutils literal notranslate"><span class="pre">SolverSpec.required_model_specs</span></code></a></li>
 </ul>
 </li>
 </ul>

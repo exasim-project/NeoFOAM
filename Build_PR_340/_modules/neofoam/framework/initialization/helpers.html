@@ -356,6 +356,7 @@
     <span class="n">create</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">Any</span><span class="p">],</span>
     <span class="n">depends_on</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">write</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">replaces</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">InitStep</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Internal factory shared by field / operator / model / lazy.&quot;&quot;&quot;</span>
     <span class="n">full_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">prefix</span> <span class="k">else</span> <span class="n">name</span>
@@ -365,6 +366,7 @@
         <span class="n">initializer</span><span class="o">=</span><span class="n">create</span><span class="p">,</span>
         <span class="n">category</span><span class="o">=</span><span class="n">category</span><span class="p">,</span>
         <span class="n">write</span><span class="o">=</span><span class="n">write</span><span class="p">,</span>
+        <span class="n">replaces</span><span class="o">=</span><span class="n">replaces</span> <span class="ow">or</span> <span class="p">[],</span>
     <span class="p">)</span>
 
 
@@ -375,6 +377,8 @@
     <span class="n">create</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">Any</span><span class="p">],</span>
     <span class="n">depends_on</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">write</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">replaces</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">InitStep</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Helper for creating field lazy initializers.</span>
@@ -396,7 +400,9 @@
 <span class="sd">        field(&quot;U&quot;, create=lambda ctx: create_vector_field(ctx[&quot;mesh&quot;], U0),</span>
 <span class="sd">              depends_on=[&quot;mesh&quot;], write=True)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">_make_lazy</span><span class="p">(</span><span class="s2">&quot;fields&quot;</span><span class="p">,</span> <span class="s2">&quot;fields&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">create</span><span class="p">,</span> <span class="n">depends_on</span><span class="p">,</span> <span class="n">write</span><span class="o">=</span><span class="n">write</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">_make_lazy</span><span class="p">(</span>
+        <span class="s2">&quot;fields&quot;</span><span class="p">,</span> <span class="s2">&quot;fields&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">create</span><span class="p">,</span> <span class="n">depends_on</span><span class="p">,</span> <span class="n">write</span><span class="o">=</span><span class="n">write</span><span class="p">,</span> <span class="n">replaces</span><span class="o">=</span><span class="n">replaces</span>
+    <span class="p">)</span></div>
 
 
 
@@ -433,6 +439,8 @@
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">create</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">Any</span><span class="p">],</span>
     <span class="n">depends_on</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">replaces</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">InitStep</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    General-purpose helper for creating lazy initializers.</span>
@@ -444,6 +452,9 @@
 <span class="sd">        name: Object name (e.g., &quot;mesh&quot;, &quot;runtime&quot;, &quot;piso_loop&quot;)</span>
 <span class="sd">        create: Function that creates the object</span>
 <span class="sd">        depends_on: List of dependencies (default: [])</span>
+<span class="sd">        replaces: Default-step names this step supersedes. When set, the</span>
+<span class="sd">            builder drops any other step carrying one of these names so a</span>
+<span class="sd">            generated resource can stand in for the default one.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        InitStep for the object</span>
@@ -451,7 +462,7 @@
 <span class="sd">    Example:</span>
 <span class="sd">        lazy(&quot;mesh&quot;, create=lambda ctx: mesh)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">_make_lazy</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;resource&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">create</span><span class="p">,</span> <span class="n">depends_on</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">_make_lazy</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;resource&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">create</span><span class="p">,</span> <span class="n">depends_on</span><span class="p">,</span> <span class="n">replaces</span><span class="o">=</span><span class="n">replaces</span><span class="p">)</span></div>
 
 
 
@@ -698,10 +709,20 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return the constructed list of initializers.</span>
 
+<span class="sd">        A step whose name is listed in another step&#39;s ``replaces=`` is dropped</span>
+<span class="sd">        so the replacer can supersede a default step. A replacer keeps its own</span>
+<span class="sd">        name in its ``replaces=`` (the terminal-alias pattern), so it is never</span>
+<span class="sd">        dropped by its own declaration and dependents still resolve.</span>
+
 <span class="sd">        Returns:</span>
 <span class="sd">            List of InitStep objects</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">initializers</span></div>
+        <span class="n">replaced</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span> <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">initializers</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">step</span><span class="o">.</span><span class="n">replaces</span><span class="p">}</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">step</span>
+            <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">initializers</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">step</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">replaced</span> <span class="ow">and</span> <span class="n">step</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">step</span><span class="o">.</span><span class="n">replaces</span><span class="p">)</span>
+        <span class="p">]</span></div>
 </div>
 
 </pre></div>
