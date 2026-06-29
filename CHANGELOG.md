@@ -25,6 +25,7 @@
 - Add an interactive marimo case wizard [#340](https://github.com/exasim-project/NeoFOAM/pull/340)
 - Add an AI case-fill agent (`neofoam agent fill`) [#340](https://github.com/exasim-project/NeoFOAM/pull/340)
 - Add an MCP server for case setup (`neofoam mcp serve`) [#340](https://github.com/exasim-project/NeoFOAM/pull/340)
+- Require Python >=3.10 [#340](https://github.com/exasim-project/NeoFOAM/pull/340)
 
 ## Development
 - Update submodule regularly by dependabot [#209](https://github.com/exasim-project/NeoFOAM/pull/209)
