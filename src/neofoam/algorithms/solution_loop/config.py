@@ -47,18 +47,9 @@ class TimeControlConfig(WriteControlConfig):
     """Time-stepping + write control, as a validated config.
 
     Extends :class:`~neofoam.algorithms.field_writer.write_control.WriteControlConfig`
-    with the advancement keys the core loop reads (``endTime``/``deltaT``). The
-    concrete, file-bound config subclasses this and adds an ``@IOStrategy``; the
-    framework only ever sees the validated config, never a raw dict — so a plugin
-    extends the loop by extending this schema.
-
-    Adaptive time-stepping (``adjustTimeStep``/``maxCo``/``maxDeltaT``) is no
-    longer part of the core config: it is provided by opt-in time-step
-    contribution models
-    (:mod:`neofoam.solver.incompressibleFluid.models.courant` and
-    :mod:`neofoam.solver.incompressibleFluid.models.max_delta_t`) that fold their
-    own deltaT constraints in, so the core loop stays a fixed-step advancer unless
-    such a model is active.
+    with the advancement keys the core loop reads (``endTime``/``deltaT``).
+    Adaptive stepping (``maxCo``/``maxDeltaT``) is opt-in via the ``courant`` /
+    ``max_delta_t`` models, not the core config.
     """
 
     endTime: float = Field(gt=0)

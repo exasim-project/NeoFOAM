@@ -15,10 +15,6 @@ regime-specific decisions the stepper used to branch on with an ``enum`` —
 * ``step_name`` — how the current step renders (a float time vs. an integer
   iteration index).
 
-Stability constraints are no longer a regime decision: a deltaT constraint
-(Courant, ``maxDeltaT`` cap, …) is owned by an opt-in time-step model that
-installs it into the loop engine, so the regime only decides the *step kind*.
-
 A new regime (pseudo-transient, local/dual time stepping, …) is a new
 ``@TimeIntegration.register`` class — never an edit to a branch (OCP). The data
 that *selects* the regime is the case's ``ddtSchemes`` default
