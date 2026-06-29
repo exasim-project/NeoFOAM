@@ -6,6 +6,7 @@ import pytest
 
 from neofoam.framework.initialization.execution.validation import (
     InitializationGraphError,
+    check_replacements,
     validate,
 )
 from neofoam.framework.initialization.init_step import InitStep
@@ -76,3 +77,24 @@ def test_initialization_graph_error_carries_report():
 
     assert err.report is report
     assert "depends on 'missing'" in str(err)
+
+
+def test_duplicate_name_without_replaces_is_error():
+    steps = [
+        InitStep(name="mesh", initializer=lambda _ctx: 1),
+        InitStep(name="mesh", initializer=lambda _ctx: 2),
+    ]
+    report = validate(steps)
+    assert not report.is_valid
+    assert any(d.code == "duplicate_name" for d in report.diagnostics)
+
+
+def test_replaces_unknown_target_is_error():
+    steps = [InitStep(name="mesh", initializer=lambda _ctx: 1, replaces=["nope"])]
+    with pytest.raises(InitializationGraphError):
+        check_replacements(steps)
+
+
+def test_replaces_self_named_target_is_ok():
+    steps = [InitStep(name="mesh", initializer=lambda _ctx: 1, replaces=["mesh"])]
+    check_replacements(steps)  # does not raise

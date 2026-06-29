@@ -63,6 +63,9 @@ class InitStep:
     initializer: Callable[[dict[str, Any]], Any] = None  # type: ignore[assignment]
     category: InitCategory = "resource"
     write: bool = False  # flag a field for persistence (auto-write)
+    replaces: list[str] = field(
+        default_factory=list
+    )  # default step names this supersedes
 
     def __post_init__(self) -> None:
         """Validate InitStep after creation."""

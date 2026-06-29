@@ -13,10 +13,7 @@ The loaded *instances* for a concrete case come from
 from neofoam.io import BaseConfig
 from neofoam.solver.incompressibleFluid import config_classes
 
-from .comparison_helpers import requires_openfoam
 
-
-@requires_openfoam
 def test_config_classes_is_case_free() -> None:
     """No case directory is touched, yet the full schema set is returned."""
     classes = config_classes()
@@ -36,3 +33,7 @@ def test_config_classes_is_case_free() -> None:
     assert any("fvSolution" in n for n in names)
     # Optional boussinesq model is listed without running detection.
     assert "BoussinesqConfig" in names
+    # Optional time-step models are part of the case-free catalog too:
+    # registration makes them discoverable without running a case.
+    assert "CourantConfig" in names
+    assert "MaxDeltaTConfig" in names

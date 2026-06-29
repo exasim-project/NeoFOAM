@@ -25,6 +25,7 @@ from neofoam.framework.operations import (
     StepBuilder,
 )
 from neofoam.framework.solver import Solver
+from neofoam.framework.tools import PreprocessConfig
 from neofoam.framework.types import OperationMetadata
 from neofoam.turbulence import momentumTransportModel
 from neofoam.viscosity import viscosityModel
@@ -55,6 +56,7 @@ incompressibleFluid = Solver("incompressibleFluid")
 # turbulenceProperties) through its registered models, so the solver does not
 # name those config classes itself.
 incompressibleFluid.config(ControlDictConfig)
+incompressibleFluid.config(PreprocessConfig)  # mesh pipeline enable file (configs())
 incompressibleFluid.core_models(PressureVelocityAlgorithm)  # required: pick ONE
 incompressibleFluid.core_models(viscosityModel)  # molecular nu (transportProperties)
 incompressibleFluid.core_models(

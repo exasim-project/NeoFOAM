@@ -25,7 +25,10 @@ from neofoam.framework.initialization import (
     lazy,
     model as init_model,
 )
-from neofoam.framework.model import ModelSpec
+from neofoam.framework.context import Context
+from neofoam.framework.model import ModelRuntime, ModelSpec, bind_owned_interfaces
+from neofoam.framework.tools import tool_graph_steps
+from neofoam.tools.run import detect_tools
 from neofoam.turbulence import (
     OpenFOAMTurbulenceModel,
     SpecMomentumTransport,
@@ -116,6 +119,18 @@ def _add_turbulence_model(builder: InitializerBuilder, case_dir: Path) -> None:
     )
 
 
+def _optional_models_by_name(optional_models: list[Any]) -> dict[str, Any]:
+    """Map each active optional model to its model name.
+
+    Registering each detected optional-model runtime under ``rt.name`` keeps it
+    discoverable in ``ctx.models`` (instead of stashing them under one opaque
+    ``"optional_models"`` list). Gating of interface contributions is no longer a
+    name lookup: it is intrinsic to the bound contributor runtimes that the MI7
+    auto-wiring step binds onto the solutionLoop owner runtime.
+    """
+    return {m.name: m for m in optional_models}
+
+
 def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
     """Build a fresh :class:`StagedInitRunner` for incompressibleFluid.
 
@@ -129,6 +144,15 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
     def load_config() -> LoadResult:
         pressure_model = PressureVelocityAlgorithm.detect_and_create()
         optional_models = incompressibleFluidModel.detect_models(resolved_case_dir)
+
+        # Detect the mesh-preprocessing pipeline up front (config-only — no
+        # mesh is touched). ``--no-preprocess`` on the argv skips detection so
+        # the default disk-read ``mesh`` step is always used. Detection resolves
+        # against the shared tool registry (solver-agnostic), so no solver import
+        # is needed here.
+        runner.preprocess_tools = (
+            [] if "--no-preprocess" in runner.argv else detect_tools(resolved_case_dir)
+        )
 
         # solutionLoop (advances time) and fieldWriter (persists fields) are
         # separate-concern Models, loaded here so their controlDict is validated
@@ -177,7 +201,7 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             return next(
                 m
                 for m in core_models
-                if getattr(getattr(m, "spec", None), "name", None) == spec_name
+                if isinstance(m, ModelRuntime) and m.spec.name == spec_name
             )
 
         solution_loop_model = _by_spec("solutionLoop")
@@ -202,6 +226,12 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         # never routed onto the Context (the leading underscore keeps it hidden).
         builder.add(lazy("_foam_time", create_foam_time))
         builder.add(lazy("mesh", create_mesh, depends_on=["_foam_time"]))
+
+        # When a mesh-preprocessing pipeline is active, its steps build the mesh
+        # in-process; the terminal alias carries ``replaces=["mesh"]`` so
+        # ``builder.build()`` drops the default disk-read ``mesh`` step above.
+        # An empty pipeline adds nothing, so the disk-read default survives.
+        builder.extend(tool_graph_steps(runner.preprocess_tools))
 
         # solutionLoop + fieldWriter are the framework *core* Models, instantiated
         # as real ModelRuntimes: add_core_models registers them and runs each
@@ -251,7 +281,32 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         _add_turbulence_model(builder, resolved_case_dir)
 
         builder.add_optional_models(optional_models)
-        builder.add_model("optional_models", optional_models)
+        # Register each active optional model BY NAME so it stays discoverable in
+        # ``ctx.models`` for a live run, instead of a single opaque list.
+        for name, opt in _optional_models_by_name(optional_models).items():
+            builder.add_model(name, opt)
+
+        # MI7 auto-wiring: bind the solutionLoop runtime's owned interfaces
+        # (timeStepConstraint / loopCondition) to the case's active contributing
+        # optional-model runtimes, and register the owner runtime under its spec
+        # name so the resolver finds ctx.models["solutionLoop"]. The bound
+        # interfaces are stored, not folded this iteration — the live deltaT drive
+        # stays deferred, so they are bound against an EMPTY Context. Capturing the
+        # live pybFoam fields/models here would create a reference cycle holding
+        # mesh-bound pybFoam objects that segfaults at GC across in-process solver
+        # runs; the future live drive re-binds against the live Context at call time.
+        def wire_loop_interfaces(_work: dict[str, Any]) -> Any:
+            return bind_owned_interfaces(
+                solution_loop_model, optional_models, Context(fields={}, models={})
+            )
+
+        builder.add(
+            init_model(
+                "solutionLoop",
+                wire_loop_interfaces,
+                depends_on=["models.solution_loop"],
+            )
+        )
 
         return builder.build()
 

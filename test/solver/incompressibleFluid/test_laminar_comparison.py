@@ -25,7 +25,6 @@ from neofoam.solver.incompressibleFluid import run
 
 from .comparison_helpers import (
     compare_solver_fields,
-    requires_openfoam,
     setup_case,
 )
 
@@ -58,7 +57,6 @@ def _make_laminar(case_dir: Path) -> None:
     )
 
 
-@requires_openfoam
 def test_laminar_solver_comparison() -> None:
     """Native laminar incompressibleFluid vs native pimpleFoam (laminar)."""
     repo_root = Path(__file__).parent.parent.parent.parent

@@ -97,6 +97,23 @@ if(DEFINED SKBUILD AND TARGET _neon)
   set_target_properties(_neon PROPERTIES INSTALL_RPATH "$ORIGIN/../neofoam/lib;$ORIGIN/../lib")
 endif()
 
+# TODO(rpath workaround): remove once umpire/camp ship a relocatable install upstream (BLT bakes an
+# absolute INSTALL_RPATH and hardcodes DESTINATION lib/). Track via the NeoN dependency bump. umpire
+# and its BLT-bundled camp dependency bake an absolute INSTALL_RPATH pointing at the temp
+# wheel-staging dir (deleted after the build), so the installed libumpire.so can never find
+# libcamp.so. They only depend on each other, so once both sit in neofoam/lib a plain $ORIGIN rpath
+# resolves everything. Pin it explicitly and disable the link-path heuristic that re-injects the
+# stale absolute path. (camp's install DESTINATION is hardcoded to lib/ by BLT and is relocated into
+# neofoam/lib by the consolidation step at the end of this file.)
+if(DEFINED SKBUILD)
+  foreach(_dep umpire camp)
+    if(TARGET ${_dep})
+      set_target_properties(${_dep} PROPERTIES INSTALL_RPATH "$ORIGIN")
+      set_target_properties(${_dep} PROPERTIES INSTALL_RPATH_USE_LINK_PATH FALSE)
+    endif()
+  endforeach()
+endif()
+
 add_subdirectory(include)
 add_subdirectory(src)
 
@@ -116,6 +133,30 @@ endif()
 
 if(NEOFOAM_BUILD_PYTHON_BINDINGS)
   add_subdirectory(src/bindings)
+endif()
+
+# TODO(install-layout workaround): drop this consolidation step once bundled deps honour
+# CMAKE_INSTALL_LIBDIR upstream (see the umpire/camp rpath TODO above). Some bundled deps (camp, via
+# BLT) hardcode `DESTINATION lib`/`include` and so leak to the wheel root instead of honouring
+# CMAKE_INSTALL_LIBDIR=neofoam/lib. Run last (after every add_subdirectory install rule) to fold
+# those stray files back under neofoam/ so every native lib lives in one folder and a plain `pip
+# install` is self-contained in any environment.
+if(DEFINED SKBUILD)
+  install(
+    CODE [=[
+    foreach(_sub lib include)
+      set(_stray_dir "${CMAKE_INSTALL_PREFIX}/${_sub}")
+      if(EXISTS "${_stray_dir}")
+        file(GLOB _stray "${_stray_dir}/*")
+        foreach(_f ${_stray})
+          get_filename_component(_n "${_f}" NAME)
+          message(STATUS "Consolidating stray ${_sub}/${_n} -> neofoam/${_sub}")
+          file(COPY "${_f}" DESTINATION "${CMAKE_INSTALL_PREFIX}/neofoam/${_sub}")
+        endforeach()
+        file(REMOVE_RECURSE "${_stray_dir}")
+      endif()
+    endforeach()
+  ]=])
 endif()
 
 include(cmake/banner.cmake)
