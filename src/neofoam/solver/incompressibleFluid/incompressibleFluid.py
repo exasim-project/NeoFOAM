@@ -62,7 +62,7 @@ incompressibleFluid.models(PressureVelocityAlgorithm, required=True)  # pick ONE
 incompressibleFluid.models(viscosityModel, required=True)  # molecular nu
 incompressibleFluid.models(momentumTransportModel, required=True)  # nut + stress
 
-incompressibleFluid.optional_models(incompressibleFluidModel)  # zero or more
+incompressibleFluid.models(incompressibleFluidModel)  # optional: zero or more
 
 
 @incompressibleFluid.initializer
