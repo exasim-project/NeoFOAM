@@ -6,7 +6,7 @@
 Exercises the solver-agnostic API end-to-end on a real solver spec:
 
 - ``SolverSpec.config(...)`` declares the four solver-core configs.
-- ``SolverSpec.optional_models(DummyModelInterface)`` binds the optional
+- ``SolverSpec.models(DummyModelInterface)`` binds the optional
   family; its registered members (model1-4) contribute their configs.
 - ``configurations(solver)`` unions both, case-free (no case directory and
   no detection), and the ``Configurations`` view builds / validates / dumps
@@ -35,8 +35,8 @@ _OPTIONAL = {
 
 
 def test_optional_family_bound_on_spec() -> None:
-    assert dummy_solver_spec._optional_model_specs == [DummyModelInterface]
-    assert dummy_solver_spec._core_model_specs == []  # no core dispatcher family
+    assert dummy_solver_spec.optional_model_specs == [DummyModelInterface]
+    assert dummy_solver_spec.required_model_specs == []  # no required dispatcher family
 
 
 def test_model_specs_lists_every_registered_member() -> None:

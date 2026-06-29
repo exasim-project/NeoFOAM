@@ -38,22 +38,6 @@ class ModelEntryDTO(BaseModel):
         )
 
 
-class ToggleModelDTO(BaseModel):
-    name: str
-    label: str
-    dicts: list[str]
-    fields: list[str]
-
-    @classmethod
-    def from_toggle(cls, toggle: Any) -> "ToggleModelDTO":
-        return cls(
-            name=toggle.name,
-            label=toggle.label,
-            dicts=[c.__name__ for c in toggle.dicts],
-            fields=[c.__name__ for c in toggle.fields],
-        )
-
-
 class ConfigSchemaDTO(BaseModel):
     name: str
     json_schema: dict[str, Any]

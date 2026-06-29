@@ -3,12 +3,13 @@
 
 from typing import Any
 
+import pytest
+
 from neofoam.mcp.dto import (
     ConfigInfoDTO,
     ConfigSchemaDTO,
     ModelEntryDTO,
     SaveResultDTO,
-    ToggleModelDTO,
 )
 
 
@@ -33,14 +34,6 @@ def test_model_entry_dto_maps_classes_to_names() -> None:
     assert "class" not in text and "ModelMetaclass" not in text
 
 
-def test_toggle_model_dto_maps_classes_to_names() -> None:
-    dto = ToggleModelDTO.from_toggle(_FakeEntry())
-    assert dto.dicts == ["FooConfig"]
-    assert ModelEntryDTO.model_validate_json(
-        ModelEntryDTO.from_entry(_FakeEntry()).model_dump_json()
-    )
-
-
 def test_config_info_and_schema_round_trip() -> None:
     info = ConfigInfoDTO(name="foo", cls_name="FooConfig", file="system/foo")
     assert (
@@ -54,3 +47,8 @@ def test_config_info_and_schema_round_trip() -> None:
     assert SaveResultDTO.model_validate_json(save.model_dump_json()).written == [
         "system/foo"
     ]
+
+
+def test_toggle_model_dto_is_removed() -> None:
+    with pytest.raises(ImportError):
+        from neofoam.mcp.dto import ToggleModelDTO  # noqa: F401

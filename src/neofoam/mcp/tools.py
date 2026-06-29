@@ -30,7 +30,6 @@ from neofoam.framework.solver.configurations import (
     _snake_case,
     configurations,
     model_catalog as _model_catalog,
-    toggle_models as _toggle_models,
 )
 from neofoam.io import default_values, rjsf_uischema
 from neofoam.mcp.dto import (
@@ -40,14 +39,12 @@ from neofoam.mcp.dto import (
     ConfigSchemaDTO,
     ModelEntryDTO,
     SaveResultDTO,
-    ToggleModelDTO,
 )
 from neofoam.mcp.registry import list_solver_names
 
 INTROSPECTION_TOOL_NAMES: tuple[str, ...] = (
     "list_solvers",
     "model_catalog",
-    "toggle_models",
     "list_configs",
     "config_schema",
 )
@@ -69,11 +66,6 @@ def list_solvers() -> list[str]:
 def model_catalog(solver: Any) -> list[ModelEntryDTO]:
     """Every model of ``solver`` with its required flag + owned configs."""
     return [ModelEntryDTO.from_entry(e) for e in _model_catalog(solver)]
-
-
-def toggle_models(solver: Any) -> list[ToggleModelDTO]:
-    """Optional models of ``solver`` flagged as on/off toggles."""
-    return [ToggleModelDTO.from_toggle(t) for t in _toggle_models(solver)]
 
 
 def list_configs(solver: Any) -> list[ConfigInfoDTO]:

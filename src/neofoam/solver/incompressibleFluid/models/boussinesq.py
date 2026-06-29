@@ -81,7 +81,7 @@ def _read_boussinesq_config() -> BoussinesqConfig:
 boussinesq = (
     Model("boussinesq")
     .register_with(incompressibleFluidModel)
-    .as_toggle("Buoyancy (Boussinesq)")
+    .labeled("Buoyancy (Boussinesq)")
 )
 
 # Declare the configs this model owns. ``BoussinesqConfig`` is loaded via

@@ -15,7 +15,6 @@ from neofoam.mcp.dto import (
     ConfigInfoDTO,
     ConfigSchemaDTO,
     ModelEntryDTO,
-    ToggleModelDTO,
 )
 from neofoam.mcp.tools import ALL_TOOL_NAMES
 
@@ -36,7 +35,6 @@ def test_all_tool_names_match_the_spec_literal_list() -> None:
     assert ALL_TOOL_NAMES == (
         "list_solvers",
         "model_catalog",
-        "toggle_models",
         "list_configs",
         "config_schema",
         "read_case",
@@ -66,12 +64,6 @@ def test_model_catalog_is_case_free_with_expected_names(solver: Any) -> None:
         fields=entries[0].fields,
     ).model_dump_json()
     assert "ModelMetaclass" not in text
-
-
-def test_toggle_models_returns_boussinesq(solver: Any) -> None:
-    toggles = tools.toggle_models(solver)
-    assert all(isinstance(t, ToggleModelDTO) for t in toggles)
-    assert "boussinesq" in {t.name for t in toggles}
 
 
 def test_list_configs_includes_control_dict_with_file(solver: Any) -> None:

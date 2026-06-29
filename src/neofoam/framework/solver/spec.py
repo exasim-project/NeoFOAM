@@ -45,8 +45,7 @@ class SolverSpec:
     def __init__(self, name: str) -> None:
         self.name = name
         self._config_classes: list[type] = []
-        self._core_model_specs: list[Any] = []
-        self._optional_model_specs: list[Any] = []
+        self._model_families: list[tuple[Any, bool]] = []
         self._operations: list[tuple[Any, dict[str, Any]]] = []
         self._initialize_func: Optional[Callable[..., Context]] = None
         self._execution_graph_func: Optional[Callable[..., tuple[Any, Any]]] = None
@@ -95,71 +94,71 @@ class SolverSpec:
     # Model-family registration
     # ------------------------------------------------------------------
 
-    def core_models(self, family: Any) -> Any:
-        """Bind a *required* model family (exactly one member runs per case).
+    def models(self, family: Any, *, required: bool = False) -> Any:
+        """Bind a model family.
 
-        ``family`` must expose ``all_specs()`` (member specs, case-free) and
-        ``detect_and_create()`` (select the single member for a concrete
-        case). Example: the pressure-velocity family (PIMPLE / SIMPLE /
-        PISO). Every member's configs join the case-free schema; detection
-        picks which one runs.
+        ``required=True`` → exactly one member runs per case (pick-one, via
+        ``family.detect_and_create()``); ``required=False`` (default) → always
+        optional, zero or more members run (via ``family.detect_models(case_dir)``).
+        ``family`` must expose ``all_specs()`` (member specs, case-free); every
+        member's configs join the case-free schema. Re-registering the same family
+        with the same flag is an idempotent no-op; re-registering it with a
+        conflicting ``required`` flag raises ``ValueError`` (a family is either
+        required or optional, never both). Returns ``family`` (chainable).
         """
-        if family not in self._core_model_specs:
-            self._core_model_specs.append(family)
-        return family
-
-    def optional_models(self, family: Any) -> Any:
-        """Bind an *optional* model family (zero or more members per case).
-
-        ``family`` must expose ``all_specs()`` (member specs, case-free) and
-        ``detect_models(case_dir)`` (the active members for a concrete case).
-        Example: the ``incompressibleFluidModel`` family (boussinesq, …).
-        Every member's configs join the case-free schema; detection picks
-        which (if any) are active.
-        """
-        if family not in self._optional_model_specs:
-            self._optional_model_specs.append(family)
+        for bound_family, bound_required in self._model_families:
+            if bound_family is family:
+                if bound_required != required:
+                    raise ValueError(
+                        f"model family {family!r} is already registered as "
+                        f"{'required' if bound_required else 'optional'}; "
+                        f"cannot re-register it as "
+                        f"{'required' if required else 'optional'}"
+                    )
+                return family
+        self._model_families.append((family, required))
         return family
 
     @property
-    def model_specs(self) -> list[Any]:
-        """Every member of every bound family, case-free (no detection).
+    def required_model_specs(self) -> list[Any]:
+        """The bound *required* model families (case-free, no detection).
 
-        The union that — together with the solver's own ``_config_classes``
-        — defines the full config schema returned by :func:`configurations`.
+        Each family contributes its active member as a required model — see
+        :func:`neofoam.framework.solver.configurations.model_catalog`.
         """
-        specs: list[Any] = []
-        for family in (*self._core_model_specs, *self._optional_model_specs):
-            specs.extend(family.all_specs())
-        return specs
+        return [family for family, required in self._model_families if required]
 
     @property
     def optional_model_specs(self) -> list[Any]:
         """The bound *optional* model families (case-free, no detection).
 
-        Each family's members are optional models; some may flag themselves as
-        a UI toggle (e.g. buoyancy) — see
-        :func:`neofoam.framework.solver.configurations.toggle_models`.
+        Optional families are always optional; their members surface in
+        :func:`neofoam.framework.solver.configurations.model_catalog` with
+        ``required=False``.
         """
-        return list(self._optional_model_specs)
+        return [family for family, required in self._model_families if not required]
 
     @property
-    def core_model_specs(self) -> list[Any]:
-        """The bound *core* (required) model families (case-free, no detection).
+    def model_specs(self) -> list[Any]:
+        """Every member of every bound family, case-free (no detection).
 
-        Each family contributes its active member as a required model — see
-        :func:`neofoam.framework.solver.configurations.model_catalog`.
+        Required families first, then optional, so the config-schema order from
+        :func:`configurations` is stable. The union that — together with the
+        solver's own ``_config_classes`` — defines the full config schema.
         """
-        return list(self._core_model_specs)
+        specs: list[Any] = []
+        for family in (*self.required_model_specs, *self.optional_model_specs):
+            specs.extend(family.all_specs())
+        return specs
 
-    def detect_core_models(self, case_dir: Optional[Any] = None) -> list[Any]:
-        """Select the single active member of each bound core family."""
-        return [family.detect_and_create() for family in self._core_model_specs]
+    def detect_required_models(self) -> list[Any]:
+        """Select the single active member of each bound required family."""
+        return [family.detect_and_create() for family in self.required_model_specs]
 
     def detect_optional_models(self, case_dir: Optional[Any] = None) -> list[Any]:
         """Collect the active members of each bound optional family."""
         active: list[Any] = []
-        for family in self._optional_model_specs:
+        for family in self.optional_model_specs:
             active.extend(family.detect_models(case_dir))
         return active
 

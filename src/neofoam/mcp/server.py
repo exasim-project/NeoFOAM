@@ -32,7 +32,6 @@ from neofoam.mcp.dto import (
     ConfigSchemaDTO,
     ModelEntryDTO,
     SaveResultDTO,
-    ToggleModelDTO,
 )
 from neofoam.mcp.registry import resolve_solver
 
@@ -56,12 +55,6 @@ def list_solvers() -> list[str]:
 def model_catalog(solver: str = DEFAULT_SOLVER) -> list[ModelEntryDTO]:
     """Every model of ``solver`` with its required flag + owned configs."""
     return tools.model_catalog(resolve_solver(solver))
-
-
-@mcp.tool
-def toggle_models(solver: str = DEFAULT_SOLVER) -> list[ToggleModelDTO]:
-    """Optional models of ``solver`` flagged as on/off toggles."""
-    return tools.toggle_models(resolve_solver(solver))
 
 
 @mcp.tool

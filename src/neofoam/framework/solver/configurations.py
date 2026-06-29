@@ -141,25 +141,11 @@ def configurations(solver: Any) -> Configurations:
 
 
 @dataclass(frozen=True)
-class ToggleModel:
-    """An optional model flagged as an on/off UI toggle (e.g. buoyancy).
-
-    ``dicts`` / ``fields`` are the config classes the model owns — what a UI
-    shows (and a case writes) only while the toggle is on.
-    """
-
-    name: str
-    label: str
-    dicts: list[type[BaseConfig]]
-    fields: list[type[BaseConfig]]
-
-
-@dataclass(frozen=True)
 class ModelEntry:
     """One model a solver consumes, for a "select models" UI.
 
-    ``required`` core models (the active member of each core family) are always
-    on and can't be deselected; optional models can be toggled. ``dicts`` /
+    ``required`` models (the active member of each required family) are always
+    on and can't be deselected; optional models can be deselected. ``dicts`` /
     ``fields`` are the config classes the model owns (derived from its spec).
     """
 
@@ -173,18 +159,19 @@ class ModelEntry:
 def model_catalog(solver: Any) -> list[ModelEntry]:
     """Every model of ``solver`` with its required flag + owned configs/fields.
 
-    Core families (:attr:`SolverSpec.core_model_specs`) yield ``required=True``
-    entries; optional families (:attr:`SolverSpec.optional_model_specs`) yield
-    ``required=False`` (and may flag themselves as toggles via ``as_toggle``).
-    Ownership comes from each model spec — no name-matching. Case-free; runs no
-    detection. (The solver's own configs — e.g. ``controlDict`` — are not models;
-    they always apply and are listed by :func:`configurations`.)
+    Members of required families (:attr:`SolverSpec.required_model_specs`) yield
+    ``required=True`` entries; members of optional families
+    (:attr:`SolverSpec.optional_model_specs`) yield ``required=False``. ``label``
+    comes from ``spec.label``. Ownership comes from each model spec — no
+    name-matching. Case-free; runs no detection. The single required/optional
+    source for UIs. (The solver's own configs — e.g. ``controlDict`` — are not
+    models; they always apply and are listed by :func:`configurations`.)
     """
     from neofoam.io import collect_config_classes
 
     out: list[ModelEntry] = []
     for required, families in (
-        (True, solver.core_model_specs),
+        (True, solver.required_model_specs),
         (False, solver.optional_model_specs),
     ):
         for family in families:
@@ -193,36 +180,10 @@ def model_catalog(solver: Any) -> list[ModelEntry]:
                 out.append(
                     ModelEntry(
                         name=spec.name,
-                        label=getattr(spec, "toggle_label", None) or spec.name,
+                        label=spec.label,
                         required=required,
                         dicts=[c for c in owned if not _is_field_schema(c)],
                         fields=[c for c in owned if _is_field_schema(c)],
                     )
                 )
-    return out
-
-
-def toggle_models(solver: Any) -> list[ToggleModel]:
-    """Optional models of ``solver`` flagged as toggles (``spec.as_toggle(...)``).
-
-    Each entry carries the model's owned config classes split into dict configs
-    and ``0/`` field schemas, derived from the model spec itself — no
-    name-matching. Case-free; runs no detection.
-    """
-    from neofoam.io import collect_config_classes
-
-    out: list[ToggleModel] = []
-    for family in solver.optional_model_specs:
-        for spec in family.all_specs():
-            if not getattr(spec, "toggle", False):
-                continue
-            owned = cast("list[type[BaseConfig]]", collect_config_classes([spec]))
-            out.append(
-                ToggleModel(
-                    name=spec.name,
-                    label=spec.toggle_label or spec.name,
-                    dicts=[c for c in owned if not _is_field_schema(c)],
-                    fields=[c for c in owned if _is_field_schema(c)],
-                )
-            )
     return out
