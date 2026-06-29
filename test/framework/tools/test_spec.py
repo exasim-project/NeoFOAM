@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""ToolSpec API: config registration, typed/untyped build seam, instantiate."""
+"""ToolSpec API: typed/untyped build seam, instantiate."""
 
 from typing import Any, Literal
 
@@ -15,13 +15,6 @@ from neofoam.framework.tools import Tool, ToolRuntime
 class SomeStep(BaseModel):
     tool: Literal["x"]
     k: int = 7
-
-
-def test_config_registers_and_dedups() -> None:
-    t = Tool("x")
-    assert t.config(SomeStep) is SomeStep
-    t.config(SomeStep)  # idempotent
-    assert t._config_classes == [SomeStep]
 
 
 def test_step_config_type_typed() -> None:

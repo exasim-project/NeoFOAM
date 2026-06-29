@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import inspect
 import re
-from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, Callable, Optional, TypeVar, cast
 
@@ -22,12 +21,6 @@ from neofoam.framework.dependency_resolver import (
     wrap_with_dependency_resolution,
 )
 from neofoam.framework.operations import Operation, OperationCollection, SequentialOp
-from neofoam.framework.tools import (
-    PreprocessConfig,
-    ToolRuntime,
-    ToolSpec,
-    resolve_pipeline,
-)
 from neofoam.framework.types import OperationMetadata, OperationNumber
 
 from .runtime import SolverRuntime
@@ -54,7 +47,6 @@ class SolverSpec:
         self._config_classes: list[type] = []
         self._core_model_specs: list[Any] = []
         self._optional_model_specs: list[Any] = []
-        self._tools: list[ToolSpec] = []
         self._operations: list[tuple[Any, dict[str, Any]]] = []
         self._initialize_func: Optional[Callable[..., Context]] = None
         self._execution_graph_func: Optional[Callable[..., tuple[Any, Any]]] = None
@@ -129,30 +121,16 @@ class SolverSpec:
             self._optional_model_specs.append(family)
         return family
 
-    def tools(self, *tools: ToolSpec) -> "SolverSpec":
-        """Register the preprocessing tools this solver offers (additive, deduped).
-
-        Tools are reusable across solvers; the set is per-solver, not a process-global
-        registry. Returns ``self`` for chaining.
-        """
-        for tool in tools:
-            if tool not in self._tools:
-                self._tools.append(tool)
-        return self
-
     @property
     def model_specs(self) -> list[Any]:
         """Every member of every bound family, case-free (no detection).
 
         The union that — together with the solver's own ``_config_classes``
         — defines the full config schema returned by :func:`configurations`.
-        Each registered ``ToolSpec`` is appended directly (it exposes
-        ``_config_classes`` for ``collect_config_classes``).
         """
         specs: list[Any] = []
         for family in (*self._core_model_specs, *self._optional_model_specs):
             specs.extend(family.all_specs())
-        specs.extend(self._tools)
         return specs
 
     def detect_core_models(self, case_dir: Optional[Any] = None) -> list[Any]:
@@ -165,21 +143,6 @@ class SolverSpec:
         for family in self._optional_model_specs:
             active.extend(family.detect_models(case_dir))
         return active
-
-    def detect_preprocess_tools(
-        self, case_dir: Optional[Any] = None
-    ) -> list[ToolRuntime]:
-        """Read ``system/preprocess.yaml`` and resolve it against this solver's tools.
-
-        An absent enable file yields ``[]``; an entry naming a tool this solver did not
-        register raises ``ValueError``.
-        """
-        effective = case_dir if case_dir is not None else Path(".")
-        try:
-            cfg = PreprocessConfig.load(case_dir=effective)
-        except FileNotFoundError:
-            return []
-        return resolve_pipeline(self._tools, cfg)
 
     def _aggregate_configs(self, instances: list[Any]) -> Any:
         """Build ``runtime.config`` from loaded instances."""

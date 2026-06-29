@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Enable-file schema + generic pipeline resolver/DAG-chainer for preprocessing tools.
+"""Enable-file schema + generic graph resolver/DAG-chainer for preprocessing tools.
 
 ``system/preprocess.yaml`` holds an open ``tools`` list of entries, each naming a
 registered tool via its ``tool`` key plus an optional ``depends_on: list[str]`` (names
 of OTHER listed tools it runs after) — dict-file presence on disk is irrelevant, only
 the list activates a tool, and **order comes from the DAG, not list position**.
-:func:`resolve_pipeline` matches each entry against a solver's registered tools (and
-carries its ``depends_on``); :func:`tool_init_steps` wires each runtime into the
+:func:`resolve_tools` matches each entry against a given set of registered tools (and
+carries its ``depends_on``); :func:`tool_graph_steps` wires each runtime into the
 existing init-DAG via its ``depends_on``, threading the mesh and publishing the sink
 through a terminal ``mesh`` alias.
 """
@@ -35,7 +35,7 @@ class PreprocessConfig(BaseConfig):
     tools: List[Dict[str, Any]] = []
 
 
-def resolve_pipeline(tools: List[ToolSpec], cfg: PreprocessConfig) -> List[ToolRuntime]:
+def resolve_tools(tools: List[ToolSpec], cfg: PreprocessConfig) -> List[ToolRuntime]:
     """Resolve each ``tools`` entry's ``tool:`` against ``tools`` (the registered set).
 
     An entry naming a tool not in ``tools`` raises ``ValueError``. ``depends_on`` is
@@ -52,7 +52,7 @@ def resolve_pipeline(tools: List[ToolSpec], cfg: PreprocessConfig) -> List[ToolR
     return runtimes
 
 
-def tool_init_steps(runtimes: List[ToolRuntime]) -> List[InitStep]:
+def tool_graph_steps(runtimes: List[ToolRuntime]) -> List[InitStep]:
     """Wire each tool's build step into the init DAG from its ``depends_on``.
 
     Each runtime becomes an ``InitStep`` whose ``depends_on`` is ``_foam_time`` plus

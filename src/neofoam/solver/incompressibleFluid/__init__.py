@@ -11,6 +11,6 @@ branch are intentionally omitted.
 """
 
 from .config_schema import config_classes
-from .incompressibleFluid import incompressibleFluid, run, run_preprocess
+from .incompressibleFluid import incompressibleFluid, run
 
-__all__ = ["incompressibleFluid", "run", "run_preprocess", "config_classes"]
+__all__ = ["incompressibleFluid", "run", "config_classes"]

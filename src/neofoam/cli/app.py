@@ -71,7 +71,7 @@ def incompressiblefluid(ctx: typer.Context) -> None:
 @app.command()
 def preprocess(case: Path) -> None:
     """Run ONLY the mesh preprocessing pipeline for <case> and stop (no time loop)."""
-    from neofoam.solver.incompressibleFluid import run_preprocess
+    from neofoam.tools.run import run_preprocess
 
     run_preprocess([sys.argv[0], "-case", str(case)])
 

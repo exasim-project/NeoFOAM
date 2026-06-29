@@ -24,8 +24,6 @@ import pytest
 
 from neofoam.solver.incompressibleFluid.create_fields import create_init
 
-from .comparison_helpers import requires_openfoam
-
 CASE_DIR = Path(__file__).parent / "val_pitzDaily"
 
 
@@ -42,7 +40,6 @@ def case(tmp_path: Path) -> Generator[Path, None, None]:
     os.chdir(original)
 
 
-@requires_openfoam
 def test_solver_crashes_validator_should_predict(case: Path) -> None:
     """Contract: if the solver crashes on val_pitzDaily, the validator
     should have predicted it via ``run_load().validate()``.
@@ -88,7 +85,6 @@ def test_solver_crashes_validator_should_predict(case: Path) -> None:
         )
 
 
-@requires_openfoam
 def test_load_result_exposes_solver_configs(case: Path) -> None:
     """LOAD surfaces the solver's config instances and declared classes.
 

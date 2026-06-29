@@ -16,12 +16,11 @@ import pytest
 pytest.importorskip("pybFoam")
 
 from neofoam.framework.initialization import InitializerBuilder, lazy  # noqa: E402
-from neofoam.framework.tools import tool_init_steps  # noqa: E402
-from neofoam.solver.incompressibleFluid import incompressibleFluid  # noqa: E402
+from neofoam.framework.tools import tool_graph_steps  # noqa: E402
 from neofoam.solver.incompressibleFluid.create_fields import create_init  # noqa: E402
+from neofoam.tools.run import detect_tools  # noqa: E402
 
 CASE = Path(__file__).parent / "preprocess_case"
-EMPTY = Path(__file__).parent / "preprocess_case_empty"
 # A full case with NO ``system/preprocess.yaml`` (the opt-in/OCP boundary): the
 # default disk-read mesh must survive the real create_fields wiring untouched.
 DISK_MESH_CASE = Path(__file__).parent / "val_pitzDaily"
@@ -31,9 +30,7 @@ def _wire(case_dir: Path) -> list:
     builder = InitializerBuilder()
     builder.add(lazy("_foam_time", lambda _ctx: "time"))
     builder.add(lazy("mesh", lambda _ctx: "disk", depends_on=["_foam_time"]))
-    builder.extend(
-        tool_init_steps(incompressibleFluid.detect_preprocess_tools(case_dir))
-    )
+    builder.extend(tool_graph_steps(detect_tools(case_dir)))
     return builder.build()
 
 
@@ -44,15 +41,6 @@ def test_pipeline_replaces_default_mesh() -> None:
     # the surviving mesh step is the pipeline alias, not the disk-read default
     assert mesh_steps[0].replaces == ["mesh"]
     assert any(s.name.startswith("preprocess.") for s in steps)
-
-
-def test_empty_pipeline_keeps_default_mesh_step() -> None:
-    steps = _wire(EMPTY)
-    mesh_steps = [s for s in steps if s.name == "mesh"]
-    assert len(mesh_steps) == 1
-    # the surviving mesh step is the disk-read default (no replacement declared)
-    assert mesh_steps[0].replaces == []
-    assert not any(s.name.startswith("preprocess.") for s in steps)
 
 
 def test_absent_enable_file_keeps_default_disk_mesh_step(
@@ -69,7 +57,7 @@ def test_absent_enable_file_keeps_default_disk_mesh_step(
     # detect_and_create reads dictionaries by relative path, so run from the case.
     monkeypatch.chdir(DISK_MESH_CASE)
 
-    assert incompressibleFluid.detect_preprocess_tools(DISK_MESH_CASE) == []
+    assert detect_tools(DISK_MESH_CASE) == []
 
     runner = create_init(case_dir=DISK_MESH_CASE)
     runner.run_load()

@@ -5,7 +5,6 @@
 
 import os
 import shutil
-import subprocess
 from pathlib import Path
 
 import pytest
@@ -13,23 +12,6 @@ import pytest
 pytest.importorskip("pybFoam")
 
 from neofoam.solver.incompressibleFluid.create_fields import create_init  # noqa: E402
-
-
-def _openfoam_available() -> bool:
-    try:
-        return (
-            subprocess.run(
-                ["blockMesh", "-help"], capture_output=True, timeout=5
-            ).returncode
-            == 0
-        )
-    except (subprocess.TimeoutExpired, FileNotFoundError):
-        return False
-
-
-requires_openfoam = pytest.mark.skipif(
-    not _openfoam_available(), reason="OpenFOAM not available"
-)
 
 CASE = Path(__file__).parents[1] / "solver" / "incompressibleFluid" / "preprocess_case"
 
@@ -63,7 +45,7 @@ def test_no_preprocess_flag_skips_detection() -> None:
 
 
 def test_preprocess_command_wires_case_argv(monkeypatch: pytest.MonkeyPatch) -> None:
-    import neofoam.solver.incompressibleFluid as inc
+    import neofoam.tools.run as run_mod
     from typer.testing import CliRunner
 
     from neofoam.cli.app import app
@@ -74,15 +56,16 @@ def test_preprocess_command_wires_case_argv(monkeypatch: pytest.MonkeyPatch) -> 
         captured["argv"] = list(argv or [])
         return object()
 
-    monkeypatch.setattr(inc, "run_preprocess", fake_run_preprocess)
+    # The CLI does ``from neofoam.tools.run import run_preprocess`` at call time,
+    # so patching the module attribute takes effect.
+    monkeypatch.setattr(run_mod, "run_preprocess", fake_run_preprocess)
     result = CliRunner().invoke(app, ["preprocess", "/some/case"])
     assert result.exit_code == 0
     assert captured["argv"][1:] == ["-case", "/some/case"]
 
 
-@requires_openfoam
 def test_preprocess_command_runs_pipeline_only(tmp_path: Path) -> None:
-    from neofoam.solver.incompressibleFluid import run_preprocess
+    from neofoam.tools.run import run_preprocess
 
     case = tmp_path / "case"
     shutil.copytree(CASE, case)

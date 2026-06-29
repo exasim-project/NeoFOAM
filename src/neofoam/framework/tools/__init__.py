@@ -3,7 +3,7 @@
 
 """neofoam.framework.tools — shared preprocessing Tool abstraction."""
 
-from .pipeline import PreprocessConfig, resolve_pipeline, tool_init_steps
+from .graph import PreprocessConfig, resolve_tools, tool_graph_steps
 from .spec import Tool, ToolRuntime, ToolSpec
 
 __all__ = [
@@ -11,6 +11,6 @@ __all__ = [
     "Tool",
     "ToolRuntime",
     "PreprocessConfig",
-    "resolve_pipeline",
-    "tool_init_steps",
+    "resolve_tools",
+    "tool_graph_steps",
 ]

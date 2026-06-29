@@ -13,7 +13,7 @@ pytest.importorskip("pybFoam")
 
 from neofoam.solver.incompressibleFluid import run
 
-from .comparison_helpers import requires_openfoam, setup_case
+from .comparison_helpers import setup_case
 
 _CONTROL = """\
 FoamFile {{ version 2.0; format ascii; class dictionary; object controlDict; }}
@@ -58,7 +58,6 @@ def _run(case: Path) -> float:
     return float(ctx.time.delta_t)
 
 
-@requires_openfoam
 def test_solver_constrains_delta_t_through_the_interface_fold() -> None:
     repo_root = Path(__file__).parent.parent.parent.parent
     source = repo_root / "tutorials" / "pitzDaily"

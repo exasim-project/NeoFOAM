@@ -13,10 +13,7 @@ The loaded *instances* for a concrete case come from
 from neofoam.io import BaseConfig
 from neofoam.solver.incompressibleFluid import config_classes
 
-from .comparison_helpers import requires_openfoam
 
-
-@requires_openfoam
 def test_config_classes_is_case_free() -> None:
     """No case directory is touched, yet the full schema set is returned."""
     classes = config_classes()

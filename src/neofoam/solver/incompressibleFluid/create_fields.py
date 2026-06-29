@@ -27,7 +27,8 @@ from neofoam.framework.initialization import (
 )
 from neofoam.framework.context import Context
 from neofoam.framework.model import ModelRuntime, ModelSpec, bind_owned_interfaces
-from neofoam.framework.tools import tool_init_steps
+from neofoam.framework.tools import tool_graph_steps
+from neofoam.tools.run import detect_tools
 from neofoam.turbulence import (
     OpenFOAMTurbulenceModel,
     SpecMomentumTransport,
@@ -146,15 +147,11 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
 
         # Detect the mesh-preprocessing pipeline up front (config-only — no
         # mesh is touched). ``--no-preprocess`` on the argv skips detection so
-        # the default disk-read ``mesh`` step is always used. The solver spec is
-        # imported lazily here to break the create_fields↔incompressibleFluid
-        # import cycle (incompressibleFluid imports create_init at module top).
-        from .incompressibleFluid import incompressibleFluid
-
+        # the default disk-read ``mesh`` step is always used. Detection resolves
+        # against the shared tool registry (solver-agnostic), so no solver import
+        # is needed here.
         runner.preprocess_tools = (
-            []
-            if "--no-preprocess" in runner.argv
-            else incompressibleFluid.detect_preprocess_tools(resolved_case_dir)
+            [] if "--no-preprocess" in runner.argv else detect_tools(resolved_case_dir)
         )
 
         # solutionLoop (advances time) and fieldWriter (persists fields) are
@@ -234,7 +231,7 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         # in-process; the terminal alias carries ``replaces=["mesh"]`` so
         # ``builder.build()`` drops the default disk-read ``mesh`` step above.
         # An empty pipeline adds nothing, so the disk-read default survives.
-        builder.extend(tool_init_steps(runner.preprocess_tools))
+        builder.extend(tool_graph_steps(runner.preprocess_tools))
 
         # solutionLoop + fieldWriter are the framework *core* Models, instantiated
         # as real ModelRuntimes: add_core_models registers them and runs each

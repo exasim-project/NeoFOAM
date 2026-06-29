@@ -4,24 +4,23 @@
 """ToolSpec — a shared, per-solver-registered preprocessing capability.
 
 A ``Tool`` is the slimmed parallel of :class:`~neofoam.framework.model.ModelSpec`:
-it carries a typed step-config schema (``@tool.config``) and a single ``@tool.build``
-that emits :class:`InitStep` objects to run before the time loop. There is no
+it carries a single ``@tool.build`` that emits :class:`InitStep` objects to run
+before the time loop, with its enable-file/step schema inferred from the
+``@build`` parameter annotation (``step_config_type``). There is no
 ``@detect``/``@resolve``/``@operation`` — tools are enable-file activated and run only
-at init time. Tools live in shared packages and are registered on a solver via
-``SolverSpec.tools(...)``; the same instance is reusable across solvers.
+at init time. Tools live in shared packages and self-register into the process-wide
+registry (``neofoam.tools.registry``); the same instance is reusable across solvers.
 """
 
 from __future__ import annotations
 
 import inspect
 from dataclasses import dataclass, field
-from typing import Any, Callable, Optional, TypeVar
+from typing import Any, Callable, Optional
 
 from pydantic import BaseModel
 
 from neofoam.framework.initialization import InitStep
-
-_ConfigT = TypeVar("_ConfigT", bound=type)
 
 
 class ToolSpec:
@@ -29,14 +28,7 @@ class ToolSpec:
 
     def __init__(self, name: str) -> None:
         self.name = name
-        self._config_classes: list[type] = []
         self._build_func: Optional[Callable[[Any], list[InitStep]]] = None
-
-    def config(self, cls: _ConfigT) -> _ConfigT:
-        """Register the typed step-config / enable-file schema (deduped)."""
-        if cls not in self._config_classes:
-            self._config_classes.append(cls)
-        return cls
 
     def build(
         self, func: Callable[[Any], list[InitStep]]
