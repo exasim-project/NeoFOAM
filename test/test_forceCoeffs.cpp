@@ -110,8 +110,8 @@ TEST_CASE("Forces - pressure force and moment match OpenFOAM reference")
 
     SECTION("uniform pressure, fixedWalls" + execName)
     {
-        fs::remove_all("postProcessing/neoForces");
-        fs::remove_all("postProcessing/ofForces");
+        REQUIRE_NOTHROW(fs::remove_all("postProcessing/neoForces"));
+        REQUIRE_NOTHROW(fs::remove_all("postProcessing/ofForces"));
 
         {
             auto rt = nf::createAdapterRunTime(runTime, exec);
@@ -178,14 +178,14 @@ TEST_CASE("Forces - pressure force and moment match OpenFOAM reference")
         );
 
         INFO("Cleaning up output directories");
-        fs::remove_all("postProcessing/neoForces");
-        fs::remove_all("postProcessing/ofForces");
+        CHECK_NOTHROW(fs::remove_all("postProcessing/neoForces"));
+        CHECK_NOTHROW(fs::remove_all("postProcessing/ofForces"));
     }
 
     SECTION("random pressure field, fixedWalls" + execName)
     {
-        fs::remove_all("postProcessing/neoForces");
-        fs::remove_all("postProcessing/ofForces");
+        REQUIRE_NOTHROW(fs::remove_all("postProcessing/neoForces"));
+        REQUIRE_NOTHROW(fs::remove_all("postProcessing/ofForces"));
 
         {
             auto rt = nf::createAdapterRunTime(runTime, exec);
@@ -239,14 +239,14 @@ TEST_CASE("Forces - pressure force and moment match OpenFOAM reference")
         );
 
         INFO("Cleaning up output directories");
-        fs::remove_all("postProcessing/neoForces");
-        fs::remove_all("postProcessing/ofForces");
+        CHECK_NOTHROW(fs::remove_all("postProcessing/neoForces"));
+        CHECK_NOTHROW(fs::remove_all("postProcessing/ofForces"));
     }
 
     SECTION("multiple patches: fixedWalls + inlet + outlet" + execName)
     {
-        fs::remove_all("postProcessing/neoForces");
-        fs::remove_all("postProcessing/ofForces");
+        REQUIRE_NOTHROW(fs::remove_all("postProcessing/neoForces"));
+        REQUIRE_NOTHROW(fs::remove_all("postProcessing/ofForces"));
 
         {
             auto rt = nf::createAdapterRunTime(runTime, exec);
@@ -300,14 +300,14 @@ TEST_CASE("Forces - pressure force and moment match OpenFOAM reference")
         );
 
         INFO("Cleaning up output directories");
-        fs::remove_all("postProcessing/neoForces");
-        fs::remove_all("postProcessing/ofForces");
+        CHECK_NOTHROW(fs::remove_all("postProcessing/neoForces"));
+        CHECK_NOTHROW(fs::remove_all("postProcessing/ofForces"));
     }
 
     SECTION("random U + non-zero viscous forces, fixedWalls" + execName)
     {
-        fs::remove_all("postProcessing/neoForces");
-        fs::remove_all("postProcessing/ofForces");
+        REQUIRE_NOTHROW(fs::remove_all("postProcessing/neoForces"));
+        REQUIRE_NOTHROW(fs::remove_all("postProcessing/ofForces"));
 
         {
             auto rt = nf::createAdapterRunTime(runTime, exec);
@@ -374,16 +374,16 @@ TEST_CASE("Forces - pressure force and moment match OpenFOAM reference")
         );
 
         INFO("Cleaning up output directories");
-        fs::remove_all("postProcessing/neoForces");
-        fs::remove_all("postProcessing/ofForces");
+        CHECK_NOTHROW(fs::remove_all("postProcessing/neoForces"));
+        CHECK_NOTHROW(fs::remove_all("postProcessing/ofForces"));
     }
 
     SECTION("random U + turbulent nuEff (nu + nut), fixedWalls" + execName)
     {
         // TODO: This test assumes nuEff in OpenFOAM is calculated as nu + nut on each patch face,
         // we never test if the NeoFOAM nuEff is actually equalt to OpenFOAMs nuEff
-        fs::remove_all("postProcessing/neoForces");
-        fs::remove_all("postProcessing/ofForces");
+        REQUIRE_NOTHROW(fs::remove_all("postProcessing/neoForces"));
+        REQUIRE_NOTHROW(fs::remove_all("postProcessing/ofForces"));
 
         const Foam::scalar nu = 1e-5;
         const Foam::scalar nutConst = 5e-4;
@@ -475,8 +475,8 @@ TEST_CASE("Forces - pressure force and moment match OpenFOAM reference")
             tol
         );
 
-        fs::remove_all("postProcessing/neoForces");
-        fs::remove_all("postProcessing/ofForces");
+        CHECK_NOTHROW(fs::remove_all("postProcessing/neoForces"));
+        CHECK_NOTHROW(fs::remove_all("postProcessing/ofForces"));
     }
 }
 
@@ -490,8 +490,8 @@ TEST_CASE("ForceCoeffs - normalised coefficients match OpenFOAM reference")
 
     SECTION("random pressure, all coefficients" + execName)
     {
-        fs::remove_all("postProcessing/neoForceCoeffs");
-        fs::remove_all("postProcessing/ofForceCoeffs");
+        REQUIRE_NOTHROW(fs::remove_all("postProcessing/neoForceCoeffs"));
+        REQUIRE_NOTHROW(fs::remove_all("postProcessing/ofForceCoeffs"));
 
         {
             auto rt = nf::createAdapterRunTime(runTime, exec);
@@ -563,14 +563,14 @@ TEST_CASE("ForceCoeffs - normalised coefficients match OpenFOAM reference")
         );
 
         INFO("Cleaning up output directories");
-        fs::remove_all("postProcessing/neoForceCoeffs");
-        fs::remove_all("postProcessing/ofForceCoeffs");
+        CHECK_NOTHROW(fs::remove_all("postProcessing/neoForceCoeffs"));
+        CHECK_NOTHROW(fs::remove_all("postProcessing/ofForceCoeffs"));
     }
 
     SECTION("random U + non-zero viscous forces, all coefficients" + execName)
     {
-        fs::remove_all("postProcessing/neoForceCoeffs");
-        fs::remove_all("postProcessing/ofForceCoeffs");
+        REQUIRE_NOTHROW(fs::remove_all("postProcessing/neoForceCoeffs"));
+        REQUIRE_NOTHROW(fs::remove_all("postProcessing/ofForceCoeffs"));
 
         {
             auto rt = nf::createAdapterRunTime(runTime, exec);
@@ -647,8 +647,8 @@ TEST_CASE("ForceCoeffs - normalised coefficients match OpenFOAM reference")
         );
 
         INFO("Cleaning up output directories");
-        fs::remove_all("postProcessing/neoForceCoeffs");
-        fs::remove_all("postProcessing/ofForceCoeffs");
+        CHECK_NOTHROW(fs::remove_all("postProcessing/neoForceCoeffs"));
+        CHECK_NOTHROW(fs::remove_all("postProcessing/ofForceCoeffs"));
     }
 }
 
