@@ -22,10 +22,15 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Union
 
 import numpy as np
 import pytest
+
+# Disable OpenFOAM's floating-point-exception trap before pybFoam is imported (lazily,
+# in _load_internal, to read fields). Constructing a Foam::Time enables trapfpe()
+# process-wide, which then aborts pytest with SIGFPE on a benign denormal while
+# loading/comparing fields.
+os.environ.setdefault("FOAM_SIGFPE", "false")
 
 
 def run_neopimplefoam(case: Path) -> None:
@@ -118,46 +123,72 @@ def _final_time_dir(case: Path) -> Path:
     return times[-1]
 
 
-def _load_internal(case: Path, time_dir: Path, field_name: str) -> np.ndarray:
-    """Load a vol*Field internal field as a numpy array via pybFoam.
+_READER = """
+import os, shutil, sys
+from pathlib import Path
+import numpy as np
+import pybFoam as pyf
+from pybFoam import volScalarField, volVectorField
 
-    pybFoam discovers the latest time on construction, so the target time dir is
-    staged as ``0/`` in a temporary case and read from there.
+case, time_dir, out_dir = (Path(p) for p in sys.argv[1:4])
+field_names = sys.argv[4:]
+
+# Stage the target time dir as 0/ so pybFoam (which reads the latest time on
+# construction) loads it.
+staged = out_dir / "case"
+shutil.copytree(case / "system", staged / "system")
+shutil.copytree(case / "constant", staged / "constant")
+shutil.copytree(time_dir, staged / "0")
+os.chdir(staged)
+
+runTime = pyf.Time(pyf.argList(["test"]))
+mesh = pyf.fvMesh(runTime)
+for name in field_names:
+    content = (staged / "0" / name).read_text()
+    if "volScalarField" in content:
+        field = volScalarField.read_field(mesh, name)
+    elif "volVectorField" in content:
+        field = volVectorField.read_field(mesh, name)
+    else:
+        raise ValueError("Unknown field type for " + name)
+    np.save(out_dir / (name + ".npy"), np.asarray(field.internalField()))
+"""
+
+
+def _load_internal_fields(
+    case: Path, time_dir: Path, field_names: tuple[str, ...], out_dir: Path
+) -> dict[str, np.ndarray]:
+    """Read vol*Field internal fields via pybFoam, isolated in a subprocess.
+
+    Constructing a ``Foam::Time`` pulls in OpenFOAM per-process global state that is
+    corrupted by a second construction in the same interpreter — subsequent reads come
+    back as nan (the same global-state hazard that forces each solver run into its own
+    process). Each case is therefore read in its own subprocess, which constructs
+    ``Time`` exactly once and dumps every requested field to ``.npy`` for the parent.
     """
-    import pybFoam as pyf
-    from pybFoam import volScalarField, volVectorField
-
-    temp_case = case.parent / f"{case.name}_read_{field_name}"
-    original_dir = Path.cwd()
-    try:
-        if temp_case.exists():
-            shutil.rmtree(temp_case)
-        temp_case.mkdir()
-        shutil.copytree(case / "system", temp_case / "system")
-        shutil.copytree(case / "constant", temp_case / "constant")
-        shutil.copytree(time_dir, temp_case / "0")
-
-        os.chdir(temp_case)
-        runTime = pyf.Time(pyf.argList(["test"]))
-        mesh = pyf.fvMesh(runTime)
-
-        content = (temp_case / "0" / field_name).read_text()
-        field: Union[volScalarField, volVectorField]
-        if "volScalarField" in content:
-            field = volScalarField.read_field(mesh, field_name)
-        elif "volVectorField" in content:
-            field = volVectorField.read_field(mesh, field_name)
-        else:
-            raise ValueError(f"Unknown field type for {field_name}")
-
-        try:
-            return np.array(field.internalField())
-        except AttributeError:
-            return np.array(field)
-    finally:
-        os.chdir(original_dir)
-        if temp_case.exists():
-            shutil.rmtree(temp_case)
+    if out_dir.exists():
+        shutil.rmtree(out_dir)
+    out_dir.mkdir(parents=True)
+    env = {**os.environ, "FOAM_SIGFPE": "false"}
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            _READER,
+            str(case),
+            str(time_dir),
+            str(out_dir),
+            *field_names,
+        ],
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert result.returncode == 0, (
+        f"field read failed (rc={result.returncode}):\n{result.stderr[-3000:]}"
+    )
+    return {name: np.load(out_dir / f"{name}.npy") for name in field_names}
 
 
 @requires_openfoam
@@ -191,20 +222,24 @@ def test_neoPimpleFoam_matches_pimpleFoam(tmp_path: Path) -> None:
         f"solvers wrote different final times: {of_final.name} vs {neo_final.name}"
     )
 
+    fields = ("p", "U")
+    of_vals = _load_internal_fields(of_case, of_final, fields, tmp_path / "of_read")
+    neo_vals = _load_internal_fields(neo_case, neo_final, fields, tmp_path / "neo_read")
+
     tol = 5e-3
     failures = []
-    for field_name in ("p", "U"):
-        of_vals = _load_internal(of_case, of_final, field_name)
-        neo_vals = _load_internal(neo_case, neo_final, field_name)
-        assert of_vals.shape == neo_vals.shape, (
-            f"{field_name}: shape {of_vals.shape} vs {neo_vals.shape}"
+    for field_name in fields:
+        of_field = of_vals[field_name]
+        neo_field = neo_vals[field_name]
+        assert of_field.shape == neo_field.shape, (
+            f"{field_name}: shape {of_field.shape} vs {neo_field.shape}"
         )
-        max_abs = float(np.max(np.abs(of_vals - neo_vals)))
-        peak = float(np.max(np.abs(of_vals)))
+        max_abs = float(np.max(np.abs(of_field - neo_field)))
+        peak = float(np.max(np.abs(of_field)))
         print(
             f"{field_name}: max abs diff = {max_abs:.3e} (peak |{field_name}| = {peak:.3e})"
         )
-        if not np.allclose(of_vals, neo_vals, rtol=0.0, atol=tol):
+        if not np.allclose(of_field, neo_field, rtol=0.0, atol=tol):
             failures.append(f"{field_name}(max abs={max_abs:.3e})")
 
     if failures:
