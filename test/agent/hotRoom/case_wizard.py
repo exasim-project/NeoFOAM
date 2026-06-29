@@ -84,7 +84,7 @@ def _():
 @app.cell
 def _(mo):
     mo.md("""
-    # incompressibleFluid case wizard
+    # Case wizard
 
     0. **Chat** — describe the case below and the AI fills the tabs and writes the
        case to disk. Then review/edit and **Save case** to re-write after edits.
