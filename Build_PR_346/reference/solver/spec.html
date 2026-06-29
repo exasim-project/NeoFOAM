@@ -376,14 +376,6 @@ picks which one runs.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="neofoam.framework.solver.spec.SolverSpec.detect_preprocess_tools">
-<span class="sig-name descname"><span class="pre">detect_preprocess_tools</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">ToolRuntime</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/solver/spec.html#SolverSpec.detect_preprocess_tools"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.solver.spec.SolverSpec.detect_preprocess_tools" title="Link to this definition">¶</a></dt>
-<dd><p>Read <code class="docutils literal notranslate"><span class="pre">system/preprocess.yaml</span></code> and resolve it against this solver’s tools.</p>
-<p>An absent enable file yields <code class="docutils literal notranslate"><span class="pre">[]</span></code>; an entry naming a tool this solver did not
-register raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code>.</p>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="neofoam.framework.solver.spec.SolverSpec.execution_graph_step">
 <span class="sig-name descname"><span class="pre">execution_graph_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/solver/spec.html#SolverSpec.execution_graph_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.solver.spec.SolverSpec.execution_graph_step" title="Link to this definition">¶</a></dt>
 <dd><p>Decorator to register execution graph construction step.</p>
@@ -406,9 +398,7 @@ register raises <code class="docutils literal notranslate"><span class="pre">Val
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">model_specs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#neofoam.framework.solver.spec.SolverSpec.model_specs" title="Link to this definition">¶</a></dt>
 <dd><p>Every member of every bound family, case-free (no detection).</p>
 <p>The union that — together with the solver’s own <code class="docutils literal notranslate"><span class="pre">_config_classes</span></code>
-— defines the full config schema returned by <code class="xref py py-func docutils literal notranslate"><span class="pre">configurations()</span></code>.
-Each registered <code class="docutils literal notranslate"><span class="pre">ToolSpec</span></code> is appended directly (it exposes
-<code class="docutils literal notranslate"><span class="pre">_config_classes</span></code> for <code class="docutils literal notranslate"><span class="pre">collect_config_classes</span></code>).</p>
+— defines the full config schema returned by <code class="xref py py-func docutils literal notranslate"><span class="pre">configurations()</span></code>.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -426,14 +416,6 @@ Each registered <code class="docutils literal notranslate"><span class="pre">Too
 Example: the <code class="docutils literal notranslate"><span class="pre">incompressibleFluidModel</span></code> family (boussinesq, …).
 Every member’s configs join the case-free schema; detection picks
 which (if any) are active.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="neofoam.framework.solver.spec.SolverSpec.tools">
-<span class="sig-name descname"><span class="pre">tools</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">tools</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ToolSpec</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#neofoam.framework.solver.spec.SolverSpec" title="neofoam.framework.solver.spec.SolverSpec"><span class="pre">SolverSpec</span></a></span></span><a class="reference internal" href="../../_modules/neofoam/framework/solver/spec.html#SolverSpec.tools"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.solver.spec.SolverSpec.tools" title="Link to this definition">¶</a></dt>
-<dd><p>Register the preprocessing tools this solver offers (additive, deduped).</p>
-<p>Tools are reusable across solvers; the set is per-solver, not a process-global
-registry. Returns <code class="docutils literal notranslate"><span class="pre">self</span></code> for chaining.</p>
 </dd></dl>
 
 </dd></dl>
@@ -502,14 +484,12 @@ registry. Returns <code class="docutils literal notranslate"><span class="pre">s
 <li><a class="reference internal" href="#neofoam.framework.solver.spec.SolverSpec.core_models"><code class="docutils literal notranslate"><span class="pre">SolverSpec.core_models()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.solver.spec.SolverSpec.detect_core_models"><code class="docutils literal notranslate"><span class="pre">SolverSpec.detect_core_models()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.solver.spec.SolverSpec.detect_optional_models"><code class="docutils literal notranslate"><span class="pre">SolverSpec.detect_optional_models()</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.framework.solver.spec.SolverSpec.detect_preprocess_tools"><code class="docutils literal notranslate"><span class="pre">SolverSpec.detect_preprocess_tools()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.solver.spec.SolverSpec.execution_graph_step"><code class="docutils literal notranslate"><span class="pre">SolverSpec.execution_graph_step()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.solver.spec.SolverSpec.initializer"><code class="docutils literal notranslate"><span class="pre">SolverSpec.initializer()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.solver.spec.SolverSpec.instantiate"><code class="docutils literal notranslate"><span class="pre">SolverSpec.instantiate()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.solver.spec.SolverSpec.model_specs"><code class="docutils literal notranslate"><span class="pre">SolverSpec.model_specs</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.solver.spec.SolverSpec.operation"><code class="docutils literal notranslate"><span class="pre">SolverSpec.operation()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.solver.spec.SolverSpec.optional_models"><code class="docutils literal notranslate"><span class="pre">SolverSpec.optional_models()</span></code></a></li>
-<li><a class="reference internal" href="#neofoam.framework.solver.spec.SolverSpec.tools"><code class="docutils literal notranslate"><span class="pre">SolverSpec.tools()</span></code></a></li>
 </ul>
 </li>
 </ul>
