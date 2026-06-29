@@ -32,6 +32,7 @@ def _make_lazy(
     create: Callable[[dict[str, Any]], Any],
     depends_on: Optional[List[str]] = None,
     write: bool = False,
+    replaces: Optional[List[str]] = None,
 ) -> InitStep:
     """Internal factory shared by field / operator / model / lazy."""
     full_name = f"{prefix}.{name}" if prefix else name
@@ -41,6 +42,7 @@ def _make_lazy(
         initializer=create,
         category=category,
         write=write,
+        replaces=replaces or [],
     )
 
 
@@ -49,6 +51,8 @@ def field(
     create: Callable[[dict[str, Any]], Any],
     depends_on: Optional[List[str]] = None,
     write: bool = False,
+    *,
+    replaces: Optional[List[str]] = None,
 ) -> InitStep:
     """
     Helper for creating field lazy initializers.
@@ -70,7 +74,9 @@ def field(
         field("U", create=lambda ctx: create_vector_field(ctx["mesh"], U0),
               depends_on=["mesh"], write=True)
     """
-    return _make_lazy("fields", "fields", name, create, depends_on, write=write)
+    return _make_lazy(
+        "fields", "fields", name, create, depends_on, write=write, replaces=replaces
+    )
 
 
 def operator(
@@ -101,6 +107,8 @@ def lazy(
     name: str,
     create: Callable[[dict[str, Any]], Any],
     depends_on: Optional[List[str]] = None,
+    *,
+    replaces: Optional[List[str]] = None,
 ) -> InitStep:
     """
     General-purpose helper for creating lazy initializers.
@@ -112,6 +120,9 @@ def lazy(
         name: Object name (e.g., "mesh", "runtime", "piso_loop")
         create: Function that creates the object
         depends_on: List of dependencies (default: [])
+        replaces: Default-step names this step supersedes. When set, the
+            builder drops any other step carrying one of these names so a
+            generated resource can stand in for the default one.
 
     Returns:
         InitStep for the object
@@ -119,7 +130,7 @@ def lazy(
     Example:
         lazy("mesh", create=lambda ctx: mesh)
     """
-    return _make_lazy(None, "resource", name, create, depends_on)
+    return _make_lazy(None, "resource", name, create, depends_on, replaces=replaces)
 
 
 def model(
@@ -334,7 +345,17 @@ class InitializerBuilder:
         """
         Return the constructed list of initializers.
 
+        A step whose name is listed in another step's ``replaces=`` is dropped
+        so the replacer can supersede a default step. A replacer keeps its own
+        name in its ``replaces=`` (the terminal-alias pattern), so it is never
+        dropped by its own declaration and dependents still resolve.
+
         Returns:
             List of InitStep objects
         """
-        return self.initializers
+        replaced = {name for step in self.initializers for name in step.replaces}
+        return [
+            step
+            for step in self.initializers
+            if not (step.name in replaced and step.name not in step.replaces)
+        ]

@@ -22,7 +22,6 @@ from pathlib import Path
 from neofoam.solver.incompressibleFluid import run
 
 from .comparison_helpers import (
-    requires_openfoam,
     setup_case,
 )
 
@@ -41,7 +40,6 @@ def _extract_residual_fields(log: str) -> list[str]:
     return pattern.findall(log)
 
 
-@requires_openfoam
 def test_hotRoom_solver_comparison() -> None:
     """Compare incompressibleFluid+boussinesq vs buoyantBoussinesqPimpleFoam."""
     repo_root = Path(__file__).parent.parent.parent.parent

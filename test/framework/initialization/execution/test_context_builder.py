@@ -222,6 +222,23 @@ def test_execute_initialization_raises_structured_graph_error():
     assert diag.node_name == "A"
 
 
+def test_execute_initialization_enforces_replaces_target():
+    # The replacement-target check must fire on the real executed path, not only
+    # inside ``_topological_sort`` (which the executed path skips by sorting with
+    # ``validate_graph=False``). A ``replaces=[X]`` naming no present step raises.
+    inits = [
+        InitStep(
+            "mesh",
+            depends_on=[],
+            initializer=lambda _ctx: "m",
+            replaces=["nonexistent"],
+        ),
+    ]
+
+    with pytest.raises(InitializationGraphError):
+        execute_initialization(inits)
+
+
 def test_execute_initialization_validates_only_once(monkeypatch):
     inits = [
         InitStep("mesh", depends_on=[], initializer=lambda _ctx: "mesh_obj"),

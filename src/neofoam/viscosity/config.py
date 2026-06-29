@@ -10,7 +10,7 @@ for Newtonian flow (optional, since non-Newtonian models carry their
 coefficients in their own sub-dictionaries instead).
 
 This is the only viscosity module that imports ``neofoam.io`` (hence pybFoam);
-tests that load it carry the ``requires_openfoam`` marker.
+tests that load it run the OpenFOAM IO path directly.
 """
 
 from typing import Optional

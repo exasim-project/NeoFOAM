@@ -4,8 +4,8 @@
 """Shared helpers for incompressibleFluid solver comparison tests.
 
 Ported from ``feat/python_solvers`` to support the minimal incompressibleFluid
-port. Provides an ``@requires_openfoam`` skip marker, case setup, field
-loading via pybFoam, and field-level numerical comparison.
+port. Provides case setup, field loading via pybFoam, and field-level numerical
+comparison. OpenFOAM/pybFoam are treated as always available.
 """
 
 import os
@@ -15,27 +15,7 @@ from pathlib import Path
 from typing import List, Tuple, Union
 
 import numpy as np
-import pytest
 from pybFoam import volScalarField, volVectorField
-
-
-def check_openfoam_available() -> bool:
-    """Return True iff ``blockMesh`` is on PATH and runnable."""
-    try:
-        result = subprocess.run(
-            ["blockMesh", "-help"],
-            capture_output=True,
-            timeout=5,
-        )
-        return result.returncode == 0
-    except (subprocess.TimeoutExpired, FileNotFoundError):
-        return False
-
-
-requires_openfoam = pytest.mark.skipif(
-    not check_openfoam_available(),
-    reason="OpenFOAM not available",
-)
 
 
 def load_field(

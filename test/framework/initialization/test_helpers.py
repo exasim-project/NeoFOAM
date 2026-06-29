@@ -177,3 +177,51 @@ def test_builds_init_steps_protocol_matches_run_build(builder, mock_core_model):
 
     assert isinstance(mock_core_model, BuildsInitSteps)
     assert not isinstance(NoRunBuild(), BuildsInitSteps)
+
+
+def test_lazy_accepts_replaces() -> None:
+    """``lazy`` threads the replacement target onto the step."""
+    step = lazy("mesh", lambda _ctx: 1, replaces=["mesh"])
+    assert step.replaces == ["mesh"]
+
+
+def test_field_accepts_replaces() -> None:
+    """``field`` threads the replacement target onto the prefixed step."""
+    step = field("U", lambda _ctx: 1, depends_on=["mesh"], replaces=["U"])
+    assert step.name == "fields.U"
+    assert step.replaces == ["U"]
+
+
+def test_lazy_replaces_defaults_empty() -> None:
+    """``lazy`` without a replacement target supersedes nothing."""
+    assert lazy("mesh", lambda _ctx: 1).replaces == []
+
+
+def test_build_drops_replaced_default_step() -> None:
+    """A replacer named for a default supersedes that default step."""
+    builder = InitializerBuilder()
+    builder.add(lazy("mesh", lambda _ctx: "disk"))
+    builder.add(lazy("mesh", lambda _ctx: "generated", replaces=["mesh"]))
+    steps = builder.build()
+    mesh_steps = [s for s in steps if s.name == "mesh"]
+    assert len(mesh_steps) == 1
+    assert mesh_steps[0].initializer({}) == "generated"
+
+
+def test_build_keeps_dependent_orderable_after_replace() -> None:
+    """Dependents of a replaced name still resolve against the carrier."""
+    builder = InitializerBuilder()
+    builder.add(lazy("mesh", lambda _ctx: "disk"))
+    builder.add(lazy("mesh", lambda _ctx: "generated", replaces=["mesh"]))
+    builder.add(field("U", lambda ctx: ctx["mesh"], depends_on=["mesh"]))
+    names = [s.name for s in builder.build()]
+    assert names.count("mesh") == 1
+    assert "fields.U" in names
+
+
+def test_build_keeps_all_when_no_replaces() -> None:
+    """Without any replacement declaration every step survives build."""
+    builder = InitializerBuilder()
+    builder.add(lazy("a", lambda _ctx: 1))
+    builder.add(lazy("b", lambda _ctx: 2))
+    assert {s.name for s in builder.build()} == {"a", "b"}

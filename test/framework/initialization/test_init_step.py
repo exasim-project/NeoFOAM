@@ -144,3 +144,15 @@ def test_execute_does_not_wrap_type_error() -> None:
     step = InitStep(name="bad", initializer=bad_init)
     with pytest.raises(TypeError, match="wrong arg type"):
         execute_step(step, {})
+
+
+def test_replaces_defaults_to_empty_list() -> None:
+    """A step with no declared replacement supersedes nothing."""
+    step = InitStep(name="mesh", initializer=lambda _ctx: None)
+    assert step.replaces == []
+
+
+def test_replaces_is_stored() -> None:
+    """A declared replacement target is kept verbatim on the step."""
+    step = InitStep(name="mesh", initializer=lambda _ctx: None, replaces=["mesh"])
+    assert step.replaces == ["mesh"]

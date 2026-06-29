@@ -29,6 +29,7 @@ class StagedInitRunner:
         self.argv: list[str] = argv or []
         self.core_models: list[Any] = []
         self.optional_models: list[Any] = []
+        self.preprocess_tools: list[Any] = []
         self.state: Any = None
 
     @property
