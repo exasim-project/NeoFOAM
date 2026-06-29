@@ -78,16 +78,16 @@ struct OfForcesSetup
 
     explicit OfForcesSetup(Foam::fvMesh& mesh, const Foam::Time& runTime, Foam::scalar nu = 0.0)
         : zeroU(
-              Foam::IOobject(
-                  "U",
-                  runTime.timeName(),
-                  mesh,
-                  Foam::IOobject::NO_READ,
-                  Foam::IOobject::NO_WRITE
-              ),
-              mesh,
-              Foam::dimensionedVector("U", Foam::dimVelocity, Foam::vector::zero)
-          )
+            Foam::IOobject(
+                "U",
+                runTime.timeName(),
+                mesh,
+                Foam::IOobject::NO_READ,
+                Foam::IOobject::NO_WRITE
+            ),
+            mesh,
+            Foam::dimensionedVector("U", Foam::dimVelocity, Foam::vector::zero)
+        )
         , transportProps(Foam::IOobject(
               "transportProperties",
               runTime.constant(),
