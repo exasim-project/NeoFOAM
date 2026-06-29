@@ -54,21 +54,30 @@ def _split(values: list[str]) -> list[str]:
 
 def _caption(discriminates: bool) -> str:
     """The guardrail that MUST travel with every similarity visualization."""
-    base = ("Coverage-shape similarity only: tests grouped here execute identical "
-            "lines, which does NOT imply identical assertions. Confirm the "
-            "assertions before merging.")
+    base = (
+        "Coverage-shape similarity only: tests grouped here execute identical "
+        "lines, which does NOT imply identical assertions. Confirm the "
+        "assertions before merging."
+    )
     if not discriminates:
-        base += (" line_coverage_discriminates=false — no test sole-owns a line, "
-                 "so coverage alone cannot prove redundancy in this module.")
+        base += (
+            " line_coverage_discriminates=false — no test sole-owns a line, "
+            "so coverage alone cannot prove redundancy in this module."
+        )
     return base
 
 
-def _mermaid(identical_clusters: list, subset_pairs: list[dict],
-             singletons: list[str], caption: str, cap: int = 10) -> str:
+def _mermaid(
+    identical_clusters: list,
+    subset_pairs: list[dict],
+    singletons: list[str],
+    caption: str,
+    cap: int = 10,
+) -> str:
     """Render the test-to-test cluster/subset structure as Mermaid (text, the
     format the LLM reviewer can actually read and embed)."""
     lines = ["flowchart TD"]
-    for part in (caption[i:i + 90] for i in range(0, len(caption), 90)):
+    for part in (caption[i : i + 90] for i in range(0, len(caption), 90)):
         lines.append(f"    %% {part}")
     ids: dict[str, str] = {}
 
@@ -77,14 +86,16 @@ def _mermaid(identical_clusters: list, subset_pairs: list[dict],
 
     for i, (group, nlines) in enumerate(identical_clusters):
         shown = group[:cap]
-        lines.append(f'    subgraph C{i}["identical: {len(group)} tests · '
-                     f'{nlines} lines → parametrize candidate"]')
+        lines.append(
+            f'    subgraph C{i}["identical: {len(group)} tests · '
+            f'{nlines} lines → parametrize candidate"]'
+        )
         for t in shown:
             lines.append(f'        {nid(t)}["{t}"]')
         if len(group) > cap:
             lines.append(f'        C{i}more["… +{len(group) - cap} more"]')
         lines.append("    end")
-    for t in singletons[:cap * 3]:
+    for t in singletons[: cap * 3]:
         lines.append(f'    {nid(t)}["{t}"]')
     # subset edges (a is fully contained in b w.r.t. lines)
     seen = 0
@@ -100,14 +111,25 @@ def _mermaid(identical_clusters: list, subset_pairs: list[dict],
 
 def _markdown(report: dict, mermaid: str, caption: str) -> str:
     """A small markdown doc the reviewer can read and embed into 4-test-review."""
-    out = [f"# Coverage contexts — {', '.join(report['sources'])}", "",
-           f"**Line coverage:** {report['total_percent']}% "
-           f"({report['total_missing']}/{report['total_statements']} missing) · "
-           f"{report['num_tests']} tests · "
-           f"`line_coverage_discriminates={str(report['line_coverage_discriminates']).lower()}`",
-           "", f"> {caption}", "",
-           "## Test-similarity structure", "", "```mermaid", mermaid, "```", "",
-           "## Identical-coverage clusters (parametrize candidates)", ""]
+    out = [
+        f"# Coverage contexts — {', '.join(report['sources'])}",
+        "",
+        f"**Line coverage:** {report['total_percent']}% "
+        f"({report['total_missing']}/{report['total_statements']} missing) · "
+        f"{report['num_tests']} tests · "
+        f"`line_coverage_discriminates={str(report['line_coverage_discriminates']).lower()}`",
+        "",
+        f"> {caption}",
+        "",
+        "## Test-similarity structure",
+        "",
+        "```mermaid",
+        mermaid,
+        "```",
+        "",
+        "## Identical-coverage clusters (parametrize candidates)",
+        "",
+    ]
     if report["identical_clusters"]:
         out.append("| # | tests | lines each |")
         out.append("|---|---|---|")
@@ -123,6 +145,7 @@ def _heatmap(test_lines: dict, out_path: Path) -> str | None:
     it's behind --viz and degrades gracefully if matplotlib is absent."""
     try:
         import matplotlib
+
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
     except ImportError:
@@ -138,10 +161,14 @@ def _heatmap(test_lines: dict, out_path: Path) -> str | None:
             mat[i][j] = inter / union
     fig, ax = plt.subplots(figsize=(max(6, n * 0.18), max(6, n * 0.18)))
     ax.imshow(mat, cmap="viridis", vmin=0, vmax=1)
-    ax.set_title("Test-to-test line-coverage Jaccard similarity\n"
-                 "(shape only — confirm assertions before merging)", fontsize=8)
+    ax.set_title(
+        "Test-to-test line-coverage Jaccard similarity\n"
+        "(shape only — confirm assertions before merging)",
+        fontsize=8,
+    )
     short_names = [t.rsplit(".", 1)[-1] for t in names]
-    ax.set_xticks(range(n)); ax.set_yticks(range(n))
+    ax.set_xticks(range(n))
+    ax.set_yticks(range(n))
     ax.set_xticklabels(short_names, rotation=90, fontsize=4)
     ax.set_yticklabels(short_names, fontsize=4)
     fig.tight_layout()
@@ -152,24 +179,45 @@ def _heatmap(test_lines: dict, out_path: Path) -> str | None:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--source", action="append", default=[], required=True,
-                    help="Dotted module(s) to scope coverage to, e.g. "
-                         "my_pkg.my_feature (repeatable / comma-sep).")
-    ap.add_argument("--tests", action="append", default=[], required=True,
-                    help="pytest path(s) to run (repeatable / comma-sep).")
-    ap.add_argument("--out", required=True,
-                    help="Output directory (created if missing).")
-    ap.add_argument("--preimport", action="append", default=[],
-                    help="Native module(s) to import UNINSTRUMENTED before arming "
-                         "coverage — use when importing the feature aborts the process "
-                         "under the tracer (a pybind11/Cython extension). Default: none.")
-    ap.add_argument("--branch", action="store_true",
-                    help="Enable branch coverage (sharper, slightly noisier).")
-    ap.add_argument("--viz", action="store_true",
-                    help="Also emit a raster heatmap (PNG) of test-to-test "
-                         "similarity. Needs matplotlib; skipped with a note if "
-                         "absent. Text artifacts (Mermaid + markdown) are always "
-                         "written regardless of this flag.")
+    ap.add_argument(
+        "--source",
+        action="append",
+        default=[],
+        required=True,
+        help="Dotted module(s) to scope coverage to, e.g. "
+        "my_pkg.my_feature (repeatable / comma-sep).",
+    )
+    ap.add_argument(
+        "--tests",
+        action="append",
+        default=[],
+        required=True,
+        help="pytest path(s) to run (repeatable / comma-sep).",
+    )
+    ap.add_argument(
+        "--out", required=True, help="Output directory (created if missing)."
+    )
+    ap.add_argument(
+        "--preimport",
+        action="append",
+        default=[],
+        help="Native module(s) to import UNINSTRUMENTED before arming "
+        "coverage — use when importing the feature aborts the process "
+        "under the tracer (a pybind11/Cython extension). Default: none.",
+    )
+    ap.add_argument(
+        "--branch",
+        action="store_true",
+        help="Enable branch coverage (sharper, slightly noisier).",
+    )
+    ap.add_argument(
+        "--viz",
+        action="store_true",
+        help="Also emit a raster heatmap (PNG) of test-to-test "
+        "similarity. Needs matplotlib; skipped with a note if "
+        "absent. Text artifacts (Mermaid + markdown) are always "
+        "written regardless of this flag.",
+    )
     args = ap.parse_args()
 
     sources = _split(args.source)
@@ -195,8 +243,9 @@ def main() -> int:
     # 2. Arm coverage, scoped to the feature, with per-test dynamic contexts.
     import coverage
 
-    cov = coverage.Coverage(source=sources, branch=args.branch,
-                            data_file=str(out / ".coverage"))
+    cov = coverage.Coverage(
+        source=sources, branch=args.branch, data_file=str(out / ".coverage")
+    )
     cov.set_option("run:dynamic_context", "test_function")
     cov.start()
 
@@ -263,14 +312,17 @@ def main() -> int:
         _, statements, _excluded, missing, _ = cov.analysis2(f)
         total_stmts += len(statements)
         total_miss += len(missing)
-        files_summary.append({
-            "file": f,
-            "statements": len(statements),
-            "missing": len(missing),
-            "missing_lines": sorted(missing),
-            "percent": round(100 * (len(statements) - len(missing))
-                             / max(1, len(statements)), 1),
-        })
+        files_summary.append(
+            {
+                "file": f,
+                "statements": len(statements),
+                "missing": len(missing),
+                "missing_lines": sorted(missing),
+                "percent": round(
+                    100 * (len(statements) - len(missing)) / max(1, len(statements)), 1
+                ),
+            }
+        )
     total_pct = round(100 * (total_stmts - total_miss) / max(1, total_stmts), 1)
 
     def short(t: str) -> str:
@@ -291,8 +343,11 @@ def main() -> int:
             for g, n in identical_clusters
         ],
         "subset_pairs": [
-            {"subset": short(p["subset"]), "superset": short(p["superset"]),
-             "lines": p["lines"]}
+            {
+                "subset": short(p["subset"]),
+                "superset": short(p["superset"]),
+                "lines": p["lines"],
+            }
             for p in subset_pairs
         ],
         "pure_redundant_tests": [short(t) for t in pure_redundant],
@@ -318,8 +373,9 @@ def main() -> int:
     caption = _caption(report["line_coverage_discriminates"])
     clustered = {t for c in report["identical_clusters"] for t in c["tests"]}
     singletons = sorted(short(t) for t in test_lines if short(t) not in clustered)
-    clusters_short = [(c["tests"], c["lines_each"])
-                      for c in report["identical_clusters"]]
+    clusters_short = [
+        (c["tests"], c["lines_each"]) for c in report["identical_clusters"]
+    ]
     mermaid = _mermaid(clusters_short, report["subset_pairs"], singletons, caption)
     (out / "clusters.mmd").write_text(mermaid + "\n")
     (out / "coverage.md").write_text(_markdown(report, mermaid, caption))
@@ -329,37 +385,46 @@ def main() -> int:
 
     # 8. Concise human summary.
     print(f"\n==== COVERAGE CONTEXTS ({', '.join(sources)}) ====")
-    print(f"pytest rc={rc}  |  {len(test_lines)} tests  |  "
-          f"line coverage {total_pct}%  ({total_miss}/{total_stmts} missing)")
+    print(
+        f"pytest rc={rc}  |  {len(test_lines)} tests  |  "
+        f"line coverage {total_pct}%  ({total_miss}/{total_stmts} missing)"
+    )
     for fs in files_summary:
         miss = fs["missing_lines"]
         # Normalise separators so the display is the same on POSIX and Windows.
         disp = fs["file"].replace("\\", "/")
         disp = disp.split("site-packages/", 1)[-1]
-        print(f"  {disp}: {fs['percent']}%"
-              + (f"  missing {miss}" if miss else ""))
+        print(f"  {disp}: {fs['percent']}%" + (f"  missing {miss}" if miss else ""))
     if identical_clusters:
-        print("\nIdentical-coverage clusters — same lines, so candidates to collapse "
-              "into ONE @pytest.mark.parametrize (only if their assertions differ "
-              "merely in data, not in behavior):")
+        print(
+            "\nIdentical-coverage clusters — same lines, so candidates to collapse "
+            "into ONE @pytest.mark.parametrize (only if their assertions differ "
+            "merely in data, not in behavior):"
+        )
         for g, n in identical_clusters:
             print(f"  - {{{', '.join(short(t) for t in g)}}}  ({n} lines each)")
     # Sole-owner lines mark load-bearing tests; when NO test owns a line (common
     # for a small module where one body serves many behaviors) line coverage
     # cannot discriminate tests — say so rather than flagging everything.
     if pure_redundant and len(pure_redundant) == len(test_lines):
-        print(f"\nNote: none of the {len(test_lines)} tests sole-owns a line "
-              "(module is small / many behaviors share the same lines). Line "
-              "coverage cannot prove redundancy here — judge merges by the "
-              "clusters above PLUS the assertions, not by coverage alone.")
+        print(
+            f"\nNote: none of the {len(test_lines)} tests sole-owns a line "
+            "(module is small / many behaviors share the same lines). Line "
+            "coverage cannot prove redundancy here — judge merges by the "
+            "clusters above PLUS the assertions, not by coverage alone."
+        )
     elif pure_redundant:
-        print("\nPure-redundant tests (cover no line that another test doesn't — "
-              "confirm assertions are subsumed, then merge):")
+        print(
+            "\nPure-redundant tests (cover no line that another test doesn't — "
+            "confirm assertions are subsumed, then merge):"
+        )
         for t in pure_redundant:
             print(f"  - {short(t)}")
-    print(f"\nWrote {out/'coverage.json'}, {out/'coverage.md'} (with Mermaid), "
-          f"{out/'clusters.mmd'}, and {out/'htmlcov'}/index.html"
-          + (f", {report.get('heatmap')}" if args.viz else ""))
+    print(
+        f"\nWrote {out / 'coverage.json'}, {out / 'coverage.md'} (with Mermaid), "
+        f"{out / 'clusters.mmd'}, and {out / 'htmlcov'}/index.html"
+        + (f", {report.get('heatmap')}" if args.viz else "")
+    )
     return 0
 
 
