@@ -3,6 +3,7 @@
 
 import sys
 from typing import Optional
+from pathlib import Path
 
 import typer
 
@@ -177,6 +178,14 @@ def incompressiblefluid(ctx: typer.Context) -> None:
 
     argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
     run_incompressible_fluid(argv)
+
+
+@app.command()
+def preprocess(case: Path) -> None:
+    """Run ONLY the mesh preprocessing pipeline for <case> and stop (no time loop)."""
+    from neofoam.tools.run import run_preprocess
+
+    run_preprocess([sys.argv[0], "-case", str(case)])
 
 
 if __name__ == "__main__":

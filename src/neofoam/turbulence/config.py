@@ -10,7 +10,7 @@ OpenFOAM IO strategy. ``simulationType`` selects RAS / LES / laminar; the
 sub-dictionaries automatically when a field's type is a ``BaseModel`` subclass.
 
 This is the only turbulence module that imports ``neofoam.io`` (hence pybFoam);
-tests that load it carry the ``requires_openfoam`` marker.
+tests that load it run the OpenFOAM IO path directly.
 """
 
 from typing import Literal, Optional

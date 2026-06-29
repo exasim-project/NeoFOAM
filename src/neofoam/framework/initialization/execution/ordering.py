@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from ...graph import TopologicalSorter, topological_order
 from ..init_step import InitStep
-from .validation import InitializationGraphError, validate
+from .validation import InitializationGraphError, check_replacements, validate
 
 
 def _topological_sort(
@@ -27,6 +27,7 @@ def _topological_sort(
         report = validate(lazy_inits)
         if not report.is_valid:
             raise InitializationGraphError(report)
+        check_replacements(lazy_inits)
 
     name_to_init = {li.name: li for li in lazy_inits}
     sorted_names = topological_order(

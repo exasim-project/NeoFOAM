@@ -19,7 +19,6 @@ from neofoam.solver.incompressibleFluid import run
 
 from .comparison_helpers import (
     compare_solver_fields,
-    requires_openfoam,
     setup_case,
 )
 
@@ -31,7 +30,6 @@ FIELDS_TO_COMPARE = [
 ]
 
 
-@requires_openfoam
 def test_pitzDaily_solver_comparison() -> None:
     """Compare incompressibleFluid against native pimpleFoam on pitzDaily."""
     repo_root = Path(__file__).parent.parent.parent.parent

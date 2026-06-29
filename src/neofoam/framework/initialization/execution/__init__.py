@@ -45,7 +45,7 @@ from .context_builder import (
 )
 from .executor import execute_lazy_inits, execute_step
 from .init_result import InitResult
-from .validation import InitializationGraphError, validate
+from .validation import InitializationGraphError, check_replacements, validate
 
 
 def execute_initialization(
@@ -61,6 +61,10 @@ def execute_initialization(
     report = validate(lazy_inits)
     if not report.is_valid:
         raise InitializationGraphError(report)
+    # The replacement targets are enforced here (not only in ``_topological_sort``)
+    # because the executed path sorts with ``validate_graph=False``; a real
+    # ``replaces=[X]`` that names no present step must still raise.
+    check_replacements(lazy_inits)
 
     results = execute_lazy_inits(lazy_inits, assume_validated=True)
     return build_context_from_results(results, router=router or default_router())

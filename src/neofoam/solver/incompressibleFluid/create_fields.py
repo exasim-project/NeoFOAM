@@ -27,6 +27,8 @@ from neofoam.framework.initialization import (
 )
 from neofoam.framework.context import Context
 from neofoam.framework.model import ModelRuntime, ModelSpec, bind_owned_interfaces
+from neofoam.framework.tools import tool_graph_steps
+from neofoam.tools.run import detect_tools
 from neofoam.turbulence import (
     OpenFOAMTurbulenceModel,
     SpecMomentumTransport,
@@ -143,6 +145,15 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         pressure_model = PressureVelocityAlgorithm.detect_and_create()
         optional_models = incompressibleFluidModel.detect_models(resolved_case_dir)
 
+        # Detect the mesh-preprocessing pipeline up front (config-only — no
+        # mesh is touched). ``--no-preprocess`` on the argv skips detection so
+        # the default disk-read ``mesh`` step is always used. Detection resolves
+        # against the shared tool registry (solver-agnostic), so no solver import
+        # is needed here.
+        runner.preprocess_tools = (
+            [] if "--no-preprocess" in runner.argv else detect_tools(resolved_case_dir)
+        )
+
         # solutionLoop (advances time) and fieldWriter (persists fields) are
         # separate-concern Models, loaded here so their controlDict is validated
         # up front; both are composed by incompressibleFluid.execution_graph.
@@ -215,6 +226,12 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         # never routed onto the Context (the leading underscore keeps it hidden).
         builder.add(lazy("_foam_time", create_foam_time))
         builder.add(lazy("mesh", create_mesh, depends_on=["_foam_time"]))
+
+        # When a mesh-preprocessing pipeline is active, its steps build the mesh
+        # in-process; the terminal alias carries ``replaces=["mesh"]`` so
+        # ``builder.build()`` drops the default disk-read ``mesh`` step above.
+        # An empty pipeline adds nothing, so the disk-read default survives.
+        builder.extend(tool_graph_steps(runner.preprocess_tools))
 
         # solutionLoop + fieldWriter are the framework *core* Models, instantiated
         # as real ModelRuntimes: add_core_models registers them and runs each
