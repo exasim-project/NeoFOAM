@@ -88,24 +88,6 @@ def test_build_emits_state_then_engine() -> None:
     loop = steps[1].initializer({"time": state})
     assert isinstance(loop, SolutionLoop)
     assert loop.state is state
-    assert loop.constraints == []
-
-
-# --- constraint seeding from config (make_solution_loop) ------------------
-
-
-def test_make_solution_loop_seeds_no_constraints() -> None:
-    # Stability limits are folded per step from the timeStepConstraint interface,
-    # so the engine starts with an empty constraint list for any config.
-    adjustable = make_solution_loop(
-        _config(adjustTimeStep=True, maxCo=1.0, maxDeltaT=0.5),
-        make_loop_state(_config(adjustTimeStep=True, maxCo=1.0, maxDeltaT=0.5)),
-    )
-    fixed = make_solution_loop(
-        _config(adjustTimeStep=False), make_loop_state(_config())
-    )
-    assert adjustable.constraints == []
-    assert fixed.constraints == []
 
 
 # --- FoamTime LoopBackend: mirror the LoopState onto pybFoam.Time ---------
