@@ -19,7 +19,7 @@ namespace detail
 static constexpr label MAX_ITER = 10;
 static constexpr scalar TOLERANCE = 1e-9;
 static constexpr scalar KAPPA = 0.41;
-static constexpr scalar E = 9.8;
+static constexpr scalar E_COEFF = 9.8;
 
 KOKKOS_INLINE_FUNCTION
 scalar computeUTau(
@@ -47,9 +47,9 @@ scalar computeUTau(
         const scalar fkUu = Kokkos::exp(kUu) - 1.0 - kUu * (1.0 + 0.5 * kUu);
 
         const scalar f =
-            -ut * y / nuw + magUp / ut + (1.0 / E) * (fkUu - (1.0 / 6.0) * kUu * kUu * kUu);
+            -ut * y / nuw + magUp / ut + (1.0 / E_COEFF) * (fkUu - (1.0 / 6.0) * kUu * kUu * kUu);
 
-        const scalar df = y / nuw + magUp / (ut * ut) + (1.0 / E) * kUu * fkUu / ut;
+        const scalar df = y / nuw + magUp / (ut * ut) + (1.0 / E_COEFF) * kUu * fkUu / ut;
 
         const scalar uTauNew = ut + f / df;
         err = NeoN::mag((ut - uTauNew) / ut);
