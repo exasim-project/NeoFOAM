@@ -204,10 +204,12 @@
 <li class="toctree-l1"><a class="reference internal" href="../../auto_tutorials/example_02_passive_scalar_plugin.html">Add a passive scalar transport model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../auto_tutorials/example_03_build_a_solver.html">Build a scalar-transport solver from scratch</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../auto_tutorials/example_04_configure_with_io.html">Typed configs: YAML, JSON, and OpenFOAM dictionaries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/scaffold-a-case-wizard.html">Scaffold a case wizard notebook</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">How-to guides</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../how-to/install.html">Install NeoFOAM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../how-to/declare-fields.html">Declare on-disk fields with typed BCs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_register_a_model.html">Register a new model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_add_an_init_step_category.html">Add a custom InitStep category</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_work_with_config_files.html">Work with configuration files</a></li>
@@ -381,6 +383,53 @@ model, then returned unchanged. It participates in <em>target</em>’s live fold
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="neofoam.framework.model.spec.ModelSpec.field">
+<span class="sig-name descname"><span class="pre">field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">dimensions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allowed_bcs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">type</span><span class="p"><span class="pre">[</span></span><span class="pre">BaseModel</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">write</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depends_on</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">('mesh',)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">FieldDecl</span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/model/spec.html#ModelSpec.field"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.model.spec.ModelSpec.field" title="Link to this definition">¶</a></dt>
+<dd><p>Declare an on-disk field (<code class="docutils literal notranslate"><span class="pre">0/&lt;name&gt;</span></code>) this model owns.</p>
+<p>Returns a <code class="xref py py-class docutils literal notranslate"><span class="pre">FieldDecl</span></code> handle for cross-linking from the
+model’s <code class="docutils literal notranslate"><span class="pre">&#64;build</span></code> callback (<code class="docutils literal notranslate"><span class="pre">decl.create(read_fn)</span></code> yields the
+<code class="xref py py-class docutils literal notranslate"><span class="pre">InitStep</span></code> the runtime consumes). The declaration also
+seeds the per-field schema surfaced by <code class="docutils literal notranslate"><span class="pre">configurations(solver)</span></code>
+— see <code class="xref py py-func docutils literal notranslate"><span class="pre">neofoam.fields.schema.schema_for()</span></code>.</p>
+<dl>
+<dt>Args:</dt><dd><p>name: Field name without prefix (<code class="docutils literal notranslate"><span class="pre">&quot;U&quot;</span></code> / <code class="docutils literal notranslate"><span class="pre">&quot;p&quot;</span></code> / …).
+dimensions: OpenFOAM dimension exponents</p>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">[M,</span> <span class="pre">L,</span> <span class="pre">T,</span> <span class="pre">Θ,</span> <span class="pre">N,</span> <span class="pre">I,</span> <span class="pre">J]</span></code>.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>value_type: <code class="xref py py-class docutils literal notranslate"><span class="pre">Scalar</span></code> /</dt><dd><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Vector</span></code> marker.</p>
+</dd>
+<dt>allowed_bcs: Permitted boundary-condition arms; include</dt><dd><p><code class="xref py py-class docutils literal notranslate"><span class="pre">GenericBC</span></code> to admit unknown
+BC types via the smart-union fallback.</p>
+</dd>
+</dl>
+<p>write: Mark the field for runtime auto-persistence.
+depends_on: Runtime dependencies for the field’s factory.
+initial_value: Optional default <code class="docutils literal notranslate"><span class="pre">internalField</span></code> baked</p>
+<blockquote>
+<div><p>into a scaffolded schema (Python literal or OpenFOAM
+uniform string).</p>
+</div></blockquote>
+</dd>
+<dt>Returns:</dt><dd><p>The <code class="xref py py-class docutils literal notranslate"><span class="pre">FieldDecl</span></code> handle. Same object is stored on
+<code class="docutils literal notranslate"><span class="pre">self._field_decls</span></code> so the loader can discover it.</p>
+</dd>
+<dt>Raises:</dt><dd><dl class="simple">
+<dt>ValueError: If a field of the same name is already declared</dt><dd><p>on this spec.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="neofoam.framework.model.spec.ModelSpec.field_decls">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">field_decls</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">FieldDecl</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#neofoam.framework.model.spec.ModelSpec.field_decls" title="Link to this definition">¶</a></dt>
+<dd><p>Read-only view of declared fields, in registration order.</p>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="neofoam.framework.model.spec.ModelSpec.instantiate">
 <span class="sig-name descname"><span class="pre">instantiate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">case_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">instance_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="runtime.html#neofoam.framework.model.runtime.ModelRuntime" title="neofoam.framework.model.runtime.ModelRuntime"><span class="pre">ModelRuntime</span></a></span></span><a class="reference internal" href="../../_modules/neofoam/framework/model/spec.html#ModelSpec.instantiate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.model.spec.ModelSpec.instantiate" title="Link to this definition">¶</a></dt>
 <dd><p>Create a fresh ModelRuntime for one instance of this spec.</p>
@@ -401,6 +450,14 @@ class via its <code class="docutils literal notranslate"><span class="pre">&#64;
 <p>The decorated function’s <code class="docutils literal notranslate"><span class="pre">__name__</span></code> is the interface name and its body
 is the single fold (defining the empty case). Returns a <code class="docutils literal notranslate"><span class="pre">ModelInterface</span></code>
 handle, also registered on this model so it is reachable from its owner.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.framework.model.spec.ModelSpec.labeled">
+<span class="sig-name descname"><span class="pre">labeled</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec" title="neofoam.framework.model.spec.ModelSpec"><span class="pre">ModelSpec</span></a></span></span><a class="reference internal" href="../../_modules/neofoam/framework/model/spec.html#ModelSpec.labeled"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.model.spec.ModelSpec.labeled" title="Link to this definition">¶</a></dt>
+<dd><p>Set this model’s human-readable display label for UIs.</p>
+<p>Chainable (e.g. after <a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec.register_with" title="neofoam.framework.model.spec.ModelSpec.register_with"><code class="xref py py-meth docutils literal notranslate"><span class="pre">register_with()</span></code></a>). Independent of whether the
+model’s family is required; defaults to the model name.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -508,8 +565,11 @@ handle, also registered on this model so it is reachable from its owner.</p>
 <li><a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec.contributes"><code class="docutils literal notranslate"><span class="pre">ModelSpec.contributes()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec.declared_interfaces"><code class="docutils literal notranslate"><span class="pre">ModelSpec.declared_interfaces</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec.detect"><code class="docutils literal notranslate"><span class="pre">ModelSpec.detect()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec.field"><code class="docutils literal notranslate"><span class="pre">ModelSpec.field()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec.field_decls"><code class="docutils literal notranslate"><span class="pre">ModelSpec.field_decls</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec.instantiate"><code class="docutils literal notranslate"><span class="pre">ModelSpec.instantiate()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec.interface"><code class="docutils literal notranslate"><span class="pre">ModelSpec.interface()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec.labeled"><code class="docutils literal notranslate"><span class="pre">ModelSpec.labeled()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec.load"><code class="docutils literal notranslate"><span class="pre">ModelSpec.load()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec.operation"><code class="docutils literal notranslate"><span class="pre">ModelSpec.operation()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec.operation_collection"><code class="docutils literal notranslate"><span class="pre">ModelSpec.operation_collection()</span></code></a></li>

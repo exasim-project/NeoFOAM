@@ -204,10 +204,12 @@
 <li class="toctree-l1"><a class="reference internal" href="../auto_tutorials/example_02_passive_scalar_plugin.html">Add a passive scalar transport model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../auto_tutorials/example_03_build_a_solver.html">Build a scalar-transport solver from scratch</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../auto_tutorials/example_04_configure_with_io.html">Typed configs: YAML, JSON, and OpenFOAM dictionaries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/scaffold-a-case-wizard.html">Scaffold a case wizard notebook</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">How-to guides</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../how-to/install.html">Install NeoFOAM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to/declare-fields.html">Declare on-disk fields with typed BCs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_register_a_model.html">Register a new model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_add_an_init_step_category.html">Add a custom InitStep category</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_work_with_config_files.html">Work with configuration files</a></li>
@@ -367,6 +369,7 @@ afterwards (the configs are in memory by then).</p>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="w"> </span><span class="kn">import</span> <span class="n">configurations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_fields</span><span class="p">,</span> <span class="n">save_fields</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigContext</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">save_configs</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.solver.incompressibleFluid</span><span class="w"> </span><span class="kn">import</span> <span class="n">incompressibleFluid</span>
@@ -392,18 +395,41 @@ works for any solver, because the classes are declared on its spec.</p>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">:</span><span class="s2">28s</span><span class="si">}</span><span class="s2"> fields: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">model_fields</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>config classes: [&#39;ControlDictConfig&#39;, &#39;PreprocessConfig&#39;, &#39;Pimple_fvSchemes&#39;, &#39;Pimple_fvSolution&#39;, &#39;TransportPropertiesConfig&#39;, &#39;TurbulencePropertiesConfig&#39;, &#39;BoussinesqConfig&#39;, &#39;boussinesq_fvSchemes&#39;, &#39;boussinesq_fvSolution&#39;, &#39;CourantConfig&#39;, &#39;MaxDeltaTConfig&#39;]
-ControlDictConfig            fields: [&#39;adjustTimeStep&#39;, &#39;application&#39;, &#39;deltaT&#39;, &#39;endTime&#39;, &#39;maxCo&#39;, &#39;maxDeltaT&#39;, &#39;startTime&#39;, &#39;writeBackend&#39;, &#39;writeControl&#39;, &#39;writeInterval&#39;]
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>config classes: [&#39;ControlDictConfig&#39;, &#39;PreprocessConfig&#39;, &#39;Pimple_fvSchemes&#39;, &#39;Pimple_fvSolution&#39;, &#39;UFieldConfig&#39;, &#39;pFieldConfig&#39;, &#39;TransportPropertiesConfig&#39;, &#39;TurbulencePropertiesConfig&#39;, &#39;BoussinesqConfig&#39;, &#39;boussinesq_fvSchemes&#39;, &#39;boussinesq_fvSolution&#39;, &#39;p_rghFieldConfig&#39;, &#39;TFieldConfig&#39;, &#39;alphatFieldConfig&#39;, &#39;CourantConfig&#39;, &#39;MaxDeltaTConfig&#39;]
+ControlDictConfig            fields: [&#39;application&#39;, &#39;deltaT&#39;, &#39;endTime&#39;, &#39;startTime&#39;, &#39;writeBackend&#39;, &#39;writeControl&#39;, &#39;writeInterval&#39;]
 PreprocessConfig             fields: [&#39;tools&#39;]
 Pimple_fvSchemes             fields: [&#39;ddtSchemes&#39;, &#39;divSchemes&#39;, &#39;gradSchemes&#39;, &#39;interpolationSchemes&#39;, &#39;laplacianSchemes&#39;, &#39;snGradSchemes&#39;]
-Pimple_fvSolution            fields: [&#39;solvers&#39;]
+Pimple_fvSolution            fields: [&#39;PIMPLE&#39;, &#39;solvers&#39;]
+UFieldConfig                 fields: [&#39;FoamFile&#39;, &#39;boundaryField&#39;, &#39;dimensions&#39;, &#39;internalField&#39;]
+pFieldConfig                 fields: [&#39;FoamFile&#39;, &#39;boundaryField&#39;, &#39;dimensions&#39;, &#39;internalField&#39;]
 TransportPropertiesConfig    fields: [&#39;nu&#39;, &#39;transportModel&#39;]
 TurbulencePropertiesConfig   fields: [&#39;LES&#39;, &#39;RAS&#39;, &#39;simulationType&#39;]
 BoussinesqConfig             fields: [&#39;Pr&#39;, &#39;Prt&#39;, &#39;TRef&#39;, &#39;beta&#39;, &#39;hRef&#39;]
 boussinesq_fvSchemes         fields: [&#39;ddtSchemes&#39;, &#39;divSchemes&#39;, &#39;laplacianSchemes&#39;]
 boussinesq_fvSolution        fields: [&#39;solvers&#39;]
+p_rghFieldConfig             fields: [&#39;FoamFile&#39;, &#39;boundaryField&#39;, &#39;dimensions&#39;, &#39;internalField&#39;]
+TFieldConfig                 fields: [&#39;FoamFile&#39;, &#39;boundaryField&#39;, &#39;dimensions&#39;, &#39;internalField&#39;]
+alphatFieldConfig            fields: [&#39;FoamFile&#39;, &#39;boundaryField&#39;, &#39;dimensions&#39;, &#39;internalField&#39;]
 CourantConfig                fields: [&#39;maxCo&#39;]
 MaxDeltaTConfig              fields: [&#39;maxDeltaT&#39;]
+</pre></div>
+</div>
+</section>
+<section id="dict-configs-vs-0-name-field-schemas">
+<h2>Dict configs vs <code class="docutils literal notranslate"><span class="pre">0/&lt;name&gt;</span></code> field schemas<a class="headerlink" href="#dict-configs-vs-0-name-field-schemas" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">configurations(...)</span></code> surfaces both the dictionary configs
+(<code class="docutils literal notranslate"><span class="pre">constant/...</span></code>, <code class="docutils literal notranslate"><span class="pre">system/...</span></code>) and the synthesised per-field
+schemas declared via <code class="docutils literal notranslate"><span class="pre">Model.field(...)</span></code> (<code class="docutils literal notranslate"><span class="pre">0/&lt;name&gt;</span></code> files). The
+<code class="docutils literal notranslate"><span class="pre">.dicts</span></code> and <code class="docutils literal notranslate"><span class="pre">.fields</span></code> properties filter the view so callers can
+walk only one kind. The fields list reflects what the bound model
+specs declare — <code class="docutils literal notranslate"><span class="pre">pimple</span></code> owns <code class="docutils literal notranslate"><span class="pre">0/U</span></code> / <code class="docutils literal notranslate"><span class="pre">0/p</span></code>, <code class="docutils literal notranslate"><span class="pre">boussinesq</span></code>
+adds <code class="docutils literal notranslate"><span class="pre">0/p_rgh</span></code> / <code class="docutils literal notranslate"><span class="pre">0/T</span></code> / <code class="docutils literal notranslate"><span class="pre">0/alphat</span></code>.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;dict files:&quot;</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">io_config</span><span class="o">.</span><span class="n">file</span> <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">schema</span><span class="o">.</span><span class="n">dicts</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;0/* fields:&quot;</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">io_config</span><span class="o">.</span><span class="n">file</span> <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">schema</span><span class="o">.</span><span class="n">fields</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>dict files: [&#39;constant/transportProperties&#39;, &#39;constant/transportProperties&#39;, &#39;constant/turbulenceProperties&#39;, &#39;system/controlDict&#39;, &#39;system/controlDict&#39;, &#39;system/controlDict&#39;, &#39;system/fvSchemes&#39;, &#39;system/fvSchemes&#39;, &#39;system/fvSolution&#39;, &#39;system/fvSolution&#39;, &#39;system/preprocess.yaml&#39;]
+0/* fields: [&#39;0/T&#39;, &#39;0/U&#39;, &#39;0/alphat&#39;, &#39;0/p&#39;, &#39;0/p_rgh&#39;]
 </pre></div>
 </div>
 </section>
@@ -432,8 +458,8 @@ JSON Schema of every class — the form most agent / UI tooling consumes.</p>
     <span class="k">return</span> <span class="n">load_result</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>ControlDictConfig fields: [&#39;adjustTimeStep&#39;, &#39;application&#39;, &#39;deltaT&#39;, &#39;endTime&#39;, &#39;maxCo&#39;, &#39;maxDeltaT&#39;, &#39;startTime&#39;, &#39;writeBackend&#39;, &#39;writeControl&#39;, &#39;writeInterval&#39;]
-JSON schema keys        : [&#39;ControlDictConfig&#39;, &#39;PreprocessConfig&#39;, &#39;Pimple_fvSchemes&#39;, &#39;Pimple_fvSolution&#39;, &#39;TransportPropertiesConfig&#39;, &#39;TurbulencePropertiesConfig&#39;, &#39;BoussinesqConfig&#39;, &#39;boussinesq_fvSchemes&#39;, &#39;boussinesq_fvSolution&#39;, &#39;CourantConfig&#39;, &#39;MaxDeltaTConfig&#39;]
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>ControlDictConfig fields: [&#39;application&#39;, &#39;deltaT&#39;, &#39;endTime&#39;, &#39;startTime&#39;, &#39;writeBackend&#39;, &#39;writeControl&#39;, &#39;writeInterval&#39;]
+JSON schema keys        : [&#39;ControlDictConfig&#39;, &#39;PreprocessConfig&#39;, &#39;Pimple_fvSchemes&#39;, &#39;Pimple_fvSolution&#39;, &#39;UFieldConfig&#39;, &#39;pFieldConfig&#39;, &#39;TransportPropertiesConfig&#39;, &#39;TurbulencePropertiesConfig&#39;, &#39;BoussinesqConfig&#39;, &#39;boussinesq_fvSchemes&#39;, &#39;boussinesq_fvSolution&#39;, &#39;p_rghFieldConfig&#39;, &#39;TFieldConfig&#39;, &#39;alphatFieldConfig&#39;, &#39;CourantConfig&#39;, &#39;MaxDeltaTConfig&#39;]
 </pre></div>
 </div>
 </section>
@@ -449,7 +475,7 @@ a plain turbulent case — PIMPLE only, no optional models.</p>
 </pre></div>
 </div>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>instances: [&#39;TimeControlConfig&#39;, &#39;WriteControlConfig&#39;, &#39;ControlDictConfig&#39;, &#39;TransportPropertiesConfig&#39;, &#39;CourantConfig&#39;]
-classes  : [&#39;Pimple_fvSchemes&#39;, &#39;Pimple_fvSolution&#39;, &#39;TimeControlConfig&#39;, &#39;WriteControlConfig&#39;, &#39;ControlDictConfig&#39;, &#39;TransportPropertiesConfig&#39;, &#39;CourantConfig&#39;]
+classes  : [&#39;Pimple_fvSchemes&#39;, &#39;Pimple_fvSolution&#39;, &#39;UFieldConfig&#39;, &#39;pFieldConfig&#39;, &#39;TimeControlConfig&#39;, &#39;WriteControlConfig&#39;, &#39;ControlDictConfig&#39;, &#39;TransportPropertiesConfig&#39;, &#39;CourantConfig&#39;]
 </pre></div>
 </div>
 </section>
@@ -466,13 +492,13 @@ validated content.</p>
 </pre></div>
 </div>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>TimeControlConfig  -&gt;  system/controlDict
-  values : {&#39;writeControl&#39;: &#39;adjustable&#39;, &#39;writeInterval&#39;: 0.01, &#39;startTime&#39;: 0.0, &#39;endTime&#39;: 0.3, &#39;deltaT&#39;: 0.0001, &#39;adjustTimeStep&#39;: True, &#39;maxCo&#39;: 5.0, &#39;maxDeltaT&#39;: None}
+  values : {&#39;writeControl&#39;: &#39;adjustable&#39;, &#39;writeInterval&#39;: 0.01, &#39;startTime&#39;: 0.0, &#39;endTime&#39;: 0.3, &#39;deltaT&#39;: 0.0001}
 
 WriteControlConfig  -&gt;  system/controlDict
   values : {&#39;writeControl&#39;: &#39;adjustable&#39;, &#39;writeInterval&#39;: 0.01, &#39;startTime&#39;: 0.0}
 
 ControlDictConfig  -&gt;  system/controlDict
-  values : {&#39;writeControl&#39;: &#39;adjustable&#39;, &#39;writeInterval&#39;: 0.01, &#39;startTime&#39;: 0.0, &#39;endTime&#39;: 0.3, &#39;deltaT&#39;: 0.0001, &#39;adjustTimeStep&#39;: True, &#39;maxCo&#39;: 5.0, &#39;maxDeltaT&#39;: None, &#39;application&#39;: &#39;pimpleFoam&#39;, &#39;writeBackend&#39;: &#39;runtime&#39;}
+  values : {&#39;writeControl&#39;: &#39;adjustable&#39;, &#39;writeInterval&#39;: 0.01, &#39;startTime&#39;: 0.0, &#39;endTime&#39;: 0.3, &#39;deltaT&#39;: 0.0001, &#39;application&#39;: &#39;pimpleFoam&#39;, &#39;writeBackend&#39;: &#39;runtime&#39;}
 
 TransportPropertiesConfig  -&gt;  constant/transportProperties
   values : {&#39;transportModel&#39;: &#39;Newtonian&#39;, &#39;nu&#39;: 1e-05}
@@ -494,10 +520,12 @@ schema an agent fills to scaffold a case.</p>
 </pre></div>
 </div>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Pimple_fvSchemes             fields: [&#39;ddtSchemes&#39;, &#39;divSchemes&#39;, &#39;gradSchemes&#39;, &#39;interpolationSchemes&#39;, &#39;laplacianSchemes&#39;, &#39;snGradSchemes&#39;]
-Pimple_fvSolution            fields: [&#39;solvers&#39;]
-TimeControlConfig            fields: [&#39;adjustTimeStep&#39;, &#39;deltaT&#39;, &#39;endTime&#39;, &#39;maxCo&#39;, &#39;maxDeltaT&#39;, &#39;startTime&#39;, &#39;writeControl&#39;, &#39;writeInterval&#39;]
+Pimple_fvSolution            fields: [&#39;PIMPLE&#39;, &#39;solvers&#39;]
+UFieldConfig                 fields: [&#39;FoamFile&#39;, &#39;boundaryField&#39;, &#39;dimensions&#39;, &#39;internalField&#39;]
+pFieldConfig                 fields: [&#39;FoamFile&#39;, &#39;boundaryField&#39;, &#39;dimensions&#39;, &#39;internalField&#39;]
+TimeControlConfig            fields: [&#39;deltaT&#39;, &#39;endTime&#39;, &#39;startTime&#39;, &#39;writeControl&#39;, &#39;writeInterval&#39;]
 WriteControlConfig           fields: [&#39;startTime&#39;, &#39;writeControl&#39;, &#39;writeInterval&#39;]
-ControlDictConfig            fields: [&#39;adjustTimeStep&#39;, &#39;application&#39;, &#39;deltaT&#39;, &#39;endTime&#39;, &#39;maxCo&#39;, &#39;maxDeltaT&#39;, &#39;startTime&#39;, &#39;writeBackend&#39;, &#39;writeControl&#39;, &#39;writeInterval&#39;]
+ControlDictConfig            fields: [&#39;application&#39;, &#39;deltaT&#39;, &#39;endTime&#39;, &#39;startTime&#39;, &#39;writeBackend&#39;, &#39;writeControl&#39;, &#39;writeInterval&#39;]
 TransportPropertiesConfig    fields: [&#39;nu&#39;, &#39;transportModel&#39;]
 CourantConfig                fields: [&#39;maxCo&#39;]
 </pre></div>
@@ -540,7 +568,7 @@ collection: <code class="docutils literal notranslate"><span class="pre">Boussin
 </pre></div>
 </div>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>instances: [&#39;TimeControlConfig&#39;, &#39;WriteControlConfig&#39;, &#39;ControlDictConfig&#39;, &#39;TransportPropertiesConfig&#39;, &#39;BoussinesqConfig&#39;]
-classes  : [&#39;Pimple_fvSchemes&#39;, &#39;Pimple_fvSolution&#39;, &#39;TimeControlConfig&#39;, &#39;WriteControlConfig&#39;, &#39;ControlDictConfig&#39;, &#39;TransportPropertiesConfig&#39;, &#39;BoussinesqConfig&#39;, &#39;boussinesq_fvSchemes&#39;, &#39;boussinesq_fvSolution&#39;]
+classes  : [&#39;Pimple_fvSchemes&#39;, &#39;Pimple_fvSolution&#39;, &#39;UFieldConfig&#39;, &#39;pFieldConfig&#39;, &#39;TimeControlConfig&#39;, &#39;WriteControlConfig&#39;, &#39;ControlDictConfig&#39;, &#39;TransportPropertiesConfig&#39;, &#39;BoussinesqConfig&#39;, &#39;boussinesq_fvSchemes&#39;, &#39;boussinesq_fvSolution&#39;, &#39;p_rghFieldConfig&#39;, &#39;TFieldConfig&#39;, &#39;alphatFieldConfig&#39;]
 </pre></div>
 </div>
 </section>
@@ -558,9 +586,40 @@ transport config. We print its values so nothing is lost.</p>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> (print-only): </span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>/home/runner/work/NeoFOAM/NeoFOAM/examples/how-to/example_collect_and_save_configs.py:180: UserWarning: Skipping BoussinesqConfig: no IO strategy registered
-  save_configs(hot_result.configs, case_dir=hot_out)
-BoussinesqConfig (print-only): {&#39;beta&#39;: 0.003, &#39;TRef&#39;: 300.0, &#39;Pr&#39;: 0.7, &#39;Prt&#39;: 0.85, &#39;hRef&#39;: 0.0}
+</section>
+<section id="read-and-write-0-name-fields-with-load-fields-save-fields">
+<h2>Read and write <code class="docutils literal notranslate"><span class="pre">0/&lt;name&gt;</span></code> fields with <code class="docutils literal notranslate"><span class="pre">load_fields</span></code> / <code class="docutils literal notranslate"><span class="pre">save_fields</span></code><a class="headerlink" href="#read-and-write-0-name-fields-with-load-fields-save-fields" title="Link to this heading">¶</a></h2>
+<p>Dict configs that share a target file (<code class="docutils literal notranslate"><span class="pre">constant/transportProperties</span></code>,
+<code class="docutils literal notranslate"><span class="pre">system/fvSchemes</span></code>) need <code class="docutils literal notranslate"><span class="pre">save_merged</span></code> so multi-owner contributions
+survive. Field files are single-owner per <code class="docutils literal notranslate"><span class="pre">0/&lt;name&gt;</span></code>, so
+<code class="xref py py-func docutils literal notranslate"><span class="pre">neofoam.fields.load_fields()</span></code> and <code class="xref py py-func docutils literal notranslate"><span class="pre">neofoam.fields.save_fields()</span></code>
+orchestrate the per-file read/write directly. The mapping returned by
+<code class="docutils literal notranslate"><span class="pre">load_fields</span></code> is keyed by field name (<code class="docutils literal notranslate"><span class="pre">&quot;U&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;p&quot;</span></code>, …), so the
+caller can mutate one BC and save just that field — or save the whole
+set.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">fields</span> <span class="o">=</span> <span class="n">load_fields</span><span class="p">(</span><span class="n">hot</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="n">incompressibleFluid</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;loaded fields:&quot;</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">fields</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="s2">&quot;T@floor:&quot;</span><span class="p">,</span>
+    <span class="nb">type</span><span class="p">(</span><span class="n">fields</span><span class="p">[</span><span class="s2">&quot;T&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">boundaryField</span><span class="p">[</span><span class="s2">&quot;floor&quot;</span><span class="p">])</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+    <span class="n">fields</span><span class="p">[</span><span class="s2">&quot;T&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">boundaryField</span><span class="p">[</span><span class="s2">&quot;floor&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+<span class="p">)</span>
+
+<span class="n">hot_fields_out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">tempfile</span><span class="o">.</span><span class="n">mkdtemp</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;neofoam_fields_hot_&quot;</span><span class="p">))</span>
+<span class="n">written_fields</span> <span class="o">=</span> <span class="n">save_fields</span><span class="p">(</span><span class="n">fields</span><span class="p">,</span> <span class="n">hot_fields_out</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;wrote fields:&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">written_fields</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  &quot;</span><span class="p">,</span> <span class="n">path</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">hot_fields_out</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>loaded fields: [&#39;T&#39;, &#39;U&#39;, &#39;alphat&#39;, &#39;p&#39;, &#39;p_rgh&#39;]
+T@floor: FixedValueBC {&#39;type&#39;: &#39;fixedValue&#39;, &#39;value&#39;: &#39;uniform 300&#39;}
+wrote fields:
+   0/U
+   0/p
+   0/p_rgh
+   0/T
+   0/alphat
 </pre></div>
 </div>
 </section>
@@ -606,17 +665,19 @@ reloaded controlDict.endTime: 10.0
 <section id="see-also">
 <h2>See also<a class="headerlink" href="#see-also" title="Link to this heading">¶</a></h2>
 <ul class="simple">
+<li><p><a class="reference internal" href="../how-to/declare-fields.html"><span class="doc">Declare on-disk fields with typed BCs</span></a> — how a model declares its <code class="docutils literal notranslate"><span class="pre">0/&lt;name&gt;</span></code>
+files (and the typed BC unions <code class="docutils literal notranslate"><span class="pre">load_fields</span></code> validates against).</p></li>
 <li><p><a class="reference internal" href="example_per_model_fvschemes.html"><span class="doc">Declare per-model fvSchemes / fvSolution slices</span></a> — how the per-model <code class="docutils literal notranslate"><span class="pre">fvSchemes</span></code> /
 <code class="docutils literal notranslate"><span class="pre">fvSolution</span></code> slices in the schema set are declared.</p></li>
 <li><p><a class="reference internal" href="example_work_with_config_files.html"><span class="doc">Work with configuration files</span></a> — loading and validating a single
 config file.</p></li>
 </ul>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;Cleanup the temporary directories.&quot;&quot;&quot;</span>
-<span class="k">for</span> <span class="n">_tmp</span> <span class="ow">in</span> <span class="p">(</span><span class="n">pitz</span><span class="p">,</span> <span class="n">hot</span><span class="p">,</span> <span class="n">pitz_out</span><span class="p">,</span> <span class="n">hot_out</span><span class="p">,</span> <span class="n">scaffold</span><span class="p">):</span>
+<span class="k">for</span> <span class="n">_tmp</span> <span class="ow">in</span> <span class="p">(</span><span class="n">pitz</span><span class="p">,</span> <span class="n">hot</span><span class="p">,</span> <span class="n">pitz_out</span><span class="p">,</span> <span class="n">hot_out</span><span class="p">,</span> <span class="n">hot_fields_out</span><span class="p">,</span> <span class="n">scaffold</span><span class="p">):</span>
     <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">_tmp</span><span class="p">,</span> <span class="n">ignore_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.044 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.068 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-how-to-example-collect-and-save-configs-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/acaee67517a3d144b2ef0c657aaccab9/example_collect_and_save_configs.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">example_collect_and_save_configs.ipynb</span></code></a></p>
@@ -690,6 +751,7 @@ config file.</p></li>
 <li><a class="reference internal" href="#">Collect and save all of a solver’s configs</a><ul>
 <li><a class="reference internal" href="#a-helper-to-run-load-resolve">A helper to run LOAD + RESOLVE</a></li>
 <li><a class="reference internal" href="#the-full-schema-without-a-case">The full schema — without a case</a></li>
+<li><a class="reference internal" href="#dict-configs-vs-0-name-field-schemas">Dict configs vs <code class="docutils literal notranslate"><span class="pre">0/&lt;name&gt;</span></code> field schemas</a></li>
 <li><a class="reference internal" href="#look-a-class-up-and-read-its-json-schema">Look a class up, and read its JSON Schema</a></li>
 <li><a class="reference internal" href="#collect-from-the-pitzdaily-case">Collect from the pitzDaily case</a></li>
 <li><a class="reference internal" href="#print-the-loaded-instances">Print the loaded instances</a></li>
@@ -697,6 +759,7 @@ config file.</p></li>
 <li><a class="reference internal" href="#save-the-configs-back-to-a-fresh-directory">Save the configs back to a fresh directory</a></li>
 <li><a class="reference internal" href="#collect-from-the-hotroom-case">Collect from the hotRoom case</a></li>
 <li><a class="reference internal" href="#saving-hotroom-s-configs">Saving hotRoom’s configs</a></li>
+<li><a class="reference internal" href="#read-and-write-0-name-fields-with-load-fields-save-fields">Read and write <code class="docutils literal notranslate"><span class="pre">0/&lt;name&gt;</span></code> fields with <code class="docutils literal notranslate"><span class="pre">load_fields</span></code> / <code class="docutils literal notranslate"><span class="pre">save_fields</span></code></a></li>
 <li><a class="reference internal" href="#scaffold-a-case-from-configs-alone">Scaffold a case from configs alone</a></li>
 <li><a class="reference internal" href="#see-also">See also</a></li>
 </ul>

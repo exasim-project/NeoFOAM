@@ -58,7 +58,7 @@ the algorithm from ``system/fvSolution`` relative to the working
 directory, so we ``chdir`` into the case for the load and restore the cwd
 afterwards (the configs are in memory by then).
 
-.. GENERATED FROM PYTHON SOURCE LINES 41-57
+.. GENERATED FROM PYTHON SOURCE LINES 41-58
 
 .. code-block:: Python
 
@@ -69,6 +69,7 @@ afterwards (the configs are in memory by then).
     from pathlib import Path
 
     from neofoam import configurations
+    from neofoam.fields import load_fields, save_fields
     from neofoam.framework.initialization import ConfigContext
     from neofoam.io import save_configs
     from neofoam.solver.incompressibleFluid import incompressibleFluid
@@ -85,7 +86,7 @@ afterwards (the configs are in memory by then).
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 58-66
+.. GENERATED FROM PYTHON SOURCE LINES 59-67
 
 The full schema — without a case
 --------------------------------
@@ -96,7 +97,7 @@ of every registered optional model (here, boussinesq). This is the schema
 an agent fills — then saves — to build a case from scratch. The same call
 works for any solver, because the classes are declared on its spec.
 
-.. GENERATED FROM PYTHON SOURCE LINES 66-73
+.. GENERATED FROM PYTHON SOURCE LINES 67-75
 
 .. code-block:: Python
 
@@ -111,34 +112,74 @@ works for any solver, because the classes are declared on its spec.
 
 
 
+
 .. rst-class:: sphx-glr-script-out
 
  .. code-block:: none
 
-    config classes: ['ControlDictConfig', 'PreprocessConfig', 'Pimple_fvSchemes', 'Pimple_fvSolution', 'TransportPropertiesConfig', 'TurbulencePropertiesConfig', 'BoussinesqConfig', 'boussinesq_fvSchemes', 'boussinesq_fvSolution', 'CourantConfig', 'MaxDeltaTConfig']
-    ControlDictConfig            fields: ['adjustTimeStep', 'application', 'deltaT', 'endTime', 'maxCo', 'maxDeltaT', 'startTime', 'writeBackend', 'writeControl', 'writeInterval']
+    config classes: ['ControlDictConfig', 'PreprocessConfig', 'Pimple_fvSchemes', 'Pimple_fvSolution', 'UFieldConfig', 'pFieldConfig', 'TransportPropertiesConfig', 'TurbulencePropertiesConfig', 'BoussinesqConfig', 'boussinesq_fvSchemes', 'boussinesq_fvSolution', 'p_rghFieldConfig', 'TFieldConfig', 'alphatFieldConfig', 'CourantConfig', 'MaxDeltaTConfig']
+    ControlDictConfig            fields: ['application', 'deltaT', 'endTime', 'startTime', 'writeBackend', 'writeControl', 'writeInterval']
     PreprocessConfig             fields: ['tools']
     Pimple_fvSchemes             fields: ['ddtSchemes', 'divSchemes', 'gradSchemes', 'interpolationSchemes', 'laplacianSchemes', 'snGradSchemes']
-    Pimple_fvSolution            fields: ['solvers']
+    Pimple_fvSolution            fields: ['PIMPLE', 'solvers']
+    UFieldConfig                 fields: ['FoamFile', 'boundaryField', 'dimensions', 'internalField']
+    pFieldConfig                 fields: ['FoamFile', 'boundaryField', 'dimensions', 'internalField']
     TransportPropertiesConfig    fields: ['nu', 'transportModel']
     TurbulencePropertiesConfig   fields: ['LES', 'RAS', 'simulationType']
     BoussinesqConfig             fields: ['Pr', 'Prt', 'TRef', 'beta', 'hRef']
     boussinesq_fvSchemes         fields: ['ddtSchemes', 'divSchemes', 'laplacianSchemes']
     boussinesq_fvSolution        fields: ['solvers']
+    p_rghFieldConfig             fields: ['FoamFile', 'boundaryField', 'dimensions', 'internalField']
+    TFieldConfig                 fields: ['FoamFile', 'boundaryField', 'dimensions', 'internalField']
+    alphatFieldConfig            fields: ['FoamFile', 'boundaryField', 'dimensions', 'internalField']
     CourantConfig                fields: ['maxCo']
     MaxDeltaTConfig              fields: ['maxDeltaT']
 
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 74-78
+.. GENERATED FROM PYTHON SOURCE LINES 76-85
+
+Dict configs vs ``0/<name>`` field schemas
+------------------------------------------
+``configurations(...)`` surfaces both the dictionary configs
+(``constant/...``, ``system/...``) and the synthesised per-field
+schemas declared via ``Model.field(...)`` (``0/<name>`` files). The
+``.dicts`` and ``.fields`` properties filter the view so callers can
+walk only one kind. The fields list reflects what the bound model
+specs declare — ``pimple`` owns ``0/U`` / ``0/p``, ``boussinesq``
+adds ``0/p_rgh`` / ``0/T`` / ``0/alphat``.
+
+.. GENERATED FROM PYTHON SOURCE LINES 85-89
+
+.. code-block:: Python
+
+
+    print("dict files:", sorted(cls.io_config.file for cls in schema.dicts))
+    print("0/* fields:", sorted(cls.io_config.file for cls in schema.fields))
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ .. code-block:: none
+
+    dict files: ['constant/transportProperties', 'constant/transportProperties', 'constant/turbulenceProperties', 'system/controlDict', 'system/controlDict', 'system/controlDict', 'system/fvSchemes', 'system/fvSchemes', 'system/fvSolution', 'system/fvSolution', 'system/preprocess.yaml']
+    0/* fields: ['0/T', '0/U', '0/alphat', '0/p', '0/p_rgh']
+
+
+
+
+.. GENERATED FROM PYTHON SOURCE LINES 90-94
 
 Look a class up, and read its JSON Schema
 -----------------------------------------
 The view is subscriptable by class name, and ``json_schema()`` returns the
 JSON Schema of every class — the form most agent / UI tooling consumes.
 
-.. GENERATED FROM PYTHON SOURCE LINES 78-100
+.. GENERATED FROM PYTHON SOURCE LINES 94-116
 
 .. code-block:: Python
 
@@ -172,20 +213,20 @@ JSON Schema of every class — the form most agent / UI tooling consumes.
 
  .. code-block:: none
 
-    ControlDictConfig fields: ['adjustTimeStep', 'application', 'deltaT', 'endTime', 'maxCo', 'maxDeltaT', 'startTime', 'writeBackend', 'writeControl', 'writeInterval']
-    JSON schema keys        : ['ControlDictConfig', 'PreprocessConfig', 'Pimple_fvSchemes', 'Pimple_fvSolution', 'TransportPropertiesConfig', 'TurbulencePropertiesConfig', 'BoussinesqConfig', 'boussinesq_fvSchemes', 'boussinesq_fvSolution', 'CourantConfig', 'MaxDeltaTConfig']
+    ControlDictConfig fields: ['application', 'deltaT', 'endTime', 'startTime', 'writeBackend', 'writeControl', 'writeInterval']
+    JSON schema keys        : ['ControlDictConfig', 'PreprocessConfig', 'Pimple_fvSchemes', 'Pimple_fvSolution', 'UFieldConfig', 'pFieldConfig', 'TransportPropertiesConfig', 'TurbulencePropertiesConfig', 'BoussinesqConfig', 'boussinesq_fvSchemes', 'boussinesq_fvSolution', 'p_rghFieldConfig', 'TFieldConfig', 'alphatFieldConfig', 'CourantConfig', 'MaxDeltaTConfig']
 
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 101-105
+.. GENERATED FROM PYTHON SOURCE LINES 117-121
 
 Collect from the pitzDaily case
 -------------------------------
 ``clone_case`` copies a bundled case to a throwaway tempdir. pitzDaily is
 a plain turbulent case — PIMPLE only, no optional models.
 
-.. GENERATED FROM PYTHON SOURCE LINES 105-113
+.. GENERATED FROM PYTHON SOURCE LINES 121-129
 
 .. code-block:: Python
 
@@ -206,12 +247,12 @@ a plain turbulent case — PIMPLE only, no optional models.
  .. code-block:: none
 
     instances: ['TimeControlConfig', 'WriteControlConfig', 'ControlDictConfig', 'TransportPropertiesConfig', 'CourantConfig']
-    classes  : ['Pimple_fvSchemes', 'Pimple_fvSolution', 'TimeControlConfig', 'WriteControlConfig', 'ControlDictConfig', 'TransportPropertiesConfig', 'CourantConfig']
+    classes  : ['Pimple_fvSchemes', 'Pimple_fvSolution', 'UFieldConfig', 'pFieldConfig', 'TimeControlConfig', 'WriteControlConfig', 'ControlDictConfig', 'TransportPropertiesConfig', 'CourantConfig']
 
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 114-119
+.. GENERATED FROM PYTHON SOURCE LINES 130-135
 
 Print the loaded instances
 --------------------------
@@ -219,7 +260,7 @@ Each config knows the file it came from (``file_name``) and, if it lives
 under a sub-dictionary, its ``subdict``. ``model_dump()`` is the parsed,
 validated content.
 
-.. GENERATED FROM PYTHON SOURCE LINES 119-127
+.. GENERATED FROM PYTHON SOURCE LINES 135-143
 
 .. code-block:: Python
 
@@ -241,13 +282,13 @@ validated content.
 
 
     TimeControlConfig  ->  system/controlDict
-      values : {'writeControl': 'adjustable', 'writeInterval': 0.01, 'startTime': 0.0, 'endTime': 0.3, 'deltaT': 0.0001, 'adjustTimeStep': True, 'maxCo': 5.0, 'maxDeltaT': None}
+      values : {'writeControl': 'adjustable', 'writeInterval': 0.01, 'startTime': 0.0, 'endTime': 0.3, 'deltaT': 0.0001}
 
     WriteControlConfig  ->  system/controlDict
       values : {'writeControl': 'adjustable', 'writeInterval': 0.01, 'startTime': 0.0}
 
     ControlDictConfig  ->  system/controlDict
-      values : {'writeControl': 'adjustable', 'writeInterval': 0.01, 'startTime': 0.0, 'endTime': 0.3, 'deltaT': 0.0001, 'adjustTimeStep': True, 'maxCo': 5.0, 'maxDeltaT': None, 'application': 'pimpleFoam', 'writeBackend': 'runtime'}
+      values : {'writeControl': 'adjustable', 'writeInterval': 0.01, 'startTime': 0.0, 'endTime': 0.3, 'deltaT': 0.0001, 'application': 'pimpleFoam', 'writeBackend': 'runtime'}
 
     TransportPropertiesConfig  ->  constant/transportProperties
       values : {'transportModel': 'Newtonian', 'nu': 1e-05}
@@ -258,7 +299,7 @@ validated content.
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 128-135
+.. GENERATED FROM PYTHON SOURCE LINES 144-151
 
 Print the declared schema set
 -----------------------------
@@ -268,7 +309,7 @@ appear here as *classes* even though their instances are not loaded (the
 OpenFOAM reader does not yet parse their typed scheme values). This is the
 schema an agent fills to scaffold a case.
 
-.. GENERATED FROM PYTHON SOURCE LINES 135-140
+.. GENERATED FROM PYTHON SOURCE LINES 151-156
 
 .. code-block:: Python
 
@@ -286,17 +327,19 @@ schema an agent fills to scaffold a case.
  .. code-block:: none
 
     Pimple_fvSchemes             fields: ['ddtSchemes', 'divSchemes', 'gradSchemes', 'interpolationSchemes', 'laplacianSchemes', 'snGradSchemes']
-    Pimple_fvSolution            fields: ['solvers']
-    TimeControlConfig            fields: ['adjustTimeStep', 'deltaT', 'endTime', 'maxCo', 'maxDeltaT', 'startTime', 'writeControl', 'writeInterval']
+    Pimple_fvSolution            fields: ['PIMPLE', 'solvers']
+    UFieldConfig                 fields: ['FoamFile', 'boundaryField', 'dimensions', 'internalField']
+    pFieldConfig                 fields: ['FoamFile', 'boundaryField', 'dimensions', 'internalField']
+    TimeControlConfig            fields: ['deltaT', 'endTime', 'startTime', 'writeControl', 'writeInterval']
     WriteControlConfig           fields: ['startTime', 'writeControl', 'writeInterval']
-    ControlDictConfig            fields: ['adjustTimeStep', 'application', 'deltaT', 'endTime', 'maxCo', 'maxDeltaT', 'startTime', 'writeBackend', 'writeControl', 'writeInterval']
+    ControlDictConfig            fields: ['application', 'deltaT', 'endTime', 'startTime', 'writeBackend', 'writeControl', 'writeInterval']
     TransportPropertiesConfig    fields: ['nu', 'transportModel']
     CourantConfig                fields: ['maxCo']
 
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 141-146
+.. GENERATED FROM PYTHON SOURCE LINES 157-162
 
 Save the configs back to a fresh directory
 ------------------------------------------
@@ -304,7 +347,7 @@ Save the configs back to a fresh directory
 path under ``case_dir``, reconstructing the case layout. Configs without
 an IO strategy are skipped with a warning rather than raising.
 
-.. GENERATED FROM PYTHON SOURCE LINES 146-155
+.. GENERATED FROM PYTHON SOURCE LINES 162-171
 
 .. code-block:: Python
 
@@ -335,7 +378,7 @@ an IO strategy are skipped with a warning rather than raising.
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 156-163
+.. GENERATED FROM PYTHON SOURCE LINES 172-179
 
 Collect from the hotRoom case
 -----------------------------
@@ -345,7 +388,7 @@ LOAD and flips ``use_boussinesq`` during RESOLVE. Its configs join the
 collection: ``BoussinesqConfig`` as an instance, plus the boussinesq
 ``fvSchemes`` / ``fvSolution`` slices in the schema set.
 
-.. GENERATED FROM PYTHON SOURCE LINES 163-171
+.. GENERATED FROM PYTHON SOURCE LINES 179-187
 
 .. code-block:: Python
 
@@ -366,12 +409,12 @@ collection: ``BoussinesqConfig`` as an instance, plus the boussinesq
  .. code-block:: none
 
     instances: ['TimeControlConfig', 'WriteControlConfig', 'ControlDictConfig', 'TransportPropertiesConfig', 'BoussinesqConfig']
-    classes  : ['Pimple_fvSchemes', 'Pimple_fvSolution', 'TimeControlConfig', 'WriteControlConfig', 'ControlDictConfig', 'TransportPropertiesConfig', 'BoussinesqConfig', 'boussinesq_fvSchemes', 'boussinesq_fvSolution']
+    classes  : ['Pimple_fvSchemes', 'Pimple_fvSolution', 'UFieldConfig', 'pFieldConfig', 'TimeControlConfig', 'WriteControlConfig', 'ControlDictConfig', 'TransportPropertiesConfig', 'BoussinesqConfig', 'boussinesq_fvSchemes', 'boussinesq_fvSolution', 'p_rghFieldConfig', 'TFieldConfig', 'alphatFieldConfig']
 
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 172-178
+.. GENERATED FROM PYTHON SOURCE LINES 188-194
 
 Saving hotRoom's configs
 ------------------------
@@ -380,7 +423,7 @@ Saving hotRoom's configs
 ``save_configs`` skips it (with a warning) and writes it once via the
 transport config. We print its values so nothing is lost.
 
-.. GENERATED FROM PYTHON SOURCE LINES 178-187
+.. GENERATED FROM PYTHON SOURCE LINES 194-203
 
 .. code-block:: Python
 
@@ -397,18 +440,63 @@ transport config. We print its values so nothing is lost.
 
 
 
+
+
+
+.. GENERATED FROM PYTHON SOURCE LINES 204-214
+
+Read and write ``0/<name>`` fields with ``load_fields`` / ``save_fields``
+------------------------------------------------------------------------
+Dict configs that share a target file (``constant/transportProperties``,
+``system/fvSchemes``) need ``save_merged`` so multi-owner contributions
+survive. Field files are single-owner per ``0/<name>``, so
+:func:`neofoam.fields.load_fields` and :func:`neofoam.fields.save_fields`
+orchestrate the per-file read/write directly. The mapping returned by
+``load_fields`` is keyed by field name (``"U"``, ``"p"``, …), so the
+caller can mutate one BC and save just that field — or save the whole
+set.
+
+.. GENERATED FROM PYTHON SOURCE LINES 214-230
+
+.. code-block:: Python
+
+
+    fields = load_fields(hot, solver=incompressibleFluid)
+    print("loaded fields:", sorted(fields))
+    print(
+        "T@floor:",
+        type(fields["T"].boundaryField["floor"]).__name__,
+        fields["T"].boundaryField["floor"].model_dump(),
+    )
+
+    hot_fields_out = Path(tempfile.mkdtemp(prefix="neofoam_fields_hot_"))
+    written_fields = save_fields(fields, hot_fields_out)
+    print("wrote fields:")
+    for path in written_fields:
+        print("  ", path.relative_to(hot_fields_out))
+
+
+
+
+
+
 .. rst-class:: sphx-glr-script-out
 
  .. code-block:: none
 
-    /home/runner/work/NeoFOAM/NeoFOAM/examples/how-to/example_collect_and_save_configs.py:180: UserWarning: Skipping BoussinesqConfig: no IO strategy registered
-      save_configs(hot_result.configs, case_dir=hot_out)
-    BoussinesqConfig (print-only): {'beta': 0.003, 'TRef': 300.0, 'Pr': 0.7, 'Prt': 0.85, 'hRef': 0.0}
+    loaded fields: ['T', 'U', 'alphat', 'p', 'p_rgh']
+    T@floor: FixedValueBC {'type': 'fixedValue', 'value': 'uniform 300'}
+    wrote fields:
+       0/U
+       0/p
+       0/p_rgh
+       0/T
+       0/alphat
 
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 188-195
+.. GENERATED FROM PYTHON SOURCE LINES 231-238
 
 Scaffold a case from configs alone
 ----------------------------------
@@ -418,7 +506,7 @@ with ``save()``. An empty directory becomes a valid (partial) case. This
 is the building block for generating a case programmatically — an agent
 fills ``schema`` and saves it.
 
-.. GENERATED FROM PYTHON SOURCE LINES 195-221
+.. GENERATED FROM PYTHON SOURCE LINES 238-264
 
 .. code-block:: Python
 
@@ -464,22 +552,24 @@ fills ``schema`` and saves it.
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 222-229
+.. GENERATED FROM PYTHON SOURCE LINES 265-274
 
 See also
 --------
 
+- :doc:`/how-to/declare-fields` — how a model declares its ``0/<name>``
+  files (and the typed BC unions ``load_fields`` validates against).
 - :doc:`example_per_model_fvschemes` — how the per-model ``fvSchemes`` /
   ``fvSolution`` slices in the schema set are declared.
 - :doc:`example_work_with_config_files` — loading and validating a single
   config file.
 
-.. GENERATED FROM PYTHON SOURCE LINES 229-232
+.. GENERATED FROM PYTHON SOURCE LINES 274-277
 
 .. code-block:: Python
 
     """Cleanup the temporary directories."""
-    for _tmp in (pitz, hot, pitz_out, hot_out, scaffold):
+    for _tmp in (pitz, hot, pitz_out, hot_out, hot_fields_out, scaffold):
         shutil.rmtree(_tmp, ignore_errors=True)
 
 
@@ -491,7 +581,7 @@ See also
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 0.044 seconds)
+   **Total running time of the script:** (0 minutes 0.068 seconds)
 
 
 .. _sphx_glr_download_auto_how-to_example_collect_and_save_configs.py:

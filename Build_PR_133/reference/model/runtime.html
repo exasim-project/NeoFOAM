@@ -204,10 +204,12 @@
 <li class="toctree-l1"><a class="reference internal" href="../../auto_tutorials/example_02_passive_scalar_plugin.html">Add a passive scalar transport model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../auto_tutorials/example_03_build_a_solver.html">Build a scalar-transport solver from scratch</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../auto_tutorials/example_04_configure_with_io.html">Typed configs: YAML, JSON, and OpenFOAM dictionaries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/scaffold-a-case-wizard.html">Scaffold a case wizard notebook</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">How-to guides</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../how-to/install.html">Install NeoFOAM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../how-to/declare-fields.html">Declare on-disk fields with typed BCs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_register_a_model.html">Register a new model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_add_an_init_step_category.html">Add a custom InitStep category</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_work_with_config_files.html">Work with configuration files</a></li>
@@ -352,7 +354,15 @@ Handles both a single config and a SimpleNamespace of multiple configs.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="neofoam.framework.model.runtime.ModelRuntime.run_build">
 <span class="sig-name descname"><span class="pre">run_build</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'InitStep'</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/model/runtime.html#ModelRuntime.run_build"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.model.runtime.ModelRuntime.run_build" title="Link to this definition">¶</a></dt>
-<dd><p>Call spec’s build func with this instance’s config (if it accepts args).</p>
+<dd><p>Return the init-step list for this runtime.</p>
+<p>The framework auto-synthesizes one <code class="xref py py-class docutils literal notranslate"><span class="pre">InitStep</span></code> per
+<code class="docutils literal notranslate"><span class="pre">Model.field(...)</span></code> declaration on <code class="docutils literal notranslate"><span class="pre">self.spec</span></code> — default
+factory <code class="docutils literal notranslate"><span class="pre">&lt;value_type&gt;.read_field(mesh,</span> <span class="pre">name)</span></code>, with
+<code class="docutils literal notranslate"><span class="pre">depends_on</span></code> / <code class="docutils literal notranslate"><span class="pre">write</span></code> flowing from the declaration — and
+prepends them to whatever <code class="docutils literal notranslate"><span class="pre">&#64;spec.build</span></code> returns. <code class="docutils literal notranslate"><span class="pre">&#64;build</span></code>
+is therefore reserved for everything the framework cannot
+synthesize: computed or intermediate fields, control objects,
+and side-effect-only steps that other declarations depend on.</p>
 </dd></dl>
 
 <dl class="py method">
