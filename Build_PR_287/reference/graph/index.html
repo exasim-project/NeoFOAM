@@ -204,15 +204,21 @@
 <li class="toctree-l1"><a class="reference internal" href="../../auto_tutorials/example_02_passive_scalar_plugin.html">Add a passive scalar transport model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../auto_tutorials/example_03_build_a_solver.html">Build a scalar-transport solver from scratch</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../auto_tutorials/example_04_configure_with_io.html">Typed configs: YAML, JSON, and OpenFOAM dictionaries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/scaffold-a-case-wizard.html">Scaffold a case wizard notebook</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">How-to guides</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../how-to/install.html">Install NeoFOAM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../how-to/declare-fields.html">Declare on-disk fields with typed BCs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_register_a_model.html">Register a new model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_add_an_init_step_category.html">Add a custom InitStep category</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_work_with_config_files.html">Work with configuration files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_custom_solver_with_configs.html">Add config files to a solver and model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_per_model_fvschemes.html">Declare per-model fvSchemes / fvSolution slices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_collect_and_save_configs.html">Collect and save all of a solver’s configs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_visualize_the_operation_dag.html">Visualize the operation DAG</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_use_depends_for_injection.html">Inject dependencies into operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_use_an_interface.html">Gather contributions from many models with a model-owned interface</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul class="current">
@@ -330,14 +336,18 @@ operations can run, the framework needs to:</p>
 no cycles) — see <a class="reference internal" href="validation.html#module-neofoam.framework.graph.validation" title="neofoam.framework.graph.validation"><code class="xref py py-mod docutils literal notranslate"><span class="pre">validation</span></code></a>.</p></li>
 <li><p>Resolve a topological order, respecting loop scopes and using
 <code class="docutils literal notranslate"><span class="pre">operation_number</span></code> as a tie-breaker — see
-<a class="reference internal" href="resolver.html#module-neofoam.framework.graph.resolver" title="neofoam.framework.graph.resolver"><code class="xref py py-mod docutils literal notranslate"><span class="pre">resolver</span></code></a>.</p></li>
+<a class="reference internal" href="resolver.html#module-neofoam.framework.graph.resolver" title="neofoam.framework.graph.resolver"><code class="xref py py-mod docutils literal notranslate"><span class="pre">resolver</span></code></a>. For the simpler
+<code class="docutils literal notranslate"><span class="pre">{node:</span> <span class="pre">[deps]}</span></code> case, <code class="xref py py-func docutils literal notranslate"><span class="pre">topological_order()</span></code> (see
+<code class="xref py py-mod docutils literal notranslate"><span class="pre">ordering</span></code>) builds the graph and sorts it.</p></li>
 <li><p>Optionally render the resulting graph for diagnostics — see
 <a class="reference internal" href="visualization.html#module-neofoam.framework.graph.visualization" title="neofoam.framework.graph.visualization"><code class="xref py py-mod docutils literal notranslate"><span class="pre">visualization</span></code></a>.</p></li>
 </ol>
-<p>The package exposes ten public symbols across four modules:</p>
+<p>The package exposes its public symbols across five modules:</p>
 <ul class="simple">
 <li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DAGResolver</span></code> — the main entry point; merges and orders
 operations across loop scopes.</p></li>
+<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">topological_order()</span></code> — order a plain <code class="docutils literal notranslate"><span class="pre">{node:</span> <span class="pre">[deps]}</span></code> mapping
+without touching networkx directly.</p></li>
 <li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">TopologicalSorter</span></code> (Protocol) and
 <code class="xref py py-class docutils literal notranslate"><span class="pre">NetworkxTopologicalSorter</span></code> (default impl) — the injection
 seam for swapping the sort backend.</p></li>

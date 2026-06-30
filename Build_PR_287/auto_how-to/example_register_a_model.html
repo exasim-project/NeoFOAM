@@ -3,7 +3,7 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Add a custom InitStep category" href="example_add_an_init_step_category.html"><link rel="prev" title="Install NeoFOAM" href="../how-to/install.html">
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Add a custom InitStep category" href="example_add_an_init_step_category.html"><link rel="prev" title="Declare on-disk fields with typed BCs" href="../how-to/declare-fields.html">
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/auto_how-to/example_register_a_model.html">
 
     <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
@@ -204,15 +204,21 @@
 <li class="toctree-l1"><a class="reference internal" href="../auto_tutorials/example_02_passive_scalar_plugin.html">Add a passive scalar transport model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../auto_tutorials/example_03_build_a_solver.html">Build a scalar-transport solver from scratch</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../auto_tutorials/example_04_configure_with_io.html">Typed configs: YAML, JSON, and OpenFOAM dictionaries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/scaffold-a-case-wizard.html">Scaffold a case wizard notebook</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">How-to guides</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../how-to/install.html">Install NeoFOAM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to/declare-fields.html">Declare on-disk fields with typed BCs</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Register a new model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_add_an_init_step_category.html">Add a custom InitStep category</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_work_with_config_files.html">Work with configuration files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_custom_solver_with_configs.html">Add config files to a solver and model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_per_model_fvschemes.html">Declare per-model fvSchemes / fvSolution slices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_collect_and_save_configs.html">Collect and save all of a solver’s configs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_visualize_the_operation_dag.html">Visualize the operation DAG</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_use_depends_for_injection.html">Inject dependencies into operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_use_an_interface.html">Gather contributions from many models with a model-owned interface</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul>
@@ -435,14 +441,27 @@ qualifies.</p>
 </pre></div>
 </div>
 </section>
+<section id="declaring-on-disk-fields">
+<h2>Declaring on-disk fields<a class="headerlink" href="#declaring-on-disk-fields" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Model.config(...)</span></code> registers the dictionary configs (<code class="docutils literal notranslate"><span class="pre">constant/...</span></code>
+/ <code class="docutils literal notranslate"><span class="pre">system/...</span></code>) the model owns. The parallel for <code class="docutils literal notranslate"><span class="pre">0/&lt;name&gt;</span></code> field
+files is <code class="docutils literal notranslate"><span class="pre">Model.field(name,</span> <span class="pre">dimensions=...,</span> <span class="pre">value_type=...,</span> <span class="pre">allowed_bcs=</span>
+<span class="pre">[...])</span></code>. The handle it returns cross-links to <code class="docutils literal notranslate"><span class="pre">&#64;spec.build</span></code> via
+<code class="docutils literal notranslate"><span class="pre">decl.create(read_fn)</span></code>, and the synthesised per-field schema surfaces
+in <code class="docutils literal notranslate"><span class="pre">configurations(solver).fields</span></code> so a case author / agent fills
+the BCs without copying a source case. See
+<a class="reference internal" href="../how-to/declare-fields.html"><span class="doc">Declare on-disk fields with typed BCs</span></a> for the full surface.</p>
+</section>
 <section id="see-also">
 <h2>See also<a class="headerlink" href="#see-also" title="Link to this heading">¶</a></h2>
 <ul class="simple">
+<li><p><a class="reference internal" href="../how-to/declare-fields.html"><span class="doc">Declare on-disk fields with typed BCs</span></a> — register a model’s <code class="docutils literal notranslate"><span class="pre">0/&lt;name&gt;</span></code> files
+with typed BC unions.</p></li>
 <li><p><a class="reference internal" href="../explanation/model-structure.html"><span class="doc">Model structure</span></a> — why the <code class="docutils literal notranslate"><span class="pre">Spec</span></code> / <code class="docutils literal notranslate"><span class="pre">Runtime</span></code>
 split exists.</p></li>
 <li><p><a class="reference internal" href="../reference/model/index.html"><span class="doc">neofoam.framework.model</span></a> — module API reference.</p></li>
 </ul>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.004 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.002 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-how-to-example-register-a-model-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/7bf29f435deb0fb9ec33d6b69a2ae183/example_register_a_model.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">example_register_a_model.ipynb</span></code></a></p>
@@ -472,14 +491,14 @@ split exists.</p></li>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="../how-to/install.html">
+          <a class="prev-page" href="../how-to/declare-fields.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">Install NeoFOAM</div>
+                <div class="title">Declare on-disk fields with typed BCs</div>
                 
               </div>
             </a>
@@ -518,6 +537,7 @@ split exists.</p></li>
 <li><a class="reference internal" href="#add-operations">Add operations</a></li>
 <li><a class="reference internal" href="#optional-stages">Optional stages</a></li>
 <li><a class="reference internal" href="#plug-into-a-solver-via-stagedinit">Plug into a solver via StagedInit</a></li>
+<li><a class="reference internal" href="#declaring-on-disk-fields">Declaring on-disk fields</a></li>
 <li><a class="reference internal" href="#see-also">See also</a></li>
 </ul>
 </li>

@@ -3,7 +3,7 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Install NeoFOAM" href="../how-to/install.html"><link rel="prev" title="Build a scalar-transport solver from scratch" href="example_03_build_a_solver.html">
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Scaffold a case wizard notebook" href="../tutorials/scaffold-a-case-wizard.html"><link rel="prev" title="Build a scalar-transport solver from scratch" href="example_03_build_a_solver.html">
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/auto_tutorials/example_04_configure_with_io.html">
 
     <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
@@ -204,15 +204,21 @@
 <li class="toctree-l1"><a class="reference internal" href="example_02_passive_scalar_plugin.html">Add a passive scalar transport model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_03_build_a_solver.html">Build a scalar-transport solver from scratch</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Typed configs: YAML, JSON, and OpenFOAM dictionaries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/scaffold-a-case-wizard.html">Scaffold a case wizard notebook</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">How-to guides</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../how-to/install.html">Install NeoFOAM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to/declare-fields.html">Declare on-disk fields with typed BCs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../auto_how-to/example_register_a_model.html">Register a new model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../auto_how-to/example_add_an_init_step_category.html">Add a custom InitStep category</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../auto_how-to/example_work_with_config_files.html">Work with configuration files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../auto_how-to/example_custom_solver_with_configs.html">Add config files to a solver and model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../auto_how-to/example_per_model_fvschemes.html">Declare per-model fvSchemes / fvSolution slices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../auto_how-to/example_collect_and_save_configs.html">Collect and save all of a solver’s configs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../auto_how-to/example_visualize_the_operation_dag.html">Visualize the operation DAG</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../auto_how-to/example_use_depends_for_injection.html">Inject dependencies into operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../auto_how-to/example_use_an_interface.html">Gather contributions from many models with a model-owned interface</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul>
@@ -347,12 +353,6 @@ alongside the script to see the file layout.</p>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.tutorial</span><span class="w"> </span><span class="kn">import</span> <span class="n">clone_case</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-pytb notranslate"><div class="highlight"><pre><span></span><span class="gt">Traceback (most recent call last):</span>
-  File <span class="nb">&quot;/home/runner/work/NeoFOAM/NeoFOAM/examples/tutorials/example_04_configure_with_io.py&quot;</span>, line <span class="m">29</span>, in <span class="n">&lt;module&gt;</span>
-<span class="w">    </span><span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.tutorial</span><span class="w"> </span><span class="kn">import</span> <span class="n">clone_case</span>
-<span class="gr">ModuleNotFoundError</span>: <span class="n">No module named &#39;neofoam.tutorial&#39;</span>
-</pre></div>
-</div>
 </section>
 <section id="clone-the-bundled-case">
 <h2>Clone the bundled case<a class="headerlink" href="#clone-the-bundled-case" title="Link to this heading">¶</a></h2>
@@ -365,6 +365,15 @@ with both flat and nested subdicts), and a deeper OpenFOAM dict
 <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">case</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s2">&quot;*&quot;</span><span class="p">)):</span>
     <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">case</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>case: /tmp/neofoam_mbc0i41v/configs_demo
+  bad_solver.yaml
+  fvSolution.yaml
+  solver_config.json
+  solver_config.yaml
+  system/processing
+  system/solverDict
 </pre></div>
 </div>
 </section>
@@ -394,6 +403,10 @@ from the <code class="docutils literal notranslate"><span class="pre">&#64;IOStr
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  tolerance type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">tolerance</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>tolerance=1e-06 maxIterations=200 solver=&#39;PCG&#39;
+  tolerance type: float
+</pre></div>
+</div>
 </section>
 <section id="mutate-and-save">
 <h2>Mutate and save<a class="headerlink" href="#mutate-and-save" title="Link to this heading">¶</a></h2>
@@ -406,6 +419,11 @@ touched.</p>
 <span class="n">cfg</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case</span><span class="p">)</span>
 
 <span class="nb">print</span><span class="p">((</span><span class="n">case</span> <span class="o">/</span> <span class="s2">&quot;solver_config.yaml&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>tolerance: 1.0e-08
+maxIterations: 500
+solver: PCG
 </pre></div>
 </div>
 </section>
@@ -425,6 +443,9 @@ we use both here to show the decorator is the <em>only</em> coupling.</p>
 <span class="nb">print</span><span class="p">(</span><span class="n">SolverConfigJSON</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case</span><span class="p">))</span>
 </pre></div>
 </div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>tolerance=1e-06 maxIterations=200 solver=&#39;PCG&#39;
+</pre></div>
+</div>
 </section>
 <section id="same-data-openfoam-dictionary">
 <h2>Same data, OpenFOAM dictionary<a class="headerlink" href="#same-data-openfoam-dictionary" title="Link to this heading">¶</a></h2>
@@ -442,6 +463,9 @@ keys verbatim; that’s deliberate.</p>
 <span class="nb">print</span><span class="p">(</span><span class="n">SolverConfigOF</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case</span><span class="p">))</span>
 </pre></div>
 </div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>tolerance=1e-06 maxIterations=200 solver=&#39;PCG&#39;
+</pre></div>
+</div>
 </section>
 <section id="flat-subdict-multiple-configs-in-one-file">
 <h2>Flat subdict: multiple configs in one file<a class="headerlink" href="#flat-subdict-multiple-configs-in-one-file" title="Link to this heading">¶</a></h2>
@@ -456,6 +480,9 @@ PIMPLE outer-loop control, and tolerances into a single file. The
 
 <span class="n">pimple</span> <span class="o">=</span> <span class="n">PIMPLEConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;PIMPLE: </span><span class="si">{</span><span class="n">pimple</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>PIMPLE: nOuterCorrectors=2 nCorrectors=2
 </pre></div>
 </div>
 </section>
@@ -479,6 +506,10 @@ the canonical “share one fvSolution between many models” pattern.</p>
 
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;solvers.p: </span><span class="si">{</span><span class="n">PSolverConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;solvers.U: </span><span class="si">{</span><span class="n">USolverConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>solvers.p: solver=&#39;PCG&#39; tolerance=1e-06
+solvers.U: solver=&#39;smoothSolver&#39; tolerance=1e-05
 </pre></div>
 </div>
 </section>
@@ -517,6 +548,11 @@ sub-blocks — two levels of nesting, mapped to two configs below.</p>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;processing.stage2:  </span><span class="si">{</span><span class="n">Stage2Config</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>metadata:           name=&#39;scalarTransport&#39; version=&#39;1.0&#39; priority=5
+processing.stage1:  algorithm=&#39;fast&#39; threshold=0.001 maxIterations=100 batchSize=32
+processing.stage2:  algorithm=&#39;accurate&#39; threshold=0.0001 maxIterations=50 batchSize=16
+</pre></div>
+</div>
 </section>
 <section id="structured-field-types-nested-models-not-just-primitives">
 <h2>Structured field types: nested models, not just primitives<a class="headerlink" href="#structured-field-types-nested-models-not-just-primitives" title="Link to this heading">¶</a></h2>
@@ -546,6 +582,13 @@ load, exactly like for top-level fields.</p>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;stage2.threshold: </span><span class="si">{</span><span class="n">processing</span><span class="o">.</span><span class="n">stage2</span><span class="o">.</span><span class="n">threshold</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;JSON schema knows about the nesting:&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">ProcessingConfig</span><span class="o">.</span><span class="n">model_json_schema</span><span class="p">()[</span><span class="s1">&#39;$defs&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>stage1 type:      StageParams
+stage1.algorithm: fast
+stage2.threshold: 0.0001
+JSON schema knows about the nesting:
+  [&#39;StageParams&#39;]
 </pre></div>
 </div>
 </section>
@@ -580,6 +623,51 @@ only edited <code class="docutils literal notranslate"><span class="pre">stage1<
 <span class="nb">print</span><span class="p">((</span><span class="n">case</span> <span class="o">/</span> <span class="s2">&quot;system&quot;</span> <span class="o">/</span> <span class="s2">&quot;processing&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
 </pre></div>
 </div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2412                                  |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+FoamFile
+{
+    version         2;
+    format          ascii;
+    class           dictionary;
+    object          processing;
+}
+
+metadata
+{
+    name            scalarTransport;
+    version         &quot;1.0&quot;;
+    priority        5;
+}
+
+processing
+{
+    stage1
+    {
+        algorithm       fast;
+        threshold       1e-05;
+        maxIterations   250;
+        batchSize       32;
+    }
+    stage2
+    {
+        algorithm       accurate;
+        threshold       0.0001;
+        maxIterations   50;
+        batchSize       16;
+    }
+}
+
+
+// ************************************************************************* //
+</pre></div>
+</div>
 </section>
 <section id="validation-bad-data-fails-on-load">
 <h2>Validation: bad data fails on load<a class="headerlink" href="#validation-bad-data-fails-on-load" title="Link to this heading">¶</a></h2>
@@ -595,6 +683,10 @@ test.</p>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">err</span><span class="p">[</span><span class="s1">&#39;loc&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">err</span><span class="p">[</span><span class="s1">&#39;msg&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Caught ValidationError:
+  (&#39;tolerance&#39;,): Input should be greater than 0
+</pre></div>
+</div>
 </section>
 <section id="collect-errors-instead-of-raising">
 <h2>Collect errors instead of raising<a class="headerlink" href="#collect-errors-instead-of-raising" title="Link to this heading">¶</a></h2>
@@ -607,6 +699,9 @@ to surface every problem at once rather than the first one.</p>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">file_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">field</span><span class="si">}</span><span class="s2"> — </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>bad_solver.yaml: (&#39;tolerance&#39;,) — Input should be greater than 0
+</pre></div>
+</div>
 </section>
 <section id="where-to-go-from-here">
 <h2>Where to go from here<a class="headerlink" href="#where-to-go-from-here" title="Link to this heading">¶</a></h2>
@@ -614,7 +709,7 @@ to surface every problem at once rather than the first one.</p>
 <li><p><a class="reference internal" href="example_02_passive_scalar_plugin.html"><span class="doc">Add a passive scalar transport model</span></a> shows a config attached
 to a plugin model via <code class="docutils literal notranslate"><span class="pre">&#64;spec.load</span></code>.</p></li>
 </ul>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.143 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.023 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-tutorials-example-04-configure-with-io-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/d820d17a965cde863db3f31d72626cf8/example_04_configure_with_io.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">example_04_configure_with_io.ipynb</span></code></a></p>
@@ -635,12 +730,12 @@ to a plugin model via <code class="docutils literal notranslate"><span class="pr
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="../how-to/install.html">
+          <a class="next-page" href="../tutorials/scaffold-a-case-wizard.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">Install NeoFOAM</div>
+                <div class="title">Scaffold a case wizard notebook</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>

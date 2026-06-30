@@ -202,15 +202,21 @@
 <li class="toctree-l1"><a class="reference internal" href="auto_tutorials/example_02_passive_scalar_plugin.html">Add a passive scalar transport model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="auto_tutorials/example_03_build_a_solver.html">Build a scalar-transport solver from scratch</a></li>
 <li class="toctree-l1"><a class="reference internal" href="auto_tutorials/example_04_configure_with_io.html">Typed configs: YAML, JSON, and OpenFOAM dictionaries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/scaffold-a-case-wizard.html">Scaffold a case wizard notebook</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">How-to guides</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="how-to/install.html">Install NeoFOAM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="how-to/declare-fields.html">Declare on-disk fields with typed BCs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="auto_how-to/example_register_a_model.html">Register a new model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="auto_how-to/example_add_an_init_step_category.html">Add a custom InitStep category</a></li>
 <li class="toctree-l1"><a class="reference internal" href="auto_how-to/example_work_with_config_files.html">Work with configuration files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="auto_how-to/example_custom_solver_with_configs.html">Add config files to a solver and model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="auto_how-to/example_per_model_fvschemes.html">Declare per-model fvSchemes / fvSolution slices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="auto_how-to/example_collect_and_save_configs.html">Collect and save all of a solver’s configs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="auto_how-to/example_visualize_the_operation_dag.html">Visualize the operation DAG</a></li>
 <li class="toctree-l1"><a class="reference internal" href="auto_how-to/example_use_depends_for_injection.html">Inject dependencies into operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="auto_how-to/example_use_an_interface.html">Gather contributions from many models with a model-owned interface</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul>
@@ -372,27 +378,37 @@
     <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/initialization/execution/context_builder.html#neofoam.framework.initialization.execution.context_builder.CategoryRouter">CategoryRouter (class in neofoam.framework.initialization.execution.context_builder)</a>
 </li>
+        <li><a href="reference/initialization/execution/validation.html#neofoam.framework.initialization.execution.validation.check_replacements">check_replacements() (in module neofoam.framework.initialization.execution.validation)</a>
+</li>
         <li><a href="reference/framework/conditions.html#neofoam.framework.conditions.Condition">Condition (class in neofoam.framework.conditions)</a>
 </li>
         <li><a href="reference/framework/decorator.html#neofoam.framework.decorator.condition">condition() (in module neofoam.framework.decorator)</a>
 </li>
-        <li><a href="reference/solver/spec.html#neofoam.framework.solver.spec.SolverSpec.config">config() (neofoam.framework.solver.spec.SolverSpec method)</a>
+        <li><a href="reference/model/spec.html#neofoam.framework.model.spec.ModelSpec.config">config() (neofoam.framework.model.spec.ModelSpec method)</a>
+
+        <ul>
+          <li><a href="reference/solver/spec.html#neofoam.framework.solver.spec.SolverSpec.config">(neofoam.framework.solver.spec.SolverSpec method)</a>
+</li>
+        </ul></li>
+        <li><a href="reference/initialization/staged/spec.html#neofoam.framework.initialization.staged.spec.LoadResult.config_classes">config_classes (neofoam.framework.initialization.staged.spec.LoadResult property)</a>
 </li>
         <li><a href="reference/initialization/config_context.html#neofoam.framework.initialization.config_context.ConfigContext">ConfigContext (class in neofoam.framework.initialization.config_context)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/model/runtime.html#neofoam.framework.model.runtime.ModelRuntime.configs">configs (neofoam.framework.model.runtime.ModelRuntime property)</a>
 
         <ul>
           <li><a href="reference/solver/runtime.html#neofoam.framework.solver.runtime.SolverRuntime.configs">(neofoam.framework.solver.runtime.SolverRuntime property)</a>
 </li>
         </ul></li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/initialization/config_context.html#neofoam.framework.initialization.config_context.ConfigContext.contains">contains() (neofoam.framework.initialization.config_context.ConfigContext method)</a>
 </li>
         <li><a href="reference/framework/context.html#neofoam.framework.context.Context">Context (class in neofoam.framework.context)</a>
 </li>
         <li><a href="reference/initialization/execution/context_builder.html#neofoam.framework.initialization.execution.context_builder.ContextBuilder">ContextBuilder (class in neofoam.framework.initialization.execution.context_builder)</a>
+</li>
+        <li><a href="reference/model/spec.html#neofoam.framework.model.spec.ModelSpec.contributes">contributes() (neofoam.framework.model.spec.ModelSpec method)</a>
 </li>
         <li><a href="reference/solver/runtime.html#neofoam.framework.solver.runtime.SolverRuntime.core_models">core_models (neofoam.framework.solver.runtime.SolverRuntime property)</a>
 </li>
@@ -408,17 +424,23 @@
     <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/graph/resolver.html#neofoam.framework.graph.resolver.DAGResolver">DAGResolver (class in neofoam.framework.graph.resolver)</a>
 </li>
+        <li><a href="reference/model/spec.html#neofoam.framework.model.spec.ModelSpec.declared_interfaces">declared_interfaces (neofoam.framework.model.spec.ModelSpec property)</a>
+</li>
         <li><a href="reference/initialization/execution/context_builder.html#neofoam.framework.initialization.execution.context_builder.default_router">default_router() (in module neofoam.framework.initialization.execution.context_builder)</a>
 </li>
         <li><a href="reference/graph/visualization.html#neofoam.framework.graph.visualization.dependency_dag">dependency_dag() (in module neofoam.framework.graph.visualization)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/framework/dependency_resolver.html#neofoam.framework.dependency_resolver.DependencyResolver">DependencyResolver (class in neofoam.framework.dependency_resolver)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/initialization/depends.html#neofoam.framework.initialization.depends.Depends">Depends (class in neofoam.framework.initialization.depends)</a>
 </li>
         <li><a href="reference/model/spec.html#neofoam.framework.model.spec.ModelSpec.detect">detect() (neofoam.framework.model.spec.ModelSpec method)</a>
+</li>
+        <li><a href="reference/solver/spec.html#neofoam.framework.solver.spec.SolverSpec.detect_optional_models">detect_optional_models() (neofoam.framework.solver.spec.SolverSpec method)</a>
+</li>
+        <li><a href="reference/solver/spec.html#neofoam.framework.solver.spec.SolverSpec.detect_required_models">detect_required_models() (neofoam.framework.solver.spec.SolverSpec method)</a>
 </li>
         <li><a href="reference/graph/visualization.html#neofoam.framework.graph.visualization.digraph_to_pyvis_html">digraph_to_pyvis_html() (in module neofoam.framework.graph.visualization)</a>
 </li>
@@ -451,9 +473,15 @@
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/initialization/helpers.html#neofoam.framework.initialization.helpers.field">field() (in module neofoam.framework.initialization.helpers)</a>
+
+        <ul>
+          <li><a href="reference/model/spec.html#neofoam.framework.model.spec.ModelSpec.field">(neofoam.framework.model.spec.ModelSpec method)</a>
 </li>
+        </ul></li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="reference/model/spec.html#neofoam.framework.model.spec.ModelSpec.field_decls">field_decls (neofoam.framework.model.spec.ModelSpec property)</a>
+</li>
         <li><a href="reference/framework/context.html#neofoam.framework.context.FieldUpdates">FieldUpdates (class in neofoam.framework.context)</a>
 </li>
     </ul></td>
@@ -508,6 +536,8 @@
           <li><a href="reference/solver/spec.html#neofoam.framework.solver.spec.SolverSpec.instantiate">(neofoam.framework.solver.spec.SolverSpec method)</a>
 </li>
         </ul></li>
+        <li><a href="reference/model/spec.html#neofoam.framework.model.spec.ModelSpec.interface">interface() (neofoam.framework.model.spec.ModelSpec method)</a>
+</li>
         <li><a href="reference/initialization/config_context.html#neofoam.framework.initialization.config_context.is_configurable_field">is_configurable_field() (in module neofoam.framework.initialization.config_context)</a>
 </li>
     </ul></td>
@@ -518,6 +548,8 @@
   <h2>L</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="reference/model/spec.html#neofoam.framework.model.spec.ModelSpec.labeled">labeled() (neofoam.framework.model.spec.ModelSpec method)</a>
+</li>
         <li><a href="reference/initialization/helpers.html#neofoam.framework.initialization.helpers.lazy">lazy() (in module neofoam.framework.initialization.helpers)</a>
 </li>
     </ul></td>
@@ -542,7 +574,11 @@
 </li>
         <li><a href="reference/framework/context.html#neofoam.framework.context.Context.model_config">model_config (neofoam.framework.context.Context attribute)</a>
 </li>
+        <li><a href="reference/solver/spec.html#neofoam.framework.solver.spec.SolverSpec.model_specs">model_specs (neofoam.framework.solver.spec.SolverSpec property)</a>
+</li>
         <li><a href="reference/model/runtime.html#neofoam.framework.model.runtime.ModelRuntime">ModelRuntime (class in neofoam.framework.model.runtime)</a>
+</li>
+        <li><a href="reference/solver/spec.html#neofoam.framework.solver.spec.SolverSpec.models">models() (neofoam.framework.solver.spec.SolverSpec method)</a>
 </li>
         <li><a href="reference/model/spec.html#neofoam.framework.model.spec.ModelSpec">ModelSpec (class in neofoam.framework.model.spec)</a>
 </li>
@@ -898,6 +934,8 @@
         </ul></li>
         <li><a href="reference/initialization/helpers.html#neofoam.framework.initialization.helpers.operator">operator() (in module neofoam.framework.initialization.helpers)</a>
 </li>
+        <li><a href="reference/solver/spec.html#neofoam.framework.solver.spec.SolverSpec.optional_model_specs">optional_model_specs (neofoam.framework.solver.spec.SolverSpec property)</a>
+</li>
         <li><a href="reference/solver/runtime.html#neofoam.framework.solver.runtime.SolverRuntime.optional_models">optional_models (neofoam.framework.solver.runtime.SolverRuntime property)</a>
 </li>
         <li><a href="reference/framework/types.html#neofoam.framework.types.OpType">OpType (class in neofoam.framework.types)</a>
@@ -916,10 +954,12 @@
 </li>
         <li><a href="reference/model/spec.html#neofoam.framework.model.spec.ModelSpec.register_with">register_with() (neofoam.framework.model.spec.ModelSpec method)</a>
 </li>
-        <li><a href="reference/model/spec.html#neofoam.framework.model.spec.ModelSpec.resolve">resolve() (neofoam.framework.model.spec.ModelSpec method)</a>
+        <li><a href="reference/solver/spec.html#neofoam.framework.solver.spec.SolverSpec.required_model_specs">required_model_specs (neofoam.framework.solver.spec.SolverSpec property)</a>
 </li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="reference/model/spec.html#neofoam.framework.model.spec.ModelSpec.resolve">resolve() (neofoam.framework.model.spec.ModelSpec method)</a>
+</li>
         <li><a href="reference/framework/dependency_resolver.html#neofoam.framework.dependency_resolver.DependencyResolver.resolve_arguments">resolve_arguments() (neofoam.framework.dependency_resolver.DependencyResolver method)</a>
 </li>
         <li><a href="reference/model/runtime.html#neofoam.framework.model.runtime.ModelRuntime.run_build">run_build() (neofoam.framework.model.runtime.ModelRuntime method)</a>

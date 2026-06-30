@@ -43,7 +43,7 @@ there.
 Solver imports
 --------------
 
-.. GENERATED FROM PYTHON SOURCE LINES 26-62
+.. GENERATED FROM PYTHON SOURCE LINES 26-67
 
 .. code-block:: Python
 
@@ -63,8 +63,8 @@ Solver imports
         volVectorField,
     )
 
-    from neofoam import Depends, FieldUpdates, Solver, StagedInit, field
-    from neofoam.foam.initialization import create_time_mesh
+    from neofoam import Depends, FieldUpdates, Solver, field
+
     from neofoam.framework.context import Context
     from neofoam.framework.graph import DAGResolver
     from neofoam.framework.initialization import (
@@ -72,8 +72,13 @@ Solver imports
         InitializerBuilder,
         InitStep,
         LoadResult,
+        StagedInitRunner,
+        StagedInitSpec,
+        lazy,
     )
-    from neofoam.framework.initialization.execution import topological_sort
+    from neofoam.framework.initialization.execution.ordering import (
+        _topological_sort as topological_sort,
+    )
     from neofoam.framework.operations import (
         IterativeOp,
         Operation,
@@ -85,19 +90,12 @@ Solver imports
 
 
 
-.. rst-class:: sphx-glr-script-out
-
-.. code-block:: pytb
-
-    Traceback (most recent call last):
-      File "/home/runner/work/NeoFOAM/NeoFOAM/examples/tutorials/example_03_build_a_solver.py", line 42, in <module>
-        from neofoam import Depends, FieldUpdates, Solver, StagedInit, field
-    ImportError: cannot import name 'Depends' from 'neofoam' (/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/neofoam/__init__.py)
 
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 63-69
+
+.. GENERATED FROM PYTHON SOURCE LINES 68-74
 
 Define the spec and the time-loop predicate
 -------------------------------------------
@@ -106,7 +104,7 @@ the analogue of ``Model`` from tutorial 2. ``TimeLoop`` is the
 iteration condition for the outer loop; ``IterativeOp`` runs it
 until it returns False.
 
-.. GENERATED FROM PYTHON SOURCE LINES 69-85
+.. GENERATED FROM PYTHON SOURCE LINES 74-84
 
 .. code-block:: Python
 
@@ -114,20 +112,94 @@ until it returns False.
 
     class TimeLoop:
         def __call__(self, ctx: Context) -> bool:
-            return bool(ctx.runtime.run())
+            return bool(ctx.time.run())
 
 
     scalar_transport = Solver("scalar_transport")
-    init = StagedInit("scalar_transport")
-
-
-    def create_init(case_dir: Optional[Any] = None) -> StagedInit:
-        init._case_dir = case_dir  # type: ignore[attr-defined]
-        return init
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 86-91
+
+
+
+
+
+
+.. GENERATED FROM PYTHON SOURCE LINES 85-98
+
+Build the staged initializer
+----------------------------
+``create_init`` returns a ``StagedInitRunner``. Its three stages are
+registered as decorators on a per-call ``StagedInitSpec`` builder and
+defined as closures so ``build`` can read ``runner.argv`` (the
+framework sets ``runner.argv`` after ``create_init`` returns but
+before ``runner.run()``).
+
+This solver has no plugin models, so LOAD and RESOLVE are trivial.
+BUILD creates the time object + mesh, then registers one ``field(...)``
+per object with ``depends_on`` listing prerequisite step names.
+``create_phi`` reads ``ctx["fields.U"]`` (the prefixed name) because
+``field("U", ...)`` produces an ``InitStep`` named ``fields.U``.
+
+.. GENERATED FROM PYTHON SOURCE LINES 98-145
+
+.. code-block:: Python
+
+
+
+    def create_init(case_dir: Optional[Any] = None) -> StagedInitRunner:
+        spec_builder = StagedInitSpec.build("scalar_transport")
+
+        @spec_builder.load
+        def load_config() -> LoadResult:
+            return LoadResult(core_models=[], optional_models=[])
+
+        @spec_builder.resolve
+        def resolve_models(config: ConfigContext) -> None:
+            pass
+
+        @spec_builder.build
+        def build_lazy(
+            core_models: list[Any], optional_models: list[Any]
+        ) -> list[InitStep]:
+            argv = runner.argv
+            builder = InitializerBuilder()
+            builder.add(lazy("time", lambda _ctx: pyf.Time(pyf.argList(argv))))
+            builder.add(
+                lazy("mesh", lambda ctx: pyf.fvMesh(ctx["time"]), depends_on=["time"])
+            )
+
+            def create_T(ctx: dict[str, Any]) -> volScalarField:
+                return volScalarField.read_field(ctx["mesh"], "T")
+
+            def create_U(ctx: dict[str, Any]) -> volVectorField:
+                return volVectorField.read_field(ctx["mesh"], "U")
+
+            def create_D(ctx: dict[str, Any]) -> volScalarField:
+                return volScalarField.read_field(ctx["mesh"], "D")
+
+            def create_phi(ctx: dict[str, Any]) -> surfaceScalarField:
+                return pyf.createPhi(ctx["fields.U"])
+
+            builder.add(field("T", create_T, depends_on=["mesh"]))
+            builder.add(field("U", create_U, depends_on=["mesh"]))
+            builder.add(field("D", create_D, depends_on=["mesh"]))
+            builder.add(field("phi", create_phi, depends_on=["fields.U"]))
+
+            return builder.build()
+
+        runner = StagedInitRunner(spec_builder.finalize())
+        return runner
+
+
+
+
+
+
+
+
+
+.. GENERATED FROM PYTHON SOURCE LINES 146-151
 
 Register the initializer
 ------------------------
@@ -135,7 +207,7 @@ Every solver has exactly one ``@initializer``. The
 ``Annotated[..., Depends(create_init)]`` marker tells the framework
 to call ``create_init()`` and pass its return value as ``init_obj``.
 
-.. GENERATED FROM PYTHON SOURCE LINES 91-101
+.. GENERATED FROM PYTHON SOURCE LINES 151-161
 
 .. code-block:: Python
 
@@ -144,13 +216,19 @@ to call ``create_init()`` and pass its return value as ``init_obj``.
     @scalar_transport.initializer
     def initialize(
         self: Any,
-        init_obj: Annotated[StagedInit, Depends(create_init)],
+        init_obj: Annotated[StagedInitRunner, Depends(create_init)],
     ) -> Context:
         return init_obj.run()
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 102-107
+
+
+
+
+
+
+.. GENERATED FROM PYTHON SOURCE LINES 162-167
 
 Define the execution graph
 --------------------------
@@ -158,7 +236,7 @@ Define the execution graph
 new loop's body. We return an empty ``Operations()`` because no
 plugin contributes operations to this solver.
 
-.. GENERATED FROM PYTHON SOURCE LINES 107-129
+.. GENERATED FROM PYTHON SOURCE LINES 167-189
 
 .. code-block:: Python
 
@@ -185,7 +263,13 @@ plugin contributes operations to this solver.
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 130-135
+
+
+
+
+
+
+.. GENERATED FROM PYTHON SOURCE LINES 190-195
 
 Add the solver's operations
 ---------------------------
@@ -193,7 +277,7 @@ Three operations: increment time, solve ``T``, write output.
 Parameter-name injection on ``solve_T`` pulls ``T``, ``U``, ``phi``,
 ``D`` from ``ctx.fields``.
 
-.. GENERATED FROM PYTHON SOURCE LINES 135-162
+.. GENERATED FROM PYTHON SOURCE LINES 195-222
 
 .. code-block:: Python
 
@@ -201,8 +285,8 @@ Parameter-name injection on ``solve_T`` pulls ``T``, ``U``, ``phi``,
 
     @scalar_transport.operation()
     def increment_time(self: Any, ctx: Context) -> None:
-        Info(f"Time = {ctx.runtime.timeName()}")
-        ctx.runtime.increment()
+        Info(f"Time = {ctx.time.timeName()}")
+        ctx.time.increment()
 
 
     @scalar_transport.operation(depends_on=["increment_time"])
@@ -220,64 +304,18 @@ Parameter-name injection on ``solve_T`` pulls ``T``, ``U``, ``phi``,
 
     @scalar_transport.operation(depends_on=["solve_T"])
     def write_output(self: Any, ctx: Context) -> None:
-        ctx.runtime.write(True)
-        ctx.runtime.printExecutionTime()
+        ctx.time.write(True)
+        ctx.time.printExecutionTime()
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 163-170
-
-Wire up StagedInit (LOAD / RESOLVE / BUILD)
--------------------------------------------
-This solver has no plugin models, so LOAD and RESOLVE are trivial.
-BUILD registers one ``field(...)`` per object, with ``depends_on``
-listing prerequisite step names. ``create_phi`` reads
-``ctx["fields.U"]`` (the prefixed name) because ``field("U", ...)``
-produces an ``InitStep`` named ``fields.U``.
-
-.. GENERATED FROM PYTHON SOURCE LINES 170-207
-
-.. code-block:: Python
 
 
 
-    @init.load
-    def load_config() -> LoadResult:
-        return LoadResult(core_models=[], optional_models=[])
-
-
-    @init.resolve
-    def resolve_models(config: ConfigContext) -> None:
-        pass
-
-
-    @init.build
-    def build_lazy(core_models: list[Any], optional_models: list[Any]) -> list[InitStep]:
-        builder = InitializerBuilder()
-        builder.extend(create_time_mesh(init.argv))
-
-        def create_T(ctx: dict[str, Any]) -> volScalarField:
-            return volScalarField.read_field(ctx["mesh"], "T")
-
-        def create_U(ctx: dict[str, Any]) -> volVectorField:
-            return volVectorField.read_field(ctx["mesh"], "U")
-
-        def create_D(ctx: dict[str, Any]) -> volScalarField:
-            return volScalarField.read_field(ctx["mesh"], "D")
-
-        def create_phi(ctx: dict[str, Any]) -> surfaceScalarField:
-            return pyf.createPhi(ctx["fields.U"])
-
-        builder.add(field("T", create_T, depends_on=["mesh"]))
-        builder.add(field("U", create_U, depends_on=["mesh"]))
-        builder.add(field("D", create_D, depends_on=["mesh"]))
-        builder.add(field("phi", create_phi, depends_on=["fields.U"]))
-
-        return builder.build()
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 208-215
+.. GENERATED FROM PYTHON SOURCE LINES 223-230
 
 Read a graph error
 ------------------
@@ -287,7 +325,7 @@ the cycle detector refuses to run. The fix is to delete the
 bogus edge: ``U`` is read from disk and depends only on ``mesh``;
 ``phi`` *derives from* ``U``, not the other way around.
 
-.. GENERATED FROM PYTHON SOURCE LINES 215-225
+.. GENERATED FROM PYTHON SOURCE LINES 230-240
 
 .. code-block:: Python
 
@@ -302,7 +340,19 @@ bogus edge: ``U`` is read from disk and depends only on ``mesh``;
         print(f"caught: {type(exc).__name__}: {exc}")
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 226-231
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ .. code-block:: none
+
+    caught: InitializationGraphError: Circular dependency: fields.U -> fields.phi
+
+
+
+
+.. GENERATED FROM PYTHON SOURCE LINES 241-246
 
 Run the new solver on the bundled case
 --------------------------------------
@@ -310,7 +360,7 @@ Run the new solver on the bundled case
 uniform inflow ``U=(0.5, 0, 0)`` and a tracer-1 inlet driving
 advection-diffusion of ``T``.
 
-.. GENERATED FROM PYTHON SOURCE LINES 231-244
+.. GENERATED FROM PYTHON SOURCE LINES 246-259
 
 .. code-block:: Python
 
@@ -328,7 +378,13 @@ advection-diffusion of ``T``.
         resolved.operations.run(ctx)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 245-250
+
+
+
+
+
+
+.. GENERATED FROM PYTHON SOURCE LINES 260-265
 
 Animate the diffusion-advection front
 -------------------------------------
@@ -336,7 +392,7 @@ Watch ``T`` sweep across the domain as advection pushes the
 inlet's ``T = 1`` boundary condition downstream and diffusion
 smears the front. A static frame would mean ``solve_T`` never ran.
 
-.. GENERATED FROM PYTHON SOURCE LINES 250-280
+.. GENERATED FROM PYTHON SOURCE LINES 265-295
 
 .. code-block:: Python
 
@@ -372,9 +428,23 @@ smears the front. A static frame would mean ``solve_T`` never ran.
     pl.show()
 
 
+
+
+.. image-sg:: /auto_tutorials/images/sphx_glr_example_03_build_a_solver_001.gif
+   :alt: example 03 build a solver
+   :srcset: /auto_tutorials/images/sphx_glr_example_03_build_a_solver_001.gif
+   :class: sphx-glr-single-img
+
+
+
+
+
+
+
+
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 0.001 seconds)
+   **Total running time of the script:** (0 minutes 1.394 seconds)
 
 
 .. _sphx_glr_download_auto_tutorials_example_03_build_a_solver.py:

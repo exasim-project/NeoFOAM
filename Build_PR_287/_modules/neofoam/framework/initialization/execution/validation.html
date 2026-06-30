@@ -203,15 +203,21 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../../auto_tutorials/example_02_passive_scalar_plugin.html">Add a passive scalar transport model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../auto_tutorials/example_03_build_a_solver.html">Build a scalar-transport solver from scratch</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../auto_tutorials/example_04_configure_with_io.html">Typed configs: YAML, JSON, and OpenFOAM dictionaries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../tutorials/scaffold-a-case-wizard.html">Scaffold a case wizard notebook</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">How-to guides</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../how-to/install.html">Install NeoFOAM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../how-to/declare-fields.html">Declare on-disk fields with typed BCs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../auto_how-to/example_register_a_model.html">Register a new model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../auto_how-to/example_add_an_init_step_category.html">Add a custom InitStep category</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../auto_how-to/example_work_with_config_files.html">Work with configuration files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../auto_how-to/example_custom_solver_with_configs.html">Add config files to a solver and model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../auto_how-to/example_per_model_fvschemes.html">Declare per-model fvSchemes / fvSolution slices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../auto_how-to/example_collect_and_save_configs.html">Collect and save all of a solver’s configs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../auto_how-to/example_visualize_the_operation_dag.html">Visualize the operation DAG</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../auto_how-to/example_use_depends_for_injection.html">Inject dependencies into operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../auto_how-to/example_use_an_interface.html">Gather contributions from many models with a model-owned interface</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul>
@@ -320,6 +326,7 @@
 <span class="sd">&quot;&quot;&quot;Pre-execution validation of an :class:`InitStep` dependency graph.&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">...graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">GraphValidationReport</span><span class="p">,</span> <span class="n">validate_dependency_graph</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">...graph.validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">_Diagnostic</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..init_step</span><span class="w"> </span><span class="kn">import</span> <span class="n">InitStep</span>
 
 
@@ -342,6 +349,37 @@
     <span class="n">node_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">li</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">li</span> <span class="ow">in</span> <span class="n">lazy_inits</span><span class="p">]</span>
     <span class="n">dependencies_by_node</span> <span class="o">=</span> <span class="p">{</span><span class="n">li</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">li</span><span class="o">.</span><span class="n">depends_on</span> <span class="k">for</span> <span class="n">li</span> <span class="ow">in</span> <span class="n">lazy_inits</span><span class="p">}</span>
     <span class="k">return</span> <span class="n">validate_dependency_graph</span><span class="p">(</span><span class="n">node_names</span><span class="p">,</span> <span class="n">dependencies_by_node</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="check_replacements">
+<a class="viewcode-back" href="../../../../../reference/initialization/execution/validation.html#neofoam.framework.initialization.execution.validation.check_replacements">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_replacements</span><span class="p">(</span><span class="n">lazy_inits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitStep</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raise if any ``replaces=[X]`` names a step that is not present.</span>
+
+<span class="sd">    A step may carry its own name in ``replaces=`` (the terminal-alias</span>
+<span class="sd">    pattern), which self-resolves; only a target with no matching step is an</span>
+<span class="sd">    error.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">present</span> <span class="o">=</span> <span class="p">{</span><span class="n">li</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">li</span> <span class="ow">in</span> <span class="n">lazy_inits</span><span class="p">}</span>
+    <span class="k">for</span> <span class="n">li</span> <span class="ow">in</span> <span class="n">lazy_inits</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">li</span><span class="o">.</span><span class="n">replaces</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">present</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">report</span> <span class="o">=</span> <span class="n">GraphValidationReport</span><span class="p">(</span>
+                <span class="n">diagnostics</span><span class="o">=</span><span class="p">(</span>
+                    <span class="n">_Diagnostic</span><span class="p">(</span>
+                        <span class="n">code</span><span class="o">=</span><span class="s2">&quot;missing_dependency&quot;</span><span class="p">,</span>
+                        <span class="n">node_name</span><span class="o">=</span><span class="n">li</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                        <span class="n">dependency</span><span class="o">=</span><span class="n">target</span><span class="p">,</span>
+                        <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;InitStep &#39;</span><span class="si">{</span><span class="n">li</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; declares replaces=&quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot;[&#39;</span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2">&#39;] but no step named &#39;</span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2">&#39; exists&quot;</span>
+                        <span class="p">),</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">raise</span> <span class="n">InitializationGraphError</span><span class="p">(</span><span class="n">report</span><span class="p">)</span></div>
 
 </pre></div>
         </article>

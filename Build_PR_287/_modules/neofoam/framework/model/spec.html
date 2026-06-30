@@ -203,15 +203,21 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../auto_tutorials/example_02_passive_scalar_plugin.html">Add a passive scalar transport model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../auto_tutorials/example_03_build_a_solver.html">Build a scalar-transport solver from scratch</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../auto_tutorials/example_04_configure_with_io.html">Typed configs: YAML, JSON, and OpenFOAM dictionaries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../tutorials/scaffold-a-case-wizard.html">Scaffold a case wizard notebook</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">How-to guides</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../how-to/install.html">Install NeoFOAM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../how-to/declare-fields.html">Declare on-disk fields with typed BCs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../auto_how-to/example_register_a_model.html">Register a new model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../auto_how-to/example_add_an_init_step_category.html">Add a custom InitStep category</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../auto_how-to/example_work_with_config_files.html">Work with configuration files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../auto_how-to/example_custom_solver_with_configs.html">Add config files to a solver and model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../auto_how-to/example_per_model_fvschemes.html">Declare per-model fvSchemes / fvSolution slices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../auto_how-to/example_collect_and_save_configs.html">Collect and save all of a solver’s configs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../auto_how-to/example_visualize_the_operation_dag.html">Visualize the operation DAG</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../auto_how-to/example_use_depends_for_injection.html">Inject dependencies into operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../auto_how-to/example_use_an_interface.html">Gather contributions from many models with a model-owned interface</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul>
@@ -327,10 +333,12 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">types</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimpleNamespace</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">cast</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.fields.decl</span><span class="w"> </span><span class="kn">import</span> <span class="n">FieldDecl</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.dependency_resolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">DependencyResolver</span><span class="p">,</span>
     <span class="n">wrap_with_dependency_resolution</span><span class="p">,</span>
@@ -338,7 +346,17 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">Operation</span><span class="p">,</span> <span class="n">Operations</span><span class="p">,</span> <span class="n">SequentialOp</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">OperationMetadata</span><span class="p">,</span> <span class="n">OperationNumber</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">.interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelInterface</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.runtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelRuntime</span>
+
+
+<span class="n">_ConfigT</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;_ConfigT&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="nb">type</span><span class="p">)</span>
+<span class="n">_T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;_T&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_snake_case</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">s1</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(.)([A-Z][a-z]+)&quot;</span><span class="p">,</span> <span class="sa">r</span><span class="s2">&quot;\1_\2&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;([a-z0-9])([A-Z])&quot;</span><span class="p">,</span> <span class="sa">r</span><span class="s2">&quot;\1_\2&quot;</span><span class="p">,</span> <span class="n">s1</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
 
 
 <div class="viewcode-block" id="ModelSpec">
@@ -355,6 +373,13 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">enabled</span> <span class="o">=</span> <span class="kc">True</span>
 
+        <span class="c1"># Human-readable display name for UIs (e.g. &quot;Buoyancy (Boussinesq)&quot;).</span>
+        <span class="c1"># Independent of required-ness; set at registration via :meth:`labeled`.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">name</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_config_classes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">type</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_field_decls</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">FieldDecl</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">_load_func</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_func</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_build_func</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -363,7 +388,139 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_operations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_operation_collection_func</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">_interfaces</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ModelInterface</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">_dependency_resolver</span> <span class="o">=</span> <span class="n">DependencyResolver</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_config_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">type</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config_classes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config_classes</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="nd">@_config_class</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_config_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">cls</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">type</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_config_classes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config_classes</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_config_classes</span> <span class="o">=</span> <span class="p">[</span><span class="bp">cls</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_config_classes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="bp">cls</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Config registration</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="ModelSpec.config">
+<a class="viewcode-back" href="../../../../reference/model/spec.html#neofoam.framework.model.spec.ModelSpec.config">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">cls</span><span class="p">:</span> <span class="n">_ConfigT</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_ConfigT</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Register a config class. Callable multiple times.</span>
+
+<span class="sd">        When more than one class is registered, ``runtime.config`` becomes a</span>
+<span class="sd">        ``SimpleNamespace`` keyed by snake-case class name; a single</span>
+<span class="sd">        registration leaves ``runtime.config`` as the instance itself.</span>
+
+<span class="sd">        Classes opting in via ``_synthesize_per_spec = True`` (e.g.</span>
+<span class="sd">        ``neofoam.foam.fvSchemes``) get a fresh per-spec subclass.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;_synthesize_per_spec&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+            <span class="n">subclass</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">_ConfigT</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="p">(</span><span class="bp">cls</span><span class="p">,),</span> <span class="p">{}))</span>
+            <span class="n">subclass</span><span class="o">.</span><span class="n">_pending_sections</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># type: ignore[attr-defined]</span>
+            <span class="n">subclass</span><span class="o">.</span><span class="n">_finalized</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># type: ignore[attr-defined]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_config_classes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">subclass</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">subclass</span>
+
+        <span class="k">if</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config_classes</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">cls</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_config_classes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Field registration (declares a 0/&lt;name&gt; field this model owns)</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="ModelSpec.field">
+<a class="viewcode-back" href="../../../../reference/model/spec.html#neofoam.framework.model.spec.ModelSpec.field">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">field</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">dimensions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">value_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span>
+        <span class="n">allowed_bcs</span><span class="p">:</span> <span class="s2">&quot;Sequence[type[BaseModel]]&quot;</span><span class="p">,</span>
+        <span class="n">write</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">depends_on</span><span class="p">:</span> <span class="s2">&quot;Sequence[str]&quot;</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;mesh&quot;</span><span class="p">,),</span>
+        <span class="n">initial_value</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FieldDecl</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Declare an on-disk field (``0/&lt;name&gt;``) this model owns.</span>
+
+<span class="sd">        Returns a :class:`FieldDecl` handle for cross-linking from the</span>
+<span class="sd">        model&#39;s ``@build`` callback (``decl.create(read_fn)`` yields the</span>
+<span class="sd">        :class:`InitStep` the runtime consumes). The declaration also</span>
+<span class="sd">        seeds the per-field schema surfaced by ``configurations(solver)``</span>
+<span class="sd">        — see :func:`neofoam.fields.schema.schema_for`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name: Field name without prefix (``&quot;U&quot;`` / ``&quot;p&quot;`` / …).</span>
+<span class="sd">            dimensions: OpenFOAM dimension exponents</span>
+<span class="sd">                ``[M, L, T, Θ, N, I, J]``.</span>
+<span class="sd">            value_type: :class:`~neofoam.fields.value_types.Scalar` /</span>
+<span class="sd">                :class:`~neofoam.fields.value_types.Vector` marker.</span>
+<span class="sd">            allowed_bcs: Permitted boundary-condition arms; include</span>
+<span class="sd">                :class:`~neofoam.fields.bc.GenericBC` to admit unknown</span>
+<span class="sd">                BC types via the smart-union fallback.</span>
+<span class="sd">            write: Mark the field for runtime auto-persistence.</span>
+<span class="sd">            depends_on: Runtime dependencies for the field&#39;s factory.</span>
+<span class="sd">            initial_value: Optional default ``internalField`` baked</span>
+<span class="sd">                into a scaffolded schema (Python literal or OpenFOAM</span>
+<span class="sd">                uniform string).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The :class:`FieldDecl` handle. Same object is stored on</span>
+<span class="sd">            ``self._field_decls`` so the loader can discover it.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If a field of the same name is already declared</span>
+<span class="sd">                on this spec.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">name</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_field_decls</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;ModelSpec &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;: field &#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; already declared&quot;</span>
+            <span class="p">)</span>
+        <span class="n">decl</span> <span class="o">=</span> <span class="n">FieldDecl</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">dimensions</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">dimensions</span><span class="p">),</span>
+            <span class="n">value_type</span><span class="o">=</span><span class="n">value_type</span><span class="p">,</span>
+            <span class="n">allowed_bcs</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">allowed_bcs</span><span class="p">),</span>
+            <span class="n">write</span><span class="o">=</span><span class="n">write</span><span class="p">,</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">depends_on</span><span class="p">),</span>
+            <span class="n">initial_value</span><span class="o">=</span><span class="n">initial_value</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_field_decls</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">decl</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">decl</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">field_decls</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;tuple[FieldDecl, ...]&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Read-only view of declared fields, in registration order.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_field_decls</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_aggregate_configs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instances</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Build ``runtime.config`` from loaded instances.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config_classes</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">matched</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config_classes</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">inst</span> <span class="ow">in</span> <span class="n">instances</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inst</span><span class="p">,</span> <span class="bp">cls</span><span class="p">):</span>
+                    <span class="n">matched</span><span class="p">[</span><span class="n">_snake_case</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)]</span> <span class="o">=</span> <span class="n">inst</span>
+                    <span class="k">break</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">matched</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_config_classes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">matched</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+        <span class="k">return</span> <span class="n">SimpleNamespace</span><span class="p">(</span><span class="o">**</span><span class="n">matched</span><span class="p">)</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># Stage decorators — store only, no side-effects</span>
@@ -371,7 +528,7 @@
 
 <div class="viewcode-block" id="ModelSpec.load">
 <a class="viewcode-back" href="../../../../reference/model/spec.html#neofoam.framework.model.spec.ModelSpec.load">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">Any</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Register the LOAD function.</span>
 
@@ -383,7 +540,7 @@
 
 <div class="viewcode-block" id="ModelSpec.resolve">
 <a class="viewcode-back" href="../../../../reference/model/spec.html#neofoam.framework.model.spec.ModelSpec.resolve">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Register the RESOLVE function.</span>
 
@@ -438,7 +595,7 @@
         <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_operations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="p">(</span>
-                    <span class="n">func</span><span class="p">,</span>  <span class="c1"># store original; wrapping happens in _build_operations_for</span>
+                    <span class="n">func</span><span class="p">,</span>
                     <span class="p">{</span>
                         <span class="s2">&quot;operation_number&quot;</span><span class="p">:</span> <span class="n">operation_number</span><span class="p">,</span>
                         <span class="s2">&quot;depends_on&quot;</span><span class="p">:</span> <span class="n">depends_on</span><span class="p">,</span>
@@ -463,30 +620,99 @@
 
 
     <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Interface ownership (model-owned extension points)</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="ModelSpec.interface">
+<a class="viewcode-back" href="../../../../reference/model/spec.html#neofoam.framework.model.spec.ModelSpec.interface">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fold</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Iterable</span><span class="p">[</span><span class="n">_T</span><span class="p">]],</span> <span class="n">_T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">ModelInterface</span><span class="p">[</span><span class="n">_T</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Declare an interface owned by this model.</span>
+
+<span class="sd">        The decorated function&#39;s ``__name__`` is the interface name and its body</span>
+<span class="sd">        is the single fold (defining the empty case). Returns a ``ModelInterface``</span>
+<span class="sd">        handle, also registered on this model so it is reachable from its owner.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">handle</span><span class="p">:</span> <span class="n">ModelInterface</span><span class="p">[</span><span class="n">_T</span><span class="p">]</span> <span class="o">=</span> <span class="n">ModelInterface</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">fold</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">owner</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">fold</span><span class="o">=</span><span class="n">fold</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">handle</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interfaces</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Model &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;: interface &#39;</span><span class="si">{</span><span class="n">handle</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; is already declared.&quot;</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_interfaces</span><span class="p">[</span><span class="n">handle</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">handle</span>
+        <span class="k">return</span> <span class="n">handle</span></div>
+
+
+<div class="viewcode-block" id="ModelSpec.contributes">
+<a class="viewcode-back" href="../../../../reference/model/spec.html#neofoam.framework.model.spec.ModelSpec.contributes">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">contributes</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">ModelInterface</span><span class="p">[</span><span class="n">_T</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">_T</span><span class="p">]],</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">_T</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Register an operation-style contribution to *target*, owned by self.</span>
+
+<span class="sd">        The function is recorded against *target* and tagged with this contributing</span>
+<span class="sd">        model, then returned unchanged. It participates in *target*&#39;s live fold</span>
+<span class="sd">        (``BoundModelInterface.__call__``) iff this model is active for the case.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">ModelInterface</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Model &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;: contributes(...) target must be a &quot;</span>
+                <span class="s2">&quot;ModelInterface declared via @&lt;model&gt;.interface, got &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">target</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">_T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">_T</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="n">target</span><span class="o">.</span><span class="n">_register_contribution</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">owner</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">decorator</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">declared_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ModelInterface</span><span class="p">[</span><span class="n">Any</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The interfaces this model owns, by name (reachable from the owner).&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_interfaces</span><span class="p">)</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># Instantiation</span>
     <span class="c1"># ------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="ModelSpec.instantiate">
 <a class="viewcode-back" href="../../../../reference/model/spec.html#neofoam.framework.model.spec.ModelSpec.instantiate">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">instantiate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">instance_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelRuntime</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">instantiate</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">case_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+        <span class="n">instance_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelRuntime</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create a fresh ModelRuntime for one instance of this spec.</span>
 
-<span class="sd">        Calls the @load function and wraps the result in a ModelRuntime.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_func</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;ModelSpec &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; has no @load stage. &quot;</span>
-                <span class="s2">&quot;Every model must register a load function with @&lt;spec&gt;.load.&quot;</span>
-            <span class="p">)</span>
-        <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_func</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">instance_id</span><span class="p">)</span>
+<span class="sd">        Loading priority:</span>
 
-        <span class="n">rt</span> <span class="o">=</span> <span class="n">ModelRuntime</span><span class="p">(</span>
-            <span class="n">spec</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
-            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">instance_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-            <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="n">rt</span></div>
+<span class="sd">        1. If ``@load`` registered → call it (with ``case_dir`` + ``instance_id``).</span>
+<span class="sd">        2. Else if one or more ``@config(Cls)`` registered → auto-load every</span>
+<span class="sd">           class via its ``@IOStrategy`` binding. Aggregates to a</span>
+<span class="sd">           ``SimpleNamespace`` when ≥ 2 are registered.</span>
+<span class="sd">        3. Else → error.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_func</span><span class="p">(</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">instance_id</span><span class="p">)</span>
+            <span class="n">rt_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">instance_id</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">instance_id</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+            <span class="k">return</span> <span class="n">ModelRuntime</span><span class="p">(</span><span class="n">spec</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">rt_name</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config_classes</span><span class="p">:</span>
+            <span class="n">loaded</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="bp">cls</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">,</span> <span class="n">validate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># type: ignore[attr-defined]</span>
+                <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config_classes</span>
+            <span class="p">]</span>
+            <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregate_configs</span><span class="p">(</span><span class="n">loaded</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">config</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">config</span> <span class="o">=</span> <span class="n">loaded</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">loaded</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="k">return</span> <span class="n">ModelRuntime</span><span class="p">(</span><span class="n">spec</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
+
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;ModelSpec &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;: cannot instantiate. &quot;</span>
+            <span class="s2">&quot;Register @load or @config(Cls) on the spec.&quot;</span>
+        <span class="p">)</span></div>
 
 
     <span class="c1"># ------------------------------------------------------------------</span>
@@ -544,12 +770,18 @@
 <div class="viewcode-block" id="ModelSpec.register_with">
 <a class="viewcode-back" href="../../../../reference/model/spec.html#neofoam.framework.model.spec.ModelSpec.register_with">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">register_with</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plugin_interface</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ModelSpec&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Register this ModelSpec with a PluginSystem interface.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Register this ModelSpec with a PluginSystem interface (idempotent by name).&quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.core.plugin_system</span><span class="w"> </span><span class="kn">import</span> <span class="n">PluginSystem</span>
 
-<span class="sd">        Creates a dynamic wrapper class whose ``get_model_instance``</span>
-<span class="sd">        returns this spec, matching the pattern used by ModelInstance.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">registry</span> <span class="o">=</span> <span class="n">PluginSystem</span><span class="o">.</span><span class="n">get_registered</span><span class="p">(</span><span class="n">plugin_interface</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">registry</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="p">{</span>
+            <span class="n">plugin_cls</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="n">plugin_cls</span> <span class="ow">in</span> <span class="n">registry</span><span class="o">.</span><span class="n">plugin_registry</span>
+        <span class="p">}:</span>
+            <span class="c1"># Already registered (e.g. a module re-import): keep a single catalog</span>
+            <span class="c1"># entry so the discriminated union does not collide on the model_type</span>
+            <span class="c1"># literal.</span>
+            <span class="k">return</span> <span class="bp">self</span>
+
         <span class="n">wrapper_class</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
             <span class="p">(</span><span class="n">BaseModel</span><span class="p">,),</span>
@@ -569,14 +801,25 @@
         <span class="k">return</span> <span class="bp">self</span></div>
 
 
+<div class="viewcode-block" id="ModelSpec.labeled">
+<a class="viewcode-back" href="../../../../reference/model/spec.html#neofoam.framework.model.spec.ModelSpec.labeled">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">labeled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ModelSpec&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set this model&#39;s human-readable display label for UIs.</span>
+
+<span class="sd">        Chainable (e.g. after :meth:`register_with`). Independent of whether the</span>
+<span class="sd">        model&#39;s family is required; defaults to the model name.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="n">label</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># Helpers</span>
     <span class="c1"># ------------------------------------------------------------------</span>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_to_snake_case</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="n">s1</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">&quot;(.)([A-Z][a-z]+)&quot;</span><span class="p">,</span> <span class="sa">r</span><span class="s2">&quot;\1_\2&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">&quot;([a-z0-9])([A-Z])&quot;</span><span class="p">,</span> <span class="sa">r</span><span class="s2">&quot;\1_\2&quot;</span><span class="p">,</span> <span class="n">s1</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span></div>
+        <span class="k">return</span> <span class="n">_snake_case</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></div>
 
 
 

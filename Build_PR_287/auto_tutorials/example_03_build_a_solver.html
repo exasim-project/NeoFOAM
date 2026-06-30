@@ -204,15 +204,21 @@
 <li class="toctree-l1"><a class="reference internal" href="example_02_passive_scalar_plugin.html">Add a passive scalar transport model</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Build a scalar-transport solver from scratch</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_04_configure_with_io.html">Typed configs: YAML, JSON, and OpenFOAM dictionaries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/scaffold-a-case-wizard.html">Scaffold a case wizard notebook</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">How-to guides</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../how-to/install.html">Install NeoFOAM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to/declare-fields.html">Declare on-disk fields with typed BCs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../auto_how-to/example_register_a_model.html">Register a new model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../auto_how-to/example_add_an_init_step_category.html">Add a custom InitStep category</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../auto_how-to/example_work_with_config_files.html">Work with configuration files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../auto_how-to/example_custom_solver_with_configs.html">Add config files to a solver and model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../auto_how-to/example_per_model_fvschemes.html">Declare per-model fvSchemes / fvSolution slices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../auto_how-to/example_collect_and_save_configs.html">Collect and save all of a solver’s configs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../auto_how-to/example_visualize_the_operation_dag.html">Visualize the operation DAG</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../auto_how-to/example_use_depends_for_injection.html">Inject dependencies into operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../auto_how-to/example_use_an_interface.html">Gather contributions from many models with a model-owned interface</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul>
@@ -357,8 +363,8 @@ there.</p>
     <span class="n">volVectorField</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="w"> </span><span class="kn">import</span> <span class="n">Depends</span><span class="p">,</span> <span class="n">FieldUpdates</span><span class="p">,</span> <span class="n">Solver</span><span class="p">,</span> <span class="n">StagedInit</span><span class="p">,</span> <span class="n">field</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.foam.initialization</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_time_mesh</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="w"> </span><span class="kn">import</span> <span class="n">Depends</span><span class="p">,</span> <span class="n">FieldUpdates</span><span class="p">,</span> <span class="n">Solver</span><span class="p">,</span> <span class="n">field</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">DAGResolver</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -366,8 +372,13 @@ there.</p>
     <span class="n">InitializerBuilder</span><span class="p">,</span>
     <span class="n">InitStep</span><span class="p">,</span>
     <span class="n">LoadResult</span><span class="p">,</span>
+    <span class="n">StagedInitRunner</span><span class="p">,</span>
+    <span class="n">StagedInitSpec</span><span class="p">,</span>
+    <span class="n">lazy</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization.execution</span><span class="w"> </span><span class="kn">import</span> <span class="n">topological_sort</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization.execution.ordering</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">_topological_sort</span> <span class="k">as</span> <span class="n">topological_sort</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.operations</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">IterativeOp</span><span class="p">,</span>
     <span class="n">Operation</span><span class="p">,</span>
@@ -376,12 +387,6 @@ there.</p>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">OperationMetadata</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.tutorial</span><span class="w"> </span><span class="kn">import</span> <span class="n">clone_case</span>
-</pre></div>
-</div>
-<div class="sphx-glr-script-out highlight-pytb notranslate"><div class="highlight"><pre><span></span><span class="gt">Traceback (most recent call last):</span>
-  File <span class="nb">&quot;/home/runner/work/NeoFOAM/NeoFOAM/examples/tutorials/example_03_build_a_solver.py&quot;</span>, line <span class="m">42</span>, in <span class="n">&lt;module&gt;</span>
-<span class="w">    </span><span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="w"> </span><span class="kn">import</span> <span class="n">Depends</span><span class="p">,</span> <span class="n">FieldUpdates</span><span class="p">,</span> <span class="n">Solver</span><span class="p">,</span> <span class="n">StagedInit</span><span class="p">,</span> <span class="n">field</span>
-<span class="gr">ImportError</span>: <span class="n">cannot import name &#39;Depends&#39; from &#39;neofoam&#39; (/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/neofoam/__init__.py)</span>
 </pre></div>
 </div>
 </section>
@@ -393,16 +398,68 @@ iteration condition for the outer loop; <code class="docutils literal notranslat
 until it returns False.</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">TimeLoop</span><span class="p">:</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">run</span><span class="p">())</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">run</span><span class="p">())</span>
 
 
 <span class="n">scalar_transport</span> <span class="o">=</span> <span class="n">Solver</span><span class="p">(</span><span class="s2">&quot;scalar_transport&quot;</span><span class="p">)</span>
-<span class="n">init</span> <span class="o">=</span> <span class="n">StagedInit</span><span class="p">(</span><span class="s2">&quot;scalar_transport&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="build-the-staged-initializer">
+<h2>Build the staged initializer<a class="headerlink" href="#build-the-staged-initializer" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">create_init</span></code> returns a <code class="docutils literal notranslate"><span class="pre">StagedInitRunner</span></code>. Its three stages are
+registered as decorators on a per-call <code class="docutils literal notranslate"><span class="pre">StagedInitSpec</span></code> builder and
+defined as closures so <code class="docutils literal notranslate"><span class="pre">build</span></code> can read <code class="docutils literal notranslate"><span class="pre">runner.argv</span></code> (the
+framework sets <code class="docutils literal notranslate"><span class="pre">runner.argv</span></code> after <code class="docutils literal notranslate"><span class="pre">create_init</span></code> returns but
+before <code class="docutils literal notranslate"><span class="pre">runner.run()</span></code>).</p>
+<p>This solver has no plugin models, so LOAD and RESOLVE are trivial.
+BUILD creates the time object + mesh, then registers one <code class="docutils literal notranslate"><span class="pre">field(...)</span></code>
+per object with <code class="docutils literal notranslate"><span class="pre">depends_on</span></code> listing prerequisite step names.
+<code class="docutils literal notranslate"><span class="pre">create_phi</span></code> reads <code class="docutils literal notranslate"><span class="pre">ctx[&quot;fields.U&quot;]</span></code> (the prefixed name) because
+<code class="docutils literal notranslate"><span class="pre">field(&quot;U&quot;,</span> <span class="pre">...)</span></code> produces an <code class="docutils literal notranslate"><span class="pre">InitStep</span></code> named <code class="docutils literal notranslate"><span class="pre">fields.U</span></code>.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">create_init</span><span class="p">(</span><span class="n">case_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StagedInitRunner</span><span class="p">:</span>
+    <span class="n">spec_builder</span> <span class="o">=</span> <span class="n">StagedInitSpec</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="s2">&quot;scalar_transport&quot;</span><span class="p">)</span>
 
+    <span class="nd">@spec_builder</span><span class="o">.</span><span class="n">load</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_config</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">LoadResult</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">LoadResult</span><span class="p">(</span><span class="n">core_models</span><span class="o">=</span><span class="p">[],</span> <span class="n">optional_models</span><span class="o">=</span><span class="p">[])</span>
 
-<span class="k">def</span><span class="w"> </span><span class="nf">create_init</span><span class="p">(</span><span class="n">case_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StagedInit</span><span class="p">:</span>
-    <span class="n">init</span><span class="o">.</span><span class="n">_case_dir</span> <span class="o">=</span> <span class="n">case_dir</span>  <span class="c1"># type: ignore[attr-defined]</span>
-    <span class="k">return</span> <span class="n">init</span>
+    <span class="nd">@spec_builder</span><span class="o">.</span><span class="n">resolve</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">resolve_models</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">ConfigContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="nd">@spec_builder</span><span class="o">.</span><span class="n">build</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_lazy</span><span class="p">(</span>
+        <span class="n">core_models</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">optional_models</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitStep</span><span class="p">]:</span>
+        <span class="n">argv</span> <span class="o">=</span> <span class="n">runner</span><span class="o">.</span><span class="n">argv</span>
+        <span class="n">builder</span> <span class="o">=</span> <span class="n">InitializerBuilder</span><span class="p">()</span>
+        <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">lazy</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_ctx</span><span class="p">:</span> <span class="n">pyf</span><span class="o">.</span><span class="n">Time</span><span class="p">(</span><span class="n">pyf</span><span class="o">.</span><span class="n">argList</span><span class="p">(</span><span class="n">argv</span><span class="p">))))</span>
+        <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+            <span class="n">lazy</span><span class="p">(</span><span class="s2">&quot;mesh&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">pyf</span><span class="o">.</span><span class="n">fvMesh</span><span class="p">(</span><span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">]),</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">])</span>
+        <span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">create_T</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">volScalarField</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">volScalarField</span><span class="o">.</span><span class="n">read_field</span><span class="p">(</span><span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">],</span> <span class="s2">&quot;T&quot;</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">create_U</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">volVectorField</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">volVectorField</span><span class="o">.</span><span class="n">read_field</span><span class="p">(</span><span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">],</span> <span class="s2">&quot;U&quot;</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">create_D</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">volScalarField</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">volScalarField</span><span class="o">.</span><span class="n">read_field</span><span class="p">(</span><span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">],</span> <span class="s2">&quot;D&quot;</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">create_phi</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">surfaceScalarField</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">createPhi</span><span class="p">(</span><span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">])</span>
+
+        <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">field</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">,</span> <span class="n">create_T</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">]))</span>
+        <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">field</span><span class="p">(</span><span class="s2">&quot;U&quot;</span><span class="p">,</span> <span class="n">create_U</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">]))</span>
+        <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">field</span><span class="p">(</span><span class="s2">&quot;D&quot;</span><span class="p">,</span> <span class="n">create_D</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">]))</span>
+        <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">field</span><span class="p">(</span><span class="s2">&quot;phi&quot;</span><span class="p">,</span> <span class="n">create_phi</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">]))</span>
+
+        <span class="k">return</span> <span class="n">builder</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+
+    <span class="n">runner</span> <span class="o">=</span> <span class="n">StagedInitRunner</span><span class="p">(</span><span class="n">spec_builder</span><span class="o">.</span><span class="n">finalize</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">runner</span>
 </pre></div>
 </div>
 </section>
@@ -414,7 +471,7 @@ to call <code class="docutils literal notranslate"><span class="pre">create_init
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@scalar_transport</span><span class="o">.</span><span class="n">initializer</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">initialize</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-    <span class="n">init_obj</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">StagedInit</span><span class="p">,</span> <span class="n">Depends</span><span class="p">(</span><span class="n">create_init</span><span class="p">)],</span>
+    <span class="n">init_obj</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">StagedInitRunner</span><span class="p">,</span> <span class="n">Depends</span><span class="p">(</span><span class="n">create_init</span><span class="p">)],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Context</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">init_obj</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 </pre></div>
@@ -453,8 +510,8 @@ Parameter-name injection on <code class="docutils literal notranslate"><span cla
 <code class="docutils literal notranslate"><span class="pre">D</span></code> from <code class="docutils literal notranslate"><span class="pre">ctx.fields</span></code>.</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@scalar_transport</span><span class="o">.</span><span class="n">operation</span><span class="p">()</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">increment_time</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="n">Info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Time = </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">timeName</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="n">ctx</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">increment</span><span class="p">()</span>
+    <span class="n">Info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Time = </span><span class="si">{</span><span class="n">ctx</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">timeName</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">increment</span><span class="p">()</span>
 
 
 <span class="nd">@scalar_transport</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;increment_time&quot;</span><span class="p">])</span>
@@ -472,51 +529,8 @@ Parameter-name injection on <code class="docutils literal notranslate"><span cla
 
 <span class="nd">@scalar_transport</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;solve_T&quot;</span><span class="p">])</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">write_output</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="n">ctx</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">ctx</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">printExecutionTime</span><span class="p">()</span>
-</pre></div>
-</div>
-</section>
-<section id="wire-up-stagedinit-load-resolve-build">
-<h2>Wire up StagedInit (LOAD / RESOLVE / BUILD)<a class="headerlink" href="#wire-up-stagedinit-load-resolve-build" title="Link to this heading">¶</a></h2>
-<p>This solver has no plugin models, so LOAD and RESOLVE are trivial.
-BUILD registers one <code class="docutils literal notranslate"><span class="pre">field(...)</span></code> per object, with <code class="docutils literal notranslate"><span class="pre">depends_on</span></code>
-listing prerequisite step names. <code class="docutils literal notranslate"><span class="pre">create_phi</span></code> reads
-<code class="docutils literal notranslate"><span class="pre">ctx[&quot;fields.U&quot;]</span></code> (the prefixed name) because <code class="docutils literal notranslate"><span class="pre">field(&quot;U&quot;,</span> <span class="pre">...)</span></code>
-produces an <code class="docutils literal notranslate"><span class="pre">InitStep</span></code> named <code class="docutils literal notranslate"><span class="pre">fields.U</span></code>.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="nd">@init</span><span class="o">.</span><span class="n">load</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">load_config</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">LoadResult</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">LoadResult</span><span class="p">(</span><span class="n">core_models</span><span class="o">=</span><span class="p">[],</span> <span class="n">optional_models</span><span class="o">=</span><span class="p">[])</span>
-
-
-<span class="nd">@init</span><span class="o">.</span><span class="n">resolve</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">resolve_models</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">ConfigContext</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="k">pass</span>
-
-
-<span class="nd">@init</span><span class="o">.</span><span class="n">build</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">build_lazy</span><span class="p">(</span><span class="n">core_models</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">optional_models</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitStep</span><span class="p">]:</span>
-    <span class="n">builder</span> <span class="o">=</span> <span class="n">InitializerBuilder</span><span class="p">()</span>
-    <span class="n">builder</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">create_time_mesh</span><span class="p">(</span><span class="n">init</span><span class="o">.</span><span class="n">argv</span><span class="p">))</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">create_T</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">volScalarField</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">volScalarField</span><span class="o">.</span><span class="n">read_field</span><span class="p">(</span><span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">],</span> <span class="s2">&quot;T&quot;</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">create_U</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">volVectorField</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">volVectorField</span><span class="o">.</span><span class="n">read_field</span><span class="p">(</span><span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">],</span> <span class="s2">&quot;U&quot;</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">create_D</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">volScalarField</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">volScalarField</span><span class="o">.</span><span class="n">read_field</span><span class="p">(</span><span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">],</span> <span class="s2">&quot;D&quot;</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">create_phi</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">surfaceScalarField</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">pyf</span><span class="o">.</span><span class="n">createPhi</span><span class="p">(</span><span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">])</span>
-
-    <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">field</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">,</span> <span class="n">create_T</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">]))</span>
-    <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">field</span><span class="p">(</span><span class="s2">&quot;U&quot;</span><span class="p">,</span> <span class="n">create_U</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">]))</span>
-    <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">field</span><span class="p">(</span><span class="s2">&quot;D&quot;</span><span class="p">,</span> <span class="n">create_D</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">]))</span>
-    <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">field</span><span class="p">(</span><span class="s2">&quot;phi&quot;</span><span class="p">,</span> <span class="n">create_phi</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;fields.U&quot;</span><span class="p">]))</span>
-
-    <span class="k">return</span> <span class="n">builder</span><span class="o">.</span><span class="n">build</span><span class="p">()</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">printExecutionTime</span><span class="p">()</span>
 </pre></div>
 </div>
 </section>
@@ -535,6 +549,9 @@ bogus edge: <code class="docutils literal notranslate"><span class="pre">U</span
     <span class="n">topological_sort</span><span class="p">(</span><span class="n">cyclic_steps</span><span class="p">)</span>
 <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;caught: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>caught: InitializationGraphError: Circular dependency: fields.U -&gt; fields.phi
 </pre></div>
 </div>
 </section>
@@ -593,7 +610,7 @@ smears the front. A static frame would mean <code class="docutils literal notran
 <span class="n">pl</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.001 seconds)</p>
+<img src="../_images/sphx_glr_example_03_build_a_solver_001.gif" srcset="../_images/sphx_glr_example_03_build_a_solver_001.gif" alt="example 03 build a solver" class = "sphx-glr-single-img"/><p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 1.394 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-tutorials-example-03-build-a-solver-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/cff1fdae1e8010c9cc172f0eedd72250/example_03_build_a_solver.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">example_03_build_a_solver.ipynb</span></code></a></p>
@@ -667,10 +684,10 @@ smears the front. A static frame would mean <code class="docutils literal notran
 <li><a class="reference internal" href="#">Build a scalar-transport solver from scratch</a><ul>
 <li><a class="reference internal" href="#solver-imports">Solver imports</a></li>
 <li><a class="reference internal" href="#define-the-spec-and-the-time-loop-predicate">Define the spec and the time-loop predicate</a></li>
+<li><a class="reference internal" href="#build-the-staged-initializer">Build the staged initializer</a></li>
 <li><a class="reference internal" href="#register-the-initializer">Register the initializer</a></li>
 <li><a class="reference internal" href="#define-the-execution-graph">Define the execution graph</a></li>
 <li><a class="reference internal" href="#add-the-solver-s-operations">Add the solver’s operations</a></li>
-<li><a class="reference internal" href="#wire-up-stagedinit-load-resolve-build">Wire up StagedInit (LOAD / RESOLVE / BUILD)</a></li>
 <li><a class="reference internal" href="#read-a-graph-error">Read a graph error</a></li>
 <li><a class="reference internal" href="#run-the-new-solver-on-the-bundled-case">Run the new solver on the bundled case</a></li>
 <li><a class="reference internal" href="#animate-the-diffusion-advection-front">Animate the diffusion-advection front</a></li>

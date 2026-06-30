@@ -3,7 +3,7 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Visualize the operation DAG" href="example_visualize_the_operation_dag.html"><link rel="prev" title="Add a custom InitStep category" href="example_add_an_init_step_category.html">
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Add config files to a solver and model" href="example_custom_solver_with_configs.html"><link rel="prev" title="Add a custom InitStep category" href="example_add_an_init_step_category.html">
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/auto_how-to/example_work_with_config_files.html">
 
     <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
@@ -204,15 +204,21 @@
 <li class="toctree-l1"><a class="reference internal" href="../auto_tutorials/example_02_passive_scalar_plugin.html">Add a passive scalar transport model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../auto_tutorials/example_03_build_a_solver.html">Build a scalar-transport solver from scratch</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../auto_tutorials/example_04_configure_with_io.html">Typed configs: YAML, JSON, and OpenFOAM dictionaries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/scaffold-a-case-wizard.html">Scaffold a case wizard notebook</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">How-to guides</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../how-to/install.html">Install NeoFOAM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../how-to/declare-fields.html">Declare on-disk fields with typed BCs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_register_a_model.html">Register a new model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_add_an_init_step_category.html">Add a custom InitStep category</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Work with configuration files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_custom_solver_with_configs.html">Add config files to a solver and model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_per_model_fvschemes.html">Declare per-model fvSchemes / fvSolution slices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_collect_and_save_configs.html">Collect and save all of a solver’s configs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_visualize_the_operation_dag.html">Visualize the operation DAG</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_use_depends_for_injection.html">Inject dependencies into operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_use_an_interface.html">Gather contributions from many models with a model-owned interface</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul>
@@ -362,7 +368,7 @@ every fixture stays addressable, including when sphinx-gallery
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;case_dir =&quot;</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>case_dir = /tmp/neofoam_howto_c9cpyujr
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>case_dir = /tmp/neofoam_howto_fezqgzuj
 </pre></div>
 </div>
 </section>
@@ -389,7 +395,7 @@ the framework reads at <code class="docutils literal notranslate"><span class="p
 </div>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>file: solver_config.yaml
 reader: YAMLStrategy
-default path under case_dir: /tmp/neofoam_howto_c9cpyujr/solver_config.yaml
+default path under case_dir: /tmp/neofoam_howto_fezqgzuj/solver_config.yaml
 </pre></div>
 </div>
 </section>
@@ -562,7 +568,7 @@ the same resolver shown in
 instantiate one of these configs per model and return it inside
 a <code class="xref py py-class docutils literal notranslate"><span class="pre">LoadResult</span></code>.</p></li>
 </ul>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.010 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.009 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-how-to-example-work-with-config-files-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/c0d78edd156e499314087225d68cb1d7/example_work_with_config_files.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">example_work_with_config_files.ipynb</span></code></a></p>
@@ -583,12 +589,12 @@ a <code class="xref py py-class docutils literal notranslate"><span class="pre">
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="example_visualize_the_operation_dag.html">
+          <a class="next-page" href="example_custom_solver_with_configs.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">Visualize the operation DAG</div>
+                <div class="title">Add config files to a solver and model</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>

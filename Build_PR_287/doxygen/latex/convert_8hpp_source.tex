@@ -23,7 +23,7 @@
 \DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00019}00019\ }
 \DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00020}\mbox{\hyperlink{namespaceNeoFOAM_a26fb8ceed319cfbb4f1b417d8f714ac9}{00020}}\ NeoN::label\ \mbox{\hyperlink{namespaceNeoFOAM_af69b228bd9e492814da093da0a51d1ac}{convert}}(\textcolor{keyword}{const}\ Foam::label\&\ in);}
 \DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00021}00021\ }
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00022}\mbox{\hyperlink{namespaceNeoFOAM_a6d9f64a98e1d898d4f2d49f9133a2979}{00022}}\ NeoN::Dictionary\ \mbox{\hyperlink{namespaceNeoFOAM_af69b228bd9e492814da093da0a51d1ac}{convert}}(\textcolor{keyword}{const}\ Foam::dictionary\&\ dict);}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00022}\mbox{\hyperlink{namespaceNeoFOAM_a75a914fbbb00d2f6a71272c9a1b85b43}{00022}}\ NeoN::Dictionary\ \mbox{\hyperlink{namespaceNeoFOAM_af69b228bd9e492814da093da0a51d1ac}{convert}}(\textcolor{keyword}{const}\ Foam::dictionary\ dict);}
 \DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00023}00023\ }
 \DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00024}00024\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
 \DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00025}\mbox{\hyperlink{namespaceNeoFOAM_a59b79053c26ad967a2ac57d1e4d0b9bb}{00025}}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespaceNeoFOAM_a59b79053c26ad967a2ac57d1e4d0b9bb}{checkEntryType}}(\textcolor{keyword}{const}\ Foam::entry\&\ entry)}
@@ -32,42 +32,57 @@
 \DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00028}00028\ \ \ \ \ Foam::FatalIOError.throwExceptions(\textcolor{keyword}{true});}
 \DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00029}00029\ \ \ \ \ \textcolor{keywordflow}{try}}
 \DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00030}00030\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00031}00031\ \ \ \ \ \ \ \ \ entry.get<T>();}
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00032}00032\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00033}00033\ \ \ \ \ \textcolor{keywordflow}{catch}\ (\textcolor{keyword}{const}\ Foam::IOerror\&\ ioErr)}
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00034}00034\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00035}00035\ \ \ \ \ \ \ \ \ Foam::FatalError.throwExceptions(\textcolor{keyword}{false});}
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00036}00036\ \ \ \ \ \ \ \ \ Foam::FatalIOError.throwExceptions(\textcolor{keyword}{false});}
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00037}00037\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00038}00038\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00039}00039\ \ \ \ \ \textcolor{keywordflow}{catch}\ (\textcolor{keyword}{const}\ Foam::error\&\ err)}
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00040}00040\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00041}00041\ \ \ \ \ \ \ \ \ Foam::FatalError.throwExceptions(\textcolor{keyword}{false});}
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00042}00042\ \ \ \ \ \ \ \ \ Foam::FatalIOError.throwExceptions(\textcolor{keyword}{false});}
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00043}00043\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00044}00044\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00045}00045\ \ \ \ \ Foam::FatalError.throwExceptions(\textcolor{keyword}{false});}
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00046}00046\ \ \ \ \ Foam::FatalIOError.throwExceptions(\textcolor{keyword}{false});}
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00047}00047\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00048}00048\ \}}
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00049}00049\ }
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00050}00050\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00051}\mbox{\hyperlink{namespaceNeoFOAM_af3b37c9dbbd37df8a0849a0f383f06d9}{00051}}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespaceNeoFOAM_af3b37c9dbbd37df8a0849a0f383f06d9}{insert}}(NeoN::Dictionary\&\ neoDict,\ \textcolor{keyword}{const}\ Foam::entry\&\ entry)}
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00052}00052\ \{}
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00053}00053\ \ \ \ \ \textcolor{keywordflow}{if}\ (checkEntryType<T>(entry))}
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00054}00054\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00055}00055\ \ \ \ \ \ \ \ \ std::string\ keyword\ =\ entry.keyword();}
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00056}00056\ \ \ \ \ \ \ \ \ neoDict.insert(keyword,\ \mbox{\hyperlink{namespaceNeoFOAM_af69b228bd9e492814da093da0a51d1ac}{convert}}(entry.get<T>()));}
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00057}00057\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00058}00058\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00059}00059\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00060}00060\ \}}
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00061}00061\ }
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00062}00062\ NeoN::TokenList\ \mbox{\hyperlink{namespaceNeoFOAM_af69b228bd9e492814da093da0a51d1ac}{convert}}(\textcolor{keyword}{const}\ Foam::ITstream\&\ stream);}
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00063}00063\ }
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00064}00064\ \textcolor{comment}{//\ To\ Foam}}
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00065}\mbox{\hyperlink{namespaceNeoFOAM_ae5529700fe31e6531dc129ac14ad3966}{00065}}\ Foam::vector\ \mbox{\hyperlink{namespaceNeoFOAM_af69b228bd9e492814da093da0a51d1ac}{convert}}(\textcolor{keyword}{const}\ NeoN::Vec3\&\ in);}
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00066}00066\ }
-\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00067}00067\ \};\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00031}00031\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ NOTE\ since\ get<T>\ this\ can\ cast\ int\ -\/>\ float\ or\ float\ -\/>\ int}}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00032}00032\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ we\ need\ to\ check\ whether\ the\ underlying\ token\ type\ actually\ matches}}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00033}00033\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (std::is\_same\_v<T,\ NeoN::scalar>)}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00034}00034\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00035}00035\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (entry.stream().tokens().size()\ ==\ 1)}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00036}00036\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00037}00037\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ isLabel\ =\ entry.stream().tokens()[0].type()\ ==\ Foam::token::tokenType::LABEL;}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00038}00038\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ we\ are\ testing\ whether\ the\ entryType\ is\ a\ scalar\ but\ the\ underlying\ token\ is}}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00039}00039\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ a\ label}}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00040}00040\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (isLabel)}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00041}00041\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00042}00042\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00043}00043\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00044}00044\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00045}00045\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00046}00046\ \ \ \ \ \ \ \ \ entry.get<T>();}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00047}00047\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00048}00048\ \ \ \ \ \textcolor{keywordflow}{catch}\ (\textcolor{keyword}{const}\ Foam::IOerror\&\ ioErr)}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00049}00049\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00050}00050\ \ \ \ \ \ \ \ \ Foam::FatalError.throwExceptions(\textcolor{keyword}{false});}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00051}00051\ \ \ \ \ \ \ \ \ Foam::FatalIOError.throwExceptions(\textcolor{keyword}{false});}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00052}00052\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00053}00053\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00054}00054\ \ \ \ \ \textcolor{keywordflow}{catch}\ (\textcolor{keyword}{const}\ Foam::error\&\ err)}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00055}00055\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00056}00056\ \ \ \ \ \ \ \ \ Foam::FatalError.throwExceptions(\textcolor{keyword}{false});}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00057}00057\ \ \ \ \ \ \ \ \ Foam::FatalIOError.throwExceptions(\textcolor{keyword}{false});}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00058}00058\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00059}00059\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00060}00060\ \ \ \ \ Foam::FatalError.throwExceptions(\textcolor{keyword}{false});}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00061}00061\ \ \ \ \ Foam::FatalIOError.throwExceptions(\textcolor{keyword}{false});}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00062}00062\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00063}00063\ \}}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00064}00064\ }
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00065}00065\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00066}\mbox{\hyperlink{namespaceNeoFOAM_af3b37c9dbbd37df8a0849a0f383f06d9}{00066}}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{namespaceNeoFOAM_af3b37c9dbbd37df8a0849a0f383f06d9}{insert}}(NeoN::Dictionary\&\ neoDict,\ \textcolor{keyword}{const}\ Foam::entry\&\ entry)}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00067}00067\ \{}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00068}00068\ \ \ \ \ \textcolor{keywordflow}{if}\ (checkEntryType<T>(entry))}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00069}00069\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00070}00070\ \ \ \ \ \ \ \ \ std::string\ keyword\ =\ entry.keyword();}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00071}00071\ \ \ \ \ \ \ \ \ neoDict.insert(keyword,\ \mbox{\hyperlink{namespaceNeoFOAM_af69b228bd9e492814da093da0a51d1ac}{convert}}(entry.get<T>()));}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00072}00072\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00073}00073\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00074}00074\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00075}00075\ \}}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00076}00076\ }
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00077}00077\ NeoN::TokenList\ \mbox{\hyperlink{namespaceNeoFOAM_af69b228bd9e492814da093da0a51d1ac}{convert}}(\textcolor{keyword}{const}\ Foam::ITstream\&\ stream);}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00078}00078\ }
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00079}00079\ \textcolor{comment}{//\ To\ Foam}}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00080}\mbox{\hyperlink{namespaceNeoFOAM_ae5529700fe31e6531dc129ac14ad3966}{00080}}\ Foam::vector\ \mbox{\hyperlink{namespaceNeoFOAM_af69b228bd9e492814da093da0a51d1ac}{convert}}(\textcolor{keyword}{const}\ NeoN::Vec3\&\ in);}
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00081}00081\ }
+\DoxyCodeLine{\Hypertarget{convert_8hpp_source_l00082}00082\ \};\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
 
 \end{DoxyCode}
