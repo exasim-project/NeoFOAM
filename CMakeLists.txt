@@ -98,8 +98,8 @@ include(cmake/CxxThirdParty.cmake)
 # flat layout). _neon installs to site-packages/neon/ while the native libs live in neofoam/lib, so
 # point it at $ORIGIN/../neofoam/lib (+ $ORIGIN/../lib for camp/cpptrace, which leak to the root).
 if(DEFINED SKBUILD AND TARGET _neon)
-  set_target_properties(_neon PROPERTIES INSTALL_RPATH
-                                         "$ORIGIN/../neofoam/lib;$ORIGIN/../lib;$ORIGIN/../pybFoam")
+  set(_neon_rpath "$ORIGIN/../neofoam/lib;$ORIGIN/../lib;$ORIGIN/../pybFoam")
+  set_target_properties(_neon PROPERTIES INSTALL_RPATH "${_neon_rpath}")
 endif()
 
 # TODO(rpath workaround): remove once umpire/camp ship a relocatable install upstream (BLT bakes an
