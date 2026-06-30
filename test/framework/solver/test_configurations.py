@@ -4,13 +4,13 @@
 """Tests for the case-free ``configurations`` schema API on SolverSpec.
 
 Locks in, using fake (pybFoam-free) model families:
-- ``core_models`` / ``optional_models`` bind a family on the spec.
+- ``models(..., required=...)`` binds a family on the spec.
 - ``model_specs`` unions every member of every bound family, case-free.
 - ``configurations(solver)`` collects the solver's own configs plus every
   family member's configs, deduped and order-preserved.
 - The ``Configurations`` view: ``names`` / iteration / ``__getitem__`` /
   ``new`` / ``json_schema`` / ``as_output_model``.
-- ``detect_core_models`` / ``detect_optional_models`` run the family
+- ``detect_required_models`` / ``detect_optional_models`` run the family
   detection contracts.
 """
 
@@ -70,21 +70,54 @@ class FakeOptionalFamily:
         return [optional_member]
 
 
+class FakeEmptyOptionalFamily:
+    @classmethod
+    def all_specs(cls) -> list[Any]:
+        return [optional_member]
+
+    @classmethod
+    def detect_models(cls, case_dir: Any = None) -> list[Any]:
+        return []
+
+
 def _solver() -> Any:
     spec = Solver("fake")
     spec.config(SolverCfgA)
     spec.config(SolverCfgB)
-    spec.core_models(FakeCoreFamily)
-    spec.optional_models(FakeOptionalFamily)
+    spec.models(FakeCoreFamily, required=True)
+    spec.models(FakeOptionalFamily)
     return spec
 
 
-def test_core_and_optional_models_bind_once() -> None:
+def test_required_and_optional_models_bind_once() -> None:
     spec = _solver()
-    spec.core_models(FakeCoreFamily)  # idempotent
-    spec.optional_models(FakeOptionalFamily)
-    assert spec._core_model_specs == [FakeCoreFamily]
-    assert spec._optional_model_specs == [FakeOptionalFamily]
+    spec.models(FakeCoreFamily, required=True)  # idempotent
+    spec.models(FakeOptionalFamily)
+    assert spec.required_model_specs == [FakeCoreFamily]
+    assert spec.optional_model_specs == [FakeOptionalFamily]
+
+
+def test_models_conflicting_required_flag_raises() -> None:
+    spec = Solver("conflict")
+    spec.models(FakeCoreFamily, required=True)
+    spec.models(FakeCoreFamily, required=True)  # same flag → idempotent no-op
+    assert spec.required_model_specs == [FakeCoreFamily]
+    assert spec.optional_model_specs == []
+    with pytest.raises(ValueError):
+        spec.models(FakeCoreFamily, required=False)
+
+
+def test_detect_optional_models_drops_empty_family() -> None:
+    spec = Solver("empty_detect")
+    spec.models(FakeEmptyOptionalFamily)
+    assert spec.optional_model_specs == [FakeEmptyOptionalFamily]
+    assert spec.detect_optional_models(Path(".")) == []
+
+
+def test_solverspec_has_no_legacy_registration_api() -> None:
+    assert not hasattr(Solver("x"), "core_models")
+    assert not hasattr(Solver("x"), "optional_models")
+    assert not hasattr(Solver("x"), "core_model_specs")
 
 
 def test_model_specs_unions_all_family_members() -> None:
@@ -128,7 +161,96 @@ def test_json_schema_and_output_model() -> None:
     }
 
 
-def test_detect_core_and_optional_models() -> None:
+def test_detect_required_and_optional_models() -> None:
     spec = _solver()
-    assert spec.detect_core_models() == [core_member]
+    assert spec.detect_required_models() == [core_member]
     assert spec.detect_optional_models(Path(".")) == [optional_member]
+
+
+def test_labeled_sets_display_label() -> None:
+    assert Model("plain").label == "plain"
+    assert Model("buoyancy").labeled("Buoyancy").label == "Buoyancy"
+
+
+def test_model_catalog_splits_required_and_optional() -> None:
+    from neofoam.framework.solver.configurations import ModelEntry, model_catalog
+
+    class CoreCfg(BaseConfig):
+        c: int = 1
+
+    class OptCfg(BaseConfig):
+        o: int = 2
+
+    core = Model("CoreModel")
+    core.config(CoreCfg)
+    opt = Model("OptModel").labeled("Opt")
+    opt.config(OptCfg)
+
+    class CoreFam:
+        @classmethod
+        def all_specs(cls) -> list[Any]:
+            return [core]
+
+        @classmethod
+        def detect_and_create(cls) -> Any:
+            return core
+
+    class OptFam:
+        @classmethod
+        def all_specs(cls) -> list[Any]:
+            return [opt]
+
+        @classmethod
+        def detect_models(cls, case_dir: Any = None) -> list[Any]:
+            return [opt]
+
+    spec = Solver("catalog_solver")
+    spec.models(CoreFam, required=True)
+    spec.models(OptFam)
+
+    cat = {e.name: e for e in model_catalog(spec)}
+    assert isinstance(cat["CoreModel"], ModelEntry)
+    assert cat["CoreModel"].required is True
+    assert [c.__name__ for c in cat["CoreModel"].dicts] == ["CoreCfg"]
+    assert cat["OptModel"].required is False
+    assert cat["OptModel"].label == "Opt"
+    assert [c.__name__ for c in cat["OptModel"].dicts] == ["OptCfg"]
+
+
+def test_incompressible_fluid_models_required_vs_optional() -> None:
+    pytest.importorskip("pybFoam")
+    from neofoam.framework.solver.configurations import model_catalog
+    from neofoam.solver.incompressibleFluid.incompressibleFluid import (
+        incompressibleFluid,
+    )
+
+    cat = {e.name: e for e in model_catalog(incompressibleFluid)}
+    # Core families are required; buoyancy + time-step contributions are optional.
+    assert cat["Pimple"].required and cat["Newtonian"].required
+    assert cat["laminar"].required
+    assert cat["boussinesq"].required is False
+    assert cat["courant"].required is False
+    assert cat["maxDeltaT"].required is False
+
+
+def test_incompressible_fluid_boussinesq_label_in_catalog() -> None:
+    pytest.importorskip("pybFoam")
+    from neofoam.framework.solver.configurations import model_catalog
+    from neofoam.solver.incompressibleFluid.incompressibleFluid import (
+        incompressibleFluid,
+    )
+
+    cat = {e.name: e for e in model_catalog(incompressibleFluid)}
+    bouss = cat["boussinesq"]
+    assert bouss.required is False
+    assert bouss.label == "Buoyancy (Boussinesq)"
+    assert {c.__name__ for c in bouss.dicts} == {
+        "BoussinesqConfig",
+        "boussinesq_fvSchemes",
+        "boussinesq_fvSolution",
+    }
+    assert {c.__name__ for c in bouss.fields} == {
+        "p_rghFieldConfig",
+        "TFieldConfig",
+        "alphatFieldConfig",
+    }

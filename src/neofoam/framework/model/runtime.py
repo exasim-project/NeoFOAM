@@ -43,15 +43,40 @@ class ModelRuntime:
                 self.config = result
 
     def run_build(self) -> list["InitStep"]:
-        """Call spec's build func with this instance's config (if it accepts args)."""
+        """Return the init-step list for this runtime.
+
+        The framework auto-synthesizes one :class:`InitStep` per
+        ``Model.field(...)`` declaration on ``self.spec`` — default
+        factory ``<value_type>.read_field(mesh, name)``, with
+        ``depends_on`` / ``write`` flowing from the declaration — and
+        prepends them to whatever ``@spec.build`` returns. ``@build``
+        is therefore reserved for everything the framework cannot
+        synthesize: computed or intermediate fields, control objects,
+        and side-effect-only steps that other declarations depend on.
+        """
         import inspect
 
         if self.spec._build_func is None:
-            return []
-        sig = inspect.signature(self.spec._build_func)
-        if len(sig.parameters) > 0:
-            return self.spec._build_func(self.config)  # type: ignore[no-any-return]
-        return self.spec._build_func()  # type: ignore[no-any-return]
+            user_steps: list["InitStep"] = []
+        else:
+            sig = inspect.signature(self.spec._build_func)
+            user_steps = (
+                self.spec._build_func(self.config)
+                if len(sig.parameters) > 0
+                else self.spec._build_func()
+            )
+
+        field_decls = getattr(self.spec, "_field_decls", None) or []
+        if not field_decls:
+            return user_steps
+
+        # Lazy import: ``synthesis`` pulls a deferred pybFoam dependency
+        # through its dispatch — importing ``framework.model.runtime``
+        # must stay light.
+        from neofoam.fields.synthesis import synthesize_init_step
+
+        auto_steps = [synthesize_init_step(decl) for decl in field_decls]
+        return auto_steps + user_steps
 
     @property
     def operations(self) -> list["Operation"]:

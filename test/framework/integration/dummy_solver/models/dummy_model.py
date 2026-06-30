@@ -27,7 +27,7 @@ class DummyModelInterface(BaseModel):
     Base class for DummySolver optional models.
 
     Implements the *optional model family* contract consumed by
-    ``SolverSpec.optional_models(...)``: ``all_specs()`` lists every
+    ``SolverSpec.models(...)``: ``all_specs()`` lists every
     registered member case-free (for the config schema) and
     ``detect_models()`` returns the active members for a concrete case.
     """

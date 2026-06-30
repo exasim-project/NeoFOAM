@@ -13,9 +13,7 @@ regime-specific decisions the stepper used to branch on with an ``enum`` —
 * ``initial_delta_t`` — the starting step (a transient run honours ``deltaT``; a
   steady run is a unit pseudo-step);
 * ``step_name`` — how the current step renders (a float time vs. an integer
-  iteration index);
-* ``constraints`` — which :class:`~neofoam.algorithms.constraints.time_step.DeltaTConstraint`
-  the regime injects (adaptive ``maxDeltaT`` cap for transient; none for steady).
+  iteration index).
 
 A new regime (pseudo-transient, local/dual time stepping, …) is a new
 ``@TimeIntegration.register`` class — never an edit to a branch (OCP). The data
@@ -25,18 +23,10 @@ that *selects* the regime is the case's ``ddtSchemes`` default
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
+from typing import Literal
 
-from neofoam.algorithms.constraints.time_step import (
-    VGREAT,
-    DeltaTConstraint,
-    MaxDeltaTConstraint,
-)
 from neofoam.core.plugin_system import PluginSystem
 from neofoam.io import BaseConfig
-
-if TYPE_CHECKING:
-    from neofoam.algorithms.solution_loop.config import TimeControlConfig
 
 
 @PluginSystem.register(
@@ -56,9 +46,6 @@ class TimeIntegration(BaseConfig):
     def step_name(self, value: float, index: int, precision: int) -> str:
         raise NotImplementedError
 
-    def constraints(self, config: "TimeControlConfig") -> list[DeltaTConstraint]:
-        raise NotImplementedError
-
 
 @TimeIntegration.register
 class TransientIntegration(TimeIntegration):
@@ -73,12 +60,6 @@ class TransientIntegration(TimeIntegration):
         # general float format (trims trailing zeros, like %g)
         return f"{value:.{precision}g}"
 
-    def constraints(self, config: "TimeControlConfig") -> list[DeltaTConstraint]:
-        if not config.adjustTimeStep:
-            return []
-        cap = config.maxDeltaT if config.maxDeltaT is not None else VGREAT
-        return [MaxDeltaTConstraint(maxDeltaT=cap)]
-
 
 @TimeIntegration.register
 class SteadyIntegration(TimeIntegration):
@@ -91,9 +72,6 @@ class SteadyIntegration(TimeIntegration):
 
     def step_name(self, value: float, index: int, precision: int) -> str:
         return str(int(round(value)))
-
-    def constraints(self, config: "TimeControlConfig") -> list[DeltaTConstraint]:
-        return []  # fixed pseudo-step
 
 
 def integration_from_ddt(ddt_default: str) -> TimeIntegration:

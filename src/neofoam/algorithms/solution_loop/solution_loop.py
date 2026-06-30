@@ -13,13 +13,11 @@ Three collaborating pieces of one concern:
   *data* (time, deltaT, index, write flag, …). Exposed as ``ctx.time``.
 * :class:`SolutionLoop` — owns the *logic*. It advances the ``LoopState`` (the
   Foam::Time ``operator++`` arithmetic, ``adjustableRunTime`` snapping and
-  write-time decision all live here), takes the ``min`` over injectable
-  :class:`~neofoam.algorithms.constraints.time_step.DeltaTConstraint`s for the next
-  ``deltaT``, and delegates the outer-loop predicate to a ``control``
-  (:class:`~neofoam.algorithms.solution_loop.control.SolutionControl`). Stability
-  limits are folded per step from the model-owned ``timeStepConstraint`` interface
-  (the active ``courant``/``maxDeltaT`` contributors) — there is no ``set_courant``
-  drive.
+  write-time decision all live here) and delegates the outer-loop predicate to a
+  ``control`` (:class:`~neofoam.algorithms.solution_loop.control.SolutionControl`).
+  Stability limits are folded per step from the model-owned ``timeStepConstraint``
+  interface (the active ``courant``/``maxDeltaT`` contributors) — there is no
+  ``set_courant`` drive.
 * :class:`LoopBackend` — an optional backend (default :class:`NullLoopBackend`,
   a no-op) that mirrors the advanced ``LoopState`` onto a real backend clock. The
   solver's pybFoam ``FoamTime`` implements it to keep ``Foam::Time`` in step so
@@ -35,10 +33,6 @@ engine, and exposes the loop body as ``@operation``s plus the predicate.
 from pathlib import Path
 from typing import Any, Callable, Optional, Protocol, runtime_checkable
 
-from neofoam.algorithms.constraints.time_step import (
-    DeltaTConstraint,
-    next_delta_t,
-)
 from neofoam.algorithms.solution_loop.interfaces import (
     VGREAT,
     loopCondition,
@@ -113,7 +107,6 @@ class SolutionLoop:
         state: LoopState,
         integration: Optional[TimeIntegration] = None,
         control: Optional[LoopControl] = None,
-        constraints: Optional[list[DeltaTConstraint]] = None,
         conditions: Optional[list[Callable[["SolutionLoop"], bool]]] = None,
         growth_cap: float = 1.2,
         backend: Optional[LoopBackend] = None,
@@ -125,7 +118,6 @@ class SolutionLoop:
         self._control: LoopControl = (
             control if control is not None else SolutionControl()
         )
-        self._constraints: list[DeltaTConstraint] = list(constraints or [])
         self._conditions: list[Callable[["SolutionLoop"], bool]] = list(
             conditions or []
         )
@@ -135,30 +127,16 @@ class SolutionLoop:
         self.next_dt: float = VGREAT
         self.keep_running: bool = True
         self._growth_cap = growth_cap
-        self._courant = 0.0
         self._backend: LoopBackend = (
             backend if backend is not None else NullLoopBackend()
         )
 
     # -- injection --------------------------------------------------------
-    def add_constraint(self, constraint: DeltaTConstraint) -> "SolutionLoop":
-        """Inject a stability criterion (any model's deltaT limit)."""
-        self._constraints.append(constraint)
-        return self
-
     def set_backend(self, backend: LoopBackend) -> None:
         """Inject the backend after construction (e.g. a solver wiring its
         ``Foam::Time`` mirror). Standalone use keeps :class:`NullLoopBackend`."""
         self._backend = backend
         self._backend.update(self._state)
-
-    def set_courant(self, courant: float) -> None:
-        """Publish the current Courant number (measured on the live fields)."""
-        self._courant = float(courant)
-
-    # -- constraint context: what a DeltaTConstraint reads ----------------
-    def max_courant(self) -> float:
-        return self._courant
 
     def current_delta_t(self) -> float:
         return self._state.delta_t
@@ -213,23 +191,12 @@ class SolutionLoop:
             else:
                 s.delta_t = max(new_delta_t, 0.2 * s.delta_t)
 
-    def adjust_delta_t(self) -> None:
-        """Set the next ``deltaT`` = min over every injected constraint."""
-        dt = next_delta_t(
-            self._constraints,
-            self,
-            current_dt=self._state.delta_t,
-            growth_cap=self._growth_cap,
-        )
-        self.set_delta_t(dt)
-
     def constrain_delta_t(self, limit: float) -> None:
         """Set the next ``deltaT`` from a folded ``timeStepConstraint`` limit.
 
         ``VGREAT`` = no active opinion -> the step is unchanged (fixed step);
         otherwise the step is the limit, clamped to ``growth_cap * current`` and
-        snapped onto the next write time. Mirrors the legacy ``next_delta_t`` clamp
-        but reads the fold instead of the injected constraint list.
+        snapped onto the next write time.
         """
         current = self._state.delta_t
         dt = current if limit >= VGREAT else min(limit, self._growth_cap * current)
@@ -270,10 +237,6 @@ class SolutionLoop:
     @property
     def control(self) -> LoopControl:
         return self._control
-
-    @property
-    def constraints(self) -> list[DeltaTConstraint]:
-        return list(self._constraints)
 
     @property
     def conditions(self) -> list[Callable[["SolutionLoop"], bool]]:

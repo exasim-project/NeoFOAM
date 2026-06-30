@@ -160,9 +160,9 @@ def test_validation_error_wrong_type(io_fixtures, config_class, invalid_file):
 def test_openfoam_validation_error_wrong_type(io_fixtures):
     """Test that OpenFOAM typed dispatch raises ValueError on type mismatch.
 
-    Unlike YAML/JSON where raw values pass through, the OpenFOAM strategy uses
-    typed dispatch and raises immediately when a value cannot be converted
-    (e.g. 'not_an_integer' as int).
+    Unlike YAML/JSON where raw values pass through, the OpenFOAM strategy
+    uses typed dispatch (``READ_DISPATCH``) and raises immediately when a
+    value cannot be converted (e.g. 'not_an_integer' as int).
     """
     with pytest.raises(ValueError, match="not_an_integer"):
         SimpleOpenFOAMConfig.load(

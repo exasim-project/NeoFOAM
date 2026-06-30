@@ -64,7 +64,7 @@ dummy_solver_spec.config(SolverConfig)
 dummy_solver_spec.config(MeshConfig)
 dummy_solver_spec.config(CoreModel2)
 dummy_solver_spec.config(DummyAlgorithm)
-dummy_solver_spec.optional_models(DummyModelInterface)
+dummy_solver_spec.models(DummyModelInterface)
 
 
 @dummy_solver_spec.initializer
