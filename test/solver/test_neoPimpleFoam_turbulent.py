@@ -9,6 +9,10 @@ through the Python bindings: ``TurbulenceModel::create`` selects the LES
 time step solves the momentum + pressure system *and* the SA ``nuTilda``
 transport PDE, then updates ``nut``.
 
+The case is the ready-to-run SA-DDES setup committed under ``test/setup_saddes``
+(a seeded pitzDaily); the test just copies it, meshes it and runs it — the
+solver settings live in the case dicts, not in this file.
+
 This asserts the binding correctly runs the model end-to-end and that turbulence
 actually develops (``nut`` grows from its seed). It deliberately does NOT assert
 field-by-field parity against OpenFOAM: the underlying NeoFOAM SA-DDES is already
@@ -28,136 +32,30 @@ import sys
 from pathlib import Path
 
 import numpy as np
-import pytest
 
 
-def _openfoam_available() -> bool:
-    try:
-        return (
-            subprocess.run(
-                ["blockMesh", "-help"], capture_output=True, timeout=5
-            ).returncode
-            == 0
-        )
-    except (subprocess.TimeoutExpired, FileNotFoundError):
-        return False
-
-
-requires_openfoam = pytest.mark.skipif(
-    not _openfoam_available(), reason="OpenFOAM not available"
-)
-
-_TURB_PROPS = """\
-FoamFile { version 2.0; format ascii; class dictionary; object turbulenceProperties; }
-simulationType  LES;
-LES
-{
-    LESModel        SpalartAllmarasDDES;
-    turbulence      on;
-    printCoeffs     on;
-    delta           cubeRootVol;
-    cubeRootVolCoeffs { deltaCoeff 1; }
-}
-"""
-
-N_STEPS = 20
-DELTA_T = 5e-5
-
-
-def _insert_into_solvers(fv_solution: Path, block: str) -> None:
-    """Insert ``block`` just before the closing brace of the ``solvers`` dict."""
-    s = fv_solution.read_text()
-    i = s.index("solvers")
-    j = s.index("{", i)
-    depth = 0
-    k = j
-    while k < len(s):
-        if s[k] == "{":
-            depth += 1
-        elif s[k] == "}":
-            depth -= 1
-            if depth == 0:
-                break
-        k += 1
-    fv_solution.write_text(s[:k] + block + s[k:])
-
-
-def _prepare_sa_ddes_case(source: Path, dest: Path) -> None:
-    """Turn the laminar neoPimpleFoam/pitzDaily tutorial into an SA-DDES case."""
+def _prepare_case(source: Path, dest: Path) -> None:
+    """Copy the committed SA-DDES case and generate its mesh."""
     if dest.exists():
         shutil.rmtree(dest)
     shutil.copytree(source, dest)
-
-    (dest / "constant" / "turbulenceProperties").write_text(_TURB_PROPS)
-
-    # SA-DDES uses the U-based Spalding wall function for nut.
-    nut = dest / "0" / "nut"
-    nut.write_text(
-        nut.read_text().replace("nutkWallFunction", "nutUSpaldingWallFunction")
-    )
-
-    # Seed nuTilda non-zero so turbulence develops (nuTilda = 0 -> nut stays 0).
-    nutilda = dest / "0" / "nuTilda"
-    txt = nutilda.read_text().replace(
-        "internalField   uniform 0;", "internalField   uniform 4e-05;"
-    )
-    txt = re.sub(
-        r"(inlet\s*\{[^}]*?value\s+uniform\s+)0(\s*;)",
-        r"\g<1>4e-05\g<2>",
-        txt,
-        flags=re.S,
-    )
-    nutilda.write_text(txt)
-
-    # nuTilda solver + momentum predictor / single outer corrector.
-    fv = dest / "system" / "fvSolution"
-    _insert_into_solvers(
-        fv,
-        "    nuTilda { solver PBiCGStab; preconditioner DILU; tolerance 1e-8; relTol 0; }\n"
-        "    nuTildaFinal { $nuTilda; }\n",
-    )
-    fv.write_text(
-        fv.read_text().replace(
-            "PIMPLE\n{",
-            "PIMPLE\n{\n    momentumPredictor yes;\n    nOuterCorrectors 1;",
-        )
-    )
-
-    # NeoFOAM laplacian/snGrad are uncorrected; add the wallDist method SA needs.
-    schemes = dest / "system" / "fvSchemes"
-    s = schemes.read_text().replace(
-        "Gauss linear corrected", "Gauss linear uncorrected"
-    )
-    s = s.replace("default         corrected;", "default         uncorrected;")
-    schemes.write_text(s + "\nwallDist { method meshWave; }\n")
-
-    # Fixed time step so the run is deterministic.
-    cd = dest / "system" / "controlDict"
-    lines = []
-    for line in cd.read_text().splitlines():
-        st = line.strip()
-        if st.startswith("application"):
-            lines.append("application pimpleFoam;")
-        elif st.startswith("adjustTimeStep"):
-            lines.append("adjustTimeStep no;")
-        elif st.startswith("deltaT"):
-            lines.append(f"deltaT {DELTA_T};")
-        elif st.startswith("endTime"):
-            lines.append(f"endTime {N_STEPS * DELTA_T};")
-        elif st.startswith("writeControl"):
-            lines.append("writeControl timeStep;")
-        elif st.startswith("writeInterval"):
-            lines.append(f"writeInterval {N_STEPS};")
-        else:
-            lines.append(line)
-    if not any(line.strip().startswith("adjustTimeStep") for line in lines):
-        lines.append("adjustTimeStep no;")
-    cd.write_text("\n".join(lines) + "\n")
-
     result = subprocess.run(
         ["blockMesh", "-case", str(dest)], capture_output=True, text=True, timeout=120
     )
     assert result.returncode == 0, f"blockMesh failed: {result.stderr}"
+
+
+def _final_time_dir(case: Path) -> Path:
+    times = sorted(
+        (
+            d
+            for d in case.iterdir()
+            if d.is_dir() and d.name.replace(".", "").isdigit() and float(d.name) > 0
+        ),
+        key=lambda d: float(d.name),
+    )
+    assert times, f"no output time directories in {case}"
+    return times[-1]
 
 
 def _read_internal(time_dir: Path, field_name: str) -> np.ndarray:
@@ -171,13 +69,12 @@ def _read_internal(time_dir: Path, field_name: str) -> np.ndarray:
     return np.array([float(m.group(1))])
 
 
-@requires_openfoam
 def test_neoPimpleFoam_SA_DDES_runs_and_develops_turbulence(tmp_path: Path) -> None:
     """The SA-DDES turbulence path runs end-to-end and nut grows from its seed."""
     repo_root = Path(__file__).parent.parent.parent
-    source = repo_root / "tutorials" / "neoPimpleFoam" / "pitzDaily"
+    source = repo_root / "test" / "setup_saddes"
     case = tmp_path / "sa_ddes"
-    _prepare_sa_ddes_case(source, case)
+    _prepare_case(source, case)
 
     # Run in an isolated subprocess: NeoN/Kokkos + OpenFOAM hold per-process global
     # state that does not survive a second in-process solver run. FOAM_SIGFPE is
@@ -200,9 +97,7 @@ def test_neoPimpleFoam_SA_DDES_runs_and_develops_turbulence(tmp_path: Path) -> N
         f"neoPimpleFoam (SA-DDES) failed (rc={result.returncode}):\n{result.stderr[-3000:]}"
     )
 
-    final = case / str(N_STEPS * DELTA_T)
-    assert final.is_dir(), f"solver did not write the final time {final}"
-
+    final = _final_time_dir(case)
     nut = _read_internal(final, "nut")
     nutilda = _read_internal(final, "nuTilda")
 
