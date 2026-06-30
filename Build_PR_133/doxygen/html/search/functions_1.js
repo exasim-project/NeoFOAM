@@ -31,5 +31,6 @@ var searchData=
   ['createexecutor_28',['createexecutor',['../namespaceNeoFOAM.html#a2d15e0c07e7e714cd7cb24248c0e0a64',1,'NeoFOAM::createExecutor(const Foam::dictionary &amp;dict)'],['../namespaceNeoFOAM.html#ac77aa23b184bcb66d69edc48540b1892',1,'NeoFOAM::createExecutor(const Foam::word &amp;execName)'],['../namespaceNeoFOAM.html#a74e50825b6254ddbd19daae97ecf9dea',1,'NeoFOAM::createExecutor(const Foam::argList &amp;args, const Foam::dictionary &amp;dict)']]],
   ['createmappedfvsolutiondicts_29',['createMappedFvSolutionDicts',['../namespaceNeoFOAM.html#afa00770785106f67fddae9d945e9e9d0',1,'NeoFOAM']]],
   ['createmesh_30',['createmesh',['../namespaceNeoFOAM.html#ac60b005cd9f9140205f676b9953615e4',1,'NeoFOAM::createMesh(const NeoN::Executor &amp;exec, const Foam::Time &amp;runTime)'],['../namespaceNeoFOAM.html#a70f3fbdfd753d2672cd8c017f759e7f8',1,'NeoFOAM::createMesh(const Foam::Time &amp;runTime)']]],
-  ['cw1_31',['cw1',['../classNeoFOAM_1_1SpalartAllmarasDDES.html#ab3d0eda637080e405dc9aa39f88448e1',1,'NeoFOAM::SpalartAllmarasDDES']]]
+  ['createturbulencemodel_31',['createTurbulenceModel',['../namespaceNeoFOAM.html#a1ee57676af58d586e18ecd6f150686b6',1,'NeoFOAM']]],
+  ['cw1_32',['cw1',['../classNeoFOAM_1_1SpalartAllmarasDDES.html#ab3d0eda637080e405dc9aa39f88448e1',1,'NeoFOAM::SpalartAllmarasDDES']]]
 ];

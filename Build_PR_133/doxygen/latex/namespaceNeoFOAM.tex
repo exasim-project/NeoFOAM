@@ -187,7 +187,9 @@ std\+::unique\+\_\+ptr$<$ Foam\+::fv\+Mesh $>$ \mbox{\hyperlink{namespaceNeoFOAM
 {\footnotesize template$<$typename Registered\+Type , typename Initializer\+Type $>$ }\\Registered\+Type \& \mbox{\hyperlink{namespaceNeoFOAM_ae3448b9356abfd01a14f812c7acffc7c}{read\+Or\+Create}} (\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&run\+Time, std\+::string name, Initializer\+Type init)
 \begin{DoxyCompactList}\small\item\em convenience function to avoid recreating objects by storing them in the runtime db \end{DoxyCompactList}\item 
 {\footnotesize template$<$typename Value\+Type $>$ }\\\mbox{\hyperlink{namespaceNeoFOAM_aecef654291f22551aa7a3b014e46cb67}{Solver}} (Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Value\+Type $>$ \&, \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&) -\/$>$ \mbox{\hyperlink{classNeoFOAM_1_1Solver}{Solver}}$<$ Value\+Type $>$
-\end{DoxyCompactItemize}
+\item 
+std\+::unique\+\_\+ptr$<$ \mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel}{Turbulence\+Model}} $>$ \mbox{\hyperlink{namespaceNeoFOAM_a1ee57676af58d586e18ecd6f150686b6}{create\+Turbulence\+Model}} (\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&rt, const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::scalar $>$ \&nu)
+\begin{DoxyCompactList}\small\item\em Out-\/of-\/line wrapper around \doxylink{classNeoFOAM_1_1TurbulenceModel_a49dee8641d6055c7fa2b88be94e8448a}{Turbulence\+Model\+::create}. \end{DoxyCompactList}\end{DoxyCompactItemize}
 
 
 \doxysubsection{Typedef Documentation}
@@ -450,7 +452,17 @@ p\+Final and UFinal are skipped when absent (not all cases define Final subdicts
 \doxysubsubsection{\texorpdfstring{createMesh()}{createMesh()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
 {\footnotesize\ttfamily std\+::unique\+\_\+ptr$<$ \mbox{\hyperlink{classNeoFOAM_1_1MeshAdapter}{Mesh\+Adapter}} $>$ Neo\+FOAM\+::create\+Mesh (\begin{DoxyParamCaption}\item[{const Neo\+N\+::\+Executor \&}]{exec,  }\item[{const Foam\+::\+Time \&}]{run\+Time }\end{DoxyParamCaption})}
 
-\Hypertarget{namespaceNeoFOAM_a3b70b9ee03711e99853bb30615bbccf7}\label{namespaceNeoFOAM_a3b70b9ee03711e99853bb30615bbccf7} 
+\Hypertarget{namespaceNeoFOAM_a1ee57676af58d586e18ecd6f150686b6}\label{namespaceNeoFOAM_a1ee57676af58d586e18ecd6f150686b6} 
+\index{NeoFOAM@{NeoFOAM}!createTurbulenceModel@{createTurbulenceModel}}
+\index{createTurbulenceModel@{createTurbulenceModel}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{createTurbulenceModel()}{createTurbulenceModel()}}
+{\footnotesize\ttfamily std\+::unique\+\_\+ptr$<$ \mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel}{Turbulence\+Model}} $>$ Neo\+FOAM\+::create\+Turbulence\+Model (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&}]{rt,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::scalar $>$ \&}]{nu }\end{DoxyParamCaption})}
+
+
+
+Out-\/of-\/line wrapper around \doxylink{classNeoFOAM_1_1TurbulenceModel_a49dee8641d6055c7fa2b88be94e8448a}{Turbulence\+Model\+::create}. 
+
+Force-\/registers the built-\/in models in lib\+Neo\+FOAM\textquotesingle{}s runtime-\/selection table before dispatching, so the factory resolves the model name even when the model is only ever reached through the -\/fvisibility=hidden Python bindings (where the automatic static self-\/registration can be elided). add\+Sub\+Type() is idempotent. \Hypertarget{namespaceNeoFOAM_a3b70b9ee03711e99853bb30615bbccf7}\label{namespaceNeoFOAM_a3b70b9ee03711e99853bb30615bbccf7} 
 \index{NeoFOAM@{NeoFOAM}!expandSchemeDefaults@{expandSchemeDefaults}}
 \index{expandSchemeDefaults@{expandSchemeDefaults}!NeoFOAM@{NeoFOAM}}
 \doxysubsubsection{\texorpdfstring{expandSchemeDefaults()}{expandSchemeDefaults()}}

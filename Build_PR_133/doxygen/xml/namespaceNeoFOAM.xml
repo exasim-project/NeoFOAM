@@ -1596,6 +1596,58 @@
         </inbodydescription>
         <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/solver.hpp" line="84" column="1" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/solver.hpp" declline="84" declcolumn="1"/>
       </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1a71de73ab6b23bdefae6e77c611999f2c" prot="private" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>NeoN::dsl::SpatialOperator&lt; NeoN::Vec3 &gt;</type>
+        <definition>NeoN::dsl::SpatialOperator&lt; NeoN::Vec3 &gt; NeoFOAM::makeViscousStress</definition>
+        <argsstring>(const NeoN::finiteVolume::cellCentred::VolumeField&lt; NeoN::scalar &gt; &amp;nu, const NeoN::finiteVolume::cellCentred::VolumeField&lt; NeoN::scalar &gt; &amp;nut, const NeoN::finiteVolume::cellCentred::VolumeField&lt; NeoN::Tensor &gt; &amp;gradU)</argsstring>
+        <name>makeViscousStress</name>
+        <qualifiedname>NeoFOAM::makeViscousStress</qualifiedname>
+        <param>
+          <type>const NeoN::finiteVolume::cellCentred::VolumeField&lt; NeoN::scalar &gt; &amp;</type>
+          <declname>nu</declname>
+        </param>
+        <param>
+          <type>const NeoN::finiteVolume::cellCentred::VolumeField&lt; NeoN::scalar &gt; &amp;</type>
+          <declname>nut</declname>
+        </param>
+        <param>
+          <type>const NeoN::finiteVolume::cellCentred::VolumeField&lt; NeoN::Tensor &gt; &amp;</type>
+          <declname>gradU</declname>
+        </param>
+        <briefdescription>
+<para>Build the explicit viscous-stress SpatialOperator inside libNeoFOAM. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Thin out-of-line wrapper around <computeroutput>NeoN::dsl::exp::viscousStress</computeroutput>. The <computeroutput>ViscousStressOperator</computeroutput>&apos;s assembly-time <computeroutput>read()</computeroutput> resolves the &quot;Gauss&quot; strategy through <computeroutput>ViscousStressOperatorFactory</computeroutput>&apos;s runtime-selection table, which is populated by the <computeroutput>GaussViscousStress</computeroutput> self-registration compiled into libNeoFOAM. Instantiating the operator (and its type-erased model thunks) here — rather than inline in a <computeroutput>-fvisibility=hidden</computeroutput> Python-binding TU — keeps the factory lookup bound to libNeoFOAM&apos;s populated table instead of a private, empty per-module copy. </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fvcc/operators/viscousStressOperator.hpp" line="289" column="28" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fvcc/operators/viscousStressOperator.hpp" declline="289" declcolumn="28"/>
+      </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1a1ee57676af58d586e18ecd6f150686b6" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>std::unique_ptr&lt; <ref refid="classNeoFOAM_1_1TurbulenceModel" kindref="compound">TurbulenceModel</ref> &gt;</type>
+        <definition>std::unique_ptr&lt; TurbulenceModel &gt; NeoFOAM::createTurbulenceModel</definition>
+        <argsstring>(RunTime &amp;rt, const nnfvcc::VolumeField&lt; NeoN::scalar &gt; &amp;nu)</argsstring>
+        <name>createTurbulenceModel</name>
+        <qualifiedname>NeoFOAM::createTurbulenceModel</qualifiedname>
+        <param>
+          <type><ref refid="structNeoFOAM_1_1RunTime" kindref="compound">RunTime</ref> &amp;</type>
+          <declname>rt</declname>
+        </param>
+        <param>
+          <type>const nnfvcc::VolumeField&lt; NeoN::scalar &gt; &amp;</type>
+          <declname>nu</declname>
+        </param>
+        <briefdescription>
+<para>Out-of-line wrapper around <ref refid="classNeoFOAM_1_1TurbulenceModel_1a49dee8641d6055c7fa2b88be94e8448a" kindref="member">TurbulenceModel::create</ref>. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Force-registers the built-in models in libNeoFOAM&apos;s runtime-selection table before dispatching, so the factory resolves the model name even when the model is only ever reached through the -fvisibility=hidden Python bindings (where the automatic static self-registration can be elided). addSubType() is idempotent. </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/turbulenceModels/turbulenceModel.hpp" line="91" column="1" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/turbulenceModels/turbulenceModel.hpp" declline="91" declcolumn="1"/>
+      </memberdef>
     </sectiondef>
     <briefdescription>
     </briefdescription>

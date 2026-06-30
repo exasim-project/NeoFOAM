@@ -302,6 +302,9 @@ Functions</h2></td></tr>
 <tr class="memitem:aecef654291f22551aa7a3b014e46cb67" id="r_aecef654291f22551aa7a3b014e46cb67"><td class="memTemplParams" colspan="2">template&lt;typename ValueType &gt; </td></tr>
 <tr class="memitem:aecef654291f22551aa7a3b014e46cb67"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#aecef654291f22551aa7a3b014e46cb67">Solver</a> (NeoN::finiteVolume::cellCentred::VolumeField&lt; ValueType &gt; &amp;, <a class="el" href="structNeoFOAM_1_1RunTime.html">RunTime</a> &amp;) -&gt; <a class="el" href="classNeoFOAM_1_1Solver.html">Solver</a>&lt; ValueType &gt;</td></tr>
 <tr class="separator:aecef654291f22551aa7a3b014e46cb67"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1ee57676af58d586e18ecd6f150686b6" id="r_a1ee57676af58d586e18ecd6f150686b6"><td class="memItemLeft" align="right" valign="top">std::unique_ptr&lt; <a class="el" href="classNeoFOAM_1_1TurbulenceModel.html">TurbulenceModel</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM.html#a1ee57676af58d586e18ecd6f150686b6">createTurbulenceModel</a> (<a class="el" href="structNeoFOAM_1_1RunTime.html">RunTime</a> &amp;rt, const nnfvcc::VolumeField&lt; NeoN::scalar &gt; &amp;nu)</td></tr>
+<tr class="memdesc:a1ee57676af58d586e18ecd6f150686b6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Out-of-line wrapper around <a class="el" href="classNeoFOAM_1_1TurbulenceModel.html#a49dee8641d6055c7fa2b88be94e8448a" title="Read the model name from constant/turbulenceProperties and create the model.">TurbulenceModel::create</a>.  <br /></td></tr>
+<tr class="separator:a1ee57676af58d586e18ecd6f150686b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Typedef Documentation</h2>
 <a id="a72ecdf875c1b4d9e941284f6f5351752" name="a72ecdf875c1b4d9e941284f6f5351752"></a>
@@ -1040,6 +1043,37 @@ template&lt;class FoamFieldType &gt; </div>
         </tr>
       </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="a1ee57676af58d586e18ecd6f150686b6" name="a1ee57676af58d586e18ecd6f150686b6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1ee57676af58d586e18ecd6f150686b6">&#9670;&#160;</a></span>createTurbulenceModel()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::unique_ptr&lt; <a class="el" href="classNeoFOAM_1_1TurbulenceModel.html">TurbulenceModel</a> &gt; NeoFOAM::createTurbulenceModel </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structNeoFOAM_1_1RunTime.html">RunTime</a> &amp;&#160;</td>
+          <td class="paramname"><em>rt</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const nnfvcc::VolumeField&lt; NeoN::scalar &gt; &amp;&#160;</td>
+          <td class="paramname"><em>nu</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Out-of-line wrapper around <a class="el" href="classNeoFOAM_1_1TurbulenceModel.html#a49dee8641d6055c7fa2b88be94e8448a" title="Read the model name from constant/turbulenceProperties and create the model.">TurbulenceModel::create</a>. </p>
+<p>Force-registers the built-in models in libNeoFOAM's runtime-selection table before dispatching, so the factory resolves the model name even when the model is only ever reached through the -fvisibility=hidden Python bindings (where the automatic static self-registration can be elided). addSubType() is idempotent. </p>
 
 </div>
 </div>
