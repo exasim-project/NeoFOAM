@@ -20,6 +20,7 @@
 - Add model-owned interfaces: extension points a model owns whose contributions are gated by owning-model activation; re-expresses time-step constraints and loop conditions as contributions and drives deltaT from the folded `timeStepConstraint` [#342](https://github.com/exasim-project/NeoFOAM/pull/342)
 - Add the spec-loop engineering workflow (`write-spec`/`spec-loop` skills + planner/implementer/reviewer agents) [#342](https://github.com/exasim-project/NeoFOAM/pull/342)
 - Add in-process mesh preprocessing tools (`blockMesh`/`snappyHexMesh`/`checkMesh`) that run before the time loop via the init DAG, opt-in through `system/preprocess.yaml` with per-tool `depends_on`; self-registering `Tool` registry (`neofoam.tools`) and a standalone `neofoam preprocess` command [#346](https://github.com/exasim-project/NeoFOAM/pull/346)
+- Port `examples/neoPimpleFoam/neoPimpleFoam.cpp` (PIMPLE/PISO + SA-DDES turbulence) to Python (`neofoam.solver.neoPimpleFoam`) with supporting bindings (PimpleControl, viscous stress, GaussGreenGrad, turbulence model); fidelity-tested against the C++ neoPimpleFoam [#348](https://github.com/exasim-project/NeoFOAM/pull/348)
 
 ## Development
 - Update submodule regularly by dependabot [#209](https://github.com/exasim-project/NeoFOAM/pull/209)
@@ -28,6 +29,7 @@
 ## Fixes
 - Fix spurious bad_any_cast errors when reading fixedValue boundaries [#194](https://github.com/exasim-project/NeoFOAM/pull/194)
 - Distributed/restart robustness: preserve OpenFOAM BC types and promote vector BC components on read for restart; default the smoothSolver preconditioner to diagonal (avoids a ParIc FPE on the non-symmetric momentum matrix) [#310](https://github.com/exasim-project/NeoFOAM/pull/310)
+- Build the Python bindings (`_neon`, `neofoam_bindings`) with nanobind `NB_SHARED` so they share one nanobind runtime with pybFoam — fixes cross-module type exchange (e.g. `create_adapter_run_time` rejecting pybFoam's `Foam::Time` in CI, where the static-nanobind modules got isolated type registries) [#348](https://github.com/exasim-project/NeoFOAM/pull/348)
 
 # Version 0.2.0 (2025.12.01)
 - Use NeoN logging functionality [#144](https://github.com/exasim-project/NeoFOAM/pull/144)

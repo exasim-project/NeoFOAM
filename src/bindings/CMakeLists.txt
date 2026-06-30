@@ -24,6 +24,7 @@ endif()
 
 nanobind_add_module(
   neofoam_bindings
+  NB_SHARED
   NOMINSIZE
   neofoam.cpp
   runtime.cpp

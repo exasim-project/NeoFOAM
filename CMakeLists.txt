@@ -135,6 +135,15 @@ if(NEOFOAM_BUILD_PYTHON_BINDINGS)
   add_subdirectory(src/bindings)
 endif()
 
+# The bindings (_neon, neofoam_bindings) are built with nanobind NB_SHARED so they share ONE
+# nanobind runtime — required for cross-module type exchange (e.g. neofoam_bindings accepting
+# pybFoam's Foam::Time, and PDE solvers accepting _neon operators). nanobind builds libnanobind.so
+# but does not install it, so place it in neofoam/lib (covered by the bindings' $ORIGIN/lib and
+# $ORIGIN/../neofoam/lib rpaths).
+if(DEFINED SKBUILD AND TARGET nanobind)
+  install(TARGETS nanobind LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT python)
+endif()
+
 # TODO(install-layout workaround): drop this consolidation step once bundled deps honour
 # CMAKE_INSTALL_LIBDIR upstream (see the umpire/camp rpath TODO above). Some bundled deps (camp, via
 # BLT) hardcode `DESTINATION lib`/`include` and so leak to the wheel root instead of honouring
