@@ -169,6 +169,19 @@ def neoicofoam(ctx: typer.Context) -> None:
 
 
 @solver_app.command(
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
+)
+def neopimplefoam(ctx: typer.Context) -> None:
+    """Transient incompressible PIMPLE solver using NeoN bindings."""
+    from neofoam.solver.neoPimpleFoam import NeoPimpleFoam
+
+    argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
+
+    solver = NeoPimpleFoam(argv)
+    solver.run()
+
+
+@solver_app.command(
     name="incompressiblefluid",
     context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
 )

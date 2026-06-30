@@ -63,6 +63,12 @@ void registerPDESolver(nb::module_& m)
             "ref_cell"_a,
             "ref_value"_a,
             "Set pressure reference cell and value"
+        )
+        .def(
+            "set_final_iter",
+            &nf::PDE<NeoN::scalar>::setFinalIter,
+            "final_iter"_a,
+            "Select the <field>Final solver subdict / relaxation on the final outer pass"
         );
 
     // -------------------------------------------------------------------
@@ -97,6 +103,17 @@ void registerPDESolver(nb::module_& m)
             "assemble",
             [](nf::PDE<NeoN::Vec3>& self) -> void { self.assemble(); },
             "Assemble the linear system"
+        )
+        .def(
+            "assemble_and_relax",
+            [](nf::PDE<NeoN::Vec3>& self) -> void { self.assembleAndRelax(); },
+            "Assemble and apply equation relaxation without solving (no momentum predictor)"
+        )
+        .def(
+            "set_final_iter",
+            &nf::PDE<NeoN::Vec3>::setFinalIter,
+            "final_iter"_a,
+            "Select the <field>Final solver subdict / relaxation on the final outer pass"
         )
         .def(
             "ddt_scheme",

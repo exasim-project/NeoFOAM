@@ -51,7 +51,11 @@ if(DEFINED SKBUILD)
   set(CMAKE_SKIP_BUILD_RPATH FALSE)
   set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
   set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-  set(CMAKE_INSTALL_RPATH "$ORIGIN" "$ORIGIN/lib" "$ORIGIN/../lib" "$ORIGIN/../../lib")
+  # $ORIGIN/../pybFoam reaches pybFoam's libnanobind.so: the bindings are built NB_SHARED but do NOT
+  # ship their own libnanobind.so; they resolve against pybFoam's by SONAME so the whole process
+  # shares ONE nanobind runtime/type registry with pybFoam (the pyOFTools pattern).
+  set(CMAKE_INSTALL_RPATH "$ORIGIN" "$ORIGIN/lib" "$ORIGIN/../lib" "$ORIGIN/../../lib"
+                          "$ORIGIN/../pybFoam")
 endif()
 
 set(NEOFOAM_BENCHMARK_MODE
@@ -94,7 +98,8 @@ include(cmake/CxxThirdParty.cmake)
 # flat layout). _neon installs to site-packages/neon/ while the native libs live in neofoam/lib, so
 # point it at $ORIGIN/../neofoam/lib (+ $ORIGIN/../lib for camp/cpptrace, which leak to the root).
 if(DEFINED SKBUILD AND TARGET _neon)
-  set_target_properties(_neon PROPERTIES INSTALL_RPATH "$ORIGIN/../neofoam/lib;$ORIGIN/../lib")
+  set(_neon_rpath "$ORIGIN/../neofoam/lib;$ORIGIN/../lib;$ORIGIN/../pybFoam")
+  set_target_properties(_neon PROPERTIES INSTALL_RPATH "${_neon_rpath}")
 endif()
 
 # TODO(rpath workaround): remove once umpire/camp ship a relocatable install upstream (BLT bakes an
