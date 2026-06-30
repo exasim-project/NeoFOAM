@@ -33,27 +33,21 @@ FIELDS_TO_COMPARE = [
     ("p", "volScalarField"),
 ]
 
-_LAMINAR_TURBULENCE_PROPERTIES = """\
-/*--------------------------------*- C++ -*----------------------------------*\\
-\\*---------------------------------------------------------------------------*/
-FoamFile
-{
-    version     2.0;
-    format      ascii;
-    class       dictionary;
-    object      turbulenceProperties;
-}
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-simulationType  laminar;
-
-// ************************************************************************* //
-"""
+# The canonical laminar ``turbulenceProperties`` lives once, as a real case file
+# under the turbulence test cases — read it instead of re-encoding the dict here.
+_LAMINAR_TURBULENCE_PROPERTIES = (
+    Path(__file__).resolve().parents[2]
+    / "turbulence"
+    / "cases"
+    / "laminar"
+    / "constant"
+    / "turbulenceProperties"
+)
 
 
 def _make_laminar(case_dir: Path) -> None:
-    (case_dir / "constant" / "turbulenceProperties").write_text(
-        _LAMINAR_TURBULENCE_PROPERTIES
+    shutil.copyfile(
+        _LAMINAR_TURBULENCE_PROPERTIES, case_dir / "constant" / "turbulenceProperties"
     )
 
 
