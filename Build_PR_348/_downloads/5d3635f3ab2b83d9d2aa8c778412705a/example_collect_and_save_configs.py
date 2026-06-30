@@ -45,6 +45,7 @@ import tempfile
 from pathlib import Path
 
 from neofoam import configurations
+from neofoam.fields import load_fields, save_fields
 from neofoam.framework.initialization import ConfigContext
 from neofoam.io import save_configs
 from neofoam.solver.incompressibleFluid import incompressibleFluid
@@ -69,6 +70,21 @@ schema = configurations(incompressibleFluid)
 print("config classes:", schema.names)
 for cls in schema:
     print(f"{cls.__name__:28s} fields: {sorted(cls.model_fields)}")
+
+
+# %%
+# Dict configs vs ``0/<name>`` field schemas
+# ------------------------------------------
+# ``configurations(...)`` surfaces both the dictionary configs
+# (``constant/...``, ``system/...``) and the synthesised per-field
+# schemas declared via ``Model.field(...)`` (``0/<name>`` files). The
+# ``.dicts`` and ``.fields`` properties filter the view so callers can
+# walk only one kind. The fields list reflects what the bound model
+# specs declare — ``pimple`` owns ``0/U`` / ``0/p``, ``boussinesq``
+# adds ``0/p_rgh`` / ``0/T`` / ``0/alphat``.
+
+print("dict files:", sorted(cls.io_config.file for cls in schema.dicts))
+print("0/* fields:", sorted(cls.io_config.file for cls in schema.fields))
 
 # %%
 # Look a class up, and read its JSON Schema
@@ -185,6 +201,33 @@ for cfg in hot_result.configs:
 
 
 # %%
+# Read and write ``0/<name>`` fields with ``load_fields`` / ``save_fields``
+# ------------------------------------------------------------------------
+# Dict configs that share a target file (``constant/transportProperties``,
+# ``system/fvSchemes``) need ``save_merged`` so multi-owner contributions
+# survive. Field files are single-owner per ``0/<name>``, so
+# :func:`neofoam.fields.load_fields` and :func:`neofoam.fields.save_fields`
+# orchestrate the per-file read/write directly. The mapping returned by
+# ``load_fields`` is keyed by field name (``"U"``, ``"p"``, …), so the
+# caller can mutate one BC and save just that field — or save the whole
+# set.
+
+fields = load_fields(hot, solver=incompressibleFluid)
+print("loaded fields:", sorted(fields))
+print(
+    "T@floor:",
+    type(fields["T"].boundaryField["floor"]).__name__,
+    fields["T"].boundaryField["floor"].model_dump(),
+)
+
+hot_fields_out = Path(tempfile.mkdtemp(prefix="neofoam_fields_hot_"))
+written_fields = save_fields(fields, hot_fields_out)
+print("wrote fields:")
+for path in written_fields:
+    print("  ", path.relative_to(hot_fields_out))
+
+
+# %%
 # Scaffold a case from configs alone
 # ----------------------------------
 # The reverse direction: build configs from values — no source case — via
@@ -222,10 +265,12 @@ print("reloaded controlDict.endTime:", reloaded.endTime)
 # See also
 # --------
 #
+# - :doc:`/how-to/declare-fields` — how a model declares its ``0/<name>``
+#   files (and the typed BC unions ``load_fields`` validates against).
 # - :doc:`example_per_model_fvschemes` — how the per-model ``fvSchemes`` /
 #   ``fvSolution`` slices in the schema set are declared.
 # - :doc:`example_work_with_config_files` — loading and validating a single
 #   config file.
 """Cleanup the temporary directories."""
-for _tmp in (pitz, hot, pitz_out, hot_out, scaffold):
+for _tmp in (pitz, hot, pitz_out, hot_out, hot_fields_out, scaffold):
     shutil.rmtree(_tmp, ignore_errors=True)

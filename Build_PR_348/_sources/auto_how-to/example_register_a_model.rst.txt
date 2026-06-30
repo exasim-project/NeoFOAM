@@ -188,11 +188,26 @@ qualifies.
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 122-128
+.. GENERATED FROM PYTHON SOURCE LINES 122-132
+
+Declaring on-disk fields
+------------------------
+``Model.config(...)`` registers the dictionary configs (``constant/...``
+/ ``system/...``) the model owns. The parallel for ``0/<name>`` field
+files is ``Model.field(name, dimensions=..., value_type=..., allowed_bcs=
+[...])``. The handle it returns cross-links to ``@spec.build`` via
+``decl.create(read_fn)``, and the synthesised per-field schema surfaces
+in ``configurations(solver).fields`` so a case author / agent fills
+the BCs without copying a source case. See
+:doc:`/how-to/declare-fields` for the full surface.
+
+.. GENERATED FROM PYTHON SOURCE LINES 135-143
 
 See also
 --------
 
+- :doc:`/how-to/declare-fields` — register a model's ``0/<name>`` files
+  with typed BC unions.
 - :doc:`/explanation/model-structure` — why the ``Spec`` / ``Runtime``
   split exists.
 - :doc:`/reference/model/index` — module API reference.

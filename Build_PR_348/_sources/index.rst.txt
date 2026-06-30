@@ -31,12 +31,14 @@ what you're trying to do:
    auto_tutorials/example_02_passive_scalar_plugin
    auto_tutorials/example_03_build_a_solver
    auto_tutorials/example_04_configure_with_io
+   tutorials/scaffold-a-case-wizard
 
 .. toctree::
    :maxdepth: 1
    :caption: How-to guides
 
    how-to/install
+   how-to/declare-fields
    auto_how-to/example_register_a_model
    auto_how-to/example_add_an_init_step_category
    auto_how-to/example_work_with_config_files
