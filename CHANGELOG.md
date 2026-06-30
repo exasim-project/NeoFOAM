@@ -21,6 +21,12 @@
 - Add the spec-loop engineering workflow (`write-spec`/`spec-loop` skills + planner/implementer/reviewer agents) [#342](https://github.com/exasim-project/NeoFOAM/pull/342)
 - Add in-process mesh preprocessing tools (`blockMesh`/`snappyHexMesh`/`checkMesh`) that run before the time loop via the init DAG, opt-in through `system/preprocess.yaml` with per-tool `depends_on`; self-registering `Tool` registry (`neofoam.tools`) and a standalone `neofoam preprocess` command [#346](https://github.com/exasim-project/NeoFOAM/pull/346)
 - Port `examples/neoPimpleFoam/neoPimpleFoam.cpp` (PIMPLE/PISO + SA-DDES turbulence) to Python (`neofoam.solver.neoPimpleFoam`) with supporting bindings (PimpleControl, viscous stress, GaussGreenGrad, turbulence model); fidelity-tested against the C++ neoPimpleFoam [#348](https://github.com/exasim-project/NeoFOAM/pull/348)
+- Add config-driven case configuration for incompressibleFluid [#340](https://github.com/exasim-project/NeoFOAM/pull/340)
+- Add solver config introspection (model catalog + per-config schema) [#340](https://github.com/exasim-project/NeoFOAM/pull/340)
+- Add an interactive marimo case wizard [#340](https://github.com/exasim-project/NeoFOAM/pull/340)
+- Add an AI case-fill agent (`neofoam agent fill`) [#340](https://github.com/exasim-project/NeoFOAM/pull/340)
+- Add an MCP server for case setup (`neofoam mcp serve`) [#340](https://github.com/exasim-project/NeoFOAM/pull/340)
+- Require Python >=3.10 [#340](https://github.com/exasim-project/NeoFOAM/pull/340)
 
 ## Development
 - Update submodule regularly by dependabot [#209](https://github.com/exasim-project/NeoFOAM/pull/209)

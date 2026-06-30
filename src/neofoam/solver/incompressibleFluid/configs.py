@@ -20,11 +20,16 @@ class ControlDictConfig(TimeControlConfig):
     """``system/controlDict`` — the file-bound time/write config for this solver.
 
     Inherits the time-stepping + write schema (``startTime``/``endTime``/
-    ``deltaT``/``adjustTimeStep``/``maxCo``/``maxDeltaT``/``writeControl``/
-    ``writeInterval`` and the ``adjustTimeStep`` ⇒ ``maxCo`` invariant) from
+    ``deltaT``/``writeControl``/``writeInterval``) from
     :class:`~neofoam.algorithms.solution_loop.config.TimeControlConfig`, so the framework
     stepper / loop / write control all consume one validated config. Adds only
     the solver-specific keys and binds the file via ``@IOStrategy``.
+
+    Adaptive stepping (``adjustTimeStep``/``maxCo``/``maxDeltaT``) is **not** here:
+    it co-owns ``controlDict`` through the opt-in time-step contribution models
+    :class:`~neofoam.solver.incompressibleFluid.models.courant.CourantConfig` and
+    :class:`~neofoam.solver.incompressibleFluid.models.max_delta_t.MaxDeltaTConfig`,
+    written only when those models are active.
     """
 
     application: str = "pimpleFoam"

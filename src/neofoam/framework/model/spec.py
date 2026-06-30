@@ -13,10 +13,11 @@ from __future__ import annotations
 import re
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, Callable, Iterable, Literal, Optional, TypeVar, cast
+from typing import Any, Callable, Iterable, Literal, Optional, Sequence, TypeVar, cast
 
 from pydantic import BaseModel
 
+from neofoam.fields.decl import FieldDecl
 from neofoam.framework.dependency_resolver import (
     DependencyResolver,
     wrap_with_dependency_resolution,
@@ -49,7 +50,12 @@ class ModelSpec:
         self.name = name
         self.enabled = True
 
+        # Human-readable display name for UIs (e.g. "Buoyancy (Boussinesq)").
+        # Independent of required-ness; set at registration via :meth:`labeled`.
+        self.label: str = name
+
         self._config_classes: list[type] = []
+        self._field_decls: list[FieldDecl] = []
 
         self._load_func: Optional[Callable[..., Any]] = None
         self._resolve_func: Optional[Callable[..., Any]] = None
@@ -101,6 +107,73 @@ class ModelSpec:
             return cls
         self._config_classes.append(cls)
         return cls
+
+    # ------------------------------------------------------------------
+    # Field registration (declares a 0/<name> field this model owns)
+    # ------------------------------------------------------------------
+
+    def field(
+        self,
+        name: str,
+        *,
+        dimensions: list[int],
+        value_type: type,
+        allowed_bcs: "Sequence[type[BaseModel]]",
+        write: bool = False,
+        depends_on: "Sequence[str]" = ("mesh",),
+        initial_value: Any = None,
+    ) -> FieldDecl:
+        """Declare an on-disk field (``0/<name>``) this model owns.
+
+        Returns a :class:`FieldDecl` handle for cross-linking from the
+        model's ``@build`` callback (``decl.create(read_fn)`` yields the
+        :class:`InitStep` the runtime consumes). The declaration also
+        seeds the per-field schema surfaced by ``configurations(solver)``
+        — see :func:`neofoam.fields.schema.schema_for`.
+
+        Args:
+            name: Field name without prefix (``"U"`` / ``"p"`` / …).
+            dimensions: OpenFOAM dimension exponents
+                ``[M, L, T, Θ, N, I, J]``.
+            value_type: :class:`~neofoam.fields.value_types.Scalar` /
+                :class:`~neofoam.fields.value_types.Vector` marker.
+            allowed_bcs: Permitted boundary-condition arms; include
+                :class:`~neofoam.fields.bc.GenericBC` to admit unknown
+                BC types via the smart-union fallback.
+            write: Mark the field for runtime auto-persistence.
+            depends_on: Runtime dependencies for the field's factory.
+            initial_value: Optional default ``internalField`` baked
+                into a scaffolded schema (Python literal or OpenFOAM
+                uniform string).
+
+        Returns:
+            The :class:`FieldDecl` handle. Same object is stored on
+            ``self._field_decls`` so the loader can discover it.
+
+        Raises:
+            ValueError: If a field of the same name is already declared
+                on this spec.
+        """
+        if any(d.name == name for d in self._field_decls):
+            raise ValueError(
+                f"ModelSpec '{self.name}': field '{name}' already declared"
+            )
+        decl = FieldDecl(
+            name=name,
+            dimensions=list(dimensions),
+            value_type=value_type,
+            allowed_bcs=tuple(allowed_bcs),
+            write=write,
+            depends_on=tuple(depends_on),
+            initial_value=initial_value,
+        )
+        self._field_decls.append(decl)
+        return decl
+
+    @property
+    def field_decls(self) -> "tuple[FieldDecl, ...]":
+        """Read-only view of declared fields, in registration order."""
+        return tuple(self._field_decls)
 
     def _aggregate_configs(self, instances: list[Any]) -> Any:
         """Build ``runtime.config`` from loaded instances."""
@@ -364,6 +437,15 @@ class ModelSpec:
                 f"Plugin interface '{plugin_interface}' does not have a 'register' method"
             )
         plugin_interface.register(wrapper_class)
+        return self
+
+    def labeled(self, label: str) -> "ModelSpec":
+        """Set this model's human-readable display label for UIs.
+
+        Chainable (e.g. after :meth:`register_with`). Independent of whether the
+        model's family is required; defaults to the model name.
+        """
+        self.label = label
         return self
 
     # ------------------------------------------------------------------

@@ -13,9 +13,9 @@ This is the only turbulence module that imports ``neofoam.io`` (hence pybFoam);
 tests that load it run the OpenFOAM IO path directly.
 """
 
-from typing import Optional
+from typing import Literal, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 from neofoam.io import BaseConfig, IOStrategy, OF
 
@@ -40,8 +40,35 @@ class LESProperties(BaseModel):
 
 @IOStrategy(OF("constant/turbulenceProperties"))
 class TurbulencePropertiesConfig(BaseConfig):
-    """Top-level ``constant/turbulenceProperties`` dictionary."""
+    """Top-level ``constant/turbulenceProperties`` dictionary.
 
-    simulationType: str
+    ``simulationType`` is the closed set ``{laminar, RAS, LES}`` so the generated
+    JSON Schema advertises the three valid options as an enum — the
+    :class:`~neofoam.io.strategies.openfoam_strategy.OpenFOAMStrategy` unwraps
+    ``Literal[...]`` to ``str`` for disk I/O, so the on-disk format is unchanged.
+    A ``model_validator`` then pins the simulationType ⇒ sub-block invariant the
+    dispatcher (``selection.model_name``) silently relies on.
+    """
+
+    simulationType: Literal["laminar", "RAS", "LES"]
     RAS: Optional[RASProperties] = None
     LES: Optional[LESProperties] = None
+
+    @model_validator(mode="after")
+    def _check_simulation_type_consistency(self) -> "TurbulencePropertiesConfig":
+        if self.simulationType == "laminar":
+            if self.RAS is not None or self.LES is not None:
+                raise ValueError(
+                    "simulationType=laminar must not set RAS or LES sub-dictionary"
+                )
+        elif self.simulationType == "RAS":
+            if self.RAS is None:
+                raise ValueError("simulationType=RAS requires the RAS sub-dictionary")
+            if self.LES is not None:
+                raise ValueError("simulationType=RAS must not set LES sub-dictionary")
+        elif self.simulationType == "LES":
+            if self.LES is None:
+                raise ValueError("simulationType=LES requires the LES sub-dictionary")
+            if self.RAS is not None:
+                raise ValueError("simulationType=LES must not set RAS sub-dictionary")
+        return self

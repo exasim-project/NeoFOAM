@@ -29,6 +29,22 @@ from pybFoam import (
     volVectorField,
 )
 
+from neofoam.fields import (
+    CalculatedBC,
+    CyclicBC,
+    EmptyBC,
+    FixedValueBC,
+    GenericBC,
+    InletOutletBC,
+    NoSlipBC,
+    PressureInletOutletVelocityBC,
+    Scalar,
+    SlipBC,
+    SymmetryBC,
+    SymmetryPlaneBC,
+    Vector,
+    ZeroGradientBC,
+)
 from neofoam.foam import fvSchemes, fvSolution
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.dependency_resolver import wrap_with_dependency_resolution
@@ -52,6 +68,64 @@ pimple = Model("Pimple")
 PimpleFvSchemes = pimple.config(fvSchemes)
 PimpleFvSolution = pimple.config(fvSolution)
 
+# Optional PIMPLE control keys read straight from ``system/fvSolution`` by
+# ``setRefCell`` (see ``create_pressure_reference``). A closed domain (no
+# fixed-pressure BC) needs a pressure reference; an open domain doesn't, so
+# these stay optional and only serialise when the case author sets them.
+PimpleFvSolution.add_controls("PIMPLE", pRefCell=int, pRefValue=float)
+
+# 0/<name> field declarations PIMPLE owns. The framework auto-synthesises
+# the matching read_field InitStep (see
+# :func:`neofoam.fields.synthesis.synthesize_init_step`) and surfaces
+# the schemas through ``configurations(solver).fields`` so the agent /
+# case author fills the BCs without copying a source case. ``GenericBC``
+# keeps unknown BC types (e.g. ``codedFixedValue``) parsing through the
+# smart-union fallback.
+pimple.field(
+    "U",
+    dimensions=[0, 1, -1, 0, 0, 0, 0],
+    value_type=Vector,
+    # Velocity-side arm set picked from the upstream-tutorial frequency
+    # survey: noSlip / fixedValue dominate; pressureInletOutletVelocity,
+    # slip, inletOutlet, and the topology arms (empty / symmetry* /
+    # cyclic) round out >90% of all volVectorField patches.
+    allowed_bcs=[
+        NoSlipBC,
+        FixedValueBC,
+        ZeroGradientBC,
+        SlipBC,
+        InletOutletBC,
+        PressureInletOutletVelocityBC,
+        EmptyBC,
+        SymmetryBC,
+        SymmetryPlaneBC,
+        CyclicBC,
+        GenericBC,
+    ],
+    write=True,
+)
+pimple.field(
+    "p",
+    dimensions=[0, 2, -2, 0, 0, 0, 0],
+    value_type=Scalar,
+    # Pressure: fixedValue / zeroGradient / inletOutlet / calculated
+    # dominate the upstream survey; topology arms cover thin / periodic
+    # cases. ``GenericBC`` keeps the wall-functions (``totalPressure``,
+    # adjoint pressure arms, …) parsing through the smart-union.
+    allowed_bcs=[
+        FixedValueBC,
+        ZeroGradientBC,
+        InletOutletBC,
+        CalculatedBC,
+        EmptyBC,
+        SymmetryBC,
+        SymmetryPlaneBC,
+        CyclicBC,
+        GenericBC,
+    ],
+    write=True,
+)
+
 
 class ViscousStress(Protocol):
     def update(self, ctx: Context) -> None: ...
@@ -60,20 +134,20 @@ class ViscousStress(Protocol):
 
 @pimple.build
 def build(self: Any) -> list[Any]:
-    """Lazy initializers for PIMPLE state.
+    """Lazy initializers for PIMPLE state (non-field bits only).
 
-    Reads ``p`` and ``U`` from disk, creates ``phi`` from ``U``, builds
-    the pimpleControl object and the pressure-reference cell. When
-    ``use_boussinesq`` has been flipped (by the boussinesq plugin during
-    resolve), the pressure-reference dependency list adds ``p_rgh`` and
-    the reference cell logic adapts to use the modified-pressure field.
+    ``U`` and ``p`` are auto-synthesized from the ``pimple.field(...)``
+    declarations at the top of this module — the framework's
+    :meth:`ModelRuntime.run_build` emits the matching read_field
+    InitStep with ``depends_on`` and ``write`` flowing from the
+    declaration. ``@build`` only carries what the framework cannot
+    synthesize: ``phi`` (surfaceScalarField; computed from U), the
+    pimpleControl object, the running continuity-error accumulator,
+    and the pressure-reference cell logic. When ``use_boussinesq`` has
+    been flipped (by the boussinesq plugin during resolve), the
+    pressure-reference dependency list adds ``p_rgh`` and the
+    reference cell logic adapts to use the modified-pressure field.
     """
-
-    def create_p(context: dict[str, Any]) -> volScalarField:
-        return volScalarField.read_field(context["mesh"], "p")
-
-    def create_U(context: dict[str, Any]) -> volVectorField:
-        return volVectorField.read_field(context["mesh"], "U")
 
     def create_phi(context: dict[str, Any]) -> surfaceScalarField:
         return pyf.createPhi(context["fields.U"])
@@ -112,8 +186,10 @@ def build(self: Any) -> list[Any]:
         return {"pRefCell": pRefCell, "pRefValue": pRefValue}
 
     init_steps = [
-        field("p", create_p, depends_on=["mesh"], write=True),
-        field("U", create_U, depends_on=["mesh"], write=True),
+        # ``phi`` is a surfaceScalarField (no per-cell internalField /
+        # boundaryField the way ``U`` / ``p`` carry, and no ``0/phi``
+        # disk file in the standard sense) so it stays on the legacy
+        # ``field()`` helper until a surface-field schema lands.
         field("phi", create_phi, depends_on=["fields.U"], write=True),
         model("pimple_control", create_pimple_control, depends_on=["mesh"]),
         model("cumulativeContErr", create_cumulative_cont_err),
@@ -139,7 +215,12 @@ def inner_loop(ctx: Context) -> bool:
 
 @pimple.operation(operation_number="2.1")
 @PimpleFvSchemes.add(
-    ddt="ddt(U)", div="div(phi,U)", grad="grad(U)", laplacian="laplacian(nuEff,U)"
+    ddt="ddt(U)",
+    # ``div(phi,U)`` (convection) + the viscous-stress divergence emitted by
+    # ``divDevReff(U)`` — both required for the momentum predictor.
+    div=["div(phi,U)", "div((nuEff*dev2(T(grad(U)))))"],
+    grad="grad(U)",
+    laplacian="laplacian(nuEff,U)",
 )
 @PimpleFvSolution.add("U")
 def momentum(
@@ -221,7 +302,7 @@ def continuity(
 @pimple.operation(operation_number="2.1")
 @PimpleFvSchemes.add(
     ddt="ddt(U)",
-    div="div(phi,U)",
+    div=["div(phi,U)", "div((nuEff*dev2(T(grad(U)))))"],
     grad="grad(U)",
     laplacian="laplacian(nuEff,U)",
     snGrad="snGrad(rhok)",

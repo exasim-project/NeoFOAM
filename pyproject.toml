@@ -12,13 +12,13 @@ authors = [
     { name = "Chih-Ta Wang", email = "chihta.wang@tum.de" },
     { name = "Dheeraj Raghunathan", email = "dheeraj.raghunathan@tum.de" }
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 
 dependencies = [
     "numpy",
     "matplotlib",
     "foamlib",
-    "pybFoam>=0.4.3",
+    "pybFoam>=0.4.4",
     "typer",
     "pydantic>=2.0.0",
     "networkx>=3.0",
@@ -71,8 +71,21 @@ docs = [
     # tutorials 02 and 03.
     "imageio",
 ]
+agent = [
+    # OpenAI-compatible client (local Ollama, OpenAI-style endpoints) plus the
+    # Anthropic backend for hosted Claude models (e.g. Haiku).
+    "pydantic-ai-slim[openai,anthropic]>=0.0.40",
+]
+mcp = [
+    # MCP server: FastMCP v3 protocol layer (pulls the `mcp` SDK transitively)
+    # + FastAPI/uvicorn web server. httpx backs the FastAPI TestClient / MCP client.
+    "fastmcp>=3,<4",
+    "fastapi",
+    "uvicorn",
+    "httpx",
+]
 all = [
-    "neofoam[dev,docs]",
+    "neofoam[dev,docs,agent,mcp]",
 ]
 
 [project.scripts]
@@ -102,7 +115,7 @@ no-build-isolation-package = ["neofoam"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py39"
+target-version = "py310"
 extend-exclude = ["build/", "dist/"]
 
 [tool.ruff.lint]

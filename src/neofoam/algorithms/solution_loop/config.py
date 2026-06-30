@@ -14,9 +14,8 @@ advances a :class:`~neofoam.algorithms.solution_loop.loop_state.LoopState`. Mirr
 from __future__ import annotations
 
 import math
-from typing import Optional
 
-from pydantic import Field, model_validator
+from pydantic import Field
 
 from neofoam.algorithms.field_writer.write_control import WriteControlConfig
 from neofoam.io import OF, IOStrategy
@@ -48,20 +47,10 @@ class TimeControlConfig(WriteControlConfig):
     """Time-stepping + write control, as a validated config.
 
     Extends :class:`~neofoam.algorithms.field_writer.write_control.WriteControlConfig`
-    with the advancement keys the loop reads (``endTime``/``deltaT`` and the
-    adaptive-stepping cap). The concrete, file-bound config subclasses this and
-    adds an ``@IOStrategy``; the framework only ever sees the validated config,
-    never a raw dict — so a plugin extends the loop by extending this schema.
+    with the advancement keys the core loop reads (``endTime``/``deltaT``).
+    Adaptive stepping (``maxCo``/``maxDeltaT``) is opt-in via the ``courant`` /
+    ``max_delta_t`` models, not the core config.
     """
 
     endTime: float = Field(gt=0)
     deltaT: float = Field(gt=0)
-    adjustTimeStep: bool = False
-    maxCo: Optional[float] = Field(default=None, gt=0)
-    maxDeltaT: Optional[float] = Field(default=None, gt=0)
-
-    @model_validator(mode="after")
-    def _check_adjust_time_step(self) -> "TimeControlConfig":
-        if self.adjustTimeStep and self.maxCo is None:
-            raise ValueError("maxCo must be set when adjustTimeStep=True")
-        return self

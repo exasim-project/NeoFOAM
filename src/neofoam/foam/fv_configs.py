@@ -24,7 +24,7 @@ is per-subclass and per-section.
 
 from __future__ import annotations
 
-from typing import Any, Callable, ClassVar
+from typing import Any, Callable, ClassVar, Optional
 
 from pydantic import ConfigDict, Field, create_model
 from pydantic.fields import FieldInfo
@@ -68,18 +68,27 @@ def _sanitize_name(s: str) -> str:
         .replace(",", "_")
         .replace(".", "_")
         .replace(" ", "_")
+        .replace("*", "_")
     )
 
 
-def _register_entry(cls: type, section_name: str, key: str, value_type: Any) -> None:
-    """Record one (section, key, value_type) on ``cls._pending_sections``.
+def _register_entry(
+    cls: type,
+    section_name: str,
+    key: str,
+    value_type: Any,
+    optional: bool = False,
+) -> None:
+    """Record one (section, key, value_type, optional) on ``cls._pending_sections``.
 
     Storage is per-subclass; the actual Pydantic submodels are
     (re-)synthesised by :func:`_rebuild_sections` after every change.
+    ``optional`` entries become ``Optional[...]`` fields defaulting to ``None``
+    (for domain-dependent keys like ``pRefCell`` that not every case carries).
     """
     section = cls._pending_sections.setdefault(section_name, {})  # type: ignore[attr-defined]
     attr_name = _sanitize_name(key)
-    section.setdefault(attr_name, (value_type, key))
+    section.setdefault(attr_name, (value_type, key, optional))
 
 
 def _rebuild_sections(cls: type) -> None:
@@ -92,10 +101,15 @@ def _rebuild_sections(cls: type) -> None:
     parent field works around this.
     """
     for section_name, entries in cls._pending_sections.items():  # type: ignore[attr-defined]
-        field_defs: dict[str, Any] = {
-            attr: (value_type, Field(alias=alias))
-            for attr, (value_type, alias) in entries.items()
-        }
+        field_defs: dict[str, Any] = {}
+        for attr, (value_type, alias, optional) in entries.items():
+            if optional:
+                field_defs[attr] = (
+                    Optional[value_type],
+                    Field(alias=alias, default=None),
+                )
+            else:
+                field_defs[attr] = (value_type, Field(alias=alias))
         fresh = create_model(
             f"_{section_name}",
             __config__=ConfigDict(extra="allow", populate_by_name=True),
@@ -192,3 +206,17 @@ class fvSolution(BaseConfig):
             return fn
 
         return _decorator
+
+    @classmethod
+    def add_controls(cls, section: str, **key_to_type: Any) -> None:
+        """Declare OPTIONAL control entries under a top-level ``section``.
+
+        For algorithm-control keys the solver reads straight from the dict —
+        e.g. ``PIMPLE { pRefCell; pRefValue; }`` for closed-domain pressure
+        referencing. Optional (default ``None``) so cases that don't need them
+        (open domains with a fixed-pressure BC) still validate, and
+        ``exclude_none`` keeps them out of the written file unless set.
+        """
+        for key, value_type in key_to_type.items():
+            _register_entry(cls, section, key, value_type, optional=True)
+        _rebuild_sections(cls)

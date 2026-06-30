@@ -57,12 +57,12 @@ incompressibleFluid = Solver("incompressibleFluid")
 # name those config classes itself.
 incompressibleFluid.config(ControlDictConfig)
 incompressibleFluid.config(PreprocessConfig)  # mesh pipeline enable file (configs())
-incompressibleFluid.core_models(PressureVelocityAlgorithm)  # required: pick ONE
-incompressibleFluid.core_models(viscosityModel)  # molecular nu (transportProperties)
-incompressibleFluid.core_models(
-    momentumTransportModel
-)  # nut + stress (turbulenceProperties)
-incompressibleFluid.optional_models(incompressibleFluidModel)  # zero or more
+
+incompressibleFluid.models(PressureVelocityAlgorithm, required=True)  # pick ONE
+incompressibleFluid.models(viscosityModel, required=True)  # molecular nu
+incompressibleFluid.models(momentumTransportModel, required=True)  # nut + stress
+
+incompressibleFluid.models(incompressibleFluidModel)  # optional: zero or more
 
 
 @incompressibleFluid.initializer

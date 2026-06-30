@@ -68,7 +68,10 @@ class JSONStrategy(SubdictMixin):
             path: Path to the JSON file
             encoding: File encoding (default: utf-8)
         """
-        data = instance.model_dump(mode="python", exclude_none=False)
+        # ``by_alias=True`` so a ``Field(alias="div(phi,U)")``-style declaration
+        # round-trips under its on-disk key, not pydantic's sanitised Python
+        # attribute name.
+        data = instance.model_dump(mode="python", exclude_none=False, by_alias=True)
         path.parent.mkdir(parents=True, exist_ok=True)
 
         if not self.subdict_path:

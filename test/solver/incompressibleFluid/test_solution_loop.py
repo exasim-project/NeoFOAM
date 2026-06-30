@@ -72,7 +72,7 @@ def test_modelspec_is_a_full_model() -> None:
 
 
 def test_build_emits_state_then_engine() -> None:
-    config = _config(adjustTimeStep=True, maxCo=1.0, maxDeltaT=0.5)
+    config = _config()
     steps = build(config)
     assert [s.name for s in steps] == [
         "time",
@@ -88,24 +88,6 @@ def test_build_emits_state_then_engine() -> None:
     loop = steps[1].initializer({"time": state})
     assert isinstance(loop, SolutionLoop)
     assert loop.state is state
-    assert loop.constraints == []
-
-
-# --- constraint seeding from config (make_solution_loop) ------------------
-
-
-def test_make_solution_loop_seeds_no_constraints() -> None:
-    # Stability limits are folded per step from the timeStepConstraint interface,
-    # so the engine starts with an empty constraint list for any config.
-    adjustable = make_solution_loop(
-        _config(adjustTimeStep=True, maxCo=1.0, maxDeltaT=0.5),
-        make_loop_state(_config(adjustTimeStep=True, maxCo=1.0, maxDeltaT=0.5)),
-    )
-    fixed = make_solution_loop(
-        _config(adjustTimeStep=False), make_loop_state(_config())
-    )
-    assert adjustable.constraints == []
-    assert fixed.constraints == []
 
 
 # --- FoamTime LoopBackend: mirror the LoopState onto pybFoam.Time ---------
@@ -126,6 +108,8 @@ def test_loop_backend_steps_inject_backend_and_logger() -> None:
     loop = make_solution_loop(_config(deltaT=0.1), make_loop_state(_config(deltaT=0.1)))
     steps = loop_backend_steps()
     by_name = {s.name: s for s in steps}
+    # the CFL measurement provider is no longer here — it belongs to the opt-in
+    # courant time-step model, so loop_backend_steps only wires backend + logger
     assert set(by_name) == {
         "models.loop_backend",
         "models.loop_logger",
