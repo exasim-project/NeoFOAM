@@ -16,8 +16,6 @@ from typing import Any
 
 import pytest
 
-pytest.importorskip("pybFoam")
-
 from neofoam.framework.tools import ToolRuntime  # noqa: E402
 from neofoam.tools import block_mesh  # noqa: E402
 from neofoam.tools.block_mesh import BlockMeshStep, blockMeshTool  # noqa: E402

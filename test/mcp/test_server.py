@@ -7,7 +7,6 @@ import json
 import pytest
 
 pytest.importorskip("fastmcp")
-pytest.importorskip("pybFoam")
 
 from neofoam.mcp import tools  # noqa: E402
 from neofoam.mcp.registry import resolve_solver  # noqa: E402

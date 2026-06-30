@@ -7,25 +7,20 @@
 into one write, so multi-owner files (e.g. ``constant/transportProperties`` from
 both ``TransportPropertiesConfig`` and ``BoussinesqConfig``) keep every
 contribution while the writer still clears-and-rewrites each file (so re-saving a
-single config drops keys it no longer carries). Writing goes through pybFoam, so
-these are gated on the bindings.
+single config drops keys it no longer carries). Writing goes through pybFoam.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
+import pybFoam as pyf
 
-pytest.importorskip("pybFoam")
-
-import pybFoam as pyf  # noqa: E402
-
-from neofoam.framework.solver.configurations import configurations  # noqa: E402
-from neofoam.io import write_configs  # noqa: E402
-from neofoam.io.base import BaseConfig  # noqa: E402
-from neofoam.io.decorator import OF, IOStrategy  # noqa: E402
-from neofoam.solver.incompressibleFluid.incompressibleFluid import (  # noqa: E402
+from neofoam.framework.solver.configurations import configurations
+from neofoam.io import write_configs
+from neofoam.io.base import BaseConfig
+from neofoam.io.decorator import OF, IOStrategy
+from neofoam.solver.incompressibleFluid.incompressibleFluid import (
     incompressibleFluid,
 )
 

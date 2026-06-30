@@ -10,8 +10,6 @@ from typing import Any, cast
 
 import pytest
 
-pytest.importorskip("pybFoam")
-
 from pydantic import ValidationError
 
 from neofoam.algorithms.solution_loop.interfaces import VGREAT, timeStepConstraint

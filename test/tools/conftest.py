@@ -13,8 +13,6 @@ from typing import Iterator
 
 import pytest
 
-pytest.importorskip("pybFoam")
-
 from neofoam.tools import registry  # noqa: E402
 
 

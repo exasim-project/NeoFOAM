@@ -13,8 +13,6 @@ from pathlib import Path
 
 import pytest
 
-pytest.importorskip("pybFoam")
-
 from neofoam.framework.initialization import InitializerBuilder, lazy  # noqa: E402
 from neofoam.framework.tools import tool_graph_steps  # noqa: E402
 from neofoam.solver.incompressibleFluid.create_fields import create_init  # noqa: E402

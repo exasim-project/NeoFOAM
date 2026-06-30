@@ -218,7 +218,6 @@ def test_model_catalog_splits_required_and_optional() -> None:
 
 
 def test_incompressible_fluid_models_required_vs_optional() -> None:
-    pytest.importorskip("pybFoam")
     from neofoam.framework.solver.configurations import model_catalog
     from neofoam.solver.incompressibleFluid.incompressibleFluid import (
         incompressibleFluid,
@@ -234,7 +233,6 @@ def test_incompressible_fluid_models_required_vs_optional() -> None:
 
 
 def test_incompressible_fluid_boussinesq_label_in_catalog() -> None:
-    pytest.importorskip("pybFoam")
     from neofoam.framework.solver.configurations import model_catalog
     from neofoam.solver.incompressibleFluid.incompressibleFluid import (
         incompressibleFluid,

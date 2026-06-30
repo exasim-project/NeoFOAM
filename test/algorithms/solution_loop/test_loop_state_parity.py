@@ -7,9 +7,6 @@ Builds an actual ``pybFoam.Time`` from a temporary case and drives both clocks
 with the identical ``while loop:``, asserting equality on the shared advancement
 quantities (``value``/``deltaT``/``write_time``/``timeName``). Field IO is *not*
 compared — that is the one place behaviour is meant to differ.
-
-Skips cleanly when pybFoam or the OpenFOAM environment needed to construct a
-``Time`` is unavailable.
 """
 
 from __future__ import annotations
@@ -17,13 +14,12 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+import pybFoam
 import pytest
 
 from neofoam.algorithms.solution_loop.config import _WRITE_CONTROL_ALIASES
 from neofoam.algorithms.solution_loop.loop_state import LoopState
 from neofoam.algorithms.solution_loop.solution_loop import SolutionLoop
-
-pybFoam = pytest.importorskip("pybFoam")
 
 _CONTROL_DICT = """\
 FoamFile {{ version 2.0; format ascii; class dictionary; object controlDict; }}
@@ -43,10 +39,7 @@ def _make_case(tmp_path: Path, **kw: object) -> Any:
     (case / "system").mkdir(parents=True)
     (case / "constant").mkdir()
     (case / "system" / "controlDict").write_text(_CONTROL_DICT.format(**kw))
-    try:
-        return pybFoam.Time(str(tmp_path), "case")
-    except Exception as exc:  # noqa: BLE001 — env-dependent construction
-        pytest.skip(f"cannot construct pybFoam.Time (OpenFOAM env?): {exc}")
+    return pybFoam.Time(str(tmp_path), "case")
 
 
 @pytest.mark.parametrize(

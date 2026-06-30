@@ -14,8 +14,6 @@ from pathlib import Path
 
 import pytest
 
-pytest.importorskip("pybFoam")
-
 from neofoam.framework.initialization import (  # noqa: E402
     InitStepExecutionError,
     lazy,

@@ -21,8 +21,6 @@ from pathlib import Path
 
 import pytest
 
-pytest.importorskip("pybFoam")
-
 import pybFoam as pyf  # noqa: E402
 
 from neofoam.io import write_configs  # noqa: E402

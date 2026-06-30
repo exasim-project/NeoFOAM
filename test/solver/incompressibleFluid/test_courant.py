@@ -10,8 +10,6 @@ from pathlib import Path
 
 import pytest
 
-pytest.importorskip("pybFoam")
-
 from neofoam.algorithms.solution_loop.interfaces import VGREAT, timeStepConstraint
 from neofoam.framework.context import Context
 from neofoam.framework.model import BoundModelInterface, ModelRuntime

@@ -15,8 +15,6 @@ from typing import Any
 
 import pytest
 
-pytest.importorskip("pybFoam")
-
 from neofoam.framework.tools import ToolRuntime  # noqa: E402
 from neofoam.tools import snappy_hex_mesh  # noqa: E402
 from neofoam.tools.snappy_hex_mesh import (  # noqa: E402
