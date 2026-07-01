@@ -26,6 +26,8 @@ from neofoam.framework.operations import (
 )
 from neofoam.framework.solver import Solver
 from neofoam.framework.tools import PreprocessConfig
+from neofoam.tools.block_mesh import BlockMeshDictConfig
+from neofoam.tools.snappy_hex_mesh import SnappyHexMeshDictConfig
 from neofoam.framework.types import OperationMetadata
 from neofoam.turbulence import momentumTransportModel
 from neofoam.viscosity import viscosityModel
@@ -57,6 +59,10 @@ incompressibleFluid = Solver("incompressibleFluid")
 # name those config classes itself.
 incompressibleFluid.config(ControlDictConfig)
 incompressibleFluid.config(PreprocessConfig)  # mesh pipeline enable file (configs())
+# The two mesh-input dicts: writer configs so configurations()/wizard/MCP fill and
+# persist them like any other case file (blockMesh/snappyHexMesh read them at launch).
+incompressibleFluid.config(BlockMeshDictConfig)
+incompressibleFluid.config(SnappyHexMeshDictConfig)
 
 incompressibleFluid.models(PressureVelocityAlgorithm, required=True)  # pick ONE
 incompressibleFluid.models(viscosityModel, required=True)  # molecular nu

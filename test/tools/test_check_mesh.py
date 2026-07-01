@@ -108,6 +108,7 @@ def test_checkmesh_propagates_check_flags(monkeypatch: pytest.MonkeyPatch) -> No
     }
 
 
+@pytest.mark.slow
 def test_checkmesh_passes_on_valid_mesh(tmp_path: Path) -> None:
     import pybFoam as pyf
     from pybFoam.meshing import checkMesh as real_check

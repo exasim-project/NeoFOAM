@@ -1,0 +1,150 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      snappyHexMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+castellatedMesh true;
+snap            true;
+addLayers       false;
+
+geometry
+{
+    metalSheet.stl
+    {
+        type triSurfaceMesh;
+        name metalSheet;
+    }
+};
+
+castellatedMeshControls
+{
+    maxLocalCells   200000000;
+    maxGlobalCells  300000000;
+    minRefinementCells 0;
+    nCellsBetweenLevels 5;
+    maxLoadUnbalance 0.2;
+    allowFreeStandingZoneFaces false;
+    resolveFeatureAngle      1;
+
+    features
+    (
+    );
+
+    refinementSurfaces
+    {
+        metalSheet
+        {
+            level (3 3);
+        }
+    }
+
+    refinementRegions
+    {
+        metalSheet
+        {
+            mode distance;
+            levels ((0.05 3) (0.1 2));
+        }
+    }
+
+    locationInMesh ( 0.8 0 0 ) ;
+}
+
+snapControls
+{
+    tolerance       1;
+    implicitFeatureSnap true;
+    explicitFeatureSnap false;
+    multiRegionFeatureSnap false;
+    detectNearSurfacesSnap true;
+    nSmoothPatch    3;
+    nSolveIter          30;
+    nRelaxIter      5;
+    nFeatureSnapIter  5;
+        strictRegionSnap true;
+}
+
+addLayersControls
+{
+    layers
+    {
+    }
+    relativeSizes    true ;
+    expansionRatio    1.2 ;
+    firstLayerThickness   0.1 ;
+    featureAngle    85;
+    slipFeatureAngle 30;
+    nGrow           0;
+    nBufferCellsNoExtrude 0;
+    minMedialAxisAngle 90;
+    maxFaceThicknessRatio 0.2;
+    maxThicknessToMedialRatio 0.3;
+    minThickness    1e-06;
+    nLayerIter      50;
+    nRelaxIter      5;
+    nSmoothSurfaceNormals 10;
+    nSmoothNormals  3;
+    nSmoothThickness 10;
+    nRelaxedIter    10;
+    nMedialAxisIter 10;
+}
+
+meshQualityControls
+{
+    minVol          1e-13;
+    minTetQuality   1e-13;
+    minArea         1e-13;
+    minTwist        0.05;
+    minDeterminant  1e-06;
+    minFaceWeight   0.02;
+    minVolRatio     0.01;
+    minTriangleTwist 0.01;
+    minFlatness     0.5;
+    maxNonOrtho     60;
+    maxBoundarySkewness 20;
+    maxInternalSkewness 4;
+    maxConcave      80;
+    nSmoothScale    4;
+    errorReduction  0.75;
+
+    relaxed
+    {
+        minVol          1e-15;
+        minTetQuality   1e-15;
+        minArea         1e-15;
+        minTwist        0.001;
+        minDeterminant  1e-06;
+        minFaceWeight   1e-06;
+        minVolRatio     0.01;
+        minTriangleTwist 0.01;
+        minFlatness     0.5;
+        maxNonOrtho     65;
+        maxBoundarySkewness 20;
+        maxInternalSkewness 4;
+        maxConcave      80;
+        nSmoothScale    4;
+        errorReduction  0.75;
+    }
+}
+
+mergeTolerance  1e-08;
+debug           0;
+
+writeFlags
+(
+    scalarLevels
+);
+
+
+// ************************************************************************* //
