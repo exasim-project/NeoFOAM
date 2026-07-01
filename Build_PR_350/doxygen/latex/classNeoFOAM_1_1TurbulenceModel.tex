@@ -1,0 +1,143 @@
+\doxysection{Neo\+FOAM\+::Turbulence\+Model Class Reference}
+\hypertarget{classNeoFOAM_1_1TurbulenceModel}{}\label{classNeoFOAM_1_1TurbulenceModel}\index{NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}}
+
+
+Abstract base for \doxylink{namespaceNeoFOAM}{Neo\+FOAM} turbulence models with runtime selection.  
+
+
+
+
+{\ttfamily \#include $<$turbulence\+Model.\+hpp$>$}
+
+Inheritance diagram for Neo\+FOAM\+::Turbulence\+Model\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=1.421320cm]{classNeoFOAM_1_1TurbulenceModel}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+virtual \mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel_a9e88a63a740f6b15b2bca5afe44341aa}{\texorpdfstring{$\sim$}{\string~}\+Turbulence\+Model}} ()=default
+\item 
+virtual void \mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel_ad6c3e347eb9ee939dfb3a1d10f5836de}{initialize}} (const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::scalar $>$ \&nu\+Tilda\+Init, const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::scalar $>$ \&nut\+Init)
+\item 
+virtual void \mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel_a0d62c0f93efa69172798d2abe0c1a919}{validate}} (const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Vec3 $>$ \&U)=0
+\item 
+virtual void \mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel_abadc7ca738620793708e34a467610289}{correct}} (const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Vec3 $>$ \&U, nnfvcc\+::\+Surface\+Field$<$ Neo\+N\+::scalar $>$ \&phi, \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&rt)=0
+\item 
+virtual nnfvcc\+::\+Surface\+Field$<$ Neo\+N\+::scalar $>$ \& \mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel_a39bed7c59f3724ff70fcf9ce3001d343}{nu\+Eff}} ()=0
+\item 
+virtual const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::scalar $>$ \& \mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel_a86fcc51daef2c0f4b5ac0d6cc6e2b76f}{nut}} () const =0
+\item 
+virtual const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Tensor $>$ \& \mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel_aef72cb4809fc873b080a0d4ae3f00d4b}{gradU}} () const =0
+\item 
+virtual void \mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel_a6af2db926d7eb7d289a1afc6b8df18e9}{rotate\+Old\+Times}} ()=0
+\item 
+virtual void \mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel_a732733c4179c9ae7a361ce73ccb408ec}{write}} (\mbox{\hyperlink{classNeoFOAM_1_1MeshAdapter}{Mesh\+Adapter}} \&mesh) const =0
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static std\+::string \mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel_a057e4bc3c9f6c0776fa975c519434f95}{name}} ()
+\item 
+static std\+::unique\+\_\+ptr$<$ \mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel}{Turbulence\+Model}} $>$ \mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel_a49dee8641d6055c7fa2b88be94e8448a}{create}} (\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&rt, const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::scalar $>$ \&nu)
+\begin{DoxyCompactList}\small\item\em Read the model name from constant/turbulence\+Properties and create the model. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Abstract base for \doxylink{namespaceNeoFOAM}{Neo\+FOAM} turbulence models with runtime selection. 
+
+Concrete models register via {\ttfamily Turbulence\+Model\+::\+Register\texorpdfstring{$<$}{<}Derived\texorpdfstring{$>$}{>}} and are instantiated by name through {\ttfamily Turbulence\+Model\+::create(rt, nu)}, which reads the model name from constant/turbulence\+Properties. Models own all transport scalars (nu\+Tilda, nut, …) and map their own solver subdicts in their constructors. 
+
+Definition at line \mbox{\hyperlink{turbulenceModel_8hpp_source_l00022}{22}} of file \mbox{\hyperlink{turbulenceModel_8hpp_source}{turbulence\+Model.\+hpp}}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{classNeoFOAM_1_1TurbulenceModel_a9e88a63a740f6b15b2bca5afe44341aa}\label{classNeoFOAM_1_1TurbulenceModel_a9e88a63a740f6b15b2bca5afe44341aa} 
+\index{NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}!````~TurbulenceModel@{\texorpdfstring{$\sim$}{\string~}TurbulenceModel}}
+\index{````~TurbulenceModel@{\texorpdfstring{$\sim$}{\string~}TurbulenceModel}!NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}}
+\doxysubsubsection{\texorpdfstring{\texorpdfstring{$\sim$}{\string~}TurbulenceModel()}{\string~TurbulenceModel()}}
+{\footnotesize\ttfamily virtual Neo\+FOAM\+::\+Turbulence\+Model\+::\texorpdfstring{$\sim$}{\string~}\+Turbulence\+Model (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}, {\ttfamily [default]}}
+
+
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{classNeoFOAM_1_1TurbulenceModel_abadc7ca738620793708e34a467610289}\label{classNeoFOAM_1_1TurbulenceModel_abadc7ca738620793708e34a467610289} 
+\index{NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}!correct@{correct}}
+\index{correct@{correct}!NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}}
+\doxysubsubsection{\texorpdfstring{correct()}{correct()}}
+{\footnotesize\ttfamily virtual void Neo\+FOAM\+::\+Turbulence\+Model\+::correct (\begin{DoxyParamCaption}\item[{const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Vec3 $>$ \&}]{U,  }\item[{nnfvcc\+::\+Surface\+Field$<$ Neo\+N\+::scalar $>$ \&}]{phi,  }\item[{\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&}]{rt }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+\Hypertarget{classNeoFOAM_1_1TurbulenceModel_a49dee8641d6055c7fa2b88be94e8448a}\label{classNeoFOAM_1_1TurbulenceModel_a49dee8641d6055c7fa2b88be94e8448a} 
+\index{NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}!create@{create}}
+\index{create@{create}!NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}}
+\doxysubsubsection{\texorpdfstring{create()}{create()}}
+{\footnotesize\ttfamily static std\+::unique\+\_\+ptr$<$ \mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel}{Turbulence\+Model}} $>$ Neo\+FOAM\+::\+Turbulence\+Model\+::create (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&}]{rt,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::scalar $>$ \&}]{nu }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Read the model name from constant/turbulence\+Properties and create the model. 
+
+Reads simulation\+Type; for LES it also reads the LESModel subkey. Equivalent to {\ttfamily create(model\+Key, rt, nu)} but without the solver needing to know which turbulence model is selected. \Hypertarget{classNeoFOAM_1_1TurbulenceModel_aef72cb4809fc873b080a0d4ae3f00d4b}\label{classNeoFOAM_1_1TurbulenceModel_aef72cb4809fc873b080a0d4ae3f00d4b} 
+\index{NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}!gradU@{gradU}}
+\index{gradU@{gradU}!NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}}
+\doxysubsubsection{\texorpdfstring{gradU()}{gradU()}}
+{\footnotesize\ttfamily virtual const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Tensor $>$ \& Neo\+FOAM\+::\+Turbulence\+Model\+::gradU (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+\Hypertarget{classNeoFOAM_1_1TurbulenceModel_ad6c3e347eb9ee939dfb3a1d10f5836de}\label{classNeoFOAM_1_1TurbulenceModel_ad6c3e347eb9ee939dfb3a1d10f5836de} 
+\index{NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}!initialize@{initialize}}
+\index{initialize@{initialize}!NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}}
+\doxysubsubsection{\texorpdfstring{initialize()}{initialize()}}
+{\footnotesize\ttfamily virtual void Neo\+FOAM\+::\+Turbulence\+Model\+::initialize (\begin{DoxyParamCaption}\item[{const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::scalar $>$ \&}]{nu\+Tilda\+Init,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::scalar $>$ \&}]{nut\+Init }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [virtual]}}
+
+
+
+Definition at line \mbox{\hyperlink{turbulenceModel_8hpp_source_l00047}{47}} of file \mbox{\hyperlink{turbulenceModel_8hpp_source}{turbulence\+Model.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1TurbulenceModel_a057e4bc3c9f6c0776fa975c519434f95}\label{classNeoFOAM_1_1TurbulenceModel_a057e4bc3c9f6c0776fa975c519434f95} 
+\index{NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}!name@{name}}
+\index{name@{name}!NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}}
+\doxysubsubsection{\texorpdfstring{name()}{name()}}
+{\footnotesize\ttfamily static std\+::string Neo\+FOAM\+::\+Turbulence\+Model\+::name (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Definition at line \mbox{\hyperlink{turbulenceModel_8hpp_source_l00034}{34}} of file \mbox{\hyperlink{turbulenceModel_8hpp_source}{turbulence\+Model.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1TurbulenceModel_a39bed7c59f3724ff70fcf9ce3001d343}\label{classNeoFOAM_1_1TurbulenceModel_a39bed7c59f3724ff70fcf9ce3001d343} 
+\index{NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}!nuEff@{nuEff}}
+\index{nuEff@{nuEff}!NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}}
+\doxysubsubsection{\texorpdfstring{nuEff()}{nuEff()}}
+{\footnotesize\ttfamily virtual nnfvcc\+::\+Surface\+Field$<$ Neo\+N\+::scalar $>$ \& Neo\+FOAM\+::\+Turbulence\+Model\+::nu\+Eff (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+\Hypertarget{classNeoFOAM_1_1TurbulenceModel_a86fcc51daef2c0f4b5ac0d6cc6e2b76f}\label{classNeoFOAM_1_1TurbulenceModel_a86fcc51daef2c0f4b5ac0d6cc6e2b76f} 
+\index{NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}!nut@{nut}}
+\index{nut@{nut}!NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}}
+\doxysubsubsection{\texorpdfstring{nut()}{nut()}}
+{\footnotesize\ttfamily virtual const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::scalar $>$ \& Neo\+FOAM\+::\+Turbulence\+Model\+::nut (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+\Hypertarget{classNeoFOAM_1_1TurbulenceModel_a6af2db926d7eb7d289a1afc6b8df18e9}\label{classNeoFOAM_1_1TurbulenceModel_a6af2db926d7eb7d289a1afc6b8df18e9} 
+\index{NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}!rotateOldTimes@{rotateOldTimes}}
+\index{rotateOldTimes@{rotateOldTimes}!NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}}
+\doxysubsubsection{\texorpdfstring{rotateOldTimes()}{rotateOldTimes()}}
+{\footnotesize\ttfamily virtual void Neo\+FOAM\+::\+Turbulence\+Model\+::rotate\+Old\+Times (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+\Hypertarget{classNeoFOAM_1_1TurbulenceModel_a0d62c0f93efa69172798d2abe0c1a919}\label{classNeoFOAM_1_1TurbulenceModel_a0d62c0f93efa69172798d2abe0c1a919} 
+\index{NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}!validate@{validate}}
+\index{validate@{validate}!NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}}
+\doxysubsubsection{\texorpdfstring{validate()}{validate()}}
+{\footnotesize\ttfamily virtual void Neo\+FOAM\+::\+Turbulence\+Model\+::validate (\begin{DoxyParamCaption}\item[{const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Vec3 $>$ \&}]{U }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+\Hypertarget{classNeoFOAM_1_1TurbulenceModel_a732733c4179c9ae7a361ce73ccb408ec}\label{classNeoFOAM_1_1TurbulenceModel_a732733c4179c9ae7a361ce73ccb408ec} 
+\index{NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}!write@{write}}
+\index{write@{write}!NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}}
+\doxysubsubsection{\texorpdfstring{write()}{write()}}
+{\footnotesize\ttfamily virtual void Neo\+FOAM\+::\+Turbulence\+Model\+::write (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classNeoFOAM_1_1MeshAdapter}{Mesh\+Adapter}} \&}]{mesh }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/runner/work/\+Neo\+FOAM/\+Neo\+FOAM/include/\+Neo\+FOAM/turbulence\+Models/\mbox{\hyperlink{turbulenceModel_8hpp}{turbulence\+Model.\+hpp}}\end{DoxyCompactItemize}
