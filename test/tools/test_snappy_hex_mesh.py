@@ -184,22 +184,18 @@ def _mesh_signature(case_dir: Path) -> dict[str, Any]:
 
 
 def _stage_tube_bank(case: Path, snappy: SnappyHexMeshDictConfig) -> None:
-    """Lay down a runnable tube-bank meshing case using ``snappy`` for the dict."""
+    """Lay down the tube-bank mesh inputs (blockMeshDict + snappy + STL) for meshing.
+
+    The minimal ``controlDict``/``fvSchemes``/``fvSolution`` a Time + fvMesh need are
+    provisioned by ``_snappy_probe.py`` at mesh time.
+    """
     from neofoam.e2e.manifest import PatchManifest
-    from neofoam.e2e.mesh import (
-        _minimal_control_dict,
-        _minimal_fv_schemes,
-        _minimal_fv_solution,
-    )
     from neofoam.e2e.mesh_inputs import block_mesh_dict
 
     (case / "system").mkdir(parents=True)
     (case / "constant" / "triSurface").mkdir(parents=True)
     manifest = PatchManifest.load(_E2E / "cases" / "tube_bank_manifest.json")
     write_configs([block_mesh_dict(manifest), snappy], case_dir=case)
-    (case / "system" / "controlDict").write_text(_minimal_control_dict())
-    (case / "system" / "fvSchemes").write_text(_minimal_fv_schemes())
-    (case / "system" / "fvSolution").write_text(_minimal_fv_solution())
     for stl in (_E2E / "constant" / "triSurface").glob("*.stl"):
         shutil.copy(stl, case / "constant" / "triSurface" / stl.name)
 

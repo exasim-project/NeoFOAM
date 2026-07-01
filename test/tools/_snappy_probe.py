@@ -19,13 +19,38 @@ import json
 import os
 import sys
 import traceback
+from pathlib import Path
 
 import pybFoam as pyf
 from pybFoam.meshing import checkMesh, generate_blockmesh, generate_snappy_hex_mesh
 
+# Minimal system dicts a Time + fvMesh need during meshing; the stats depend only on
+# the mesh (blockMeshDict + snappyHexMeshDict + STL), not these values.
+_MINIMAL = {
+    "controlDict": (
+        "FoamFile{version 2.0;format ascii;class dictionary;object controlDict;}\n"
+        "application blockMesh;startFrom startTime;startTime 0;stopAt endTime;"
+        "endTime 1;deltaT 1;writeControl timeStep;writeInterval 1;"
+    ),
+    "fvSchemes": (
+        "FoamFile{version 2.0;format ascii;class dictionary;object fvSchemes;}\n"
+        "ddtSchemes{default steadyState;}gradSchemes{default Gauss linear;}"
+        "divSchemes{default none;}laplacianSchemes{default Gauss linear corrected;}"
+        "interpolationSchemes{default linear;}snGradSchemes{default corrected;}"
+    ),
+    "fvSolution": (
+        "FoamFile{version 2.0;format ascii;class dictionary;object fvSolution;}\nsolvers{}"
+    ),
+}
+
 
 def mesh_signature(case_dir: str) -> dict[str, object]:
     """Build blockMesh→snappy in ``case_dir`` and return the snapped mesh stats."""
+    system = Path(case_dir) / "system"
+    for name, text in _MINIMAL.items():
+        target = system / name
+        if not target.is_file():  # provision only what the case doesn't already carry
+            target.write_text(text)
     with contextlib.chdir(case_dir):
         time = pyf.Time(pyf.argList(["snappy", "-case", "."]))
         mesh = generate_blockmesh(
