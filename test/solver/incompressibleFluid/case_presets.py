@@ -108,7 +108,19 @@ def lid_driven_cavity(
                     "tolerance": 1e-7,
                     "relTol": 0.05,
                 },
+                "p_rghFinal": {
+                    "solver": "PCG",
+                    "preconditioner": "DIC",
+                    "tolerance": 1e-7,
+                    "relTol": 0.0,
+                },
                 "U": {
+                    "solver": "PBiCGStab",
+                    "preconditioner": "DILU",
+                    "tolerance": 1e-8,
+                    "relTol": 0.0,
+                },
+                "UFinal": {
                     "solver": "PBiCGStab",
                     "preconditioner": "DILU",
                     "tolerance": 1e-8,

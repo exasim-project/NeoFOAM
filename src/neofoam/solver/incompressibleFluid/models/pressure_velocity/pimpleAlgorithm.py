@@ -211,7 +211,17 @@ def build(self: Any) -> list[Any]:
 
 
 def inner_loop(ctx: Context) -> bool:
-    return bool(ctx.models["pimple_control"].loop())
+    pimple = ctx.models["pimple_control"]
+    looping = bool(pimple.loop())
+    if looping:
+        # Mirror pimpleControl::loop(): on the final outer iteration the mesh
+        # is flagged so fvMatrix::solve picks the <field>Final solver settings
+        # (in PISO mode, nOuterCorrectors 1, that is every iteration). The
+        # flag deliberately stays raised on exit — the turbulence correction
+        # runs after this loop in the framework graph but inside the final
+        # outer iteration natively; the next step's first call lowers it.
+        ctx.mesh.setFinalIteration(pimple.finalIter())
+    return looping
 
 
 @pimple.operation(operation_number="2.1")
