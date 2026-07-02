@@ -1,10 +1,6 @@
 Ordering Framework Architecture
 ===============================
 
-.. contents::
-   :depth: 3
-   :local:
-
 Overview
 --------
 
