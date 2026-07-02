@@ -9,6 +9,61 @@ import typer
 
 app = typer.Typer()
 
+
+def _consume_dag_flags(args: list[str]) -> list[str]:
+    """Strip the DAG-dump flags from passthrough solver args, setting env vars.
+
+    Recognised (each accepts ``FLAG PATH`` or ``FLAG=PATH``):
+
+    * ``--dag-init PATH`` → ``NEOFOAM_DUMP_INIT_DAG`` (resolved order dumped
+      during ``initialize()``);
+    * ``--dag-operation PATH`` → ``NEOFOAM_DUMP_OPERATION_DAG`` (the resolved
+      time-loop operation DAG);
+
+    and the boolean ``--dag-only`` → ``NEOFOAM_DUMP_DAG_ONLY`` (stop after
+    dumping, skip the solve). Paths are resolved to absolute (the solver chdirs
+    into the case). The format of each dump is chosen from its suffix
+    (``.dot``/``.gv`` → Graphviz, ``.html`` → interactive HTML, else text).
+    Returns ``args`` with the recognised flags removed.
+    """
+    import os
+
+    from neofoam.framework.initialization.execution.executor import DUMP_INIT_DAG_ENV
+
+    path_flags = {
+        "--dag-init": DUMP_INIT_DAG_ENV,
+        "--dag-operation": "NEOFOAM_DUMP_OPERATION_DAG",
+    }
+
+    out: list[str] = []
+    i = 0
+    while i < len(args):
+        arg = args[i]
+        if arg == "--dag-only":
+            os.environ["NEOFOAM_DUMP_DAG_ONLY"] = "1"
+            i += 1
+            continue
+        matched = False
+        for flag, env in path_flags.items():
+            if arg == flag:
+                if i + 1 >= len(args):
+                    raise typer.BadParameter(f"{flag} requires a PATH argument")
+                os.environ[env] = str(Path(args[i + 1]).resolve())
+                i += 2
+                matched = True
+                break
+            if arg.startswith(f"{flag}="):
+                os.environ[env] = str(Path(arg.split("=", 1)[1]).resolve())
+                i += 1
+                matched = True
+                break
+        if matched:
+            continue
+        out.append(arg)
+        i += 1
+    return out
+
+
 # Solver command group
 solver_app = typer.Typer()
 
@@ -186,10 +241,22 @@ def neopimplefoam(ctx: typer.Context) -> None:
     context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
 )
 def incompressiblefluid(ctx: typer.Context) -> None:
-    """Transient PIMPLE solver for incompressible Newtonian flow."""
+    """Transient PIMPLE solver for incompressible Newtonian flow.
+
+    DAG-dump flags (each ``.dot``/``.gv`` → Graphviz, ``.html`` → interactive
+    HTML, else a text report):
+
+    * ``--dag-init PATH`` — the resolved initialization DAG (step order +
+      dependencies), written during initialization;
+    * ``--dag-operation PATH`` — the resolved time-loop operation DAG;
+    * ``--dag-only`` — stop after dumping, skipping the solve.
+
+    All other args pass through to the solver.
+    """
     from neofoam.solver.incompressibleFluid import run as run_incompressible_fluid
 
-    argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
+    passthrough = _consume_dag_flags([str(arg) for arg in ctx.args])
+    argv = [sys.argv[0]] + passthrough
     run_incompressible_fluid(argv)
 
 
