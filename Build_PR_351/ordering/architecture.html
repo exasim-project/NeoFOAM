@@ -359,42 +359,57 @@ assembly and solution.</p>
 <pre  class="mermaid">
         flowchart TD
 
- Mesh[&quot;NeoN Mesh&quot;]
- MeshView[&quot;MeshView&quot;]
- Context[&quot;OrderingContext&quot;]
+   Mesh[&quot;NeoN Mesh&quot;]
+   Benchmark[&quot;Benchmark&quot;]
 
- GraphBuilder[&quot;GraphBuilder&quot;]
- Geometry[&quot;Geometry Provider&quot;]
+   subgraph OrderingFramework[&quot;Ordering Framework&quot;]
 
- Graph[&quot;CSRGraph&quot;]
+      MeshView[&quot;MeshView&quot;]
 
- Algorithm[&quot;OrderingAlgorithm&quot;]
+      Context[&quot;OrderingContext&quot;]
 
- Permutation[&quot;Permutation&quot;]
+      GraphBuilder[&quot;GraphBuilder&quot;]
+      Geometry[&quot;Geometry Provider&quot;]
+      Future[&quot;Future Providers&quot;]
 
- Applicator[&quot;PermutationApplicator&quot;]
+      Graph[&quot;CSRGraph&quot;]
 
- Reordered[&quot;Reordered NeoN Mesh&quot;]
+      Algorithm[&quot;OrderingAlgorithm&quot;]
 
- Mesh --&gt; MeshView
- MeshView --&gt; Context
+      Permutation[&quot;Permutation&quot;]
 
- Context --&gt; GraphBuilder
- Context --&gt; Geometry
+      IO[&quot;PermutationIO&quot;]
+      Cache[&quot;PermutationCache&quot;]
 
- GraphBuilder --&gt; Graph
- Graph --&gt; Algorithm
- Geometry -.-&gt; Algorithm
+      Applicator[&quot;PermutationApplicator&quot;]
 
- Algorithm --&gt; Permutation
- Permutation --&gt; Applicator
- Applicator --&gt; Reordered
+   end
 
- Benchmark[&quot;Benchmark&quot;] -.-&gt; Algorithm
- Benchmark -.-&gt; Applicator
+   Reordered[&quot;Reordered NeoN Mesh&quot;]
 
- Permutation --&gt; IO[&quot;PermutationIO&quot;]
- IO --&gt; Cache[&quot;PermutationCache&quot;]
+   Mesh --&gt; MeshView
+   MeshView --&gt; Context
+
+   Context --&gt; GraphBuilder
+   Context --&gt; Geometry
+   Context --&gt; Future
+
+   GraphBuilder --&gt; Graph
+
+   Graph --&gt; Algorithm
+   Geometry -.-&gt; Algorithm
+   Future -.-&gt; Algorithm
+
+   Algorithm --&gt; Permutation
+
+   Permutation --&gt; IO
+   IO --&gt; Cache
+
+   Permutation --&gt; Applicator
+   Applicator --&gt; Reordered
+
+   Benchmark -.-&gt; Algorithm
+   Benchmark -.-&gt; Applicator
     </pre></section>
 <section id="component-responsibilities">
 <h2>Component Responsibilities<a class="headerlink" href="#component-responsibilities" title="Link to this heading">¶</a></h2>
