@@ -78,3 +78,56 @@ def test_preprocess_command_runs_pipeline_only(tmp_path: Path) -> None:
         assert "U" not in ctx.fields
     finally:
         os.chdir(cwd)
+
+
+def test_consume_dag_flags_sets_env_and_strips_flag(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``--dag-init PATH`` is removed from passthrough args + sets the env var."""
+    from neofoam.cli.app import _consume_dag_flags
+    from neofoam.framework.initialization.execution.executor import DUMP_INIT_DAG_ENV
+
+    monkeypatch.delenv(DUMP_INIT_DAG_ENV, raising=False)
+    rest = _consume_dag_flags(["-case", ".", "--dag-init", "d.dot", "-parallel"])
+    assert rest == ["-case", ".", "-parallel"]  # solver args pass through untouched
+    # relative path is resolved to absolute (solver chdirs into the case)
+    assert os.environ[DUMP_INIT_DAG_ENV] == str((Path.cwd() / "d.dot").resolve())
+
+
+def test_consume_dag_flags_accepts_equals_form(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from neofoam.cli.app import _consume_dag_flags
+    from neofoam.framework.initialization.execution.executor import DUMP_INIT_DAG_ENV
+
+    monkeypatch.delenv(DUMP_INIT_DAG_ENV, raising=False)
+    rest = _consume_dag_flags(["--dag-init=/tmp/x.txt", "-case", "."])
+    assert rest == ["-case", "."]
+    assert os.environ[DUMP_INIT_DAG_ENV] == "/tmp/x.txt"
+
+
+def test_consume_dag_flags_missing_value_errors() -> None:
+    import typer
+
+    from neofoam.cli.app import _consume_dag_flags
+
+    with pytest.raises(typer.BadParameter):
+        _consume_dag_flags(["-case", ".", "--dag-init"])
+
+
+def test_consume_dag_flags_operation_dag_and_dump_only(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """``--dag-operation PATH`` and ``--dag-only`` set their env vars."""
+    from neofoam.cli.app import _consume_dag_flags
+
+    monkeypatch.delenv("NEOFOAM_DUMP_OPERATION_DAG", raising=False)
+    monkeypatch.delenv("NEOFOAM_DUMP_DAG_ONLY", raising=False)
+    rest = _consume_dag_flags(
+        ["-case", ".", "--dag-operation", "ops.dot", "--dag-only"]
+    )
+    assert rest == ["-case", "."]
+    assert os.environ["NEOFOAM_DUMP_OPERATION_DAG"] == str(
+        (Path.cwd() / "ops.dot").resolve()
+    )
+    assert os.environ["NEOFOAM_DUMP_DAG_ONLY"] == "1"

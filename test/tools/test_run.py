@@ -99,6 +99,7 @@ def test_run_preprocess_runs_dag_without_solver(
     assert "U" not in ctx.fields
 
 
+@pytest.mark.slow
 def test_run_preprocess_real(tmp_path: Path) -> None:
     case = tmp_path / "case"
     shutil.copytree(CASE, case)

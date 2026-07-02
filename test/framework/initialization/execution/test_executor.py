@@ -2,9 +2,12 @@
 #
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
+from pathlib import Path
+
 import pytest
 
 from neofoam.framework.initialization.execution.executor import (
+    _init_digraph,
     execute_lazy_inits,
     execute_step,
 )
@@ -96,6 +99,57 @@ def test_execute_step_preserves_value_error():
     )
     with pytest.raises(ValueError, match="bad value"):
         execute_step(step, {})
+
+
+def test_init_digraph_carries_step_attributes_and_edges():
+    steps = [
+        InitStep("mesh", depends_on=[], initializer=lambda _ctx: 0),
+        InitStep(
+            "fields.U",
+            depends_on=["mesh"],
+            initializer=lambda _ctx: 1,
+            category="fields",
+            write=True,
+        ),
+    ]
+
+    graph = _init_digraph(steps)
+
+    assert graph.has_edge("mesh", "fields.U")
+    assert graph.nodes["fields.U"]["category"] == "fields"
+    assert graph.nodes["fields.U"]["write"] is True
+    assert graph.nodes["fields.U"]["depends_on"] == ["mesh"]
+
+
+def test_execute_lazy_inits_dumps_dag_when_env_set(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """NEOFOAM_DUMP_INIT_DAG writes the resolved order before executing."""
+    target = tmp_path / "init_dag.txt"
+    monkeypatch.setenv("NEOFOAM_DUMP_INIT_DAG", str(target))
+    inits = [
+        InitStep("b", depends_on=["root"], initializer=lambda _ctx: 2),
+        InitStep("root", depends_on=[], initializer=lambda _ctx: 0),
+    ]
+
+    execute_lazy_inits(inits)
+
+    assert target.is_file()
+    body = [
+        ln for ln in target.read_text().splitlines() if ln and not ln.startswith("#")
+    ]
+    # the dependency-free root is executed (and numbered) first
+    assert body[0].startswith("   1. root")
+
+
+def test_execute_lazy_inits_dumps_dot_when_suffix_dot(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    target = tmp_path / "init_dag.dot"
+    monkeypatch.setenv("NEOFOAM_DUMP_INIT_DAG", str(target))
+    execute_lazy_inits([InitStep("root", initializer=lambda _ctx: 0)])
+
+    assert target.read_text().startswith("digraph dag {")
 
 
 def test_init_step_execution_error_in_pipeline():

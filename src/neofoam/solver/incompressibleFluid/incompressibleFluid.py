@@ -26,6 +26,8 @@ from neofoam.framework.operations import (
 )
 from neofoam.framework.solver import Solver
 from neofoam.framework.tools import PreprocessConfig
+from neofoam.tools.block_mesh import BlockMeshDictConfig
+from neofoam.tools.snappy_hex_mesh import SnappyHexMeshDictConfig
 from neofoam.framework.types import OperationMetadata
 from neofoam.turbulence import momentumTransportModel
 from neofoam.viscosity import viscosityModel
@@ -57,6 +59,10 @@ incompressibleFluid = Solver("incompressibleFluid")
 # name those config classes itself.
 incompressibleFluid.config(ControlDictConfig)
 incompressibleFluid.config(PreprocessConfig)  # mesh pipeline enable file (configs())
+# The two mesh-input dicts: writer configs so configurations()/wizard/MCP fill and
+# persist them like any other case file (blockMesh/snappyHexMesh read them at launch).
+incompressibleFluid.config(BlockMeshDictConfig)
+incompressibleFluid.config(SnappyHexMeshDictConfig)
 
 incompressibleFluid.models(PressureVelocityAlgorithm, required=True)  # pick ONE
 incompressibleFluid.models(viscosityModel, required=True)  # molecular nu
@@ -168,6 +174,37 @@ def run(
 
         resolver = DAGResolver()
         resolved = resolver.resolve(builder, model_ops)
+
+        # Optionally dump the resolved operation DAG (the time-loop graph) for
+        # inspection / hand-off, mirroring the init-DAG dump done during
+        # ``initialize()``. ``NEOFOAM_DUMP_OPERATION_DAG`` names the target;
+        # the format is chosen from its suffix (.dot/.gv, .html, else text).
+        op_dag_path = os.environ.get("NEOFOAM_DUMP_OPERATION_DAG")
+        if op_dag_path:
+            from neofoam.framework.graph import (
+                operation_order,
+                operations_dag,
+                write_digraph,
+            )
+
+            graph = operations_dag(resolved.operations)
+            # Number by the real resolved execution order (walk of the tree),
+            # not a re-derived topological sort.
+            order = operation_order(resolved.operations)
+            write_digraph(
+                graph,
+                op_dag_path,
+                order=order,
+                title="NeoFOAM incompressibleFluid operation DAG "
+                f"— {graph.number_of_nodes()} operations",
+            )
+
+        # ``NEOFOAM_DUMP_DAG_ONLY`` stops after the graphs are dumped, skipping
+        # the time loop — for producing DAG diagrams without a full solve.
+        if os.environ.get("NEOFOAM_DUMP_DAG_ONLY"):
+            Info("Dumped DAG(s); skipping time loop (NEOFOAM_DUMP_DAG_ONLY set)")
+            return ctx
+
         resolved.operations.run(ctx)
 
         Info("End")
