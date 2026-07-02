@@ -45,6 +45,7 @@ from neofoam.fields import (
     Vector,
     ZeroGradientBC,
 )
+from neofoam import telemetry
 from neofoam.foam import fvSchemes, fvSolution
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.dependency_resolver import wrap_with_dependency_resolution
@@ -236,12 +237,16 @@ def momentum(
     # from the Context (a laminar model has no nut, the OpenFOAM fallback owns its
     # own and no-ops here). nut is fixed across the PIMPLE outer iterations, so this
     # matches OpenFOAM's once-per-step eddy viscosity.
-    viscousStress.update(ctx)
-    UEqn = fvVectorMatrix(fvm.ddt(U) + fvm.div(phi, U) + viscousStress.divDevReff(U))
-    UEqn.relax()
+    with telemetry.span("momentum.assemble"):
+        viscousStress.update(ctx)
+        UEqn = fvVectorMatrix(
+            fvm.ddt(U) + fvm.div(phi, U) + viscousStress.divDevReff(U)
+        )
+        UEqn.relax()
 
     if pimple_control.momentumPredictor():
-        pyf.solve(UEqn + fvc.grad(p))
+        with telemetry.span("momentum.solve"):
+            pyf.solve(UEqn + fvc.grad(p))
 
     return FieldUpdates({"UEqn": UEqn, "U": U})
 
@@ -267,21 +272,25 @@ def continuity(
     pRefValue = pressure_reference["pRefValue"]
 
     while pimple_control.correct():
-        rAU = volScalarField(pyf.Word("rAU"), 1.0 / UEqn.A())
-        HbyA = volVectorField(pyf.constrainHbyA(rAU * UEqn.H(), U, p))
+        with telemetry.span("pressure.assemble"):
+            rAU = volScalarField(pyf.Word("rAU"), 1.0 / UEqn.A())
+            HbyA = volVectorField(pyf.constrainHbyA(rAU * UEqn.H(), U, p))
 
-        phiHbyA = surfaceScalarField(
-            pyf.Word("phiHbyA"),
-            fvc.flux(HbyA) + fvc.interpolate(rAU) * fvc.ddtCorr(U, phi),
-        )
+            phiHbyA = surfaceScalarField(
+                pyf.Word("phiHbyA"),
+                fvc.flux(HbyA) + fvc.interpolate(rAU) * fvc.ddtCorr(U, phi),
+            )
 
-        pyf.adjustPhi(phiHbyA, U, p)
-        pyf.constrainPressure(p, U, phiHbyA, rAU)
+            pyf.adjustPhi(phiHbyA, U, p)
+            pyf.constrainPressure(p, U, phiHbyA, rAU)
 
         while pimple_control.correctNonOrthogonal():
-            pEqn = fvScalarMatrix(fvm.laplacian(rAU, p) - fvc.div(phiHbyA))
-            pEqn.setReference(pRefCell, pRefValue, False)
-            pEqn.solve(p.select(pimple_control.finalInnerIter()))
+            with telemetry.span(
+                "pressure.solve", final=pimple_control.finalInnerIter()
+            ):
+                pEqn = fvScalarMatrix(fvm.laplacian(rAU, p) - fvc.div(phiHbyA))
+                pEqn.setReference(pRefCell, pRefValue, False)
+                pEqn.solve(p.select(pimple_control.finalInnerIter()))
 
             if pimple_control.finalNonOrthogonalIter():
                 phi.assign(phiHbyA - pEqn.flux())
@@ -322,17 +331,21 @@ def momentum_boussinesq(
     mesh = U.mesh()
 
     # Refresh nuEff where it is consumed (see ``momentum``).
-    viscousStress.update(ctx)
-    UEqn = fvVectorMatrix(fvm.ddt(U) + fvm.div(phi, U) + viscousStress.divDevReff(U))
-    UEqn.relax()
+    with telemetry.span("momentum.assemble"):
+        viscousStress.update(ctx)
+        UEqn = fvVectorMatrix(
+            fvm.ddt(U) + fvm.div(phi, U) + viscousStress.divDevReff(U)
+        )
+        UEqn.relax()
 
     if pimple_control.momentumPredictor():
-        pyf.solve(
-            UEqn
-            + fvc.reconstruct(
-                (-ghf * fvc.snGrad(rhok) - fvc.snGrad(p_rgh)) * mesh.magSf()
+        with telemetry.span("momentum.solve"):
+            pyf.solve(
+                UEqn
+                + fvc.reconstruct(
+                    (-ghf * fvc.snGrad(rhok) - fvc.snGrad(p_rgh)) * mesh.magSf()
+                )
             )
-        )
 
     return FieldUpdates({"UEqn": UEqn, "U": U})
 
@@ -363,24 +376,28 @@ def continuity_boussinesq(
     mesh = U.mesh()
 
     while pimple_control.correct():
-        rAU = volScalarField(pyf.Word("rAU"), 1.0 / UEqn.A())
-        rAUf = surfaceScalarField(pyf.Word("rAUf"), fvc.interpolate(rAU))
-        HbyA = volVectorField(pyf.constrainHbyA(rAU * UEqn.H(), U, p_rgh))
+        with telemetry.span("pressure.assemble"):
+            rAU = volScalarField(pyf.Word("rAU"), 1.0 / UEqn.A())
+            rAUf = surfaceScalarField(pyf.Word("rAUf"), fvc.interpolate(rAU))
+            HbyA = volVectorField(pyf.constrainHbyA(rAU * UEqn.H(), U, p_rgh))
 
-        phig = surfaceScalarField(
-            pyf.Word("phig"), -rAUf * ghf * fvc.snGrad(rhok) * mesh.magSf()
-        )
-        phiHbyA = surfaceScalarField(
-            pyf.Word("phiHbyA"),
-            fvc.flux(HbyA) + rAUf * fvc.ddtCorr(U, phi) + phig,
-        )
+            phig = surfaceScalarField(
+                pyf.Word("phig"), -rAUf * ghf * fvc.snGrad(rhok) * mesh.magSf()
+            )
+            phiHbyA = surfaceScalarField(
+                pyf.Word("phiHbyA"),
+                fvc.flux(HbyA) + rAUf * fvc.ddtCorr(U, phi) + phig,
+            )
 
-        pyf.constrainPressure(p_rgh, U, phiHbyA, rAUf)
+            pyf.constrainPressure(p_rgh, U, phiHbyA, rAUf)
 
         while pimple_control.correctNonOrthogonal():
-            pEqn = fvScalarMatrix(fvm.laplacian(rAUf, p_rgh) - fvc.div(phiHbyA))
-            pEqn.setReference(pRefCell, pRefValue, False)
-            pEqn.solve(p_rgh.select(pimple_control.finalInnerIter()))
+            with telemetry.span(
+                "pressure.solve", final=pimple_control.finalInnerIter()
+            ):
+                pEqn = fvScalarMatrix(fvm.laplacian(rAUf, p_rgh) - fvc.div(phiHbyA))
+                pEqn.setReference(pRefCell, pRefValue, False)
+                pEqn.solve(p_rgh.select(pimple_control.finalInnerIter()))
 
             if pimple_control.finalNonOrthogonalIter():
                 phi.assign(phiHbyA - pEqn.flux())

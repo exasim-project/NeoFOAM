@@ -15,6 +15,7 @@ from typing import Annotated, Any, Optional
 
 from pybFoam import Info
 
+from neofoam import telemetry
 from neofoam.framework.context import Context
 from neofoam.framework.graph import DAGResolver
 from neofoam.framework.initialization import Depends, StagedInitRunner
@@ -35,6 +36,7 @@ from .create_fields import create_init
 from .models.incompressibleFluidModel import incompressibleFluidModel
 from .models.pressure_velocity.base import PressureVelocityAlgorithm
 from .models.solution_loop import SolutionLoopPredicate
+from .models.telemetry import maybe_configure_telemetry
 
 
 # model lookup helper: find an instantiated core model by its spec name
@@ -159,20 +161,25 @@ def run(
         os.close(log_fd)
 
     try:
-        solver = incompressibleFluid.instantiate(argv=argv or [])
-        ctx = solver.initialize()
+        # Opt-in via the controlDict `telemetry` dict — activated before
+        # initialize() so the init/build steps are traced too.
+        maybe_configure_telemetry()
+        with telemetry.span("solver.run"):
+            solver = incompressibleFluid.instantiate(argv=argv or [])
+            ctx = solver.initialize()
 
-        Info("Starting time loop")
+            Info("Starting time loop")
 
-        builder, model_ops = solver.execution_graph(ctx=ctx)
+            builder, model_ops = solver.execution_graph(ctx=ctx)
 
-        resolver = DAGResolver()
-        resolved = resolver.resolve(builder, model_ops)
-        resolved.operations.run(ctx)
+            resolver = DAGResolver()
+            resolved = resolver.resolve(builder, model_ops)
+            resolved.operations.run(ctx)
 
-        Info("End")
+            Info("End")
         return ctx
     finally:
+        telemetry.shutdown()
         if redirect and saved_fd is not None:
             sys.stdout.flush()
             os.dup2(saved_fd, 1)

@@ -9,6 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Callable, Iterator, Union
 
+from neofoam import telemetry
 from neofoam.framework.context import Context
 
 from .types import OperationMetadata, OperationNumber
@@ -101,6 +102,16 @@ class Operation:
         return self.metadata.dependencies
 
     def run(self, ctx: Context) -> Any:
+        if not telemetry.is_active():
+            return self._execute(ctx)
+        with telemetry.span(
+            self.metadata.op_name or self.metadata.name or "operation",
+            operation_type=self.operation_type,
+            domain=self.metadata.domain_name,
+        ):
+            return self._execute(ctx)
+
+    def _execute(self, ctx: Context) -> Any:
         op_type = self.operation_type
         if op_type == "conditional":
             return self.func(ctx)
