@@ -106,18 +106,6 @@ The framework shall
 - be thread-safe
 - be easy to unit test
 
-Non-goals
----------
-
-The first version does **not** support
-
-- distributed-memory ordering
-- adaptive mesh refinement
-- dynamic runtime reordering
-- GPU-native graph construction
-
-These capabilities may be added in future versions.
-
 Design Principles
 -----------------
 
