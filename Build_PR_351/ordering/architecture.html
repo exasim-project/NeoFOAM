@@ -175,7 +175,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
         <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
       </label>
     </div>
@@ -201,17 +201,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../ci.html">Continuous Integration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../debugProfileTools.html">Using Kokkos Tools</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Ordering Framework Architecture</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#overview">Overview</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#motivation">Motivation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#goals">Goals</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#non-goals">Non-goals</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#design-principles">Design Principles</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#high-level-architecture">High-Level Architecture</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#component-responsibilities">Component Responsibilities</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#module-dependencies">Module Dependencies</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#extension-points">Extension Points</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#persistence">Persistence</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#workflow">Workflow</a></li>
 </ul>
 
 </div>
@@ -245,25 +234,62 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
             <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
           </label>
         </div>
         <article role="main" id="furo-main-content">
           <section id="ordering-framework-architecture">
 <h1>Ordering Framework Architecture<a class="headerlink" href="#ordering-framework-architecture" title="Link to this heading">¶</a></h1>
-</section>
+<nav class="contents local" id="contents">
+<ul class="simple">
+<li><p><a class="reference internal" href="#overview" id="id1">Overview</a></p></li>
+<li><p><a class="reference internal" href="#motivation" id="id2">Motivation</a></p></li>
+<li><p><a class="reference internal" href="#goals" id="id3">Goals</a></p>
+<ul>
+<li><p><a class="reference internal" href="#functional-goals" id="id4">Functional goals</a></p></li>
+<li><p><a class="reference internal" href="#non-functional-goals" id="id5">Non-functional goals</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#non-goals" id="id6">Non-goals</a></p></li>
+<li><p><a class="reference internal" href="#design-principles" id="id7">Design Principles</a></p></li>
+<li><p><a class="reference internal" href="#high-level-architecture" id="id8">High-Level Architecture</a></p></li>
+<li><p><a class="reference internal" href="#component-responsibilities" id="id9">Component Responsibilities</a></p>
+<ul>
+<li><p><a class="reference internal" href="#meshview" id="id10">MeshView</a></p></li>
+<li><p><a class="reference internal" href="#orderingcontext" id="id11">OrderingContext</a></p></li>
+<li><p><a class="reference internal" href="#csrgraph" id="id12">CSRGraph</a></p></li>
+<li><p><a class="reference internal" href="#graphbuilder" id="id13">GraphBuilder</a></p></li>
+<li><p><a class="reference internal" href="#permutation" id="id14">Permutation</a></p></li>
+<li><p><a class="reference internal" href="#permutationapplicator" id="id15">PermutationApplicator</a></p></li>
+<li><p><a class="reference internal" href="#orderingalgorithm" id="id16">OrderingAlgorithm</a></p></li>
+<li><p><a class="reference internal" href="#orderingregistry" id="id17">OrderingRegistry</a></p></li>
+<li><p><a class="reference internal" href="#permutationio" id="id18">PermutationIO</a></p></li>
+<li><p><a class="reference internal" href="#permutationcache" id="id19">PermutationCache</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#module-dependencies" id="id20">Module Dependencies</a></p></li>
+<li><p><a class="reference internal" href="#extension-points" id="id21">Extension Points</a></p>
+<ul>
+<li><p><a class="reference internal" href="#adding-an-ordering-algorithm" id="id22">Adding an ordering algorithm</a></p></li>
+<li><p><a class="reference internal" href="#adding-a-graph-representation" id="id23">Adding a graph representation</a></p></li>
+<li><p><a class="reference internal" href="#adding-a-benchmark" id="id24">Adding a benchmark</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#persistence" id="id25">Persistence</a></p></li>
+<li><p><a class="reference internal" href="#workflow" id="id26">Workflow</a></p></li>
+</ul>
+</nav>
 <section id="overview">
-<h1>Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h1>
-<p>The Ordering Framework provides a reusable infrastructure for computing,
+<h2><a class="toc-backref" href="#id1" role="doc-backlink">Overview</a><a class="headerlink" href="#overview" title="Link to this heading">¶</a></h2>
+<p>The Ordering Framework provides reusable infrastructure for computing,
 evaluating, storing, and applying permutations of mesh entities in NeoFOAM.</p>
 <p>Its primary objective is to improve the performance of matrix assembly,
 linear solvers, and other mesh-based computations by improving memory
 locality and reducing graph bandwidth.</p>
-<p>Unlike traditional implementations that focus on one particular ordering
-algorithm, this framework is designed around stable abstractions.
-Ordering algorithms are interchangeable components that consume mesh-derived
-information and produce a common output:</p>
+<p>Rather than being built around a single ordering algorithm, the framework is
+designed around stable abstractions. Ordering algorithms are interchangeable
+components that consume mesh-derived information and produce a common output:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Permutation</span>
 </pre></div>
 </div>
@@ -274,16 +300,16 @@ information and produce a common output:</p>
 <li><p>hybrid ordering</p></li>
 <li><p>future GPU-aware ordering</p></li>
 </ul>
-<p>without changing the surrounding infrastructure.</p>
+<p>without requiring changes to the surrounding infrastructure.</p>
 </section>
 <section id="motivation">
-<h1>Motivation<a class="headerlink" href="#motivation" title="Link to this heading">¶</a></h1>
-<p>NeoFOAM converts OpenFOAM meshes into NeoN meshes before performing matrix
-assembly and numerical solution.</p>
+<h2><a class="toc-backref" href="#id2" role="doc-backlink">Motivation</a><a class="headerlink" href="#motivation" title="Link to this heading">¶</a></h2>
+<p>NeoFOAM currently converts an OpenFOAM mesh into a NeoN mesh before matrix
+assembly and solution.</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OpenFOAM</span><span class="w"> </span><span class="n">Mesh</span>
 <span class="w">      </span><span class="err">│</span>
 <span class="w">      </span><span class="err">▼</span>
-<span class="w"> </span><span class="n">Mesh</span><span class="w"> </span><span class="n">Adapter</span>
+<span class="n">Mesh</span><span class="w"> </span><span class="n">Adapter</span>
 <span class="w">      </span><span class="err">│</span>
 <span class="w">      </span><span class="err">▼</span>
 <span class="w">  </span><span class="n">NeoN</span><span class="w"> </span><span class="n">Mesh</span>
@@ -292,34 +318,34 @@ assembly and numerical solution.</p>
 <span class="n">Matrix</span><span class="w"> </span><span class="n">Assembly</span>
 <span class="w">      </span><span class="err">│</span>
 <span class="w">      </span><span class="err">▼</span>
-<span class="w">  </span><span class="n">Linear</span><span class="w"> </span><span class="n">Solver</span>
+<span class="n">Linear</span><span class="w"> </span><span class="n">Solver</span>
 </pre></div>
 </div>
-<p>The Ordering Framework is inserted after NeoN mesh construction.</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="n">OpenFOAM</span><span class="w"> </span><span class="n">Mesh</span>
-<span class="w">        </span><span class="err">│</span>
-<span class="w">        </span><span class="err">▼</span>
-<span class="w">    </span><span class="n">NeoN</span><span class="w"> </span><span class="n">Mesh</span>
-<span class="w">        </span><span class="err">│</span>
-<span class="w">        </span><span class="err">▼</span>
-<span class="w">    </span><span class="n">Ordering</span>
-<span class="w">        </span><span class="err">│</span>
-<span class="w">        </span><span class="err">▼</span>
+<p>The Ordering Framework is inserted immediately after NeoN mesh construction.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OpenFOAM</span><span class="w"> </span><span class="n">Mesh</span>
+<span class="w">      </span><span class="err">│</span>
+<span class="w">      </span><span class="err">▼</span>
+<span class="w">  </span><span class="n">NeoN</span><span class="w"> </span><span class="n">Mesh</span>
+<span class="w">      </span><span class="err">│</span>
+<span class="w">      </span><span class="err">▼</span>
+<span class="w">   </span><span class="n">Ordering</span>
+<span class="w">      </span><span class="err">│</span>
+<span class="w">      </span><span class="err">▼</span>
 <span class="n">Reordered</span><span class="w"> </span><span class="n">NeoN</span><span class="w"> </span><span class="n">Mesh</span>
-<span class="w">        </span><span class="err">│</span>
-<span class="w">        </span><span class="err">▼</span>
-<span class="w">  </span><span class="n">Matrix</span><span class="w"> </span><span class="n">Assembly</span>
-<span class="w">        </span><span class="err">│</span>
-<span class="w">        </span><span class="err">▼</span>
-<span class="w">    </span><span class="n">Linear</span><span class="w"> </span><span class="n">Solver</span>
+<span class="w">      </span><span class="err">│</span>
+<span class="w">      </span><span class="err">▼</span>
+<span class="n">Matrix</span><span class="w"> </span><span class="n">Assembly</span>
+<span class="w">      </span><span class="err">│</span>
+<span class="w">      </span><span class="err">▼</span>
+<span class="n">Linear</span><span class="w"> </span><span class="n">Solver</span>
 </pre></div>
 </div>
 <p>The reordered mesh is then used throughout the simulation.</p>
 </section>
 <section id="goals">
-<h1>Goals<a class="headerlink" href="#goals" title="Link to this heading">¶</a></h1>
+<h2><a class="toc-backref" href="#id3" role="doc-backlink">Goals</a><a class="headerlink" href="#goals" title="Link to this heading">¶</a></h2>
 <section id="functional-goals">
-<h2>Functional goals<a class="headerlink" href="#functional-goals" title="Link to this heading">¶</a></h2>
+<h3><a class="toc-backref" href="#id4" role="doc-backlink">Functional goals</a><a class="headerlink" href="#functional-goals" title="Link to this heading">¶</a></h3>
 <p>The framework shall</p>
 <ul class="simple">
 <li><p>compute permutations</p></li>
@@ -327,12 +353,12 @@ assembly and numerical solution.</p>
 <li><p>cache permutations</p></li>
 <li><p>store permutations</p></li>
 <li><p>benchmark ordering algorithms</p></li>
-<li><p>compare multiple ordering strategies</p></li>
+<li><p>compare ordering strategies</p></li>
 <li><p>support external libraries</p></li>
 </ul>
 </section>
 <section id="non-functional-goals">
-<h2>Non-functional goals<a class="headerlink" href="#non-functional-goals" title="Link to this heading">¶</a></h2>
+<h3><a class="toc-backref" href="#id5" role="doc-backlink">Non-functional goals</a><a class="headerlink" href="#non-functional-goals" title="Link to this heading">¶</a></h3>
 <p>The framework shall</p>
 <ul class="simple">
 <li><p>minimise memory allocations</p></li>
@@ -346,110 +372,90 @@ assembly and numerical solution.</p>
 </section>
 </section>
 <section id="non-goals">
-<h1>Non-goals<a class="headerlink" href="#non-goals" title="Link to this heading">¶</a></h1>
+<h2><a class="toc-backref" href="#id6" role="doc-backlink">Non-goals</a><a class="headerlink" href="#non-goals" title="Link to this heading">¶</a></h2>
 <p>The first version does <strong>not</strong> support</p>
 <ul class="simple">
 <li><p>distributed-memory ordering</p></li>
 <li><p>adaptive mesh refinement</p></li>
-<li><p>dynamic reordering during runtime</p></li>
+<li><p>dynamic runtime reordering</p></li>
 <li><p>GPU-native graph construction</p></li>
 </ul>
-<p>These may be added in future versions.</p>
+<p>These capabilities may be added in future versions.</p>
 </section>
 <section id="design-principles">
-<h1>Design Principles<a class="headerlink" href="#design-principles" title="Link to this heading">¶</a></h1>
-<p>The Ordering Framework follows the following principles.</p>
+<h2><a class="toc-backref" href="#id7" role="doc-backlink">Design Principles</a><a class="headerlink" href="#design-principles" title="Link to this heading">¶</a></h2>
+<p>The framework follows these principles.</p>
 <ol class="arabic simple">
 <li><p>Design around stable abstractions.</p></li>
 <li><p>Algorithms compute permutations only.</p></li>
 <li><p>The framework owns orchestration.</p></li>
 <li><p>Meshes are accessed through views.</p></li>
 <li><p>Graphs are implementation details.</p></li>
-<li><p>Expensive derived data is lazily computed.</p></li>
+<li><p>Expensive derived data is computed lazily.</p></li>
 <li><p>Algorithms are stateless.</p></li>
 <li><p>File I/O is separated from algorithms.</p></li>
-<li><p>New algorithms should require minimal framework changes.</p></li>
-<li><p>Performance optimisation must not reduce maintainability.</p></li>
+<li><p>New algorithms require minimal framework changes.</p></li>
+<li><p>Performance optimisations must not reduce maintainability.</p></li>
 </ol>
 </section>
 <section id="high-level-architecture">
-<h1>High-Level Architecture<a class="headerlink" href="#high-level-architecture" title="Link to this heading">¶</a></h1>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">                    </span><span class="n">NeoFOAM</span>
-
-<span class="w">                        </span><span class="err">│</span>
-
-<span class="w">            </span><span class="err">┌───────────┴───────────┐</span>
-
-<span class="w">            </span><span class="err">▼</span><span class="w">                       </span><span class="err">▼</span>
-
-<span class="w">         </span><span class="n">NeoN</span><span class="w"> </span><span class="n">Mesh</span><span class="w">             </span><span class="n">Benchmark</span>
-
-<span class="w">            </span><span class="err">│</span>
-
-<span class="w">            </span><span class="err">▼</span>
-
-<span class="w">        </span><span class="n">MeshView</span>
-
-<span class="w">            </span><span class="err">│</span>
-
-<span class="w">            </span><span class="err">▼</span>
-
+<h2><a class="toc-backref" href="#id8" role="doc-backlink">High-Level Architecture</a><a class="headerlink" href="#high-level-architecture" title="Link to this heading">¶</a></h2>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="w">                          </span><span class="n">NeoFOAM</span>
+<span class="w">                              </span><span class="err">│</span>
+<span class="w">             </span><span class="err">┌────────────────┴────────────────┐</span>
+<span class="w">             </span><span class="err">│</span><span class="w">                                 </span><span class="err">│</span>
+<span class="w">             </span><span class="err">▼</span><span class="w">                                 </span><span class="err">▼</span>
+<span class="w">        </span><span class="n">NeoN</span><span class="w"> </span><span class="n">Mesh</span><span class="w">                       </span><span class="n">Benchmarking</span>
+<span class="w">             </span><span class="err">│</span>
+<span class="w">             </span><span class="err">▼</span>
+<span class="w">         </span><span class="n">MeshView</span>
+<span class="w">             </span><span class="err">│</span>
+<span class="w">             </span><span class="err">▼</span>
 <span class="w">     </span><span class="n">OrderingContext</span>
-
-<span class="w">     </span><span class="err">┌──────────────┬───────────────┐</span>
-
-<span class="w">     </span><span class="err">▼</span><span class="w">              </span><span class="err">▼</span><span class="w">               </span><span class="err">▼</span>
-
-<span class="n">GraphBuilder</span><span class="w">    </span><span class="n">Geometry</span><span class="w">      </span><span class="n">Future</span><span class="w"> </span><span class="n">Providers</span>
-
+<span class="w">             </span><span class="err">│</span>
+<span class="w">     </span><span class="err">┌───────┼───────────┐</span>
+<span class="w">     </span><span class="err">│</span><span class="w">       </span><span class="err">│</span><span class="w">           </span><span class="err">│</span>
+<span class="w">     </span><span class="err">▼</span><span class="w">       </span><span class="err">▼</span><span class="w">           </span><span class="err">▼</span>
+<span class="n">GraphBuilder</span><span class="w"> </span><span class="n">Geometry</span><span class="w">  </span><span class="n">Future</span><span class="w"> </span><span class="n">Providers</span>
 <span class="w">     </span><span class="err">│</span>
-
 <span class="w">     </span><span class="err">▼</span>
-
 <span class="w">  </span><span class="n">CSRGraph</span>
-
 <span class="w">     </span><span class="err">│</span>
-
 <span class="w">     </span><span class="err">▼</span>
+<span class="n">OrderingAlgorithm</span>
+<span class="w">     </span><span class="err">│</span>
+<span class="w">     </span><span class="err">▼</span>
+<span class="w"> </span><span class="n">Permutation</span>
+<span class="w">     </span><span class="err">│</span>
+<span class="w"> </span><span class="err">┌───┴──────────────┐</span>
+<span class="w"> </span><span class="err">│</span><span class="w">                  </span><span class="err">│</span>
+<span class="w"> </span><span class="err">▼</span><span class="w">                  </span><span class="err">▼</span>
 </pre></div>
 </div>
-<p>OrderingAlgorithm</p>
-<blockquote>
-<div><blockquote>
-<div><blockquote>
-<div><p>│</p>
-<p>▼</p>
+<dl>
+<dt>PermutationIO   PermutationApplicator</dt><dd><blockquote>
+<div><p>│                  │
+▼                  ▼</p>
 </div></blockquote>
-<p>Permutation</p>
-<blockquote>
-<div><p>│</p>
-</div></blockquote>
-</div></blockquote>
-<p>┌────┴───────────┐</p>
-<p>▼                ▼</p>
-</div></blockquote>
-<p>IO             Applicator</p>
-<blockquote>
-<div><p>│                │</p>
-<p>▼                ▼</p>
-</div></blockquote>
-<p>Cache      Reordered Mesh</p>
+<p>Cache         Reordered NeoN Mesh</p>
+</dd>
+</dl>
 </section>
 <section id="component-responsibilities">
-<h1>Component Responsibilities<a class="headerlink" href="#component-responsibilities" title="Link to this heading">¶</a></h1>
+<h2><a class="toc-backref" href="#id9" role="doc-backlink">Component Responsibilities</a><a class="headerlink" href="#component-responsibilities" title="Link to this heading">¶</a></h2>
 <section id="meshview">
-<h2>MeshView<a class="headerlink" href="#meshview" title="Link to this heading">¶</a></h2>
+<h3><a class="toc-backref" href="#id10" role="doc-backlink">MeshView</a><a class="headerlink" href="#meshview" title="Link to this heading">¶</a></h3>
 <p>Provides read-only access to mesh information.</p>
 <p>Responsibilities</p>
 <ul class="simple">
 <li><p>cell connectivity</p></li>
-<li><p>owner/neighbour</p></li>
+<li><p>owner/neighbour relationships</p></li>
 <li><p>cell centres</p></li>
 <li><p>boundary information</p></li>
 </ul>
 </section>
 <section id="orderingcontext">
-<h2>OrderingContext<a class="headerlink" href="#orderingcontext" title="Link to this heading">¶</a></h2>
+<h3><a class="toc-backref" href="#id11" role="doc-backlink">OrderingContext</a><a class="headerlink" href="#orderingcontext" title="Link to this heading">¶</a></h3>
 <p>Provides lazily computed mesh-derived information.</p>
 <p>Responsibilities</p>
 <ul class="simple">
@@ -460,15 +466,15 @@ assembly and numerical solution.</p>
 </ul>
 </section>
 <section id="csrgraph">
-<h2>CSRGraph<a class="headerlink" href="#csrgraph" title="Link to this heading">¶</a></h2>
-<p>Stores graph connectivity.</p>
+<h3><a class="toc-backref" href="#id12" role="doc-backlink">CSRGraph</a><a class="headerlink" href="#csrgraph" title="Link to this heading">¶</a></h3>
+<p>Stores graph connectivity in compressed sparse row (CSR) format.</p>
 </section>
 <section id="graphbuilder">
-<h2>GraphBuilder<a class="headerlink" href="#graphbuilder" title="Link to this heading">¶</a></h2>
-<p>Constructs CSRGraph from MeshView.</p>
+<h3><a class="toc-backref" href="#id13" role="doc-backlink">GraphBuilder</a><a class="headerlink" href="#graphbuilder" title="Link to this heading">¶</a></h3>
+<p>Constructs a CSRGraph from a MeshView.</p>
 </section>
 <section id="permutation">
-<h2>Permutation<a class="headerlink" href="#permutation" title="Link to this heading">¶</a></h2>
+<h3><a class="toc-backref" href="#id14" role="doc-backlink">Permutation</a><a class="headerlink" href="#permutation" title="Link to this heading">¶</a></h3>
 <p>Represents</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">old</span><span class="w"> </span><span class="n">index</span><span class="w"> </span><span class="err">→</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">index</span>
 </pre></div>
@@ -481,16 +487,16 @@ assembly and numerical solution.</p>
 </ul>
 </section>
 <section id="permutationapplicator">
-<h2>PermutationApplicator<a class="headerlink" href="#permutationapplicator" title="Link to this heading">¶</a></h2>
+<h3><a class="toc-backref" href="#id15" role="doc-backlink">PermutationApplicator</a><a class="headerlink" href="#permutationapplicator" title="Link to this heading">¶</a></h3>
 <p>Applies permutations to</p>
 <ul class="simple">
-<li><p>mesh</p></li>
+<li><p>meshes</p></li>
 <li><p>fields</p></li>
 <li><p>matrices</p></li>
 </ul>
 </section>
 <section id="orderingalgorithm">
-<h2>OrderingAlgorithm<a class="headerlink" href="#orderingalgorithm" title="Link to this heading">¶</a></h2>
+<h3><a class="toc-backref" href="#id16" role="doc-backlink">OrderingAlgorithm</a><a class="headerlink" href="#orderingalgorithm" title="Link to this heading">¶</a></h3>
 <p>Consumes</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OrderingContext</span>
 </pre></div>
@@ -499,64 +505,49 @@ assembly and numerical solution.</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Permutation</span>
 </pre></div>
 </div>
-<p>Algorithms never modify meshes.</p>
+<p>Algorithms never modify mesh data.</p>
 </section>
 <section id="orderingregistry">
-<h2>OrderingRegistry<a class="headerlink" href="#orderingregistry" title="Link to this heading">¶</a></h2>
+<h3><a class="toc-backref" href="#id17" role="doc-backlink">OrderingRegistry</a><a class="headerlink" href="#orderingregistry" title="Link to this heading">¶</a></h3>
 <p>Maps algorithm names to implementations.</p>
 </section>
 <section id="permutationio">
-<h2>PermutationIO<a class="headerlink" href="#permutationio" title="Link to this heading">¶</a></h2>
+<h3><a class="toc-backref" href="#id18" role="doc-backlink">PermutationIO</a><a class="headerlink" href="#permutationio" title="Link to this heading">¶</a></h3>
 <p>Reads and writes permutation files.</p>
 </section>
 <section id="permutationcache">
-<h2>PermutationCache<a class="headerlink" href="#permutationcache" title="Link to this heading">¶</a></h2>
+<h3><a class="toc-backref" href="#id19" role="doc-backlink">PermutationCache</a><a class="headerlink" href="#permutationcache" title="Link to this heading">¶</a></h3>
 <p>Stores cached permutations for later reuse.</p>
 </section>
 </section>
 <section id="module-dependencies">
-<h1>Module Dependencies<a class="headerlink" href="#module-dependencies" title="Link to this heading">¶</a></h1>
+<h2><a class="toc-backref" href="#id20" role="doc-backlink">Module Dependencies</a><a class="headerlink" href="#module-dependencies" title="Link to this heading">¶</a></h2>
 <p>Dependencies always point downward.</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Applications</span>
-
 <span class="w">      </span><span class="err">│</span>
-
 <span class="w">      </span><span class="err">▼</span>
-
-<span class="w">  </span><span class="n">Solver</span>
-
+<span class="w">   </span><span class="n">Solvers</span>
 <span class="w">      </span><span class="err">│</span>
-
 <span class="w">      </span><span class="err">▼</span>
-
-<span class="w">  </span><span class="n">Ordering</span>
-
+<span class="w">   </span><span class="n">Ordering</span>
 <span class="w">      </span><span class="err">│</span>
-
 <span class="w">      </span><span class="err">▼</span>
-
-<span class="w">   </span><span class="n">Graph</span>
-
+<span class="w">     </span><span class="n">Graph</span>
 <span class="w">      </span><span class="err">│</span>
-
 <span class="w">      </span><span class="err">▼</span>
-
-<span class="w">    </span><span class="n">Mesh</span>
-
+<span class="w">      </span><span class="n">Mesh</span>
 <span class="w">      </span><span class="err">│</span>
-
 <span class="w">      </span><span class="err">▼</span>
-
-<span class="w">    </span><span class="n">Core</span>
+<span class="w">      </span><span class="n">Core</span>
 </pre></div>
 </div>
-<p>Ordering must never depend on Solver.</p>
-<p>Graph must never depend on Ordering.</p>
+<p>Ordering must never depend on solver modules.</p>
+<p>Graph must never depend on ordering modules.</p>
 </section>
 <section id="extension-points">
-<h1>Extension Points<a class="headerlink" href="#extension-points" title="Link to this heading">¶</a></h1>
+<h2><a class="toc-backref" href="#id21" role="doc-backlink">Extension Points</a><a class="headerlink" href="#extension-points" title="Link to this heading">¶</a></h2>
 <section id="adding-an-ordering-algorithm">
-<h2>Adding an ordering algorithm<a class="headerlink" href="#adding-an-ordering-algorithm" title="Link to this heading">¶</a></h2>
+<h3><a class="toc-backref" href="#id22" role="doc-backlink">Adding an ordering algorithm</a><a class="headerlink" href="#adding-an-ordering-algorithm" title="Link to this heading">¶</a></h3>
 <p>Implement</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">compute</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">OrderingContext</span><span class="o">&amp;</span><span class="p">)</span>
 </pre></div>
@@ -566,19 +557,19 @@ assembly and numerical solution.</p>
 <p>No framework modifications should be necessary.</p>
 </section>
 <section id="adding-a-graph-representation">
-<h2>Adding a graph representation<a class="headerlink" href="#adding-a-graph-representation" title="Link to this heading">¶</a></h2>
+<h3><a class="toc-backref" href="#id23" role="doc-backlink">Adding a graph representation</a><a class="headerlink" href="#adding-a-graph-representation" title="Link to this heading">¶</a></h3>
 <p>Implement the Graph concept.</p>
-<p>GraphBuilder may construct it.</p>
-<p>Existing algorithms remain unchanged.</p>
+<p>Extend GraphBuilder to construct the new graph type.</p>
+<p>Existing algorithms should remain unchanged.</p>
 </section>
 <section id="adding-a-benchmark">
-<h2>Adding a benchmark<a class="headerlink" href="#adding-a-benchmark" title="Link to this heading">¶</a></h2>
+<h3><a class="toc-backref" href="#id24" role="doc-backlink">Adding a benchmark</a><a class="headerlink" href="#adding-a-benchmark" title="Link to this heading">¶</a></h3>
 <p>Implement a BenchmarkRunner.</p>
-<p>Benchmarks are independent from algorithms.</p>
+<p>Benchmarks are independent from ordering algorithms.</p>
 </section>
 </section>
 <section id="persistence">
-<h1>Persistence<a class="headerlink" href="#persistence" title="Link to this heading">¶</a></h1>
+<h2><a class="toc-backref" href="#id25" role="doc-backlink">Persistence</a><a class="headerlink" href="#persistence" title="Link to this heading">¶</a></h2>
 <p>Permutations are persistent objects.</p>
 <p>The framework stores</p>
 <ul class="simple">
@@ -591,54 +582,59 @@ assembly and numerical solution.</p>
 <p>The framework does <strong>not</strong> store reordered meshes.</p>
 </section>
 <section id="workflow">
-<h1>Workflow<a class="headerlink" href="#workflow" title="Link to this heading">¶</a></h1>
+<h2><a class="toc-backref" href="#id26" role="doc-backlink">Workflow</a><a class="headerlink" href="#workflow" title="Link to this heading">¶</a></h2>
 <p>The framework executes the following workflow.</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Mesh</span>
-
-<span class="w">  </span><span class="err">│</span>
-
-<span class="w">  </span><span class="err">▼</span>
+<span class="w"> </span><span class="err">│</span>
+<span class="w"> </span><span class="err">▼</span>
 </pre></div>
 </div>
-<p>MeshFingerprint</p>
-<blockquote>
-<div><p>│</p>
-<p>▼</p>
-</div></blockquote>
-<p>Cache Lookup</p>
-<blockquote>
-<div><p>│</p>
-<p>├───────────────┐</p>
-<p>│               │</p>
-<p>▼               ▼</p>
-</div></blockquote>
-<p>Load            Compute</p>
-<blockquote>
+<dl>
+<dt>MeshFingerprint</dt><dd><blockquote>
 <div><blockquote>
-<div><p>│</p>
-<p>▼</p>
+<div><p>│
+▼</p>
 </div></blockquote>
-<p>Permutation</p>
-<blockquote>
+<dl>
+<dt>Cache Lookup</dt><dd><blockquote>
+<div><p>│</p>
+</div></blockquote>
+<p>┌───┴────┐
+│        │
+▼        ▼</p>
+</dd>
+</dl>
+</div></blockquote>
+<dl>
+<dt>Load    Compute</dt><dd><blockquote>
 <div><blockquote>
-<div><blockquote>
-<div><p>│</p>
-<p>▼</p>
+<div><p>│
+▼</p>
 </div></blockquote>
-<p>Validate</p>
-<blockquote>
-<div><p>│</p>
-<p>▼</p>
+<dl>
+<dt>Permutation</dt><dd><blockquote>
+<div><p>│
+▼</p>
 </div></blockquote>
+<dl class="simple">
+<dt>Validate</dt><dd><p>│
+▼</p>
+</dd>
+</dl>
+</dd>
+</dl>
 </div></blockquote>
-<p>Apply Ordering</p>
-<blockquote>
-<div><p>│</p>
-<p>▼</p>
-</div></blockquote>
-</div></blockquote>
+<dl class="simple">
+<dt>Apply Ordering</dt><dd><p>│
+▼</p>
+</dd>
+</dl>
 <p>Matrix Assembly</p>
-</div></blockquote>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
 </section>
 
         </article>
@@ -676,8 +672,58 @@ assembly and numerical solution.</p>
         
       </footer>
     </div>
-    <aside class="toc-drawer no-toc">
+    <aside class="toc-drawer">
       
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Ordering Framework Architecture</a><ul>
+<li><a class="reference internal" href="#overview">Overview</a></li>
+<li><a class="reference internal" href="#motivation">Motivation</a></li>
+<li><a class="reference internal" href="#goals">Goals</a><ul>
+<li><a class="reference internal" href="#functional-goals">Functional goals</a></li>
+<li><a class="reference internal" href="#non-functional-goals">Non-functional goals</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#non-goals">Non-goals</a></li>
+<li><a class="reference internal" href="#design-principles">Design Principles</a></li>
+<li><a class="reference internal" href="#high-level-architecture">High-Level Architecture</a></li>
+<li><a class="reference internal" href="#component-responsibilities">Component Responsibilities</a><ul>
+<li><a class="reference internal" href="#meshview">MeshView</a></li>
+<li><a class="reference internal" href="#orderingcontext">OrderingContext</a></li>
+<li><a class="reference internal" href="#csrgraph">CSRGraph</a></li>
+<li><a class="reference internal" href="#graphbuilder">GraphBuilder</a></li>
+<li><a class="reference internal" href="#permutation">Permutation</a></li>
+<li><a class="reference internal" href="#permutationapplicator">PermutationApplicator</a></li>
+<li><a class="reference internal" href="#orderingalgorithm">OrderingAlgorithm</a></li>
+<li><a class="reference internal" href="#orderingregistry">OrderingRegistry</a></li>
+<li><a class="reference internal" href="#permutationio">PermutationIO</a></li>
+<li><a class="reference internal" href="#permutationcache">PermutationCache</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-dependencies">Module Dependencies</a></li>
+<li><a class="reference internal" href="#extension-points">Extension Points</a><ul>
+<li><a class="reference internal" href="#adding-an-ordering-algorithm">Adding an ordering algorithm</a></li>
+<li><a class="reference internal" href="#adding-a-graph-representation">Adding a graph representation</a></li>
+<li><a class="reference internal" href="#adding-a-benchmark">Adding a benchmark</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#persistence">Persistence</a></li>
+<li><a class="reference internal" href="#workflow">Workflow</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
       
       
     </aside>
