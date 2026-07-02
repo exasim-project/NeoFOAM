@@ -6,7 +6,7 @@
 Welcome to NeoFOAM!
 ===================
 
-The NeoFOAM is the coupling interface. It provides platform-portable implementations of common CFD algorithms 
+The NeoFOAM is the coupling interface. It provides platform-portable implementations of common CFD algorithms
 and solvers using NeoN as a computational backend. It leverages standard OpenFOAM such that OpenFOAM simulations
 can be run on accelerator devices.
 
