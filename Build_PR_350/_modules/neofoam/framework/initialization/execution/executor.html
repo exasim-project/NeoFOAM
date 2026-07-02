@@ -325,11 +325,40 @@
 
 <span class="sd">&quot;&quot;&quot;Execute init steps in dependency order.&quot;&quot;&quot;</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">networkx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nx</span>  <span class="c1"># type: ignore[import-untyped]</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">...graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">write_digraph</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..init_step</span><span class="w"> </span><span class="kn">import</span> <span class="n">InitStep</span><span class="p">,</span> <span class="n">InitStepExecutionError</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.init_result</span><span class="w"> </span><span class="kn">import</span> <span class="n">InitResult</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.ordering</span><span class="w"> </span><span class="kn">import</span> <span class="n">_topological_sort</span>
+
+<span class="c1">#: When set to a path, :func:`execute_lazy_inits` dumps the resolved init DAG</span>
+<span class="c1">#: there before running any step (so a native abort mid-init still leaves it).</span>
+<span class="n">DUMP_INIT_DAG_ENV</span> <span class="o">=</span> <span class="s2">&quot;NEOFOAM_DUMP_INIT_DAG&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_init_digraph</span><span class="p">(</span><span class="n">steps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitStep</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a DiGraph from ``steps`` for rendering (edges: dependency → step).</span>
+
+<span class="sd">    Each step becomes a node carrying its ``category``, ``write`` flag, and</span>
+<span class="sd">    declared ``depends_on`` (so the text renderer lists dependencies in</span>
+<span class="sd">    declaration order). Dependencies that are not themselves declared steps —</span>
+<span class="sd">    external context keys — appear as attribute-less nodes via their edges.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="n">steps</span><span class="p">:</span>
+        <span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span>
+            <span class="n">step</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">category</span><span class="o">=</span><span class="n">step</span><span class="o">.</span><span class="n">category</span><span class="p">,</span>
+            <span class="n">write</span><span class="o">=</span><span class="n">step</span><span class="o">.</span><span class="n">write</span><span class="p">,</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">step</span><span class="o">.</span><span class="n">depends_on</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">dep</span> <span class="ow">in</span> <span class="n">step</span><span class="o">.</span><span class="n">depends_on</span><span class="p">:</span>
+            <span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">dep</span><span class="p">,</span> <span class="n">step</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">graph</span>
 
 
 <div class="viewcode-block" id="execute_step">
@@ -360,6 +389,19 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitResult</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute ``lazy_inits`` in dependency order and collect their results.&quot;&quot;&quot;</span>
     <span class="n">sorted_inits</span> <span class="o">=</span> <span class="n">_topological_sort</span><span class="p">(</span><span class="n">lazy_inits</span><span class="p">,</span> <span class="n">validate_graph</span><span class="o">=</span><span class="ow">not</span> <span class="n">assume_validated</span><span class="p">)</span>
+
+    <span class="n">dump_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">DUMP_INIT_DAG_ENV</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">dump_path</span><span class="p">:</span>
+        <span class="c1"># ``sorted_inits`` is already the execution order — dump it verbatim,</span>
+        <span class="c1"># before the first step runs, so a native abort still leaves the file.</span>
+        <span class="n">write_digraph</span><span class="p">(</span>
+            <span class="n">_init_digraph</span><span class="p">(</span><span class="n">sorted_inits</span><span class="p">),</span>
+            <span class="n">dump_path</span><span class="p">,</span>
+            <span class="n">order</span><span class="o">=</span><span class="p">[</span><span class="n">step</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="n">sorted_inits</span><span class="p">],</span>
+            <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;NeoFOAM initialization DAG — </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">sorted_inits</span><span class="p">)</span><span class="si">}</span><span class="s2"> steps &quot;</span>
+            <span class="s2">&quot;(execution order)&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
     <span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitResult</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 

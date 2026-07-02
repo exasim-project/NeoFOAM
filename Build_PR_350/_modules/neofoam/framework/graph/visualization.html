@@ -325,18 +325,29 @@
 
 <span class="sd">&quot;&quot;&quot;Visualization helpers for graph structures.</span>
 
-<span class="sd">Public entry points are :func:`digraph_to_pyvis_html` (HTML rendering) and</span>
-<span class="sd">:func:`dependency_dag` (compose per-domain operation DAGs into a single graph</span>
-<span class="sd">for rendering or diagnostics).</span>
+<span class="sd">Public entry points render a :class:`networkx.DiGraph` for inspection, hand-off</span>
+<span class="sd">to other tools, or interactive viewing:</span>
+
+<span class="sd">* :func:`format_digraph` — a numbered text report (execution order).</span>
+<span class="sd">* :func:`digraph_to_dot` — Graphviz ``DOT`` (edges: dependency → node).</span>
+<span class="sd">* :func:`digraph_to_pyvis_html` — an interactive pyvis HTML page.</span>
+<span class="sd">* :func:`write_digraph` — pick the format from the path suffix and write it.</span>
+
+<span class="sd">These read an optional node-attribute vocabulary — ``category`` (str),</span>
+<span class="sd">``write`` (bool), ``depends_on`` (sequence of names), plus the pyvis renderer&#39;s</span>
+<span class="sd">``shape``/``color`` — so any producer can annotate its graph without the</span>
+<span class="sd">renderers knowing the producer&#39;s domain. :func:`dependency_dag` composes</span>
+<span class="sd">per-domain operation DAGs into a single graph for rendering or diagnostics.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">networkx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nx</span>  <span class="c1"># type: ignore[import-untyped]</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pyvis.network</span><span class="w"> </span><span class="kn">import</span> <span class="n">Network</span>  <span class="c1"># type: ignore[import-untyped]</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">OperationCollection</span><span class="p">,</span> <span class="n">Operations</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">Operation</span><span class="p">,</span> <span class="n">OperationCollection</span><span class="p">,</span> <span class="n">Operations</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">OperationMetadata</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.sorter</span><span class="w"> </span><span class="kn">import</span> <span class="n">NetworkxTopologicalSorter</span>
@@ -378,6 +389,77 @@
 <span class="sd">    :meth:`Simulation.dependency_graph`) bind to a stable public name.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">_build_global_dag</span><span class="p">(</span><span class="n">domains</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="operations_dag">
+<a class="viewcode-back" href="../../../../reference/graph/visualization.html#neofoam.framework.graph.visualization.operations_dag">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">operations_dag</span><span class="p">(</span>
+    <span class="n">operations</span><span class="p">:</span> <span class="n">Operations</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">include_nesting</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the operation DAG for an :class:`Operations` tree.</span>
+
+<span class="sd">    Nodes are the operations, with loop/conditional bodies recursed into via</span>
+<span class="sd">    ``sub_operations``. Two kinds of edge are drawn:</span>
+
+<span class="sd">    * **dependency** edges, from each operation&#39;s declared ``depends_on``</span>
+<span class="sd">      (dependency → operation);</span>
+<span class="sd">    * **containment** edges, from a loop/conditional operation to each of its</span>
+<span class="sd">      direct sub-operations (parent → child), when ``include_nesting`` is set.</span>
+
+<span class="sd">    Without the containment edges most steps in a sequentially-built loop would</span>
+<span class="sd">    render as disconnected nodes, since ordering there comes from the loop</span>
+<span class="sd">    structure rather than explicit ``depends_on``. Suitable for rendering with</span>
+<span class="sd">    :func:`digraph_to_dot` / :func:`write_digraph`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">walk</span><span class="p">(</span><span class="n">op</span><span class="p">:</span> <span class="n">Operation</span><span class="p">,</span> <span class="n">parent</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">meta</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">metadata</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">name</span>
+        <span class="n">graph</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span>
+            <span class="n">name</span><span class="p">,</span>
+            <span class="n">meta</span><span class="o">=</span><span class="n">meta</span><span class="p">,</span>
+            <span class="n">shape</span><span class="o">=</span><span class="n">meta</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="n">meta</span><span class="o">.</span><span class="n">color</span><span class="p">,</span>
+            <span class="n">operation_number</span><span class="o">=</span><span class="n">meta</span><span class="o">.</span><span class="n">operation_number</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">dependency</span> <span class="ow">in</span> <span class="n">meta</span><span class="o">.</span><span class="n">dependencies</span><span class="p">:</span>
+            <span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">dependency</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">include_nesting</span> <span class="ow">and</span> <span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">sub</span> <span class="ow">in</span> <span class="n">op</span><span class="o">.</span><span class="n">sub_operations</span><span class="p">:</span>
+            <span class="n">walk</span><span class="p">(</span><span class="n">sub</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">operations</span><span class="p">:</span>
+        <span class="n">walk</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">graph</span></div>
+
+
+
+<div class="viewcode-block" id="operation_order">
+<a class="viewcode-back" href="../../../../reference/graph/visualization.html#neofoam.framework.graph.visualization.operation_order">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">operation_order</span><span class="p">(</span><span class="n">operations</span><span class="p">:</span> <span class="n">Operations</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return operation names in execution order (pre-order walk of the tree).</span>
+
+<span class="sd">    An :class:`Operations` tree runs top to bottom, descending into each</span>
+<span class="sd">    loop/conditional&#39;s ``sub_operations`` in turn — so a depth-first pre-order</span>
+<span class="sd">    walk yields the exact sequence in which the steps first execute. Use this as</span>
+<span class="sd">    the ``order`` for :func:`digraph_to_dot` / :func:`format_digraph` so the node</span>
+<span class="sd">    numbering matches the real run order rather than a re-derived sort.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">order</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">walk</span><span class="p">(</span><span class="n">op</span><span class="p">:</span> <span class="n">Operation</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">order</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">sub</span> <span class="ow">in</span> <span class="n">op</span><span class="o">.</span><span class="n">sub_operations</span><span class="p">:</span>
+            <span class="n">walk</span><span class="p">(</span><span class="n">sub</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">operations</span><span class="p">:</span>
+        <span class="n">walk</span><span class="p">(</span><span class="n">op</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">order</span></div>
 
 
 
@@ -439,6 +521,122 @@
 
     <span class="n">net</span><span class="o">.</span><span class="n">set_options</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">options</span><span class="p">))</span>
     <span class="n">net</span><span class="o">.</span><span class="n">write_html</span><span class="p">(</span><span class="n">html_path</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_dot_escape</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Escape a string for use inside a DOT double-quoted id/label.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\\\\</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&quot;&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="digraph_to_dot">
+<a class="viewcode-back" href="../../../../reference/graph/visualization.html#neofoam.framework.graph.visualization.digraph_to_dot">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">digraph_to_dot</span><span class="p">(</span>
+    <span class="n">graph</span><span class="p">:</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">order</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;dag&quot;</span><span class="p">,</span>
+    <span class="n">rankdir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;LR&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render ``graph`` as Graphviz ``DOT`` (edges: dependency → node).</span>
+
+<span class="sd">    Every node and edge is drawn, so dependency keys that were never declared as</span>
+<span class="sd">    nodes (external prerequisites, added by their edges) stay visible. For a node</span>
+<span class="sd">    listed in ``order`` the label carries its 1-based execution index and, when</span>
+<span class="sd">    present, its ``category`` attribute; other nodes render with just their name.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">positions</span> <span class="o">=</span> <span class="p">{</span><span class="n">node_name</span><span class="p">:</span> <span class="n">idx</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">node_name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">order</span> <span class="ow">or</span> <span class="p">[],</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">)}</span>
+
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;digraph </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> </span><span class="se">{{</span><span class="s2">&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;  rankdir=</span><span class="si">{</span><span class="n">rankdir</span><span class="si">}</span><span class="s2">;&quot;</span><span class="p">,</span> <span class="s2">&quot;  node [shape=box];&quot;</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">node_name</span><span class="p">,</span> <span class="n">attrs</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="n">esc_name</span> <span class="o">=</span> <span class="n">_dot_escape</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">node_name</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">node_name</span> <span class="ow">in</span> <span class="n">positions</span><span class="p">:</span>
+            <span class="c1"># ``\n`` is a DOT line-break directive — assemble it from</span>
+            <span class="c1"># already-escaped parts so it is NOT doubled by the escaper.</span>
+            <span class="n">label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">positions</span><span class="p">[</span><span class="n">node_name</span><span class="p">]</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">esc_name</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">category</span> <span class="o">=</span> <span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;category&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">category</span><span class="p">:</span>
+                <span class="n">label</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\\</span><span class="s2">n[&quot;</span> <span class="o">+</span> <span class="n">_dot_escape</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">category</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot;]&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">label</span> <span class="o">=</span> <span class="n">esc_name</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  &quot;</span><span class="si">{</span><span class="n">esc_name</span><span class="si">}</span><span class="s1">&quot; [label=&quot;</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s1">&quot;];&#39;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">source</span><span class="p">,</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">edges</span><span class="p">:</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  &quot;</span><span class="si">{</span><span class="n">_dot_escape</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">source</span><span class="p">))</span><span class="si">}</span><span class="s1">&quot; -&gt; &quot;</span><span class="si">{</span><span class="n">_dot_escape</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">target</span><span class="p">))</span><span class="si">}</span><span class="s1">&quot;;&#39;</span><span class="p">)</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;}&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="format_digraph">
+<a class="viewcode-back" href="../../../../reference/graph/visualization.html#neofoam.framework.graph.visualization.format_digraph">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">format_digraph</span><span class="p">(</span>
+    <span class="n">graph</span><span class="p">:</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">order</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">title</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render ``graph`` as a numbered text report (one node per line).</span>
+
+<span class="sd">    Nodes are numbered in ``order`` (default: the graph&#39;s node order); nodes not</span>
+<span class="sd">    in ``order`` — e.g. external dependency keys — are omitted from the listing.</span>
+<span class="sd">    Each line shows the node&#39;s name, its ``category`` attribute, its dependencies</span>
+<span class="sd">    (the ``depends_on`` attribute if set, else the graph predecessors), and a</span>
+<span class="sd">    ``*write`` flag when the ``write`` attribute is truthy.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">node_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">order</span><span class="p">)</span> <span class="k">if</span> <span class="n">order</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span>
+    <span class="n">name_width</span> <span class="o">=</span> <span class="nb">max</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">node_names</span><span class="p">),</span> <span class="n">default</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+    <span class="n">cat_width</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+        <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;category&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)))</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">node_names</span><span class="p">),</span>
+        <span class="n">default</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">title</span><span class="p">:</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;# </span><span class="si">{</span><span class="n">title</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">node_name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">node_names</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">attrs</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">[</span><span class="n">node_name</span><span class="p">]</span>
+        <span class="n">category</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;category&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
+        <span class="n">declared</span> <span class="o">=</span> <span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;depends_on&quot;</span><span class="p">)</span>
+        <span class="n">deps_list</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">list</span><span class="p">(</span><span class="n">declared</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">declared</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">predecessors</span><span class="p">(</span><span class="n">node_name</span><span class="p">))</span>
+        <span class="p">)</span>
+        <span class="n">deps</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">deps_list</span><span class="p">)</span> <span class="k">if</span> <span class="n">deps_list</span> <span class="k">else</span> <span class="s2">&quot;-&quot;</span>
+        <span class="n">flags</span> <span class="o">=</span> <span class="s2">&quot; *write&quot;</span> <span class="k">if</span> <span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;write&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">idx</span><span class="si">:</span><span class="s2">&gt;4</span><span class="si">}</span><span class="s2">. </span><span class="si">{</span><span class="n">node_name</span><span class="si">:</span><span class="s2">&lt;</span><span class="si">{</span><span class="n">name_width</span><span class="si">}}</span><span class="s2">  &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">category</span><span class="si">:</span><span class="s2">&lt;</span><span class="si">{</span><span class="n">cat_width</span><span class="si">}}</span><span class="s2">]  deps: </span><span class="si">{</span><span class="n">deps</span><span class="si">}{</span><span class="n">flags</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="write_digraph">
+<a class="viewcode-back" href="../../../../reference/graph/visualization.html#neofoam.framework.graph.visualization.write_digraph">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_digraph</span><span class="p">(</span>
+    <span class="n">graph</span><span class="p">:</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">,</span>
+    <span class="n">path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">order</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">title</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Write ``graph`` to ``path``; the format is chosen from the suffix.</span>
+
+<span class="sd">    ``.dot`` / ``.gv`` → Graphviz DOT (:func:`digraph_to_dot`); ``.html`` /</span>
+<span class="sd">    ``.htm`` → interactive pyvis HTML (:func:`digraph_to_pyvis_html`); anything</span>
+<span class="sd">    else → the numbered text report (:func:`format_digraph`). Returns the path.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">out</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">suffix</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">suffix</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;.dot&quot;</span><span class="p">,</span> <span class="s2">&quot;.gv&quot;</span><span class="p">):</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">digraph_to_dot</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="n">suffix</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;.html&quot;</span><span class="p">,</span> <span class="s2">&quot;.htm&quot;</span><span class="p">):</span>
+        <span class="n">digraph_to_pyvis_html</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">html_path</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">out</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">format_digraph</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">out</span></div>
 
 </pre></div>
         </article>
