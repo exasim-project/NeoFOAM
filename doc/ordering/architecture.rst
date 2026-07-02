@@ -38,42 +38,39 @@ Motivation
 NeoFOAM currently converts an OpenFOAM mesh into a NeoN mesh before matrix
 assembly and solution.
 
-::
+.. mermaid::
 
-   OpenFOAM Mesh
-         │
-         ▼
-   Mesh Adapter
-         │
-         ▼
-     NeoN Mesh
-         │
-         ▼
-   Matrix Assembly
-         │
-         ▼
-   Linear Solver
+   flowchart TD
+
+      OF[OpenFOAM Mesh]
+      Adapter[Mesh Adapter]
+      Mesh[NeoN Mesh]
+      Assembly[Matrix Assembly]
+      Solver[Linear Solver]
+
+      OF --> Adapter
+      Adapter --> Mesh
+      Mesh --> Assembly
+      Assembly --> Solver
 
 The Ordering Framework is inserted immediately after NeoN mesh construction.
 
-::
+.. mermaid::
 
-   OpenFOAM Mesh
-         │
-         ▼
-     NeoN Mesh
-         │
-         ▼
-      Ordering
-         │
-         ▼
-   Reordered NeoN Mesh
-         │
-         ▼
-   Matrix Assembly
-         │
-         ▼
-   Linear Solver
+   flowchart TD
+
+      OF[OpenFOAM Mesh]
+      Mesh[NeoN Mesh]
+      Ordering[Ordering Framework]
+      RMesh[Reordered NeoN Mesh]
+      Assembly[Matrix Assembly]
+      Solver[Linear Solver]
+
+      OF --> Mesh
+      Mesh --> Ordering
+      Ordering --> RMesh
+      RMesh --> Assembly
+      Assembly --> Solver
 
 The reordered mesh is then used throughout the simulation.
 
@@ -106,6 +103,18 @@ The framework shall
 - be thread-safe
 - be easy to unit test
 
+Non-goals
+---------
+
+The first version does **not** support
+
+- distributed-memory ordering
+- adaptive mesh refinement
+- dynamic runtime reordering
+- GPU-native graph construction
+
+These capabilities may be added in future versions.
+
 Design Principles
 -----------------
 
@@ -119,48 +128,67 @@ The framework follows these principles.
 6. Expensive derived data is computed lazily.
 7. Algorithms are stateless.
 8. File I/O is separated from algorithms.
-9. New algorithms require minimal framework changes.
+9. New algorithms should require minimal framework changes.
 10. Performance optimisations must not reduce maintainability.
 
 High-Level Architecture
 -----------------------
 
-::
+.. mermaid::
 
-                           NeoFOAM
-                               │
-              ┌────────────────┴────────────────┐
-              │                                 │
-              ▼                                 ▼
-         NeoN Mesh                       Benchmarking
-              │
-              ▼
-          MeshView
-              │
-              ▼
-      OrderingContext
-              │
-      ┌───────┼───────────┐
-      │       │           │
-      ▼       ▼           ▼
- GraphBuilder Geometry  Future Providers
-      │
-      ▼
-   CSRGraph
-      │
-      ▼
- OrderingAlgorithm
-      │
-      ▼
-  Permutation
-      │
-  ┌───┴──────────────┐
-  │                  │
-  ▼                  ▼
-PermutationIO   PermutationApplicator
-  │                  │
-  ▼                  ▼
- Cache         Reordered NeoN Mesh
+   flowchart TD
+
+      Mesh["NeoN Mesh"]
+      Benchmark["Benchmark"]
+
+      subgraph OrderingFramework["Ordering Framework"]
+
+         MeshView["MeshView"]
+
+         Context["OrderingContext"]
+
+         GraphBuilder["GraphBuilder"]
+         Geometry["Geometry Provider"]
+         Future["Future Providers"]
+
+         Graph["CSRGraph"]
+
+         Algorithm["OrderingAlgorithm"]
+
+         Permutation["Permutation"]
+
+         IO["PermutationIO"]
+         Cache["PermutationCache"]
+
+         Applicator["PermutationApplicator"]
+
+      end
+
+      Reordered["Reordered NeoN Mesh"]
+
+      Mesh --> MeshView
+      MeshView --> Context
+
+      Context --> GraphBuilder
+      Context --> Geometry
+      Context --> Future
+
+      GraphBuilder --> Graph
+
+      Graph --> Algorithm
+      Geometry -.-> Algorithm
+      Future -.-> Algorithm
+
+      Algorithm --> Permutation
+
+      Permutation --> IO
+      IO --> Cache
+
+      Permutation --> Applicator
+      Applicator --> Reordered
+
+      Benchmark -.-> Algorithm
+      Benchmark -.-> Applicator
 
 Component Responsibilities
 --------------------------
@@ -260,24 +288,22 @@ Module Dependencies
 
 Dependencies always point downward.
 
-::
+.. mermaid::
 
-   Applications
-         │
-         ▼
-      Solvers
-         │
-         ▼
-      Ordering
-         │
-         ▼
-        Graph
-         │
-         ▼
-         Mesh
-         │
-         ▼
-         Core
+   flowchart TD
+
+      Applications["Applications"]
+      Solvers["Solvers"]
+      Ordering["Ordering"]
+      Graph["Graph"]
+      Mesh["Mesh"]
+      Core["Core"]
+
+      Applications --> Solvers
+      Solvers --> Ordering
+      Ordering --> Graph
+      Graph --> Mesh
+      Mesh --> Core
 
 Ordering must never depend on solver modules.
 
@@ -337,29 +363,38 @@ Workflow
 
 The framework executes the following workflow.
 
-::
+.. mermaid::
 
-      Mesh
-       │
-       ▼
-MeshFingerprint
-       │
-       ▼
-  Cache Lookup
-       │
-   ┌───┴────┐
-   │        │
-   ▼        ▼
- Load    Compute
-            │
-            ▼
-      Permutation
-            │
-            ▼
-        Validate
-            │
-            ▼
-    Apply Ordering
-            │
-            ▼
-    Matrix Assembly
+   flowchart TD
+
+      Mesh["Mesh"]
+
+      Fingerprint["Mesh Fingerprint"]
+
+      Lookup{"Permutation cached?"}
+
+      Load["Load Permutation"]
+
+      Compute["Compute Permutation"]
+
+      Validate["Validate"]
+
+      Apply["Apply Ordering"]
+
+      Assembly["Matrix Assembly"]
+
+      Mesh --> Fingerprint
+
+      Fingerprint --> Lookup
+
+      Lookup -->|Yes| Load
+
+      Lookup -->|No| Compute
+
+      Load --> Validate
+
+      Compute --> Validate
+
+      Validate --> Apply
+
+      Apply --> Assembly
