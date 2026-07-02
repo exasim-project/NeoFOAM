@@ -134,57 +134,43 @@ High-Level Architecture
 
    flowchart TD
 
-      Mesh["NeoN Mesh"]
-      Benchmark["Benchmark"]
+    Mesh["NeoN Mesh"]
+    MeshView["MeshView"]
+    Context["OrderingContext"]
 
-      subgraph OrderingFramework["Ordering Framework"]
+    GraphBuilder["GraphBuilder"]
+    Geometry["Geometry Provider"]
 
-         MeshView["MeshView"]
+    Graph["CSRGraph"]
 
-         Context["OrderingContext"]
+    Algorithm["OrderingAlgorithm"]
 
-         GraphBuilder["GraphBuilder"]
-         Geometry["Geometry Provider"]
-         Future["Future Providers"]
+    Permutation["Permutation"]
 
-         Graph["CSRGraph"]
+    Applicator["PermutationApplicator"]
 
-         Algorithm["OrderingAlgorithm"]
+    Reordered["Reordered NeoN Mesh"]
 
-         Permutation["Permutation"]
+    Mesh --> MeshView
+    MeshView --> Context
 
-         IO["PermutationIO"]
-         Cache["PermutationCache"]
+    Context --> GraphBuilder
+    Context --> Geometry
 
-         Applicator["PermutationApplicator"]
+    GraphBuilder --> Graph
+    Graph --> Algorithm
+    Geometry -.-> Algorithm
 
-      end
+    Algorithm --> Permutation
+    Permutation --> Applicator
+    Applicator --> Reordered
 
-      Reordered["Reordered NeoN Mesh"]
+    Benchmark["Benchmark"] -.-> Algorithm
+    Benchmark -.-> Applicator
 
-      Mesh --> MeshView
-      MeshView --> Context
+    Permutation --> IO["PermutationIO"]
+    IO --> Cache["PermutationCache"]
 
-      Context --> GraphBuilder
-      Context --> Geometry
-      Context --> Future
-
-      GraphBuilder --> Graph
-
-      Graph --> Algorithm
-      Geometry -.-> Algorithm
-      Future -.-> Algorithm
-
-      Algorithm --> Permutation
-
-      Permutation --> IO
-      IO --> Cache
-
-      Permutation --> Applicator
-      Applicator --> Reordered
-
-      Benchmark -.-> Algorithm
-      Benchmark -.-> Applicator
 
 Component Responsibilities
 --------------------------

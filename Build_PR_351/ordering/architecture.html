@@ -359,57 +359,42 @@ assembly and solution.</p>
 <pre  class="mermaid">
         flowchart TD
 
-   Mesh[&quot;NeoN Mesh&quot;]
-   Benchmark[&quot;Benchmark&quot;]
+ Mesh[&quot;NeoN Mesh&quot;]
+ MeshView[&quot;MeshView&quot;]
+ Context[&quot;OrderingContext&quot;]
 
-   subgraph OrderingFramework[&quot;Ordering Framework&quot;]
+ GraphBuilder[&quot;GraphBuilder&quot;]
+ Geometry[&quot;Geometry Provider&quot;]
 
-      MeshView[&quot;MeshView&quot;]
+ Graph[&quot;CSRGraph&quot;]
 
-      Context[&quot;OrderingContext&quot;]
+ Algorithm[&quot;OrderingAlgorithm&quot;]
 
-      GraphBuilder[&quot;GraphBuilder&quot;]
-      Geometry[&quot;Geometry Provider&quot;]
-      Future[&quot;Future Providers&quot;]
+ Permutation[&quot;Permutation&quot;]
 
-      Graph[&quot;CSRGraph&quot;]
+ Applicator[&quot;PermutationApplicator&quot;]
 
-      Algorithm[&quot;OrderingAlgorithm&quot;]
+ Reordered[&quot;Reordered NeoN Mesh&quot;]
 
-      Permutation[&quot;Permutation&quot;]
+ Mesh --&gt; MeshView
+ MeshView --&gt; Context
 
-      IO[&quot;PermutationIO&quot;]
-      Cache[&quot;PermutationCache&quot;]
+ Context --&gt; GraphBuilder
+ Context --&gt; Geometry
 
-      Applicator[&quot;PermutationApplicator&quot;]
+ GraphBuilder --&gt; Graph
+ Graph --&gt; Algorithm
+ Geometry -.-&gt; Algorithm
 
-   end
+ Algorithm --&gt; Permutation
+ Permutation --&gt; Applicator
+ Applicator --&gt; Reordered
 
-   Reordered[&quot;Reordered NeoN Mesh&quot;]
+ Benchmark[&quot;Benchmark&quot;] -.-&gt; Algorithm
+ Benchmark -.-&gt; Applicator
 
-   Mesh --&gt; MeshView
-   MeshView --&gt; Context
-
-   Context --&gt; GraphBuilder
-   Context --&gt; Geometry
-   Context --&gt; Future
-
-   GraphBuilder --&gt; Graph
-
-   Graph --&gt; Algorithm
-   Geometry -.-&gt; Algorithm
-   Future -.-&gt; Algorithm
-
-   Algorithm --&gt; Permutation
-
-   Permutation --&gt; IO
-   IO --&gt; Cache
-
-   Permutation --&gt; Applicator
-   Applicator --&gt; Reordered
-
-   Benchmark -.-&gt; Algorithm
-   Benchmark -.-&gt; Applicator
+ Permutation --&gt; IO[&quot;PermutationIO&quot;]
+ IO --&gt; Cache[&quot;PermutationCache&quot;]
     </pre></section>
 <section id="component-responsibilities">
 <h2>Component Responsibilities<a class="headerlink" href="#component-responsibilities" title="Link to this heading">¶</a></h2>
