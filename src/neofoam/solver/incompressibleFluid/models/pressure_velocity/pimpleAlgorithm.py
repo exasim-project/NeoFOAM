@@ -282,7 +282,7 @@ def continuity(
     pRefValue = pressure_reference["pRefValue"]
 
     while pimple_control.correct():
-        with telemetry.span("pressure.assemble"):
+        with telemetry.span("pressure.flux"):
             rAU = volScalarField(pyf.Word("rAU"), 1.0 / UEqn.A())
             HbyA = volVectorField(pyf.constrainHbyA(rAU * UEqn.H(), U, p))
 
@@ -295,11 +295,12 @@ def continuity(
             pyf.constrainPressure(p, U, phiHbyA, rAU)
 
         while pimple_control.correctNonOrthogonal():
+            with telemetry.span("pressure.assemble"):
+                pEqn = fvScalarMatrix(fvm.laplacian(rAU, p) - fvc.div(phiHbyA))
+                pEqn.setReference(pRefCell, pRefValue, False)
             with telemetry.span(
                 "pressure.solve", final=pimple_control.finalInnerIter()
             ):
-                pEqn = fvScalarMatrix(fvm.laplacian(rAU, p) - fvc.div(phiHbyA))
-                pEqn.setReference(pRefCell, pRefValue, False)
                 pEqn.solve(p.select(pimple_control.finalInnerIter()))
 
             if pimple_control.finalNonOrthogonalIter():
@@ -386,7 +387,7 @@ def continuity_boussinesq(
     mesh = U.mesh()
 
     while pimple_control.correct():
-        with telemetry.span("pressure.assemble"):
+        with telemetry.span("pressure.flux"):
             rAU = volScalarField(pyf.Word("rAU"), 1.0 / UEqn.A())
             rAUf = surfaceScalarField(pyf.Word("rAUf"), fvc.interpolate(rAU))
             HbyA = volVectorField(pyf.constrainHbyA(rAU * UEqn.H(), U, p_rgh))
@@ -402,11 +403,12 @@ def continuity_boussinesq(
             pyf.constrainPressure(p_rgh, U, phiHbyA, rAUf)
 
         while pimple_control.correctNonOrthogonal():
+            with telemetry.span("pressure.assemble"):
+                pEqn = fvScalarMatrix(fvm.laplacian(rAUf, p_rgh) - fvc.div(phiHbyA))
+                pEqn.setReference(pRefCell, pRefValue, False)
             with telemetry.span(
                 "pressure.solve", final=pimple_control.finalInnerIter()
             ):
-                pEqn = fvScalarMatrix(fvm.laplacian(rAUf, p_rgh) - fvc.div(phiHbyA))
-                pEqn.setReference(pRefCell, pRefValue, False)
                 pEqn.solve(p_rgh.select(pimple_control.finalInnerIter()))
 
             if pimple_control.finalNonOrthogonalIter():

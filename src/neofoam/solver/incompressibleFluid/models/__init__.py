@@ -4,9 +4,11 @@
 """incompressibleFluid solver-local model plugins.
 
 Exposes the plugin interface, the PressureVelocityAlgorithm dispatcher,
-and the boussinesq, courant, maxDeltaT, and telemetry optional models.
-SpalartAllmaras from the source branch is intentionally not ported in this
-minimal version.
+and the boussinesq, courant, and maxDeltaT optional models. SpalartAllmaras
+from the source branch is intentionally not ported in this minimal version.
+Telemetry is NOT a model: it is solver lifecycle, owned by the solver
+entrypoint (``incompressibleFluid.maybe_configure_telemetry`` and the
+``TelemetryDictConfig`` solver config).
 """
 
 from .incompressibleFluidModel import incompressibleFluidModel
@@ -14,7 +16,6 @@ from .pressure_velocity import PressureVelocityAlgorithm
 from .boussinesq import boussinesq
 from .courant import courant
 from .max_delta_t import maxDeltaT
-from .telemetry import telemetry
 
 __all__ = [
     "incompressibleFluidModel",
@@ -22,5 +23,4 @@ __all__ = [
     "boussinesq",
     "courant",
     "maxDeltaT",
-    "telemetry",
 ]

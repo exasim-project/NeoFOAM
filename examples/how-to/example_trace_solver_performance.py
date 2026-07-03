@@ -31,6 +31,8 @@ import contextlib
 import json
 import subprocess
 
+import pybFoam as pyf
+
 from neofoam.solver import incompressibleFluid
 from neofoam.tutorial import clone_case
 
@@ -39,27 +41,26 @@ subprocess.run(["blockMesh", "-case", str(case)], check=True)
 subprocess.run(["setFields", "-case", str(case)], check=True)
 
 control_dict = case / "system" / "controlDict"
-text = control_dict.read_text().replace("endTime         2000;", "endTime         40;")
-control_dict.write_text(text)
+cd = pyf.dictionary.read(str(control_dict))
+cd.set("endTime", 40)
+cd.write(str(control_dict))
 
 # %%
 # Opt the case into tracing
 # -------------------------
 # The ``telemetry`` sub-dict is all it takes — every key shown here is
 # optional (``enabled`` defaults to ``yes``, ``directory`` to
-# ``telemetry``, ``summary`` to ``yes``).
+# ``telemetry``, ``summary`` to ``yes``). ``subDictOrAdd`` creates the
+# sub-dict but returns a detached copy, so re-fetch it with ``subDict``
+# to get a live handle before setting the keys.
 
-control_dict.write_text(
-    control_dict.read_text()
-    + """
-telemetry
-{
-    enabled     yes;
-    directory   telemetry;
-    summary     yes;
-}
-"""
-)
+cd = pyf.dictionary.read(str(control_dict))
+cd.subDictOrAdd("telemetry")
+telemetry_dict = cd.subDict("telemetry")
+telemetry_dict.set("enabled", "yes")
+telemetry_dict.set("directory", "telemetry")
+telemetry_dict.set("summary", "yes")
+cd.write(str(control_dict))
 
 # %%
 # Run the solver

@@ -61,6 +61,10 @@ def detect_model() -> bool:
 def courant_limit(phi: surfaceScalarField, deltaT: float, cfg: CourantConfig) -> float:
     """Largest deltaT the CFL condition permits on the live ``phi``.
 
+    Reports the raw maximum, ``deltaT * maxCo / Co`` — *how* to approach that
+    limit (OpenFOAM's ``setDeltaT.H`` growth damping and the 1.2 cap) is the
+    solution loop's responsibility (``SolutionLoop.constrain_delta_t``).
+
     ``Co`` is the maximum Courant number on ``phi``; below ``SMALL`` the flow is
     quiescent and the rule offers no opinion (``VGREAT``).
     """
