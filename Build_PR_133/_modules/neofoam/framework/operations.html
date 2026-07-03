@@ -218,6 +218,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../auto_how-to/example_visualize_the_operation_dag.html">Visualize the operation DAG</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../auto_how-to/example_use_depends_for_injection.html">Inject dependencies into operations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../auto_how-to/example_use_an_interface.html">Gather contributions from many models with a model-owned interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../auto_how-to/example_trace_solver_performance.html">Trace solver performance with OpenTelemetry</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul>
@@ -330,6 +331,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Union</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="w"> </span><span class="kn">import</span> <span class="n">telemetry</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">OperationMetadata</span><span class="p">,</span> <span class="n">OperationNumber</span>
@@ -424,6 +426,16 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">dependencies</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">telemetry</span><span class="o">.</span><span class="n">is_active</span><span class="p">():</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execute</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">telemetry</span><span class="o">.</span><span class="n">span</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">op_name</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">name</span> <span class="ow">or</span> <span class="s2">&quot;operation&quot;</span><span class="p">,</span>
+            <span class="n">operation_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">operation_type</span><span class="p">,</span>
+            <span class="n">domain</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">domain_name</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execute</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="n">op_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation_type</span>
         <span class="k">if</span> <span class="n">op_type</span> <span class="o">==</span> <span class="s2">&quot;conditional&quot;</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>

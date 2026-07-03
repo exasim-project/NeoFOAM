@@ -218,6 +218,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../../auto_how-to/example_visualize_the_operation_dag.html">Visualize the operation DAG</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../auto_how-to/example_use_depends_for_injection.html">Inject dependencies into operations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../auto_how-to/example_use_an_interface.html">Gather contributions from many models with a model-owned interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../auto_how-to/example_trace_solver_performance.html">Trace solver performance with OpenTelemetry</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul>
@@ -327,6 +328,8 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="w"> </span><span class="kn">import</span> <span class="n">telemetry</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">..init_step</span><span class="w"> </span><span class="kn">import</span> <span class="n">InitStep</span><span class="p">,</span> <span class="n">InitStepExecutionError</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.init_result</span><span class="w"> </span><span class="kn">import</span> <span class="n">InitResult</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.ordering</span><span class="w"> </span><span class="kn">import</span> <span class="n">_topological_sort</span>
@@ -345,7 +348,8 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;InitStep &#39;</span><span class="si">{</span><span class="n">step</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; has no initializer function&quot;</span><span class="p">)</span>
 
     <span class="k">try</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">step</span><span class="o">.</span><span class="n">initializer</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">telemetry</span><span class="o">.</span><span class="n">span</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;init.</span><span class="si">{</span><span class="n">step</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="n">step</span><span class="o">.</span><span class="n">category</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">step</span><span class="o">.</span><span class="n">initializer</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
     <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
         <span class="k">raise</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
@@ -363,17 +367,18 @@
     <span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitResult</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
-    <span class="k">for</span> <span class="n">lazy_init</span> <span class="ow">in</span> <span class="n">sorted_inits</span><span class="p">:</span>
-        <span class="n">obj</span> <span class="o">=</span> <span class="n">execute_step</span><span class="p">(</span><span class="n">lazy_init</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span>
-        <span class="n">context</span><span class="p">[</span><span class="n">lazy_init</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">obj</span>
-        <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="n">InitResult</span><span class="p">(</span>
-                <span class="n">name</span><span class="o">=</span><span class="n">lazy_init</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-                <span class="n">category</span><span class="o">=</span><span class="n">lazy_init</span><span class="o">.</span><span class="n">category</span><span class="p">,</span>
-                <span class="n">value</span><span class="o">=</span><span class="n">obj</span><span class="p">,</span>
-                <span class="n">write</span><span class="o">=</span><span class="n">lazy_init</span><span class="o">.</span><span class="n">write</span><span class="p">,</span>
+    <span class="k">with</span> <span class="n">telemetry</span><span class="o">.</span><span class="n">span</span><span class="p">(</span><span class="s2">&quot;initialization&quot;</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">lazy_init</span> <span class="ow">in</span> <span class="n">sorted_inits</span><span class="p">:</span>
+            <span class="n">obj</span> <span class="o">=</span> <span class="n">execute_step</span><span class="p">(</span><span class="n">lazy_init</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span>
+            <span class="n">context</span><span class="p">[</span><span class="n">lazy_init</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">obj</span>
+            <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">InitResult</span><span class="p">(</span>
+                    <span class="n">name</span><span class="o">=</span><span class="n">lazy_init</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                    <span class="n">category</span><span class="o">=</span><span class="n">lazy_init</span><span class="o">.</span><span class="n">category</span><span class="p">,</span>
+                    <span class="n">value</span><span class="o">=</span><span class="n">obj</span><span class="p">,</span>
+                    <span class="n">write</span><span class="o">=</span><span class="n">lazy_init</span><span class="o">.</span><span class="n">write</span><span class="p">,</span>
+                <span class="p">)</span>
             <span class="p">)</span>
-        <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">results</span></div>
 
