@@ -46,15 +46,18 @@ Prepare the case
 Clone ``hotRoom``, mesh it, and initialize the hot-air blob — what its
 ``Allrun`` would do. We then shorten the run to 20 time steps.
 
-.. GENERATED FROM PYTHON SOURCE LINES 29-45
+.. GENERATED FROM PYTHON SOURCE LINES 29-49
 
 .. code-block:: Python
 
 
     import contextlib
-    import json
     import subprocess
 
+    import matplotlib.pyplot as plt
+    import pybFoam as pyf
+
+    from neofoam import telemetry
     from neofoam.solver import incompressibleFluid
     from neofoam.tutorial import clone_case
 
@@ -63,61 +66,48 @@ Clone ``hotRoom``, mesh it, and initialize the hot-air blob — what its
     subprocess.run(["setFields", "-case", str(case)], check=True)
 
     control_dict = case / "system" / "controlDict"
-    text = control_dict.read_text().replace("endTime         2000;", "endTime         40;")
-    control_dict.write_text(text)
+    cd = pyf.dictionary.read(str(control_dict))
+    cd.set("endTime", 40)
+    cd.write(str(control_dict))
 
 
 
 
 
-.. rst-class:: sphx-glr-script-out
-
- .. code-block:: none
-
-
-    1247
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 46-51
+.. GENERATED FROM PYTHON SOURCE LINES 50-57
 
 Opt the case into tracing
 -------------------------
 The ``telemetry`` sub-dict is all it takes — every key shown here is
 optional (``enabled`` defaults to ``yes``, ``directory`` to
-``telemetry``, ``summary`` to ``yes``).
+``telemetry``, ``summary`` to ``yes``). ``subDictOrAdd`` creates the
+sub-dict but returns a detached copy, so re-fetch it with ``subDict``
+to get a live handle before setting the keys.
 
-.. GENERATED FROM PYTHON SOURCE LINES 51-64
+.. GENERATED FROM PYTHON SOURCE LINES 57-66
 
 .. code-block:: Python
 
 
-    control_dict.write_text(
-        control_dict.read_text()
-        + """
-    telemetry
-    {
-        enabled     yes;
-        directory   telemetry;
-        summary     yes;
-    }
-    """
-    )
+    cd = pyf.dictionary.read(str(control_dict))
+    cd.subDictOrAdd("telemetry")
+    telemetry_dict = cd.subDict("telemetry")
+    telemetry_dict.set("enabled", "yes")
+    telemetry_dict.set("directory", "telemetry")
+    telemetry_dict.set("summary", "yes")
+    cd.write(str(control_dict))
 
 
 
 
 
-.. rst-class:: sphx-glr-script-out
-
- .. code-block:: none
-
-
-    1331
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 65-72
+.. GENERATED FROM PYTHON SOURCE LINES 67-74
 
 Run the solver
 --------------
@@ -127,7 +117,7 @@ case and launch e.g. ``mpirun -np 4 python -m <driver>`` with
 ``run(["incompressibleFluid", "-parallel"])`` to get ``rank0`` …
 ``rank3`` span files, each tagged with ``mpi.rank`` / ``mpi.size``.
 
-.. GENERATED FROM PYTHON SOURCE LINES 72-76
+.. GENERATED FROM PYTHON SOURCE LINES 74-78
 
 .. code-block:: Python
 
@@ -142,32 +132,64 @@ case and launch e.g. ``mpirun -np 4 python -m <driver>`` with
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 77-82
+.. GENERATED FROM PYTHON SOURCE LINES 79-87
 
-Where did the time go?
-----------------------
-The summary aggregates every span by name. ``time_loop`` is the whole
-loop; ``momentum``/``continuity`` are the PIMPLE stages inside it, and
-``init.*`` entries are the one-off build steps.
+Where did the time go? — the summary bar chart
+----------------------------------------------
+:func:`neofoam.telemetry.plot_summary` reads ``rank<N>.summary.json`` and
+draws the per-operation total wall-clock. ``time_loop`` is the whole loop;
+``momentum`` / ``continuity`` are the PIMPLE stages inside it, and their
+``.assemble`` / ``.solve`` children split matrix build from linear solve.
+Passing an axes lets the docs gallery (or a report) capture the figure;
+``neofoam telemetry plot <case>`` does the same from the command line.
 
-.. GENERATED FROM PYTHON SOURCE LINES 82-96
+.. GENERATED FROM PYTHON SOURCE LINES 87-91
 
 .. code-block:: Python
 
 
-    summary = json.loads((case / "telemetry" / "rank0.summary.json").read_text())
-    print(f"rank {summary['mpi']['rank']} of {summary['mpi']['size']}")
+    fig, ax = plt.subplots(figsize=(8, 5))
+    telemetry.plot_summary(case / "telemetry" / "rank0.summary.json", top=12, ax=ax)
 
-    by_total = sorted(
-        summary["spans"].items(), key=lambda item: item[1]["total_s"], reverse=True
-    )
-    print(f"{'operation':<28} {'count':>5} {'total [s]':>10} {'mean [s]':>10}")
-    for name, stats in by_total[:12]:
-        print(
-            f"{name:<28} {stats['count']:>5} {stats['total_s']:>10.4f} "
-            f"{stats['mean_s']:>10.4f}"
-        )
 
+
+
+.. image-sg:: /auto_how-to/images/sphx_glr_example_trace_solver_performance_001.png
+   :alt: operation totals (rank 0)
+   :srcset: /auto_how-to/images/sphx_glr_example_trace_solver_performance_001.png
+   :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ .. code-block:: none
+
+
+    <Figure size 800x500 with 1 Axes>
+
+
+
+.. GENERATED FROM PYTHON SOURCE LINES 92-103
+
+The interactive timeline — open in Perfetto
+-------------------------------------------
+The summary flattens the run; the *spans* keep the full hierarchy (each
+carries its parent span id and exact start/end). :func:`~neofoam.telemetry.
+write_chrome_trace` turns them into a ``trace.json`` you drop into
+https://ui.perfetto.dev or ``chrome://tracing`` for a zoomable flame
+timeline — one process row per MPI rank, so you can see exactly which
+inner-loop iteration was slow (``neofoam telemetry trace <case>`` from the
+CLI). Operation authors add finer detail with
+``neofoam.telemetry.span("my.step")`` or ``neofoam.telemetry.instrument()``
+— those spans nest under the operation's span automatically.
+
+.. GENERATED FROM PYTHON SOURCE LINES 103-106
+
+.. code-block:: Python
+
+
+    trace_path = telemetry.write_chrome_trace(case)
+    print(f"wrote {trace_path} — open it in https://ui.perfetto.dev")
 
 
 
@@ -176,54 +198,7 @@ loop; ``momentum``/``continuity`` are the PIMPLE stages inside it, and
 
  .. code-block:: none
 
-    rank 0 of 1
-    operation                    count  total [s]   mean [s]
-    solver.run                       1     0.3700     0.3700
-    time_loop                        1     0.3404     0.3404
-    inner_loop                      20     0.2767     0.0138
-    continuity                      20     0.1795     0.0090
-    pressure.solve                  40     0.1013     0.0025
-    momentum                        20     0.0591     0.0030
-    of_correct_turbulence           20     0.0379     0.0019
-    momentum.solve                  20     0.0315     0.0016
-    initialization                   1     0.0249     0.0249
-    pressure.assemble               40     0.0233     0.0006
-    solve_energy                    20     0.0191     0.0010
-    momentum.assemble               20     0.0169     0.0008
-
-
-
-
-.. GENERATED FROM PYTHON SOURCE LINES 97-104
-
-The raw spans keep the full hierarchy — each line carries its parent
-span id, so a trace viewer (or a few lines of Python) can reconstruct
-exactly which inner-loop iteration was slow. Operation authors can add
-finer detail from inside an operation with
-``neofoam.telemetry.span("my.step")`` or by decorating a helper with
-``neofoam.telemetry.instrument()`` — those spans nest under the
-operation's span automatically.
-
-.. GENERATED FROM PYTHON SOURCE LINES 104-111
-
-.. code-block:: Python
-
-
-    spans = [
-        json.loads(line)
-        for line in (case / "telemetry" / "rank0.spans.jsonl").read_text().splitlines()
-    ]
-    momentum = [s for s in spans if s["name"] == "momentum"]
-    print(f"{len(spans)} spans total, {len(momentum)} momentum solves")
-
-
-
-
-.. rst-class:: sphx-glr-script-out
-
- .. code-block:: none
-
-    336 spans total, 20 momentum solves
+    wrote /tmp/neofoam_0ljuoy69/hotRoom/telemetry/trace.json — open it in https://ui.perfetto.dev
 
 
 
@@ -231,7 +206,7 @@ operation's span automatically.
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 0.479 seconds)
+   **Total running time of the script:** (0 minutes 0.665 seconds)
 
 
 .. _sphx_glr_download_auto_how-to_example_trace_solver_performance.py:

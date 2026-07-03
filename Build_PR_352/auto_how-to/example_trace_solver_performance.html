@@ -354,9 +354,12 @@ reads the summary back.</p>
 <p>Clone <code class="docutils literal notranslate"><span class="pre">hotRoom</span></code>, mesh it, and initialize the hot-air blob — what its
 <code class="docutils literal notranslate"><span class="pre">Allrun</span></code> would do. We then shorten the run to 20 time steps.</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">contextlib</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pybFoam</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pyf</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="w"> </span><span class="kn">import</span> <span class="n">telemetry</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.solver</span><span class="w"> </span><span class="kn">import</span> <span class="n">incompressibleFluid</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.tutorial</span><span class="w"> </span><span class="kn">import</span> <span class="n">clone_case</span>
 
@@ -365,11 +368,9 @@ reads the summary back.</p>
 <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">&quot;setFields&quot;</span><span class="p">,</span> <span class="s2">&quot;-case&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">case</span><span class="p">)],</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 <span class="n">control_dict</span> <span class="o">=</span> <span class="n">case</span> <span class="o">/</span> <span class="s2">&quot;system&quot;</span> <span class="o">/</span> <span class="s2">&quot;controlDict&quot;</span>
-<span class="n">text</span> <span class="o">=</span> <span class="n">control_dict</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;endTime         2000;&quot;</span><span class="p">,</span> <span class="s2">&quot;endTime         40;&quot;</span><span class="p">)</span>
-<span class="n">control_dict</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
-</pre></div>
-</div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>1247
+<span class="n">cd</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dictionary</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">control_dict</span><span class="p">))</span>
+<span class="n">cd</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;endTime&quot;</span><span class="p">,</span> <span class="mi">40</span><span class="p">)</span>
+<span class="n">cd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">control_dict</span><span class="p">))</span>
 </pre></div>
 </div>
 </section>
@@ -377,21 +378,16 @@ reads the summary back.</p>
 <h2>Opt the case into tracing<a class="headerlink" href="#opt-the-case-into-tracing" title="Link to this heading">¶</a></h2>
 <p>The <code class="docutils literal notranslate"><span class="pre">telemetry</span></code> sub-dict is all it takes — every key shown here is
 optional (<code class="docutils literal notranslate"><span class="pre">enabled</span></code> defaults to <code class="docutils literal notranslate"><span class="pre">yes</span></code>, <code class="docutils literal notranslate"><span class="pre">directory</span></code> to
-<code class="docutils literal notranslate"><span class="pre">telemetry</span></code>, <code class="docutils literal notranslate"><span class="pre">summary</span></code> to <code class="docutils literal notranslate"><span class="pre">yes</span></code>).</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">control_dict</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
-    <span class="n">control_dict</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span>
-    <span class="o">+</span> <span class="s2">&quot;&quot;&quot;</span>
-<span class="s2">telemetry</span>
-<span class="s2">{</span>
-<span class="s2">    enabled     yes;</span>
-<span class="s2">    directory   telemetry;</span>
-<span class="s2">    summary     yes;</span>
-<span class="s2">}</span>
-<span class="s2">&quot;&quot;&quot;</span>
-<span class="p">)</span>
-</pre></div>
-</div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>1331
+<code class="docutils literal notranslate"><span class="pre">telemetry</span></code>, <code class="docutils literal notranslate"><span class="pre">summary</span></code> to <code class="docutils literal notranslate"><span class="pre">yes</span></code>). <code class="docutils literal notranslate"><span class="pre">subDictOrAdd</span></code> creates the
+sub-dict but returns a detached copy, so re-fetch it with <code class="docutils literal notranslate"><span class="pre">subDict</span></code>
+to get a live handle before setting the keys.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">dictionary</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">control_dict</span><span class="p">))</span>
+<span class="n">cd</span><span class="o">.</span><span class="n">subDictOrAdd</span><span class="p">(</span><span class="s2">&quot;telemetry&quot;</span><span class="p">)</span>
+<span class="n">telemetry_dict</span> <span class="o">=</span> <span class="n">cd</span><span class="o">.</span><span class="n">subDict</span><span class="p">(</span><span class="s2">&quot;telemetry&quot;</span><span class="p">)</span>
+<span class="n">telemetry_dict</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;enabled&quot;</span><span class="p">,</span> <span class="s2">&quot;yes&quot;</span><span class="p">)</span>
+<span class="n">telemetry_dict</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;directory&quot;</span><span class="p">,</span> <span class="s2">&quot;telemetry&quot;</span><span class="p">)</span>
+<span class="n">telemetry_dict</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;summary&quot;</span><span class="p">,</span> <span class="s2">&quot;yes&quot;</span><span class="p">)</span>
+<span class="n">cd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">control_dict</span><span class="p">))</span>
 </pre></div>
 </div>
 </section>
@@ -407,60 +403,41 @@ case and launch e.g. <code class="docutils literal notranslate"><span class="pre
 </pre></div>
 </div>
 </section>
-<section id="where-did-the-time-go">
-<h2>Where did the time go?<a class="headerlink" href="#where-did-the-time-go" title="Link to this heading">¶</a></h2>
-<p>The summary aggregates every span by name. <code class="docutils literal notranslate"><span class="pre">time_loop</span></code> is the whole
-loop; <code class="docutils literal notranslate"><span class="pre">momentum</span></code>/<code class="docutils literal notranslate"><span class="pre">continuity</span></code> are the PIMPLE stages inside it, and
-<code class="docutils literal notranslate"><span class="pre">init.*</span></code> entries are the one-off build steps.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">summary</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">((</span><span class="n">case</span> <span class="o">/</span> <span class="s2">&quot;telemetry&quot;</span> <span class="o">/</span> <span class="s2">&quot;rank0.summary.json&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;rank </span><span class="si">{</span><span class="n">summary</span><span class="p">[</span><span class="s1">&#39;mpi&#39;</span><span class="p">][</span><span class="s1">&#39;rank&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="n">summary</span><span class="p">[</span><span class="s1">&#39;mpi&#39;</span><span class="p">][</span><span class="s1">&#39;size&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-<span class="n">by_total</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
-    <span class="n">summary</span><span class="p">[</span><span class="s2">&quot;spans&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="n">item</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;total_s&quot;</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span>
-<span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;operation&#39;</span><span class="si">:</span><span class="s2">&lt;28</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">&#39;count&#39;</span><span class="si">:</span><span class="s2">&gt;5</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">&#39;total [s]&#39;</span><span class="si">:</span><span class="s2">&gt;10</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="s1">&#39;mean [s]&#39;</span><span class="si">:</span><span class="s2">&gt;10</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">stats</span> <span class="ow">in</span> <span class="n">by_total</span><span class="p">[:</span><span class="mi">12</span><span class="p">]:</span>
-    <span class="nb">print</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">:</span><span class="s2">&lt;28</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;count&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">&gt;5</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;total_s&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">&gt;10.4f</span><span class="si">}</span><span class="s2"> &quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;mean_s&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">&gt;10.4f</span><span class="si">}</span><span class="s2">&quot;</span>
-    <span class="p">)</span>
+<section id="where-did-the-time-go-the-summary-bar-chart">
+<h2>Where did the time go? — the summary bar chart<a class="headerlink" href="#where-did-the-time-go-the-summary-bar-chart" title="Link to this heading">¶</a></h2>
+<p><code class="xref py py-func docutils literal notranslate"><span class="pre">neofoam.telemetry.plot_summary()</span></code> reads <code class="docutils literal notranslate"><span class="pre">rank&lt;N&gt;.summary.json</span></code> and
+draws the per-operation total wall-clock. <code class="docutils literal notranslate"><span class="pre">time_loop</span></code> is the whole loop;
+<code class="docutils literal notranslate"><span class="pre">momentum</span></code> / <code class="docutils literal notranslate"><span class="pre">continuity</span></code> are the PIMPLE stages inside it, and their
+<code class="docutils literal notranslate"><span class="pre">.assemble</span></code> / <code class="docutils literal notranslate"><span class="pre">.solve</span></code> children split matrix build from linear solve.
+Passing an axes lets the docs gallery (or a report) capture the figure;
+<code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">telemetry</span> <span class="pre">plot</span> <span class="pre">&lt;case&gt;</span></code> does the same from the command line.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+<span class="n">telemetry</span><span class="o">.</span><span class="n">plot_summary</span><span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">&quot;telemetry&quot;</span> <span class="o">/</span> <span class="s2">&quot;rank0.summary.json&quot;</span><span class="p">,</span> <span class="n">top</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>rank 0 of 1
-operation                    count  total [s]   mean [s]
-solver.run                       1     0.3700     0.3700
-time_loop                        1     0.3404     0.3404
-inner_loop                      20     0.2767     0.0138
-continuity                      20     0.1795     0.0090
-pressure.solve                  40     0.1013     0.0025
-momentum                        20     0.0591     0.0030
-of_correct_turbulence           20     0.0379     0.0019
-momentum.solve                  20     0.0315     0.0016
-initialization                   1     0.0249     0.0249
-pressure.assemble               40     0.0233     0.0006
-solve_energy                    20     0.0191     0.0010
-momentum.assemble               20     0.0169     0.0008
+<img src="../_images/sphx_glr_example_trace_solver_performance_001.png" srcset="../_images/sphx_glr_example_trace_solver_performance_001.png" alt="operation totals (rank 0)" class = "sphx-glr-single-img"/><div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;Figure size 800x500 with 1 Axes&gt;
 </pre></div>
 </div>
-<p>The raw spans keep the full hierarchy — each line carries its parent
-span id, so a trace viewer (or a few lines of Python) can reconstruct
-exactly which inner-loop iteration was slow. Operation authors can add
-finer detail from inside an operation with
-<code class="docutils literal notranslate"><span class="pre">neofoam.telemetry.span(&quot;my.step&quot;)</span></code> or by decorating a helper with
-<code class="docutils literal notranslate"><span class="pre">neofoam.telemetry.instrument()</span></code> — those spans nest under the
-operation’s span automatically.</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">spans</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="p">(</span><span class="n">case</span> <span class="o">/</span> <span class="s2">&quot;telemetry&quot;</span> <span class="o">/</span> <span class="s2">&quot;rank0.spans.jsonl&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
-<span class="p">]</span>
-<span class="n">momentum</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">spans</span> <span class="k">if</span> <span class="n">s</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;momentum&quot;</span><span class="p">]</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">spans</span><span class="p">)</span><span class="si">}</span><span class="s2"> spans total, </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">momentum</span><span class="p">)</span><span class="si">}</span><span class="s2"> momentum solves&quot;</span><span class="p">)</span>
+</section>
+<section id="the-interactive-timeline-open-in-perfetto">
+<h2>The interactive timeline — open in Perfetto<a class="headerlink" href="#the-interactive-timeline-open-in-perfetto" title="Link to this heading">¶</a></h2>
+<p>The summary flattens the run; the <em>spans</em> keep the full hierarchy (each
+carries its parent span id and exact start/end). <code class="xref py py-func docutils literal notranslate">
+<span class="pre">write_chrome_trace()</span></code> turns them into a <code class="docutils literal notranslate"><span class="pre">trace.json</span></code> you drop into
+<a class="reference external" href="https://ui.perfetto.dev">https://ui.perfetto.dev</a> or <code class="docutils literal notranslate"><span class="pre">chrome://tracing</span></code> for a zoomable flame
+timeline — one process row per MPI rank, so you can see exactly which
+inner-loop iteration was slow (<code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">telemetry</span> <span class="pre">trace</span> <span class="pre">&lt;case&gt;</span></code> from the
+CLI). Operation authors add finer detail with
+<code class="docutils literal notranslate"><span class="pre">neofoam.telemetry.span(&quot;my.step&quot;)</span></code> or <code class="docutils literal notranslate"><span class="pre">neofoam.telemetry.instrument()</span></code>
+— those spans nest under the operation’s span automatically.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">trace_path</span> <span class="o">=</span> <span class="n">telemetry</span><span class="o">.</span><span class="n">write_chrome_trace</span><span class="p">(</span><span class="n">case</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;wrote </span><span class="si">{</span><span class="n">trace_path</span><span class="si">}</span><span class="s2"> — open it in https://ui.perfetto.dev&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>336 spans total, 20 momentum solves
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>wrote /tmp/neofoam_0ljuoy69/hotRoom/telemetry/trace.json — open it in https://ui.perfetto.dev
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.479 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.665 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-how-to-example-trace-solver-performance-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/fc97c5977b7c8c5e04ca75669272e0c7/example_trace_solver_performance.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">example_trace_solver_performance.ipynb</span></code></a></p>
@@ -535,7 +512,8 @@ operation’s span automatically.</p>
 <li><a class="reference internal" href="#prepare-the-case">Prepare the case</a></li>
 <li><a class="reference internal" href="#opt-the-case-into-tracing">Opt the case into tracing</a></li>
 <li><a class="reference internal" href="#run-the-solver">Run the solver</a></li>
-<li><a class="reference internal" href="#where-did-the-time-go">Where did the time go?</a></li>
+<li><a class="reference internal" href="#where-did-the-time-go-the-summary-bar-chart">Where did the time go? — the summary bar chart</a></li>
+<li><a class="reference internal" href="#the-interactive-timeline-open-in-perfetto">The interactive timeline — open in Perfetto</a></li>
 </ul>
 </li>
 </ul>
