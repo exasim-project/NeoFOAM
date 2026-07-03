@@ -214,12 +214,16 @@ def inner_loop(ctx: Context) -> bool:
     pimple = ctx.models["pimple_control"]
     looping = bool(pimple.loop())
     if looping:
-        # Mirror pimpleControl::loop(): on the final outer iteration the mesh
-        # is flagged so fvMatrix::solve picks the <field>Final solver settings
-        # (in PISO mode, nOuterCorrectors 1, that is every iteration). The
-        # flag deliberately stays raised on exit — the turbulence correction
-        # runs after this loop in the framework graph but inside the final
-        # outer iteration natively; the next step's first call lowers it.
+        # Mirror pimpleControl::loop(): on the final outer iteration flag the
+        # mesh so fvMatrix::solve picks the <field>Final solver settings (in
+        # PISO mode, nOuterCorrectors 1, that is every iteration). The momentum
+        # and pressure equations pass this flag explicitly (U.select / p.select
+        # below), so the mesh flag is only needed for solves buried inside
+        # OpenFOAM library code — the turbulence model's k/epsilon/nuTilda
+        # solves in ``turbulence.correct()``, which take no argument. The flag
+        # deliberately stays raised on exit — that correction runs after this
+        # loop in the framework graph but inside the final outer iteration
+        # natively; the next step's first call lowers it.
         ctx.mesh.setFinalIteration(pimple.finalIter())
     return looping
 
@@ -256,7 +260,14 @@ def momentum(
 
     if pimple_control.momentumPredictor():
         with telemetry.span("momentum.solve"):
-            pyf.solve(UEqn + fvc.grad(p))
+            # Pass the final-iteration flag explicitly via ``U.select`` (so the
+            # solve picks the UFinal settings) instead of relying on the mesh
+            # finalIteration state. ``UEqn`` keeps its coefficients for the
+            # pressure loop; the predictor system ``UEqn + grad(p)`` is a
+            # separate matrix whose solve updates U.
+            fvVectorMatrix(UEqn + fvc.grad(p)).solve(
+                U.select(pimple_control.finalIter())
+            )
 
     return FieldUpdates({"UEqn": UEqn, "U": U})
 
@@ -351,12 +362,14 @@ def momentum_boussinesq(
 
     if pimple_control.momentumPredictor():
         with telemetry.span("momentum.solve"):
-            pyf.solve(
+            # Explicit final-iteration flag (see ``momentum``): pick UFinal via
+            # U.select rather than the mesh finalIteration state.
+            fvVectorMatrix(
                 UEqn
                 + fvc.reconstruct(
                     (-ghf * fvc.snGrad(rhok) - fvc.snGrad(p_rgh)) * mesh.magSf()
                 )
-            )
+            ).solve(U.select(pimple_control.finalIter()))
 
     return FieldUpdates({"UEqn": UEqn, "U": U})
 
