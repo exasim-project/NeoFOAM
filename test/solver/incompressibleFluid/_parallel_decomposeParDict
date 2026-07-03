@@ -1,0 +1,30 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      decomposeParDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Two subdomains so the parallel comparison tests run on a CI runner with only
+// two cores. ``simple (2 1 1)`` splits along x and is geometry-agnostic, so the
+// same file serves both the pitzDaily and hotRoom cases.
+numberOfSubdomains  2;
+
+method          simple;
+
+coeffs
+{
+    n           (2 1 1);
+}
+
+
+// ************************************************************************* //

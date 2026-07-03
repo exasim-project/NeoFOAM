@@ -56,32 +56,14 @@ PimpleFoam(["pimplefoam"]).run()
 
 # A ``-parallel`` framework run: each MPI rank is a fresh interpreter spawned by
 # mpirun, so the solver drives itself the same way native ``pimpleFoam -parallel``
-# does (one ``argList``/``Time`` per rank, all under the same MPI session).
-_PARALLEL_DRIVER = """
-import os
-os.environ["FOAM_SIGFPE"] = ""
-from neofoam.solver.incompressibleFluid import run
-run(["incompressibleFluid", "-parallel"])
-"""
+# does (one ``argList``/``Time`` per rank, all under the same MPI session). The
+# driver and the decomposeParDict live in real files rather than inline strings.
+_PARALLEL_DRIVER = Path(__file__).parent / "_parallel_driver.py"
+_DECOMPOSE_PAR_DICT = Path(__file__).parent / "_parallel_decomposeParDict"
 
+# Two subdomains — the fixture decomposeParDict decomposes into two, keeping the
+# test runnable on a two-core CI runner.
 _NPROCS = 2
-_DECOMPOSE_DICT = """FoamFile
-{
-    version     2.0;
-    format      ascii;
-    class       dictionary;
-    object      decomposeParDict;
-}
-
-numberOfSubdomains 2;
-
-method          simple;
-
-coeffs
-{
-    n           (2 1 1);
-}
-"""
 
 
 def _mpi_available() -> bool:
@@ -192,7 +174,7 @@ def test_framework_matches_native_pimpleFoam() -> None:
 
 
 def _decompose(case: Path) -> None:
-    (case / "system" / "decomposeParDict").write_text(_DECOMPOSE_DICT)
+    shutil.copyfile(_DECOMPOSE_PAR_DICT, case / "system" / "decomposeParDict")
     result = subprocess.run(
         ["decomposePar", "-case", str(case), "-force"],
         capture_output=True,
@@ -216,7 +198,7 @@ def _run_framework_parallel(case: Path) -> None:
     repo_root = Path(__file__).parent.parent.parent.parent
     env = {**os.environ, "PYTHONPATH": str(repo_root / "src")}
     result = subprocess.run(
-        ["mpirun", "-np", str(_NPROCS), sys.executable, "-c", _PARALLEL_DRIVER],
+        ["mpirun", "-np", str(_NPROCS), sys.executable, str(_PARALLEL_DRIVER)],
         cwd=case,
         capture_output=True,
         text=True,

@@ -160,30 +160,10 @@ def test_second_in_process_run_reconfigures_cleanly(tmp_path: Path) -> None:
 
 # --- MPI ------------------------------------------------------------------------
 
-_DECOMPOSE_DICT = """FoamFile
-{
-    version     2.0;
-    format      ascii;
-    class       dictionary;
-    object      decomposeParDict;
-}
-
-numberOfSubdomains 2;
-
-method          simple;
-
-coeffs
-{
-    n           (2 1 1);
-}
-"""
-
-_PARALLEL_DRIVER = """
-import os
-os.environ["FOAM_SIGFPE"] = ""
-from neofoam.solver.incompressibleFluid import run
-run(["incompressibleFluid", "-parallel"])
-"""
+# The two-subdomain decomposeParDict and the ``-parallel`` driver live in real
+# files (shared with test_pitzDaily_comparison) rather than inline strings.
+_DECOMPOSE_PAR_DICT = Path(__file__).parent / "_parallel_decomposeParDict"
+_PARALLEL_DRIVER = Path(__file__).parent / "_parallel_driver.py"
 
 
 def _mpi_available() -> bool:
@@ -195,7 +175,7 @@ def _mpi_available() -> bool:
 @pytest.mark.skipif(not _mpi_available(), reason="mpirun/decomposePar not available")
 def test_hotRoom_telemetry_parallel_writes_one_file_per_rank(tmp_path: Path) -> None:
     case = _prepare_case(tmp_path / "hotRoom_parallel")
-    (case / "system" / "decomposeParDict").write_text(_DECOMPOSE_DICT)
+    shutil.copyfile(_DECOMPOSE_PAR_DICT, case / "system" / "decomposeParDict")
 
     result = subprocess.run(
         ["decomposePar", "-case", str(case)],
@@ -208,7 +188,7 @@ def test_hotRoom_telemetry_parallel_writes_one_file_per_rank(tmp_path: Path) -> 
     import sys
 
     result = subprocess.run(
-        ["mpirun", "-np", "2", sys.executable, "-c", _PARALLEL_DRIVER],
+        ["mpirun", "-np", "2", sys.executable, str(_PARALLEL_DRIVER)],
         cwd=case,
         capture_output=True,
         text=True,
