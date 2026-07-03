@@ -104,16 +104,16 @@ Design Principles
 
 The framework follows these principles.
 
-1. Design around stable abstractions.
-2. Algorithms compute permutations only.
-3. The framework owns orchestration.
-4. Meshes are accessed through views.
-5. Graphs are implementation details.
-6. Expensive derived data is computed lazily.
-7. Algorithms are stateless.
-8. File I/O is separated from algorithms.
-9. New algorithms should require minimal framework changes.
-10. Performance optimisations must not compromise maintainability.
+#. Design around stable abstractions.
+#. Algorithms compute permutations only.
+#. The framework owns orchestration.
+#. Meshes are accessed through views.
+#. Graphs are implementation details.
+#. Expensive derived data is computed lazily.
+#. Algorithms are stateless.
+#. File I/O is separated from algorithms.
+#. New algorithms should require minimal framework changes.
+#. Performance optimisations must not compromise maintainability.
 
 High-Level Architecture
 -----------------------
