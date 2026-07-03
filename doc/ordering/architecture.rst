@@ -99,18 +99,6 @@ The framework shall
 - be thread-safe
 - be easy to unit test
 
-Non-goals
----------
-
-The first version does **not** support
-
-- distributed-memory ordering
-- adaptive mesh refinement
-- dynamic runtime reordering
-- GPU-native graph construction
-
-These capabilities may be added in future versions.
-
 Design Principles
 -----------------
 
@@ -125,7 +113,7 @@ The framework follows these principles.
 7. Algorithms are stateless.
 8. File I/O is separated from algorithms.
 9. New algorithms should require minimal framework changes.
-10. Performance optimisations must not reduce maintainability.
+10. Performance optimisations must not compromise maintainability.
 
 High-Level Architecture
 -----------------------
