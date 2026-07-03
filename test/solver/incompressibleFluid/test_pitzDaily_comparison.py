@@ -11,12 +11,13 @@ time step so every solver does identical stepping:
    must match to round-off. This guards that the framework machinery
    (operation graph, models, finalIteration handling) does not change the
    physics.
-2. **framework vs native ``pimpleFoam``** — currently ``xfail``: the plain
-   pybFoam port itself diverges from the C++ binary from the first momentum
-   solve on (different smoothSolver iteration counts on an identical-looking
-   matrix, ~10% rel after 200 steps). That port-fidelity gap is shared by
-   every pybFoam-based solver and predates the framework; it needs its own
-   investigation. An XPASS here means it got fixed — then remove the marker.
+2. **framework vs native ``pimpleFoam``** — round-off parity against the C++
+   binary. This used to be ``xfail``: the pybFoam solvers skipped
+   ``turbulence->validate()`` (which ``pimpleFoam`` calls before the first
+   solve), so the eddy viscosity stayed at the ``0/nut`` placeholder (``0``)
+   for the first momentum equation and every field diverged from there. Both
+   the framework and the plain port now validate on build, matching native
+   bit-for-bit.
 """
 
 import os
@@ -125,13 +126,6 @@ def test_framework_matches_plain_pybfoam_port() -> None:
                 shutil.rmtree(tc)
 
 
-@pytest.mark.xfail(
-    reason="pre-existing pybFoam-vs-native gap: the plain pybFoam port already "
-    "diverges from the C++ pimpleFoam binary from the first momentum solve "
-    "(~10% rel on pitzDaily) — shared by every pybFoam-based solver, "
-    "independent of the framework (which matches the port to round-off, see "
-    "test above). Remove this marker once the port fidelity is fixed."
-)
 def test_framework_matches_native_pimpleFoam() -> None:
     """The end goal: round-off parity against the C++ binary."""
     repo_root = Path(__file__).parent.parent.parent.parent
