@@ -54,6 +54,42 @@ from neofoam.solver.pimplefoam import PimpleFoam
 PimpleFoam(["pimplefoam"]).run()
 """
 
+# A ``-parallel`` framework run: each MPI rank is a fresh interpreter spawned by
+# mpirun, so the solver drives itself the same way native ``pimpleFoam -parallel``
+# does (one ``argList``/``Time`` per rank, all under the same MPI session).
+_PARALLEL_DRIVER = """
+import os
+os.environ["FOAM_SIGFPE"] = ""
+from neofoam.solver.incompressibleFluid import run
+run(["incompressibleFluid", "-parallel"])
+"""
+
+_NPROCS = 2
+_DECOMPOSE_DICT = """FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      decomposeParDict;
+}
+
+numberOfSubdomains 2;
+
+method          simple;
+
+coeffs
+{
+    n           (2 1 1);
+}
+"""
+
+
+def _mpi_available() -> bool:
+    return all(
+        shutil.which(tool) is not None
+        for tool in ("mpirun", "decomposePar", "reconstructPar")
+    )
+
 
 def _prepare_case(source: Path, target: Path) -> None:
     """Copy + mesh the case and pin a fixed time step (identical stepping).
@@ -147,6 +183,91 @@ def test_framework_matches_native_pimpleFoam() -> None:
             timeout=300,
         )
         assert result.returncode == 0, f"pimpleFoam failed: {result.stderr}"
+
+        _assert_fields_match(case_framework, case_native, rtol=1e-10, atol=1e-15)
+    finally:
+        for tc in [case_framework, case_native]:
+            if tc.exists():
+                shutil.rmtree(tc)
+
+
+def _decompose(case: Path) -> None:
+    (case / "system" / "decomposeParDict").write_text(_DECOMPOSE_DICT)
+    result = subprocess.run(
+        ["decomposePar", "-case", str(case), "-force"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, f"decomposePar failed: {result.stderr}"
+
+
+def _reconstruct(case: Path) -> None:
+    result = subprocess.run(
+        ["reconstructPar", "-case", str(case), "-latestTime"],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, f"reconstructPar failed: {result.stderr}"
+
+
+def _run_framework_parallel(case: Path) -> None:
+    repo_root = Path(__file__).parent.parent.parent.parent
+    env = {**os.environ, "PYTHONPATH": str(repo_root / "src")}
+    result = subprocess.run(
+        ["mpirun", "-np", str(_NPROCS), sys.executable, "-c", _PARALLEL_DRIVER],
+        cwd=case,
+        capture_output=True,
+        text=True,
+        timeout=300,
+        env=env,
+    )
+    assert result.returncode == 0, (
+        f"framework parallel run failed:\n{result.stdout[-1000:]}\n"
+        f"{result.stderr[-2000:]}"
+    )
+
+
+def _run_native_parallel(case: Path) -> None:
+    result = subprocess.run(
+        ["mpirun", "-np", str(_NPROCS), "pimpleFoam", "-case", str(case), "-parallel"],
+        capture_output=True,
+        text=True,
+        timeout=300,
+    )
+    assert result.returncode == 0, f"pimpleFoam -parallel failed: {result.stderr}"
+
+
+@pytest.mark.skipif(
+    not _mpi_available(), reason="mpirun/decomposePar/reconstructPar not available"
+)
+def test_framework_matches_native_pimpleFoam_parallel() -> None:
+    """The ``-parallel`` path must match native ``pimpleFoam`` run in parallel.
+
+    Decomposes pitzDaily identically for both solvers, runs each under
+    ``mpirun -np 2 … -parallel``, reconstructs, and compares the fields. Guards
+    the framework's parallel wiring: one ``argList``/``Time`` per rank with the
+    argList (and the MPI session it owns) kept alive for the whole run, so no
+    Pstream exchange happens after MPI is finalized.
+    """
+    repo_root = Path(__file__).parent.parent.parent.parent
+    source_case = repo_root / "tutorials" / "pitzDaily"
+
+    case_framework = repo_root / "test_cases" / "pitzDaily_parallel_framework"
+    case_native = repo_root / "test_cases" / "pitzDaily_parallel_native"
+
+    try:
+        _prepare_case(source_case, case_framework)
+        _prepare_case(source_case, case_native)
+
+        for case, run_parallel in (
+            (case_framework, _run_framework_parallel),
+            (case_native, _run_native_parallel),
+        ):
+            _decompose(case)
+            run_parallel(case)
+            _reconstruct(case)
 
         _assert_fields_match(case_framework, case_native, rtol=1e-10, atol=1e-15)
     finally:

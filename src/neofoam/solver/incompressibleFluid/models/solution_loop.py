@@ -67,6 +67,12 @@ def loop_backend_steps() -> list[InitStep]:
 
     def inject_backend(ctx: dict[str, Any]) -> FoamTime:
         backend = FoamTime(ctx["_foam_time"])
+        # Anchor the argList (which ``Foam::Time`` only holds by raw reference) to
+        # this backend, which lives on the Context for the whole run. Under
+        # ``-parallel`` the argList owns the MPI session and its destructor calls
+        # MPI_Finalize; without a lasting owner it is collected right after init
+        # and every subsequent Pstream exchange aborts (MPI after FINALIZE).
+        backend._foam_arglist = ctx.get("_foam_arglist")
         ctx["models.solution_loop"].set_backend(backend)
         return backend
 
@@ -77,7 +83,7 @@ def loop_backend_steps() -> list[InitStep]:
         model(
             "loop_backend",
             inject_backend,
-            depends_on=["models.solution_loop", "_foam_time"],
+            depends_on=["models.solution_loop", "_foam_time", "_foam_arglist"],
         ),
         model("loop_logger", make_logger),
     ]

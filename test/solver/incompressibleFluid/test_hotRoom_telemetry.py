@@ -192,12 +192,6 @@ def _mpi_available() -> bool:
     )
 
 
-@pytest.mark.skip(
-    reason="the Python incompressibleFluid '-parallel' path is not yet functional: "
-    "a second argList construction finalizes MPI mid-init (pre-existing, "
-    "telemetry-independent — fails identically with telemetry off). Enable once "
-    "parallel runs work; per-rank tagging is covered by test/telemetry unit tests."
-)
 @pytest.mark.skipif(not _mpi_available(), reason="mpirun/decomposePar not available")
 def test_hotRoom_telemetry_parallel_writes_one_file_per_rank(tmp_path: Path) -> None:
     case = _prepare_case(tmp_path / "hotRoom_parallel")
