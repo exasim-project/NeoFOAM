@@ -208,9 +208,17 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         field_writer_model = _by_spec("fieldWriter")
         argv = runner.argv
 
-        def create_foam_time(_ctx: dict[str, Any]) -> Any:
-            argList = pyf.argList(argv)
-            return pyf.Time(argList)
+        def create_foam_arglist(_ctx: dict[str, Any]) -> Any:
+            return pyf.argList(argv)
+
+        def create_foam_time(ctx: dict[str, Any]) -> Any:
+            # ``pyf.Time`` keeps only a raw reference to the argList, so the
+            # argList must outlive it. In a ``-parallel`` run the argList owns the
+            # MPI session and its destructor calls MPI_Finalize; letting it fall
+            # out of scope here would finalize MPI mid-run (every later Pstream
+            # broadcast then aborts). Keep it as its own init resource so it lives
+            # as long as the Time / Context does.
+            return pyf.Time(ctx["_foam_arglist"])
 
         def create_mesh(ctx: dict[str, Any]) -> Any:
             return pyf.fvMesh(ctx["_foam_time"])
@@ -224,7 +232,10 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         # the pybFoam Foam::Time is an init-only resource ("_foam_time"): it
         # parents the mesh objectRegistry and is the write(True) target, but is
         # never routed onto the Context (the leading underscore keeps it hidden).
-        builder.add(lazy("_foam_time", create_foam_time))
+        # ``_foam_arglist`` is held alongside it purely to keep the argList (and,
+        # under ``-parallel``, the MPI session it owns) alive for the whole run.
+        builder.add(lazy("_foam_arglist", create_foam_arglist))
+        builder.add(lazy("_foam_time", create_foam_time, depends_on=["_foam_arglist"]))
         builder.add(lazy("mesh", create_mesh, depends_on=["_foam_time"]))
 
         # When a mesh-preprocessing pipeline is active, its steps build the mesh

@@ -125,6 +125,11 @@ class PimpleFoam:
         mesh = pyf.fvMesh(runTime)
 
         p, U, phi, laminarTransport, turbulence = create_fields(mesh)
+        # Recompute nut from the initial k/epsilon (correctNut) before the first
+        # solve, exactly as pimpleFoam does — the 0/nut on disk is typically a
+        # placeholder, so without this the first momentum equation runs with
+        # nuEff = nu and diverges from the native solver.
+        turbulence.validate()
 
         fvSolution = pyf.dictionary.read("system/fvSolution")
         self.pRefCell, self.pRefValue = pyf.setRefCell(p, fvSolution.subDict("PIMPLE"))

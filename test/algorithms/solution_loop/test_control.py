@@ -93,3 +93,32 @@ def test_steady_partial_convergence_keeps_running() -> None:
     rt = FakeStepper(end=10.0, dt=1.0)
     assert sc.run(rt) is True
     assert rt.ended is False
+
+
+# --- finalIter: the outer-iteration counterpart of finalInnerIter ---------
+
+
+def test_pimple_final_iter_piso_mode_is_always_final() -> None:
+    # nOuterCorrectors defaults to 1 (PISO mode): every outer iteration is
+    # the final one, exactly like OpenFOAM's pimpleControl.
+    pimple = PimpleControl(nCorrectors=2, momentumPredictor=True)
+    assert pimple.loop() is True
+    assert pimple.finalIter() is True
+    assert pimple.loop() is False
+
+
+def test_pimple_final_iter_true_only_on_last_outer_corrector() -> None:
+    pimple = PimpleControl(nCorrectors=2, nOuterCorrectors=3, momentumPredictor=True)
+    finals = []
+    while pimple.loop():
+        finals.append(pimple.finalIter())
+    assert finals == [False, False, True]
+
+
+def test_pimple_final_iter_resets_with_the_loop() -> None:
+    pimple = PimpleControl(nCorrectors=2, nOuterCorrectors=2, momentumPredictor=True)
+    while pimple.loop():
+        pass
+    # next time step starts non-final again
+    assert pimple.loop() is True
+    assert pimple.finalIter() is False

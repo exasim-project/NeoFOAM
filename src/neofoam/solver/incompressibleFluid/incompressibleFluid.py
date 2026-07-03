@@ -11,10 +11,12 @@ are omitted in this minimal version. The main iteration loop is owned by the
 injectable stability constraints, and the write decision.
 """
 
-from typing import Annotated, Any, Optional
+from pathlib import Path
+from typing import Annotated, Any, Optional, Union
 
-from pybFoam import Info
+from pybFoam import Info, dictionary
 
+from neofoam import telemetry
 from neofoam.framework.context import Context
 from neofoam.framework.graph import DAGResolver
 from neofoam.framework.initialization import Depends, StagedInitRunner
@@ -27,14 +29,48 @@ from neofoam.framework.operations import (
 from neofoam.framework.solver import Solver
 from neofoam.framework.tools import PreprocessConfig
 from neofoam.framework.types import OperationMetadata
+from neofoam.telemetry import TelemetrySettings
 from neofoam.turbulence import momentumTransportModel
 from neofoam.viscosity import viscosityModel
 
-from .configs import ControlDictConfig
+from .configs import ControlDictConfig, TelemetryDictConfig
 from .create_fields import create_init
 from .models.incompressibleFluidModel import incompressibleFluidModel
 from .models.pressure_velocity.base import PressureVelocityAlgorithm
 from .models.solution_loop import SolutionLoopPredicate
+
+
+def maybe_configure_telemetry(case_dir: Union[Path, str] = ".") -> bool:
+    """Activate the telemetry shim when the case opts in; returns whether it did.
+
+    Telemetry is solver lifecycle, not a model: the case opts in through the
+    solver-owned ``telemetry`` sub-dict of ``system/controlDict`` (the dict
+    present and ``enabled`` absent-or-true activates it). Called by
+    :func:`run` *before* initialization so init/build steps are traced too.
+
+    Raises :class:`neofoam.telemetry.TelemetryNotInstalledError` when the case
+    enables telemetry but the optional ``neofoam[telemetry]`` extra is missing.
+    """
+    control_dict = Path(case_dir) / "system" / "controlDict"
+    if not control_dict.is_file():
+        return False
+    if not dictionary.read(str(control_dict)).found("telemetry"):
+        return False
+
+    config = TelemetryDictConfig.load(case_dir=case_dir)
+    if not config.enabled:
+        return False
+
+    telemetry.configure(
+        TelemetrySettings(
+            enabled=config.enabled,
+            directory=config.directory,
+            summary=config.summary,
+            service_name="incompressibleFluid",
+        ),
+        case_dir=case_dir,
+    )
+    return True
 
 
 # model lookup helper: find an instantiated core model by its spec name
@@ -57,6 +93,7 @@ incompressibleFluid = Solver("incompressibleFluid")
 # name those config classes itself.
 incompressibleFluid.config(ControlDictConfig)
 incompressibleFluid.config(PreprocessConfig)  # mesh pipeline enable file (configs())
+incompressibleFluid.config(TelemetryDictConfig)  # opt-in tracing (controlDict subdict)
 
 incompressibleFluid.models(PressureVelocityAlgorithm, required=True)  # pick ONE
 incompressibleFluid.models(viscosityModel, required=True)  # molecular nu
@@ -146,7 +183,6 @@ def run(
     """
     import os
     import sys
-    from pathlib import Path
 
     redirect = log_file is not None
     saved_fd: Optional[int] = None
@@ -159,20 +195,25 @@ def run(
         os.close(log_fd)
 
     try:
-        solver = incompressibleFluid.instantiate(argv=argv or [])
-        ctx = solver.initialize()
+        # Opt-in via the controlDict `telemetry` dict — activated before
+        # initialize() so the init/build steps are traced too.
+        maybe_configure_telemetry()
+        with telemetry.span("solver.run"):
+            solver = incompressibleFluid.instantiate(argv=argv or [])
+            ctx = solver.initialize()
 
-        Info("Starting time loop")
+            Info("Starting time loop")
 
-        builder, model_ops = solver.execution_graph(ctx=ctx)
+            builder, model_ops = solver.execution_graph(ctx=ctx)
 
-        resolver = DAGResolver()
-        resolved = resolver.resolve(builder, model_ops)
-        resolved.operations.run(ctx)
+            resolver = DAGResolver()
+            resolved = resolver.resolve(builder, model_ops)
+            resolved.operations.run(ctx)
 
-        Info("End")
+            Info("End")
         return ctx
     finally:
+        telemetry.shutdown()
         if redirect and saved_fd is not None:
             sys.stdout.flush()
             os.dup2(saved_fd, 1)

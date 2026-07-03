@@ -192,14 +192,17 @@ class fvSolution(BaseConfig):
     def add(cls, *fields: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         """Declare solver entries the operation needs.
 
-        Each ``field`` adds a typed entry under ``solvers.<field>``.
-        Today the value is parsed as ``dict[str, Any]`` (extra-allow
-        sub-section); a richer typed solver-control model is a
-        follow-up. The presence check alone catches the most common
-        case-misconfiguration failures.
+        Each ``field`` adds a typed entry under ``solvers.<field>`` plus its
+        ``solvers.<field>Final`` companion: on the final (in PISO mode:
+        every) outer iteration ``fvMatrix::solve`` selects the ``Final``
+        solver settings, so OpenFOAM requires both dictionaries. Today the
+        value is parsed as ``dict[str, Any]`` (extra-allow sub-section); a
+        richer typed solver-control model is a follow-up. The presence
+        check alone catches the most common case-misconfiguration failures.
         """
         for field_name in fields:
             _register_entry(cls, "solvers", field_name, dict)
+            _register_entry(cls, "solvers", f"{field_name}Final", dict)
         _rebuild_sections(cls)
 
         def _decorator(fn: Callable[..., Any]) -> Callable[..., Any]:

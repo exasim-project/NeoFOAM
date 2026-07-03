@@ -69,9 +69,17 @@ class OpenFOAMTurbulenceModel:
         self._impl: Any = None
 
     def build(self) -> "OpenFOAMTurbulenceModel":
-        """Instantiate the underlying pybFoam turbulence model."""
+        """Instantiate the underlying pybFoam turbulence model.
+
+        ``validate()`` recomputes the eddy viscosity from the initial ``k``/
+        ``epsilon`` (``correctNut``) exactly as ``pimpleFoam`` does before the
+        first solve — the ``0/nut`` shipped with a case is usually a placeholder
+        (e.g. ``uniform 0``), so skipping this leaves the first momentum equation
+        with ``nuEff = nu`` and diverges from native OpenFOAM.
+        """
         factory = self._factory or _default_factory()
         self._impl = factory(self._U, self._phi, self._transport)
+        self._impl.validate()
         return self
 
     def _require_impl(self) -> Any:

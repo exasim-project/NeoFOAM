@@ -20,6 +20,7 @@ Locks in:
 """
 
 import pytest
+from pydantic import ValidationError
 
 from neofoam.foam import fvSchemes, fvSolution
 from neofoam.framework.model import Model
@@ -188,14 +189,37 @@ def test_two_specs_dont_share_added_entries() -> None:
 
 
 def test_fvsolution_add_creates_solvers_section() -> None:
+    """Each field declares its entry plus the <field>Final companion.
+
+    fvMatrix::solve selects the Final settings on the final outer
+    iteration (in PISO mode: on every solve), so OpenFOAM needs both.
+    """
     spec = Model("FvSolution")
     Sub = spec.config(fvSolution)
     Sub.add("U", "p")
 
-    parsed = {"solvers": {"U": {"solver": "PBiCG"}, "p": {"solver": "PCG"}}}
+    parsed = {
+        "solvers": {
+            "U": {"solver": "PBiCG"},
+            "UFinal": {"solver": "PBiCG", "relTol": 0},
+            "p": {"solver": "PCG"},
+            "pFinal": {"solver": "PCG", "relTol": 0},
+        }
+    }
     inst = Sub.model_validate(parsed)
     assert inst.solvers.U == {"solver": "PBiCG"}
     assert inst.solvers.p == {"solver": "PCG"}
+    assert inst.solvers.UFinal == {"solver": "PBiCG", "relTol": 0}
+    assert inst.solvers.pFinal == {"solver": "PCG", "relTol": 0}
+
+
+def test_fvsolution_add_requires_the_final_variant() -> None:
+    spec = Model("FvSolutionNoFinal")
+    Sub = spec.config(fvSolution)
+    Sub.add("U")
+
+    with pytest.raises(ValidationError):
+        Sub.model_validate({"solvers": {"U": {"solver": "PBiCG"}}})
 
 
 def test_fvsolution_passes_through_extra_sections() -> None:
@@ -205,7 +229,7 @@ def test_fvsolution_passes_through_extra_sections() -> None:
     Sub.add("p")
 
     parsed = {
-        "solvers": {"p": {"solver": "PCG"}},
+        "solvers": {"p": {"solver": "PCG"}, "pFinal": {"solver": "PCG"}},
         "PIMPLE": {"nOuterCorrectors": 1, "nCorrectors": 2},
     }
     inst = Sub.model_validate(parsed)

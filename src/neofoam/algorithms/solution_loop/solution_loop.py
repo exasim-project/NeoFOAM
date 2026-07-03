@@ -194,12 +194,21 @@ class SolutionLoop:
     def constrain_delta_t(self, limit: float) -> None:
         """Set the next ``deltaT`` from a folded ``timeStepConstraint`` limit.
 
-        ``VGREAT`` = no active opinion -> the step is unchanged (fixed step);
-        otherwise the step is the limit, clamped to ``growth_cap * current`` and
-        snapped onto the next write time.
+        ``VGREAT`` = no active opinion -> the step is unchanged (fixed step).
+        Otherwise the step approaches the limit the way OpenFOAM's
+        ``setDeltaT.H`` does: shrinking takes the limit at once, growing is
+        damped through ``min(fact, 1 + 0.1*fact, growth_cap)`` (with
+        ``fact = limit / current``) so recovery from a constraint spike ramps
+        up gently instead of jumping straight to the ceiling. The result is
+        snapped onto the next write time. Constraints report only their raw
+        maximum — *how* it is approached is this loop's responsibility.
         """
         current = self._state.delta_t
-        dt = current if limit >= VGREAT else min(limit, self._growth_cap * current)
+        if limit >= VGREAT:
+            dt = current
+        else:
+            fact = limit / current
+            dt = min(fact, 1.0 + 0.1 * fact, self._growth_cap) * current
         self.set_delta_t(dt)
 
     def advance(self) -> None:

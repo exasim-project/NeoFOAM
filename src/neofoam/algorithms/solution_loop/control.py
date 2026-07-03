@@ -285,6 +285,11 @@ class PimpleControl(BaseModel):
         assert self._non_ortho is not None
         return self._non_ortho(ctx)
 
+    def finalIter(self) -> bool:
+        """Check if this is the final outer (PIMPLE) iteration."""
+        assert self._loop is not None
+        return self._loop.is_final()
+
     def finalInnerIter(self) -> bool:
         """Check if this is the final corrector iteration."""
         assert self._corrector is not None
