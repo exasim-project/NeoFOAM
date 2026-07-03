@@ -28,11 +28,12 @@ reads the summary back.
 # ``Allrun`` would do. We then shorten the run to 20 time steps.
 
 import contextlib
-import json
 import subprocess
 
+import matplotlib.pyplot as plt
 import pybFoam as pyf
 
+from neofoam import telemetry
 from neofoam.solver import incompressibleFluid
 from neofoam.tutorial import clone_case
 
@@ -75,37 +76,30 @@ with contextlib.chdir(case):
     incompressibleFluid.run(["."])
 
 # %%
-# Where did the time go?
-# ----------------------
-# The summary aggregates every span by name. ``time_loop`` is the whole
-# loop; ``momentum``/``continuity`` are the PIMPLE stages inside it, and
-# ``init.*`` entries are the one-off build steps.
+# Where did the time go? — the summary bar chart
+# ----------------------------------------------
+# :func:`neofoam.telemetry.plot_summary` reads ``rank<N>.summary.json`` and
+# draws the per-operation total wall-clock. ``time_loop`` is the whole loop;
+# ``momentum`` / ``continuity`` are the PIMPLE stages inside it, and their
+# ``.assemble`` / ``.solve`` children split matrix build from linear solve.
+# Passing an axes lets the docs gallery (or a report) capture the figure;
+# ``neofoam telemetry plot <case>`` does the same from the command line.
 
-summary = json.loads((case / "telemetry" / "rank0.summary.json").read_text())
-print(f"rank {summary['mpi']['rank']} of {summary['mpi']['size']}")
-
-by_total = sorted(
-    summary["spans"].items(), key=lambda item: item[1]["total_s"], reverse=True
-)
-print(f"{'operation':<28} {'count':>5} {'total [s]':>10} {'mean [s]':>10}")
-for name, stats in by_total[:12]:
-    print(
-        f"{name:<28} {stats['count']:>5} {stats['total_s']:>10.4f} "
-        f"{stats['mean_s']:>10.4f}"
-    )
+fig, ax = plt.subplots(figsize=(8, 5))
+telemetry.plot_summary(case / "telemetry" / "rank0.summary.json", top=12, ax=ax)
 
 # %%
-# The raw spans keep the full hierarchy — each line carries its parent
-# span id, so a trace viewer (or a few lines of Python) can reconstruct
-# exactly which inner-loop iteration was slow. Operation authors can add
-# finer detail from inside an operation with
-# ``neofoam.telemetry.span("my.step")`` or by decorating a helper with
-# ``neofoam.telemetry.instrument()`` — those spans nest under the
-# operation's span automatically.
+# The interactive timeline — open in Perfetto
+# -------------------------------------------
+# The summary flattens the run; the *spans* keep the full hierarchy (each
+# carries its parent span id and exact start/end). :func:`~neofoam.telemetry.
+# write_chrome_trace` turns them into a ``trace.json`` you drop into
+# https://ui.perfetto.dev or ``chrome://tracing`` for a zoomable flame
+# timeline — one process row per MPI rank, so you can see exactly which
+# inner-loop iteration was slow (``neofoam telemetry trace <case>`` from the
+# CLI). Operation authors add finer detail with
+# ``neofoam.telemetry.span("my.step")`` or ``neofoam.telemetry.instrument()``
+# — those spans nest under the operation's span automatically.
 
-spans = [
-    json.loads(line)
-    for line in (case / "telemetry" / "rank0.spans.jsonl").read_text().splitlines()
-]
-momentum = [s for s in spans if s["name"] == "momentum"]
-print(f"{len(spans)} spans total, {len(momentum)} momentum solves")
+trace_path = telemetry.write_chrome_trace(case)
+print(f"wrote {trace_path} — open it in https://ui.perfetto.dev")

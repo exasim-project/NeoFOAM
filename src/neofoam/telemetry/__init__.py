@@ -16,6 +16,14 @@ from .api import (
     shutdown,
     span,
 )
+from .report import (
+    load_spans,
+    load_summaries,
+    plot_summary,
+    to_chrome_trace,
+    write_chrome_trace,
+    write_summary_plot,
+)
 from .settings import MpiInfo, TelemetrySettings
 
 __all__ = [
@@ -25,6 +33,12 @@ __all__ = [
     "configure",
     "instrument",
     "is_active",
+    "load_spans",
+    "load_summaries",
+    "plot_summary",
     "shutdown",
     "span",
+    "to_chrome_trace",
+    "write_chrome_trace",
+    "write_summary_plot",
 ]

@@ -24,6 +24,56 @@ mcp_app = typer.Typer()
 
 app.add_typer(mcp_app, name="mcp", help="Run the NeoFOAM MCP server.")
 
+# Telemetry visualization command group
+telemetry_app = typer.Typer()
+
+app.add_typer(
+    telemetry_app, name="telemetry", help="Visualize solver telemetry traces."
+)
+
+
+@telemetry_app.command("trace")
+def telemetry_trace(
+    case: Path = typer.Argument(
+        ..., help="Case directory (or its telemetry/ dir) holding rank*.spans.jsonl."
+    ),
+    output: Optional[Path] = typer.Option(
+        None, "--output", "-o", help="Output file (default: <telemetry>/trace.json)."
+    ),
+) -> None:
+    """Export the trace as a Chrome Trace-Event ``trace.json``.
+
+    Open the file in https://ui.perfetto.dev or ``chrome://tracing`` for a
+    zoomable Gantt/flame timeline (one process row per MPI rank).
+    """
+    from neofoam.telemetry.report import write_chrome_trace
+
+    written = write_chrome_trace(case, output)
+    typer.echo(f"Wrote {written}")
+    typer.echo("Open it in https://ui.perfetto.dev or chrome://tracing")
+
+
+@telemetry_app.command("plot")
+def telemetry_plot(
+    case: Path = typer.Argument(
+        ..., help="Case directory (or its telemetry/ dir) holding rank*.summary.json."
+    ),
+    output: Optional[Path] = typer.Option(
+        None, "--output", "-o", help="Output image (default: <telemetry>/summary.png)."
+    ),
+    top: Optional[int] = typer.Option(
+        None, "--top", help="Keep only the N slowest operations."
+    ),
+    rank: Optional[int] = typer.Option(
+        None, "--rank", help="Which rank's summary to plot (default: lowest)."
+    ),
+) -> None:
+    """Render the per-operation total wall-clock as a bar-chart image (PNG)."""
+    from neofoam.telemetry.report import write_summary_plot
+
+    written = write_summary_plot(case, output, top=top, rank=rank)
+    typer.echo(f"Wrote {written}")
+
 
 @mcp_app.command("serve")
 def mcp_serve(
