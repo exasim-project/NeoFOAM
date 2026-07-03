@@ -26,4 +26,6 @@ class Permutation
         [[nodiscard]] Permutation inverse() const;
 
         [[nodiscard]] Permutation compose(const Permutation& other) const;
+
+        [[nodiscard]] bool isIdentity() const;
 }
