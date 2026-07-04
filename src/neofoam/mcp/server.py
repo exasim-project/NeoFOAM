@@ -31,7 +31,10 @@ from neofoam.mcp.dto import (
     ConfigInfoDTO,
     ConfigSchemaDTO,
     ModelEntryDTO,
+    PatchDTO,
     SaveResultDTO,
+    ToolInfoDTO,
+    ValidationReportDTO,
 )
 from neofoam.mcp.registry import resolve_solver
 
@@ -58,6 +61,12 @@ def model_catalog(solver: str = DEFAULT_SOLVER) -> list[ModelEntryDTO]:
 
 
 @mcp.tool
+def tool_catalog(solver: str = DEFAULT_SOLVER) -> list[ToolInfoDTO]:
+    """Preprocessing tools (blockMesh/snappyHexMesh/checkMesh) + the config each reads."""
+    return tools.tool_catalog(resolve_solver(solver))
+
+
+@mcp.tool
 def list_configs(solver: str = DEFAULT_SOLVER) -> list[ConfigInfoDTO]:
     """Every config class ``solver`` may consume (name/cls_name/file)."""
     return tools.list_configs(resolve_solver(solver))
@@ -67,6 +76,21 @@ def list_configs(solver: str = DEFAULT_SOLVER) -> list[ConfigInfoDTO]:
 def config_schema(name: str, solver: str = DEFAULT_SOLVER) -> ConfigSchemaDTO:
     """JSON Schema + rjsf ui-schema + defaults for one config class of ``solver``."""
     return tools.config_schema(resolve_solver(solver), name)
+
+
+# -- case geometry ------------------------------------------------------------
+
+
+@mcp.tool
+def case_patches(case_dir: str) -> list[PatchDTO]:
+    """Boundary patches (name + role) of a staged case, for authoring boundary conditions."""
+    return tools.case_patches(case_dir)
+
+
+@mcp.tool
+def validate_case(case_dir: str, solver: str = DEFAULT_SOLVER) -> ValidationReportDTO:
+    """Static pre-flight: completeness + BC/mesh-patch + fvSolution/fvSchemes checks (no run)."""
+    return tools.validate_case(resolve_solver(solver), case_dir)
 
 
 # -- case scaffolding ---------------------------------------------------------
@@ -133,3 +157,9 @@ def config_schema_resource(solver_name: str, name: str) -> str:
 def registered_tool_names(server: FastMCP = mcp) -> set[str]:
     """The registered tool names via the public FastMCP API."""
     return {tool.name for tool in asyncio.run(server.list_tools())}
+
+
+if __name__ == "__main__":
+    # ``python -m neofoam.mcp.server`` — serve over stdio (default transport), for an
+    # MCP client (Claude Code, etc.) to launch as a subprocess.
+    mcp.run()

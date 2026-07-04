@@ -84,8 +84,20 @@ mcp = [
     "uvicorn",
     "httpx",
 ]
+ui = [
+    # Case-wizard UI: a trame app (server + vuetify3 layout) that renders each
+    # config's JSON schema as a NATIVE Vue form. The form component (JSONForms,
+    # @jsonforms/vue-vuetify — Vue3 + Vuetify3, live @change binding) is a
+    # CLIENT-side JS asset (Vite-built UMD, checked in under
+    # src/neofoam/ui/jsonforms_module/static/), not a Python dependency — there is
+    # no working trame<->anywidget bridge on PyPI, so the anywidget approach was
+    # dropped. pydantic-ai backs the AI prompt-fill step.
+    "trame",
+    "trame-vuetify",
+    "pydantic-ai-slim[anthropic]>=0.0.40",
+]
 all = [
-    "neofoam[dev,docs,agent,mcp]",
+    "neofoam[dev,docs,agent,mcp,ui]",
 ]
 
 [project.scripts]
@@ -112,6 +124,7 @@ NEOFOAM_BUILD_PYTHON_BINDINGS = "ON"
 
 [tool.uv]
 no-build-isolation-package = ["neofoam"]
+
 
 [tool.ruff]
 line-length = 100
