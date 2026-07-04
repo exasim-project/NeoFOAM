@@ -27,6 +27,8 @@ with the same interface, so the solver treats both uniformly.
 
 from typing import Any, Optional
 
+import pybFoam as pyf
+from pybFoam import volScalarField
 from pydantic import BaseModel
 
 from neofoam.core.plugin_system import PluginSystem
@@ -56,13 +58,32 @@ class SpecMomentumTransport:
     #: Descriptive tag for the stress family this model uses.
     stress_kind = "linear"
 
-    def __init__(self, runtime: ModelRuntime) -> None:
+    def __init__(self, runtime: ModelRuntime, mesh: Any = None) -> None:
         self._runtime = runtime
+        self._mesh = mesh
 
     @property
     def operations(self) -> Any:
         """The model's ``@spec.operation``s, stepped after the loop (may be several)."""
         return self._runtime.operations
+
+    def nu(self) -> Any:
+        """Molecular viscosity — the ``nu`` Context field the viscosity model owns."""
+        return volScalarField.from_registry(self._mesh, "nu")
+
+    def nut(self) -> Any:
+        """Turbulent (eddy) viscosity.
+
+        A closure with an eddy viscosity (kEpsilon, …) registers a ``nut`` field;
+        laminar registers none, so — mirroring OpenFOAM's laminar
+        ``momentumTransportModel`` — ``nut`` is identically zero (``nu``'s
+        dimensions). Consumers such as the Boussinesq energy equation
+        (``alphat = nut/Prt``) then see no turbulent diffusivity.
+        """
+        registered = volScalarField.from_registry(self._mesh, "nut")
+        if registered is not None:
+            return registered
+        return self.nu() * pyf.dimensionedScalar("zero", pyf.dimless, 0.0)
 
 
 @PluginSystem.register(discriminator_variable="model", discriminator="model_type")

@@ -303,7 +303,9 @@ def continuity(
 @PimpleFvSchemes.add(
     ddt="ddt(U)",
     div=["div(phi,U)", "div((nuEff*dev2(T(grad(U)))))"],
-    grad="grad(U)",
+    # grad(rhok) is needed by the non-orthogonal correction of the corrected
+    # snGrad(rhok) in the buoyancy term below.
+    grad=["grad(U)", "grad(rhok)"],
     laplacian="laplacian(nuEff,U)",
     snGrad="snGrad(rhok)",
 )

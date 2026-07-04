@@ -88,8 +88,15 @@ def _add_turbulence_model(builder: InitializerBuilder, case_dir: Path) -> None:
     spec = momentumTransportModel.find_spec(name) if name is not None else None
     if spec is not None:
         runtime = spec.instantiate(case_dir)
-        model_obj = SpecMomentumTransport(runtime)
-        builder.add(init_model("turbulence", lambda _ctx: model_obj))
+        # The wrapper resolves nu/nut from the mesh registry on demand (nut is
+        # zero for laminar), so it needs the mesh — bind it at build time.
+        builder.add(
+            init_model(
+                "turbulence",
+                lambda ctx: SpecMomentumTransport(runtime, ctx["mesh"]),
+                depends_on=["mesh"],
+            )
+        )
         # The model's @build registers ``models.viscousStress`` (and ``fields.nut``
         # if it has an eddy viscosity).
         builder.extend(runtime.run_build())
@@ -209,7 +216,11 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         argv = runner.argv
 
         def create_foam_time(_ctx: dict[str, Any]) -> Any:
-            argList = pyf.argList(argv)
+            # ``--no-preprocess`` is a NeoFOAM-level flag (consumed above via
+            # ``runner.argv``); strip it so OpenFOAM's argList — which only knows
+            # native options — does not reject it as an invalid option.
+            of_argv = [a for a in argv if a != "--no-preprocess"]
+            argList = pyf.argList(of_argv)
             return pyf.Time(argList)
 
         def create_mesh(ctx: dict[str, Any]) -> Any:
