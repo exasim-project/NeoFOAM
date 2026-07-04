@@ -106,6 +106,33 @@ def test_consume_dag_flags_accepts_equals_form(
     assert os.environ[DUMP_INIT_DAG_ENV] == "/tmp/x.txt"
 
 
+def test_ui_command_starts_server(monkeypatch: pytest.MonkeyPatch) -> None:
+    """``neofoam ui`` builds the app and starts it with the given host/port/browser."""
+    import neofoam.ui as ui_mod
+    from typer.testing import CliRunner
+
+    from neofoam.cli.app import app
+
+    captured: dict[str, object] = {}
+
+    class _FakeServer:
+        def start(self, **kwargs: object) -> None:
+            captured["start"] = kwargs
+
+    def fake_build_app(*, solver_name: str) -> _FakeServer:
+        captured["solver"] = solver_name
+        return _FakeServer()
+
+    # The command does ``from neofoam.ui import build_app`` at call time.
+    monkeypatch.setattr(ui_mod, "build_app", fake_build_app)
+    result = CliRunner().invoke(
+        app, ["ui", "--port", "9001", "--host", "0.0.0.0", "--no-browser"]
+    )
+    assert result.exit_code == 0, result.output
+    assert captured["solver"] == "incompressibleFluid"
+    assert captured["start"] == {"host": "0.0.0.0", "port": 9001, "open_browser": False}
+
+
 def test_consume_dag_flags_missing_value_errors() -> None:
     import typer
 
