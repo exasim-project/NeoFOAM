@@ -30,7 +30,7 @@ from neofoam.ui.geometry import (  # noqa: E402
     write_mesh_configs,
 )
 
-_TUBE_BANK = Path(__file__).resolve().parents[1] / "e2e" / "cases" / "tube_bank"
+_TUBE_BANK = Path(__file__).resolve().parents[1] / "workflow" / "cases" / "tube_bank"
 _TRI = _TUBE_BANK / "constant" / "triSurface"
 
 

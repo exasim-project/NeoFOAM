@@ -14,7 +14,7 @@ against ``preprocess.yaml`` — this module only *writes the dicts*.
 The dict-authoring math mirrors the deterministic ``PatchSet``→config mappers but
 re-derives the geometry facts (bounding box, per-patch box faces) straight from the
 STL triangles, so this module depends only on :mod:`neofoam.tools` (never on the
-e2e workflow package). No OpenFOAM, no LLM.
+workflow package). No OpenFOAM, no LLM.
 """
 
 from __future__ import annotations

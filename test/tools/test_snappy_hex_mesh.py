@@ -169,7 +169,7 @@ def test_snappyhexmeshdict_round_trip_reproduces_dict(
 # --------------------------------------------------------------------------- #
 
 _PROBE = Path(__file__).parent / "_snappy_probe.py"
-_E2E = Path(__file__).parents[1] / "e2e"
+_WORKFLOW = Path(__file__).parents[1] / "workflow"
 
 
 def _mesh_signature(case_dir: Path) -> dict[str, Any]:
@@ -189,27 +189,27 @@ def _stage_tube_bank(case: Path, snappy: SnappyHexMeshDictConfig) -> None:
     The minimal ``controlDict``/``fvSchemes``/``fvSolution`` a Time + fvMesh need are
     provisioned by ``_snappy_probe.py`` at mesh time.
     """
-    from neofoam.e2e.manifest import PatchManifest
-    from neofoam.e2e.mesh_inputs import block_mesh_dict
+    from neofoam.workflow.patch_set import PatchSet
+    from neofoam.workflow.mesh_inputs import block_mesh_dict
 
     (case / "system").mkdir(parents=True)
     (case / "constant" / "triSurface").mkdir(parents=True)
-    manifest = PatchManifest.load(_E2E / "cases" / "tube_bank_manifest.json")
-    write_configs([block_mesh_dict(manifest), snappy], case_dir=case)
-    for stl in (_E2E / "constant" / "triSurface").glob("*.stl"):
+    patch_set = PatchSet.load(_WORKFLOW / "cases" / "tube_bank_manifest.json")
+    write_configs([block_mesh_dict(patch_set), snappy], case_dir=case)
+    for stl in (_WORKFLOW / "cases" / "tube_bank" / "constant" / "triSurface").glob("*.stl"):
         shutil.copy(stl, case / "constant" / "triSurface" / stl.name)
 
 
 @pytest.mark.slow
 def test_tube_bank_snappy_round_trip_reproduces_mesh(tmp_path: Path) -> None:
     """A snappy dict written, then reloaded + rewritten, meshes identically."""
-    from neofoam.e2e.manifest import PatchManifest
-    from neofoam.e2e.mesh_inputs import snappy_dict
+    from neofoam.workflow.patch_set import PatchSet
+    from neofoam.workflow.mesh_inputs import snappy_dict
 
-    manifest = PatchManifest.load(_E2E / "cases" / "tube_bank_manifest.json")
+    patch_set = PatchSet.load(_WORKFLOW / "cases" / "tube_bank_manifest.json")
 
     original = tmp_path / "original"
-    _stage_tube_bank(original, snappy_dict(manifest))
+    _stage_tube_bank(original, snappy_dict(patch_set))
 
     # Reload the written snappyHexMeshDict and stage it again.
     reloaded = SnappyHexMeshDictConfig.load(

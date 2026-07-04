@@ -182,7 +182,7 @@ def case_patches(case_dir: str) -> list[PatchDTO]:
     Lets an agent author boundary conditions without inventing patch names or roles:
     the geometry is a given, extracted upstream and written to the manifest.
     """
-    from neofoam.e2e.patch_set import PatchSet
+    from neofoam.workflow.patch_set import PatchSet
 
     _require_case_dir(case_dir)
     manifest = Path(case_dir) / "manifest.json"

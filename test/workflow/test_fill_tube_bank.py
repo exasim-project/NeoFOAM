@@ -23,8 +23,7 @@ import pytest
 pytest.importorskip("pybFoam")
 
 from neofoam.agent.case_fill import build_case_output_model  # noqa: E402
-from neofoam.e2e.config import REQUIRED_FILES  # noqa: E402
-from neofoam.e2e.manifest import PatchManifest, PatchRole  # noqa: E402
+from neofoam.workflow.patch_set import PatchSet, PatchRole  # noqa: E402
 from neofoam.framework.solver.configurations import (  # noqa: E402
     _snake_case,
     configurations,
@@ -42,6 +41,22 @@ _spec = importlib.util.spec_from_file_location("fill_tube_bank", _DRIVER_PATH)
 assert _spec and _spec.loader
 fill_tube_bank = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(fill_tube_bank)
+
+# Files a complete laminar tube-bank case carries after fill+stage (preprocess.yaml
+# wires the in-process mesh pipeline that scripts/Allrun runs before solving).
+REQUIRED_FILES = (
+    "system/controlDict",
+    "system/fvSchemes",
+    "system/fvSolution",
+    "system/blockMeshDict",
+    "system/snappyHexMeshDict",
+    "system/preprocess.yaml",
+    "constant/transportProperties",
+    "constant/turbulenceProperties",
+    "0/U",
+    "0/p",
+    "Allrun",
+)
 
 
 # --- a recorded "good" agent output (the determinism boundary) -------------------
@@ -77,6 +92,7 @@ _FV_SCHEMES = {
         "grad(U)": "Gauss linear",
         "grad(p)": "Gauss linear",
         "grad(p_rgh)": "Gauss linear",
+        "grad(rhok)": "Gauss linear",
     },
     "divSchemes": {
         "div(phi,U)": "Gauss linearUpwind grad(U)",
@@ -117,15 +133,15 @@ _FV_SOLUTION = {
 }
 
 
-def _recorded_spec(manifest: PatchManifest) -> Any:
+def _recorded_spec(patch_set: PatchSet) -> Any:
     """A filled ``CaseSpec`` a stub agent hands back (a known-good laminar case)."""
     cfgs = configurations(incompressibleFluid)
     configs = [
         cfgs["UFieldConfig"](
-            boundaryField={p.name: dict(_U_BC[p.role]) for p in manifest.patches}
+            boundaryField={p.name: dict(_U_BC[p.role]) for p in patch_set.patches}
         ),
         cfgs["pFieldConfig"](
-            boundaryField={p.name: dict(_P_BC[p.role]) for p in manifest.patches}
+            boundaryField={p.name: dict(_P_BC[p.role]) for p in patch_set.patches}
         ),
         cfgs["Pimple_fvSchemes"].model_validate(_FV_SCHEMES),
         cfgs["Pimple_fvSolution"].model_validate(_FV_SOLUTION),
@@ -143,34 +159,34 @@ def _recorded_spec(manifest: PatchManifest) -> Any:
     return case_spec_cls(**{_snake_case(type(c).__name__): c for c in configs})
 
 
-def _stub_agent(manifest: PatchManifest) -> Any:
+def _stub_agent(patch_set: PatchSet) -> Any:
     """An agent whose ``run_sync`` returns the recorded spec (no network)."""
-    output = _recorded_spec(manifest)
+    output = _recorded_spec(patch_set)
     return SimpleNamespace(run_sync=lambda _prompt: SimpleNamespace(output=output))
 
 
 def test_stub_agent_output_is_written_to_a_complete_case(tmp_path: Path) -> None:
     """Whatever the agent returns is saved into a complete, gate-passing case."""
-    manifest = PatchManifest.load(fill_tube_bank.MANIFEST)
+    patch_set = PatchSet.load(fill_tube_bank.MANIFEST)
     case = fill_tube_bank.build_tube_bank(
-        tmp_path, manifest=manifest, agent=_stub_agent(manifest)
+        tmp_path, patch_set=patch_set, agent=_stub_agent(patch_set)
     )
     for rel in REQUIRED_FILES:
         assert (case / rel).is_file(), f"missing required file: {rel}"
     u_text = (case / "0" / "U").read_text()
-    for patch in manifest.patches:
+    for patch in patch_set.patches:
         assert patch.name in u_text, f"0/U missing patch {patch.name}"
 
 
 def test_geometry_is_deterministic_not_from_the_agent(tmp_path: Path) -> None:
-    """The agent's geometry is ignored; the mesh dicts come from the manifest."""
-    manifest = PatchManifest.load(fill_tube_bank.MANIFEST)
+    """The agent's geometry is ignored; the mesh dicts come from the patch_set."""
+    patch_set = PatchSet.load(fill_tube_bank.MANIFEST)
     fill_tube_bank.build_tube_bank(
-        tmp_path, manifest=manifest, agent=_stub_agent(manifest)
+        tmp_path, patch_set=patch_set, agent=_stub_agent(patch_set)
     )
-    # locationInMesh in the written snappy dict is the manifest point.
+    # locationInMesh in the written snappy dict is the patch_set point.
     snappy = (tmp_path / "system" / "snappyHexMeshDict").read_text()
-    x, y, z = manifest.location_in_mesh
+    x, y, z = patch_set.location_in_mesh
     assert f"( {x} {y} {z} )" in snappy or f"({x} {y} {z})" in snappy
 
 
@@ -192,9 +208,11 @@ def test_live_agent_fills_and_case_solves(tmp_path: Path) -> None:
     ).save(case_dir=case)
 
     proc = subprocess.run(
-        [sys.executable, "-m", "neofoam.e2e.solve", str(case)],
+        ["./Allrun"],
+        cwd=case,
         capture_output=True,
         text=True,
+        env={**os.environ, "NEOFOAM_PYTHON": sys.executable},
     )
     time_dirs = [
         child.name

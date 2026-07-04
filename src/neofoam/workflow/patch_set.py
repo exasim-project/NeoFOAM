@@ -1,18 +1,18 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""The patch manifest -- the contract handed across every e2e stage.
+"""The :class:`PatchSet` -- the geometry contract between staging and case filling.
 
-Stage 1 (STL extraction) runs in a *separate* conda env (FreeCAD) and writes
-``<case>/manifest.json``; stages 2 and 3 (mesh authoring, boundary-condition
-filling) run in the neofoam env and read it back. The filesystem is therefore
-the cross-env boundary, and this module is the single schema both sides agree
-on. All coordinates are in **metres** (the extractor applies ``scale_to_meters``
-when exporting the STL, so the manifest and the triSurface STLs share one
-coordinate system).
+Whatever stages a case's geometry writes ``<case>/manifest.json``; the downstream
+consumers (:mod:`neofoam.workflow.mesh_inputs` for the mesh dicts,
+:func:`neofoam.mcp.tools.case_patches` for boundary-condition filling) read it
+back, so the filesystem is the hand-off boundary and this module is the single
+schema both sides agree on. All coordinates are in **metres** (``scale_to_meters``
+records the factor applied when the STLs were exported, so the patch set and the
+triSurface STLs share one coordinate system).
 
 The module imports only pydantic + stdlib so it stays importable from a minimal
-environment and the stage-1 unit test is hermetic.
+environment.
 """
 
 from __future__ import annotations
@@ -68,7 +68,7 @@ class BoundingBox(BaseModel):
     max: Vec3
 
 
-class PatchManifest(BaseModel):
+class PatchSet(BaseModel):
     """Everything stages 2 and 3 need to know about the extracted geometry."""
 
     case_dir: str
@@ -86,12 +86,12 @@ class PatchManifest(BaseModel):
 
     # -- io -----------------------------------------------------------------
     @classmethod
-    def load(cls, path: str | Path) -> PatchManifest:
-        """Load and validate a manifest from ``manifest.json``."""
+    def load(cls, path: str | Path) -> PatchSet:
+        """Load and validate a patch set from ``manifest.json``."""
         return cls.model_validate_json(Path(path).read_text())
 
     def save(self, path: str | Path) -> Path:
-        """Write the manifest as pretty JSON; return the path written."""
+        """Write the patch set as pretty JSON; return the path written."""
         out = Path(path)
         out.write_text(self.model_dump_json(indent=2))
         return out

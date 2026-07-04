@@ -5,11 +5,11 @@ from pathlib import Path
 
 import pytest
 
-from neofoam.e2e.manifest import PatchManifest
+from neofoam.workflow.patch_set import PatchSet
 
 CASES = Path(__file__).parent / "cases"
 
 
 @pytest.fixture
-def manifest() -> PatchManifest:
-    return PatchManifest.load(CASES / "tube_bank_manifest.json")
+def patch_set() -> PatchSet:
+    return PatchSet.load(CASES / "tube_bank_manifest.json")

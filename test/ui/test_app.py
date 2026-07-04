@@ -103,7 +103,7 @@ def test_geometry_scan_and_write_mesh(tmp_path):
     # A case whose constant/triSurface holds the given STLs (copied from tube_bank).
     src_tri = (
         Path(__file__).resolve().parents[1]
-        / "e2e"
+        / "workflow"
         / "cases"
         / "tube_bank"
         / "constant"

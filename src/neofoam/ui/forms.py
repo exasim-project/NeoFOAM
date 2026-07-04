@@ -34,7 +34,7 @@ __all__ = [
 
 _BC_KEYS = ("boundaryField",)
 
-# Mesh / preprocessing dict configs belong to the upstream meshing stage (the e2e
+# Mesh / preprocessing dict configs belong to the upstream meshing stage (the
 # geometry→mesh workflow), not the physics case wizard. They also aren't writable via
 # write_configs' merged path (preprocess.yaml uses YAMLStrategy). Exclude them.
 _MESH_FILES = frozenset({"blockMeshDict", "snappyHexMeshDict", "preprocess.yaml"})

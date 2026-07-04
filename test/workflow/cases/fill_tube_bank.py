@@ -3,7 +3,7 @@
 
 """Agent-driven driver: an LLM fills the case configs, we save them and verify it runs.
 
-This is the point of the e2e workflow: given the geometry manifest, an agent fills
+This is the point of the workflow: given the geometry patch_set, an agent fills
 the solver's ``BaseConfig`` models (``configurations(incompressibleFluid)`` via
 :func:`build_case_agent`), we ``write_configs`` them to disk, and launch the solver
 to prove the authored case actually meshes + solves.
@@ -11,29 +11,29 @@ to prove the authored case actually meshes + solves.
 Split of responsibility:
 
 * **geometry is a given** — the two mesh dicts (``block_mesh_dict`` / ``snappy_dict``)
-  and the preprocessing chain are derived deterministically from the manifest, and
-  the STLs are staged as-is;
-* **the agent decides the physics** — boundary conditions (from the manifest patch
+  are derived deterministically from the patch_set and the STLs are staged as-is;
+  a ``system/preprocess.yaml`` wires the in-process mesh pipeline so a single solver
+  run (``scripts/Allrun``) meshes (blockMesh → snappyHexMesh) then solves;
+* **the agent decides the physics** — boundary conditions (from the patch_set patch
   roles), transport / turbulence, time controls, and the PIMPLE fvSchemes/fvSolution.
 
 The ``agent`` is injectable: production uses a live LLM (``build_case_agent``); tests
 pass a stub returning a recorded ``CaseSpec`` so the fill→save→run path is
 deterministic without a network call.
 
-Run ``python test/e2e/cases/fill_tube_bank.py <case_dir>`` to fill + solve (needs an
+Run ``python test/workflow/cases/fill_tube_bank.py <case_dir>`` to fill + solve (needs an
 Anthropic API key + a sourced OpenFOAM), or ``--no-run`` to only author.
 """
 
 from __future__ import annotations
 
+import shutil
 from pathlib import Path
 from typing import Any, Optional
 
 from neofoam.agent.case_fill import build_case_agent, case_spec_to_configs
-from neofoam.e2e.config import require_configs
-from neofoam.e2e.geometry import stage_geometry
-from neofoam.e2e.manifest import PatchManifest
-from neofoam.e2e.mesh_inputs import block_mesh_dict, snappy_dict
+from neofoam.workflow.patch_set import PatchSet
+from neofoam.workflow.mesh_inputs import block_mesh_dict, snappy_dict
 from neofoam.framework.tools import PreprocessConfig
 from neofoam.io import BaseConfig, write_configs
 from neofoam.solver.incompressibleFluid.incompressibleFluid import incompressibleFluid
@@ -42,19 +42,24 @@ from neofoam.tools.snappy_hex_mesh import SnappyHexMeshDictConfig
 
 HERE = Path(__file__).resolve().parent
 MANIFEST = HERE / "tube_bank_manifest.json"
-TRI_SURFACE = HERE.parent / "constant" / "triSurface"  # test/e2e/constant/triSurface
+TRI_SURFACE = (
+    HERE / "tube_bank" / "constant" / "triSurface"
+)  # test/workflow/cases/tube_bank/constant/triSurface
+# Mesh + solve are run by the minimal OpenFOAM-convention Allrun (just the solver;
+# meshing happens in-process from preprocess.yaml).
+ALLRUN = HERE.resolve().parents[2] / "scripts" / "Allrun"
 
 # Mesh dicts are geometry, not physics — the agent must not author them.
 _GEOMETRY_CONFIGS = (BlockMeshDictConfig, SnappyHexMeshDictConfig)
 
 
-def case_prompt(manifest: PatchManifest) -> str:
+def case_prompt(patch_set: PatchSet) -> str:
     """The natural-language brief the agent fills the case from.
 
     Carries the geometry facts the agent cannot invent — the boundary patch names
     and their roles — plus the physics of a laminar tube-bank run.
     """
-    patches = "\n".join(f"  - {p.name}: {p.role.value}" for p in manifest.patches)
+    patches = "\n".join(f"  - {p.name}: {p.role.value}" for p in patch_set.patches)
     return (
         "Author a LAMINAR incompressibleFluid (PIMPLE) tube-bank case.\n\n"
         "Fill 0/U and 0/p with a boundaryField entry for EVERY patch below:\n"
@@ -86,11 +91,11 @@ def case_prompt(manifest: PatchManifest) -> str:
 
 
 def author_configs(
-    manifest: PatchManifest, *, agent: Optional[Any] = None
+    patch_set: PatchSet, *, agent: Optional[Any] = None
 ) -> list[BaseConfig]:
     """Have the agent fill the physics configs (drops any geometry it filled)."""
     agent = agent or build_case_agent(solver=incompressibleFluid)
-    result = agent.run_sync(case_prompt(manifest))
+    result = agent.run_sync(case_prompt(patch_set))
     return [
         cfg
         for cfg in case_spec_to_configs(result.output)
@@ -98,8 +103,29 @@ def author_configs(
     ]
 
 
+def _stage_stls(case: Path, patch_set: PatchSet) -> None:
+    """Copy the patch_set's declared STL surfaces into ``<case>/constant/triSurface``."""
+    dst = case / "constant" / "triSurface"
+    dst.mkdir(parents=True, exist_ok=True)
+    for patch in patch_set.patches:
+        name = Path(patch.stl).name
+        src = TRI_SURFACE / name
+        if not src.is_file():
+            raise FileNotFoundError(f"geometry surface not found: {src}")
+        shutil.copy2(src, dst / name)
+
+
+def _stage_allrun(case: Path) -> None:
+    """Copy ``scripts/Allrun`` into the case dir (run there, OpenFOAM-style)."""
+    shutil.copy2(ALLRUN, case / "Allrun")
+
+
 def preprocess_chain() -> PreprocessConfig:
-    """The blockMesh → snappyHexMesh → checkMesh pipeline (fills the existing config)."""
+    """The in-process blockMesh → snappyHexMesh → checkMesh pipeline (system/preprocess.yaml).
+
+    Staged so a single solver run (``scripts/Allrun``) builds the mesh from the
+    dicts before solving — no separate mesh binaries to orchestrate.
+    """
     return PreprocessConfig(
         tools=[
             {"tool": "blockMesh"},
@@ -112,36 +138,37 @@ def preprocess_chain() -> PreprocessConfig:
 def build_tube_bank(
     case_dir: str | Path,
     *,
-    manifest: Optional[PatchManifest] = None,
+    patch_set: Optional[PatchSet] = None,
     agent: Optional[Any] = None,
 ) -> Path:
     """Fill a laminar tube-bank case (agent physics + deterministic geometry), on disk.
 
-    Stages the geometry, has the agent author the physics configs, adds the
-    manifest-derived mesh dicts + preprocessing chain, writes everything, and gates
-    on :func:`require_configs`. Returns the case directory.
+    Stages the STLs, has the agent author the physics configs, adds the
+    patch_set-derived mesh dicts + the in-process preprocess pipeline, and copies in
+    the ``Allrun`` script. Returns the case directory; running ``./Allrun`` there then
+    meshes (from ``preprocess.yaml``) and solves in one solver invocation.
     """
     case = Path(case_dir)
-    manifest = manifest or PatchManifest.load(MANIFEST)
+    patch_set = patch_set or PatchSet.load(MANIFEST)
 
-    stage_geometry(TRI_SURFACE, case, manifest=manifest)
+    _stage_stls(case, patch_set)
     write_configs(
         [
-            block_mesh_dict(manifest),
-            snappy_dict(manifest),
-            *author_configs(manifest, agent=agent),
+            block_mesh_dict(patch_set),
+            snappy_dict(patch_set),
+            *author_configs(patch_set, agent=agent),
         ],
         case_dir=case,
     )
     preprocess_chain().save(case_dir=case)
-
-    require_configs(case)
+    _stage_allrun(case)
     return case
 
 
 def main(argv: Optional[list[str]] = None) -> int:
     """Fill the case with a live agent and (unless ``--no-run``) mesh + solve it."""
     import argparse
+    import os
     import subprocess
     import sys
 
@@ -157,10 +184,10 @@ def main(argv: Optional[list[str]] = None) -> int:
     if args.no_run:
         return 0
 
-    # Normal launch: neofoam.e2e.solve runs the preprocess DAG (mesh) then solves, in
-    # an isolated process (in-process pybFoam SIGBUSes at GC teardown).
+    # Mesh + solve in one solver run via the case-local Allrun (OpenFOAM-style:
+    # run ./Allrun from inside the case; in-process preprocess meshes then solves).
     return subprocess.run(
-        [sys.executable, "-m", "neofoam.e2e.solve", str(case)]
+        ["./Allrun"], cwd=case, env={**os.environ, "NEOFOAM_PYTHON": sys.executable}
     ).returncode
 
 

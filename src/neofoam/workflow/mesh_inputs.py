@@ -1,18 +1,18 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Build the two mesh-input configs from a :class:`PatchManifest`.
+"""Build the two mesh-input configs from a :class:`PatchSet`.
 
-Deterministic manifest → ``BaseConfig`` mappers (no OpenFOAM, no LLM):
+Deterministic patch_set → ``BaseConfig`` mappers (no OpenFOAM, no LLM):
 
-* :func:`block_mesh_dict` — one hex enclosing the bbox; each manifest patch with
+* :func:`block_mesh_dict` — one hex enclosing the bbox; each patch_set patch with
   ``box_faces`` becomes a blockMesh ``boundary`` patch owning those box faces.
 * :func:`snappy_dict` — each snappy-surface patch (``box_faces is None``) becomes
   a ``geometry`` + ``refinementSurfaces`` entry; ``locationInMesh`` comes from the
-  manifest.
+  patch_set.
 
 The resulting configs serialise to ``system/blockMeshDict`` /
-``system/snappyHexMeshDict`` via :func:`neofoam.io.write_configs` — the manifest
+``system/snappyHexMeshDict`` via :func:`neofoam.io.write_configs` — the patch_set
 supplies the geometry facts, the configs know how to write themselves.
 """
 
@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from neofoam.e2e.manifest import BoxFace, PatchManifest, PatchRole
+from neofoam.workflow.patch_set import BoxFace, PatchSet, PatchRole
 from neofoam.tools._foam_tokens import num
 from neofoam.tools.block_mesh import Block, BlockMeshDictConfig, BlockPatch
 from neofoam.tools.snappy_hex_mesh import SnappyHexMeshDictConfig, SnappySurface
@@ -50,7 +50,7 @@ _PATCH_TYPE: dict[PatchRole, str] = {
 
 
 def _resolve_cells(
-    manifest: PatchManifest,
+    patch_set: PatchSet,
     cell_size: float | None,
     cells: tuple[int, int, int] | None,
     padding: float,
@@ -58,8 +58,8 @@ def _resolve_cells(
     """Background cell counts, from explicit ``cells`` or a target ``cell_size``."""
     if cells is not None:
         return cells
-    size = cell_size or 0.5 * manifest.length_scale
-    lo, hi = manifest.bbox.min, manifest.bbox.max
+    size = cell_size or 0.5 * patch_set.length_scale
+    lo, hi = patch_set.bbox.min, patch_set.bbox.max
     return (
         max(1, round((hi[0] - lo[0] + 2 * padding) / size)),
         max(1, round((hi[1] - lo[1] + 2 * padding) / size)),
@@ -68,7 +68,7 @@ def _resolve_cells(
 
 
 def block_mesh_dict(
-    manifest: PatchManifest,
+    patch_set: PatchSet,
     *,
     cell_size: float | None = None,
     cells: tuple[int, int, int] | None = None,
@@ -78,16 +78,16 @@ def block_mesh_dict(
     """One graded hex box enclosing the bbox, with the box-face patches named.
 
     Args:
-        manifest: geometry facts (bbox + patches).
+        patch_set: geometry facts (bbox + patches).
         cell_size: target background cell edge length (m); defaults to half the
-            manifest ``length_scale`` so the smallest feature spans ~2 base cells.
+            patch_set ``length_scale`` so the smallest feature spans ~2 base cells.
         cells: explicit ``(nx, ny, nz)`` override; takes precedence over
             ``cell_size``.
         padding: symmetric bbox expansion (m) per side (0 = box == bbox).
         grading: ``simpleGrading`` ratios.
     """
-    lo = [manifest.bbox.min[i] - padding for i in range(3)]
-    hi = [manifest.bbox.max[i] + padding for i in range(3)]
+    lo = [patch_set.bbox.min[i] - padding for i in range(3)]
+    hi = [patch_set.bbox.max[i] + padding for i in range(3)]
     vertices: list[tuple[float, float, float]] = [
         (lo[0], lo[1], lo[2]),
         (hi[0], lo[1], lo[2]),
@@ -104,20 +104,20 @@ def block_mesh_dict(
             type=_PATCH_TYPE[patch.role],
             faces=[_FACE_QUADS[f] for f in patch.box_faces],
         )
-        for patch in manifest.patches
+        for patch in patch_set.patches
         if patch.box_faces
     ]
     gx, gy, gz = grading
     block = Block(
         vertices=list(range(8)),
-        cells=_resolve_cells(manifest, cell_size, cells, padding),
+        cells=_resolve_cells(patch_set, cell_size, cells, padding),
         grading=f"simpleGrading ( {num(gx)} {num(gy)} {num(gz)} )",
     )
     return BlockMeshDictConfig(vertices=vertices, blocks=[block], boundary=boundary)
 
 
 def snappy_dict(
-    manifest: PatchManifest,
+    patch_set: PatchSet,
     *,
     default_level: tuple[int, int] = (1, 2),
     n_cells_between_levels: int = 2,
@@ -125,9 +125,9 @@ def snappy_dict(
     max_global_cells: int = 2_000_000,
     add_layers: bool = False,
 ) -> SnappyHexMeshDictConfig:
-    """Carve the snappy-surface patches; ``locationInMesh`` from the manifest.
+    """Carve the snappy-surface patches; ``locationInMesh`` from the patch_set.
 
-    Each manifest patch with no ``box_faces`` (a snappy surface) becomes a
+    Each patch_set patch with no ``box_faces`` (a snappy surface) becomes a
     ``geometry`` + ``refinementSurfaces`` entry backed by its STL basename; its
     ``surface_refinement`` overrides ``default_level`` when set.
     """
@@ -138,12 +138,12 @@ def snappy_dict(
             level=patch.surface_refinement or default_level,
             patch_type=_PATCH_TYPE[patch.role],
         )
-        for patch in manifest.patches
+        for patch in patch_set.patches
         if patch.is_snappy_surface
     ]
     return SnappyHexMeshDictConfig.castellate_and_snap(
         surfaces=surfaces,
-        location_in_mesh=manifest.location_in_mesh,
+        location_in_mesh=patch_set.location_in_mesh,
         n_cells_between_levels=n_cells_between_levels,
         resolve_feature_angle=resolve_feature_angle,
         max_global_cells=max_global_cells,
