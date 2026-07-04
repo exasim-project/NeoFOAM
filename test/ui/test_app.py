@@ -23,18 +23,17 @@ from neofoam.ui.app import _schema_key  # noqa: E402
 def test_build_app_constructs():
     server = build_app(server=get_server("neofoam_ui_test_construct"))
     assert callable(server.controller.save_case)
-    assert server.state.current_step == "setup"
+    assert server.state.current_step == "models"
     assert server.state.target_dir == ""
     entries = server.controller.get_entries()
     steps = server.controller.get_steps()
     assert len(entries) > 0
     assert [s.id for s in steps] == [
-        "setup",
-        "geometry",
         "models",
-        "schemes",
+        "geometry",
         "bcs",
         "initial",
+        "schemes",
         "review",
     ]
     for entry in entries:

@@ -13,15 +13,15 @@ from neofoam.ui.forms import FormEntry
 
 __all__ = ["Step", "ModelChoice", "build_steps", "build_model_choices"]
 
-# Fixed order. `setup` (model selection), `geometry` (STL → mesh dicts) and `review`
-# hold no form entries — they are bespoke panels rendered by app.py.
+# Fixed order. `models` opens with the model-selection panel (rendered by app.py)
+# above its config forms; `geometry` (STL → mesh dicts) and `review` hold no form
+# entries — they are bespoke panels rendered by app.py.
 _STEP_DEFS: list[tuple[str, str]] = [
-    ("setup", "Setup"),
-    ("geometry", "Geometry & mesh"),
     ("models", "Models"),
-    ("schemes", "Schemes"),
+    ("geometry", "Geometry & mesh"),
     ("bcs", "Boundary conditions"),
     ("initial", "Initial values"),
+    ("schemes", "Numerics"),
     ("review", "Review & run"),
 ]
 
@@ -48,7 +48,7 @@ def build_steps(solver: Any, entries: list[FormEntry]) -> list[Step]:
     """The six steps in fixed order, each carrying its form-entry keys.
 
     Membership follows ``FormEntry.step`` (``models``/``schemes``/``bcs``/``initial``);
-    ``setup`` and ``review`` are form-less.
+    ``geometry`` and ``review`` are form-less bespoke panels.
     """
     by_step: dict[str, list[str]] = {sid: [] for sid, _ in _STEP_DEFS}
     for entry in entries:

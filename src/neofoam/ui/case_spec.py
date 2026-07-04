@@ -24,6 +24,21 @@ __all__ = [
 ]
 
 
+def _defaults_complete(cls: Any) -> bool:
+    """True when ``cls()`` validates — every field has a default.
+
+    Such a config (e.g. ``fvSchemes``/``fvSolution``) is written even when its form
+    was never touched: the case needs the file, and the class supplies full defaults.
+    """
+    if cls is None:
+        return False
+    try:
+        cls()
+    except Exception:  # noqa: BLE001 - any validation error ⇒ user input required
+        return False
+    return True
+
+
 def owned_entry_keys_by_model(entries: list[FormEntry]) -> dict[str, list[str]]:
     """Optional-model name → the form-entry keys it owns (for hide/skip)."""
     owned: dict[str, list[str]] = {}
@@ -40,7 +55,10 @@ def state_to_case_spec(
 ) -> dict[str, dict[str, Any]]:
     """Aggregate ``form_state`` (entry.key → live data) into the save_case dict.
 
-    - dict entry: taken whole; skipped if empty or owned by an unselected model.
+    - dict entry: taken whole; an *empty* form is still included when its config
+      class default-constructs (the case needs ``system/fvSchemes`` etc. even if the
+      user never opened that panel); skipped when empty **and** requiring input, or
+      when owned by an unselected model.
     - field config: input + BC halves merged via
       :func:`neofoam.agent.case_forms.merge_field_config`; skipped if both halves are
       empty or the config is owned by an unselected model.
@@ -55,7 +73,7 @@ def state_to_case_spec(
             continue
         data = form_state.get(entry.key) or {}
         if entry.kind == "dict":
-            if data:
+            if data or _defaults_complete(entry.cls):
                 spec[entry.config_name] = data
             continue
         slot = fields.setdefault(

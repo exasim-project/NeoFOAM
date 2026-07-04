@@ -20,18 +20,16 @@ def test_steps_fixed_order_and_membership():
     steps = build_steps(solver, entries)
 
     assert [s.id for s in steps] == [
-        "setup",
-        "geometry",
         "models",
-        "schemes",
+        "geometry",
         "bcs",
         "initial",
+        "schemes",
         "review",
     ]
     by_id = {s.id: s for s in steps}
 
-    # setup / geometry / review are form-less bespoke panels.
-    assert by_id["setup"].entry_keys == []
+    # geometry / review are form-less bespoke panels.
     assert by_id["geometry"].entry_keys == []
     assert by_id["review"].entry_keys == []
 

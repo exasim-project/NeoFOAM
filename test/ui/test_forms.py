@@ -148,8 +148,9 @@ def test_seed_boundary_field_roles_values_and_preservation():
     u = seed_boundary_field(entries["field_bc:UFieldConfig"], patches, {})[
         "boundaryField"
     ]
-    # Role → BC type, clamped to the field's allowed arms.
-    assert u["frontBack"] == {"type": "empty"}
+    # Role → BC type, clamped to the field's allowed arms. Role `empty` seeds a
+    # symmetry BC — the snappy mesh realises empty patches as symmetry patches.
+    assert u["frontBack"] == {"type": "symmetry"}
     assert u["walls"] == {"type": "noSlip"}
     assert u["outlet"] == {"type": "zeroGradient"}
     # Value-carrying types are seeded with a valid zero payload (matching the arm).

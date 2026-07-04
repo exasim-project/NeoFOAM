@@ -36,7 +36,11 @@ def test_aggregate_validates_and_round_trips(tmp_path):
     state = _state_from_defaults(entries, only={"transport_properties_config"})
 
     spec = state_to_case_spec(entries, state, selected_models=set())
-    assert set(spec) == {"transport_properties_config"}
+    # The filled config plus every default-complete required dict config (their
+    # files — fvSchemes/fvSolution — are needed even with untouched forms).
+    assert "transport_properties_config" in spec
+    assert "pimple_fv_schemes" in spec
+    assert "pimple_fv_solution" in spec
 
     # Structurally valid for the aggregate model, and writes via save_case.
     build_case_output_model(solver=solver)(**spec)
@@ -59,11 +63,18 @@ def test_unselected_optional_model_is_skipped():
     assert "boussinesq_config" in spec_on
 
 
-def test_empty_forms_are_omitted():
+def test_empty_forms_keep_only_default_complete_dicts():
     solver = _solver()
     entries = build_forms(solver)
     spec = state_to_case_spec(entries, _state_from_defaults(entries, only=set()), set())
-    assert spec == {}
+    # Empty forms whose config REQUIRES input (controlDict: endTime/deltaT) are
+    # omitted; default-complete dict configs stay so their files get written.
+    assert "control_dict_config" not in spec
+    assert "turbulence_properties_config" not in spec
+    assert spec.get("pimple_fv_schemes") == {}
+    assert spec.get("pimple_fv_solution") == {}
+    # No field configs — both halves empty.
+    assert not any(k.endswith("_field_config") for k in spec)
 
 
 def test_field_merges_from_one_half():

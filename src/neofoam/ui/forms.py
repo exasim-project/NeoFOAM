@@ -13,6 +13,7 @@ to. A ``0/<field>`` config is split into two entries — an *input* half
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -24,6 +25,7 @@ from neofoam.mcp import tools
 __all__ = [
     "FormEntry",
     "build_forms",
+    "humanize",
     "jsonforms_schema",
     "allowed_bc_types",
     "seed_boundary_field",
@@ -85,6 +87,40 @@ def _owner_by_cls_name(solver: Any) -> dict[str, str]:
 
 def _slice_defaults(defaults: dict[str, Any], keep: tuple[str, ...]) -> dict[str, Any]:
     return {k: v for k, v in defaults.items() if k in keep}
+
+
+# camelCase / snake_case boundary for human labels: "writeControl" → "Write control".
+_CAMEL_RE = re.compile(r"(?<=[a-z0-9])(?=[A-Z])")
+# Sphinx roles in pydantic docstrings: ":class:`~a.b.C`" → "C".
+_SPHINX_ROLE_RE = re.compile(r":[a-zA-Z:]+:`~?([^`]+)`")
+
+
+def humanize(key: str) -> str:
+    """A property key as a human label: ``deltaT`` → "Delta T", ``nu`` → "Nu"."""
+    words = _CAMEL_RE.sub(" ", key.replace("_", " ")).strip()
+    return words[:1].upper() + words[1:]
+
+
+def _label_title(key: str, node: Any) -> Any:
+    """Replace a pydantic auto-title (``"Writecontrol"``) with :func:`humanize`.
+
+    A hand-written title (anything that isn't just the key re-capitalised) is kept.
+    """
+    if not isinstance(node, dict):
+        return node
+    title = node.get("title")
+    auto = title is None or (
+        isinstance(title, str) and title.replace(" ", "").lower() == key.lower()
+    )
+    return {**node, "title": humanize(key)} if auto else node
+
+
+def _clean_description(text: str) -> str:
+    """First paragraph of a docstring description, Sphinx markup stripped."""
+    first = text.strip().split("\n\n", 1)[0]
+    first = _SPHINX_ROLE_RE.sub(lambda m: m.group(1).rsplit(".", 1)[-1], first)
+    first = first.replace("``", "")
+    return re.sub(r"\s+", " ", first).strip()
 
 
 def _const_type_of(arm: dict[str, Any], defs: dict[str, Any]) -> str | None:
@@ -176,6 +212,8 @@ def jsonforms_schema(schema: dict[str, Any]) -> dict[str, Any]:
         if not isinstance(node, dict):
             return node
         node = dict(node)
+        if isinstance(node.get("description"), str):
+            node["description"] = _clean_description(node["description"])
 
         for comb in ("anyOf", "oneOf"):
             arms = node.get(comb)
@@ -208,7 +246,7 @@ def jsonforms_schema(schema: dict[str, Any]) -> dict[str, Any]:
                     if k == "dimensions"
                     and isinstance(v, dict)
                     and v.get("type") == "array"
-                    else transform(v)
+                    else _label_title(k, transform(v))
                 )
                 for k, v in node["properties"].items()
             }
@@ -231,6 +269,26 @@ def jsonforms_schema(schema: dict[str, Any]) -> dict[str, Any]:
 
     result: dict[str, Any] = transform(schema)
     return result
+
+
+def _dict_title(cls_name: str, file: str | None) -> str:
+    """Panel title for a dict config: the OpenFOAM file it writes, qualified.
+
+    The file basename is the domain language (``controlDict``, ``fvSchemes``); a
+    config that co-owns a file with others gets its model/aspect as a qualifier —
+    ``fvSchemes · Pimple``, ``controlDict · Courant``. Falls back to the humanized
+    class name when the config is not file-bound.
+    """
+    stem = cls_name.removesuffix("Config")
+    if "_" in stem:  # model-prefixed duplicates, e.g. "Pimple_fvSchemes"
+        model, qualified = stem.split("_", 1)
+        return f"{qualified} · {model}"
+    if not file:
+        return humanize(stem)
+    base = file.rsplit("/", 1)[-1]
+    if stem.lower() == base.lower():
+        return base
+    return f"{base} · {humanize(stem)}"  # co-owner: "controlDict · Courant"
 
 
 def build_forms(solver: Any) -> list[FormEntry]:
@@ -290,7 +348,7 @@ def build_forms(solver: Any) -> list[FormEntry]:
                     key=f"dict:{info.cls_name}",
                     config_name=info.name,
                     cls_name=info.cls_name,
-                    title=info.cls_name,
+                    title=_dict_title(info.cls_name, info.file),
                     schema=jsonforms_schema(dto.json_schema),
                     defaults=dto.defaults,
                     state_key=f"form_{info.name}",
@@ -307,8 +365,11 @@ def build_forms(solver: Any) -> list[FormEntry]:
 # ``allowed_bc_types`` (a scalar field has no ``noSlip``), then to the first allowed
 # non-fallback arm. Payload-free types are preferred so the scaffold stays valid;
 # value-carrying arms (``fixedValue``) surface a ``value`` field for the user to fill.
+# Role ``empty`` seeds a ``symmetry`` BC: the snappy mesh realises an empty (2-D)
+# patch as a generalized ``symmetry`` patch (see ``ui.geometry._PATCH_TYPE``), and the
+# BC type must match the mesh patch type.
 _ROLE_BC_PREFS: dict[str, tuple[str, ...]] = {
-    "empty": ("empty",),
+    "empty": ("symmetry", "symmetryPlane", "empty"),
     "symmetry": ("symmetry", "symmetryPlane"),
     "wall": ("noSlip", "zeroGradient", "fixedValue"),
     "inlet": ("fixedValue", "zeroGradient"),

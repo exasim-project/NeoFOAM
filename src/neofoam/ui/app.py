@@ -3,16 +3,19 @@
 
 """Trame case wizard: sidebar step nav + JSONForms panels + model-aware save.
 
-Left drawer lists the wizard steps (``current_step``); the main area mounts every
+The left drawer lists the wizard steps (``current_step``); the main area mounts every
 step once, shown via ``v_show`` so navigation never unmounts a form and wipes its
-state. The Setup step toggles optional models (``sel_<model>``); a config panel owned
-by an unselected optional model is hidden and skipped on save. Save aggregates the
-live form state through :func:`neofoam.ui.case_spec.state_to_case_spec` and writes via
+state. Every form is rendered generically from its :class:`~neofoam.ui.forms.FormEntry`
+JSON Schema — there is no per-case or per-config markup. The Models step opens with
+the model-selection panel (``sel_<model>``); a config panel owned by an unselected
+optional model is hidden and skipped on save. Save aggregates the live form state
+through :func:`neofoam.ui.case_spec.state_to_case_spec` and writes via
 :func:`neofoam.mcp.tools.save_case`.
 """
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from dataclasses import asdict
@@ -40,16 +43,74 @@ from neofoam.ui.geometry import (
 from neofoam.ui import review
 from neofoam.ui.review import findings_to_rows
 from neofoam.ui.scaffold import scaffold_runnable_case
-from neofoam.ui.steps import build_model_choices, build_steps
+from neofoam.ui.steps import Step, build_model_choices, build_steps
 
 _ROLE_NAMES = [r.value for r in PatchRole]
 
-# Default STL folder — a manual-testing convenience so the geometry step is
-# pre-populated and one click away from a scan.
-_DEFAULT_STL_DIR = (
-    "/home/henning/libsAndApps/NeoFOAM/.claude/worktrees/feat+e2eWorkflow/"
-    "playground/hx/constant/triSurface"
-)
+# Optional pre-fill for the geometry step's STL folder (manual-testing convenience).
+_DEFAULT_STL_DIR = os.environ.get("NEOFOAM_WIZARD_STL_DIR", "")
+
+# Per-step presentation (icon + one-line caption under the step title). Purely
+# cosmetic — steps themselves come from ``neofoam.ui.steps.build_steps``.
+_STEP_ICONS = {
+    "models": "mdi-atom",
+    "geometry": "mdi-cube-outline",
+    "bcs": "mdi-border-all-variant",
+    "initial": "mdi-waves",
+    "schemes": "mdi-function-variant",
+    "review": "mdi-clipboard-check-outline",
+}
+_STEP_CAPTIONS = {
+    "models": "Pick the optional physics models, then configure the model dictionaries.",
+    "geometry": "Scan the boundary STLs, assign patch roles and author the mesh dicts.",
+    "bcs": "Boundary conditions per field — patches are seeded by the geometry scan.",
+    "initial": "Physical dimensions and initial internal value per field.",
+    "schemes": "Discretisation schemes and linear solvers — the defaults are sensible.",
+    "review": "Save the case, review the validation findings and run it.",
+}
+
+# One coherent look for every (schema-generated) widget: an app theme plus global
+# component defaults, so the generic forms need no per-widget styling.
+_VUETIFY_CONFIG = {
+    "theme": {
+        "defaultTheme": "neofoam",
+        "themes": {
+            "neofoam": {
+                "dark": False,
+                "colors": {
+                    "primary": "#1F5FBF",
+                    "secondary": "#00838F",
+                    "background": "#F4F6FB",
+                    "surface": "#FFFFFF",
+                    "surface-variant": "#E9EDF5",
+                    "error": "#C62828",
+                    "warning": "#E65100",
+                    "success": "#2E7D32",
+                    "info": "#0277BD",
+                },
+            },
+        },
+    },
+    "defaults": {
+        "VTextField": {"density": "compact", "variant": "outlined", "color": "primary"},
+        "VSelect": {"density": "compact", "variant": "outlined", "color": "primary"},
+        "VSwitch": {"density": "compact", "color": "primary", "hideDetails": True},
+        "VBtn": {"rounded": "lg"},
+        "VCard": {"rounded": "lg"},
+        "VAlert": {"density": "compact", "rounded": "lg"},
+        "VExpansionPanels": {"multiple": True, "variant": "accordion"},
+        "VTooltip": {"location": "bottom"},
+    },
+}
+
+# Light global polish on top of the theme (panel borders, calmer form spacing).
+_CSS = """
+.v-expansion-panel { border: 1px solid rgba(31, 95, 191, 0.12); }
+.v-expansion-panel-title { font-weight: 500; min-height: 44px; }
+.v-expansion-panel--active > .v-expansion-panel-title { color: rgb(31, 95, 191); }
+.nf-step-title { letter-spacing: -0.3px; }
+.v-navigation-drawer .v-list-item-title { font-weight: 500; }
+"""
 
 
 def _case_dir_for(stl_dir: str) -> str:
@@ -134,7 +195,7 @@ def build_app(server: Any = None, *, solver_name: str = "incompressibleFluid") -
     """Construct the trame Server, state, layout and Save controller. Returns it."""
     from trame.app import get_server  # type: ignore  # untyped optional 'ui' dep
     from trame.ui.vuetify3 import SinglePageWithDrawerLayout  # type: ignore  # untyped dep
-    from trame.widgets import html, vuetify3 as v3  # type: ignore  # untyped 'ui' deps
+    from trame.widgets import client, html, vuetify3 as v3  # type: ignore  # untyped deps
     from trame_client.widgets.core import AbstractElement  # type: ignore  # untyped dep
 
     class JsonForms(AbstractElement):  # type: ignore[misc]  # untyped base
@@ -156,7 +217,7 @@ def build_app(server: Any = None, *, solver_name: str = "incompressibleFluid") -
     server = get_server() if server is None else server
     state, ctrl = server.state, server.controller
 
-    state.current_step = "setup"
+    state.current_step = steps[0].id
     state.ai_panel = True  # right AI drawer open by default (foldable)
     state.target_dir = ""
     state.save_report = None
@@ -178,6 +239,10 @@ def build_app(server: Any = None, *, solver_name: str = "incompressibleFluid") -
     for entry in entries:
         state[_schema_key(entry)] = entry.schema
         state[entry.state_key] = dict(entry.defaults)
+
+    # ------------------------------------------------------------------ #
+    # Controller                                                         #
+    # ------------------------------------------------------------------ #
 
     def _validate_and_store() -> None:
         report = tools.validate_case(solver, state.target_dir)
@@ -265,14 +330,34 @@ def build_app(server: Any = None, *, solver_name: str = "incompressibleFluid") -
 
     build_agent_panel(server, entries, solver)
 
+    # ------------------------------------------------------------------ #
+    # Layout                                                             #
+    # ------------------------------------------------------------------ #
+
+    def _step_header(step: Step) -> None:
+        html.Div(step.label, classes="text-h5 font-weight-bold nf-step-title")
+        html.Div(
+            _STEP_CAPTIONS.get(step.id, ""),
+            classes="text-body-2 text-medium-emphasis mb-5",
+        )
+
     def _form_panel(entry: FormEntry) -> None:
         # Owned by an optional model → hide unless selected; else always visible
         # (omit v-show entirely — a bare `v-show` with no expression won't compile).
         panel_kwargs = {}
         if entry.owner_model is not None:
             panel_kwargs["v_show"] = f"sel_{entry.owner_model}"
-        with v3.VExpansionPanel(**panel_kwargs):
-            v3.VExpansionPanelTitle(entry.title)
+        with v3.VExpansionPanel(elevation=0, **panel_kwargs):
+            with v3.VExpansionPanelTitle():
+                html.Span(entry.title)
+                if entry.owner_model is not None:
+                    v3.VChip(
+                        entry.owner_model,
+                        size="x-small",
+                        color="secondary",
+                        variant="tonal",
+                        classes="ml-2",
+                    )
             with v3.VExpansionPanelText():
                 JsonForms(
                     schema=(_schema_key(entry),),
@@ -280,14 +365,260 @@ def build_app(server: Any = None, *, solver_name: str = "incompressibleFluid") -
                     change=f"{entry.state_key} = $event.data",
                 )
 
-    with SinglePageWithDrawerLayout(server) as layout:
+    def _model_selector() -> None:
+        """Required models (locked on) + optional model toggles."""
+        with v3.VCard(variant="outlined", classes="mb-6"):
+            with v3.VCardText():
+                html.Div(
+                    "Included models",
+                    classes="text-overline text-medium-emphasis",
+                )
+                with html.Div(classes="d-flex flex-wrap ga-2 mb-4"):
+                    for c in required:
+                        v3.VChip(
+                            c.label,
+                            prepend_icon="mdi-lock",
+                            variant="tonal",
+                            color="primary",
+                            size="small",
+                        )
+                html.Div(
+                    "Optional models",
+                    classes="text-overline text-medium-emphasis",
+                )
+                for c in optional:
+                    v3.VSwitch(v_model=(f"sel_{c.name}",), label=c.label, inset=True)
+
+    def _geometry_panel() -> None:
+        """STL patches → blockMesh / snappy / preprocess dicts."""
+        with v3.VCard(variant="outlined", classes="mb-4"):
+            with v3.VCardText():
+                with v3.VRow(align="center", dense=True):
+                    with v3.VCol():
+                        v3.VTextField(
+                            v_model=("stl_dir",),
+                            label="STL folder (triSurface or case dir)",
+                            hide_details=True,
+                            prepend_inner_icon="mdi-folder-outline",
+                        )
+                    with v3.VCol(cols="auto"):
+                        v3.VBtn(
+                            "Scan",
+                            click=ctrl.load_geometry,
+                            color="primary",
+                            variant="tonal",
+                            prepend_icon="mdi-magnify",
+                        )
+                html.Div(
+                    "Point at a folder of STLs (or a case dir with"
+                    " constant/triSurface/*.stl) and Scan. Adjust patch roles and"
+                    " refinement, then Write mesh to author blockMeshDict,"
+                    " snappyHexMeshDict and preprocess.yaml.",
+                    classes="text-body-2 text-medium-emphasis mt-3",
+                )
+        # Per-patch role + refinement editor (rows come from the scan).
+        with v3.VCard(
+            variant="outlined", classes="mb-4", v_show="geometry_patches.length"
+        ):
+            with v3.VTable(density="compact", hover=True):
+                with html.Thead():
+                    with html.Tr():
+                        html.Th("Patch")
+                        html.Th("STL")
+                        html.Th("Faces")
+                        html.Th("Role")
+                        html.Th("Refinement")
+                with html.Tbody():
+                    with html.Tr(v_for="(p, i) in geometry_patches", key="i"):
+                        with html.Td():
+                            html.Span("{{ p.name }}", classes="font-weight-medium")
+                        with html.Td():
+                            html.Span("{{ p.stl }}", classes="text-medium-emphasis")
+                        with html.Td():
+                            html.Span("{{ p.faces }}", classes="text-medium-emphasis")
+                        with html.Td():
+                            v3.VSelect(
+                                v_model=("p.role",),
+                                items=("role_names",),
+                                hide_details=True,
+                                style="min-width: 130px",
+                            )
+                        with html.Td():
+                            v3.VTextField(
+                                v_model=("p.refinement_str",),
+                                v_show="p.is_snappy",
+                                placeholder="min max",
+                                hide_details=True,
+                                style="max-width: 110px",
+                            )
+            # Background-mesh knobs.
+            with v3.VCardText():
+                with v3.VRow(dense=True):
+                    with v3.VCol(cols="6"):
+                        v3.VTextField(
+                            v_model=("geo_location",),
+                            label="locationInMesh (x y z)",
+                            hide_details=True,
+                        )
+                    with v3.VCol(cols="6"):
+                        v3.VTextField(
+                            v_model=("geo_cell_size", 0.0),
+                            label="Background cell size (m, 0 = auto)",
+                            type="number",
+                            hide_details=True,
+                        )
+                v3.VBtn(
+                    "Write mesh",
+                    click=ctrl.write_mesh,
+                    color="primary",
+                    prepend_icon="mdi-cube-outline",
+                    classes="mt-4",
+                )
+        v3.VAlert(
+            text=("geometry_status",),
+            type="info",
+            variant="tonal",
+            v_show="geometry_status",
+            classes="mb-2",
+        )
+        v3.VAlert(
+            text=("'Wrote: ' + mesh_written.join(', ')",),
+            type="success",
+            variant="tonal",
+            v_show="mesh_written.length",
+        )
+
+    def _review_panel() -> None:
+        """validate_case findings + scaffolded runnable case."""
+        with v3.VRow(align="center", classes="mb-2", no_gutters=True):
+            v3.VSpacer()
+            v3.VBtn(
+                "Re-validate",
+                click=ctrl.revalidate,
+                variant="tonal",
+                color="primary",
+                prepend_icon="mdi-refresh",
+            )
+        # Prompt to save first.
+        v3.VAlert(
+            "Click 'Save case' to write the case, scaffold Allrun/Allclean and"
+            " validate it.",
+            type="info",
+            variant="tonal",
+            classes="mb-3",
+            v_show="validation_ok === null",
+        )
+        # Overall verdict.
+        v3.VAlert(
+            text=(
+                "validation_ok"
+                " ? 'Case is valid — run it with ./Allrun'"
+                " : (findings.length + ' issue(s) to fix before it will run')",
+            ),
+            type=("validation_ok ? 'success' : 'error'",),
+            variant="tonal",
+            classes="mb-3",
+            v_show="validation_ok !== null",
+        )
+        # One alert per finding.
+        with v3.VAlert(
+            v_for="(f, i) in findings",
+            key="i",
+            type=("f.color",),
+            variant="tonal",
+            border="start",
+            classes="mb-2",
+        ):
+            v3.VAlertTitle("{{ f.file }}")
+            html.Div("{{ f.message }}")
+            html.Div(
+                "Fix → {{ f.fix }}",
+                v_show="f.fix",
+                classes="text-medium-emphasis mt-1",
+            )
+        # Scaffolded files.
+        v3.VAlert(
+            text=("'Scaffolded: ' + scaffolded.join(', ')",),
+            type="success",
+            variant="outlined",
+            classes="mt-3",
+            v_show="scaffolded.length",
+        )
+
+    def _ai_drawer() -> None:
+        """Right-hand foldable AI chat drawer (multi-turn, fills the forms)."""
+        with v3.VNavigationDrawer(
+            v_model=("ai_panel", True),
+            location="right",
+            width=400,
+        ):
+            with html.Div(classes="d-flex flex-column", style="height: 100%;"):
+                v3.VToolbar(title="AI assistant", density="compact", flat=True)
+                # Scrolling transcript.
+                with html.Div(classes="flex-grow-1 pa-3", style="overflow-y: auto;"):
+                    # Empty-state hint + suggested prompts.
+                    with html.Div(v_show="!chat_log.length"):
+                        v3.VCardText(
+                            "Describe your case and I'll fill the forms. Try:",
+                            classes="text-medium-emphasis px-0",
+                        )
+                        with v3.VChip(
+                            v_for="(p, i) in suggested_prompts",
+                            key="i",
+                            click=(ctrl.send_message, "[p]"),
+                            size="small",
+                            variant="tonal",
+                            color="secondary",
+                            classes="mb-2",
+                            style="height: auto; white-space: normal;",
+                        ):
+                            html.Span("{{ p }}", classes="py-1")
+                    # Messages.
+                    with v3.VSheet(
+                        v_for="(m, i) in chat_log",
+                        key="i",
+                        rounded="lg",
+                        classes="pa-3 mb-2",
+                        color=("m.role === 'user' ? 'primary' : 'surface-variant'",),
+                    ):
+                        html.Div(
+                            "{{ m.content }}",
+                            style="white-space: pre-wrap; font-size: 0.9rem;",
+                        )
+                    v3.VProgressLinear(
+                        indeterminate=True, v_show="ai_busy", color="secondary"
+                    )
+                # Composer pinned to the bottom.
+                with html.Div(classes="pa-3"):
+                    v3.VTextField(
+                        v_model=("chat_input",),
+                        placeholder="Message the assistant…",
+                        hide_details=True,
+                        keydown_enter=(ctrl.send_message, "[]"),
+                    )
+                    v3.VBtn(
+                        "Send",
+                        click=(ctrl.send_message, "[]"),
+                        loading=("ai_busy",),
+                        disabled=("!chat_input",),
+                        color="secondary",
+                        prepend_icon="mdi-send",
+                        block=True,
+                        classes="mt-2",
+                    )
+
+    with SinglePageWithDrawerLayout(server, vuetify_config=_VUETIFY_CONFIG) as layout:
         layout.title.set_text("NeoFOAM case wizard")
+        client.Style(_CSS)
 
         with layout.drawer:
-            with v3.VList(nav=True, density="compact"):
+            with v3.VList(nav=True, density="comfortable", color="primary"):
+                v3.VListSubheader(solver_name)
                 for step in steps:
                     v3.VListItem(
                         title=step.label,
+                        prepend_icon=_STEP_ICONS.get(step.id, "mdi-circle-outline"),
+                        rounded="lg",
                         active=(f"current_step === '{step.id}'",),
                         click=f"current_step = '{step.id}'",
                     )
@@ -297,290 +628,44 @@ def build_app(server: Any = None, *, solver_name: str = "incompressibleFluid") -
             v3.VTextField(
                 v_model=("target_dir",),
                 label="Target directory",
-                density="compact",
                 hide_details=True,
-                style="max-width: 320px",
+                prepend_inner_icon="mdi-folder-arrow-down-outline",
+                style="max-width: 340px",
             )
-            v3.VBtn("Save case", click=ctrl.save_case, color="primary", classes="ml-3")
+            v3.VBtn(
+                "Save case",
+                click=ctrl.save_case,
+                color="primary",
+                variant="flat",
+                prepend_icon="mdi-content-save-outline",
+                classes="mx-3",
+            )
             # Fold / unfold the AI assistant drawer.
             v3.VBtn(
                 icon="mdi-robot-happy-outline",
                 click="ai_panel = !ai_panel",
                 variant="text",
-                classes="ml-2",
             )
 
-        # Right-hand foldable AI chat drawer (multi-turn, fills the forms).
         with layout.root:
-            with v3.VNavigationDrawer(
-                v_model=("ai_panel", True),
-                location="right",
-                width=400,
-            ):
-                with html.Div(
-                    classes="d-flex flex-column",
-                    style="height: 100%;",
-                ):
-                    v3.VToolbar(
-                        title="AI assistant",
-                        density="compact",
-                        flat=True,
-                    )
-                    # Scrolling transcript.
-                    with html.Div(
-                        classes="flex-grow-1 pa-3",
-                        style="overflow-y: auto;",
-                    ):
-                        # Empty-state hint + suggested prompts.
-                        with html.Div(v_show="!chat_log.length"):
-                            v3.VCardText(
-                                "Describe your case and I'll fill the forms. Try:",
-                                classes="text-medium-emphasis px-0",
-                            )
-                            with v3.VChip(
-                                v_for="(p, i) in suggested_prompts",
-                                key="i",
-                                click=(ctrl.send_message, "[p]"),
-                                size="small",
-                                variant="tonal",
-                                color="secondary",
-                                classes="mb-2",
-                                style="height: auto; white-space: normal;",
-                            ):
-                                html.Span("{{ p }}", classes="py-1")
-                        # Messages.
-                        with v3.VSheet(
-                            v_for="(m, i) in chat_log",
-                            key="i",
-                            rounded="lg",
-                            classes="pa-3 mb-2",
-                            color=(
-                                "m.role === 'user' ? 'primary' : 'surface-variant'",
-                            ),
-                        ):
-                            html.Div(
-                                "{{ m.content }}",
-                                style="white-space: pre-wrap; font-size: 0.9rem;",
-                            )
-                        v3.VProgressLinear(
-                            indeterminate=True,
-                            v_show="ai_busy",
-                            color="secondary",
-                        )
-                    # Composer pinned to the bottom.
-                    with html.Div(classes="pa-3"):
-                        v3.VTextField(
-                            v_model=("chat_input",),
-                            placeholder="Message the assistant…",
-                            hide_details=True,
-                            variant="outlined",
-                            density="compact",
-                            keydown_enter=(ctrl.send_message, "[]"),
-                        )
-                        v3.VBtn(
-                            "Send",
-                            click=(ctrl.send_message, "[]"),
-                            loading=("ai_busy",),
-                            disabled=("!chat_input",),
-                            color="secondary",
-                            prepend_icon="mdi-send",
-                            block=True,
-                            classes="mt-2",
-                        )
+            _ai_drawer()
 
-        with layout.content, v3.VContainer(fluid=True):
-            # Setup — model selection.
-            with html.Div(v_show="current_step === 'setup'"):
-                v3.VCardTitle("Choose models")
-                v3.VListSubheader("Required (always on)")
-                with v3.VList(density="compact"):
-                    for c in required:
-                        v3.VListItem(title=c.label, prepend_icon="mdi-lock")
-                v3.VListSubheader("Optional")
-                for c in optional:
-                    v3.VSwitch(
-                        v_model=(f"sel_{c.name}",),
-                        label=c.label,
-                        density="compact",
-                        hide_details=True,
-                        color="primary",
-                    )
-
-            # Geometry & mesh — STL patches → blockMesh / snappy / preprocess dicts.
-            with html.Div(v_show="current_step === 'geometry'"):
-                v3.VCardTitle("Geometry & mesh")
-                # STL folder picker (a triSurface folder or a case dir) + Scan.
-                with v3.VRow(align="center", classes="mb-2"):
-                    with v3.VCol():
-                        v3.VTextField(
-                            v_model=("stl_dir",),
-                            label="STL folder (triSurface or case dir)",
-                            density="compact",
-                            hide_details=True,
-                            prepend_inner_icon="mdi-folder-outline",
-                        )
-                    with v3.VCol(cols="auto"):
-                        v3.VBtn(
-                            "Scan STL folder",
-                            click=ctrl.load_geometry,
-                            variant="tonal",
-                            prepend_icon="mdi-magnify",
-                        )
-                v3.VAlert(
-                    "Point at a folder of STLs (or a case dir with"
-                    " constant/triSurface/*.stl), then Scan. Adjust patch roles /"
-                    " refinement and click Write mesh to author blockMeshDict,"
-                    " snappyHexMeshDict and preprocess.yaml.",
-                    type="info",
-                    variant="tonal",
-                    density="compact",
-                    classes="mb-3",
-                )
-                # Per-patch role + refinement editor (rows come from the scan).
-                with v3.VTable(density="compact", v_show="geometry_patches.length"):
-                    with html.Thead():
-                        with html.Tr():
-                            html.Th("Patch")
-                            html.Th("STL")
-                            html.Th("Faces")
-                            html.Th("Role")
-                            html.Th("Refinement")
-                    with html.Tbody():
-                        with html.Tr(v_for="(p, i) in geometry_patches", key="i"):
-                            with html.Td():
-                                html.Span("{{ p.name }}")
-                            with html.Td():
-                                html.Span("{{ p.stl }}", classes="text-medium-emphasis")
-                            with html.Td():
-                                html.Span(
-                                    "{{ p.faces }}", classes="text-medium-emphasis"
-                                )
-                            with html.Td():
-                                v3.VSelect(
-                                    v_model=("p.role",),
-                                    items=("role_names",),
-                                    density="compact",
-                                    hide_details=True,
-                                    variant="outlined",
-                                    style="min-width: 130px",
-                                )
-                            with html.Td():
-                                v3.VTextField(
-                                    v_model=("p.refinement_str",),
-                                    v_show="p.is_snappy",
-                                    placeholder="min max",
-                                    density="compact",
-                                    hide_details=True,
-                                    variant="outlined",
-                                    style="max-width: 110px",
-                                )
-                # Background-mesh knobs.
-                with v3.VRow(classes="mt-3", v_show="geometry_patches.length"):
-                    with v3.VCol(cols="6"):
-                        v3.VTextField(
-                            v_model=("geo_location",),
-                            label="locationInMesh (x y z)",
-                            density="compact",
-                            hide_details=True,
-                        )
-                    with v3.VCol(cols="6"):
-                        v3.VTextField(
-                            v_model=("geo_cell_size", 0.0),
-                            label="Background cell size (m, 0 = auto)",
-                            type="number",
-                            density="compact",
-                            hide_details=True,
-                        )
-                v3.VBtn(
-                    "Write mesh",
-                    click=ctrl.write_mesh,
-                    color="primary",
-                    prepend_icon="mdi-cube-outline",
-                    classes="mt-3",
-                    v_show="geometry_patches.length",
-                )
-                v3.VAlert(
-                    text=("geometry_status",),
-                    type="info",
-                    variant="outlined",
-                    density="compact",
-                    classes="mt-3",
-                    v_show="geometry_status",
-                )
-                v3.VAlert(
-                    text=("'Wrote: ' + mesh_written.join(', ')",),
-                    type="success",
-                    variant="outlined",
-                    density="compact",
-                    classes="mt-2",
-                    v_show="mesh_written.length",
-                )
-
-            # Form steps.
+        with layout.content, v3.VContainer(fluid=True, classes="pa-6"):
+            # One uniform loop: every step renders its header, its bespoke panel
+            # (models / geometry / review) and its schema-generated form panels.
             for step in steps:
-                if step.id in ("setup", "geometry", "review"):
-                    continue
                 with html.Div(v_show=f"current_step === '{step.id}'"):
-                    with v3.VExpansionPanels(multiple=True):
-                        for key in step.entry_keys:
-                            _form_panel(by_key[key])
-
-            # Review — validate_case findings + scaffolded runnable case.
-            with html.Div(v_show="current_step === 'review'"):
-                with v3.VRow(align="center", classes="mb-2"):
-                    v3.VCardTitle("Review & run")
-                    v3.VSpacer()
-                    v3.VBtn(
-                        "Re-validate",
-                        click=ctrl.revalidate,
-                        variant="tonal",
-                        prepend_icon="mdi-refresh",
-                    )
-                # Prompt to save first.
-                v3.VAlert(
-                    "Click 'Save case' to write the case, scaffold Allrun/Allclean and validate.",
-                    type="info",
-                    variant="tonal",
-                    classes="mb-3",
-                    v_show="validation_ok === null",
-                )
-                # Overall verdict.
-                v3.VAlert(
-                    text=(
-                        "validation_ok"
-                        " ? 'Case is valid — run it with ./Allrun'"
-                        " : (findings.length + ' issue(s) to fix before it will run')",
-                    ),
-                    type=("validation_ok ? 'success' : 'error'",),
-                    variant="tonal",
-                    classes="mb-3",
-                    v_show="validation_ok !== null",
-                )
-                # One alert per finding.
-                with v3.VAlert(
-                    v_for="(f, i) in findings",
-                    key="i",
-                    type=("f.color",),
-                    variant="tonal",
-                    border="start",
-                    classes="mb-2",
-                ):
-                    v3.VAlertTitle("{{ f.file }}")
-                    html.Div("{{ f.message }}")
-                    html.Div(
-                        "Fix → {{ f.fix }}",
-                        v_show="f.fix",
-                        classes="text-medium-emphasis mt-1",
-                    )
-                # Scaffolded files.
-                v3.VAlert(
-                    text=("'Scaffolded: ' + scaffolded.join(', ')",),
-                    type="success",
-                    variant="outlined",
-                    density="compact",
-                    classes="mt-3",
-                    v_show="scaffolded.length",
-                )
+                    _step_header(step)
+                    if step.id == "models":
+                        _model_selector()
+                    elif step.id == "geometry":
+                        _geometry_panel()
+                    elif step.id == "review":
+                        _review_panel()
+                    if step.entry_keys:
+                        with v3.VExpansionPanels():
+                            for key in step.entry_keys:
+                                _form_panel(by_key[key])
 
     server.enable_module(jsonforms_module)
     return server
