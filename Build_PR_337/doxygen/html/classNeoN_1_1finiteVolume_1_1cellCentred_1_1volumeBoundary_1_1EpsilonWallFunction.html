@@ -82,6 +82,9 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
+<p>Turbulent dissipation rate wall function BC.  
+ <a href="classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction.html#details">More...</a></p>
+
 <p><code>#include &lt;<a class="el" href="epsilonWallFunction_8hpp_source.html">epsilonWallFunction.hpp</a>&gt;</code></p>
 <div class="dynheader">
 Inheritance diagram for NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction:</div>
@@ -113,7 +116,15 @@ Static Public Member Functions</h2></td></tr>
 <tr class="separator:a4307a8fbf0f0201117e37f779fe40897"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock">
+<div class="textblock"><p>Turbulent dissipation rate wall function BC. </p>
+<p>Mirrors Foam::epsilonWallFunctionFvPatchScalarField: blends viscous and log-layer ε estimates (BINOMIAL n=2) and sets the wall face value.</p>
+<p>Required BoundaryContext fields:</p><ul>
+<li><code>"k"</code> VolumeField&lt;scalar&gt; — turbulent kinetic energy</li>
+<li><code>"nu"</code> VolumeField&lt;scalar&gt; — laminar viscosity, boundary values</li>
+<li><code>"nearWallDist"</code> VolumeField&lt;scalar&gt; — cell-to-wall distance y, boundary values</li>
+</ul>
+<p>Single-patch-corner only (cornerWeights == 1). G feedback is handled by the parent KEpsilon model, not by this BC. </p>
+
 <p class="definition">Definition at line <a class="el" href="epsilonWallFunction_8hpp_source.html#l00100">100</a> of file <a class="el" href="epsilonWallFunction_8hpp_source.html">epsilonWallFunction.hpp</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a66584fed9edc0d4e67a28f786a6b0688" name="a66584fed9edc0d4e67a28f786a6b0688"></a>

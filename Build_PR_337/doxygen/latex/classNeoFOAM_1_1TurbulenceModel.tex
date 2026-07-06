@@ -21,23 +21,23 @@ Inheritance diagram for Neo\+FOAM\+::Turbulence\+Model\+:\begin{figure}[H]
 virtual \mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel_a9e88a63a740f6b15b2bca5afe44341aa}{\texorpdfstring{$\sim$}{\string~}\+Turbulence\+Model}} ()=default
 \item 
 virtual void \mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel_ad6c3e347eb9ee939dfb3a1d10f5836de}{initialize}} (const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::scalar $>$ \&nu\+Tilda\+Init, const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::scalar $>$ \&nut\+Init)
-\item 
+\begin{DoxyCompactList}\small\item\em Seed internal transport scalars from disk-\/read \doxylink{namespaceNeoN}{NeoN} fields. \end{DoxyCompactList}\item 
 virtual void \mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel_a0d62c0f93efa69172798d2abe0c1a919}{validate}} (const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Vec3 $>$ \&U)=0
-\item 
+\begin{DoxyCompactList}\small\item\em Seed gradU and nut before the time loop. \end{DoxyCompactList}\item 
 virtual void \mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel_abadc7ca738620793708e34a467610289}{correct}} (const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Vec3 $>$ \&U, nnfvcc\+::\+Surface\+Field$<$ Neo\+N\+::scalar $>$ \&phi, \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&rt)=0
-\item 
+\begin{DoxyCompactList}\small\item\em Update the turbulence model after the momentum solve each time step. \end{DoxyCompactList}\item 
 virtual nnfvcc\+::\+Surface\+Field$<$ Neo\+N\+::scalar $>$ \& \mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel_a39bed7c59f3724ff70fcf9ce3001d343}{nu\+Eff}} ()=0
-\item 
+\begin{DoxyCompactList}\small\item\em Surface effective viscosity (ν + ν\+\_\+t) for the momentum laplacian. \end{DoxyCompactList}\item 
 virtual const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::scalar $>$ \& \mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel_a86fcc51daef2c0f4b5ac0d6cc6e2b76f}{nut}} () const =0
-\item 
+\begin{DoxyCompactList}\small\item\em Cell-\/centred turbulent viscosity for the explicit viscous\+Stress term. \end{DoxyCompactList}\item 
 virtual const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Tensor $>$ \& \mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel_aef72cb4809fc873b080a0d4ae3f00d4b}{gradU}} () const =0
-\item 
+\begin{DoxyCompactList}\small\item\em Velocity gradient tensor updated each \doxylink{classNeoFOAM_1_1TurbulenceModel_abadc7ca738620793708e34a467610289}{correct()} call. \end{DoxyCompactList}\item 
 virtual void \mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel_ac20133231a12abcd1199bd00d8d72a89}{update\+GradU}} (const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Vec3 $>$ \&U)=0
-\item 
+\begin{DoxyCompactList}\small\item\em Recompute the model-\/owned gradU in place at the given velocity. \end{DoxyCompactList}\item 
 virtual void \mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel_a6af2db926d7eb7d289a1afc6b8df18e9}{rotate\+Old\+Times}} ()=0
-\item 
+\begin{DoxyCompactList}\small\item\em Rotate time-\/dependent fields for BDF2 time advancement. \end{DoxyCompactList}\item 
 virtual void \mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel_a732733c4179c9ae7a361ce73ccb408ec}{write}} (\mbox{\hyperlink{classNeoFOAM_1_1MeshAdapter}{Mesh\+Adapter}} \&mesh) const =0
-\end{DoxyCompactItemize}
+\begin{DoxyCompactList}\small\item\em Write model-\/owned fields (nu\+Tilda, nut, …) to disk. \end{DoxyCompactList}\end{DoxyCompactItemize}
 \doxysubsubsection*{Static Public Member Functions}
 \begin{DoxyCompactItemize}
 \item 
@@ -72,6 +72,10 @@ Definition at line \mbox{\hyperlink{turbulenceModel_8hpp_source_l00022}{22}} of 
 \doxysubsubsection{\texorpdfstring{correct()}{correct()}}
 {\footnotesize\ttfamily virtual void Neo\+FOAM\+::\+Turbulence\+Model\+::correct (\begin{DoxyParamCaption}\item[{const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Vec3 $>$ \&}]{U,  }\item[{nnfvcc\+::\+Surface\+Field$<$ Neo\+N\+::scalar $>$ \&}]{phi,  }\item[{\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&}]{rt }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
 
+
+
+Update the turbulence model after the momentum solve each time step. 
+
 \Hypertarget{classNeoFOAM_1_1TurbulenceModel_a49dee8641d6055c7fa2b88be94e8448a}\label{classNeoFOAM_1_1TurbulenceModel_a49dee8641d6055c7fa2b88be94e8448a} 
 \index{NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}!create@{create}}
 \index{create@{create}!NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}}
@@ -88,6 +92,10 @@ Reads simulation\+Type; for LES it also reads the LESModel subkey. Equivalent to
 \doxysubsubsection{\texorpdfstring{gradU()}{gradU()}}
 {\footnotesize\ttfamily virtual const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Tensor $>$ \& Neo\+FOAM\+::\+Turbulence\+Model\+::gradU (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [pure virtual]}}
 
+
+
+Velocity gradient tensor updated each \doxylink{classNeoFOAM_1_1TurbulenceModel_abadc7ca738620793708e34a467610289}{correct()} call. 
+
 \Hypertarget{classNeoFOAM_1_1TurbulenceModel_ad6c3e347eb9ee939dfb3a1d10f5836de}\label{classNeoFOAM_1_1TurbulenceModel_ad6c3e347eb9ee939dfb3a1d10f5836de} 
 \index{NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}!initialize@{initialize}}
 \index{initialize@{initialize}!NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}}
@@ -96,7 +104,11 @@ Reads simulation\+Type; for LES it also reads the LESModel subkey. Equivalent to
 
 
 
-Definition at line \mbox{\hyperlink{turbulenceModel_8hpp_source_l00047}{47}} of file \mbox{\hyperlink{turbulenceModel_8hpp_source}{turbulence\+Model.\+hpp}}.
+Seed internal transport scalars from disk-\/read \doxylink{namespaceNeoN}{NeoN} fields. 
+
+Optional hook; the default is a no-\/op. Override to initialise model-\/owned fields (e.\+g. nu\+Tilda) from values already loaded from disk by the caller. 
+
+Definition at line \mbox{\hyperlink{turbulenceModel_8hpp_source_l00052}{52}} of file \mbox{\hyperlink{turbulenceModel_8hpp_source}{turbulence\+Model.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1TurbulenceModel_a057e4bc3c9f6c0776fa975c519434f95}\label{classNeoFOAM_1_1TurbulenceModel_a057e4bc3c9f6c0776fa975c519434f95} 
 \index{NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}!name@{name}}
@@ -114,11 +126,19 @@ Definition at line \mbox{\hyperlink{turbulenceModel_8hpp_source_l00034}{34}} of 
 \doxysubsubsection{\texorpdfstring{nuEff()}{nuEff()}}
 {\footnotesize\ttfamily virtual nnfvcc\+::\+Surface\+Field$<$ Neo\+N\+::scalar $>$ \& Neo\+FOAM\+::\+Turbulence\+Model\+::nu\+Eff (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
 
+
+
+Surface effective viscosity (ν + ν\+\_\+t) for the momentum laplacian. 
+
 \Hypertarget{classNeoFOAM_1_1TurbulenceModel_a86fcc51daef2c0f4b5ac0d6cc6e2b76f}\label{classNeoFOAM_1_1TurbulenceModel_a86fcc51daef2c0f4b5ac0d6cc6e2b76f} 
 \index{NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}!nut@{nut}}
 \index{nut@{nut}!NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}}
 \doxysubsubsection{\texorpdfstring{nut()}{nut()}}
 {\footnotesize\ttfamily virtual const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::scalar $>$ \& Neo\+FOAM\+::\+Turbulence\+Model\+::nut (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+Cell-\/centred turbulent viscosity for the explicit viscous\+Stress term. 
 
 \Hypertarget{classNeoFOAM_1_1TurbulenceModel_a6af2db926d7eb7d289a1afc6b8df18e9}\label{classNeoFOAM_1_1TurbulenceModel_a6af2db926d7eb7d289a1afc6b8df18e9} 
 \index{NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}!rotateOldTimes@{rotateOldTimes}}
@@ -126,23 +146,39 @@ Definition at line \mbox{\hyperlink{turbulenceModel_8hpp_source_l00034}{34}} of 
 \doxysubsubsection{\texorpdfstring{rotateOldTimes()}{rotateOldTimes()}}
 {\footnotesize\ttfamily virtual void Neo\+FOAM\+::\+Turbulence\+Model\+::rotate\+Old\+Times (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
 
+
+
+Rotate time-\/dependent fields for BDF2 time advancement. 
+
 \Hypertarget{classNeoFOAM_1_1TurbulenceModel_ac20133231a12abcd1199bd00d8d72a89}\label{classNeoFOAM_1_1TurbulenceModel_ac20133231a12abcd1199bd00d8d72a89} 
 \index{NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}!updateGradU@{updateGradU}}
 \index{updateGradU@{updateGradU}!NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}}
 \doxysubsubsection{\texorpdfstring{updateGradU()}{updateGradU()}}
 {\footnotesize\ttfamily virtual void Neo\+FOAM\+::\+Turbulence\+Model\+::update\+GradU (\begin{DoxyParamCaption}\item[{const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Vec3 $>$ \&}]{U }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
 
-\Hypertarget{classNeoFOAM_1_1TurbulenceModel_a0d62c0f93efa69172798d2abe0c1a919}\label{classNeoFOAM_1_1TurbulenceModel_a0d62c0f93efa69172798d2abe0c1a919} 
+
+
+Recompute the model-\/owned gradU in place at the given velocity. 
+
+Includes internal, boundary, and proc-\/halo exchange. Lets the PIMPLE outer loop refresh gradU for its 2nd+ correctors by reusing this one buffer instead of allocating a separate Volume\+Field$<$\+Tensor$>$ per solver. Safe because \doxylink{classNeoFOAM_1_1TurbulenceModel_abadc7ca738620793708e34a467610289}{correct()} recomputes gradU afterwards; the first corrector reads the U\texorpdfstring{$^\wedge$}{\string^}n \doxylink{classNeoFOAM_1_1TurbulenceModel_aef72cb4809fc873b080a0d4ae3f00d4b}{grad\+U()} left by the previous step\textquotesingle{}s \doxylink{classNeoFOAM_1_1TurbulenceModel_abadc7ca738620793708e34a467610289}{correct()}. \Hypertarget{classNeoFOAM_1_1TurbulenceModel_a0d62c0f93efa69172798d2abe0c1a919}\label{classNeoFOAM_1_1TurbulenceModel_a0d62c0f93efa69172798d2abe0c1a919} 
 \index{NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}!validate@{validate}}
 \index{validate@{validate}!NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}}
 \doxysubsubsection{\texorpdfstring{validate()}{validate()}}
 {\footnotesize\ttfamily virtual void Neo\+FOAM\+::\+Turbulence\+Model\+::validate (\begin{DoxyParamCaption}\item[{const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Vec3 $>$ \&}]{U }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+Seed gradU and nut before the time loop. 
 
 \Hypertarget{classNeoFOAM_1_1TurbulenceModel_a732733c4179c9ae7a361ce73ccb408ec}\label{classNeoFOAM_1_1TurbulenceModel_a732733c4179c9ae7a361ce73ccb408ec} 
 \index{NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}!write@{write}}
 \index{write@{write}!NeoFOAM::TurbulenceModel@{NeoFOAM::TurbulenceModel}}
 \doxysubsubsection{\texorpdfstring{write()}{write()}}
 {\footnotesize\ttfamily virtual void Neo\+FOAM\+::\+Turbulence\+Model\+::write (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classNeoFOAM_1_1MeshAdapter}{Mesh\+Adapter}} \&}]{mesh }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [pure virtual]}}
+
+
+
+Write model-\/owned fields (nu\+Tilda, nut, …) to disk. 
 
 
 

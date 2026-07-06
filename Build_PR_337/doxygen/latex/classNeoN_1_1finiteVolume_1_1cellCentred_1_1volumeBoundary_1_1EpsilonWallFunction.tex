@@ -2,6 +2,11 @@
 \hypertarget{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction}{}\label{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction}\index{NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction@{NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction}}
 
 
+Turbulent dissipation rate wall function BC.  
+
+
+
+
 {\ttfamily \#include $<$epsilon\+Wall\+Function.\+hpp$>$}
 
 Inheritance diagram for NeoN\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::Epsilon\+Wall\+Function\+:\begin{figure}[H]
@@ -35,7 +40,18 @@ static std\+::string \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1
 
 
 \doxysubsection{Detailed Description}
+Turbulent dissipation rate wall function BC. 
 
+Mirrors Foam\+::epsilon\+Wall\+Function\+Fv\+Patch\+Scalar\+Field\+: blends viscous and log-\/layer ε estimates (BINOMIAL n=2) and sets the wall face value.
+
+Required Boundary\+Context fields\+:
+\begin{DoxyItemize}
+\item {\ttfamily "{}k"{}} Volume\+Field$<$scalar$>$ — turbulent kinetic energy
+\item {\ttfamily "{}nu"{}} Volume\+Field$<$scalar$>$ — laminar viscosity, boundary values
+\item {\ttfamily "{}near\+Wall\+Dist"{}} Volume\+Field$<$scalar$>$ — cell-\/to-\/wall distance y, boundary values
+\end{DoxyItemize}
+
+Single-\/patch-\/corner only (corner\+Weights == 1). G feedback is handled by the parent KEpsilon model, not by this BC. 
 
 Definition at line \mbox{\hyperlink{epsilonWallFunction_8hpp_source_l00100}{100}} of file \mbox{\hyperlink{epsilonWallFunction_8hpp_source}{epsilon\+Wall\+Function.\+hpp}}.
 

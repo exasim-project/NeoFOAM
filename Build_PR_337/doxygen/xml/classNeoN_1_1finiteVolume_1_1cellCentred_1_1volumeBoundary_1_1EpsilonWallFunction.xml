@@ -204,8 +204,17 @@
       </memberdef>
     </sectiondef>
     <briefdescription>
+<para>Turbulent dissipation rate wall function BC. </para>
     </briefdescription>
     <detaileddescription>
+<para>Mirrors Foam::epsilonWallFunctionFvPatchScalarField: blends viscous and log-layer ε estimates (BINOMIAL n=2) and sets the wall face value.</para>
+<para>Required BoundaryContext fields:<itemizedlist>
+<listitem><para><computeroutput>&quot;k&quot;</computeroutput> VolumeField&lt;scalar&gt; — turbulent kinetic energy</para>
+</listitem><listitem><para><computeroutput>&quot;nu&quot;</computeroutput> VolumeField&lt;scalar&gt; — laminar viscosity, boundary values</para>
+</listitem><listitem><para><computeroutput>&quot;nearWallDist&quot;</computeroutput> VolumeField&lt;scalar&gt; — cell-to-wall distance y, boundary values</para>
+</listitem></itemizedlist>
+</para>
+<para>Single-patch-corner only (cornerWeights == 1). G feedback is handled by the parent KEpsilon model, not by this BC. </para>
     </detaileddescription>
     <inheritancegraph>
       <node id="1">

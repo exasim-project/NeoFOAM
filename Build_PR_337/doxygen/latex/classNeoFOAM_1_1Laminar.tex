@@ -19,23 +19,23 @@ Inheritance diagram for Neo\+FOAM\+::Laminar\+:\begin{figure}[H]
 \begin{DoxyCompactItemize}
 \item 
 \mbox{\hyperlink{classNeoFOAM_1_1Laminar_a77e8c0f6fc163e3fc4bf2a8e8c58c1dd}{Laminar}} (\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&rt, const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::scalar $>$ \&nu)
-\item 
+\begin{DoxyCompactList}\small\item\em Construct the laminar model; interpolates nu to faces for nu\+Eff. \end{DoxyCompactList}\item 
 void \mbox{\hyperlink{classNeoFOAM_1_1Laminar_aa9b5b6a81ebad82fdda5767eb459a3da}{validate}} (const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Vec3 $>$ \&U) override
-\item 
+\begin{DoxyCompactList}\small\item\em Compute gradU once before the time loop. \end{DoxyCompactList}\item 
 void \mbox{\hyperlink{classNeoFOAM_1_1Laminar_a4a3ef51d2f64b3c925facf9f413020c9}{correct}} (const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Vec3 $>$ \&U, nnfvcc\+::\+Surface\+Field$<$ Neo\+N\+::scalar $>$ \&phi, \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&rt) override
-\item 
+\begin{DoxyCompactList}\small\item\em Recompute gradU each time step (nut stays zero). \end{DoxyCompactList}\item 
 nnfvcc\+::\+Surface\+Field$<$ Neo\+N\+::scalar $>$ \& \mbox{\hyperlink{classNeoFOAM_1_1Laminar_a81ab1672334a331df04298072c9d5589}{nu\+Eff}} () override
-\item 
+\begin{DoxyCompactList}\small\item\em Returns the face-\/interpolated laminar ν (ν\+\_\+t = 0). \end{DoxyCompactList}\item 
 const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::scalar $>$ \& \mbox{\hyperlink{classNeoFOAM_1_1Laminar_affd3601ee536b0eadd45e006e8b84882}{nut}} () const override
-\item 
+\begin{DoxyCompactList}\small\item\em Returns the zero turbulent viscosity field. \end{DoxyCompactList}\item 
 const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Tensor $>$ \& \mbox{\hyperlink{classNeoFOAM_1_1Laminar_a233c808400e5b0970c6c13276fba07ca}{gradU}} () const override
-\item 
+\begin{DoxyCompactList}\small\item\em Velocity gradient tensor (updated each \doxylink{classNeoFOAM_1_1Laminar_a4a3ef51d2f64b3c925facf9f413020c9}{correct()}). \end{DoxyCompactList}\item 
 void \mbox{\hyperlink{classNeoFOAM_1_1Laminar_a52578a3fa7284a660438228da1975f97}{update\+GradU}} (const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Vec3 $>$ \&U) override
-\item 
+\begin{DoxyCompactList}\small\item\em Recompute gradU in place at the given velocity. \end{DoxyCompactList}\item 
 void \mbox{\hyperlink{classNeoFOAM_1_1Laminar_a995332ed6034abe073d56dcf2578d26e}{rotate\+Old\+Times}} () override
-\item 
+\begin{DoxyCompactList}\small\item\em No-\/op\+: laminar model has no time-\/dependent fields. \end{DoxyCompactList}\item 
 void \mbox{\hyperlink{classNeoFOAM_1_1Laminar_a71a647bb466a1b82993b726ac2da302d}{write}} (\mbox{\hyperlink{classNeoFOAM_1_1MeshAdapter}{Mesh\+Adapter}} \&) const override
-\end{DoxyCompactItemize}
+\begin{DoxyCompactList}\small\item\em No-\/op\+: laminar model owns no fields to write. \end{DoxyCompactList}\end{DoxyCompactItemize}
 \doxysubsubsection*{Static Public Member Functions}
 \begin{DoxyCompactItemize}
 \item 
@@ -65,12 +65,20 @@ Definition at line \mbox{\hyperlink{laminar_8hpp_source_l00017}{17}} of file \mb
 
 
 
+Construct the laminar model; interpolates nu to faces for nu\+Eff. 
+
+
+
 \doxysubsection{Member Function Documentation}
 \Hypertarget{classNeoFOAM_1_1Laminar_a4a3ef51d2f64b3c925facf9f413020c9}\label{classNeoFOAM_1_1Laminar_a4a3ef51d2f64b3c925facf9f413020c9} 
 \index{NeoFOAM::Laminar@{NeoFOAM::Laminar}!correct@{correct}}
 \index{correct@{correct}!NeoFOAM::Laminar@{NeoFOAM::Laminar}}
 \doxysubsubsection{\texorpdfstring{correct()}{correct()}}
 {\footnotesize\ttfamily void Neo\+FOAM\+::\+Laminar\+::correct (\begin{DoxyParamCaption}\item[{const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Vec3 $>$ \&}]{U,  }\item[{nnfvcc\+::\+Surface\+Field$<$ Neo\+N\+::scalar $>$ \&}]{phi,  }\item[{\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&}]{rt }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}}
+
+
+
+Recompute gradU each time step (nut stays zero). 
 
 \Hypertarget{classNeoFOAM_1_1Laminar_a3464b55bf9a401d0ae0729b8cca0410e}\label{classNeoFOAM_1_1Laminar_a3464b55bf9a401d0ae0729b8cca0410e} 
 \index{NeoFOAM::Laminar@{NeoFOAM::Laminar}!doc@{doc}}
@@ -88,6 +96,10 @@ Definition at line \mbox{\hyperlink{laminar_8hpp_source_l00022}{22}} of file \mb
 \doxysubsubsection{\texorpdfstring{gradU()}{gradU()}}
 {\footnotesize\ttfamily const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Tensor $>$ \& Neo\+FOAM\+::\+Laminar\+::gradU (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [override]}}
 
+
+
+Velocity gradient tensor (updated each \doxylink{classNeoFOAM_1_1Laminar_a4a3ef51d2f64b3c925facf9f413020c9}{correct()}). 
+
 \Hypertarget{classNeoFOAM_1_1Laminar_a6b4ae8b1041995e92e40ed71e32ec647}\label{classNeoFOAM_1_1Laminar_a6b4ae8b1041995e92e40ed71e32ec647} 
 \index{NeoFOAM::Laminar@{NeoFOAM::Laminar}!name@{name}}
 \index{name@{name}!NeoFOAM::Laminar@{NeoFOAM::Laminar}}
@@ -104,11 +116,19 @@ Definition at line \mbox{\hyperlink{laminar_8hpp_source_l00021}{21}} of file \mb
 \doxysubsubsection{\texorpdfstring{nuEff()}{nuEff()}}
 {\footnotesize\ttfamily nnfvcc\+::\+Surface\+Field$<$ Neo\+N\+::scalar $>$ \& Neo\+FOAM\+::\+Laminar\+::nu\+Eff (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}}
 
+
+
+Returns the face-\/interpolated laminar ν (ν\+\_\+t = 0). 
+
 \Hypertarget{classNeoFOAM_1_1Laminar_affd3601ee536b0eadd45e006e8b84882}\label{classNeoFOAM_1_1Laminar_affd3601ee536b0eadd45e006e8b84882} 
 \index{NeoFOAM::Laminar@{NeoFOAM::Laminar}!nut@{nut}}
 \index{nut@{nut}!NeoFOAM::Laminar@{NeoFOAM::Laminar}}
 \doxysubsubsection{\texorpdfstring{nut()}{nut()}}
 {\footnotesize\ttfamily const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::scalar $>$ \& Neo\+FOAM\+::\+Laminar\+::nut (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [override]}}
+
+
+
+Returns the zero turbulent viscosity field. 
 
 \Hypertarget{classNeoFOAM_1_1Laminar_a995332ed6034abe073d56dcf2578d26e}\label{classNeoFOAM_1_1Laminar_a995332ed6034abe073d56dcf2578d26e} 
 \index{NeoFOAM::Laminar@{NeoFOAM::Laminar}!rotateOldTimes@{rotateOldTimes}}
@@ -118,7 +138,11 @@ Definition at line \mbox{\hyperlink{laminar_8hpp_source_l00021}{21}} of file \mb
 
 
 
-Definition at line \mbox{\hyperlink{laminar_8hpp_source_l00043}{43}} of file \mbox{\hyperlink{laminar_8hpp_source}{laminar.\+hpp}}.
+No-\/op\+: laminar model has no time-\/dependent fields. 
+
+
+
+Definition at line \mbox{\hyperlink{laminar_8hpp_source_l00051}{51}} of file \mbox{\hyperlink{laminar_8hpp_source}{laminar.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1Laminar_a576ec012ba4d4d98728438f4431cbcaa}\label{classNeoFOAM_1_1Laminar_a576ec012ba4d4d98728438f4431cbcaa} 
 \index{NeoFOAM::Laminar@{NeoFOAM::Laminar}!schema@{schema}}
@@ -136,11 +160,19 @@ Definition at line \mbox{\hyperlink{laminar_8hpp_source_l00023}{23}} of file \mb
 \doxysubsubsection{\texorpdfstring{updateGradU()}{updateGradU()}}
 {\footnotesize\ttfamily void Neo\+FOAM\+::\+Laminar\+::update\+GradU (\begin{DoxyParamCaption}\item[{const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Vec3 $>$ \&}]{U }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}}
 
+
+
+Recompute gradU in place at the given velocity. 
+
 \Hypertarget{classNeoFOAM_1_1Laminar_aa9b5b6a81ebad82fdda5767eb459a3da}\label{classNeoFOAM_1_1Laminar_aa9b5b6a81ebad82fdda5767eb459a3da} 
 \index{NeoFOAM::Laminar@{NeoFOAM::Laminar}!validate@{validate}}
 \index{validate@{validate}!NeoFOAM::Laminar@{NeoFOAM::Laminar}}
 \doxysubsubsection{\texorpdfstring{validate()}{validate()}}
 {\footnotesize\ttfamily void Neo\+FOAM\+::\+Laminar\+::validate (\begin{DoxyParamCaption}\item[{const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Vec3 $>$ \&}]{U }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}}
+
+
+
+Compute gradU once before the time loop. 
 
 \Hypertarget{classNeoFOAM_1_1Laminar_a71a647bb466a1b82993b726ac2da302d}\label{classNeoFOAM_1_1Laminar_a71a647bb466a1b82993b726ac2da302d} 
 \index{NeoFOAM::Laminar@{NeoFOAM::Laminar}!write@{write}}
@@ -150,7 +182,11 @@ Definition at line \mbox{\hyperlink{laminar_8hpp_source_l00023}{23}} of file \mb
 
 
 
-Definition at line \mbox{\hyperlink{laminar_8hpp_source_l00045}{45}} of file \mbox{\hyperlink{laminar_8hpp_source}{laminar.\+hpp}}.
+No-\/op\+: laminar model owns no fields to write. 
+
+
+
+Definition at line \mbox{\hyperlink{laminar_8hpp_source_l00054}{54}} of file \mbox{\hyperlink{laminar_8hpp_source}{laminar.\+hpp}}.
 
 
 
