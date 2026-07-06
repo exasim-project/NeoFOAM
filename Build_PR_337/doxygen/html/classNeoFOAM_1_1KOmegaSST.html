@@ -115,6 +115,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a59eba8a7042ff85269b2d8205f108b7a" id="r_a59eba8a7042ff85269b2d8205f108b7a"><td class="memItemLeft" align="right" valign="top">const nnfvcc::VolumeField&lt; NeoN::Tensor &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1KOmegaSST.html#a59eba8a7042ff85269b2d8205f108b7a">gradU</a> () const</td></tr>
 <tr class="memdesc:a59eba8a7042ff85269b2d8205f108b7a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Velocity gradient tensor (updated each <a class="el" href="classNeoFOAM_1_1KOmegaSST.html#a700c93859285ffe8fced126b0d3006f5" title="Full turbulence update: solve k and omega PDEs, update nut.">correct()</a> call)  <br /></td></tr>
 <tr class="separator:a59eba8a7042ff85269b2d8205f108b7a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a44e9bae18c8ee89ddd65e161dcaf1e65" id="r_a44e9bae18c8ee89ddd65e161dcaf1e65"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1KOmegaSST.html#a44e9bae18c8ee89ddd65e161dcaf1e65">updateGradU</a> (const nnfvcc::VolumeField&lt; <a class="el" href="pressureVelocityCoupling_8hpp.html#ae261b7f2859c508a432e8a334ad179d2">Vec3</a> &gt; &amp;U)</td></tr>
+<tr class="memdesc:a44e9bae18c8ee89ddd65e161dcaf1e65"><td class="mdescLeft">&#160;</td><td class="mdescRight">Recompute gradU_ in place at the given velocity (internal + boundary).  <br /></td></tr>
+<tr class="separator:a44e9bae18c8ee89ddd65e161dcaf1e65"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a39f6d28bbbf7655ba369911d6f90709c" id="r_a39f6d28bbbf7655ba369911d6f90709c"><td class="memItemLeft" align="right" valign="top">NeoN::Vector&lt; NeoN::SymmTensor &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1KOmegaSST.html#a39f6d28bbbf7655ba369911d6f90709c">devRhoReff</a> () const</td></tr>
 <tr class="memdesc:a39f6d28bbbf7655ba369911d6f90709c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the deviatoric stress at all boundary faces as Vector&lt;SymmTensor&gt;.  <br /></td></tr>
 <tr class="separator:a39f6d28bbbf7655ba369911d6f90709c"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -140,9 +143,6 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a51802407e31708f1d17d7f5a82dde61f" id="r_a51802407e31708f1d17d7f5a82dde61f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1KOmegaSST.html#a51802407e31708f1d17d7f5a82dde61f">calcDiffusivities</a> (const nnfvcc::VolumeField&lt; <a class="el" href="pressureVelocityCoupling_8hpp.html#acc912e7a5a44b028589fda3fd76ba7ea">scalar</a> &gt; &amp;nut)</td></tr>
 <tr class="memdesc:a51802407e31708f1d17d7f5a82dde61f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Recompute surface diffusivity fields from current nut and F1_.  <br /></td></tr>
 <tr class="separator:a51802407e31708f1d17d7f5a82dde61f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a24948125c13ba9f2918a3c4de32853d6" id="r_a24948125c13ba9f2918a3c4de32853d6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1KOmegaSST.html#a24948125c13ba9f2918a3c4de32853d6">initNearWallDistBoundary</a> ()</td></tr>
-<tr class="memdesc:a24948125c13ba9f2918a3c4de32853d6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Populate nearWallDist_'s boundary face values from wallDist_.  <br /></td></tr>
-<tr class="separator:a24948125c13ba9f2918a3c4de32853d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>NeoFOAM-level wrapper for the k-omega SST turbulence model (Menter 1993/2003). </p>
@@ -249,7 +249,7 @@ Public Member Functions</h2></td></tr>
 
 <p>Read-only access to model coefficients. </p>
 
-<p class="definition">Definition at line <a class="el" href="kOmegaSST_8hpp_source.html#l00123">123</a> of file <a class="el" href="kOmegaSST_8hpp_source.html">kOmegaSST.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="kOmegaSST_8hpp_source.html#l00126">126</a> of file <a class="el" href="kOmegaSST_8hpp_source.html">kOmegaSST.hpp</a>.</p>
 
 </div>
 </div>
@@ -304,7 +304,7 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Compute sources for k and omega equations plus F1. </p>
-<p>Uses the OLD nut (current nut, before the PDE solve) for production G = nut * GbyNu0. Writes F1_, Pk_, spK_, omegaSource_, spOmega_. </p>
+<p>Uses the OLD nut (current nut, before the <a class="el" href="classNeoFOAM_1_1PDE.html">PDE</a> solve) for production G = nut * GbyNu0. Writes F1_, Pk_, spK_, omegaSource_, spOmega_. </p>
 
 </div>
 </div>
@@ -492,7 +492,7 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="kOmegaSST_8hpp_source.html#l00126">126</a> of file <a class="el" href="kOmegaSST_8hpp_source.html">kOmegaSST.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="kOmegaSST_8hpp_source.html#l00129">129</a> of file <a class="el" href="kOmegaSST_8hpp_source.html">kOmegaSST.hpp</a>.</p>
 
 </div>
 </div>
@@ -512,26 +512,6 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Velocity gradient tensor (updated each <a class="el" href="classNeoFOAM_1_1KOmegaSST.html#a700c93859285ffe8fced126b0d3006f5" title="Full turbulence update: solve k and omega PDEs, update nut.">correct()</a> call) </p>
-
-</div>
-</div>
-<a id="a24948125c13ba9f2918a3c4de32853d6" name="a24948125c13ba9f2918a3c4de32853d6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a24948125c13ba9f2918a3c4de32853d6">&#9670;&#160;</a></span>initNearWallDistBoundary()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void NeoFOAM::KOmegaSST::initNearWallDistBoundary </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Populate nearWallDist_'s boundary face values from wallDist_. </p>
-<p>Copies each wall face's adjacent-cell internal value. Extracted into a member function (rather than inlined in the constructor) because CUDA forbids extended <b>host</b> <b>device</b> lambdas inside constructors. </p>
 
 </div>
 </div>
@@ -577,7 +557,7 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="kOmegaSST_8hpp_source.html#l00129">129</a> of file <a class="el" href="kOmegaSST_8hpp_source.html">kOmegaSST.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="kOmegaSST_8hpp_source.html#l00132">132</a> of file <a class="el" href="kOmegaSST_8hpp_source.html">kOmegaSST.hpp</a>.</p>
 
 </div>
 </div>
@@ -604,7 +584,7 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="kOmegaSST_8hpp_source.html#l00127">127</a> of file <a class="el" href="kOmegaSST_8hpp_source.html">kOmegaSST.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="kOmegaSST_8hpp_source.html#l00130">130</a> of file <a class="el" href="kOmegaSST_8hpp_source.html">kOmegaSST.hpp</a>.</p>
 
 </div>
 </div>
@@ -631,7 +611,7 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="kOmegaSST_8hpp_source.html#l00128">128</a> of file <a class="el" href="kOmegaSST_8hpp_source.html">kOmegaSST.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="kOmegaSST_8hpp_source.html#l00131">131</a> of file <a class="el" href="kOmegaSST_8hpp_source.html">kOmegaSST.hpp</a>.</p>
 
 </div>
 </div>
@@ -658,7 +638,27 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="kOmegaSST_8hpp_source.html#l00130">130</a> of file <a class="el" href="kOmegaSST_8hpp_source.html">kOmegaSST.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="kOmegaSST_8hpp_source.html#l00133">133</a> of file <a class="el" href="kOmegaSST_8hpp_source.html">kOmegaSST.hpp</a>.</p>
+
+</div>
+</div>
+<a id="a44e9bae18c8ee89ddd65e161dcaf1e65" name="a44e9bae18c8ee89ddd65e161dcaf1e65"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a44e9bae18c8ee89ddd65e161dcaf1e65">&#9670;&#160;</a></span>updateGradU()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void NeoFOAM::KOmegaSST::updateGradU </td>
+          <td>(</td>
+          <td class="paramtype">const nnfvcc::VolumeField&lt; <a class="el" href="pressureVelocityCoupling_8hpp.html#ae261b7f2859c508a432e8a334ad179d2">Vec3</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>U</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Recompute gradU_ in place at the given velocity (internal + boundary). </p>
 
 </div>
 </div>

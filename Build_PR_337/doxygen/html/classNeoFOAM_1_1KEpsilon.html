@@ -115,6 +115,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aa497b1685c66ac2c10891017c7457351" id="r_aa497b1685c66ac2c10891017c7457351"><td class="memItemLeft" align="right" valign="top">const nnfvcc::VolumeField&lt; NeoN::Tensor &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1KEpsilon.html#aa497b1685c66ac2c10891017c7457351">gradU</a> () const</td></tr>
 <tr class="memdesc:aa497b1685c66ac2c10891017c7457351"><td class="mdescLeft">&#160;</td><td class="mdescRight">Velocity gradient tensor (updated each <a class="el" href="classNeoFOAM_1_1KEpsilon.html#ad020d2f72910e94b9ee5a42dbf3e86fd" title="Full turbulence update: solve ε and k PDEs, update ν_t.">correct()</a> call)  <br /></td></tr>
 <tr class="separator:aa497b1685c66ac2c10891017c7457351"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adbd201e7bda9416634e612b03070c105" id="r_adbd201e7bda9416634e612b03070c105"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1KEpsilon.html#adbd201e7bda9416634e612b03070c105">updateGradU</a> (const nnfvcc::VolumeField&lt; <a class="el" href="pressureVelocityCoupling_8hpp.html#ae261b7f2859c508a432e8a334ad179d2">Vec3</a> &gt; &amp;U)</td></tr>
+<tr class="memdesc:adbd201e7bda9416634e612b03070c105"><td class="mdescLeft">&#160;</td><td class="mdescRight">Recompute gradU_ in place at the given velocity (internal + boundary).  <br /></td></tr>
+<tr class="separator:adbd201e7bda9416634e612b03070c105"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af9a5026a5c71ce3c3d4a7df9f4c44aa8" id="r_af9a5026a5c71ce3c3d4a7df9f4c44aa8"><td class="memItemLeft" align="right" valign="top">NeoN::Vector&lt; NeoN::SymmTensor &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1KEpsilon.html#af9a5026a5c71ce3c3d4a7df9f4c44aa8">devRhoReff</a> () const</td></tr>
 <tr class="memdesc:af9a5026a5c71ce3c3d4a7df9f4c44aa8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the deviatoric stress at boundary faces: -ν_eff · symm(twoSymm(∇U)).dev2.  <br /></td></tr>
 <tr class="separator:af9a5026a5c71ce3c3d4a7df9f4c44aa8"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -138,9 +141,6 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a5c2ac35e716fe181f3092e68e63d7c0c" id="r_a5c2ac35e716fe181f3092e68e63d7c0c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1KEpsilon.html#a5c2ac35e716fe181f3092e68e63d7c0c">calcDiffusivities</a> (const nnfvcc::VolumeField&lt; <a class="el" href="pressureVelocityCoupling_8hpp.html#acc912e7a5a44b028589fda3fd76ba7ea">scalar</a> &gt; &amp;nut)</td></tr>
 <tr class="memdesc:a5c2ac35e716fe181f3092e68e63d7c0c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Recompute surface diffusivity fields from current ν_t.  <br /></td></tr>
 <tr class="separator:a5c2ac35e716fe181f3092e68e63d7c0c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a07fe92a470e336250076b3fef8646034" id="r_a07fe92a470e336250076b3fef8646034"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1KEpsilon.html#a07fe92a470e336250076b3fef8646034">initNearWallDistBoundary</a> ()</td></tr>
-<tr class="memdesc:a07fe92a470e336250076b3fef8646034"><td class="mdescLeft">&#160;</td><td class="mdescRight">Populate nearWallDist_'s boundary face values from wallDist_.  <br /></td></tr>
-<tr class="separator:a07fe92a470e336250076b3fef8646034"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>NeoFOAM-level wrapper for the standard k-ε turbulence model (Launder &amp; Spalding 1974). </p>
@@ -250,7 +250,7 @@ Public Member Functions</h2></td></tr>
 
 <p>Read-only access to model coefficients. </p>
 
-<p class="definition">Definition at line <a class="el" href="kEpsilon_8hpp_source.html#l00103">103</a> of file <a class="el" href="kEpsilon_8hpp_source.html">kEpsilon.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="kEpsilon_8hpp_source.html#l00106">106</a> of file <a class="el" href="kEpsilon_8hpp_source.html">kEpsilon.hpp</a>.</p>
 
 </div>
 </div>
@@ -293,7 +293,7 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Compute sources for k and ε equations. </p>
-<p>Uses the OLD ν_t (current ν_t, before the PDE solve) for production G = ν_t·GbyNu0. Writes Pk_, spK_, epsilonSource_, spEpsilon_. </p>
+<p>Uses the OLD ν_t (current ν_t, before the <a class="el" href="classNeoFOAM_1_1PDE.html">PDE</a> solve) for production G = ν_t·GbyNu0. Writes Pk_, spK_, epsilonSource_, spEpsilon_. </p>
 
 </div>
 </div>
@@ -467,7 +467,7 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="kEpsilon_8hpp_source.html#l00108">108</a> of file <a class="el" href="kEpsilon_8hpp_source.html">kEpsilon.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="kEpsilon_8hpp_source.html#l00111">111</a> of file <a class="el" href="kEpsilon_8hpp_source.html">kEpsilon.hpp</a>.</p>
 
 </div>
 </div>
@@ -487,26 +487,6 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Velocity gradient tensor (updated each <a class="el" href="classNeoFOAM_1_1KEpsilon.html#ad020d2f72910e94b9ee5a42dbf3e86fd" title="Full turbulence update: solve ε and k PDEs, update ν_t.">correct()</a> call) </p>
-
-</div>
-</div>
-<a id="a07fe92a470e336250076b3fef8646034" name="a07fe92a470e336250076b3fef8646034"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a07fe92a470e336250076b3fef8646034">&#9670;&#160;</a></span>initNearWallDistBoundary()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void NeoFOAM::KEpsilon::initNearWallDistBoundary </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Populate nearWallDist_'s boundary face values from wallDist_. </p>
-<p>Copies each wall face's adjacent-cell internal value. Extracted into a member function (rather than inlined in the constructor) because CUDA forbids extended <b>host</b> <b>device</b> lambdas inside constructors. </p>
 
 </div>
 </div>
@@ -552,7 +532,7 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="kEpsilon_8hpp_source.html#l00106">106</a> of file <a class="el" href="kEpsilon_8hpp_source.html">kEpsilon.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="kEpsilon_8hpp_source.html#l00109">109</a> of file <a class="el" href="kEpsilon_8hpp_source.html">kEpsilon.hpp</a>.</p>
 
 </div>
 </div>
@@ -579,7 +559,7 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="kEpsilon_8hpp_source.html#l00109">109</a> of file <a class="el" href="kEpsilon_8hpp_source.html">kEpsilon.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="kEpsilon_8hpp_source.html#l00112">112</a> of file <a class="el" href="kEpsilon_8hpp_source.html">kEpsilon.hpp</a>.</p>
 
 </div>
 </div>
@@ -606,7 +586,27 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="kEpsilon_8hpp_source.html#l00107">107</a> of file <a class="el" href="kEpsilon_8hpp_source.html">kEpsilon.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="kEpsilon_8hpp_source.html#l00110">110</a> of file <a class="el" href="kEpsilon_8hpp_source.html">kEpsilon.hpp</a>.</p>
+
+</div>
+</div>
+<a id="adbd201e7bda9416634e612b03070c105" name="adbd201e7bda9416634e612b03070c105"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adbd201e7bda9416634e612b03070c105">&#9670;&#160;</a></span>updateGradU()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void NeoFOAM::KEpsilon::updateGradU </td>
+          <td>(</td>
+          <td class="paramtype">const nnfvcc::VolumeField&lt; <a class="el" href="pressureVelocityCoupling_8hpp.html#ae261b7f2859c508a432e8a334ad179d2">Vec3</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>U</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Recompute gradU_ in place at the given velocity (internal + boundary). </p>
 
 </div>
 </div>

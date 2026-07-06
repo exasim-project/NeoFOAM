@@ -31,6 +31,8 @@ nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc
 \begin{DoxyCompactList}\small\item\em Effective omega diffusion coefficient on faces\+: alpha\+Omega(\+F1)\texorpdfstring{$\ast$}{*}nut + nu. \end{DoxyCompactList}\item 
 const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Tensor $>$ \& \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_a59eba8a7042ff85269b2d8205f108b7a}{gradU}} () const
 \begin{DoxyCompactList}\small\item\em Velocity gradient tensor (updated each \doxylink{classNeoFOAM_1_1KOmegaSST_a700c93859285ffe8fced126b0d3006f5}{correct()} call) \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_a44e9bae18c8ee89ddd65e161dcaf1e65}{update\+GradU}} (const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&U)
+\begin{DoxyCompactList}\small\item\em Recompute grad\+U\+\_\+ in place at the given velocity (internal + boundary). \end{DoxyCompactList}\item 
 Neo\+N\+::\+Vector$<$ Neo\+N\+::\+Symm\+Tensor $>$ \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_a39f6d28bbbf7655ba369911d6f90709c}{dev\+Rho\+Reff}} () const
 \begin{DoxyCompactList}\small\item\em Returns the deviatoric stress at all boundary faces as Vector$<$\+Symm\+Tensor$>$. \end{DoxyCompactList}\item 
 const \mbox{\hyperlink{structNeoFOAM_1_1KOmegaSST_1_1Coefficients}{Coefficients}} \& \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_aaa26f6b2ff0a0cf362d3338233cee39d}{coeffs}} () const
@@ -50,9 +52,7 @@ void \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_a016a735a33d7a93e62ccd0e566d507d
 void \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_a2ee8df7bd15c58d68c63a5506708e571}{correct\+Nut\+Internal}} (const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&k, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&omega, nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&nut) const
 \begin{DoxyCompactList}\small\item\em Update nut internal vector from new k, omega and current grad\+U\+\_\+ (S2). \end{DoxyCompactList}\item 
 void \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_a51802407e31708f1d17d7f5a82dde61f}{calc\+Diffusivities}} (const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&nut)
-\begin{DoxyCompactList}\small\item\em Recompute surface diffusivity fields from current nut and F1\+\_\+. \end{DoxyCompactList}\item 
-void \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST_a24948125c13ba9f2918a3c4de32853d6}{init\+Near\+Wall\+Dist\+Boundary}} ()
-\begin{DoxyCompactList}\small\item\em Populate near\+Wall\+Dist\+\_\+\textquotesingle{}s boundary face values from wall\+Dist\+\_\+. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{DoxyCompactList}\small\item\em Recompute surface diffusivity fields from current nut and F1\+\_\+. \end{DoxyCompactList}\end{DoxyCompactItemize}
 
 
 \doxysubsection{Detailed Description}
@@ -113,7 +113,7 @@ Read-\/only access to model coefficients.
 
 
 
-Definition at line \mbox{\hyperlink{kOmegaSST_8hpp_source_l00123}{123}} of file \mbox{\hyperlink{kOmegaSST_8hpp_source}{k\+Omega\+SST.\+hpp}}.
+Definition at line \mbox{\hyperlink{kOmegaSST_8hpp_source_l00126}{126}} of file \mbox{\hyperlink{kOmegaSST_8hpp_source}{k\+Omega\+SST.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1KOmegaSST_a016a735a33d7a93e62ccd0e566d507d7}\label{classNeoFOAM_1_1KOmegaSST_a016a735a33d7a93e62ccd0e566d507d7} 
 \index{NeoFOAM::KOmegaSST@{NeoFOAM::KOmegaSST}!computeF1AndSources@{computeF1AndSources}}
@@ -125,7 +125,7 @@ Definition at line \mbox{\hyperlink{kOmegaSST_8hpp_source_l00123}{123}} of file 
 
 Compute sources for k and omega equations plus F1. 
 
-Uses the OLD nut (current nut, before the PDE solve) for production G = nut \texorpdfstring{$\ast$}{*} Gby\+Nu0. Writes F1\+\_\+, Pk\+\_\+, sp\+K\+\_\+, omega\+Source\+\_\+, sp\+Omega\+\_\+. \Hypertarget{classNeoFOAM_1_1KOmegaSST_a700c93859285ffe8fced126b0d3006f5}\label{classNeoFOAM_1_1KOmegaSST_a700c93859285ffe8fced126b0d3006f5} 
+Uses the OLD nut (current nut, before the \doxylink{classNeoFOAM_1_1PDE}{PDE} solve) for production G = nut \texorpdfstring{$\ast$}{*} Gby\+Nu0. Writes F1\+\_\+, Pk\+\_\+, sp\+K\+\_\+, omega\+Source\+\_\+, sp\+Omega\+\_\+. \Hypertarget{classNeoFOAM_1_1KOmegaSST_a700c93859285ffe8fced126b0d3006f5}\label{classNeoFOAM_1_1KOmegaSST_a700c93859285ffe8fced126b0d3006f5} 
 \index{NeoFOAM::KOmegaSST@{NeoFOAM::KOmegaSST}!correct@{correct}}
 \index{correct@{correct}!NeoFOAM::KOmegaSST@{NeoFOAM::KOmegaSST}}
 \doxysubsubsection{\texorpdfstring{correct()}{correct()}}
@@ -200,7 +200,7 @@ Effective omega diffusion coefficient on faces\+: alpha\+Omega(\+F1)\texorpdfstr
 
 
 
-Definition at line \mbox{\hyperlink{kOmegaSST_8hpp_source_l00126}{126}} of file \mbox{\hyperlink{kOmegaSST_8hpp_source}{k\+Omega\+SST.\+hpp}}.
+Definition at line \mbox{\hyperlink{kOmegaSST_8hpp_source_l00129}{129}} of file \mbox{\hyperlink{kOmegaSST_8hpp_source}{k\+Omega\+SST.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1KOmegaSST_a59eba8a7042ff85269b2d8205f108b7a}\label{classNeoFOAM_1_1KOmegaSST_a59eba8a7042ff85269b2d8205f108b7a} 
 \index{NeoFOAM::KOmegaSST@{NeoFOAM::KOmegaSST}!gradU@{gradU}}
@@ -212,17 +212,7 @@ Definition at line \mbox{\hyperlink{kOmegaSST_8hpp_source_l00126}{126}} of file 
 
 Velocity gradient tensor (updated each \doxylink{classNeoFOAM_1_1KOmegaSST_a700c93859285ffe8fced126b0d3006f5}{correct()} call) 
 
-\Hypertarget{classNeoFOAM_1_1KOmegaSST_a24948125c13ba9f2918a3c4de32853d6}\label{classNeoFOAM_1_1KOmegaSST_a24948125c13ba9f2918a3c4de32853d6} 
-\index{NeoFOAM::KOmegaSST@{NeoFOAM::KOmegaSST}!initNearWallDistBoundary@{initNearWallDistBoundary}}
-\index{initNearWallDistBoundary@{initNearWallDistBoundary}!NeoFOAM::KOmegaSST@{NeoFOAM::KOmegaSST}}
-\doxysubsubsection{\texorpdfstring{initNearWallDistBoundary()}{initNearWallDistBoundary()}}
-{\footnotesize\ttfamily void Neo\+FOAM\+::\+KOmega\+SST\+::init\+Near\+Wall\+Dist\+Boundary (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
-
-
-
-Populate near\+Wall\+Dist\+\_\+\textquotesingle{}s boundary face values from wall\+Dist\+\_\+. 
-
-Copies each wall face\textquotesingle{}s adjacent-\/cell internal value. Extracted into a member function (rather than inlined in the constructor) because CUDA forbids extended {\bfseries{host}} {\bfseries{device}} lambdas inside constructors. \Hypertarget{classNeoFOAM_1_1KOmegaSST_af2a6a40c34f11192d96a8fc190c3c870}\label{classNeoFOAM_1_1KOmegaSST_af2a6a40c34f11192d96a8fc190c3c870} 
+\Hypertarget{classNeoFOAM_1_1KOmegaSST_af2a6a40c34f11192d96a8fc190c3c870}\label{classNeoFOAM_1_1KOmegaSST_af2a6a40c34f11192d96a8fc190c3c870} 
 \index{NeoFOAM::KOmegaSST@{NeoFOAM::KOmegaSST}!nuEff@{nuEff}}
 \index{nuEff@{nuEff}!NeoFOAM::KOmegaSST@{NeoFOAM::KOmegaSST}}
 \doxysubsubsection{\texorpdfstring{nuEff()}{nuEff()}}
@@ -240,7 +230,7 @@ Effective viscosity on faces\+: nu + nut (for momentum equation laplacian)
 
 
 
-Definition at line \mbox{\hyperlink{kOmegaSST_8hpp_source_l00129}{129}} of file \mbox{\hyperlink{kOmegaSST_8hpp_source}{k\+Omega\+SST.\+hpp}}.
+Definition at line \mbox{\hyperlink{kOmegaSST_8hpp_source_l00132}{132}} of file \mbox{\hyperlink{kOmegaSST_8hpp_source}{k\+Omega\+SST.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1KOmegaSST_a00c5b263a4d923e68d01767a5a2f6cfd}\label{classNeoFOAM_1_1KOmegaSST_a00c5b263a4d923e68d01767a5a2f6cfd} 
 \index{NeoFOAM::KOmegaSST@{NeoFOAM::KOmegaSST}!PkField@{PkField}}
@@ -250,7 +240,7 @@ Definition at line \mbox{\hyperlink{kOmegaSST_8hpp_source_l00129}{129}} of file 
 
 
 
-Definition at line \mbox{\hyperlink{kOmegaSST_8hpp_source_l00127}{127}} of file \mbox{\hyperlink{kOmegaSST_8hpp_source}{k\+Omega\+SST.\+hpp}}.
+Definition at line \mbox{\hyperlink{kOmegaSST_8hpp_source_l00130}{130}} of file \mbox{\hyperlink{kOmegaSST_8hpp_source}{k\+Omega\+SST.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1KOmegaSST_ab9773af332df7754762363eef11381a5}\label{classNeoFOAM_1_1KOmegaSST_ab9773af332df7754762363eef11381a5} 
 \index{NeoFOAM::KOmegaSST@{NeoFOAM::KOmegaSST}!spKField@{spKField}}
@@ -260,7 +250,7 @@ Definition at line \mbox{\hyperlink{kOmegaSST_8hpp_source_l00127}{127}} of file 
 
 
 
-Definition at line \mbox{\hyperlink{kOmegaSST_8hpp_source_l00128}{128}} of file \mbox{\hyperlink{kOmegaSST_8hpp_source}{k\+Omega\+SST.\+hpp}}.
+Definition at line \mbox{\hyperlink{kOmegaSST_8hpp_source_l00131}{131}} of file \mbox{\hyperlink{kOmegaSST_8hpp_source}{k\+Omega\+SST.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1KOmegaSST_aa662abe259d497281375c1dfe233792a}\label{classNeoFOAM_1_1KOmegaSST_aa662abe259d497281375c1dfe233792a} 
 \index{NeoFOAM::KOmegaSST@{NeoFOAM::KOmegaSST}!spOmegaField@{spOmegaField}}
@@ -270,7 +260,17 @@ Definition at line \mbox{\hyperlink{kOmegaSST_8hpp_source_l00128}{128}} of file 
 
 
 
-Definition at line \mbox{\hyperlink{kOmegaSST_8hpp_source_l00130}{130}} of file \mbox{\hyperlink{kOmegaSST_8hpp_source}{k\+Omega\+SST.\+hpp}}.
+Definition at line \mbox{\hyperlink{kOmegaSST_8hpp_source_l00133}{133}} of file \mbox{\hyperlink{kOmegaSST_8hpp_source}{k\+Omega\+SST.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1KOmegaSST_a44e9bae18c8ee89ddd65e161dcaf1e65}\label{classNeoFOAM_1_1KOmegaSST_a44e9bae18c8ee89ddd65e161dcaf1e65} 
+\index{NeoFOAM::KOmegaSST@{NeoFOAM::KOmegaSST}!updateGradU@{updateGradU}}
+\index{updateGradU@{updateGradU}!NeoFOAM::KOmegaSST@{NeoFOAM::KOmegaSST}}
+\doxysubsubsection{\texorpdfstring{updateGradU()}{updateGradU()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::\+KOmega\+SST\+::update\+GradU (\begin{DoxyParamCaption}\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&}]{U }\end{DoxyParamCaption})}
+
+
+
+Recompute grad\+U\+\_\+ in place at the given velocity (internal + boundary). 
 
 \Hypertarget{classNeoFOAM_1_1KOmegaSST_a8731bdfb6db9771ba813d4ee039da8e9}\label{classNeoFOAM_1_1KOmegaSST_a8731bdfb6db9771ba813d4ee039da8e9} 
 \index{NeoFOAM::KOmegaSST@{NeoFOAM::KOmegaSST}!validate@{validate}}

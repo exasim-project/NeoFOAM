@@ -61,13 +61,21 @@
 \DoxyCodeLine{\Hypertarget{turbulenceModel_8hpp_source_l00072}00072\ \ \ \ \ \textcolor{comment}{//\ Velocity\ gradient\ tensor\ updated\ each\ correct()\ call.}}
 \DoxyCodeLine{\Hypertarget{turbulenceModel_8hpp_source_l00073}\mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel_aef72cb4809fc873b080a0d4ae3f00d4b}{00073}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keyword}{const}\ nnfvcc::VolumeField<NeoN::Tensor>\&\ \mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel_aef72cb4809fc873b080a0d4ae3f00d4b}{gradU}}()\ \textcolor{keyword}{const}\ =\ 0;}
 \DoxyCodeLine{\Hypertarget{turbulenceModel_8hpp_source_l00074}00074\ }
-\DoxyCodeLine{\Hypertarget{turbulenceModel_8hpp_source_l00075}00075\ \ \ \ \ \textcolor{comment}{//\ Rotate\ time-\/dependent\ fields\ for\ BDF2\ time\ advancement.}}
-\DoxyCodeLine{\Hypertarget{turbulenceModel_8hpp_source_l00076}\mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel_a6af2db926d7eb7d289a1afc6b8df18e9}{00076}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel_a6af2db926d7eb7d289a1afc6b8df18e9}{rotateOldTimes}}()\ =\ 0;}
-\DoxyCodeLine{\Hypertarget{turbulenceModel_8hpp_source_l00077}00077\ }
-\DoxyCodeLine{\Hypertarget{turbulenceModel_8hpp_source_l00078}00078\ \ \ \ \ \textcolor{comment}{//\ Write\ model-\/owned\ fields\ (nuTilda,\ nut,\ …)\ to\ disk.}}
-\DoxyCodeLine{\Hypertarget{turbulenceModel_8hpp_source_l00079}\mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel_a732733c4179c9ae7a361ce73ccb408ec}{00079}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel_a732733c4179c9ae7a361ce73ccb408ec}{write}}(\mbox{\hyperlink{classNeoFOAM_1_1MeshAdapter}{MeshAdapter}}\&\ mesh)\ \textcolor{keyword}{const}\ =\ 0;}
-\DoxyCodeLine{\Hypertarget{turbulenceModel_8hpp_source_l00080}00080\ \};}
-\DoxyCodeLine{\Hypertarget{turbulenceModel_8hpp_source_l00081}00081\ }
-\DoxyCodeLine{\Hypertarget{turbulenceModel_8hpp_source_l00082}00082\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
+\DoxyCodeLine{\Hypertarget{turbulenceModel_8hpp_source_l00075}00075\ \ \ \ \ \textcolor{comment}{//\ Recompute\ the\ model-\/owned\ gradU\ in\ place\ at\ the\ given\ velocity\ (internal\ +\ boundary\ +}}
+\DoxyCodeLine{\Hypertarget{turbulenceModel_8hpp_source_l00076}00076\ \ \ \ \ \textcolor{comment}{//\ proc-\/halo\ exchange).\ Lets\ the\ PIMPLE\ outer\ loop\ refresh\ gradU\ for\ its\ 2nd+\ correctors\ by}}
+\DoxyCodeLine{\Hypertarget{turbulenceModel_8hpp_source_l00077}00077\ \ \ \ \ \textcolor{comment}{//\ reusing\ this\ one\ buffer\ instead\ of\ allocating\ a\ separate\ VolumeField<Tensor>\ (\string~nCells*9}}
+\DoxyCodeLine{\Hypertarget{turbulenceModel_8hpp_source_l00078}00078\ \ \ \ \ \textcolor{comment}{//\ scalars)\ per\ solver.\ Safe\ because\ correct()\ recomputes\ gradU\ afterwards,\ so\ no\ turbulence}}
+\DoxyCodeLine{\Hypertarget{turbulenceModel_8hpp_source_l00079}00079\ \ \ \ \ \textcolor{comment}{//\ state\ is\ corrupted,\ and\ the\ first\ corrector\ still\ reads\ the\ U\string^n\ gradU()\ left\ by\ the\ previous}}
+\DoxyCodeLine{\Hypertarget{turbulenceModel_8hpp_source_l00080}00080\ \ \ \ \ \textcolor{comment}{//\ step's\ correct().}}
+\DoxyCodeLine{\Hypertarget{turbulenceModel_8hpp_source_l00081}\mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel_ac20133231a12abcd1199bd00d8d72a89}{00081}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel_ac20133231a12abcd1199bd00d8d72a89}{updateGradU}}(\textcolor{keyword}{const}\ nnfvcc::VolumeField<NeoN::Vec3>\&\ U)\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{turbulenceModel_8hpp_source_l00082}00082\ }
+\DoxyCodeLine{\Hypertarget{turbulenceModel_8hpp_source_l00083}00083\ \ \ \ \ \textcolor{comment}{//\ Rotate\ time-\/dependent\ fields\ for\ BDF2\ time\ advancement.}}
+\DoxyCodeLine{\Hypertarget{turbulenceModel_8hpp_source_l00084}\mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel_a6af2db926d7eb7d289a1afc6b8df18e9}{00084}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel_a6af2db926d7eb7d289a1afc6b8df18e9}{rotateOldTimes}}()\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{turbulenceModel_8hpp_source_l00085}00085\ }
+\DoxyCodeLine{\Hypertarget{turbulenceModel_8hpp_source_l00086}00086\ \ \ \ \ \textcolor{comment}{//\ Write\ model-\/owned\ fields\ (nuTilda,\ nut,\ …)\ to\ disk.}}
+\DoxyCodeLine{\Hypertarget{turbulenceModel_8hpp_source_l00087}\mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel_a732733c4179c9ae7a361ce73ccb408ec}{00087}}\ \ \ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel_a732733c4179c9ae7a361ce73ccb408ec}{write}}(\mbox{\hyperlink{classNeoFOAM_1_1MeshAdapter}{MeshAdapter}}\&\ mesh)\ \textcolor{keyword}{const}\ =\ 0;}
+\DoxyCodeLine{\Hypertarget{turbulenceModel_8hpp_source_l00088}00088\ \};}
+\DoxyCodeLine{\Hypertarget{turbulenceModel_8hpp_source_l00089}00089\ }
+\DoxyCodeLine{\Hypertarget{turbulenceModel_8hpp_source_l00090}00090\ \}\ \textcolor{comment}{//\ namespace\ NeoFOAM}}
 
 \end{DoxyCode}

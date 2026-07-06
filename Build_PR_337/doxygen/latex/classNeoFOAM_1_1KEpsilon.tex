@@ -31,6 +31,8 @@ nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc
 \begin{DoxyCompactList}\small\item\em Effective ε diffusion coefficient on faces\+: ν\+\_\+t/σ\+\_\+ε + ν \end{DoxyCompactList}\item 
 const nnfvcc\+::\+Volume\+Field$<$ Neo\+N\+::\+Tensor $>$ \& \mbox{\hyperlink{classNeoFOAM_1_1KEpsilon_aa497b1685c66ac2c10891017c7457351}{gradU}} () const
 \begin{DoxyCompactList}\small\item\em Velocity gradient tensor (updated each \doxylink{classNeoFOAM_1_1KEpsilon_ad020d2f72910e94b9ee5a42dbf3e86fd}{correct()} call) \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1KEpsilon_adbd201e7bda9416634e612b03070c105}{update\+GradU}} (const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&U)
+\begin{DoxyCompactList}\small\item\em Recompute grad\+U\+\_\+ in place at the given velocity (internal + boundary). \end{DoxyCompactList}\item 
 Neo\+N\+::\+Vector$<$ Neo\+N\+::\+Symm\+Tensor $>$ \mbox{\hyperlink{classNeoFOAM_1_1KEpsilon_af9a5026a5c71ce3c3d4a7df9f4c44aa8}{dev\+Rho\+Reff}} () const
 \begin{DoxyCompactList}\small\item\em Returns the deviatoric stress at boundary faces\+: -\/ν\+\_\+eff · symm(two\+Symm(∇U)).dev2. \end{DoxyCompactList}\item 
 const \mbox{\hyperlink{structNeoFOAM_1_1KEpsilon_1_1Coefficients}{Coefficients}} \& \mbox{\hyperlink{classNeoFOAM_1_1KEpsilon_aa6d3ce1e240c448d5d54c0444fd01752}{coeffs}} () const
@@ -48,9 +50,7 @@ void \mbox{\hyperlink{classNeoFOAM_1_1KEpsilon_a34035f6d3333e85a487eb7f0a6830a4d
 void \mbox{\hyperlink{classNeoFOAM_1_1KEpsilon_a87cacbac58e89ed5fae3e2ac586257ff}{correct\+Nut\+Internal}} (const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&k, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&epsilon, nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&nut) const
 \begin{DoxyCompactList}\small\item\em Update ν\+\_\+t internal vector from new k, ε\+: ν\+\_\+t = Cμ·k²/ε. \end{DoxyCompactList}\item 
 void \mbox{\hyperlink{classNeoFOAM_1_1KEpsilon_a5c2ac35e716fe181f3092e68e63d7c0c}{calc\+Diffusivities}} (const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&nut)
-\begin{DoxyCompactList}\small\item\em Recompute surface diffusivity fields from current ν\+\_\+t. \end{DoxyCompactList}\item 
-void \mbox{\hyperlink{classNeoFOAM_1_1KEpsilon_a07fe92a470e336250076b3fef8646034}{init\+Near\+Wall\+Dist\+Boundary}} ()
-\begin{DoxyCompactList}\small\item\em Populate near\+Wall\+Dist\+\_\+\textquotesingle{}s boundary face values from wall\+Dist\+\_\+. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{DoxyCompactList}\small\item\em Recompute surface diffusivity fields from current ν\+\_\+t. \end{DoxyCompactList}\end{DoxyCompactItemize}
 
 
 \doxysubsection{Detailed Description}
@@ -117,7 +117,7 @@ Read-\/only access to model coefficients.
 
 
 
-Definition at line \mbox{\hyperlink{kEpsilon_8hpp_source_l00103}{103}} of file \mbox{\hyperlink{kEpsilon_8hpp_source}{k\+Epsilon.\+hpp}}.
+Definition at line \mbox{\hyperlink{kEpsilon_8hpp_source_l00106}{106}} of file \mbox{\hyperlink{kEpsilon_8hpp_source}{k\+Epsilon.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1KEpsilon_a34035f6d3333e85a487eb7f0a6830a4d}\label{classNeoFOAM_1_1KEpsilon_a34035f6d3333e85a487eb7f0a6830a4d} 
 \index{NeoFOAM::KEpsilon@{NeoFOAM::KEpsilon}!computeSources@{computeSources}}
@@ -129,7 +129,7 @@ Definition at line \mbox{\hyperlink{kEpsilon_8hpp_source_l00103}{103}} of file \
 
 Compute sources for k and ε equations. 
 
-Uses the OLD ν\+\_\+t (current ν\+\_\+t, before the PDE solve) for production G = ν\+\_\+t·\+Gby\+Nu0. Writes Pk\+\_\+, sp\+K\+\_\+, epsilon\+Source\+\_\+, sp\+Epsilon\+\_\+. \Hypertarget{classNeoFOAM_1_1KEpsilon_ad020d2f72910e94b9ee5a42dbf3e86fd}\label{classNeoFOAM_1_1KEpsilon_ad020d2f72910e94b9ee5a42dbf3e86fd} 
+Uses the OLD ν\+\_\+t (current ν\+\_\+t, before the \doxylink{classNeoFOAM_1_1PDE}{PDE} solve) for production G = ν\+\_\+t·\+Gby\+Nu0. Writes Pk\+\_\+, sp\+K\+\_\+, epsilon\+Source\+\_\+, sp\+Epsilon\+\_\+. \Hypertarget{classNeoFOAM_1_1KEpsilon_ad020d2f72910e94b9ee5a42dbf3e86fd}\label{classNeoFOAM_1_1KEpsilon_ad020d2f72910e94b9ee5a42dbf3e86fd} 
 \index{NeoFOAM::KEpsilon@{NeoFOAM::KEpsilon}!correct@{correct}}
 \index{correct@{correct}!NeoFOAM::KEpsilon@{NeoFOAM::KEpsilon}}
 \doxysubsubsection{\texorpdfstring{correct()}{correct()}}
@@ -187,7 +187,7 @@ Effective k diffusion coefficient on faces\+: ν\+\_\+t/σ\+\_\+k + ν
 
 
 
-Definition at line \mbox{\hyperlink{kEpsilon_8hpp_source_l00108}{108}} of file \mbox{\hyperlink{kEpsilon_8hpp_source}{k\+Epsilon.\+hpp}}.
+Definition at line \mbox{\hyperlink{kEpsilon_8hpp_source_l00111}{111}} of file \mbox{\hyperlink{kEpsilon_8hpp_source}{k\+Epsilon.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1KEpsilon_aa497b1685c66ac2c10891017c7457351}\label{classNeoFOAM_1_1KEpsilon_aa497b1685c66ac2c10891017c7457351} 
 \index{NeoFOAM::KEpsilon@{NeoFOAM::KEpsilon}!gradU@{gradU}}
@@ -199,17 +199,7 @@ Definition at line \mbox{\hyperlink{kEpsilon_8hpp_source_l00108}{108}} of file \
 
 Velocity gradient tensor (updated each \doxylink{classNeoFOAM_1_1KEpsilon_ad020d2f72910e94b9ee5a42dbf3e86fd}{correct()} call) 
 
-\Hypertarget{classNeoFOAM_1_1KEpsilon_a07fe92a470e336250076b3fef8646034}\label{classNeoFOAM_1_1KEpsilon_a07fe92a470e336250076b3fef8646034} 
-\index{NeoFOAM::KEpsilon@{NeoFOAM::KEpsilon}!initNearWallDistBoundary@{initNearWallDistBoundary}}
-\index{initNearWallDistBoundary@{initNearWallDistBoundary}!NeoFOAM::KEpsilon@{NeoFOAM::KEpsilon}}
-\doxysubsubsection{\texorpdfstring{initNearWallDistBoundary()}{initNearWallDistBoundary()}}
-{\footnotesize\ttfamily void Neo\+FOAM\+::\+KEpsilon\+::init\+Near\+Wall\+Dist\+Boundary (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
-
-
-
-Populate near\+Wall\+Dist\+\_\+\textquotesingle{}s boundary face values from wall\+Dist\+\_\+. 
-
-Copies each wall face\textquotesingle{}s adjacent-\/cell internal value. Extracted into a member function (rather than inlined in the constructor) because CUDA forbids extended {\bfseries{host}} {\bfseries{device}} lambdas inside constructors. \Hypertarget{classNeoFOAM_1_1KEpsilon_ae797e81021694a7be2ce54fc1b3ecc17}\label{classNeoFOAM_1_1KEpsilon_ae797e81021694a7be2ce54fc1b3ecc17} 
+\Hypertarget{classNeoFOAM_1_1KEpsilon_ae797e81021694a7be2ce54fc1b3ecc17}\label{classNeoFOAM_1_1KEpsilon_ae797e81021694a7be2ce54fc1b3ecc17} 
 \index{NeoFOAM::KEpsilon@{NeoFOAM::KEpsilon}!nuEff@{nuEff}}
 \index{nuEff@{nuEff}!NeoFOAM::KEpsilon@{NeoFOAM::KEpsilon}}
 \doxysubsubsection{\texorpdfstring{nuEff()}{nuEff()}}
@@ -227,7 +217,7 @@ Effective viscosity on faces\+: ν + ν\+\_\+t (for momentum laplacian)
 
 
 
-Definition at line \mbox{\hyperlink{kEpsilon_8hpp_source_l00106}{106}} of file \mbox{\hyperlink{kEpsilon_8hpp_source}{k\+Epsilon.\+hpp}}.
+Definition at line \mbox{\hyperlink{kEpsilon_8hpp_source_l00109}{109}} of file \mbox{\hyperlink{kEpsilon_8hpp_source}{k\+Epsilon.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1KEpsilon_a6223b12ed0e3b180bf9c88e3b5cd592d}\label{classNeoFOAM_1_1KEpsilon_a6223b12ed0e3b180bf9c88e3b5cd592d} 
 \index{NeoFOAM::KEpsilon@{NeoFOAM::KEpsilon}!spEpsilonField@{spEpsilonField}}
@@ -237,7 +227,7 @@ Definition at line \mbox{\hyperlink{kEpsilon_8hpp_source_l00106}{106}} of file \
 
 
 
-Definition at line \mbox{\hyperlink{kEpsilon_8hpp_source_l00109}{109}} of file \mbox{\hyperlink{kEpsilon_8hpp_source}{k\+Epsilon.\+hpp}}.
+Definition at line \mbox{\hyperlink{kEpsilon_8hpp_source_l00112}{112}} of file \mbox{\hyperlink{kEpsilon_8hpp_source}{k\+Epsilon.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1KEpsilon_a1a6eafc6f769f0a1eb994c2de0c0edf1}\label{classNeoFOAM_1_1KEpsilon_a1a6eafc6f769f0a1eb994c2de0c0edf1} 
 \index{NeoFOAM::KEpsilon@{NeoFOAM::KEpsilon}!spKField@{spKField}}
@@ -247,7 +237,17 @@ Definition at line \mbox{\hyperlink{kEpsilon_8hpp_source_l00109}{109}} of file \
 
 
 
-Definition at line \mbox{\hyperlink{kEpsilon_8hpp_source_l00107}{107}} of file \mbox{\hyperlink{kEpsilon_8hpp_source}{k\+Epsilon.\+hpp}}.
+Definition at line \mbox{\hyperlink{kEpsilon_8hpp_source_l00110}{110}} of file \mbox{\hyperlink{kEpsilon_8hpp_source}{k\+Epsilon.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1KEpsilon_adbd201e7bda9416634e612b03070c105}\label{classNeoFOAM_1_1KEpsilon_adbd201e7bda9416634e612b03070c105} 
+\index{NeoFOAM::KEpsilon@{NeoFOAM::KEpsilon}!updateGradU@{updateGradU}}
+\index{updateGradU@{updateGradU}!NeoFOAM::KEpsilon@{NeoFOAM::KEpsilon}}
+\doxysubsubsection{\texorpdfstring{updateGradU()}{updateGradU()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::\+KEpsilon\+::update\+GradU (\begin{DoxyParamCaption}\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&}]{U }\end{DoxyParamCaption})}
+
+
+
+Recompute grad\+U\+\_\+ in place at the given velocity (internal + boundary). 
 
 \Hypertarget{classNeoFOAM_1_1KEpsilon_afeb8fce294681e34c0a47d4ab61df34c}\label{classNeoFOAM_1_1KEpsilon_afeb8fce294681e34c0a47d4ab61df34c} 
 \index{NeoFOAM::KEpsilon@{NeoFOAM::KEpsilon}!validate@{validate}}

@@ -7,7 +7,7 @@ var searchData=
   ['readsurfaceboundaryconditions_4',['readSurfaceBoundaryConditions',['../namespaceNeoFOAM.html#adb365cf8e725db6dbfc0a758c392e2b1',1,'NeoFOAM']]],
   ['readvolboundaryconditions_5',['readVolBoundaryConditions',['../namespaceNeoFOAM.html#a6cb4d89d1e44667e5a66f5119bad9206',1,'NeoFOAM']]],
   ['registryname_6',['registryName',['../classNeoFOAM_1_1DatabaseWrapper.html#a294a3f7e57e3700663a52e4ef2afe71f',1,'NeoFOAM::DatabaseWrapper']]],
-  ['relaxownedls_7',['relaxOwnedLs',['../classNeoFOAM_1_1PDESolver.html#a5bf63a2b300465377c937bda5d52f5f5',1,'NeoFOAM::PDESolver']]],
+  ['relaxownedls_7',['relaxOwnedLs',['../classNeoFOAM_1_1PDE.html#adb2db6a18334f46d42794e5b5aef0fdb',1,'NeoFOAM::PDE']]],
   ['reportcontinuityerror_8',['reportContinuityError',['../namespaceNeoFOAM.html#a216c99c971b9acb00fbd8ff36d9f2ee9',1,'NeoFOAM']]],
   ['residualmap_9',['ResidualMap',['../namespaceNeoFOAM.html#ad7da788dc1fc4af69c98dea808d84073',1,'NeoFOAM']]],
   ['resolvemesh_10',['resolveMesh',['../classNeoFOAM_1_1Forces.html#af835251b826a633fce525e08d8716535',1,'NeoFOAM::Forces']]],

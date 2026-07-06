@@ -16,47 +16,63 @@
 \DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00012}00012\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary}{NeoN::finiteVolume::cellCentred::volumeBoundary}}}
 \DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00013}00013\ \{}
 \DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00014}00014\ }
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00019}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1KqRWallFunction}{00019}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1KqRWallFunction}{KqRWallFunction}}\ :\ \textcolor{keyword}{public}\ VolumeBoundaryFactory<scalar>::template\ Register<KqRWallFunction>}
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00020}00020\ \{}
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00021}00021\ \ \ \ \ \textcolor{keyword}{using\ }Base\ =\ VolumeBoundaryFactory<scalar>::template\ Register<KqRWallFunction>;}
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00022}00022\ }
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00023}00023\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00024}00024\ }
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00025}00025\ \ \ \ \ \textcolor{keyword}{using\ }Base::correctBoundaryCondition;}
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00026}00026\ }
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00027}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1KqRWallFunction_a0d4a27065a60bbaba08aa60fcf109061}{00027}}\ \ \ \ \ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1KqRWallFunction_a0d4a27065a60bbaba08aa60fcf109061}{KqRWallFunction}}(\textcolor{keyword}{const}\ UnstructuredMesh\&\ mesh,\ \textcolor{keyword}{const}\ Dictionary\&\ dict,\ localIdx\ patchID)}
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00028}00028\ \ \ \ \ \ \ \ \ :\ Base(mesh,\ dict,\ patchID,\ \{.assignable\ =\ \textcolor{keyword}{false},\ .fixesValue\ =\ \textcolor{keyword}{false}\})}
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00029}00029\ \ \ \ \ \ \ \ \ ,\ mesh\_(mesh)}
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00030}00030\ \ \ \ \ \{\}}
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00031}00031\ }
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00032}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1KqRWallFunction_a5342d812d7bb9e02ac329fa29bb8bdb2}{00032}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1KqRWallFunction_a5342d812d7bb9e02ac329fa29bb8bdb2}{correctBoundaryCondition}}(Field<scalar>\&\ domainVector)\ \textcolor{keyword}{final}}
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00033}00033\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00034}00034\ \ \ \ \ \ \ \ \ detail::setGradientValue(domainVector,\ mesh\_,\ this-\/>range(),\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}(0));}
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00035}00035\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00015}00015\ \textcolor{comment}{//\ Mirrors\ OpenFOAM's\ kqRWallFunctionFvPatchField<scalar>}}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00016}00016\ \textcolor{comment}{//\ (src/TurbulenceModels/turbulenceModels/derivedFvPatchFields/wallFunctions/}}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00017}00017\ \textcolor{comment}{//\ \ kqRWallFunctions/kqRWallFunction/kqRWallFunctionFvPatchField.\{H,C\}).}}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00018}00018\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00019}00019\ \textcolor{comment}{//\ Upstream\ the\ class\ derives\ from\ zeroGradientFvPatchField<Type>\ and\ overrides}}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00020}00020\ \textcolor{comment}{//\ nothing\ —\ its\ own\ docstring\ states\ "{}It\ is\ not\ a\ wall-\/function\ condition."{}.}}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00021}00021\ \textcolor{comment}{//\ We\ mirror\ that\ here:\ correctBoundaryCondition()\ applies\ the\ same\ kernel\ as}}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00022}00022\ \textcolor{comment}{//\ FixedGradient<scalar>\ with\ a\ zero\ gradient.}}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00023}00023\ \textcolor{comment}{//}}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00024}00024\ \textcolor{comment}{//\ Kept\ as\ a\ distinct\ dispatched\ class\ (not\ a\ string-\/level\ alias\ of}}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00025}00025\ \textcolor{comment}{//\ fixedGradient)\ so\ OpenFOAM\ dictionaries\ authored\ with\ \`{}type\ kqRWallFunction;`}}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00026}00026\ \textcolor{comment}{//\ flow\ through\ the\ runtime-\/selection\ factory\ unchanged.\ This\ also\ leaves\ the}}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00027}00027\ \textcolor{comment}{//\ door\ open\ for\ future\ wall\ functions\ (omegaWallFunction,\ nutkWallFunction)}}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00028}00028\ \textcolor{comment}{//\ that\ *do*\ need\ a\ real\ wall-\/distance-\/based\ kernel\ —\ they\ can\ be\ registered}}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00029}00029\ \textcolor{comment}{//\ alongside\ this\ class\ and\ consume\ BoundaryContext::scalarFieldPtr("{}nearWallDist"{})}}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00030}00030\ \textcolor{comment}{//\ the\ way\ NutUSpaldingWallFunction\ already\ does.}}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00031}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1KqRWallFunction}{00031}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1KqRWallFunction}{KqRWallFunction}}\ :\ \textcolor{keyword}{public}\ VolumeBoundaryFactory<scalar>::template\ Register<KqRWallFunction>}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00032}00032\ \{}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00033}00033\ \ \ \ \ \textcolor{keyword}{using\ }Base\ =\ VolumeBoundaryFactory<scalar>::template\ Register<KqRWallFunction>;}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00034}00034\ }
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00035}00035\ \textcolor{keyword}{public}:}
 \DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00036}00036\ }
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00037}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1KqRWallFunction_aaec2b1c5cf68f877243a6de4760a3b3b}{00037}}\ \ \ \ \ \textcolor{keyword}{static}\ std::string\ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1KqRWallFunction_aaec2b1c5cf68f877243a6de4760a3b3b}{name}}()\ \{\ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}kqRWallFunction"{}};\ \}}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00037}00037\ \ \ \ \ \textcolor{keyword}{using\ }Base::correctBoundaryCondition;}
 \DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00038}00038\ }
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00039}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1KqRWallFunction_a7642dc1e3a7953be082b68798d943d3b}{00039}}\ \ \ \ \ std::string\ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1KqRWallFunction_a7642dc1e3a7953be082b68798d943d3b}{getName}}()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1KqRWallFunction_aaec2b1c5cf68f877243a6de4760a3b3b}{name}}();\ \}}
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00040}00040\ }
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00041}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1KqRWallFunction_abc946a6501f61608247df639f0f91690}{00041}}\ \ \ \ \ \textcolor{keyword}{static}\ std::string\ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1KqRWallFunction_abc946a6501f61608247df639f0f91690}{doc}}()}
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00042}00042\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00043}00043\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}Renamed\ zero-\/gradient\ BC\ for\ turbulent\ kinetic\ energy\ k\ (and\ q,\ R)\ "{}}}
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00044}00044\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}at\ high-\/Re\ walls.\ Matches\ OpenFOAM's\ kqRWallFunction,\ which\ is\ not\ "{}}}
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00045}00045\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}actually\ a\ wall\ function\ —\ see\ upstream\ class\ docstring."{}};}
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00046}00046\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00047}00047\ }
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00048}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1KqRWallFunction_ae3dabeb21827c808345060d65fdca4db}{00048}}\ \ \ \ \ \textcolor{keyword}{static}\ std::string\ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1KqRWallFunction_ae3dabeb21827c808345060d65fdca4db}{schema}}()\ \{\ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}none"{}};\ \}}
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00049}00049\ }
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00050}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1KqRWallFunction_a7b494cb57132d2c7a0a37f6f5d801101}{00050}}\ \ \ \ \ std::unique\_ptr<VolumeBoundaryFactory<scalar>>\ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1KqRWallFunction_a7b494cb57132d2c7a0a37f6f5d801101}{clone}}()\ const\ final}
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00051}00051\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00052}00052\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::make\_unique<KqRWallFunction>(*\textcolor{keyword}{this});}
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00053}00053\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00054}00054\ }
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00055}00055\ \textcolor{keyword}{private}:}
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00056}00056\ }
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00057}00057\ \ \ \ \ \textcolor{keyword}{const}\ UnstructuredMesh\&\ mesh\_;}
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00058}00058\ \};}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00039}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1KqRWallFunction_a0d4a27065a60bbaba08aa60fcf109061}{00039}}\ \ \ \ \ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1KqRWallFunction_a0d4a27065a60bbaba08aa60fcf109061}{KqRWallFunction}}(\textcolor{keyword}{const}\ UnstructuredMesh\&\ mesh,\ \textcolor{keyword}{const}\ Dictionary\&\ dict,\ localIdx\ patchID)}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00040}00040\ \ \ \ \ \ \ \ \ :\ Base(mesh,\ dict,\ patchID,\ \{.assignable\ =\ \textcolor{keyword}{false},\ .fixesValue\ =\ \textcolor{keyword}{false}\})}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00041}00041\ \ \ \ \ \ \ \ \ ,\ mesh\_(mesh)}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00042}00042\ \ \ \ \ \{\}}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00043}00043\ }
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00044}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1KqRWallFunction_a5342d812d7bb9e02ac329fa29bb8bdb2}{00044}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1KqRWallFunction_a5342d812d7bb9e02ac329fa29bb8bdb2}{correctBoundaryCondition}}(Field<scalar>\&\ domainVector)\ \textcolor{keyword}{final}}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00045}00045\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00046}00046\ \ \ \ \ \ \ \ \ detail::setGradientValue(domainVector,\ mesh\_,\ this-\/>range(),\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}(0));}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00047}00047\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00048}00048\ }
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00049}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1KqRWallFunction_aaec2b1c5cf68f877243a6de4760a3b3b}{00049}}\ \ \ \ \ \textcolor{keyword}{static}\ std::string\ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1KqRWallFunction_aaec2b1c5cf68f877243a6de4760a3b3b}{name}}()\ \{\ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}kqRWallFunction"{}};\ \}}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00050}00050\ }
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00051}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1KqRWallFunction_a7642dc1e3a7953be082b68798d943d3b}{00051}}\ \ \ \ \ std::string\ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1KqRWallFunction_a7642dc1e3a7953be082b68798d943d3b}{getName}}()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1KqRWallFunction_aaec2b1c5cf68f877243a6de4760a3b3b}{name}}();\ \}}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00052}00052\ }
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00053}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1KqRWallFunction_abc946a6501f61608247df639f0f91690}{00053}}\ \ \ \ \ \textcolor{keyword}{static}\ std::string\ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1KqRWallFunction_abc946a6501f61608247df639f0f91690}{doc}}()}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00054}00054\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00055}00055\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}Renamed\ zero-\/gradient\ BC\ for\ turbulent\ kinetic\ energy\ k\ (and\ q,\ R)\ "{}}}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00056}00056\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}at\ high-\/Re\ walls.\ Matches\ OpenFOAM's\ kqRWallFunction,\ which\ is\ not\ "{}}}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00057}00057\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}actually\ a\ wall\ function\ —\ see\ upstream\ class\ docstring."{}};}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00058}00058\ \ \ \ \ \}}
 \DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00059}00059\ }
-\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00060}00060\ \}\ \textcolor{comment}{//\ namespace\ NeoN::finiteVolume::cellCentred::volumeBoundary}}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00060}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1KqRWallFunction_ae3dabeb21827c808345060d65fdca4db}{00060}}\ \ \ \ \ \textcolor{keyword}{static}\ std::string\ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1KqRWallFunction_ae3dabeb21827c808345060d65fdca4db}{schema}}()\ \{\ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}none"{}};\ \}}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00061}00061\ }
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00062}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1KqRWallFunction_a7b494cb57132d2c7a0a37f6f5d801101}{00062}}\ \ \ \ \ std::unique\_ptr<VolumeBoundaryFactory<scalar>>\ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1KqRWallFunction_a7b494cb57132d2c7a0a37f6f5d801101}{clone}}()\ const\ final}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00063}00063\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00064}00064\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::make\_unique<KqRWallFunction>(*\textcolor{keyword}{this});}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00065}00065\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00066}00066\ }
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00067}00067\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00068}00068\ }
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00069}00069\ \ \ \ \ \textcolor{keyword}{const}\ UnstructuredMesh\&\ mesh\_;}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00070}00070\ \};}
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00071}00071\ }
+\DoxyCodeLine{\Hypertarget{kqRWallFunction_8hpp_source_l00072}00072\ \}\ \textcolor{comment}{//\ namespace\ NeoN::finiteVolume::cellCentred::volumeBoundary}}
 
 \end{DoxyCode}

@@ -2,7 +2,7 @@ var searchData=
 [
   ['databasewrapper_0',['DatabaseWrapper',['../classNeoFOAM_1_1DatabaseWrapper.html#a02cdc14e7b624372b9cf39ca0ba45667',1,'NeoFOAM::DatabaseWrapper']]],
   ['db_1',['db',['../classNeoFOAM_1_1DatabaseWrapper.html#a972ffb40a536ddf575fb0561e4c8c475',1,'NeoFOAM::DatabaseWrapper::db()'],['../classNeoFOAM_1_1DatabaseWrapper.html#a042af60270233d51c61f6ff83bc4616c',1,'NeoFOAM::DatabaseWrapper::db() const']]],
-  ['ddtscheme_2',['ddtScheme',['../classNeoFOAM_1_1PDESolver.html#a577b2534bdc16547869ed719bd03d879',1,'NeoFOAM::PDESolver']]],
+  ['ddtscheme_2',['ddtScheme',['../classNeoFOAM_1_1PDE.html#a56b8e0f478755f95fa476022d5947523',1,'NeoFOAM::PDE']]],
   ['depsiloneff_3',['DepsilonEff',['../classNeoFOAM_1_1KEpsilon.html#aa4efd3847ea7bbcae07c3022be84a555',1,'NeoFOAM::KEpsilon']]],
   ['devrhoreff_4',['devrhoreff',['../classNeoFOAM_1_1KEpsilon.html#af9a5026a5c71ce3c3d4a7df9f4c44aa8',1,'NeoFOAM::KEpsilon::devRhoReff()'],['../classNeoFOAM_1_1KOmegaSST.html#a39f6d28bbbf7655ba369911d6f90709c',1,'NeoFOAM::KOmegaSST::devRhoReff()'],['../classNeoFOAM_1_1SpalartAllmarasDDES.html#ac253c51b5267125370b87ac879bb96b9',1,'NeoFOAM::SpalartAllmarasDDES::devRhoReff()']]],
   ['divdevreff_5',['divDevReff',['../namespaceNeoN_1_1finiteVolume_1_1cellCentred.html#aac397c2e2aaea7b2e6cb89130315c39f',1,'NeoN::finiteVolume::cellCentred']]],
