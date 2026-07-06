@@ -87,6 +87,41 @@ def test_jsonforms_transform_unwraps_optional_and_titles_unions():
     assert {"fixedValue", "noSlip", "zeroGradient"} <= titles
 
 
+def test_inline_refs_makes_every_schema_self_contained():
+    # JSONForms' combinator renderers ajv.compile() every oneOf/anyOf arm
+    # STANDALONE; an arm containing a $ref throws, is never cached and
+    # recompiles on every reactive re-evaluation — the big scheme schemas
+    # (nested discriminated unions) hard-froze the page that way.
+    import json
+
+    for e in build_forms(_solver()):
+        text = json.dumps(e.schema)
+        assert "$ref" not in text, f"{e.key} still contains a $ref"
+        assert "$defs" not in e.schema, f"{e.key} still carries $defs"
+        assert "discriminator" not in text, f"{e.key} keeps a dangling discriminator"
+
+
+def test_inline_refs_merges_siblings_and_keeps_cycles():
+    from neofoam.ui.forms import inline_refs
+
+    schema = {
+        "$defs": {
+            "Leaf": {"type": "object", "title": "leaf-title"},
+            "Loop": {"properties": {"next": {"$ref": "#/$defs/Loop"}}},
+        },
+        "properties": {
+            "a": {"$ref": "#/$defs/Leaf", "title": "arm-title"},
+            "b": {"$ref": "#/$defs/Loop"},
+        },
+    }
+    out = inline_refs(schema)
+    # Sibling keys override the resolved definition.
+    assert out["properties"]["a"] == {"type": "object", "title": "arm-title"}
+    # The cyclic ref survives, so its definitions are kept.
+    assert out["properties"]["b"]["properties"]["next"]["$ref"] == "#/$defs/Loop"
+    assert "Loop" in out["$defs"]
+
+
 def test_field_in_dimensions_and_internalfield_collapse_to_text():
     # The fixed 7-element dimension vector and the FieldValue union both render as a
     # single string field, not a growable integer list / ANYOF combinator tabs.
@@ -119,10 +154,11 @@ def test_bc_value_arm_collapses_to_text_but_type_union_stays():
         for a in bc["properties"]["boundaryField"]["additionalProperties"]["oneOf"]
         if a.get("title") == "fixedValue"
     )
-    fixed_def = bc["$defs"]["FixedValueBC"]
-    # … but the fixedValue `value` (scalar|vector|uniform-string) collapses to a string.
-    assert fixed_def["properties"]["value"]["type"] == "string"
-    assert fixed["$ref"].endswith("FixedValueBC")
+    # … every arm is self-contained (inline_refs: no $ref/$defs — JSONForms'
+    # combinator renderer must be able to hand each arm to AJV standalone) …
+    assert "$ref" not in fixed and "$defs" not in bc
+    # … and the fixedValue `value` (scalar|vector|uniform-string) collapses to a string.
+    assert fixed["properties"]["value"]["type"] == "string"
 
 
 def test_allowed_bc_types_lists_titled_arms():
@@ -179,7 +215,7 @@ def test_patch_bc_schema_pins_named_patch_sections():
     assert set(bf["properties"]) == {"inlet", "walls"}
     assert bf["properties"]["inlet"]["title"] == "inlet"
     assert "oneOf" in bf["properties"]["inlet"]  # each patch keeps the BC-type union
-    assert "$defs" in schema  # arm $refs still resolvable
+    assert "$defs" not in schema  # arms are inlined — nothing left to resolve
     # No names → schema returned unchanged.
     assert patch_bc_schema(entry, []) is entry.schema
 

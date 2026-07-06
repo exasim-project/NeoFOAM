@@ -14,14 +14,16 @@ from neofoam.ui.forms import FormEntry
 __all__ = ["Step", "ModelChoice", "build_steps", "build_model_choices"]
 
 # Fixed order. `models` opens with the model-selection panel (rendered by app.py)
-# above its config forms; `geometry` (STL → mesh dicts) and `review` hold no form
-# entries — they are bespoke panels rendered by app.py.
+# above its config forms; `geometry` (STL → mesh dicts), `sweep` (the parameter
+# canvas) and `review` hold no form entries — they are bespoke panels rendered
+# by app.py.
 _STEP_DEFS: list[tuple[str, str]] = [
     ("models", "Models"),
     ("geometry", "Geometry & mesh"),
     ("bcs", "Boundary conditions"),
     ("initial", "Initial values"),
     ("schemes", "Numerics"),
+    ("sweep", "Parameters"),
     ("review", "Review & run"),
 ]
 

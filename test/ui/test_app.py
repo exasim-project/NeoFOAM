@@ -11,6 +11,7 @@ import pytest
 
 pytest.importorskip("pybFoam")
 pytest.importorskip("trame")
+pytest.importorskip("trame_flow")  # build_app renders the sweep canvas
 
 from trame.app import get_server  # noqa: E402
 
@@ -34,6 +35,7 @@ def test_build_app_constructs():
         "bcs",
         "initial",
         "schemes",
+        "sweep",
         "review",
     ]
     for entry in entries:

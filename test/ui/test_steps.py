@@ -25,12 +25,14 @@ def test_steps_fixed_order_and_membership():
         "bcs",
         "initial",
         "schemes",
+        "sweep",
         "review",
     ]
     by_id = {s.id: s for s in steps}
 
-    # geometry / review are form-less bespoke panels.
+    # geometry / sweep / review are form-less bespoke panels.
     assert by_id["geometry"].entry_keys == []
+    assert by_id["sweep"].entry_keys == []
     assert by_id["review"].entry_keys == []
 
     # Each form step holds exactly the entries whose FormEntry.step matches.

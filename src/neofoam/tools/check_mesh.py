@@ -31,7 +31,7 @@ class CheckMeshStep(BaseModel):
     fail_on_error: bool = True
 
 
-checkMeshTool = Tool("checkMesh")
+checkMeshTool = Tool("checkMesh", consumes_mesh=True)
 
 
 @checkMeshTool.build

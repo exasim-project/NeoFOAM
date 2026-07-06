@@ -44,6 +44,7 @@ from neofoam.ui import review
 from neofoam.ui.review import findings_to_rows
 from neofoam.ui.scaffold import scaffold_runnable_case
 from neofoam.ui.steps import Step, build_model_choices, build_steps
+from neofoam.ui.sweep_panel import SweepPanel
 
 _ROLE_NAMES = [r.value for r in PatchRole]
 
@@ -58,6 +59,7 @@ _STEP_ICONS = {
     "bcs": "mdi-border-all-variant",
     "initial": "mdi-waves",
     "schemes": "mdi-function-variant",
+    "sweep": "mdi-tune-variant",
     "review": "mdi-clipboard-check-outline",
 }
 _STEP_CAPTIONS = {
@@ -66,6 +68,7 @@ _STEP_CAPTIONS = {
     "bcs": "Boundary conditions per field — patches are seeded by the geometry scan.",
     "initial": "Physical dimensions and initial internal value per field.",
     "schemes": "Discretisation schemes and linear solvers — the defaults are sensible.",
+    "sweep": "Sweep any config over named variants and export a Snakemake workflow.",
     "review": "Save the case, review the validation findings and run it.",
 }
 
@@ -136,7 +139,7 @@ def _patch_row(patch: PatchGeometry) -> dict[str, Any]:
 
 
 def _parse_pair(text: str) -> tuple[int, int] | None:
-    """Parse a ``"min max"`` refinement string; ``None`` when unparseable."""
+    """Parse a ``"min max"`` refinement string; ``None`` when unparsable."""
     parts = text.split()
     if len(parts) != 2:
         return None
@@ -329,6 +332,7 @@ def build_app(server: Any = None, *, solver_name: str = "incompressibleFluid") -
     ctrl.get_steps = lambda: steps
 
     build_agent_panel(server, entries, solver)
+    sweep_panel = SweepPanel(server, entries, solver, solver_name)
 
     # ------------------------------------------------------------------ #
     # Layout                                                             #
@@ -660,6 +664,8 @@ def build_app(server: Any = None, *, solver_name: str = "incompressibleFluid") -
                         _model_selector()
                     elif step.id == "geometry":
                         _geometry_panel()
+                    elif step.id == "sweep":
+                        sweep_panel.render(JsonForms)
                     elif step.id == "review":
                         _review_panel()
                     if step.entry_keys:

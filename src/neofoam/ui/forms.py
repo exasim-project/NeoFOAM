@@ -26,6 +26,7 @@ __all__ = [
     "FormEntry",
     "build_forms",
     "humanize",
+    "inline_refs",
     "jsonforms_schema",
     "allowed_bc_types",
     "seed_boundary_field",
@@ -187,11 +188,64 @@ def _is_value_union(arms: list[Any]) -> bool:
     return has_str and has_num
 
 
+def inline_refs(schema: dict[str, Any]) -> dict[str, Any]:
+    """Resolve every ``#/$defs/...`` ``$ref`` into a self-contained subtree.
+
+    JSONForms' combinator renderers hand each ``oneOf``/``anyOf`` arm to AJV
+    *standalone* (``ajv.compile(subschema)``) to find the fitting arm. An arm
+    that is (or contains) a ``$ref`` cannot be compiled that way — AJV throws,
+    the result is never cached, and the schema is recompiled on every reactive
+    re-evaluation. For the big scheme configs (deeply nested discriminated
+    unions) that compile-throw loop hard-freezes the page. Inlining makes every
+    subschema self-contained, so AJV compiles each arm once and caches it.
+
+    Sibling keys of a ``$ref`` (e.g. the arm ``title``) override the resolved
+    definition. Cyclic or unknown refs are left in place; ``discriminator``
+    keys are dropped (JSONForms ignores them, and their ``mapping`` would
+    dangle once the defs are gone). ``$defs`` is removed when nothing refers
+    to it anymore.
+    """
+    defs = schema.get("$defs", {})
+
+    def resolve(node: Any, stack: frozenset[str]) -> Any:
+        if isinstance(node, list):
+            return [resolve(item, stack) for item in node]
+        if not isinstance(node, dict):
+            return node
+        ref = node.get("$ref")
+        if isinstance(ref, str) and ref.startswith("#/$defs/"):
+            name = ref.rsplit("/", 1)[-1]
+            if name not in defs or name in stack:
+                return dict(node)  # unknown or cyclic: keep the $ref
+            target = resolve(defs[name], stack | {name})
+            siblings = {k: v for k, v in node.items() if k != "$ref"}
+            return {**target, **{k: resolve(v, stack) for k, v in siblings.items()}}
+        return {
+            k: resolve(v, stack)
+            for k, v in node.items()
+            if k not in ("$defs", "discriminator")
+        }
+
+    def has_ref(node: Any) -> bool:
+        if isinstance(node, list):
+            return any(has_ref(item) for item in node)
+        if isinstance(node, dict):
+            return "$ref" in node or any(has_ref(v) for v in node.values())
+        return False
+
+    out: dict[str, Any] = resolve(schema, frozenset())
+    if has_ref(out):
+        out["$defs"] = defs  # a cyclic ref survived — keep its definitions
+    return out
+
+
 def jsonforms_schema(schema: dict[str, Any]) -> dict[str, Any]:
     """Make a pydantic JSON Schema render cleanly in JSONForms (generic, no per-config).
 
-    Schema-driven rewrites, applied recursively (schema, ``$defs``, ``properties``,
-    ``items``, ``additionalProperties`` and union arms):
+    The schema is first made self-contained via :func:`inline_refs` (JSONForms'
+    combinator renderers cannot handle ``$ref`` arms — see there). Then the
+    schema-driven rewrites, applied recursively (schema, ``$defs``,
+    ``properties``, ``items``, ``additionalProperties`` and union arms):
 
     * **Unwrap ``Optional[X]``** — ``anyOf``/``oneOf`` with exactly one non-``null`` arm
       collapses to that arm (JSONForms otherwise renders the ``null`` arm as a second,
@@ -206,6 +260,7 @@ def jsonforms_schema(schema: dict[str, Any]) -> dict[str, Any]:
       their ``const`` value, so JSONForms shows a clean "pick a type" dropdown
       (``fixedValue``/``noSlip``/…) instead of stacking every arm.
     """
+    schema = inline_refs(schema)
     defs: dict[str, Any] = schema.get("$defs", {})
 
     def transform(node: Any) -> Any:

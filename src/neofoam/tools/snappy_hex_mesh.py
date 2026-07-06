@@ -49,7 +49,7 @@ class SnappyHexMeshStep(BaseModel):
     verbose: bool = True
 
 
-snappyHexMeshTool = Tool("snappyHexMesh")
+snappyHexMeshTool = Tool("snappyHexMesh", consumes_mesh=True)
 
 
 @snappyHexMeshTool.build

@@ -24,10 +24,17 @@ from neofoam.framework.initialization import InitStep
 
 
 class ToolSpec:
-    """Immutable preprocessing-tool definition (read-only after import)."""
+    """Immutable preprocessing-tool definition (read-only after import).
 
-    def __init__(self, name: str) -> None:
+    ``consumes_mesh`` marks tools whose build reads ``ctx["_prev_mesh"]``
+    (snappyHexMesh, checkMesh). When such a tool starts a pipeline (no
+    ``depends_on``), the graph seeds ``_prev_mesh`` from a caller-provided
+    mesh source (see :func:`~neofoam.framework.tools.graph.tool_graph_steps`).
+    """
+
+    def __init__(self, name: str, *, consumes_mesh: bool = False) -> None:
         self.name = name
+        self.consumes_mesh = consumes_mesh
         self._build_func: Optional[Callable[[Any], list[InitStep]]] = None
 
     def build(
@@ -79,9 +86,9 @@ class ToolSpec:
         )
 
 
-def Tool(name: str) -> ToolSpec:
+def Tool(name: str, *, consumes_mesh: bool = False) -> ToolSpec:
     """Factory: create a named :class:`ToolSpec`."""
-    return ToolSpec(name)
+    return ToolSpec(name, consumes_mesh=consumes_mesh)
 
 
 @dataclass

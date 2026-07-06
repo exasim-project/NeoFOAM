@@ -51,7 +51,12 @@ def run_preprocess(argv: Optional[list[str]] = None) -> Context:
     def create_foam_time(_ctx: dict[str, Any]) -> Any:
         return pyf.Time(pyf.argList(resolved_argv))
 
+    def read_disk_mesh(ctx: dict[str, Any]) -> Any:
+        # Seeds _prev_mesh for a pipeline resuming from a mesh already on disk
+        # (e.g. a single-tool snappyHexMesh slice after a prior blockMesh run).
+        return pyf.fvMesh(ctx["_foam_time"])
+
     case_dir = Path(_case_dir_from_argv(resolved_argv))
     steps = [lazy("_foam_time", create_foam_time)]
-    steps.extend(tool_graph_steps(detect_tools(case_dir)))
+    steps.extend(tool_graph_steps(detect_tools(case_dir), mesh_source=read_disk_mesh))
     return execute_initialization(steps)

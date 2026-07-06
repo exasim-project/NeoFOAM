@@ -109,7 +109,9 @@ def _write_merged_payload(strategy: Any, path: Path, data: dict[str, Any]) -> No
     Mirrors the file/dir handling in the strategy's own ``write`` but skips the
     per-instance ``model_dump`` (the caller already merged in Python). Reuses
     ``OpenFOAMStrategy._write`` so encoding matches single-instance writes, and
-    injects a ``FoamFile`` header for headerless dict configs.
+    emits the ``FoamFile`` header FIRST — OpenFOAM rejects a file whose header
+    is not the leading entry, and a payload that round-tripped through
+    ``load(...)`` (e.g. the AI-fill push) carries ``FoamFile`` as its last key.
     """
     if isinstance(strategy, OpenFOAMStrategy):
         import pybFoam as pyf  # lazy: keep ``neofoam.io`` import light
@@ -117,8 +119,8 @@ def _write_merged_payload(strategy: Any, path: Path, data: dict[str, Any]) -> No
         path.parent.mkdir(parents=True, exist_ok=True)
         root = pyf.dictionary.read(str(path)) if path.exists() else pyf.dictionary()
         root.clear()
-        if "FoamFile" not in data:
-            strategy._write(root, {"FoamFile": foam_header(path)})
+        header = data.pop("FoamFile", None)
+        strategy._write(root, {"FoamFile": header or foam_header(path)})
         strategy._write(root, data)
         root.write(str(path))
         return
