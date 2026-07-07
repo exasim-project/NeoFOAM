@@ -22,7 +22,9 @@ from neofoam.ui.app import _schema_key  # noqa: E402
 
 
 def test_build_app_constructs():
-    server = build_app(server=get_server("neofoam_ui_test_construct"))
+    # plugins=[] pins the built-in baseline regardless of any installed
+    # `neofoam.ui.steps` entry points (e.g. the optional FoamCAD step).
+    server = build_app(server=get_server("neofoam_ui_test_construct"), plugins=[])
     assert callable(server.controller.save_case)
     assert server.state.current_step == "models"
     assert server.state.target_dir == ""
@@ -44,7 +46,7 @@ def test_build_app_constructs():
 
 
 def test_nav_does_not_reset_form_state():
-    server = build_app(server=get_server("neofoam_ui_test_nav"))
+    server = build_app(server=get_server("neofoam_ui_test_nav"), plugins=[])
     entries = server.controller.get_entries()
     before = {e.state_key for e in entries}
 
@@ -55,7 +57,7 @@ def test_nav_does_not_reset_form_state():
 
 def test_save_case_round_trip(tmp_path):
     solver = resolve_solver("incompressibleFluid")
-    server = build_app(server=get_server("neofoam_ui_test_save"))
+    server = build_app(server=get_server("neofoam_ui_test_save"), plugins=[])
     entries = server.controller.get_entries()
 
     defaults = tools.config_schema(solver, "transport_properties_config").defaults
@@ -76,7 +78,7 @@ def test_save_scaffolds_and_validates(tmp_path):
     import os
 
     solver = resolve_solver("incompressibleFluid")
-    server = build_app(server=get_server("neofoam_ui_test_scaffold"))
+    server = build_app(server=get_server("neofoam_ui_test_scaffold"), plugins=[])
     entries = server.controller.get_entries()
 
     defaults = tools.config_schema(solver, "transport_properties_config").defaults
@@ -114,7 +116,7 @@ def test_geometry_scan_and_write_mesh(tmp_path):
     dst_tri = tmp_path / "constant" / "triSurface"
     shutil.copytree(src_tri, dst_tri)
 
-    server = build_app(server=get_server("neofoam_ui_test_geometry"))
+    server = build_app(server=get_server("neofoam_ui_test_geometry"), plugins=[])
     # Point the STL-folder field straight at the triSurface dir (as in the UI).
     server.state.stl_dir = str(dst_tri)
     server.state.target_dir = str(tmp_path)
@@ -134,7 +136,7 @@ def test_geometry_scan_and_write_mesh(tmp_path):
 def test_incomplete_save_is_reported_not_raised(tmp_path):
     # The pristine app pre-seeds partial defaults (e.g. controlDict lacks endTime);
     # saving must surface the error in Review, not crash the controller.
-    server = build_app(server=get_server("neofoam_ui_test_badsave"))
+    server = build_app(server=get_server("neofoam_ui_test_badsave"), plugins=[])
     server.state.target_dir = str(tmp_path)
     server.controller.save_case()  # must not raise
 
@@ -146,7 +148,7 @@ def test_incomplete_save_is_reported_not_raised(tmp_path):
 
 def test_revalidate_reruns_without_resaving(tmp_path):
     solver = resolve_solver("incompressibleFluid")
-    server = build_app(server=get_server("neofoam_ui_test_reval"))
+    server = build_app(server=get_server("neofoam_ui_test_reval"), plugins=[])
     entries = server.controller.get_entries()
     defaults = tools.config_schema(solver, "transport_properties_config").defaults
     for entry in entries:

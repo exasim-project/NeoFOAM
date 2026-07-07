@@ -30,13 +30,14 @@ This module deliberately has no trame imports so it can be exercised headless.
 from __future__ import annotations
 
 import itertools
+import json
 import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from neofoam.workflow.paramspace import (
     YamlParamSpace,
@@ -46,12 +47,17 @@ from neofoam.workflow.paramspace import (
     write_sweep_csv,
 )
 from neofoam.workflow.rules import (
+    CAD_DIM,
+    DEFAULT_ENABLED,
     MESH_DIM,
     RuleRegistry,
     RuleSpec,
     SETUP_CONFIG_PATTERN,
     default_registry,
 )
+
+#: Rule that regenerates the STLs when a CAD axis is swept (opt-in, like post).
+CAD_RULE = "cad_geometry"
 
 #: Canvas node types rendered by the app's CustomNode templates.
 DIM_NODE_TYPE = "dim"
@@ -160,7 +166,7 @@ def rule_nodes(
         enabled: The selected rule names (default: the full default pipeline).
     """
     plan = (registry or default_registry()).plan(enabled)
-    setup_dims = sorted(d for d in dims if d != MESH_DIM)
+    setup_dims = sorted(d for d in dims if d not in (MESH_DIM, CAD_DIM))
 
     def resolve(spec: RuleSpec) -> tuple[list[str], list[str], list[str]]:
         """(cfg_dims, inputs, outputs) with plan-dependent patterns rendered."""
@@ -314,8 +320,17 @@ def cross_product(
     dim_order = sorted(dimensions)
     names_per_dim = [sorted(dimensions[dim]) for dim in dim_order]
     rows: list[dict[str, str]] = []
+    seen: dict[str, tuple[str, ...]] = {}
     for combo in itertools.product(*names_per_dim):
         case = "_".join(combo) or "default"
+        if case in seen:
+            msg = (
+                f"case-name collision: '{case}' produced by more than one variant "
+                f"combination ({seen[case]} and {combo}) — rename a variant to "
+                f"avoid '_' ambiguity"
+            )
+            raise ValueError(msg)
+        seen[case] = combo
         row = {case_col: case}
         row.update(zip(dim_order, combo))
         rows.append(row)
@@ -386,15 +401,38 @@ def validate_mesh_dimension(
                 raise ValueError(msg) from e
 
 
+def validate_cad_dimension(variants: Mapping[str, Any]) -> None:
+    """Validate the ``cad`` dimension's numeric parameter-map variants.
+
+    A CAD variant is a plain ``{alias: number}`` map (the parametric model's
+    driven dimensions); there is no config class to validate against, only the
+    numeric shape.
+
+    Raises:
+        ValueError: Naming the offending ``cad.variant`` (or its alias) when a
+            variant is not a mapping or carries a non-numeric value.
+    """
+    for name, payload in variants.items():
+        if not isinstance(payload, Mapping):
+            msg = f"cad variant '{name}' must map parameter aliases to numbers"
+            raise ValueError(msg)
+        for alias, value in payload.items():
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                msg = (
+                    f"cad variant '{name}.{alias}' must be a number, got "
+                    f"{type(value).__name__}"
+                )
+                raise ValueError(msg)
+
+
 def _short_validation_error(exc: Exception) -> str:
     """A one-line, user-facing message from a pydantic ``ValidationError``.
 
     Takes the first error's location + message (e.g. ``nu: Input should be
     greater than 0``); falls back to the exception text for non-pydantic errors.
     """
-    errors = getattr(exc, "errors", None)
-    if callable(errors):
-        detail = errors()
+    if isinstance(exc, ValidationError):
+        detail = exc.errors()
         if detail:
             first = detail[0]
             loc = ".".join(str(p) for p in first.get("loc", ())) or "value"
@@ -457,6 +495,7 @@ def sweep_snakefile(
     base_case: str | Path,
     dims: Sequence[str],
     *,
+    cad_model: str | None = None,
     registry: RuleRegistry | None = None,
     enabled: Sequence[str] | None = None,
 ) -> str:
@@ -467,15 +506,48 @@ def sweep_snakefile(
     (``write_if_changed`` keeps unchanged cases from re-running) and defines
     the plain globals the static ``.smk`` files consume — Snakemake's
     ``include:`` shares the Snakefile's namespace.
+
+    When ``cad_model`` is given the header also defines ``CAD_MODEL`` and the
+    keyed ``cad_axis`` the packaged ``cad_geometry.smk`` consumes (that rule's
+    include comes first in the mesh chain, ahead of blockMesh).
     """
     plan = (registry or default_registry()).plan(enabled)
     base = str(Path(base_case).resolve())
-    setup_dims = sorted(d for d in dims if d != MESH_DIM)
+    setup_dims = sorted(d for d in dims if d not in (MESH_DIM, CAD_DIM))
     includes = "\n".join(
         f'include: str(rules_dir() / "{spec.smk_file}")'
         for spec in plan.rules
         if spec.smk_file  # `all` is emitted inline below
     )
+    cad_global = (
+        f"\nCAD_MODEL = {json.dumps(cad_model)}" if cad_model is not None else ""
+    )
+    cad_axis = (
+        f'\ncad_axis = space.keyed("{CAD_DIM}", out_dir="configs")'
+        if cad_model is not None
+        else ""
+    )
+    # MESH_STEM is the mesh mini-case dir used verbatim as the mesh-chain rules'
+    # static `output:` (so it stays a literal wildcard path, never a lambda). It
+    # composes cad × mesh into `meshes/{cad}__{mesh}` when a CAD axis is present,
+    # and stays `meshes/{mesh}` otherwise; _mesh_case / _mesh_dir_of compute the
+    # concrete dirs for the input:/params: lambdas.
+    if cad_model is not None:
+        mesh_stem_block = (
+            'MESH_STEM = "meshes/{cad}__{mesh}"\n'
+            "def _mesh_case(wc):\n"
+            '    return f"meshes/{wc.cad}__{wc.mesh}"\n'
+            "def _mesh_dir_of(wc):\n"
+            '    return f"meshes/{cad_axis.of(wc)}__{mesh_axis.of(wc)}"'
+        )
+    else:
+        mesh_stem_block = (
+            'MESH_STEM = "meshes/{mesh}"\n'
+            "def _mesh_case(wc):\n"
+            '    return f"meshes/{wc.mesh}"\n'
+            "def _mesh_dir_of(wc):\n"
+            '    return f"meshes/{mesh_axis.of(wc)}"'
+        )
     return f'''# Generated by NeoFOAM — parameter sweep composed from the packaged rule
 # library (neofoam.workflow.rules; see the included .smk files for the rule
 # bodies). Run from this directory:  snakemake -n  (dry run),  snakemake -j4
@@ -483,10 +555,10 @@ def sweep_snakefile(
 from neofoam.workflow.paramspace import YamlParamSpace
 from neofoam.workflow.rules import rules_dir
 
-SOLVER = "{solver_name}"
+SOLVER = {json.dumps(solver_name)}
 # The CLI subcommand (`neofoam solver <cmd>`) — the solver name, lowercased.
-SOLVER_CMD = "{solver_name.lower()}"
-BASE_CASE = "{base}"
+SOLVER_CMD = {json.dumps(solver_name.lower())}
+BASE_CASE = {json.dumps(base)}{cad_global}
 SETUP_DIMS = {setup_dims!r}
 MESH_TOOL_INPUT = {plan.mesh_tool_input!r}
 MESH_DONE = "{plan.mesh_done}"
@@ -494,7 +566,8 @@ FINAL_PATTERN = "{plan.final_pattern}"
 
 space = YamlParamSpace("sweep.csv", "params.yaml")
 space.materialize({{"setup": SETUP_DIMS}}, out_dir="configs")
-mesh_axis = space.keyed("{MESH_DIM}", out_dir="configs")
+mesh_axis = space.keyed("{MESH_DIM}", out_dir="configs"){cad_axis}
+{mesh_stem_block}
 cases = space.cases
 
 {includes}
@@ -506,6 +579,33 @@ rule all:
     input:
         expand(FINAL_PATTERN, case=cases)
 '''
+
+
+def _check_composite_mesh_names(
+    dimensions: Mapping[str, Mapping[str, Any]],
+) -> None:
+    """Guard the composite ``meshes/{cad}__{mesh}`` mini-case keying.
+
+    With a CAD axis the mesh mini-case dir is ``f"{cad}__{mesh}"``; a variant
+    name may itself contain ``__``, so distinct ``(cad, mesh)`` pairs could
+    collapse to the same directory (and Snakemake would then mis-route the
+    wildcard split). Raise before any file is written, mirroring
+    :func:`cross_product`'s case-name guard.
+    """
+    cad_names = sorted(dimensions.get(CAD_DIM, {}))
+    mesh_names = sorted(dimensions.get(MESH_DIM, {})) or ["base"]
+    seen: dict[str, tuple[str, str]] = {}
+    for cad_name in cad_names:
+        for mesh_name in mesh_names:
+            key = f"{cad_name}__{mesh_name}"
+            if key in seen:
+                msg = (
+                    f"mesh-key collision: '{key}' from more than one cad/mesh "
+                    f"combination ({seen[key]} and {(cad_name, mesh_name)}) — "
+                    f"rename a variant to avoid '__' ambiguity"
+                )
+                raise ValueError(msg)
+            seen[key] = (cad_name, mesh_name)
 
 
 @dataclass(frozen=True)
@@ -526,28 +626,63 @@ def export_sweep(
     base_case: str | Path,
     dimensions: Mapping[str, dict[str, dict[str, Any]]],
     classes: Mapping[str, type[BaseModel]],
+    cad: Mapping[str, Mapping[str, Any]] | None = None,
     registry: RuleRegistry | None = None,
     enabled: Sequence[str] | None = None,
 ) -> SweepExport:
     """Write the runnable workflow directory for the current canvas.
 
     Validates every variant (the ``mesh`` dimension via
-    :func:`validate_mesh_dimension`, everything else against its config
-    class), builds the cross product and writes ``sweep.csv``, ``params.yaml``,
-    the ``Snakefile`` and the materialized configs into ``out_dir`` —
-    per-case ``configs/{case}/setup.json`` (mesh excluded: its payloads apply
-    in the mesh mini-case) plus per-variant ``configs/mesh/{variant}.json``
-    (an implicit empty ``base`` variant when the sweep has no mesh dimension,
-    so the mesh is still built once and shared). The directory is immediately
-    runnable with ``snakemake``.
+    :func:`validate_mesh_dimension`, the ``cad`` dimension via
+    :func:`validate_cad_dimension`, everything else against its config class),
+    builds the cross product and writes ``sweep.csv``, ``params.yaml``, the
+    ``Snakefile`` and the materialized configs into ``out_dir`` — per-case
+    ``configs/{case}/setup.json`` (mesh + cad excluded: they apply in the mesh
+    mini-case) plus per-variant ``configs/mesh/{variant}.json`` (an implicit
+    empty ``base`` variant when the sweep has no mesh dimension) and, when a CAD
+    axis is present, ``configs/cad/{variant}.json``. The directory is
+    immediately runnable with ``snakemake``.
+
+    Args:
+        cad: The CAD axis as ``{"cad": {"model": path, "variants": {name:
+            params}}}`` (the :meth:`SweepModel.cad_dimensions` shape). Empty or
+            ``None`` keeps today's mesh-only behaviour. When given, the
+            ``cad_geometry`` rule is enabled and the model path is threaded into
+            the Snakefile.
     """
-    case_dims = {d: v for d, v in dimensions.items() if d != MESH_DIM}
+    dimensions = {d: dict(v) for d, v in dimensions.items()}
+    info = (cad or {}).get(CAD_DIM) or {}
+    variants = info.get("variants")
+    if variants:
+        dimensions[CAD_DIM] = {k: dict(v) for k, v in variants.items()}
+    # A CAD axis exists only once it carries variants — an empty cad dict emits
+    # no CAD_MODEL / cad_axis / configs/cad and behaves like a mesh-only sweep.
+    has_cad = CAD_DIM in dimensions
+    cad_model: str | None = str(info["model"]) if has_cad else None
+    if has_cad:
+        validate_cad_dimension(dimensions[CAD_DIM])
+
+    case_dims = {d: v for d, v in dimensions.items() if d not in (MESH_DIM, CAD_DIM)}
     validate_dimensions(case_dims, classes)
     if MESH_DIM in dimensions:
         validate_mesh_dimension(dimensions[MESH_DIM], classes)
     if not dimensions:
         msg = "no sweep dimensions on the canvas — add at least one config dimension"
         raise ValueError(msg)
+    # Build the sweep rows before creating the output directory so a case-name
+    # collision aborts with nothing written to disk (no partial workflow dir).
+    rows = cross_product(dimensions)
+    if has_cad:
+        _check_composite_mesh_names(dimensions)
+
+    # The CAD chain is opt-in (like post): enable it only when a CAD axis is on
+    # the canvas so mesh-only sweeps stay untouched.
+    plan_enabled: Sequence[str] | None = enabled
+    if has_cad:
+        base_enabled = list(DEFAULT_ENABLED if enabled is None else enabled)
+        if CAD_RULE not in base_enabled:
+            base_enabled.append(CAD_RULE)
+        plan_enabled = base_enabled
 
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -555,7 +690,7 @@ def export_sweep(
     params_path = out / "params.yaml"
     snakefile_path = out / "Snakefile"
 
-    write_sweep_csv(sweep_path, cross_product(dimensions))
+    write_sweep_csv(sweep_path, rows)
     write_params_yaml(params_path, {d: dict(v) for d, v in dimensions.items()})
     write_if_changed(
         snakefile_path,
@@ -563,13 +698,14 @@ def export_sweep(
             solver_name,
             base_case,
             sorted(dimensions),
+            cad_model=cad_model,
             registry=registry,
-            enabled=enabled,
+            enabled=plan_enabled,
         ),
     )
 
     space = YamlParamSpace(sweep_path, params_path)
-    setup_dims = [d for d in space.dims if d != MESH_DIM]
+    setup_dims = [d for d in space.dims if d not in (MESH_DIM, CAD_DIM)]
     configs = space.materialize({SETUP_RULE: setup_dims}, out_dir=out / "configs")
     if MESH_DIM in dimensions:
         configs += space.materialize_dims([MESH_DIM], out_dir=out / "configs")
@@ -577,6 +713,8 @@ def export_sweep(
         implicit = out / "configs" / MESH_DIM / "base.json"
         if write_if_changed(implicit, "{}\n"):
             configs.append(implicit)
+    if has_cad:
+        configs += space.materialize_dims([CAD_DIM], out_dir=out / "configs")
 
     return SweepExport(
         out_dir=out,
@@ -595,6 +733,7 @@ class LoadedSweep:
     base_case: str
     dimensions: dict[str, dict[str, dict[str, Any]]]
     enabled: list[str]
+    cad_model: str = ""
 
 
 def load_sweep(
@@ -621,7 +760,7 @@ def load_sweep(
         msg = f"'{out}' is not an exported sweep (no params.yaml)"
         raise ValueError(msg)
     dimensions = read_params_yaml(params_path)
-    solver_name, base_case, enabled = _read_snakefile_header(
+    solver_name, base_case, enabled, cad_model = _read_snakefile_header(
         out / "Snakefile", registry or default_registry()
     )
     return LoadedSweep(
@@ -629,26 +768,36 @@ def load_sweep(
         base_case=base_case,
         dimensions=dimensions,
         enabled=enabled,
+        cad_model=cad_model,
     )
 
 
 def _read_snakefile_header(
     path: Path, registry: RuleRegistry
-) -> tuple[str, str, list[str]]:
-    """Recover ``(solver_name, base_case, enabled_rules)`` from a Snakefile.
+) -> tuple[str, str, list[str], str]:
+    """Recover ``(solver_name, base_case, enabled_rules, cad_model)`` from a Snakefile.
 
     The enabled rules are the ``include:``d ``.smk`` files mapped to rule names
-    via the registry, plus the always-inline ``all`` target. Missing/renamed
+    via the registry, plus the always-inline ``all`` target. ``cad_model`` is the
+    ``CAD_MODEL`` global (empty when the sweep has no CAD axis). Missing/renamed
     header values fall back to sensible defaults so a partial file still loads.
     """
     text = path.read_text() if path.is_file() else ""
 
+    # A full JSON/Python double-quoted string literal, escapes included — the
+    # inverse of the ``json.dumps`` the generator emits for these globals.
+    quoted = r'("(?:[^"\\]|\\.)*")'
+
     def match(pattern: str, default: str = "") -> str:
         found = re.search(pattern, text)
-        return found.group(1) if found else default
+        if not found:
+            return default
+        decoded = json.loads(found.group(1))
+        return str(decoded)
 
-    solver_name = match(r'SOLVER\s*=\s*"([^"]*)"') or "incompressibleFluid"
-    base_case = match(r'BASE_CASE\s*=\s*"([^"]*)"')
+    solver_name = match(rf"SOLVER\s*=\s*{quoted}") or "incompressibleFluid"
+    base_case = match(rf"BASE_CASE\s*=\s*{quoted}")
+    cad_model = match(rf"CAD_MODEL\s*=\s*{quoted}")
     by_smk = {
         registry.get(name).smk_file: name
         for name in registry.names
@@ -659,4 +808,4 @@ def _read_snakefile_header(
     # `all` is emitted inline (no include); it is always part of the pipeline.
     if "all" in registry.names and "all" not in enabled:
         enabled.append("all")
-    return solver_name, base_case, enabled
+    return solver_name, base_case, enabled, cad_model

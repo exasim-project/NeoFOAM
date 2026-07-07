@@ -111,6 +111,20 @@ def test_paramspace_resolves_cases(tmp_path: Path) -> None:
     assert space.instance({"case": "short_nu1"})["control"] == {"endTime": 1.0}
 
 
+def test_config_for_rejects_unknown_case_and_dimension(tmp_path: Path) -> None:
+    space = YamlParamSpace(*_write_space(tmp_path))
+    with pytest.raises(KeyError, match="unknown case 'nope'"):
+        space.config_for("nope")
+    with pytest.raises(ValueError, match="unknown dimension 'mesh'"):
+        space.config_for("long_nu1", dims=["mesh"])
+
+
+def test_instance_requires_a_case_wildcard(tmp_path: Path) -> None:
+    space = YamlParamSpace(*_write_space(tmp_path))
+    with pytest.raises(KeyError, match="carry no 'case'"):
+        space.instance({})
+
+
 def test_paramspace_validation_errors(tmp_path: Path) -> None:
     sweep, params = _write_space(tmp_path)
 

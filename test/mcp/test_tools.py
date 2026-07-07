@@ -58,13 +58,17 @@ def test_tool_catalog_lists_tools_with_step_schema_and_config(solver: Any) -> No
     assert {"blockMesh", "snappyHexMesh", "checkMesh"} <= set(by_name)
     # the preprocess.yaml entry schema (its ``tool`` key + options)
     block = by_name["blockMesh"]
-    assert "properties" in block.step_schema and "tool" in block.step_schema["properties"]
+    assert (
+        "properties" in block.step_schema and "tool" in block.step_schema["properties"]
+    )
     # blockMesh reads system/blockMeshDict, written by BlockMeshDictConfig
     assert block.dict_file == "system/blockMeshDict"
     assert block.config == "BlockMeshDictConfig"
     assert by_name["snappyHexMesh"].config == "SnappyHexMeshDictConfig"
     # checkMesh reads no dict
-    assert by_name["checkMesh"].dict_file is None and by_name["checkMesh"].config is None
+    assert (
+        by_name["checkMesh"].dict_file is None and by_name["checkMesh"].config is None
+    )
 
 
 def test_model_catalog_is_case_free_with_expected_names(solver: Any) -> None:
@@ -138,12 +142,18 @@ def _stage_mesh_dicts_with_u(tmp_path: Path, frontback_bc: str) -> Any:
     from neofoam.workflow.patch_set import PatchSet
     from neofoam.framework.solver.configurations import configurations
     from neofoam.io import write_configs
-    from neofoam.solver.incompressibleFluid.incompressibleFluid import incompressibleFluid
+    from neofoam.solver.incompressibleFluid.incompressibleFluid import (
+        incompressibleFluid,
+    )
 
-    ps = PatchSet.load(REPO_ROOT / "test" / "workflow" / "cases" / "tube_bank_manifest.json")
+    ps = PatchSet.load(
+        REPO_ROOT / "test" / "workflow" / "cases" / "tube_bank_manifest.json"
+    )
     u = configurations(incompressibleFluid)["UFieldConfig"](
         boundaryField={
-            p.name: {"type": frontback_bc if p.role.value == "empty" else "zeroGradient"}
+            p.name: {
+                "type": frontback_bc if p.role.value == "empty" else "zeroGradient"
+            }
             for p in ps.patches
         }
     )
@@ -195,7 +205,31 @@ def test_validate_case_requires_constant_g_when_boussinesq(
     from neofoam.io import write_configs
 
     write_configs([GravityConfig()], case_dir=tmp_path)
-    assert not any(f.file == "constant/g" for f in tools.validate_case(solver, str(tmp_path)).findings)
+    assert not any(
+        f.file == "constant/g"
+        for f in tools.validate_case(solver, str(tmp_path)).findings
+    )
+
+
+def test_validate_case_buoyant_p_needs_no_pfinal(solver: Any, tmp_path: Path) -> None:
+    """In a Boussinesq case the vestigial 'p' solver needs no 'pFinal' (p_rgh is solved).
+
+    The buoyantBoussinesq tutorials ship U/UFinal + p_rgh/p_rghFinal + a plain 'p'
+    solver with NO pFinal — the validator must not demand one; a genuinely missing
+    Final (here 'U' without 'UFinal') is still flagged.
+    """
+    _write(tmp_path / "constant" / "transportProperties", "beta 3e-3;\nTRef 300;\n")
+    _write(
+        tmp_path / "system" / "fvSolution",
+        "solvers{ p{ solver GAMG; smoother GaussSeidel; }\n"
+        "  p_rgh{ solver GAMG; smoother GaussSeidel; }\n"
+        "  p_rghFinal{ solver GAMG; smoother GaussSeidel; }\n"
+        "  U{ solver smoothSolver; } }\n",
+    )
+    findings = tools.validate_case(solver, str(tmp_path)).findings
+    msgs = [f.message for f in findings]
+    assert not any("pFinal" in m for m in msgs)  # p is vestigial → no pFinal needed
+    assert any("UFinal" in m for m in msgs)  # a real missing Final is still flagged
 
 
 def test_validate_case_flags_wall_function_in_laminar_case(

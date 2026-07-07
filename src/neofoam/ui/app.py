@@ -41,6 +41,7 @@ from neofoam.ui.geometry import (
     write_mesh_configs,
 )
 from neofoam.ui import review
+from neofoam.ui.plugins import StepContext, StepPlugin, discover_step_plugins
 from neofoam.ui.review import findings_to_rows
 from neofoam.ui.scaffold import scaffold_runnable_case
 from neofoam.ui.steps import Step, build_model_choices, build_steps
@@ -194,8 +195,18 @@ def _schema_key(entry: FormEntry) -> str:
     return "schema_" + entry.key.replace(":", "_")
 
 
-def build_app(server: Any = None, *, solver_name: str = "incompressibleFluid") -> Any:
-    """Construct the trame Server, state, layout and Save controller. Returns it."""
+def build_app(
+    server: Any = None,
+    *,
+    solver_name: str = "incompressibleFluid",
+    plugins: list[StepPlugin] | None = None,
+) -> Any:
+    """Construct the trame Server, state, layout and Save controller. Returns it.
+
+    ``plugins`` overrides step-plugin discovery (a test/embedding seam); by default
+    the ``neofoam.ui.steps`` entry points are used. Contributed steps are woven into
+    the sidebar and content area after the built-in steps are wired.
+    """
     from trame.app import get_server  # type: ignore  # untyped optional 'ui' dep
     from trame.ui.vuetify3 import SinglePageWithDrawerLayout  # type: ignore  # untyped dep
     from trame.widgets import client, html, vuetify3 as v3  # type: ignore  # untyped deps
@@ -211,7 +222,9 @@ def build_app(server: Any = None, *, solver_name: str = "incompressibleFluid") -
 
     solver = resolve_solver(solver_name)
     entries: list[FormEntry] = build_forms(solver)
-    steps = build_steps(solver, entries)
+    step_plugins = discover_step_plugins(plugins)
+    steps = build_steps(solver, entries, step_plugins)
+    plugin_by_id = {p.id: p for p in step_plugins}
     choices = build_model_choices(solver)
     required = [c for c in choices if c.required]
     optional = [c for c in choices if not c.required]
@@ -334,14 +347,33 @@ def build_app(server: Any = None, *, solver_name: str = "incompressibleFluid") -
     build_agent_panel(server, entries, solver)
     sweep_panel = SweepPanel(server, entries, solver, solver_name)
 
+    # Contributed steps (§ neofoam.ui.plugins): each seeds its own state +
+    # controllers now, and draws its panel in the content loop below.
+    ctx = StepContext(
+        server=server,
+        solver=solver,
+        solver_name=solver_name,
+        entries=entries,
+        json_forms=JsonForms,
+        v3=v3,
+        html=html,
+        client=client,
+        sweep=sweep_panel,
+        schema_key=_schema_key,
+    )
+    for plugin in step_plugins:
+        plugin.register(ctx)
+
     # ------------------------------------------------------------------ #
     # Layout                                                             #
     # ------------------------------------------------------------------ #
 
     def _step_header(step: Step) -> None:
+        _p = plugin_by_id.get(step.id)
+        caption = _p.caption if _p is not None else _STEP_CAPTIONS.get(step.id, "")
         html.Div(step.label, classes="text-h5 font-weight-bold nf-step-title")
         html.Div(
-            _STEP_CAPTIONS.get(step.id, ""),
+            caption,
             classes="text-body-2 text-medium-emphasis mb-5",
         )
 
@@ -619,9 +651,14 @@ def build_app(server: Any = None, *, solver_name: str = "incompressibleFluid") -
             with v3.VList(nav=True, density="comfortable", color="primary"):
                 v3.VListSubheader(solver_name)
                 for step in steps:
+                    _p = plugin_by_id.get(step.id)
                     v3.VListItem(
                         title=step.label,
-                        prepend_icon=_STEP_ICONS.get(step.id, "mdi-circle-outline"),
+                        prepend_icon=(
+                            _p.icon
+                            if _p is not None
+                            else _STEP_ICONS.get(step.id, "mdi-circle-outline")
+                        ),
                         rounded="lg",
                         active=(f"current_step === '{step.id}'",),
                         click=f"current_step = '{step.id}'",
@@ -668,6 +705,8 @@ def build_app(server: Any = None, *, solver_name: str = "incompressibleFluid") -
                         sweep_panel.render(JsonForms)
                     elif step.id == "review":
                         _review_panel()
+                    elif step.id in plugin_by_id:
+                        plugin_by_id[step.id].render(ctx)
                     if step.entry_keys:
                         with v3.VExpansionPanels():
                             for key in step.entry_keys:

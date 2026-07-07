@@ -18,7 +18,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
-from neofoam.workflow.rules import DEFAULT_ENABLED
+from neofoam.workflow.rules import DEFAULT_ENABLED, MESH_DIM
 from neofoam.workflow.sweep import cross_product, variant_errors
 
 __all__ = [
@@ -112,6 +112,14 @@ class DimensionState:
     whole form); ``schema`` is the JSONForms schema actually rendered (sliced to
     ``fields`` when picked). ``selected`` / ``rename`` are the active variant and
     the rename buffer.
+
+    ``kind`` is ``"config"`` for a solver-config dimension (validated against a
+    pydantic class), ``"cad"`` for the CAD geometry axis (a numeric parameter map
+    validated only structurally), or ``"mesh"`` for the reserved keyed mesh
+    dimension (variants are config-name-keyed ``{config_name: payload}`` maps, one
+    per mesh dict source, validated against each source's class);
+    ``model_path`` is the parametric model file for a ``cad`` dimension (empty
+    otherwise).
     """
 
     name: str
@@ -121,6 +129,8 @@ class DimensionState:
     selected: str
     fields: list[str] = field(default_factory=list)
     rename: str = ""
+    kind: str = "config"
+    model_path: str = ""
 
     def numeric_params(self) -> list[dict[str, Any]]:
         """The top-level numeric properties (the series generator's targets)."""
@@ -197,6 +207,135 @@ class SweepModel:
             rename="base",
         )
         self.dirty = True
+
+    def add_cad_dimension(
+        self,
+        name: str,
+        *,
+        title: str,
+        model_path: str,
+        params: dict[str, float],
+    ) -> None:
+        """Add the CAD geometry axis, seeded with a single ``base`` variant.
+
+        A CAD dimension is a numeric parameter map ``{alias: value}`` driving a
+        parametric model; its schema is synthesised as a flat numeric JSONForms
+        object (no solver config class). It is exempt from config validation.
+
+        Raises:
+            ValueError: If a dimension of this name is already present.
+        """
+        if name in self.dims:
+            msg = f"'{title}' is already on the canvas."
+            raise ValueError(msg)
+        schema: dict[str, Any] = {
+            "type": "object",
+            "properties": {
+                alias: {"type": "number", "title": alias} for alias in params
+            },
+        }
+        self.dims[name] = DimensionState(
+            name=name,
+            title=title,
+            schema=schema,
+            entries={"base": dict(params)},
+            selected="base",
+            fields=list(params),
+            rename="base",
+            kind="cad",
+            model_path=model_path,
+        )
+        self.dirty = True
+
+    def cad_dimensions(self) -> dict[str, dict[str, Any]]:
+        """The CAD axes as ``{name: {"model": path, "variants": {name: params}}}``.
+
+        The shape :func:`neofoam.workflow.sweep.export_sweep` consumes as its
+        ``cad`` kwarg; empty when no CAD dimension is on the canvas.
+        """
+        return {
+            name: {"model": d.model_path, "variants": dict(d.entries)}
+            for name, d in self.dims.items()
+            if d.kind == "cad"
+        }
+
+    def add_mesh_source(
+        self,
+        config_name: str,
+        *,
+        title: str,
+        schema: dict[str, Any],
+        seed: dict[str, Any],
+    ) -> None:
+        """Add a mesh dict (blockMesh/snappy) as a source of the keyed ``mesh`` dim.
+
+        The reserved ``mesh`` dimension is *config-name-keyed*: every variant
+        payload maps each source's config name to that source's full config
+        (``{"block_mesh_dict_config": {...}, "snappy_hex_mesh_dict_config":
+        {...}}``). Adding the first source creates the dimension (seeded with a
+        single ``base`` variant); a further source is grafted onto *every*
+        existing variant (seeded from ``seed``), and its schema property joins the
+        combined mesh form so both configs render together.
+
+        Raises:
+            ValueError: If this config is already a mesh source.
+        """
+        prop = {**schema, "title": title}
+        mesh = self.dims.get(MESH_DIM)
+        if mesh is None:
+            self.dims[MESH_DIM] = DimensionState(
+                name=MESH_DIM,
+                title="Mesh",
+                schema={"type": "object", "properties": {config_name: prop}},
+                entries={"base": {config_name: dict(seed)}},
+                selected="base",
+                rename="base",
+                kind="mesh",
+            )
+            self.dirty = True
+            return
+        if config_name in mesh.schema.get("properties", {}):
+            msg = f"'{title}' is already a mesh source."
+            raise ValueError(msg)
+        mesh.schema = {
+            **mesh.schema,
+            "properties": {**mesh.schema.get("properties", {}), config_name: prop},
+        }
+        for payload in mesh.entries.values():
+            payload.setdefault(config_name, dict(seed))
+        self.dirty = True
+
+    def remove_mesh_source(self, config_name: str) -> None:
+        """Drop one mesh source; remove the whole ``mesh`` dim if it was the last.
+
+        Raises:
+            ValueError: If there is no mesh dimension or this config is not a
+                source of it.
+        """
+        mesh = self.dims.get(MESH_DIM)
+        if mesh is None or config_name not in mesh.schema.get("properties", {}):
+            msg = f"'{config_name}' is not a mesh source."
+            raise ValueError(msg)
+        props = {
+            k: v
+            for k, v in mesh.schema.get("properties", {}).items()
+            if k != config_name
+        }
+        if not props:
+            del self.dims[MESH_DIM]
+            self.dirty = True
+            return
+        mesh.schema = {**mesh.schema, "properties": props}
+        for payload in mesh.entries.values():
+            payload.pop(config_name, None)
+        self.dirty = True
+
+    def mesh_sources(self) -> list[str]:
+        """The config names currently sourced by the ``mesh`` dimension (sorted)."""
+        mesh = self.dims.get(MESH_DIM)
+        if mesh is None:
+            return []
+        return sorted(mesh.schema.get("properties", {}))
 
     def remove_dimension(self, name: str) -> None:
         """Drop a dimension and its variants.
@@ -321,7 +460,11 @@ class SweepModel:
             rows = cross_product(dimensions) if dimensions else []
         except ValueError:
             dimensions, rows = {}, []
-        errors = variant_errors(dimensions, classes)
+        # CAD variants are numeric parameter maps with no solver config class, so
+        # they are exempt from config validation (they are always structurally
+        # valid); they still flow through the table + case count unchanged.
+        validated = {d: v for d, v in dimensions.items() if self.dims[d].kind != "cad"}
+        errors = variant_errors(validated, classes)
 
         # Factorized count: "2 × 3 = 6 case(s)".
         per_dim = [len(dimensions[d]) for d in sorted(dimensions)]
@@ -381,7 +524,7 @@ class SweepModel:
     def variant_error(self, name: str, classes: dict[str, Any]) -> str:
         """The selected variant's validation message (for the Configure alert)."""
         dim = self.dims.get(name)
-        if dim is None:
+        if dim is None or dim.kind == "cad":
             return ""
         errors = variant_errors(
             {name: {dim.selected: dim.entries[dim.selected]}}, classes

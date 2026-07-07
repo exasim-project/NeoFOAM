@@ -375,8 +375,14 @@ def validate_case(solver: Any, case_dir: str) -> ValidationReportDTO:
                 f"solver '{name}' is GAMG but has no smoother",
                 fix=f"add a smoother to '{name}' (e.g. GaussSeidel)",
             )
+    # In a buoyant (Boussinesq) case the working pressure is p_rgh, so a plain
+    # 'p' solver entry is vestigial (never solved in the PIMPLE loop) and needs no
+    # 'pFinal' — the buoyantBoussinesq tutorials ship exactly this shape.
+    buoyant = _is_boussinesq(case)
     for name in solvers:
-        if not name.endswith("Final") and f"{name}Final" not in solvers:
+        if name.endswith("Final") or (buoyant and name == "p"):
+            continue
+        if f"{name}Final" not in solvers:
             err(
                 "system/fvSolution",
                 f"PIMPLE needs a '{name}Final' solver entry (missing)",

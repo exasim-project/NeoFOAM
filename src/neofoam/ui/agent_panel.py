@@ -15,6 +15,7 @@ logic so it stays unit-testable without trame or a browser.
 
 from __future__ import annotations
 
+import os
 from typing import Any, Callable
 
 from neofoam.agent.case_fill import build_case_agent, case_spec_to_configs
@@ -29,7 +30,17 @@ from neofoam.ui.geometry_agent import (
 
 __all__ = ["build_agent_panel", "SUGGESTED_PROMPTS"]
 
+#: Default case-fill model. Overridable per session via ``NEOFOAM_CASE_MODEL`` —
+#: a stronger model (e.g. Sonnet) produces far fewer OpenFOAM-invalid-but-schema-
+#: valid dictionaries (malformed grad/div schemes, missing Final solvers), which
+#: the save-time validation cannot catch. Read at agent-build time so the env var
+#: can be set after import.
 _MODEL_NAME = "claude-haiku-4-5"
+
+
+def _case_model_name() -> str:
+    return os.environ.get("NEOFOAM_CASE_MODEL", _MODEL_NAME)
+
 
 SUGGESTED_PROMPTS = [
     "Lid-driven cavity, laminar; top patch movingWall, other patches fixedWalls.",
@@ -64,6 +75,19 @@ def build_agent_panel(
     agent_cache: dict[str, Any] = {}
     geo_cache: dict[str, Any] = {}
     history: list[Any] = []  # pydantic-ai message history → multi-turn refinement
+    # Per-step chat handlers (a plugin can own the prompt while its step is active).
+    chat_handlers: dict[str, Callable[[str], Any]] = {}
+
+    def register_chat_handler(step_id: str, handler: Callable[[str], Any]) -> None:
+        """Route the chat prompt to ``handler`` while ``step_id`` is the active step.
+
+        A step plugin (e.g. the CAD step) registers here so that typing in the shared
+        AI assistant drives *its* agent instead of the physics fill; the handler runs
+        for ``prompt`` and returns an optional assistant summary string.
+        """
+        chat_handlers[step_id] = handler
+
+    ctrl.register_chat_handler = register_chat_handler
 
     def _say(role: str, content: str) -> None:
         state.chat_log = [*state.chat_log, {"role": role, "content": content}]
@@ -99,10 +123,21 @@ def build_agent_panel(
         state.chat_input = ""
         state.ai_busy = True
         try:
+            # A step plugin can own the prompt while its step is active (e.g. CAD).
+            handler = chat_handlers.get(state.current_step)
+            if handler is not None:
+                try:
+                    reply = await handler(prompt)
+                except Exception as exc:  # noqa: BLE001 - report, don't crash the chat
+                    reply = f"**Failed:** {exc}"
+                if reply:
+                    _say("assistant", str(reply))
+                return
+
             try:
                 agent = agent_cache.get("agent")
                 if agent is None:
-                    agent = agent_factory(solver=solver, model_name=_MODEL_NAME)
+                    agent = agent_factory(solver=solver, model_name=_case_model_name())
                     agent_cache["agent"] = agent
             except Exception as exc:  # noqa: BLE001
                 _say(

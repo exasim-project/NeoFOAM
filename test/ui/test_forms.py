@@ -9,7 +9,7 @@ from neofoam.agent.case_fill import build_case_output_model
 from neofoam.agent.case_forms import INPUT_KEYS
 from neofoam.mcp import tools
 from neofoam.mcp.registry import resolve_solver
-from neofoam.ui.forms import build_forms
+from neofoam.ui.forms import build_field_forms, build_forms, build_mesh_forms
 
 
 def _solver():
@@ -256,3 +256,35 @@ def test_state_keys_unique():
     entries = build_forms(_solver())
     keys = [e.state_key for e in entries]
     assert len(keys) == len(set(keys))
+
+
+def test_build_mesh_forms_surfaces_sweepable_mesh_dicts_only():
+    solver = _solver()
+    mesh = {e.config_name: e for e in build_mesh_forms(solver)}
+    # blockMesh + snappy are surfaced (for the Parameters step's mesh dimension);
+    # preprocess.yaml (a YAML config, not a per-config sweep target) is not.
+    assert set(mesh) == {"block_mesh_dict_config", "snappy_hex_mesh_dict_config"}
+    for entry in mesh.values():
+        assert entry.kind == "dict"
+        assert entry.step == "mesh"  # never a wizard step
+        assert entry.owner_model is None
+        assert entry.schema.get("properties")
+    # And they are kept OUT of the physics wizard forms.
+    wizard = {e.config_name for e in build_forms(solver)}
+    assert wizard.isdisjoint(mesh)
+
+
+def test_build_field_forms_are_whole_field_dict_entries():
+    solver = _solver()
+    fields = {e.config_name: e for e in build_field_forms(solver)}
+    # One whole-field entry per 0/<field> config.
+    assert "u_field_config" in fields
+    for entry in fields.values():
+        assert entry.kind == "dict"  # whole config, not a split half
+        assert entry.step == "fields"
+        props = entry.schema.get("properties", {})
+        # Carries BOTH halves (input + boundaryField), unlike the wizard's split.
+        assert "boundaryField" in props
+    # T / p_rgh fields are owned by the optional Boussinesq model (gated).
+    assert fields["t_field_config"].owner_model == "boussinesq"
+    assert fields["u_field_config"].owner_model is None

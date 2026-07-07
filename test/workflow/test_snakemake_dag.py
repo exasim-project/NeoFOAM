@@ -68,3 +68,53 @@ def test_dag_graph_surfaces_snakemake_errors(tmp_path):
     (tmp_path / "Snakefile").write_text("this is not a Snakefile\n")
     with pytest.raises(RuntimeError, match="snakemake --dag failed"):
         dag_graph(tmp_path, "dag")
+
+
+@pytest.mark.skipif(
+    shutil.which("snakemake") is None or shutil.which("dot") is None,
+    reason="needs both snakemake and graphviz dot",
+)
+def test_graphviz_layout_places_dependents_below_dependencies(tmp_path):
+    (tmp_path / "Snakefile").write_text(
+        'rule all:\n    input:\n        "done"\n\n'
+        'rule work:\n    output:\n        "done"\n    shell:\n        "touch done"\n'
+    )
+    nodes, edges = dag_graph(tmp_path, "dag")
+    by_id = {n["id"]: n for n in nodes}
+    # An edge points dependency -> dependent; the `dot` layout must place the
+    # dependent lower on screen (larger y after the y-flip transform).
+    source, target = edges[0]["source"], edges[0]["target"]
+    assert by_id[target]["position"]["y"] > by_id[source]["position"]["y"]
+
+
+def test_snakemake_dot_reports_missing_binary(tmp_path, monkeypatch):
+    def _no_binary(*args, **kwargs):
+        raise FileNotFoundError("snakemake")
+
+    monkeypatch.setattr("neofoam.workflow.snakemake_dag.subprocess.run", _no_binary)
+    with pytest.raises(RuntimeError, match="not installed"):
+        snakemake_dot(tmp_path, "dag")
+
+
+def test_dag_graph_falls_back_to_layered_layout_without_dot(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        "neofoam.workflow.snakemake_dag.snakemake_dot", lambda *a, **k: _DOT
+    )
+    # No `dot` binary → _graphviz_layout returns None and dag_graph uses the
+    # pure-Python layered fallback, which still orders dependents below deps.
+    monkeypatch.setattr(
+        "neofoam.workflow.snakemake_dag.shutil.which", lambda name: None
+    )
+    nodes, _ = dag_graph(tmp_path, "dag")
+    by_id = {n["id"]: n for n in nodes}
+    assert (
+        by_id["0"]["position"]["y"]
+        > by_id["1"]["position"]["y"]
+        > by_id["2"]["position"]["y"]
+    )
+
+
+def test_parse_dot_falls_back_on_malformed_color():
+    dot = 'digraph {\n\t0[label = "x", color = "garbage", style="rounded"];\n}\n'
+    nodes, _ = parse_dot(dot)
+    assert nodes["0"]["color"] == "#888888"

@@ -157,6 +157,45 @@ def test_apply_configs_rejects_unknown_or_invalid(tmp_path: Path) -> None:
         )
 
 
+def test_apply_configs_rejects_config_without_file_binding(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # A config class with no @IOStrategy binding (io_config is None) has no file
+    # to write, so it cannot be swept.
+    from neofoam.io import BaseConfig
+    from neofoam.workflow import sweep_runner
+
+    class _NoFile(BaseConfig):
+        x: int = 1
+
+    monkeypatch.setattr(
+        sweep_runner, "config_classes_by_name", lambda solver: {"no_file": _NoFile}
+    )
+    with pytest.raises(ValueError, match="cannot be swept"):
+        apply_configs(None, tmp_path, {"no_file": {}})
+
+
+def test_load_payloads_rejects_non_mapping_json(tmp_path: Path) -> None:
+    from neofoam.workflow.sweep_runner import _load_payloads
+
+    config_json = tmp_path / "setup.json"
+    config_json.write_text("[1, 2, 3]")
+    with pytest.raises(ValueError, match="mapping of config payloads"):
+        _load_payloads(config_json)
+
+
+def test_clone_case_wipes_existing_dest(tmp_path: Path) -> None:
+    base = _make_base(tmp_path)
+    dest = tmp_path / "cases" / "clone"
+    clone_case(base, dest)
+    stray = dest / "stray.txt"
+    stray.write_text("leftover from a previous run")
+
+    clone_case(base, dest)
+    assert not stray.exists()
+    assert (dest / "constant" / "transportProperties").is_file()
+
+
 def _write_json(tmp_path: Path, payload: dict[str, dict[str, object]]) -> Path:
     path = tmp_path / "setup.json"
     path.write_text(json.dumps(payload))
@@ -321,6 +360,157 @@ def test_setup_case_missing_mesh_src_errors(tmp_path: Path) -> None:
             _write_json(tmp_path, {}),
             mesh_src=tmp_path / "meshes" / "nope",
         )
+
+
+# --- CAD geometry axis: run_cad (FreeCADParametricModel stubbed) -------------
+
+
+class _StubParametricModel:
+    """A stand-in for foamcadagent's FreeCADParametricModel (no FreeCAD needed)."""
+
+    def __init__(self, path: str) -> None:
+        self.path = path
+        self.applied: dict[str, float] = {}
+        self.surface_names: object = "unset"
+        self.bc_labels: object = "unset"
+
+    def update(self, params: dict[str, float]) -> "_StubParametricModel":
+        self.applied = dict(params)
+        return self
+
+    def write_surfaces(
+        self, case_dir: object, names: object = None, **_: object
+    ) -> None:
+        self.surface_names = names
+        tri = Path(str(case_dir)) / "constant" / "triSurface"
+        tri.mkdir(parents=True, exist_ok=True)
+        (tri / "tubes.stl").write_text("solid tubes\nendsolid tubes\n")
+
+    def export_bc_surfaces(self, case_dir: object, labels: object) -> None:
+        self.bc_labels = labels
+        tri = Path(str(case_dir)) / "constant" / "triSurface"
+        tri.mkdir(parents=True, exist_ok=True)
+        (tri / "inlet.stl").write_text("solid inlet\nendsolid inlet\n")
+
+
+def test_run_cad_reads_params_updates_model_and_writes_stamp(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from neofoam.workflow import sweep_runner
+
+    made: dict[str, _StubParametricModel] = {}
+
+    def _fake_model(model: str) -> _StubParametricModel:
+        stub = _StubParametricModel(model)
+        made["stub"] = stub
+        return stub
+
+    monkeypatch.setattr(sweep_runner, "_load_parametric_model", _fake_model)
+
+    params_json = tmp_path / "d6.json"
+    params_json.write_text(json.dumps({"tube_d": 6.0, "n_tubes": 8}))
+    case = tmp_path / "meshes" / "coarse"
+    stamp = case / "constant" / "triSurface" / ".cad.done"
+
+    rc = main(
+        [
+            "cad",
+            "--model",
+            "geometry/design.FCStd",
+            "--params",
+            str(params_json),
+            "--case",
+            str(case),
+            "--stamp",
+            str(stamp),
+        ]
+    )
+    assert rc == 0
+    stub = made["stub"]
+    assert stub.path == "geometry/design.FCStd"
+    assert stub.applied == {"tube_d": 6.0, "n_tubes": 8}
+    # Fallback (no --names/--labels): a single merged STL (names=None), NOT a
+    # per-patch split.
+    assert stub.surface_names is None
+    assert (case / "constant" / "triSurface" / "tubes.stl").is_file()
+    stamped = json.loads(stamp.read_text())
+    assert stamped["model"] == "geometry/design.FCStd"
+    assert stamped["params"] == {"tube_d": 6.0, "n_tubes": 8}
+
+
+def test_run_cad_names_map_splits_per_patch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from neofoam.workflow import sweep_runner
+
+    made: dict[str, _StubParametricModel] = {}
+
+    def _fake_model(model: str) -> _StubParametricModel:
+        made["stub"] = _StubParametricModel(model)
+        return made["stub"]
+
+    monkeypatch.setattr(sweep_runner, "_load_parametric_model", _fake_model)
+
+    params_json = tmp_path / "d6.json"
+    params_json.write_text(json.dumps({"tube_d": 6.0}))
+    case = tmp_path / "meshes" / "coarse"
+
+    rc = main(
+        [
+            "cad",
+            "--model",
+            "design.FCStd",
+            "--params",
+            str(params_json),
+            "--case",
+            str(case),
+            "--names",
+            json.dumps({"inlet": "Inlet", "outlet": "Outlet"}),
+        ]
+    )
+    assert rc == 0
+    # The selector map is forwarded to write_surfaces → one STL per patch.
+    assert made["stub"].surface_names == {"inlet": "Inlet", "outlet": "Outlet"}
+
+
+def test_run_cad_rejects_non_numeric_params(tmp_path: Path) -> None:
+    from neofoam.workflow.sweep_runner import run_cad
+
+    bad = tmp_path / "bad.json"
+    bad.write_text(json.dumps({"tube_d": "wide"}))
+    with pytest.raises(ValueError, match="must be a number"):
+        run_cad("design.FCStd", bad, tmp_path / "meshes" / "x")
+
+
+def test_run_cad_rejects_non_mapping_params(tmp_path: Path) -> None:
+    from neofoam.workflow.sweep_runner import run_cad
+
+    bad = tmp_path / "list.json"
+    bad.write_text(json.dumps([1, 2, 3]))
+    with pytest.raises(ValueError, match="mapping"):
+        run_cad("design.FCStd", bad, tmp_path / "meshes" / "x")
+
+
+def test_run_cad_missing_foamcadagent_gives_install_hint(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import builtins
+
+    from neofoam.workflow import sweep_runner
+
+    real_import = builtins.__import__
+
+    def _blocked(name: str, *args: object, **kwargs: object) -> object:
+        if name.startswith("foamcadagent"):
+            raise ImportError("no foamcadagent here")
+        return real_import(name, *args, **kwargs)  # type: ignore[arg-type]
+
+    monkeypatch.setattr(builtins, "__import__", _blocked)
+
+    good = tmp_path / "d6.json"
+    good.write_text(json.dumps({"tube_d": 6.0}))
+    with pytest.raises(ImportError, match="foamcad"):
+        sweep_runner.run_cad("design.FCStd", good, tmp_path / "meshes" / "x")
 
 
 @pytest.mark.slow

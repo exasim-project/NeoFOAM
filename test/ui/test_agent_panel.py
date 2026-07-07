@@ -214,6 +214,38 @@ def test_geometry_fill_skipped_when_no_patches():
     assert stub_geo.calls == []
 
 
+def test_chat_handler_owns_prompt_for_its_step():
+    solver = _solver()
+    server = _server()
+    calls: list[str] = []
+
+    async def handler(prompt: str) -> str:
+        calls.append(prompt)
+        return "handled: " + prompt
+
+    send = build_agent_panel(
+        server,
+        build_forms(solver),
+        solver,
+        agent_factory=lambda *, solver, model_name: _StubAgent(
+            _prebuilt_case_spec(solver)
+        ),
+    )
+    server.controller.register_chat_handler("cad", handler)
+
+    # Off the handler's step → the physics fill runs; the handler is untouched.
+    server.state.current_step = "models"
+    asyncio.run(send("fill physics"))
+    assert calls == []
+
+    # On the handler's step → it owns the prompt and its reply is logged.
+    server.state.current_step = "cad"
+    asyncio.run(send("a tube bank"))
+    assert calls == ["a tube bank"]
+    assert server.state.chat_log[-1]["content"] == "handled: a tube bank"
+    assert server.state.ai_busy is False
+
+
 def test_busy_true_during_run():
     solver = _solver()
     server = _server()

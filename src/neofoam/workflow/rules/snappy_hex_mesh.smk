@@ -2,17 +2,19 @@
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 #
 # Refine/snap the variant's mesh around the STL surfaces (single-tool slice;
-# resumes from the constant/polyMesh its predecessor left on disk).
-# Consumes header globals: BASE_CASE, MESH_TOOL_INPUT.
+# resumes from the constant/polyMesh its predecessor left on disk). Keyed by
+# MESH_STEM (`{cad}__{mesh}` with a CAD axis, else `{mesh}`).
+# Consumes header globals: BASE_CASE, MESH_STEM, _mesh_case, MESH_TOOL_INPUT.
 rule snappyHexMesh:
     input:
-        lambda wc: f"meshes/{wc.mesh}/{MESH_TOOL_INPUT['snappyHexMesh']}"
+        MESH_STEM + "/" + MESH_TOOL_INPUT['snappyHexMesh']
     output:
-        "meshes/{mesh}/.snappyHexMesh.done"
+        MESH_STEM + "/.snappyHexMesh.done"
     params:
         base=lambda wc: BASE_CASE,
+        case=lambda wc: _mesh_case(wc),
     shell:
         "python -m neofoam.workflow.sweep_runner tool"
         " --tool snappyHexMesh --base '{params.base}'"
-        " --case 'meshes/{wildcards.mesh}' --stamp '{output}'"
-        " > 'meshes/{wildcards.mesh}/log.snappyHexMesh' 2>&1"
+        " --case '{params.case}' --stamp '{output}'"
+        " > '{params.case}/log.snappyHexMesh' 2>&1"

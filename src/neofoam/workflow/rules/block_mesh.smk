@@ -2,17 +2,19 @@
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 #
 # Build the background mesh in the staged variant dir (single-tool
-# preprocess.yaml slice; options come from the base case's entry).
-# Consumes header globals: BASE_CASE, MESH_TOOL_INPUT.
+# preprocess.yaml slice; options come from the base case's entry). Keyed by
+# MESH_STEM (`{cad}__{mesh}` with a CAD axis, else `{mesh}`).
+# Consumes header globals: BASE_CASE, MESH_STEM, _mesh_case, MESH_TOOL_INPUT.
 rule blockMesh:
     input:
-        lambda wc: f"meshes/{wc.mesh}/{MESH_TOOL_INPUT['blockMesh']}"
+        MESH_STEM + "/" + MESH_TOOL_INPUT['blockMesh']
     output:
-        "meshes/{mesh}/.blockMesh.done"
+        MESH_STEM + "/.blockMesh.done"
     params:
         base=lambda wc: BASE_CASE,
+        case=lambda wc: _mesh_case(wc),
     shell:
         "python -m neofoam.workflow.sweep_runner tool"
         " --tool blockMesh --base '{params.base}'"
-        " --case 'meshes/{wildcards.mesh}' --stamp '{output}'"
-        " > 'meshes/{wildcards.mesh}/log.blockMesh' 2>&1"
+        " --case '{params.case}' --stamp '{output}'"
+        " > '{params.case}/log.blockMesh' 2>&1"

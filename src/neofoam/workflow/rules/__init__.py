@@ -30,6 +30,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 __all__ = [
+    "CAD_CONFIG_PATTERN",
+    "CAD_DIM",
+    "CAD_STAMP",
     "DEFAULT_ENABLED",
     "MESH_CONFIG_PATTERN",
     "MESH_DIM",
@@ -48,9 +51,22 @@ __all__ = [
 #: The reserved keyed dimension: mesh variants (params.yaml key / sweep column).
 MESH_DIM = "mesh"
 
-#: File patterns of the pipeline ({case} = sweep case, {mesh} = mesh variant).
+#: The reserved keyed dimension: CAD geometry variants — an independent,
+#: STL-producing axis upstream of the mesh chain (composes as ``cad × mesh``).
+CAD_DIM = "cad"
+
+# File patterns of the pipeline ({case} = sweep case, {mesh} = mesh variant).
+# These stay single-``{mesh}`` for the overview canvas (which has no cad node);
+# the runtime Snakefile composes the real mesh mini-case dir as ``MESH_STEM``
+# (``meshes/{cad}__{mesh}`` when a CAD axis is present) in its header, and the
+# composite graph is what ``snakemake --dag`` renders in the DAG tab.
 MESH_CONFIG_PATTERN = "configs/mesh/{mesh}.json"
 MESH_STAGE_STAMP = ".staged.json"  # meshes/{mesh}/.staged.json
+CAD_CONFIG_PATTERN = "configs/cad/{cad}.json"
+#: The cad tool's per-variant stamp, relative to ``meshes/{mesh}/``. It sits in
+#: the STL directory the CAD run populates, so blockMesh chaining off it also
+#: expresses "the surfaces are on disk".
+CAD_STAMP = "constant/triSurface/.cad.done"
 SETUP_CONFIG_PATTERN = "configs/{case}/setup.json"
 SETUP_STAMP_PATTERN = "cases/{case}/.applied.json"
 RUN_DONE_PATTERN = "cases/{case}/done"
@@ -75,6 +91,11 @@ class RuleSpec:
         consumes_case_dims: setup — gets every non-mesh dimension as a config port.
         consumes_mesh_dim: setup_mesh — gets the mesh dimension's config port.
         creates_mesh: valid start of the mesh tool chain (blockMesh).
+        produces_geometry: writes the STLs the mesh chain consumes (cad_geometry).
+            Such a rule may precede the mesh creator in the chain even though it
+            does not itself create a mesh.
+        stamp_name: Override for the per-variant stamp basename (relative to
+            ``meshes/{mesh}/``); defaults to ``.{name}.done``.
         title: Canvas display label.
     """
 
@@ -86,6 +107,8 @@ class RuleSpec:
     consumes_case_dims: bool = False
     consumes_mesh_dim: bool = False
     creates_mesh: bool = False
+    produces_geometry: bool = False
+    stamp_name: str = ""
     title: str = ""
 
     @property
@@ -96,7 +119,7 @@ class RuleSpec:
     @property
     def stamp(self) -> str:
         """The per-variant stamp a mesh tool writes (``.blockMesh.done``)."""
-        return f".{self.name}.done"
+        return self.stamp_name or f".{self.name}.done"
 
 
 @dataclass(frozen=True)
@@ -173,9 +196,14 @@ class RuleRegistry:
         if not chain:
             msg = "the mesh chain needs at least one mesh tool rule (e.g. blockMesh)"
             raise ValueError(msg)
-        if not chain[0].creates_mesh:
+        # Leading geometry producers (cad_geometry) write the STLs the chain
+        # meshes; the first tool that is NOT a geometry producer must create the
+        # mesh (setup_mesh stages a clean variant).
+        non_geometry = [spec for spec in chain if not spec.produces_geometry]
+        if not non_geometry or not non_geometry[0].creates_mesh:
+            offender = non_geometry[0] if non_geometry else chain[0]
             msg = (
-                f"the mesh chain starts at '{chain[0].name}', which does not create "
+                f"the mesh chain starts at '{offender.name}', which does not create "
                 f"a mesh — setup_mesh stages a clean variant, so the first tool must "
                 f"be a mesh creator (e.g. blockMesh)"
             )
@@ -232,6 +260,16 @@ def default_registry() -> RuleRegistry:
                 keyed_by=MESH_DIM,
                 consumes_mesh_dim=True,
                 title="stage mesh variant",
+            ),
+            RuleSpec(
+                name="cad_geometry",
+                smk_file="cad_geometry.smk",
+                inputs=(f"meshes/{{mesh}}/{MESH_STAGE_STAMP}",),
+                outputs=(f"meshes/{{mesh}}/{CAD_STAMP}",),
+                keyed_by=MESH_DIM,
+                produces_geometry=True,
+                stamp_name=CAD_STAMP,
+                title="CAD geometry",
             ),
             RuleSpec(
                 name="blockMesh",

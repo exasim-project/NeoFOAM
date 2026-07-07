@@ -25,6 +25,8 @@ from neofoam.mcp import tools
 __all__ = [
     "FormEntry",
     "build_forms",
+    "build_field_forms",
+    "build_mesh_forms",
     "humanize",
     "inline_refs",
     "jsonforms_schema",
@@ -39,6 +41,13 @@ _BC_KEYS = ("boundaryField",)
 # geometry→mesh workflow), not the physics case wizard. They also aren't writable via
 # write_configs' merged path (preprocess.yaml uses YAMLStrategy). Exclude them.
 _MESH_FILES = frozenset({"blockMeshDict", "snappyHexMeshDict", "preprocess.yaml"})
+
+# The subset of mesh dicts that are per-config *sweepable*: OpenFOAM dict configs
+# with a real ``@IOStrategy`` file binding (``write_configs`` writes them cleanly).
+# ``preprocess.yaml`` is excluded — it uses ``YAMLStrategy`` and is not a solver
+# config the sweep applies. These feed the Parameters step's keyed mesh dimension
+# only (never the physics wizard); see :func:`build_mesh_forms`.
+_SWEEPABLE_MESH_FILES = frozenset({"blockMeshDict", "snappyHexMeshDict"})
 
 
 @dataclass(frozen=True)
@@ -413,6 +422,80 @@ def build_forms(solver: Any) -> list[FormEntry]:
                     cls=cls,
                 )
             )
+    return entries
+
+
+def build_mesh_forms(solver: Any) -> list[FormEntry]:
+    """:class:`FormEntry` descriptors for the sweepable *mesh* dicts.
+
+    These are the ``blockMeshDict`` / ``snappyHexMeshDict`` configs that
+    :func:`build_forms` deliberately drops from the physics wizard
+    (``_MESH_FILES``). The Parameters step surfaces them as sources of its keyed
+    ``mesh`` dimension, so it needs their titles + JSONForms schemas; every entry
+    is a plain ``dict``-kind ``FormEntry`` with ``step="mesh"`` (never a wizard
+    step) and no owner model. Same shape as a wizard dict entry, so the sweep
+    palette can treat them uniformly.
+    """
+    cfgs = configurations(solver)
+    entries: list[FormEntry] = []
+    for info in tools.list_configs(solver):
+        base = info.file.rsplit("/", 1)[-1] if info.file else ""
+        if base not in _SWEEPABLE_MESH_FILES:
+            continue
+        dto = tools.config_schema(solver, info.name)
+        entries.append(
+            FormEntry(
+                key=f"dict:{info.cls_name}",
+                config_name=info.name,
+                cls_name=info.cls_name,
+                title=_dict_title(info.cls_name, info.file),
+                schema=jsonforms_schema(dto.json_schema),
+                defaults=dto.defaults,
+                state_key=f"form_{info.name}",
+                kind="dict",
+                step="mesh",
+                owner_model=None,
+                cls=cfgs[info.cls_name],
+            )
+        )
+    return entries
+
+
+def build_field_forms(solver: Any) -> list[FormEntry]:
+    """:class:`FormEntry` descriptors for the *whole* ``0/<field>`` configs.
+
+    The wizard splits each field config into an *input* half (``field_in``) and a
+    *boundary-conditions* half (``field_bc``) that render in separate steps. The
+    Parameters step, though, sweeps a config as one unit (``apply_configs`` writes
+    the whole ``0/<field>`` file), so it needs a single ``dict``-kind entry per
+    field carrying the full schema (``dimensions`` + ``internalField`` +
+    ``boundaryField``). That is what this builds — one whole-field entry per
+    ``0/<name>`` config, ``step="fields"``, so a case author can sweep a boundary
+    value (e.g. the inlet velocity) as its own dimension.
+    """
+    cfgs = configurations(solver)
+    owner = _owner_by_cls_name(solver)
+    entries: list[FormEntry] = []
+    for info in tools.list_configs(solver):
+        if not (info.file and info.file.startswith("0/")):
+            continue
+        dto = tools.config_schema(solver, info.name)
+        fname = field_name(cfgs[info.cls_name])
+        entries.append(
+            FormEntry(
+                key=f"dict:{info.cls_name}",
+                config_name=info.name,
+                cls_name=info.cls_name,
+                title=f"{fname} — field",
+                schema=jsonforms_schema(dto.json_schema),
+                defaults=dto.defaults,
+                state_key=f"form_{info.name}",
+                kind="dict",
+                step="fields",
+                owner_model=owner.get(info.cls_name),
+                cls=cfgs[info.cls_name],
+            )
+        )
     return entries
 
 

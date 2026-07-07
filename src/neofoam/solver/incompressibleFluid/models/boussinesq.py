@@ -286,9 +286,7 @@ def build(configs: BoussinesqConfig) -> list[object]:
         )
         t_ref = pyf.dimensionedScalar("TRef", pyf.dimTemperature, configs.TRef)
         one = pyf.dimensionedScalar("one", pyf.dimless, 1.0)
-        return volScalarField(
-            pyf.Word("rhok"), one - beta * (temperature - t_ref)
-        )
+        return volScalarField(pyf.Word("rhok"), one - beta * (temperature - t_ref))
 
     def _gh_ref(context: dict[str, Any]) -> tuple[Any, Any]:
         mesh = context["mesh"]
@@ -336,7 +334,9 @@ def build(configs: BoussinesqConfig) -> list[object]:
 
 
 @boussinesq.operation(operation_number="2.5", depends_on=["momentum"])
-@BoussinesqFvSchemes.add(ddt="default", div="div(phi,T)", laplacian="default")
+@BoussinesqFvSchemes.add(
+    ddt="default", div="div(phi,T)", grad="grad(T)", laplacian="default"
+)
 @BoussinesqFvSolution.add("T")
 def solve_energy(
     self: Any,

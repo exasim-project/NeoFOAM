@@ -35,7 +35,7 @@ from pathlib import Path
 from typing import Any
 
 from neofoam.io.pydantic_schema import slice_schema
-from neofoam.ui.forms import FormEntry
+from neofoam.ui.forms import FormEntry, build_field_forms, build_mesh_forms
 from neofoam.ui.sweep_model import DimensionState, SweepModel, series_values
 from neofoam.workflow.rules import DEFAULT_ENABLED, default_registry
 from neofoam.workflow.snakemake_dag import dag_graph
@@ -117,6 +117,17 @@ class SweepPanel:
         self._dims: dict[str, FormEntry] = {
             e.config_name: e for e in entries if e.kind == "dict"
         }
+        # Sweepable mesh dicts (blockMesh/snappy) — sources of the keyed ``mesh``
+        # dimension, kept out of the physics wizard (see forms._MESH_FILES).
+        self._mesh_dims: dict[str, FormEntry] = {
+            e.config_name: e for e in build_mesh_forms(solver)
+        }
+        # Whole ``0/<field>`` configs — sweepable boundary/field values (e.g. the
+        # inlet velocity). Regular per-case dimensions (setup.json), unlike the
+        # keyed mesh dicts; the wizard forms only carry their split halves.
+        self._field_dims: dict[str, FormEntry] = {
+            e.config_name: e for e in build_field_forms(solver)
+        }
         self._editor: Any = None
         self._dag_view: Any = None
         self._fit_task: Any = None
@@ -138,6 +149,19 @@ class SweepPanel:
             {"title": e.title, "value": name} for name, e in sorted(self._dims.items())
         ]
         state.sweep_dims_on_canvas = []
+        # Mesh-source palette: the blockMesh/snappy dicts feeding the keyed mesh
+        # dimension, and which of them are currently on the canvas.
+        state.sweep_mesh_palette = [
+            {"title": e.title, "value": name}
+            for name, e in sorted(self._mesh_dims.items())
+        ]
+        state.sweep_mesh_on_canvas = []
+        # Field / boundary-condition palette (whole 0/<field> configs).
+        state.sweep_field_palette = [
+            {"title": e.title, "value": name, "owner": e.owner_model or ""}
+            for name, e in sorted(self._field_dims.items())
+        ]
+        state.sweep_field_on_canvas = []
         state.sweep_rule_palette = self._rule_palette()
         state.sweep_out_dir = ""
         state.sweep_status = ""
@@ -199,6 +223,10 @@ class SweepPanel:
 
         ctrl = server.controller
         ctrl.sweep_add_dimension = self.add_dimension
+        ctrl.sweep_add_cad_dimension = self.add_cad_dimension
+        ctrl.sweep_add_mesh_source = self.add_mesh_source
+        ctrl.sweep_remove_mesh_source = self.remove_mesh_source
+        ctrl.sweep_add_field_source = self.add_field_source
         ctrl.sweep_remove_dimension = self.remove_dimension
         ctrl.sweep_toggle_dimension = self.toggle_dimension
         ctrl.sweep_toggle_rule = self.toggle_rule
@@ -299,6 +327,10 @@ class SweepPanel:
         nodes = [*dim_nodes, *rules]
         self._editor.graph = {"nodes": nodes, "edges": autowire(nodes)}
         self._server.state.sweep_dims_on_canvas = sorted(s.name for s in states)
+        self._server.state.sweep_mesh_on_canvas = self._model.mesh_sources()
+        self._server.state.sweep_field_on_canvas = sorted(
+            s.name for s in states if s.name in self._field_dims
+        )
 
     def _write_dim_node(self, name: str, *, echo: bool) -> None:
         """Sync one dimension node's server-side data from the model.
@@ -372,12 +404,13 @@ class SweepPanel:
             for d in sorted(self._model.sorted_dims(), key=lambda d: d.title)
         ]
 
-    def _sync_cfg_mirror(self, *, push_data: bool = True) -> None:
+    def _sync_cfg_mirror(self) -> None:
         """Mirror the active dimension's model state into the Configure state.
 
-        ``push_data=False`` skips re-pushing the form payload (used after an
-        in-form edit, which the client already mirrors — re-pushing would fight
-        the user's cursor, the snakeflow no-echo rule).
+        Every call re-pushes the selected variant's form payload. The no-echo
+        rule (an in-form edit must not fight the user's cursor) is realized by
+        ``_on_variant_edit`` deliberately *not* calling this method — the client
+        already mirrors that edit locally.
         """
         state = self._server.state
         state.sweep_cfg_chips = self._cfg_chips()
@@ -408,8 +441,7 @@ class SweepPanel:
         # V1: the active variant's validation message (switching variants must
         # refresh the badge even without a full table recompute).
         state.sweep_cfg_error = self._model.variant_error(dim.name, self._classes)
-        if push_data:
-            state.sweep_cfg_data = dict(dim.entries[dim.selected])
+        state.sweep_cfg_data = dict(dim.entries[dim.selected])
 
     def select_cfg(self, name: str) -> None:
         """Configure-tab selector: make ``name`` the active dimension."""
@@ -427,20 +459,18 @@ class SweepPanel:
         self._sync_cfg_mirror()
 
     def cfg_variant_select(self, name: str) -> None:
+        # The node handler already mirrors the active dimension (the Configure
+        # tab always operates on it), so no extra sync is needed here.
         self._on_variant_select(self._cfg_node_id(), name)
-        self._sync_cfg_mirror()
 
     def cfg_variant_add(self) -> None:
         self._on_variant_add(self._cfg_node_id())
-        self._sync_cfg_mirror()
 
     def cfg_variant_delete(self) -> None:
         self._on_variant_delete(self._cfg_node_id())
-        self._sync_cfg_mirror()
 
     def cfg_variant_rename(self) -> None:
         self._on_variant_rename(self._cfg_node_id())
-        self._sync_cfg_mirror()
 
     def cfg_rename_buffer(self, value: str) -> None:
         self._on_rename_buffer(self._cfg_node_id(), value)
@@ -516,6 +546,140 @@ class SweepPanel:
         self._sync_cfg_mirror()
         self._editor.fit_view()  # bring the new node into the viewport
         self._notify(message=f"Added dimension '{entry.title}'.")
+
+    def add_cad_dimension(self, model_path: str, params: dict[str, float]) -> None:
+        """Add the CAD geometry axis (reserved dim ``cad``) to the canvas.
+
+        Called by the FoamCAD step's "Add to sweep": ``params`` are the selected
+        parametric aliases and their current values. The CAD dimension is an
+        independent, STL-producing axis (it composes with the mesh axis as
+        ``cad × mesh``) and is configured as a numeric parameter map.
+        """
+        state = self._server.state
+        if self._model.has("cad"):
+            self._notify(error="A CAD dimension is already on the canvas.")
+            return
+        self._model.add_cad_dimension(
+            "cad", title="CAD geometry", model_path=model_path, params=params
+        )
+        self._rebuild_graph()
+        self._refresh_overview()
+        state.sweep_cfg_dim = "cad"
+        self._sync_cfg_mirror()
+        self._editor.fit_view()
+        self._notify(message="Added CAD dimension.")
+
+    def _config_seed(self, entry: FormEntry) -> dict[str, Any]:
+        """The full config from the saved base case (schema-defaults fallback).
+
+        Sweeping applies *whole* configs (``apply_configs`` validates and rewrites
+        the file), so a dimension must be seeded with the base case's complete
+        payload — the same ``model_dump(by_alias=True, exclude_none=True)`` shape
+        the headless examples use — not a partial override. When the base case has
+        no such file yet, fall back to the schema defaults so the dimension is
+        still addable (the user fills it in).
+        """
+        cls = self._classes.get(entry.config_name)
+        target = self._server.state.target_dir
+        if cls is not None and target:
+            try:
+                loaded = cls.load(case_dir=Path(target))
+                seed = loaded.model_dump(by_alias=True, exclude_none=True)
+                seed.pop("FoamFile", None)
+                return seed
+            except Exception:  # noqa: BLE001 - file absent/unreadable: use defaults
+                pass
+        return dict(entry.defaults)
+
+    def add_mesh_source(self, config_name: str) -> None:
+        """Add a mesh dict (blockMesh/snappy) as a source of the keyed mesh dim."""
+        state = self._server.state
+        entry = self._mesh_dims.get(config_name)
+        if entry is None:
+            self._notify(error=f"Unknown mesh source '{config_name}'.")
+            return
+        try:
+            self._model.add_mesh_source(
+                config_name,
+                title=entry.title,
+                schema=entry.schema,
+                seed=self._config_seed(entry),
+            )
+        except ValueError as exc:
+            self._notify(error=str(exc))
+            return
+        self._rebuild_graph()
+        self._refresh_overview()
+        state.sweep_cfg_dim = "mesh"
+        self._sync_cfg_mirror()
+        self._editor.fit_view()
+        self._notify(message=f"Added mesh source '{entry.title}'.")
+
+    def add_field_source(self, config_name: str) -> None:
+        """Add a whole ``0/<field>`` config as a (per-case) sweep dimension.
+
+        A field config (e.g. ``u_field_config``) is a regular dimension — it
+        applies in the per-case clone via ``setup.json``, not the keyed mesh
+        mini-case — so it goes through the normal :meth:`SweepModel.add_dimension`
+        path, seeded from the saved base case. Gated on its owner model like any
+        optional-model config (``t_field_config`` needs Boussinesq enabled).
+        """
+        state = self._server.state
+        entry = self._field_dims.get(config_name)
+        if entry is None:
+            self._notify(error=f"Unknown field '{config_name}'.")
+            return
+        if entry.owner_model is not None and not state[f"sel_{entry.owner_model}"]:
+            self._notify(
+                error=f"'{entry.title}' belongs to the unselected model"
+                f" '{entry.owner_model}' — enable it in the Models step first."
+            )
+            return
+        try:
+            self._model.add_dimension(
+                config_name,
+                title=entry.title,
+                schema=entry.schema,
+                seed=self._config_seed(entry),
+            )
+        except ValueError as exc:
+            self._notify(error=str(exc))
+            return
+        self._rebuild_graph()
+        self._refresh_overview()
+        state.sweep_cfg_dim = config_name
+        self._sync_cfg_mirror()
+        self._editor.fit_view()
+        self._notify(message=f"Added field dimension '{entry.title}'.")
+
+    def _on_palette_field(self, config_name: str) -> None:
+        """Palette click on a field/BC config: toggle it as a sweep dimension."""
+        if self._model.has(config_name):
+            self.remove_dimension(config_name)
+        else:
+            self.add_field_source(config_name)
+
+    def remove_mesh_source(self, config_name: str) -> None:
+        """Remove a mesh source; drops the mesh dimension if it was the last."""
+        entry = self._mesh_dims.get(config_name)
+        try:
+            self._model.remove_mesh_source(config_name)
+        except ValueError as exc:
+            self._notify(error=str(exc))
+            return
+        self._rebuild_graph()
+        self._refresh_overview()
+        self._sync_cfg_mirror()
+        self._fit_soon(self._editor)
+        title = entry.title if entry else config_name
+        self._notify(message=f"Removed mesh source '{title}'.")
+
+    def _on_palette_mesh(self, config_name: str) -> None:
+        """Palette click on a mesh source: toggle it on the keyed mesh dimension."""
+        if config_name in self._model.mesh_sources():
+            self.remove_mesh_source(config_name)
+        else:
+            self.add_mesh_source(config_name)
 
     def open_dim_picker(self, name: str) -> None:
         """Open the "which parameters vary?" dialog for a palette config."""
@@ -624,6 +788,8 @@ class SweepPanel:
         states: list[DimensionState] = []
         skipped: list[str] = []
         for dim, variants in sorted(loaded.dimensions.items()):
+            if dim in ("cad", "mesh"):
+                continue  # the cad/mesh axes are restored below (not solver-config)
             entry = self._dims.get(dim)
             if entry is None or not variants:
                 skipped.append(dim)
@@ -635,6 +801,56 @@ class SweepPanel:
                     schema=entry.schema,  # whole form: picked slices aren't persisted
                     entries={k: dict(v) for k, v in variants.items()},
                     selected=next(iter(variants)),
+                )
+            )
+
+        # Restore the keyed mesh axis: its variants are config-name-keyed
+        # (``{config_name: payload}``), so rebuild the combined schema from the
+        # source configs present across all variants (mirror of add_mesh_source).
+        mesh_variants = loaded.dimensions.get("mesh")
+        if mesh_variants:
+            sources = sorted(
+                {name for payload in mesh_variants.values() for name in payload}
+            )
+            mesh_props = {
+                name: {
+                    **self._mesh_dims[name].schema,
+                    "title": self._mesh_dims[name].title,
+                }
+                for name in sources
+                if name in self._mesh_dims
+            }
+            states.append(
+                DimensionState(
+                    name="mesh",
+                    title="Mesh",
+                    schema={"type": "object", "properties": mesh_props},
+                    entries={k: dict(v) for k, v in mesh_variants.items()},
+                    selected=next(iter(mesh_variants)),
+                    kind="mesh",
+                )
+            )
+
+        # Restore the CAD axis: it has no solver-config entry in `self._dims`, so
+        # rebuild its numeric DimensionState directly from the loaded variants +
+        # the header's model path (mirror of SweepModel.add_cad_dimension).
+        cad_variants = loaded.dimensions.get("cad")
+        if cad_variants and loaded.cad_model:
+            aliases = sorted({a for payload in cad_variants.values() for a in payload})
+            cad_schema: dict[str, Any] = {
+                "type": "object",
+                "properties": {a: {"type": "number", "title": a} for a in aliases},
+            }
+            states.append(
+                DimensionState(
+                    name="cad",
+                    title="CAD geometry",
+                    schema=cad_schema,
+                    entries={k: dict(v) for k, v in cad_variants.items()},
+                    selected=next(iter(cad_variants)),
+                    fields=list(aliases),
+                    kind="cad",
+                    model_path=loaded.cad_model,
                 )
             )
 
@@ -692,6 +908,7 @@ class SweepPanel:
                 base_case=Path(state.target_dir).resolve(),
                 dimensions=self._model.to_dimensions(),
                 classes=self._classes,
+                cad=self._model.cad_dimensions(),
                 enabled=self._model.enabled,
             )
         except ValueError as exc:
@@ -855,11 +1072,23 @@ class SweepPanel:
         if self._model.has(name):
             self._model.set_rename_buffer(name, value)
 
+    def _sync_cfg_if_active(self, name: str) -> None:
+        """Re-mirror the Configure tab if ``name`` is the dimension it shows.
+
+        A structural node-seam mutation (add/delete/rename/select) must keep the
+        ``sweep_cfg_*`` mirror in sync when it hits the active dimension — the
+        node seam is otherwise equivalent to the browser's Configure path (and
+        could leave the mirror pointing at a deleted/renamed variant).
+        """
+        if name == self._server.state.sweep_cfg_dim:
+            self._sync_cfg_mirror()
+
     def _on_variant_select(self, node_id: str, name: str) -> None:
         dim = _dim_name(node_id)
         if self._model.has(dim):
             self._model.variant_select(dim, name)
             self._write_dim_node(dim, echo=True)
+            self._sync_cfg_if_active(dim)
 
     def _on_variant_add(self, node_id: str) -> None:
         name = _dim_name(node_id)
@@ -868,6 +1097,7 @@ class SweepPanel:
         self._model.variant_add(name)
         self._write_dim_node(name, echo=True)
         self._refresh_overview()
+        self._sync_cfg_if_active(name)
 
     def _on_variant_delete(self, node_id: str) -> None:
         name = _dim_name(node_id)
@@ -880,6 +1110,7 @@ class SweepPanel:
             return
         self._write_dim_node(name, echo=True)
         self._refresh_overview()
+        self._sync_cfg_if_active(name)
 
     def _on_variant_rename(self, node_id: str) -> None:
         name = _dim_name(node_id)
@@ -892,6 +1123,7 @@ class SweepPanel:
             return
         self._write_dim_node(name, echo=True)
         self._refresh_overview()
+        self._sync_cfg_if_active(name)
 
     # -- UI ---------------------------------------------------------------------
 
@@ -1377,6 +1609,50 @@ class SweepPanel:
                         ),
                         color=(
                             "sweep_dims_on_canvas.includes(item.value)"
+                            " ? 'error' : 'primary'",
+                        ),
+                        size="small",
+                    )
+            v3.VDivider(classes="my-2")
+            v3.VListSubheader("Fields / boundary conditions")
+            with v3.VListItem(
+                v_for="item in sweep_field_palette",
+                key="item.value",
+                click=(self._on_palette_field, "[item.value]"),
+                title=("item.title",),
+                subtitle=("item.owner ? 'model: ' + item.owner : 'per-case'",),
+            ):
+                with v3.Template(v_slot_append=True):
+                    v3.VIcon(
+                        icon=(
+                            "sweep_field_on_canvas.includes(item.value)"
+                            " ? 'mdi-minus-circle-outline'"
+                            " : 'mdi-plus-circle-outline'",
+                        ),
+                        color=(
+                            "sweep_field_on_canvas.includes(item.value)"
+                            " ? 'error' : 'primary'",
+                        ),
+                        size="small",
+                    )
+            v3.VDivider(classes="my-2")
+            v3.VListSubheader("Mesh dimension")
+            with v3.VListItem(
+                v_for="item in sweep_mesh_palette",
+                key="item.value",
+                click=(self._on_palette_mesh, "[item.value]"),
+                title=("item.title",),
+                subtitle="re-meshes per variant",
+            ):
+                with v3.Template(v_slot_append=True):
+                    v3.VIcon(
+                        icon=(
+                            "sweep_mesh_on_canvas.includes(item.value)"
+                            " ? 'mdi-minus-circle-outline'"
+                            " : 'mdi-plus-circle-outline'",
+                        ),
+                        color=(
+                            "sweep_mesh_on_canvas.includes(item.value)"
                             " ? 'error' : 'primary'",
                         ),
                         size="small",
