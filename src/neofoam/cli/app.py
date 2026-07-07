@@ -232,6 +232,18 @@ def neopimplefoam(ctx: typer.Context) -> None:
 
 
 @solver_app.command(
+    name="neointerfoam",
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
+def neointerfoam(ctx: typer.Context) -> None:
+    """interFoam-style NeoN VoF solver (upwind alpha, buoyant p_rgh)."""
+    from neofoam.solver.neoInterFoam import NeoInterFoam
+
+    argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
+    NeoInterFoam(argv).run()
+
+
+@solver_app.command(
     name="incompressiblefluid",
     context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
 )
