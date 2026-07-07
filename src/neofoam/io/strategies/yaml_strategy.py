@@ -7,6 +7,7 @@ from typing import Any, Optional
 from pathlib import Path
 
 import yaml
+from pydantic import BaseModel
 
 from neofoam.io.strategies.subdict import SubdictMixin
 
@@ -34,10 +35,13 @@ class YAMLStrategy(SubdictMixin):
         """
         super().__init__(subdict_path)
 
-    def read(self, path: Path, encoding: str = "utf-8") -> dict[str, Any]:
+    def read(
+        self, model_cls: type[BaseModel], path: Path, encoding: str = "utf-8"
+    ) -> dict[str, Any]:
         """Read YAML configuration file.
 
         Args:
+            model_cls: The model class
             path: Path to the YAML file
             encoding: File encoding (default: utf-8)
 
@@ -56,14 +60,18 @@ class YAMLStrategy(SubdictMixin):
 
         return self._extract_subdict(full_data)
 
-    def write(self, data: dict[str, Any], path: Path, encoding: str = "utf-8") -> None:
+    def write(self, instance: BaseModel, path: Path, encoding: str = "utf-8") -> None:
         """Write configuration to YAML file.
 
         Args:
-            data: Configuration data to write
+            instance: The model instance to write
             path: Path to the YAML file
             encoding: File encoding (default: utf-8)
         """
+        # ``by_alias=True`` so a ``Field(alias="div(phi,U)")``-style declaration
+        # round-trips under its on-disk key, not pydantic's sanitised Python
+        # attribute name.
+        data = instance.model_dump(mode="python", exclude_none=False, by_alias=True)
         path.parent.mkdir(parents=True, exist_ok=True)
 
         if not self.subdict_path:

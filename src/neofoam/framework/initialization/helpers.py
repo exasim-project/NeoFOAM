@@ -8,13 +8,21 @@ Helper Functions for Lazy Initialization
 Provides convenience functions for creating InitStep objects with common patterns.
 """
 
-from typing import Callable, Any, List, Optional, Union
+from typing import Callable, Any, List, Optional, Protocol, Union, runtime_checkable
 from .init_step import InitStep, InitCategory
 
 
-# ---------------------------------------------------------------------------
-# Core factory — all four helpers delegate to this
-# ---------------------------------------------------------------------------
+@runtime_checkable
+class BuildsInitSteps(Protocol):
+    """Protocol matched by objects that contribute :class:`InitStep` lists.
+
+    Models / sub-systems implement ``run_build()`` to expose their
+    initialization steps to :class:`InitializerBuilder`. The Protocol gives
+    the contract a name (mypy can check it) and replaces the duck-typed
+    ``hasattr(item, "run_build")`` checks used elsewhere.
+    """
+
+    def run_build(self) -> List[InitStep]: ...
 
 
 def _make_lazy(
@@ -23,6 +31,8 @@ def _make_lazy(
     name: str,
     create: Callable[[dict[str, Any]], Any],
     depends_on: Optional[List[str]] = None,
+    write: bool = False,
+    replaces: Optional[List[str]] = None,
 ) -> InitStep:
     """Internal factory shared by field / operator / model / lazy."""
     full_name = f"{prefix}.{name}" if prefix else name
@@ -31,6 +41,8 @@ def _make_lazy(
         depends_on=depends_on or [],
         initializer=create,
         category=category,
+        write=write,
+        replaces=replaces or [],
     )
 
 
@@ -38,6 +50,9 @@ def field(
     name: str,
     create: Callable[[dict[str, Any]], Any],
     depends_on: Optional[List[str]] = None,
+    write: bool = False,
+    *,
+    replaces: Optional[List[str]] = None,
 ) -> InitStep:
     """
     Helper for creating field lazy initializers.
@@ -48,14 +63,20 @@ def field(
         name: Field name (e.g., "U", "p", "nu")
         create: Function that creates the field
         depends_on: List of dependencies (default: [])
+        write: Flag this field for persistence (auto-write). Collected into
+            ``Context.write_fields`` so a per-field write backend knows which
+            fields to write to disk.
 
     Returns:
         InitStep for the field
 
     Example:
-        field("U", create=lambda ctx: create_vector_field(ctx["mesh"], U0), depends_on=["mesh"])
+        field("U", create=lambda ctx: create_vector_field(ctx["mesh"], U0),
+              depends_on=["mesh"], write=True)
     """
-    return _make_lazy("fields", "fields", name, create, depends_on)
+    return _make_lazy(
+        "fields", "fields", name, create, depends_on, write=write, replaces=replaces
+    )
 
 
 def operator(
@@ -86,6 +107,8 @@ def lazy(
     name: str,
     create: Callable[[dict[str, Any]], Any],
     depends_on: Optional[List[str]] = None,
+    *,
+    replaces: Optional[List[str]] = None,
 ) -> InitStep:
     """
     General-purpose helper for creating lazy initializers.
@@ -97,6 +120,9 @@ def lazy(
         name: Object name (e.g., "mesh", "runtime", "piso_loop")
         create: Function that creates the object
         depends_on: List of dependencies (default: [])
+        replaces: Default-step names this step supersedes. When set, the
+            builder drops any other step carrying one of these names so a
+            generated resource can stand in for the default one.
 
     Returns:
         InitStep for the object
@@ -104,7 +130,7 @@ def lazy(
     Example:
         lazy("mesh", create=lambda ctx: mesh)
     """
-    return _make_lazy(None, "resource", name, create, depends_on)
+    return _make_lazy(None, "resource", name, create, depends_on, replaces=replaces)
 
 
 def model(
@@ -230,8 +256,8 @@ class InitializerBuilder:
             # Add the model itself
             self.add_model(name, model_instance)
 
-            # Add InitStep objects from run_build() if available
-            if hasattr(model_instance, "run_build"):
+            # Add InitStep objects from run_build() if available.
+            if isinstance(model_instance, BuildsInitSteps):
                 self.extend(model_instance.run_build())
 
         return self
@@ -311,7 +337,7 @@ class InitializerBuilder:
             Self for chaining
         """
         for m in optional_models:
-            if hasattr(m, "run_build"):
+            if isinstance(m, BuildsInitSteps):
                 self.extend(m.run_build())
         return self
 
@@ -319,7 +345,17 @@ class InitializerBuilder:
         """
         Return the constructed list of initializers.
 
+        A step whose name is listed in another step's ``replaces=`` is dropped
+        so the replacer can supersede a default step. A replacer keeps its own
+        name in its ``replaces=`` (the terminal-alias pattern), so it is never
+        dropped by its own declaration and dependents still resolve.
+
         Returns:
             List of InitStep objects
         """
-        return self.initializers
+        replaced = {name for step in self.initializers for name in step.replaces}
+        return [
+            step
+            for step in self.initializers
+            if not (step.name in replaced and step.name not in step.replaces)
+        ]

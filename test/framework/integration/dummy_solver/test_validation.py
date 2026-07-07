@@ -9,8 +9,11 @@ implementation with real configuration files. Configuration classes use
 the @IOStrategy(YAML(...)) decorator pattern for declarative IO configuration.
 """
 
+from __future__ import annotations
+
 import shutil
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -23,7 +26,7 @@ from .dummy_init import create_init
 
 
 @pytest.fixture
-def temp_config_dir(tmp_path):
+def temp_config_dir(tmp_path: Path) -> Path:
     """Create temporary config directory with copies of valid configs."""
     configs_src = Path(__file__).parent / "configs"
     configs_dst = tmp_path / "configs"
@@ -39,7 +42,7 @@ def temp_config_dir(tmp_path):
 # ============================================================================
 
 
-def test_dummy_solver_valid_configs():
+def test_dummy_solver_valid_configs() -> None:
     """Integration test: successful initialization with default valid configs."""
     init = create_init()
     ctx = init.run()
@@ -50,7 +53,7 @@ def test_dummy_solver_valid_configs():
     assert ctx.models["config"]["param1"] == 1e-05
 
 
-def test_dummy_solver_invalid_config(temp_config_dir, monkeypatch):
+def test_dummy_solver_invalid_config(temp_config_dir: Path, monkeypatch: Any) -> None:
     """Integration test: validation fails with all invalid configs from configs_invalid folder."""
     # Copy all invalid configs from configs_invalid folder
     invalid_configs_dir = Path(__file__).parent / "configs_invalid"
@@ -80,7 +83,7 @@ def test_dummy_solver_invalid_config(temp_config_dir, monkeypatch):
 
     # Expected per-file error specifications:
     #   (file_name, min_errors, [(field_substr, input_value, error_type), ...])
-    expected = [
+    expected: list[tuple[str, int, list[tuple[str, float, str | None]]]] = [
         ("algorithm_config.yaml", 1, [("param1", -0.00001, "greater_than")]),
         ("mesh_config.yaml", 1, [("nPoints", -1, "greater_than")]),
         ("model1_config.yaml", 1, [("prop1", 1.5, "less_than_equal")]),

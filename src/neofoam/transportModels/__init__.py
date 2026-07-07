@@ -1,6 +1,0 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# SPDX-FileCopyrightText: 2026 NeoFOAM authors
-
-from .transport_model import TransportModel
-
-__all__ = ["TransportModel"]

@@ -25,7 +25,10 @@ class DependencyResolver:
         }
 
     def resolve_arguments(
-        self, func: Callable, ctx: Optional[Context] = None, **provided_kwargs: Any
+        self,
+        func: Callable[..., Any],
+        ctx: Optional[Context] = None,
+        **provided_kwargs: Any,
     ) -> dict[str, Any]:
         """Resolve function arguments from Depends markers and Context."""
         sig = inspect.signature(func)
@@ -48,6 +51,32 @@ class DependencyResolver:
             if param.annotation != inspect.Parameter.empty:
                 if param.annotation is Context:
                     kwargs[param_name] = ctx
+                    continue
+
+                # Model-owned interface: a param annotated with a ModelInterface
+                # handle is injected as the owning runtime's per-case bound handle.
+                from .model.interface import ModelInterface as _ModelInterface  # noqa: PLC0415
+                from .model.runtime import ModelRuntime as _ModelRuntime  # noqa: PLC0415
+
+                if isinstance(param.annotation, _ModelInterface):
+                    iface = param.annotation
+                    if ctx is None:
+                        raise ValueError(
+                            f"Parameter '{param_name}' is typed as a ModelInterface "
+                            "but no Context was provided to the resolver."
+                        )
+                    owner_runtime = ctx.models.get(iface.owner.name)
+                    if (
+                        not isinstance(owner_runtime, _ModelRuntime)
+                        or iface.name not in owner_runtime.bound_interfaces
+                    ):
+                        raise ValueError(
+                            f"Interface '{iface.name}' (owned by model "
+                            f"'{iface.owner.name}') is not bound for this case; "
+                            "expected a BoundModelInterface on the owning "
+                            "ModelRuntime."
+                        )
+                    kwargs[param_name] = owner_runtime.bound_interfaces[iface.name]
                     continue
 
                 if get_origin(param.annotation) is Annotated:
@@ -109,7 +138,9 @@ class DependencyResolver:
             return ctx.models.get(parts[1]) if len(parts) > 1 else None
         return getattr(ctx, path, None)
 
-    def _resolve_callable(self, provider: Callable, ctx: Optional[Context]) -> Any:
+    def _resolve_callable(
+        self, provider: Callable[..., Any], ctx: Optional[Context]
+    ) -> Any:
         kwargs = self.resolve_arguments(provider, ctx)
         return provider(**kwargs)
 
@@ -123,7 +154,7 @@ class DependencyResolver:
 
 
 def wrap_with_dependency_resolution(
-    func: Callable,
+    func: Callable[..., Any],
     instance: Any,
     dependency_resolver: DependencyResolver,
 ) -> Callable[[Context], Any]:
@@ -134,8 +165,8 @@ def wrap_with_dependency_resolution(
     If the return value is a ``FieldUpdates`` the context is updated
     automatically.
 
-    This is the canonical implementation shared by ``SolverInstance`` and
-    ``ModelInstance`` — avoids duplicating the same wrapper in every factory.
+    This is the canonical implementation shared by ``SolverSpec`` and
+    ``ModelSpec`` — avoids duplicating the same wrapper in every factory.
     """
     from functools import wraps
 

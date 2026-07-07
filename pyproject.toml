@@ -1,15 +1,24 @@
+# SPDX-License-Identifier: Unlicense
+# SPDX-FileCopyrightText: 2026 NeoFOAM authors
+
 [project]
 name = "neofoam"
-version = "0.1.0"
+version = "0.3.0"
 description = "Add your description here"
 readme = "README.md"
 authors = [
-    { name = "Henning Scheufler", email = "henning.scheufler@web.de" }
+    { name = "Henning Scheufler", email = "henning.scheufler@web.de" },
+    { name = "Gregor Olenik", email = "gregor.olenik@tum.de" },
+    { name = "Chih-Ta Wang", email = "chihta.wang@tum.de" },
+    { name = "Dheeraj Raghunathan", email = "dheeraj.raghunathan@tum.de" }
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 
 dependencies = [
-    "pybFoam>=0.3.0",
+    "numpy",
+    "matplotlib",
+    "foamlib",
+    "pybFoam>=0.5.0",
     "typer",
     "pydantic>=2.0.0",
     "networkx>=3.0",
@@ -22,6 +31,7 @@ dev = [
     "pytest>=6.0",
     "pytest-cov",
     "pytest-xdist",
+    "pydantic-settings",
     "black",
     "flake8",
     "isort",
@@ -32,6 +42,9 @@ dev = [
     "mypy",
     "pre-commit",
     "types-PyYAML",
+    # build deps needed in env when no-build-isolation is enabled
+    "scikit-build-core[pyproject]>=0.11.0",
+    "nanobind>=2.9.0",
 ]
 docs = [
     "sphinx>=4.0",
@@ -41,23 +54,84 @@ docs = [
     "sphinxcontrib-mermaid",
     "sphinx-togglebutton>=0.3.2",
     "breathe",
+    "pyvista>=0.43",
+    "sphinx-gallery>=0.16",
+    # Interactive .vtksz scenes embedded under each pyvista figure
+    # via DynamicScraper; trame materialises the vtk.js viewer and
+    # nest_asyncio2 lets pyvista launch the in-memory trame server
+    # synchronously from inside `Plotter.export_vtksz`. sphinx-design
+    # provides the tab-set / tab-item directives DynamicScraper emits
+    # to switch between the static PNG and the interactive viewer.
+    "trame",
+    "trame-vtk",
+    "trame-vuetify",
+    "nest_asyncio2",
+    "sphinx-design",
+    # GIF animations from pl.open_gif() / pl.write_frame() in
+    # tutorials 02 and 03.
+    "imageio",
+    # The telemetry how-to (example_trace_solver_performance) traces a
+    # real solver run at gallery-build time.
+    "opentelemetry-api>=1.20",
+    "opentelemetry-sdk>=1.20",
+]
+agent = [
+    # OpenAI-compatible client (local Ollama, OpenAI-style endpoints) plus the
+    # Anthropic backend for hosted Claude models (e.g. Haiku).
+    "pydantic-ai-slim[openai,anthropic]>=0.0.40",
+]
+mcp = [
+    # MCP server: FastMCP v3 protocol layer (pulls the `mcp` SDK transitively)
+    # + FastAPI/uvicorn web server. httpx backs the FastAPI TestClient / MCP client.
+    "fastmcp>=3,<4",
+    "fastapi",
+    "uvicorn",
+    "httpx",
+]
+telemetry = [
+    # Opt-in performance tracing (neofoam.telemetry); the shim itself works
+    # without these — only activating telemetry requires the SDK.
+    "opentelemetry-api>=1.20",
+    "opentelemetry-sdk>=1.20",
+    # neofoam.telemetry.report renders the emitted trace: the Chrome/Perfetto
+    # export is dependency-free, the summary bar chart needs matplotlib.
+    "matplotlib>=3.5",
 ]
 all = [
-    "neofoam[dev,docs]",
+    "neofoam[dev,docs,agent,mcp,telemetry]",
 ]
 
 [project.scripts]
 neofoam = "neofoam.cli.app:app"
+
 [build-system]
-requires = ["uv_build>=0.8.6,<0.9.0"]
-build-backend = "uv_build"
+requires = [
+    "scikit-build-core[pyproject]>=0.11.0",
+    "nanobind>=2.9.0",
+]
+build-backend = "scikit_build_core.build"
+
+[tool.scikit-build]
+cmake.version = ">=3.22"
+cmake.args = ["--preset=python-bindings"]
+build.verbose = true
+build-dir = "_skbuild"
+editable.mode = "redirect"
+editable.verbose = true
+editable.rebuild = false
+
+[tool.scikit-build.cmake.define]
+NEOFOAM_BUILD_PYTHON_BINDINGS = "ON"
+
+[tool.uv]
+no-build-isolation-package = ["neofoam"]
 
 [tool.uv.sources]
 pybFoam = { path = "/home/henning/libsAndApps/pybFoam", editable = true }
 
 [tool.ruff]
 line-length = 100
-target-version = "py39"
+target-version = "py310"
 extend-exclude = ["build/", "dist/"]
 
 [tool.ruff.lint]
@@ -87,19 +161,32 @@ strict = true                    # optional but recommended
 # (mypy applies this regex to the normalized file path)
 exclude = [
   "src/NeoN",
-  "test/",
 ]
 
-# If other code imports src/Neon and you want mypy to never follow into it:
+# If other code imports src/NeoN and you want mypy to never follow into it:
 [[tool.mypy.overrides]]
-module = ["Neon", "Neon.*"]
-ignore_errors = true
+module = ["NeoN", "NeoN.*", "pybFoam", "pybFoam.*", "neon", "neon.*"]
+ignore_missing_imports = true
 follow_imports = "skip"
+
+# opentelemetry is the optional [telemetry] extra — absent in most envs.
+[[tool.mypy.overrides]]
+module = ["opentelemetry", "opentelemetry.*"]
+ignore_missing_imports = true
 
 [tool.poe.tasks]
 test = "pytest"
 lint = "ruff check"
-format = "ruff format"
+format = "ruff format src test"
 type_check = "mypy"
+# sphinx-gallery (configured in doc/conf.py) executes each
+# examples/tutorials/example_*.py at build time and emits the rendered
+# tutorial pages under doc/auto_tutorials/. Caching via .py.md5 makes
+# re-builds of unchanged scripts near-instant. Needs OpenFOAM sourced
+# (WM_PROJECT_DIR set) and pyvista headless (xvfb on Linux).
 build_docs = "sphinx-build -b html doc doc/_build"
-view_docs = { shell = "python -m webbrowser -t doc/_build/index.html" }
+# Serve the built docs over a local HTTP server. Required for the
+# interactive pyvista viewers — they fetch `.vtksz` files via JS,
+# which browsers block under the ``file://`` protocol.
+serve_docs = { shell = "cd doc/_build && python -m http.server 8000" }
+view_docs = { shell = "python -m webbrowser -t http://localhost:8000/index.html" }

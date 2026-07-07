@@ -36,9 +36,8 @@ collect_system_info() {
         elif [[ "$GPU_VENDOR" == "amd" ]]; then
             rocm-smi --showproductname --showvbios
         elif [[ "$GPU_VENDOR" == "intel" ]]; then
-            if ! sycl-ls --ignore-device-selectors 2>/dev/null | grep -qi intel; then
-                echo "No Intel GPU found or Level Zero runtime not available"
-            fi
+            SYCL_PI_TRACE=1
+            sycl-ls 2>/dev/null | grep '^\[level_zero:gpu\]'
         else
             echo "No GPU selected"
         fi
@@ -78,28 +77,36 @@ build_and_benchmark() {
     echo ">>> Configuring build"
     if [[ "$GPU_VENDOR" == "nvidia" ]]; then
         cmake --preset $PRESET \
-        -DNEOFOAM_NEON_DIR=../NeoN \
-        -DCMAKE_CUDA_ARCHITECTURES=90 \
-        -DNeoN_WITH_THREADS=OFF
+            -DNEOFOAM_NEON_DIR=../NeoN \
+            -DCMAKE_CUDA_ARCHITECTURES=90 \
+            -DNeoN_WITH_THREADS=ON
     elif [[ "$GPU_VENDOR" == "amd" ]]; then
         # Set up environment
-        export PATH=/opt/rocm/bin:$PATH
+        export CXX_COMPILER_PATH="$(which g++)"
+        export CXX_SOURCE="${CXX_COMPILER_PATH%/*/*}"
+        export CXX_LIBDIR="${CXX_SOURCE}/lib64"
+        export LD_LIBRARY_PATH=${CXX_LIBDIR}:${LD_LIBRARY_PATH}
 
         cmake --preset $PRESET \
-        -DNEOFOAM_NEON_DIR=../NeoN \
-        -DCMAKE_CXX_COMPILER=hipcc \
-        -DCMAKE_HIP_ARCHITECTURES=gfx90a \
-        -DKokkos_ARCH_AMD_GFX90A=ON \
-        -DNeoN_WITH_THREADS=OFF
+            -DNEOFOAM_NEON_DIR=../NeoN \
+            -DCMAKE_PREFIX_PATH=/opt/rocm \
+            -DCMAKE_C_COMPILER=/opt/rocm/llvm/bin/clang \
+            -DCMAKE_CXX_COMPILER=/opt/rocm/llvm/bin/clang++ \
+            -DCMAKE_CXX_FLAGS="--gcc-toolchain=${CXX_SOURCE}" \
+            -DCMAKE_EXE_LINKER_FLAGS="-L${CXX_LIBDIR}" \
+            -DCMAKE_HIP_ARCHITECTURES=gfx90a \
+            -DKokkos_ARCH_AMD_GFX90A=ON \
+            -DNeoN_WITH_THREADS=ON
     elif [[ "$GPU_VENDOR" == "intel" ]]; then
         cmake --preset $PRESET \
-        -DNEOFOAM_NEON_DIR=../NeoN \
-        -DCMAKE_CXX_COMPILER=icpx \
-        -DCMAKE_CXX_FLAGS="-Wno-deprecated-declarations -Wno-sycl-2020-compat -ffp-model=precise" \
-        -DKokkos_ENABLE_SYCL=ON \
-        -DNeoN_WITH_THREADS=OFF \
-        -DNEOFOAM_BENCHMARK_MODE="fast" \
-        -DCMAKE_BUILD_TYPE="release"
+            -DNEOFOAM_NEON_DIR=../NeoN \
+            -DCMAKE_CXX_COMPILER=icpx \
+            -DCMAKE_CXX_FLAGS="-Wno-deprecated-declarations -Wno-sycl-2020-compat -ffp-model=precise" \
+            -DKokkos_ENABLE_SYCL=ON \
+            -DKokkos_ARCH_INTEL_PVC=ON \
+            -DNeoN_WITH_THREADS=ON \
+            -DNEOFOAM_BENCHMARK_MODE="fast" \
+            -DCMAKE_BUILD_TYPE="release"
     else
         cmake --preset $PRESET -DNEOFOAM_NEON_DIR=../NeoN -DNeoN_WITH_THREADS=OFF
     fi
@@ -108,19 +115,16 @@ build_and_benchmark() {
     cmake --build --preset $PRESET
     echo ">>> Running benchmarks..."
     export PATH=$PATH:$PWD/build/$PRESET/bin/benchmarks
-    if [[ "$GPU_VENDOR" == "intel" ]]; then
-        export ONEAPI_DEVICE_SELECTOR=level_zero:gpu
-    fi
     ctest --preset profiling
     echo ">>> Benchmarks completed"
 
     # Check for produced results
-    find build  -name "results"  -exec python3 benchmarks/benchmarkSuite/createStudies.py display {} \;
+    find build  -name "results"  -exec python3 benchmarks/benchmarkSuite/createStudies.py display {} \; > results.md
+    cat results.md
     mapfile -d '' csv_files < <(find build/profiling/benchmarkSuite/ -type f -name '*.csv' -print0)
 
     if [ "${#csv_files[@]}" -eq 0 ]; then
         echo "No CSV files found!" >&2
-        exit 1
     fi
 
     # Display the list of files generated
@@ -147,14 +151,14 @@ push_results() {
     git config user.email "gitlab-ci@users.noreply.github.com"
     git config user.name "GitLab CI"
 
-    git checkout "${TARGET_BRANCH}" || git checkout -b "${TARGET_BRANCH}"
+    git checkout "NeoFOAM_PR_${PR_NUMBER}" || git checkout -b "NeoFOAM_PR_${PR_NUMBER}"
     mkdir -p "${RESULTS_DIR}"
     cp -r ../${RESULTS_DIR}/* "${RESULTS_DIR}"
 
     git add .
     git commit -m "Benchmarks from GitLab pipeline ${RUN_IDENTIFIER}" || echo "No changes to commit"
     git pull --rebase || true
-    git push origin "${TARGET_BRANCH}"
+    git push origin "NeoFOAM_PR_${PR_NUMBER}"
 }
 
 ### Main execution ###
@@ -163,10 +167,6 @@ collect_system_info "${GPU_VENDOR}"
 # Current branch
 echo ">>> Benchmarking the current branch"
 build_and_benchmark "$(git rev-parse --abbrev-ref HEAD)" "${RESULTS_DIR}"
-
-# Develop branch
-echo ">>> Benchmarking the develop branch"
-build_and_benchmark "develop" "${RESULTS_DIR}/develop" || true
 
 # Push results
 echo ">>> Copying results to NeoFOAM-BenchmarkData repository"

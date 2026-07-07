@@ -1,10 +1,21 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# SPDX-FileCopyrightText: 2025 NeoFOAM authors
+# SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""3-stage initialization for incompressibleVoF solver."""
+"""3-stage initialization for the incompressibleVoF solver.
+
+LOAD    → detect the PIMPLE algorithm and any optional models
+RESOLVE → wire optional-model dependencies via ConfigContext
+BUILD   → emit lazy InitSteps for runtime/mesh, the alpha-advection + PIMPLE
+          core models (each owns the fields it registers) and the two-phase
+          turbulence model.
+
+Ported from the ``StagedInit`` / ``ModelInstance`` API to the
+``StagedInitRunner`` / ``StagedInitSpec`` + ``ModelSpec`` API in
+``stack/python_arch`` (mirrors ``incompressibleFluid.create_fields``).
+"""
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import pybFoam.vof as vof
 
@@ -14,85 +25,93 @@ from neofoam.framework.initialization import (
     InitializerBuilder,
     InitStep,
     LoadResult,
-    StagedInit,
+    StagedInitRunner,
+    StagedInitSpec,
     model as init_model,
 )
-from neofoam.solver.incompressibleVoF import models as _solver_models  # noqa: F401
-from neofoam.solver.incompressibleVoF.models.incompressibleVoFModel import (
-    incompressibleVoFModel,
-)
-from neofoam.solver.incompressibleVoF.models.alpha_advection.alphaAdvectionModel import (
-    alpha_advection_model,
-)
-from neofoam.solver.incompressibleVoF.models.pressure_velocity.base import (
-    PressureVelocityAlgorithm,
-)
+
+from .models.incompressibleVoFModel import incompressibleVoFModel
+from .models.alpha_advection.alphaAdvectionModel import alpha_advection_model
+from .models.pressure_velocity.base import PressureVelocityAlgorithm
 
 
-init = StagedInit("incompressibleVoF")
+def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
+    """Build a fresh :class:`StagedInitRunner` for incompressibleVoF."""
+    spec_builder = StagedInitSpec.build("incompressibleVoF")
+    resolved_case_dir = case_dir or Path(".")
 
+    @spec_builder.load
+    def load_config() -> LoadResult:
+        # VoF always uses PIMPLE; detect (and warn on missing PIMPLE dict).
+        pressure_model = PressureVelocityAlgorithm.detect_and_create()
+        optional_models = incompressibleVoFModel.detect_models(resolved_case_dir)
 
-def create_init(case_dir: Path = None) -> StagedInit:
-    init._case_dir = case_dir
-    return init
+        # alpha-advection runs first each outer corrector, then PIMPLE.
+        core_models: list[Any] = [alpha_advection_model, pressure_model]
+        return LoadResult(core_models=core_models, optional_models=optional_models)
 
+    @spec_builder.resolve
+    def resolve_models(config: ConfigContext) -> None:
+        for opt in runner.optional_models:
+            opt.run_resolve(config)
 
-@init.load
-def load_config() -> LoadResult:
-    # VoF always uses PIMPLE; detect (and warn on SIMPLE/PISO)
-    pressure_model = PressureVelocityAlgorithm.detect_and_create()
+    @spec_builder.build
+    def build_lazy(
+        core_models: list[Any], optional_models: list[Any]
+    ) -> list[InitStep]:
+        alpha_model = core_models[0]
+        pressure_model = core_models[1]
 
-    # Detect optional models registered with incompressibleVoFModel
-    optional_models = incompressibleVoFModel.detect_models()
-    for optional_model in optional_models:
-        optional_model.run_load()
+        builder = InitializerBuilder()
 
-    core_models: list[Any] = [alpha_advection_model, pressure_model]
-    return LoadResult(core_models=core_models, optional_models=optional_models)
+        # Foam::Time ("runtime") + fvMesh ("mesh"). create_time_mesh routes the
+        # Time onto ctx.models["runtime"] and the mesh onto ctx.mesh.
+        builder.extend(create_time_mesh(runner.argv))
 
+        # Register the two core models under their solver-facing names, then run
+        # each spec's @build to emit the field/model InitSteps it owns (phi,
+        # mixture, alpha1/alpha2, rho, rhoPhi from alpha-advection; U, p_rgh, gh,
+        # ghf, p, pimple_control, pressure_reference from PIMPLE). The bare
+        # ModelSpec is not a BuildsInitSteps runtime, so add_core_models only
+        # registers it — the @build steps are added explicitly here.
+        builder.add_core_models(
+            [("alpha_advection", alpha_model), ("pressure_velocity", pressure_model)]
+        )
+        for spec in (alpha_model, pressure_model):
+            if spec._build_func is not None:
+                builder.extend(spec._build_func(spec))
 
-@init.resolve
-def resolve_models(config: ConfigContext) -> None:
-    for model in init.optional_models:
-        model.run_resolve(config)
+        # Two-phase turbulence model (wraps rho, U, phi, rhoPhi, mixture).
+        def create_turbulence(ctx: dict[str, Any]) -> Any:
+            return vof.TwoPhaseTransportModel(
+                ctx["fields.rho"],
+                ctx["fields.U"],
+                ctx["fields.phi"],
+                ctx["fields.rhoPhi"],
+                ctx["models.mixture"],
+            )
 
-
-@init.build
-def build_lazy(core_models: list[Any], optional_models: list[Any]) -> list[InitStep]:
-    alpha_model = core_models[0]
-    pressure_model = core_models[1]
-
-    builder = InitializerBuilder()
-    builder.extend(create_time_mesh(init.argv))
-    builder.add_core_models(
-        [("alpha_advection", alpha_model), ("pressure_velocity", pressure_model)]
-    )
-
-    # Two-phase turbulence model (TwoPhaseTransportModel wraps rho, U, phi, rhoPhi, mixture)
-    def create_turbulence(ctx):
-        return vof.TwoPhaseTransportModel(
-            ctx["fields.rho"],
-            ctx["fields.U"],
-            ctx["fields.phi"],
-            ctx["fields.rhoPhi"],
-            ctx["models.mixture"],
+        builder.add(
+            init_model(
+                "turbulence",
+                create_turbulence,
+                depends_on=[
+                    "fields.rho",
+                    "fields.U",
+                    "fields.phi",
+                    "fields.rhoPhi",
+                    "models.mixture",
+                ],
+            )
         )
 
-    builder.add(
-        init_model(
-            "turbulence",
-            depends_on=[
-                "fields.rho",
-                "fields.U",
-                "fields.phi",
-                "fields.rhoPhi",
-                "models.mixture",
-            ],
-            create=create_turbulence,
-        )
-    )
+        builder.add_optional_models(optional_models)
+        # Register each active optional model BY NAME so it stays discoverable in
+        # ctx.models for a live run.
+        for opt in optional_models:
+            builder.add_model(opt.name, opt)
 
-    builder.add_optional_models(optional_models)
-    builder.add_model("optional_models", optional_models)
+        return builder.build()
 
-    return builder.build()
+    runner = StagedInitRunner(spec_builder.finalize())
+    return runner

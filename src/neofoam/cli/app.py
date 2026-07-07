@@ -2,6 +2,8 @@
 # SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
 import sys
+from typing import Optional
+from pathlib import Path
 
 import typer
 
@@ -11,6 +13,167 @@ app = typer.Typer()
 solver_app = typer.Typer()
 
 app.add_typer(solver_app, name="solver", help="Run foam solvers.")
+
+# Agent command group
+agent_app = typer.Typer()
+
+app.add_typer(agent_app, name="agent", help="LLM-driven case scaffolding.")
+
+# MCP server command group
+mcp_app = typer.Typer()
+
+app.add_typer(mcp_app, name="mcp", help="Run the NeoFOAM MCP server.")
+
+# Telemetry visualization command group
+telemetry_app = typer.Typer()
+
+app.add_typer(
+    telemetry_app, name="telemetry", help="Visualize solver telemetry traces."
+)
+
+
+@telemetry_app.command("trace")
+def telemetry_trace(
+    case: Path = typer.Argument(
+        ..., help="Case directory (or its telemetry/ dir) holding rank*.spans.jsonl."
+    ),
+    output: Optional[Path] = typer.Option(
+        None, "--output", "-o", help="Output file (default: <telemetry>/trace.json)."
+    ),
+) -> None:
+    """Export the trace as a Chrome Trace-Event ``trace.json``.
+
+    Open the file in https://ui.perfetto.dev or ``chrome://tracing`` for a
+    zoomable Gantt/flame timeline (one process row per MPI rank).
+    """
+    from neofoam.telemetry.report import write_chrome_trace
+
+    written = write_chrome_trace(case, output)
+    typer.echo(f"Wrote {written}")
+    typer.echo("Open it in https://ui.perfetto.dev or chrome://tracing")
+
+
+@telemetry_app.command("plot")
+def telemetry_plot(
+    case: Path = typer.Argument(
+        ..., help="Case directory (or its telemetry/ dir) holding rank*.summary.json."
+    ),
+    output: Optional[Path] = typer.Option(
+        None, "--output", "-o", help="Output image (default: <telemetry>/summary.png)."
+    ),
+    top: Optional[int] = typer.Option(
+        None, "--top", help="Keep only the N slowest operations."
+    ),
+    rank: Optional[int] = typer.Option(
+        None, "--rank", help="Which rank's summary to plot (default: lowest)."
+    ),
+) -> None:
+    """Render the per-operation total wall-clock as a bar-chart image (PNG)."""
+    from neofoam.telemetry.report import write_summary_plot
+
+    written = write_summary_plot(case, output, top=top, rank=rank)
+    typer.echo(f"Wrote {written}")
+
+
+@mcp_app.command("serve")
+def mcp_serve(
+    host: str = typer.Option("127.0.0.1", "--host", help="Bind host."),
+    port: int = typer.Option(8000, "--port", help="Bind port."),
+) -> None:
+    """Start the NeoFOAM MCP server (blocking, one process).
+
+    The server is solver-agnostic: each tool takes a ``solver`` argument
+    (default ``incompressibleFluid``) resolved per call.
+    """
+    from neofoam.mcp.app import serve
+
+    serve(host=host, port=port)
+
+
+@agent_app.command("fill")
+def agent_fill(
+    source: str = typer.Argument(..., help="Source case directory."),
+    target: str = typer.Argument(..., help="Target case directory."),
+    no_llm: bool = typer.Option(
+        False,
+        "--no-llm",
+        help=(
+            "Skip the LLM and roundtrip the source configs from disk. Useful"
+            " for testing the schema + IO path without an API key."
+        ),
+    ),
+    model_name: str = typer.Option(
+        "claude-haiku-4-5",
+        "--model",
+        help="Anthropic model name when not in --no-llm mode.",
+    ),
+    prompt: Optional[str] = typer.Option(
+        None,
+        "--prompt",
+        help=(
+            "Extra natural-language guidance appended to the source-case"
+            " text before sending to the LLM."
+        ),
+    ),
+) -> None:
+    """Fill the configs of TARGET by reading SOURCE.
+
+    Copies mesh + ``0/``/``0.orig/`` fields from SOURCE, then either
+    asks an LLM to rewrite the configs (default) or roundtrips them from
+    disk (``--no-llm``). Either way TARGET ends up runnable by
+    ``neofoam solver incompressiblefluid``.
+    """
+    from neofoam.agent import build_case_agent, fill_case
+
+    agent_obj = None
+    if not no_llm:
+        agent_obj = build_case_agent(model_name=model_name)
+        if prompt:
+            # The default prompt only contains source-case text; append the
+            # user note as an extra instruction the agent will see verbatim.
+            original_run = agent_obj.run_sync
+
+            def _run_sync(p: str, *args: object, **kwargs: object) -> object:
+                return original_run(f"{p}\n\nAdditional guidance:\n{prompt}")
+
+            agent_obj.run_sync = _run_sync
+
+    spec = fill_case(source, target, agent=agent_obj)
+    written = [n for n in type(spec).model_fields if getattr(spec, n) is not None]
+    typer.echo(f"Wrote configs to {target}: {', '.join(written)}")
+
+
+@agent_app.command("wizard")
+def agent_wizard(
+    target: str = typer.Argument(
+        ".", help="Directory to scaffold the wizard notebook into (default: cwd)."
+    ),
+    name: str = typer.Option(
+        "case_wizard.py", "--name", help="Notebook file name to write."
+    ),
+    force: bool = typer.Option(
+        False, "--force", help="Overwrite an existing notebook file."
+    ),
+) -> None:
+    """Scaffold a marimo *case wizard* notebook into TARGET.
+
+    Writes a self-contained notebook that renders the ``incompressibleFluid``
+    configs as forms (Models / Schemes / BCs / Initial values) with an AI chat
+    that fills and saves the case. The notebook operates on the directory it is
+    written to, so run it from there::
+
+        neofoam agent wizard my_case
+        marimo edit my_case/case_wizard.py
+    """
+    from neofoam.agent import write_wizard_notebook
+
+    try:
+        path = write_wizard_notebook(target, filename=name, force=force)
+    except FileExistsError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=1) from exc
+    typer.echo(f"Wrote case wizard to {path}")
+    typer.echo(f"Run it with:  marimo edit {path}")
 
 
 @solver_app.command(
@@ -44,30 +207,60 @@ def pimplefoam(ctx: typer.Context) -> None:
 
 @solver_app.command(
     context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
-)  # type: ignore[untyped-decorator]
-def incompressiblefluid(ctx: typer.Context) -> None:
-    """incompressibleFluid - General incompressible fluid solver with turbulence models."""
+)
+def neoicofoam(ctx: typer.Context) -> None:
+    """Transient solver for incompressible, laminar flow using NeoN bindings."""
+    from neofoam.solver.neoIcoFoam import NeoIcoFoam
 
-    from neofoam.solver.incompressibleFluid import run
-
-    # Only pass the extra args (not the Typer command path)
     argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
 
-    run(argv)
+    solver = NeoIcoFoam(argv)
+    solver.run()
 
 
 @solver_app.command(
     context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
-)  # type: ignore[untyped-decorator]
-def incompressiblevof(ctx: typer.Context) -> None:
-    """incompressibleVoF - interFoam-style VoF solver with surface tension and gravity."""
+)
+def neopimplefoam(ctx: typer.Context) -> None:
+    """Transient incompressible PIMPLE solver using NeoN bindings."""
+    from neofoam.solver.neoPimpleFoam import NeoPimpleFoam
 
-    from neofoam.solver.incompressibleVoF import run
-
-    # Only pass the extra args (not the Typer command path)
     argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
 
-    run(argv)
+    solver = NeoPimpleFoam(argv)
+    solver.run()
+
+
+@solver_app.command(
+    name="incompressiblefluid",
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
+def incompressiblefluid(ctx: typer.Context) -> None:
+    """Transient PIMPLE solver for incompressible Newtonian flow."""
+    from neofoam.solver.incompressibleFluid import run as run_incompressible_fluid
+
+    argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
+    run_incompressible_fluid(argv)
+
+
+@solver_app.command(
+    name="incompressiblevof",
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
+def incompressiblevof(ctx: typer.Context) -> None:
+    """incompressibleVoF - interFoam-style VoF solver with surface tension and gravity."""
+    from neofoam.solver.incompressibleVoF import run as run_incompressible_vof
+
+    argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
+    run_incompressible_vof(argv)
+
+
+@app.command()
+def preprocess(case: Path) -> None:
+    """Run ONLY the mesh preprocessing pipeline for <case> and stop (no time loop)."""
+    from neofoam.tools.run import run_preprocess
+
+    run_preprocess([sys.argv[0], "-case", str(case)])
 
 
 if __name__ == "__main__":

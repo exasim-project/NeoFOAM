@@ -29,7 +29,7 @@ Operations:
   - alpha_advection  (Python-orchestrated MULES subcycling)
 """
 
-from typing import Annotated, Protocol
+from typing import Annotated, Any, Protocol
 
 import pybFoam as pyf
 import pybFoam.vof as vof
@@ -41,12 +41,14 @@ from pybFoam import (
 )
 
 from neofoam.framework.context import FieldUpdates
+from neofoam.framework.dependency_resolver import wrap_with_dependency_resolution
 from neofoam.framework.initialization import field, model
 from neofoam.framework.operations import (
     Operation,
     Operations,
     SequentialOp,
 )
+from neofoam.framework.types import OperationMetadata
 from ..incompressibleVoFModel import Model
 
 alpha_advection_model = Model("AlphaAdvection")
@@ -71,14 +73,14 @@ class MixtureProtocol(Protocol):
 
 
 @alpha_advection_model.build
-def build() -> list[object]:
+def build(self: object) -> list[object]:
     """Register field/model initialisation steps for alpha advection."""
 
-    def create_phi(context: dict) -> surfaceScalarField:
+    def create_phi(context: dict[str, Any]) -> surfaceScalarField:
         """Create face flux phi from U."""
         return pyf.createPhi(context["fields.U"])
 
-    def create_mixture(context: dict):
+    def create_mixture(context: dict[str, Any]) -> Any:
         """Create immiscibleIncompressibleTwoPhaseMixture and register alpha flux."""
         mesh = context["mesh"]
         U = context["fields.U"]
@@ -88,13 +90,13 @@ def build() -> list[object]:
         mesh.setFluxRequired(mixture.alpha1().name())
         return mixture
 
-    def create_alpha1(context: dict) -> volScalarField:
-        return context["models.mixture"].alpha1()
+    def create_alpha1(context: dict[str, Any]) -> volScalarField:
+        return context["models.mixture"].alpha1()  # type: ignore[no-any-return]
 
-    def create_alpha2(context: dict) -> volScalarField:
-        return context["models.mixture"].alpha2()
+    def create_alpha2(context: dict[str, Any]) -> volScalarField:
+        return context["models.mixture"].alpha2()  # type: ignore[no-any-return]
 
-    def create_rho(context: dict) -> volScalarField:
+    def create_rho(context: dict[str, Any]) -> volScalarField:
         mixture = context["models.mixture"]
         alpha1 = context["fields.alpha1"]
         alpha2 = context["fields.alpha2"]
@@ -102,10 +104,10 @@ def build() -> list[object]:
         rho2 = mixture.rho2()
         rho = volScalarField(pyf.Word("rho"), alpha1 * rho1 + alpha2 * rho2)
         # Store old-time so that fvm.ddt(rho, U) in momentum has a valid old value
-        rho.oldTime()
+        rho.oldTime()  # type: ignore[attr-defined]
         return rho
 
-    def create_rho_phi(context: dict) -> surfaceScalarField:
+    def create_rho_phi(context: dict[str, Any]) -> surfaceScalarField:
         rho = context["fields.rho"]
         phi = context["fields.phi"]
         return surfaceScalarField(pyf.Word("rhoPhi"), fvc.interpolate(rho) * phi)
@@ -262,8 +264,8 @@ def _solve_alpha_python(
     #   rhoPhi = alphaPhi10 * (rho1 - rho2) + phi * rho2
     #   rho    = alpha1 * rho1 + alpha2 * rho2
     # ------------------------------------------------------------------
-    rhoPhi.assign(alpha_phi10 * rho1 - alpha_phi10 * rho2 + phi * rho2)
-    rho.assign(alpha1 * rho1 + alpha2 * rho2)
+    rhoPhi.assign(alpha_phi10 * rho1 - alpha_phi10 * rho2 + phi * rho2)  # type: ignore[operator]
+    rho.assign(alpha1 * rho1 + alpha2 * rho2)  # type: ignore[operator]
 
     Info(f"Phase-1 volume fraction: nAlphaCorr={n_alpha_corr}  MULESCorr={mules_corr}")
 
@@ -295,19 +297,24 @@ def alpha_advection(
 
 
 @alpha_advection_model.operation_collection
-def collected_operations(self, model_state: object) -> Operations:
+def collected_operations(self: object) -> Operations:
+    # The collection path bypasses the spec's default operation wrapping, so
+    # wrap alpha_advection with dependency resolution here (``self`` is the
+    # bound runtime).
+    wrapped_alpha_advection = wrap_with_dependency_resolution(
+        alpha_advection, self, alpha_advection_model._dependency_resolver
+    )
     model_ops = Operations()
     model_ops.add(
         Operation(
-            func=SequentialOp(alpha_advection),
-            operation_number=None,
-            operation_name="alpha_advection",
-            domain_name=None,
-            depends_on=[],
-            before=[],
-            shape="box",
-            color="lightgreen",
-            level=0,
+            func=SequentialOp(wrapped_alpha_advection),
+            metadata=OperationMetadata(
+                op_name="alpha_advection",
+                depends_on=[],
+                before=[],
+                shape="box",
+                color="lightgreen",
+            ),
         )
     )
     return model_ops

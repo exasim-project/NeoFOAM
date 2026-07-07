@@ -6,87 +6,13 @@
 
 from __future__ import annotations
 
-import inspect
-from dataclasses import dataclass, field, is_dataclass
-from typing import Annotated, Any, Callable, Iterator, Union, get_args, get_origin
+from dataclasses import dataclass, field
+from typing import Any, Callable, Iterator, Union
 
-from neofoam.framework.context import Context, FieldUpdates
+from neofoam import telemetry
+from neofoam.framework.context import Context
 
-from .types import OperationMetadata, OpType, OperationNumber
-
-
-def _get_value(ctx: Context, name: str, annotation: Any) -> dict[str, Any]:
-    call_args = {}
-    ctx_var = ctx.fields
-
-    is_annotated = get_origin(annotation) is Annotated
-    var_name = "fields"
-    if is_annotated:
-        var_name = get_args(annotation)[1]
-        ctx_var = getattr(ctx, var_name)
-
-    if name in ctx_var:
-        call_args[name] = ctx_var[name]
-    else:
-        raise KeyError(
-            f"Required parameter '{name}' was not found in {var_name} and has no default value."
-        )
-
-    return call_args
-
-
-def get_function_parameters(func: Callable[..., Any]) -> dict[str, type]:
-    sig = inspect.signature(func)
-    param_types = {}
-    for name, param in sig.parameters.items():
-        param_types[name] = param.annotation
-    return param_types
-
-
-def get_call_arguments(func_args: dict[str, type], context: Context) -> dict[str, Any]:
-    call_args: dict[str, Any] = {}
-    for name, annotation in func_args.items():
-        if is_dataclass(annotation):
-            dc_sig = inspect.signature(annotation)
-            dc_args = {}
-            for dc_name, dc_param in dc_sig.parameters.items():
-                dc_annotation = dc_sig.parameters[dc_name].annotation
-                dc_args.update(_get_value(context, dc_name, dc_annotation))
-            call_args[name] = annotation(**dc_args)
-        elif annotation == Context:
-            call_args[name] = context
-        elif get_origin(annotation) is Annotated:
-            call_args.update(_get_value(context, name, annotation))
-        else:
-            call_args[name] = context.fields[name]
-    return call_args
-
-
-def _get_operation_type(func: Callable[..., Any]) -> OpType:
-    if hasattr(func, "_metadata"):
-        op_type = func._metadata.op_type
-        if not isinstance(op_type, OpType):
-            raise ValueError("Function metadata does not have valid op_type")
-        return op_type
-    raise ValueError("Function is not decorated with metadata")
-
-
-def context_adapter(func: Callable[..., Any]) -> Callable[[Context], Any]:
-    func_paras = get_function_parameters(func)
-    op_type = _get_operation_type(func)
-    # TODO error handling if not FieldUpdates is returned
-
-    def wrapped_function(context: Context) -> Any:
-        call_args = get_call_arguments(func_paras, context)
-        results = func(**call_args)
-
-        if op_type == OpType.OPERATION and isinstance(results, FieldUpdates):
-            context.fields.update(results)
-            return None
-
-        return results
-
-    return wrapped_function
+from .types import OperationMetadata, OperationNumber
 
 
 class ConditionalOp:
@@ -106,11 +32,6 @@ class IterativeOp:
 
 
 class SequentialOp:
-    @staticmethod
-    def from_method(method: Callable[..., Any]) -> SequentialOp:
-        func = context_adapter(method)
-        return SequentialOp(func=func)
-
     def __init__(self, func: Callable[[Context], Any]) -> None:
         self.func = func
 
@@ -120,42 +41,46 @@ class SequentialOp:
 
 @dataclass
 class Operation:
-    """A concrete operation class that wraps a function with metadata."""
+    """A concrete operation class that wraps a function with metadata.
+
+    Stores an :class:`OperationMetadata` instance as the single source of
+    truth for name, numbering, dependencies, and visualisation hints.
+    """
 
     func: Union[ConditionalOp, IterativeOp, SequentialOp]
-    operation_number: OperationNumber | None = None
-    operation_name: str | None = None
-    domain_name: str | None = None
-    depends_on: list[str] | None = None
-    before: list[str] | None = None
-    # TODO move visualization metadata to a separate class
-    shape: str = "box"
-    color: str = "lightblue"
+    metadata: OperationMetadata = field(default_factory=OperationMetadata)
     level: int = 0
     sub_operations: list["Operation"] = field(default_factory=list)
 
-    def __post_init__(self) -> None:
-        if self.depends_on is None:
-            self.depends_on = []
-        if self.before is None:
-            self.before = []
+    # --- Convenience accessors delegating to metadata ---
 
-    @staticmethod
-    def create_SeqOp(callable_method: Callable[..., Any], **kwargs: Any) -> Operation:
-        if (
-            not hasattr(callable_method, "_metadata")
-            or not callable_method._metadata.is_operation
-        ):
-            raise ValueError("callable_method cannot be None")
-        seq_op = SequentialOp.from_method(callable_method)
-        metadata = callable_method._metadata
-        if "operation_name" not in kwargs and metadata.name is not None:
-            kwargs["operation_name"] = metadata.name
-        if "operation_number" not in kwargs and metadata.operation_number is not None:
-            kwargs["operation_number"] = metadata.operation_number
-        if "depends_on" not in kwargs and metadata.depends_on is not None:
-            kwargs["depends_on"] = metadata.depends_on
-        return Operation(func=seq_op, **kwargs)
+    @property
+    def operation_name(self) -> str | None:
+        return self.metadata.op_name
+
+    @property
+    def operation_number(self) -> OperationNumber | None:
+        return self.metadata.operation_number
+
+    @property
+    def domain_name(self) -> str | None:
+        return self.metadata.domain_name
+
+    @property
+    def depends_on(self) -> list[str]:
+        return self.metadata.depends_on if self.metadata.depends_on is not None else []
+
+    @property
+    def before(self) -> list[str]:
+        return self.metadata.before if self.metadata.before is not None else []
+
+    @property
+    def shape(self) -> str:
+        return self.metadata.shape
+
+    @property
+    def color(self) -> str | None:
+        return self.metadata.color
 
     @property
     def operation_type(self) -> str:
@@ -168,33 +93,25 @@ class Operation:
         else:
             raise ValueError("Unknown operation type")
 
-    def operation_metadata(self) -> OperationMetadata:
-        return OperationMetadata(
-            op_name=self.operation_name or "unknown",
-            depends_on=self.depends_on,
-            shape=self.shape,
-            operation_number=self.operation_number,
-            color=self.color,
-            domain_name=self.domain_name,
-        )
-
     @property
     def name(self) -> str | None:
-        return (
-            f"{self.domain_name}.{self.operation_name}"
-            if self.domain_name
-            else self.operation_name
-        )
+        return self.metadata.name
 
     @property
     def dependency_names(self) -> list[str]:
-        if self.depends_on is None:
-            return []
-        if self.domain_name:
-            return [f"{self.domain_name}.{dep}" for dep in self.depends_on]
-        return self.depends_on
+        return self.metadata.dependencies
 
     def run(self, ctx: Context) -> Any:
+        if not telemetry.is_active():
+            return self._execute(ctx)
+        with telemetry.span(
+            self.metadata.op_name or self.metadata.name or "operation",
+            operation_type=self.operation_type,
+            domain=self.metadata.domain_name,
+        ):
+            return self._execute(ctx)
+
+    def _execute(self, ctx: Context) -> Any:
         op_type = self.operation_type
         if op_type == "conditional":
             return self.func(ctx)

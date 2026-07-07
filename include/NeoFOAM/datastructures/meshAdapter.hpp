@@ -18,6 +18,10 @@ std::vector<NeoN::localIdx> computeOffset(const Foam::fvMesh& mesh);
 
 int32_t computeNBoundaryFaces(const Foam::fvMesh& mesh);
 
+NeoN::localIdx computeProcBoundaryPatches(const Foam::fvMesh& mesh);
+
+std::vector<NeoN::localIdx> computeNeighbourRank(const Foam::fvMesh& mesh);
+
 template<typename FieldT>
 FieldT flatBCField(const Foam::fvMesh& mesh, std::function<FieldT(const Foam::fvPatch&)> f);
 

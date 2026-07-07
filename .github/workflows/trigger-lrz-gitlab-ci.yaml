@@ -27,6 +27,7 @@ jobs:
       skip-nvidia: ${{ steps.skip-labels.outputs.skip-nvidia }}
       skip-amd: ${{ steps.skip-labels.outputs.skip-amd }}
       skip-intel: ${{ steps.skip-labels.outputs.skip-intel }}
+      skip-validation: ${{ steps.skip-labels.outputs.skip-validation }}
 
     if: >
       github.event_name != 'pull_request' ||
@@ -63,15 +64,17 @@ jobs:
           echo "skip-nvidia=false" >> $GITHUB_OUTPUT
           echo "skip-amd=false" >> $GITHUB_OUTPUT
           echo "skip-intel=false" >> $GITHUB_OUTPUT
+          echo "skip-validation=false" >> $GITHUB_OUTPUT
 
           # Only check labels if this is a PR
           if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
             labels=$(jq -r '.pull_request.labels[].name // empty' "$GITHUB_EVENT_PATH")
             for label in $labels; do
               case "$label" in
-                skip-nvidia) echo "skip-nvidia=true" >> $GITHUB_OUTPUT ;;
-                skip-amd)    echo "skip-amd=true" >> $GITHUB_OUTPUT ;;
-                skip-intel)  echo "skip-intel=true" >> $GITHUB_OUTPUT ;;
+                skip-nvidia)      echo "skip-nvidia=true" >> $GITHUB_OUTPUT ;;
+                skip-amd)         echo "skip-amd=true" >> $GITHUB_OUTPUT ;;
+                skip-intel)       echo "skip-intel=true" >> $GITHUB_OUTPUT ;;
+                skip-validation)  echo "skip-validation=true" >> $GITHUB_OUTPUT ;;
               esac
             done
           fi
@@ -106,7 +109,8 @@ jobs:
             "variables[BENCHMARK]=false" \
             "variables[SKIP_NVIDIA]=${{ steps.skip-labels.outputs.skip-nvidia }}" \
             "variables[SKIP_AMD]=${{ steps.skip-labels.outputs.skip-amd }}" \
-            "variables[SKIP_INTEL]=${{ steps.skip-labels.outputs.skip-intel }}"
+            "variables[SKIP_INTEL]=${{ steps.skip-labels.outputs.skip-intel }}" \
+            "variables[SKIP_VALIDATION]=${{ steps.skip-labels.outputs.skip-validation }}"
 
       - name: Wait for LRZ GitLab CI pipeline
         run: |

@@ -47,19 +47,33 @@ jobs:
           echo "Using NeoFOAM branch: $NEOFOAM_BRANCH"
           echo "NEOFOAM_BRANCH=$NEOFOAM_BRANCH" >> $GITHUB_ENV
 
-          # Define remote repo URL
-          REPO_URL="https://github.com/exasim-project/NeoN"
+          # Define remote repo
+          NEON_REPO="exasim-project/NeoN"
+          REPO_URL="https://github.com/${NEON_REPO}"
 
+          # Prefer a NeoN branch with the same name as this NeoFOAM branch (coordinated
+          # PRs), but only while it still has commits that are NOT yet in develop. A
+          # same-named branch already merged into / contained in develop is stale and
+          # would build against an outdated NeoN API, so fall back to develop then.
+          NEON_BRANCH="develop"
           echo "Checking if branch '$NEOFOAM_BRANCH' exists in NeoN..."
-
-          # Query exact match: refs/heads/<branch>
           if git ls-remote --exit-code --heads "$REPO_URL" "refs/heads/${NEOFOAM_BRANCH}" >/dev/null 2>&1; then
-            echo "NeoN branch exists: $NEOFOAM_BRANCH"
-            echo "NEON_BRANCH=$NEOFOAM_BRANCH" >> $GITHUB_ENV
+            echo "NeoN branch exists; checking whether it is already merged into develop..."
+            # compare develop...<branch>: 'behind'/'identical' => branch fully contained in develop
+            NEON_STATUS=$(curl -s "https://api.github.com/repos/${NEON_REPO}/compare/develop...${NEOFOAM_BRANCH}" | jq -r '.status // empty' || echo "")
+            echo "compare(develop...${NEOFOAM_BRANCH}) status: ${NEON_STATUS:-<unknown>}"
+            if [ "$NEON_STATUS" = "behind" ] || [ "$NEON_STATUS" = "identical" ]; then
+              echo "NeoN branch is already merged into develop. Falling back to 'develop'."
+            else
+              echo "NeoN branch has unmerged commits (or status unknown). Using it: $NEOFOAM_BRANCH"
+              NEON_BRANCH="$NEOFOAM_BRANCH"
+            fi
           else
             echo "NeoN branch '$NEOFOAM_BRANCH' does not exist. Falling back to 'develop'."
-            echo "NEON_BRANCH=develop" >> $GITHUB_ENV
           fi
+
+          echo "Resolved NeoN ref: $NEON_BRANCH"
+          echo "NEON_BRANCH=$NEON_BRANCH" >> $GITHUB_ENV
 
       - name: Checkout NeoFOAM
         uses: actions/checkout@v4
@@ -78,9 +92,8 @@ jobs:
         with:
           packages: >-
             ninja-build
-            clang-16
-            gcc-10
-            libomp-16-dev
+            clang-19
+            libomp-19-dev
             python3
             python3-dev
             build-essential
@@ -99,11 +112,12 @@ jobs:
       - name: Build NeoFOAM
         run: |
           source /usr/lib/openfoam/openfoam2406/etc/bashrc || true
-          CC=${{matrix.compiler.CC}}
-          CXX=${{matrix.compiler.CXX}}
           cmake --preset develop \
             -DNeoN_DEVEL_TOOLS=OFF \
             -DNeoN_BUILD_TESTS=OFF \
+            -DNEOFOAM_WITH_MPI=ON \
+            -DCMAKE_CXX_COMPILER=${{matrix.compiler.CXX}} \
+            -DCMAKE_C_COMPILER=${{matrix.compiler.CC}} \
             -DNeoN_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF \
             -DNEOFOAM_NEON_VERSION=${{ env.NEON_BRANCH }} \
             -DNEOFOAM_BUILD_BENCHMARKS=ON
@@ -120,7 +134,7 @@ jobs:
     strategy:
       matrix:
         openfoam-version: [ 2506] # 2406, 2412,
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
       fail-fast: false
     name: neofoam Python with OpenFOAM ${{ matrix.openfoam-version }}
     steps:
@@ -131,9 +145,6 @@ jobs:
         with:
           openfoam-version: ${{ matrix.openfoam-version }}
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
-
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
@@ -141,16 +152,16 @@ jobs:
 
       - name: Install test dependencies
         run: |
-          uv run pip install -v .[all]
+          pip install -v .[all]
 
       - name: Test with pytest
         run: |
-          uv run pytest
+          pytest
 
   python-coverage:
     runs-on: ubuntu-24.04 # may use an older version to test
 
-    name: Test coverage with OpenFOAM 2506 and Python 3.9
+    name: Test coverage with OpenFOAM 2506 and Python 3.10
     steps:
       - uses: actions/checkout@v5
 
@@ -158,18 +169,18 @@ jobs:
         uses: gerlero/setup-openfoam@v1
         with:
           openfoam-version: 2506
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.9
+          python-version: '3.10'
 
       - name: Install test dependencies
         run: |
-          uv run pip install -v .[all]
+          pip install -v .[all]
 
       - name: Test with pytest
         run: |
-          source .venv/bin/activate
           pytest --cov=neofoam --cov-report=xml --cov-report=term
 
       # - name: Upload code coverage results to Codecov
@@ -208,16 +219,12 @@ jobs:
       with:
         openfoam-version: 2506
 
-    - name: Install uv
-      uses: astral-sh/setup-uv@v7
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v5
       with:
-        python-version: 3.9
-    - name: Check types with ty
-      run: |
-        uv run pip install .[all]
-        poe type_check
+        python-version: '3.10'
 
     - name: Check types with ty
       run: |
-        uv run pip install .[all]
+        pip install .[all]
         poe type_check

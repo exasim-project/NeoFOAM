@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class FieldUpdates(dict[str, Any]):
@@ -31,4 +31,9 @@ class Context(BaseModel):
     fields: dict[str, Any]
     models: dict[str, Any]
     mesh: Any = None
-    runTime: Any = None
+    # the pure-Python LoopState (time, deltaT, index, write flag); advanced by
+    # the solutionLoop engine. The backend Foam::Time (if any) is hidden.
+    time: Any = None
+    # names of fields (keys of ``fields``) flagged for persistence via
+    # ``field(..., write=True)``; a per-field write backend writes exactly these.
+    write_fields: set[str] = Field(default_factory=set)

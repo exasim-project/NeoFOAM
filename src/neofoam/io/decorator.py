@@ -6,7 +6,7 @@
 from typing import Any, Callable, Optional, TypeVar
 
 from neofoam.io.validation_types import IOMetadata
-from neofoam.io.strategies import YAMLStrategy, JSONStrategy
+from neofoam.io.strategies import YAMLStrategy, JSONStrategy, OpenFOAMStrategy
 
 
 def YAML(
@@ -69,6 +69,29 @@ def JSON(
             host: str
     """
     strategy = JSONStrategy(subdict)
+
+    return {
+        "input_file": file,
+        "reading_strategy": strategy,
+        "writing_strategy": strategy,
+    }
+
+
+def OF(
+    file: str,
+    subdict: Optional[str] = None,
+) -> dict[str, Any]:
+    """Helper to create OpenFOAM dictionary strategy configuration.
+
+    Args:
+        file: Relative path to OpenFOAM dictionary file
+        subdict: Optional subdict path for partial file updates.
+                 Examples: "PISO" (flat) or "solvers.p" (nested with dots)
+
+    Returns:
+        Dictionary with strategy configuration
+    """
+    strategy = OpenFOAMStrategy(subdict)
 
     return {
         "input_file": file,

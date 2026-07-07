@@ -18,6 +18,10 @@ application     icoFoam;
 
 executor        GPU;
 
+allocator       UmpirePool;
+
+memPoolSize     1.0; // requested pool size in GB
+
 startFrom       startTime;
 
 startTime       0;
@@ -52,5 +56,24 @@ maxCo           0.2;
 
 maxDeltaT       1;
 
+
+functions
+{
+    cylinderForceCoeffs
+    {
+        type      neoForceCoeffs;
+        libs      (NeoFOAM);
+        patches   (cylinder);
+        pName     p;
+        rhoInf    1.0;
+        pRef      0.0;
+        magUInf   1.0;
+        lRef      0.1;
+        Aref      0.1;
+        CofR      (0 0 0);
+        dragDir   (1 0 0);
+        liftDir   (0 1 0);
+    }
+}
 
 // ************************************************************************* //

@@ -7,28 +7,36 @@ DummySolver - Test solver with FastAPI-style syntax.
 Mimics SimpleSolver structure for testing new API.
 """
 
-from typing import Annotated, Optional
+from typing import Annotated, Any, Optional
 
 
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.graph import DAGResolver
-from neofoam.framework.initialization import Depends, StagedInit
+from neofoam.framework.initialization import Depends, StagedInitRunner
 from neofoam.framework.operations import (
     IterativeOp,
     Operation,
     OperationCollection,
     StepBuilder,
 )
-from neofoam.framework.solver_factory import Solver
+from neofoam.framework.solver import Solver
+from neofoam.framework.types import OperationMetadata
 
-# Import create_init from dummy_init
-from .dummy_init import create_init
+# Import create_init + the solver-core config classes from dummy_init
+from .dummy_init import (
+    CoreModel2,
+    DummyAlgorithm,
+    MeshConfig,
+    SolverConfig,
+    create_init,
+)
+from .models.dummy_model import DummyModelInterface
 
 
 class AlgorithmLoop:
     """Helper class for managing the algorithm inner loop."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._iteration = 0
         self._max_iterations = 3  # Limit for testing
 
@@ -41,26 +49,36 @@ class AlgorithmLoop:
 
         algorithm = ctx.models.get("algorithm")
         if algorithm and hasattr(algorithm, "solve"):
-            return algorithm.solve()
+            return bool(algorithm.solve())
         return True  # Continue for testing
 
 
-# Create Solver instance for decorating operations
-dummy_solver = Solver("DummySolver")
+# Create SolverSpec (immutable definition)
+dummy_solver_spec = Solver("DummySolver")
+
+# Declare the full config schema on the spec, case-free. This solver has no
+# core model *family* (no select-one dispatcher) — its core configs are
+# declared directly — and binds the optional ``DummyModelInterface`` family,
+# whose registered members (model1-4) contribute their configs to the schema.
+dummy_solver_spec.config(SolverConfig)
+dummy_solver_spec.config(MeshConfig)
+dummy_solver_spec.config(CoreModel2)
+dummy_solver_spec.config(DummyAlgorithm)
+dummy_solver_spec.models(DummyModelInterface)
 
 
-@dummy_solver.initializer
-def initialize(init: Annotated[StagedInit, Depends(create_init)]) -> Context:
+@dummy_solver_spec.initializer
+def initialize(
+    self: Any, init: Annotated[StagedInitRunner, Depends(create_init)]
+) -> Context:
     """Initialize using create_init factory with dependency injection."""
-    init.argv = dummy_solver.argv
     ctx = init.run()
-    dummy_solver.core_models = init.core_models
-    dummy_solver.optional_models = init.optional_models
     return ctx
 
 
-@dummy_solver.execution_graph_step
+@dummy_solver_spec.execution_graph_step
 def execution_graph(
+    self: Any,
     domain_name: Optional[str] = None,
 ) -> tuple[StepBuilder, OperationCollection]:
     """
@@ -73,7 +91,7 @@ def execution_graph(
 
     # Build solver structure
 
-    ops = dummy_solver.operations
+    ops = self.operations
     builder = StepBuilder()
 
     # Outer time loop - limit to 1 iteration for testing
@@ -85,16 +103,14 @@ def execution_graph(
 
     time_loop = Operation(
         func=IterativeOp(time_condition),
-        operation_name="time_loop",
-        operation_number=None,
+        metadata=OperationMetadata(op_name="time_loop"),
     )
 
     with builder.loop(time_loop) as time_builder:
         # Algorithm inner loop
         algo_loop = Operation(
             func=IterativeOp(AlgorithmLoop()),
-            operation_name="inner_loop",
-            operation_number=None,
+            metadata=OperationMetadata(op_name="inner_loop"),
         )
 
         with time_builder.loop(algo_loop) as inner_builder:
@@ -104,7 +120,7 @@ def execution_graph(
 
     # Collect model operations
     model_ops = OperationCollection()
-    for model in dummy_solver.optional_models:
+    for model in self.optional_models:
         model_ops.add(model.operations)
 
     return builder, model_ops
@@ -131,8 +147,8 @@ def run() -> Context:
     return ctx
 
 
-@dummy_solver.operation(operation_number="1.0")
-def solver_step1(self, field1: float, field2: float) -> FieldUpdates:
+@dummy_solver_spec.operation(operation_number="1.0")
+def solver_step1(self: Any, field1: float, field2: float) -> FieldUpdates:
     """
     Primary solver step.
 
@@ -149,8 +165,8 @@ def solver_step1(self, field1: float, field2: float) -> FieldUpdates:
     return FieldUpdates({"field1": f1_new})
 
 
-@dummy_solver.operation(operation_number="2.0")
-def solver_step2(self, field2: float, field3: float) -> FieldUpdates:
+@dummy_solver_spec.operation(operation_number="2.0")
+def solver_step2(self: Any, field2: float, field3: float) -> FieldUpdates:
     """
     Secondary solver step.
 
@@ -167,8 +183,8 @@ def solver_step2(self, field2: float, field3: float) -> FieldUpdates:
     return FieldUpdates({"field2": f2_new})
 
 
-@dummy_solver.operation(operation_number="3.0")
-def solver_step3(self, field1: float) -> FieldUpdates:
+@dummy_solver_spec.operation(operation_number="3.0")
+def solver_step3(self: Any, field1: float) -> FieldUpdates:
     """
     Correction solver step.
 
@@ -183,3 +199,8 @@ def solver_step3(self, field1: float) -> FieldUpdates:
     f1_corrected = field1 * 0.99  # Small correction
 
     return FieldUpdates({"field1": f1_corrected})
+
+
+# Module-level runtime for tests — preserves backward compatibility
+# Tests import `dummy_solver` and call .initialize(), .execution_graph(), etc.
+dummy_solver = dummy_solver_spec.instantiate()

@@ -1,0 +1,128 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 NeoFOAM authors
+
+"""Tests for ``write_configs`` (``neofoam.io.write_configs``).
+
+``write_configs`` groups configs by their target file and deep-merges co-owners
+into one write, so multi-owner files (e.g. ``constant/transportProperties`` from
+both ``TransportPropertiesConfig`` and ``BoussinesqConfig``) keep every
+contribution while the writer still clears-and-rewrites each file (so re-saving a
+single config drops keys it no longer carries). Writing goes through pybFoam, so
+these are gated on the bindings.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+
+import pybFoam as pyf  # noqa: E402
+
+from neofoam.framework.solver.configurations import configurations  # noqa: E402
+from neofoam.io import write_configs  # noqa: E402
+from neofoam.io.base import BaseConfig  # noqa: E402
+from neofoam.io.decorator import OF, IOStrategy  # noqa: E402
+from neofoam.solver.incompressibleFluid.incompressibleFluid import (  # noqa: E402
+    incompressibleFluid,
+)
+
+
+def _cfgs():
+    return configurations(incompressibleFluid)
+
+
+def test_write_configs_writes_field_and_dict_files(tmp_path: Path) -> None:
+    cfgs = _cfgs()
+    u = cfgs["UFieldConfig"].model_validate(
+        {
+            "internalField": "uniform (0 0 0)",
+            "boundaryField": {"walls": {"type": "noSlip"}},
+        }
+    )
+    cd = cfgs["ControlDictConfig"].model_validate({"endTime": 1.0, "deltaT": 0.1})
+
+    report = write_configs([u, cd], case_dir=tmp_path)
+
+    assert report["0/U"] == ["UFieldConfig"]
+    assert report["system/controlDict"] == ["ControlDictConfig"]
+    assert (tmp_path / "0" / "U").exists()
+    assert (tmp_path / "system" / "controlDict").exists()
+    text = (tmp_path / "0" / "U").read_text()
+    assert "noSlip" in text and "boundaryField" in text
+
+
+def test_write_configs_skips_instances_without_io_config(tmp_path: Path) -> None:
+    from pydantic import BaseModel
+
+    class NoIO(BaseModel):
+        x: int = 1
+
+    assert write_configs([NoIO()], case_dir=tmp_path) == {}
+
+
+def test_write_configs_co_owners_accumulate(tmp_path: Path) -> None:
+    """Two configs targeting one file accumulate — neither clobbers the other."""
+
+    @IOStrategy(OF("constant/shared"))
+    class _A(BaseConfig):
+        alpha: int = 1
+
+    @IOStrategy(OF("constant/shared"))
+    class _B(BaseConfig):
+        beta: int = 2
+
+    write_configs([_A(alpha=11), _B(beta=22)], case_dir=tmp_path)
+
+    root = pyf.dictionary.read(str(tmp_path / "constant" / "shared"))
+    assert root.found("alpha") and root.found("beta")
+    assert str(root.get[str]("alpha")) == "11"
+    assert str(root.get[str]("beta")) == "22"
+
+
+def test_write_configs_merges_multi_owner_file(tmp_path: Path) -> None:
+    """Multi-owner ``constant/transportProperties`` keeps both contributors.
+
+    Merging Boussinesq with Transport must not drop Transport's ``nu`` (a naive
+    per-config clear-write would).
+    """
+    cfgs = _cfgs()
+    transport = cfgs["TransportPropertiesConfig"].model_validate(
+        {"transportModel": "Newtonian", "nu": 1e-5}
+    )
+    boussinesq = cfgs["BoussinesqConfig"].model_construct()
+    assert (
+        transport.io_config.file
+        == boussinesq.io_config.file
+        == "constant/transportProperties"
+    )
+
+    write_configs([transport, boussinesq], case_dir=tmp_path)
+
+    # Transport's value survived Boussinesq's later write to the same file.
+    reloaded = cfgs["TransportPropertiesConfig"].load(case_dir=tmp_path)
+    assert reloaded.nu == 1e-5
+    assert reloaded.transportModel == "Newtonian"
+
+
+def test_dict_config_emits_foamfile_header(tmp_path: Path) -> None:
+    cfgs = _cfgs()
+    cd = cfgs["ControlDictConfig"].model_validate({"endTime": 1.0, "deltaT": 0.1})
+    cd.save(case_dir=tmp_path)  # single-instance path also injects a header
+
+    root = pyf.dictionary.read(str(tmp_path / "system" / "controlDict"))
+    header = root.subDict("FoamFile")
+    assert str(header.get[str]("class")) == "dictionary"
+    assert str(header.get[str]("object")) == "controlDict"
+
+
+def test_field_config_keeps_native_header(tmp_path: Path) -> None:
+    cfgs = _cfgs()
+    u = cfgs["UFieldConfig"].model_validate(
+        {"boundaryField": {"walls": {"type": "noSlip"}}}
+    )
+    u.save(case_dir=tmp_path)
+
+    root = pyf.dictionary.read(str(tmp_path / "0" / "U"))
+    header = root.subDict("FoamFile")
+    assert str(header.get[str]("class")) == "volVectorField"
+    assert str(header.get[str]("object")) == "U"

@@ -12,7 +12,7 @@ Note: alpha_advection has been extracted into the AlphaAdvection core model
   phi, mixture, alpha1, alpha2, rho, rhoPhi.
 """
 
-from typing import Annotated, Callable, Optional, Protocol
+from typing import Annotated, Any, Callable, Protocol
 
 import pybFoam as pyf
 from pybFoam import (
@@ -25,9 +25,10 @@ from pybFoam import (
     volVectorField,
 )
 
-from neofoam.algorithms.control import PimpleControl
+from neofoam.algorithms.solution_loop.control import PimpleControl
 from neofoam.foam.initialization import read_vol_field
 from neofoam.framework.context import Context, FieldUpdates
+from neofoam.framework.dependency_resolver import wrap_with_dependency_resolution
 from neofoam.framework.initialization import field, model
 from neofoam.framework.operations import (
     IterativeOp,
@@ -35,6 +36,7 @@ from neofoam.framework.operations import (
     Operations,
     SequentialOp,
 )
+from neofoam.framework.types import OperationMetadata
 from .control_factory import create_pimple_control
 from ..incompressibleVoFModel import Model
 
@@ -68,47 +70,49 @@ class TwoPhaseTransportProtocol(Protocol):
 
 
 @pimple.build
-def build() -> list[object]:  # noqa: C901
+def build(self: object) -> list[object]:  # noqa: C901
     """Register all field and model initialisation steps for VoF PIMPLE algorithm."""
 
     # ------------------------------------------------------------------ #
     # Factory functions (closures) for each field / model                 #
     # ------------------------------------------------------------------ #
 
-    def _gravity_ref(mesh) -> "pyf.dimensionedScalar":
-        """Compute the reference gravity-head as a dimensionedScalar."""
+    def _gravity_ref(mesh: Any) -> tuple[Any, Any]:
+        """Return ``(g, ghRef)`` — gravity field and its reference head."""
         g = pyf.uniformDimensionedVectorField(mesh, "g")
         return g, pyf.dimensionedScalar("ghRef", g.dimensions() * pyf.dimLength, 0.0)
 
-    def create_gh(context: dict) -> volScalarField:
+    def create_gh(context: dict[str, Any]) -> volScalarField:
         mesh = context["mesh"]
         g, gh_ref_dim = _gravity_ref(mesh)
         return volScalarField(pyf.Word("gh"), (g & mesh.C()) - gh_ref_dim)
 
-    def create_ghf(context: dict) -> surfaceScalarField:
+    def create_ghf(context: dict[str, Any]) -> surfaceScalarField:
         mesh = context["mesh"]
         g, gh_ref_dim = _gravity_ref(mesh)
         return surfaceScalarField(pyf.Word("ghf"), (g & mesh.Cf()) - gh_ref_dim)
 
-    def create_p(context: dict) -> volScalarField:
+    def create_p(context: dict[str, Any]) -> volScalarField:
         p_rgh = context["fields.p_rgh"]
         rho = context["fields.rho"]
         gh = context["fields.gh"]
         # Absolute pressure: p = p_rgh + rho*gh
         return volScalarField(pyf.Word("p"), p_rgh + rho * gh)
 
-    def create_p_rgh(context: dict) -> volScalarField:
+    def create_p_rgh(context: dict[str, Any]) -> volScalarField:
         mesh = context["mesh"]
         mesh.setFluxRequired(pyf.Word("p_rgh"))
         return volScalarField.read_field(mesh, "p_rgh")
 
-    def create_pressure_reference(context: dict) -> dict:
+    def create_pressure_reference(context: dict[str, Any]) -> dict[str, Any]:
         """Set reference cell/value for p_rgh."""
         p = context["fields.p"]
         p_rgh = context["fields.p_rgh"]
         fv_solution = pyf.dictionary.read("system/fvSolution")
         algo_dict = fv_solution.subDict("PIMPLE")
-        pRefCell, pRefValue = pyf.setRefCell(p, p_rgh, algo_dict, False)
+        # Two-field setRefCell(p, p_rgh, dict) — the stub only knows the
+        # single-field overload.
+        pRefCell, pRefValue = pyf.setRefCell(p, p_rgh, algo_dict, False)  # type: ignore[call-arg, arg-type]
         return {"pRefCell": pRefCell, "pRefValue": pRefValue}
 
     # ------------------------------------------------------------------ #
@@ -141,7 +145,14 @@ def build() -> list[object]:  # noqa: C901
 
 
 def inner_loop(ctx: Context) -> bool:
-    return bool(ctx.models["pimple_control"].loop(ctx))
+    pimple_control = ctx.models["pimple_control"]
+    looping = bool(pimple_control.loop(ctx))
+    if looping:
+        # Mirror pimpleControl::loop(): on the final outer iteration flag the
+        # mesh so fvMatrix::solve picks the <field>Final settings for the
+        # library solves buried in turbulence.correct() (k/epsilon/nuTilda).
+        ctx.mesh.setFinalIteration(pimple_control.finalIter())
+    return looping
 
 
 # ---------------------------------------------------------------------------
@@ -155,17 +166,15 @@ def _alias_operation(
     operation_name: str,
     depends_on: list[str],
 ) -> Operation:
-    metadata = getattr(op_func, "_metadata", None)
     return Operation(
         func=SequentialOp(op_func),
-        operation_number=getattr(metadata, "operation_number", None),
-        operation_name=operation_name,
-        domain_name=None,
-        depends_on=depends_on,
-        before=[],
-        shape="box",
-        color="lightblue",
-        level=0,
+        metadata=OperationMetadata(
+            op_name=operation_name,
+            depends_on=depends_on,
+            before=[],
+            shape="box",
+            color="lightblue",
+        ),
     )
 
 
@@ -222,7 +231,7 @@ def continuity(
     UEqn: fvVectorMatrix,
     pimple_control: Annotated[PimpleControl, "models"],
     cumulativeContErr: Annotated[list[float], "models"],
-    pressure_reference: Annotated[dict[str, object], "models"],
+    pressure_reference: Annotated[dict[str, Any], "models"],
     mixture: Annotated[MixtureProtocol, "models"],
 ) -> FieldUpdates:
     """Pressure-velocity coupling for VoF with surface tension and gravity."""
@@ -284,20 +293,36 @@ def continuity(
 
 
 @pimple.operation_collection
-def collected_operations(self, model_state: object) -> Operations:
+def collected_operations(self: object) -> Operations:
+    """Wrap momentum/continuity inside the PIMPLE inner loop.
+
+    The operation-collection path bypasses the spec's default operation
+    wrapping, so momentum/continuity are wrapped with dependency resolution
+    here (``self`` is the bound runtime) — mirroring the incompressibleFluid
+    PIMPLE model.
+    """
     model_ops = Operations()
 
     model_ops.add(
         Operation(
             func=IterativeOp(inner_loop),
-            operation_name="inner_loop",
-            operation_number=None,
+            metadata=OperationMetadata(op_name="inner_loop"),
         )
     )
-    model_ops.add(_alias_operation(momentum, operation_name="momentum", depends_on=[]))
+
+    wrapped_momentum = wrap_with_dependency_resolution(
+        momentum, self, pimple._dependency_resolver
+    )
+    wrapped_continuity = wrap_with_dependency_resolution(
+        continuity, self, pimple._dependency_resolver
+    )
+
+    model_ops.add(
+        _alias_operation(wrapped_momentum, operation_name="momentum", depends_on=[])
+    )
     model_ops.add(
         _alias_operation(
-            continuity, operation_name="continuity", depends_on=["momentum"]
+            wrapped_continuity, operation_name="continuity", depends_on=["momentum"]
         )
     )
 

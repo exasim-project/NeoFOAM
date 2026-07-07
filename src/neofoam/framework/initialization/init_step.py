@@ -9,10 +9,12 @@ Provides the InitStep dataclass for deferred initialization with dependency trac
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Callable, Literal
+from typing import Any, Callable
 
-
-InitCategory = Literal["fields", "models", "operators", "resource"]
+# ``InitCategory`` used to be a closed ``Literal``; routing is now extensible
+# via :class:`CategoryRouter` so categories are plain strings. The alias is
+# kept as ``str`` to limit churn on annotations that reference the name.
+InitCategory = str
 
 
 class InitStepExecutionError(RuntimeError):
@@ -60,26 +62,10 @@ class InitStep:
     depends_on: list[str] = field(default_factory=list)
     initializer: Callable[[dict[str, Any]], Any] = None  # type: ignore[assignment]
     category: InitCategory = "resource"
-
-    def execute(self, context: dict[str, Any]) -> Any:
-        """Execute the deferred initialization and return the result.
-
-        Args:
-            context: Dictionary of already-initialized objects for dependencies
-
-        Raises:
-            ValueError: If the initializer is ``None``.
-            InitStepExecutionError: If the initializer itself raises.
-        """
-        if self.initializer is None:
-            raise ValueError(f"InitStep '{self.name}' has no initializer function")
-
-        try:
-            return self.initializer(context)
-        except (ValueError, TypeError):
-            raise
-        except Exception as exc:
-            raise InitStepExecutionError(self.name, self.depends_on, exc) from exc
+    write: bool = False  # flag a field for persistence (auto-write)
+    replaces: list[str] = field(
+        default_factory=list
+    )  # default step names this supersedes
 
     def __post_init__(self) -> None:
         """Validate InitStep after creation."""
@@ -89,7 +75,7 @@ class InitStep:
             raise ValueError(
                 f"InitStep '{self.name}' must have an initializer function"
             )
-        if self.category not in {"fields", "models", "operators", "resource"}:
+        if not isinstance(self.category, str) or not self.category:
             raise ValueError(
-                f"InitStep '{self.name}' has invalid category '{self.category}'"
+                f"InitStep '{self.name}' must have a non-empty category string"
             )
