@@ -97,8 +97,24 @@ telemetry = [
     # export is dependency-free, the summary bar chart needs matplotlib.
     "matplotlib>=3.5",
 ]
+blockamr = [
+    # Runtime deps of the vendored `neon.blockamr` engine (built from src/NeoN
+    # when NeoN_WITH_AMREX is ON below). The AMReX MLMG solve is C++, but the DSL
+    # stencil kernels are JAX + Triton/Pallas and run on the GPU — a CUDA jaxlib
+    # is required (there is no CPU lowering for the Pallas kernels).
+    #
+    # jax is pinned to 0.10.2 (NOT the reference 0.9.1): jaxlib 0.9.1 serialises
+    # Pallas kernels to on-disk Triton IR it cannot parse back, so the second
+    # dispatch of a kernel aborts nondeterministically with "Failed to parse
+    # Triton module: expected mlir::triton::CacheModifierAttr, but got:
+    # array<i32>". 0.10.2 fixes the round-trip (same triton 3.6.0). Keep the
+    # cu13 wheels coherent — do not let cu12 jax plugins co-install.
+    "jax[cuda13]==0.10.2",
+    "triton==3.6.0",
+    "equinox==0.13.6",
+]
 all = [
-    "neofoam[dev,docs,agent,mcp,telemetry]",
+    "neofoam[dev,docs,agent,mcp,telemetry,blockamr]",
 ]
 
 [project.scripts]
@@ -122,6 +138,29 @@ editable.rebuild = false
 
 [tool.scikit-build.cmake.define]
 NEOFOAM_BUILD_PYTHON_BINDINGS = "ON"
+# Build the block-structured AMReX engine + its bindings (neon.blockamr) as part
+# of the same wheel: AMReX is fetched from source via CPM under SKBUILD, and
+# _blockamr.so + neon/blockamr/*.py install alongside _neon. This makes
+# `pip install .[all] -v` provide the full incompressibleFluidBlockAMR stack in
+# one interpreter.
+#
+# AMReX uses the CUDA backend (derived from NeoN's Kokkos CUDA): the blockamr DSL
+# stencil kernels are JAX+Triton/Pallas and run on the GPU, so the AMReX
+# MultiFabs must live in device memory for a same-device AMReX<->JAX dlpack
+# handoff (a CPU AMReX build makes Pallas try a nonexistent CPU lowering). The
+# early enable_language(CUDA) in NeoN/CMakeLists keeps the -D defines from being
+# dropped when Kokkos swaps the compiler mid-configure.
+NeoN_WITH_AMREX = "ON"
+# NeoN is left to build exactly as it does standalone: its CUDA auto-detect
+# (cmake/AutoEnableDevice.cmake) turns on the Kokkos CUDA backend when a CUDA
+# compiler is present, so NeoN keeps all of its executor backends
+# (Serial/OpenMP/CUDA). AMReX inherits that same CUDA backend (NeoN derives
+# NeoN_AMREX_GPU_BACKEND from Kokkos_ENABLE_CUDA), which is what blockamr needs
+# for the device-memory JAX/Triton dlpack handoff — so enabling AMReX does not
+# change NeoN's own build. The only combined-build-specific tweak lives in
+# neofoam's top-level CMakeLists (an early enable_language(CUDA)) so neofoam's
+# own NeoFOAM lib sees CUDA compile-features; that is a neofoam concern and does
+# not touch NeoN.
 
 [tool.uv]
 no-build-isolation-package = ["neofoam"]

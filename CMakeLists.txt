@@ -76,6 +76,17 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 include(cmake/OpenFOAM.cmake)
 include(cmake/KokkosTools.cmake)
 
+# Enable CUDA at the TOP level, before the NeoN and neofoam-src subdirectories,
+# so CMAKE_CUDA_COMPILE_FEATURES is populated globally. Enabling it only inside
+# the NeoN subdirectory leaves neofoam's own NeoFOAM lib without CUDA features,
+# and it fails to configure ("No known features for CUDA compiler") when it
+# inherits NeoN's cuda_std_17 usage requirement (only bites this combined build).
+include(CheckLanguage)
+check_language(CUDA)
+if(CMAKE_CUDA_COMPILER)
+  enable_language(CUDA)
+endif()
+
 set(NeoN_WITH_MPI
     ${NEOFOAM_WITH_MPI}
     CACHE BOOL "" FORCE)
@@ -100,6 +111,14 @@ include(cmake/CxxThirdParty.cmake)
 if(DEFINED SKBUILD AND TARGET _neon)
   set(_neon_rpath "$ORIGIN/../neofoam/lib;$ORIGIN/../lib;$ORIGIN/../pybFoam")
   set_target_properties(_neon PROPERTIES INSTALL_RPATH "${_neon_rpath}")
+endif()
+
+# _blockamr installs one level deeper (site-packages/neon/blockamr/) and NeoN
+# hard-sets its RPATH to "$ORIGIN/../../lib"; the native libs (libamrex_3d.so,
+# libNeoN.so, kokkos) actually live in neofoam/lib, so point it there.
+if(DEFINED SKBUILD AND TARGET _blockamr)
+  set(_blockamr_rpath "$ORIGIN/../../neofoam/lib;$ORIGIN/../../lib")
+  set_target_properties(_blockamr PROPERTIES INSTALL_RPATH "${_blockamr_rpath}")
 endif()
 
 # TODO(rpath workaround): remove once umpire/camp ship a relocatable install upstream (BLT bakes an
