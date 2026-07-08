@@ -696,7 +696,15 @@
 <codeline lineno="556"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1a1a20de9aeea93a39b256d91014ce9039" kindref="member">applyOperator</ref>(expr.<ref refid="classNeoFOAM_1_1PDE_1ad7837cb66df5a2d02a51079865fd9b69" kindref="member">linearSystem</ref>(),<sp/>psi);</highlight></codeline>
 <codeline lineno="557"><highlight class="normal">}</highlight></codeline>
 <codeline lineno="558"><highlight class="normal"></highlight></codeline>
-<codeline lineno="559"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="559"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Explicit<sp/>instantiation<sp/>declarations:<sp/>PDE&lt;scalar&gt;<sp/>and<sp/>PDE&lt;Vec3&gt;<sp/>member<sp/>functions</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="560"><highlight class="normal"></highlight><highlight class="comment">//<sp/>are<sp/>compiled<sp/>only<sp/>in<sp/>src/datastructures/pde.cpp.<sp/>This<sp/>keeps<sp/>the<sp/>large<sp/>SYCL<sp/>kernel</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="561"><highlight class="normal"></highlight><highlight class="comment">//<sp/>set<sp/>(FixedValueConstraints,<sp/>SetReference,<sp/>dsl<sp/>operators)<sp/>out<sp/>of<sp/>turbulence-model</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="562"><highlight class="normal"></highlight><highlight class="comment">//<sp/>translation<sp/>units<sp/>such<sp/>as<sp/>kOmegaSST.cpp,<sp/>which<sp/>already<sp/>carry<sp/>22+<sp/>physics<sp/>kernels</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="563"><highlight class="normal"></highlight><highlight class="comment">//<sp/>and<sp/>would<sp/>otherwise<sp/>exceed<sp/>Intel<sp/>PVC&apos;s<sp/>per-TU<sp/>AOT<sp/>compilation<sp/>limit<sp/>(3<sp/>passes).</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="564"><highlight class="normal"></highlight><highlight class="keyword">extern</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">template</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">class<sp/></highlight><highlight class="normal">PDE&lt;NeoN::scalar&gt;;</highlight></codeline>
+<codeline lineno="565"><highlight class="normal"></highlight><highlight class="keyword">extern</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">template</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">class<sp/></highlight><highlight class="normal">PDE&lt;NeoN::Vec3&gt;;</highlight></codeline>
+<codeline lineno="566"><highlight class="normal"></highlight></codeline>
+<codeline lineno="567"><highlight class="normal">}</highlight></codeline>
     </programlisting>
     <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp"/>
   </compounddef>

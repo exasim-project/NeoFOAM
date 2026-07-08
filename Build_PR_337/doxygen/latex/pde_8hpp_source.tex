@@ -533,6 +533,14 @@
 \DoxyCodeLine{\Hypertarget{pde_8hpp_source_l00556}00556\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{namespaceNeoFOAM_a1a20de9aeea93a39b256d91014ce9039}{applyOperator}}(expr.\mbox{\hyperlink{classNeoFOAM_1_1PDE_ad7837cb66df5a2d02a51079865fd9b69}{linearSystem}}(),\ psi);}
 \DoxyCodeLine{\Hypertarget{pde_8hpp_source_l00557}00557\ \}}
 \DoxyCodeLine{\Hypertarget{pde_8hpp_source_l00558}00558\ }
-\DoxyCodeLine{\Hypertarget{pde_8hpp_source_l00559}00559\ \}}
+\DoxyCodeLine{\Hypertarget{pde_8hpp_source_l00559}00559\ \textcolor{comment}{//\ Explicit\ instantiation\ declarations:\ PDE<scalar>\ and\ PDE<Vec3>\ member\ functions}}
+\DoxyCodeLine{\Hypertarget{pde_8hpp_source_l00560}00560\ \textcolor{comment}{//\ are\ compiled\ only\ in\ src/datastructures/pde.cpp.\ This\ keeps\ the\ large\ SYCL\ kernel}}
+\DoxyCodeLine{\Hypertarget{pde_8hpp_source_l00561}00561\ \textcolor{comment}{//\ set\ (FixedValueConstraints,\ SetReference,\ dsl\ operators)\ out\ of\ turbulence-\/model}}
+\DoxyCodeLine{\Hypertarget{pde_8hpp_source_l00562}00562\ \textcolor{comment}{//\ translation\ units\ such\ as\ kOmegaSST.cpp,\ which\ already\ carry\ 22+\ physics\ kernels}}
+\DoxyCodeLine{\Hypertarget{pde_8hpp_source_l00563}00563\ \textcolor{comment}{//\ and\ would\ otherwise\ exceed\ Intel\ PVC's\ per-\/TU\ AOT\ compilation\ limit\ (3\ passes).}}
+\DoxyCodeLine{\Hypertarget{pde_8hpp_source_l00564}00564\ \textcolor{keyword}{extern}\ \textcolor{keyword}{template}\ \textcolor{keyword}{class\ }PDE<NeoN::scalar>;}
+\DoxyCodeLine{\Hypertarget{pde_8hpp_source_l00565}00565\ \textcolor{keyword}{extern}\ \textcolor{keyword}{template}\ \textcolor{keyword}{class\ }PDE<NeoN::Vec3>;}
+\DoxyCodeLine{\Hypertarget{pde_8hpp_source_l00566}00566\ }
+\DoxyCodeLine{\Hypertarget{pde_8hpp_source_l00567}00567\ \}}
 
 \end{DoxyCode}

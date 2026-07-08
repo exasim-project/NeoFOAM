@@ -653,7 +653,15 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00557" name="l00557"></a><span class="lineno">  557</span>}</div>
 </div>
 <div class="line"><a id="l00558" name="l00558"></a><span class="lineno">  558</span> </div>
-<div class="line"><a id="l00559" name="l00559"></a><span class="lineno">  559</span>}</div>
+<div class="line"><a id="l00559" name="l00559"></a><span class="lineno">  559</span><span class="comment">// Explicit instantiation declarations: PDE&lt;scalar&gt; and PDE&lt;Vec3&gt; member functions</span></div>
+<div class="line"><a id="l00560" name="l00560"></a><span class="lineno">  560</span><span class="comment">// are compiled only in src/datastructures/pde.cpp. This keeps the large SYCL kernel</span></div>
+<div class="line"><a id="l00561" name="l00561"></a><span class="lineno">  561</span><span class="comment">// set (FixedValueConstraints, SetReference, dsl operators) out of turbulence-model</span></div>
+<div class="line"><a id="l00562" name="l00562"></a><span class="lineno">  562</span><span class="comment">// translation units such as kOmegaSST.cpp, which already carry 22+ physics kernels</span></div>
+<div class="line"><a id="l00563" name="l00563"></a><span class="lineno">  563</span><span class="comment">// and would otherwise exceed Intel PVC&#39;s per-TU AOT compilation limit (3 passes).</span></div>
+<div class="line"><a id="l00564" name="l00564"></a><span class="lineno">  564</span><span class="keyword">extern</span> <span class="keyword">template</span> <span class="keyword">class </span>PDE&lt;NeoN::scalar&gt;;</div>
+<div class="line"><a id="l00565" name="l00565"></a><span class="lineno">  565</span><span class="keyword">extern</span> <span class="keyword">template</span> <span class="keyword">class </span>PDE&lt;NeoN::Vec3&gt;;</div>
+<div class="line"><a id="l00566" name="l00566"></a><span class="lineno">  566</span> </div>
+<div class="line"><a id="l00567" name="l00567"></a><span class="lineno">  567</span>}</div>
 <div class="ttc" id="aclassNeoFOAM_1_1PDE_html"><div class="ttname"><a href="classNeoFOAM_1_1PDE.html">NeoFOAM::PDE</a></div><div class="ttdef"><b>Definition</b> <a href="pde_8hpp_source.html#l00033">pde.hpp:34</a></div></div>
 <div class="ttc" id="aclassNeoFOAM_1_1PDE_html_a12a547d6a089a5805df40f91c0a48318"><div class="ttname"><a href="classNeoFOAM_1_1PDE.html#a12a547d6a089a5805df40f91c0a48318">NeoFOAM::PDE::setFinalIter</a></div><div class="ttdeci">void setFinalIter(bool finalIter)</div><div class="ttdoc">When true, selects the &lt;field&gt;Final relaxation factor and solver subdict.</div><div class="ttdef"><b>Definition</b> <a href="pde_8hpp_source.html#l00153">pde.hpp:153</a></div></div>
 <div class="ttc" id="aclassNeoFOAM_1_1PDE_html_a1a19c403768745a0a9a3b7637335f2ac"><div class="ttname"><a href="classNeoFOAM_1_1PDE.html#a1a19c403768745a0a9a3b7637335f2ac">NeoFOAM::PDE::solve</a></div><div class="ttdeci">NeoN::la::SolverStats solve(dsl::SpatialOperator&lt; NeoN::Vec3 &gt; &amp;&amp;rhs)</div><div class="ttdoc">solve expression with additional rhs</div><div class="ttdef"><b>Definition</b> <a href="pde_8hpp_source.html#l00221">pde.hpp:221</a></div></div>
