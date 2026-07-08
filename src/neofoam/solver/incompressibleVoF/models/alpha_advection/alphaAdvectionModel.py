@@ -5,15 +5,21 @@
 
 Implements MULES-based phase-fraction transport as a standalone core model.
 
-Most of the algorithm logic is written in Python; the MULES inner loop is
-delegated to low-level ``vof`` C++ primitives that mirror ``alphaEqn.H``
-piece-by-piece:
+The whole algorithm is written in Python — a step-by-step transcription of
+``alphaEqn.H`` from OpenFOAM-v2406 — composed from *generic* pybFoam operator
+primitives (nothing VoF-specific is delegated to C++):
 
-* ``vof.compute_interface_compression_velocity`` — phic with BC zeroing
-* ``vof.alpha_phase_flux``                       — scheme-based alphaPhiUn
-* ``vof.mules_explicit_solve``                   — MULES::explicitSolve
-* ``vof.mules_correct``                          — MULES::correct
-* ``vof.mules_implicit_predictor``               — implicit upwind predictor
+* interface compression velocity ``phic`` — ``pyf.mag`` + ``fvPatch.coupled()``
+* scheme-based phase flux ``alphaPhiUn``  — ``fvc.flux(phi, field, key=...)``
+* implicit-upwind predictor              — ``fvm.ddt`` + ``fvm.div(.., scheme="Gauss upwind")``
+* MULES limiter                          — ``mules.explicit_solve`` / ``mules.correct``
+
+The only C++ that remains is the mixture *model*
+(``vof.immiscibleIncompressibleTwoPhaseMixture``) and the ``nAlphaSubCycles > 1``
+fallback (``vof.solveAlpha``), which needs OpenFOAM's ``subCycle`` machinery.
+
+Because each step is a small Python function over generic operators, schemes,
+correctors and the predictor can be recomposed or replaced without touching C++.
 
 Fields provided:
   - phi       (face volumetric flux)
@@ -26,12 +32,14 @@ Models provided:
   - mixture   (immiscibleIncompressibleTwoPhaseMixture)
 
 Operations:
-  - alpha_advection  (Python-orchestrated MULES subcycling)
+  - alpha_advection  (Python-orchestrated MULES corrector loop)
 """
 
 from typing import Annotated, Any, Protocol
 
 import pybFoam as pyf
+import pybFoam.fvm as fvm
+import pybFoam.mules as mules
 import pybFoam.vof as vof
 from pybFoam import (
     Info,
@@ -62,9 +70,16 @@ alpha_advection_model = Model("AlphaAdvection")
 class MixtureProtocol(Protocol):
     def alpha1(self) -> volScalarField: ...
     def alpha2(self) -> volScalarField: ...
-    def rho1(self) -> object: ...
-    def rho2(self) -> object: ...
+    def rho1(self) -> Any: ...
+    def rho2(self) -> Any: ...
+    def cAlpha(self) -> float: ...
+    def nHatf(self) -> surfaceScalarField: ...
     def correct(self) -> None: ...
+
+
+# Scheme names, resolved from fvSchemes divSchemes (mirrors alphaEqn.H).
+_ALPHA_SCHEME = "div(phi,alpha)"
+_ALPHAR_SCHEME = "div(phirb,alpha)"
 
 
 # ---------------------------------------------------------------------------
@@ -127,8 +142,118 @@ def build(self: object) -> list[object]:
 
 
 # ---------------------------------------------------------------------------
-# Python-level alpha advection (calls MULES via C++ binding)
+# Composable Python steps — each is a small transcription of one block of
+# alphaEqn.H over generic pybFoam operators.  Swap / recompose freely.
 # ---------------------------------------------------------------------------
+
+
+def read_alpha_controls(alpha_name: str) -> tuple[int, int, bool]:
+    """Read (nAlphaCorr, nAlphaSubCycles, MULESCorr) from ``system/fvSolution``."""
+    n_alpha_corr = 1
+    n_alpha_sub_cycles = 1
+    mules_corr = False
+    try:
+        fv_solution = pyf.dictionary.read("system/fvSolution")
+        alpha_dict = fv_solution.subDict("solvers").subDict(alpha_name)
+        n_alpha_corr = alpha_dict.getOrDefault[int]("nAlphaCorr", 1)
+        n_alpha_sub_cycles = alpha_dict.getOrDefault[int]("nAlphaSubCycles", 1)
+        mules_corr = alpha_dict.getOrDefault[bool]("MULESCorr", False)
+    except Exception:
+        pass  # use defaults
+    return n_alpha_corr, n_alpha_sub_cycles, mules_corr
+
+
+def interface_compression_velocity(
+    mixture: MixtureProtocol, phi: surfaceScalarField
+) -> surfaceScalarField:
+    """phic = cAlpha * |phi / magSf|, with non-coupled boundary faces zeroed.
+
+    Mirrors the ``phic`` block at the top of ``alphaEqn.H``.  The boundary
+    zeroing is done in Python via ``fvPatch.coupled()``.
+    """
+    mesh = phi.mesh()
+    phic = surfaceScalarField(
+        pyf.Word("phic"), mixture.cAlpha() * pyf.mag(phi / mesh.magSf())
+    )
+    # Zero compression on non-coupled (inlet/outlet/wall) boundary faces.
+    # Index access (fvPatch by reference) — the fvBoundaryMesh iterator returns
+    # fvPatch by value, which is invalid for the abstract fvPatch base.
+    boundary = mesh.boundary()
+    for i in range(len(boundary)):
+        patch = boundary[i]
+        if not patch.coupled():
+            name = str(patch.name())
+            phic[name] = pyf.scalarField([0.0] * len(phic[name]))
+    return phic
+
+
+def alpha_phase_flux(
+    phi: surfaceScalarField,
+    alpha1: volScalarField,
+    alpha2: volScalarField,
+    phic: surfaceScalarField,
+    mixture: MixtureProtocol,
+) -> surfaceScalarField:
+    """Scheme-based phase flux with interface compression (``alphaPhiUn``).
+
+    alphaPhiUn = fvc::flux(phi, alpha1, alphaScheme)
+               + fvc::flux(-fvc::flux(-phir, alpha2, alpharScheme),
+                            alpha1, alpharScheme)
+    with phir = phic * mixture.nHatf().
+
+    Composed from ``fvc.flux(phi, field, key=...)`` (by-name fvSchemes lookup).
+    The negated intermediate fluxes are materialised into ``surfaceScalarField``
+    (bitwise-identical) so they satisfy the ``fvc.flux`` surface-field
+    first-argument overload.
+    """
+    phir = surfaceScalarField(pyf.Word("phir"), phic * mixture.nHatf())
+    neg_phir = surfaceScalarField(pyf.Word("negPhir"), -phir)
+    phir_flux = surfaceScalarField(
+        pyf.Word("phirFlux"), fvc.flux(neg_phir, alpha2, key=_ALPHAR_SCHEME)
+    )
+    neg_phir_flux = surfaceScalarField(pyf.Word("negPhirFlux"), -phir_flux)
+    return surfaceScalarField(
+        pyf.Word("alphaPhiUn"),
+        fvc.flux(phi, alpha1, key=_ALPHA_SCHEME)
+        + fvc.flux(neg_phir_flux, alpha1, key=_ALPHAR_SCHEME),
+    )
+
+
+def mules_implicit_predictor(
+    alpha1: volScalarField, phi: surfaceScalarField
+) -> surfaceScalarField:
+    """Implicit upwind predictor for the MULESCorr branch.
+
+    Builds and solves ``fvm.ddt(alpha1) + fvm.div(phi, alpha1, scheme="Gauss upwind") = 0``
+    (Euler ddt from fvSchemes, upwind convection from the inline scheme spec —
+    matching alphaEqn.H's hardcoded upwind), modifies ``alpha1`` in-place, and
+    returns the resulting upwind face flux.
+    """
+    alpha1_eqn = pyf.fvScalarMatrix(
+        fvm.ddt(alpha1) + fvm.div(phi, alpha1, scheme="Gauss upwind")
+    )
+    alpha1_eqn.solve()
+    return surfaceScalarField(pyf.Word("alphaPhi10"), alpha1_eqn.flux())
+
+
+def update_rho_rhophi(
+    rho: volScalarField,
+    rhoPhi: surfaceScalarField,
+    alpha1: volScalarField,
+    alpha2: volScalarField,
+    phi: surfaceScalarField,
+    alpha_phi10: surfaceScalarField,
+    mixture: MixtureProtocol,
+) -> None:
+    """Update ``rhoPhi`` and ``rho`` from the phase flux (Euler scheme, phiCN = phi).
+
+    rhoPhi = alphaPhi10 * (rho1 - rho2) + phi * rho2
+    rho    = alpha1 * rho1 + alpha2 * rho2
+    """
+    rho1 = mixture.rho1()
+    rho2 = mixture.rho2()
+    rhoPhi.assign(alpha_phi10 * rho1 - alpha_phi10 * rho2 + phi * rho2)
+    rho.assign(alpha1 * rho1 + alpha2 * rho2)
 
 
 def _solve_alpha_python(
@@ -139,133 +264,63 @@ def _solve_alpha_python(
     rho: volScalarField,
     mixture: MixtureProtocol,
 ) -> None:
-    """Python port of alphaEqn.H — MULES phase-fraction advection.
-
-    Structure mirrors ``alphaEqn.H`` from OpenFOAM-v2406:
+    """Pure-Python MULES phase-fraction advection (transcription of alphaEqn.H).
 
     1. Read solver settings (nAlphaCorr, nAlphaSubCycles, MULESCorr).
-    2. For ``nAlphaSubCycles > 1``: delegate to C++ ``vof.solveAlpha``
-       (uses OpenFOAM's ``subCycle<volScalarField>`` which cannot be
-       replicated in Python without extra bindings).
-    3. For ``nAlphaSubCycles == 1``:
-       a. Compute interface compression velocity ``phic`` (C++, handles
-          non-coupled boundary zeroing).
-       b. Initialise alpha face flux ``alpha_phi10``.
-       c. **MULESCorr predictor** (if enabled): implicit upwind solve,
-          store upwind flux in ``alpha_phi10``.
-       d. **Corrector loop** (``nAlphaCorr`` iterations):
-          - Compute scheme-based phase flux ``alpha_phi_un`` (C++).
-          - MULESCorr  → ``vof.mules_correct``; correct with under-relaxation
-                          for iterations > 0 using a per-iteration alpha snapshot.
-          - No MULESCorr → ``vof.mules_explicit_solve``.
-          - ``alpha2 = 1 - alpha1``; ``mixture.correct()``.
-    4. Update ``rhoPhi`` and ``rho`` from ``alpha_phi10`` (Euler scheme formula).
+    2. ``nAlphaSubCycles > 1``: delegate to ``vof.solveAlpha`` (needs OpenFOAM's
+       ``subCycle<volScalarField>`` machinery).
+    3. ``nAlphaSubCycles == 1``: compose the Python steps below.
     """
-    alpha_name = alpha1.name()
+    n_alpha_corr, n_alpha_sub_cycles, mules_corr = read_alpha_controls(alpha1.name())
 
-    # ------------------------------------------------------------------
-    # 1. Read solver settings
-    # ------------------------------------------------------------------
-    alpha_scheme = "div(phi,alpha)"
-    alphar_scheme = "div(phirb,alpha)"
-
-    n_alpha_corr = 1
-    n_alpha_sub_cycles = 1
-    mules_corr = False
-
-    try:
-        fv_solution = pyf.dictionary.read("system/fvSolution")
-        alpha_dict = fv_solution.subDict("solvers").subDict(alpha_name)
-        n_alpha_corr = alpha_dict.getOrDefault[int]("nAlphaCorr", 1)
-        n_alpha_sub_cycles = alpha_dict.getOrDefault[int]("nAlphaSubCycles", 1)
-        mules_corr = alpha_dict.getOrDefault[bool]("MULESCorr", False)
-    except Exception:
-        pass  # use defaults
-
-    rho1 = mixture.rho1()
-    rho2 = mixture.rho2()
-
-    # ------------------------------------------------------------------
-    # 2. Sub-cycling: delegate entirely to C++ (subCycle machinery)
-    # ------------------------------------------------------------------
+    # Sub-cycling still needs OpenFOAM's subCycle machinery.
     if n_alpha_sub_cycles > 1:
         vof.solveAlpha(alpha1, alpha2, phi, rhoPhi, rho, mixture)
         return
 
-    # ------------------------------------------------------------------
-    # 3. Single cycle: Python-orchestrated MULES following alphaEqn.H
-    # ------------------------------------------------------------------
+    # (a) Interface compression velocity.
+    phic = interface_compression_velocity(mixture, phi)
 
-    # (a) Interface compression velocity phic = cAlpha * |phi/magSf|
-    #     with non-coupled boundary faces zeroed (C++ handles forAll loop).
-    phic = vof.compute_interface_compression_velocity(mixture, phi)
-
-    # (b) Initialise face alpha-flux accumulator
+    # (b) Initialise face alpha-flux accumulator.
     alpha_phi10 = surfaceScalarField(
-        pyf.Word("alphaPhi10"),
-        phi * fvc.interpolate(alpha1),
+        pyf.Word("alphaPhi10"), phi * fvc.interpolate(alpha1)
     )
 
-    # (c) MULESCorr implicit upwind predictor
+    # (c) MULESCorr implicit-upwind predictor.
     if mules_corr:
-        # Builds fvScalarMatrix(fvmDdt(alpha1) + fvmDiv(phi_upwind, alpha1)),
-        # solves it, modifies alpha1 in-place, returns the upwind face flux.
-        upwind_flux = vof.mules_implicit_predictor(alpha1, phi)
-        alpha_phi10.assign(upwind_flux)
+        alpha_phi10.assign(mules_implicit_predictor(alpha1, phi))
         alpha2.assign(-alpha1 + 1.0)
         mixture.correct()
 
-    # (d) Corrector loop
+    # (d) Corrector loop.
     for a_corr in range(n_alpha_corr):
-        # Scheme-based phase flux with interface compression:
-        #   alphaPhiUn = fvc::flux(phi, alpha1, scheme)
-        #              + fvc::flux(-fvc::flux(-phir, alpha2, alpharScheme),
-        #                          alpha1, alpharScheme)
-        # where phir = phic * mixture.nHatf()
-        alpha_phi_un = vof.alpha_phase_flux(
-            phi, alpha1, alpha2, phic, mixture, alpha_scheme, alphar_scheme
-        )
+        alpha_phi_un = alpha_phase_flux(phi, alpha1, alpha2, phic, mixture)
 
         if mules_corr:
-            # Capture alpha1 state BEFORE this iteration's correction
-            # so we can under-relax for aCorr > 0 (mirrors alpha10 in alphaEqn.H).
+            # Capture alpha1 before this iteration's correction so aCorr > 0 can
+            # under-relax (mirrors alpha10 in alphaEqn.H).
             alpha10_iter = volScalarField(pyf.Word("alpha10"), 1.0 * alpha1)
 
-            # Correction flux relative to the upwind base
+            # Correction flux relative to the upwind base; MULES limits it.
             alpha_phi_corr = surfaceScalarField(
-                pyf.Word("alphaPhi1Corr"),
-                alpha_phi_un - alpha_phi10,
+                pyf.Word("alphaPhi1Corr"), alpha_phi_un - alpha_phi10
             )
+            mules.correct(alpha1, alpha_phi_un, alpha_phi_corr)
 
-            # Apply MULES limiter to the correction:
-            #   MULES::correct(1, alpha1, alphaPhiUn, alphaPhi1Corr, 0, 0, 1, 0)
-            # Modifies alpha1 and alpha_phi_corr in-place.
-            vof.mules_correct(alpha1, alpha_phi_un, alpha_phi_corr)
-
-            # Under-relax: first corrector adds full correction;
-            # subsequent correctors average new vs. pre-corrected value.
             if a_corr == 0:
                 alpha_phi10.assign(alpha_phi10 + alpha_phi_corr)
             else:
                 alpha1.assign(0.5 * alpha1 + 0.5 * alpha10_iter)
                 alpha_phi10.assign(alpha_phi10 + 0.5 * alpha_phi_corr)
         else:
-            # Set alpha_phi10 to the scheme flux, then let MULES::explicitSolve
-            # update both alpha1 and alpha_phi10 in-place.
             alpha_phi10.assign(alpha_phi_un)
-            vof.mules_explicit_solve(alpha1, phi, alpha_phi10)
+            mules.explicit_solve(alpha1, phi, alpha_phi10)
 
-        # alpha2 = 1 - alpha1
         alpha2.assign(-alpha1 + 1.0)
         mixture.correct()
 
-    # ------------------------------------------------------------------
-    # 4. Update rhoPhi and rho (Euler scheme: phiCN = phi)
-    #   rhoPhi = alphaPhi10 * (rho1 - rho2) + phi * rho2
-    #   rho    = alpha1 * rho1 + alpha2 * rho2
-    # ------------------------------------------------------------------
-    rhoPhi.assign(alpha_phi10 * rho1 - alpha_phi10 * rho2 + phi * rho2)  # type: ignore[operator]
-    rho.assign(alpha1 * rho1 + alpha2 * rho2)  # type: ignore[operator]
+    # (e) Update rhoPhi and rho.
+    update_rho_rhophi(rho, rhoPhi, alpha1, alpha2, phi, alpha_phi10, mixture)
 
     Info(f"Phase-1 volume fraction: nAlphaCorr={n_alpha_corr}  MULESCorr={mules_corr}")
 
