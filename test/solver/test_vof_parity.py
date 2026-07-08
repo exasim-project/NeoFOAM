@@ -28,7 +28,7 @@ import os
 
 import pytest
 
-from vof_parity_harness import REL_ERR, prepare_case, run_parity
+from vof_parity_harness import NEON_VOF_STATE, REL_ERR, prepare_case, run_parity
 
 os.environ.setdefault("FOAM_SIGFPE", "false")
 
@@ -74,9 +74,9 @@ import gc
 import numpy as np
 import neon._neon as nn
 import neofoam.neofoam_bindings as nfb
-from neofoam.solver.neoInterFoam import NeoInterFoam
 """
     + REL_ERR
+    + NEON_VOF_STATE
     + r"""
 def _drive():
     ref_magSf = np.load("ref_magSf.npy")
@@ -84,7 +84,7 @@ def _drive():
     ref_recon = np.load("ref_reconstruct.npy")
     Cx = np.load("ref_Cx.npy")
 
-    s = NeoInterFoam(["neoInterFoam"]).setup()
+    s = setup()
 
     # mag_sf — pure geometry, face-by-face (also validates internal-face ordering).
     ms = np.asarray(nfb.mag_sf(s.rt).internal_vector().copy_to_host())
@@ -147,15 +147,15 @@ _NEON_ST = (
 import gc
 import numpy as np
 import neofoam.neofoam_bindings as nfb
-from neofoam.solver.neoInterFoam import NeoInterFoam
 """
     + REL_ERR
+    + NEON_VOF_STATE
     + r"""
 def _drive():
     nhatf_ref = np.load("nhatf_ref.npy")
     stf_ref = np.load("stf_ref.npy")
 
-    s = NeoInterFoam(["neoInterFoam"]).setup()
+    s = setup()
 
     nhatf = np.asarray(
         nfb.interface_nhatf(s.rt, s.alpha1).internal_vector().copy_to_host()

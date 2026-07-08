@@ -44,6 +44,50 @@ def rel_err(a, b):
 """
 
 
+# Shared NeoN VoF-state builder injected into the NeoN driver strings — the
+# minimal runtime + damBreak field construction the primitive-parity drivers
+# need (rt / alpha1 / phi / p_rgh / U / phase). Replaces the former
+# ``NeoInterFoam(...).setup()`` scaffold now that the imperative solver is gone;
+# the framework solver ``incompressibleVoFNeon`` builds the same state through
+# its ModelSpec ``@build`` steps (create_fields.create_neon_runtime registers
+# the identical VoF schemes). ``setup()`` returns a SimpleNamespace holding the
+# argList + Time too, so ``Foam::Time``'s raw argList reference stays alive for
+# the whole driver (dropping it corrupts later dictionary reads → nan).
+NEON_VOF_STATE = r"""
+import types as _types
+import pybFoam as _pyf
+import neon._neon as _nn
+import neofoam.neofoam_bindings as _nfb
+from neofoam.solver.neoPimpleFoam import _ensure_neon_initialized as _ensure_neon
+
+
+def setup(argv=None):
+    argv = argv or ["vofparity"]
+    _ensure_neon(argv)
+    _al = _pyf.argList(argv)
+    _t = _pyf.Time(_al)
+    rt = _nfb.create_adapter_run_time(_t)
+    rt.fv_schemes_dict = _nfb.map_fv_schemes(rt.fv_schemes_dict)
+    _div = rt.fv_schemes_dict.subDict("divSchemes")
+    _div.insert_token_list("div(rhoPhi,U)", _nn.TokenList(["Gauss", "linear"]))
+    _div.insert_token_list(
+        "div((nuEff*dev2(T(grad(U)))))", _nn.TokenList(["Gauss", "linear"])
+    )
+    _lap = rt.fv_schemes_dict.subDict("laplacianSchemes")
+    for _k in ("laplacian(muf,U)", "laplacian(rAUf,p_rgh)"):
+        _lap.insert_token_list(_k, _nn.TokenList(["Gauss", "linear", "uncorrected"]))
+    alpha1 = _nfb.read_scalar_volume_field(rt, "alpha.water")
+    U = _nfb.read_vector_volume_field(rt, "U")
+    p_rgh = _nfb.read_scalar_volume_field(rt, "p_rgh")
+    phi = _nfb.create_phi(rt, "U")
+    phase = _nfb.read_two_phase_transport_properties(rt)
+    return _types.SimpleNamespace(
+        rt=rt, alpha1=alpha1, U=U, p_rgh=p_rgh, phi=phi, phase=phase,
+        _arg_list=_al, _foam_time=_t,
+    )
+"""
+
+
 def prepare_case(dest: Path) -> None:
     """Copy the damBreak tutorial and run blockMesh + setFields into ``dest``."""
     repo_root = Path(__file__).parent.parent.parent
@@ -60,6 +104,26 @@ def prepare_case(dest: Path) -> None:
             cmd, cwd=str(dest), env=env, capture_output=True, text=True, timeout=180
         )
         assert r.returncode == 0, f"{cmd[0]} failed:\n{r.stderr[-2000:]}"
+
+
+def neon_executors() -> list[str]:
+    """NeoN executors available on this build, as ``create_adapter_run_time`` names.
+
+    Always includes ``"Serial"``. Adds ``"CPU"`` when the Kokkos host-parallel
+    backend is compiled in (``__has_cpu__``) and ``"GPU"`` when a device is
+    actually usable (``gpu_available()`` — a runtime probe; the ``__has_gpu__``
+    compile flag is unreliable). Tests parametrize over this so every NeoN
+    primitive is verified on each real executor, not just the default Serial.
+    """
+    import neon._neon as nn
+
+    execs = ["Serial"]
+    if getattr(nn, "__has_cpu__", False):
+        execs.append("CPU")
+    gpu_probe = getattr(nn, "gpu_available", None)
+    if callable(gpu_probe) and gpu_probe():
+        execs.append("GPU")
+    return execs
 
 
 def _run_subprocess(case: Path, driver: str, timeout: int = 300) -> str:

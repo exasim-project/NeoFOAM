@@ -181,8 +181,11 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
         {"fixedFluxPressure",
          [&](auto& dict)
          {
-             dict.insert("type", std::string("fixedGradient"));
-             dict.insert("fixedGradient", NeoN::zero<type_primitive_t>());
+             // Faithful wall fixedFluxPressure: the per-face refGrad is set externally by
+             // NeoFOAM::constrainPressure so the projection cancels the buoyancy/capillary
+             // wall face flux. The FixedFluxPressure BC ignores the dict (refGrad is
+             // zero-initialised -> zeroGradient until the first constrainPressure).
+             dict.insert("type", std::string("fixedFluxPressure"));
          }},
         {"totalPressure",
          [&](auto& dict)

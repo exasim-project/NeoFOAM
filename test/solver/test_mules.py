@@ -23,6 +23,7 @@ import os
 import pytest
 
 from vof_parity_harness import (
+    NEON_VOF_STATE,
     REL_ERR,
     _parse_metrics,
     _run_subprocess,
@@ -75,13 +76,13 @@ import gc
 import numpy as np
 import neon._neon as nn
 import neofoam.neofoam_bindings as nfb
-from neofoam.solver.neoInterFoam import NeoInterFoam
 
 N_LIMITER_ITER = """
     + str(_N_LIMITER_ITER)
     + r"""
 """
     + REL_ERR
+    + NEON_VOF_STATE
     + r"""
 def _drive():
     a0 = np.load("alpha_in.npy")
@@ -92,7 +93,7 @@ def _drive():
     alpha_ref = np.load("alpha_ref.npy")
     alphaPhi_ref = np.load("alphaPhi_ref.npy")
 
-    s = NeoInterFoam(["neoInterFoam"]).setup()
+    s = setup()
     surf = nn.SurfaceInterpolationScalar(
         s.rt.executor, s.rt.nf_mesh, nn.TokenList(["linear"])
     )
@@ -149,13 +150,15 @@ gc.collect()
 # nonzero boundary alphaPhi on a closed cell with zeroed interior flux, so only the
 # boundary efflux is active, and checks the telescoping identity
 # Sum((a_new-a_old)*V) == -dt*Sum_boundary(alphaPhi) != 0 (validates owner index + sign).
-_MULES_BND_DRIVER = r"""
+_MULES_BND_DRIVER = (
+    r"""
 import gc
 import numpy as np
 import neon._neon as nn
 import neofoam.neofoam_bindings as nfb
-from neofoam.solver.neoInterFoam import NeoInterFoam
-
+"""
+    + NEON_VOF_STATE
+    + r"""
 BND_VAL = 1.0e-3
 
 
@@ -164,7 +167,7 @@ def host(f):
 
 
 def _drive():
-    s = NeoInterFoam(["neoInterFoam"]).setup()
+    s = setup()
     V = np.asarray(s.rt.nf_mesh.cell_volumes.copy_to_host())
     surf = nn.SurfaceInterpolationScalar(
         s.rt.executor, s.rt.nf_mesh, nn.TokenList(["linear"])
@@ -195,6 +198,7 @@ def _drive():
 _drive()
 gc.collect()
 """
+)
 
 
 @pytest.fixture(scope="module")

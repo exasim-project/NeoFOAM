@@ -37,6 +37,25 @@ void constrainHbyA(
     nnfvcc::VolumeField<Vec3>& HbyA
 );
 
+/* @brief Constrain the wall pressure gradient for the flux projection.
+ *
+ * @detail Transcribes the geometricOneField / NullMRF branch of OpenFOAM's
+ * Foam::constrainPressure (rho == 1, no MRF): for every boundary patch whose BC is
+ * fixedFluxPressure, sets the per-face reference gradient
+ *   refGrad_b = (phiHbyA_b - (Sf_b & U_b)) / (magSf_b * rAUf_b)
+ * then calls p_rgh.correctBoundaryConditions(). On noSlip walls U_b == 0, so the wall
+ * gradient reduces to phiHbyA_b/(magSf_b*rAUf_b) — exactly the buoyancy/capillary face flux
+ * carried in phiHbyA (via phig), which the pressure projection then cancels (zero wall-normal
+ * flux). Patches with any other BC are left untouched. All boundary geometry is read
+ * device-side via .view() (unaffected by the Vec3 host-copy limitation).
+ */
+void constrainPressure(
+    nnfvcc::VolumeField<scalar>& p_rgh,
+    const nnfvcc::VolumeField<Vec3>& U,
+    const nnfvcc::SurfaceField<scalar>& phiHbyA,
+    const nnfvcc::SurfaceField<scalar>& rAUf
+);
+
 /* @brief given a ... this function computes rAU
  *
  * where rAU  - inverse of the system matrix diagonal
@@ -86,6 +105,26 @@ void updateVelocity(
     const nnfvcc::VolumeField<Vec3>& hByA,
     const nnfvcc::VolumeField<scalar>& rAU,
     const nnfvcc::VolumeField<scalar>& p,
+    nnfvcc::VolumeField<Vec3>& U
+);
+
+/* @brief buoyant velocity reconstruction for VoF / buoyant p_rgh solvers
+ * U = HbyA + rAU*fvc::reconstruct(numeratorFlux / rAUf);
+ *
+ * @details interFoam's velocity correction reconstructs the buoyancy + capillary +
+ * pressure face-flux balance back onto the cell velocity, NOT just -grad(p):
+ *   U = HbyA + rAU*fvc::reconstruct((phig - pEqn.flux())/rAUf)
+ * where phig = (fSigma - ghf*snGrad(rho))*rAUf*magSf. The caller passes
+ * numeratorFlux = phig - pEqn.flux() (a surface field it already holds as
+ * phig - (phiHbyA - phi) after updateFaceVelocity). Using the plain
+ * updateVelocity (U = HbyA - rAU*grad(p_rgh)) instead drops the buoyancy/surface
+ * -tension flux and leaves large spurious velocities at the interface.
+ */
+void updateVelocityBuoyant(
+    const nnfvcc::VolumeField<Vec3>& hByA,
+    const nnfvcc::VolumeField<scalar>& rAU,
+    const nnfvcc::SurfaceField<scalar>& numeratorFlux,
+    const nnfvcc::SurfaceField<scalar>& rAUf,
     nnfvcc::VolumeField<Vec3>& U
 );
 
