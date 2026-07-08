@@ -1,17 +1,31 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
-// Explicit instantiation definitions for PDE<scalar> and PDE<Vec3>.
-// All SYCL kernels referenced by PDE member functions (FixedValueConstraints,
-// SetReference, dsl operators) are compiled here rather than in every translation
-// unit that uses PDE — keeping per-TU kernel counts below Intel PVC AOT limits.
+// Non-template wrappers that call the FixedValueConstraints and SetReference SYCL kernels.
+// Defined here so the kernels are compiled exactly once rather than in every translation unit
+// that instantiates PDE<scalar>::solveImpl (e.g. kOmegaSST.cpp, kEpsilon.cpp, …), which
+// would otherwise push those TUs over Intel PVC's per-TU AOT compilation limit.
 
 #include "NeoFOAM/datastructures/pde.hpp"
 
-namespace NeoFOAM
+namespace NeoFOAM::detail
 {
 
-template class PDE<NeoN::scalar>;
-template class PDE<NeoN::Vec3>;
+void applyFixedValueConstraints(
+    ScalarLinearSystem& ls,
+    NeoN::View<const NeoN::scalar> mask,
+    NeoN::View<const NeoN::scalar> values,
+    NeoN::localIdx nCells
+)
+{
+    NeoN::dsl::FixedValueConstraints<NeoN::scalar> pin(mask, values, nCells);
+    pin(ls);
+}
 
-} // namespace NeoFOAM
+void applySetReference(ScalarLinearSystem& ls, NeoN::localIdx refCell, NeoN::scalar refValue)
+{
+    NeoN::dsl::SetReference<NeoN::scalar> refFunct(refCell, refValue);
+    refFunct(ls);
+}
+
+} // namespace NeoFOAM::detail

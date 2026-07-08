@@ -20,6 +20,21 @@ namespace dsl = NeoN::dsl;
 namespace NeoFOAM
 {
 
+// Non-template helpers for PDE<scalar>::solveImpl. Defined in src/datastructures/pde.cpp so
+// the FixedValueConstraints and SetReference SYCL kernels are compiled only once, not in every
+// translation unit that instantiates PDE<scalar> (e.g. kOmegaSST.cpp, kEpsilon.cpp, …).
+namespace detail
+{
+using ScalarLinearSystem = NeoN::la::LinearSystem<NeoN::scalar, NeoN::scalar>;
+void applyFixedValueConstraints(
+    ScalarLinearSystem& ls,
+    NeoN::View<const NeoN::scalar> mask,
+    NeoN::View<const NeoN::scalar> values,
+    NeoN::localIdx nCells
+);
+void applySetReference(ScalarLinearSystem& ls, NeoN::localIdx refCell, NeoN::scalar refValue);
+} // namespace detail
+
 /*@brief extends expression by giving access to assembled matrix
  * @note used in neoIcoFOAM directly instead of dsl::expression
  * TODO: implement flag if matrix is assembled or not -> if not assembled call assemble
@@ -362,13 +377,12 @@ public:
             lookupEqnRelaxation(runTime_->fvSolutionDict, psi_->name, finalIter_).value_or(1.0);
         NeoN::dsl::applyMatrixRelaxation(ls, *psi_, alpha);
 
-        // Apply reference-cell pinning directly (avoids object-slicing issue)
+        // Apply reference-cell pinning (kernel compiled only in pde.cpp via detail helper)
         if constexpr (std::is_same_v<ValueType, NeoN::scalar>)
         {
             if (needReference_)
             {
-                NeoN::dsl::SetReference<ValueType> refFunct(pRefCell_, pRefValue_);
-                refFunct(ls);
+                detail::applySetReference(ls, pRefCell_, pRefValue_);
             }
         }
 
@@ -377,12 +391,12 @@ public:
             if (constraintMask_ != nullptr)
             {
                 const NeoN::localIdx nCells = psi_->mesh().nCells();
-                NeoN::dsl::FixedValueConstraints<ValueType> pin(
+                detail::applyFixedValueConstraints(
+                    ls,
                     constraintMask_->view(),
                     constraintValues_->view(),
                     nCells
                 );
-                pin(ls);
             }
         }
 
@@ -555,13 +569,5 @@ NeoN::finiteVolume::cellCentred::VolumeField<ValueType> operator&(
 {
     return applyOperator(expr.linearSystem(), psi);
 }
-
-// Explicit instantiation declarations: PDE<scalar> and PDE<Vec3> member functions
-// are compiled only in src/datastructures/pde.cpp. This keeps the large SYCL kernel
-// set (FixedValueConstraints, SetReference, dsl operators) out of turbulence-model
-// translation units such as kOmegaSST.cpp, which already carry 22+ physics kernels
-// and would otherwise exceed Intel PVC's per-TU AOT compilation limit (3 passes).
-extern template class PDE<NeoN::scalar>;
-extern template class PDE<NeoN::Vec3>;
 
 }

@@ -23,114 +23,15 @@ using NeoN::SymmTensor;
 namespace NeoFOAM
 {
 
-namespace
+namespace detail
 {
-
-// ---------------------------------------------------------------------------
-// Robustness guards. These are overflow/edge-case limiters, NOT physics: each
-// bound is set far outside any converged-solution value, so a healthy run never
-// touches them. They exist only to stop a localised transient (a tiny omega, a
-// degenerate wall y, or a runaway nut) from producing an Inf/NaN that FOAM's
-// FOAM_SIGFPE trap turns into a hard crash mid-solve.
-// ---------------------------------------------------------------------------
-// Lower floor on omega used inside divisions (matches the post-solve bound()).
-inline constexpr scalar KOSST_OMEGA_MIN = scalar(1e-10);
-// Upper cap on the eddy viscosity nut. Physical air nut is O(1e-3..1e0); 1e6 is
-// ~10 orders above that, so it only ever clips a diverging transient.
-inline constexpr scalar KOSST_NUT_MAX = scalar(1e6);
-// Upper cap on the pinned wall omega. omega_vis = 6 nu/(beta1 y^2) is large on
-// fine meshes (1e6..1e9) but finite; this guards a degenerate near-zero y. Single-sourced from
-// the omegaWallFunction BC so the BC's wall FACE value and this CELL pin use the IDENTICAL clamp.
-inline constexpr scalar KOSST_OMEGA_WALL_MAX =
-    NeoN::finiteVolume::cellCentred::volumeBoundary::detail::OMEGA_WF_OMEGA_MAX;
-
-// Diagnostic that mirrors OpenFOAM's Foam::bound() (finiteVolume/lnInclude/bound.C): compute the
-// GLOBAL min/max/average of a field and, ONLY when it dipped below `lowerBound` (i.e. the caller's
-// max(field, lowerBound) clip actually does something), print the upstream-identical line
-//   "bounding <name>, min: .. max: .. average: .."
-// so neoFOAM and simpleFoam logs line up. This reports; the caller still performs the clip.
-// Returns the GLOBAL min so the caller can decide whether the smoother bound() repair below is
-// needed (OpenFOAM guards the repair on minVsf < lowerBound).
 scalar reportBounding(
     const NeoN::Executor& exec,
     const nnfvcc::VolumeField<scalar>& field,
     const std::string& name,
     scalar lowerBound,
     bool isDistributed
-)
-{
-    const auto view = field.internalVector().view();
-    const localIdx n = static_cast<localIdx>(field.internalVector().size());
-
-    scalar localMin = 0, localMax = 0, localSum = 0;
-    Kokkos::Min<scalar> rMin(localMin);
-    Kokkos::Max<scalar> rMax(localMax);
-    NeoN::parallelReduce(
-        exec,
-        {0, n},
-        NEON_LAMBDA(const localIdx i, scalar& s) {
-            if (view[i] < s) s = view[i];
-        },
-        rMin
-    );
-    NeoN::parallelReduce(
-        exec,
-        {0, n},
-        NEON_LAMBDA(const localIdx i, scalar& s) {
-            if (view[i] > s) s = view[i];
-        },
-        rMax
-    );
-    NeoN::parallelReduce(
-        exec,
-        {0, n},
-        NEON_LAMBDA(const localIdx i, scalar& s) { s += view[i]; },
-        localSum
-    );
-
-    scalar gMin = localMin, gMax = localMax, gSum = localSum, gCount = static_cast<scalar>(n);
-#ifdef NF_WITH_MPI_SUPPORT
-    if (isDistributed)
-    {
-        NeoN::mpi::Environment env;
-        MPI_Allreduce(MPI_IN_PLACE, &gMin, 1, NeoN::mpi::getType<scalar>(), MPI_MIN, env.comm());
-        MPI_Allreduce(MPI_IN_PLACE, &gMax, 1, NeoN::mpi::getType<scalar>(), MPI_MAX, env.comm());
-        scalar sumCount[2] = {gSum, gCount};
-        MPI_Allreduce(MPI_IN_PLACE, sumCount, 2, NeoN::mpi::getType<scalar>(), MPI_SUM, env.comm());
-        gSum = sumCount[0];
-        gCount = sumCount[1];
-    }
-#else
-    (void)isDistributed;
-#endif
-
-    if (gMin < lowerBound)
-    {
-        NeoN::Logging::info(
-            "bounding {}, min: {} max: {} average: {}",
-            name,
-            gMin,
-            gMax,
-            gSum / gCount
-        );
-    }
-
-    return gMin;
-}
-
-// Mirror of Foam::bound(vsf, lowerBound) (OpenFOAM finiteVolume/lnInclude/bound.C): a LOWER bound
-// whose repair of out-of-range cells is the magSf-weighted neighbourhood average
-// fvc::average(max(vsf, lb)) — NOT a hard clip to the floor. Cells that actually went <= 0 are
-// replaced by that average; cells that are merely small-but-positive are clipped to lb. This is
-// what keeps upstream kOmegaSST stable WITHOUT an omega ceiling: a hard floor (the previous NeoN
-// behaviour) leaves the negative omega spikes that amplify, step over step, into the omega
-// blow-up / SIGFPE. The caller guards on gMin < lb so this only runs on the steps that need it.
-//
-// fvc::average(vtf) == surfaceSum(magSf * linearInterpolate(vtf)) / surfaceSum(magSf), i.e. for
-// each cell the area-weighted mean of its surrounding face values (owner AND neighbour for every
-// internal face — a sign-flip-free scatter, unlike surfaceIntegrate/div). Distribution-safe: the
-// floored boundary copies vsf's boundary, which already holds processor-halo neighbour values, so
-// the interpolated face values (and hence the average) are consistent across ranks.
+);
 void boundLowerSmoothRepair(
     const NeoN::Executor& exec,
     nnfvcc::VolumeField<scalar>& field,
@@ -141,115 +42,7 @@ void boundLowerSmoothRepair(
     NeoN::Vector<scalar>& sumFaceArea,
     bool& sumFaceAreaBuilt,
     scalar lowerBound
-)
-{
-    const auto nCells = static_cast<localIdx>(mesh.nCells());
-    const auto nInternalFaces = mesh.nInternalFaces();
-
-    const auto magSfV = mesh.faceAreas().view();
-    const auto ownersV = mesh.faceOwners().view();
-    const auto neighsV = mesh.faceNeighbors().view();
-    const auto bOwnersV = mesh.boundaryMesh().faceOwners().view();
-    const auto bMagSfV = mesh.boundaryMesh().faceAreas().view();
-    const auto nBoundaryFaces = static_cast<localIdx>(bOwnersV.size());
-
-    // 1. floored = max(field, lowerBound) on internal cells and on boundary faces (the latter so
-    //    the boundary term of fvc::average is the floored, processor-consistent value).
-    {
-        auto fldI = field.internalVector().view();
-        auto floI = floored.internalVector().view();
-        auto fldB = field.boundaryData().value().view();
-        auto floB = floored.boundaryData().value().view();
-        NeoN::parallelFor(
-            exec,
-            {0, nCells},
-            NEON_LAMBDA(const localIdx i) { floI[i] = Kokkos::max(fldI[i], lowerBound); },
-            "kOmegaSST::boundFloorInternal"
-        );
-        NeoN::parallelFor(
-            exec,
-            {0, nBoundaryFaces},
-            NEON_LAMBDA(const localIdx i) { floB[i] = Kokkos::max(fldB[i], lowerBound); },
-            "kOmegaSST::boundFloorBoundary"
-        );
-    }
-
-    // 2. linearInterpolate(floored) -> faces (internal + boundary, incl. processor halo).
-    surfInterp.interpolate(floored, surfFloored);
-
-    // 3. fvc::average denominator surfaceSum(magSf). Mesh-static, so build it once and cache.
-    if (!sumFaceAreaBuilt)
-    {
-        NeoN::fill(sumFaceArea, scalar(0));
-        auto sfa = sumFaceArea.view();
-        NeoN::parallelFor(
-            exec,
-            {0, nInternalFaces},
-            NEON_LAMBDA(const localIdx f) {
-                Kokkos::atomic_add(&sfa[ownersV[f]], magSfV[f]);
-                Kokkos::atomic_add(&sfa[neighsV[f]], magSfV[f]);
-            },
-            "kOmegaSST::boundSumMagSfInternal"
-        );
-        NeoN::parallelFor(
-            exec,
-            {0, nBoundaryFaces},
-            NEON_LAMBDA(const localIdx bf) { Kokkos::atomic_add(&sfa[bOwnersV[bf]], bMagSfV[bf]); },
-            "kOmegaSST::boundSumMagSfBoundary"
-        );
-        sumFaceAreaBuilt = true;
-    }
-
-    // 4. fvc::average numerator surfaceSum(magSf * floored_face).
-    NeoN::Vector<scalar> avgNum(exec, nCells, scalar(0));
-    {
-        auto num = avgNum.view();
-        const auto sfI = surfFloored.internalVector().view();
-        const auto sfB = surfFloored.boundaryData().value().view();
-        NeoN::parallelFor(
-            exec,
-            {0, nInternalFaces},
-            NEON_LAMBDA(const localIdx f) {
-                const scalar contrib = magSfV[f] * sfI[f];
-                Kokkos::atomic_add(&num[ownersV[f]], contrib);
-                Kokkos::atomic_add(&num[neighsV[f]], contrib);
-            },
-            "kOmegaSST::boundAvgNumInternal"
-        );
-        NeoN::parallelFor(
-            exec,
-            {0, nBoundaryFaces},
-            NEON_LAMBDA(const localIdx bf) {
-                Kokkos::atomic_add(&num[bOwnersV[bf]], bMagSfV[bf] * sfB[bf]);
-            },
-            "kOmegaSST::boundAvgNumBoundary"
-        );
-    }
-
-    // 5. Repair: cells that went <= 0 take the neighbourhood average; everything else is floored.
-    //    Mirrors  max( max(vsf, avg * pos0(-vsf)), lowerBound )  with avg >= lowerBound by
-    //    construction (it is an average of floored values).
-    {
-        auto fldI = field.internalVector().view();
-        const auto num = avgNum.view();
-        const auto sfa = sumFaceArea.view();
-        NeoN::parallelFor(
-            exec,
-            {0, nCells},
-            NEON_LAMBDA(const localIdx i) {
-                const scalar avg = num[i] / sfa[i];
-                const scalar repaired = (fldI[i] <= scalar(0)) ? avg : fldI[i];
-                fldI[i] = Kokkos::max(repaired, lowerBound);
-            },
-            "kOmegaSST::boundSmoothRepair"
-        );
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Fused kernel: F1, production/sp for k, production/sp for omega, and the
-// internal nut update in a single pass over cells.
-// ---------------------------------------------------------------------------
+);
 void kernelComputeF1AndSources(
     const NeoN::Executor& exec,
     const NeoN::Vector<scalar>& kVec,
@@ -277,155 +70,7 @@ void kernelComputeF1AndSources(
     scalar a1,
     scalar b1,
     scalar c1
-)
-{
-    const auto
-        [kV,
-         omegaV,
-         nutV,
-         nuV,
-         wallDistV,
-         gradKV,
-         gradOmegaV,
-         gradUV,
-         F1V,
-         PkV,
-         spKV,
-         omegaSourceV,
-         spOmegaV] =
-            NeoN::views(
-                kVec,
-                omegaVec,
-                nutVec,
-                nuVec,
-                wallDistVec,
-                gradKVec,
-                gradOmegaVec,
-                gradUVec,
-                F1Vec,
-                PkVec,
-                spKVec,
-                omegaSourceVec,
-                spOmegaVec
-            );
-
-    const scalar rootVSmall = scalar(1e-30);
-    // Local copies of the namespace guards: an anonymous-namespace constexpr is
-    // not addressable in device code, so capture them by value (like rootVSmall).
-    const scalar omegaMin = KOSST_OMEGA_MIN;
-    const scalar nutMax = KOSST_NUT_MAX;
-
-    NeoN::parallelFor(
-        exec,
-        {0, static_cast<localIdx>(kVec.size())},
-        NEON_LAMBDA(const localIdx i) {
-            const scalar k_i = kV[i];
-            const scalar omega_i = omegaV[i];
-            const scalar nu_i = nuV[i];
-            const scalar y_i = Kokkos::max(wallDistV[i], rootVSmall);
-            const scalar y2_i = y_i * y_i;
-
-            // Floored omega/k used in every division and limiter below (overflow
-            // guard; a healthy field is far above the floor so these are no-ops).
-            const scalar omegaSafe = Kokkos::max(omega_i, omegaMin);
-            const scalar kSafe = Kokkos::max(k_i, scalar(0));
-
-            // ----- CDkOmega (cross-diffusion, clamped for F1 stability) -----
-            const scalar dotGradKOmega = gradKV[i][0] * gradOmegaV[i][0]
-                                       + gradKV[i][1] * gradOmegaV[i][1]
-                                       + gradKV[i][2] * gradOmegaV[i][2];
-
-            const scalar CDkOmegaPlus =
-                Kokkos::max(scalar(2) * alphaOmega2 * dotGradKOmega / omegaSafe, scalar(1e-10));
-
-            // ----- F1 blending (inner ↔ outer) -----
-            const scalar sqrtK = Kokkos::sqrt(Kokkos::max(k_i, scalar(0)));
-
-            const scalar arg1 = Kokkos::min(
-                Kokkos::min(
-                    Kokkos::max(
-                        sqrtK / (betaStar * omegaSafe * y_i),
-                        scalar(500) * nu_i / (y2_i * omegaSafe)
-                    ),
-                    scalar(4) * alphaOmega2 * k_i / (CDkOmegaPlus * y2_i)
-                ),
-                scalar(10)
-            );
-            const scalar arg14 = arg1 * arg1 * arg1 * arg1;
-            F1V[i] = Kokkos::tanh(arg14);
-            const scalar F1_i = F1V[i];
-
-            // ----- F2 (for nut correction) -----
-            const scalar arg2 = Kokkos::min(
-                Kokkos::max(
-                    scalar(2) * sqrtK / (betaStar * omegaSafe * y_i),
-                    scalar(500) * nu_i / (y2_i * omegaSafe)
-                ),
-                scalar(100)
-            );
-            const scalar F2_i = Kokkos::tanh(arg2 * arg2);
-
-            // ----- S2 = 2*|symm(gradU)|^2 and GbyNu0 = gradU && devTwoSymm(gradU) -----
-            const Tensor& g = gradUV[i];
-
-            scalar normSq = scalar(0);
-            scalar dotTrans = scalar(0);
-            for (int r = 0; r < 3; ++r)
-            {
-                for (int c = 0; c < 3; ++c)
-                {
-                    normSq += g(r, c) * g(r, c);
-                    dotTrans += g(r, c) * g(c, r);
-                }
-            }
-            const scalar divU = g(0, 0) + g(1, 1) + g(2, 2);
-
-            const scalar S2_i = normSq + dotTrans;
-            const scalar GbyNu0_i = S2_i - (scalar(2) / scalar(3)) * divU * divU;
-
-            // ----- nut (for production G = nut * GbyNu0) -----
-            const scalar sqrtS2 = Kokkos::sqrt(Kokkos::max(S2_i, scalar(0)));
-            // OLD nut for G (consistent with OF sequence), clamped to [0, NUT_MAX].
-            const scalar nut_i = Kokkos::min(Kokkos::max(nutV[i], scalar(0)), nutMax);
-
-            // ----- Blended coefficients -----
-            const scalar gamma_i = F1_i * (gamma1 - gamma2) + gamma2;
-            const scalar beta_i = F1_i * (beta1 - beta2) + beta2;
-
-            // ----- k equation sources -----
-            // G = nut * GbyNu0, Pk = min(G, c1*betaStar*k*omega)
-            const scalar G_i = nut_i * GbyNu0_i;
-            PkV[i] = Kokkos::min(G_i, c1 * betaStar * kSafe * omegaSafe);
-
-            // betaStar*omega as implicit destruction for k
-            spKV[i] = betaStar * omegaSafe;
-
-            // ----- omega equation sources -----
-            // Bounded GbyNu for omega production
-            const scalar GbyNuBound_i = Kokkos::min(
-                GbyNu0_i,
-                (c1 / a1) * betaStar * omegaSafe * Kokkos::max(a1 * omegaSafe, b1 * F2_i * sqrtS2)
-            );
-            omegaSourceV[i] = gamma_i * GbyNuBound_i;
-
-            // beta*omega as implicit destruction for omega (base)
-            spOmegaV[i] = beta_i * omegaSafe;
-
-            // Cross-diffusion: (1-F1)*CDkOmega (actual, may be negative)
-            const scalar CDkOmegaActual = scalar(2) * alphaOmega2 * dotGradKOmega / omegaSafe;
-            const scalar crossSource = (scalar(1) - F1_i) * CDkOmegaActual;
-
-            // Positive cross-source → explicit; negative → implicit sink for stability
-            omegaSourceV[i] += Kokkos::max(crossSource, scalar(0));
-            spOmegaV[i] += Kokkos::max(-crossSource / omegaSafe, scalar(0));
-        },
-        "kOmegaSST::computeF1AndSources"
-    );
-}
-
-// ---------------------------------------------------------------------------
-// Kernel: update internal nut from new k/omega using current gradU_ for S2.
-// ---------------------------------------------------------------------------
+);
 void kernelCorrectNutInternal(
     const NeoN::Executor& exec,
     const NeoN::Vector<scalar>& kVec,
@@ -437,73 +82,7 @@ void kernelCorrectNutInternal(
     scalar betaStar,
     scalar a1,
     scalar b1
-)
-{
-    const auto [kV, omegaV, wallDistV, nuV, gradUV, nutV_] =
-        NeoN::views(kVec, omegaVec, wallDistVec, nuVec, gradUVec, nutVec);
-
-    const scalar rootVSmall = scalar(1e-30);
-    // Local copies of the namespace guards (not addressable in device code).
-    const scalar omegaMin = KOSST_OMEGA_MIN;
-    const scalar nutMax = KOSST_NUT_MAX;
-
-    NeoN::parallelFor(
-        exec,
-        {0, static_cast<localIdx>(kVec.size())},
-        NEON_LAMBDA(const localIdx i) {
-            const scalar k_i = kV[i];
-            const scalar omega_i = omegaV[i];
-            const scalar nu_i = nuV[i];
-            const scalar y_i = Kokkos::max(wallDistV[i], rootVSmall);
-            const scalar y2_i = y_i * y_i;
-
-            // Floored omega/k for divisions and the nut denominator (overflow guard).
-            const scalar omegaSafe = Kokkos::max(omega_i, omegaMin);
-            const scalar kSafe = Kokkos::max(k_i, scalar(0));
-
-            // F2
-            const scalar sqrtK = Kokkos::sqrt(kSafe);
-            const scalar arg2 = Kokkos::min(
-                Kokkos::max(
-                    scalar(2) * sqrtK / (betaStar * omegaSafe * y_i),
-                    scalar(500) * nu_i / (y2_i * omegaSafe)
-                ),
-                scalar(100)
-            );
-            const scalar F2_i = Kokkos::tanh(arg2 * arg2);
-
-            // S2 from current gradU
-            const Tensor& g = gradUV[i];
-            scalar normSq = scalar(0);
-            scalar dotTrans = scalar(0);
-            for (int r = 0; r < 3; ++r)
-            {
-                for (int c = 0; c < 3; ++c)
-                {
-                    normSq += g(r, c) * g(r, c);
-                    dotTrans += g(r, c) * g(c, r);
-                }
-            }
-            const scalar S2_i = normSq + dotTrans;
-            const scalar sqrtS2 = Kokkos::sqrt(Kokkos::max(S2_i, scalar(0)));
-
-            // nut = a1*k / max(a1*omega, b1*F2*sqrt(S2)), capped to [0, NUT_MAX].
-            // The denominator already has a positive floor via a1*omegaSafe, so the
-            // division is finite; the cap stops a transient k spike (or vanishing
-            // strain+omega) from producing an Inf that the FP trap would catch.
-            const scalar nutRaw = a1 * kSafe / Kokkos::max(a1 * omegaSafe, b1 * F2_i * sqrtS2);
-            nutV_[i] = Kokkos::min(nutRaw, nutMax);
-        },
-        "kOmegaSST::correctNutInternal"
-    );
-}
-
-// ---------------------------------------------------------------------------
-// Kernel: compute blended diffusivities on faces.
-// DkEffF    = (F1*(alphaK1-alphaK2) + alphaK2)*nutF + nuF
-// DomegaEffF = (F1*(alphaO1-alphaO2) + alphaO2)*nutF + nuF
-// nuEffF     = nutF + nuF
-// ---------------------------------------------------------------------------
+);
 void kernelCalcDiffusivities(
     const NeoN::Executor& exec,
     const NeoN::Vector<scalar>& surfNuVec,
@@ -517,70 +96,29 @@ void kernelCalcDiffusivities(
     scalar alphaOmega1,
     scalar alphaOmega2,
     std::string label
-)
-{
-    const auto [nuF, nutF, F1F, nuEffF, DkF, DomF] =
-        NeoN::views(surfNuVec, surfNutVec, surfF1Vec, nuEffVec, DkEffVec, DomegaEffVec);
-
-    NeoN::parallelFor(
-        exec,
-        {0, static_cast<localIdx>(nuEffVec.size())},
-        NEON_LAMBDA(const localIdx f) {
-            const scalar alphaK = F1F[f] * (alphaK1 - alphaK2) + alphaK2;
-            const scalar alphaOmega = F1F[f] * (alphaOmega1 - alphaOmega2) + alphaOmega2;
-
-            nuEffF[f] = nuF[f] + nutF[f];
-            DkF[f] = alphaK * nutF[f] + nuF[f];
-            DomF[f] = alphaOmega * nutF[f] + nuF[f];
-        },
-        std::move(label)
-    );
-}
-
+);
 void kernelDevRhoReff(
     const NeoN::Executor& exec,
     const NeoN::Vector<Tensor>& gradUB,
     const NeoN::Vector<scalar>& nuEffB,
     NeoN::Vector<SymmTensor>& result
-)
-{
-    const auto [gV, nuEffV, resV] = NeoN::views(gradUB, nuEffB, result);
-    const localIdx nBF = static_cast<localIdx>(gradUB.size());
-
-    NeoN::parallelFor(
-        exec,
-        {0, nBF},
-        NEON_LAMBDA(const localIdx bf) {
-            resV[bf] = NeoN::symm(NeoN::twoSymm(gV[bf])).dev2() * (-nuEffV[bf]);
-        },
-        "kOmegaSST::devRhoReff::boundary"
-    );
-}
-
-// Populate nearWallDist's boundary face values from wallDist's owner-cell internal value.
-// Kept as a free function (not a constructor body / member) because NVCC forbids extended
-// __host__ __device__ lambdas (NEON_LAMBDA) inside functions whose address can't be taken
-// (constructors) or inside private/protected members.
+);
 void initNearWallDistBoundary(
     const NeoN::Executor& exec,
     const nnfvcc::VolumeField<scalar>& wallDist,
     const NeoN::UnstructuredMesh& mesh,
     nnfvcc::VolumeField<scalar>& nearWallDist
-)
-{
-    const auto wdInternal = wallDist.internalVector().view();
-    const auto faceOwners = mesh.boundaryMesh().faceOwners().view();
-    auto nwdBoundary = nearWallDist.boundaryData().value().view();
-    const auto nBoundaryFaces = static_cast<NeoN::localIdx>(nwdBoundary.size());
-    NeoN::parallelFor(
-        exec,
-        {0, nBoundaryFaces},
-        NEON_LAMBDA(const NeoN::localIdx i) { nwdBoundary[i] = wdInternal[faceOwners[i]]; },
-        "kOmegaSST::initNearWallDistBoundary"
-    );
-}
+);
+} // namespace detail
 
+namespace
+{
+inline constexpr scalar KOSST_OMEGA_MIN = scalar(1e-10);
+inline constexpr scalar KOSST_NUT_MAX = scalar(1e6);
+inline constexpr scalar KOSST_OMEGA_WALL_MAX =
+    NeoN::finiteVolume::cellCentred::volumeBoundary::detail::OMEGA_WF_OMEGA_MAX;
 } // namespace
+
 
 // ============================================================
 // Constructor
@@ -684,7 +222,7 @@ KOmegaSST::KOmegaSST(
     // wall-function unit tests construct explicitly). Mesh is static, so
     // doing it once at construction is sufficient.
     // Done via a free function because NVCC forbids NEON_LAMBDA in a constructor body.
-    initNearWallDistBoundary(exec_, wallDist_, mesh_, nearWallDist_);
+    detail::initNearWallDistBoundary(exec_, wallDist_, mesh_, nearWallDist_);
 }
 
 // ============================================================
@@ -911,7 +449,7 @@ void KOmegaSST::correct(
     // average (boundLowerSmoothRepair) instead of a hard clip. The hard clip left negative omega
     // spikes that amplified into the omega blow-up / SIGFPE seen in the pMG parameter study.
     {
-        const scalar gMin = reportBounding(
+        const scalar gMin = detail::reportBounding(
             exec_,
             omega,
             "omega",
@@ -920,7 +458,7 @@ void KOmegaSST::correct(
         );
         if (gMin < KOSST_OMEGA_MIN)
         {
-            boundLowerSmoothRepair(
+            detail::boundLowerSmoothRepair(
                 exec_,
                 omega,
                 mesh_,
@@ -962,10 +500,10 @@ void KOmegaSST::correct(
     // Bound k >= 0, mirroring OpenFOAM's Foam::bound() with the same smoother repair as omega.
     {
         const scalar gMin =
-            reportBounding(exec_, k, "k", scalar(0), mesh_.boundaryMesh().isDistributed());
+            detail::reportBounding(exec_, k, "k", scalar(0), mesh_.boundaryMesh().isDistributed());
         if (gMin < scalar(0))
         {
-            boundLowerSmoothRepair(
+            detail::boundLowerSmoothRepair(
                 exec_,
                 k,
                 mesh_,
@@ -1006,7 +544,12 @@ NeoN::Vector<SymmTensor> KOmegaSST::devRhoReff() const
 {
     const localIdx nBF = static_cast<localIdx>(gradU_.boundaryData().value().size());
     NeoN::Vector<SymmTensor> result(exec_, nBF, NeoN::zero<SymmTensor>());
-    kernelDevRhoReff(exec_, gradU_.boundaryData().value(), nuEff_.boundaryData().value(), result);
+    detail::kernelDevRhoReff(
+        exec_,
+        gradU_.boundaryData().value(),
+        nuEff_.boundaryData().value(),
+        result
+    );
     return result;
 }
 
@@ -1023,7 +566,7 @@ void KOmegaSST::computeF1AndSources(
     const nnfvcc::VolumeField<NeoN::Tensor>& gradU
 )
 {
-    kernelComputeF1AndSources(
+    detail::kernelComputeF1AndSources(
         exec_,
         k.internalVector(),
         omega.internalVector(),
@@ -1066,7 +609,7 @@ void KOmegaSST::correctNutInternal(
     nnfvcc::VolumeField<scalar>& nut
 ) const
 {
-    kernelCorrectNutInternal(
+    detail::kernelCorrectNutInternal(
         exec_,
         k.internalVector(),
         omega.internalVector(),
@@ -1078,7 +621,7 @@ void KOmegaSST::correctNutInternal(
         coeffs_.a1,
         coeffs_.b1
     );
-    kernelCorrectNutInternal(
+    detail::kernelCorrectNutInternal(
         exec_,
         k.boundaryData().value(),
         omega.boundaryData().value(),
@@ -1097,7 +640,7 @@ void KOmegaSST::calcDiffusivities(const nnfvcc::VolumeField<scalar>& nut)
     surfInterp_.interpolate(nut, surfNut_);
     surfInterp_.interpolate(F1_, surfF1_);
 
-    kernelCalcDiffusivities(
+    detail::kernelCalcDiffusivities(
         exec_,
         surfNu_.internalVector(),
         surfNut_.internalVector(),
@@ -1111,7 +654,7 @@ void KOmegaSST::calcDiffusivities(const nnfvcc::VolumeField<scalar>& nut)
         coeffs_.alphaOmega2,
         "kOmegaSST::calcDiffusivities::internal"
     );
-    kernelCalcDiffusivities(
+    detail::kernelCalcDiffusivities(
         exec_,
         surfNu_.boundaryData().value(),
         surfNut_.boundaryData().value(),
