@@ -8,7 +8,7 @@
 
 NeoN implementation of interFoam's ``alphaEqn.H``: one MULES-limited
 phase-fraction step per time step, backed by the NeoN-core FCT
-limiter (``nn.mules_explicit_solve``). The high-order face flux
+limiter (``nfb.mules_explicit_solve``). The high-order face flux
 ``alphaPhi = linearInterp(alpha1) * phi`` is limited in place (no clamp —
 boundedness comes from the limiter) while ``alpha1`` is advanced conservatively;
 ``rho`` / ``mu`` are rebuilt from the limited flux and ``rhoPhi`` is recomputed
@@ -276,7 +276,7 @@ def alpha_advection(
         # once by the FCT limiter. cAlpha=0 falls back to plain vanLeer.
         alpha_phi10 = nfb.alpha_phase_flux(rt, alpha1, phi, c_alpha)
         alpha_phi10.name = "alphaPhi"
-        nn.mules_explicit_solve(
+        nfb.mules_explicit_solve(
             alpha1, phi, alpha_phi10, rt.dt, 1.0, 0.0, n_limiter
         )
         alpha1.correct_boundary_conditions()

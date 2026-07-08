@@ -16,7 +16,7 @@ Both backends run on the SAME uniform mesh + SAME initial disc (setFields):
   (``_solve_alpha_python``): full ``alphaEqn.H`` — Gauss vanLeer + interface
   compression (``cAlpha=1``) + ``MULESCorr`` + ``nAlphaCorr=2``.
 * **NeoN** = what ``incompressibleVoFNeon`` runs: a single explicit MULES step
-  (``nn.mules_explicit_solve``) with linear interpolation and **no** interface
+  (``nfb.mules_explicit_solve``) with linear interpolation and **no** interface
   compression (``cAlpha=0``).
 
 What is asserted TIGHTLY (must always hold): both schemes conserve mass exactly
@@ -30,7 +30,7 @@ is ~2x more diffuse than pyf's full scheme; that gap is entirely the alpha-schem
 A second fixture (``mules_parity``) runs the *same* bare explicit-MULES scheme on
 both backends and asserts they agree to **machine precision over 100 steps** —
 the multi-step complement to the single-step ``test_mules`` parity, proving the
-NeoN MULES core (``nn.mules_explicit_solve``) is a bitwise-exact transcription of
+NeoN MULES core (``nfb.mules_explicit_solve``) is a bitwise-exact transcription of
 OpenFOAM's ``MULES::explicitSolve`` (so the diffusion gap above is purely scheme
 config, not a limiter difference). NB the pyf side MUST call ``runTime.increment()``
 each step to rotate ``psi.oldTime()``; without it OpenFOAM's disc freezes.
@@ -209,7 +209,7 @@ def drive():
     a0 = np.asarray(a1.internal_vector().copy_to_host()).copy()
     for _ in range(N):
         ap = surf.interpolate(a1) * phi
-        nn.mules_explicit_solve(a1, phi, ap, rt.dt, 1.0, 0.0, 5)
+        nfb.mules_explicit_solve(a1, phi, ap, rt.dt, 1.0, 0.0, 5)
         a1.correct_boundary_conditions()
     af = np.asarray(a1.internal_vector().copy_to_host())
     np.save("neon_alphaN.npy", af)
@@ -290,7 +290,7 @@ def drive():
     surf = nn.SurfaceInterpolationScalar(rt.executor, rt.nf_mesh, nn.TokenList(["linear"]))
     for _ in range(N):
         ap = surf.interpolate(alpha) * phi
-        nn.mules_explicit_solve(alpha, phi, ap, rt.dt, 1.0, 0.0, 5)
+        nfb.mules_explicit_solve(alpha, phi, ap, rt.dt, 1.0, 0.0, 5)
     np.save("neon_mules.npy", np.asarray(alpha.internal_vector().copy_to_host()))
     del alpha, U, phi, surf, rt, t, al
     print("END_OK")

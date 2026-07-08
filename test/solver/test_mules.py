@@ -3,7 +3,7 @@
 
 """MULES parity + boundedness + conservation for the NeoN-core FCT limiter.
 
-Value-matches NeoN's ``nn.mules_explicit_solve`` against pybFoam's
+Value-matches NeoN's ``nfb.mules_explicit_solve`` against pybFoam's
 ``vof.mules_explicit_solve`` (OpenFOAM ``MULES::explicitSolve``) on identical
 inputs on the shared damBreak mesh, via the two-subprocess ``.npy`` harness.
 
@@ -107,7 +107,7 @@ def _drive():
     np.asarray(alpha_phi.internal_vector())[:] = aphiun
     np.asarray(alpha_phi.boundary_data_value())[:] = 0.0
 
-    nn.mules_explicit_solve(s.alpha1, s.phi, alpha_phi, dt, 1.0, 0.0, N_LIMITER_ITER)
+    nfb.mules_explicit_solve(s.alpha1, s.phi, alpha_phi, dt, 1.0, 0.0, N_LIMITER_ITER)
 
     a_new = np.asarray(s.alpha1.internal_vector().copy_to_host())
     aphi_new = np.asarray(alpha_phi.internal_vector().copy_to_host())
@@ -127,7 +127,7 @@ def _drive():
     azp.name = "azp"
     np.asarray(azp.internal_vector())[:] = 0.0
     np.asarray(azp.boundary_data_value())[:] = 0.0
-    nn.mules_explicit_solve(s.alpha1, s.phi, azp, dt, 1.0, 0.0, N_LIMITER_ITER)
+    nfb.mules_explicit_solve(s.alpha1, s.phi, azp, dt, 1.0, 0.0, N_LIMITER_ITER)
     az = np.asarray(s.alpha1.internal_vector().copy_to_host())
     print("ALPHA_ZERO_DRIFT", float(np.max(np.abs(az - a0))))
     print(
@@ -186,7 +186,7 @@ def _drive():
     minus_dt_bnd = -float(s.rt.dt) * float(np.sum(apB))
 
     a_before = host(s.alpha1).copy()
-    nn.mules_explicit_solve(s.alpha1, s.phi, alpha_phi, s.rt.dt, 1.0, 0.0, 5)
+    nfb.mules_explicit_solve(s.alpha1, s.phi, alpha_phi, s.rt.dt, 1.0, 0.0, 5)
     a_after = host(s.alpha1)
     print("DSUM_ALPHAV", float(np.sum((a_after - a_before) * V)))
     print("MINUS_DT_BND", minus_dt_bnd)

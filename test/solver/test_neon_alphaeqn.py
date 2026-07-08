@@ -105,7 +105,7 @@ def drive():
     phi = nfb.flux(U)
     for _ in range({_N_STEPS}):
         aphi = {flux_expr}
-        nn.mules_explicit_solve(alpha, phi, aphi, rt.dt, 1.0, 0.0, 5)
+        nfb.mules_explicit_solve(alpha, phi, aphi, rt.dt, 1.0, 0.0, 5)
     np.save("neon_a.npy", np.asarray(alpha.internal_vector().copy_to_host()))
     del alpha, U, phi, rt, t, al
     print("END_OK")
