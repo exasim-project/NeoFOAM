@@ -219,6 +219,7 @@
 <li class="toctree-l1"><a class="reference internal" href="example_visualize_the_operation_dag.html">Visualize the operation DAG</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_use_depends_for_injection.html">Inject dependencies into operations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_use_an_interface.html">Gather contributions from many models with a model-owned interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_trace_solver_performance.html">Trace solver performance with OpenTelemetry</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul>
@@ -378,9 +379,17 @@ rather than constructing the dictionaries inline.</p>
 <span class="w">  </span><span class="nt">U</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">solver</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PBiCG</span>
 <span class="w">    </span><span class="nt">tolerance</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0e-6</span>
+<span class="w">  </span><span class="nt">UFinal</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">solver</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PBiCG</span>
+<span class="w">    </span><span class="nt">tolerance</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0e-6</span>
+<span class="w">    </span><span class="nt">relTol</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
 <span class="w">  </span><span class="nt">p</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">solver</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PCG</span>
 <span class="w">    </span><span class="nt">tolerance</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0e-7</span>
+<span class="w">  </span><span class="nt">pFinal</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">solver</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PCG</span>
+<span class="w">    </span><span class="nt">tolerance</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0e-7</span>
+<span class="w">    </span><span class="nt">relTol</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
 <span class="w">  </span><span class="nt">k</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">solver</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PBiCG</span>
 <span class="w">    </span><span class="nt">tolerance</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0e-6</span>
@@ -411,7 +420,7 @@ rather than constructing the dictionaries inline.</p>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;case_dir =&quot;</span><span class="p">,</span> <span class="n">CASE_DIR</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>case_dir = /tmp/neofoam_fvschemes_14hdl60o
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>case_dir = /tmp/neofoam_fvschemes_5bnclo7c
 </pre></div>
 </div>
 </section>
@@ -488,7 +497,7 @@ GradScheme, …).</p>
   divSchemes entries     : [&#39;div_phi_U&#39;]
   gradSchemes entries    : [&#39;grad_U&#39;, &#39;grad_p&#39;]
   laplacianSchemes ents  : [&#39;laplacian_nuEff_U&#39;, &#39;laplacian_rAU_p&#39;]
-PimpleFvSolution.solvers : [&#39;U&#39;, &#39;p&#39;]
+PimpleFvSolution.solvers : [&#39;U&#39;, &#39;UFinal&#39;, &#39;p&#39;, &#39;pFinal&#39;]
 </pre></div>
 </div>
 </section>
@@ -567,7 +576,7 @@ value types when <code class="docutils literal notranslate"><span class="pre">.a
 <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">CASE_DIR</span><span class="p">,</span> <span class="n">ignore_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.017 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.016 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-how-to-example-per-model-fvschemes-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/25e2dc4778329dac2e3ce01b416d63cc/example_per_model_fvschemes.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">example_per_model_fvschemes.ipynb</span></code></a></p>

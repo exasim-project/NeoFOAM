@@ -219,6 +219,7 @@
 <li class="toctree-l1"><a class="reference internal" href="example_visualize_the_operation_dag.html">Visualize the operation DAG</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_use_depends_for_injection.html">Inject dependencies into operations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="example_use_an_interface.html">Gather contributions from many models with a model-owned interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_trace_solver_performance.html">Trace solver performance with OpenTelemetry</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul>
@@ -395,9 +396,10 @@ works for any solver, because the classes are declared on its spec.</p>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">:</span><span class="s2">28s</span><span class="si">}</span><span class="s2"> fields: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">model_fields</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>config classes: [&#39;ControlDictConfig&#39;, &#39;PreprocessConfig&#39;, &#39;Pimple_fvSchemes&#39;, &#39;Pimple_fvSolution&#39;, &#39;UFieldConfig&#39;, &#39;pFieldConfig&#39;, &#39;TransportPropertiesConfig&#39;, &#39;TurbulencePropertiesConfig&#39;, &#39;BoussinesqConfig&#39;, &#39;boussinesq_fvSchemes&#39;, &#39;boussinesq_fvSolution&#39;, &#39;p_rghFieldConfig&#39;, &#39;TFieldConfig&#39;, &#39;alphatFieldConfig&#39;, &#39;CourantConfig&#39;, &#39;MaxDeltaTConfig&#39;]
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>config classes: [&#39;ControlDictConfig&#39;, &#39;PreprocessConfig&#39;, &#39;TelemetryDictConfig&#39;, &#39;Pimple_fvSchemes&#39;, &#39;Pimple_fvSolution&#39;, &#39;UFieldConfig&#39;, &#39;pFieldConfig&#39;, &#39;TransportPropertiesConfig&#39;, &#39;TurbulencePropertiesConfig&#39;, &#39;BoussinesqConfig&#39;, &#39;boussinesq_fvSchemes&#39;, &#39;boussinesq_fvSolution&#39;, &#39;p_rghFieldConfig&#39;, &#39;TFieldConfig&#39;, &#39;alphatFieldConfig&#39;, &#39;CourantConfig&#39;, &#39;MaxDeltaTConfig&#39;]
 ControlDictConfig            fields: [&#39;application&#39;, &#39;deltaT&#39;, &#39;endTime&#39;, &#39;startTime&#39;, &#39;writeBackend&#39;, &#39;writeControl&#39;, &#39;writeInterval&#39;]
 PreprocessConfig             fields: [&#39;tools&#39;]
+TelemetryDictConfig          fields: [&#39;directory&#39;, &#39;enabled&#39;, &#39;summary&#39;]
 Pimple_fvSchemes             fields: [&#39;ddtSchemes&#39;, &#39;divSchemes&#39;, &#39;gradSchemes&#39;, &#39;interpolationSchemes&#39;, &#39;laplacianSchemes&#39;, &#39;snGradSchemes&#39;]
 Pimple_fvSolution            fields: [&#39;PIMPLE&#39;, &#39;solvers&#39;]
 UFieldConfig                 fields: [&#39;FoamFile&#39;, &#39;boundaryField&#39;, &#39;dimensions&#39;, &#39;internalField&#39;]
@@ -428,7 +430,7 @@ adds <code class="docutils literal notranslate"><span class="pre">0/p_rgh</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;0/* fields:&quot;</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">io_config</span><span class="o">.</span><span class="n">file</span> <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">schema</span><span class="o">.</span><span class="n">fields</span><span class="p">))</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>dict files: [&#39;constant/transportProperties&#39;, &#39;constant/transportProperties&#39;, &#39;constant/turbulenceProperties&#39;, &#39;system/controlDict&#39;, &#39;system/controlDict&#39;, &#39;system/controlDict&#39;, &#39;system/fvSchemes&#39;, &#39;system/fvSchemes&#39;, &#39;system/fvSolution&#39;, &#39;system/fvSolution&#39;, &#39;system/preprocess.yaml&#39;]
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>dict files: [&#39;constant/transportProperties&#39;, &#39;constant/transportProperties&#39;, &#39;constant/turbulenceProperties&#39;, &#39;system/controlDict&#39;, &#39;system/controlDict&#39;, &#39;system/controlDict&#39;, &#39;system/controlDict&#39;, &#39;system/fvSchemes&#39;, &#39;system/fvSchemes&#39;, &#39;system/fvSolution&#39;, &#39;system/fvSolution&#39;, &#39;system/preprocess.yaml&#39;]
 0/* fields: [&#39;0/T&#39;, &#39;0/U&#39;, &#39;0/alphat&#39;, &#39;0/p&#39;, &#39;0/p_rgh&#39;]
 </pre></div>
 </div>
@@ -459,7 +461,7 @@ JSON Schema of every class — the form most agent / UI tooling consumes.</p>
 </pre></div>
 </div>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>ControlDictConfig fields: [&#39;application&#39;, &#39;deltaT&#39;, &#39;endTime&#39;, &#39;startTime&#39;, &#39;writeBackend&#39;, &#39;writeControl&#39;, &#39;writeInterval&#39;]
-JSON schema keys        : [&#39;ControlDictConfig&#39;, &#39;PreprocessConfig&#39;, &#39;Pimple_fvSchemes&#39;, &#39;Pimple_fvSolution&#39;, &#39;UFieldConfig&#39;, &#39;pFieldConfig&#39;, &#39;TransportPropertiesConfig&#39;, &#39;TurbulencePropertiesConfig&#39;, &#39;BoussinesqConfig&#39;, &#39;boussinesq_fvSchemes&#39;, &#39;boussinesq_fvSolution&#39;, &#39;p_rghFieldConfig&#39;, &#39;TFieldConfig&#39;, &#39;alphatFieldConfig&#39;, &#39;CourantConfig&#39;, &#39;MaxDeltaTConfig&#39;]
+JSON schema keys        : [&#39;ControlDictConfig&#39;, &#39;PreprocessConfig&#39;, &#39;TelemetryDictConfig&#39;, &#39;Pimple_fvSchemes&#39;, &#39;Pimple_fvSolution&#39;, &#39;UFieldConfig&#39;, &#39;pFieldConfig&#39;, &#39;TransportPropertiesConfig&#39;, &#39;TurbulencePropertiesConfig&#39;, &#39;BoussinesqConfig&#39;, &#39;boussinesq_fvSchemes&#39;, &#39;boussinesq_fvSolution&#39;, &#39;p_rghFieldConfig&#39;, &#39;TFieldConfig&#39;, &#39;alphatFieldConfig&#39;, &#39;CourantConfig&#39;, &#39;MaxDeltaTConfig&#39;]
 </pre></div>
 </div>
 </section>
@@ -677,7 +679,7 @@ config file.</p></li>
     <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">_tmp</span><span class="p">,</span> <span class="n">ignore_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.079 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.074 seconds)</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-how-to-example-collect-and-save-configs-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/acaee67517a3d144b2ef0c657aaccab9/example_collect_and_save_configs.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">example_collect_and_save_configs.ipynb</span></code></a></p>
