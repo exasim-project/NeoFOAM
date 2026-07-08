@@ -243,6 +243,18 @@ def incompressiblefluid(ctx: typer.Context) -> None:
     run_incompressible_fluid(argv)
 
 
+@solver_app.command(
+    name="incompressiblefluidneon",
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
+def incompressiblefluidneon(ctx: typer.Context) -> None:
+    """Transient PIMPLE solver for incompressible flow (NeoN backend)."""
+    from neofoam.solver.incompressibleFluidNeoN import run as run_neon
+
+    argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
+    run_neon(argv)
+
+
 @app.command()
 def preprocess(case: Path) -> None:
     """Run ONLY the mesh preprocessing pipeline for <case> and stop (no time loop)."""
