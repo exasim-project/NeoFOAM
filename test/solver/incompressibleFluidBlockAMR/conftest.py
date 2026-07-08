@@ -24,6 +24,7 @@ import neon.blockamr as blockamr  # noqa: E402
 os.environ.setdefault("AMREX_THE_ARENA_INIT_SIZE", "0")
 
 CASE_SRC = Path(__file__).parent / "cases" / "box"
+CYLINDER_CASE_SRC = Path(__file__).parent / "cases" / "cylinder"
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -48,5 +49,14 @@ def box_case(tmp_path, monkeypatch):
     """Copy the bundled periodic-box case to a tmp dir and chdir into it."""
     dst = tmp_path / "box"
     shutil.copytree(CASE_SRC, dst)
+    monkeypatch.chdir(dst)
+    return dst
+
+
+@pytest.fixture
+def cylinder_case(tmp_path, monkeypatch):
+    """Copy the bundled non-periodic cylinder case to a tmp dir and chdir in."""
+    dst = tmp_path / "cylinder"
+    shutil.copytree(CYLINDER_CASE_SRC, dst)
     monkeypatch.chdir(dst)
     return dst

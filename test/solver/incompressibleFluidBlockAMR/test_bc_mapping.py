@@ -4,15 +4,15 @@
 """INT-5 / C5 — OpenFOAM-style patch BCs map to neon.blockamr VectorBC.
 
 Supported: inlet ``fixedValue`` (Dirichlet), outlet ``zeroGradient`` (Neumann),
-wall ``noSlip``. Pins the gap: ``slip`` / ``symmetry`` have no engine
-counterpart and must raise ``NotImplementedError``.
+wall ``noSlip``, and free-slip ``slip`` / ``symmetry`` / ``symmetryPlane``
+(``SlipBC`` — no penetration + zero tangential shear).
 """
 
 import pytest
 
 pytest.importorskip("neon")
 
-from neon.blockamr.bc import NeumannBC, VectorDirichletBC  # noqa: E402
+from neon.blockamr.bc import NeumannBC, SlipBC, VectorDirichletBC  # noqa: E402
 
 from neofoam.solver.incompressibleFluidBlockAMR.models.bc_mapping import (  # noqa: E402
     build_vector_bc,
@@ -52,9 +52,8 @@ def test_build_vector_bc_places_faces():
 
 
 @pytest.mark.parametrize("bc_type", ["slip", "symmetry", "symmetryPlane"])
-def test_slip_symmetry_unsupported(bc_type):
-    with pytest.raises(NotImplementedError):
-        map_patch({"type": bc_type})
+def test_slip_symmetry_maps_to_slip(bc_type):
+    assert isinstance(map_patch({"type": bc_type}), SlipBC)
 
 
 def test_unknown_face_rejected():

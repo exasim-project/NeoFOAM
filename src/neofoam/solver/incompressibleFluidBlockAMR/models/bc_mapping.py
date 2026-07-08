@@ -10,28 +10,31 @@ The block-structured domain is a Cartesian box whose six faces are keyed
 * ``fixedValue``              → :func:`neon.blockamr.bc.fixedValue` (Dirichlet)
 * ``noSlip``                  → :func:`neon.blockamr.bc.noSlip`
 * ``zeroGradient`` / ``Neumann`` → :class:`neon.blockamr.bc.NeumannBC`
+* ``slip`` / ``symmetry`` / ``symmetryPlane`` → :func:`neon.blockamr.bc.slip`
+  (:class:`~neon.blockamr.bc.SlipBC`: no penetration + zero tangential shear)
 
-``slip`` / ``symmetry`` / ``symmetryPlane`` have **no** counterpart in the
-vendored engine (only Dirichlet + Neumann ghost fills exist), so they raise
-:class:`NotImplementedError` — a genuine gap flagged for a later spec. Periodic
-faces need no entry: the engine skips them from ``geom.is_periodic()``.
+Periodic faces need no entry: the engine skips them from ``geom.is_periodic()``.
 """
 
 from typing import Any, Mapping
+
+from ..configs import _parse_of_list
 
 _FACES = ("xlo", "xhi", "ylo", "yhi", "zlo", "zhi")
 
 
 def map_patch(spec: Mapping[str, Any]) -> Any:
     """Map one OpenFOAM-style patch spec to a ``neon.blockamr`` face BC object."""
-    from neon.blockamr.bc import NeumannBC, fixedValue, noSlip
+    from neon.blockamr.bc import NeumannBC, fixedValue, noSlip, slip
 
     bc_type = spec.get("type")
     if bc_type == "fixedValue":
-        value = spec.get("value")
-        if value is None or len(value) != 3:
+        # ``value`` is a real list (JSON/YAML) or an OpenFOAM ``( ux uy uz )``
+        # string that survives the reader verbatim — normalise both.
+        value = _parse_of_list(spec.get("value"))
+        if not isinstance(value, (list, tuple)) or len(value) != 3:
             raise ValueError(
-                f"fixedValue patch needs a 3-vector 'value'; got {value!r}"
+                f"fixedValue patch needs a 3-vector 'value'; got {spec.get('value')!r}"
             )
         return fixedValue([float(v) for v in value])
     if bc_type == "noSlip":
@@ -39,11 +42,7 @@ def map_patch(spec: Mapping[str, Any]) -> Any:
     if bc_type in ("zeroGradient", "Neumann"):
         return NeumannBC()
     if bc_type in ("slip", "symmetry", "symmetryPlane"):
-        raise NotImplementedError(
-            f"BC type {bc_type!r} is not supported by the neon.blockamr engine "
-            "(only Dirichlet fixedValue/noSlip and Neumann zeroGradient exist). "
-            "Slip/symmetry ghost fills are deferred to a later spec."
-        )
+        return slip()
     raise ValueError(f"unknown/unsupported patch BC type {bc_type!r}")
 
 

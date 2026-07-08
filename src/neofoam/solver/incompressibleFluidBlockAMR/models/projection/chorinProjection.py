@@ -20,7 +20,6 @@ captured in the operation closure — mirroring the op-closure-cycle rule.
 
 from typing import Annotated, Any, Callable, Optional
 
-from neofoam.framework.context import Context
 from neofoam.framework.dependency_resolver import wrap_with_dependency_resolution
 from neofoam.framework.initialization import field, lazy, model as init_model
 from neofoam.framework.operations import Operation, Operations, SequentialOp
@@ -74,6 +73,15 @@ def build(self: Any) -> list[Any]:
         }
         div_scheme = _make_div_scheme(sol_cfg.divScheme)
 
+        # Immersed cylinder body → direct-forcing IBM spec for the engine.
+        eb = None
+        if mesh_cfg.eb.type == "cylinder":
+            eb = {
+                "center": mesh_cfg.eb.center,
+                "radius": mesh_cfg.eb.radius,
+                "axis": mesh_cfg.eb.axis,
+            }
+
         if all(mesh_cfg.periodicity):
             # Fully periodic: no domain BCs — use the conservative fill-patch.
             return DSLIncompressibleSolver(
@@ -83,6 +91,7 @@ def build(self: Any) -> list[Any]:
                 fill_patch=FillPatchCellConservative(),
                 schemes_p=schemes_p,
                 div_scheme=div_scheme,
+                eb=eb,
             )
         # Walled/open domain: map the per-face boundary spec to a VectorBC.
         u_bc = build_vector_bc(mesh_cfg.boundary or {})
@@ -93,6 +102,7 @@ def build(self: Any) -> list[Any]:
             U_bc=u_bc,
             schemes_p=schemes_p,
             div_scheme=div_scheme,
+            eb=eb,
         )
 
     def alias_engine(context: dict[str, Any]) -> Any:

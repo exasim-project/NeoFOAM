@@ -8,10 +8,11 @@ Builds a single-level :class:`neon.blockamr.Mesh` (or a multi-level
 validated dict config: physical ``RealBox`` extents, coarse cell counts, and
 per-axis periodicity map to the AMReX ``Geometry``.
 
-Embedded boundaries (``eb.type = cylinder``) are **not** supported by the
-vendored engine on this branch — there are no EB bindings compiled — so the
-factory raises :class:`NotImplementedError` for them. Cylinder/EB support is a
-verification-spec (02+) concern.
+Embedded boundaries (``eb.type = cylinder``) are represented by a **direct-forcing
+immersed boundary**: the mesh stays a plain Cartesian grid and the engine pins the
+velocity to zero in the solid cells each step (mask built from ``eb.center`` /
+``eb.radius`` / ``eb.axis``). The mesh factory only validates the ``eb`` block; the
+mask itself lives in :class:`~neon.blockamr.dsl_solver.DSLIncompressibleSolver`.
 """
 
 from typing import Any
@@ -22,8 +23,7 @@ from ..configs import MeshDictConfig
 def _validate(cfg: MeshDictConfig) -> None:
     if len(cfg.domain) != 2 or any(len(p) != 3 for p in cfg.domain):
         raise ValueError(
-            "meshDict.domain must be [[xlo,ylo,zlo],[xhi,yhi,zhi]]; "
-            f"got {cfg.domain!r}"
+            f"meshDict.domain must be [[xlo,ylo,zlo],[xhi,yhi,zhi]]; got {cfg.domain!r}"
         )
     if len(cfg.nCell) != 3:
         raise ValueError(f"meshDict.nCell must have 3 entries; got {cfg.nCell!r}")
@@ -33,6 +33,23 @@ def _validate(cfg: MeshDictConfig) -> None:
         )
     if any(n < 1 for n in cfg.nCell):
         raise ValueError(f"meshDict.nCell entries must be >= 1; got {cfg.nCell!r}")
+    if cfg.eb.type not in ("none", "cylinder"):
+        raise ValueError(
+            f"meshDict.eb.type must be 'none' or 'cylinder'; got {cfg.eb.type!r}"
+        )
+    if cfg.eb.type == "cylinder":
+        if cfg.eb.center is None or len(cfg.eb.center) != 3:
+            raise ValueError(
+                f"cylinder eb needs a 3-vector 'center'; got {cfg.eb.center!r}"
+            )
+        if cfg.eb.radius is None or cfg.eb.radius <= 0.0:
+            raise ValueError(
+                f"cylinder eb needs a positive 'radius'; got {cfg.eb.radius!r}"
+            )
+        if cfg.eb.axis not in (0, 1, 2):
+            raise ValueError(
+                f"cylinder eb 'axis' must be 0, 1 or 2; got {cfg.eb.axis!r}"
+            )
 
 
 def build_mesh(cfg: MeshDictConfig) -> Any:
@@ -45,18 +62,6 @@ def build_mesh(cfg: MeshDictConfig) -> Any:
     from neon.blockamr.mesh import AmrMesh, Mesh
 
     _validate(cfg)
-
-    if cfg.eb.type == "cylinder":
-        raise NotImplementedError(
-            "eb.type='cylinder' is not supported: the vendored neon.blockamr "
-            "engine on this branch has no embedded-boundary bindings. Use a "
-            "box/periodic mesh (eb.type='none'); cylinder/EB is deferred to the "
-            "verification specs (02+)."
-        )
-    if cfg.eb.type != "none":
-        raise ValueError(
-            f"meshDict.eb.type must be 'none' or 'cylinder'; got {cfg.eb.type!r}"
-        )
 
     lo, hi = cfg.domain
     nx, ny, nz = (int(n) for n in cfg.nCell)
