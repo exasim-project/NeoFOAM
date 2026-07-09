@@ -133,7 +133,10 @@ class BlockAMRSolutionConfig(BaseConfig):
     block-structured engine does not read ``constant/transportProperties``);
     ``rtol`` / ``atol`` / ``maxIter`` configure the pressure-Poisson MLMG solve;
     ``divScheme`` selects the advection scheme (``upwind`` | ``linear`` |
-    ``vanLeer`` | ``quick``).
+    ``vanLeer`` | ``quick``); ``bottomSolver`` optionally picks the MLMG
+    bottom solver (``cg`` | ``bicgstab`` | ``smoother`` | ``cgbicg`` | ``bicgcg``
+    | ``default``) — empty leaves AMReX's default (a Krylov solver that converges
+    the nodal projection in ~5 V-cycles; ``smoother`` is ~100x slower here).
     """
 
     nu: float = Field(gt=0.0)
@@ -141,3 +144,4 @@ class BlockAMRSolutionConfig(BaseConfig):
     atol: float = Field(default=1e-8, gt=0.0)
     maxIter: int = Field(default=200, gt=0)
     divScheme: str = "vanLeer"
+    bottomSolver: str = ""

@@ -71,6 +71,9 @@ def build(self: Any) -> list[Any]:
             "max_iter": sol_cfg.maxIter,
             "verbose": 0,
         }
+        # optional explicit MLMG bottom solver (empty → AMReX default)
+        if sol_cfg.bottomSolver:
+            schemes_p["bottom_solver"] = sol_cfg.bottomSolver
         div_scheme = _make_div_scheme(sol_cfg.divScheme)
 
         # Immersed cylinder body → direct-forcing IBM spec for the engine.
