@@ -94,6 +94,14 @@ import numpy as np
 import pybFoam as pyf
 import neon._neon as nn
 import neofoam.neofoam_bindings as nfb
+from neofoam.framework.context import Context
+from neofoam.framework.model import ModelRuntime
+from neofoam.framework.model.interface import bind_owned_interfaces
+from neofoam.solver.incompressibleVoFNeon.models.surface_forces import (
+    gravityForce,
+    surfaceForces,
+    surfaceTensionForce,
+)
 from neofoam.solver.neoPimpleFoam import _ensure_neon_initialized
 
 
@@ -128,6 +136,23 @@ def _drive():
     # Sanity ranges: damBreak water/air rho in [1, 1000], gh <= 0 (g points -y).
     print("RHO_MIN", float(host(rho).min()))
     print("RHO_MAX", float(host(rho).max()))
+
+    # surfaceForces interface model: the folded interfaceForce (surface tension
+    # first, gravity second) must equal the legacy inline expression bitwise.
+    owner_rt = ModelRuntime(spec=surfaceForces, name="surfaceForces", config=None)
+    contributors = [
+        ModelRuntime(spec=surfaceTensionForce, name="surfaceTensionForce", config=None),
+        ModelRuntime(spec=gravityForce, name="gravityForce", config=None),
+    ]
+    bind_owned_interfaces(owner_rt, contributors, Context(fields={}, models={}))
+    ctx = Context(
+        fields={"alpha1": alpha1, "rho": rho, "ghf": ghf},
+        models={"phase": phase, "neon_runtime": rt},
+    )
+    folded = owner_rt.bound_interfaces["interfaceForce"](ctx)
+    inline = stf + (-1.0 * ghf) * nfb.sn_grad(rho)
+    print("FOLDED_VS_INLINE_ABS", float(np.max(np.abs(host(folded) - host(inline)))))
+    del folded, inline, ctx, owner_rt, contributors
 
     del alpha1, _U, _phi, rho, mu, gh, ghf, stf, rt, run_time, arg_list
     print("END_OK")
@@ -174,3 +199,15 @@ def test_surface_tension_force_matches_pybfoam(parity: dict[str, float]) -> None
     """
     assert parity["STF_NEON_ABSMAX"] > 1e-3
     assert parity["STF_REL"] < 1e-10
+
+
+def test_folded_interface_force_matches_inline_expression(
+    parity: dict[str, float],
+) -> None:
+    """The surfaceForces fold == fSigma + (-1.0*ghf)*snGrad(rho), bitwise.
+
+    Registration order (surface tension first, gravity second) reproduces the
+    legacy inline addition order, so on the serial CPU path the folded field is
+    bit-identical to the expression the solver used to hardcode.
+    """
+    assert parity["FOLDED_VS_INLINE_ABS"] == 0.0

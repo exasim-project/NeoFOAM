@@ -14,17 +14,23 @@ matching interFoam's ``divDevRhoReff``), with a zero ``nut0``.
 
 Split into two operations that mirror ``incompressibleFluidNeoN``: ``momentum``
 assembles ``UEqn`` (and, when ``momentumPredictor`` is on, solves it against the
-buoyant + capillary source) and hands ``UEqn`` / ``fSigma`` / ``grad_u`` to
-``continuity`` through ``FieldUpdates`` (never write-flagged); ``continuity``
-runs the ``nCorrectors`` PISO loop and recomputes the static pressure. There is
-no outer PIMPLE residual loop — one alpha + momentum + pressure pass per step,
-exactly as the legacy ``neoInterFoam`` run body.
+buoyant + capillary source) and hands ``UEqn`` / ``grad_u`` to ``continuity``
+through ``FieldUpdates`` (never write-flagged); ``continuity`` runs the
+``nCorrectors`` PISO loop and recomputes the static pressure. There is no outer
+PIMPLE residual loop — one alpha + momentum + pressure pass per step, exactly
+as the legacy ``neoInterFoam`` run body.
+
+The gravity + surface-tension face forces are NOT hardcoded here: both
+operations fold the ``interfaceForce`` extension point owned by the
+``surfaceForces`` model (``..surface_forces``) — ``momentum`` consumes the fold
+as ``reconstruct((F - snGrad(p_rgh)) * magSf)``, ``continuity`` as
+``phig = F * rAUf * magSf``.
 
 This model owns fields: ``U``, ``p_rgh``, ``p``, ``gh``, ``ghf``, ``nut0`` and
 models: ``grad_op``, ``pimple_state``, ``pressure_reference``.
 """
 
-from typing import Annotated, Any, Callable
+from typing import Annotated, Any, Callable, NamedTuple
 
 import neon._neon as nn  # NeoN Python bindings
 from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
@@ -40,6 +46,7 @@ from neofoam.framework.types import OperationMetadata
 
 from ..incompressibleVoFNeonModel import Model
 from ..shared import read_int, read_switch
+from ..surface_forces import interfaceForce
 
 pimpleNeoN = Model("PimpleVoFNeoN")
 
@@ -142,44 +149,54 @@ def build(self: Any) -> list[Any]:
     ]
 
 
-@pimpleNeoN.operation(operation_number="2.1")
-def momentum(
+def _folded_interface_force(interface_force: Any, ctx: Context) -> Any:
+    """Fold the bound ``interfaceForce`` against the live Context.
+
+    The two default contributions (surface tension, gravity) are always wired
+    by ``create_fields`` — an empty fold (``None``) is a wiring error.
+    """
+    face_force = interface_force(ctx)
+    if face_force is None:
+        raise RuntimeError(
+            "surfaceForces: no interface-force contributions are bound "
+            "(surface tension + gravity are wired by create_fields)."
+        )
+    return face_force
+
+
+class _MomentumAssembly(NamedTuple):
+    """``UEqn`` plus the objects its operators hold raw references to.
+
+    The implicit operators and ``viscous_stress`` do NOT copy their operands:
+    ``muf`` / ``grad_u`` / ``stress_terms`` must stay alive until ``UEqn`` is
+    assembled (solved), so the caller keeps this tuple in scope through the
+    solve — and hands ``grad_u`` on to ``continuity`` via ``FieldUpdates``.
+    """
+
+    UEqn: Any
+    grad_u: Any
+    muf: Any
+    stress_terms: Any
+
+
+def _assemble_ueqn(
     U: Any,
-    phi: Any,
     rho: Any,
     mu: Any,
     rhoPhi: Any,
-    p_rgh: Any,
-    gh: Any,
-    ghf: Any,
     nut0: Any,
-    alpha1: Any,
-    phase: Annotated[dict[str, float], "models"],
-    grad_op: Annotated[Any, "models"],
-    surf_interp: Annotated[Any, "models"],
-    pimple_state: Annotated[Any, "models"],
-    neon_runtime: Annotated[Any, "models"],
-) -> FieldUpdates:
-    """Density-weighted momentum predictor with gravity + surface tension.
+    grad_op: Any,
+    surf_interp: Any,
+    rt: Any,
+) -> _MomentumAssembly:
+    """Assemble ``UEqn = ddt(rho,U) + div(rhoPhi,U) - laplacian(muf,U) + dev2``.
 
-    ``UEqn = ddt(rho,U) + div(rhoPhi,U) - laplacian(muf,U) + dev2 laminar
-    stress``, solved (when ``momentumPredictor`` is on) against the buoyant +
-    capillary source ``reconstruct((fSigma - ghf*snGrad(rho) - snGrad(p_rgh))
-    * magSf)``, where ``fSigma = interpolate(sigma*K)*snGrad(alpha1)`` is the
-    surface-tension face force. Hands ``UEqn`` / ``fSigma`` / ``grad_u`` to
-    ``continuity``.
+    grad(U) feeds the explicit dev2 laminar viscous stress (interFoam
+    divDevRhoReff) — viscous_stress returns
+    ``-div((mu+nut0)*dev2(T(grad(U))))``, nut0=0 -> pure laminar.
     """
-    rt = neon_runtime
-    nn.rotate_old_times(U)
-    nn.rotate_old_times(phi)
-
     muf = surf_interp.interpolate(mu)
     muf.name = "muf"
-
-    # grad(U) for the explicit dev2 laminar viscous stress (interFoam
-    # divDevRhoReff). viscous_stress returns -div((mu+nut0)*dev2(T(grad(U))));
-    # nut0=0 -> pure laminar. Kept alive (handed to continuity via FieldUpdates)
-    # because the operator holds a reference.
     grad_u = grad_op.grad_tensor(U)
     stress_terms = (
         nn.imp.ddt(rho, U)
@@ -187,115 +204,205 @@ def momentum(
         - nn.imp.laplacian(muf, U)
         + nfb.viscous_stress(mu, nut0, grad_u)
     )
-    UEqn = nfb.PDESolverVec3(stress_terms, U, rt)
+    return _MomentumAssembly(
+        UEqn=nfb.PDESolverVec3(stress_terms, U, rt),
+        grad_u=grad_u,
+        muf=muf,
+        stress_terms=stress_terms,
+    )
 
-    sn_rho = nfb.sn_grad(rho)
-    sn_prgh = nfb.sn_grad(p_rgh)
-    magSf = nfb.mag_sf(rt)
-    # Surface-tension face force fSigma = interpolate(sigma*K)*snGrad(alpha1),
-    # computed once (curvature depends on alpha1, fixed across the corrector loop).
-    fSigma = nfb.surface_tension_force(rt, alpha1, phase["sigma"])
-    # Buoyant + capillary face force flux.
-    face_force = (fSigma + (-1.0 * ghf) * sn_rho - sn_prgh) * magSf
-    src_field = nn.reconstruct(face_force)
+
+@pimpleNeoN.operation(operation_number="2.1")
+def momentum(
+    ctx: Context,
+    U: Any,
+    phi: Any,
+    rho: Any,
+    mu: Any,
+    rhoPhi: Any,
+    p_rgh: Any,
+    nut0: Any,
+    grad_op: Annotated[Any, "models"],
+    surf_interp: Annotated[Any, "models"],
+    pimple_state: Annotated[Any, "models"],
+    neon_runtime: Annotated[Any, "models"],
+    interface_force: interfaceForce,  # type: ignore[valid-type]
+) -> FieldUpdates:
+    """Density-weighted momentum predictor with the folded interface forces.
+
+    ``UEqn = ddt(rho,U) + div(rhoPhi,U) - laplacian(muf,U) + dev2 laminar
+    stress``, solved (when ``momentumPredictor`` is on) against the source
+    ``reconstruct((F - snGrad(p_rgh)) * magSf)`` where ``F`` is the folded
+    ``interfaceForce`` (surface tension + gravity by default). Hands ``UEqn``
+    / ``grad_u`` to ``continuity``.
+    """
+    rt = neon_runtime
+    nn.rotate_old_times(U)
+    nn.rotate_old_times(phi)
+
+    # `assembly` keeps muf / grad_u / stress_terms alive through the solve —
+    # the UEqn operators hold raw references to them.
+    assembly = _assemble_ueqn(U, rho, mu, rhoPhi, nut0, grad_op, surf_interp, rt)
+    UEqn = assembly.UEqn
+
+    # Buoyant + capillary face force flux from the folded contributions.
+    face_force = _folded_interface_force(interface_force, ctx)
+    src_field = nn.reconstruct((face_force - nfb.sn_grad(p_rgh)) * nfb.mag_sf(rt))
 
     if pimple_state.momentum_predictor:
         UEqn.solve_with_source(nn.exp.source(src_field))
     else:
         UEqn.assemble_and_relax()
 
-    return FieldUpdates({"UEqn": UEqn, "fSigma": fSigma, "grad_u": grad_u, "U": U})
+    return FieldUpdates({"UEqn": UEqn, "grad_u": assembly.grad_u, "U": U})
+
+
+class _FluxPrediction(NamedTuple):
+    """One PISO corrector's flux prediction (the pEqn.H setup phase)."""
+
+    rAU: Any
+    hByA: Any
+    rAUf: Any
+    phig: Any
+    phiHbyA: Any
+
+
+def _predict_face_flux(
+    UEqn: Any,
+    U: Any,
+    phi: Any,
+    p_rgh: Any,
+    rho: Any,
+    face_force: Any,
+    magSf: Any,
+    ddt_scheme: Any,
+    surf_interp: Any,
+    rt: Any,
+) -> _FluxPrediction:
+    """rAU/HbyA and the buoyant face flux ``phiHbyA = flux(HbyA) + ddtCorr + phig``."""
+    rAU, hByA = nfb.compute_rau_and_hbya(UEqn)
+    nfb.constrain_hbya(U, p_rgh, hByA)
+    rAUf = surf_interp.interpolate(rAU)
+    rAUf.name = "rAUf"
+    # ddtCorr weight is interpolate(rho*rAU) (not interpolate(rAU)): near the
+    # interface rho jumps ~1000x, so the transient Rhie-Chow correction must
+    # carry the density weight. The laplacian / phig terms keep plain rAUf.
+    rho_rau = nfb.mul_scalar_volume(rho, rAU)
+    rhorAUf = surf_interp.interpolate(rho_rau)
+    rhorAUf.name = "rhorAUf"
+    phig = face_force * rAUf * magSf
+    phiHbyA = (
+        nfb.flux(hByA) + rhorAUf * nfb.ddt_flux_corr(U, phi, rt.dt, ddt_scheme) + phig
+    )
+
+    # Faithful wall fixedFluxPressure (pEqn.H): set the wall p_rgh gradient so
+    # the projection cancels the buoyancy/capillary face flux in phiHbyA.
+    if _HAS_CONSTRAIN_PRESSURE:
+        nfb.constrain_pressure(p_rgh, U, phiHbyA, rAUf)
+
+    return _FluxPrediction(rAU=rAU, hByA=hByA, rAUf=rAUf, phig=phig, phiHbyA=phiHbyA)
+
+
+def _solve_pressure(
+    p_rgh: Any,
+    phi: Any,
+    prediction: _FluxPrediction,
+    state: Any,
+    pressure_reference: dict[str, Any],
+    rt: Any,
+) -> None:
+    """Solve ``laplacian(rAUf,p_rgh) == div(phiHbyA)`` (non-orth loop); update phi."""
+    p_ref_cell = pressure_reference["pRefCell"]
+    p_ref_value = pressure_reference["pRefValue"]
+    needs_ref = pressure_reference["needsRef"]
+
+    pEqn: Any = None
+    for _ in range(state.n_non_orth + 1):
+        pEqn = nfb.PDESolverScalar(
+            nn.imp.laplacian(prediction.rAUf, p_rgh) - nn.exp.div(prediction.phiHbyA),
+            p_rgh,
+            rt,
+        )
+        if needs_ref:
+            pEqn.set_reference(p_ref_cell, p_ref_value)
+        pEqn.solve()
+        p_rgh.correct_boundary_conditions()
+    nfb.update_face_velocity(prediction.phiHbyA, pEqn, phi)
+
+
+def _report_continuity_error(phi: Any, state: Any, rt: Any) -> None:
+    """continuityErrs.H: accumulate and print the time-step continuity errors."""
+    sum_local, global_err = nfb.compute_continuity_error(phi, rt)
+    state.cumulative_cont_err += global_err
+    print(
+        f"time step continuity errors : sum local = {sum_local}, "
+        f"global = {global_err}, cumulative = {state.cumulative_cont_err}"
+    )
+
+
+def _correct_velocity(
+    U: Any, phi: Any, p_rgh: Any, prediction: _FluxPrediction
+) -> None:
+    """interFoam velocity correction ``U = HbyA + rAU*reconstruct((phig - pEqn.flux())/rAUf)``.
+
+    After update_face_velocity, phi = phiHbyA - pEqn.flux(), so pEqn.flux() =
+    phiHbyA - phi and the reconstruct numerator is phig - pEqn.flux() =
+    phig - phiHbyA + phi. Carrying the buoyancy + surface-tension flux this way
+    (not the plain -grad(p_rgh) form) is what keeps the interface velocity
+    physical.
+    """
+    if _HAS_UPDATE_VELOCITY_BUOYANT:
+        numerator = prediction.phig - prediction.phiHbyA + phi
+        nfb.update_velocity_buoyant(
+            prediction.hByA, prediction.rAU, numerator, prediction.rAUf, U
+        )
+    else:
+        nfb.update_velocity(prediction.hByA, prediction.rAU, p_rgh, U)
+    U.correct_boundary_conditions()
 
 
 @pimpleNeoN.operation(operation_number="2.2", depends_on=["momentum"])
 def continuity(
+    ctx: Context,
     U: Any,
     p_rgh: Any,
     p: Any,
     phi: Any,
     rho: Any,
     gh: Any,
-    ghf: Any,
     UEqn: Any,
-    fSigma: Any,
     pimple_state: Annotated[Any, "models"],
     surf_interp: Annotated[Any, "models"],
     pressure_reference: Annotated[dict[str, Any], "models"],
     neon_runtime: Annotated[Any, "models"],
+    interface_force: interfaceForce,  # type: ignore[valid-type]
 ) -> FieldUpdates:
     """Buoyant ``p_rgh`` PISO pressure correction; recompute static pressure.
 
-    Verbatim port of the corrector loop in ``neoInterFoam.momentum_pressure``:
-    ``phig = (fSigma - ghf*snGrad(rho))*rAUf*magSf``, ``phiHbyA = flux(HbyA) +
-    rhorAUf*ddtCorr + phig`` (the ddtCorr weight is ``interpolate(rho*rAU)`` —
-    the density weight matters across the ~1000x interface jump), then the
-    ``laplacian(rAUf, p_rgh) == div(phiHbyA)`` solve and the flux / velocity
-    update. ``p = p_rgh + rho*gh`` is the derived static-pressure output.
+    Port of the corrector loop in ``neoInterFoam.momentum_pressure``, one
+    helper per pEqn.H phase: predict the face flux (``phig = F*rAUf*magSf``
+    with ``F`` the folded ``interfaceForce``, ``phiHbyA = flux(HbyA) +
+    rhorAUf*ddtCorr + phig``), solve ``laplacian(rAUf, p_rgh) ==
+    div(phiHbyA)``, report the continuity error, and apply the buoyant
+    velocity correction. ``p = p_rgh + rho*gh`` is the derived static-pressure
+    output.
     """
     state = pimple_state
     rt = neon_runtime
     ddt_scheme = UEqn.ddt_scheme()
-
-    sn_rho = nfb.sn_grad(rho)
     magSf = nfb.mag_sf(rt)
-    p_ref_cell = pressure_reference["pRefCell"]
-    p_ref_value = pressure_reference["pRefValue"]
-    needs_ref = pressure_reference["needsRef"]
+
+    # Folded ONCE before the PISO loop (the curvature in the surface-tension
+    # contribution depends on alpha1, which is fixed across the correctors).
+    face_force = _folded_interface_force(interface_force, ctx)
 
     for _ in range(state.n_correctors):
-        rAU, hByA = nfb.compute_rau_and_hbya(UEqn)
-        nfb.constrain_hbya(U, p_rgh, hByA)
-        rAUf = surf_interp.interpolate(rAU)
-        rAUf.name = "rAUf"
-        # ddtCorr weight is interpolate(rho*rAU) (not interpolate(rAU)): near the
-        # interface rho jumps ~1000x, so the transient Rhie-Chow correction must
-        # carry the density weight. The laplacian / phig terms keep plain rAUf.
-        rho_rau = nfb.mul_scalar_volume(rho, rAU)
-        rhorAUf = surf_interp.interpolate(rho_rau)
-        rhorAUf.name = "rhorAUf"
-        phig = (fSigma + (-1.0 * ghf) * sn_rho) * rAUf * magSf
-        phiHbyA = (
-            nfb.flux(hByA)
-            + rhorAUf * nfb.ddt_flux_corr(U, phi, rt.dt, ddt_scheme)
-            + phig
+        prediction = _predict_face_flux(
+            UEqn, U, phi, p_rgh, rho, face_force, magSf, ddt_scheme, surf_interp, rt
         )
-
-        # Faithful wall fixedFluxPressure (pEqn.H): set the wall p_rgh gradient so
-        # the projection cancels the buoyancy/capillary face flux in phiHbyA.
-        if _HAS_CONSTRAIN_PRESSURE:
-            nfb.constrain_pressure(p_rgh, U, phiHbyA, rAUf)
-
-        pEqn = None
-        for _ in range(state.n_non_orth + 1):
-            pEqn = nfb.PDESolverScalar(
-                nn.imp.laplacian(rAUf, p_rgh) - nn.exp.div(phiHbyA),
-                p_rgh,
-                rt,
-            )
-            if needs_ref:
-                pEqn.set_reference(p_ref_cell, p_ref_value)
-            pEqn.solve()
-            p_rgh.correct_boundary_conditions()
-        nfb.update_face_velocity(phiHbyA, pEqn, phi)
-
-        sum_local, global_err = nfb.compute_continuity_error(phi, rt)
-        state.cumulative_cont_err += global_err
-        print(
-            f"time step continuity errors : sum local = {sum_local}, "
-            f"global = {global_err}, cumulative = {state.cumulative_cont_err}"
-        )
-
-        # interFoam velocity correction: U = HbyA + rAU*reconstruct((phig - pEqn.flux())/rAUf).
-        # After update_face_velocity, phi = phiHbyA - pEqn.flux(), so pEqn.flux() = phiHbyA - phi
-        # and the reconstruct numerator is phig - pEqn.flux() = phig - phiHbyA + phi. Carrying the
-        # buoyancy + surface-tension flux this way (not the plain -grad(p_rgh) form) is what keeps
-        # the interface velocity physical.
-        if _HAS_UPDATE_VELOCITY_BUOYANT:
-            numerator = phig - phiHbyA + phi
-            nfb.update_velocity_buoyant(hByA, rAU, numerator, rAUf, U)
-        else:
-            nfb.update_velocity(hByA, rAU, p_rgh, U)
-        U.correct_boundary_conditions()
+        _solve_pressure(p_rgh, phi, prediction, state, pressure_reference, rt)
+        _report_continuity_error(phi, state, rt)
+        _correct_velocity(U, phi, p_rgh, prediction)
 
     # Static pressure p = p_rgh + rho*gh (derived output).
     nfb.update_static_pressure(p, p_rgh, rho, gh)

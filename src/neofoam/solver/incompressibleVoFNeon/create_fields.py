@@ -44,6 +44,7 @@ from .models.incompressibleVoFNeonModel import incompressibleVoFNeonModel
 from .models.pressure_velocity.base import PressureVelocityAlgorithmNeoN
 from .models.shared import ALPHA1_FIELD, prefixed_alpha_solver_key
 from .models.solution_loop import neon_loop_backend_steps, solutionLoop
+from .models.surface_forces import gravityForce, surfaceForces, surfaceTensionForce
 
 # Solver-solution subdicts mapped from OpenFOAM to NeoN/Ginkgo equivalents — the
 # VoF momentum/pressure fields and their *Final variants (the alpha equation
@@ -107,11 +108,22 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         solution_loop_model = solutionLoop.instantiate(resolved_case_dir, "main")
         field_writer_model = fieldWriter.instantiate(resolved_case_dir, "main")
 
+        # surfaceForces owns the interfaceForce extension point; surface
+        # tension + gravity are its always-on default contributors.
+        surface_forces_model = surfaceForces.instantiate(resolved_case_dir, "main")
+        surface_tension_model = surfaceTensionForce.instantiate(
+            resolved_case_dir, "main"
+        )
+        gravity_model = gravityForce.instantiate(resolved_case_dir, "main")
+
         core_models: list[Any] = [
             pressure_model,
             alpha_advection_model,
             solution_loop_model,
             field_writer_model,
+            surface_forces_model,
+            surface_tension_model,
+            gravity_model,
         ]
         core_models.append(
             ControlDictConfig.load(case_dir=resolved_case_dir, validate=False)
@@ -153,6 +165,9 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
 
         solution_loop_model = _by_spec("solutionLoop")
         field_writer_model = _by_spec("fieldWriter")
+        surface_forces_model = _by_spec("surfaceForces")
+        surface_tension_model = _by_spec("surfaceTensionForce")
+        gravity_model = _by_spec("gravityForce")
         argv = runner.argv
 
         def create_arg_list(_ctx: dict[str, Any]) -> Any:
@@ -270,6 +285,21 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
                 depends_on=["models.solution_loop"],
             )
         )
+
+        # Bind the surfaceForces-owned interfaceForce to its default
+        # contributors (surface tension, gravity) plus any case-detected
+        # optional models — a future force model contributing to
+        # interfaceForce folds in automatically. Bound against an EMPTY
+        # Context (same cross-run GC rule as wire_loop_interfaces); the live
+        # fold resolves fields/models from the call-time Context.
+        def wire_surface_forces(_work: dict[str, Any]) -> Any:
+            return bind_owned_interfaces(
+                surface_forces_model,
+                [surface_tension_model, gravity_model, *optional_models],
+                Context(fields={}, models={}),
+            )
+
+        builder.add(init_model("surfaceForces", wire_surface_forces))
 
         return builder.build()
 
