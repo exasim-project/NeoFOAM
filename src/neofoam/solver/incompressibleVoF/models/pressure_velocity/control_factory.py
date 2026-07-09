@@ -21,11 +21,24 @@ def _read_algorithm_dict(algorithm_name: str) -> Any:
 
 
 def create_pimple_control(_context: dict[str, Any]) -> PimpleControl:
-    """Create a :class:`PimpleControl` from the PIMPLE subdict."""
+    """Create a :class:`PimpleControl` from the PIMPLE subdict.
+
+    ``nCorrectors`` defaults to 2 and values below 2 are rejected here with a
+    solver-level message: the PISO pressure correction needs at least two
+    corrector iterations to converge the pressure-velocity coupling
+    (:class:`PimpleControl` enforces ``ge=2``).
+    """
     d = _read_algorithm_dict("PIMPLE")
+    n_correctors = int(d.getOrDefault[int]("nCorrectors", 2))
+    if n_correctors < 2:
+        raise ValueError(
+            "incompressibleVoF: the PISO pressure correction requires "
+            f"nCorrectors >= 2, but the fvSolution PIMPLE dict sets "
+            f"nCorrectors {n_correctors}."
+        )
     return PimpleControl(
         nOuterCorrectors=d.getOrDefault[int]("nOuterCorrectors", 1),
-        nCorrectors=d.getOrDefault[int]("nCorrectors", 1),
+        nCorrectors=n_correctors,
         nNonOrthogonalCorrectors=d.getOrDefault[int]("nNonOrthogonalCorrectors", 0),
         momentumPredictor=d.getOrDefault[bool]("momentumPredictor", True),
         turbCorr=d.getOrDefault[bool]("turbCorr", True),
