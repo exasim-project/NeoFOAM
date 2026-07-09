@@ -62,8 +62,11 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
     def build_lazy(
         core_models: list[Any], optional_models: list[Any]
     ) -> list[InitStep]:
-        alpha_model = core_models[0]
-        pressure_model = core_models[1]
+        # Core models, looked up by spec name (order-independent).
+        alpha_names = set(advectionModel.registered_names())
+        pressure_names = {s.name for s in PressureVelocityAlgorithm.all_specs()}
+        alpha_model = next(m for m in core_models if m.name in alpha_names)
+        pressure_model = next(m for m in core_models if m.name in pressure_names)
 
         builder = InitializerBuilder()
 
@@ -81,8 +84,7 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             [("alpha_advection", alpha_model), ("pressure_velocity", pressure_model)]
         )
         for spec in (alpha_model, pressure_model):
-            if spec._build_func is not None:
-                builder.extend(spec._build_func(spec))
+            builder.extend(spec.build_steps())
 
         # Two-phase turbulence model (wraps rho, U, phi, rhoPhi, mixture).
         def create_turbulence(ctx: dict[str, Any]) -> Any:

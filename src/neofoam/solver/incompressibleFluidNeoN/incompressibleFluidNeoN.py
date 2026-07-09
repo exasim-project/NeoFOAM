@@ -26,7 +26,7 @@ from neofoam.framework.operations import (
 )
 from neofoam.framework.solver import Solver
 from neofoam.framework.types import OperationMetadata
-from neofoam.solver.neoPimpleFoam import _ensure_neon_initialized
+from neofoam.solver.neon_runtime import ensure_neon_initialized
 
 from .configs import ControlDictConfig
 from .create_fields import create_init
@@ -137,7 +137,7 @@ def run(
     import sys
     from pathlib import Path
 
-    _ensure_neon_initialized(list(argv) if argv else ["incompressibleFluidNeoN"])
+    ensure_neon_initialized(list(argv) if argv else ["incompressibleFluidNeoN"])
 
     redirect = log_file is not None
     saved_fd: Optional[int] = None

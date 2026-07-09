@@ -39,6 +39,8 @@ from neofoam.framework.solver import Solver
 from neofoam.framework.types import OperationMetadata
 
 from .create_fields import create_init
+from .models.alpha_advection.advectionModel import advectionModel
+from .models.pressure_velocity.base import PressureVelocityAlgorithm
 
 
 # Interface band for the alpha Courant number: only faces where the
@@ -84,11 +86,14 @@ class CorrectableModel(Protocol):
     def correct(self) -> None: ...
 
 
-class TimeLoop:
+def time_loop(ctx: Context) -> bool:
     """Predicate: whether the outer time loop should continue."""
+    return bool(ctx.models["runtime"].run())
 
-    def __call__(self, ctx: Context) -> bool:
-        return bool(ctx.models["runtime"].run())
+
+def _core_spec(state: Any, names: set[str]) -> Any:
+    """Find a core-model spec by name (order-independent lookup)."""
+    return next(m for m in state.core_models if m.name in names)
 
 
 incompressibleVoF = Solver("incompressibleVoF")
@@ -113,18 +118,21 @@ def execution_graph(
 
     builder = StepBuilder()
 
-    # Core models: alpha-advection (index 0) then PIMPLE (index 1). Each spec is
-    # used as its own runtime binding for operation building.
-    alpha_model = self.state.core_models[0]
-    pimple_model = self.state.core_models[1]
-    alpha_ops = Operations(alpha_model._build_operations_for(alpha_model))
-    pimple_ops = Operations(pimple_model._build_operations_for(pimple_model))
+    # Core models, looked up by spec name (order-independent): the active
+    # alpha-advection scheme and PIMPLE. Each spec is used as its own runtime
+    # binding for operation building.
+    alpha_model = _core_spec(self.state, set(advectionModel.registered_names()))
+    pimple_model = _core_spec(
+        self.state, {spec.name for spec in PressureVelocityAlgorithm.all_specs()}
+    )
+    alpha_ops = Operations(alpha_model.build_operations_for(alpha_model))
+    pimple_ops = Operations(pimple_model.build_operations_for(pimple_model))
 
     # Solver-owned time-loop operations.
     ops = self.operations
 
     time_loop_op = Operation(
-        func=IterativeOp(TimeLoop()),
+        func=IterativeOp(time_loop),
         metadata=OperationMetadata(op_name="time_loop"),
     )
 
@@ -205,32 +213,19 @@ def set_time_step(
     runtime: Annotated[Any, "models"],
 ) -> None:
     """Adjust the time step from both flow-CFL and alpha-CFL (interFoam setDeltaT)."""
-    # adjustTimeStep / maxCo / maxAlphaCo / maxDeltaT are static controlDict
-    # entries — read them from the file (Time.controlDict() is not bound).
+    # Re-read system/controlDict every step — faithful to OpenFOAM's
+    # runTimeModifiable handling of adjustTimeStep/maxCo/maxAlphaCo/maxDeltaT
+    # (Time.controlDict() is not bound, so the file is read directly). Missing
+    # keys fall back to the interFoam defaults; a malformed value is a fatal
+    # OpenFOAM IO error (not catchable from Python), exactly as in interFoam.
     ctrl_dict = pyf.dictionary.read("system/controlDict")
 
-    def _dict_bool(key: str, default: bool) -> bool:
-        if ctrl_dict.found(key):
-            try:
-                return bool(ctrl_dict.getOrDefault[bool](key, default))
-            except Exception:
-                pass
-        return default
-
-    def _dict_float(key: str, default: float) -> float:
-        if ctrl_dict.found(key):
-            try:
-                return float(ctrl_dict.getOrDefault[float](key, default))
-            except Exception:
-                pass
-        return default
-
-    if not _dict_bool("adjustTimeStep", False):
+    if not ctrl_dict.getOrDefault[bool]("adjustTimeStep", False):
         return
 
-    max_co = _dict_float("maxCo", 1.0)
-    max_alpha_co = _dict_float("maxAlphaCo", 1.0)
-    max_delta_t = _dict_float("maxDeltaT", 1.0)
+    max_co = float(ctrl_dict.getOrDefault[float]("maxCo", 1.0))
+    max_alpha_co = float(ctrl_dict.getOrDefault[float]("maxAlphaCo", 1.0))
+    max_delta_t = float(ctrl_dict.getOrDefault[float]("maxDeltaT", 1.0))
 
     # Flow + interface (alpha) Courant numbers.
     maxCoNum, meanCoNum = pyf.computeCFLNumber(phi)

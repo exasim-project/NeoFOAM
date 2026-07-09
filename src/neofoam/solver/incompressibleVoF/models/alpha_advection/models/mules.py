@@ -36,7 +36,6 @@ from pybFoam import (
 )
 
 from neofoam.framework.context import FieldUpdates
-from neofoam.framework.dependency_resolver import wrap_with_dependency_resolution
 from neofoam.framework.operations import (
     Operation,
     Operations,
@@ -75,19 +74,36 @@ def build(self: object) -> list[object]:
 
 
 def read_alpha_controls(alpha_name: str) -> tuple[int, int, bool]:
-    """Read (nAlphaCorr, nAlphaSubCycles, MULESCorr) from ``system/fvSolution``."""
-    n_alpha_corr = 1
-    n_alpha_sub_cycles = 1
-    mules_corr = False
+    """Read (nAlphaCorr, nAlphaSubCycles, MULESCorr) from ``system/fvSolution``.
+
+    Re-read on every alpha solve — faithful to alphaEqn.H, which pulls the
+    controls from ``mesh.solverDict`` each time step (runTimeModifiable).
+    Absent dicts/keys fall back to the interFoam defaults with a logged notice;
+    a malformed value is a fatal OpenFOAM IO error (not catchable from Python).
+    ``found``/``subDict`` regex-match the OpenFOAM solver keys (damBreak:
+    ``"alpha.water.*"``).
+    """
+    defaults = (1, 1, False)
     try:
         fv_solution = pyf.dictionary.read("system/fvSolution")
-        alpha_dict = fv_solution.subDict("solvers").subDict(alpha_name)
-        n_alpha_corr = alpha_dict.getOrDefault[int]("nAlphaCorr", 1)
-        n_alpha_sub_cycles = alpha_dict.getOrDefault[int]("nAlphaSubCycles", 1)
-        mules_corr = alpha_dict.getOrDefault[bool]("MULESCorr", False)
-    except Exception:
-        pass  # use defaults
-    return n_alpha_corr, n_alpha_sub_cycles, mules_corr
+    except RuntimeError as err:
+        Info(
+            f"read_alpha_controls: cannot read system/fvSolution ({err}); using defaults."
+        )
+        return defaults
+    if not fv_solution.found("solvers"):
+        Info("read_alpha_controls: no 'solvers' dict in fvSolution; using defaults.")
+        return defaults
+    solvers = fv_solution.subDict("solvers")
+    if not solvers.found(alpha_name):
+        Info(f"read_alpha_controls: no '{alpha_name}' solver dict; using defaults.")
+        return defaults
+    alpha_dict = solvers.subDict(alpha_name)
+    return (
+        alpha_dict.getOrDefault[int]("nAlphaCorr", 1),
+        alpha_dict.getOrDefault[int]("nAlphaSubCycles", 1),
+        alpha_dict.getOrDefault[bool]("MULESCorr", False),
+    )
 
 
 def interface_compression_velocity(
@@ -288,9 +304,7 @@ def collected_operations(self: object) -> Operations:
     # The collection path bypasses the spec's default operation wrapping, so
     # wrap alpha_advection with dependency resolution here (``self`` is the
     # bound runtime).
-    wrapped_alpha_advection = wrap_with_dependency_resolution(
-        alpha_advection, self, mules._dependency_resolver
-    )
+    wrapped_alpha_advection = mules.wrap_operation(alpha_advection, self)
     model_ops = Operations()
     model_ops.add(
         Operation(

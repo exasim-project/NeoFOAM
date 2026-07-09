@@ -25,7 +25,7 @@ from typing import Annotated, Any, Optional
 from neofoam.framework.context import Context
 from neofoam.framework.graph import DAGResolver
 from neofoam.framework.initialization import Depends, StagedInitRunner
-from neofoam.framework.model import ModelRuntime
+from neofoam.framework.model import ModelRuntime, ModelSpec
 from neofoam.framework.operations import (
     IterativeOp,
     Operation,
@@ -34,7 +34,7 @@ from neofoam.framework.operations import (
 )
 from neofoam.framework.solver import Solver
 from neofoam.framework.types import OperationMetadata
-from neofoam.solver.neoPimpleFoam import _ensure_neon_initialized
+from neofoam.solver.neon_runtime import ensure_neon_initialized
 
 from .configs import ControlDictConfig
 from .create_fields import create_init
@@ -50,6 +50,13 @@ def _core_model(state: Any, spec_name: str) -> Any:
         m
         for m in state.core_models
         if isinstance(m, ModelRuntime) and m.spec.name == spec_name
+    )
+
+
+def _core_spec(state: Any, names: set[str]) -> Any:
+    """Find a bare core-model ModelSpec by name (order-independent lookup)."""
+    return next(
+        m for m in state.core_models if isinstance(m, ModelSpec) and m.name in names
     )
 
 
@@ -85,12 +92,15 @@ def execution_graph(
 
     builder = StepBuilder()
 
-    # Core models: pimple (index 0) then alpha-advection (index 1). Each spec is
-    # used as its own runtime binding for operation building.
-    pimple_model = self.state.core_models[0]
-    alpha_model = self.state.core_models[1]
-    algo_ops = Operations(pimple_model._build_operations_for(pimple_model))
-    alpha_ops = Operations(alpha_model._build_operations_for(alpha_model))
+    # Core models, looked up by spec name (order-independent): PIMPLE and the
+    # alpha-advection model. Each spec is used as its own runtime binding for
+    # operation building.
+    pimple_model = _core_spec(
+        self.state, {s.name for s in PressureVelocityAlgorithmNeoN.all_specs()}
+    )
+    alpha_model = _core_spec(self.state, {alpha_advection_model.name})
+    algo_ops = Operations(pimple_model.build_operations_for(pimple_model))
+    alpha_ops = Operations(alpha_model.build_operations_for(alpha_model))
 
     loop_ops = Operations(_core_model(self.state, "solutionLoop").operations)
     writer_ops = Operations(_core_model(self.state, "fieldWriter").operations)
@@ -133,7 +143,7 @@ def run(
     import sys
     from pathlib import Path
 
-    _ensure_neon_initialized(list(argv) if argv else ["incompressibleVoFNeon"])
+    ensure_neon_initialized(list(argv) if argv else ["incompressibleVoFNeon"])
 
     redirect = log_file is not None
     saved_fd: Optional[int] = None

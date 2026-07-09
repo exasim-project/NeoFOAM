@@ -31,7 +31,7 @@ class PressureVelocityAlgorithm:
 
     @classmethod
     def detect_and_create(cls) -> Any:
-        """Detect the algorithm from fvSolution and prime the PIMPLE spec."""
+        """Detect the algorithm from fvSolution and return the PIMPLE spec."""
         fv_solution = pyf.dictionary.read("system/fvSolution")
         if not fv_solution.found("PIMPLE"):
             warnings.warn(
@@ -40,5 +40,4 @@ class PressureVelocityAlgorithm:
                 stacklevel=2,
             )
 
-        pimple.algorithm_type = "PIMPLE"  # type: ignore[attr-defined]
         return pimple

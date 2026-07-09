@@ -28,7 +28,7 @@ class PressureVelocityAlgorithmNeoN:
 
     @classmethod
     def detect_and_create(cls) -> Any:
-        """Detect the algorithm from fvSolution and prime the PIMPLE spec."""
+        """Detect the algorithm from fvSolution and return the PIMPLE spec."""
         fv_solution = pyf.dictionary.read("system/fvSolution")
         if not fv_solution.found("PIMPLE"):
             warnings.warn(
@@ -36,7 +36,6 @@ class PressureVelocityAlgorithmNeoN:
                 "uses PIMPLE. Continuing with default PIMPLE settings.",
                 stacklevel=2,
             )
-        pimpleNeoN.algorithm_type = "PIMPLE"  # type: ignore[attr-defined]
         return pimpleNeoN
 
     @classmethod
@@ -47,5 +46,4 @@ class PressureVelocityAlgorithmNeoN:
                 f"incompressibleVoFNeon only supports the PIMPLE algorithm; "
                 f"requested {algorithm_type!r}."
             )
-        pimpleNeoN.algorithm_type = "PIMPLE"  # type: ignore[attr-defined]
         return pimpleNeoN

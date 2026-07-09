@@ -28,7 +28,6 @@ from pybFoam import (
 from neofoam.algorithms.solution_loop.control import PimpleControl
 from neofoam.foam.initialization import read_vol_field
 from neofoam.framework.context import Context, FieldUpdates
-from neofoam.framework.dependency_resolver import wrap_with_dependency_resolution
 from neofoam.framework.initialization import field, model
 from neofoam.framework.operations import (
     IterativeOp,
@@ -38,6 +37,7 @@ from neofoam.framework.operations import (
 )
 from neofoam.framework.types import OperationMetadata
 from .control_factory import create_pimple_control
+from ..alpha_advection.shared import MixtureProtocol
 from ..incompressibleVoFModel import Model
 
 pimple = Model("Pimple")
@@ -46,15 +46,6 @@ pimple = Model("Pimple")
 # ---------------------------------------------------------------------------
 # Type protocols for static analysis
 # ---------------------------------------------------------------------------
-
-
-class MixtureProtocol(Protocol):
-    def alpha1(self) -> volScalarField: ...
-    def alpha2(self) -> volScalarField: ...
-    def rho1(self) -> object: ...
-    def rho2(self) -> object: ...
-    def surfaceTensionForce(self) -> surfaceScalarField: ...
-    def correct(self) -> None: ...
 
 
 class TwoPhaseTransportProtocol(Protocol):
@@ -270,7 +261,10 @@ def continuity(
             if pimple_control.finalNonOrthogonalIter():
                 phi.assign(phiHbyA - pEqn.flux())
 
-        # Reconstruct velocity with surface tension + pressure flux correction
+        # Reconstruct velocity with surface tension + pressure flux correction.
+        # pEqn deliberately leaks out of the non-orthogonal while loop above —
+        # correctNonOrthogonal() always runs at least once, so pEqn is the
+        # final-iteration matrix here (mirrors pEqn.H's scoping).
         U.assign(HbyA + rAU * fvc.reconstruct((phig - pEqn.flux()) / rAUf))
         U.correctBoundaryConditions()
 
@@ -310,12 +304,8 @@ def collected_operations(self: object) -> Operations:
         )
     )
 
-    wrapped_momentum = wrap_with_dependency_resolution(
-        momentum, self, pimple._dependency_resolver
-    )
-    wrapped_continuity = wrap_with_dependency_resolution(
-        continuity, self, pimple._dependency_resolver
-    )
+    wrapped_momentum = pimple.wrap_operation(momentum, self)
+    wrapped_continuity = pimple.wrap_operation(continuity, self)
 
     model_ops.add(
         _alias_operation(wrapped_momentum, operation_name="momentum", depends_on=[])

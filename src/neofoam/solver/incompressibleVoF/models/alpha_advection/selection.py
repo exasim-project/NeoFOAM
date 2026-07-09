@@ -59,12 +59,19 @@ def select_advection_scheme(name: str) -> ModelSpec:
 def select_from_case(case_dir: str = ".") -> ModelSpec:
     """Read ``advectionScheme`` from ``system/fvSolution`` and select the scheme.
 
-    Defaults to ``MULES`` when the key (or the file) is absent.
+    Defaults to ``MULES`` when the key (or the file) is absent; the fallback is
+    logged so a missing/unreadable fvSolution never silently changes the scheme.
     """
     name = _DEFAULT_SCHEME
     try:
         fv_solution = pyf.dictionary.read("system/fvSolution")
+    except RuntimeError as err:
+        # pybFoam raises RuntimeError when the file cannot be opened; a
+        # malformed value inside the dict is a fatal OpenFOAM IO error instead.
+        Info(
+            f"select_from_case: cannot read system/fvSolution ({err}); "
+            f"using advectionScheme '{_DEFAULT_SCHEME}'."
+        )
+    else:
         name = str(fv_solution.getOrDefault[str]("advectionScheme", _DEFAULT_SCHEME))
-    except Exception:
-        pass  # use default
     return select_advection_scheme(name)

@@ -36,7 +36,6 @@ import neon._neon as nn  # NeoN Python bindings
 from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
 
 from neofoam.framework.context import FieldUpdates
-from neofoam.framework.dependency_resolver import wrap_with_dependency_resolution
 from neofoam.framework.initialization import field, model
 from neofoam.framework.operations import (
     Operation,
@@ -46,53 +45,9 @@ from neofoam.framework.operations import (
 from neofoam.framework.types import OperationMetadata
 
 from ..incompressibleVoFNeonModel import Model
+from ..shared import ALPHA1_FIELD, alpha_solver_dict, read_float, read_int, read_switch
 
 alpha_advection_model = Model("AlphaAdvectionNeoN")
-
-
-def _read_int(d: Any, key: str, default: int) -> int:
-    return int(d.get_int(key)) if d.contains(key) else default
-
-
-def _read_float(d: Any, key: str, default: float) -> float:
-    """Read a scalar, tolerating int storage (``cAlpha 1`` parses as an int, so
-    ``get_double`` would raise ``bad any_cast``)."""
-    if not d.contains(key):
-        return default
-    try:
-        return float(d.get_double(key))
-    except Exception:
-        return float(d.get_int(key))
-
-
-def _alpha_solver_dict(rt: Any) -> Any:
-    """The ``alpha.water`` alpha-controls subdict, or ``None``.
-
-    The user's subdict is keyed by an OpenFOAM regex (damBreak: ``"alpha.water.*"``)
-    and carries the MULES controls (``MULESCorr`` / ``nAlphaCorr`` / ``cAlpha`` /
-    ``nLimiterIter``); the NeoN dictionary stores the pattern verbatim and does no
-    regex matching, so look it up by its ``alpha.water`` prefix. ``create_fields``
-    also registers a MULES-key-*stripped* copy under the exact key ``"alpha.water"``
-    for the predictor's linear solver, so PREFER a prefixed key that still carries
-    the controls (any ``alpha.water`` key other than the bare ``"alpha.water"``),
-    falling back to the exact key only if it is the sole match.
-    """
-    solvers = rt.fv_solution_dict.subDict("solvers")
-    keys = [k for k in solvers.keys() if k.startswith("alpha.water")]
-    if not keys:
-        return None
-    key = next((k for k in keys if k != "alpha.water"), keys[0])
-    return solvers.subDict(key)
-
-
-def _read_switch(d: Any, key: str, default: bool) -> bool:
-    """Read an OpenFOAM on/off switch, tolerating word or bool storage."""
-    if d is None or not d.contains(key):
-        return default
-    try:
-        return bool(d.get_bool(key))
-    except Exception:
-        return d.get_string(key).strip().lower() in ("yes", "true", "on", "1")
 
 
 def _read_alpha_controls(rt: Any) -> dict[str, Any]:
@@ -104,7 +59,7 @@ def _read_alpha_controls(rt: Any) -> dict[str, Any]:
     (interFoam's semi-implicit MULES); ``nAlphaCorr`` = number of correctors used
     only on the MULESCorr path (the explicit path always advances once).
     """
-    d = _alpha_solver_dict(rt)
+    d = alpha_solver_dict(rt)
     if d is None:
         return {
             "n_limiter_iter": 3,
@@ -113,10 +68,10 @@ def _read_alpha_controls(rt: Any) -> dict[str, Any]:
             "n_alpha_corr": 1,
         }
     return {
-        "n_limiter_iter": _read_int(d, "nLimiterIter", 3),
-        "c_alpha": _read_float(d, "cAlpha", 1.0),
-        "mules_corr": _read_switch(d, "MULESCorr", False),
-        "n_alpha_corr": _read_int(d, "nAlphaCorr", 1),
+        "n_limiter_iter": read_int(d, "nLimiterIter", 3),
+        "c_alpha": read_float(d, "cAlpha", 1.0),
+        "mules_corr": read_switch(d, "MULESCorr", False),
+        "n_alpha_corr": read_int(d, "nAlphaCorr", 1),
     }
 
 
@@ -138,7 +93,7 @@ def build(self: Any) -> list[Any]:
         return nfb.read_two_phase_transport_properties(context["_neon_runtime"])
 
     def create_alpha1(context: dict[str, Any]) -> Any:
-        return nfb.read_scalar_volume_field(context["_neon_runtime"], "alpha.water")
+        return nfb.read_scalar_volume_field(context["_neon_runtime"], ALPHA1_FIELD)
 
     def create_phi(context: dict[str, Any]) -> Any:
         return nfb.create_phi(context["_neon_runtime"], "U")
@@ -298,8 +253,8 @@ def collected_operations(self: Any) -> Operations:
     # The collection path bypasses the spec's default operation wrapping, so
     # wrap alpha_advection with dependency resolution here (``self`` is the
     # bound runtime).
-    wrapped_alpha_advection = wrap_with_dependency_resolution(
-        alpha_advection, self, alpha_advection_model._dependency_resolver
+    wrapped_alpha_advection = alpha_advection_model.wrap_operation(
+        alpha_advection, self
     )
     model_ops = Operations()
     model_ops.add(

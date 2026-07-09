@@ -30,7 +30,6 @@ from pybFoam import (
 )
 
 from neofoam.framework.context import FieldUpdates
-from neofoam.framework.dependency_resolver import wrap_with_dependency_resolution
 from neofoam.framework.initialization import model
 from neofoam.framework.operations import (
     Operation,
@@ -119,9 +118,7 @@ def collected_operations(self: object) -> Operations:
     # The collection path bypasses the spec's default operation wrapping, so
     # wrap alpha_advection with dependency resolution here (``self`` is the
     # bound runtime).
-    wrapped_alpha_advection = wrap_with_dependency_resolution(
-        alpha_advection, self, iso_advector._dependency_resolver
-    )
+    wrapped_alpha_advection = iso_advector.wrap_operation(alpha_advection, self)
     model_ops = Operations()
     model_ops.add(
         Operation(

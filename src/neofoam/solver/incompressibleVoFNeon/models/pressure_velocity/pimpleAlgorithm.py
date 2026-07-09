@@ -30,7 +30,6 @@ import neon._neon as nn  # NeoN Python bindings
 from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
 
 from neofoam.framework.context import Context, FieldUpdates  # noqa: F401
-from neofoam.framework.dependency_resolver import wrap_with_dependency_resolution
 from neofoam.framework.initialization import field, model
 from neofoam.framework.operations import (
     Operation,
@@ -40,6 +39,7 @@ from neofoam.framework.operations import (
 from neofoam.framework.types import OperationMetadata
 
 from ..incompressibleVoFNeonModel import Model
+from ..shared import read_int, read_switch
 
 pimpleNeoN = Model("PimpleVoFNeoN")
 
@@ -57,20 +57,6 @@ _HAS_CONSTRAIN_PRESSURE = hasattr(nfb, "constrain_pressure")
 # ``U = HbyA - rAU*grad(p_rgh)``) drops that flux and leaves large spurious
 # velocities at the interface; fall back to it only on an older binding.
 _HAS_UPDATE_VELOCITY_BUOYANT = hasattr(nfb, "update_velocity_buoyant")
-
-
-def _read_int(d: Any, key: str, default: int) -> int:
-    return int(d.get_int(key)) if d.contains(key) else default
-
-
-def _read_switch(d: Any, key: str, default: bool) -> bool:
-    """Read an OpenFOAM on/off switch, tolerating word or bool storage."""
-    if not d.contains(key):
-        return default
-    try:
-        return bool(d.get_bool(key))
-    except Exception:
-        return d.get_string(key).strip().lower() in ("yes", "true", "on", "1")
 
 
 class PimpleVoFState:
@@ -129,9 +115,9 @@ def build(self: Any) -> list[Any]:
         rt = context["_neon_runtime"]
         pimple_dict = rt.fv_solution_dict.subDict("PIMPLE")
         return PimpleVoFState(
-            n_correctors=_read_int(pimple_dict, "nCorrectors", 1),
-            n_non_orth=_read_int(pimple_dict, "nNonOrthogonalCorrectors", 0),
-            momentum_predictor=_read_switch(pimple_dict, "momentumPredictor", True),
+            n_correctors=read_int(pimple_dict, "nCorrectors", 1),
+            n_non_orth=read_int(pimple_dict, "nNonOrthogonalCorrectors", 0),
+            momentum_predictor=read_switch(pimple_dict, "momentumPredictor", True),
         )
 
     def create_pressure_reference(context: dict[str, Any]) -> dict[str, Any]:
@@ -343,12 +329,8 @@ def collected_operations(self: Any) -> Operations:
     """
     model_ops = Operations()
 
-    wrapped_momentum = wrap_with_dependency_resolution(
-        momentum, self, pimpleNeoN._dependency_resolver
-    )
-    wrapped_continuity = wrap_with_dependency_resolution(
-        continuity, self, pimpleNeoN._dependency_resolver
-    )
+    wrapped_momentum = pimpleNeoN.wrap_operation(momentum, self)
+    wrapped_continuity = pimpleNeoN.wrap_operation(continuity, self)
 
     model_ops.add(
         _alias_operation(wrapped_momentum, operation_name="momentum", depends_on=[])

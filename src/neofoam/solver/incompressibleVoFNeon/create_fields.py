@@ -35,13 +35,14 @@ from neofoam.framework.initialization import (
     lazy,
     model as init_model,
 )
-from neofoam.framework.model import ModelRuntime, bind_owned_interfaces
+from neofoam.framework.model import ModelRuntime, ModelSpec, bind_owned_interfaces
 
 from .configs import ControlDictConfig
 from .models.alpha_advection.alphaAdvectionModel import alpha_advection_model
 from .models.field_writer import fieldWriter, neon_writer_backend_steps
 from .models.incompressibleVoFNeonModel import incompressibleVoFNeonModel
 from .models.pressure_velocity.base import PressureVelocityAlgorithmNeoN
+from .models.shared import ALPHA1_FIELD, prefixed_alpha_solver_key
 from .models.solution_loop import neon_loop_backend_steps, solutionLoop
 
 # Solver-solution subdicts mapped from OpenFOAM to NeoN/Ginkgo equivalents — the
@@ -71,23 +72,23 @@ _ALPHA_MULES_KEYS = (
 
 
 def _register_alpha_predictor_solver(rt: Any) -> None:
-    """Register the MULESCorr predictor's Ginkgo solver dict under ``alpha.water``.
+    """Register the MULESCorr predictor's Ginkgo solver dict under ``ALPHA1_FIELD``.
 
-    The OpenFOAM ``alpha.water`` solver subdict is keyed by a regex (damBreak:
+    The OpenFOAM alpha solver subdict is keyed by a regex (damBreak:
     ``"alpha.water.*"``) and carries MULES control keys. The generic scalar PDE
     solver looks the dict up by the exact field name and hands it to Ginkgo, so
     map the linear-solver settings and register a MULES-key-stripped copy under
-    the exact key ``"alpha.water"``. No-op when there is no alpha solver subdict.
+    the exact key. No-op when there is no regex-keyed alpha solver subdict.
     """
     solvers = rt.fv_solution_dict.subDict("solvers")
-    key = next((k for k in solvers.keys() if k.startswith("alpha.water")), None)
-    if key is None or key == "alpha.water":
+    key = prefixed_alpha_solver_key(solvers)
+    if key is None:
         return
     mapped = nfb.map_fv_solution(solvers.subDict(key))
     for junk in _ALPHA_MULES_KEYS:
         if mapped.contains(junk):
             mapped.remove(junk)
-    solvers.insert_dict("alpha.water", mapped)
+    solvers.insert_dict(ALPHA1_FIELD, mapped)
 
 
 def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
@@ -130,8 +131,18 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
     def build_lazy(
         core_models: list[Any], optional_models: list[Any]
     ) -> list[InitStep]:
-        pressure_model = core_models[0]
-        alpha_model = core_models[1]
+        # Core models, looked up by spec name (order-independent): the bare
+        # PIMPLE / alpha-advection ModelSpecs and the instantiated
+        # solutionLoop / fieldWriter ModelRuntimes.
+        def _bare_spec(names: set[str]) -> Any:
+            return next(
+                m for m in core_models if isinstance(m, ModelSpec) and m.name in names
+            )
+
+        pressure_model = _bare_spec(
+            {s.name for s in PressureVelocityAlgorithmNeoN.all_specs()}
+        )
+        alpha_model = _bare_spec({alpha_advection_model.name})
 
         def _by_spec(spec_name: str) -> Any:
             return next(
@@ -187,7 +198,7 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             # key. Harmless when MULESCorr is off (the explicit path never builds
             # the predictor).
             div_schemes.insert_token_list(
-                "div(phi,alpha.water)", nn.TokenList(["Gauss", "upwind"])
+                f"div(phi,{ALPHA1_FIELD})", nn.TokenList(["Gauss", "upwind"])
             )
             _register_alpha_predictor_solver(rt)
             return rt
@@ -233,8 +244,7 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             ]
         )
         for spec in (alpha_model, pressure_model):
-            if spec._build_func is not None:
-                builder.extend(spec._build_func(spec))
+            builder.extend(spec.build_steps())
 
         builder.add_optional_models(optional_models)
         # Register each active optional model BY NAME so it stays discoverable in

@@ -56,7 +56,6 @@ class NeoNWriteHook(FieldHook):
     vector_names: tuple[str, ...] = ("U",)
 
     def write_fields(self, fields: Mapping[str, Any]) -> None:
-        print("Writing fields")
         for name, fld in fields.items():
             if name in self.scalar_names:
                 nfb.write_scalar_field(fld, self.runtime)
