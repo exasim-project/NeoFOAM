@@ -54,74 +54,28 @@ os.environ.setdefault("FOAM_SIGFPE", "false")
 # Disc: centred at (0.35, 0.5), radius 0.15, on a unit box, 100x100 uniform mesh.
 # U = (1, 0, 0), dt = 0.002 (Co = 0.2), 100 steps -> centre travels to x = 0.55,
 # front to 0.70 < 1.0 so the disc never reaches the outflow wall.
+# Must match deltaT/endTime in cases/disc_advection/system/controlDict.
 _N_STEPS = 100
 _DT = 0.002
 
-_BLOCKMESH = """FoamFile { version 2.0; format ascii; class dictionary; object blockMeshDict; }
-convertToMeters 1;
-vertices
-(
-    (0 0 0)(1 0 0)(1 1 0)(0 1 0)
-    (0 0 0.01)(1 0 0.01)(1 1 0.01)(0 1 0.01)
-);
-blocks ( hex (0 1 2 3 4 5 6 7) (100 100 1) simpleGrading (1 1 1) );
-edges ();
-boundary
-(
-    leftWall { type wall; faces ((0 4 7 3)); }
-    rightWall { type wall; faces ((2 6 5 1)); }
-    lowerWall { type wall; faces ((1 5 4 0)); }
-    atmosphere { type patch; faces ((3 7 6 2)); }
-    defaultFaces { type empty; faces ((0 3 2 1)(4 5 6 7)); }
-);
-mergePatchPairs ();
-"""
-
-_SETFIELDS = """FoamFile { version 2.0; format ascii; class dictionary; object setFieldsDict; }
-defaultFieldValues ( volScalarFieldValue alpha.water 0 );
-regions
-(
-    cylinderToCell
-    {
-        p1 (0.35 0.5 -1);
-        p2 (0.35 0.5 1);
-        radius 0.15;
-        fieldValues ( volScalarFieldValue alpha.water 1 );
-    }
-);
-"""
+# The disc case lives on disk as an overlay over the damBreak tutorial: the
+# uniform-box blockMeshDict, the disc setFieldsDict, zero gravity, the uniform
+# advecting U and the fixed-dt controlDict (real OpenFOAM case files, per the
+# test convention).
+_CASE_OVERLAY = Path(__file__).parent / "cases" / "disc_advection"
 
 
 def _prepare_disc_case(dest: Path) -> None:
-    """Uniform-box disc case: reuse damBreak's system/constant/0 (patch names +
-    BCs match), swap the mesh (uniform box), the field (a disc), zero gravity and
-    impose a uniform advecting velocity with a fixed time step."""
+    """Uniform-box disc case: damBreak's system/constant/0 (patch names + BCs
+    match) overlaid with the case files kept under
+    ``test/solver/cases/disc_advection/``."""
     repo_root = Path(__file__).parent.parent.parent
     src = repo_root / "tutorials" / "damBreak"
     if dest.exists():
         shutil.rmtree(dest)
     shutil.copytree(src, dest)
+    shutil.copytree(_CASE_OVERLAY, dest, dirs_exist_ok=True)
     shutil.copytree(dest / "0.orig", dest / "0", dirs_exist_ok=True)
-
-    (dest / "system" / "blockMeshDict").write_text(_BLOCKMESH)
-    (dest / "system" / "setFieldsDict").write_text(_SETFIELDS)
-
-    g = dest / "constant" / "g"
-    g.write_text(re.sub(r"value\s+\([^)]*\)", "value           (0 0 0)", g.read_text()))
-    u = dest / "0" / "U"
-    u.write_text(
-        re.sub(
-            r"internalField\s+uniform \([^)]*\)",
-            "internalField   uniform (1 0 0)",
-            u.read_text(),
-        )
-    )
-    cd = dest / "system" / "controlDict"
-    t = cd.read_text()
-    t = re.sub(r"adjustTimeStep\s+\S+;", "adjustTimeStep no;", t)
-    t = re.sub(r"deltaT\s+\S+;", f"deltaT {_DT};", t)
-    t = re.sub(r"endTime\s+\S+;", "endTime 0.2;", t)
-    cd.write_text(t)
 
     env = {**os.environ, "FOAM_SIGFPE": "false"}
     for cmd in (
