@@ -31,7 +31,7 @@ _ID_PATTERN = re.compile(
 
 def _guarded_files() -> list[Path]:
     files = sorted(p for p in _TEST_DIR.glob("test_*.py") if p.name != _GUARD_FILE)
-    assert files, "guard found no test_*.py files to scan — mis-scoped"
+    assert files, "guard found no test_*.py files to scan — wrongly scoped"
     return files
 
 
@@ -54,7 +54,7 @@ def test_id_pattern_fires_on_a_planted_id() -> None:
 
 def test_id_guard_scan_wiring_fires(tmp_path: Path) -> None:
     # Negative self-test for the SCAN (not just the regex): a planted ID in a scanned file
-    # must be flagged, so a mis-scoped _guarded_files() can't false-green.
+    # must be flagged, so a wrongly scoped _guarded_files() can't false-green.
     planted = tmp_path / "test_planted.py"
     planted.write_text("# resolves finding F3 and Task 6\n")
     hits = [ln for ln in planted.read_text().splitlines() if _ID_PATTERN.search(ln)]

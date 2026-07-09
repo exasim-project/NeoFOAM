@@ -37,7 +37,11 @@ def _prepare_case(dest: Path) -> None:
     if not zero.exists():
         shutil.copytree(dest / "0.orig", zero)
     env = {**os.environ, "FOAM_SIGFPE": "false"}
-    for cmd in (["blockMesh"], ["setFields"], ["postProcess", "-func", "writeCellCentres", "-time", "0"]):
+    for cmd in (
+        ["blockMesh"],
+        ["setFields"],
+        ["postProcess", "-func", "writeCellCentres", "-time", "0"],
+    ):
         r = subprocess.run(
             cmd, cwd=str(dest), env=env, capture_output=True, text=True, timeout=180
         )

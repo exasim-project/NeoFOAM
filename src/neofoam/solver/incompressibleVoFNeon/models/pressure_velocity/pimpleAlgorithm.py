@@ -218,9 +218,7 @@ def momentum(
     else:
         UEqn.assemble_and_relax()
 
-    return FieldUpdates(
-        {"UEqn": UEqn, "fSigma": fSigma, "grad_u": grad_u, "U": U}
-    )
+    return FieldUpdates({"UEqn": UEqn, "fSigma": fSigma, "grad_u": grad_u, "U": U})
 
 
 @pimpleNeoN.operation(operation_number="2.2", depends_on=["momentum"])

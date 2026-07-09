@@ -163,13 +163,9 @@ def build(self: Any) -> list[Any]:
 
     return [
         model("phase", create_phase, depends_on=["_neon_runtime"]),
-        field(
-            "alpha1", create_alpha1, depends_on=["_neon_runtime"], write=True
-        ),
+        field("alpha1", create_alpha1, depends_on=["_neon_runtime"], write=True),
         field("phi", create_phi, depends_on=["_neon_runtime", "fields.U"]),
-        field(
-            "rhoPhi", create_rho_phi, depends_on=["_neon_runtime", "fields.phi"]
-        ),
+        field("rhoPhi", create_rho_phi, depends_on=["_neon_runtime", "fields.phi"]),
         field(
             "rho",
             create_rho,
@@ -181,9 +177,7 @@ def build(self: Any) -> list[Any]:
             depends_on=["_neon_runtime", "fields.alpha1"],
         ),
         model("surf_interp", create_surf_interp, depends_on=["_neon_runtime"]),
-        model(
-            "alpha_settings", create_alpha_settings, depends_on=["_neon_runtime"]
-        ),
+        model("alpha_settings", create_alpha_settings, depends_on=["_neon_runtime"]),
     ]
 
 
@@ -269,24 +263,21 @@ def alpha_advection(
         # advances alpha1 (bounded, its upwind flux is the FCT donor base
         # alphaPhi10), then nAlphaCorr high-order correctors FCT-limit the
         # antidiffusive correction (alphaPhiUn - alphaPhi10) and accumulate it.
-        alpha_phi10 = _mules_corr_solve(rt, alpha1, phi, c_alpha, n_limiter,
-                                        alpha_settings["n_alpha_corr"])
+        alpha_phi10 = _mules_corr_solve(
+            rt, alpha1, phi, c_alpha, n_limiter, alpha_settings["n_alpha_corr"]
+        )
     else:
         # Explicit MULES: high-order flux (vanLeer + cAlpha compression) advanced
         # once by the FCT limiter. cAlpha=0 falls back to plain vanLeer.
         alpha_phi10 = nfb.alpha_phase_flux(rt, alpha1, phi, c_alpha)
         alpha_phi10.name = "alphaPhi"
-        nfb.mules_explicit_solve(
-            alpha1, phi, alpha_phi10, rt.dt, 1.0, 0.0, n_limiter
-        )
+        nfb.mules_explicit_solve(alpha1, phi, alpha_phi10, rt.dt, 1.0, 0.0, n_limiter)
         alpha1.correct_boundary_conditions()
     alpha_phi = alpha_phi10
 
     rho1, rho2 = phase["rho1"], phase["rho2"]
     nfb.update_mixture_density(rho, alpha1, rho1, rho2)
-    nfb.update_mixture_viscosity(
-        mu, alpha1, rho1, rho2, phase["nu1"], phase["nu2"]
-    )
+    nfb.update_mixture_viscosity(mu, alpha1, rho1, rho2, phase["nu1"], phase["nu2"])
     # Rebuild rhoPhi from the LIMITED alpha flux (conservation-consistent with
     # ddt(rho,U)): rhoPhi = alphaPhi*(rho1-rho2) + phi*rho2.
     rho_phi_new = alpha_phi * (rho1 - rho2) + rho2 * phi
@@ -294,9 +285,7 @@ def alpha_advection(
     rho.correct_boundary_conditions()
     mu.correct_boundary_conditions()
 
-    return FieldUpdates(
-        {"alpha1": alpha1, "rho": rho, "mu": mu, "rhoPhi": rhoPhi}
-    )
+    return FieldUpdates({"alpha1": alpha1, "rho": rho, "mu": mu, "rhoPhi": rhoPhi})
 
 
 # ---------------------------------------------------------------------------
