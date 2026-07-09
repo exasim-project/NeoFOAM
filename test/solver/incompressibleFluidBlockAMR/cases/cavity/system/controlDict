@@ -1,0 +1,14 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+application     incompressibleFluidBlockAMR;
+startTime       0;
+endTime         46.875;      // ~3000 steps to approximate steady state (dt=1/64)
+deltaT          0.015625;    // CFL 0.25 at N=16 (dx=1/16)
+writeControl    timeStep;
+writeInterval   3000;        // only the final state
+executor        cpu;

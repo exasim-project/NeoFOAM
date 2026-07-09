@@ -22,9 +22,17 @@ pytest.importorskip("neon")
 import neon.blockamr as blockamr  # noqa: E402
 
 os.environ.setdefault("AMREX_THE_ARENA_INIT_SIZE", "0")
+# Preallocate the JAX/XLA pool up front (a fixed fraction) — much faster than
+# on-demand growth, which pays an allocation cost every step. The AMReX arena
+# for these small test meshes is tiny (~0.1 GB, it grows on demand from init
+# size 0), so the ~20 % left by MEM_FRACTION is ample; both allocators coexist
+# on the one device.
+os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "true")
+os.environ.setdefault("XLA_PYTHON_CLIENT_MEM_FRACTION", "0.8")
 
 CASE_SRC = Path(__file__).parent / "cases" / "box"
 CYLINDER_CASE_SRC = Path(__file__).parent / "cases" / "cylinder"
+CAVITY_CASE_SRC = Path(__file__).parent / "cases" / "cavity"
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -58,5 +66,14 @@ def cylinder_case(tmp_path, monkeypatch):
     """Copy the bundled non-periodic cylinder case to a tmp dir and chdir in."""
     dst = tmp_path / "cylinder"
     shutil.copytree(CYLINDER_CASE_SRC, dst)
+    monkeypatch.chdir(dst)
+    return dst
+
+
+@pytest.fixture
+def cavity_case(tmp_path, monkeypatch):
+    """Copy the bundled lid-driven cavity case to a tmp dir and chdir in."""
+    dst = tmp_path / "cavity"
+    shutil.copytree(CAVITY_CASE_SRC, dst)
     monkeypatch.chdir(dst)
     return dst

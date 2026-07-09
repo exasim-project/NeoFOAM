@@ -1,0 +1,16 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+application     incompressibleFluidBlockAMR;
+startTime       0;
+// CFL 0.1 (dx=0.0125, U=1): the high-resolution outflow+IBM run is stable at
+// CFL 0.1 but diverges at CFL 0.3 — a timestep constraint, not a solver bug.
+endTime         3.125;        // ~2500 steps -> steady Re=20 wake
+deltaT          0.00125;
+writeControl    timeStep;
+writeInterval   2500;         // only the final state
+executor        cpu;

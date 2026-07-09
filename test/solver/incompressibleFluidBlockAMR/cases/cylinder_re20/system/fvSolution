@@ -1,0 +1,18 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSolution;
+}
+blockAMR
+{
+    nu          0.01;      // Re = U*D/nu = 1*0.2/0.01 = 20
+    rtol        1e-8;
+    atol        1e-11;
+    maxIter     400;
+    divScheme   vanLeer;
+    // Krylov bottom solver: the slip-wall outflow nodal projection converges in
+    // ~5 V-cycles with it (vs ~600 for "smoother") — ~5.5x faster overall.
+    bottomSolver bicgstab;
+}
