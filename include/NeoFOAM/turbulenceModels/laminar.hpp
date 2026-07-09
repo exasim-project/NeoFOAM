@@ -38,6 +38,8 @@ public:
 
     const nnfvcc::VolumeField<NeoN::Tensor>& gradU() const override;
 
+    void updateGradU(const nnfvcc::VolumeField<NeoN::Vec3>& U) override;
+
     void rotateOldTimes() override {}
 
     void write(MeshAdapter&) const override {}

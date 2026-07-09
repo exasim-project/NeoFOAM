@@ -45,7 +45,7 @@ public:
         : psi_(&psi)
         , expr_(expr)
         , runTime_(&runTime)
-        , ls_(readOrCreate<LinearSystem>(
+        , ls_(&readOrCreate<LinearSystem>(
               runTime,
               "linearSystem" + psi.name,
               // FIXME find a proper place
@@ -70,6 +70,7 @@ public:
               }
           ))
     {
+        markLsBorrowed();
         // TODO run NeoN expr_ = NeoN::dsl::optimize(expr); if optimize is set in fvSolution
         // NOTE OpenFOAM tokenizes a switch like 'optimize true;' as a word, so it is stored
         // as a std::string in the NeoN dictionary; reading it as bool throws bad_any_cast.
@@ -90,16 +91,19 @@ public:
         : psi_(nullptr)
         , expr_(std::move(expr))
         , runTime_(nullptr)
-        , ls_(std::nullopt)
+        , ls_(nullptr)
     {}
 
+    // Copies share the cached LinearSystem pointer without re-borrowing (ownsLsBorrow_ stays
+    // false), so only the original releases the borrow. Copies must not outlive / be used
+    // concurrently with the original — same one-live-per-field invariant as ls_.
     PDE(const PDE& expr)
         : psi_(expr.psi_)
         , expr_(expr.expr_)
         , runTime_(expr.runTime_)
         , ls_(expr.ls_) {};
 
-    ~PDE() = default;
+    ~PDE() { releaseLsBorrowIfOwned(); }
 
     VolumeField& getField() { return *psi_; }
 
@@ -428,7 +432,7 @@ private:
         }
         expr_.read(NeoFOAM::expandSchemeDefaults(rt.fvSchemesDict, expr_, psi.name));
 
-        ls_.emplace(readOrCreate<LinearSystem>(
+        ls_ = &readOrCreate<LinearSystem>(
             rt,
             "linearSystem" + psi.name,
             [&psi, &rt]()
@@ -450,7 +454,49 @@ private:
                     );
                 }
             }
-        ));
+        );
+        markLsBorrowed();
+    }
+
+    // Mark this PDESolver as the borrower of its field's cached LinearSystem. In debug builds a
+    // per-field flag in controlDict asserts that no other live PDESolver already holds it (the
+    // system is assembled in place; two concurrent borrowers would corrupt it). Release builds
+    // only set ownsLsBorrow_ (zero overhead beyond the bool).
+    void markLsBorrowed()
+    {
+        ownsLsBorrow_ = true;
+#ifdef NF_DEBUG
+        const std::string key = "linearSystem" + psi_->name + "::borrowed";
+        auto initFalse = []() { return false; };
+        bool& borrowed = readOrCreate<bool>(*runTime_, key, initFalse);
+        NF_ASSERT(
+            !borrowed,
+            "PDESolver: this field's cached LinearSystem is already borrowed by another live "
+            "PDESolver. At most one PDESolver per field may be live at a time (it is assembled in "
+            "place)."
+        );
+        borrowed = true;
+#endif
+    }
+
+    // Release the borrow on destruction so the next PDESolver for the same field may take it.
+    void releaseLsBorrowIfOwned()
+    {
+        if (!ownsLsBorrow_)
+        {
+            return;
+        }
+        ownsLsBorrow_ = false;
+#ifdef NF_DEBUG
+        if (runTime_ != nullptr && psi_ != nullptr)
+        {
+            const std::string key = "linearSystem" + psi_->name + "::borrowed";
+            if (runTime_->controlDict.contains(key))
+            {
+                runTime_->controlDict.template get<bool>(key) = false;
+            }
+        }
+#endif
     }
 
     // Per-component name (Ux/Uy/Uz) when a vector field is solved as separate
@@ -493,7 +539,20 @@ private:
     VolumeField* psi_;
     dsl::Expression<ValueType> expr_;
     RunTime* runTime_;
-    std::optional<LinearSystem> ls_;
+    // Non-owning pointer into the single LinearSystem cached in RunTime::controlDict (keyed per
+    // field by readOrCreate). PDESolver assembles/relaxes/solves it IN PLACE instead of copying
+    // it, so there is exactly one LinearSystem per field — not an idle dict template plus a
+    // per-solver deep copy of the value/rhs/boundary buffers (~1.4 GB for a Vec3 momentum system
+    // at 18M cells). The cached system outlives every PDESolver (controlDict lives in RunTime) and
+    // its address is stable (controlDict is a node-based std::unordered_map and the entry is never
+    // erased). INVARIANT: at most one PDESolver per field may be live at a time — it is assembled
+    // in place, so two concurrent borrowers would corrupt each other's matrix. This holds for the
+    // segregated PISO/PIMPLE/SA solvers (U, p, nuTilda are each solved one at a time) and is
+    // checked by a debug borrow guard (markLsBorrowed/releaseLsBorrowIfOwned).
+    LinearSystem* ls_ = nullptr;
+    // True when this instance acquired the borrow (so its destructor releases it). Copies share
+    // the pointer without re-borrowing.
+    bool ownsLsBorrow_ = false;
     bool needReference_ = false;
     NeoN::localIdx pRefCell_ = 0;
     NeoN::scalar pRefValue_ = 0.0;

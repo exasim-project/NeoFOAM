@@ -34,18 +34,22 @@ Laminar::Laminar(RunTime& rt, const nnfvcc::VolumeField<NeoN::scalar>& nu)
     , surfInterp_(rt.exec, rt.nfMesh, NeoN::TokenList({std::string("linear")}))
 {}
 
-void Laminar::validate(const nnfvcc::VolumeField<NeoN::Vec3>& U)
+void Laminar::updateGradU(const nnfvcc::VolumeField<NeoN::Vec3>& U)
 {
     gradOp_.gradTensor(U, gradU_);
     gradU_.correctBoundaryConditions();
+}
+
+void Laminar::validate(const nnfvcc::VolumeField<NeoN::Vec3>& U)
+{
+    updateGradU(U);
     surfInterp_.interpolate(nu_, nuEff_);
 }
 
 void Laminar::
     correct(const nnfvcc::VolumeField<NeoN::Vec3>& U, nnfvcc::SurfaceField<NeoN::scalar>&, RunTime&)
 {
-    gradOp_.gradTensor(U, gradU_);
-    gradU_.correctBoundaryConditions();
+    updateGradU(U);
     surfInterp_.interpolate(nu_, nuEff_);
 }
 
