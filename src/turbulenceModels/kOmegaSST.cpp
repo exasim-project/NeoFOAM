@@ -223,6 +223,12 @@ KOmegaSST::KOmegaSST(
     // doing it once at construction is sufficient.
     // Done via a free function because NVCC forbids NEON_LAMBDA in a constructor body.
     detail::initNearWallDistBoundary(exec_, wallDist_, mesh_, nearWallDist_);
+
+    // Both surfInterp_.interpolate and initNearWallDistBoundary dispatch GPU kernels
+    // asynchronously.  Fence here so that the constructor's post-condition holds:
+    // surfNu_ and nearWallDist_ contain fully-written results before any subsequent
+    // code (e.g. KOmegaSSTModel::KOmegaSSTModel constructAndRegister calls) begins.
+    NeoN::fence(exec_);
 }
 
 // ============================================================
