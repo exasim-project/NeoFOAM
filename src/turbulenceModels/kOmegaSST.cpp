@@ -674,6 +674,10 @@ void KOmegaSST::calcDiffusivities(const nnfvcc::VolumeField<scalar>& nut)
         coeffs_.alphaOmega2,
         "kOmegaSST::calcDiffusivities::boundary"
     );
+    // Drain the two kernelCalcDiffusivities kernels: nuEff_/DkEffF_/DomegaEffF_ are read by the
+    // caller's next operation (UEqn assembly in correct(), or the fence in validate()), so ensure
+    // the writes are visible before this function returns.
+    NeoN::fence(exec_);
 }
 
 namespace
