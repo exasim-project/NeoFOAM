@@ -17,9 +17,11 @@ they read the Foam::Time that ``create_time_mesh`` routes onto
 from typing import Annotated, Any, Optional, Protocol
 
 import pybFoam as pyf
-import pybFoam.vof as vof
 from pybFoam import (
     Info,
+    dimensionedScalar,
+    dimless,
+    fvc,
     surfaceScalarField,
     volScalarField,
 )
@@ -37,6 +39,45 @@ from neofoam.framework.solver import Solver
 from neofoam.framework.types import OperationMetadata
 
 from .create_fields import create_init
+
+
+# Interface band for the alpha Courant number: only faces where the
+# interpolated phase fraction straddles the interface (0.01 <= alphaf <= 0.99)
+# contribute. Mirrors interFoam/interIsoFoam alphaCourantNo.H.
+_ALPHA_CO_LO = dimensionedScalar(pyf.Word("alphaCoLo"), dimless, 0.01)
+_ALPHA_CO_HI = dimensionedScalar(pyf.Word("alphaCoHi"), dimless, 0.99)
+
+
+def compute_alpha_courant_number(
+    phi: surfaceScalarField, alpha1: volScalarField
+) -> tuple[float, float]:
+    """Interface (alpha) Courant number, composed from generic pybFoam primitives.
+
+    A pure-Python transcription of OpenFOAM's ``alphaCourantNo.H``: like the flow
+    CFL number but the face flux is weighted to interface faces
+    (``0.01 <= interpolate(alpha1) <= 0.99``) via a ``pos0`` band mask, summed
+    into cells with ``fvc.surfaceSum`` and reduced with ``gMax``/``gSum``. The
+    ``pos0`` mask is exactly 0/1 so the weighting is bitwise-identical to the
+    native routine (which drives the alpha-CFL branch of the adaptive dt).
+
+    Returns ``(alphaCoNum, meanAlphaCo)``.
+    """
+    mesh = phi.mesh()
+    if mesh.nInternalFaces() == 0:
+        return 0.0, 0.0
+
+    dt = mesh.time().deltaTValue()
+    alphaf = surfaceScalarField(pyf.Word("alphaf"), fvc.interpolate(alpha1))
+    # Interface band mask: pos0(alphaf - 0.01) * pos0(0.99 - alphaf), 0/1 valued.
+    band = pyf.pos0(alphaf - _ALPHA_CO_LO) * pyf.pos0(-(alphaf - _ALPHA_CO_HI))
+    sum_phi_alpha = volScalarField(
+        pyf.Word("sumPhiAlpha"), fvc.surfaceSum(pyf.mag(phi) * band)
+    ).internalField()
+
+    volumes = mesh.V()
+    alpha_co = 0.5 * pyf.gMax(sum_phi_alpha / volumes) * dt
+    mean_alpha_co = 0.5 * (pyf.sum(sum_phi_alpha) / pyf.sum(volumes)) * dt
+    return alpha_co, mean_alpha_co
 
 
 class CorrectableModel(Protocol):
@@ -193,7 +234,7 @@ def set_time_step(
 
     # Flow + interface (alpha) Courant numbers.
     maxCoNum, meanCoNum = pyf.computeCFLNumber(phi)
-    alphaCoNum, meanAlphaCo = vof.computeAlphaCourantNumber(phi, alpha1)
+    alphaCoNum, meanAlphaCo = compute_alpha_courant_number(phi, alpha1)
 
     Info(f"Courant Number mean: {meanCoNum:.4g}  max: {maxCoNum:.4g}")
     Info(f"Interface Courant Number mean: {meanAlphaCo:.4g}  max: {alphaCoNum:.4g}")

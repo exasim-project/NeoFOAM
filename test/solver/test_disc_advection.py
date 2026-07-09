@@ -110,7 +110,11 @@ def _prepare_disc_case(dest: Path) -> None:
     g.write_text(re.sub(r"value\s+\([^)]*\)", "value           (0 0 0)", g.read_text()))
     u = dest / "0" / "U"
     u.write_text(
-        re.sub(r"internalField\s+uniform \([^)]*\)", "internalField   uniform (1 0 0)", u.read_text())
+        re.sub(
+            r"internalField\s+uniform \([^)]*\)",
+            "internalField   uniform (1 0 0)",
+            u.read_text(),
+        )
     )
     cd = dest / "system" / "controlDict"
     t = cd.read_text()
@@ -152,8 +156,8 @@ def _centroid_x(alpha: np.ndarray, cx: np.ndarray) -> float:
 _PYF_DRIVER = f"""
 import numpy as np, pybFoam as pyf
 from pybFoam import fvc, volScalarField, surfaceScalarField, volVectorField
-import pybFoam.vof as vof
-from neofoam.solver.incompressibleVoF.models.alpha_advection.alphaAdvectionModel import (
+import pybFoam.multiphase as vof
+from neofoam.solver.incompressibleVoF.models.alpha_advection.models.mules import (
     _solve_alpha_python,
 )
 
@@ -238,7 +242,9 @@ def disc(tmp_path_factory: pytest.TempPathFactory) -> dict[str, float]:
     m["PYF_CENTROID_X"] = _centroid_x(pyf_a, cx)
     m["NEON_CENTROID_X"] = _centroid_x(neon_a, cx)
     diff = np.abs(pyf_a - neon_a)
-    m["XREL_L2"] = float(np.sqrt((diff**2).mean()) / (np.sqrt((pyf_a**2).mean()) + 1e-30))
+    m["XREL_L2"] = float(
+        np.sqrt((diff**2).mean()) / (np.sqrt((pyf_a**2).mean()) + 1e-30)
+    )
     m["XMAXABS"] = float(diff.max())
     return m
 
@@ -251,7 +257,7 @@ def disc(tmp_path_factory: pytest.TempPathFactory) -> dict[str, float]:
 _PYF_MULES_DRIVER = f"""
 import numpy as np, pybFoam as pyf
 from pybFoam import fvc, surfaceScalarField, volVectorField, volScalarField
-import pybFoam.vof as vof
+from pybFoam import mules
 
 N = {_N_STEPS}
 runTime = pyf.Time(pyf.argList(["disc"]))
@@ -263,12 +269,13 @@ alpha = volScalarField.read_field(mesh, "alpha.water")
 for _ in range(N):
     runTime.increment()  # rotate alpha.oldTime() (OpenFOAM MULES reads psi.oldTime())
     aphi = surfaceScalarField(pyf.Word("aphi"), fvc.interpolate(alpha) * phi)
-    vof.mules_explicit_solve(alpha, phi, aphi)
+    mules.explicit_solve(alpha, phi, aphi)
 np.save("pyf_mules.npy", np.asarray(alpha.internalField()))
 print("PYFM_BAND", int(((np.asarray(alpha.internalField()) > 0.01)
                         & (np.asarray(alpha.internalField()) < 0.99)).sum()))
 print("END_OK")
 """
+
 
 def _neon_mules_driver(executor: str) -> str:
     """Bare explicit-MULES advection on a named NeoN executor."""
@@ -307,7 +314,9 @@ def mules_parity(request, tmp_path_factory: pytest.TempPathFactory) -> dict[str,
     _prepare_disc_case(case)
     m = _parse_metrics(_run_subprocess(case, _PYF_MULES_DRIVER, timeout=400))
     m.update(
-        _parse_metrics(_run_subprocess(case, _neon_mules_driver(request.param), timeout=400))
+        _parse_metrics(
+            _run_subprocess(case, _neon_mules_driver(request.param), timeout=400)
+        )
     )
     pyf_a = np.load(case / "pyf_mules.npy")
     neon_a = np.load(case / "neon_mules.npy")

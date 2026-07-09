@@ -63,8 +63,8 @@ _SOLVE_EXECUTORS = [e for e in _EXECUTORS if e != "GPU"]
 _PYF = f"""
 import numpy as np, pybFoam as pyf
 from pybFoam import fvc, surfaceScalarField, volVectorField, volScalarField
-import pybFoam.vof as vof
-from neofoam.solver.incompressibleVoF.models.alpha_advection.alphaAdvectionModel import (
+import pybFoam.multiphase as vof
+from neofoam.solver.incompressibleVoF.models.alpha_advection.models.mules import (
     _solve_alpha_python,
 )
 
@@ -134,7 +134,9 @@ def _run_parity(tmp_path_factory, name, flux_expr, executor, **controls) -> dict
     diff = np.abs(pyf_a - neon_a)
     return {
         "MAXABS": float(diff.max()),
-        "REL_L2": float(np.sqrt((diff**2).mean()) / (np.sqrt((pyf_a**2).mean()) + 1e-30)),
+        "REL_L2": float(
+            np.sqrt((diff**2).mean()) / (np.sqrt((pyf_a**2).mean()) + 1e-30)
+        ),
         "NEON_BAND": int(((neon_a > 0.01) & (neon_a < 0.99)).sum()),
         "PYF_BAND": int(((pyf_a > 0.01) & (pyf_a < 0.99)).sum()),
     }
@@ -209,7 +211,11 @@ def _prepare_dambreak_alpha_case(dest: Path) -> None:
     g.write_text(re.sub(r"value\s+\([^)]*\)", "value           (0 0 0)", g.read_text()))
     u = dest / "0" / "U"
     u.write_text(
-        re.sub(r"internalField\s+uniform \([^)]*\)", "internalField   uniform (1 0 0)", u.read_text())
+        re.sub(
+            r"internalField\s+uniform \([^)]*\)",
+            "internalField   uniform (1 0 0)",
+            u.read_text(),
+        )
     )
     cd = dest / "system" / "controlDict"
     t = cd.read_text()
@@ -233,20 +239,26 @@ def dambreak_explicit(request, tmp_path_factory: pytest.TempPathFactory) -> dict
     _patch_alpha_controls(case, cAlpha=1, MULESCorr="no", nAlphaCorr=1)
     _run_subprocess(case, _PYF, timeout=400)
     _run_subprocess(
-        case, _neon_driver("nfb.alpha_phase_flux(rt, alpha, phi, 1.0)", request.param), timeout=400
+        case,
+        _neon_driver("nfb.alpha_phase_flux(rt, alpha, phi, 1.0)", request.param),
+        timeout=400,
     )
     pyf_a = np.load(case / "pyf_a.npy")
     neon_a = np.load(case / "neon_a.npy")
     diff = np.abs(pyf_a - neon_a)
     return {
         "MAXABS": float(diff.max()),
-        "REL_L2": float(np.sqrt((diff**2).mean()) / (np.sqrt((pyf_a**2).mean()) + 1e-30)),
+        "REL_L2": float(
+            np.sqrt((diff**2).mean()) / (np.sqrt((pyf_a**2).mean()) + 1e-30)
+        ),
         "NEON_BAND": int(((neon_a > 0.01) & (neon_a < 0.99)).sum()),
         "PYF_BAND": int(((pyf_a > 0.01) & (pyf_a < 0.99)).sum()),
     }
 
 
-def test_explicit_alpha_path_matches_pybfoam_on_dambreak(dambreak_explicit: dict) -> None:
+def test_explicit_alpha_path_matches_pybfoam_on_dambreak(
+    dambreak_explicit: dict,
+) -> None:
     """The full explicit alpha step matches pyf to machine precision on the REAL
     damBreak graded mesh + water-column interface (100 steps, shared phi), on
     every executor. Observed maxabsdiff ~3e-15 (~1 ULP at the interface)."""
@@ -313,7 +325,9 @@ def mulescorr(request, tmp_path_factory: pytest.TempPathFactory) -> dict:
     # Tighten the alpha.water predictor tolerance so the Ginkgo-vs-smoothSolver
     # implicit-solve difference drops below the parity bar (see module note).
     fv = case / "system" / "fvSolution"
-    fv.write_text(fv.read_text().replace("tolerance       1e-8;", "tolerance       1e-13;"))
+    fv.write_text(
+        fv.read_text().replace("tolerance       1e-8;", "tolerance       1e-13;")
+    )
     _run_subprocess(case, _PYF, timeout=400)
     _run_subprocess(case, _neon_mulescorr_driver(request.param), timeout=400)
     pyf_a = np.load(case / "pyf_a.npy")
@@ -321,7 +335,9 @@ def mulescorr(request, tmp_path_factory: pytest.TempPathFactory) -> dict:
     diff = np.abs(pyf_a - neon_a)
     return {
         "MAXABS": float(diff.max()),
-        "REL_L2": float(np.sqrt((diff**2).mean()) / (np.sqrt((pyf_a**2).mean()) + 1e-30)),
+        "REL_L2": float(
+            np.sqrt((diff**2).mean()) / (np.sqrt((pyf_a**2).mean()) + 1e-30)
+        ),
         "NEON_BAND": int(((neon_a > 0.01) & (neon_a < 0.99)).sum()),
         "PYF_BAND": int(((pyf_a > 0.01) & (pyf_a < 0.99)).sum()),
     }

@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# SPDX-FileCopyrightText: 2025 NeoFOAM authors
+# SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""AlphaAdvection model for incompressibleVoF (interFoam-based) solver.
+"""MULES alpha-advection scheme (interFoam-based).
 
-Implements MULES-based phase-fraction transport as a standalone core model.
-
-The whole algorithm is written in Python — a step-by-step transcription of
-``alphaEqn.H`` from OpenFOAM-v2406 — composed from *generic* pybFoam operator
-primitives (nothing VoF-specific is delegated to C++):
+Implements MULES-based phase-fraction transport as a member of the
+``advectionModel`` family. The whole algorithm is written in Python — a
+step-by-step transcription of ``alphaEqn.H`` from OpenFOAM-v2406 — composed
+from *generic* pybFoam operator primitives (nothing VoF-specific is delegated
+to C++):
 
 * interface compression velocity ``phic`` — ``pyf.mag`` + ``fvPatch.coupled()``
 * scheme-based phase flux ``alphaPhiUn``  — ``fvc.flux(phi, field, key=...)``
@@ -15,66 +15,41 @@ primitives (nothing VoF-specific is delegated to C++):
 * MULES limiter                          — ``mules.explicit_solve`` / ``mules.correct``
 
 The only C++ that remains is the mixture *model*
-(``vof.immiscibleIncompressibleTwoPhaseMixture``) and the ``nAlphaSubCycles > 1``
-fallback (``vof.solveAlpha``), which needs OpenFOAM's ``subCycle`` machinery.
+(``multiphase.immiscibleIncompressibleTwoPhaseMixture``). Sub-cycling
+(``nAlphaSubCycles > 1``) would need OpenFOAM's ``subCycle`` machinery and is
+not supported by this pure-Python path (it raises ``NotImplementedError``).
 
-Because each step is a small Python function over generic operators, schemes,
-correctors and the predictor can be recomposed or replaced without touching C++.
-
-Fields provided:
-  - phi       (face volumetric flux)
-  - alpha1    (phase-1 volume fraction)
-  - alpha2    (phase-2 volume fraction)
-  - rho       (mixture density)
-  - rhoPhi    (density-weighted face flux)
-
-Models provided:
-  - mixture   (immiscibleIncompressibleTwoPhaseMixture)
-
-Operations:
-  - alpha_advection  (Python-orchestrated MULES corrector loop)
+Provides the shared VoF fields (via ``shared_field_build_steps``) and the
+``alpha_advection`` operation (a Python-orchestrated MULES corrector loop).
 """
 
-from typing import Annotated, Any, Protocol
+from typing import Annotated
 
 import pybFoam as pyf
 import pybFoam.fvm as fvm
-import pybFoam.mules as mules
-import pybFoam.vof as vof
 from pybFoam import (
     Info,
     fvc,
+    mules as mules_lib,
     surfaceScalarField,
     volScalarField,
 )
 
 from neofoam.framework.context import FieldUpdates
 from neofoam.framework.dependency_resolver import wrap_with_dependency_resolution
-from neofoam.framework.initialization import field, model
 from neofoam.framework.operations import (
     Operation,
     Operations,
     SequentialOp,
 )
 from neofoam.framework.types import OperationMetadata
-from ..incompressibleVoFModel import Model
 
-alpha_advection_model = Model("AlphaAdvection")
+from ..advectionModel import Model, advectionModel
+from ..shared import MixtureProtocol, shared_field_build_steps
 
+__all__ = ["mules"]
 
-# ---------------------------------------------------------------------------
-# Type protocol for static analysis
-# ---------------------------------------------------------------------------
-
-
-class MixtureProtocol(Protocol):
-    def alpha1(self) -> volScalarField: ...
-    def alpha2(self) -> volScalarField: ...
-    def rho1(self) -> Any: ...
-    def rho2(self) -> Any: ...
-    def cAlpha(self) -> float: ...
-    def nHatf(self) -> surfaceScalarField: ...
-    def correct(self) -> None: ...
+mules = Model("MULES").register_with(advectionModel).labeled("MULES")
 
 
 # Scheme names, resolved from fvSchemes divSchemes (mirrors alphaEqn.H).
@@ -83,62 +58,14 @@ _ALPHAR_SCHEME = "div(phirb,alpha)"
 
 
 # ---------------------------------------------------------------------------
-# Build: register initialisation steps provided by this model
+# Build: the shared VoF fields (phi, mixture, alpha1/alpha2, rho, rhoPhi)
 # ---------------------------------------------------------------------------
 
 
-@alpha_advection_model.build
+@mules.build
 def build(self: object) -> list[object]:
-    """Register field/model initialisation steps for alpha advection."""
-
-    def create_phi(context: dict[str, Any]) -> surfaceScalarField:
-        """Create face flux phi from U."""
-        return pyf.createPhi(context["fields.U"])
-
-    def create_mixture(context: dict[str, Any]) -> Any:
-        """Create immiscibleIncompressibleTwoPhaseMixture and register alpha flux."""
-        mesh = context["mesh"]
-        U = context["fields.U"]
-        phi = context["fields.phi"]
-        mixture = vof.immiscibleIncompressibleTwoPhaseMixture(U, phi)
-        # alpha.water face flux required for MULES solver
-        mesh.setFluxRequired(mixture.alpha1().name())
-        return mixture
-
-    def create_alpha1(context: dict[str, Any]) -> volScalarField:
-        return context["models.mixture"].alpha1()  # type: ignore[no-any-return]
-
-    def create_alpha2(context: dict[str, Any]) -> volScalarField:
-        return context["models.mixture"].alpha2()  # type: ignore[no-any-return]
-
-    def create_rho(context: dict[str, Any]) -> volScalarField:
-        mixture = context["models.mixture"]
-        alpha1 = context["fields.alpha1"]
-        alpha2 = context["fields.alpha2"]
-        rho1 = mixture.rho1()
-        rho2 = mixture.rho2()
-        rho = volScalarField(pyf.Word("rho"), alpha1 * rho1 + alpha2 * rho2)
-        # Store old-time so that fvm.ddt(rho, U) in momentum has a valid old value
-        rho.oldTime()  # type: ignore[attr-defined]
-        return rho
-
-    def create_rho_phi(context: dict[str, Any]) -> surfaceScalarField:
-        rho = context["fields.rho"]
-        phi = context["fields.phi"]
-        return surfaceScalarField(pyf.Word("rhoPhi"), fvc.interpolate(rho) * phi)
-
-    return [
-        field("phi", create_phi, depends_on=["fields.U"]),
-        model("mixture", create_mixture, depends_on=["fields.U", "fields.phi", "mesh"]),
-        field("alpha1", create_alpha1, depends_on=["models.mixture"]),
-        field("alpha2", create_alpha2, depends_on=["models.mixture"]),
-        field(
-            "rho",
-            create_rho,
-            depends_on=["models.mixture", "fields.alpha1", "fields.alpha2"],
-        ),
-        field("rhoPhi", create_rho_phi, depends_on=["fields.rho", "fields.phi"]),
-    ]
+    """Register the field/model initialisation steps for MULES advection."""
+    return shared_field_build_steps()
 
 
 # ---------------------------------------------------------------------------
@@ -267,16 +194,21 @@ def _solve_alpha_python(
     """Pure-Python MULES phase-fraction advection (transcription of alphaEqn.H).
 
     1. Read solver settings (nAlphaCorr, nAlphaSubCycles, MULESCorr).
-    2. ``nAlphaSubCycles > 1``: delegate to ``vof.solveAlpha`` (needs OpenFOAM's
-       ``subCycle<volScalarField>`` machinery).
-    3. ``nAlphaSubCycles == 1``: compose the Python steps below.
+    2. ``nAlphaSubCycles == 1``: compose the Python steps below.
+
+    ``nAlphaSubCycles > 1`` is not supported by this pure-Python path (it needs
+    OpenFOAM's ``subCycle<volScalarField>`` machinery) and raises
+    ``NotImplementedError``.
     """
     n_alpha_corr, n_alpha_sub_cycles, mules_corr = read_alpha_controls(alpha1.name())
 
-    # Sub-cycling still needs OpenFOAM's subCycle machinery.
+    # Sub-cycling needs OpenFOAM's subCycle machinery, which this Python path
+    # does not implement.
     if n_alpha_sub_cycles > 1:
-        vof.solveAlpha(alpha1, alpha2, phi, rhoPhi, rho, mixture)
-        return
+        raise NotImplementedError(
+            "MULES alpha sub-cycling (nAlphaSubCycles > 1) is not supported by "
+            "the pure-Python advection path; set nAlphaSubCycles 1 in fvSolution."
+        )
 
     # (a) Interface compression velocity.
     phic = interface_compression_velocity(mixture, phi)
@@ -305,7 +237,7 @@ def _solve_alpha_python(
             alpha_phi_corr = surfaceScalarField(
                 pyf.Word("alphaPhi1Corr"), alpha_phi_un - alpha_phi10
             )
-            mules.correct(alpha1, alpha_phi_un, alpha_phi_corr)
+            mules_lib.correct(alpha1, alpha_phi_un, alpha_phi_corr)
 
             if a_corr == 0:
                 alpha_phi10.assign(alpha_phi10 + alpha_phi_corr)
@@ -314,7 +246,7 @@ def _solve_alpha_python(
                 alpha_phi10.assign(alpha_phi10 + 0.5 * alpha_phi_corr)
         else:
             alpha_phi10.assign(alpha_phi_un)
-            mules.explicit_solve(alpha1, phi, alpha_phi10)
+            mules_lib.explicit_solve(alpha1, phi, alpha_phi10)
 
         alpha2.assign(-alpha1 + 1.0)
         mixture.correct()
@@ -326,11 +258,11 @@ def _solve_alpha_python(
 
 
 # ---------------------------------------------------------------------------
-# Operations
+# Operation
 # ---------------------------------------------------------------------------
 
 
-@alpha_advection_model.operation(operation_number="2.0")
+@mules.operation(operation_number="2.0")
 def alpha_advection(
     alpha1: volScalarField,
     alpha2: volScalarField,
@@ -351,13 +283,13 @@ def alpha_advection(
 # ---------------------------------------------------------------------------
 
 
-@alpha_advection_model.operation_collection
+@mules.operation_collection
 def collected_operations(self: object) -> Operations:
     # The collection path bypasses the spec's default operation wrapping, so
     # wrap alpha_advection with dependency resolution here (``self`` is the
     # bound runtime).
     wrapped_alpha_advection = wrap_with_dependency_resolution(
-        alpha_advection, self, alpha_advection_model._dependency_resolver
+        alpha_advection, self, mules._dependency_resolver
     )
     model_ops = Operations()
     model_ops.add(

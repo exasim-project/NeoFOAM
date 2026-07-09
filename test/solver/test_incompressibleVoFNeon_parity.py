@@ -39,7 +39,7 @@ _PYF_REF = r"""
 import numpy as np
 import pybFoam as pyf
 from pybFoam import surfaceScalarField, volScalarField
-import pybFoam.vof as vof
+import pybFoam.multiphase as vof
 
 runTime = pyf.Time(pyf.argList(["parity"]))
 mesh = pyf.fvMesh(runTime)

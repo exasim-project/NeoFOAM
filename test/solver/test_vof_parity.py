@@ -124,7 +124,7 @@ _PYF_ST = r"""
 import numpy as np
 import pybFoam as pyf
 from pybFoam import surfaceScalarField, volVectorField
-import pybFoam.vof as vof
+import pybFoam.multiphase as vof
 
 runTime = pyf.Time(pyf.argList(["stparity"]))
 mesh = pyf.fvMesh(runTime)

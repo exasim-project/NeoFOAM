@@ -1,14 +1,18 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# SPDX-FileCopyrightText: 2025 NeoFOAM authors
+# SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
 """
-Comparison test for damBreak: incompressibleVoF vs native interFoam.
+Comparison test for damBreak: incompressibleVoF (isoAdvector) vs native interIsoFoam.
 
-Both solvers use adaptive time stepping (adjustTimeStep yes, maxCo 1, maxAlphaCo 1).
-Since both use identical CFL computation (pybFoam.computeCFLNumber and the
-Python-composed compute_alpha_courant_number, built from the same OpenFOAM
-primitives), they follow the same time-step sequence deterministically and
-results must match to machine precision (rtol=1e-10).
+The ``damBreak_isoAdvector`` tutorial selects the geometric advection scheme via
+``advectionScheme isoAdvector;`` in ``system/fvSolution`` (with the isoAdvector
+controls in the ``"alpha.water.*"`` solver sub-dict). isoAdvector is a pure
+function of ``(alpha1, phi, U, deltaT)``; both solvers read identical controls
+and share the same adaptive-dt routines (``pybFoam.computeCFLNumber`` and the
+Python-composed ``compute_alpha_courant_number``), so they follow the same time-step sequence
+deterministically and results must match to machine precision (rtol=1e-10).
+
+Companion to ``test_damBreak_comparison.py`` (the MULES scheme vs interFoam).
 """
 
 import os
@@ -37,14 +41,14 @@ FIELDS_TO_COMPARE = [
 ]
 
 
-def test_damBreak_solver_comparison():
-    """Compare incompressibleVoF against native interFoam on damBreak case."""
+def test_damBreak_isoAdvector_solver_comparison():
+    """Compare incompressibleVoF (isoAdvector) against native interIsoFoam."""
 
     repo_root = Path(__file__).parent.parent.parent.parent
-    source_case = repo_root / "tutorials" / "damBreak"
+    source_case = repo_root / "tutorials" / "damBreak_isoAdvector"
 
-    test_case_custom = repo_root / "test_cases" / "damBreak_incompressibleVoF"
-    test_case_native = repo_root / "test_cases" / "damBreak_interFoam"
+    test_case_custom = repo_root / "test_cases" / "damBreak_iso_incompressibleVoF"
+    test_case_native = repo_root / "test_cases" / "damBreak_iso_interIsoFoam"
 
     end_time = 0.05
     write_interval = 0.05
@@ -70,9 +74,9 @@ def test_damBreak_solver_comparison():
         )
 
         # ------------------------------------------------------------------ #
-        # Run incompressibleVoF                                               #
+        # Run incompressibleVoF (auto-detects isoAdvector from fvSolution)    #
         # ------------------------------------------------------------------ #
-        print("\n=== Running incompressibleVoF ===")
+        print("\n=== Running incompressibleVoF (isoAdvector) ===")
         original_dir = Path.cwd()
         os.chdir(test_case_custom)
         try:
@@ -81,19 +85,19 @@ def test_damBreak_solver_comparison():
             os.chdir(original_dir)
 
         # ------------------------------------------------------------------ #
-        # Run native interFoam                                                #
+        # Run native interIsoFoam                                            #
         # ------------------------------------------------------------------ #
-        print("\n=== Running native interFoam ===")
+        print("\n=== Running native interIsoFoam ===")
         result = subprocess.run(
-            ["interFoam", "-case", str(test_case_native)],
+            ["interIsoFoam", "-case", str(test_case_native)],
             capture_output=True,
             text=True,
             timeout=300,
         )
-        assert result.returncode == 0, f"interFoam failed:\n{result.stderr}"
+        assert result.returncode == 0, f"interIsoFoam failed:\n{result.stderr}"
 
         # ------------------------------------------------------------------ #
-        # Compare fields (loose tolerance: adaptive dt may diverge slightly)  #
+        # Compare fields (bitwise: same scheme, same dt sequence)             #
         # ------------------------------------------------------------------ #
         all_match, failed_fields, failed_details = compare_solver_fields(
             test_case_custom,

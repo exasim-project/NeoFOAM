@@ -17,7 +17,7 @@ Ported from the ``StagedInit`` / ``ModelInstance`` API to the
 from pathlib import Path
 from typing import Any, Optional
 
-import pybFoam.vof as vof
+import pybFoam.multiphase as multiphase
 
 from neofoam.foam.initialization import create_time_mesh
 from neofoam.framework.initialization import (
@@ -31,7 +31,7 @@ from neofoam.framework.initialization import (
 )
 
 from .models.incompressibleVoFModel import incompressibleVoFModel
-from .models.alpha_advection.alphaAdvectionModel import alpha_advection_model
+from .models.alpha_advection import advectionModel  # noqa: F401  (registers schemes)
 from .models.pressure_velocity.base import PressureVelocityAlgorithm
 
 
@@ -46,8 +46,11 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         pressure_model = PressureVelocityAlgorithm.detect_and_create()
         optional_models = incompressibleVoFModel.detect_models(resolved_case_dir)
 
-        # alpha-advection runs first each outer corrector, then PIMPLE.
-        core_models: list[Any] = [alpha_advection_model, pressure_model]
+        # alpha-advection scheme is runtime-switchable (advectionScheme key in
+        # system/fvSolution, default MULES); it runs first each outer corrector,
+        # then PIMPLE.
+        alpha_model = advectionModel.detect_and_create()
+        core_models: list[Any] = [alpha_model, pressure_model]
         return LoadResult(core_models=core_models, optional_models=optional_models)
 
     @spec_builder.resolve
@@ -83,7 +86,7 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
 
         # Two-phase turbulence model (wraps rho, U, phi, rhoPhi, mixture).
         def create_turbulence(ctx: dict[str, Any]) -> Any:
-            return vof.TwoPhaseTransportModel(
+            return multiphase.TwoPhaseTransportModel(
                 ctx["fields.rho"],
                 ctx["fields.U"],
                 ctx["fields.phi"],

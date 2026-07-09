@@ -4,7 +4,7 @@
 """MULES parity + boundedness + conservation for the NeoN-core FCT limiter.
 
 Value-matches NeoN's ``nfb.mules_explicit_solve`` against pybFoam's
-``vof.mules_explicit_solve`` (OpenFOAM ``MULES::explicitSolve``) on identical
+``mules.explicit_solve`` (OpenFOAM ``MULES::explicitSolve``) on identical
 inputs on the shared damBreak mesh, via the two-subprocess ``.npy`` harness.
 
 The parity config is load-bearing: a uniform interior velocity U=(1,0,0) gives an
@@ -43,7 +43,7 @@ _PYF_REF = r"""
 import numpy as np
 import pybFoam as pyf
 from pybFoam import fvc, surfaceScalarField, volScalarField
-import pybFoam.vof as vof
+from pybFoam import mules
 
 runTime = pyf.Time(pyf.argList(["mules"]))
 mesh = pyf.fvMesh(runTime)
@@ -63,7 +63,7 @@ np.save("dt.npy", np.array([mesh.time().deltaTValue()]))
 aphi = surfaceScalarField(pyf.Word("alphaPhiUn"), fvc.interpolate(alpha) * phi)
 np.save("alphaPhiUn_int.npy", np.asarray(aphi.internalField()).copy())
 
-vof.mules_explicit_solve(alpha, phi, aphi)
+mules.explicit_solve(alpha, phi, aphi)
 np.save("alpha_ref.npy", np.asarray(alpha.internalField()).copy())
 np.save("alphaPhi_ref.npy", np.asarray(aphi.internalField()).copy())
 print("END_OK")
