@@ -35,6 +35,18 @@ from pybFoam import (
     volScalarField,
 )
 
+from neofoam.fields import (
+    CyclicBC,
+    EmptyBC,
+    FixedValueBC,
+    GenericBC,
+    InletOutletBC,
+    Scalar,
+    SymmetryBC,
+    SymmetryPlaneBC,
+    ZeroGradientBC,
+)
+from neofoam.foam import fvSchemes, fvSolution
 from neofoam.framework.context import FieldUpdates
 from neofoam.framework.operations import (
     Operation,
@@ -49,6 +61,32 @@ from ..shared import MixtureProtocol, shared_field_build_steps
 __all__ = ["mules"]
 
 mules = Model("MULES").register_with(advectionModel).labeled("MULES")
+
+# Per-spec fvSchemes / fvSolution slices + the ``0/alpha.water`` field the wizard
+# authors. Schema-only (surfaced through ``configurations(solver)``); the alpha
+# field is created at run time from the C++ mixture (``shared_field_build_steps``),
+# so declaring it here changes no init behaviour. ``alpha.water`` is declared on
+# MULES alone (the default advection scheme) so it surfaces exactly once even
+# though every advection member owns the same field.
+MulesFvSchemes = mules.config(fvSchemes)
+MulesFvSolution = mules.config(fvSolution)
+
+mules.field(
+    "alpha.water",
+    dimensions=[0, 0, 0, 0, 0, 0, 0],
+    value_type=Scalar,
+    allowed_bcs=[
+        FixedValueBC,
+        ZeroGradientBC,
+        InletOutletBC,
+        EmptyBC,
+        SymmetryBC,
+        SymmetryPlaneBC,
+        CyclicBC,
+        GenericBC,
+    ],
+    write=True,
+)
 
 
 # Scheme names, resolved from fvSchemes divSchemes (mirrors alphaEqn.H).
@@ -279,6 +317,12 @@ def _solve_alpha_python(
 
 
 @mules.operation(operation_number="2.0")
+@MulesFvSchemes.add(
+    ddt="ddt(alpha1)",
+    # scheme-based phase flux + interface-compression flux (alphaEqn.H).
+    div=["div(phi,alpha)", "div(phirb,alpha)"],
+)
+@MulesFvSolution.add("alpha.water")
 def alpha_advection(
     alpha1: volScalarField,
     alpha2: volScalarField,

@@ -36,10 +36,20 @@ from neofoam.framework.operations import (
     StepBuilder,
 )
 from neofoam.framework.solver import Solver
+from neofoam.framework.tools import PreprocessConfig
 from neofoam.framework.types import OperationMetadata
+from neofoam.tools.block_mesh import BlockMeshDictConfig
+from neofoam.tools.snappy_hex_mesh import SnappyHexMeshDictConfig
 
+from .configs import (
+    ControlDictConfig,
+    GravityConfig,
+    TransportPropertiesConfig,
+    TurbulencePropertiesConfig,
+)
 from .create_fields import create_init
-from .models.alpha_advection.advectionModel import advectionModel
+from .models.alpha_advection import advectionModel  # noqa: F401 (registers members)
+from .models.incompressibleVoFModel import incompressibleVoFModel
 from .models.pressure_velocity.base import PressureVelocityAlgorithm
 
 
@@ -97,6 +107,26 @@ def _core_spec(state: Any, names: set[str]) -> Any:
 
 
 incompressibleVoF = Solver("incompressibleVoF")
+
+# Declare the full case-authoring schema on the spec, case-free (mirrors
+# ``incompressibleFluid``): the solver's own configs plus the model families it
+# owns. Every member's configs/fields join the schema; per-case detection (in
+# create_fields) still picks which members run. Two-phase transport, gravity and
+# turbulence are read by the C++ backend directly, so they are declared as solver
+# configs (VoF has no single-phase viscosity/turbulence model families).
+incompressibleVoF.config(ControlDictConfig)
+incompressibleVoF.config(PreprocessConfig)  # mesh pipeline enable file (configs())
+# The two mesh-input dicts: writer configs so the wizard/MCP fill and persist them
+# like any other case file (blockMesh/snappyHexMesh read them at launch).
+incompressibleVoF.config(BlockMeshDictConfig)
+incompressibleVoF.config(SnappyHexMeshDictConfig)
+incompressibleVoF.config(TransportPropertiesConfig)  # two-phase phases/nu/rho/sigma
+incompressibleVoF.config(GravityConfig)  # constant/g
+incompressibleVoF.config(TurbulencePropertiesConfig)  # simulationType
+
+incompressibleVoF.models(advectionModel, required=True)  # alpha advection (pick ONE)
+incompressibleVoF.models(PressureVelocityAlgorithm, required=True)  # VoF PIMPLE
+incompressibleVoF.models(incompressibleVoFModel)  # optional: zero or more
 
 
 @incompressibleVoF.initializer
