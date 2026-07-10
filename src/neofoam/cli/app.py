@@ -256,18 +256,6 @@ def incompressiblevof(ctx: typer.Context) -> None:
 
 
 @solver_app.command(
-    name="incompressiblevofneon",
-    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
-)
-def incompressiblevofneon(ctx: typer.Context) -> None:
-    """interFoam-style VoF solver with surface tension and gravity (NeoN backend)."""
-    from neofoam.solver.incompressibleVoFNeon import run as run_incompressible_vof_neon
-
-    argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
-    run_incompressible_vof_neon(argv)
-
-
-@solver_app.command(
     name="incompressiblefluidneon",
     context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
 )
