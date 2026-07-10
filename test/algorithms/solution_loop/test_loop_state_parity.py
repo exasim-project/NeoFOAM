@@ -23,7 +23,7 @@ from neofoam.algorithms.solution_loop.config import _WRITE_CONTROL_ALIASES
 from neofoam.algorithms.solution_loop.loop_state import LoopState
 from neofoam.algorithms.solution_loop.solution_loop import SolutionLoop
 
-pybFoam = pytest.importorskip("pybFoam")
+import pybFoam
 
 _CONTROL_DICT = """\
 FoamFile {{ version 2.0; format ascii; class dictionary; object controlDict; }}

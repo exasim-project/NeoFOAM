@@ -41,6 +41,7 @@
 - Validate the turbulence model before the first solve (`turbulence->validate()` / `correctNut`) in incompressibleFluid and the plain pybFoam port, so `nut` is initialised from `k`/`epsilon` instead of the `0/nut` placeholder — the framework is now bit-identical to native `pimpleFoam` on pitzDaily (requires pybFoam>=0.4.6, which binds `incompressibleTurbulenceModel::validate`) [#352](https://github.com/exasim-project/NeoFOAM/pull/352)
 - Fix the incompressibleFluid `-parallel` path: keep the `argList` (and the MPI session it owns) alive for the whole run so MPI is not finalised mid-solve; the framework now matches native `pimpleFoam -parallel` [#352](https://github.com/exasim-project/NeoFOAM/pull/352)
 - Add missing `<field>Final` linear-solver entries (`sFinal`, `UFinal`, `pFinal`) to the passive-scalar tutorial case and the `per_model_fvSolution.yaml` example so the documentation gallery builds [#352](https://github.com/exasim-project/NeoFOAM/pull/352)
+- Add the `incompressibleVoF` solver (interFoam-style VoF on the SolverSpec/ModelSpec framework) with a runtime-switchable phase-fraction advection family: `MULES` (algebraic, default) and `isoAdvector` (geometric, interIsoFoam), selected via an `advectionScheme` key in `system/fvSolution`; both bitwise-parity-verified on damBreak against native interFoam / interIsoFoam [#354](https://github.com/exasim-project/NeoFOAM/pull/354)
 
 # Version 0.2.0 (2025.12.01)
 - Use NeoN logging functionality [#144](https://github.com/exasim-project/NeoFOAM/pull/144)

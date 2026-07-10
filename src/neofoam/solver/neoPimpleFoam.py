@@ -20,7 +20,6 @@ This mirrors ``examples/neoPimpleFoam/neoPimpleFoam.cpp``.
 
 from __future__ import annotations
 
-import atexit
 from typing import Any
 
 import pybFoam as pyf
@@ -28,19 +27,11 @@ import neon._neon as nn  # NeoN Python bindings
 from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
 from neofoam.solver.pisoControl import PisoControl
 
-
-# Kokkos (via NeoN) may only be initialized/finalized once per process. Guard so
-# repeated solver runs in one process (e.g. the test suite) reuse a single
-# initialization, and finalize once at interpreter exit.
-_neon_initialized = False
-
-
-def _ensure_neon_initialized(argv: list[str]) -> None:
-    global _neon_initialized
-    if not _neon_initialized:
-        nn.initialize(argv)
-        _neon_initialized = True
-        atexit.register(nn.finalize)
+# Compatibility re-export: the process-wide Kokkos init guard lives in
+# neofoam.solver.neon_runtime under its public name.
+from neofoam.solver.neon_runtime import (  # noqa: F401
+    ensure_neon_initialized as _ensure_neon_initialized,
+)
 
 
 def _read_int(d: Any, key: str, default: int) -> int:

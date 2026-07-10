@@ -11,7 +11,6 @@ import pytest
 
 pytest.importorskip("fastmcp")
 pytest.importorskip("fastapi")
-pytest.importorskip("pybFoam")
 
 from fastapi.testclient import TestClient  # noqa: E402
 

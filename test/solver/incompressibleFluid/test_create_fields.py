@@ -8,7 +8,6 @@ from pathlib import Path
 import pytest
 
 # create_fields imports pybFoam (argList/Time/fvMesh) at module top.
-pytest.importorskip("pybFoam")
 
 from neofoam.framework.model import BoundModelInterface
 from neofoam.solver.incompressibleFluid.create_fields import (

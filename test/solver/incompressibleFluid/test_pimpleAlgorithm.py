@@ -12,10 +12,6 @@ leave the flag raised after the loop exits: the turbulence correction runs
 iteration natively.
 """
 
-import pytest
-
-pytest.importorskip("pybFoam")
-
 from neofoam.algorithms.solution_loop.control import PimpleControl  # noqa: E402
 from neofoam.framework.context import Context  # noqa: E402
 from neofoam.solver.incompressibleFluid.models.pressure_velocity.pimpleAlgorithm import (  # noqa: E402

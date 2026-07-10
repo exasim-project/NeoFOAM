@@ -9,7 +9,6 @@ from pathlib import Path
 
 import pytest
 
-pytest.importorskip("pybFoam")
 
 from neofoam.solver.incompressibleFluid import run
 

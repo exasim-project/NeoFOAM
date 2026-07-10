@@ -14,7 +14,6 @@ from typing import Any
 
 import pytest
 
-pytest.importorskip("pybFoam")
 
 from neofoam.framework.initialization import InitStepExecutionError  # noqa: E402
 from neofoam.framework.tools import ToolRuntime  # noqa: E402
