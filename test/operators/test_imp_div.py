@@ -1,47 +1,52 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Matrix-apply parity of the implicit convection operators.
+"""Cross-backend parity of the implicit convection operators.
 
-neon assembles ``nn.imp.div(phi, psi)`` via ``nfb.evaluate_implicit`` and
-applies the matrix to the current field, ``(A·psi - b) / V``; the reference is
-the pybFoam explicit twin (``M & psi == fvc.div(...)`` in OpenFOAM). Runs
-under every div scheme.
+Both backends assemble the implicit operator and apply the matrix to the
+current field: pybFoam builds the ``fvm.div`` matrix and returns ``M & psi``;
+neon assembles the linear system of ``nn.imp.div`` and returns
+``(A·psi - b) / V``. In exact arithmetic both equal the explicit divergence.
 """
 
 from __future__ import annotations
 
-from typing import Callable
-
+import numpy as np
 import pytest
-from conftest import MeshResults, assert_operator_parity, operator_params
+from backends import Field, nb, pyb
+from conftest import EXECUTORS, MESH_NAMES, TWO_D_MESHES
 
 
-@pytest.mark.parametrize(
-    ("mesh", "scheme", "executor"), operator_params("imp_div_phi_T")
-)
+@pytest.mark.parametrize("executor", EXECUTORS)
+@pytest.mark.parametrize("mesh", MESH_NAMES)
+@pytest.mark.parametrize("scheme", ["linear", "upwind", "linearUpwind"])
 def test_imp_div_phi_T(
-    mesh: str,
-    scheme: str,
-    executor: str,
-    mesh_results: Callable[[str], MeshResults],
-    gpu_available: bool,
+    mesh: str, scheme: str, executor: str, T: Field, phi: Field
 ) -> None:
-    assert_operator_parity(
-        "imp_div_phi_T", mesh, scheme, executor, mesh_results, gpu_available
+    pyb_res = pyb.fvm.div(phi, T, scheme=scheme)
+    nb_res = nb.imp.div(phi, T, scheme=scheme)
+
+    rtol = 1e-9 if executor == "Serial" else 1e-8
+    np.testing.assert_allclose(
+        nb_res, pyb_res, rtol=rtol, atol=1e-12 * np.abs(pyb_res).max()
     )
 
 
-@pytest.mark.parametrize(
-    ("mesh", "scheme", "executor"), operator_params("imp_div_phi_U")
-)
+@pytest.mark.parametrize("executor", EXECUTORS)
+@pytest.mark.parametrize("mesh", MESH_NAMES)
+@pytest.mark.parametrize("scheme", ["linear", "upwind", "linearUpwind"])
 def test_imp_div_phi_U(
-    mesh: str,
-    scheme: str,
-    executor: str,
-    mesh_results: Callable[[str], MeshResults],
-    gpu_available: bool,
+    mesh: str, scheme: str, executor: str, U: Field, phi: Field
 ) -> None:
-    assert_operator_parity(
-        "imp_div_phi_U", mesh, scheme, executor, mesh_results, gpu_available
-    )
+    pyb_res = pyb.fvm.div(phi, U, scheme=scheme)
+    nb_res = nb.imp.div(phi, U, scheme=scheme)
+
+    rtol = 1e-9 if executor == "Serial" else 1e-8
+    scale = np.abs(pyb_res).max()
+    if mesh in TWO_D_MESHES:
+        # OpenFOAM's matrix apply zeroes the empty-direction z on 2D meshes
+        np.testing.assert_allclose(
+            nb_res[:, :2], pyb_res[:, :2], rtol=rtol, atol=1e-12 * scale
+        )
+    else:
+        np.testing.assert_allclose(nb_res, pyb_res, rtol=rtol, atol=1e-12 * scale)

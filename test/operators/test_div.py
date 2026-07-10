@@ -1,55 +1,58 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Parity of the explicit divergence operators (pybFoam fvc vs neon).
+"""Cross-backend parity of the explicit divergence operators (pybFoam fvc vs neon).
 
-``div_phi_T`` uses the Gauss identity ``fvc.div(fvc.flux(phi, T,
-key="div(phi,T)"))`` on the pybFoam side (no scalar convection overload of
-``fvc.div``); the convection operators run under every div scheme.
+Convection runs under every div scheme; the scheme is passed per call.
 """
 
 from __future__ import annotations
 
-from typing import Callable
-
+import numpy as np
 import pytest
-from conftest import MeshResults, assert_operator_parity, operator_params
+from backends import Field, nb, pyb
+from conftest import EXECUTORS, MESH_NAMES, TWO_D_MESHES
 
 
-@pytest.mark.parametrize(("mesh", "scheme", "executor"), operator_params("div_phi"))
-def test_div_phi(
-    mesh: str,
-    scheme: str,
-    executor: str,
-    mesh_results: Callable[[str], MeshResults],
-    gpu_available: bool,
-) -> None:
-    assert_operator_parity(
-        "div_phi", mesh, scheme, executor, mesh_results, gpu_available
+@pytest.mark.parametrize("executor", EXECUTORS)
+@pytest.mark.parametrize("mesh", MESH_NAMES)
+def test_div_phi(mesh: str, executor: str, phi: Field) -> None:
+    pyb_res = pyb.fvc.div(phi)
+    nb_res = nb.exp.div(phi)
+
+    rtol = 1e-9 if executor == "Serial" else 1e-8
+    np.testing.assert_allclose(
+        nb_res, pyb_res, rtol=rtol, atol=1e-12 * np.abs(pyb_res).max()
     )
 
 
-@pytest.mark.parametrize(("mesh", "scheme", "executor"), operator_params("div_phi_T"))
-def test_div_phi_T(
-    mesh: str,
-    scheme: str,
-    executor: str,
-    mesh_results: Callable[[str], MeshResults],
-    gpu_available: bool,
-) -> None:
-    assert_operator_parity(
-        "div_phi_T", mesh, scheme, executor, mesh_results, gpu_available
+@pytest.mark.parametrize("executor", EXECUTORS)
+@pytest.mark.parametrize("mesh", MESH_NAMES)
+@pytest.mark.parametrize("scheme", ["linear", "upwind", "linearUpwind"])
+def test_div_phi_T(mesh: str, scheme: str, executor: str, T: Field, phi: Field) -> None:
+    pyb_res = pyb.fvc.div(phi, T, scheme=scheme)
+    nb_res = nb.exp.div(phi, T, scheme=scheme)
+
+    rtol = 1e-9 if executor == "Serial" else 1e-8
+    np.testing.assert_allclose(
+        nb_res, pyb_res, rtol=rtol, atol=1e-12 * np.abs(pyb_res).max()
     )
 
 
-@pytest.mark.parametrize(("mesh", "scheme", "executor"), operator_params("div_phi_U"))
-def test_div_phi_U(
-    mesh: str,
-    scheme: str,
-    executor: str,
-    mesh_results: Callable[[str], MeshResults],
-    gpu_available: bool,
-) -> None:
-    assert_operator_parity(
-        "div_phi_U", mesh, scheme, executor, mesh_results, gpu_available
-    )
+@pytest.mark.parametrize("executor", EXECUTORS)
+@pytest.mark.parametrize("mesh", MESH_NAMES)
+@pytest.mark.parametrize("scheme", ["linear", "upwind", "linearUpwind"])
+def test_div_phi_U(mesh: str, scheme: str, executor: str, U: Field, phi: Field) -> None:
+    pyb_res = pyb.fvc.div(phi, U, scheme=scheme)
+    nb_res = nb.exp.div(phi, U, scheme=scheme)
+
+    rtol = 1e-9 if executor == "Serial" else 1e-8
+    scale = np.abs(pyb_res).max()
+    if mesh in TWO_D_MESHES:
+        # z is only defined up to the empty-patch treatment on 2D meshes
+        np.testing.assert_allclose(
+            nb_res[:, :2], pyb_res[:, :2], rtol=rtol, atol=1e-12 * scale
+        )
+        np.testing.assert_allclose(nb_res[:, 2], pyb_res[:, 2], atol=1e-4 * scale)
+    else:
+        np.testing.assert_allclose(nb_res, pyb_res, rtol=rtol, atol=1e-12 * scale)

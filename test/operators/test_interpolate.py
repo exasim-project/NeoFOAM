@@ -1,26 +1,25 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Parity of surface interpolation: fvc.interpolate vs NeoN SurfaceInterpolation."""
+"""Cross-backend parity of linear surface interpolation (pybFoam fvc vs neon)."""
 
 from __future__ import annotations
 
-from typing import Callable
-
+import numpy as np
 import pytest
-from conftest import MeshResults, assert_operator_parity, operator_params
+from backends import Field, nb, pyb
+from conftest import EXECUTORS, MESH_NAMES
 
 
-@pytest.mark.parametrize(
-    ("mesh", "scheme", "executor"), operator_params("interpolate_T")
-)
-def test_interpolate_T(
-    mesh: str,
-    scheme: str,
-    executor: str,
-    mesh_results: Callable[[str], MeshResults],
-    gpu_available: bool,
-) -> None:
-    assert_operator_parity(
-        "interpolate_T", mesh, scheme, executor, mesh_results, gpu_available
+@pytest.mark.parametrize("executor", EXECUTORS)
+@pytest.mark.parametrize("mesh", MESH_NAMES)
+def test_interpolate_T(mesh: str, executor: str, T: Field) -> None:
+    pyb_res = pyb.fvc.interpolate(T)
+    nb_res = nb.interpolate(T)
+
+    # neon appends boundary-face values after the internal faces
+    nb_res = nb_res[: pyb_res.shape[0]]
+    rtol = 1e-12 if executor == "Serial" else 1e-8
+    np.testing.assert_allclose(
+        nb_res, pyb_res, rtol=rtol, atol=1e-14 * np.abs(pyb_res).max()
     )

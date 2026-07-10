@@ -1,24 +1,25 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Parity of the face flux: fvc.flux(U) vs nfb.flux(U)."""
+"""Cross-backend parity of the face flux (pybFoam fvc vs neon)."""
 
 from __future__ import annotations
 
-from typing import Callable
-
+import numpy as np
 import pytest
-from conftest import MeshResults, assert_operator_parity, operator_params
+from backends import Field, nb, pyb
+from conftest import EXECUTORS, MESH_NAMES
 
 
-@pytest.mark.parametrize(("mesh", "scheme", "executor"), operator_params("flux_U"))
-def test_flux_U(
-    mesh: str,
-    scheme: str,
-    executor: str,
-    mesh_results: Callable[[str], MeshResults],
-    gpu_available: bool,
-) -> None:
-    assert_operator_parity(
-        "flux_U", mesh, scheme, executor, mesh_results, gpu_available
+@pytest.mark.parametrize("executor", EXECUTORS)
+@pytest.mark.parametrize("mesh", MESH_NAMES)
+def test_flux_U(mesh: str, executor: str, U: Field) -> None:
+    pyb_res = pyb.fvc.flux(U)
+    nb_res = nb.flux(U)
+
+    # neon appends boundary-face values after the internal faces
+    nb_res = nb_res[: pyb_res.shape[0]]
+    rtol = 1e-12 if executor == "Serial" else 1e-8
+    np.testing.assert_allclose(
+        nb_res, pyb_res, rtol=rtol, atol=1e-13 * np.abs(pyb_res).max()
     )

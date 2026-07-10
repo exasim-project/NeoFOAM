@@ -1,41 +1,41 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Parity of the explicit laplacian operators: fvc.laplacian vs nn.exp.laplacian."""
+"""Cross-backend parity of the explicit laplacian operators (pybFoam fvc vs neon)."""
 
 from __future__ import annotations
 
-from typing import Callable
-
+import numpy as np
 import pytest
-from conftest import MeshResults, assert_operator_parity, operator_params
+from backends import Field, nb, pyb
+from conftest import EXECUTORS, MESH_NAMES, TWO_D_MESHES
 
 
-@pytest.mark.parametrize(
-    ("mesh", "scheme", "executor"), operator_params("laplacian_Gamma_T")
-)
-def test_laplacian_Gamma_T(
-    mesh: str,
-    scheme: str,
-    executor: str,
-    mesh_results: Callable[[str], MeshResults],
-    gpu_available: bool,
-) -> None:
-    assert_operator_parity(
-        "laplacian_Gamma_T", mesh, scheme, executor, mesh_results, gpu_available
+@pytest.mark.parametrize("executor", EXECUTORS)
+@pytest.mark.parametrize("mesh", MESH_NAMES)
+def test_laplacian_Gamma_T(mesh: str, executor: str, Gamma: Field, T: Field) -> None:
+    pyb_res = pyb.fvc.laplacian(Gamma, T)
+    nb_res = nb.exp.laplacian(Gamma, T)
+
+    rtol = 1e-9 if executor == "Serial" else 1e-8
+    np.testing.assert_allclose(
+        nb_res, pyb_res, rtol=rtol, atol=1e-10 * np.abs(pyb_res).max()
     )
 
 
-@pytest.mark.parametrize(
-    ("mesh", "scheme", "executor"), operator_params("laplacian_Gamma_U")
-)
-def test_laplacian_Gamma_U(
-    mesh: str,
-    scheme: str,
-    executor: str,
-    mesh_results: Callable[[str], MeshResults],
-    gpu_available: bool,
-) -> None:
-    assert_operator_parity(
-        "laplacian_Gamma_U", mesh, scheme, executor, mesh_results, gpu_available
-    )
+@pytest.mark.parametrize("executor", EXECUTORS)
+@pytest.mark.parametrize("mesh", MESH_NAMES)
+def test_laplacian_Gamma_U(mesh: str, executor: str, Gamma: Field, U: Field) -> None:
+    pyb_res = pyb.fvc.laplacian(Gamma, U)
+    nb_res = nb.exp.laplacian(Gamma, U)
+
+    rtol = 1e-9 if executor == "Serial" else 1e-8
+    scale = np.abs(pyb_res).max()
+    if mesh in TWO_D_MESHES:
+        # z is only defined up to the empty-patch treatment on 2D meshes
+        np.testing.assert_allclose(
+            nb_res[:, :2], pyb_res[:, :2], rtol=rtol, atol=1e-10 * scale
+        )
+        np.testing.assert_allclose(nb_res[:, 2], pyb_res[:, 2], atol=1e-4 * scale)
+    else:
+        np.testing.assert_allclose(nb_res, pyb_res, rtol=rtol, atol=1e-10 * scale)
