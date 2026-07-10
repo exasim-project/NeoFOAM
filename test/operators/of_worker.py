@@ -4,15 +4,17 @@
 """Persistent pybFoam evaluation worker for one staged case.
 
 Started as ``python of_worker.py <case_dir>`` by ``backends.Worker``; owns the
-one ``Foam::Time`` of its process. At startup it stages the case itself:
-generates the mesh from ``system/blockMeshDict`` via
-``pybFoam.meshing.generate_blockmesh`` (no external ``blockMesh`` binary) and
-seeds the deterministic analytic ``T``/``U`` fields (written with
-``writePrecision 17``, so the values round-trip bit-identically — the neon
-workers read exactly the same numbers from disk). Once staged it prints
-``#READY`` and serves JSON-line requests from stdin
-(``{"func", "args", "scheme", "out"}``), saving each result as ``<out>.npy``
-and replying ``#RESULT {...}`` on stdout.
+one ``Foam::Time`` of its process. At startup it generates the mesh from
+``system/blockMeshDict`` via ``pybFoam.meshing.generate_blockmesh`` (no
+external ``blockMesh`` binary), prints ``#READY`` and serves JSON-line
+requests from stdin (``{"func", "args", "scheme", "out", "data"?}``), saving
+each array result as ``<out>.npy`` and replying ``#RESULT {...}`` on stdout.
+
+Field values come from the tests: ``field.set`` copies a pushed numpy array
+into the field's ``internalField``, corrects the boundary conditions, and
+persists ``0/<name>`` (``writePrecision 17`` — bit-identical round-trip) so
+the neon workers can reload exactly the same values. ``flux.update``
+re-derives ``phi = fvc::flux(U)`` from the current ``U``.
 
 Operator notes:
 - ``fvc.div(phi, T)``: pybFoam has no scalar convection overload, so the
@@ -28,8 +30,6 @@ Staging notes:
 - the fvMesh returned by ``generate_blockmesh`` is registered as ``region0``
   and must be dropped before constructing the disk-read ``fvMesh`` the
   operators use — keeping both breaks field registration.
-- the seed fields are smooth, non-symmetric functions of the cell centres so
-  every operator produces a non-trivial result.
 """
 
 from __future__ import annotations
@@ -54,6 +54,8 @@ from pybFoam import (
 
 from schemes import div_scheme
 
+Op = Callable[[str, "np.ndarray | None"], "np.ndarray | None"]
+
 
 def _internal(result: Any) -> np.ndarray:
     return np.asarray(result.ref().internalField())
@@ -75,29 +77,17 @@ def _generate_mesh(case_dir: Path, runtime: Any) -> None:
     gc.collect()
 
 
-def _seed_fields(t: Any, u: Any, centres: np.ndarray) -> None:
-    """Seed deterministic analytic values into T and U and write them to 0/."""
-    span = centres.max(axis=0) - centres.min(axis=0)
-    scale = float(span.max())
-    x, y, z = (centres[:, i] / scale for i in range(3))
-
-    t_view = np.asarray(t.internalField())
-    t_view[:] = 2.0 + np.sin(np.pi * x) * np.cos(np.pi * y) + 0.3 * z
-
-    # nonzero divergence in every direction (U_i must vary with x_i)
-    u_view = np.asarray(u.internalField())
-    u_view[:, 0] = 1.0 + np.sin(np.pi * y) + 0.5 * np.sin(np.pi * x)
-    u_view[:, 1] = 0.5 + np.cos(np.pi * x) + 0.5 * np.cos(np.pi * y)
-    u_view[:, 2] = 0.1 + 0.2 * np.sin(np.pi * z)
-
-    t.correctBoundaryConditions()
-    u.correctBoundaryConditions()
-    pyf.write(t)
-    pyf.write(u)
+def _set_field(field: Any, values: np.ndarray | None) -> None:
+    """Copy pushed values into the field and persist 0/<name> for neon."""
+    assert values is not None
+    view = np.asarray(field.internalField())
+    view[:] = values.reshape(view.shape)
+    field.correctBoundaryConditions()
+    pyf.write(field)
 
 
 def run(case_dir: Path) -> None:
-    """Stage the case, then serve requests.
+    """Generate the mesh, read the fields, then serve requests.
 
     Everything lives in this frame for the whole serve loop — the operator
     closures capture the fields, but ``arg_list``/``runtime``/``mesh`` must
@@ -112,32 +102,44 @@ def run(case_dir: Path) -> None:
     t = volScalarField.read_field(mesh, "T")
     u = volVectorField.read_field(mesh, "U")
     gamma = volScalarField.read_field(mesh, "Gamma")
-    _seed_fields(t, u, np.asarray(mesh.C().internalField()))
     phi = pyf.createPhi(u)
+    centres = np.array(mesh.C().internalField())
 
-    ops: dict[tuple[str, tuple[str, ...]], Callable[[Any], np.ndarray]] = {
-        ("fvc.interpolate", ("T",)): lambda s: _internal(fvc.interpolate(t)),
-        ("fvc.flux", ("U",)): lambda s: _internal(fvc.flux(u)),
-        ("fvc.grad", ("T",)): lambda s: _internal(fvc.grad(t)),
-        ("fvc.div", ("phi",)): lambda s: _internal(fvc.div(phi)),
-        ("fvc.div", ("phi", "T")): lambda s: _internal(
+    ops: dict[tuple[str, tuple[str, ...]], Op] = {
+        ("mesh.C", ()): lambda s, d: centres,
+        ("field.get", ("T",)): lambda s, d: np.array(t.internalField()),
+        ("field.get", ("U",)): lambda s, d: np.array(u.internalField()),
+        ("field.get", ("Gamma",)): lambda s, d: np.array(gamma.internalField()),
+        ("field.set", ("T",)): lambda s, d: _set_field(t, d),
+        ("field.set", ("U",)): lambda s, d: _set_field(u, d),
+        ("field.set", ("Gamma",)): lambda s, d: _set_field(gamma, d),
+        ("flux.update", ("U",)): lambda s, d: phi.assign(fvc.flux(u)),
+        ("fvc.interpolate", ("T",)): lambda s, d: _internal(fvc.interpolate(t)),
+        ("fvc.flux", ("U",)): lambda s, d: _internal(fvc.flux(u)),
+        ("fvc.grad", ("T",)): lambda s, d: _internal(fvc.grad(t)),
+        ("fvc.div", ("phi",)): lambda s, d: _internal(fvc.div(phi)),
+        ("fvc.div", ("phi", "T")): lambda s, d: _internal(
             fvc.div(fvc.flux(phi, t, key=f"divT_{s}"))
         ),
-        ("fvc.div", ("phi", "U")): lambda s: _internal(
+        ("fvc.div", ("phi", "U")): lambda s, d: _internal(
             fvc.div(phi, u, scheme=div_scheme(s, "U"))
         ),
-        ("fvc.laplacian", ("Gamma", "T")): lambda s: _internal(fvc.laplacian(gamma, t)),
-        ("fvc.laplacian", ("Gamma", "U")): lambda s: _internal(fvc.laplacian(gamma, u)),
-        ("fvm.div", ("phi", "T")): lambda s: _matrix_apply(
+        ("fvc.laplacian", ("Gamma", "T")): lambda s, d: _internal(
+            fvc.laplacian(gamma, t)
+        ),
+        ("fvc.laplacian", ("Gamma", "U")): lambda s, d: _internal(
+            fvc.laplacian(gamma, u)
+        ),
+        ("fvm.div", ("phi", "T")): lambda s, d: _matrix_apply(
             fvScalarMatrix(fvm.div(phi, t, scheme=div_scheme(s, "T"))), t
         ),
-        ("fvm.div", ("phi", "U")): lambda s: _matrix_apply(
+        ("fvm.div", ("phi", "U")): lambda s, d: _matrix_apply(
             fvVectorMatrix(fvm.div(phi, u, scheme=div_scheme(s, "U"))), u
         ),
-        ("fvm.laplacian", ("Gamma", "T")): lambda s: _matrix_apply(
+        ("fvm.laplacian", ("Gamma", "T")): lambda s, d: _matrix_apply(
             fvScalarMatrix(fvm.laplacian(gamma, t)), t
         ),
-        ("fvm.laplacian", ("Gamma", "U")): lambda s: _matrix_apply(
+        ("fvm.laplacian", ("Gamma", "U")): lambda s, d: _matrix_apply(
             fvVectorMatrix(fvm.laplacian(gamma, u)), u
         ),
     }
@@ -145,7 +147,7 @@ def run(case_dir: Path) -> None:
     _serve(ops)
 
 
-def _serve(ops: dict[tuple[str, tuple[str, ...]], Callable[[Any], np.ndarray]]) -> None:
+def _serve(ops: dict[tuple[str, tuple[str, ...]], Op]) -> None:
     for line in sys.stdin:
         line = line.strip()
         if not line:
@@ -154,10 +156,12 @@ def _serve(ops: dict[tuple[str, tuple[str, ...]], Callable[[Any], np.ndarray]]) 
         if request.get("exit"):
             return
         try:
+            data = np.load(request["data"]) if request.get("data") else None
             result = ops[(request["func"], tuple(request["args"]))](
-                request.get("scheme")
+                request.get("scheme"), data
             )
-            np.save(request["out"], result)
+            if result is not None:
+                np.save(request["out"], result)
             reply: dict[str, str] = {"status": "ok"}
         except Exception as exc:  # noqa: BLE001 — report to the client, keep serving
             reply = {"status": "error", "message": f"{type(exc).__name__}: {exc}"}

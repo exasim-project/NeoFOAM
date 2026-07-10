@@ -6,19 +6,23 @@
 Both backends hold per-process global state (one ``Foam::Time``, one Kokkos
 runtime), so the test process cannot evaluate them directly on three meshes.
 Every backend method forwards the call to a persistent worker subprocess
-bound to the staged case of the field's ``mesh``/``executor`` (the ``T``,
-``U``, ``Gamma``, ``phi`` fixtures bind that per test), executes the real
-operator there, and returns the internal field as a numpy array (neon
-results are copied to host).
+bound to the staged case of the field's ``case``/``executor`` (tests obtain
+fields from ``case_setup.simulation(...)``), executes the real operator
+there, and returns the internal field as a numpy array (neon results are
+copied to host).
 
 The mapping is one-to-one: ``pyb.fvc.div(phi, U, scheme=...)`` runs
 ``fvc.div(phi, U, scheme=...)`` in the pybFoam worker; ``nb.imp.div(...)``
 assembles the implicit NeoN operator and applies its matrix. See
 ``of_worker.py`` / ``neon_worker.py`` for the exact per-operator code.
 
-The pybFoam worker also stages its case at startup (mesh generation via
-``pybFoam.meshing`` + analytic field seeding) and signals ``#READY``; the
-``WorkerPool`` in ``conftest.py`` awaits that before starting neon workers.
+The wire protocol is JSON lines on stdin/stdout: requests carry an optional
+``data`` .npy path (arrays pushed *into* the worker, e.g. field values set
+by a test) and answers land as ``<out>.npy`` files; the ``#RESULT`` reply
+prefix separates them from OpenFOAM/NeoN log noise. The pybFoam worker also
+stages its case at startup (mesh generation via ``pybFoam.meshing``) and
+signals ``#READY``; the ``WorkerPool`` in ``conftest.py`` awaits that before
+starting neon workers.
 """
 
 from __future__ import annotations
@@ -27,11 +31,13 @@ import json
 import os
 import subprocess
 import sys
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
+
+if TYPE_CHECKING:
+    from case_setup import Field
 
 _RESULT_PREFIX = "#RESULT "
 
@@ -40,24 +46,15 @@ _RESULT_PREFIX = "#RESULT "
 POOL: Any = None
 
 
-@dataclass(frozen=True)
-class Field:
-    """A staged-case field, bound to the test's mesh and executor."""
-
-    name: str
-    mesh: str
-    executor: str
+def _of_worker(field: "Field") -> "Worker":
+    return POOL.of_worker(field.case)
 
 
-def _of_worker(field: Field) -> "Worker":
-    return POOL.of_worker(field.mesh)
+def _neon_worker(field: "Field") -> "Worker":
+    return POOL.neon_worker(field.case, field.executor)
 
 
-def _neon_worker(field: Field) -> "Worker":
-    return POOL.neon_worker(field.mesh, field.executor)
-
-
-def _names(fields: tuple[Field, ...]) -> tuple[str, ...]:
+def _names(fields: "tuple[Field, ...]") -> tuple[str, ...]:
     return tuple(field.name for field in fields)
 
 
@@ -93,12 +90,20 @@ class Worker:
             f"(exit code {self._proc.poll()}, log: {self._log_path})"
         )
 
-    def evaluate(
-        self, func: str, args: tuple[str, ...], scheme: str | None
-    ) -> np.ndarray:
+    def _request(
+        self,
+        func: str,
+        args: tuple[str, ...],
+        scheme: str | None,
+        data: np.ndarray | None,
+    ) -> Path:
         self._count += 1
         out = self._out_dir / f"{self._count:04d}.npy"
         request = {"func": func, "args": list(args), "scheme": scheme, "out": str(out)}
+        if data is not None:
+            data_path = self._out_dir / f"{self._count:04d}_in.npy"
+            np.save(data_path, data)
+            request["data"] = str(data_path)
         assert self._proc.stdin is not None and self._proc.stdout is not None
         self._proc.stdin.write(json.dumps(request) + "\n")
         self._proc.stdin.flush()
@@ -110,11 +115,23 @@ class Worker:
             reply = json.loads(line[len(_RESULT_PREFIX) :])
             if reply["status"] != "ok":
                 raise RuntimeError(f"{func}{args} failed in worker: {reply['message']}")
-            return np.load(out)
+            return out
         raise RuntimeError(
             f"worker exited while evaluating {func}{args} "
             f"(exit code {self._proc.poll()}, log: {self._log_path})"
         )
+
+    def evaluate(
+        self, func: str, args: tuple[str, ...], scheme: str | None = None
+    ) -> np.ndarray:
+        """Run an op that produces an array result."""
+        return np.load(self._request(func, args, scheme, None))
+
+    def command(
+        self, func: str, args: tuple[str, ...], data: np.ndarray | None = None
+    ) -> None:
+        """Run an op for its side effect, optionally shipping ``data`` along."""
+        self._request(func, args, None, data)
 
     def close(self) -> None:
         if self._proc.poll() is None and self._proc.stdin is not None:
@@ -130,35 +147,31 @@ class Worker:
 class PybFvc:
     """``pybFoam.fvc`` — explicit operators, evaluated in the pybFoam worker."""
 
-    def interpolate(self, field: Field) -> np.ndarray:
-        return _of_worker(field).evaluate("fvc.interpolate", (field.name,), None)
+    def interpolate(self, field: "Field") -> np.ndarray:
+        return _of_worker(field).evaluate("fvc.interpolate", (field.name,))
 
-    def flux(self, field: Field) -> np.ndarray:
-        return _of_worker(field).evaluate("fvc.flux", (field.name,), None)
+    def flux(self, field: "Field") -> np.ndarray:
+        return _of_worker(field).evaluate("fvc.flux", (field.name,))
 
-    def grad(self, field: Field) -> np.ndarray:
-        return _of_worker(field).evaluate("fvc.grad", (field.name,), None)
+    def grad(self, field: "Field") -> np.ndarray:
+        return _of_worker(field).evaluate("fvc.grad", (field.name,))
 
-    def div(self, *fields: Field, scheme: str = "linear") -> np.ndarray:
+    def div(self, *fields: "Field", scheme: str = "linear") -> np.ndarray:
         return _of_worker(fields[0]).evaluate("fvc.div", _names(fields), scheme)
 
-    def laplacian(self, gamma: Field, field: Field) -> np.ndarray:
-        return _of_worker(field).evaluate(
-            "fvc.laplacian", (gamma.name, field.name), None
-        )
+    def laplacian(self, gamma: "Field", field: "Field") -> np.ndarray:
+        return _of_worker(field).evaluate("fvc.laplacian", (gamma.name, field.name))
 
 
 class PybFvm:
     """``pybFoam.fvm`` — implicit operators, returned as the matrix applied to
     the current field (``M & psi``)."""
 
-    def div(self, *fields: Field, scheme: str = "linear") -> np.ndarray:
+    def div(self, *fields: "Field", scheme: str = "linear") -> np.ndarray:
         return _of_worker(fields[0]).evaluate("fvm.div", _names(fields), scheme)
 
-    def laplacian(self, gamma: Field, field: Field) -> np.ndarray:
-        return _of_worker(field).evaluate(
-            "fvm.laplacian", (gamma.name, field.name), None
-        )
+    def laplacian(self, gamma: "Field", field: "Field") -> np.ndarray:
+        return _of_worker(field).evaluate("fvm.laplacian", (gamma.name, field.name))
 
 
 class PybBackend:
@@ -172,29 +185,25 @@ class PybBackend:
 class NeonExp:
     """``neon.exp`` — explicit DSL operators (``nfb.evaluate_explicit``)."""
 
-    def grad(self, field: Field) -> np.ndarray:
-        return _neon_worker(field).evaluate("exp.grad", (field.name,), None)
+    def grad(self, field: "Field") -> np.ndarray:
+        return _neon_worker(field).evaluate("exp.grad", (field.name,))
 
-    def div(self, *fields: Field, scheme: str = "linear") -> np.ndarray:
+    def div(self, *fields: "Field", scheme: str = "linear") -> np.ndarray:
         return _neon_worker(fields[0]).evaluate("exp.div", _names(fields), scheme)
 
-    def laplacian(self, gamma: Field, field: Field) -> np.ndarray:
-        return _neon_worker(field).evaluate(
-            "exp.laplacian", (gamma.name, field.name), None
-        )
+    def laplacian(self, gamma: "Field", field: "Field") -> np.ndarray:
+        return _neon_worker(field).evaluate("exp.laplacian", (gamma.name, field.name))
 
 
 class NeonImp:
     """``neon.imp`` — implicit DSL operators, assembled via
     ``nfb.evaluate_implicit`` and returned as ``(A·psi - b) / V``."""
 
-    def div(self, *fields: Field, scheme: str = "linear") -> np.ndarray:
+    def div(self, *fields: "Field", scheme: str = "linear") -> np.ndarray:
         return _neon_worker(fields[0]).evaluate("imp.div", _names(fields), scheme)
 
-    def laplacian(self, gamma: Field, field: Field) -> np.ndarray:
-        return _neon_worker(field).evaluate(
-            "imp.laplacian", (gamma.name, field.name), None
-        )
+    def laplacian(self, gamma: "Field", field: "Field") -> np.ndarray:
+        return _neon_worker(field).evaluate("imp.laplacian", (gamma.name, field.name))
 
 
 class NeonBackend:
@@ -209,11 +218,11 @@ class NeonBackend:
         self.exp = NeonExp()
         self.imp = NeonImp()
 
-    def interpolate(self, field: Field) -> np.ndarray:
-        return _neon_worker(field).evaluate("interpolate", (field.name,), None)
+    def interpolate(self, field: "Field") -> np.ndarray:
+        return _neon_worker(field).evaluate("interpolate", (field.name,))
 
-    def flux(self, field: Field) -> np.ndarray:
-        return _neon_worker(field).evaluate("flux", (field.name,), None)
+    def flux(self, field: "Field") -> np.ndarray:
+        return _neon_worker(field).evaluate("flux", (field.name,))
 
 
 pyb = PybBackend()

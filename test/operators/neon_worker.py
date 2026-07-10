@@ -9,6 +9,15 @@ its process, reads the staged fields once, then serves JSON-line requests
 from stdin (``{"func", "args", "scheme", "out"}``), saving each result as
 ``<out>.npy`` and replying ``#RESULT {...}`` on stdout.
 
+Field values come from the tests via the pybFoam worker: after it persists
+``0/<name>``, a ``field.reload`` request re-reads the field from disk into a
+fresh NeoN field on this worker's executor (host→device copy on GPU) —
+re-registration is safe, the ``VectorCollection`` keys documents uniquely.
+``flux.update`` rebuilds ``phi`` from the on-disk ``U`` exactly like startup
+(``nfb.create_phi`` runs OpenFOAM's ``fvc::flux``), so both backends consume
+a bit-identical flux. The live fields are looked up per request from the
+``fields`` dict, never captured in the op closures.
+
 Operator notes:
 - explicit ops run through ``nfb.evaluate_explicit`` (zero the result vector,
   ``read`` the scheme, ``explicitOperation``); implicit ops through
@@ -18,7 +27,7 @@ Operator notes:
   straight to the operator's ``read`` as a TokenList. Everything else reads
   the staged ``system/fvSchemes`` dictionary.
 - all results are copied to host; every NeoN object stays local to
-  ``_build_ops``/``serve`` so teardown happens before ``nn.finalize()``.
+  ``serve`` so teardown happens before ``nn.finalize()``.
 """
 
 from __future__ import annotations
@@ -36,6 +45,8 @@ import pybFoam as pyf
 
 from neofoam import neofoam_bindings as nfb
 from schemes import div_scheme
+
+Op = Callable[[str, "np.ndarray | None"], "np.ndarray | None"]
 
 
 def _to_numpy(vec: Any) -> np.ndarray:
@@ -56,12 +67,17 @@ def serve(case_dir: Path, executor: str) -> None:
     rt = nfb.create_adapter_run_time(run_time, executor)
     fv_schemes = nfb.map_fv_schemes(rt.fv_schemes_dict)
 
-    t = nfb.read_scalar_volume_field(rt, "T")
-    u = nfb.read_vector_volume_field(rt, "U")
-    gamma = nfb.create_uniform_surface_field(rt, "Gamma", 1.0)
-    phi = nfb.create_phi(rt, "U")
-    n_cells = t.size()
+    fields: dict[str, Any] = {
+        "T": nfb.read_scalar_volume_field(rt, "T"),
+        "U": nfb.read_vector_volume_field(rt, "U"),
+        "Gamma": nfb.create_uniform_surface_field(rt, "Gamma", 1.0),
+        "phi": nfb.create_phi(rt, "U"),
+    }
+    n_cells = fields["T"].size()
     volumes = _to_numpy(rt.nf_mesh.cell_volumes)
+
+    def reload_field(name: str, reader: Callable[[], Any]) -> None:
+        fields[name] = reader()
 
     def div_tokens(scheme: str, field: str) -> Any:
         return nn.TokenList(div_scheme(scheme, field).split())
@@ -86,46 +102,61 @@ def serve(case_dir: Path, executor: str) -> None:
         nfb.evaluate_implicit(op, schemes, psi, result)
         return _to_numpy(result) / volumes[:, None]
 
-    def interpolate_t(_: Any) -> np.ndarray:
+    def interpolate_t(_s: Any, _d: Any) -> np.ndarray:
         interp = nn.SurfaceInterpolationScalar(
             rt.executor, rt.nf_mesh, nn.TokenList(["linear"])
         )
-        return _to_numpy(interp.interpolate(t).internal_vector())
+        return _to_numpy(interp.interpolate(fields["T"]).internal_vector())
 
-    ops: dict[tuple[str, tuple[str, ...]], Callable[[Any], np.ndarray]] = {
+    ops: dict[tuple[str, tuple[str, ...]], Op] = {
+        ("field.reload", ("T",)): lambda s, d: reload_field(
+            "T", lambda: nfb.read_scalar_volume_field(rt, "T")
+        ),
+        ("field.reload", ("U",)): lambda s, d: reload_field(
+            "U", lambda: nfb.read_vector_volume_field(rt, "U")
+        ),
+        ("flux.update", ("U",)): lambda s, d: reload_field(
+            "phi", lambda: nfb.create_phi(rt, "U")
+        ),
         ("interpolate", ("T",)): interpolate_t,
-        ("flux", ("U",)): lambda s: _to_numpy(nfb.flux(u).internal_vector()),
-        ("exp.grad", ("T",)): lambda s: explicit_vector(nn.exp.grad(t), fv_schemes),
-        ("exp.div", ("phi",)): lambda s: explicit_scalar(nn.exp.div(phi), fv_schemes),
-        ("exp.div", ("phi", "T")): lambda s: explicit_scalar(
-            nn.exp.div(phi, t), div_tokens(s, "T")
+        ("flux", ("U",)): lambda s, d: _to_numpy(
+            nfb.flux(fields["U"]).internal_vector()
         ),
-        ("exp.div", ("phi", "U")): lambda s: explicit_vector(
-            nfb.exp_div(phi, u), div_tokens(s, "U")
+        ("exp.grad", ("T",)): lambda s, d: explicit_vector(
+            nn.exp.grad(fields["T"]), fv_schemes
         ),
-        ("exp.laplacian", ("Gamma", "T")): lambda s: explicit_scalar(
-            nn.exp.laplacian(gamma, t), fv_schemes
+        ("exp.div", ("phi",)): lambda s, d: explicit_scalar(
+            nn.exp.div(fields["phi"]), fv_schemes
         ),
-        ("exp.laplacian", ("Gamma", "U")): lambda s: explicit_vector(
-            nn.exp.laplacian(gamma, u), fv_schemes
+        ("exp.div", ("phi", "T")): lambda s, d: explicit_scalar(
+            nn.exp.div(fields["phi"], fields["T"]), div_tokens(s, "T")
         ),
-        ("imp.div", ("phi", "T")): lambda s: implicit_scalar(
-            nn.imp.div(phi, t), t, div_tokens(s, "T")
+        ("exp.div", ("phi", "U")): lambda s, d: explicit_vector(
+            nfb.exp_div(fields["phi"], fields["U"]), div_tokens(s, "U")
         ),
-        ("imp.div", ("phi", "U")): lambda s: implicit_vector(
-            nn.imp.div(phi, u), u, div_tokens(s, "U")
+        ("exp.laplacian", ("Gamma", "T")): lambda s, d: explicit_scalar(
+            nn.exp.laplacian(fields["Gamma"], fields["T"]), fv_schemes
         ),
-        ("imp.laplacian", ("Gamma", "T")): lambda s: implicit_scalar(
-            nn.imp.laplacian(gamma, t), t, fv_schemes
+        ("exp.laplacian", ("Gamma", "U")): lambda s, d: explicit_vector(
+            nn.exp.laplacian(fields["Gamma"], fields["U"]), fv_schemes
         ),
-        ("imp.laplacian", ("Gamma", "U")): lambda s: implicit_vector(
-            nn.imp.laplacian(gamma, u), u, fv_schemes
+        ("imp.div", ("phi", "T")): lambda s, d: implicit_scalar(
+            nn.imp.div(fields["phi"], fields["T"]), fields["T"], div_tokens(s, "T")
+        ),
+        ("imp.div", ("phi", "U")): lambda s, d: implicit_vector(
+            nn.imp.div(fields["phi"], fields["U"]), fields["U"], div_tokens(s, "U")
+        ),
+        ("imp.laplacian", ("Gamma", "T")): lambda s, d: implicit_scalar(
+            nn.imp.laplacian(fields["Gamma"], fields["T"]), fields["T"], fv_schemes
+        ),
+        ("imp.laplacian", ("Gamma", "U")): lambda s, d: implicit_vector(
+            nn.imp.laplacian(fields["Gamma"], fields["U"]), fields["U"], fv_schemes
         ),
     }
     _serve(ops)
 
 
-def _serve(ops: dict[tuple[str, tuple[str, ...]], Callable[[Any], np.ndarray]]) -> None:
+def _serve(ops: dict[tuple[str, tuple[str, ...]], Op]) -> None:
     for line in sys.stdin:
         line = line.strip()
         if not line:
@@ -134,10 +165,12 @@ def _serve(ops: dict[tuple[str, tuple[str, ...]], Callable[[Any], np.ndarray]]) 
         if request.get("exit"):
             return
         try:
+            data = np.load(request["data"]) if request.get("data") else None
             result = ops[(request["func"], tuple(request["args"]))](
-                request.get("scheme")
+                request.get("scheme"), data
             )
-            np.save(request["out"], result)
+            if result is not None:
+                np.save(request["out"], result)
             reply: dict[str, str] = {"status": "ok"}
         except Exception as exc:  # noqa: BLE001 — report to the client, keep serving
             reply = {"status": "error", "message": f"{type(exc).__name__}: {exc}"}

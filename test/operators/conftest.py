@@ -1,22 +1,22 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Fixtures for the cross-backend operator parity tests.
+"""Session plumbing for the cross-backend operator parity tests.
 
-Tests import the two backend singletons (``pyb`` — pybFoam/OpenFOAM,
-``nb`` — neon/NeoN) from ``backends`` and take the staged-case fields
-(``T``, ``U``, ``Gamma``, ``phi``) as fixtures, which bind them to the
-test's ``mesh`` and ``executor`` params. Every backend call returns a plain
-numpy array; the asserts live in the test body.
+Tests build their own setup in the test body: ``simulation(mesh, executor)``
+(from ``case_setup``) returns the session-cached case handle, fields are
+loaded by name and seeded with numpy, and the backend singletons ``pyb`` /
+``nb`` (from ``backends``) evaluate the operators. This module only provides
+the parametrization constants and the session ``WorkerPool``.
 
 Per mesh the case is staged once per session: the checked-in inputs
 (``cases/common`` plus ``cases/<mesh>/blockMeshDict``) are copied to a temp
-dir, and the pybFoam worker generates the mesh and seeds the deterministic
-``T``/``U`` fields in-process at startup (``pybFoam.meshing`` — no external
-OpenFOAM binaries). Each backend/executor then gets one persistent worker
-subprocess on that case (one ``Foam::Time`` / Kokkos runtime per process —
-see ``backends.py``); the pybFoam worker always starts first, since the neon
-workers read the mesh and fields it wrote.
+dir, and the pybFoam worker generates the mesh in-process at startup
+(``pybFoam.meshing`` — no external OpenFOAM binaries). Each backend/executor
+then gets one persistent worker subprocess on that case (one ``Foam::Time``
+/ Kokkos runtime per process — see ``backends.py``); the pybFoam worker
+always starts first, since the neon workers read the mesh and the
+test-seeded fields it writes.
 
 pybFoam and neon are hard requirements — nothing here is guarded or skipped
 except GPU-executor runs on hosts without a GPU device.
@@ -29,11 +29,14 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Iterator
+from typing import TYPE_CHECKING, Iterator
 
 import backends
 import pytest
-from backends import Field, Worker
+from backends import Worker
+
+if TYPE_CHECKING:
+    import numpy as np
 
 TEST_DIR = Path(__file__).parent
 CASES_DIR = TEST_DIR / "cases"
@@ -46,7 +49,7 @@ EXECUTORS = ["Serial", "GPU"]
 
 
 def _stage_case(mesh: str, dest: Path) -> Path:
-    """Copy the checked-in case inputs; the of_worker meshes and seeds on top."""
+    """Copy the checked-in case inputs; the of_worker meshes on top."""
     shutil.copytree(CASES_DIR / "common", dest)
     shutil.copytree(dest / "0.orig", dest / "0")
     shutil.copy(CASES_DIR / mesh / "blockMeshDict", dest / "system")
@@ -57,13 +60,19 @@ class WorkerPool:
     """Stages each mesh once and keeps one worker per backend/case/executor.
 
     The pybFoam worker is always started (and awaited) first — it generates
-    the mesh and seeds the fields that the neon workers read from disk.
+    the mesh and writes the fields that the neon workers read from disk.
     """
 
     def __init__(self, tmp_path_factory: pytest.TempPathFactory):
         self._tmp = tmp_path_factory
         self._cases: dict[str, Path] = {}
         self._workers: dict[tuple[str, ...], Worker] = {}
+        self._cell_centres: dict[str, "np.ndarray"] = {}
+        self._gpu_available: bool | None = None
+
+    def case_dir(self, mesh: str) -> Path:
+        self.of_worker(mesh)  # ensures the case is staged
+        return self._cases[mesh]
 
     def of_worker(self, mesh: str) -> Worker:
         key = ("of", mesh)
@@ -84,6 +93,29 @@ class WorkerPool:
             )
         return self._workers[key]
 
+    def cell_centres(self, mesh: str) -> "np.ndarray":
+        if mesh not in self._cell_centres:
+            self._cell_centres[mesh] = self.of_worker(mesh).evaluate("mesh.C", ())
+        return self._cell_centres[mesh]
+
+    def gpu_available(self) -> bool:
+        """Whether the neon GPU executor can be constructed on this host."""
+        if self._gpu_available is None:
+            env = {**os.environ, "FOAM_SIGFPE": "false"}
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    "-c",
+                    "import neon._neon as nn; nn.initialize(['probe']); "
+                    "nn.GPUExecutor(); nn.finalize()",
+                ],
+                env=env,
+                capture_output=True,
+                timeout=120.0,
+            )
+            self._gpu_available = proc.returncode == 0
+        return self._gpu_available
+
     def close(self) -> None:
         for worker in self._workers.values():
             worker.close()
@@ -96,55 +128,3 @@ def _worker_pool(tmp_path_factory: pytest.TempPathFactory) -> "Iterator[None]":
     yield
     backends.POOL.close()
     backends.POOL = None
-
-
-@pytest.fixture(scope="session")
-def gpu_available() -> bool:
-    """Whether the neon GPU executor can be constructed on this host."""
-    env = {**os.environ, "FOAM_SIGFPE": "false"}
-    proc = subprocess.run(
-        [
-            sys.executable,
-            "-c",
-            "import neon._neon as nn; nn.initialize(['probe']); "
-            "nn.GPUExecutor(); nn.finalize()",
-        ],
-        env=env,
-        capture_output=True,
-        timeout=120.0,
-    )
-    return proc.returncode == 0
-
-
-def _bound_field(
-    name: str, request: pytest.FixtureRequest, gpu_available: bool
-) -> Field:
-    """Bind a staged-case field to the test's ``mesh``/``executor`` params."""
-    params = request.node.callspec.params
-    if params["executor"] == "GPU" and not gpu_available:
-        pytest.skip("no GPU executor available on this host")
-    return Field(name, params["mesh"], params["executor"])
-
-
-@pytest.fixture
-def T(request: pytest.FixtureRequest, gpu_available: bool) -> Field:
-    """Seeded ``0/T``: ``2 + sin(pi x) cos(pi y) + 0.3 z`` (see of_worker.py)."""
-    return _bound_field("T", request, gpu_available)
-
-
-@pytest.fixture
-def U(request: pytest.FixtureRequest, gpu_available: bool) -> Field:
-    """Seeded ``0/U`` with divergence in every direction (see of_worker.py)."""
-    return _bound_field("U", request, gpu_available)
-
-
-@pytest.fixture
-def Gamma(request: pytest.FixtureRequest, gpu_available: bool) -> Field:
-    """Uniform diffusivity 1: volume field on pybFoam, surface field on neon."""
-    return _bound_field("Gamma", request, gpu_available)
-
-
-@pytest.fixture
-def phi(request: pytest.FixtureRequest, gpu_available: bool) -> Field:
-    """Face flux derived from ``U`` (``fvc::flux(U)`` — no ``0/phi`` is staged)."""
-    return _bound_field("phi", request, gpu_available)

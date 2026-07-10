@@ -7,13 +7,24 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-from backends import Field, nb, pyb
+from backends import nb, pyb
+from case_setup import simulation
 from conftest import EXECUTORS, MESH_NAMES
 
 
 @pytest.mark.parametrize("executor", EXECUTORS)
 @pytest.mark.parametrize("mesh", MESH_NAMES)
-def test_flux_U(mesh: str, executor: str, U: Field) -> None:
+def test_flux_U(mesh: str, executor: str) -> None:
+    sim = simulation(mesh, executor)
+    x, y, z = sim.mesh.cell_centres.T
+
+    U = sim.field("U")
+    u = np.asarray(U)
+    u[:, 0] = 1.0 + np.sin(np.pi * y) + 0.5 * np.sin(np.pi * x)
+    u[:, 1] = 0.5 + np.cos(np.pi * x) + 0.5 * np.cos(np.pi * y)
+    u[:, 2] = 0.1 + 0.2 * np.sin(np.pi * z)
+    U[:] = u
+
     pyb_res = pyb.fvc.flux(U)
     nb_res = nb.flux(U)
 
