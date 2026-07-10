@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Shared constants + NeoN-dict helpers for the incompressibleVoFNeon models.
+"""Shared constants + NeoN-dict helpers for the incompressibleVoFNeoN models.
 
 ``ALPHA1_FIELD`` is the single definition of the phase-fraction field name the
 solver reads/advects — interFoam derives it from the ``phases`` entry in

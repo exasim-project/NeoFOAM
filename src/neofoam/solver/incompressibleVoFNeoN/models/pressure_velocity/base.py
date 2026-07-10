@@ -32,7 +32,7 @@ class PressureVelocityAlgorithmNeoN:
         fv_solution = pyf.dictionary.read("system/fvSolution")
         if not fv_solution.found("PIMPLE"):
             warnings.warn(
-                "No PIMPLE dict found in fvSolution. incompressibleVoFNeon always "
+                "No PIMPLE dict found in fvSolution. incompressibleVoFNeoN always "
                 "uses PIMPLE. Continuing with default PIMPLE settings.",
                 stacklevel=2,
             )
@@ -43,7 +43,7 @@ class PressureVelocityAlgorithmNeoN:
         """Programmatically create the PIMPLE algorithm model."""
         if algorithm_type not in {"Pimple", "PIMPLE"}:
             raise ValueError(
-                f"incompressibleVoFNeon only supports the PIMPLE algorithm; "
+                f"incompressibleVoFNeoN only supports the PIMPLE algorithm; "
                 f"requested {algorithm_type!r}."
             )
         return pimpleNeoN

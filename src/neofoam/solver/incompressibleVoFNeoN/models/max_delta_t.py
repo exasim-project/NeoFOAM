@@ -16,7 +16,7 @@ from pydantic import Field
 from neofoam.algorithms.solution_loop.interfaces import timeStepConstraint
 from neofoam.io import OF, BaseConfig, IOStrategy
 
-from .incompressibleVoFNeonModel import Model, incompressibleVoFNeonModel
+from .incompressibleVoFNeoNModel import Model, incompressibleVoFNeoNModel
 
 
 @IOStrategy(OF("system/controlDict"))
@@ -26,7 +26,7 @@ class MaxDeltaTConfig(BaseConfig):
     maxDeltaT: float = Field(gt=0.0)
 
 
-maxDeltaT = Model("maxDeltaT").register_with(incompressibleVoFNeonModel)
+maxDeltaT = Model("maxDeltaT").register_with(incompressibleVoFNeoNModel)
 maxDeltaT.config(MaxDeltaTConfig)
 
 

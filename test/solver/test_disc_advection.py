@@ -15,7 +15,7 @@ Both backends run on the SAME uniform mesh + SAME initial disc (setFields):
 * **pyf reference** = the pybFoam ``incompressibleVoF`` alpha model
   (``_solve_alpha_python``): full ``alphaEqn.H`` — Gauss vanLeer + interface
   compression (``cAlpha=1``) + ``MULESCorr`` + ``nAlphaCorr=2``.
-* **NeoN** = what ``incompressibleVoFNeon`` runs: a single explicit MULES step
+* **NeoN** = what ``incompressibleVoFNeoN`` runs: a single explicit MULES step
   (``nfb.mules_explicit_solve``) with linear interpolation and **no** interface
   compression (``cAlpha=0``).
 
@@ -146,7 +146,7 @@ print("NCELLS", int(af.size))
 print("END_OK")
 """
 
-# NeoN: the incompressibleVoFNeon alpha step (explicit MULES, linear, cAlpha=0).
+# NeoN: the incompressibleVoFNeoN alpha step (explicit MULES, linear, cAlpha=0).
 _NEON_DRIVER = f"""
 import gc, numpy as np, pybFoam as pyf, neon._neon as nn, neofoam.neofoam_bindings as nfb
 from neofoam.solver.neoPimpleFoam import _ensure_neon_initialized

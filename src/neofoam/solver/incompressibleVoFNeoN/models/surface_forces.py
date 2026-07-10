@@ -4,7 +4,7 @@
 # NOTE: no `from __future__ import annotations` — keep annotations live so the
 # contributions' field / `Annotated[..., "models"]` params resolve by name.
 
-"""surfaceForces — composable interface forces for incompressibleVoFNeon.
+"""surfaceForces — composable interface forces for incompressibleVoFNeoN.
 
 The ``surfaceForces`` model owns the ``interfaceForce`` extension point: the
 fold SUMS face-force-density contributions in registration order (empty ->
@@ -22,7 +22,7 @@ the case — ``create_fields`` passes the case's optional-model runtimes as bind
 candidates, so no solver edit is needed.
 
 These specs are always-on core physics: they are NOT registered with the
-``incompressibleVoFNeonModel`` optional family (no case detection, no UI
+``incompressibleVoFNeoNModel`` optional family (no case detection, no UI
 catalog entry).
 """
 
@@ -31,7 +31,7 @@ from typing import Annotated, Any, Iterable, Optional
 
 from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
 
-from .incompressibleVoFNeonModel import Model
+from .incompressibleVoFNeoNModel import Model
 
 
 def _no_config(_case_dir: Path, _instance_id: Optional[str]) -> None:

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""incompressibleVoFNeon — solver entrypoint.
+"""incompressibleVoFNeoN — solver entrypoint.
 
 Framework NeoN port of an interFoam-style two-phase VoF solver: the same
 SolverSpec / ModelSpec / StagedInit composition as the pybFoam
@@ -39,7 +39,7 @@ from neofoam.solver.neon_runtime import ensure_neon_initialized
 from .configs import ControlDictConfig
 from .create_fields import create_init
 from .models.alpha_advection.alphaAdvectionModel import alpha_advection_model
-from .models.incompressibleVoFNeonModel import incompressibleVoFNeonModel
+from .models.incompressibleVoFNeoNModel import incompressibleVoFNeoNModel
 from .models.pressure_velocity.base import PressureVelocityAlgorithmNeoN
 from .models.solution_loop import SolutionLoopPredicate
 
@@ -60,20 +60,20 @@ def _core_spec(state: Any, names: set[str]) -> Any:
     )
 
 
-incompressibleVoFNeon = Solver("incompressibleVoFNeon")
+incompressibleVoFNeoN = Solver("incompressibleVoFNeoN")
 
 # Declare the full config schema on the spec, case-free: the solver's own
 # configs plus the model families it owns. Two-phase transport / gravity carry
 # no Python config classes — the NeoN C++ factories read
 # constant/transportProperties / constant/g directly.
-incompressibleVoFNeon.config(ControlDictConfig)
+incompressibleVoFNeoN.config(ControlDictConfig)
 
-incompressibleVoFNeon.models(PressureVelocityAlgorithmNeoN, required=True)  # pick ONE
-incompressibleVoFNeon.models(alpha_advection_model, required=True)  # phase advection
-incompressibleVoFNeon.models(incompressibleVoFNeonModel)  # optional: zero or more
+incompressibleVoFNeoN.models(PressureVelocityAlgorithmNeoN, required=True)  # pick ONE
+incompressibleVoFNeoN.models(alpha_advection_model, required=True)  # phase advection
+incompressibleVoFNeoN.models(incompressibleVoFNeoNModel)  # optional: zero or more
 
 
-@incompressibleVoFNeon.initializer
+@incompressibleVoFNeoN.initializer
 def initialize(
     self: Any, init: Annotated[StagedInitRunner, Depends(create_init)]
 ) -> Context:
@@ -81,7 +81,7 @@ def initialize(
     return init.run()
 
 
-@incompressibleVoFNeon.execution_graph_step
+@incompressibleVoFNeoN.execution_graph_step
 def execution_graph(
     self: Any,
     ctx: Context,
@@ -143,7 +143,7 @@ def run(
     import sys
     from pathlib import Path
 
-    ensure_neon_initialized(list(argv) if argv else ["incompressibleVoFNeon"])
+    ensure_neon_initialized(list(argv) if argv else ["incompressibleVoFNeoN"])
 
     redirect = log_file is not None
     saved_fd: Optional[int] = None
@@ -156,7 +156,7 @@ def run(
         os.close(log_fd)
 
     try:
-        solver = incompressibleVoFNeon.instantiate(argv=argv or [])
+        solver = incompressibleVoFNeoN.instantiate(argv=argv or [])
         ctx = solver.initialize()
 
         builder, model_ops = solver.execution_graph(ctx=ctx)

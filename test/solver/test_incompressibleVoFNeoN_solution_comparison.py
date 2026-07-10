@@ -1,13 +1,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Solution-level comparison: incompressibleVoFNeon vs incompressibleVoF.
+"""Solution-level comparison: incompressibleVoFNeoN vs its two references.
 
-Both VoF variants run the identical damBreak case (fixed dt, so the step
-sequences match and trajectory divergence is excluded) and the written fields
-at the end time are compared. The pybFoam variant is bitwise-verified against
-native interFoam elsewhere (``test/solver/incompressibleVoF/``), so it is the
-reference here; the NeoN variant is run-to-run deterministic.
+The NeoN solver, the pybFoam ``incompressibleVoF`` solver, and native
+``interFoam`` all run the identical damBreak case (fixed dt, so the step
+sequences match and trajectory divergence is excluded) and the NeoN fields at
+the end time are compared against each reference. The pybFoam variant is
+bitwise-verified against native interFoam elsewhere
+(``test/solver/incompressibleVoF/``), so the same tolerances apply to both
+references; the NeoN variant is run-to-run deterministic.
 
 Current measured agreement at t=0.01 (10 fixed steps, 2268 cells):
 alpha relL2 ~8e-4, p_rgh relL2 ~2e-3, U relL2 ~8e-2. The U gap is NOT noise:
@@ -89,16 +91,31 @@ def _run_solver(case: Path, driver: str) -> None:
     assert r.returncode == 0, f"solver failed:\n{r.stdout[-800:]}\n{r.stderr[-2000:]}"
 
 
+def _run_native(case: Path, solver: str) -> None:
+    env = {**os.environ, "FOAM_SIGFPE": "false"}
+    r = subprocess.run(
+        [solver, "-case", str(case)],
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=400,
+    )
+    assert r.returncode == 0, f"{solver} failed:\n{r.stdout[-800:]}\n{r.stderr[-2000:]}"
+
+
+_REFERENCES = ("pybfoam", "interfoam")
+
+
 @pytest.fixture(scope="module")
 def solution_fields(
     tmp_path_factory: pytest.TempPathFactory,
-) -> dict[str, tuple[np.ndarray, np.ndarray]]:
-    """(neon, pybfoam) internal fields at the end time, per compared field."""
+) -> dict[str, dict[str, np.ndarray]]:
+    """Internal fields at the end time, per compared field and per solver tag."""
     repo_root = Path(__file__).parent.parent.parent
     source_case = repo_root / "tutorials" / "damBreak"
 
     cases: dict[str, Path] = {}
-    for tag in ("pybfoam", "neon"):
+    for tag in ("neon", *_REFERENCES):
         case = tmp_path_factory.mktemp(f"damBreak_cmp_{tag}")
         shutil.rmtree(case)
         setup_case(source_case, case, _END_TIME, _END_TIME, run_setfields=True)
@@ -111,41 +128,45 @@ def solution_fields(
     )
     _run_solver(
         cases["neon"],
-        "from neofoam.solver.incompressibleVoFNeon import run\nrun(['incompressibleVoFNeon'])",
+        "from neofoam.solver.incompressibleVoFNeoN import run\nrun(['incompressibleVoFNeoN'])",
     )
+    _run_native(cases["interfoam"], "interFoam")
 
-    fields: dict[str, tuple[np.ndarray, np.ndarray]] = {}
+    fields: dict[str, dict[str, np.ndarray]] = {}
     for name, parse in (
         ("alpha.water", _parse_scalar),
         ("p_rgh", _parse_scalar),
         ("U", _parse_vector),
     ):
-        fields[name] = (
-            parse(cases["neon"] / _TIME_NAME / name),
-            parse(cases["pybfoam"] / _TIME_NAME / name),
-        )
+        fields[name] = {
+            tag: parse(case / _TIME_NAME / name) for tag, case in cases.items()
+        }
     return fields
 
 
+@pytest.mark.parametrize("reference", _REFERENCES)
 @pytest.mark.parametrize("field_name", ["alpha.water", "p_rgh", "U"])
 def test_field_agreement(
-    solution_fields: dict[str, tuple[np.ndarray, np.ndarray]], field_name: str
+    solution_fields: dict[str, dict[str, np.ndarray]], field_name: str, reference: str
 ) -> None:
-    """Each written field agrees with the pybFoam reference within tolerance."""
-    neon, pybfoam = solution_fields[field_name]
-    rel = _rel_l2(neon, pybfoam)
+    """Each written field agrees with both references within tolerance."""
+    neon = solution_fields[field_name]["neon"]
+    ref = solution_fields[field_name][reference]
+    rel = _rel_l2(neon, ref)
     assert rel < _TOLERANCES[field_name], (
-        f"{field_name}: relL2 {rel:.3e} exceeds {_TOLERANCES[field_name]:.1e} "
-        "(regression vs the locked-in NeoN/pybFoam agreement)"
+        f"{field_name}: relL2 {rel:.3e} vs {reference} exceeds "
+        f"{_TOLERANCES[field_name]:.1e} (regression vs the locked-in agreement)"
     )
 
 
+@pytest.mark.parametrize("reference", _REFERENCES)
 def test_interface_position_agrees(
-    solution_fields: dict[str, tuple[np.ndarray, np.ndarray]],
+    solution_fields: dict[str, dict[str, np.ndarray]], reference: str
 ) -> None:
     """The alpha>0.5 interface indicator matches in all but a few cells."""
-    neon, pybfoam = solution_fields["alpha.water"]
-    mismatched = int(((neon > 0.5) != (pybfoam > 0.5)).sum())
+    neon = solution_fields["alpha.water"]["neon"]
+    ref = solution_fields["alpha.water"][reference]
+    mismatched = int(((neon > 0.5) != (ref > 0.5)).sum())
     assert mismatched <= 5, (
-        f"interface indicator differs in {mismatched}/{neon.size} cells"
+        f"interface indicator differs vs {reference} in {mismatched}/{neon.size} cells"
     )

@@ -48,7 +48,7 @@ def rel_err(a, b):
 # minimal runtime + damBreak field construction the primitive-parity drivers
 # need (rt / alpha1 / phi / p_rgh / U / phase). Replaces the former
 # ``NeoInterFoam(...).setup()`` scaffold now that the imperative solver is gone;
-# the framework solver ``incompressibleVoFNeon`` builds the same state through
+# the framework solver ``incompressibleVoFNeoN`` builds the same state through
 # its ModelSpec ``@build`` steps (create_fields.create_neon_runtime registers
 # the identical VoF schemes). ``setup()`` returns a SimpleNamespace holding the
 # argList + Time too, so ``Foam::Time``'s raw argList reference stays alive for

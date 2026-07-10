@@ -283,10 +283,10 @@ def _neon_mulescorr_driver(executor: str) -> str:
     return f"""
 import gc, numpy as np, pybFoam as pyf, neon._neon as nn, neofoam.neofoam_bindings as nfb
 from neofoam.solver.neoPimpleFoam import _ensure_neon_initialized
-from neofoam.solver.incompressibleVoFNeon.models.alpha_advection.alphaAdvectionModel import (
+from neofoam.solver.incompressibleVoFNeoN.models.alpha_advection.alphaAdvectionModel import (
     _mules_corr_solve, _read_alpha_controls,
 )
-from neofoam.solver.incompressibleVoFNeon.create_fields import (
+from neofoam.solver.incompressibleVoFNeoN.create_fields import (
     _register_alpha_predictor_solver,
 )
 

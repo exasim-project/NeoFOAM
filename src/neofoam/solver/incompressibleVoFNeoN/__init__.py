@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""incompressibleVoFNeon solver package.
+"""incompressibleVoFNeoN solver package.
 
 Framework port of the NeoN-backed ``neoInterFoam`` VoF solver: the same
 SolverSpec / ModelSpec / StagedInit composition as ``incompressibleVoF``, with
@@ -12,6 +12,6 @@ buoyant ``p_rgh`` pressure correction. Laminar only (no turbulence model).
 """
 
 from .config_schema import config_classes
-from .incompressibleVoFNeon import incompressibleVoFNeon, run
+from .incompressibleVoFNeoN import incompressibleVoFNeoN, run
 
-__all__ = ["incompressibleVoFNeon", "run", "config_classes"]
+__all__ = ["incompressibleVoFNeoN", "run", "config_classes"]

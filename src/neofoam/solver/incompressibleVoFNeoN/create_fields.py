@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""3-stage initialization for the incompressibleVoFNeon solver.
+"""3-stage initialization for the incompressibleVoFNeoN solver.
 
 LOAD    → detect the PIMPLE algorithm and any optional models
 RESOLVE → wire optional-model dependencies via ConfigContext
@@ -40,7 +40,7 @@ from neofoam.framework.model import ModelRuntime, ModelSpec, bind_owned_interfac
 from .configs import ControlDictConfig
 from .models.alpha_advection.alphaAdvectionModel import alpha_advection_model
 from .models.field_writer import fieldWriter, neon_writer_backend_steps
-from .models.incompressibleVoFNeonModel import incompressibleVoFNeonModel
+from .models.incompressibleVoFNeoNModel import incompressibleVoFNeoNModel
 from .models.pressure_velocity.base import PressureVelocityAlgorithmNeoN
 from .models.shared import ALPHA1_FIELD, prefixed_alpha_solver_key
 from .models.solution_loop import neon_loop_backend_steps, solutionLoop
@@ -93,18 +93,18 @@ def _register_alpha_predictor_solver(rt: Any) -> None:
 
 
 def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
-    """Build a fresh :class:`StagedInitRunner` for incompressibleVoFNeon."""
-    spec_builder = StagedInitSpec.build("incompressibleVoFNeon")
+    """Build a fresh :class:`StagedInitRunner` for incompressibleVoFNeoN."""
+    spec_builder = StagedInitSpec.build("incompressibleVoFNeoN")
     resolved_case_dir = case_dir or Path(".")
 
     @spec_builder.load
     def load_config() -> LoadResult:
         pressure_model = PressureVelocityAlgorithmNeoN.detect_and_create()
-        optional_models = incompressibleVoFNeonModel.detect_models(resolved_case_dir)
+        optional_models = incompressibleVoFNeoNModel.detect_models(resolved_case_dir)
 
         # solutionLoop (advances time) and fieldWriter (persists fields) are
         # separate-concern Models, loaded here so their controlDict is validated
-        # up front; both are composed by incompressibleVoFNeon.execution_graph.
+        # up front; both are composed by incompressibleVoFNeoN.execution_graph.
         solution_loop_model = solutionLoop.instantiate(resolved_case_dir, "main")
         field_writer_model = fieldWriter.instantiate(resolved_case_dir, "main")
 

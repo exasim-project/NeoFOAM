@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Plugin interface for solver-local incompressibleVoFNeon optional models.
+"""Plugin interface for solver-local incompressibleVoFNeoN optional models.
 
 Mirror of the pybFoam solver's ``incompressibleVoFModel`` interface for the
 NeoN-backed solver. The PluginSystem registry is keyed by this class name, so
 the NeoN family is disjoint from the pybFoam one — a model registered here is
-only discovered by ``incompressibleVoFNeon``.
+only discovered by ``incompressibleVoFNeoN``.
 """
 
 from pathlib import Path
@@ -17,17 +17,17 @@ from pydantic import BaseModel
 from neofoam.core.plugin_system import PluginSystem
 from neofoam.framework.model import Model, ModelRuntime, ModelSpec  # noqa: F401
 
-__all__ = ["incompressibleVoFNeonModel", "Model", "ModelRuntime", "ModelSpec"]
+__all__ = ["incompressibleVoFNeoNModel", "Model", "ModelRuntime", "ModelSpec"]
 
 
 @PluginSystem.register(discriminator_variable="model", discriminator="model_type")
-class incompressibleVoFNeonModel(BaseModel):
-    """Plugin interface for solver-local incompressibleVoFNeon models."""
+class incompressibleVoFNeoNModel(BaseModel):
+    """Plugin interface for solver-local incompressibleVoFNeoN models."""
 
     @classmethod
     def all_specs(cls) -> list[ModelSpec]:
         """Return every registered optional-model spec, without detection."""
-        registry = PluginSystem.get_registered("incompressibleVoFNeonModel")
+        registry = PluginSystem.get_registered("incompressibleVoFNeoNModel")
         if not registry:
             return []
 
@@ -40,7 +40,7 @@ class incompressibleVoFNeonModel(BaseModel):
     @classmethod
     def detect_models(cls, case_dir: Optional[Path] = None) -> list[ModelRuntime]:
         """Return enabled model runtimes from the plugin registry."""
-        registry = PluginSystem.get_registered("incompressibleVoFNeonModel")
+        registry = PluginSystem.get_registered("incompressibleVoFNeoNModel")
         if not registry:
             return []
 

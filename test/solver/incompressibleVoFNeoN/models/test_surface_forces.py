@@ -14,7 +14,7 @@ from typing import Any
 
 import pytest
 
-import neofoam.solver.incompressibleVoFNeon.models.surface_forces as sf
+import neofoam.solver.incompressibleVoFNeoN.models.surface_forces as sf
 from neofoam.framework.context import Context
 from neofoam.framework.model import Model, ModelRuntime
 from neofoam.framework.model.interface import bind_owned_interfaces

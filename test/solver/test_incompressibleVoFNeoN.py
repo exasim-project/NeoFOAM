@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""End-to-end tests for the framework NeoN VoF solver ``incompressibleVoFNeon``.
+"""End-to-end tests for the framework NeoN VoF solver ``incompressibleVoFNeoN``.
 
 Framework port (SolverSpec/ModelSpec) of the imperative ``neoInterFoam``. These
 tests prepare the damBreak tutorial (blockMesh + setFields) and run the full
@@ -55,7 +55,7 @@ _RUN_DRIVER = r"""
 import re
 from pathlib import Path
 import numpy as np
-from neofoam.solver.incompressibleVoFNeon import run
+from neofoam.solver.incompressibleVoFNeoN import run
 
 t = open("system/controlDict").read()
 t = re.sub(r"endTime\s+\S+;", "endTime         0.02;", t)
@@ -98,7 +98,7 @@ def _latest_with(name):
 def _drive():
     ok = 1
     try:
-        run(["incompressibleVoFNeon"])
+        run(["incompressibleVoFNeoN"])
     except Exception as exc:
         ok = 0
         print("RUN_ERR", repr(exc))
@@ -160,13 +160,13 @@ def run_metrics(tmp_path_factory: pytest.TempPathFactory) -> dict[str, float]:
 
 def test_solver_spec_registered() -> None:
     """The solver package imports and exposes its SolverSpec + run entrypoint."""
-    from neofoam.solver.incompressibleVoFNeon import (
+    from neofoam.solver.incompressibleVoFNeoN import (
         config_classes,
-        incompressibleVoFNeon,
+        incompressibleVoFNeoN,
         run,
     )
 
-    assert incompressibleVoFNeon.name == "incompressibleVoFNeon"
+    assert incompressibleVoFNeoN.name == "incompressibleVoFNeoN"
     assert callable(run)
     assert callable(config_classes)
 

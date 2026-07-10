@@ -4,7 +4,7 @@
 # NB: no ``from __future__ import annotations`` — the dependency_resolver
 # matches ``param.annotation is Context`` / ``Annotated[..., "models"]`` live.
 
-"""AlphaAdvection model for incompressibleVoFNeon — NeoN MULES phase advection.
+"""AlphaAdvection model for incompressibleVoFNeoN — NeoN MULES phase advection.
 
 NeoN implementation of interFoam's ``alphaEqn.H``: one MULES-limited
 phase-fraction step per time step, backed by the NeoN-core FCT
@@ -44,7 +44,7 @@ from neofoam.framework.operations import (
 )
 from neofoam.framework.types import OperationMetadata
 
-from ..incompressibleVoFNeonModel import Model
+from ..incompressibleVoFNeoNModel import Model
 from ..shared import ALPHA1_FIELD, alpha_solver_dict, read_float, read_int, read_switch
 
 alpha_advection_model = Model("AlphaAdvectionNeoN")

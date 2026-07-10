@@ -44,7 +44,7 @@ from neofoam.framework.operations import (
 )
 from neofoam.framework.types import OperationMetadata
 
-from ..incompressibleVoFNeonModel import Model
+from ..incompressibleVoFNeoNModel import Model
 from ..shared import read_int, read_switch
 from ..surface_forces import interfaceForce
 

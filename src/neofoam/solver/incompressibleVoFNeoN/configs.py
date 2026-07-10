@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Solver-core configs for incompressibleVoFNeon.
+"""Solver-core configs for incompressibleVoFNeoN.
 
 Pydantic ``BaseConfig`` for ``system/controlDict``, loaded via
 ``@IOStrategy(OF(...))`` — it feeds validation of the time-stepping controls
@@ -29,4 +29,4 @@ class ControlDictConfig(TimeControlConfig):
     models (``courant`` / ``maxDeltaT``), written only when those are active.
     """
 
-    application: str = "incompressibleVoFNeon"
+    application: str = "incompressibleVoFNeoN"

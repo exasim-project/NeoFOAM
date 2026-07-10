@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""pybFoam value-parity for the VoF *physics* components of incompressibleVoFNeon.
+"""pybFoam value-parity for the VoF *physics* components of incompressibleVoFNeoN.
 
-The framework solver ``incompressibleVoFNeon`` composes the same NeoN VoF
+The framework solver ``incompressibleVoFNeoN`` composes the same NeoN VoF
 primitives the imperative ``neoInterFoam`` does; the face operators (``mag_sf`` /
 ``sn_grad`` / ``reconstruct``) and the MULES alpha step are parity-tested
 elsewhere (``test_vof_parity.py`` / ``test_mules.py``). This module covers the
@@ -97,7 +97,7 @@ import neofoam.neofoam_bindings as nfb
 from neofoam.framework.context import Context
 from neofoam.framework.model import ModelRuntime
 from neofoam.framework.model.interface import bind_owned_interfaces
-from neofoam.solver.incompressibleVoFNeon.models.surface_forces import (
+from neofoam.solver.incompressibleVoFNeoN.models.surface_forces import (
     gravityForce,
     surfaceForces,
     surfaceTensionForce,

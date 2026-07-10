@@ -33,7 +33,7 @@ from pydantic import Field
 from neofoam.algorithms.solution_loop.interfaces import VGREAT, timeStepConstraint
 from neofoam.io import OF, BaseConfig, IOStrategy
 
-from .incompressibleVoFNeonModel import Model, incompressibleVoFNeonModel
+from .incompressibleVoFNeoNModel import Model, incompressibleVoFNeoNModel
 
 SMALL = 1e-15
 
@@ -45,7 +45,7 @@ class CourantConfig(BaseConfig):
     maxCo: float = Field(gt=0.0)
 
 
-courant = Model("courant").register_with(incompressibleVoFNeonModel)
+courant = Model("courant").register_with(incompressibleVoFNeoNModel)
 courant.config(CourantConfig)
 
 
