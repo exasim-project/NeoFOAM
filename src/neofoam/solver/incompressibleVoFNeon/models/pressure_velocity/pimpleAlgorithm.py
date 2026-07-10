@@ -244,6 +244,10 @@ def momentum(
     # the UEqn operators hold raw references to them.
     assembly = _assemble_ueqn(U, rho, mu, rhoPhi, nut0, grad_op, surf_interp, rt)
     UEqn = assembly.UEqn
+    # interFoam runs a single outer corrector, so the whole step is the final
+    # outer pass (OpenFOAM's mesh-data finalIteration flag): the momentum solve
+    # selects the "UFinal" solver subdict when the case provides one.
+    UEqn.set_final_iter(True)
 
     # Buoyant + capillary face force flux from the folded contributions.
     face_force = _folded_interface_force(interface_force, ctx)
@@ -310,6 +314,7 @@ def _solve_pressure(
     state: Any,
     pressure_reference: dict[str, Any],
     rt: Any,
+    final_corrector: bool,
 ) -> None:
     """Solve ``laplacian(rAUf,p_rgh) == div(phiHbyA)`` (non-orth loop); update phi."""
     p_ref_cell = pressure_reference["pRefCell"]
@@ -317,12 +322,16 @@ def _solve_pressure(
     needs_ref = pressure_reference["needsRef"]
 
     pEqn: Any = None
-    for _ in range(state.n_non_orth + 1):
+    for non_orth in range(state.n_non_orth + 1):
         pEqn = nfb.PDESolverScalar(
             nn.imp.laplacian(prediction.rAUf, p_rgh) - nn.exp.div(prediction.phiHbyA),
             p_rgh,
             rt,
         )
+        # interFoam pEqn.H: p_rghEqn.solve(mesh.solver(p_rgh.select(
+        # pimple.finalInnerIter()))) — the "p_rghFinal" subdict (relTol 0)
+        # applies only to the last corrector's last non-orthogonal solve.
+        pEqn.set_final_iter(final_corrector and non_orth == state.n_non_orth)
         if needs_ref:
             pEqn.set_reference(p_ref_cell, p_ref_value)
         pEqn.solve()
@@ -396,11 +405,19 @@ def continuity(
     # contribution depends on alpha1, which is fixed across the correctors).
     face_force = _folded_interface_force(interface_force, ctx)
 
-    for _ in range(state.n_correctors):
+    for corrector in range(state.n_correctors):
         prediction = _predict_face_flux(
             UEqn, U, phi, p_rgh, rho, face_force, magSf, ddt_scheme, surf_interp, rt
         )
-        _solve_pressure(p_rgh, phi, prediction, state, pressure_reference, rt)
+        _solve_pressure(
+            p_rgh,
+            phi,
+            prediction,
+            state,
+            pressure_reference,
+            rt,
+            final_corrector=corrector == state.n_correctors - 1,
+        )
         _report_continuity_error(phi, state, rt)
         _correct_velocity(U, phi, p_rgh, prediction)
 
