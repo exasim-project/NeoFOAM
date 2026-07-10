@@ -41,103 +41,63 @@
 \DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00037}00037\ \ \ \ \ nnfvcc::VolumeField<Vec3>\&\ HbyA}
 \DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00038}00038\ );}
 \DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00039}00039\ }
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00040}00040\ \textcolor{comment}{/*\ @brief\ Constrain\ the\ wall\ pressure\ gradient\ for\ the\ flux\ projection.}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00040}00040\ \textcolor{comment}{/*\ @brief\ given\ a\ ...\ this\ function\ computes\ rAU}}
 \DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00041}00041\ \textcolor{comment}{\ *}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00042}00042\ \textcolor{comment}{\ *\ @detail\ Transcribes\ the\ geometricOneField\ /\ NullMRF\ branch\ of\ OpenFOAM's}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00043}00043\ \textcolor{comment}{\ *\ Foam::constrainPressure\ (rho\ ==\ 1,\ no\ MRF):\ for\ every\ boundary\ patch\ whose\ BC\ is}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00044}00044\ \textcolor{comment}{\ *\ fixedFluxPressure,\ sets\ the\ per-\/face\ reference\ gradient}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00045}00045\ \textcolor{comment}{\ *\ \ \ refGrad\_b\ =\ (phiHbyA\_b\ -\/\ (Sf\_b\ \&\ U\_b))\ /\ (magSf\_b\ *\ rAUf\_b)}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00046}00046\ \textcolor{comment}{\ *\ then\ calls\ p\_rgh.correctBoundaryConditions().\ On\ noSlip\ walls\ U\_b\ ==\ 0,\ so\ the\ wall}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00047}00047\ \textcolor{comment}{\ *\ gradient\ reduces\ to\ phiHbyA\_b/(magSf\_b*rAUf\_b)\ —\ exactly\ the\ buoyancy/capillary\ face\ flux}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00048}00048\ \textcolor{comment}{\ *\ carried\ in\ phiHbyA\ (via\ phig),\ which\ the\ pressure\ projection\ then\ cancels\ (zero\ wall-\/normal}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00049}00049\ \textcolor{comment}{\ *\ flux).\ Patches\ with\ any\ other\ BC\ are\ left\ untouched.\ All\ boundary\ geometry\ is\ read}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00050}00050\ \textcolor{comment}{\ *\ device-\/side\ via\ .view()\ (unaffected\ by\ the\ Vec3\ host-\/copy\ limitation).}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00051}00051\ \textcolor{comment}{\ */}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00052}\mbox{\hyperlink{namespaceNeoFOAM_a003f4b58029c41a790c3d439e65fffe4}{00052}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_a003f4b58029c41a790c3d439e65fffe4}{constrainPressure}}(}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00053}00053\ \ \ \ \ nnfvcc::VolumeField<scalar>\&\ p\_rgh,}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00054}00054\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<Vec3>\&\ U,}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00055}00055\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::SurfaceField<scalar>\&\ phiHbyA,}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00056}00056\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::SurfaceField<scalar>\&\ rAUf}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00057}00057\ );}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00042}00042\ \textcolor{comment}{\ *\ where\ rAU\ \ -\/\ inverse\ of\ the\ system\ matrix\ diagonal}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00043}00043\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00044}00044\ \textcolor{comment}{\ *\ @return\ a\ tuple\ containing\ rAU\ and\ HbyA}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00045}00045\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00046}\mbox{\hyperlink{namespaceNeoFOAM_a74cc48fddc351d5e37ae614dda7bd934}{00046}}\ nnfvcc::VolumeField<scalar>\ \mbox{\hyperlink{namespaceNeoFOAM_a74cc48fddc351d5e37ae614dda7bd934}{computeRAU}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1PDE}{PDE<Vec3>}}\&\ expr);}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00047}00047\ }
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00048}00048\ \textcolor{comment}{/*\ @brief\ given\ access\ to\ a\ PDE\ this\ function\ computes\ rAU\ and\ HbyA}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00049}00049\ \textcolor{comment}{\ *\ from\ the\ assembled\ system}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00050}00050\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00051}00051\ \textcolor{comment}{\ *\ where\ rAU\ \ -\/\ inverse\ of\ the\ system\ matrix\ diagonal}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00052}00052\ \textcolor{comment}{\ *\ \ \ \ \ \ \ HbyA\ -\/\ offdiagonal\ entries\ divided\ by\ diagonal}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00053}00053\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00054}00054\ \textcolor{comment}{\ *\ @return\ a\ tuple\ containing\ rAU\ and\ HbyA}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00055}00055\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00056}00056\ std::tuple<nnfvcc::VolumeField<scalar>,\ nnfvcc::VolumeField<Vec3>>}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00057}\mbox{\hyperlink{namespaceNeoFOAM_afbb950ff446ab9ad8e13e28325d4ded0}{00057}}\ \mbox{\hyperlink{namespaceNeoFOAM_afbb950ff446ab9ad8e13e28325d4ded0}{computeRAUandHByA}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1PDE}{PDE<Vec3>}}\&\ expr);}
 \DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00058}00058\ }
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00059}00059\ \textcolor{comment}{/*\ @brief\ given\ a\ ...\ this\ function\ computes\ rAU}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00060}00060\ \textcolor{comment}{\ *}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00061}00061\ \textcolor{comment}{\ *\ where\ rAU\ \ -\/\ inverse\ of\ the\ system\ matrix\ diagonal}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00062}00062\ \textcolor{comment}{\ *}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00063}00063\ \textcolor{comment}{\ *\ @return\ a\ tuple\ containing\ rAU\ and\ HbyA}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00064}00064\ \textcolor{comment}{\ */}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00065}\mbox{\hyperlink{namespaceNeoFOAM_a74cc48fddc351d5e37ae614dda7bd934}{00065}}\ nnfvcc::VolumeField<scalar>\ \mbox{\hyperlink{namespaceNeoFOAM_a74cc48fddc351d5e37ae614dda7bd934}{computeRAU}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1PDE}{PDE<Vec3>}}\&\ expr);}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00066}00066\ }
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00067}00067\ \textcolor{comment}{/*\ @brief\ given\ access\ to\ a\ PDE\ this\ function\ computes\ rAU\ and\ HbyA}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00068}00068\ \textcolor{comment}{\ *\ from\ the\ assembled\ system}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00069}00069\ \textcolor{comment}{\ *}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00070}00070\ \textcolor{comment}{\ *\ where\ rAU\ \ -\/\ inverse\ of\ the\ system\ matrix\ diagonal}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00071}00071\ \textcolor{comment}{\ *\ \ \ \ \ \ \ HbyA\ -\/\ offdiagonal\ entries\ divided\ by\ diagonal}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00072}00072\ \textcolor{comment}{\ *}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00073}00073\ \textcolor{comment}{\ *\ @return\ a\ tuple\ containing\ rAU\ and\ HbyA}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00074}00074\ \textcolor{comment}{\ */}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00075}00075\ std::tuple<nnfvcc::VolumeField<scalar>,\ nnfvcc::VolumeField<Vec3>>}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00076}\mbox{\hyperlink{namespaceNeoFOAM_afbb950ff446ab9ad8e13e28325d4ded0}{00076}}\ \mbox{\hyperlink{namespaceNeoFOAM_afbb950ff446ab9ad8e13e28325d4ded0}{computeRAUandHByA}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1PDE}{PDE<Vec3>}}\&\ expr);}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00077}00077\ }
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00078}00078\ \textcolor{comment}{/*\ @brief\ computes\ phi\ =\ phiHbyA\ -\/\ pEqn.flux();}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00079}00079\ \textcolor{comment}{\ *\ where\ pEqn.flux()\ =\ (orthogonal\ matrix-\/coefficient\ flux)\ +\ faceFluxCorrection}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00080}00080\ \textcolor{comment}{\ *}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00081}00081\ \textcolor{comment}{\ *\ @detail\ The\ pressure\ Laplacian\ defers\ its\ non-\/orthogonal\ snGrad\ correction\ to\ the\ matrix}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00082}00082\ \textcolor{comment}{\ *\ RHS\ (deferred\ correction)\ and\ stashes\ the\ per-\/face\ correction\ flux\ in\ the\ linear\ system}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00083}00083\ \textcolor{comment}{\ *\ (LinearSystem::faceFluxCorrection(),\ the\ OpenFOAM\ fvMatrix::faceFluxCorrectionPtr\_\ analogue).}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00084}00084\ \textcolor{comment}{\ *\ This\ reconstruction\ adds\ it\ back;\ the\ orthogonal-\/only\ reconstruction\ would\ otherwise\ leave}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00085}00085\ \textcolor{comment}{\ *\ div(phi)\ =\ div(correctionFlux)\ !=\ 0,\ inflating\ the\ continuity\ error\ on\ non-\/orthogonal\ meshes}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00086}00086\ \textcolor{comment}{\ *\ while\ orthogonal\ /\ uncorrected\ meshes\ stay\ correct.}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00087}00087\ \textcolor{comment}{\ *}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00088}00088\ \textcolor{comment}{\ *\ @note\ assumes\ an\ assembled\ system\ matrix}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00089}00089\ \textcolor{comment}{\ */}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00090}\mbox{\hyperlink{namespaceNeoFOAM_adf06ff73f2db547389c03e2181600d76}{00090}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_adf06ff73f2db547389c03e2181600d76}{updateFaceVelocity}}(}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00091}00091\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::SurfaceField<scalar>\&\ predictedPhi,}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00092}00092\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1PDE}{PDE<scalar>}}\&\ expr,}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00093}00093\ \ \ \ \ nnfvcc::SurfaceField<scalar>\&\ phi}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00094}00094\ );}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00095}00095\ }
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00096}00096\ \textcolor{comment}{/*\ @brief\ velocity\ based\ on\ HbyA,\ rAU\ and\ current\ pressure\ value}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00097}00097\ \textcolor{comment}{\ *\ U\ =\ HbyA\ -\/\ rAU*fvc::grad(p);}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00098}00098\ \textcolor{comment}{\ *}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00099}00099\ \textcolor{comment}{\ *\ @details\ once\ Hby\ rAU\ and\ a\ current\ pressure\ value\ is\ available}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00100}00100\ \textcolor{comment}{\ *\ an\ updated\ velocity\ can\ be\ computed\ according\ to}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00101}00101\ \textcolor{comment}{\ *\ \(\backslash\)bold\ \{u\_P\}\ =\ \(\backslash\)frac\{\(\backslash\)bold\ \{H[u\string^*]\ \}\}\{a\_P\string^*\ \}\ -\/\ \(\backslash\)frac\{1\}\{a\_P\string^*\ \}\(\backslash\)nabla\ p\_P}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00102}00102\ \textcolor{comment}{\ *\ See\ https://openfoamwiki.net/index.php/SimpleFoam\ for\ details}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00103}00103\ \textcolor{comment}{\ */}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00104}\mbox{\hyperlink{namespaceNeoFOAM_af74166d4a917f022e9371fa7a13cbc6a}{00104}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_af74166d4a917f022e9371fa7a13cbc6a}{updateVelocity}}(}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00105}00105\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<Vec3>\&\ hByA,}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00106}00106\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<scalar>\&\ rAU,}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00107}00107\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<scalar>\&\ p,}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00108}00108\ \ \ \ \ nnfvcc::VolumeField<Vec3>\&\ U}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00109}00109\ );}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00110}00110\ }
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00111}00111\ \textcolor{comment}{/*\ @brief\ buoyant\ velocity\ reconstruction\ for\ VoF\ /\ buoyant\ p\_rgh\ solvers}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00112}00112\ \textcolor{comment}{\ *\ U\ =\ HbyA\ +\ rAU*fvc::reconstruct(numeratorFlux\ /\ rAUf);}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00113}00113\ \textcolor{comment}{\ *}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00114}00114\ \textcolor{comment}{\ *\ @details\ interFoam's\ velocity\ correction\ reconstructs\ the\ buoyancy\ +\ capillary\ +}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00115}00115\ \textcolor{comment}{\ *\ pressure\ face-\/flux\ balance\ back\ onto\ the\ cell\ velocity,\ NOT\ just\ -\/grad(p):}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00116}00116\ \textcolor{comment}{\ *\ \ \ U\ =\ HbyA\ +\ rAU*fvc::reconstruct((phig\ -\/\ pEqn.flux())/rAUf)}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00117}00117\ \textcolor{comment}{\ *\ where\ phig\ =\ (fSigma\ -\/\ ghf*snGrad(rho))*rAUf*magSf.\ The\ caller\ passes}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00118}00118\ \textcolor{comment}{\ *\ numeratorFlux\ =\ phig\ -\/\ pEqn.flux()\ (a\ surface\ field\ it\ already\ holds\ as}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00119}00119\ \textcolor{comment}{\ *\ phig\ -\/\ (phiHbyA\ -\/\ phi)\ after\ updateFaceVelocity).\ Using\ the\ plain}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00120}00120\ \textcolor{comment}{\ *\ updateVelocity\ (U\ =\ HbyA\ -\/\ rAU*grad(p\_rgh))\ instead\ drops\ the\ buoyancy/surface}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00121}00121\ \textcolor{comment}{\ *\ -\/tension\ flux\ and\ leaves\ large\ spurious\ velocities\ at\ the\ interface.}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00122}00122\ \textcolor{comment}{\ */}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00123}\mbox{\hyperlink{namespaceNeoFOAM_a2517ae4c7fd1c5fd3c1a1de07025d9be}{00123}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_a2517ae4c7fd1c5fd3c1a1de07025d9be}{updateVelocityBuoyant}}(}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00124}00124\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<Vec3>\&\ hByA,}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00125}00125\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<scalar>\&\ rAU,}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00126}00126\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::SurfaceField<scalar>\&\ numeratorFlux,}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00127}00127\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::SurfaceField<scalar>\&\ rAUf,}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00128}00128\ \ \ \ \ nnfvcc::VolumeField<Vec3>\&\ U}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00129}00129\ );}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00130}00130\ }
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00131}00131\ }
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00132}00132\ \textcolor{comment}{/*\ @brief\ Reimplementation\ of\ OpenFOAMs\ fvMatrix.flux()}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00133}00133\ \textcolor{comment}{\ *\ @return\ flux\ surface\ field}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00134}00134\ \textcolor{comment}{\ */}}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00135}\mbox{\hyperlink{namespaceNeoFOAM_a0d9937816ddfe9d997066890d86705a3}{00135}}\ nnfvcc::SurfaceField<scalar>\ \mbox{\hyperlink{namespaceNeoFOAM_a0d9937816ddfe9d997066890d86705a3}{flux}}(\textcolor{keyword}{const}\ nnfvcc::VolumeField<Vec3>\&\ volField);}
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00136}00136\ }
-\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00137}00137\ \}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00059}00059\ \textcolor{comment}{/*\ @brief\ computes\ phi\ =\ phiHbyA\ -\/\ pEqn.flux();}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00060}00060\ \textcolor{comment}{\ *\ where\ pEqn.flux()\ =\ (orthogonal\ matrix-\/coefficient\ flux)\ +\ faceFluxCorrection}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00061}00061\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00062}00062\ \textcolor{comment}{\ *\ @detail\ The\ pressure\ Laplacian\ defers\ its\ non-\/orthogonal\ snGrad\ correction\ to\ the\ matrix}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00063}00063\ \textcolor{comment}{\ *\ RHS\ (deferred\ correction)\ and\ stashes\ the\ per-\/face\ correction\ flux\ in\ the\ linear\ system}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00064}00064\ \textcolor{comment}{\ *\ (LinearSystem::faceFluxCorrection(),\ the\ OpenFOAM\ fvMatrix::faceFluxCorrectionPtr\_\ analogue).}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00065}00065\ \textcolor{comment}{\ *\ This\ reconstruction\ adds\ it\ back;\ the\ orthogonal-\/only\ reconstruction\ would\ otherwise\ leave}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00066}00066\ \textcolor{comment}{\ *\ div(phi)\ =\ div(correctionFlux)\ !=\ 0,\ inflating\ the\ continuity\ error\ on\ non-\/orthogonal\ meshes}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00067}00067\ \textcolor{comment}{\ *\ while\ orthogonal\ /\ uncorrected\ meshes\ stay\ correct.}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00068}00068\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00069}00069\ \textcolor{comment}{\ *\ @note\ assumes\ an\ assembled\ system\ matrix}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00070}00070\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00071}\mbox{\hyperlink{namespaceNeoFOAM_adf06ff73f2db547389c03e2181600d76}{00071}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_adf06ff73f2db547389c03e2181600d76}{updateFaceVelocity}}(}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00072}00072\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::SurfaceField<scalar>\&\ predictedPhi,}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00073}00073\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classNeoFOAM_1_1PDE}{PDE<scalar>}}\&\ expr,}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00074}00074\ \ \ \ \ nnfvcc::SurfaceField<scalar>\&\ phi}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00075}00075\ );}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00076}00076\ }
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00077}00077\ \textcolor{comment}{/*\ @brief\ velocity\ based\ on\ HbyA,\ rAU\ and\ current\ pressure\ value}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00078}00078\ \textcolor{comment}{\ *\ U\ =\ HbyA\ -\/\ rAU*fvc::grad(p);}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00079}00079\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00080}00080\ \textcolor{comment}{\ *\ @details\ once\ Hby\ rAU\ and\ a\ current\ pressure\ value\ is\ available}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00081}00081\ \textcolor{comment}{\ *\ an\ updated\ velocity\ can\ be\ computed\ according\ to}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00082}00082\ \textcolor{comment}{\ *\ \(\backslash\)bold\ \{u\_P\}\ =\ \(\backslash\)frac\{\(\backslash\)bold\ \{H[u\string^*]\ \}\}\{a\_P\string^*\ \}\ -\/\ \(\backslash\)frac\{1\}\{a\_P\string^*\ \}\(\backslash\)nabla\ p\_P}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00083}00083\ \textcolor{comment}{\ *\ See\ https://openfoamwiki.net/index.php/SimpleFoam\ for\ details}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00084}00084\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00085}\mbox{\hyperlink{namespaceNeoFOAM_af74166d4a917f022e9371fa7a13cbc6a}{00085}}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoFOAM_af74166d4a917f022e9371fa7a13cbc6a}{updateVelocity}}(}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00086}00086\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<Vec3>\&\ hByA,}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00087}00087\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<scalar>\&\ rAU,}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00088}00088\ \ \ \ \ \textcolor{keyword}{const}\ nnfvcc::VolumeField<scalar>\&\ p,}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00089}00089\ \ \ \ \ nnfvcc::VolumeField<Vec3>\&\ U}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00090}00090\ );}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00091}00091\ }
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00092}00092\ \textcolor{comment}{/*\ @brief\ Reimplementation\ of\ OpenFOAMs\ fvMatrix.flux()}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00093}00093\ \textcolor{comment}{\ *\ @return\ flux\ surface\ field}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00094}00094\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00095}\mbox{\hyperlink{namespaceNeoFOAM_a0d9937816ddfe9d997066890d86705a3}{00095}}\ nnfvcc::SurfaceField<scalar>\ \mbox{\hyperlink{namespaceNeoFOAM_a0d9937816ddfe9d997066890d86705a3}{flux}}(\textcolor{keyword}{const}\ nnfvcc::VolumeField<Vec3>\&\ volField);}
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00096}00096\ }
+\DoxyCodeLine{\Hypertarget{pressureVelocityCoupling_8hpp_source_l00097}00097\ \}}
 
 \end{DoxyCode}
