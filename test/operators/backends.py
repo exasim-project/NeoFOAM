@@ -15,6 +15,10 @@ The mapping is one-to-one: ``pyb.fvc.div(phi, U, scheme=...)`` runs
 ``fvc.div(phi, U, scheme=...)`` in the pybFoam worker; ``nb.imp.div(...)``
 assembles the implicit NeoN operator and applies its matrix. See
 ``of_worker.py`` / ``neon_worker.py`` for the exact per-operator code.
+
+The pybFoam worker also stages its case at startup (mesh generation via
+``pybFoam.meshing`` + analytic field seeding) and signals ``#READY``; the
+``WorkerPool`` in ``conftest.py`` awaits that before starting neon workers.
 """
 
 from __future__ import annotations
@@ -77,6 +81,17 @@ class Worker:
             text=True,
         )
         self._count = 0
+
+    def wait_ready(self) -> None:
+        """Block until the worker prints ``#READY`` (case staged, ops built)."""
+        assert self._proc.stdout is not None
+        for line in self._proc.stdout:
+            if line.startswith("#READY"):
+                return
+        raise RuntimeError(
+            f"worker exited before becoming ready "
+            f"(exit code {self._proc.poll()}, log: {self._log_path})"
+        )
 
     def evaluate(
         self, func: str, args: tuple[str, ...], scheme: str | None

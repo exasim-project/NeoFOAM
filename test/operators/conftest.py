@@ -9,136 +9,78 @@ Tests import the two backend singletons (``pyb`` — pybFoam/OpenFOAM,
 test's ``mesh`` and ``executor`` params. Every backend call returns a plain
 numpy array; the asserts live in the test body.
 
-Per mesh the case is staged once per session: copy, generate the mesh
-(blockMesh, plus the snappyHexMesh pipeline for tiltedCube), seed the
-deterministic ``0/`` fields, write the shared ``system/fvSchemes``. Each
-backend/executor then gets one persistent worker subprocess on that case
-(one ``Foam::Time`` / Kokkos runtime per process — see ``backends.py``).
+Per mesh the case is staged once per session: the checked-in inputs
+(``cases/common`` plus ``cases/<mesh>/blockMeshDict``) are copied to a temp
+dir, and the pybFoam worker generates the mesh and seeds the deterministic
+``T``/``U`` fields in-process at startup (``pybFoam.meshing`` — no external
+OpenFOAM binaries). Each backend/executor then gets one persistent worker
+subprocess on that case (one ``Foam::Time`` / Kokkos runtime per process —
+see ``backends.py``); the pybFoam worker always starts first, since the neon
+workers read the mesh and fields it wrote.
 
-pybFoam, neon and the OpenFOAM binaries (blockMesh, snappyHexMesh) are hard
-requirements — nothing here is guarded or skipped except GPU-executor runs
-on hosts without a GPU device.
+pybFoam and neon are hard requirements — nothing here is guarded or skipped
+except GPU-executor runs on hosts without a GPU device.
 """
 
 from __future__ import annotations
 
 import os
-import re
 import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Callable, Iterator
+from typing import Iterator
 
 import backends
 import pytest
 from backends import Field, Worker
-from schemes import FV_SCHEMES
 
 TEST_DIR = Path(__file__).parent
-REPO_ROOT = TEST_DIR.parent.parent
-SETUP_OPERATOR_CASE = REPO_ROOT / "test" / "setup_operator"
-TILTED_CUBE_CASE = REPO_ROOT / "tutorials" / "tiltedCube"
-CARTESIAN_OVERLAY = TEST_DIR / "cases" / "cartesian"
-TILTED_CUBE_OVERLAY = TEST_DIR / "cases" / "tiltedCube"
+CASES_DIR = TEST_DIR / "cases"
 
 OF_WORKER = TEST_DIR / "of_worker.py"
 NEON_WORKER = TEST_DIR / "neon_worker.py"
-SEED_FIELDS = TEST_DIR / "seed_fields.py"
 
-MESH_NAMES = ["cartesian_nx5", "cartesian_nx20", "tiltedCube"]
+MESH_NAMES = ["cartesian_nx5", "cartesian_nx20", "sheared"]
 EXECUTORS = ["Serial", "GPU"]
 
-# Meshes with empty front/back patches, where the z component of vector
-# results is only defined up to the empty-patch treatment (see
-# test/operators.cpp).
-TWO_D_MESHES = {"cartesian_nx5", "cartesian_nx20"}
 
-
-def _run(cmd: list[str], cwd: Path | None = None, timeout: float = 600.0) -> None:
-    env = {**os.environ, "FOAM_SIGFPE": "false"}
-    proc = subprocess.run(
-        cmd, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout
-    )
-    if proc.returncode != 0:
-        raise RuntimeError(
-            f"command failed ({proc.returncode}): {' '.join(cmd)}\n"
-            f"--- stdout ---\n{proc.stdout}\n--- stderr ---\n{proc.stderr}"
-        )
-
-
-def _seed(case: Path) -> None:
-    _run([sys.executable, str(SEED_FIELDS), str(case)])
-
-
-def _stage_cartesian(dest: Path, nx: int) -> Path:
-    """Copy test/setup_operator, set NX, overlay complete 0/ fields, mesh, seed."""
-    shutil.copytree(SETUP_OPERATOR_CASE, dest)
-    for name in ("T", "U", "Gamma"):
-        shutil.copy(CARTESIAN_OVERLAY / "0.orig" / name, dest / "0" / name)
-    params = dest / "system" / "simulationParameters"
-    params.write_text(
-        re.sub(r"NX\s+\d+;", f"NX              {nx};", params.read_text())
-    )
-    _run(["blockMesh"], cwd=dest)
-    _seed(dest)
+def _stage_case(mesh: str, dest: Path) -> Path:
+    """Copy the checked-in case inputs; the of_worker meshes and seeds on top."""
+    shutil.copytree(CASES_DIR / "common", dest)
+    shutil.copytree(dest / "0.orig", dest / "0")
+    shutil.copy(CASES_DIR / mesh / "blockMeshDict", dest / "system")
     return dest
-
-
-def _stage_tilted_cube(dest: Path) -> Path:
-    """Copy tutorials/tiltedCube, run its snappy pipeline, overlay fields, seed.
-
-    The Allmesh script needs OpenFOAM's RunFunctions, so its steps are replayed
-    directly: STL generation, blockMesh, surfaceFeatureExtract, snappyHexMesh.
-    """
-    shutil.copytree(TILTED_CUBE_CASE, dest)
-    _run([sys.executable, "makeTiltedCube.py"], cwd=dest / "constant" / "triSurface")
-    _run(["blockMesh"], cwd=dest)
-    _run(["surfaceFeatureExtract"], cwd=dest)
-    _run(["snappyHexMesh", "-overwrite"], cwd=dest, timeout=1800.0)
-    zero = dest / "0"
-    zero.mkdir(exist_ok=True)
-    for name in ("T", "U", "Gamma"):
-        shutil.copy(TILTED_CUBE_OVERLAY / "0.orig" / name, zero / name)
-    _seed(dest)
-    return dest
-
-
-MESHES: dict[str, Callable[[Path], Path]] = {
-    "cartesian_nx5": lambda dest: _stage_cartesian(dest, 5),
-    "cartesian_nx20": lambda dest: _stage_cartesian(dest, 20),
-    "tiltedCube": _stage_tilted_cube,
-}
 
 
 class WorkerPool:
-    """Stages each mesh once and keeps one worker per backend/case/executor."""
+    """Stages each mesh once and keeps one worker per backend/case/executor.
+
+    The pybFoam worker is always started (and awaited) first — it generates
+    the mesh and seeds the fields that the neon workers read from disk.
+    """
 
     def __init__(self, tmp_path_factory: pytest.TempPathFactory):
         self._tmp = tmp_path_factory
         self._cases: dict[str, Path] = {}
         self._workers: dict[tuple[str, ...], Worker] = {}
 
-    def _case(self, mesh: str) -> Path:
-        if mesh not in self._cases:
-            case = MESHES[mesh](self._tmp.mktemp(mesh) / "case")
-            (case / "system" / "fvSchemes").write_text(FV_SCHEMES)
-            self._cases[mesh] = case
-        return self._cases[mesh]
-
     def of_worker(self, mesh: str) -> Worker:
         key = ("of", mesh)
         if key not in self._workers:
-            case = self._case(mesh)
-            self._workers[key] = Worker(OF_WORKER, case, "of", argv=[])
+            case = _stage_case(mesh, self._tmp.mktemp(mesh) / "case")
+            worker = Worker(OF_WORKER, case, "of", argv=[])
+            worker.wait_ready()
+            self._cases[mesh] = case
+            self._workers[key] = worker
         return self._workers[key]
 
     def neon_worker(self, mesh: str, executor: str) -> Worker:
         key = ("neon", mesh, executor)
         if key not in self._workers:
-            case = self._case(mesh)
+            self.of_worker(mesh)  # ensures the case is staged on disk
             self._workers[key] = Worker(
-                NEON_WORKER, case, f"neon_{executor}", argv=[executor]
+                NEON_WORKER, self._cases[mesh], f"neon_{executor}", argv=[executor]
             )
         return self._workers[key]
 
@@ -186,13 +128,13 @@ def _bound_field(
 
 @pytest.fixture
 def T(request: pytest.FixtureRequest, gpu_available: bool) -> Field:
-    """Seeded ``0/T``: ``2 + sin(pi x) cos(pi y) + 0.3 z`` (see seed_fields.py)."""
+    """Seeded ``0/T``: ``2 + sin(pi x) cos(pi y) + 0.3 z`` (see of_worker.py)."""
     return _bound_field("T", request, gpu_available)
 
 
 @pytest.fixture
 def U(request: pytest.FixtureRequest, gpu_available: bool) -> Field:
-    """Seeded ``0/U`` with in-plane divergence (see seed_fields.py)."""
+    """Seeded ``0/U`` with divergence in every direction (see of_worker.py)."""
     return _bound_field("U", request, gpu_available)
 
 
