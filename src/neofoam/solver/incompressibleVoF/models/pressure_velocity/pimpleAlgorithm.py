@@ -75,6 +75,21 @@ PimpleFvSolution = pimple.config(fvSolution)
 # fixed-pressure BC) needs a pressure reference, an open one does not.
 PimpleFvSolution.add_controls("PIMPLE", pRefCell=int, pRefValue=float)
 
+# Section ``default`` schemes — interFoam's ``interfaceProperties`` resolves the
+# interface-normal gradient through a ``nHat`` gradScheme and makes several other
+# unnamed scheme lookups (curvature / surface-tension interpolation) that fall
+# back to the section default. Without these, a wizard-authored VoF case (explicit
+# entries only) aborts with *Entry 'nHat' not found in gradSchemes*. ``div`` is
+# left out on purpose: interFoam keeps ``divSchemes default none`` so every
+# convection term must be declared explicitly (they are, above).
+PimpleFvSchemes.add(
+    ddt="default",
+    grad="default",
+    laplacian="default",
+    snGrad="default",
+    interpolation="default",
+)
+
 # 0/<name> field declarations PIMPLE owns for the wizard: velocity ``U`` and the
 # buoyant (dynamic) pressure ``p_rgh`` — the fields the case author fills BCs for.
 # The absolute pressure ``p`` is derived (``p = p_rgh + rho*gh``) so it is not a
@@ -302,7 +317,10 @@ def momentum(
 @PimpleFvSchemes.add(
     grad="grad(p_rgh)",
     laplacian="laplacian(rAUf,p_rgh)",
-    interpolation=["flux(HbyA)", "interpolate(rho*rAU)"],
+    # ``flux(U)`` builds the initial face flux phi (``createPhi(U)`` in the
+    # advection shared build); OpenFOAM looks it up in interpolationSchemes, so it
+    # must be declared or the case aborts *Entry 'flux(U)' not found*.
+    interpolation=["flux(U)", "flux(HbyA)", "interpolate(rho*rAU)"],
     snGrad=["snGrad(p_rgh)", "snGrad(rho)"],
 )
 @PimpleFvSolution.add("p_rgh")
