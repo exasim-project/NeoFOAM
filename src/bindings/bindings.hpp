@@ -15,5 +15,6 @@ void registerPDESolver(nanobind::module_& m);
 void registerPressureVelocityCoupling(nanobind::module_& m);
 void registerUtility(nanobind::module_& m);
 void registerPimple(nanobind::module_& m);
+void registerExplicitOperators(nanobind::module_& m);
 
 } // namespace NeoFOAM::bindings
