@@ -28,7 +28,7 @@ from typing import Callable
 
 import numpy as np
 import pytest
-from operator_defs import DIV_SCHEMES, fv_schemes_text, ops_for_scheme
+from operator_defs import DIV_SCHEMES, IMPLICIT_TWINS, fv_schemes_text, ops_for_scheme
 
 TEST_DIR = Path(__file__).parent
 REPO_ROOT = TEST_DIR.parent.parent
@@ -122,10 +122,13 @@ def _compute_results(case: Path, executors: list[str]) -> MeshResults:
     for scheme in DIV_SCHEMES:
         (case / "system" / "fvSchemes").write_text(fv_schemes_text(scheme))
         ops = ops_for_scheme(scheme)
+        # implicit operators are evaluated on the neon side only; their
+        # pybFoam reference is the explicit twin's result
+        of_ops = [op for op in ops if op not in IMPLICIT_TWINS]
         out_of = results_root / f"of_{scheme}"
         out_of.mkdir(parents=True)
-        _run([sys.executable, str(RUN_OPENFOAM), str(case), str(out_of), *ops])
-        of[scheme] = {op: np.load(out_of / f"{op}.npy") for op in ops}
+        _run([sys.executable, str(RUN_OPENFOAM), str(case), str(out_of), *of_ops])
+        of[scheme] = {op: np.load(out_of / f"{op}.npy") for op in of_ops}
         for executor in executors:
             out_nn = results_root / f"neon_{executor}_{scheme}"
             out_nn.mkdir(parents=True)

@@ -8,6 +8,10 @@
 //     what test/operators.cpp does with read() + explicitOperation().
 //   - exp_div: dsl::exp::div(flux, VolumeField<Vec3>) — the _neon module
 //     only binds the scalar explicit div overloads.
+//   - evaluate_implicit: assemble the operator into a fresh linear system and
+//     return the matrix-vector residual A·x − b, the volume-integrated
+//     equivalent of the explicit operation (cf. applyOperator/operator& in
+//     include/NeoFOAM/datastructures/pde.hpp).
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
@@ -15,6 +19,8 @@
 // NeoN headers
 #include "NeoN/NeoN.hpp"
 #include "NeoN/dsl/explicit.hpp"
+#include "NeoN/linearAlgebra/linearSystem.hpp"
+#include "NeoN/linearAlgebra/utilities.hpp"
 
 #include "NeoN/finiteVolume/cellCentred/operators/gaussGreenDiv.hpp"
 #include "NeoN/finiteVolume/cellCentred/operators/gaussGreenLaplacian.hpp"
@@ -58,6 +64,25 @@ void evaluateExplicit(
     NeoN::fill(result, NeoN::zero<ValueType>());
     op.read(NeoN::Input {schemes});
     op.explicitOperation(result);
+}
+
+template<typename ValueType, typename SchemeType>
+void evaluateImplicit(
+    NeoN::dsl::SpatialOperator<ValueType>& op,
+    const SchemeType& schemes,
+    const fvcc::VolumeField<ValueType>& psi,
+    NeoN::Vector<ValueType>& result
+)
+{
+    // Segregated scalar-matrix system — the only form computeResidual is
+    // instantiated for; for scalar fields it is the plain LinearSystem<scalar>.
+    // The system is freshly created, so the accumulation of implicitOperation
+    // starts from zero.
+    auto ls = NeoN::la::createEmptyLinearSystem<NeoN::scalar, ValueType>(psi.mesh());
+    op.read(NeoN::Input {schemes});
+    op.implicitOperation(ls);
+    // A·x − b: the volume-integrated equivalent of the explicit operation.
+    NeoN::la::computeResidual(ls.matrix(), ls.rhs(), psi.internalVector(), result);
 }
 
 } // namespace
@@ -118,6 +143,50 @@ void registerExplicitOperators(nb::module_& m)
         "schemes"_a,
         "result"_a,
         "Evaluate an explicit vector operator with raw scheme tokens"
+    );
+
+    // -------------------------------------------------------------------
+    // Evaluate an implicit spatial operator as a matrix-vector product:
+    // assemble A and b into a fresh linear system, then result = A·psi − b.
+    // The result is volume-integrated — divide by the cell volumes to get
+    // the per-volume density the explicit operators produce.
+    // Overloads: {scalar, Vec3} x {Dictionary, TokenList}.
+    // -------------------------------------------------------------------
+    m.def(
+        "evaluate_implicit",
+        &evaluateImplicit<NeoN::scalar, NeoN::Dictionary>,
+        "op"_a,
+        "schemes"_a,
+        "psi"_a,
+        "result"_a,
+        "Apply an implicit scalar operator (A·psi − b); scheme from the fvSchemes dict"
+    );
+    m.def(
+        "evaluate_implicit",
+        &evaluateImplicit<NeoN::Vec3, NeoN::Dictionary>,
+        "op"_a,
+        "schemes"_a,
+        "psi"_a,
+        "result"_a,
+        "Apply an implicit vector operator (A·psi − b); scheme from the fvSchemes dict"
+    );
+    m.def(
+        "evaluate_implicit",
+        &evaluateImplicit<NeoN::scalar, NeoN::TokenList>,
+        "op"_a,
+        "schemes"_a,
+        "psi"_a,
+        "result"_a,
+        "Apply an implicit scalar operator (A·psi − b) with raw scheme tokens"
+    );
+    m.def(
+        "evaluate_implicit",
+        &evaluateImplicit<NeoN::Vec3, NeoN::TokenList>,
+        "op"_a,
+        "schemes"_a,
+        "psi"_a,
+        "result"_a,
+        "Apply an implicit vector operator (A·psi − b) with raw scheme tokens"
     );
 }
 

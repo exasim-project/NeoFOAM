@@ -14,6 +14,12 @@ resolves the operator's scheme from the mapped ``fvSchemes`` dictionary (the
 same file the pybFoam runner reads) and runs its ``explicitOperation``.
 Surface results keep NeoN's layout (internal faces first, boundary faces
 appended) — the comparison slices to the OpenFOAM length.
+
+Implicit DSL operators (``nn.imp.*``) are evaluated as a matrix-apply through
+``nfb.evaluate_implicit(op, schemes, psi, result)``, which assembles the
+operator into a fresh linear system and returns ``A·psi - b``. That product is
+volume-integrated, so it is divided by the cell volumes here to obtain the
+same per-volume density the explicit operators produce.
 """
 
 from __future__ import annotations
@@ -53,6 +59,7 @@ def compute_ops(case_dir: Path, out_dir: Path, executor: str, ops: list[str]) ->
     phi = nfb.create_phi(rt, "U")
     gamma = nfb.create_uniform_surface_field(rt, "Gamma", 1.0)
     n_cells = t_field.size()
+    volumes = np.asarray(rt.nf_mesh.cell_volumes.copy_to_host())
 
     def evaluate_scalar(op: Any) -> np.ndarray:
         result = nn.ScalarVector(rt.executor, n_cells, 0.0)
@@ -63,6 +70,16 @@ def compute_ops(case_dir: Path, out_dir: Path, executor: str, ops: list[str]) ->
         result = nn.VectorVector(rt.executor, n_cells, nn.Vec3(0.0, 0.0, 0.0))
         nfb.evaluate_explicit(op, schemes, result)
         return _to_numpy(result)
+
+    def evaluate_implicit_scalar(op: Any, psi: Any) -> np.ndarray:
+        result = nn.ScalarVector(rt.executor, n_cells, 0.0)
+        nfb.evaluate_implicit(op, schemes, psi, result)
+        return _to_numpy(result) / volumes
+
+    def evaluate_implicit_vector(op: Any, psi: Any) -> np.ndarray:
+        result = nn.VectorVector(rt.executor, n_cells, nn.Vec3(0.0, 0.0, 0.0))
+        nfb.evaluate_implicit(op, schemes, psi, result)
+        return _to_numpy(result) / volumes[:, None]
 
     def interpolate_t() -> np.ndarray:
         interp = nn.SurfaceInterpolationScalar(
@@ -79,6 +96,18 @@ def compute_ops(case_dir: Path, out_dir: Path, executor: str, ops: list[str]) ->
         "div_phi_U": lambda: evaluate_vector(nfb.exp_div(phi, u_field)),
         "laplacian_Gamma_T": lambda: evaluate_scalar(nn.exp.laplacian(gamma, t_field)),
         "laplacian_Gamma_U": lambda: evaluate_vector(nn.exp.laplacian(gamma, u_field)),
+        "imp_div_phi_T": lambda: evaluate_implicit_scalar(
+            nn.imp.div(phi, t_field), t_field
+        ),
+        "imp_div_phi_U": lambda: evaluate_implicit_vector(
+            nn.imp.div(phi, u_field), u_field
+        ),
+        "imp_laplacian_Gamma_T": lambda: evaluate_implicit_scalar(
+            nn.imp.laplacian(gamma, t_field), t_field
+        ),
+        "imp_laplacian_Gamma_U": lambda: evaluate_implicit_vector(
+            nn.imp.laplacian(gamma, u_field), u_field
+        ),
     }
 
     for op in ops:

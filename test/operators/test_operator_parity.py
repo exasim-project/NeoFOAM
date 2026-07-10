@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Cross-backend parity of explicit FV operators (pybFoam fvc vs neon).
+"""Cross-backend parity of FV operators (pybFoam fvc vs neon).
 
 Every operator in ``operator_defs.OPERATORS`` is evaluated by both backends on
 the same staged case — same mesh, same seeded ``0/`` fields, same
@@ -9,6 +9,11 @@ the same staged case — same mesh, same seeded ``0/`` fields, same
 operator's tolerances. The matrix is mesh x operator x div-scheme x executor;
 GPU runs assert at a relaxed rtol (summation order differs) and skip when no
 device is available.
+
+Implicit operators (``imp_*``) are evaluated on the neon side as the assembled
+matrix applied to the current field, ``(A·psi - b) / V``; in OpenFOAM that
+matrix-apply reproduces the explicit operator (``M & psi == fvc.op(...)``), so
+the reference is the pybFoam explicit result of the ``IMPLICIT_TWINS`` twin.
 """
 
 from __future__ import annotations
@@ -18,7 +23,7 @@ from typing import Callable
 import numpy as np
 import pytest
 from conftest import TWO_D_MESHES, MeshResults
-from operator_defs import OPERATORS, OpSpec
+from operator_defs import IMPLICIT_TWINS, OPERATORS, OpSpec
 
 MESH_NAMES = ["cartesian_nx5", "cartesian_nx20", "tiltedCube"]
 EXECUTORS = ["Serial", "GPU"]
@@ -87,6 +92,6 @@ def test_operator_parity(
     if executor == "GPU" and not gpu_available:
         pytest.skip("no GPU executor available on this host")
     results = mesh_results(mesh)
-    reference = results.of[scheme][op]
+    reference = results.of[scheme][IMPLICIT_TWINS.get(op, op)]
     candidate = results.neon[executor][scheme][op]
     _assert_match(reference, candidate, OPERATORS[op], executor, mesh in TWO_D_MESHES)

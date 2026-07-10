@@ -3,15 +3,23 @@
 
 """Shared operator matrix for the cross-backend (pybFoam vs neon) parity tests.
 
-Each entry names one explicit finite-volume operator that both backends expose,
-the value type of its result, the div-scheme variants it is compared under, and
+Each entry names one finite-volume operator that both backends expose, the
+value type of its result, the div-scheme variants it is compared under, and
 its comparison tolerances. The runners (``run_openfoam_ops.py`` /
-``run_neon_ops.py``) and ``test_operator_parity.py`` all import from here so the
-matrix lives in exactly one place.
+``run_neon_ops.py``) and ``test_operator_parity.py`` all import from here so
+the matrix lives in exactly one place.
 
-Implicit operators (``fvm.*`` vs ``nn.imp.*``) are deferred: pybFoam exposes
-``fvMatrix`` opaquely, so a fair comparison needs either matrix-export bindings
-on both sides or a one-step ``nfb.PDESolverScalar`` transport-solve comparison.
+Implicit operators (``imp_*`` keys) are evaluated on the neon side only, via
+the matrix-apply identity: the matrix a finite-volume operator assembles,
+applied to the current field, reproduces the explicit operator
+(``M & psi == fvc.op(...)`` in OpenFOAM). ``nfb.evaluate_implicit`` assembles
+the operator's linear system and returns ``(A·psi - b) / V``, which is compared
+against the pybFoam *explicit* result of the twin operator in
+``IMPLICIT_TWINS`` — the reference is never reconstructed from the fvMatrix.
+
+``ddt`` and ``Sp``/``source`` remain out of scope: ``ddt`` needs a controlled
+time state (oldTime registration and dt agreement between the backends) and is
+the natural follow-up.
 """
 
 from __future__ import annotations
@@ -69,6 +77,33 @@ OPERATORS: dict[str, OpSpec] = {
     "laplacian_Gamma_U": OpSpec(
         kind="vol_vector", rtol=1e-9, atol_scale=1e-10, z_atol=1e-4
     ),
+    "imp_div_phi_T": OpSpec(
+        kind="vol_scalar",
+        div_schemes=("linear", "upwind", "linearUpwind"),
+        rtol=1e-9,
+        atol_scale=1e-12,
+    ),
+    "imp_div_phi_U": OpSpec(
+        kind="vol_vector",
+        div_schemes=("linear", "upwind", "linearUpwind"),
+        rtol=1e-9,
+        atol_scale=1e-12,
+        z_atol=1e-4,
+    ),
+    "imp_laplacian_Gamma_T": OpSpec(kind="vol_scalar", rtol=1e-9, atol_scale=1e-10),
+    "imp_laplacian_Gamma_U": OpSpec(
+        kind="vol_vector", rtol=1e-9, atol_scale=1e-10, z_atol=1e-4
+    ),
+}
+
+# Implicit operator -> its explicit twin. The neon matrix-apply result is
+# compared against the pybFoam explicit result of the twin; the twin also
+# names the fvSchemes key both discretisations resolve (div(phi,T) etc.).
+IMPLICIT_TWINS: dict[str, str] = {
+    "imp_div_phi_T": "div_phi_T",
+    "imp_div_phi_U": "div_phi_U",
+    "imp_laplacian_Gamma_T": "laplacian_Gamma_T",
+    "imp_laplacian_Gamma_U": "laplacian_Gamma_U",
 }
 
 
