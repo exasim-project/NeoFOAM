@@ -30,11 +30,10 @@ target_sources(
           "functionObjects/forceCoeffs.cpp")
 
 # vofOperators.cpp mixes Kokkos device kernels with OpenFOAM headers (fvCFD.H). Without
-# namespaceFoam=1 OpenFOAM injects sqrt/sin/... into the global namespace, which collide
-# with CUDA's device-stub math (ambiguous overload). The NeoFOAM target only exports this
-# define via INTERFACE (so consumers such as the bindings get it), so set it directly on
-# this source. Namespacing-only macro — no effect on the algorithm's numerics.
-set_source_files_properties(
-  "algorithms/vofOperators.cpp" PROPERTIES COMPILE_DEFINITIONS "namespaceFoam=1")
+# namespaceFoam=1 OpenFOAM injects sqrt/sin/... into the global namespace, which collide with CUDA's
+# device-stub math (ambiguous overload). The NeoFOAM target only exports this define via INTERFACE
+# (so consumers such as the bindings get it), so set it directly on this source. Namespacing-only
+# macro — no effect on the algorithm's numerics.
+set_property(SOURCE "algorithms/vofOperators.cpp" PROPERTY COMPILE_DEFINITIONS "namespaceFoam=1")
 
 install(TARGETS NeoFOAM)

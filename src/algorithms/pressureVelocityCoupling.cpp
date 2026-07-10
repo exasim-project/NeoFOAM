@@ -65,9 +65,8 @@ void constrainPressure(
             p_rgh.boundaryData().range(patchi),
             NEON_LAMBDA(const size_t bfacei) {
                 // geometricOneField / NullMRF branch: rho == 1, MRF.relative == identity.
-                refGrad[bfacei] =
-                    (phiHbyABc[bfacei] - (sfBc[bfacei] & uBc[bfacei]))
-                    / (magSfBc[bfacei] * rAUfBc[bfacei]);
+                refGrad[bfacei] = (phiHbyABc[bfacei] - (sfBc[bfacei] & uBc[bfacei]))
+                                / (magSfBc[bfacei] * rAUfBc[bfacei]);
             }
         );
     }
