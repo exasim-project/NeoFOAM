@@ -54,20 +54,6 @@ void registerPressureVelocityCoupling(nb::module_& m)
     );
 
     m.def(
-        "constrain_pressure",
-        [](fvcc::VolumeField<NeoN::scalar>& p_rgh,
-           const fvcc::VolumeField<NeoN::Vec3>& U,
-           const fvcc::SurfaceField<NeoN::scalar>& phiHbyA,
-           const fvcc::SurfaceField<NeoN::scalar>& rAUf)
-        { nf::constrainPressure(p_rgh, U, phiHbyA, rAUf); },
-        "p_rgh"_a,
-        "U"_a,
-        "phiHbyA"_a,
-        "rAUf"_a,
-        "Set wall fixedFluxPressure refGrad so the projection cancels the buoyancy face flux."
-    );
-
-    m.def(
         "update_face_velocity",
         [](const fvcc::SurfaceField<NeoN::scalar>& phiHbyA,
            const nf::PDE<NeoN::scalar>& pEqn,
@@ -89,23 +75,6 @@ void registerPressureVelocityCoupling(nb::module_& m)
         "p"_a,
         "U"_a,
         "Update cell velocity: U = HbyA - rAU * grad(p)"
-    );
-
-    m.def(
-        "update_velocity_buoyant",
-        [](const fvcc::VolumeField<NeoN::Vec3>& hByA,
-           const fvcc::VolumeField<NeoN::scalar>& rAU,
-           const fvcc::SurfaceField<NeoN::scalar>& numeratorFlux,
-           const fvcc::SurfaceField<NeoN::scalar>& rAUf,
-           fvcc::VolumeField<NeoN::Vec3>& U)
-        { nf::updateVelocityBuoyant(hByA, rAU, numeratorFlux, rAUf, U); },
-        "hByA"_a,
-        "rAU"_a,
-        "numerator_flux"_a,
-        "rAUf"_a,
-        "U"_a,
-        "Buoyant velocity: U = HbyA + rAU * reconstruct(numerator_flux / rAUf), where "
-        "numerator_flux = phig - pEqn.flux() (interFoam velocity correction)."
     );
 
     m.def(

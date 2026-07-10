@@ -2,7 +2,6 @@
 // SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
 #include "NeoN/NeoN.hpp"
-#include "NeoN/finiteVolume/cellCentred/operators/reconstruct.hpp"
 
 #include "NeoFOAM/algorithms/pressureVelocityCoupling.hpp"
 #include "Kokkos_Core.hpp"
@@ -34,44 +33,6 @@ void constrainHbyA(
             );
         }
     }
-}
-
-void constrainPressure(
-    nnfvcc::VolumeField<scalar>& p_rgh,
-    const nnfvcc::VolumeField<Vec3>& U,
-    const nnfvcc::SurfaceField<scalar>& phiHbyA,
-    const nnfvcc::SurfaceField<scalar>& rAUf
-)
-{
-    const auto& mesh = p_rgh.mesh();
-    auto refGrad = p_rgh.boundaryData().refGrad().view();
-    const auto [phiHbyABc, uBc, rAUfBc, sfBc, magSfBc] = views(
-        phiHbyA.boundaryData().value(),
-        U.boundaryData().value(),
-        rAUf.boundaryData().value(),
-        mesh.boundaryMesh().faceNormals(),
-        mesh.boundaryMesh().faceAreas()
-    );
-
-    const auto& pBCs = p_rgh.boundaryConditions();
-    for (auto patchi = 0; patchi < pBCs.size(); ++patchi)
-    {
-        if (pBCs[patchi].name() != "fixedFluxPressure")
-        {
-            continue;
-        }
-        parallelFor(
-            p_rgh.exec(),
-            p_rgh.boundaryData().range(patchi),
-            NEON_LAMBDA(const size_t bfacei) {
-                // geometricOneField / NullMRF branch: rho == 1, MRF.relative == identity.
-                refGrad[bfacei] = (phiHbyABc[bfacei] - (sfBc[bfacei] & uBc[bfacei]))
-                                / (magSfBc[bfacei] * rAUfBc[bfacei]);
-            }
-        );
-    }
-
-    p_rgh.correctBoundaryConditions();
 }
 
 nnfvcc::VolumeField<scalar> computeRAU(const PDE<Vec3>& expr)
@@ -276,57 +237,6 @@ void updateVelocity(
 
     u.internalVector().apply(NEON_LAMBDA(const std::size_t celli) {
         return iHbyA[celli] - iRAU[celli] * iGradP[celli];
-    });
-}
-
-void updateVelocityBuoyant(
-    const nnfvcc::VolumeField<Vec3>& hByA,
-    const nnfvcc::VolumeField<scalar>& rAU,
-    const nnfvcc::SurfaceField<scalar>& numeratorFlux,
-    const nnfvcc::SurfaceField<scalar>& rAUf,
-    nnfvcc::VolumeField<Vec3>& u
-)
-{
-    const auto exec = u.exec();
-    const auto& mesh = u.mesh();
-    const auto nInternalFaces = mesh.nInternalFaces();
-
-    // scaledFlux = numeratorFlux / rAUf  (the fvc::reconstruct argument). rAUf is a
-    // face interpolation of rAU (strictly positive) so the division is well defined;
-    // guard the boundary against a zero rAUf all the same.
-    auto sBCs = nnfvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh);
-    auto scaledFlux = nnfvcc::SurfaceField<scalar>(exec, "scaledFlux", mesh, sBCs);
-    NeoN::fill(scaledFlux.internalVector(), NeoN::zero<scalar>());
-    NeoN::fill(scaledFlux.boundaryData().value(), NeoN::zero<scalar>());
-
-    auto [sfIn, sfBc] = views(scaledFlux.internalVector(), scaledFlux.boundaryData().value());
-    const auto [numIn, numBc, rAUfIn, rAUfBc] = views(
-        numeratorFlux.internalVector(),
-        numeratorFlux.boundaryData().value(),
-        rAUf.internalVector(),
-        rAUf.boundaryData().value()
-    );
-
-    NeoN::parallelFor(
-        exec,
-        {0, nInternalFaces},
-        NEON_LAMBDA(const size_t facei) { sfIn[facei] = numIn[facei] / rAUfIn[facei]; }
-    );
-    NeoN::parallelFor(
-        exec,
-        {0, static_cast<size_t>(scaledFlux.boundaryData().value().size())},
-        NEON_LAMBDA(const size_t bfacei) {
-            auto d = rAUfBc[bfacei];
-            sfBc[bfacei] = (d != scalar(0)) ? numBc[bfacei] / d : scalar(0);
-        }
-    );
-
-    auto uCorr = nnfvcc::reconstruct(scaledFlux);
-
-    auto [iHbyA, iRAU, iCorr] =
-        views(hByA.internalVector(), rAU.internalVector(), uCorr.internalVector());
-    u.internalVector().apply(NEON_LAMBDA(const std::size_t celli) {
-        return iHbyA[celli] + iRAU[celli] * iCorr[celli];
     });
 }
 

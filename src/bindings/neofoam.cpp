@@ -21,6 +21,4 @@ NB_MODULE(neofoam_bindings, m)
     NeoFOAM::bindings::registerPressureVelocityCoupling(m);
     NeoFOAM::bindings::registerUtility(m);
     NeoFOAM::bindings::registerPimple(m);
-    NeoFOAM::bindings::registerTwoPhaseProperties(m);
-    NeoFOAM::bindings::registerVofOperators(m);
 }
