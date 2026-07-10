@@ -57,47 +57,66 @@ SKIP=reuse pre-commit run --all-files   # format + lint + mypy
 - `test/io/` has **no** `__init__.py` (would shadow the stdlib `io` module);
   `test/framework/__init__.py` **does** exist.
 
-## Architecture (where things live)
+Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
 
-Everything is **config-driven**: a case is a set of validated pydantic configs that
-serialize to OpenFOAM/JSON/YAML files.
+**Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
 
-- **`io/`** — `BaseConfig` + `@IOStrategy(OF("system/controlDict"))` bind a config
-  class to a file. `write_configs(instances, case_dir)` groups co-owners of the
-  same file, deep-merges, and writes each file once (FoamFile header injected for
-  dict configs). `collect_config_classes`, `default_values`, strategies
-  (openfoam/json/yaml).
-- **`fields/`** — boundary-condition types, `FieldValue[Scalar|Vector]`
-  (`value_types.py`, uniform + non-uniform, per-writer serialization), `schema.py`
-  (synthesised `0/<name>` field schemas), `synthesis.py`.
-- **`foam/`** — `fvSchemes`/`fvSolution` per-spec config builders (`fv_configs.py`),
-  FoamFile helpers.
-- **`framework/model/`** — `ModelSpec`/`Model`: decorators `@spec.load` `@detect`
-  `@resolve` `@build` `@operation`; `.config()` `.field()` `.register_with(family)`
-  `.as_toggle(label)`. Optional **toggle** models (e.g. `boussinesq`,
-  `adaptiveTimeStep`) are surfaced in UIs.
-- **`framework/solver/`** — `SolverSpec`/`Solver`: `core_models()` (required, pick
-  one) / `optional_models()` (zero+). `configurations(solver)` is the case-free
-  config schema; `model_catalog()` / `toggle_models()` drive the wizard's
-  required-vs-optional model selection (type-driven, no name-matching).
-- **`framework/initialization/`** — staged init (load → resolve → build); `InitStep`
-  via `lazy()`/`field()`/`model()`; `InitializerBuilder`. A model's `@build`
-  `InitStep` can `depends_on=["models.solution_loop"]` and mutate the built engine.
-- **`algorithms/solution_loop/`** — the pure-Python time loop. `SolutionLoop`
-  engine holds an injectable `DeltaTConstraint` list and a **named measurement
-  registry** (`publish(name,value)`/`measured(name)`). Time-step rules are
-  **opt-in models** that install constraints via `install_constraints_step(...)`
-  and register a `measurement_provider.<name>` — the core loop is never edited to
-  add a new rule (see `solver/incompressibleFluid/models/adaptive_time_step.py`).
-- **`solver/incompressibleFluid/`** — the reference solver: `incompressibleFluid.py`
-  (the `SolverSpec` + bound families), `create_fields.py` (wires the init graph),
-  `configs.py`, `models/` (pressure-velocity PIMPLE, viscosity, turbulence,
-  boussinesq, adaptiveTimeStep).
-- **`agent/`** — LLM case scaffolding. `case_fill.py` (pydantic-ai agent, output
-  type = aggregate `CaseSpec`), `case_forms.py`, `pydantic_schema.py`, and
-  `wizard_template.py` (the packaged marimo notebook the CLI scaffolds). The live
-  wizard is `test/agent/hotRoom/case_wizard.py`; **keep `wizard_template.py` an
-  exact copy** when the notebook changes (verified by
-  `test/agent/test_wizard_template.py`).
-- **`core/`** — `PluginSystem` (discriminated registries used by constraints,
-  time-integration regimes, and model families).
+## 1. Think Before Coding
+
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
+
+Before implementing:
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them - don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
+
+## 2. Simplicity First
+
+**Minimum code that solves the problem. Nothing speculative.**
+
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
+
+Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+
+## 3. Surgical Changes
+
+**Touch only what you must. Clean up only your own mess.**
+
+When editing existing code:
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it - don't delete it.
+
+When your changes create orphans:
+- Remove imports/variables/functions that YOUR changes made unused.
+- Don't remove pre-existing dead code unless asked.
+
+The test: Every changed line should trace directly to the user's request.
+
+## 4. Goal-Driven Execution
+
+**Define success criteria. Loop until verified.**
+
+Transform tasks into verifiable goals:
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
+
+For multi-step tasks, state a brief plan:
+```
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
+```
+
+Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+
+---
+
+**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
