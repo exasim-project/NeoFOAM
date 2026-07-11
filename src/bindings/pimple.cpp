@@ -11,6 +11,7 @@
 //   - the continuity-error report, and a uniform volume scalar field factory.
 
 #include <nanobind/nanobind.h>
+#include <nanobind/ndarray.h> // copy_from_host (host array -> field)
 #include <nanobind/stl/map.h>
 #include <nanobind/stl/pair.h>
 #include <nanobind/stl/string.h>
@@ -20,6 +21,9 @@
 #include "NeoN/dsl/solver.hpp" // fieldRelaxationSnapshot / applyFieldRelaxation
 #include "NeoN/finiteVolume/cellCentred/operators/gaussGreenGrad.hpp" // GaussGreenGrad
 
+// OpenFOAM headers
+#include "wallDist.H" // Foam::wallDist for read_wall_distance
+
 // NeoFOAM headers
 #include "NeoFOAM/datastructures/runTime.hpp"
 #include "NeoFOAM/datastructures/meshAdapter.hpp"
@@ -28,6 +32,7 @@
 #include "NeoFOAM/turbulenceModels/turbulenceModel.hpp"
 #include "NeoFOAM/compatibility/fvSolution.hpp"
 #include "NeoFOAM/auxiliary/continuityError.hpp"
+#include "NeoFOAM/auxiliary/readers.hpp" // constructFrom (Foam field -> NeoN field)
 
 #include "bindings.hpp"
 
@@ -61,6 +66,153 @@ struct TurbulenceModelHandle
     void rotateOldTimes() { model->rotateOldTimes(); }
     void write(nf::MeshAdapter& mesh) const { model->write(mesh); }
 };
+
+// Turbulence production per unit eddy viscosity, G/nut = dev(twoSymm(gradU)) && gradU.
+// Kept in a free function: NEON_LAMBDA is an extended __device__ lambda under CUDA,
+// which nvcc forbids from being defined inside another lambda (the binding lambda).
+fvcc::VolumeField<NeoN::scalar> strainProduction(const fvcc::VolumeField<NeoN::Tensor>& gradU)
+{
+    auto bcs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<NeoN::scalar>>(gradU.mesh());
+    fvcc::VolumeField<NeoN::scalar> gByNu(gradU.exec(), "GbyNu", gradU.mesh(), bcs);
+    auto gv = gradU.internalVector().view();
+    auto ov = gByNu.internalVector().view();
+    NeoN::parallelFor(
+        gByNu.exec(),
+        {0, gByNu.internalVector().size()},
+        NEON_LAMBDA(const NeoN::localIdx i) {
+            const NeoN::Tensor t = gv[i];
+            const NeoN::Tensor ts = t + t.T(); // twoSymm(gradU)
+            const NeoN::scalar third = ts.trace() / NeoN::scalar(3.0);
+            NeoN::scalar sum = 0.0;
+            for (int r = 0; r < 3; ++r)
+            {
+                for (int c = 0; c < 3; ++c)
+                {
+                    // dev(ts)(r,c) = ts(r,c) - (tr/3) delta_rc
+                    const NeoN::scalar dev = ts(r, c) - (r == c ? third : NeoN::scalar(0.0));
+                    sum += dev * t(r, c);
+                }
+            }
+            ov[i] = sum;
+        },
+        "strainProduction"
+    );
+    return gByNu;
+}
+
+// Vorticity magnitude Omega = sqrt(2) * mag(skew(gradU)), the strain invariant the
+// Spalart-Allmaras production term Stilda is built from. Free function for the same
+// nvcc/NEON_LAMBDA reason as strainProduction.
+fvcc::VolumeField<NeoN::scalar> vorticityMagnitude(const fvcc::VolumeField<NeoN::Tensor>& gradU)
+{
+    auto bcs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<NeoN::scalar>>(gradU.mesh());
+    fvcc::VolumeField<NeoN::scalar> omega(gradU.exec(), "vorticityMagnitude", gradU.mesh(), bcs);
+    auto gv = gradU.internalVector().view();
+    auto ov = omega.internalVector().view();
+    NeoN::parallelFor(
+        omega.exec(),
+        {0, omega.internalVector().size()},
+        NEON_LAMBDA(const NeoN::localIdx i) {
+            const NeoN::Tensor t = gv[i];
+            NeoN::scalar s = 0.0; // sum of squares of skew(gradU) components
+            for (int r = 0; r < 3; ++r)
+            {
+                for (int c = 0; c < 3; ++c)
+                {
+                    const NeoN::scalar sk = NeoN::scalar(0.5) * (t(r, c) - t(c, r));
+                    s += sk * sk;
+                }
+            }
+            // Omega = sqrt(2)*mag(skew) = sqrt(2 * sum(skew^2))
+            ov[i] = Kokkos::sqrt(NeoN::scalar(2.0) * s);
+        },
+        "vorticityMagnitude"
+    );
+    return omega;
+}
+
+// magSqr(grad(phi)) for a scalar field — the Spalart-Allmaras Cb2 diffusion source
+// term magSqr(grad(nuTilda)). Evaluates the Gauss-Green gradient of phi (carrying
+// phi's boundary conditions) and squares its magnitude per cell.
+fvcc::VolumeField<NeoN::scalar>
+magSqrGrad(nf::RunTime& rt, const fvcc::VolumeField<NeoN::scalar>& phi)
+{
+    fvcc::GaussGreenGrad grad(rt.exec, rt.nfMesh);
+    fvcc::VolumeField<NeoN::Vec3> gradPhi = grad.grad(phi);
+    auto bcs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<NeoN::scalar>>(rt.nfMesh);
+    fvcc::VolumeField<NeoN::scalar> out(rt.exec, "magSqrGrad", rt.nfMesh, bcs);
+    auto gv = gradPhi.internalVector().view();
+    auto ov = out.internalVector().view();
+    NeoN::parallelFor(
+        out.exec(),
+        {0, out.internalVector().size()},
+        NEON_LAMBDA(const NeoN::localIdx i) {
+            const NeoN::Vec3 g = gv[i];
+            ov[i] = g[0] * g[0] + g[1] * g[1] + g[2] * g[2];
+        },
+        "magSqrGrad"
+    );
+    return out;
+}
+
+// Strain-rate magnitude squared S2 = 2 magSqr(symm(gradU)), the kOmegaSST production
+// invariant (nut uses sqrt(S2)). symm(T) = (T + T^T)/2; magSqr sums the 9 components.
+fvcc::VolumeField<NeoN::scalar>
+strainMagnitudeSqr(const fvcc::VolumeField<NeoN::Tensor>& gradU)
+{
+    auto bcs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<NeoN::scalar>>(gradU.mesh());
+    fvcc::VolumeField<NeoN::scalar> out(gradU.exec(), "strainMagnitudeSqr", gradU.mesh(), bcs);
+    auto gv = gradU.internalVector().view();
+    auto ov = out.internalVector().view();
+    NeoN::parallelFor(
+        out.exec(),
+        {0, out.internalVector().size()},
+        NEON_LAMBDA(const NeoN::localIdx i) {
+            const NeoN::Tensor t = gv[i];
+            NeoN::scalar s = 0.0; // sum of squares of symm(gradU) components
+            for (int r = 0; r < 3; ++r)
+            {
+                for (int c = 0; c < 3; ++c)
+                {
+                    const NeoN::scalar sy = NeoN::scalar(0.5) * (t(r, c) + t(c, r));
+                    s += sy * sy;
+                }
+            }
+            ov[i] = NeoN::scalar(2.0) * s; // 2 magSqr(symm(gradU))
+        },
+        "strainMagnitudeSqr"
+    );
+    return out;
+}
+
+// grad(a) & grad(b) for two scalar fields — the kOmegaSST cross-diffusion
+// CDkOmega = 2 alphaOmega2 (grad(k) . grad(omega)) / omega.
+fvcc::VolumeField<NeoN::scalar> gradDotGrad(
+    nf::RunTime& rt,
+    const fvcc::VolumeField<NeoN::scalar>& a,
+    const fvcc::VolumeField<NeoN::scalar>& b
+)
+{
+    fvcc::GaussGreenGrad grad(rt.exec, rt.nfMesh);
+    fvcc::VolumeField<NeoN::Vec3> gradA = grad.grad(a);
+    fvcc::VolumeField<NeoN::Vec3> gradB = grad.grad(b);
+    auto bcs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<NeoN::scalar>>(rt.nfMesh);
+    fvcc::VolumeField<NeoN::scalar> out(rt.exec, "gradDotGrad", rt.nfMesh, bcs);
+    auto av = gradA.internalVector().view();
+    auto bv = gradB.internalVector().view();
+    auto ov = out.internalVector().view();
+    NeoN::parallelFor(
+        out.exec(),
+        {0, out.internalVector().size()},
+        NEON_LAMBDA(const NeoN::localIdx i) {
+            const NeoN::Vec3 ga = av[i];
+            const NeoN::Vec3 gb = bv[i];
+            ov[i] = ga[0] * gb[0] + ga[1] * gb[1] + ga[2] * gb[2];
+        },
+        "gradDotGrad"
+    );
+    return out;
+}
 } // namespace
 
 namespace NeoFOAM::bindings
@@ -113,6 +265,87 @@ void registerPimple(nb::module_& m)
             "u"_a,
             "Compute the velocity gradient tensor field grad(U)"
         );
+
+    // -------------------------------------------------------------------
+    // Turbulence production per unit eddy viscosity: dev(twoSymm(gradU)) && gradU,
+    // the scalar field G/nut used by two-equation closures (kEpsilon, ...). The
+    // tensor contraction lives here (there is no field-level tensor algebra in
+    // Python); the closure multiplies the result by nut in readable field maths.
+    // -------------------------------------------------------------------
+    // -------------------------------------------------------------------
+    // Spalart-Allmaras primitives that have no field-level counterpart in the
+    // Python DSL: the vorticity magnitude and the scalar-gradient magnitude
+    // squared (both small tensor/vector contractions kept in Kokkos kernels),
+    // the wall-distance field, and a host->device write so the closure's
+    // nonlinear scalar maths (chi, fv1, fw, ...) can be authored in plain NumPy.
+    // -------------------------------------------------------------------
+    m.def(
+        "vorticity_magnitude",
+        &vorticityMagnitude,
+        "grad_u"_a,
+        "Vorticity magnitude Omega = sqrt(2) mag(skew(gradU)) (Spalart-Allmaras)"
+    );
+
+    m.def(
+        "mag_sqr_grad",
+        &magSqrGrad,
+        "runtime"_a,
+        "phi"_a,
+        "magSqr(grad(phi)) for a scalar field (Spalart-Allmaras Cb2 source)"
+    );
+
+    m.def(
+        "strain_magnitude_sqr",
+        &strainMagnitudeSqr,
+        "grad_u"_a,
+        "Strain-rate magnitude squared S2 = 2 magSqr(symm(gradU)) (kOmegaSST)"
+    );
+
+    m.def(
+        "grad_dot_grad",
+        &gradDotGrad,
+        "runtime"_a,
+        "a"_a,
+        "b"_a,
+        "grad(a) . grad(b) for two scalar fields (kOmegaSST cross-diffusion)"
+    );
+
+    m.def(
+        "read_wall_distance",
+        [](nf::RunTime& rt) -> fvcc::VolumeField<NeoN::scalar>
+        {
+            Foam::wallDist y(rt.mesh);
+            return NeoFOAM::constructFrom(rt.exec, rt.nfMesh, y.y());
+        },
+        "runtime"_a,
+        "Wall-distance field y (Foam::wallDist to the nearest wall patch)"
+    );
+
+    m.def(
+        "copy_from_host",
+        [](fvcc::VolumeField<NeoN::scalar>& field,
+           nb::ndarray<const NeoN::scalar, nb::ndim<1>, nb::c_contig, nb::device::cpu> values)
+        {
+            const auto n = field.internalVector().size();
+            if (static_cast<std::size_t>(values.shape(0)) != static_cast<std::size_t>(n))
+            {
+                throw std::runtime_error("copy_from_host: array size != field size");
+            }
+            field.internalVector() =
+                NeoN::Vector<NeoN::scalar>(field.exec(), values.data(), n, NeoN::SerialExecutor());
+            field.correctBoundaryConditions();
+        },
+        "field"_a,
+        "values"_a,
+        "Overwrite a scalar field's internal values from a host array; corrects BCs"
+    );
+
+    m.def(
+        "strain_production",
+        &strainProduction,
+        "grad_u"_a,
+        "Scalar production per eddy viscosity dev(twoSymm(gradU)) && gradU (= G/nut)"
+    );
 
     // -------------------------------------------------------------------
     // Explicit dev2 viscous-stress operator: div(nuEff*dev2(T(grad(U)))).
