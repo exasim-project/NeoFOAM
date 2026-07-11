@@ -22,7 +22,9 @@ using NeoN::SymmTensor;
 namespace NeoFOAM
 {
 
-namespace
+// Named (not anonymous) so this model's SYCL device-kernel names stay unique across TUs — anonymous
+// namespaces mangle to a shared `_GLOBAL__N_1` and would alias device images between models.
+namespace saDdesDetail
 {
 
 void kernelCorrectNutInternal(
@@ -226,13 +228,15 @@ void kernelDevRhoReff(
     );
 }
 
-} // namespace
+} // namespace saDdesDetail
+
+using namespace saDdesDetail;
 
 // ============================================================
 // Private helpers: build NeoN fields from the OpenFOAM mesh
 // ============================================================
 
-namespace
+namespace saDdesDetail
 {
 
 nnfvcc::VolumeField<scalar> buildWallDist(const NeoN::Executor& exec, MeshAdapter& mesh)
@@ -288,7 +292,7 @@ nnfvcc::VolumeField<scalar> buildDelta(const NeoN::Executor& exec, MeshAdapter& 
     return NeoFOAM::constructFrom(exec, mesh.nfMesh(), ofField);
 }
 
-} // anonymous namespace
+} // namespace saDdesDetail
 
 // ============================================================
 // Constructors

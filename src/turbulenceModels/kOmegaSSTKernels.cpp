@@ -13,7 +13,7 @@ using NeoN::localIdx;
 using NeoN::Tensor;
 using NeoN::SymmTensor;
 
-namespace NeoFOAM::detail
+namespace NeoFOAM::kOmegaSSTDetail
 {
 
 inline constexpr scalar KOSST_OMEGA_MIN = scalar(1e-10);
@@ -485,4 +485,4 @@ void initNearWallDistBoundary(
     );
 }
 
-} // namespace NeoFOAM::detail
+} // namespace NeoFOAM::kOmegaSSTDetail

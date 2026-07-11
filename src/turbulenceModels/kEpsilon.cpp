@@ -23,7 +23,8 @@ using NeoN::SymmTensor;
 namespace NeoFOAM
 {
 
-namespace
+// Named (not anonymous) so this model's SYCL device-kernel names stay unique across TUs.
+namespace kEpsilonDetail
 {
 
 // ---------------------------------------------------------------------------
@@ -197,7 +198,9 @@ void initNearWallDistBoundary(
     );
 }
 
-} // namespace
+} // namespace kEpsilonDetail
+
+using namespace kEpsilonDetail;
 
 // ============================================================
 // Constructor
@@ -591,7 +594,7 @@ void KEpsilon::calcDiffusivities(const nnfvcc::VolumeField<scalar>& nut)
     );
 }
 
-namespace
+namespace kEpsilonDetail
 {
 
 nnfvcc::VolumeField<scalar> buildWallDistKEps(const NeoN::Executor& exec, MeshAdapter& mesh)
@@ -615,7 +618,7 @@ Foam::volScalarField readOFScalarFieldKEps(MeshAdapter& mesh, const std::string&
     );
 }
 
-} // namespace
+} // namespace kEpsilonDetail
 
 KEpsilonModel::KEpsilonModel(RunTime& rt, const nnfvcc::VolumeField<scalar>& nu)
     : nu_(nu)
