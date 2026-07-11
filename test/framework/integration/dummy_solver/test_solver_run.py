@@ -1,11 +1,17 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
-"""
-Tests for DummySolver — complete solver with ModelSpec / ModelRuntime API.
+"""End-to-end scenario: a full DummySolver run wires the staged init, the
+optional-model family, conditional dispatch, and DAG resolution together.
+
+Uses the pybFoam-free DummySolver so the whole LOAD -> RESOLVE -> BUILD ->
+execute -> run path can be exercised in-process without OpenFOAM. The
+deterministic op formulas let the run assert exact final field values.
 """
 
 from pathlib import Path
+
+import pytest
 
 from neofoam.framework.graph import DAGResolver
 from neofoam.framework.model import ModelRuntime
@@ -100,24 +106,24 @@ def test_execution_graph_and_dag() -> None:
 
 
 def test_dummy_solver_complete_run() -> None:
-    """Complete solver run with all operations."""
-    from .dummy_solver import dummy_solver as solver, run
+    """One full run drives all ops to their exact deterministic final state.
 
-    ctx_initial = solver.initialize()
-    f1_initial = ctx_initial.fields["field1"]
-    f2_initial = ctx_initial.fields["field2"]
-    mf1_initial = ctx_initial.fields["model_field1"]
-    mf3_initial = ctx_initial.fields["model_field3"]
-    mf4_initial = ctx_initial.fields["model_field4"]
+    The inner algorithm loop runs 3 iterations (AlgorithmLoop._max_iterations),
+    so every field lands on a fixed value derived from the op formulas — no
+    "something moved" checks. Initial values are covered by
+    ``test_dummy_solver_full_initialization``.
+    """
+    from .dummy_solver import run
 
     ctx_final = run()
 
-    assert ctx_final.fields["field1"] != f1_initial
-    assert ctx_final.fields["field2"] != f2_initial
-    assert ctx_final.fields["model_field1"] != mf1_initial
-    assert ctx_final.fields["model_field3"] != mf3_initial
-    assert ctx_final.fields["model_field4"] != mf4_initial
-    assert ctx_final.models["algorithm"]._iteration_count >= 1
+    assert ctx_final.fields["field1"] == pytest.approx(0.982096104825)
+    assert ctx_final.fields["field2"] == 101305.0
+    assert ctx_final.fields["model_field1"] == pytest.approx(300.01993029517496)
+    assert ctx_final.fields["model_field3"] == 504.0
+    assert ctx_final.fields["model_field4"] == pytest.approx(0.25)
+    assert ctx_final.fields["model3_field"] == pytest.approx(4.500199752800874)
+    assert ctx_final.models["algorithm"]._iteration_count == 3
 
 
 def test_dummy_solver_model_operations_executed() -> None:

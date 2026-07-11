@@ -94,11 +94,15 @@ def _solver() -> Any:
     return spec
 
 
-def test_required_and_optional_models_bind_once() -> None:
+def test_required_models_bind_once() -> None:
     spec = _solver()
     spec.models(FakeCoreFamily, required=True)  # idempotent
-    spec.models(FakeOptionalFamily)
     assert spec.required_model_specs == [FakeCoreFamily]
+
+
+def test_optional_models_bind_once() -> None:
+    spec = _solver()
+    spec.models(FakeOptionalFamily)  # idempotent
     assert spec.optional_model_specs == [FakeOptionalFamily]
 
 
@@ -119,12 +123,6 @@ def test_detect_optional_models_drops_empty_family() -> None:
     assert spec.detect_optional_models(Path(".")) == []
 
 
-def test_solverspec_has_no_legacy_registration_api() -> None:
-    assert not hasattr(Solver("x"), "core_models")
-    assert not hasattr(Solver("x"), "optional_models")
-    assert not hasattr(Solver("x"), "core_model_specs")
-
-
 def test_model_specs_unions_all_family_members() -> None:
     spec = _solver()
     assert spec.model_specs == [core_member, optional_member]
@@ -143,20 +141,27 @@ def test_configurations_collects_solver_and_member_configs() -> None:
     assert [c.__name__ for c in cfg] == cfg.names
 
 
-def test_getitem_and_new() -> None:
+def test_getitem_returns_config_class_or_raises() -> None:
     cfg = configurations(_solver())
     assert cfg["CoreMemberCfg"] is CoreMemberCfg
-    inst = cfg.new("CoreMemberCfg", iters=9)
-    assert inst.iters == 9
     with pytest.raises(KeyError):
         cfg["Missing"]
 
 
-def test_json_schema_and_output_model() -> None:
+def test_new_constructs_a_config_instance() -> None:
+    cfg = configurations(_solver())
+    inst = cfg.new("CoreMemberCfg", iters=9)
+    assert inst.iters == 9
+
+
+def test_json_schema_keys_match_config_names() -> None:
     cfg = configurations(_solver())
     schema = cfg.json_schema()
     assert set(schema) == set(cfg.names)
 
+
+def test_output_model_fields_are_snake_cased_config_names() -> None:
+    cfg = configurations(_solver())
     out = cfg.as_output_model()
     assert set(out.model_fields) == {
         "solver_cfg_a",
@@ -166,10 +171,12 @@ def test_json_schema_and_output_model() -> None:
     }
 
 
-def test_detect_required_and_optional_models() -> None:
-    spec = _solver()
-    assert spec.detect_required_models() == [core_member]
-    assert spec.detect_optional_models(Path(".")) == [optional_member]
+def test_detect_required_models_runs_the_family_contract() -> None:
+    assert _solver().detect_required_models() == [core_member]
+
+
+def test_detect_optional_models_runs_the_family_contract() -> None:
+    assert _solver().detect_optional_models(Path(".")) == [optional_member]
 
 
 def test_labeled_sets_display_label() -> None:

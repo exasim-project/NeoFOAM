@@ -4,6 +4,8 @@
 
 """Unit tests for StagedInitSpec, StagedInitSpecBuilder, and LoadResult."""
 
+import dataclasses
+
 import pytest
 
 from neofoam.framework.initialization.staged.spec import (
@@ -90,7 +92,7 @@ def test_builder_build_decorator_records_callback():
 def test_spec_is_frozen():
     spec = StagedInitSpec.build("X").finalize()
 
-    with pytest.raises(Exception):  # FrozenInstanceError
+    with pytest.raises(dataclasses.FrozenInstanceError):
         spec.name = "other"  # type: ignore[misc]
 
 

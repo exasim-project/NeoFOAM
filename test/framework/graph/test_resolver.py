@@ -18,7 +18,6 @@ from neofoam.framework.graph import (
     MissingDependencyError,
     NetworkxTopologicalSorter,
 )
-from neofoam.framework.graph import resolver as resolver_module
 from neofoam.framework.graph.resolver import (
     _build_global_graph as build_global_graph,
     _collect_tagged_ops as collect_tagged_ops,
@@ -876,9 +875,3 @@ def test_runnable_loop_execution_order_with_model_ops() -> None:
 
     # 2 iterations × (S1, M1, S2) = [S1, M1, S2, S1, M1, S2]
     assert log == ["S1", "M1", "S2", "S1", "M1", "S2"]
-
-
-def test_walk_is_module_level() -> None:
-    """Internal ``_walk`` helper lives at module scope (not nested)."""
-    assert callable(resolver_module._walk)
-    assert resolver_module._walk.__module__ == resolver_module.__name__

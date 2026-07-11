@@ -61,19 +61,28 @@ def test_helper_execute() -> None:
 @pytest.mark.parametrize(
     "method,expected_prefix,kwargs",
     [
-        ("add_field", "fields.", {"depends_on": ["mesh"], "value": 42}),
-        ("add_model", "models.", {"value": "instance"}),
-        ("add_operator", "operators.", {"depends_on": ["fields.U"], "value": "op"}),
+        (
+            InitializerBuilder.add_field,
+            "fields.",
+            {"depends_on": ["mesh"], "value": 42},
+        ),
+        (InitializerBuilder.add_model, "models.", {"value": "instance"}),
+        (
+            InitializerBuilder.add_operator,
+            "operators.",
+            {"depends_on": ["fields.U"], "value": "op"},
+        ),
     ],
+    ids=["add_field", "add_model", "add_operator"],
 )
 def test_builder_add_methods(
     builder: InitializerBuilder,
-    method: str,
+    method: Callable[..., Any],
     expected_prefix: str,
     kwargs: dict[str, Any],
 ) -> None:
     """Builder add_field/add_model/add_operator create correctly prefixed InitStep."""
-    getattr(builder, method)("X", **kwargs)
+    method(builder, "X", **kwargs)
     inits = builder.build()
     assert len(inits) == 1
     assert inits[0].name == f"{expected_prefix}X"

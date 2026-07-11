@@ -1,8 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
-"""
-Test that models are properly registered with DummyModelInterface.
+"""Registry unit test: the plugin system discovers the optional-model family.
+
+Verifies that ``@register_with(DummyModelInterface)`` makes all four dummy
+models detectable — ``detect_specs()`` returns them as ModelSpec objects and
+the PluginSystem registry exposes them by name — which is the discovery step
+``SolverSpec.models(...)`` relies on before any case is loaded.
 """
 
 from .models.dummy_model import DummyModelInterface
