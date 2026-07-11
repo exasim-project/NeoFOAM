@@ -15,9 +15,9 @@ from typing import Any
 
 import pytest
 
-from neofoam.framework.tools import ToolRuntime  # noqa: E402
-from neofoam.tools import snappy_hex_mesh  # noqa: E402
-from neofoam.tools.snappy_hex_mesh import (  # noqa: E402
+from neofoam.framework.tools import ToolRuntime
+from neofoam.tools import snappy_hex_mesh
+from neofoam.tools.snappy_hex_mesh import (
     SnappyHexMeshStep,
     snappyHexMeshTool,
 )

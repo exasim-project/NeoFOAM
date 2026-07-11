@@ -16,10 +16,10 @@ from typing import Any
 
 import pytest
 
-from neofoam.framework.tools import ToolRuntime  # noqa: E402
-from neofoam.tools import block_mesh  # noqa: E402
-from neofoam.tools.block_mesh import BlockMeshStep, blockMeshTool  # noqa: E402
-from neofoam.tools.run import run_preprocess  # noqa: E402
+from neofoam.framework.tools import ToolRuntime
+from neofoam.tools import block_mesh
+from neofoam.tools.block_mesh import BlockMeshStep, blockMeshTool
+from neofoam.tools.run import run_preprocess
 
 CASE = Path(__file__).parents[1] / "solver" / "incompressibleFluid" / "preprocess_case"
 

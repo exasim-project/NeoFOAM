@@ -14,10 +14,10 @@ from typing import Any
 
 import pytest
 
-from neofoam.framework.initialization import InitStepExecutionError  # noqa: E402
-from neofoam.framework.tools import ToolRuntime  # noqa: E402
-from neofoam.tools import check_mesh  # noqa: E402
-from neofoam.tools.check_mesh import CheckMeshStep, checkMeshTool  # noqa: E402
+from neofoam.framework.initialization import InitStepExecutionError
+from neofoam.framework.tools import ToolRuntime
+from neofoam.tools import check_mesh
+from neofoam.tools.check_mesh import CheckMeshStep, checkMeshTool
 
 CASE = Path(__file__).parents[1] / "solver" / "incompressibleFluid" / "preprocess_case"
 

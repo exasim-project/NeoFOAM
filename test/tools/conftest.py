@@ -13,7 +13,7 @@ from typing import Iterator
 
 import pytest
 
-from neofoam.tools import registry  # noqa: E402
+from neofoam.tools import registry
 
 
 @pytest.fixture(autouse=True)

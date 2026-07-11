@@ -21,12 +21,12 @@ from pathlib import Path
 
 import pytest
 
-import pybFoam as pyf  # noqa: E402
+import pybFoam as pyf
 
-from neofoam.io import write_configs  # noqa: E402
-from neofoam.solver.incompressibleFluid import run  # noqa: E402
+from neofoam.io import write_configs
+from neofoam.solver.incompressibleFluid import run
 
-from .case_presets import CAVITY_PATCHES, lid_driven_cavity  # noqa: E402
+from .case_presets import CAVITY_PATCHES, lid_driven_cavity
 
 # A tiny 3x3x1 cavity — enough cells to wire every operation, cheap to step once.
 # Patch names must match ``CAVITY_PATCHES``.

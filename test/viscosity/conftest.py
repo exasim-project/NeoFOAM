@@ -36,8 +36,9 @@ from _case_discovery import case_for as _case_for
 #: real ``constant/transportProperties`` plus an ``expected.yaml`` manifest).
 CASES = discover_cases(Path(__file__).resolve().parent / "cases")
 
+#: A native viscosity model is a plain ``ModelRuntime`` used as-is (no native-wrap).
 build_as_solver = make_build_as_solver(
-    TransportPropertiesConfig, select_viscosity_model, lambda runtime: runtime
+    TransportPropertiesConfig, select_viscosity_model
 )
 assert_selection = make_assert_selection(OpenFOAMViscosityModel)
 

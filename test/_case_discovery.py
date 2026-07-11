@@ -73,21 +73,23 @@ def case_for(cases: list[Case], model_name: str) -> Case:
 def make_build_as_solver(
     config_cls: Any,
     select_fn: Callable[[Any], Any],
-    wrap_native: Callable[[Any], Any],
+    wrap_native: Optional[Callable[[Any], Any]] = None,
 ) -> Callable[[Case], Any]:
     """Build a ``build_as_solver(case)`` bound to a domain's hooks.
 
     Loads *config_cls* from the case dir, runs *select_fn*, and for a native
     :class:`ModelSpec` instantiates it at the case dir and passes the runtime
-    through *wrap_native* (identity for viscosity; ``SpecMomentumTransport`` for
-    turbulence). Non-native selections are returned unbuilt.
+    through *wrap_native* (``SpecMomentumTransport`` for turbulence; omit it for
+    viscosity, where the runtime is used as-is). Non-native selections are
+    returned unbuilt.
     """
 
     def build_as_solver(case: Case) -> Any:
         cfg = config_cls.load(case_dir=case.path)
         selected = select_fn(cfg)
         if isinstance(selected, ModelSpec):
-            return wrap_native(selected.instantiate(case.path))
+            runtime = selected.instantiate(case.path)
+            return wrap_native(runtime) if wrap_native else runtime
         return selected
 
     return build_as_solver
