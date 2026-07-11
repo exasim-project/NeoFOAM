@@ -23,7 +23,8 @@ using NeoN::SymmTensor;
 namespace NeoFOAM
 {
 
-namespace detail
+// Named per-model so this model's SYCL device-kernel names stay unique across TUs.
+namespace kOmegaSSTDetail
 {
 scalar reportBounding(
     const NeoN::Executor& exec,
@@ -109,7 +110,7 @@ void initNearWallDistBoundary(
     const NeoN::UnstructuredMesh& mesh,
     nnfvcc::VolumeField<scalar>& nearWallDist
 );
-} // namespace detail
+} // namespace kOmegaSSTDetail
 
 namespace
 {
@@ -222,7 +223,7 @@ KOmegaSST::KOmegaSST(
     // wall-function unit tests construct explicitly). Mesh is static, so
     // doing it once at construction is sufficient.
     // Done via a free function because NVCC forbids NEON_LAMBDA in a constructor body.
-    detail::initNearWallDistBoundary(exec_, wallDist_, mesh_, nearWallDist_);
+    kOmegaSSTDetail::initNearWallDistBoundary(exec_, wallDist_, mesh_, nearWallDist_);
 
     // Both surfInterp_.interpolate and initNearWallDistBoundary dispatch GPU kernels
     // asynchronously.  Fence here so that the constructor's post-condition holds:
@@ -455,7 +456,7 @@ void KOmegaSST::correct(
     // average (boundLowerSmoothRepair) instead of a hard clip. The hard clip left negative omega
     // spikes that amplified into the omega blow-up / SIGFPE seen in the pMG parameter study.
     {
-        const scalar gMin = detail::reportBounding(
+        const scalar gMin = kOmegaSSTDetail::reportBounding(
             exec_,
             omega,
             "omega",
@@ -464,7 +465,7 @@ void KOmegaSST::correct(
         );
         if (gMin < KOSST_OMEGA_MIN)
         {
-            detail::boundLowerSmoothRepair(
+            kOmegaSSTDetail::boundLowerSmoothRepair(
                 exec_,
                 omega,
                 mesh_,
@@ -506,10 +507,10 @@ void KOmegaSST::correct(
     // Bound k >= 0, mirroring OpenFOAM's Foam::bound() with the same smoother repair as omega.
     {
         const scalar gMin =
-            detail::reportBounding(exec_, k, "k", scalar(0), mesh_.boundaryMesh().isDistributed());
+            kOmegaSSTDetail::reportBounding(exec_, k, "k", scalar(0), mesh_.boundaryMesh().isDistributed());
         if (gMin < scalar(0))
         {
-            detail::boundLowerSmoothRepair(
+            kOmegaSSTDetail::boundLowerSmoothRepair(
                 exec_,
                 k,
                 mesh_,
@@ -550,7 +551,7 @@ NeoN::Vector<SymmTensor> KOmegaSST::devRhoReff() const
 {
     const localIdx nBF = static_cast<localIdx>(gradU_.boundaryData().value().size());
     NeoN::Vector<SymmTensor> result(exec_, nBF, NeoN::zero<SymmTensor>());
-    detail::kernelDevRhoReff(
+    kOmegaSSTDetail::kernelDevRhoReff(
         exec_,
         gradU_.boundaryData().value(),
         nuEff_.boundaryData().value(),
@@ -572,7 +573,7 @@ void KOmegaSST::computeF1AndSources(
     const nnfvcc::VolumeField<NeoN::Tensor>& gradU
 )
 {
-    detail::kernelComputeF1AndSources(
+    kOmegaSSTDetail::kernelComputeF1AndSources(
         exec_,
         k.internalVector(),
         omega.internalVector(),
@@ -615,7 +616,7 @@ void KOmegaSST::correctNutInternal(
     nnfvcc::VolumeField<scalar>& nut
 ) const
 {
-    detail::kernelCorrectNutInternal(
+    kOmegaSSTDetail::kernelCorrectNutInternal(
         exec_,
         k.internalVector(),
         omega.internalVector(),
@@ -627,7 +628,7 @@ void KOmegaSST::correctNutInternal(
         coeffs_.a1,
         coeffs_.b1
     );
-    detail::kernelCorrectNutInternal(
+    kOmegaSSTDetail::kernelCorrectNutInternal(
         exec_,
         k.boundaryData().value(),
         omega.boundaryData().value(),
@@ -646,7 +647,7 @@ void KOmegaSST::calcDiffusivities(const nnfvcc::VolumeField<scalar>& nut)
     surfInterp_.interpolate(nut, surfNut_);
     surfInterp_.interpolate(F1_, surfF1_);
 
-    detail::kernelCalcDiffusivities(
+    kOmegaSSTDetail::kernelCalcDiffusivities(
         exec_,
         surfNu_.internalVector(),
         surfNut_.internalVector(),
@@ -660,7 +661,7 @@ void KOmegaSST::calcDiffusivities(const nnfvcc::VolumeField<scalar>& nut)
         coeffs_.alphaOmega2,
         "kOmegaSST::calcDiffusivities::internal"
     );
-    detail::kernelCalcDiffusivities(
+    kOmegaSSTDetail::kernelCalcDiffusivities(
         exec_,
         surfNu_.boundaryData().value(),
         surfNut_.boundaryData().value(),
