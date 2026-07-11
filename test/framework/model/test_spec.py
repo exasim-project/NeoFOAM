@@ -13,6 +13,10 @@ from typing import Any
 
 import pytest
 
+from neofoam.fields.bc import FixedValueBC, NoSlipBC
+from neofoam.fields.decl import FieldDecl
+from neofoam.fields.value_types import Scalar, Vector
+from neofoam.framework.initialization import lazy
 from neofoam.framework.model import ModelRuntime, ModelSpec, Model
 
 
@@ -350,3 +354,134 @@ def test_runtime_configs_empty_for_non_config() -> None:
     spec = _stub_spec()
     rt = ModelRuntime(spec=spec, name="rt", config={"plain": "dict"})  # type: ignore[arg-type]
     assert rt.configs == []
+
+def test_field_returns_decl_handle() -> None:
+    spec = Model("Test")
+    decl = spec.field(
+        "U",
+        dimensions=[0, 1, -1, 0, 0, 0, 0],
+        value_type=Vector,
+        allowed_bcs=[NoSlipBC, FixedValueBC],
+        write=True,
+    )
+    assert isinstance(decl, FieldDecl)
+    assert decl.name == "U"
+    assert decl.value_type is Vector
+    assert decl.allowed_bcs == (NoSlipBC, FixedValueBC)
+    assert decl.write is True
+    assert decl.depends_on == ("mesh",)
+
+
+def test_field_decls_lists_declarations_in_order() -> None:
+    spec = Model("Test")
+    U = spec.field(
+        "U",
+        dimensions=[0, 1, -1, 0, 0, 0, 0],
+        value_type=Vector,
+        allowed_bcs=[NoSlipBC],
+    )
+    p = spec.field(
+        "p",
+        dimensions=[0, 2, -2, 0, 0, 0, 0],
+        value_type=Vector,
+        allowed_bcs=[FixedValueBC],
+    )
+    assert spec.field_decls == (U, p)
+
+
+def test_duplicate_field_name_is_error() -> None:
+    spec = Model("Test")
+    spec.field(
+        "U",
+        dimensions=[0, 1, -1, 0, 0, 0, 0],
+        value_type=Vector,
+        allowed_bcs=[NoSlipBC],
+    )
+    with pytest.raises(ValueError, match="field 'U' already declared"):
+        spec.field(
+            "U",
+            dimensions=[0, 1, -1, 0, 0, 0, 0],
+            value_type=Vector,
+            allowed_bcs=[NoSlipBC],
+        )
+
+
+def test_run_build_auto_synthesizes_for_every_decl() -> None:
+    """A bare spec with only field declarations gets a full step list."""
+    spec = Model("synth")
+    spec.field(
+        "U",
+        dimensions=[0, 1, -1, 0, 0, 0, 0],
+        value_type=Vector,
+        allowed_bcs=[NoSlipBC],
+        write=True,
+    )
+    spec.field(
+        "p",
+        dimensions=[0, 2, -2, 0, 0, 0, 0],
+        value_type=Scalar,
+        allowed_bcs=[NoSlipBC],
+    )
+
+    @spec.build
+    def _build() -> list[object]:  # noqa: ANN401
+        return []
+
+    rt = ModelRuntime(spec=spec, name="synth", config=None)
+    steps = rt.run_build()
+    names = [s.name for s in steps]
+    assert names == ["fields.U", "fields.p"]
+    assert steps[0].write is True
+    assert steps[1].write is False
+
+
+def test_run_build_prepends_field_steps_before_user_steps() -> None:
+    """Auto-synthesised steps come first; @build steps follow.
+
+    The topological sort is the source of truth for execution order at
+    run time — order in the returned list is only cosmetic. The
+    contract this test pins is: a downstream consumer that walks the
+    list in order sees fields first, then user-written infrastructure.
+    """
+    spec = Model("synth_mixed")
+    spec.field(
+        "U",
+        dimensions=[0, 1, -1, 0, 0, 0, 0],
+        value_type=Vector,
+        allowed_bcs=[NoSlipBC],
+    )
+
+    @spec.build
+    def _build() -> list[object]:
+        return [lazy("control_object", lambda _ctx: None)]
+
+    rt = ModelRuntime(spec=spec, name="synth_mixed", config=None)
+    steps = rt.run_build()
+    assert [s.name for s in steps] == ["fields.U", "control_object"]
+
+
+def test_run_build_handles_specs_without_field_decls() -> None:
+    """A spec with no Model.field declarations behaves like before."""
+    spec = Model("no_fields")
+
+    @spec.build
+    def _build() -> list[object]:
+        return [lazy("just_a_thing", lambda _ctx: None)]
+
+    rt = ModelRuntime(spec=spec, name="no_fields", config=None)
+    steps = rt.run_build()
+    assert [s.name for s in steps] == ["just_a_thing"]
+
+
+def test_run_build_handles_specs_without_build_func() -> None:
+    """No @build but declared fields: auto-synthesis still fires."""
+    spec = Model("only_fields")
+    spec.field(
+        "T",
+        dimensions=[0, 0, 0, 1, 0, 0, 0],
+        value_type=Scalar,
+        allowed_bcs=[NoSlipBC],
+    )
+    rt = ModelRuntime(spec=spec, name="only_fields", config=None)
+    steps = rt.run_build()
+    assert [s.name for s in steps] == ["fields.T"]

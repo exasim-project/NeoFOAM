@@ -11,6 +11,8 @@ construction of the matching :class:`InitStep` is the framework's job
 
 from __future__ import annotations
 
+import dataclasses
+
 import pytest
 
 from neofoam.fields.bc import FixedValueBC, NoSlipBC
@@ -42,5 +44,5 @@ def test_field_decl_records_inputs() -> None:
 
 def test_field_decl_is_immutable() -> None:
     decl = _U_decl()
-    with pytest.raises(Exception):  # frozen dataclass → FrozenInstanceError
+    with pytest.raises(dataclasses.FrozenInstanceError):
         decl.name = "V"  # type: ignore[misc]

@@ -12,23 +12,11 @@ fields against the staged hotRoom fixture exercises the path
 
 from __future__ import annotations
 
-import shutil
 from pathlib import Path
 
 from neofoam.fields.loader import load_fields, save_fields
 from neofoam.framework.solver.configurations import configurations
 from neofoam.solver.incompressibleFluid.incompressibleFluid import incompressibleFluid
-
-
-FIXTURE = Path(__file__).parent / "cases" / "hotRoom" / "0.orig"
-
-
-def _stage(tmp_path: Path) -> Path:
-    case = tmp_path / "case"
-    (case / "0").mkdir(parents=True)
-    for f in FIXTURE.iterdir():
-        shutil.copy(f, case / "0" / f.name)
-    return case
 
 
 def test_pimple_fields_surface_through_configurations() -> None:
@@ -42,8 +30,8 @@ def test_pimple_fields_surface_through_configurations() -> None:
     assert expected <= field_names
 
 
-def test_load_fields_round_trip_against_hot_room(tmp_path: Path) -> None:
-    case = _stage(tmp_path)
+def test_load_fields_round_trip_against_hot_room(staged_hot_room: Path) -> None:
+    case = staged_hot_room
 
     before = load_fields(case, solver=incompressibleFluid)
     save_fields(before, case)
