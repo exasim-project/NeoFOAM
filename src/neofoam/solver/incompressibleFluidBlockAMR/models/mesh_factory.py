@@ -10,9 +10,11 @@ per-axis periodicity map to the AMReX ``Geometry``.
 
 Embedded boundaries (``eb.type = cylinder``) are represented by a **direct-forcing
 immersed boundary**: the mesh stays a plain Cartesian grid and the engine pins the
-velocity to zero in the solid cells each step (mask built from ``eb.center`` /
-``eb.radius`` / ``eb.axis``). The mesh factory only validates the ``eb`` block; the
-mask itself lives in :class:`~neon.blockamr.dsl_solver.DSLIncompressibleSolver`.
+velocity to zero in the solid cells each step. The mesh factory validates the
+``eb`` block and sets the resulting geometry on ``mesh.body`` (a
+:class:`~neon.blockamr.ibm.body.Cylinder`); the IBM *method* (which per-field
+solve pins the cells) is a separate ``fvSolution`` choice, wired up in
+:mod:`~neofoam.solver.incompressibleFluidBlockAMR.models.projection.chorinProjection`.
 """
 
 from typing import Any
@@ -59,6 +61,7 @@ def build_mesh(cfg: MeshDictConfig) -> Any:
     :class:`neon.blockamr.AmrMesh` (``refinement.maxLevel > 0``).
     """
     import neon.blockamr as blockamr
+    from neon.blockamr.ibm.body import Cylinder
     from neon.blockamr.mesh import AmrMesh, Mesh
 
     _validate(cfg)
@@ -89,6 +92,10 @@ def build_mesh(cfg: MeshDictConfig) -> Any:
         info.set_blocking_factor(0, blocking_factor or 4)
         mesh = AmrMesh(geom, info)
         mesh.init_from_scratch(0.0)
+        if cfg.eb.type == "cylinder":
+            mesh.body = Cylinder(
+                centre=cfg.eb.center, radius=cfg.eb.radius, axis=cfg.eb.axis
+            )
         return mesh
 
     box_array = blockamr.BoxArray(box)
@@ -104,4 +111,9 @@ def build_mesh(cfg: MeshDictConfig) -> Any:
     else:
         box_array.max_size(max_size)
     dist_map = blockamr.DistributionMapping(box_array)
-    return Mesh(box_array, dist_map, geom)
+    mesh = Mesh(box_array, dist_map, geom)
+    if cfg.eb.type == "cylinder":
+        mesh.body = Cylinder(
+            centre=cfg.eb.center, radius=cfg.eb.radius, axis=cfg.eb.axis
+        )
+    return mesh

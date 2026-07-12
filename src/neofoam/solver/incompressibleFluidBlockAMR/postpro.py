@@ -7,9 +7,10 @@ The single source of the observable definitions Spec 04's cross-solver
 comparison consumes:
 
 * :func:`force_coefficients` — drag/lift coefficients ``(Cd, Cl)``. The direct-
-  forcing immersed body records its reaction force every step
-  (``engine._ibm_force_history``); that momentum-removal integral *is* the
-  hydrodynamic force on the body, so it is the primary estimator. A
+  forcing immersed body records its reaction force every step (read via the
+  ``DirectForcing`` method's ``force_history`` accessor on the mesh-owned
+  IBM data); that momentum-removal integral *is* the hydrodynamic force on
+  the body, so it is the primary estimator. A
   control-volume momentum-deficit survey (:func:`momentum_deficit_forces`) over
   a wake box is the field-only fallback (and what the canned INT-8 test drives).
 * :func:`strouhal` — shedding frequency ``St = f D / U∞`` from the FFT peak of a
@@ -60,8 +61,8 @@ def gather_field(engine: Any, level: int = 0) -> FieldSnapshot:
 
     Assembles the per-box valid regions into a single regular array using each
     box's global lower index, and (re)builds the solid mask analytically from
-    ``engine._eb`` on the same grid. ``neon`` is imported lazily so importing
-    this module stays GPU-free.
+    ``engine.mesh.body`` on the same grid. ``neon`` is imported lazily so
+    importing this module stays GPU-free.
     """
     import neon.blockamr as blockamr  # noqa: PLC0415 — lazy: keep import GPU-free
 
@@ -99,11 +100,11 @@ def gather_field(engine: Any, level: int = 0) -> FieldSnapshot:
     z = lo[2] + (np.arange(nz) + 0.5) * dx[2]
 
     solid: Optional[np.ndarray] = None
-    eb = engine._eb
-    if eb is not None:
-        center = [float(c) for c in eb["center"]]
-        radius = float(eb["radius"])
-        axis = int(eb["axis"])
+    body = engine.mesh.body
+    if body is not None:
+        center = [float(c) for c in body.centre]
+        radius = float(body.radius)
+        axis = int(body.axis)
         plane = [a for a in range(3) if a != axis]
         coords = [x, y, z]
         grid = np.meshgrid(coords[0], coords[1], coords[2], indexing="ij")
@@ -190,9 +191,21 @@ def _ibm_force_mean(
 
     Averages over the last ``tail_fraction`` of the history (drop the startup
     transient). The force is in kinematic units (per ρ), so ρ cancels in the
-    coefficient and the frontal area is ``D * span``.
+    coefficient and the frontal area is ``D * span``. Reads the reaction-force
+    time series from the mesh-owned IBM data via the method's
+    ``force_history`` accessor (``engine.sol_U["ibm"]`` names the method); no
+    body / no IBM method configured on ``U`` returns ``None`` (fall back to
+    the momentum-deficit survey).
     """
-    hist = engine._ibm_force_history
+    ibm_name = engine.sol_U.get("ibm")
+    if ibm_name is None:
+        return None
+
+    from neon.blockamr.ibm import IBM  # noqa: PLC0415 — lazy: keep import GPU-free
+
+    method = IBM.lookup(ibm_name)
+    data = engine.mesh.ibm_data(method)
+    hist = method.force_history(data)
     if not hist:
         return None
     arr = np.asarray(hist, dtype=float)  # (n, 4): t, Fx, Fy, Fz

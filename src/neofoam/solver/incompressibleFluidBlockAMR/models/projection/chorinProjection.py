@@ -88,14 +88,14 @@ def build(self: Any) -> list[Any]:
         if div_scheme is not None:
             schemes["div(phi,U)"] = div_scheme
 
-        # Immersed cylinder body → direct-forcing IBM spec for the engine.
-        eb = None
+        # Immersed cylinder body → direct-forcing IBM method for U. The
+        # geometry itself lives on ``mesh.body`` (set by the mesh factory
+        # from meshDict.eb); this is the per-field fvSolution choice (API
+        # doc §6). Until plan 05's per-field configs exist, synthesize it
+        # here from the same ``eb.type`` flag.
+        sol_U: dict[str, Any] = {}
         if mesh_cfg.eb.type == "cylinder":
-            eb = {
-                "center": mesh_cfg.eb.center,
-                "radius": mesh_cfg.eb.radius,
-                "axis": mesh_cfg.eb.axis,
-            }
+            sol_U["ibm"] = "directForcing"
 
         if all(mesh_cfg.periodicity):
             # Fully periodic: no domain BCs — use the conservative fill-patch.
@@ -105,8 +105,8 @@ def build(self: Any) -> list[Any]:
                 ctrl_cfg.deltaT,
                 fill_patch=FillPatchCellConservative(),
                 schemes=schemes,
+                sol_U=sol_U,
                 sol_p=sol_p,
-                eb=eb,
             )
         # Walled/open domain: map the per-face boundary spec to a VectorBC.
         u_bc = build_vector_bc(mesh_cfg.boundary or {})
@@ -116,8 +116,8 @@ def build(self: Any) -> list[Any]:
             ctrl_cfg.deltaT,
             U_bc=u_bc,
             schemes=schemes,
+            sol_U=sol_U,
             sol_p=sol_p,
-            eb=eb,
         )
 
     def alias_engine(context: dict[str, Any]) -> Any:
