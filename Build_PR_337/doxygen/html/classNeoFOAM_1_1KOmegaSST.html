@@ -116,7 +116,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a59eba8a7042ff85269b2d8205f108b7a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Velocity gradient tensor (updated each <a class="el" href="classNeoFOAM_1_1KOmegaSST.html#a700c93859285ffe8fced126b0d3006f5" title="Full turbulence update: solve k and omega PDEs, update nut.">correct()</a> call)  <br /></td></tr>
 <tr class="separator:a59eba8a7042ff85269b2d8205f108b7a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a44e9bae18c8ee89ddd65e161dcaf1e65" id="r_a44e9bae18c8ee89ddd65e161dcaf1e65"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1KOmegaSST.html#a44e9bae18c8ee89ddd65e161dcaf1e65">updateGradU</a> (const nnfvcc::VolumeField&lt; <a class="el" href="pressureVelocityCoupling_8hpp.html#ae261b7f2859c508a432e8a334ad179d2">Vec3</a> &gt; &amp;U)</td></tr>
-<tr class="memdesc:a44e9bae18c8ee89ddd65e161dcaf1e65"><td class="mdescLeft">&#160;</td><td class="mdescRight">Recompute gradU_ in place at the given velocity (internal + boundary).  <br /></td></tr>
+<tr class="memdesc:a44e9bae18c8ee89ddd65e161dcaf1e65"><td class="mdescLeft">&#160;</td><td class="mdescRight">Recompute gradUTmp_ in place at the given velocity (internal + boundary).  <br /></td></tr>
 <tr class="separator:a44e9bae18c8ee89ddd65e161dcaf1e65"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a39f6d28bbbf7655ba369911d6f90709c" id="r_a39f6d28bbbf7655ba369911d6f90709c"><td class="memItemLeft" align="right" valign="top">NeoN::Vector&lt; NeoN::SymmTensor &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1KOmegaSST.html#a39f6d28bbbf7655ba369911d6f90709c">devRhoReff</a> () const</td></tr>
 <tr class="memdesc:a39f6d28bbbf7655ba369911d6f90709c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the deviatoric stress at all boundary faces as Vector&lt;SymmTensor&gt;.  <br /></td></tr>
@@ -138,10 +138,10 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a016a735a33d7a93e62ccd0e566d507d7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute sources for k and omega equations plus F1.  <br /></td></tr>
 <tr class="separator:a016a735a33d7a93e62ccd0e566d507d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2ee8df7bd15c58d68c63a5506708e571" id="r_a2ee8df7bd15c58d68c63a5506708e571"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1KOmegaSST.html#a2ee8df7bd15c58d68c63a5506708e571">correctNutInternal</a> (const nnfvcc::VolumeField&lt; <a class="el" href="pressureVelocityCoupling_8hpp.html#acc912e7a5a44b028589fda3fd76ba7ea">scalar</a> &gt; &amp;k, const nnfvcc::VolumeField&lt; <a class="el" href="pressureVelocityCoupling_8hpp.html#acc912e7a5a44b028589fda3fd76ba7ea">scalar</a> &gt; &amp;omega, nnfvcc::VolumeField&lt; <a class="el" href="pressureVelocityCoupling_8hpp.html#acc912e7a5a44b028589fda3fd76ba7ea">scalar</a> &gt; &amp;nut) const</td></tr>
-<tr class="memdesc:a2ee8df7bd15c58d68c63a5506708e571"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update nut internal vector from new k, omega and current gradU_ (S2).  <br /></td></tr>
+<tr class="memdesc:a2ee8df7bd15c58d68c63a5506708e571"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update nut internal vector from new k, omega and current gradUTmp_ (S2).  <br /></td></tr>
 <tr class="separator:a2ee8df7bd15c58d68c63a5506708e571"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a51802407e31708f1d17d7f5a82dde61f" id="r_a51802407e31708f1d17d7f5a82dde61f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1KOmegaSST.html#a51802407e31708f1d17d7f5a82dde61f">calcDiffusivities</a> (const nnfvcc::VolumeField&lt; <a class="el" href="pressureVelocityCoupling_8hpp.html#acc912e7a5a44b028589fda3fd76ba7ea">scalar</a> &gt; &amp;nut)</td></tr>
-<tr class="memdesc:a51802407e31708f1d17d7f5a82dde61f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Recompute surface diffusivity fields from current nut and F1_.  <br /></td></tr>
+<tr class="memdesc:a51802407e31708f1d17d7f5a82dde61f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Recompute surface diffusivity fields from current nut and F1Tmp_.  <br /></td></tr>
 <tr class="separator:a51802407e31708f1d17d7f5a82dde61f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -219,8 +219,8 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Recompute surface diffusivity fields from current nut and F1_. </p>
-<p>Interpolates nut → surfNut_, F1_ → surfF1_, then fills DkEffF_, DomegaEffF_, nuEff_. </p>
+<p>Recompute surface diffusivity fields from current nut and F1Tmp_. </p>
+<p>Interpolates nut → surfNutTmp_, F1Tmp_ → surfF1Tmp_, then fills DkEffFTmp_, DomegaEffFTmp_, nuEffTmp_. </p>
 
 </div>
 </div>
@@ -304,7 +304,7 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Compute sources for k and omega equations plus F1. </p>
-<p>Uses the OLD nut (current nut, before the <a class="el" href="classNeoFOAM_1_1PDE.html">PDE</a> solve) for production G = nut * GbyNu0. Writes F1_, Pk_, spK_, omegaSource_, spOmega_. </p>
+<p>Uses the OLD nut (current nut, before the <a class="el" href="classNeoFOAM_1_1PDE.html">PDE</a> solve) for production G = nut * GbyNu0. Writes F1Tmp_, PkTmp_, spKTmp_, omegaSourceTmp_, spOmegaTmp_. </p>
 
 </div>
 </div>
@@ -406,7 +406,7 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Update nut internal vector from new k, omega and current gradU_ (S2). </p>
+<p>Update nut internal vector from new k, omega and current gradUTmp_ (S2). </p>
 <p>Writes only the internal (non-boundary) cells of nut.internalVector(). </p>
 
 </div>
@@ -658,7 +658,7 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Recompute gradU_ in place at the given velocity (internal + boundary). </p>
+<p>Recompute gradUTmp_ in place at the given velocity (internal + boundary). </p>
 
 </div>
 </div>
