@@ -96,8 +96,8 @@ def _make_tg_solver(n):
         # Unlimited 2nd-order central advection: a verification test must measure the
         # scheme's design order, so it uses the non-limited scheme (the production
         # default vanLeer clips to 1st order at extrema and would mask the order).
-        div_scheme=Linear(),
-        schemes_p={"rtol": 1e-12, "atol": 1e-14, "max_iter": 400, "verbose": 0},
+        schemes={"div(phi,U)": Linear()},
+        sol_p={"rtol": 1e-12, "atol": 1e-14, "maxIter": 400, "verbose": 0},
     )
     _set_tg_ic(solver, mesh)
     return solver, mesh
