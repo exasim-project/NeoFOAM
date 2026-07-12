@@ -54,8 +54,8 @@ void kernelComputeF1AndSources(
     const NeoN::Vector<Vec3>& gradKVec,
     const NeoN::Vector<Vec3>& gradOmegaVec,
     const NeoN::Vector<Tensor>& gradUVec,
-    NeoN::Vector<scalar>& F1Vec,
-    NeoN::Vector<scalar>& PkVec,
+    NeoN::Vector<scalar>& f1Vec,
+    NeoN::Vector<scalar>& pkVec,
     NeoN::Vector<scalar>& spKVec,
     NeoN::Vector<scalar>& omegaSourceVec,
     NeoN::Vector<scalar>& spOmegaVec,
@@ -88,10 +88,10 @@ void kernelCalcDiffusivities(
     const NeoN::Executor& exec,
     const NeoN::Vector<scalar>& surfNuVec,
     const NeoN::Vector<scalar>& surfNutVec,
-    const NeoN::Vector<scalar>& surfF1Vec,
+    const NeoN::Vector<scalar>& surff1Vec,
     NeoN::Vector<scalar>& nuEffVec,
-    NeoN::Vector<scalar>& DkEffVec,
-    NeoN::Vector<scalar>& DomegaEffVec,
+    NeoN::Vector<scalar>& dkEffVec,
+    NeoN::Vector<scalar>& domegaEffVec,
     scalar alphaK1,
     scalar alphaK2,
     scalar alphaOmega1,
@@ -193,13 +193,13 @@ KOmegaSST::KOmegaSST(
           mesh,
           fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh)
       )
-    , DkEffFTmp_(
+    , dkEffFTmp_(
           exec,
           "DkEff",
           mesh,
           fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh)
       )
-    , DomegaEffFTmp_(
+    , domegaEffFTmp_(
           exec,
           "DomegaEff",
           mesh,
@@ -409,7 +409,7 @@ void KOmegaSST::correct(
     // ----- omega equation -----
     PDESolver<scalar> omegaEqn(
         dsl::imp::ddt(omega) + dsl::imp::div(phi, omega)
-            - dsl::imp::laplacian(DomegaEffFTmp_, omega) + dsl::imp::source(spOmegaTmp_, omega)
+            - dsl::imp::laplacian(domegaEffFTmp_, omega) + dsl::imp::source(spOmegaTmp_, omega)
             - dsl::exp::source(omegaSourceTmp_),
         omega,
         rt
@@ -457,7 +457,7 @@ void KOmegaSST::correct(
     freeVecs(
         omegaSourceTmp_.internalVector(),
         spOmegaTmp_.internalVector(),
-        DomegaEffFTmp_.internalVector(),
+        domegaEffFTmp_.internalVector(),
         omegaWallValueTmp_,
         omegaWallMaskTmp_
     );
@@ -476,7 +476,7 @@ void KOmegaSST::correct(
 
     // ----- k equation -----
     PDESolver<scalar> kEqn(
-        dsl::imp::ddt(k) + dsl::imp::div(phi, k) - dsl::imp::laplacian(DkEffFTmp_, k)
+        dsl::imp::ddt(k) + dsl::imp::div(phi, k) - dsl::imp::laplacian(dkEffFTmp_, k)
             + dsl::imp::source(spKTmp_, k) - dsl::exp::source(PkTmp_),
         k,
         rt
@@ -515,7 +515,7 @@ void KOmegaSST::correct(
         k.correctBoundaryConditions(ctx);
     }
 
-    freeVecs(PkTmp_.internalVector(), spKTmp_.internalVector(), DkEffFTmp_.internalVector());
+    freeVecs(PkTmp_.internalVector(), spKTmp_.internalVector(), dkEffFTmp_.internalVector());
     correctNutInternal(k, omega, nut);
     nut.correctBoundaryConditions(ctx);
 
@@ -527,9 +527,9 @@ void KOmegaSST::correct(
 
 nnfvcc::SurfaceField<scalar>& KOmegaSST::nuEff() { return nuEffTmp_; }
 
-nnfvcc::SurfaceField<scalar>& KOmegaSST::DkEff() { return DkEffFTmp_; }
+nnfvcc::SurfaceField<scalar>& KOmegaSST::dkEff() { return dkEffFTmp_; }
 
-nnfvcc::SurfaceField<scalar>& KOmegaSST::DomegaEff() { return DomegaEffFTmp_; }
+nnfvcc::SurfaceField<scalar>& KOmegaSST::domegaEff() { return domegaEffFTmp_; }
 
 const nnfvcc::VolumeField<Tensor>& KOmegaSST::gradU() const { return gradUTmp_; }
 
@@ -640,8 +640,8 @@ void KOmegaSST::calcDiffusivities(const nnfvcc::VolumeField<scalar>& nut)
     ensure(surfNutTmp_.internalVector(), nsf);
     ensure(surfF1Tmp_.internalVector(), nsf);
     ensure(nuEffTmp_.internalVector(), nsf);
-    ensure(DkEffFTmp_.internalVector(), nsf);
-    ensure(DomegaEffFTmp_.internalVector(), nsf);
+    ensure(dkEffFTmp_.internalVector(), nsf);
+    ensure(domegaEffFTmp_.internalVector(), nsf);
 
     surfInterp_.interpolate(nut, surfNutTmp_);
     surfInterp_.interpolate(F1Tmp_, surfF1Tmp_);
@@ -652,8 +652,8 @@ void KOmegaSST::calcDiffusivities(const nnfvcc::VolumeField<scalar>& nut)
         surfNutTmp_.internalVector(),
         surfF1Tmp_.internalVector(),
         nuEffTmp_.internalVector(),
-        DkEffFTmp_.internalVector(),
-        DomegaEffFTmp_.internalVector(),
+        dkEffFTmp_.internalVector(),
+        domegaEffFTmp_.internalVector(),
         coeffs_.alphaK1,
         coeffs_.alphaK2,
         coeffs_.alphaOmega1,
@@ -666,8 +666,8 @@ void KOmegaSST::calcDiffusivities(const nnfvcc::VolumeField<scalar>& nut)
         surfNutTmp_.boundaryData().value(),
         surfF1Tmp_.boundaryData().value(),
         nuEffTmp_.boundaryData().value(),
-        DkEffFTmp_.boundaryData().value(),
-        DomegaEffFTmp_.boundaryData().value(),
+        dkEffFTmp_.boundaryData().value(),
+        domegaEffFTmp_.boundaryData().value(),
         coeffs_.alphaK1,
         coeffs_.alphaK2,
         coeffs_.alphaOmega1,
@@ -732,8 +732,8 @@ void KOmegaSST::releaseScratch()
         boundFlooredTmp_.internalVector(),
         surfNutTmp_.internalVector(),
         surfF1Tmp_.internalVector(),
-        DkEffFTmp_.internalVector(),
-        DomegaEffFTmp_.internalVector(),
+        dkEffFTmp_.internalVector(),
+        domegaEffFTmp_.internalVector(),
         surfBoundFlooredTmp_.internalVector(),
         omegaWallValueTmp_,
         omegaWallMaskTmp_

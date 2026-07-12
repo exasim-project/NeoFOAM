@@ -205,8 +205,8 @@ void kernelComputeF1AndSources(
     const NeoN::Vector<Vec3>& gradKVec,
     const NeoN::Vector<Vec3>& gradOmegaVec,
     const NeoN::Vector<Tensor>& gradUVec,
-    NeoN::Vector<scalar>& F1Vec,
-    NeoN::Vector<scalar>& PkVec,
+    NeoN::Vector<scalar>& f1Vec,
+    NeoN::Vector<scalar>& pkVec,
     NeoN::Vector<scalar>& spKVec,
     NeoN::Vector<scalar>& omegaSourceVec,
     NeoN::Vector<scalar>& spOmegaVec,
@@ -233,8 +233,8 @@ void kernelComputeF1AndSources(
          gradKV,
          gradOmegaV,
          gradUV,
-         F1V,
-         PkV,
+         f1V,
+         pkV,
          spKV,
          omegaSourceV,
          spOmegaV] =
@@ -247,8 +247,8 @@ void kernelComputeF1AndSources(
                 gradKVec,
                 gradOmegaVec,
                 gradUVec,
-                F1Vec,
-                PkVec,
+                f1Vec,
+                pkVec,
                 spKVec,
                 omegaSourceVec,
                 spOmegaVec
@@ -291,8 +291,8 @@ void kernelComputeF1AndSources(
                 scalar(10)
             );
             const scalar arg14 = arg1 * arg1 * arg1 * arg1;
-            F1V[i] = Kokkos::tanh(arg14);
-            const scalar F1_i = F1V[i];
+            f1V[i] = Kokkos::tanh(arg14);
+            const scalar F1_i = f1V[i];
 
             const scalar arg2 = Kokkos::min(
                 Kokkos::max(
@@ -327,7 +327,7 @@ void kernelComputeF1AndSources(
             const scalar beta_i = F1_i * (beta1 - beta2) + beta2;
 
             const scalar G_i = nut_i * GbyNu0_i;
-            PkV[i] = Kokkos::min(G_i, c1 * betaStar * kSafe * omegaSafe);
+            pkV[i] = Kokkos::min(G_i, c1 * betaStar * kSafe * omegaSafe);
 
             spKV[i] = betaStar * omegaSafe;
 
@@ -417,10 +417,10 @@ void kernelCalcDiffusivities(
     const NeoN::Executor& exec,
     const NeoN::Vector<scalar>& surfNuVec,
     const NeoN::Vector<scalar>& surfNutVec,
-    const NeoN::Vector<scalar>& surfF1Vec,
+    const NeoN::Vector<scalar>& surff1Vec,
     NeoN::Vector<scalar>& nuEffVec,
-    NeoN::Vector<scalar>& DkEffVec,
-    NeoN::Vector<scalar>& DomegaEffVec,
+    NeoN::Vector<scalar>& dkEffVec,
+    NeoN::Vector<scalar>& domegaEffVec,
     scalar alphaK1,
     scalar alphaK2,
     scalar alphaOmega1,
@@ -428,19 +428,19 @@ void kernelCalcDiffusivities(
     std::string label
 )
 {
-    const auto [nuF, nutF, F1F, nuEffF, DkF, DomF] =
-        NeoN::views(surfNuVec, surfNutVec, surfF1Vec, nuEffVec, DkEffVec, DomegaEffVec);
+    const auto [nuF, nutF, f1F, nuEffF, dkF, domF] =
+        NeoN::views(surfNuVec, surfNutVec, surff1Vec, nuEffVec, dkEffVec, domegaEffVec);
 
     NeoN::parallelFor(
         exec,
         {0, static_cast<localIdx>(nuEffVec.size())},
         NEON_LAMBDA(const localIdx f) {
-            const scalar alphaK = F1F[f] * (alphaK1 - alphaK2) + alphaK2;
-            const scalar alphaOmega = F1F[f] * (alphaOmega1 - alphaOmega2) + alphaOmega2;
+            const scalar alphaK = f1F[f] * (alphaK1 - alphaK2) + alphaK2;
+            const scalar alphaOmega = f1F[f] * (alphaOmega1 - alphaOmega2) + alphaOmega2;
 
             nuEffF[f] = nuF[f] + nutF[f];
-            DkF[f] = alphaK * nutF[f] + nuF[f];
-            DomF[f] = alphaOmega * nutF[f] + nuF[f];
+            dkF[f] = alphaK * nutF[f] + nuF[f];
+            domF[f] = alphaOmega * nutF[f] + nuF[f];
         },
         std::move(label)
     );

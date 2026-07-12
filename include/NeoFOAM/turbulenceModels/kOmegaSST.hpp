@@ -104,10 +104,10 @@ public:
     nnfvcc::SurfaceField<scalar>& nuEff();
 
     /// @brief Effective k diffusion coefficient on faces: alphaK(F1)*nut + nu
-    nnfvcc::SurfaceField<scalar>& DkEff();
+    nnfvcc::SurfaceField<scalar>& dkEff();
 
     /// @brief Effective omega diffusion coefficient on faces: alphaOmega(F1)*nut + nu
-    nnfvcc::SurfaceField<scalar>& DomegaEff();
+    nnfvcc::SurfaceField<scalar>& domegaEff();
 
     /// @brief Velocity gradient tensor (updated each correct() call)
     const nnfvcc::VolumeField<NeoN::Tensor>& gradU() const;
@@ -126,8 +126,8 @@ public:
     const Coefficients& coeffs() const { return coeffs_; }
 
     // Internal result fields — read-only access for testing/inspection
-    const nnfvcc::VolumeField<scalar>& F1Field() const { return F1Tmp_; }
-    const nnfvcc::VolumeField<scalar>& PkField() const { return PkTmp_; }
+    const nnfvcc::VolumeField<scalar>& f1Field() const { return F1Tmp_; }
+    const nnfvcc::VolumeField<scalar>& pkField() const { return PkTmp_; }
     const nnfvcc::VolumeField<scalar>& spKField() const { return spKTmp_; }
     const nnfvcc::VolumeField<scalar>& omegaSourceField() const { return omegaSourceTmp_; }
     const nnfvcc::VolumeField<scalar>& spOmegaField() const { return spOmegaTmp_; }
@@ -164,7 +164,7 @@ public:
      * @brief Recompute surface diffusivity fields from current nut and F1Tmp_.
      *
      * Interpolates nut → surfNutTmp_, F1Tmp_ → surfF1Tmp_, then fills
-     * DkEffFTmp_, DomegaEffFTmp_, nuEffTmp_.
+     * dkEffFTmp_, domegaEffFTmp_, nuEffTmp_.
      */
     void calcDiffusivities(const nnfvcc::VolumeField<scalar>& nut);
 
@@ -215,8 +215,8 @@ private:
     nnfvcc::SurfaceField<scalar> surfNutTmp_;
     nnfvcc::SurfaceField<scalar> surfF1Tmp_;
     nnfvcc::SurfaceField<scalar> nuEffTmp_;
-    nnfvcc::SurfaceField<scalar> DkEffFTmp_;
-    nnfvcc::SurfaceField<scalar> DomegaEffFTmp_;
+    nnfvcc::SurfaceField<scalar> dkEffFTmp_;
+    nnfvcc::SurfaceField<scalar> domegaEffFTmp_;
 
     // Cached operators (constructed once)
     nnfvcc::GaussGreenGrad gradOp_;
