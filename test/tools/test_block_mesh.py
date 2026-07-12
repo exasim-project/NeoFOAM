@@ -9,13 +9,13 @@ in-process build drives the real bindings against the ``preprocess_case`` fixtur
 """
 
 import os
-import shutil
 import types
 from pathlib import Path
 from typing import Any
 
 import pytest
 
+from neofoam.casebuild import from_template
 from neofoam.framework.tools import ToolRuntime
 from neofoam.tools import block_mesh
 from neofoam.tools.block_mesh import BlockMeshStep, blockMeshTool
@@ -59,10 +59,9 @@ def test_block_propagates_verbose(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_blockmesh_builds_in_process(tmp_path: Path) -> None:
     assert not (CASE / "constant" / "polyMesh").exists()
-    case = tmp_path / "case"
-    shutil.copytree(CASE, case)
+    case_dir = from_template(CASE).build_at(tmp_path / "case")
     cwd = Path.cwd()
-    os.chdir(case)
+    os.chdir(case_dir.path)
     try:
         ctx = run_preprocess(["preprocess"])
         assert ctx.mesh.nCells() > 0

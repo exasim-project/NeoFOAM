@@ -10,7 +10,6 @@ comparison. OpenFOAM/pybFoam are treated as always available.
 
 import os
 import shutil
-import subprocess
 from pathlib import Path
 from typing import List, Tuple, Union
 
@@ -117,64 +116,6 @@ def compare_fields_numerically(
     except Exception as exc:
         print(f"  {field_name}: error loading/comparing: {exc}")
         return False, float("inf"), float("inf")
-
-
-def setup_case(
-    source_case: Path,
-    test_case: Path,
-    end_time: float = 0.01,
-    write_interval: float = 0.01,
-    run_setfields: bool = False,
-) -> None:
-    """Copy a tutorial case, restore ``0/``, run blockMesh, override timings.
-
-    ``run_setfields=True`` invokes ``setFields`` after blockMesh — needed
-    by cases like hotRoom that initialize a temperature blob via
-    ``system/setFieldsDict``.
-    """
-    if test_case.exists():
-        shutil.rmtree(test_case)
-    test_case.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copytree(source_case, test_case)
-
-    orig_dir = test_case / "0.orig"
-    zero_dir = test_case / "0"
-    if orig_dir.exists():
-        if zero_dir.exists():
-            shutil.rmtree(zero_dir)
-        shutil.copytree(orig_dir, zero_dir)
-
-    result = subprocess.run(
-        ["blockMesh", "-case", str(test_case)],
-        capture_output=True,
-        text=True,
-        timeout=60,
-    )
-    assert result.returncode == 0, f"blockMesh failed: {result.stderr}"
-
-    if run_setfields:
-        result = subprocess.run(
-            ["setFields", "-case", str(test_case)],
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
-        assert result.returncode == 0, f"setFields failed: {result.stderr}"
-
-    control_dict = test_case / "system" / "controlDict"
-    lines = control_dict.read_text().split("\n")
-    new_lines: List[str] = []
-    for line in lines:
-        stripped = line.strip()
-        if stripped.startswith("endTime"):
-            new_lines.append(f"endTime         {end_time};")
-        elif stripped.startswith("writeControl"):
-            new_lines.append("writeControl    adjustable;")
-        elif stripped.startswith("writeInterval"):
-            new_lines.append(f"writeInterval   {write_interval};")
-        else:
-            new_lines.append(line)
-    control_dict.write_text("\n".join(new_lines))
 
 
 def get_time_directories(case_dir: Path) -> List[Path]:

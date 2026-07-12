@@ -8,12 +8,12 @@ real binding against the ``preprocess_case`` fixture.
 """
 
 import os
-import shutil
 from pathlib import Path
 from typing import Any
 
 import pytest
 
+from neofoam.casebuild import from_template
 from neofoam.framework.initialization import InitStepExecutionError
 from neofoam.framework.tools import ToolRuntime
 from neofoam.tools import check_mesh
@@ -112,10 +112,9 @@ def test_checkmesh_passes_on_valid_mesh(tmp_path: Path) -> None:
     from pybFoam.meshing import generate_blockmesh
 
     assert not (CASE / "constant" / "polyMesh").exists()
-    case = tmp_path / "case"
-    shutil.copytree(CASE, case)
+    case_dir = from_template(CASE).build_at(tmp_path / "case")
     cwd = Path.cwd()
-    os.chdir(case)
+    os.chdir(case_dir.path)
     try:
         time = pyf.Time(pyf.argList(["preprocess"]))
         m = generate_blockmesh(time, pyf.dictionary.read("system/blockMeshDict"))
