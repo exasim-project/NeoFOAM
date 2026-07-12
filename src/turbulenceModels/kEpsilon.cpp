@@ -262,6 +262,7 @@ KEpsilon::KEpsilon(
     , gradOp_(exec, mesh)
     , surfInterp_(exec, mesh, NeoN::TokenList({std::string("linear")}))
     , coeffs_()
+    , cornerWeight_(exec, static_cast<NeoN::localIdx>(mesh.nCells()), scalar(0))
 {
     surfInterp_.interpolate(nu_, surfNu_);
 
@@ -348,6 +349,53 @@ void KEpsilon::correct(
         const auto yBoundaryV = nearWallDist_.boundaryData().value().view();
         const auto kInternalV = k.internalVector().view();
         auto pkInternalV = Pk_.internalVector().view();
+        const auto nCells = static_cast<NeoN::localIdx>(mesh_.nCells());
+
+        // One-time: build cornerWeight_[c] = 1/(number of epsilonWallFunction faces touching cell
+        // c), 0 for non-wall cells. Mirrors kOmegaSST corner-averaging to avoid data races when
+        // multiple boundary faces share the same owner cell (edges/corners).
+        if (!cornerWeightsBuilt_)
+        {
+            NeoN::fill(cornerWeight_, scalar(0));
+            auto cwBuild = cornerWeight_.view();
+            for (NeoN::localIdx patchID = 0;
+                 patchID < static_cast<NeoN::localIdx>(epsilonBCs.size());
+                 ++patchID)
+            {
+                if (epsilonBCs[static_cast<size_t>(patchID)].name() != "epsilonWallFunction")
+                    continue;
+                const auto [start, end] = epsilon.boundaryData().range(patchID);
+                NeoN::parallelFor(
+                    exec_,
+                    {start, end},
+                    NEON_LAMBDA(const NeoN::localIdx i) {
+                        Kokkos::atomic_add(&cwBuild[faceOwnersV[i]], scalar(1));
+                    },
+                    "kEpsilon::epsilonWFCountFaces"
+                );
+            }
+            NeoN::parallelFor(
+                exec_,
+                {0, nCells},
+                NEON_LAMBDA(const NeoN::localIdx c) {
+                    if (cwBuild[c] > scalar(0)) cwBuild[c] = scalar(1) / cwBuild[c];
+                },
+                "kEpsilon::epsilonWFInvertCount"
+            );
+            cornerWeightsBuilt_ = true;
+        }
+        const auto cornerWeightV = cornerWeight_.view();
+
+        // Zero Pk_ at wall cells before accumulation (computeSources wrote bulk production there).
+        NeoN::parallelFor(
+            exec_,
+            {0, nCells},
+            NEON_LAMBDA(const NeoN::localIdx c) {
+                if (cornerWeightV[c] > scalar(0)) pkInternalV[c] = scalar(0);
+            },
+            "kEpsilon::epsilonWFZeroWallPk"
+        );
+        NeoN::fence(exec_);
 
         for (NeoN::localIdx patchID = 0; patchID < static_cast<NeoN::localIdx>(epsilonBCs.size());
              ++patchID)
@@ -362,6 +410,7 @@ void KEpsilon::correct(
                 {start, end},
                 NEON_LAMBDA(const NeoN::localIdx i) {
                     const auto owner = faceOwnersV[i];
+                    const scalar cw = cornerWeightV[owner];
                     const NeoN::Vec3 uOwn = uInternalV[owner];
                     const NeoN::Vec3 uWall = uBoundaryV[i];
                     const scalar deltaInv = deltaCoeffsV[i];
@@ -373,7 +422,7 @@ void KEpsilon::correct(
                     const scalar kc = Kokkos::max(kInternalV[owner], scalar(0));
                     const scalar gWall =
                         (nutw + nuw) * magGradUw * Cmu25 * Kokkos::sqrt(kc) / (kappa_ * y);
-                    pkInternalV[owner] = gWall;
+                    Kokkos::atomic_add(&pkInternalV[owner], cw * gWall);
                 },
                 "kEpsilon::epsilonWFGFeedback"
             );

@@ -178,6 +178,11 @@ private:
 
     // Model coefficients
     Coefficients coeffs_;
+
+    // Corner-averaging weights for wall-function G feedback (1/N per wall cell, 0 elsewhere).
+    // Built once on first correct() since wall topology is static.
+    NeoN::Vector<scalar> cornerWeight_;
+    bool cornerWeightsBuilt_ = false;
 };
 
 /**
