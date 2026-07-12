@@ -1,0 +1,55 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| Cartesian mesh + direct-forcing immersed cylinder (Re=20).                    |
+| nCell is rewritten by the harness for the grid-refinement scaling study,      |
+| keeping cells CUBIC (dz=dx, nz = nx * Lz/Lx): the nodal MLMG coarsens well on |
+| cubic cells but FAILS on anisotropic ones (dx>>dz). The base 160x80x64 is a   |
+| ~0.82M-cell 3D slab — a proper GPU load (the earlier 160x80x8 thin slab was   |
+| only ~0.1M, under-utilising the device). z is periodic (homogeneous 2D wake). |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      meshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Channel [0,2] x [0,1] x [0,0.8], cubic cells (dx=dy=dz=0.0125), periodic in z.
+domain          ( ( 0 0 0 ) ( 2 1 0.8 ) );
+nCell           ( 160 80 64 );
+periodicity     ( false false true );
+
+// AMReX max_grid_size — the largest box the domain is chopped into. Omitted
+// (or >= max(nCell)) keeps the whole domain a single box; a smaller value splits
+// it into more boxes. NOTE: on a single GPU splitting only adds overhead (the
+// nodal projection converges at a realistic rtol but is slower, and needs a
+// looser rtol than the single-box 1e-10) — see test_max_size_sweep.
+// maxSize         160;
+// blockingFactor  16;   // aligns box sizes to a multiple (standard AMReX knob)
+
+refinement
+{
+    maxLevel    0;
+    refRatio    ( 2 2 2 );
+}
+
+// Immersed cylinder: D = 0.2, axis = z. Re = U*D/nu = 1*0.2/0.01 = 20.
+eb
+{
+    type        cylinder;
+    center      ( 0.5 0.5 0.4 );
+    radius      0.1;
+    axis        2;
+}
+
+// Per-face velocity BC (AMReX faces xlo/xhi/ylo/yhi; z is periodic).
+boundary
+{
+    xlo { type fixedValue; value ( 1 0 0 ); }
+    xhi { type zeroGradient; }
+    ylo { type slip; }
+    yhi { type slip; }
+}
+
+// ************************************************************************* //

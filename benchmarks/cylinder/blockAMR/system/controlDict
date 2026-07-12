@@ -1,0 +1,27 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| Fixed-step benchmark control. endTime / deltaT are rewritten by the harness  |
+| (benchmarks/test_cylinder_runtime.py); deltaT is scaled with the mesh in the |
+| refinement study so every resolution runs at the same CFL. executor selects  |
+| the AMReX/JAX backend (gpu for the perf numbers).                             |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     incompressibleFluidBlockAMR;
+startTime       0;
+
+// 12 fixed steps at CFL ~= 0.2 (dx=dz=0.0125, U=1).
+endTime         0.03;
+deltaT          0.0025;
+
+writeControl    timeStep;
+writeInterval   10000;
+executor        gpu;
+
+// ************************************************************************* //
