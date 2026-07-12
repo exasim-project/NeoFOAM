@@ -166,7 +166,11 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
         {"kqRWallFunction", [](auto& dict) { dict.insert("type", std::string("kqRWallFunction")); }
         },
         {"omegaWallFunction",
-         [](auto& dict) { dict.insert("type", std::string("omegaWallFunction")); }}
+         [](auto& dict) { dict.insert("type", std::string("omegaWallFunction")); }},
+        {"epsilonWallFunction",
+         [](auto& dict) { dict.insert("type", std::string("epsilonWallFunction")); }},
+        {"nutkWallFunction",
+         [](auto& dict) { dict.insert("type", std::string("nutkWallFunction")); }}
     };
 
     auto applyVolInserter =

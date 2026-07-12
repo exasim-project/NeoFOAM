@@ -64,13 +64,10 @@ function(neofoam_generate_controlDict SETUP_DIR)
   if(NOT DEFINED CTRL_EXTRAS)
     set(CTRL_EXTRAS "")
   else()
-    set(_extras_str "")
-    foreach(_extra IN LISTS CTRL_EXTRAS)
-      if(_extra)
-        string(APPEND _extras_str "${_extra}\n")
-      endif()
-    endforeach()
-    set(CTRL_EXTRAS "${_extras_str}")
+    # CMake splits list values on ';', which strips OpenFOAM statement terminators. Rejoin with ';'
+    # to restore the original content.
+    list(JOIN CTRL_EXTRAS ";" CTRL_EXTRAS)
+    string(APPEND CTRL_EXTRAS "\n")
   endif()
 
   if(CTRL_EXECUTOR)
