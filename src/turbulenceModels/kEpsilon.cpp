@@ -39,17 +39,17 @@ void kernelComputeSources(
     const NeoN::Vector<scalar>& epsVec,
     const NeoN::Vector<scalar>& nutVec,
     const NeoN::Vector<Tensor>& gradUVec,
-    NeoN::Vector<scalar>& PkVec,
+    NeoN::Vector<scalar>& pkVec,
     NeoN::Vector<scalar>& spKVec,
     NeoN::Vector<scalar>& epsSourceVec,
     NeoN::Vector<scalar>& spEpsVec,
-    scalar Cmu,
+    scalar cmu,
     scalar C1,
     scalar C2
 )
 {
-    const auto [kV, epsV, nutV, gradUV, PkV, spKV, epsSV, spEpsV] =
-        NeoN::views(kVec, epsVec, nutVec, gradUVec, PkVec, spKVec, epsSourceVec, spEpsVec);
+    const auto [kV, epsV, nutV, gradUV, pkV, spKV, epsSV, spEpsV] =
+        NeoN::views(kVec, epsVec, nutVec, gradUVec, pkVec, spKVec, epsSourceVec, spEpsVec);
 
     const scalar rootVSmall = scalar(1e-30);
 
@@ -85,14 +85,14 @@ void kernelComputeSources(
             // k equation:
             //   source: +G
             //   implicit destruction (sp): ε/k     → spK = ε/k
-            PkV[i] = G_i;
+            pkV[i] = G_i;
             spKV[i] = eps_i / Kokkos::max(k_i, rootVSmall);
 
             // ε equation:
             //   source: +C1 · Cμ · k · GbyNu0  (since C1·G·ε/k = C1·Cμ·k·GbyNu0
             //                                    using ν_t = Cμ·k²/ε)
             //   implicit destruction (sp): C2 · ε/k → spEps = C2 · ε/k
-            epsSV[i] = C1 * Cmu * k_i * GbyNu0_i;
+            epsSV[i] = C1 * cmu * k_i * GbyNu0_i;
             spEpsV[i] = C2 * eps_i / Kokkos::max(k_i, rootVSmall);
         },
         "kEpsilon::computeSources"
@@ -107,7 +107,7 @@ void kernelCorrectNutInternal(
     const NeoN::Vector<scalar>& kVec,
     const NeoN::Vector<scalar>& epsVec,
     NeoN::Vector<scalar>& nutVec,
-    scalar Cmu
+    scalar cmu
 )
 {
     const auto [kV, epsV, nutV_] = NeoN::views(kVec, epsVec, nutVec);
@@ -119,7 +119,7 @@ void kernelCorrectNutInternal(
         NEON_LAMBDA(const localIdx i) {
             const scalar k_i = Kokkos::max(kV[i], scalar(0));
             const scalar eps_i = Kokkos::max(epsV[i], rootVSmall);
-            nutV_[i] = Cmu * k_i * k_i / eps_i;
+            nutV_[i] = cmu * k_i * k_i / eps_i;
         },
         "kEpsilon::correctNutInternal"
     );
@@ -133,23 +133,23 @@ void kernelCalcDiffusivities(
     const NeoN::Vector<scalar>& surfNuVec,
     const NeoN::Vector<scalar>& surfNutVec,
     NeoN::Vector<scalar>& nuEffVec,
-    NeoN::Vector<scalar>& DkEffVec,
-    NeoN::Vector<scalar>& DepsEffVec,
+    NeoN::Vector<scalar>& dkEffVec,
+    NeoN::Vector<scalar>& depsEffVec,
     scalar sigmaK,
     scalar sigmaEps,
     std::string label
 )
 {
-    const auto [nuF, nutF, nuEffF, DkF, DepsF] =
-        NeoN::views(surfNuVec, surfNutVec, nuEffVec, DkEffVec, DepsEffVec);
+    const auto [nuF, nutF, nuEffF, dkF, depsF] =
+        NeoN::views(surfNuVec, surfNutVec, nuEffVec, dkEffVec, depsEffVec);
 
     NeoN::parallelFor(
         exec,
         {0, static_cast<localIdx>(nuEffVec.size())},
         NEON_LAMBDA(const localIdx f) {
             nuEffF[f] = nuF[f] + nutF[f];
-            DkF[f] = nuF[f] + nutF[f] / sigmaK;
-            DepsF[f] = nuF[f] + nutF[f] / sigmaEps;
+            dkF[f] = nuF[f] + nutF[f] / sigmaK;
+            depsF[f] = nuF[f] + nutF[f] / sigmaEps;
         },
         std::move(label)
     );
@@ -255,8 +255,8 @@ KEpsilon::KEpsilon(
           fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh)
       )
     , nuEff_(exec, "nuEff", mesh, fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh))
-    , DkEffF_(exec, "DkEff", mesh, fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh))
-    , DepsilonEffF_(
+    , dkEffF_(exec, "DkEff", mesh, fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh))
+    , depsilonEffF_(
           exec,
           "DepsilonEff",
           mesh,
@@ -340,7 +340,7 @@ void KEpsilon::correct(
     //
     // Identifies wall-function patches by name on epsilon's BC list.
     {
-        const scalar Cmu25 = Kokkos::pow(coeffs_.Cmu, scalar(0.25));
+        const scalar cmu25 = Kokkos::pow(coeffs_.cmu, scalar(0.25));
         const scalar kappa_ = scalar(0.41); // matches epsilonWallFunction default
         const auto& epsilonBCs = epsilon.boundaryConditions();
         const auto faceOwnersV = mesh_.boundaryMesh().faceOwners().view();
@@ -424,7 +424,7 @@ void KEpsilon::correct(
                     const scalar y = yBoundaryV[i];
                     const scalar kc = Kokkos::max(kInternalV[owner], scalar(0));
                     const scalar gWall =
-                        (nutw + nuw) * magGradUw * Cmu25 * Kokkos::sqrt(kc) / (kappa_ * y);
+                        (nutw + nuw) * magGradUw * cmu25 * Kokkos::sqrt(kc) / (kappa_ * y);
                     Kokkos::atomic_add(&pkInternalV[owner], cw * gWall);
                 },
                 "kEpsilon::epsilonWFGFeedback"
@@ -437,7 +437,7 @@ void KEpsilon::correct(
     // sequencing (kEpsilon.C:251-291: ε first, then k).
     auto epsEqn = PDESolver<scalar>(
         dsl::imp::ddt(epsilon) + dsl::imp::div(phi, epsilon)
-            - dsl::imp::laplacian(DepsilonEffF_, epsilon) + dsl::imp::source(spEpsilon_, epsilon)
+            - dsl::imp::laplacian(depsilonEffF_, epsilon) + dsl::imp::source(spEpsilon_, epsilon)
             - dsl::exp::source(epsilonSource_),
         epsilon,
         rt
@@ -475,7 +475,7 @@ void KEpsilon::correct(
 
     // ----- k equation -----
     auto kEqn = PDESolver<scalar>(
-        dsl::imp::ddt(k) + dsl::imp::div(phi, k) - dsl::imp::laplacian(DkEffF_, k)
+        dsl::imp::ddt(k) + dsl::imp::div(phi, k) - dsl::imp::laplacian(dkEffF_, k)
             + dsl::imp::source(spK_, k) - dsl::exp::source(Pk_),
         k,
         rt
@@ -504,9 +504,9 @@ void KEpsilon::correct(
 
 nnfvcc::SurfaceField<scalar>& KEpsilon::nuEff() { return nuEff_; }
 
-nnfvcc::SurfaceField<scalar>& KEpsilon::DkEff() { return DkEffF_; }
+nnfvcc::SurfaceField<scalar>& KEpsilon::dkEff() { return dkEffF_; }
 
-nnfvcc::SurfaceField<scalar>& KEpsilon::DepsilonEff() { return DepsilonEffF_; }
+nnfvcc::SurfaceField<scalar>& KEpsilon::depsilonEff() { return depsilonEffF_; }
 
 const nnfvcc::VolumeField<Tensor>& KEpsilon::gradU() const { return gradU_; }
 
@@ -545,7 +545,7 @@ void KEpsilon::computeSources(
         spK_.internalVector(),
         epsilonSource_.internalVector(),
         spEpsilon_.internalVector(),
-        coeffs_.Cmu,
+        coeffs_.cmu,
         coeffs_.C1,
         coeffs_.C2
     );
@@ -562,7 +562,7 @@ void KEpsilon::correctNutInternal(
         k.internalVector(),
         epsilon.internalVector(),
         nut.internalVector(),
-        coeffs_.Cmu
+        coeffs_.cmu
     );
 }
 
@@ -575,8 +575,8 @@ void KEpsilon::calcDiffusivities(const nnfvcc::VolumeField<scalar>& nut)
         surfNu_.internalVector(),
         surfNut_.internalVector(),
         nuEff_.internalVector(),
-        DkEffF_.internalVector(),
-        DepsilonEffF_.internalVector(),
+        dkEffF_.internalVector(),
+        depsilonEffF_.internalVector(),
         coeffs_.sigmaK,
         coeffs_.sigmaEps,
         "kEpsilon::calcDiffusivities::internal"
@@ -586,8 +586,8 @@ void KEpsilon::calcDiffusivities(const nnfvcc::VolumeField<scalar>& nut)
         surfNu_.boundaryData().value(),
         surfNut_.boundaryData().value(),
         nuEff_.boundaryData().value(),
-        DkEffF_.boundaryData().value(),
-        DepsilonEffF_.boundaryData().value(),
+        dkEffF_.boundaryData().value(),
+        depsilonEffF_.boundaryData().value(),
         coeffs_.sigmaK,
         coeffs_.sigmaEps,
         "kEpsilon::calcDiffusivities::boundary"

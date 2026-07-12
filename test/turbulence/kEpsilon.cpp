@@ -167,7 +167,7 @@ TEST_CASE("kEpsilon: computeSources matches OpenFOAM")
     }
 
     // --- Compare source terms ---
-    REQUIRE_THAT(turbNF.PkField(), EqualsInternal(ofPk, ApproxScalar(1e-10)));
+    REQUIRE_THAT(turbNF.pkField(), EqualsInternal(ofPk, ApproxScalar(1e-10)));
     REQUIRE_THAT(turbNF.spKField(), EqualsInternal(ofSpK, ApproxScalar(1e-10)));
     REQUIRE_THAT(turbNF.epsilonSourceField(), EqualsInternal(ofEpsSource, ApproxScalar(1e-10)));
     REQUIRE_THAT(turbNF.spEpsilonField(), EqualsInternal(ofSpEps, ApproxScalar(1e-10)));
