@@ -1,8 +1,11 @@
+// SPDX-License-Identifier: Unlicense
+// SPDX-FileCopyrightText: 2023 NeoFOAM authors
+// Generated file — edit neofoam_generate_controlDict in CMakeLists.txt.
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2306                                 |
-|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|  \\    /   O peration     |                                                 |
+|   \\  /    A nd           |                                                 |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
 FoamFile
@@ -14,41 +17,36 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-application     laplacianFoam;
-
-startFrom       startTime;
+application     @CTRL_APPLICATION@;
+@CTRL_EXECUTOR_LINE@
+@CTRL_ALLOCATOR_LINE@
+startFrom       @CTRL_START_FROM@;
 
 startTime       0;
 
 stopAt          endTime;
 
-endTime         3;
+endTime         @CTRL_END_TIME@;
 
-deltaT          0.005;
+deltaT          @CTRL_DELTA_T@;
 
-writeControl    runTime;
+writeControl    @CTRL_WRITE_CONTROL@;
 
-writeInterval   10000;
+writeInterval   @CTRL_WRITE_INTERVAL@;
 
 purgeWrite      0;
 
-writeFormat     ascii;
+writeFormat     @CTRL_WRITE_FORMAT@;
 
-writePrecision  16;
+writePrecision  @CTRL_WRITE_PRECISION@;
 
 writeCompression off;
 
 timeFormat      general;
 
-timePrecision   16;
+timePrecision   @CTRL_TIME_PRECISION@;
 
 runTimeModifiable true;
-
-profiling
-{
-    active      true;
-    cpuInfo     true;
-    memInfo     true;
-    sysInfo     true;
-}
+@CTRL_EXTRAS@
+@CTRL_PROFILING_BLOCK@
 // ************************************************************************* //

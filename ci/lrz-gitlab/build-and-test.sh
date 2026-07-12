@@ -45,6 +45,12 @@ elif [[ "$GPU_VENDOR" == "intel" ]]; then
     sycl-ls 2>/dev/null | grep '^\[level_zero:gpu\]'
     # Compiler info (non-fatal)
     icpx --version 2>/dev/null | head -1 || echo "icpx not found"
+    # Intel PVC has two tiles and implicit scaling routes work across them;
+    # sycl::queue::wait() only drains the root-device queue and misses
+    # in-flight work on tile 1, causing GPU page faults on freed USM memory.
+    # COMPOSITE hierarchy exposes each tile as a separate L0 device so Kokkos
+    # selects a single tile — all work and synchronisation stay on one tile.
+    export ZE_FLAT_DEVICE_HIERARCHY=COMPOSITE
 
 else
     echo "Unsupported GPU vendor: $GPU_VENDOR"

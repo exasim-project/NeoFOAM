@@ -139,6 +139,9 @@ public:
     /// @brief Velocity gradient tensor (updated each correct() call, for viscousStress term)
     const nnfvcc::VolumeField<NeoN::Tensor>& gradU() const override;
 
+    /// @brief Recompute gradU_ in place at U (+ proc-halo exchange); see TurbulenceModel.
+    void updateGradU(const nnfvcc::VolumeField<NeoN::Vec3>& U) override;
+
     void initialize(
         const nnfvcc::VolumeField<scalar>& nuTildaInit,
         const nnfvcc::VolumeField<scalar>& nutInit

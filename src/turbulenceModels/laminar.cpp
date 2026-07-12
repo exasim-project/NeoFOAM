@@ -32,20 +32,32 @@ Laminar::Laminar(RunTime& rt, const nnfvcc::VolumeField<NeoN::scalar>& nu)
           fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<NeoN::scalar>>(rt.nfMesh)
       )
     , surfInterp_(rt.exec, rt.nfMesh, NeoN::TokenList({std::string("linear")}))
-{}
+{
+    // nut is identically zero for the laminar model, but the VolumeField constructor
+    // above only ALLOCATES nut_ (from the Umpire pool, which does not zero memory) — it
+    // never initialises it. viscousStress() reads nuEff = nu + nut per cell, so an
+    // uninitialised nut_ injects garbage into the momentum source and diverges the solve.
+    // Pin it to zero here (internal + boundary) so nuEff == nu as documented.
+    NeoN::fill(nut_.internalVector(), NeoN::scalar(0));
+    NeoN::fill(nut_.boundaryData().value(), NeoN::scalar(0));
+}
 
-void Laminar::validate(const nnfvcc::VolumeField<NeoN::Vec3>& U)
+void Laminar::updateGradU(const nnfvcc::VolumeField<NeoN::Vec3>& U)
 {
     gradOp_.gradTensor(U, gradU_);
     gradU_.correctBoundaryConditions();
+}
+
+void Laminar::validate(const nnfvcc::VolumeField<NeoN::Vec3>& U)
+{
+    updateGradU(U);
     surfInterp_.interpolate(nu_, nuEff_);
 }
 
 void Laminar::
     correct(const nnfvcc::VolumeField<NeoN::Vec3>& U, nnfvcc::SurfaceField<NeoN::scalar>&, RunTime&)
 {
-    gradOp_.gradTensor(U, gradU_);
-    gradU_.correctBoundaryConditions();
+    updateGradU(U);
     surfInterp_.interpolate(nu_, nuEff_);
 }
 

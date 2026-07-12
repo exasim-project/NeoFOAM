@@ -163,6 +163,10 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
         {"symmetry", [](auto& dict) { dict.insert("type", std::string("symmetry")); }},
         {"nutUSpaldingWallFunction",
          [](auto& dict) { dict.insert("type", std::string("nutUSpaldingWallFunction")); }},
+        {"kqRWallFunction", [](auto& dict) { dict.insert("type", std::string("kqRWallFunction")); }
+        },
+        {"omegaWallFunction",
+         [](auto& dict) { dict.insert("type", std::string("omegaWallFunction")); }},
         // Two-phase VoF outlet/pressure conditions from the damBreak case. These
         // are outflow-dominant and are approximated here as zeroGradient so the
         // fields can be read; a faithful treatment lands with the VoF solve.
