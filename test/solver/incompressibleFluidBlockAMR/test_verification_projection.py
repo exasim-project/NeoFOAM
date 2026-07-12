@@ -179,7 +179,7 @@ def test_projection_makes_velocity_divergence_free(blockamr_session):
         0.01,
         0.2 / n,
         fill_patch=FillPatchCellConservative(),
-        schemes_p={"rtol": 1e-12, "atol": 1e-14, "max_iter": 400, "verbose": 0},
+        sol_p={"rtol": 1e-12, "atol": 1e-14, "maxIter": 400, "verbose": 0},
     )
     _set_random_velocity(solver, mesh, seed=3)
 

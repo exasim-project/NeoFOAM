@@ -67,8 +67,8 @@ def _blockamr_tg_case(n):
         NU,
         DT,
         fill_patch=FillPatchCellConservative(),
-        div_scheme=Linear(),
-        schemes_p={"rtol": 1e-12, "atol": 1e-14, "max_iter": 400, "verbose": 0},
+        schemes={"div(phi,U)": Linear()},
+        sol_p={"rtol": 1e-12, "atol": 1e-14, "maxIter": 400, "verbose": 0},
     )
     geom = mesh.geom(0)
     dx = geom.cell_size()

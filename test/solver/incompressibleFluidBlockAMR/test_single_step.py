@@ -80,9 +80,11 @@ def _make_periodic_tg_solver(n=16, nz=4, re=100.0, cfl=0.2):
     dm = blockamr.DistributionMapping(ba)
     mesh = Mesh(ba, dm, geom)
     solver = DSLIncompressibleSolver(
-        mesh, nu, dt,
+        mesh,
+        nu,
+        dt,
         fill_patch=FillPatchCellConservative(),
-        schemes_p={"rtol": 1e-12, "atol": 1e-14, "max_iter": 400, "verbose": 0},
+        sol_p={"rtol": 1e-12, "atol": 1e-14, "maxIter": 400, "verbose": 0},
     )
     _taylor_green_ic(solver.U.mf[0], geom)
     return solver, mesh

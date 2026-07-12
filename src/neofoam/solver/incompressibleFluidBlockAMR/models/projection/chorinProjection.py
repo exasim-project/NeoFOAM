@@ -65,16 +65,28 @@ def build(self: Any) -> list[Any]:
         sol_cfg = context["_solution_cfg"]
         ctrl_cfg = context["_control_cfg"]
 
-        schemes_p = {
+        # MLMG solve controls from the fvSolution ``blockAMR`` subdict, threaded
+        # to the engine as the ``sol_p`` (fvSolution.solvers['p']) parameter.
+        # ``verbose`` / ``bottomVerbose`` set the AMReX residual-trace level
+        # (0 = quiet).
+        sol_p: dict[str, Any] = {
             "rtol": sol_cfg.rtol,
             "atol": sol_cfg.atol,
-            "max_iter": sol_cfg.maxIter,
-            "verbose": 0,
+            "maxIter": sol_cfg.maxIter,
+            "verbose": sol_cfg.verbose,
+            "bottomVerbose": sol_cfg.bottomVerbose,
         }
         # optional explicit MLMG bottom solver (empty → AMReX default)
         if sol_cfg.bottomSolver:
-            schemes_p["bottom_solver"] = sol_cfg.bottomSolver
+            sol_p["bottomSolver"] = sol_cfg.bottomSolver
+
+        # fvSchemes: discretisation scheme names, bound to UEqn/pEqn at
+        # construction. Omitting the key lets the engine fall back to its
+        # default (Upwind).
+        schemes: dict[str, Any] = {}
         div_scheme = _make_div_scheme(sol_cfg.divScheme)
+        if div_scheme is not None:
+            schemes["div(phi,U)"] = div_scheme
 
         # Immersed cylinder body → direct-forcing IBM spec for the engine.
         eb = None
@@ -92,8 +104,8 @@ def build(self: Any) -> list[Any]:
                 sol_cfg.nu,
                 ctrl_cfg.deltaT,
                 fill_patch=FillPatchCellConservative(),
-                schemes_p=schemes_p,
-                div_scheme=div_scheme,
+                schemes=schemes,
+                sol_p=sol_p,
                 eb=eb,
             )
         # Walled/open domain: map the per-face boundary spec to a VectorBC.
@@ -103,8 +115,8 @@ def build(self: Any) -> list[Any]:
             sol_cfg.nu,
             ctrl_cfg.deltaT,
             U_bc=u_bc,
-            schemes_p=schemes_p,
-            div_scheme=div_scheme,
+            schemes=schemes,
+            sol_p=sol_p,
             eb=eb,
         )
 

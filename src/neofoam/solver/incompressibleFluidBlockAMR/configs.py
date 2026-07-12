@@ -147,6 +147,9 @@ class BlockAMRSolutionConfig(BaseConfig):
     bottom solver (``cg`` | ``bicgstab`` | ``smoother`` | ``cgbicg`` | ``bicgcg``
     | ``default``) — empty leaves AMReX's default (a Krylov solver that converges
     the nodal projection in ~5 V-cycles; ``smoother`` is ~100x slower here).
+    ``verbose`` / ``bottomVerbose`` set the AMReX MLMG residual-trace level (0 =
+    quiet) for the nodal solve and its bottom solver — a debugging aid for e.g.
+    diagnosing a multi-box convergence stall.
     """
 
     nu: float = Field(gt=0.0)
@@ -155,3 +158,5 @@ class BlockAMRSolutionConfig(BaseConfig):
     maxIter: int = Field(default=200, gt=0)
     divScheme: str = "vanLeer"
     bottomSolver: str = ""
+    verbose: int = Field(default=0, ge=0)
+    bottomVerbose: int = Field(default=0, ge=0)

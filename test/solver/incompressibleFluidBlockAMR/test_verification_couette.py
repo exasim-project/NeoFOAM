@@ -44,7 +44,7 @@ def _couette_profile(n, nsteps):
     mesh = Mesh(box_array, dm, geom)
 
     u_bc = VectorBC(ylo=noSlip(), yhi=fixedValue([WALL_SPEED, 0.0, 0.0]))
-    solver = DSLIncompressibleSolver(mesh, NU, dt, u_bc)
+    solver = DSLIncompressibleSolver(mesh, NU, dt, U_bc=u_bc)
     for _ in range(nsteps):
         solver.step()
 
