@@ -173,7 +173,7 @@ from neofoam.solver.incompressibleFluidBlockAMR import run
 t0 = time.perf_counter()
 ctx = run(["incompressibleFluidBlockAMR"])
 dt = time.perf_counter() - t0
-eng = ctx.models["blockamr_engine"]
+eng = ctx.models["projection_state"]
 maxu = float(np.max(np.abs(np.asarray(eng.U.mf[0].arrays()[0]))))
 sys.stdout.write(f"BENCH_SECONDS={dt:.4f}\\n")
 sys.stdout.write(f"BENCH_MAXU={maxu:.6f}\\n")

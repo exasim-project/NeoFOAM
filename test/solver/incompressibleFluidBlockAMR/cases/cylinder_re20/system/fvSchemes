@@ -1,6 +1,6 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
-| \\      /  F ield         | NeoFOAM: block-structured solve controls        |
+| \\      /  F ield         | NeoFOAM: block-structured discretisation schemes|
 |  \\    /   O peration     |                                                 |
 |   \\  /    A nd           |                                                 |
 |    \\/     M anipulation  |                                                 |
@@ -10,28 +10,28 @@ FoamFile
     version     2.0;
     format      ascii;
     class       dictionary;
-    object      fvSolution;
+    object      fvSchemes;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-solvers
+ddtSchemes
 {
-    U
-    {
-        backend     jax;
-    }
-    p
-    {
-        solver      MLMG;
-        rtol        1e-10;
-        atol        1e-8;
-        maxIter     200;
-    }
+    default     Euler;
 }
 
-blockAMR
+divSchemes
 {
-    nu          0.01;
+    div(phi,U)  vanLeer;
+}
+
+laplacianSchemes
+{
+    default     central;
+}
+
+gradSchemes
+{
+    default     central;
 }
 
 // ************************************************************************* //

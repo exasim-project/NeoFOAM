@@ -5,13 +5,13 @@
 
 A framework ``SolverSpec`` mirroring ``incompressibleFluid``'s composition
 (SolverSpec / ModelSpec / StagedInit) but backed by the block-structured AMReX
-engine ``neon.blockamr.dsl_solver.DSLIncompressibleSolver`` instead of pybFoam.
+DSL ``neon.blockamr`` instead of pybFoam.
 
 One time step is a Chorin fractional-step projection::
 
-    set_time_step     # fold time-step constraints; push dt onto the engine
+    set_time_step     # fold time-step constraints; push dt onto the state
     increment_time    # "Time = ..." print; advance the LoopState
-    project           # engine.step(): interpolate -> MAC project -> predictor
+    project           # worked example: interpolate -> MAC project -> predictor
                       #                -> pressure Poisson -> velocity correct
     write_output      # PlotfileWriteHook writes an AMReX plotfile on write steps
 
@@ -35,7 +35,14 @@ from neofoam.framework.solver import Solver
 from neofoam.framework.types import OperationMetadata
 from neofoam.algorithms.solution_loop.solution_loop import SolutionLoopPredicate
 
-from .configs import BlockAMRSolutionConfig, ControlDictConfig, MeshDictConfig
+from .configs import (
+    BlockAMRSolutionConfig,
+    ControlDictConfig,
+    FvSchemesConfig,
+    MeshDictConfig,
+    PSolutionConfig,
+    USolutionConfig,
+)
 from .create_fields import create_init
 from .models.incompressibleFluidBlockAMRModel import incompressibleFluidBlockAMRModel
 from .models.projection.base import ProjectionAlgorithm
@@ -55,6 +62,9 @@ incompressibleFluidBlockAMR = Solver("incompressibleFluidBlockAMR")
 # Declare the full config schema on the spec, case-free.
 incompressibleFluidBlockAMR.config(ControlDictConfig)
 incompressibleFluidBlockAMR.config(MeshDictConfig)
+incompressibleFluidBlockAMR.config(FvSchemesConfig)
+incompressibleFluidBlockAMR.config(USolutionConfig)
+incompressibleFluidBlockAMR.config(PSolutionConfig)
 incompressibleFluidBlockAMR.config(BlockAMRSolutionConfig)
 
 incompressibleFluidBlockAMR.models(ProjectionAlgorithm, required=True)  # pick ONE

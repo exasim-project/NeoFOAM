@@ -24,7 +24,7 @@ pytest.importorskip("neon")
 
 import neon.blockamr as blockamr  # noqa: E402
 from neon.blockamr.bc import VectorBC, fixedValue, noSlip  # noqa: E402
-from neon.blockamr.dsl_solver import DSLIncompressibleSolver  # noqa: E402
+from neon.blockamr.incompressible import build_incompressible, step  # noqa: E402
 from neon.blockamr.mesh import Mesh  # noqa: E402
 
 WALL_SPEED = 1.0
@@ -44,9 +44,9 @@ def _couette_profile(n, nsteps):
     mesh = Mesh(box_array, dm, geom)
 
     u_bc = VectorBC(ylo=noSlip(), yhi=fixedValue([WALL_SPEED, 0.0, 0.0]))
-    solver = DSLIncompressibleSolver(mesh, NU, dt, U_bc=u_bc)
+    solver = build_incompressible(mesh, NU, dt, U_bc=u_bc)
     for _ in range(nsteps):
-        solver.step()
+        step(solver)
 
     mf = solver.U.mf[0]
     ng = mf.n_grow()

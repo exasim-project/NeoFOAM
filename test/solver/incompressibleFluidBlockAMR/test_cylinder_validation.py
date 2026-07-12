@@ -69,7 +69,7 @@ def cylinder_re20_case(tmp_path, monkeypatch):
 def test_cylinder_re20_observables_in_band(blockamr_session, cylinder_re20_case):
     """Config-driven Re=20 cylinder: steady, sane wake, Cd in the achievable band."""
     ctx = run(["incompressibleFluidBlockAMR"])
-    engine = ctx.models["blockamr_engine"]
+    engine = ctx.models["projection_state"]
 
     U_inf, D = 1.0, 0.2
     Cd, Cl = postpro.force_coefficients(engine, U_inf, D, nu=0.01, tail_fraction=0.3)

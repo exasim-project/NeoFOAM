@@ -10,7 +10,7 @@ solution of incompressible Navier-Stokes::
     v =  sin(x) cos(y) e^{-2 nu t}
     p = -1/4 (cos 2x + cos 2y) e^{-4 nu t}
 
-Driving ``incompressibleFluidBlockAMR``'s engine (``DSLIncompressibleSolver``) with
+Driving ``incompressibleFluidBlockAMR``'s ``neon.blockamr`` DSL projection with
 the exact field as initial condition exercises every term at once — advection,
 diffusion, the MAC projection, the pressure solve, and the coupled time advance.
 Three checks:
@@ -32,7 +32,7 @@ pytest.importorskip("neon")
 
 import jax.numpy as jnp  # noqa: E402
 import neon.blockamr as blockamr  # noqa: E402
-from neon.blockamr.dsl_solver import DSLIncompressibleSolver  # noqa: E402
+from neon.blockamr.incompressible import build_incompressible, step  # noqa: E402
 from neon.blockamr.fillpatch import FillPatchCellConservative  # noqa: E402
 from neon.blockamr.schemes.div_schemes import Linear  # noqa: E402
 
@@ -88,7 +88,7 @@ def _set_tg_ic(solver, mesh):
 
 def _make_tg_solver(n):
     mesh = _tg_mesh(n)
-    solver = DSLIncompressibleSolver(
+    solver = build_incompressible(
         mesh,
         NU,
         DT,
@@ -107,7 +107,7 @@ def _tg_case_builder(n):
     """case_builder for run_at_resolution: build, step NSTEPS, return (solver, mesh)."""
     solver, mesh = _make_tg_solver(n)
     for _ in range(NSTEPS):
-        solver.step()
+        step(solver)
     return solver, mesh
 
 
@@ -146,9 +146,9 @@ def test_taylor_green_viscous_decay_envelope(blockamr_session):
     solver, _ = _make_tg_solver(64)
     m0 = _max_speed(solver)
     n_decay = 20
-    for step in range(1, n_decay + 1):
-        solver.step()
-        t = step * DT
+    for k in range(1, n_decay + 1):
+        step(solver)
+        t = k * DT
         ratio = _max_speed(solver) / m0
         expected = math.exp(-2.0 * NU * t)
         assert abs(ratio - expected) < 5e-3, (

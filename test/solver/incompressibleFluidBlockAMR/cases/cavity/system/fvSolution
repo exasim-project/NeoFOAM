@@ -5,11 +5,23 @@ FoamFile
     class       dictionary;
     object      fvSolution;
 }
+
+solvers
+{
+    U
+    {
+        backend     jax;
+    }
+    p
+    {
+        solver      MLMG;
+        rtol        1e-10;
+        atol        1e-8;
+        maxIter     200;
+    }
+}
+
 blockAMR
 {
     nu          0.01;        // Re = U L / nu = 1 * 1 / 0.01 = 100
-    rtol        1e-10;
-    atol        1e-8;
-    maxIter     200;
-    divScheme   vanLeer;
 }

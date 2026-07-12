@@ -5,8 +5,8 @@
 
 The block-structured engine couples pressure and velocity by a fractional-step
 **projection**, not an OpenFOAM PIMPLE/PISO loop. Only one member exists —
-:data:`chorinProjection` (MAC + nodal projection via
-``DSLIncompressibleSolver``) — so detection is trivial; the family shape matches
+:data:`chorinProjection` (MAC + nodal projection via the ``neon.blockamr`` DSL) —
+so detection is trivial; the family shape matches
 the other solvers so ``solver.models(ProjectionAlgorithm, required=True)`` and
 ``configurations()`` work uniformly.
 """

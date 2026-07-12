@@ -19,7 +19,7 @@ from neofoam.solver.incompressibleFluidBlockAMR import run  # noqa: E402
 def test_run_smoke_finishes_without_nans(blockamr_session, box_case):
     ctx = run(["incompressibleFluidBlockAMR"])
 
-    engine = ctx.models["blockamr_engine"]
+    engine = ctx.models["projection_state"]
 
     # Velocity finite everywhere after the full run.
     for a in engine.U.mf[0].arrays():

@@ -6,15 +6,16 @@
 LOAD    → detect the projection algorithm + any optional models; instantiate the
           reused ``solutionLoop`` / ``fieldWriter`` core Models.
 RESOLVE → wire optional-model dependencies via ConfigContext.
-BUILD   → emit lazy InitSteps that construct the ``neon.blockamr`` mesh + engine,
-          register ``U`` / ``p`` / ``phi`` + the engine into the Context, and
-          inject the blockAMR loop/writer backends through the framework seams.
+BUILD   → emit lazy InitSteps that construct the ``neon.blockamr`` mesh + the
+          projection state (fields + equations), register ``U`` / ``p`` / ``phi``
+          + the state into the Context, and inject the blockAMR loop/writer
+          backends through the framework seams.
 
 Unlike the pybFoam / NeoN solvers there is no ``Foam::Time`` / OpenFOAM mesh: the
 framework core Models are pure-Python (``LoopState`` + ``FieldWriter``), and the
-block-structured engine (``DSLIncompressibleSolver``) owns the physics. The mesh
-and the validated dict configs are init-only resources (leading underscore keeps
-them off the Context); the engine is re-exposed as ``models.blockamr_engine`` so
+block-structured DSL (``neon.blockamr``) carries the physics. The mesh and the
+validated dict configs are init-only resources (leading underscore keeps them off
+the Context); the projection state is re-exposed as ``models.projection_state`` so
 the ``project`` operation injects it by name.
 """
 
@@ -36,7 +37,14 @@ from neofoam.framework.initialization import (
 )
 from neofoam.framework.model import ModelRuntime, bind_owned_interfaces
 
-from .configs import BlockAMRSolutionConfig, ControlDictConfig, MeshDictConfig
+from .configs import (
+    BlockAMRSolutionConfig,
+    ControlDictConfig,
+    FvSchemesConfig,
+    MeshDictConfig,
+    PSolutionConfig,
+    USolutionConfig,
+)
 from .models.blockamr_backend import loop_backend_steps, writer_backend_steps
 from .models.incompressibleFluidBlockAMRModel import incompressibleFluidBlockAMRModel
 from .models.mesh_factory import build_mesh
@@ -56,7 +64,9 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
     @spec_builder.load
     def load_config() -> LoadResult:
         projection_model = ProjectionAlgorithm.detect_and_create(resolved_case_dir)
-        optional_models = incompressibleFluidBlockAMRModel.detect_models(resolved_case_dir)
+        optional_models = incompressibleFluidBlockAMRModel.detect_models(
+            resolved_case_dir
+        )
 
         # solutionLoop (advances time) + fieldWriter (persists fields) are the
         # reused framework core Models; loaded here so their controlDict is
@@ -79,7 +89,9 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             opt.run_resolve(config)
 
     @spec_builder.build
-    def build_lazy(core_models: list[Any], optional_models: list[Any]) -> list[InitStep]:
+    def build_lazy(
+        core_models: list[Any], optional_models: list[Any]
+    ) -> list[InitStep]:
         projection_model = core_models[0]
 
         def _by_spec(spec_name: str) -> Any:
@@ -103,6 +115,15 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         def load_control_cfg(_ctx: dict[str, Any]) -> ControlDictConfig:
             return ControlDictConfig.load(case_dir=resolved_case_dir)
 
+        def load_fvschemes_cfg(_ctx: dict[str, Any]) -> FvSchemesConfig:
+            return FvSchemesConfig.load(case_dir=resolved_case_dir)
+
+        def load_sol_u_cfg(_ctx: dict[str, Any]) -> USolutionConfig:
+            return USolutionConfig.load(case_dir=resolved_case_dir)
+
+        def load_sol_p_cfg(_ctx: dict[str, Any]) -> PSolutionConfig:
+            return PSolutionConfig.load(case_dir=resolved_case_dir)
+
         def make_mesh(ctx: dict[str, Any]) -> Any:
             return build_mesh(ctx["_mesh_cfg"])
 
@@ -110,6 +131,9 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         builder.add(lazy("_mesh_cfg", load_mesh_cfg))
         builder.add(lazy("_solution_cfg", load_solution_cfg))
         builder.add(lazy("_control_cfg", load_control_cfg))
+        builder.add(lazy("_fvschemes_cfg", load_fvschemes_cfg))
+        builder.add(lazy("_sol_u_cfg", load_sol_u_cfg))
+        builder.add(lazy("_sol_p_cfg", load_sol_p_cfg))
         builder.add(lazy("_blockamr_mesh", make_mesh, depends_on=["_mesh_cfg"]))
 
         # solutionLoop + fieldWriter core Models; the blockAMR touch-points
@@ -122,7 +146,9 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             ]
         )
         builder.extend(loop_backend_steps())
-        builder.extend(writer_backend_steps(ControlDictConfig.load(case_dir=resolved_case_dir)))
+        builder.extend(
+            writer_backend_steps(ControlDictConfig.load(case_dir=resolved_case_dir))
+        )
 
         # The projection ModelSpec is used as its own runtime (no instantiate):
         # its @build constructs the engine and registers U/p/phi + the engine.

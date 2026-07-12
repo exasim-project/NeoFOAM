@@ -16,7 +16,7 @@ import pytest
 pytest.importorskip("neon")
 
 import neon.blockamr as blockamr  # noqa: E402
-from neon.blockamr.dsl_solver import DSLIncompressibleSolver  # noqa: E402
+from neon.blockamr.incompressible import build_incompressible, step  # noqa: E402
 from neon.blockamr.fillpatch import FillPatchCellConservative  # noqa: E402
 from neon.blockamr.mesh import Mesh  # noqa: E402
 
@@ -79,7 +79,7 @@ def _make_periodic_tg_solver(n=16, nz=4, re=100.0, cfl=0.2):
     ba.max_size(n)
     dm = blockamr.DistributionMapping(ba)
     mesh = Mesh(ba, dm, geom)
-    solver = DSLIncompressibleSolver(
+    solver = build_incompressible(
         mesh,
         nu,
         dt,
@@ -94,7 +94,7 @@ def test_single_step_bounded_and_divergence_free(blockamr_session):
     solver, mesh = _make_periodic_tg_solver()
     u0 = _max_velocity(solver)
 
-    solver.step()
+    step(solver)
 
     # No NaNs / Infs anywhere in U.
     for a in solver.U.mf[0].arrays():

@@ -28,7 +28,7 @@ pytest.importorskip("neon")
 
 import jax.numpy as jnp  # noqa: E402
 import neon.blockamr as blockamr  # noqa: E402
-from neon.blockamr.dsl_solver import DSLIncompressibleSolver  # noqa: E402
+from neon.blockamr.incompressible import build_incompressible, step  # noqa: E402
 from neon.blockamr.fillpatch import FillPatchCellConservative  # noqa: E402
 from neon.blockamr.schemes.div_schemes import Linear  # noqa: E402
 
@@ -62,7 +62,7 @@ def _blockamr_tg_case(n):
             periodicity=[True, True, True],
         )
     )
-    solver = DSLIncompressibleSolver(
+    solver = build_incompressible(
         mesh,
         NU,
         DT,
@@ -87,7 +87,7 @@ def _blockamr_tg_case(n):
         mf.copy_from(mfi, jnp.asarray(vals, dtype=float))
     solver.U.fill_patch(0, 0.0)
     for _ in range(NSTEPS):
-        solver.step()
+        step(solver)
     return solver, mesh
 
 
