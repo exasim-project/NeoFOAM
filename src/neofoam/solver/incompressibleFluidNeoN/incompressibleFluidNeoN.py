@@ -47,9 +47,10 @@ def _core_model(state: Any, spec_name: str) -> Any:
 incompressibleFluidNeoN = Solver("incompressibleFluidNeoN")
 
 # Declare the full config schema on the spec, case-free: the solver's own
-# configs plus the model families it owns. Viscosity/turbulence carry no
-# Python config classes — the NeoN C++ factories read
-# constant/transportProperties / constant/turbulenceProperties directly.
+# configs plus the model families it owns. Viscosity carries no Python config
+# class (the NeoN C++ factory reads constant/transportProperties directly);
+# turbulence is runtime-selected in create_fields from
+# constant/turbulenceProperties (pure-Python NeoN family, C++ fallback).
 incompressibleFluidNeoN.config(ControlDictConfig)
 
 incompressibleFluidNeoN.models(PressureVelocityAlgorithmNeoN, required=True)  # pick ONE

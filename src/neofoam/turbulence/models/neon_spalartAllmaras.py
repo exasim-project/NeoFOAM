@@ -102,6 +102,12 @@ def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
         nut.correct_boundary_conditions()
         return nut
 
+    def create_nu_eff(ctx: dict[str, Any]) -> Any:
+        # Effective (surface) viscosity for the momentum laplacian: nuEff = nut + nu.
+        return ctx["models.sa_surf"].interpolate(
+            ctx["fields.nut"] + ctx["models.nu_vol"]
+        )
+
     return [
         init_field("nuTilda", read_nutilda, depends_on=["models.neon_runtime"]),
         init_model("sa_surf", create_surf, depends_on=["models.neon_runtime"]),
@@ -109,6 +115,11 @@ def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
         init_model("sa_wall_dist", read_wall_dist, depends_on=["models.neon_runtime"]),
         init_field(
             "nut", seed_nut, depends_on=["models.neon_runtime", "fields.nuTilda"]
+        ),
+        init_field(
+            "nuEff",
+            create_nu_eff,
+            depends_on=["fields.nut", "models.sa_surf", "models.nu_vol"],
         ),
     ]
 
@@ -167,6 +178,8 @@ def correct_nutilda(
     eqn.set_final_iter(False)
     eqn.solve()
     nuTilda.assign(nn.field_max(nuTilda, nuTildaMin))
+    # OpenFOAM's fvMatrix::solve corrects the solved field's BCs; NeoN's does not.
+    nuTilda.correct_boundary_conditions()
     return FieldUpdates({"nuTilda": nuTilda})
 
 
@@ -174,11 +187,13 @@ def correct_nutilda(
 def correct_nut(
     self: Any,
     neon_runtime: Annotated[Any, "models"],
+    nu_vol: Annotated[Any, "models"],
+    sa_surf: Annotated[Any, "models"],
     nuTilda: Annotated[Any, "fields"],
     nut: Annotated[Any, "fields"],
 ) -> FieldUpdates:
-    """correctNut: ``nut = nuTilda fv1(chi)`` from the updated ``nuTilda`` (on-device)."""
+    """correctNut: ``nut = nuTilda fv1(chi)``, then refresh the effective viscosity ``nuEff``."""
     nu = nfb.read_transport_viscosity(neon_runtime)
     nut.assign(nuTilda * _fv1(nuTilda / nu))
     nut.correct_boundary_conditions()
-    return FieldUpdates({"nut": nut})
+    return FieldUpdates({"nut": nut, "nuEff": sa_surf.interpolate(nut + nu_vol)})

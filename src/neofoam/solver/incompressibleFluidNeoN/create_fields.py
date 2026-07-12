@@ -15,10 +15,13 @@ Differences from the pybFoam ``incompressibleFluid`` init graph:
 * the NeoN ``RunTime`` adapter is the central resource: an init-only
   ``_neon_runtime`` (never routed onto the Context) plus a
   ``models.neon_runtime`` alias so operations inject it by name;
-* viscosity/turbulence are not Python model families: the C++ factories are
-  already runtime-selected from ``constant/transportProperties`` /
-  ``constant/turbulenceProperties``, so one ``nu_vol`` and one ``turbulence``
-  init step each suffice.
+* viscosity is not a Python model family: the C++ factory is already
+  runtime-selected from ``constant/transportProperties``, so one ``nu_vol``
+  init step suffices;
+* turbulence is one ``turbulence`` init step that prefers the pure-Python NeoN
+  ModelSpec family (:mod:`neofoam.turbulence.neon`, selected by name from
+  ``constant/turbulenceProperties``) and falls back to the C++ factory for
+  models not yet ported (e.g. LES SpalartAllmarasDDES).
 """
 
 from pathlib import Path
@@ -39,6 +42,9 @@ from neofoam.framework.initialization import (
     model as init_model,
 )
 from neofoam.framework.model import ModelRuntime, bind_owned_interfaces
+from neofoam.turbulence.config import TurbulencePropertiesConfig
+from neofoam.turbulence.neon import build_neon_turbulence, neonMomentumTransportModel
+from neofoam.turbulence.selection import model_name as turbulence_model_name
 
 from .configs import ControlDictConfig
 from .models.field_writer import fieldWriter, neon_writer_backend_steps
@@ -48,8 +54,23 @@ from .models.solution_loop import neon_loop_backend_steps, solutionLoop
 
 # Solver-solution subdicts mapped from OpenFOAM to NeoN/Ginkgo equivalents. The
 # base solver subdicts AND the *Final subdicts so the final outer-corrector
-# pass selects a converted dict (mirrors the legacy neoPimpleFoam port).
-_MAPPED_SOLVER_DICTS = ("p", "U", "pFinal", "UFinal", "nuTilda", "nuTildaFinal")
+# pass selects a converted dict (mirrors the legacy neoPimpleFoam port). The
+# turbulence transport unknowns are included so the pure-Python NeoN closures
+# (kEpsilon / SpalartAllmaras / kOmegaSST) find their converted solver dicts.
+_MAPPED_SOLVER_DICTS = (
+    "p",
+    "U",
+    "pFinal",
+    "UFinal",
+    "k",
+    "kFinal",
+    "epsilon",
+    "epsilonFinal",
+    "nuTilda",
+    "nuTildaFinal",
+    "omega",
+    "omegaFinal",
+)
 
 
 def _optional_models_by_name(optional_models: list[Any]) -> dict[str, Any]:
@@ -148,11 +169,26 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             )
 
         def create_turbulence(ctx: dict[str, Any]) -> Any:
-            # Runtime-selected C++ turbulence model (laminar or LES
-            # SpalartAllmarasDDES, per constant/turbulenceProperties). Owns
-            # nut / nuEff / gradU; for laminar nut = 0 and nuEff = nu.
+            # Runtime-selected turbulence model (per constant/turbulenceProperties):
+            # a registered pure-Python NeoN ModelSpec model (laminar / kEpsilon /
+            # SpalartAllmaras / kOmegaSST) when one matches the configured name,
+            # else the C++ factory (e.g. LES SpalartAllmarasDDES). Both expose the
+            # same handle surface (nut / nu_eff / rotate_old_times / correct /
+            # write); for laminar nut = 0 and nuEff = nu.
             rt = ctx["_neon_runtime"]
-            turb = nfb.create_turbulence_model(rt, ctx["models.nu_vol"])
+            # Validated load: with ``validate=False`` the RAS/LES sub-configs stay
+            # plain dicts and ``model_name`` cannot resolve the RAS/LES model name.
+            turb_config = TurbulencePropertiesConfig.load(case_dir=resolved_case_dir)
+            name = turbulence_model_name(turb_config)
+            if (
+                name is not None
+                and neonMomentumTransportModel.find_spec(name) is not None
+            ):
+                turb: Any = build_neon_turbulence(
+                    turb_config, rt, ctx["models.nu_vol"], resolved_case_dir
+                )
+            else:
+                turb = nfb.create_turbulence_model(rt, ctx["models.nu_vol"])
             turb.validate(ctx["fields.U"])
             return turb
 

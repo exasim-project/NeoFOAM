@@ -32,6 +32,7 @@ from typing import Any, Optional
 
 from pydantic import BaseModel
 
+from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
 from neofoam.core.plugin_system import PluginSystem
 from neofoam.framework.context import Context
 from neofoam.framework.initialization import field as init_field
@@ -97,7 +98,16 @@ class NeoNMomentumTransport:
     ``nuEff`` (and, for a closure, its ``k`` / ``epsilon`` and helper operators).
     :meth:`correct` then steps the spec's ``@operation``s (a transport solve for a
     closure; nothing for ``laminar``) over that same Context.
+
+    The accessor surface (:meth:`nut` / :meth:`nu_eff` / :meth:`rotate_old_times` /
+    :meth:`write`) matches the C++ ``nfb.create_turbulence_model`` handle, so the
+    incompressibleFluidNeoN solver consumes either interchangeably.
     """
+
+    #: Volume fields a model may own that OpenFOAM auto-writes alongside p/U —
+    #: persisted by :meth:`write` when present (``nuEff`` is a surface field and
+    #: ``G`` a per-step temporary, so neither is written).
+    _WRITE_FIELDS = ("nut", "k", "epsilon", "nuTilda", "omega")
 
     def __init__(self, runtime: ModelRuntime, neon_runtime: Any, nu: Any) -> None:
         self._runtime = runtime
@@ -144,6 +154,34 @@ class NeoNMomentumTransport:
                 f"(known: {sorted(self._ctx.fields)})"
             )
         return self._ctx.fields[name]
+
+    def nut(self) -> Any:
+        """The eddy viscosity ``nut`` (volume field) the model maintains."""
+        return self.field("nut")
+
+    def nu_eff(self) -> Any:
+        """The effective viscosity ``nuEff`` (surface field) the model maintains."""
+        return self.field("nuEff")
+
+    def rotate_old_times(self) -> None:
+        """No-op: each transport ``@operation`` rotates its own field before its solve.
+
+        The C++ handle rotates its transport fields' old times at the start of a
+        time step; the pure-Python closures do the equivalent ``nn.rotate_old_times``
+        inside :meth:`correct` (nothing touches those fields in between).
+        """
+
+    def write(self, mesh: Any = None) -> None:
+        """Write the owned volume fields (``nut`` + transport unknowns) to disk.
+
+        Signature-compatible with the C++ handle's ``write(mesh)``; ``mesh`` is
+        unused — the NeoN writer resolves the output through the runtime adapter.
+        """
+        if self._ctx is None:
+            raise RuntimeError("validate() must be called before write()")
+        for name in self._WRITE_FIELDS:
+            if name in self._ctx.fields:
+                nfb.write_scalar_field(self._ctx.fields[name], self._neon_runtime)
 
 
 def build_neon_turbulence(

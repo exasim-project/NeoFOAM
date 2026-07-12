@@ -174,6 +174,8 @@ def correct_epsilon(
     eps_eqn.set_final_iter(False)
     eps_eqn.solve()
     epsilon.assign(nn.field_max(epsilon, epsilonMin))
+    # OpenFOAM's fvMatrix::solve corrects the solved field's BCs; NeoN's does not.
+    epsilon.correct_boundary_conditions()
     return FieldUpdates({"epsilon": epsilon})
 
 
@@ -207,6 +209,8 @@ def correct_k(
     k_eqn.set_final_iter(False)
     k_eqn.solve()
     k.assign(nn.field_max(k, kMin))
+    # OpenFOAM's fvMatrix::solve corrects the solved field's BCs; NeoN's does not.
+    k.correct_boundary_conditions()
     return FieldUpdates({"k": k})
 
 

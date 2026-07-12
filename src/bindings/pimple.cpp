@@ -97,6 +97,28 @@ fvcc::VolumeField<NeoN::scalar> strainProduction(const fvcc::VolumeField<NeoN::T
         },
         "strainProduction"
     );
+    auto gb = gradU.boundaryData().value().view();
+    auto ob = gByNu.boundaryData().value().view();
+    NeoN::parallelFor(
+        gByNu.exec(),
+        {0, gByNu.boundaryData().value().size()},
+        NEON_LAMBDA(const NeoN::localIdx i) {
+            const NeoN::Tensor t = gb[i];
+            const NeoN::Tensor ts = t + t.T();
+            const NeoN::scalar third = ts.trace() / NeoN::scalar(3.0);
+            NeoN::scalar sum = 0.0;
+            for (int r = 0; r < 3; ++r)
+            {
+                for (int c = 0; c < 3; ++c)
+                {
+                    const NeoN::scalar dev = ts(r, c) - (r == c ? third : NeoN::scalar(0.0));
+                    sum += dev * t(r, c);
+                }
+            }
+            ob[i] = sum;
+        },
+        "strainProduction::boundary"
+    );
     return gByNu;
 }
 
@@ -128,6 +150,26 @@ fvcc::VolumeField<NeoN::scalar> vorticityMagnitude(const fvcc::VolumeField<NeoN:
         },
         "vorticityMagnitude"
     );
+    auto gb = gradU.boundaryData().value().view();
+    auto ob = omega.boundaryData().value().view();
+    NeoN::parallelFor(
+        omega.exec(),
+        {0, omega.boundaryData().value().size()},
+        NEON_LAMBDA(const NeoN::localIdx i) {
+            const NeoN::Tensor t = gb[i];
+            NeoN::scalar s = 0.0;
+            for (int r = 0; r < 3; ++r)
+            {
+                for (int c = 0; c < 3; ++c)
+                {
+                    const NeoN::scalar sk = NeoN::scalar(0.5) * (t(r, c) - t(c, r));
+                    s += sk * sk;
+                }
+            }
+            ob[i] = Kokkos::sqrt(NeoN::scalar(2.0) * s);
+        },
+        "vorticityMagnitude::boundary"
+    );
     return omega;
 }
 
@@ -157,8 +199,7 @@ magSqrGrad(nf::RunTime& rt, const fvcc::VolumeField<NeoN::scalar>& phi)
 
 // Strain-rate magnitude squared S2 = 2 magSqr(symm(gradU)), the kOmegaSST production
 // invariant (nut uses sqrt(S2)). symm(T) = (T + T^T)/2; magSqr sums the 9 components.
-fvcc::VolumeField<NeoN::scalar>
-strainMagnitudeSqr(const fvcc::VolumeField<NeoN::Tensor>& gradU)
+fvcc::VolumeField<NeoN::scalar> strainMagnitudeSqr(const fvcc::VolumeField<NeoN::Tensor>& gradU)
 {
     auto bcs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<NeoN::scalar>>(gradU.mesh());
     fvcc::VolumeField<NeoN::scalar> out(gradU.exec(), "strainMagnitudeSqr", gradU.mesh(), bcs);
@@ -181,6 +222,26 @@ strainMagnitudeSqr(const fvcc::VolumeField<NeoN::Tensor>& gradU)
             ov[i] = NeoN::scalar(2.0) * s; // 2 magSqr(symm(gradU))
         },
         "strainMagnitudeSqr"
+    );
+    auto gb = gradU.boundaryData().value().view();
+    auto ob = out.boundaryData().value().view();
+    NeoN::parallelFor(
+        out.exec(),
+        {0, out.boundaryData().value().size()},
+        NEON_LAMBDA(const NeoN::localIdx i) {
+            const NeoN::Tensor t = gb[i];
+            NeoN::scalar s = 0.0;
+            for (int r = 0; r < 3; ++r)
+            {
+                for (int c = 0; c < 3; ++c)
+                {
+                    const NeoN::scalar sy = NeoN::scalar(0.5) * (t(r, c) + t(c, r));
+                    s += sy * sy;
+                }
+            }
+            ob[i] = NeoN::scalar(2.0) * s;
+        },
+        "strainMagnitudeSqr::boundary"
     );
     return out;
 }

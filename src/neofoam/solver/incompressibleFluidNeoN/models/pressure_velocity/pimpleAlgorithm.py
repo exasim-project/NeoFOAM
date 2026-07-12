@@ -15,7 +15,7 @@ bindings (``neon._neon`` / ``neofoam.neofoam_bindings``).
 The momentum stress follows ``pimpleFoam``'s ``divDevReff(U)`` decomposition,
 ``-laplacian(nuEff,U) - div(nuEff*dev2(T(grad(U))))``: the implicit laplacian
 plus the explicit dev2 viscous-stress term. ``nuEff``/``nut`` come from the
-runtime-selected C++ turbulence model (created in ``create_fields``), fixed
+runtime-selected turbulence model (created in ``create_fields``), fixed
 across the PIMPLE loop and corrected once per time step (the solver's
 ``turbulence_correct`` op), as in OpenFOAM.
 

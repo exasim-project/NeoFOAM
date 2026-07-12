@@ -141,6 +141,12 @@ def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
         nut.correct_boundary_conditions()
         return nut
 
+    def create_nu_eff(ctx: dict[str, Any]) -> Any:
+        # Effective (surface) viscosity for the momentum laplacian: nuEff = nut + nu.
+        return ctx["models.komega_surf"].interpolate(
+            ctx["fields.nut"] + ctx["models.nu_vol"]
+        )
+
     return [
         init_field("k", read_k, depends_on=["models.neon_runtime"]),
         init_field("omega", read_omega, depends_on=["models.neon_runtime"]),
@@ -160,6 +166,11 @@ def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
                 "models.komega_grad",
                 "models.komega_wall_dist",
             ],
+        ),
+        init_field(
+            "nuEff",
+            create_nu_eff,
+            depends_on=["fields.nut", "models.komega_surf", "models.nu_vol"],
         ),
     ]
 
@@ -243,6 +254,8 @@ def correct_omega(
     eqn.set_final_iter(False)
     eqn.solve()
     omega.assign(nn.field_max(omega, omegaMin))
+    # OpenFOAM's fvMatrix::solve corrects the solved field's BCs; NeoN's does not.
+    omega.correct_boundary_conditions()
     return FieldUpdates({"omega": omega})
 
 
@@ -276,6 +289,8 @@ def correct_k(
     eqn.set_final_iter(False)
     eqn.solve()
     k.assign(nn.field_max(k, kMin))
+    # OpenFOAM's fvMatrix::solve corrects the solved field's BCs; NeoN's does not.
+    k.correct_boundary_conditions()
     return FieldUpdates({"k": k})
 
 
@@ -283,6 +298,8 @@ def correct_k(
 def correct_nut(
     self: Any,
     neon_runtime: Annotated[Any, "models"],
+    nu_vol: Annotated[Any, "models"],
+    komega_surf: Annotated[Any, "models"],
     komega_grad: Annotated[Any, "models"],
     komega_wall_dist: Annotated[Any, "models"],
     U: Annotated[Any, "fields"],
@@ -290,10 +307,10 @@ def correct_nut(
     omega: Annotated[Any, "fields"],
     nut: Annotated[Any, "fields"],
 ) -> FieldUpdates:
-    """correctNut from the updated ``k`` / ``omega``: ``nut = a1 k / max(a1 omega, b1 F23 sqrt(S2))``."""
+    """correctNut from the updated ``k`` / ``omega``, then refresh ``nuEff``."""
     nu = nfb.read_transport_viscosity(neon_runtime)
     y = komega_wall_dist
     s2 = nfb.strain_magnitude_sqr(komega_grad.grad_tensor(U))
     nut.assign(_correct_nut(k, omega, _f2(k, omega, y, nu), s2))
     nut.correct_boundary_conditions()
-    return FieldUpdates({"nut": nut})
+    return FieldUpdates({"nut": nut, "nuEff": komega_surf.interpolate(nut + nu_vol)})
