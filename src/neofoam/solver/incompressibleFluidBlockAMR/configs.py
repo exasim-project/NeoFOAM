@@ -26,7 +26,7 @@ Every field is a scalar / list of scalars so the OpenFOAM reader can parse it
 import re
 from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 
 from neofoam.algorithms.solution_loop.config import TimeControlConfig
 from neofoam.io import OF, BaseConfig, IOStrategy
@@ -111,7 +111,8 @@ class MeshDictConfig(BaseConfig):
 
     ``domain`` is the physical ``RealBox`` as ``[[xlo,ylo,zlo],[xhi,yhi,zhi]]``;
     ``nCell`` the coarse-level cell counts; ``periodicity`` the per-axis periodic
-    flags. ``refinement`` / ``eb`` are optional.
+    flags. ``refinement`` / ``body`` are optional. ``eb`` is accepted as a
+    deprecated alias for ``body`` (geometry-only IBM rename).
     """
 
     domain: List[List[float]]
@@ -132,11 +133,20 @@ class MeshDictConfig(BaseConfig):
     _parse_lists = field_validator("domain", "nCell", "periodicity", mode="before")(
         _parse_of_list
     )
-    eb: EmbeddedBoundaryConfig = Field(default_factory=EmbeddedBoundaryConfig)
+    body: EmbeddedBoundaryConfig = Field(default_factory=EmbeddedBoundaryConfig)
     # Per-face velocity BC for non-periodic domains, keyed xlo/xhi/ylo/yhi/zlo/zhi;
     # each entry is an OpenFOAM-style patch spec ({"type": ..., "value": [...]})
     # mapped to a neon.blockamr VectorBC. Empty for fully-periodic cases.
     boundary: Dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _eb_alias(cls, data: Any) -> Any:
+        """Deprecated ``eb`` key/kwarg -> ``body`` (geometry-only IBM rename)."""
+        if isinstance(data, dict) and "eb" in data and "body" not in data:
+            data = dict(data)
+            data["body"] = data.pop("eb")
+        return data
 
 
 @IOStrategy(OF("system/fvSchemes"))
