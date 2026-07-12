@@ -74,7 +74,10 @@ def build_mesh(cfg: MeshDictConfig) -> Any:
     )
     geom = blockamr.Geometry(box, real_box, 0, is_per)
 
-    max_size = max(nx, ny, nz)
+    # AMReX max_grid_size: a single box spanning the domain by default, or the
+    # user-set meshDict ``maxSize`` to chop it into more (smaller) boxes.
+    max_size = int(cfg.maxSize) if cfg.maxSize else max(nx, ny, nz)
+    blocking_factor = int(cfg.blockingFactor) if cfg.blockingFactor else None
 
     if cfg.refinement.maxLevel > 0:
         info = blockamr.AmrInfo()
@@ -83,12 +86,22 @@ def build_mesh(cfg: MeshDictConfig) -> Any:
         for lev in range(cfg.refinement.maxLevel):
             info.set_ref_ratio(lev, int(ref))
         info.set_max_grid_size(0, max_size)
-        info.set_blocking_factor(0, 4)
+        info.set_blocking_factor(0, blocking_factor or 4)
         mesh = AmrMesh(geom, info)
         mesh.init_from_scratch(0.0)
         return mesh
 
     box_array = blockamr.BoxArray(box)
-    box_array.max_size(max_size)
+    if blocking_factor is not None:
+        # Align every box dimension to ``blocking_factor`` (round ``max_size`` down
+        # to a multiple) so the split boxes stay coarsenable for the nodal MLMG.
+        # NOTE: box decomposition (max_size < domain) currently fails the nodal
+        # projection on a single GPU regardless of alignment — see
+        # test_max_size_sweep; blocking_factor is honoured here for the AMR /
+        # future multi-box path, not a fix for the single-level split.
+        aligned = max(blocking_factor, (max_size // blocking_factor) * blocking_factor)
+        box_array.max_size(aligned)
+    else:
+        box_array.max_size(max_size)
     dist_map = blockamr.DistributionMapping(box_array)
     return Mesh(box_array, dist_map, geom)

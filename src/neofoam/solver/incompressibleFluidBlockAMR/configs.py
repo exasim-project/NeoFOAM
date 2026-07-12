@@ -113,6 +113,16 @@ class MeshDictConfig(BaseConfig):
     domain: List[List[float]]
     nCell: List[int]
     periodicity: List[bool]
+    # AMReX ``max_grid_size``: the largest box the domain is chopped into. ``None``
+    # keeps the whole domain as a single box (``max(nCell)``); a smaller value
+    # splits it into more boxes (more parallel work-units / smaller kernel
+    # launches — the knob for the box-size performance sweep).
+    maxSize: Optional[int] = None
+    # AMReX ``blocking_factor``: rounds ``maxSize`` down to a multiple of it so the
+    # split boxes are better coarsenable for the nodal-MLMG projection (some box
+    # sizes otherwise stall the cross-box coarse-grid correction). Must divide the
+    # ``nCell`` dimensions. ``None`` keeps the plain ``maxSize`` chop.
+    blockingFactor: Optional[int] = None
     refinement: RefinementConfig = Field(default_factory=RefinementConfig)
 
     _parse_lists = field_validator("domain", "nCell", "periodicity", mode="before")(
