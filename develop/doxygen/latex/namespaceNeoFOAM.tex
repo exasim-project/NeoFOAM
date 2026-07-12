@@ -22,6 +22,14 @@ class \mbox{\hyperlink{classNeoFOAM_1_1Forces}{Forces}}
 \begin{DoxyCompactList}\small\item\em GPU-\/accelerated boundary-\/patch force and moment calculator. \end{DoxyCompactList}\item 
 class \mbox{\hyperlink{classNeoFOAM_1_1FunctionObjectIO}{Function\+Object\+IO}}
 \begin{DoxyCompactList}\small\item\em Base class for \doxylink{namespaceNeoFOAM}{Neo\+FOAM} function\+Objects that produce scalar time-\/series output. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classNeoFOAM_1_1KEpsilon}{KEpsilon}}
+\begin{DoxyCompactList}\small\item\em Neo\+FOAM-\/level wrapper for the standard k-\/ε turbulence model (Launder \& Spalding 1974). \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classNeoFOAM_1_1KEpsilonModel}{KEpsilon\+Model}}
+\begin{DoxyCompactList}\small\item\em Turbulence\+Model-\/factory wrapper for k-\/epsilon. \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSST}{KOmega\+SST}}
+\begin{DoxyCompactList}\small\item\em Neo\+FOAM-\/level wrapper for the k-\/omega SST turbulence model (Menter 1993/2003). \end{DoxyCompactList}\item 
+class \mbox{\hyperlink{classNeoFOAM_1_1KOmegaSSTModel}{KOmega\+SSTModel}}
+\begin{DoxyCompactList}\small\item\em Turbulence\+Model-\/factory wrapper for k-\/omega SST. \end{DoxyCompactList}\item 
 class \mbox{\hyperlink{classNeoFOAM_1_1Laminar}{Laminar}}
 \begin{DoxyCompactList}\small\item\em No-\/op turbulence model for laminar flow. \end{DoxyCompactList}\item 
 class \mbox{\hyperlink{classNeoFOAM_1_1MeshAdapter}{Mesh\+Adapter}}
@@ -58,6 +66,8 @@ struct \mbox{\hyperlink{structNeoFOAM_1_1TypeMap_3_01Foam_1_1List_3_01Foam_1_1sc
 \end{DoxyCompactItemize}
 \doxysubsubsection*{Typedefs}
 \begin{DoxyCompactItemize}
+\item 
+{\footnotesize template$<$typename Value\+Type $>$ }\\using \mbox{\hyperlink{namespaceNeoFOAM_ae698f2a4b5a7e67bfd294b0e09b1e303}{PDESolver}} = \mbox{\hyperlink{classNeoFOAM_1_1PDE}{PDE}}$<$ Value\+Type $>$
 \item 
 using \mbox{\hyperlink{namespaceNeoFOAM_a72ecdf875c1b4d9e941284f6f5351752}{Field\+Residual}} = std\+::pair$<$ Neo\+N\+::scalar, Neo\+N\+::scalar $>$
 \item 
@@ -201,6 +211,17 @@ std\+::unique\+\_\+ptr$<$ Foam\+::fv\+Mesh $>$ \mbox{\hyperlink{namespaceNeoFOAM
 
 Definition at line \mbox{\hyperlink{pimpleControl_8hpp_source_l00019}{19}} of file \mbox{\hyperlink{pimpleControl_8hpp_source}{pimple\+Control.\+hpp}}.
 
+\Hypertarget{namespaceNeoFOAM_ae698f2a4b5a7e67bfd294b0e09b1e303}\label{namespaceNeoFOAM_ae698f2a4b5a7e67bfd294b0e09b1e303} 
+\index{NeoFOAM@{NeoFOAM}!PDESolver@{PDESolver}}
+\index{PDESolver@{PDESolver}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{PDESolver}{PDESolver}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+using \mbox{\hyperlink{namespaceNeoFOAM_ae698f2a4b5a7e67bfd294b0e09b1e303}{Neo\+FOAM\+::\+PDESolver}} = typedef \mbox{\hyperlink{classNeoFOAM_1_1PDE}{PDE}}$<$Value\+Type$>$}
+
+
+
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00544}{544}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+
 \Hypertarget{namespaceNeoFOAM_ad7da788dc1fc4af69c98dea808d84073}\label{namespaceNeoFOAM_ad7da788dc1fc4af69c98dea808d84073} 
 \index{NeoFOAM@{NeoFOAM}!ResidualMap@{ResidualMap}}
 \index{ResidualMap@{ResidualMap}!NeoFOAM@{NeoFOAM}}
@@ -223,7 +244,7 @@ Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Value\+Type $>$ 
 
 
 
-Definition at line \mbox{\hyperlink{pde_8hpp_source_l00505}{505}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00547}{547}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_a59b79053c26ad967a2ac57d1e4d0b9bb}\label{namespaceNeoFOAM_a59b79053c26ad967a2ac57d1e4d0b9bb} 
 \index{NeoFOAM@{NeoFOAM}!checkEntryType@{checkEntryType}}
@@ -316,7 +337,7 @@ Tuple containing the fields
 \end{DoxyReturn}
 
 
-Definition at line \mbox{\hyperlink{readers_8hpp_source_l00483}{483}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
+Definition at line \mbox{\hyperlink{readers_8hpp_source_l00491}{491}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_a386425b9e39dc89773b9248909cf4139}\label{namespaceNeoFOAM_a386425b9e39dc89773b9248909cf4139} 
 \index{NeoFOAM@{NeoFOAM}!constrainHbyA@{constrainHbyA}}
@@ -337,7 +358,7 @@ construct an NF field from a given OF field and register
 
 
 
-Definition at line \mbox{\hyperlink{readers_8hpp_source_l00490}{490}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
+Definition at line \mbox{\hyperlink{readers_8hpp_source_l00498}{498}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_ab7276ff683225b6140acfa56618926b5}\label{namespaceNeoFOAM_ab7276ff683225b6140acfa56618926b5} 
 \index{NeoFOAM@{NeoFOAM}!constructFrom@{constructFrom}}
@@ -348,7 +369,7 @@ auto Neo\+FOAM\+::construct\+From (\begin{DoxyParamCaption}\item[{const Neo\+N\+
 
 
 
-Definition at line \mbox{\hyperlink{readers_8hpp_source_l00306}{306}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
+Definition at line \mbox{\hyperlink{readers_8hpp_source_l00314}{314}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_a75a914fbbb00d2f6a71272c9a1b85b43}\label{namespaceNeoFOAM_a75a914fbbb00d2f6a71272c9a1b85b43} 
 \index{NeoFOAM@{NeoFOAM}!convert@{convert}}
@@ -547,7 +568,7 @@ Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Value\+Type $>$ 
 
 
 
-Definition at line \mbox{\hyperlink{pde_8hpp_source_l00524}{524}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00566}{566}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_aa63d77fd599301dc114f8358d866b805}\label{namespaceNeoFOAM_aa63d77fd599301dc114f8358d866b805} 
 \index{NeoFOAM@{NeoFOAM}!operator==@{operator==}}
@@ -613,7 +634,7 @@ auto Neo\+FOAM\+::read\+Surface\+Boundary\+Conditions (\begin{DoxyParamCaption}\
 
 
 
-Definition at line \mbox{\hyperlink{readers_8hpp_source_l00216}{216}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
+Definition at line \mbox{\hyperlink{readers_8hpp_source_l00224}{224}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_a6cb4d89d1e44667e5a66f5119bad9206}\label{namespaceNeoFOAM_a6cb4d89d1e44667e5a66f5119bad9206} 
 \index{NeoFOAM@{NeoFOAM}!readVolBoundaryConditions@{readVolBoundaryConditions}}
