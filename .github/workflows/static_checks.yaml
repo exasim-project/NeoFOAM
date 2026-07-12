@@ -133,7 +133,9 @@ jobs:
           | grep -F -f pattern - > files
         # run clang-tidy on all specified files
         grep -v "examples/" files > files_wo_examples
-        clang-tidy-16 --fix --extra-arg=-w -p build/develop $(cat files_wo_examples)
+        run-clang-tidy-16 -fix -extra-arg=-w -p build/develop -j $(nproc) \
+          -header-filter='.*/include/NeoFOAM/.*' \
+          $(cat files_wo_examples)
 
     - name: Check for fixes
       run: |
