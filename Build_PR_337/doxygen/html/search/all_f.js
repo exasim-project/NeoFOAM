@@ -9,7 +9,7 @@ var searchData=
   ['setfinaliter_6',['setFinalIter',['../classNeoFOAM_1_1PDE.html#a12a547d6a089a5805df40f91c0a48318',1,'NeoFOAM::PDE']]],
   ['setnutkwallfunction_7',['setNutkWallFunction',['../namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail.html#a87f4e12c3134a79f464aeb051efba390',1,'NeoN::finiteVolume::cellCentred::volumeBoundary::detail']]],
   ['setnutuspaldingwallfunction_8',['setNutUSpaldingWallFunction',['../namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail.html#aae1a87a0c4d00386db2c7df821ec128f',1,'NeoN::finiteVolume::cellCentred::volumeBoundary::detail']]],
-  ['setomegawallfunction_9',['setOmegaWallFunction',['../namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail.html#ab63e24f7dbd2ddfe6e23b8d941c4cc48',1,'NeoN::finiteVolume::cellCentred::volumeBoundary::detail']]],
+  ['setomegawallfunction_9',['setOmegaWallFunction',['../namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail.html#ac4ccace2b5c8b2c1a97c0132f4f76a9a',1,'NeoN::finiteVolume::cellCentred::volumeBoundary::detail']]],
   ['setreference_10',['setReference',['../classNeoFOAM_1_1PDE.html#a761c2d04db4af1d188d452bda66ac827',1,'NeoFOAM::PDE']]],
   ['setup_2ehpp_11',['setup.hpp',['../setup_8hpp.html',1,'']]],
   ['sigmaeps_12',['sigmaEps',['../structNeoFOAM_1_1KEpsilon_1_1Coefficients.html#a003a74bbe808056b1f858c4d5f65f691',1,'NeoFOAM::KEpsilon::Coefficients']]],

@@ -29,7 +29,7 @@
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00028}00028\ }
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00032}\mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_a0b6cb2d36a5fb53f61f7960a207b9ddd}{00032}}\ \textcolor{keyword}{inline}\ \textcolor{keyword}{constexpr}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ \mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_a0b6cb2d36a5fb53f61f7960a207b9ddd}{OMEGA\_WF\_OMEGA\_MAX}}\ =\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}(1e12);}
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00033}00033\ }
-\DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00046}\mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_ab63e24f7dbd2ddfe6e23b8d941c4cc48}{00046}}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_ab63e24f7dbd2ddfe6e23b8d941c4cc48}{setOmegaWallFunction}}(}
+\DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00046}\mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_ac4ccace2b5c8b2c1a97c0132f4f76a9a}{00046}}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_ac4ccace2b5c8b2c1a97c0132f4f76a9a}{setOmegaWallFunction}}(}
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00047}00047\ \ \ \ \ Field<scalar>\&\ omega,}
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00048}00048\ \ \ \ \ \textcolor{keyword}{const}\ fvcc::VolumeField<scalar>\&\ k,}
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00049}00049\ \ \ \ \ \textcolor{keyword}{const}\ fvcc::VolumeField<scalar>\&\ nu,}
@@ -37,11 +37,11 @@
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00051}00051\ \ \ \ \ \textcolor{keyword}{const}\ UnstructuredMesh\&\ mesh,}
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00052}00052\ \ \ \ \ std::pair<localIdx,\ localIdx>\ range,}
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00053}00053\ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ beta1,}
-\DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00054}00054\ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ Cmu,}
+\DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00054}00054\ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ cmu,}
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00055}00055\ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ kappa}
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00056}00056\ )}
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00057}00057\ \{}
-\DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00058}00058\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ Cmu25\ =\ Kokkos::pow(Cmu,\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}(0.25));}
+\DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00058}00058\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ cmu25\ =\ Kokkos::pow(cmu,\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}(0.25));}
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00059}00059\ \ \ \ \ \textcolor{comment}{//\ Function-\/local\ copy:\ a\ namespace-\/scope\ constexpr\ cannot\ be\ referenced\ inside\ a}}
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00060}00060\ \ \ \ \ \textcolor{comment}{//\ \_\_host\_\_\ \_\_device\_\_\ lambda\ (it\ is\ "{}undefined\ in\ device\ code"{});\ bind\ it\ here\ first.}}
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00061}00061\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ omegaMax\ =\ \mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_a0b6cb2d36a5fb53f61f7960a207b9ddd}{OMEGA\_WF\_OMEGA\_MAX}};}
@@ -71,7 +71,7 @@
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00085}00085\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ wVis\ =\ 6.0\ *\ nuw\ /\ (beta1\ *\ y\ *\ y);}
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00086}00086\ }
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00087}00087\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Log\ layer:\ √k\ /\ (C\_µ\string^0.25·κ·y)\ \ \ (omega.C:226-\/234)}}
-\DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00088}00088\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ wLog\ =\ Kokkos::sqrt(kw)\ /\ (Cmu25\ *\ kappa\ *\ y);}
+\DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00088}00088\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ wLog\ =\ Kokkos::sqrt(kw)\ /\ (cmu25\ *\ kappa\ *\ y);}
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00089}00089\ }
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00090}00090\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ BINOMIAL\ blender,\ n\ =\ 2\ (upstream\ default\ at\ omega.C:396)\ —}}
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00091}00091\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ closed\ form:\ ω\ =\ √(ωᵥᵢₛ²\ +\ ωₗₒg²).\ Clamped\ to\ OMEGA\_WF\_OMEGA\_MAX\ so\ this\ face}}
@@ -110,7 +110,7 @@
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00138}00138\ \ \ \ \ \ \ \ \ ,\ beta1\_(}
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00139}00139\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dict.contains(\textcolor{stringliteral}{"{}beta1"{}})\ ?\ dict.get<\mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}>(\textcolor{stringliteral}{"{}beta1"{}})\ :\ detail::OMEGA\_WF\_DEFAULT\_BETA1}
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00140}00140\ \ \ \ \ \ \ \ \ \ \ )}
-\DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00141}00141\ \ \ \ \ \ \ \ \ ,\ Cmu\_(dict.contains(\textcolor{stringliteral}{"{}Cmu"{}})\ ?\ dict.get<\mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}>(\textcolor{stringliteral}{"{}Cmu"{}})\ :\ detail::OMEGA\_WF\_DEFAULT\_CMU)}
+\DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00141}00141\ \ \ \ \ \ \ \ \ ,\ cmu\_(dict.contains(\textcolor{stringliteral}{"{}Cmu"{}})\ ?\ dict.get<\mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}>(\textcolor{stringliteral}{"{}Cmu"{}})\ :\ detail::OMEGA\_WF\_DEFAULT\_CMU)}
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00142}00142\ \ \ \ \ \ \ \ \ ,\ kappa\_(}
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00143}00143\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dict.contains(\textcolor{stringliteral}{"{}kappa"{}})\ ?\ dict.get<\mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}>(\textcolor{stringliteral}{"{}kappa"{}})\ :\ detail::OMEGA\_WF\_DEFAULT\_KAPPA}
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00144}00144\ \ \ \ \ \ \ \ \ \ \ )}
@@ -121,7 +121,7 @@
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00149}00149\ \ \ \ \ \textcolor{keywordtype}{void}}
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00150}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1OmegaWallFunction_a9f77a168cf212f6ee009a5dc7ad2ef40}{00150}}\ \ \ \ \ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1OmegaWallFunction_a9f77a168cf212f6ee009a5dc7ad2ef40}{correctBoundaryCondition}}(Field<scalar>\&\ domainVector,\ \textcolor{keyword}{const}\ fvcc::BoundaryContext\&\ ctx)\ \textcolor{keyword}{final}}
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00151}00151\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00152}00152\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_ab63e24f7dbd2ddfe6e23b8d941c4cc48}{detail::setOmegaWallFunction}}(}
+\DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00152}00152\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_ac4ccace2b5c8b2c1a97c0132f4f76a9a}{detail::setOmegaWallFunction}}(}
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00153}00153\ \ \ \ \ \ \ \ \ \ \ \ \ domainVector,}
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00154}00154\ \ \ \ \ \ \ \ \ \ \ \ \ ctx.scalarFieldPtr(\textcolor{stringliteral}{"{}k"{}}),}
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00155}00155\ \ \ \ \ \ \ \ \ \ \ \ \ ctx.scalarFieldPtr(\textcolor{stringliteral}{"{}nu"{}}),}
@@ -129,7 +129,7 @@
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00157}00157\ \ \ \ \ \ \ \ \ \ \ \ \ mesh\_,}
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00158}00158\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>range(),}
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00159}00159\ \ \ \ \ \ \ \ \ \ \ \ \ beta1\_,}
-\DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00160}00160\ \ \ \ \ \ \ \ \ \ \ \ \ Cmu\_,}
+\DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00160}00160\ \ \ \ \ \ \ \ \ \ \ \ \ cmu\_,}
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00161}00161\ \ \ \ \ \ \ \ \ \ \ \ \ kappa\_}
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00162}00162\ \ \ \ \ \ \ \ \ );}
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00163}00163\ \ \ \ \ \}}
@@ -159,7 +159,7 @@
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00187}00187\ }
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00188}00188\ \ \ \ \ \textcolor{keyword}{const}\ UnstructuredMesh\&\ mesh\_;}
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00189}00189\ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ beta1\_;}
-\DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00190}00190\ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ Cmu\_;}
+\DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00190}00190\ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ cmu\_;}
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00191}00191\ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ kappa\_;}
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00192}00192\ \};}
 \DoxyCodeLine{\Hypertarget{omegaWallFunction_8hpp_source_l00193}00193\ }
