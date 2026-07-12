@@ -8,10 +8,10 @@ Builds a single-level :class:`neon.blockamr.Mesh` (or a multi-level
 validated dict config: physical ``RealBox`` extents, coarse cell counts, and
 per-axis periodicity map to the AMReX ``Geometry``.
 
-Embedded boundaries (``eb.type = cylinder``) are represented by a **direct-forcing
+Embedded boundaries (``body.type = cylinder``) are represented by a **direct-forcing
 immersed boundary**: the mesh stays a plain Cartesian grid and the engine pins the
 velocity to zero in the solid cells each step. The mesh factory validates the
-``eb`` block and sets the resulting geometry on ``mesh.body`` (a
+``body`` block and sets the resulting geometry on ``mesh.body`` (a
 :class:`~neon.blockamr.ibm.body.Cylinder`); the IBM *method* (which per-field
 solve pins the cells) is a separate ``fvSolution`` choice, wired up in
 :mod:`~neofoam.solver.incompressibleFluidBlockAMR.models.projection.chorinProjection`.
@@ -35,22 +35,22 @@ def _validate(cfg: MeshDictConfig) -> None:
         )
     if any(n < 1 for n in cfg.nCell):
         raise ValueError(f"meshDict.nCell entries must be >= 1; got {cfg.nCell!r}")
-    if cfg.eb.type not in ("none", "cylinder"):
+    if cfg.body.type not in ("none", "cylinder"):
         raise ValueError(
-            f"meshDict.eb.type must be 'none' or 'cylinder'; got {cfg.eb.type!r}"
+            f"meshDict.body.type must be 'none' or 'cylinder'; got {cfg.body.type!r}"
         )
-    if cfg.eb.type == "cylinder":
-        if cfg.eb.center is None or len(cfg.eb.center) != 3:
+    if cfg.body.type == "cylinder":
+        if cfg.body.center is None or len(cfg.body.center) != 3:
             raise ValueError(
-                f"cylinder eb needs a 3-vector 'center'; got {cfg.eb.center!r}"
+                f"cylinder body needs a 3-vector 'center'; got {cfg.body.center!r}"
             )
-        if cfg.eb.radius is None or cfg.eb.radius <= 0.0:
+        if cfg.body.radius is None or cfg.body.radius <= 0.0:
             raise ValueError(
-                f"cylinder eb needs a positive 'radius'; got {cfg.eb.radius!r}"
+                f"cylinder body needs a positive 'radius'; got {cfg.body.radius!r}"
             )
-        if cfg.eb.axis not in (0, 1, 2):
+        if cfg.body.axis not in (0, 1, 2):
             raise ValueError(
-                f"cylinder eb 'axis' must be 0, 1 or 2; got {cfg.eb.axis!r}"
+                f"cylinder body 'axis' must be 0, 1 or 2; got {cfg.body.axis!r}"
             )
 
 
@@ -92,9 +92,9 @@ def build_mesh(cfg: MeshDictConfig) -> Any:
         info.set_blocking_factor(0, blocking_factor or 4)
         mesh = AmrMesh(geom, info)
         mesh.init_from_scratch(0.0)
-        if cfg.eb.type == "cylinder":
+        if cfg.body.type == "cylinder":
             mesh.body = Cylinder(
-                centre=cfg.eb.center, radius=cfg.eb.radius, axis=cfg.eb.axis
+                centre=cfg.body.center, radius=cfg.body.radius, axis=cfg.body.axis
             )
         return mesh
 
@@ -112,8 +112,8 @@ def build_mesh(cfg: MeshDictConfig) -> Any:
         box_array.max_size(max_size)
     dist_map = blockamr.DistributionMapping(box_array)
     mesh = Mesh(box_array, dist_map, geom)
-    if cfg.eb.type == "cylinder":
+    if cfg.body.type == "cylinder":
         mesh.body = Cylinder(
-            centre=cfg.eb.center, radius=cfg.eb.radius, axis=cfg.eb.axis
+            centre=cfg.body.center, radius=cfg.body.radius, axis=cfg.body.axis
         )
     return mesh
