@@ -14,7 +14,7 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from neofoam.casebuild._foamdict import apply_overrides
+from neofoam.casebuild._foamdict import apply_overrides, remove_entries
 from neofoam.casebuild.pipeline import CaseDir, Step
 from neofoam.io import write_configs
 
@@ -34,6 +34,22 @@ def patch(
 
     def step(case: CaseDir) -> None:
         apply_overrides(case.path / rel_path, merged)
+
+    return step
+
+
+def unset(rel_path: str, *keys: str) -> Step:
+    """Ensure *keys* are absent from the OpenFOAM dict at *rel_path*.
+
+    The inverse of :func:`patch`: it lets one base be forked in the "key absent"
+    direction (e.g. ``unset("system/controlDict", "adjustTimeStep")``) without
+    committing a second template. See
+    :func:`neofoam.casebuild._foamdict.remove_entries` for the mechanism and its
+    single-line-entry limitation.
+    """
+
+    def step(case: CaseDir) -> None:
+        remove_entries(case.path / rel_path, keys)
 
     return step
 

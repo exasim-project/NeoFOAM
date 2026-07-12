@@ -14,7 +14,7 @@ from pathlib import Path
 import pybFoam as pyf
 import pytest
 
-from neofoam.casebuild import CaseDir, configs, patch
+from neofoam.casebuild import CaseDir, configs, patch, unset
 from neofoam.framework.solver.configurations import configurations
 from neofoam.solver.incompressibleFluid.incompressibleFluid import incompressibleFluid
 
@@ -39,6 +39,31 @@ def test_patch_missing_file_raises(tmp_path: Path) -> None:
     case = _staged(tmp_path)
     with pytest.raises(FileNotFoundError):
         patch("system/doesNotExist", endTime=1.0)(case)
+
+
+def test_unset_removes_the_key(tmp_path: Path) -> None:
+    case = _staged(tmp_path)
+    assert pyf.dictionary.read(str(case.path / "system" / "controlDict")).found(
+        "deltaT"
+    )
+    unset("system/controlDict", "deltaT")(case)
+    d = pyf.dictionary.read(str(case.path / "system" / "controlDict"))
+    assert not d.found("deltaT")
+    assert d.found("endTime")  # neighbours untouched
+
+
+def test_unset_and_patch_fork_a_base_both_ways(tmp_path: Path) -> None:
+    # The inverse-of-patch contract: one base, forked into key-present and key-absent.
+    present = _staged(tmp_path / "present")
+    absent = _staged(tmp_path / "absent")
+    patch("system/controlDict", adjustTimeStep=True)(present)
+    unset("system/controlDict", "adjustTimeStep")(absent)
+    assert pyf.dictionary.read(str(present.path / "system" / "controlDict")).found(
+        "adjustTimeStep"
+    )
+    assert not pyf.dictionary.read(str(absent.path / "system" / "controlDict")).found(
+        "adjustTimeStep"
+    )
 
 
 def test_configs_writes_config_file(tmp_path: Path) -> None:

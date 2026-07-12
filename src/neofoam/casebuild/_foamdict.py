@@ -13,9 +13,10 @@ OpenFOAM Switch ``yes``/``no``; the rest forward to ``set`` for pybFoam to strin
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+import re
+from collections.abc import Callable, Iterable, Mapping
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import pybFoam as pyf
 
@@ -60,3 +61,37 @@ def apply_overrides(path: Path, overrides: Mapping[str, object]) -> None:
             target = target.subDict(part)
         _set_value(target, leaf, value)
     root.write(str(path))
+
+
+#: A top-level ``keyword value;`` entry: the keyword, then whitespace, then a body
+#: terminated by ``;`` on the same line.
+_ENTRY = re.compile(r"\s*([A-Za-z0-9_]+)\s")
+
+
+def _entry_keyword(line: str) -> Optional[str]:
+    """Return the keyword of a single-line ``key value;`` entry, else ``None``."""
+    match = _ENTRY.match(line)
+    if match is None or not line.rstrip().endswith(";"):
+        return None
+    return match.group(1)
+
+
+def remove_entries(path: Path, keys: Iterable[str]) -> None:
+    """Drop each top-level single-line entry named in *keys* from the dict at *path*.
+
+    pybFoam does not bind ``Foam::dictionary::remove``, so removal is done on the
+    file text: every top-level line whose keyword matches is dropped. Idempotent —
+    a key already absent is a no-op ("ensure absent"). Only single-line entries
+    (``key value;``) are handled; sub-dict / multi-line entries are out of scope.
+    Raises ``FileNotFoundError`` if *path* is not an existing file.
+    """
+    if not path.is_file():
+        raise FileNotFoundError(f"Cannot edit missing dictionary file: {path}")
+
+    targets = set(keys)
+    kept = [
+        line
+        for line in path.read_text().splitlines(keepends=True)
+        if _entry_keyword(line) not in targets
+    ]
+    path.write_text("".join(kept))

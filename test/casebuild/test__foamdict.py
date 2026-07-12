@@ -15,7 +15,7 @@ from pathlib import Path
 import pybFoam as pyf
 import pytest
 
-from neofoam.casebuild._foamdict import apply_overrides
+from neofoam.casebuild._foamdict import apply_overrides, remove_entries
 
 CONTROLDICT = Path(__file__).parent / "cases" / "cavity" / "system" / "controlDict"
 
@@ -61,3 +61,30 @@ def test_apply_overrides_rejects_unsupported_type(tmp_path: Path) -> None:
     cd = _staged(tmp_path)
     with pytest.raises(TypeError):
         apply_overrides(cd, {"foo": [1, 2, 3]})
+
+
+def test_remove_entries_drops_the_key(tmp_path: Path) -> None:
+    cd = _staged(tmp_path)
+    assert pyf.dictionary.read(str(cd)).found("deltaT")
+    remove_entries(cd, ["deltaT"])
+    assert not pyf.dictionary.read(str(cd)).found("deltaT")
+
+
+def test_remove_entries_leaves_other_keys_intact(tmp_path: Path) -> None:
+    cd = _staged(tmp_path)
+    end_time = pyf.dictionary.read(str(cd)).get_scalar("endTime")
+    remove_entries(cd, ["deltaT"])
+    # a same-prefix neighbour must survive the word-boundary match
+    assert pyf.dictionary.read(str(cd)).get_scalar("endTime") == pytest.approx(end_time)
+
+
+def test_remove_entries_is_idempotent_for_absent_key(tmp_path: Path) -> None:
+    cd = _staged(tmp_path)
+    before = cd.read_text()
+    remove_entries(cd, ["neverPresent"])  # no-op, no raise
+    assert cd.read_text() == before
+
+
+def test_remove_entries_missing_file_raises(tmp_path: Path) -> None:
+    with pytest.raises(FileNotFoundError):
+        remove_entries(tmp_path / "nope", ["endTime"])

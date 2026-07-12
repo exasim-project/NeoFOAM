@@ -10,6 +10,7 @@ each run in isolation). The committed ``cavity`` template is staged into ``tmp_p
 
 from pathlib import Path
 
+import numpy as np
 import pybFoam as pyf
 import pytest
 
@@ -75,3 +76,22 @@ def test_fork_is_independent_and_reuses_mesh(tmp_path: Path) -> None:
     assert _end_time(v2.path) == pytest.approx(2.0)
     # forking copied the generated mesh — variants never re-mesh
     assert (v1.path / "constant" / "polyMesh" / "points").is_file()
+
+
+def test_read_field_returns_finite_internal_field(tmp_path: Path) -> None:
+    case = (from_template(CAVITY) | block_mesh()).build_at(tmp_path / "c")
+    p = case.read_field("p")  # initial p (from 0.orig) at the latest (only) time
+    assert p.ndim == 1 and p.size > 0  # scalar field -> (N,)
+    assert np.all(
+        np.isfinite(p)
+    )  # subprocess isolation -> no Foam::Time nan corruption
+
+
+def test_read_field_twice_in_one_process_stays_consistent(tmp_path: Path) -> None:
+    # Two Foam::Time constructions in ONE interpreter corrupt global state (later
+    # reads return nan); read_field spawns a fresh process per read, so both agree.
+    case = (from_template(CAVITY) | block_mesh()).build_at(tmp_path / "c")
+    first = case.read_field("p")
+    second = case.read_field("p")
+    assert np.all(np.isfinite(second))
+    np.testing.assert_array_equal(first, second)
