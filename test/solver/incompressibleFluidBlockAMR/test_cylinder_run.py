@@ -22,7 +22,7 @@ def test_cylinder_case_runs_and_enforces_body(blockamr_session, cylinder_case):
     from neon.blockamr.ibm import DirectForcing
 
     ctx = run(["incompressibleFluidBlockAMR"])
-    engine = ctx.models["blockamr_engine"]
+    engine = ctx.models["projection_state"]
 
     # the immersed body was built from the eb config (geometry on mesh.body,
     # direct-forcing masks precomputed on the mesh)

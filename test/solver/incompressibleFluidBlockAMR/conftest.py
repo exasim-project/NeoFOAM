@@ -31,6 +31,7 @@ os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "true")
 os.environ.setdefault("XLA_PYTHON_CLIENT_MEM_FRACTION", "0.8")
 
 CASE_SRC = Path(__file__).parent / "cases" / "box"
+BOX_CPP_CASE_SRC = Path(__file__).parent / "cases" / "box_cpp"
 CYLINDER_CASE_SRC = Path(__file__).parent / "cases" / "cylinder"
 CAVITY_CASE_SRC = Path(__file__).parent / "cases" / "cavity"
 
@@ -57,6 +58,15 @@ def box_case(tmp_path, monkeypatch):
     """Copy the bundled periodic-box case to a tmp dir and chdir into it."""
     dst = tmp_path / "box"
     shutil.copytree(CASE_SRC, dst)
+    monkeypatch.chdir(dst)
+    return dst
+
+
+@pytest.fixture
+def box_cpp_case(tmp_path, monkeypatch):
+    """Copy the periodic-box case whose ``solvers.U`` selects the cpp backend."""
+    dst = tmp_path / "box_cpp"
+    shutil.copytree(BOX_CPP_CASE_SRC, dst)
     monkeypatch.chdir(dst)
     return dst
 

@@ -4,7 +4,7 @@
 """INT-1 / C1 — the environment gate.
 
 ``neon.blockamr`` + ``jax`` import in the neofoam venv, and a small periodic
-``DSLIncompressibleSolver`` constructs in-process.
+projection state constructs in-process.
 """
 
 import pytest
@@ -12,7 +12,7 @@ import pytest
 pytest.importorskip("neon")
 
 import neon.blockamr as blockamr  # noqa: E402
-from neon.blockamr.dsl_solver import DSLIncompressibleSolver  # noqa: E402
+from neon.blockamr.incompressible import build_incompressible  # noqa: E402
 from neon.blockamr.fillpatch import FillPatchCellConservative  # noqa: E402
 from neon.blockamr.mesh import Mesh  # noqa: E402
 
@@ -34,7 +34,7 @@ def test_construct_periodic_solver(blockamr_session):
     dist_map = blockamr.DistributionMapping(box_array)
     mesh = Mesh(box_array, dist_map, geom)
 
-    solver = DSLIncompressibleSolver(
+    solver = build_incompressible(
         mesh,
         nu=0.01,
         dt=0.01,

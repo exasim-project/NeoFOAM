@@ -1,5 +1,9 @@
 /*--------------------------------*- C++ -*----------------------------------*\
-| blockAMR projection controls for the slip-wall outflow cylinder.              |
+| =========                 |                                                 |
+| \\      /  F ield         | NeoFOAM: block-structured solve controls        |
+|  \\    /   O peration     |                                                 |
+|   \\  /    A nd           |                                                 |
+|    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
 FoamFile
 {
@@ -14,8 +18,7 @@ solvers
 {
     U
     {
-        ibm         directForcing;
-        backend     jax;
+        backend     cpp;
     }
     p
     {
@@ -23,9 +26,6 @@ solvers
         rtol        1e-10;
         atol        1e-8;
         maxIter     200;
-        // Krylov bottom solver for the slip-wall outflow nodal projection (~6
-        // V-cycles vs ~600 for "smoother"); empty leaves AMReX's default.
-        bottomSolver bicgstab;
     }
 }
 

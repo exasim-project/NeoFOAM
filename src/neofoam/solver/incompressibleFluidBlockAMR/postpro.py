@@ -23,7 +23,7 @@ comparison consumes:
 
 The physics operates on plain numpy arrays (:class:`FieldSnapshot`), so it is
 GPU-free and unit-testable on canned fields; :func:`gather_field` is the only
-engine-touching entry point and imports ``neon`` lazily.
+state-touching entry point and imports ``neon`` lazily.
 """
 
 from __future__ import annotations
@@ -36,7 +36,7 @@ import numpy as np
 
 @dataclass
 class FieldSnapshot:
-    """Dense, level-0 cell-centred fields + geometry marshalled from the engine.
+    """Dense, level-0 cell-centred fields + geometry marshalled from the state.
 
     ``u``/``v``/``w``/``p`` are ``(nx, ny, nz)`` arrays over the valid cells;
     ``x``/``y``/``z`` the 1-D cell-centre coordinate axes; ``solid`` the boolean
@@ -56,17 +56,17 @@ class FieldSnapshot:
     solid: Optional[np.ndarray] = None
 
 
-def gather_field(engine: Any, level: int = 0) -> FieldSnapshot:
-    """Marshal the engine's level-``level`` ``U``/``p`` into a dense snapshot.
+def gather_field(state: Any, level: int = 0) -> FieldSnapshot:
+    """Marshal the state's level-``level`` ``U``/``p`` into a dense snapshot.
 
     Assembles the per-box valid regions into a single regular array using each
     box's global lower index, and (re)builds the solid mask analytically from
-    ``engine.mesh.body`` on the same grid. ``neon`` is imported lazily so
+    ``state.mesh.body`` on the same grid. ``neon`` is imported lazily so
     importing this module stays GPU-free.
     """
     import neon.blockamr as blockamr  # noqa: PLC0415 — lazy: keep import GPU-free
 
-    geom = engine.mesh.geom(level)
+    geom = state.mesh.geom(level)
     dx = [float(v) for v in geom.cell_size()]
     lo = [float(v) for v in geom.prob_lo()]
     hi = [float(v) for v in geom.prob_hi()]
@@ -77,7 +77,7 @@ def gather_field(engine: Any, level: int = 0) -> FieldSnapshot:
     w = np.zeros((nx, ny, nz), dtype=float)
     p = np.zeros((nx, ny, nz), dtype=float)
 
-    umf = engine.U.mf[level]
+    umf = state.U.mf[level]
     for mfi in blockamr.MFIterator(umf):
         arr = np.asarray(umf.copy_to_host(mfi))  # (bx, by, bz, 3) valid region
         s = mfi.valid_box().small_end()
@@ -87,7 +87,7 @@ def gather_field(engine: Any, level: int = 0) -> FieldSnapshot:
         v[sl] = arr[..., 1]
         w[sl] = arr[..., 2]
 
-    pmf = engine.p.mf[level]
+    pmf = state.p.mf[level]
     for mfi in blockamr.MFIterator(pmf):
         arr = np.asarray(pmf.copy_to_host(mfi))  # (bx, by, bz, 1)
         s = mfi.valid_box().small_end()
@@ -100,7 +100,7 @@ def gather_field(engine: Any, level: int = 0) -> FieldSnapshot:
     z = lo[2] + (np.arange(nz) + 0.5) * dx[2]
 
     solid: Optional[np.ndarray] = None
-    body = engine.mesh.body
+    body = state.mesh.body
     if body is not None:
         center = [float(c) for c in body.centre]
         radius = float(body.radius)
@@ -185,7 +185,7 @@ def momentum_deficit_forces(
 
 
 def _ibm_force_mean(
-    engine: Any, U_inf: float, D: float, span: float, tail_fraction: float
+    state: Any, U_inf: float, D: float, span: float, tail_fraction: float
 ) -> Optional[tuple[float, float]]:
     """Time-mean ``(Cd, Cl)`` from the recorded IBM reaction force, or ``None``.
 
@@ -193,18 +193,18 @@ def _ibm_force_mean(
     transient). The force is in kinematic units (per ρ), so ρ cancels in the
     coefficient and the frontal area is ``D * span``. Reads the reaction-force
     time series from the mesh-owned IBM data via the method's
-    ``force_history`` accessor (``engine.sol_U["ibm"]`` names the method); no
+    ``force_history`` accessor (``state.sol_U["ibm"]`` names the method); no
     body / no IBM method configured on ``U`` returns ``None`` (fall back to
     the momentum-deficit survey).
     """
-    ibm_name = engine.sol_U.get("ibm")
+    ibm_name = state.sol_U.get("ibm")
     if ibm_name is None:
         return None
 
     from neon.blockamr.ibm import IBM  # noqa: PLC0415 — lazy: keep import GPU-free
 
     method = IBM.lookup(ibm_name)
-    data = engine.mesh.ibm_data(method)
+    data = state.mesh.ibm_data(method)
     hist = method.force_history(data)
     if not hist:
         return None
@@ -218,7 +218,7 @@ def _ibm_force_mean(
 
 
 def force_coefficients(
-    engine: Any,
+    state: Any,
     U_inf: float,
     D: float,
     *,
@@ -234,10 +234,10 @@ def force_coefficients(
     a control-volume momentum-deficit survey over ``cv`` (physical
     ``(xw, xe, ys, yn)`` extents; defaults to a wake box around the body).
     """
-    snap = gather_field(engine)
+    snap = gather_field(state)
     span = float(snap.z[-1] - snap.z[0] + snap.dz)
 
-    ibm = _ibm_force_mean(engine, U_inf, D, span, tail_fraction)
+    ibm = _ibm_force_mean(state, U_inf, D, span, tail_fraction)
     if ibm is not None:
         return ibm
 

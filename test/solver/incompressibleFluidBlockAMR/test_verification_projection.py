@@ -12,7 +12,7 @@ through the framework blockAMR operators:
   to machine epsilon, independent of resolution. This is summation-by-parts: it is
   what makes the pressure correction ``U -= dt grad(p)`` remove exactly the
   divergence the pressure solve saw.
-* **Divergence-free result** — after one ``DSLIncompressibleSolver.step()`` the MAC
+* **Divergence-free result** — after one projection ``step()`` the MAC
   face flux is divergence-free to the pressure-solve tolerance, *regardless* of how
   non-solenoidal the initial velocity was (started here from a random field).
 """
@@ -25,7 +25,7 @@ pytest.importorskip("neon")
 import jax.numpy as jnp  # noqa: E402
 import neon.blockamr as blockamr  # noqa: E402
 from neon.blockamr.dsl import exp  # noqa: E402
-from neon.blockamr.dsl_solver import DSLIncompressibleSolver  # noqa: E402
+from neon.blockamr.incompressible import build_incompressible, step  # noqa: E402
 from neon.blockamr.field import CellField  # noqa: E402
 from neon.blockamr.fillpatch import FillPatchCellConservative  # noqa: E402
 
@@ -174,7 +174,7 @@ def test_projection_makes_velocity_divergence_free(blockamr_session):
             periodicity=[True, True, True],
         )
     )
-    solver = DSLIncompressibleSolver(
+    solver = build_incompressible(
         mesh,
         0.01,
         0.2 / n,
@@ -183,7 +183,7 @@ def test_projection_makes_velocity_divergence_free(blockamr_session):
     )
     _set_random_velocity(solver, mesh, seed=3)
 
-    solver.step()
+    step(solver)
 
     div_after = _max_face_divergence(solver.phi, mesh)
     assert div_after < 1e-6, f"projection left max|div phi| = {div_after:.3e}"

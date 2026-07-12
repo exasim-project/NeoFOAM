@@ -10,16 +10,17 @@ Both framework core Models are backend-agnostic; this module supplies the two
 block-structured touch-points through their injection seams (DIP):
 
 * :class:`BlockAMRTimeBackend` — a ``LoopBackend`` mirroring the framework
-  ``LoopState`` clock onto the ``DSLIncompressibleSolver`` (which owns its own
-  ``dt``/time). The framework loop owns the outer step count + write control;
-  this backend only pushes the per-step ``dt`` onto the engine. It deliberately
-  does **not** write the engine's simulation time — ``engine.step()`` advances
-  that itself, so mirroring it here would double-count.
+  ``LoopState`` clock onto the projection state (which owns its own ``dt``/time).
+  The framework loop owns the outer step count + write control; this backend only
+  pushes the per-step ``dt`` onto the state. It deliberately does **not** write
+  the simulation time — the ``project`` operation advances that itself, so
+  mirroring it here would double-count.
 * :class:`PlotfileWriteHook` — a ``FieldHook`` that writes an AMReX plotfile of
   the ``write=True`` fields on write steps (gated by the ``FieldWriter``).
 
-The engine is resolved from the init work dict (``_blockamr_engine``) at wire
-time and held on the backend/hook — never captured in an operation closure.
+The projection state is resolved from the init work dict (``_projection_state``)
+at wire time and held on the backend/hook — never captured in an operation
+closure.
 """
 
 from typing import Any, Literal, Mapping
@@ -45,20 +46,20 @@ __all__ = [
 
 
 class BlockAMRTimeBackend:
-    """LoopBackend: mirror the framework ``LoopState`` ``dt`` onto the engine.
+    """LoopBackend: mirror the framework ``LoopState`` ``dt`` onto the state.
 
-    The ``DSLIncompressibleSolver`` owns its own ``dt`` and simulation time
-    (``engine.step()`` does ``self._t += dt``). The framework loop drives the
-    outer step count and write control; each ``update`` pushes the (possibly
-    constraint-folded) ``delta_t`` onto the engine so the next ``step()`` uses
-    it. Simulation time is left to the engine to avoid double-advancing it.
+    The projection state owns its own ``dt`` and simulation time (the ``project``
+    operation does ``state.t += dt``). The framework loop drives the outer step
+    count and write control; each ``update`` pushes the (possibly
+    constraint-folded) ``delta_t`` onto the state so the next ``project`` uses
+    it. Simulation time is left to the operation to avoid double-advancing it.
     """
 
-    def __init__(self, engine: Any) -> None:
-        self._engine = engine
+    def __init__(self, state: Any) -> None:
+        self._state = state
 
     def update(self, state: LoopState) -> None:
-        self._engine.dt = state.delta_t
+        self._state.dt = state.delta_t
 
 
 @FieldHook.register
@@ -66,34 +67,37 @@ class PlotfileWriteHook(FieldHook):
     """Write an AMReX plotfile of the flagged fields on a write step.
 
     Receives only the ``write=True`` fields (``U`` / ``p``) — the same
-    ``CellField`` objects the engine owns — and hands them to the engine's
-    plotfile writer, which stamps the current simulation time. Plotfile
-    directories are named ``plt<NNNNN>`` by write index (AMReX convention).
+    ``CellField`` objects the projection state owns — and hands them to the
+    ``neon.blockamr`` free ``write_plotfile``, stamped with the state's current
+    simulation time. Plotfile directories are named ``plt<NNNNN>`` by write index
+    (AMReX convention).
     """
 
     field_hook_type: Literal["plotfile"] = "plotfile"
-    engine: Any = None  # the DSLIncompressibleSolver
+    state: Any = None  # the projection state (fields + equations + time)
     directory: str = "."
     count: int = 0
 
     def write_fields(self, fields: Mapping[str, Any]) -> None:
-        to_write = [fields[n] for n in ("U", "p") if n in fields]
+        from neon.blockamr.incompressible import write_plotfile
+
+        to_write = [fields[n] for n in ("U", "p") if n in fields] or [self.state.U]
         name = f"{self.directory.rstrip('/')}/plt{self.count:05d}"
-        self.engine.write_plotfile(name, fields=to_write or None)
+        write_plotfile(self.state.mesh, self.state.time, name, to_write)
         self.count += 1
 
 
 def loop_backend_steps() -> list[InitStep]:
     """Init steps wiring the blockAMR backend into the framework ``solutionLoop``.
 
-    Injects :class:`BlockAMRTimeBackend` into the framework-built engine (which
-    defaults to a no-op ``NullLoopBackend``); ``set_backend`` immediately mirrors
-    the initial state, seeding the engine ``dt``. Registers ``loop_logger`` as a
-    plain ``print`` for the per-step time announcement.
+    Injects :class:`BlockAMRTimeBackend` into the framework loop (which defaults
+    to a no-op ``NullLoopBackend``); ``set_backend`` immediately mirrors the
+    initial state, seeding the projection state's ``dt``. Registers
+    ``loop_logger`` as a plain ``print`` for the per-step time announcement.
     """
 
     def inject_backend(ctx: dict[str, Any]) -> BlockAMRTimeBackend:
-        backend = BlockAMRTimeBackend(ctx["_blockamr_engine"])
+        backend = BlockAMRTimeBackend(ctx["_projection_state"])
         ctx["models.solution_loop"].set_backend(backend)
         return backend
 
@@ -104,7 +108,7 @@ def loop_backend_steps() -> list[InitStep]:
         model(
             "loop_backend",
             inject_backend,
-            depends_on=["models.solution_loop", "_blockamr_engine"],
+            depends_on=["models.solution_loop", "_projection_state"],
         ),
         model("loop_logger", make_logger),
     ]
@@ -119,7 +123,7 @@ def writer_backend_steps(config: Any = None) -> list[InitStep]:
     """
 
     def inject_hook(ctx: dict[str, Any]) -> FieldHook:
-        hook = PlotfileWriteHook(engine=ctx["_blockamr_engine"])
+        hook = PlotfileWriteHook(state=ctx["_projection_state"])
         ctx["models.writer"].hook = hook
         return hook
 
@@ -130,7 +134,7 @@ def writer_backend_steps(config: Any = None) -> list[InitStep]:
         model(
             "writer_hook",
             inject_hook,
-            depends_on=["models.writer", "_blockamr_engine"],
+            depends_on=["models.writer", "_projection_state"],
         ),
         model("step_reporter", make_reporter),
     ]

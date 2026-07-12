@@ -12,15 +12,19 @@ OpenFOAM objectRegistry, so the case is described by a small set of validated
 * :class:`MeshDictConfig`      — ``system/meshDict`` dict-driven Cartesian(+AMR)
   mesh: domain box, cell counts, per-axis periodicity, optional refinement and
   embedded boundary.
+* :class:`FvSchemesConfig`     — ``system/fvSchemes`` discretisation scheme
+  names (ddt/div/laplacian/grad), flattened to the DSL ``schemes`` dict.
+* :class:`USolutionConfig` / :class:`PSolutionConfig` — ``system/fvSolution``
+  per-field ``solvers.U`` / ``solvers.p`` linear-solver + IBM + backend blocks.
 * :class:`BlockAMRSolutionConfig` — ``system/fvSolution`` (subdict ``blockAMR``)
-  physical viscosity + pressure-Poisson (MLMG) tolerances + advection scheme.
+  the engine's physical viscosity ``nu``.
 
 Every field is a scalar / list of scalars so the OpenFOAM reader can parse it
 (it does not load dimensioned entries).
 """
 
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import Field, field_validator
 
@@ -135,28 +139,94 @@ class MeshDictConfig(BaseConfig):
     boundary: Dict[str, Any] = Field(default_factory=dict)
 
 
-@IOStrategy(OF("system/fvSolution", subdict="blockAMR"))
-class BlockAMRSolutionConfig(BaseConfig):
-    """``system/fvSolution`` (subdict ``blockAMR``) — solve controls.
+@IOStrategy(OF("system/fvSchemes"))
+class FvSchemesConfig(BaseConfig):
+    """``system/fvSchemes`` — discretisation scheme names per operator.
 
-    ``nu`` is the kinematic viscosity the engine advects/diffuses with (the
-    block-structured engine does not read ``constant/transportProperties``);
-    ``rtol`` / ``atol`` / ``maxIter`` configure the pressure-Poisson MLMG solve;
-    ``divScheme`` selects the advection scheme (``upwind`` | ``linear`` |
-    ``vanLeer`` | ``quick``); ``bottomSolver`` optionally picks the MLMG
-    bottom solver (``cg`` | ``bicgstab`` | ``smoother`` | ``cgbicg`` | ``bicgcg``
-    | ``default``) — empty leaves AMReX's default (a Krylov solver that converges
-    the nodal projection in ~5 V-cycles; ``smoother`` is ~100x slower here).
-    ``verbose`` / ``bottomVerbose`` set the AMReX MLMG residual-trace level (0 =
-    quiet) for the nodal solve and its bottom solver — a debugging aid for e.g.
-    diagnosing a multi-box convergence stall.
+    Each sub-block maps an OpenFOAM-style operator key to a scheme name the
+    engine's ``SCHEME_REGISTRY`` resolves (``ddt`` → ``Euler`` | ``RK2`` |
+    ``RK4``; ``div`` → ``upwind`` | ``linear`` | ``vanLeer`` | ``quick``;
+    ``laplacian`` / ``grad`` → ``central``). :meth:`resolve` flattens the
+    blocks into the single ``schemes`` dict the DSL consumes.
     """
 
-    nu: float = Field(gt=0.0)
+    ddtSchemes: Dict[str, str] = Field(default_factory=dict)
+    divSchemes: Dict[str, str] = Field(default_factory=dict)
+    laplacianSchemes: Dict[str, str] = Field(default_factory=dict)
+    gradSchemes: Dict[str, str] = Field(default_factory=dict)
+
+    def resolve(self) -> Dict[str, str]:
+        """Flatten the sub-blocks into the DSL ``schemes`` name dict.
+
+        A ``default`` key expands to the block's bare operator key
+        (``ddtSchemes{default Euler}`` → ``{"ddt": "Euler"}``); any other key
+        is kept verbatim (``divSchemes{div(phi,U) vanLeer}`` →
+        ``{"div(phi,U)": "vanLeer"}``).
+        """
+        out: Dict[str, str] = {}
+        for op, block in (
+            ("ddt", self.ddtSchemes),
+            ("div", self.divSchemes),
+            ("laplacian", self.laplacianSchemes),
+            ("grad", self.gradSchemes),
+        ):
+            for key, value in block.items():
+                out[op if key == "default" else key] = value
+        return out
+
+
+class FieldSolutionConfig(BaseConfig):
+    """One field's ``fvSolution.solvers[<field>]`` block.
+
+    ``solver`` / ``rtol`` / ``atol`` / ``maxIter`` configure the field's MLMG
+    solve; ``bottomSolver`` optionally picks the MLMG bottom solver
+    (``cg`` | ``bicgstab`` | ``smoother`` | ...) — empty leaves AMReX's default
+    (a Krylov solver converging the nodal projection in ~5 V-cycles;
+    ``smoother`` is ~100x slower here). ``ibm`` selects the field's immersed-
+    boundary method (``directForcing``; empty = none). ``backend`` picks the
+    per-field kernel implementation (``jax`` | ``cpp``) — distinct from
+    ``controlDict.executor`` (``cpu`` | ``gpu``), which selects the *device*.
+    ``verbose`` / ``bottomVerbose`` set the AMReX MLMG residual-trace level
+    (0 = quiet) for the solve and its bottom solver.
+    """
+
+    solver: str = "MLMG"
     rtol: float = Field(default=1e-10, gt=0.0)
     atol: float = Field(default=1e-8, gt=0.0)
     maxIter: int = Field(default=200, gt=0)
-    divScheme: str = "vanLeer"
     bottomSolver: str = ""
+    ibm: str = ""
+    backend: Literal["jax", "cpp"] = "jax"
     verbose: int = Field(default=0, ge=0)
     bottomVerbose: int = Field(default=0, ge=0)
+
+    def resolve(self) -> Dict[str, Any]:
+        """Return the plain ``solution`` dict with empty-string entries dropped.
+
+        Unset ``bottomSolver`` / ``ibm`` (empty string) are omitted so the DSL
+        sees only the keys that were actually configured.
+        """
+        return {k: v for k, v in self.model_dump().items() if v != ""}
+
+
+@IOStrategy(OF("system/fvSolution", subdict="solvers.U"))
+class USolutionConfig(FieldSolutionConfig):
+    """``system/fvSolution`` (subdict ``solvers.U``) — velocity solve block."""
+
+
+@IOStrategy(OF("system/fvSolution", subdict="solvers.p"))
+class PSolutionConfig(FieldSolutionConfig):
+    """``system/fvSolution`` (subdict ``solvers.p``) — pressure solve block."""
+
+
+@IOStrategy(OF("system/fvSolution", subdict="blockAMR"))
+class BlockAMRSolutionConfig(BaseConfig):
+    """``system/fvSolution`` (subdict ``blockAMR``) — engine physics extras.
+
+    ``nu`` is the kinematic viscosity the engine advects/diffuses with (the
+    block-structured engine does not read ``constant/transportProperties``).
+    The MLMG tolerances, advection scheme and verbosity live in the per-field
+    ``solvers.U`` / ``solvers.p`` blocks and ``fvSchemes``.
+    """
+
+    nu: float = Field(gt=0.0)

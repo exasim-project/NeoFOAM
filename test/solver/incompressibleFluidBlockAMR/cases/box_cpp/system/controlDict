@@ -1,6 +1,6 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
-| \\      /  F ield         | NeoFOAM: block-structured solve controls        |
+| \\      /  F ield         | NeoFOAM: block-structured AMReX cpp-backend case|
 |  \\    /   O peration     |                                                 |
 |   \\  /    A nd           |                                                 |
 |    \\/     M anipulation  |                                                 |
@@ -10,28 +10,25 @@ FoamFile
     version     2.0;
     format      ascii;
     class       dictionary;
-    object      fvSolution;
+    object      controlDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-solvers
-{
-    U
-    {
-        backend     jax;
-    }
-    p
-    {
-        solver      MLMG;
-        rtol        1e-10;
-        atol        1e-8;
-        maxIter     200;
-    }
-}
+application     incompressibleFluidBlockAMR;
 
-blockAMR
-{
-    nu          0.01;
-}
+startTime       0;
+
+// deltaT is a negative power of two (2^-4) so the explicit backend's f32
+// dt/coeff cast is exact — isolating the jax vs cpp comparison from that
+// pre-existing scaling and leaving only float64 summation-order differences.
+endTime         0.25;
+
+deltaT          0.0625;
+
+writeControl    timeStep;
+
+writeInterval   4;
+
+executor        cpu;
 
 // ************************************************************************* //
