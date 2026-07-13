@@ -158,3 +158,32 @@ if [[ "$SKIP_VALIDATION" != "true" ]]; then
 else
     echo "=== Skipping validation (skip-validation label set) ==="
 fi
+
+# -----------------------------
+# Step 7: Smoke-test neoSimpleFoam (motorBike, 5 iterations)
+# -----------------------------
+SKIP_SIMPLE_SMOKETEST=${SKIP_SIMPLE_SMOKETEST:-false}
+if [[ "$SKIP_SIMPLE_SMOKETEST" != "true" ]]; then
+    pushd tutorials/neoSimpleFoam/motorBike >/dev/null
+    mkdir -p constant/triSurface
+    cp -f "$FOAM_TUTORIALS"/resources/geometry/motorBike.obj.gz constant/triSurface/
+    surfaceFeatureExtract > log.surfaceFeatureExtract 2>&1
+    blockMesh > log.blockMesh 2>&1
+    decomposePar -decomposeParDict system/decomposeParDict.6 > log.decomposePar 2>&1
+    restore0Dir -processor
+    mpirun -np 6 snappyHexMesh -parallel -overwrite \
+        -decomposeParDict system/decomposeParDict.6 > log.snappyHexMesh 2>&1
+    mpirun -np 6 topoSet -parallel \
+        -decomposeParDict system/decomposeParDict.6 > log.topoSet 2>&1
+    mpirun -np 6 potentialFoam -parallel -writephi \
+        -decomposeParDict system/decomposeParDict.6 > log.potentialFoam 2>&1
+    foamDictionary -entry endTime -set 5 system/controlDict
+    foamDictionary -entry executor -set GPU system/controlDict
+    if ! mpirun -np 6 "../../build/$PRESET/bin/neoSimpleFoam" -parallel \
+            -decomposeParDict system/decomposeParDict.6 > log.neoSimpleFoam 2>&1; then
+        cat log.neoSimpleFoam; exit 1
+    fi
+    popd >/dev/null
+else
+    echo "=== Skipping neoSimpleFoam smoke test (SKIP_SIMPLE_SMOKETEST set) ==="
+fi
