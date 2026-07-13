@@ -1,0 +1,89 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.8" xml:lang="en-US">
+  <compounddef id="permutatoin_8hpp" kind="file" language="C++">
+    <compoundname>permutatoin.hpp</compoundname>
+    <includes local="yes">NeoN/NeoN.hpp</includes>
+    <includes local="no">vector</includes>
+    <includes local="no">span</includes>
+    <incdepgraph>
+      <node id="1">
+        <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/ordering/permutatoin.hpp</label>
+        <link refid="permutatoin_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>NeoN/NeoN.hpp</label>
+      </node>
+      <node id="4">
+        <label>span</label>
+      </node>
+      <node id="3">
+        <label>vector</label>
+      </node>
+    </incdepgraph>
+    <innerclass refid="classPermutation" prot="public">Permutation</innerclass>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="comment">//<sp/>SPDX-License-Identifier:<sp/>GPL-3.0-or-later</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight><highlight class="comment">//<sp/>SPDX-FileCopyrightText:<sp/>2026<sp/>NeoFOAM<sp/>authors</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="3"><highlight class="normal"></highlight></codeline>
+<codeline lineno="4"><highlight class="normal"></highlight><highlight class="comment">/*</highlight></codeline>
+<codeline lineno="5"><highlight class="comment">A<sp/>Permutation<sp/>is<sp/>an<sp/>immutable<sp/>value<sp/>type<sp/>representing<sp/>a<sp/>bijective<sp/>mapping<sp/>between<sp/></highlight></codeline>
+<codeline lineno="6"><highlight class="comment">two<sp/>index<sp/>spaces<sp/>and<sp/>providing<sp/>efficient<sp/>operations<sp/>on<sp/>that<sp/>mapping.</highlight></codeline>
+<codeline lineno="7"><highlight class="comment"></highlight></codeline>
+<codeline lineno="8"><highlight class="comment">Invariant:</highlight></codeline>
+<codeline lineno="9"><highlight class="comment"></highlight></codeline>
+<codeline lineno="10"><highlight class="comment">-<sp/>oldToNew_.size()<sp/>==<sp/>newToOld_.size()</highlight></codeline>
+<codeline lineno="11"><highlight class="comment"></highlight></codeline>
+<codeline lineno="12"><highlight class="comment">-<sp/>oldToNew_<sp/>is<sp/>bijective</highlight></codeline>
+<codeline lineno="13"><highlight class="comment"></highlight></codeline>
+<codeline lineno="14"><highlight class="comment">-<sp/>newToOld_<sp/>is<sp/>the<sp/>inverse<sp/>of<sp/>oldToNew_</highlight></codeline>
+<codeline lineno="15"><highlight class="comment"></highlight></codeline>
+<codeline lineno="16"><highlight class="comment">-<sp/>indices<sp/>lie<sp/>in<sp/>[0,size())</highlight></codeline>
+<codeline lineno="17"><highlight class="comment">*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="18"><highlight class="normal"></highlight><highlight class="preprocessor">#pragma<sp/>once</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="19"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;NeoN/NeoN.hpp&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="20"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;vector&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="21"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;span&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="22"><highlight class="normal"></highlight></codeline>
+<codeline lineno="23" refid="classPermutation" refkind="compound"><highlight class="normal"></highlight><highlight class="keyword">class<sp/></highlight><highlight class="normal"><ref refid="classPermutation" kindref="compound">Permutation</ref></highlight></codeline>
+<codeline lineno="24"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="25"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">public</highlight><highlight class="normal">:</highlight></codeline>
+<codeline lineno="26" refid="classPermutation_1a071faf4580fbea30cedd4425e1182030" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">using<sp/></highlight><highlight class="normal"><ref refid="classPermutation_1a071faf4580fbea30cedd4425e1182030" kindref="member">IndexType</ref><sp/>=<sp/>NeoN::label;</highlight></codeline>
+<codeline lineno="27"><highlight class="normal"></highlight></codeline>
+<codeline lineno="28" refid="classPermutation_1aa24203b945921e3d8fc37fbd8c2d69d0" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">explicit</highlight><highlight class="normal"><sp/><ref refid="classPermutation_1aa24203b945921e3d8fc37fbd8c2d69d0" kindref="member">Permutation</ref>(std::vector&lt;IndexType&gt;<sp/><ref refid="classPermutation_1a9240fabc681418fe4a23531157e41810" kindref="member">oldToNew</ref>);</highlight></codeline>
+<codeline lineno="29"><highlight class="normal"></highlight></codeline>
+<codeline lineno="30" refid="classPermutation_1aa9c31a14d7c30cec0927ed7b473e4c0a" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">static</highlight><highlight class="normal"><sp/><ref refid="classPermutation" kindref="compound">Permutation</ref><sp/><ref refid="classPermutation_1aa9c31a14d7c30cec0927ed7b473e4c0a" kindref="member">identity</ref>(std::size_t<sp/><ref refid="classPermutation_1a5635c3096949081c230869c94b7f0bd3" kindref="member">size</ref>)<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">noexcept</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="31"><highlight class="normal"></highlight></codeline>
+<codeline lineno="32" refid="classPermutation_1ad665058b86daee38b1126566e2ba3bea" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>[[nodiscard]]<sp/>std::size_t<sp/><ref refid="classPermutation_1a5635c3096949081c230869c94b7f0bd3" kindref="member">size</ref>()</highlight><highlight class="keyword"><sp/>const<sp/></highlight><highlight class="normal">{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>oldToNew_.size();<sp/>}<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">noexcept</highlight><highlight class="normal">;<sp/></highlight></codeline>
+<codeline lineno="33"><highlight class="normal"></highlight></codeline>
+<codeline lineno="34" refid="classPermutation_1ad95660343e3cf4195de6669b2aabc564" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>[[nodiscard]]<sp/><ref refid="classPermutation_1a071faf4580fbea30cedd4425e1182030" kindref="member">IndexType</ref><sp/><ref refid="classPermutation_1ad95660343e3cf4195de6669b2aabc564" kindref="member">oldToNew</ref>(<ref refid="classPermutation_1a071faf4580fbea30cedd4425e1182030" kindref="member">IndexType</ref><sp/>oldIndex)<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="35"><highlight class="normal"></highlight></codeline>
+<codeline lineno="36" refid="classPermutation_1a161cd0f58f80e5f13b937ab374c1ea9a" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>[[nodiscard]]<sp/><ref refid="classPermutation_1a071faf4580fbea30cedd4425e1182030" kindref="member">IndexType</ref><sp/><ref refid="classPermutation_1a161cd0f58f80e5f13b937ab374c1ea9a" kindref="member">newToOld</ref>(<ref refid="classPermutation_1a071faf4580fbea30cedd4425e1182030" kindref="member">IndexType</ref><sp/>newIndex)<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="37"><highlight class="normal"></highlight></codeline>
+<codeline lineno="38" refid="classPermutation_1a9240fabc681418fe4a23531157e41810" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>[[nodiscard]]<sp/>std::span&lt;const<sp/>IndexType&gt;<sp/><ref refid="classPermutation_1a9240fabc681418fe4a23531157e41810" kindref="member">oldToNew</ref>()<sp/>const<sp/><ref refid="classPermutation_1ad665058b86daee38b1126566e2ba3bea" kindref="member">noexcept</ref>;</highlight></codeline>
+<codeline lineno="39"><highlight class="normal"></highlight></codeline>
+<codeline lineno="40" refid="classPermutation_1a1c3aa6d22d0a6701eba631798a995af3" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>[[nodiscard]]<sp/>std::span&lt;const<sp/><ref refid="classPermutation_1a071faf4580fbea30cedd4425e1182030" kindref="member">IndexType</ref>&gt;<sp/><ref refid="classPermutation_1a1c3aa6d22d0a6701eba631798a995af3" kindref="member">newToOld</ref>()<sp/>const<sp/><ref refid="classPermutation_1ad665058b86daee38b1126566e2ba3bea" kindref="member">noexcept</ref>;</highlight></codeline>
+<codeline lineno="41"><highlight class="normal"></highlight></codeline>
+<codeline lineno="42" refid="classPermutation_1af906faaa87c2727bf4be22b32092c313" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>[[nodiscard]]<sp/><ref refid="classPermutation" kindref="compound">Permutation</ref><sp/><ref refid="classPermutation_1af906faaa87c2727bf4be22b32092c313" kindref="member">inverse</ref>()<sp/>const;</highlight></codeline>
+<codeline lineno="43"><highlight class="normal"></highlight></codeline>
+<codeline lineno="44" refid="classPermutation_1a646fcdeac25d51e23e47de92b5f69664" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>[[nodiscard]]<sp/><ref refid="classPermutation" kindref="compound">Permutation</ref><sp/><ref refid="classPermutation_1a646fcdeac25d51e23e47de92b5f69664" kindref="member">compose</ref>(const<sp/><ref refid="classPermutation" kindref="compound">Permutation</ref>&amp;<sp/>other)<sp/>const;</highlight></codeline>
+<codeline lineno="45"><highlight class="normal"></highlight></codeline>
+<codeline lineno="46" refid="classPermutation_1aaada3cb8dad4be4032dc12c349479ff2" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>[[nodiscard]]<sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/><ref refid="classPermutation_1aaada3cb8dad4be4032dc12c349479ff2" kindref="member">isIdentity</ref>()<sp/>const;</highlight></codeline>
+<codeline lineno="47"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="48"><highlight class="normal"><sp/><sp/><sp/><sp/>private:</highlight></codeline>
+<codeline lineno="49"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>std::vector&lt;<ref refid="classPermutation_1a071faf4580fbea30cedd4425e1182030" kindref="member">IndexType</ref>&gt;<sp/>oldToNew_;</highlight></codeline>
+<codeline lineno="50"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>std::vector&lt;<ref refid="classPermutation_1a071faf4580fbea30cedd4425e1182030" kindref="member">IndexType</ref>&gt;<sp/>newToOld_;</highlight></codeline>
+<codeline lineno="51"><highlight class="normal">}</highlight></codeline>
+    </programlisting>
+    <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/ordering/permutatoin.hpp"/>
+  </compounddef>
+</doxygen>

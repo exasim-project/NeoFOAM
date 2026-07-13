@@ -1,0 +1,384 @@
+Ordering Framework Architecture
+===============================
+
+Overview
+--------
+
+The Ordering Framework provides reusable infrastructure for computing,
+evaluating, storing, and applying permutations of mesh entities in NeoFOAM.
+
+Its primary objective is to improve the performance of matrix assembly,
+linear solvers, and other mesh-based computations by improving memory
+locality and reducing graph bandwidth.
+
+Rather than being built around a single ordering algorithm, the framework is
+designed around stable abstractions. Ordering algorithms are interchangeable
+components that consume mesh-derived information and produce a common output:
+
+::
+
+   Permutation
+
+The framework supports
+
+- graph-based ordering
+- geometric ordering
+- hybrid ordering
+- future GPU-aware ordering
+
+without requiring changes to the surrounding infrastructure.
+
+Motivation
+----------
+
+NeoFOAM currently converts an OpenFOAM mesh into a NeoN mesh before matrix
+assembly and solution.
+
+.. mermaid::
+
+   flowchart TD
+
+      OF[OpenFOAM Mesh]
+      Adapter[Mesh Adapter]
+      Mesh[NeoN Mesh]
+      Assembly[Matrix Assembly]
+      Solver[Linear Solver]
+
+      OF --> Adapter
+      Adapter --> Mesh
+      Mesh --> Assembly
+      Assembly --> Solver
+
+The Ordering Framework is inserted immediately after NeoN mesh construction.
+
+.. mermaid::
+
+   flowchart TD
+
+      OF[OpenFOAM Mesh]
+      Mesh[NeoN Mesh]
+      Ordering[Ordering Framework]
+      RMesh[Reordered NeoN Mesh]
+      Assembly[Matrix Assembly]
+      Solver[Linear Solver]
+
+      OF --> Mesh
+      Mesh --> Ordering
+      Ordering --> RMesh
+      RMesh --> Assembly
+      Assembly --> Solver
+
+The reordered mesh is then used throughout the simulation.
+
+Goals
+-----
+
+Functional goals
+~~~~~~~~~~~~~~~~
+
+The framework shall
+
+- compute permutations
+- apply permutations
+- cache permutations
+- store permutations
+- benchmark ordering algorithms
+- compare ordering strategies
+- support external libraries
+
+Non-functional goals
+~~~~~~~~~~~~~~~~~~~~
+
+The framework shall
+
+- minimise memory allocations
+- avoid unnecessary copies
+- support CPU and GPU implementations
+- be modular
+- be extensible
+- be thread-safe
+- be easy to unit test
+
+Design Principles
+-----------------
+
+The framework follows these principles.
+
+#. Design around stable abstractions.
+#. Algorithms compute permutations only.
+#. The framework owns orchestration.
+#. Meshes are accessed through views.
+#. Graphs are implementation details.
+#. Expensive derived data is computed lazily.
+#. Algorithms are stateless.
+#. File I/O is separated from algorithms.
+#. New algorithms should require minimal framework changes.
+#. Performance optimisations must not compromise maintainability.
+
+High-Level Architecture
+-----------------------
+
+.. mermaid::
+
+   flowchart TD
+
+      Mesh["NeoN Mesh"]
+      Benchmark["Benchmark"]
+
+      subgraph OrderingFramework["Ordering Framework"]
+
+         MeshView["MeshView"]
+
+         Context["OrderingContext"]
+
+         GraphBuilder["GraphBuilder"]
+         Geometry["Geometry Provider"]
+         Future["Future Providers"]
+
+         Graph["CSRGraph"]
+
+         Algorithm["OrderingAlgorithm"]
+
+         Permutation["Permutation"]
+
+         IO["PermutationIO"]
+         Cache["PermutationCache"]
+
+         Applicator["PermutationApplicator"]
+
+      end
+
+      Reordered["Reordered NeoN Mesh"]
+
+      Mesh --> MeshView
+      MeshView --> Context
+
+      Context --> GraphBuilder
+      Context --> Geometry
+      Context --> Future
+
+      GraphBuilder --> Graph
+
+      Graph --> Algorithm
+      Geometry -.-> Algorithm
+      Future -.-> Algorithm
+
+      Algorithm --> Permutation
+
+      Permutation --> IO
+      IO --> Cache
+
+      Permutation --> Applicator
+      Applicator --> Reordered
+
+      Benchmark -.-> Algorithm
+      Benchmark -.-> Applicator
+
+Component Responsibilities
+--------------------------
+
+MeshView
+~~~~~~~~
+
+Provides read-only access to mesh information.
+
+Responsibilities
+
+- cell connectivity
+- owner/neighbour relationships
+- cell centres
+- boundary information
+
+OrderingContext
+~~~~~~~~~~~~~~~
+
+Provides lazily computed mesh-derived information.
+
+Responsibilities
+
+- graph()
+- cellCenters()
+- boundingBox()
+- partitionInfo()
+
+CSRGraph
+~~~~~~~~
+
+Stores graph connectivity in compressed sparse row (CSR) format.
+
+GraphBuilder
+~~~~~~~~~~~~
+
+Constructs a CSRGraph from a MeshView.
+
+Permutation
+~~~~~~~~~~~
+
+Represents
+
+::
+
+   old index → new index
+
+Responsibilities
+
+- validate()
+- inverse()
+- compose()
+
+PermutationApplicator
+~~~~~~~~~~~~~~~~~~~~~
+
+Applies permutations to
+
+- meshes
+- fields
+- matrices
+
+OrderingAlgorithm
+~~~~~~~~~~~~~~~~~
+
+Consumes
+
+::
+
+   OrderingContext
+
+Produces
+
+::
+
+   Permutation
+
+Algorithms never modify mesh data.
+
+OrderingRegistry
+~~~~~~~~~~~~~~~~
+
+Maps algorithm names to implementations.
+
+PermutationIO
+~~~~~~~~~~~~~
+
+Reads and writes permutation files.
+
+PermutationCache
+~~~~~~~~~~~~~~~~
+
+Stores cached permutations for later reuse.
+
+Module Dependencies
+-------------------
+
+Dependencies always point downward.
+
+.. mermaid::
+
+   flowchart TD
+
+      Applications["Applications"]
+      Solvers["Solvers"]
+      Ordering["Ordering"]
+      Graph["Graph"]
+      Mesh["Mesh"]
+      Core["Core"]
+
+      Applications --> Solvers
+      Solvers --> Ordering
+      Ordering --> Graph
+      Graph --> Mesh
+      Mesh --> Core
+
+Ordering must never depend on solver modules.
+
+Graph must never depend on ordering modules.
+
+Extension Points
+----------------
+
+Adding an ordering algorithm
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Implement
+
+::
+
+   compute(const OrderingContext&)
+
+Register the algorithm.
+
+Add unit tests.
+
+No framework modifications should be necessary.
+
+Adding a graph representation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Implement the Graph concept.
+
+Extend GraphBuilder to construct the new graph type.
+
+Existing algorithms should remain unchanged.
+
+Adding a benchmark
+~~~~~~~~~~~~~~~~~~
+
+Implement a BenchmarkRunner.
+
+Benchmarks are independent from ordering algorithms.
+
+Persistence
+-----------
+
+Permutations are persistent objects.
+
+The framework stores
+
+- permutation
+- algorithm
+- parameters
+- mesh fingerprint
+- NeoFOAM version
+
+The framework does **not** store reordered meshes.
+
+Workflow
+--------
+
+The framework executes the following workflow.
+
+.. mermaid::
+
+   flowchart TD
+
+      Mesh["Mesh"]
+
+      Fingerprint["Mesh Fingerprint"]
+
+      Lookup{"Permutation cached?"}
+
+      Load["Load Permutation"]
+
+      Compute["Compute Permutation"]
+
+      Validate["Validate"]
+
+      Apply["Apply Ordering"]
+
+      Assembly["Matrix Assembly"]
+
+      Mesh --> Fingerprint
+
+      Fingerprint --> Lookup
+
+      Lookup -->|Yes| Load
+
+      Lookup -->|No| Compute
+
+      Load --> Validate
+
+      Compute --> Validate
+
+      Validate --> Apply
+
+      Apply --> Assembly
