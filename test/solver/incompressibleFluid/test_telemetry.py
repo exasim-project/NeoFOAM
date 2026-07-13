@@ -71,7 +71,7 @@ def _case_copy(source: str, tmp_path: Path) -> Path:
 def test_maybe_configure_is_false_when_dict_absent(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.chdir(_CASES / "maxDeltaT_absent")
+    monkeypatch.chdir(_CASES / "controldict_base")
     assert maybe_configure_telemetry() is False
     assert telemetry_shim.is_active() is False
 
