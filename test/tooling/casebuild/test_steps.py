@@ -14,7 +14,7 @@ from pathlib import Path
 import pybFoam as pyf
 import pytest
 
-from neofoam.casebuild import CaseDir, configs, patch
+from neofoam.tooling.casebuild import CaseDir, configs, patch
 from neofoam.framework.solver.configurations import configurations
 from neofoam.solver.incompressibleFluid.incompressibleFluid import incompressibleFluid
 

@@ -13,11 +13,17 @@ from __future__ import annotations
 
 from fastapi import FastAPI
 
-from neofoam.mcp.server import mcp
+from neofoam.mcp.server import configure_root, mcp
 
 
-def build_fastapi_app(*, name: str = "neofoam") -> FastAPI:
-    """FastAPI app exposing the MCP endpoint at ``/mcp`` plus a ``/health`` route."""
+def build_fastapi_app(*, name: str = "neofoam", root: str | None = None) -> FastAPI:
+    """FastAPI app exposing the MCP endpoint at ``/mcp`` plus a ``/health`` route.
+
+    When ``root`` is given, every filesystem tool confines its path arguments under
+    it (relative paths only, escapes rejected) — the trust boundary for an untrusted
+    client. ``None`` leaves paths unconfined (trusted/local use).
+    """
+    configure_root(root)
     mcp_app = mcp.http_app(path="/mcp")  # Streamable-HTTP ASGI app, endpoint at /mcp
 
     app = FastAPI(title=name, lifespan=mcp_app.lifespan)
@@ -30,8 +36,14 @@ def build_fastapi_app(*, name: str = "neofoam") -> FastAPI:
     return app
 
 
-def serve(*, host: str = "127.0.0.1", port: int = 8000) -> None:
-    """Blocking: run :func:`build_fastapi_app` under uvicorn (one process)."""
+def serve(
+    *, host: str = "127.0.0.1", port: int = 8000, root: str | None = None
+) -> None:
+    """Blocking: run :func:`build_fastapi_app` under uvicorn (one process).
+
+    ``root`` confines every filesystem tool's paths under that directory; omit it only
+    for trusted/local use (see :func:`build_fastapi_app`).
+    """
     import uvicorn
 
-    uvicorn.run(build_fastapi_app(), host=host, port=port)
+    uvicorn.run(build_fastapi_app(root=root), host=host, port=port)

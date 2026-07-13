@@ -79,6 +79,16 @@ def telemetry_plot(
 def mcp_serve(
     host: str = typer.Option("127.0.0.1", "--host", help="Bind host."),
     port: int = typer.Option(8000, "--port", help="Bind port."),
+    root: Optional[str] = typer.Option(
+        None,
+        "--root",
+        help=(
+            "Confine every case path under this directory (relative paths only; "
+            "escapes are rejected). Recommended when the server is reachable by an "
+            "untrusted client. Omit only for trusted/local use, where absolute paths "
+            "are allowed."
+        ),
+    ),
 ) -> None:
     """Start the NeoFOAM MCP server (blocking, one process).
 
@@ -87,7 +97,7 @@ def mcp_serve(
     """
     from neofoam.mcp.app import serve
 
-    serve(host=host, port=port)
+    serve(host=host, port=port, root=root)
 
 
 @agent_app.command("fill")

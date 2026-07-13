@@ -11,16 +11,17 @@ import pytest
 from neofoam.tooling import CaseAccessError, Workspace
 
 
-def test_import_pulls_no_heavy_frontend_deps() -> None:
-    """Importing the workspace sandbox drags in no trame / fastmcp / pybFoam.
+def test_import_pulls_no_optional_frontend_extras() -> None:
+    """Importing the workspace sandbox drags in no trame (ui) / fastmcp (mcp) extra.
 
-    Checked in a clean subprocess: the shared pytest session imports the mcp/ui
-    frontends (which do pull those), so only a fresh interpreter can prove that
-    ``import neofoam.tooling`` itself stays stdlib-only.
+    pybFoam is a hard dependency the eager ``neofoam`` package import always pulls, so
+    only the *optional* frontend extras are asserted absent. Checked in a clean
+    subprocess: the shared pytest session imports the mcp/ui frontends (which do pull
+    those), so only a fresh interpreter can prove ``import neofoam.tooling`` avoids them.
     """
     probe = (
         "import sys, neofoam.tooling\n"
-        "heavy = [m for m in ('trame', 'fastmcp', 'pybFoam') if m in sys.modules]\n"
+        "heavy = [m for m in ('trame', 'fastmcp') if m in sys.modules]\n"
         "assert not heavy, heavy\n"
     )
     subprocess.run([sys.executable, "-c", probe], check=True)

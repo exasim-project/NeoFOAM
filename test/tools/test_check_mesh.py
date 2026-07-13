@@ -13,7 +13,7 @@ from typing import Any
 
 import pytest
 
-from neofoam.casebuild import from_template
+from neofoam.tooling.casebuild import from_template
 from neofoam.framework.initialization import InitStepExecutionError
 from neofoam.framework.tools import ToolRuntime
 from neofoam.tools import check_mesh

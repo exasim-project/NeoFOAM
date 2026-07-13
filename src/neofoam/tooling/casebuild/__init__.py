@@ -14,13 +14,13 @@ A :class:`Pipeline` is a value â€” nothing touches disk until ``.build_at()`` â€
 materialized repeatedly, and ``base | step`` forks a materialized :class:`CaseDir`.
 """
 
-from neofoam.casebuild.meshing import (
+from neofoam.tooling.casebuild.meshing import (
     BoxMeshStep,
     block_mesh,
     box,
     snappy_hex_mesh,
 )
-from neofoam.casebuild.pipeline import (
+from neofoam.tooling.casebuild.pipeline import (
     CaseDir,
     Pipeline,
     Step,
@@ -28,7 +28,7 @@ from neofoam.casebuild.pipeline import (
     from_template,
     pipe,
 )
-from neofoam.casebuild.steps import configs, patch
+from neofoam.tooling.casebuild.steps import configs, patch
 
 __all__ = [
     "CaseDir",

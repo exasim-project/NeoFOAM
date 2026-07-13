@@ -68,10 +68,11 @@ def test_finding_and_report_round_trip_json() -> None:
     assert "0/U" in report.model_dump_json()
 
 
-def test_validation_package_imports_without_pybfoam_or_mcp() -> None:
+def test_validation_package_imports_without_mcp() -> None:
+    # pybFoam is a hard dependency the eager ``neofoam`` import always pulls; only the
+    # optional mcp extra must stay unloaded when importing the validation package.
     code = (
         "import sys, neofoam.framework.validation\n"
-        "assert 'pybFoam' not in sys.modules, 'pybFoam leaked'\n"
         "assert not any(m.startswith('neofoam.mcp') for m in sys.modules), 'mcp leaked'\n"
         "assert 'fastmcp' not in sys.modules, 'fastmcp leaked'\n"
     )

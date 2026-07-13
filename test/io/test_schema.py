@@ -110,15 +110,15 @@ def test_model_catalog_reports_required_and_optional(solver: Any) -> None:
     assert "ModelMetaclass" not in entries[0].model_dump_json()
 
 
-def test_schema_module_imports_without_mcp_or_pybfoam() -> None:
+def test_schema_module_imports_without_mcp() -> None:
     # io.schema is frontend-agnostic: importing it into a fresh interpreter pulls no
     # mcp / fastmcp (run in a subprocess so reloading its classes can't contaminate the
-    # aliased mcp.dto types the rest of the suite isinstance-checks against).
+    # aliased mcp.dto types the rest of the suite isinstance-checks against). pybFoam is
+    # a hard dependency the eager ``neofoam`` import always pulls, so it is not asserted.
     code = (
         "import sys, neofoam.io.schema\n"
         "assert not any(m.startswith('neofoam.mcp') for m in sys.modules), 'mcp leaked'\n"
         "assert 'fastmcp' not in sys.modules, 'fastmcp leaked'\n"
-        "assert 'pybFoam' not in sys.modules, 'pybFoam leaked'\n"
     )
     proc = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
     assert proc.returncode == 0, proc.stderr

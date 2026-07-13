@@ -25,7 +25,7 @@ from typing import Any
 import pybFoam as pyf
 from pydantic import BaseModel
 
-from neofoam.casebuild.pipeline import CaseDir, Step
+from neofoam.tooling.casebuild.pipeline import CaseDir, Step
 from neofoam.tools.block_mesh import blockMeshTool
 from neofoam.tools.snappy_hex_mesh import snappyHexMeshTool
 

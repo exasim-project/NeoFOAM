@@ -18,7 +18,7 @@ import re
 import subprocess
 from pathlib import Path
 
-from neofoam.casebuild import from_template, block_mesh, patch
+from neofoam.tooling.casebuild import from_template, block_mesh, patch
 from neofoam.solver.incompressibleFluid import run
 
 from .._run_case import cwd

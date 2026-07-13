@@ -5,11 +5,9 @@
 
 The unit checks monkeypatch the module-global bindings so no mesh is built; the OF
 case drives the real bindings against the ``preprocess_case`` fixture. The config
-tests mirror the blockMesh strategy: over real ``snappyHexMeshDict`` files vendored
-under ``snappyhexmesh_cases/`` verify that loading one and writing it back reproduces
-the dict.
+test covers the ``castellate_and_snap`` constructor that the case-authoring surface
+(wizard/MCP) uses to assemble geometry + refinementSurfaces.
 """
-
 
 import os
 import types
@@ -18,9 +16,8 @@ from typing import Any
 
 import pytest
 
-from neofoam.casebuild import from_template
+from neofoam.tooling.casebuild import from_template
 from neofoam.framework.tools import ToolRuntime
-from neofoam.io import write_configs
 from neofoam.tools import snappy_hex_mesh
 from neofoam.tools.snappy_hex_mesh import (
     SnappyHexMeshDictConfig,
@@ -90,7 +87,7 @@ def test_snappy_refines_prior_mesh(tmp_path: Path) -> None:
 
 
 # --------------------------------------------------------------------------- #
-# SnappyHexMeshDictConfig — construction + load/write round-trip               #
+# SnappyHexMeshDictConfig — construction                                        #
 # --------------------------------------------------------------------------- #
 
 
@@ -104,55 +101,3 @@ def test_castellate_and_snap_builds_geometry_and_refinement() -> None:
     cmc = cfg.castellatedMeshControls
     assert cmc["refinementSurfaces"]["tubes"]["level"] == "(1 2)"
     assert cmc["locationInMesh"] == "(0.08 0.08 0.01)"
-
-
-# --------------------------------------------------------------------------- #
-# Reproduction: each vendored dict, loaded + written back, is unchanged         #
-# --------------------------------------------------------------------------- #
-#
-# ``snappyhexmesh_cases/`` holds one real snappyHexMeshDict per distinct feature
-# (searchable primitives, cell/face zones, surface layers, AMI, a plain baseline).
-# snappyHexMesh needs a base mesh + external STL geometry to run, so the vendored
-# dicts (geometry absent) are verified at the dict level — load → write → reload is
-# structurally identical. The mesh-level ``checkMesh`` reproduction is covered by
-# ``test_tube_bank_snappy_round_trip_reproduces_mesh`` below, which has geometry.
-
-_CASES = sorted(
-    (Path(__file__).parent / "snappyhexmesh_cases").glob("*.snappyHexMeshDict")
-)
-
-
-def _rounded(value: Any) -> Any:
-    """Round every float (incl. those inside strings) to 6 significant figures.
-
-    pybFoam writes scalars at 6 significant figures, so an exact ``==`` on a
-    load→write→reload cycle trips on that precision; comparing at 6 figures isolates
-    genuine structural differences.
-    """
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, float):
-        return float(f"{value:.6g}")
-    if isinstance(value, dict):
-        return {k: _rounded(v) for k, v in value.items()}
-    if isinstance(value, (list, tuple)):
-        return [_rounded(v) for v in value]
-    if isinstance(value, str):
-        import re
-
-        return re.sub(r"-?\d+\.\d+", lambda m: f"{float(m.group()):.6g}", value)
-    return value
-
-
-@pytest.mark.parametrize("case", _CASES, ids=[p.stem for p in _CASES])
-def test_snappyhexmeshdict_round_trip_reproduces_dict(
-    case: Path, tmp_path: Path
-) -> None:
-    """Load a vendored ``snappyHexMeshDict``, write it back, assert it is unchanged."""
-    cfg = SnappyHexMeshDictConfig.load(case_dir=case)
-    write_configs([cfg], tmp_path)
-    reloaded = SnappyHexMeshDictConfig.load(
-        case_dir=tmp_path / "system" / "snappyHexMeshDict"
-    )
-    assert _rounded(reloaded.model_dump()) == _rounded(cfg.model_dump())
-

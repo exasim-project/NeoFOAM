@@ -11,7 +11,7 @@ a hard dep — no skip). Point counts are exact for structured block meshes
 
 from pathlib import Path
 
-from neofoam.casebuild import block_mesh, box, from_template, snappy_hex_mesh
+from neofoam.tooling.casebuild import block_mesh, box, from_template, snappy_hex_mesh
 
 CASES = Path(__file__).parent / "cases"
 CAVITY = CASES / "cavity"

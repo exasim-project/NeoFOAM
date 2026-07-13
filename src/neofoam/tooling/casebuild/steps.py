@@ -3,7 +3,7 @@
 
 """The built-in case-build steps: ``patch``, ``configs`` (meshing lives in ``meshing.py``).
 
-Each is a free function returning a :data:`~neofoam.casebuild.pipeline.Step`
+Each is a free function returning a :data:`~neofoam.tooling.casebuild.pipeline.Step`
 (``Callable[[CaseDir], None]``) so it can be injected into a pipeline with ``|``.
 """
 
@@ -14,7 +14,7 @@ from typing import Optional, Union
 
 from pydantic import BaseModel
 
-from neofoam.casebuild.pipeline import CaseDir, Step
+from neofoam.tooling.casebuild.pipeline import CaseDir, Step
 from neofoam.io import DictFile, write_configs
 
 

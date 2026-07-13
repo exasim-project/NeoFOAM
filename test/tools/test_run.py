@@ -16,7 +16,7 @@ from pathlib import Path
 import pytest
 
 import neofoam.tools.run as run_mod
-from neofoam.casebuild import from_template
+from neofoam.tooling.casebuild import from_template
 from neofoam.tools import block_mesh, check_mesh, snappy_hex_mesh
 from neofoam.tools.block_mesh import BlockMeshStep
 from neofoam.tools.check_mesh import CheckMeshStep

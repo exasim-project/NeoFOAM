@@ -5,8 +5,8 @@
 
 Constructing a ``Foam::Time`` twice in one interpreter corrupts OpenFOAM per-process
 global state — later reads come back as ``nan`` — so every read runs in its own
-process. This module is the entry point :meth:`neofoam.casebuild.CaseDir.read_field`
-spawns; run it as ``python -m neofoam.casebuild._reader <case> <time> <field> <out.npy>``.
+process. This module is the entry point :meth:`neofoam.tooling.casebuild.CaseDir.read_field`
+spawns; run it as ``python -m neofoam.tooling.casebuild._reader <case> <time> <field> <out.npy>``.
 
 The requested time directory is staged as ``0/`` in a temporary case so the field is
 read where a freshly-constructed ``Time`` (which starts at ``startTime``) can see it —

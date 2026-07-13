@@ -62,7 +62,7 @@ class CaseDir:
                 [
                     sys.executable,
                     "-m",
-                    "neofoam.casebuild._reader",
+                    "neofoam.tooling.casebuild._reader",
                     str(self.path),
                     time,
                     name,
