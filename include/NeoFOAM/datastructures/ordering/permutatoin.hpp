@@ -32,4 +32,8 @@ class Permutation
         [[nodiscard]] Permutation compose(const Permutation& other) const;
 
         [[nodiscard]] bool isIdentity() const;
+    
+    private:
+        std::vector<IndexType> oldToNew_;
+        std::vector<IndexType> newToOld_;
 }
