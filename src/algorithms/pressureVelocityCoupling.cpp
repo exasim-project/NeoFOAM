@@ -144,10 +144,8 @@ computeRAtU(const PDESolver<Vec3>& expr, const nnfvcc::VolumeField<scalar>& rAU)
 
     const auto nRows = ls.matrix().nRows();
 
-    // sumOff[cell] = sum of the off-diagonal coefficients of that cell's row. The
-    // OpenFOAM fvMatrix::H1() is -sumOff/V (lduMatrix::H1 subtracts every off-diagonal,
-    // fvMatrix::H1 divides by V and folds in coupled-patch coupling). We accumulate the
-    // off-diagonal sum here and form rAtU = 1/(1/rAU - H1) below.
+    // sumOff[cell] accumulates off-diagonal row coefficients; used below to form
+    // rAtU = 1/(1/rAU + sumOff/V).
     auto sumOff = NeoN::Vector<scalar>(expr.exec(), nRows, scalar(0));
 
     const auto [rowOffsV, colIdxV, matrixV] = views(
@@ -164,9 +162,6 @@ computeRAtU(const PDESolver<Vec3>& expr, const nnfvcc::VolumeField<scalar>& rAU)
             scalar s = scalar(0);
             for (auto i = rowOffsV[rowi]; i < rowOffsV[rowi + 1]; i++)
             {
-                // The momentum system is the segregated vector-solve form: a scalar matrix
-                // (MatrixValueType == scalar) whose single coefficient couples every velocity
-                // component, exactly like OpenFOAM's fvVectorMatrix upper()/lower().
                 if (colIdxV[i] != rowi) s += matrixV[i];
             }
             sumOffV[rowi] = s;
@@ -205,7 +200,6 @@ computeRAtU(const PDESolver<Vec3>& expr, const nnfvcc::VolumeField<scalar>& rAU)
         expr.exec(),
         {0, nRows},
         NEON_LAMBDA(const NeoN::localIdx rowi) {
-            // A = 1/rAU = diag/V, H1 = -sumOff/V, so 1/rAU - H1 = (diag + sumOff)/V.
             const scalar denom = scalar(1) / rAUV[rowi] + sumOffV[rowi] / volV[rowi];
             rAtUV[rowi] = scalar(1) / denom;
         },
@@ -227,7 +221,6 @@ void addConsistentFluxCorrection(
     const auto exec = phiHbyA.exec();
     const auto& mesh = phiHbyA.mesh();
 
-    // drAU = rAtU - rAU
     auto drAUBCs = nnfvcc::createExtrapolatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh);
     auto drAU = nnfvcc::VolumeField<scalar>(exec, "drAU", mesh, drAUBCs);
     {
@@ -238,7 +231,6 @@ void addConsistentFluxCorrection(
     }
     drAU.correctBoundaryConditions();
 
-    // interpolate(rAtU - rAU) to the faces and snGrad(p) (corrected: keep non-orthogonality)
     auto linear =
         nnfvcc::SurfaceInterpolation<scalar>(exec, mesh, NeoN::TokenList({std::string("linear")}));
     auto drAUf = linear.interpolate(drAU);

@@ -119,8 +119,7 @@ int main(int argc, char* argv[])
                 auto [crAU, hByA] = nf::computeRAUandHByA(UEqn);
                 nf::constrainHbyA(U, p, hByA);
 
-                // SIMPLEC: rAtU = 1/(1/rAU - H1) folds the off-diagonal coupling that plain
-                // SIMPLE drops. crAtU aliases crAU for plain SIMPLE so the block is shared.
+                // SIMPLEC: rAtU absorbs off-diagonal coupling; for plain SIMPLE crAtU == crAU.
                 const bool consistent = simple.consistent();
                 fvcc::VolumeField<NeoN::scalar> crAtU =
                     consistent ? nf::computeRAtU(UEqn, crAU) : crAU;
