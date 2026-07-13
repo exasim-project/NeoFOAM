@@ -25,8 +25,13 @@ from neofoam.framework.operations import (
     StepBuilder,
 )
 from neofoam.framework.solver import Solver
+from neofoam.framework.tools import PreprocessConfig
 from neofoam.framework.types import OperationMetadata
 from neofoam.solver.neon_runtime import ensure_neon_initialized
+from neofoam.tools.block_mesh import BlockMeshDictConfig
+from neofoam.tools.snappy_hex_mesh import SnappyHexMeshDictConfig
+from neofoam.turbulence.config import TurbulencePropertiesConfig
+from neofoam.viscosity.config import TransportPropertiesConfig
 
 from .configs import ControlDictConfig
 from .create_fields import create_init
@@ -47,10 +52,22 @@ def _core_model(state: Any, spec_name: str) -> Any:
 incompressibleFluidNeoN = Solver("incompressibleFluidNeoN")
 
 # Declare the full config schema on the spec, case-free: the solver's own
-# configs plus the model families it owns. Viscosity/turbulence carry no
-# Python config classes — the NeoN C++ factories read
-# constant/transportProperties / constant/turbulenceProperties directly.
+# configs plus the model families it owns.
 incompressibleFluidNeoN.config(ControlDictConfig)
+incompressibleFluidNeoN.config(
+    PreprocessConfig
+)  # mesh pipeline enable file (configs())
+# The two mesh-input dicts: writer configs so the wizard/MCP fill and persist them
+# like any other case file (blockMesh/snappyHexMesh read them at launch) — without
+# them the sweep's mesh dimension is unavailable.
+incompressibleFluidNeoN.config(BlockMeshDictConfig)
+incompressibleFluidNeoN.config(SnappyHexMeshDictConfig)
+# The NeoN C++ factories read constant/transportProperties /
+# constant/turbulenceProperties directly at solve time; declaring the (single-phase)
+# Python config classes here does not change that — it only surfaces the two
+# mandatory files in the case-authoring schema so the wizard/agent fills them.
+incompressibleFluidNeoN.config(TransportPropertiesConfig)  # molecular nu
+incompressibleFluidNeoN.config(TurbulencePropertiesConfig)  # simulationType
 
 incompressibleFluidNeoN.models(PressureVelocityAlgorithmNeoN, required=True)  # pick ONE
 incompressibleFluidNeoN.models(incompressibleFluidNeoNModel)  # optional: zero or more

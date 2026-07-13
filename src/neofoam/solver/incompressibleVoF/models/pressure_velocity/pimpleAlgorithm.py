@@ -26,6 +26,24 @@ from pybFoam import (
 )
 
 from neofoam.algorithms.solution_loop.control import PimpleControl
+from neofoam.fields import (
+    CalculatedBC,
+    CyclicBC,
+    EmptyBC,
+    FixedFluxPressureBC,
+    FixedValueBC,
+    GenericBC,
+    InletOutletBC,
+    NoSlipBC,
+    PressureInletOutletVelocityBC,
+    Scalar,
+    SlipBC,
+    SymmetryBC,
+    SymmetryPlaneBC,
+    Vector,
+    ZeroGradientBC,
+)
+from neofoam.foam import fvSchemes, fvSolution
 from neofoam.foam.initialization import read_vol_field
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.initialization import field, model
@@ -41,6 +59,81 @@ from ..alpha_advection.shared import MixtureProtocol
 from ..incompressibleVoFModel import Model
 
 pimple = Model("Pimple")
+
+# Per-spec fvSchemes / fvSolution slices — schema-only, surfaced through
+# ``configurations(solver)`` so the case wizard / agent fills the case scaffold.
+# Operations extend these via ``@PimpleFvSchemes.add(...)`` /
+# ``@PimpleFvSolution.add(...)`` below. Declaring them does not change the solve:
+# ``ModelSpec.build_steps`` runs only the ``@pimple.build`` function, never the
+# field/config declarations, so the fields are still read by ``@build`` at run
+# time exactly as before.
+PimpleFvSchemes = pimple.config(fvSchemes)
+PimpleFvSolution = pimple.config(fvSolution)
+
+# Optional PIMPLE control keys read straight from ``system/fvSolution`` by
+# ``setRefCell`` (see ``create_pressure_reference``): a closed domain (no
+# fixed-pressure BC) needs a pressure reference, an open one does not.
+PimpleFvSolution.add_controls("PIMPLE", pRefCell=int, pRefValue=float)
+
+# Section ``default`` schemes — interFoam's ``interfaceProperties`` resolves the
+# interface-normal gradient through a ``nHat`` gradScheme and makes several other
+# unnamed scheme lookups (curvature / surface-tension interpolation) that fall
+# back to the section default. Without these, a wizard-authored VoF case (explicit
+# entries only) aborts with *Entry 'nHat' not found in gradSchemes*. ``div`` is
+# left out on purpose: interFoam keeps ``divSchemes default none`` so every
+# convection term must be declared explicitly (they are, above).
+PimpleFvSchemes.add(
+    ddt="default",
+    grad="default",
+    laplacian="default",
+    snGrad="default",
+    interpolation="default",
+)
+
+# 0/<name> field declarations PIMPLE owns for the wizard: velocity ``U`` and the
+# buoyant (dynamic) pressure ``p_rgh`` — the fields the case author fills BCs for.
+# The absolute pressure ``p`` is derived (``p = p_rgh + rho*gh``) so it is not a
+# separate authoring surface; ``alpha.water`` is owned by the advection family.
+pimple.field(
+    "U",
+    dimensions=[0, 1, -1, 0, 0, 0, 0],
+    value_type=Vector,
+    allowed_bcs=[
+        NoSlipBC,
+        FixedValueBC,
+        ZeroGradientBC,
+        SlipBC,
+        InletOutletBC,
+        PressureInletOutletVelocityBC,
+        EmptyBC,
+        SymmetryBC,
+        SymmetryPlaneBC,
+        CyclicBC,
+        GenericBC,
+    ],
+    write=True,
+)
+pimple.field(
+    "p_rgh",
+    dimensions=[1, -1, -2, 0, 0, 0, 0],
+    value_type=Scalar,
+    # Buoyant pressure: fixedFluxPressure dominates on walls/tubes, fixedValue
+    # at the outlet, inletOutlet/calculated round out the survey; topology arms
+    # cover thin / periodic cases.
+    allowed_bcs=[
+        FixedFluxPressureBC,
+        FixedValueBC,
+        ZeroGradientBC,
+        InletOutletBC,
+        CalculatedBC,
+        EmptyBC,
+        SymmetryBC,
+        SymmetryPlaneBC,
+        CyclicBC,
+        GenericBC,
+    ],
+    write=True,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -175,6 +268,16 @@ def _alias_operation(
 
 
 @pimple.operation(operation_number="2.1")
+@PimpleFvSchemes.add(
+    ddt="ddt(U)",
+    # density-weighted convection + the viscous-stress divergence from
+    # ``divDevRhoReff(rho, U)``.
+    div=["div(rhoPhi,U)", "div(((rho*nuEff)*dev2(T(grad(U)))))"],
+    grad="grad(U)",
+    laplacian="laplacian(nuEff,U)",
+    snGrad=["snGrad(rho)", "snGrad(p_rgh)"],
+)
+@PimpleFvSolution.add("U")
 def momentum(
     U: volVectorField,
     rho: volScalarField,
@@ -211,6 +314,16 @@ def momentum(
 
 
 @pimple.operation(operation_number="2.2", depends_on=["momentum"])
+@PimpleFvSchemes.add(
+    grad="grad(p_rgh)",
+    laplacian="laplacian(rAUf,p_rgh)",
+    # ``flux(U)`` builds the initial face flux phi (``createPhi(U)`` in the
+    # advection shared build); OpenFOAM looks it up in interpolationSchemes, so it
+    # must be declared or the case aborts *Entry 'flux(U)' not found*.
+    interpolation=["flux(U)", "flux(HbyA)", "interpolate(rho*rAU)"],
+    snGrad=["snGrad(p_rgh)", "snGrad(rho)"],
+)
+@PimpleFvSolution.add("p_rgh")
 def continuity(
     U: volVectorField,
     rho: volScalarField,
