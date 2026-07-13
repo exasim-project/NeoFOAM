@@ -9,47 +9,50 @@ Each is a free function returning a :data:`~neofoam.casebuild.pipeline.Step`
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from typing import Optional
+from collections.abc import Iterable, Mapping
+from typing import Optional, Union
 
 from pydantic import BaseModel
 
-from neofoam.casebuild._foamdict import apply_overrides, remove_entries
 from neofoam.casebuild.pipeline import CaseDir, Step
-from neofoam.io import write_configs
+from neofoam.io import DictFile, write_configs
+
+
+def _addr(key: str) -> Union[str, tuple[str, ...]]:
+    """A dotted key becomes a :class:`DictFile` tuple address; a plain key stays."""
+    return tuple(key.split(".")) if "." in key else key
 
 
 def patch(
     rel_path: str,
     overrides: Optional[Mapping[str, object]] = None,
     /,
+    *,
+    remove: Iterable[str] = (),
     **kwargs: object,
 ) -> Step:
-    """Override entries in the OpenFOAM dict at *rel_path*.
+    """Set and/or remove entries in the dict at *rel_path*.
 
-    Merges the *overrides* mapping with keyword arguments (kwargs win on conflict).
-    Dotted keys address sub-dicts, e.g. ``patch("system/fvSolution", **{"PIMPLE.nCorrectors": 2})``.
+    Merges the *overrides* mapping with keyword arguments (kwargs win on conflict)
+    to form the keys to set; the keyword-only ``remove`` lists keys to delete
+    (its inverse -- forking one base in the "key absent" direction without
+    committing a second template, e.g.
+    ``patch("system/controlDict", remove=["adjustTimeStep"])``). Both accept
+    dotted keys addressing sub-dicts, e.g.
+    ``patch("system/fvSolution", **{"PIMPLE.nCorrectors": 2})``. Removing an
+    absent key is a no-op. The file's format (OpenFOAM / JSON / YAML) is chosen
+    by suffix -- see :class:`neofoam.io.DictFile`.
     """
     merged: dict[str, object] = {**(overrides or {}), **kwargs}
+    removals = list(remove)
 
     def step(case: CaseDir) -> None:
-        apply_overrides(case.path / rel_path, merged)
-
-    return step
-
-
-def unset(rel_path: str, *keys: str) -> Step:
-    """Ensure *keys* are absent from the OpenFOAM dict at *rel_path*.
-
-    The inverse of :func:`patch`: it lets one base be forked in the "key absent"
-    direction (e.g. ``unset("system/controlDict", "adjustTimeStep")``) without
-    committing a second template. See
-    :func:`neofoam.casebuild._foamdict.remove_entries` for the mechanism and its
-    single-line-entry limitation.
-    """
-
-    def step(case: CaseDir) -> None:
-        remove_entries(case.path / rel_path, keys)
+        d = DictFile(case.path / rel_path)
+        for key, value in merged.items():
+            d.set(_addr(key), value)
+        for key in removals:
+            d.remove(_addr(key))
+        d.write()
 
     return step
 

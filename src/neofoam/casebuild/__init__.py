@@ -28,7 +28,7 @@ from neofoam.casebuild.pipeline import (
     from_template,
     pipe,
 )
-from neofoam.casebuild.steps import configs, patch, unset
+from neofoam.casebuild.steps import configs, patch
 
 __all__ = [
     "CaseDir",
@@ -39,7 +39,6 @@ __all__ = [
     "pipe",
     "configs",
     "patch",
-    "unset",
     "block_mesh",
     "box",
     "snappy_hex_mesh",

@@ -4,36 +4,22 @@
 """Shared validation types to avoid circular imports."""
 
 from dataclasses import dataclass
-from typing import Any, Optional, Protocol, runtime_checkable
-
-from pydantic import BaseModel
-
-
-@runtime_checkable
-class ReadingStrategy(Protocol):
-    """Protocol for reading configuration files."""
-
-    def read(
-        self, model_cls: type[BaseModel], path: Any, encoding: str = "utf-8"
-    ) -> dict[str, Any]: ...
-
-
-@runtime_checkable
-class WritingStrategy(Protocol):
-    """Protocol for writing configuration files."""
-
-    def write(
-        self, instance: BaseModel, path: Any, encoding: str = "utf-8"
-    ) -> None: ...
+from typing import Any, Optional
 
 
 @dataclass
 class IOMetadata:
-    """Metadata set by the ``@IOStrategy`` decorator."""
+    """Metadata set by the ``@IOStrategy`` decorator.
+
+    ``reader``/``writer`` are format-marker strategy instances (``OpenFOAMStrategy``,
+    ``YAMLStrategy``, ``JSONStrategy``): reads/writes go through
+    :class:`neofoam.io.DictFile`, so these are used only for their declared
+    ``subdict_path`` and, in :func:`neofoam.io.write_configs`, their type.
+    """
 
     file: str
-    reader: ReadingStrategy
-    writer: WritingStrategy
+    reader: Any
+    writer: Any
 
     @property
     def subdict(self) -> Optional[str]:
