@@ -128,6 +128,182 @@ computeRAUandHByA(const PDE<Vec3>& expr)
 }
 
 
+nnfvcc::VolumeField<scalar>
+computeRAtU(const PDESolver<Vec3>& expr, const nnfvcc::VolumeField<scalar>& rAU)
+{
+    const auto& u = expr.getField();
+    const auto& mesh = u.mesh();
+    const auto& ls = expr.linearSystem();
+    NF_ASSERT(
+        ls.matrix().values().size() > 0,
+        "computeRAtU: linear system not assembled - call PDESolver::assemble() before reading rAtU"
+    );
+
+    auto rAtUBCs = nnfvcc::createExtrapolatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh);
+    auto rAtU = nnfvcc::VolumeField<scalar>(expr.exec(), "rAtU", mesh, rAtUBCs);
+
+    const auto nRows = ls.matrix().nRows();
+
+    // sumOff[cell] = sum of the off-diagonal coefficients of that cell's row. The
+    // OpenFOAM fvMatrix::H1() is -sumOff/V (lduMatrix::H1 subtracts every off-diagonal,
+    // fvMatrix::H1 divides by V and folds in coupled-patch coupling). We accumulate the
+    // off-diagonal sum here and form rAtU = 1/(1/rAU - H1) below.
+    auto sumOff = NeoN::Vector<scalar>(expr.exec(), nRows, scalar(0));
+
+    const auto [rowOffsV, colIdxV, matrixV] = views(
+        ls.matrix().sparsity()->rowOffs(),
+        ls.matrix().sparsity()->colIdxs(),
+        ls.matrix().values()
+    );
+    auto sumOffV = sumOff.view();
+
+    NeoN::parallelFor(
+        expr.exec(),
+        {0, nRows},
+        NEON_LAMBDA(const NeoN::localIdx rowi) {
+            scalar s = scalar(0);
+            for (auto i = rowOffsV[rowi]; i < rowOffsV[rowi + 1]; i++)
+            {
+                // The momentum system is the segregated vector-solve form: a scalar matrix
+                // (MatrixValueType == scalar) whose single coefficient couples every velocity
+                // component, exactly like OpenFOAM's fvVectorMatrix upper()/lower().
+                if (colIdxV[i] != rowi) s += matrixV[i];
+            }
+            sumOffV[rowi] = s;
+        },
+        "computeRAtUSumOffDiag"
+    );
+
+    // Processor ghost-cell coupling lives in offDiagonalMatrix (indexed per proc face),
+    // not in the CSR sparsity. Fold it into the owner row's off-diagonal sum exactly as
+    // computeRAUandHByA treats the same coupling for HbyA.
+    const auto nProcFaces = mesh.nProcBoundaryFaces();
+    if (nProcFaces > 0)
+    {
+        const auto nBoundaryFaces = mesh.nBoundaryFaces();
+        const auto nlValues = ls.offDiagonalMatrix().values().view();
+        const auto bfOwners = mesh.boundaryMesh().faceOwners().view();
+        const auto rowOrderV = mesh.boundaryMesh().getRowOrderWriteIndex().view();
+
+        NeoN::parallelFor(
+            expr.exec(),
+            {0, nProcFaces},
+            NEON_LAMBDA(const NeoN::localIdx procFacei) {
+                auto own = static_cast<std::size_t>(bfOwners[nBoundaryFaces + procFacei]);
+                auto coeff = nlValues[rowOrderV[procFacei]];
+                Kokkos::atomic_add(&sumOffV[own], coeff);
+            },
+            "computeRAtUProcBoundary"
+        );
+    }
+
+    const auto volV = mesh.cellVolumes().view();
+    const auto rAUV = rAU.internalVector().view();
+    auto rAtUV = rAtU.internalVector().view();
+
+    NeoN::parallelFor(
+        expr.exec(),
+        {0, nRows},
+        NEON_LAMBDA(const NeoN::localIdx rowi) {
+            // A = 1/rAU = diag/V, H1 = -sumOff/V, so 1/rAU - H1 = (diag + sumOff)/V.
+            const scalar denom = scalar(1) / rAUV[rowi] + sumOffV[rowi] / volV[rowi];
+            rAtUV[rowi] = scalar(1) / denom;
+        },
+        "computeRAtUFinalize"
+    );
+
+    rAtU.correctBoundaryConditions();
+    return rAtU;
+}
+
+
+void addConsistentFluxCorrection(
+    nnfvcc::SurfaceField<scalar>& phiHbyA,
+    const nnfvcc::VolumeField<scalar>& rAU,
+    const nnfvcc::VolumeField<scalar>& rAtU,
+    const nnfvcc::VolumeField<scalar>& p
+)
+{
+    const auto exec = phiHbyA.exec();
+    const auto& mesh = phiHbyA.mesh();
+
+    // drAU = rAtU - rAU
+    auto drAUBCs = nnfvcc::createExtrapolatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh);
+    auto drAU = nnfvcc::VolumeField<scalar>(exec, "drAU", mesh, drAUBCs);
+    {
+        const auto [iRAtU, iRAU] = views(rAtU.internalVector(), rAU.internalVector());
+        drAU.internalVector().apply(NEON_LAMBDA(const std::size_t celli) {
+            return iRAtU[celli] - iRAU[celli];
+        });
+    }
+    drAU.correctBoundaryConditions();
+
+    // interpolate(rAtU - rAU) to the faces and snGrad(p) (corrected: keep non-orthogonality)
+    auto linear =
+        nnfvcc::SurfaceInterpolation<scalar>(exec, mesh, NeoN::TokenList({std::string("linear")}));
+    auto drAUf = linear.interpolate(drAU);
+
+    auto sng =
+        nnfvcc::FaceNormalGradient<scalar>(exec, mesh, NeoN::TokenList({std::string("corrected")}));
+    auto snGradP = sng.faceNormalGrad(p);
+
+    const auto nInternalFaces = mesh.nInternalFaces();
+    {
+        const auto [df, sg, magSf] =
+            views(drAUf.internalVector(), snGradP.internalVector(), mesh.faceAreas());
+        auto phiV = phiHbyA.internalVector().view();
+        NeoN::parallelFor(
+            exec,
+            {0, nInternalFaces},
+            NEON_LAMBDA(const NeoN::localIdx facei) {
+                phiV[facei] += df[facei] * sg[facei] * magSf[facei];
+            },
+            "addConsistentFluxInternal"
+        );
+    }
+
+    // Regular boundary faces (processor faces excluded: their interpolated drAU is not
+    // populated here, and updateFaceVelocity reconstructs the proc-face flux separately).
+    {
+        const auto [dfB, sgB, magSfB] = views(
+            drAUf.boundaryData().value(),
+            snGradP.boundaryData().value(),
+            mesh.boundaryMesh().faceAreas()
+        );
+        auto phiB = phiHbyA.boundaryData().value().view();
+        NeoN::parallelFor(
+            exec,
+            {0, mesh.nBoundaryFaces()},
+            NEON_LAMBDA(const NeoN::localIdx bfacei) {
+                phiB[bfacei] += dfB[bfacei] * sgB[bfacei] * magSfB[bfacei];
+            },
+            "addConsistentFluxBoundary"
+        );
+    }
+}
+
+
+void subtractConsistentHbyA(
+    nnfvcc::VolumeField<Vec3>& hByA,
+    const nnfvcc::VolumeField<scalar>& rAU,
+    const nnfvcc::VolumeField<scalar>& rAtU,
+    const nnfvcc::VolumeField<scalar>& p
+)
+{
+    auto gradP = nnfvcc::GaussGreenGrad(p.exec(), p.mesh()).grad(p);
+    const auto [iHbyA, iRAU, iRAtU, iGradP] = views(
+        hByA.internalVector(),
+        rAU.internalVector(),
+        rAtU.internalVector(),
+        gradP.internalVector()
+    );
+    hByA.internalVector().apply(NEON_LAMBDA(const std::size_t celli) {
+        return iHbyA[celli] - (iRAU[celli] - iRAtU[celli]) * iGradP[celli];
+    });
+    hByA.correctBoundaryConditions();
+}
+
+
 void updateFaceVelocity(
     const nnfvcc::SurfaceField<scalar>& predictedPhi,
     const PDE<scalar>& expr,

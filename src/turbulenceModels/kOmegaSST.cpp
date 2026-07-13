@@ -815,6 +815,7 @@ void KOmegaSSTModel::rotateOldTimes()
     fvcc::rotateOldTimes(*omega_);
 }
 
+
 void KOmegaSSTModel::write(MeshAdapter& mesh) const
 {
     NeoFOAM::write(*k_, mesh);

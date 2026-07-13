@@ -45,6 +45,14 @@ VolumeField<Tensor> computeDevStress(
     const UnstructuredMesh& mesh = gradU.mesh();
     const auto exec = gradU.exec();
 
+    // PERF: this materializes a full Tensor VolumeField (9 scalars/cell + boundary, the largest
+    // single temporary in the momentum assemble) only to be consumed immediately by divDevReff().
+    // It is allocated and freed every assemble -- with the un-pooled Umpire/Kokkos allocator that is
+    // a synchronizing cudaMalloc + cudaFree on a multi-MB buffer, a major contributor to the
+    // momentum.assemble host-side "remainder". Two independent fixes (see the assembly-temporaries
+    // plan): (1) run with allocator=UmpirePool so the alloc/free is pool-served (no device sync);
+    // (2) fuse dev2(nuEff*gradU^T) inline into divDevReff's face loop so `tau` is never materialized
+    // (mirrors the SurfaceField<Tensor> inlining already done in divDevReff, see below).
     VolumeField<Tensor>
         tau(exec, "devStress", mesh, createCalculatedBCs<VolumeBoundary<Tensor>>(mesh));
 

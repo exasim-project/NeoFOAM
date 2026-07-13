@@ -1,0 +1,104 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2412                                 |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// PARAM STUDY case3: p = configFile (Ginkgo scale-corrected multigrid)
+//                    U,k,omega = PBiCGStab/diagonal
+// The configFile carries the full Ginkgo solver/preconditioner/stopping config;
+// fvSolution.cpp injects "solver Ginkgo" and reads no other keys for p. Path is
+// UNQUOTED so the OpenFOAM tokenizer keeps it as a single word, and is relative
+// to the case directory.
+
+solvers
+{
+    p
+    {
+        configFile       system/gko/p-cg.json;
+        // Opt the Ginkgo configFile solver into NeoN's L1-scaled residual stop. The
+        // configFile's criteria array references it by name ("neon::l1ScaledResidual");
+        // these keys supply the absolute tolerance / relTol the named criterion uses.
+        l1ScaledResidual true;
+        tolerance        1e-7;
+        relTol           0.01;
+    }
+
+    Phi
+    {
+        $p;
+    }
+
+    U
+    {
+        solver           PBiCGStab;
+        preconditioner   diagonal;
+        optimize         true;
+        cacheSolver      true;
+        tolerance        1e-8;
+        relTol           0.1;
+        l1ScaledResidual true;
+    }
+
+    k
+    {
+        solver           PBiCGStab;
+        preconditioner   diagonal;
+        optimize         true;
+        cacheSolver      true;
+        tolerance        1e-8;
+        relTol           0.1;
+        l1ScaledResidual true;
+    }
+
+    omega
+    {
+        solver           PBiCGStab;
+        preconditioner   diagonal;
+        optimize         true;
+        cacheSolver      true;
+        tolerance        1e-8;
+        relTol           0.1;
+        l1ScaledResidual true;
+    }
+}
+
+SIMPLE
+{
+    nNonOrthogonalCorrectors 0;
+    consistent yes;
+}
+
+potentialFlow
+{
+    nNonOrthogonalCorrectors 10;
+}
+
+relaxationFactors
+{
+    fields
+    {
+        p               0.3;
+    }
+    equations
+    {
+        U               0.7;
+        k               0.7;
+        omega           0.7;
+    }
+}
+
+cache
+{
+    grad(U);
+}
+
+// ************************************************************************* //

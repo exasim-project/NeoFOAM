@@ -6,6 +6,8 @@
 
 #include "NeoN/NeoN.hpp"
 
+#include <Kokkos_Profiling_ScopedRegion.hpp> // momentum.assemble sub-region (no-op without a tool)
+
 #include <algorithm>
 #include <cmath>
 #include <optional>
@@ -60,7 +62,7 @@ public:
         : psi_(&psi)
         , expr_(expr)
         , runTime_(&runTime)
-        , ls_(readOrCreate<LinearSystem>(
+        , ls_(&readOrCreate<LinearSystem>(
               runTime,
               "linearSystem" + psi.name,
               // FIXME find a proper place
@@ -85,6 +87,7 @@ public:
               }
           ))
     {
+        markLsBorrowed();
         // TODO run NeoN expr_ = NeoN::dsl::optimize(expr); if optimize is set in fvSolution
         // NOTE OpenFOAM tokenizes a switch like 'optimize true;' as a word, so it is stored
         // as a std::string in the NeoN dictionary; reading it as bool throws bad_any_cast.
@@ -105,16 +108,19 @@ public:
         : psi_(nullptr)
         , expr_(std::move(expr))
         , runTime_(nullptr)
-        , ls_(std::nullopt)
+        , ls_(nullptr)
     {}
 
+    // Copies share the cached LinearSystem pointer without re-borrowing (ownsLsBorrow_ stays
+    // false), so only the original releases the borrow. Copies must not outlive / be used
+    // concurrently with the original — same one-live-per-field invariant as ls_.
     PDE(const PDE& expr)
         : psi_(expr.psi_)
         , expr_(expr.expr_)
         , runTime_(expr.runTime_)
         , ls_(expr.ls_) {};
 
-    ~PDE() = default;
+    ~PDE() { releaseLsBorrowIfOwned(); }
 
     VolumeField& getField() { return *psi_; }
 
@@ -164,16 +170,20 @@ public:
         }
     }
 
-    /** @brief When true, selects the <field>Final relaxation factor and solver subdict. */
-    void setFinalIter(bool finalIter) { finalIter_ = finalIter; }
-
-    /** @brief Hard-pin a set of cells to prescribed values after assembly (omega wall function). */
+    /** @brief Hard-pin a set of cells to prescribed values during the solve — the equivalent
+     *  of OpenFOAM's fvMatrix::setValues, used by omega/epsilon wall functions. @p mask and
+     *  @p values are nCells-sized and owned by the caller (must outlive the solve); a cell is
+     *  pinned iff mask[cell] != 0, to value[cell]. Applied in solveImpl after relaxation, via
+     *  NeoN::dsl::FixedValueConstraints. Scalar fields only (no-op for vector fields). */
     void
     setConstraints(const NeoN::Vector<NeoN::scalar>& mask, const NeoN::Vector<ValueType>& values)
     {
         constraintMask_ = &mask;
         constraintValues_ = &values;
     }
+
+    /** @brief When true, selects the <field>Final relaxation factor and solver subdict. */
+    void setFinalIter(bool finalIter) { finalIter_ = finalIter; }
 
     /** @brief assemble the linear system owned by the solver based on the current expression */
     LinearSystem& assemble()
@@ -238,8 +248,10 @@ public:
         // Assemble and relax the owned ls_ so computeRAUandHByA reads the relaxed diagonal.
         // Apply -grad p to ls_->rhs() in place (avoids copying the matrix), snapshot the rhs
         // beforehand and restore it after solve so ls_ retains the H-system for computeRAUandHByA.
+        Kokkos::Profiling::pushRegion("momentum.assemble");
         assemble();
         relaxOwnedLs();
+        Kokkos::Profiling::popRegion();
 
 
         auto rhsExpr = dsl::Expression<ValueType>(-1.0 * rhs);
@@ -249,16 +261,27 @@ public:
 
         auto solverDict = runTime_->fvSolutionDict.subDict("solvers");
         const std::string finalKey = psi_->name + "Final";
-        auto fvSolution = (finalIter_ && solverDict.isDict(finalKey))
-                            ? solverDict.subDict(finalKey)
-                            : solverDict.subDict(psi_->name);
+        const bool useFinal = finalIter_ && solverDict.isDict(finalKey);
+        auto fvSolution = useFinal ? solverDict.subDict(finalKey) : solverDict.subDict(psi_->name);
         // Drop NeoFOAM-only keys before handing the dict to NeoN/Ginkgo, whose
         // config parser rejects unknown keys (e.g. assemblyStrategy, optimize).
         stripNeoFOAMKeys(fvSolution);
-        auto solver = NeoN::la::Solver(psi_->exec(), fvSolution);
-        // Do some sanity checks before trying to solve
-        // NF_ASSERT(ls.exec() == solution.exec(), "Executors are not the same");
-        auto stats = solver.solve(*ls_, psi_->internalVector());
+        // Persist the NeoN solver across iterations (Strategy 1a), exactly like solveImpl does for
+        // the scalar (pressure) path. The momentum predictor previously created a FRESH
+        // NeoN::la::Solver every step here, which discarded the GinkgoSolver's distributed-topology
+        // caches (index_map / non-local Coo) and forced them to be rebuilt 3x per step (once per
+        // Ux, Uy, Uz) -- the dominant cost in the profiled momentumPredictor region (~34% of wall,
+        // while the actual velocity solve is only ~3%). Keeping one solver alive per field lets
+        // those caches (and any solver/workspace reuse) survive across timesteps. Stored as a
+        // shared_ptr so Dictionary's std::any copy never clones the Solver (GinkgoSolver::clone
+        // aborts).
+        const std::string solverKey = "solver:" + (useFinal ? finalKey : psi_->name);
+        auto& solver = readOrCreate<std::shared_ptr<NeoN::la::Solver>>(
+            *runTime_,
+            solverKey,
+            [&] { return std::make_shared<NeoN::la::Solver>(psi_->exec(), fvSolution); }
+        );
+        auto stats = solver->solve(*ls_, psi_->internalVector());
 
         ls_->rhs() = savedRhs;
 
@@ -399,21 +422,48 @@ public:
                     nCells
                 );
             }
+            // Hard-pin wall-function cells (omega/epsilon setValues equivalent). Must run after
+            // relaxation, like SetReference: it overwrites each pinned row's diagonal-scaled rhs.
+            if (constraintMask_ != nullptr)
+            {
+                NeoN::dsl::FixedValueConstraints<ValueType> constraints(
+                    constraintMask_->view(),
+                    constraintValues_->view(),
+                    static_cast<NeoN::localIdx>(constraintMask_->size())
+                );
+                constraints(ls);
+            }
         }
 
         auto solverDict = runTime_->fvSolutionDict.subDict("solvers");
         const std::string finalKey = psi_->name + "Final";
-        auto fieldSolverDict = (finalIter_ && solverDict.isDict(finalKey))
-                                 ? solverDict.subDict(finalKey)
-                                 : solverDict.subDict(psi_->name);
+        const bool useFinal = finalIter_ && solverDict.isDict(finalKey);
+        auto fieldSolverDict =
+            useFinal ? solverDict.subDict(finalKey) : solverDict.subDict(psi_->name);
         // Drop NeoFOAM-only keys before handing the dict to NeoN/Ginkgo, whose
         // config parser rejects unknown keys (e.g. assemblyStrategy, optimize).
         stripNeoFOAMKeys(fieldSolverDict);
         NeoN::fence(psi_->exec());
         NF_ASSERT(ls.exec() == psi_->exec(), "Executors are not the same");
 
-        auto solver = NeoN::la::Solver(psi_->exec(), fieldSolverDict);
-        auto stats = solver.solve(ls, psi_->internalVector());
+        // Persist the NeoN solver across iterations (Strategy 1a): keep the underlying solver
+        // instance alive in the RunTime controlDict (like ls_ above), keyed by field (and its Final
+        // variant). This is what lets a Ginkgo solver with cacheSolver=true reuse its cached
+        // (multigrid) preconditioner via update_matrix_value across successive solves instead of
+        // rebuilding the whole hierarchy every time -- a fresh per-solve solver would defeat the
+        // cache. The initializer runs once, on the first solve for this key.
+        //
+        // Stored as a shared_ptr, NOT a bare Solver: Dictionary::insert copies the std::any, and a
+        // Solver copy invokes NeoN::la::Solver's copy ctor (solverInstance_->clone(), which the
+        // Ginkgo backend does not support). Copying the shared_ptr only bumps a refcount, so the
+        // Solver itself -- and its cache -- is never cloned.
+        const std::string solverKey = "solver:" + (useFinal ? finalKey : psi_->name);
+        auto& solver = readOrCreate<std::shared_ptr<NeoN::la::Solver>>(
+            *runTime_,
+            solverKey,
+            [&] { return std::make_shared<NeoN::la::Solver>(psi_->exec(), fieldSolverDict); }
+        );
+        auto stats = solver->solve(ls, psi_->internalVector());
 
         reportSolverStats(stats, fieldSolverDict);
 
@@ -425,6 +475,9 @@ public:
     // Only calls the free function applyMatrixRelaxation — no NEON_LAMBDA in this body.
     void relaxOwnedLs()
     {
+        // Matrix under-relaxation (a fused post-assembly kernel), inside the momentum.assemble
+        // region. Profiled separately so the assemble "remainder" can be split from relaxation.
+        Kokkos::Profiling::ScopedRegion region_("assemble.relax");
         const auto alpha =
             lookupEqnRelaxation(runTime_->fvSolutionDict, psi_->name, finalIter_).value_or(1.0);
         NeoN::dsl::applyMatrixRelaxation(*ls_, *psi_, alpha);
@@ -465,7 +518,7 @@ private:
         }
         expr_.read(NeoFOAM::expandSchemeDefaults(rt.fvSchemesDict, expr_, psi.name));
 
-        ls_.emplace(readOrCreate<LinearSystem>(
+        ls_ = &readOrCreate<LinearSystem>(
             rt,
             "linearSystem" + psi.name,
             [&psi, &rt]()
@@ -487,7 +540,49 @@ private:
                     );
                 }
             }
-        ));
+        );
+        markLsBorrowed();
+    }
+
+    // Mark this PDESolver as the borrower of its field's cached LinearSystem. In debug builds a
+    // per-field flag in controlDict asserts that no other live PDESolver already holds it (the
+    // system is assembled in place; two concurrent borrowers would corrupt it). Release builds
+    // only set ownsLsBorrow_ (zero overhead beyond the bool).
+    void markLsBorrowed()
+    {
+        ownsLsBorrow_ = true;
+#ifdef NF_DEBUG
+        const std::string key = "linearSystem" + psi_->name + "::borrowed";
+        auto initFalse = []() { return false; };
+        bool& borrowed = readOrCreate<bool>(*runTime_, key, initFalse);
+        NF_ASSERT(
+            !borrowed,
+            "PDESolver: this field's cached LinearSystem is already borrowed by another live "
+            "PDESolver. At most one PDESolver per field may be live at a time (it is assembled in "
+            "place)."
+        );
+        borrowed = true;
+#endif
+    }
+
+    // Release the borrow on destruction so the next PDESolver for the same field may take it.
+    void releaseLsBorrowIfOwned()
+    {
+        if (!ownsLsBorrow_)
+        {
+            return;
+        }
+        ownsLsBorrow_ = false;
+#ifdef NF_DEBUG
+        if (runTime_ != nullptr && psi_ != nullptr)
+        {
+            const std::string key = "linearSystem" + psi_->name + "::borrowed";
+            if (runTime_->controlDict.contains(key))
+            {
+                runTime_->controlDict.template get<bool>(key) = false;
+            }
+        }
+#endif
     }
 
     // Per-component name (Ux/Uy/Uz) when a vector field is solved as separate
@@ -517,12 +612,15 @@ private:
         {
             const auto& stat = stats.entries[i];
             NeoN::Logging::info(
-                "{}:  Solving for {}, Initial residual = {}, Final residual = {}, No Iterations {}",
+                "{}:  Solving for {}, Initial residual = {}, Final residual = {}, No Iterations "
+                "{}, "
+                "Solve time = {} ms",
                 label,
                 componentName(psi_->name, i, n),
                 stat.initResNorm,
                 stat.finalResNorm,
-                stat.numIter
+                stat.numIter,
+                stat.solveTime
             );
         }
     }
@@ -530,18 +628,38 @@ private:
     VolumeField* psi_;
     dsl::Expression<ValueType> expr_;
     RunTime* runTime_;
-    std::optional<LinearSystem> ls_;
+    // Non-owning pointer into the single LinearSystem cached in RunTime::controlDict (keyed per
+    // field by readOrCreate). PDESolver assembles/relaxes/solves it IN PLACE instead of copying
+    // it, so there is exactly one LinearSystem per field — not an idle dict template plus a
+    // per-solver deep copy of the value/rhs/boundary buffers (~1.4 GB for a Vec3 momentum system
+    // at 18M cells). The cached system outlives every PDESolver (controlDict lives in RunTime) and
+    // its address is stable (controlDict is a node-based std::unordered_map and the entry is never
+    // erased). INVARIANT: at most one PDESolver per field may be live at a time — it is assembled
+    // in place, so two concurrent borrowers would corrupt each other's matrix. This holds for the
+    // segregated PISO/PIMPLE/SA solvers (U, p, nuTilda are each solved one at a time) and is
+    // checked by a debug borrow guard (markLsBorrowed/releaseLsBorrowIfOwned).
+    LinearSystem* ls_ = nullptr;
+    // True when this instance acquired the borrow (so its destructor releases it). Copies share
+    // the pointer without re-borrowing.
+    bool ownsLsBorrow_ = false;
     bool needReference_ = false;
     NeoN::localIdx pRefCell_ = 0;
     NeoN::scalar pRefValue_ = 0.0;
-    bool finalIter_ = false;
+    // Non-owning views to caller-held wall-function cell constraints (mask + target values,
+    // both nCells-sized). Null unless setConstraints() was called. See solveImpl.
     const NeoN::Vector<NeoN::scalar>* constraintMask_ = nullptr;
     const NeoN::Vector<ValueType>* constraintValues_ = nullptr;
+    bool finalIter_ = false;
 };
 
-
-template<typename ValueType>
-using PDESolver = PDE<ValueType>;
+// Backward-compatibility alias: PDE was previously named PDESolver. Existing consumers
+// (turbulence models, pressureVelocityCoupling, neoSimpleFoam) still spell it PDESolver; keep this
+// alias so they compile against the renamed class. Prefer PDE in new code.
+template<
+    typename ValueType,
+    typename MatrixValueType = NeoN::scalar,
+    typename IndexType = NeoN::localIdx>
+using PDESolver = PDE<ValueType, MatrixValueType, IndexType>;
 
 template<typename ValueType, typename IndexType = NeoN::localIdx>
 NeoN::finiteVolume::cellCentred::VolumeField<ValueType> applyOperator(

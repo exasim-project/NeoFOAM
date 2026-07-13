@@ -201,29 +201,19 @@ public:
     static std::string doc() { return "k-epsilon turbulence model"; }
     static std::string schema() { return "{}"; }
 
-    /** @brief Read k, epsilon, nut from RunTime and construct the KEpsilon physics object. */
     KEpsilonModel(RunTime& rt, const nnfvcc::VolumeField<scalar>& nu);
 
-    /** @brief Initialise ν_t and diffusivities from the on-disk k/ε. */
     void validate(const nnfvcc::VolumeField<Vec3>& U) override;
 
-    /** @brief Solve the ε and k PDEs and update ν_t. */
     void correct(const nnfvcc::VolumeField<Vec3>& U, nnfvcc::SurfaceField<scalar>& phi, RunTime& rt)
         override;
 
-    /** @brief Surface effective viscosity (ν + ν_t). */
     nnfvcc::SurfaceField<scalar>& nuEff() override;
-    /** @brief Cell-centred turbulent viscosity. */
     const nnfvcc::VolumeField<scalar>& nut() const override;
-    /** @brief Velocity gradient tensor (updated each correct()). */
     const nnfvcc::VolumeField<NeoN::Tensor>& gradU() const override;
-    /** @brief Recompute gradU in place at the given velocity. */
     void updateGradU(const nnfvcc::VolumeField<Vec3>& U) override;
 
-    /** @brief Write k, epsilon and nut fields to disk. */
     void write(MeshAdapter& mesh) const override;
-
-    /** @brief Rotate k, epsilon and nut old-time levels for BDF2. */
     void rotateOldTimes() override;
 
 private:
@@ -235,5 +225,6 @@ private:
     nnfvcc::VolumeField<scalar>* nut_ = nullptr;
     KEpsilon model_;
 };
+
 
 } // namespace NeoFOAM

@@ -271,13 +271,9 @@ public:
     const nnfvcc::VolumeField<scalar>& nut() const override;
     /** @brief Velocity gradient tensor (updated each correct()). */
     const nnfvcc::VolumeField<NeoN::Tensor>& gradU() const override;
-    /** @brief Recompute gradU in place at the given velocity. */
     void updateGradU(const nnfvcc::VolumeField<Vec3>& U) override;
 
-    /** @brief Write k, omega and nut fields to disk. */
     void write(MeshAdapter& mesh) const override;
-
-    /** @brief Rotate k, omega and nut old-time levels for BDF2. */
     void rotateOldTimes() override;
 
 private:

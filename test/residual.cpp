@@ -66,10 +66,12 @@ TEST_CASE("L1 scaled residual matches OpenFOAM")
         // of the assembled system at the starting field.
         NeoN::Dictionary solverConfig {
             {{"solver", std::string {"Ginkgo"}},
-             {"type", "solver::Cg"},
+             {"type", std::string {"solver::Cg"}},
              {"l1ScaledResidual", true},
              {"preconditioner",
-              NeoN::Dictionary {{{"type", "preconditioner::Jacobi"}, {"max_block_size", 1}}}},
+              NeoN::Dictionary {
+                  {{"type", std::string {"preconditioner::Jacobi"}}, {"max_block_size", 1}}
+              }},
              {"criteria", NeoN::Dictionary {{{"iteration", 0}, {"absolute_residual_norm", 1e-9}}}}}
         };
         auto solver = NeoN::la::Solver(exec, solverConfig);
@@ -85,10 +87,12 @@ TEST_CASE("L1 scaled residual matches OpenFOAM")
         // identically, otherwise the feature is unreachable from case dictionaries.
         NeoN::Dictionary solverConfigStr {
             {{"solver", std::string {"Ginkgo"}},
-             {"type", "solver::Cg"},
+             {"type", std::string {"solver::Cg"}},
              {"l1ScaledResidual", std::string {"true"}},
              {"preconditioner",
-              NeoN::Dictionary {{{"type", "preconditioner::Jacobi"}, {"max_block_size", 1}}}},
+              NeoN::Dictionary {
+                  {{"type", std::string {"preconditioner::Jacobi"}}, {"max_block_size", 1}}
+              }},
              {"criteria", NeoN::Dictionary {{{"iteration", 0}, {"absolute_residual_norm", 1e-9}}}}}
         };
         auto solverStr = NeoN::la::Solver(exec, solverConfigStr);
@@ -117,10 +121,12 @@ TEST_CASE("L1 scaled residual matches OpenFOAM")
         const NeoN::scalar absTol = 1e-8;
         NeoN::Dictionary solverConfig {
             {{"solver", std::string {"Ginkgo"}},
-             {"type", "solver::Cg"},
+             {"type", std::string {"solver::Cg"}},
              {"l1ScaledResidual", true},
              {"preconditioner",
-              NeoN::Dictionary {{{"type", "preconditioner::Jacobi"}, {"max_block_size", 1}}}},
+              NeoN::Dictionary {
+                  {{"type", std::string {"preconditioner::Jacobi"}}, {"max_block_size", 1}}
+              }},
              {"criteria",
               NeoN::Dictionary {{{"iteration", 1000}, {"absolute_residual_norm", absTol}}}}}
         };

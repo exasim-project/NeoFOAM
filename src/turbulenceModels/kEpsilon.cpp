@@ -632,6 +632,7 @@ KEpsilonModel::KEpsilonModel(RunTime& rt, const nnfvcc::VolumeField<scalar>& nu)
         &NeoFOAM::constructAndRegister(vc, rt, readOFScalarFieldKEps(rt.mesh, "epsilon"), true);
     nut_ = &NeoFOAM::constructAndRegister(vc, rt, readOFScalarFieldKEps(rt.mesh, "nut"), false);
 
+
     auto& solverDict = rt.fvSolutionDict.subDict("solvers");
     for (const auto* f : {"k", "epsilon", "kFinal", "epsilonFinal"})
     {
@@ -676,5 +677,6 @@ void KEpsilonModel::write(MeshAdapter& mesh) const
     NeoFOAM::write(*epsilon_, mesh);
     NeoFOAM::write(*nut_, mesh);
 }
+
 
 } // namespace NeoFOAM

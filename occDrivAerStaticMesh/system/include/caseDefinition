@@ -1,0 +1,31 @@
+// Geometric parameters
+lref       2.78618;                        // Reference length/wheelbase (in m)
+Aref       2.17;                           // Reference area (in m^2) - frontal area
+
+// Patch assignment:
+inletPatch                  inlet;
+outletPatch                 outlet;
+slipGroundPatch             ground;
+fixedWallPatches            "(Body.*|Closed.*|CTRL.*|Engine.*|Exhaust.*|Mirror.*|Notchback.*|OCDA.*|Powertrain|Wheel.*|Rims.*|Brake.*|Tires.*|Plinth.*|ground_noSlip.*)";
+symmPatches                 freestream;
+forcesWallPatches           "(Body.*|Closed.*|CTRL.*|Engine.*|Exhaust.*|Mirror.*|Notchback.*|OCDA.*|Powertrain|Wheel.*|Rimsfront|BrakeDiscfront|Tiresfront|Rimsrear|BrakeDiscrear|Tiresrear|Rimsfront_rota|Rimsrear_rota|BrakeDiscfront_rota|BrakeDiscrear_rota)";
+
+// Inlet and boundary conditions:
+Uinf                (38.889 0 0);    // Reference velocity vector at inlet (in m/s)
+UinfMag             38.889;          // Reference velocity magnitude at inlet (in m/s)
+nu                  1.507e-05;       // Reference kinematic viscosity (in m^2/s) - air at 20°C
+pref                0.0;             // Reference pressure at outlet (in m^2/s^2)
+viscRatio           5.0;             // Turbulent viscosity ratio in domain
+Tu                  0.0026;          // Turbulence intensity in domain
+
+// Turbulence model:
+RASturbModel        kOmegaSST;       // Model for RANS simulations if used
+
+// Simulation parameters:
+nCores              512;              // Number of cores used for simulation
+decompositionMethod hierarchical;    // Decomposition method
+nHierarchical       (16 8 4);         // Coefficient n for the hierarchical decomposition method
+
+// Probe settings:
+interpScheme cellPatchConstrained;
+probeField   cp;

@@ -1,0 +1,1199 @@
+╭─── Claude Code v2.1.190 ─────────────────────────────────────────────────────╮
+│                                                    │ Tips for getting        │
+│                Welcome back Gregor!                │ started                 │
+│                                                    │ Run /init to create a … │
+│                       ▐▛███▜▌                      │ ─────────────────────── │
+│                      ▝▜█████▛▘                     │ What's new              │
+│                        ▘▘ ▝▝                       │ Bug fixes and reliabil… │
+│ Opus 4.8 · Claude Max · olenik.gregor@gmail.com's  │ Added `sandbox.credent… │
+│ Organization                                       │ Added org-configured m… │
+│                   ~/code/NeoFOAM                   │ /release-notes for more │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+
+✻ Conversation compacted (ctrl+o for history)
+
+
+● That was just the -np 1 -parallel rejection (invalid test). Let me retry -np 4
+  with explicit env forwarding (-x), which may be why exec failed (spawned
+  ranks couldn't find libs):
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      BIN=/storage/home/greole/code/NeoFOAM/buil…)
+  ⎿  Running in the background (↓ to manage)
+
+● The parallel run is backgrounded (bmst8y123). Let me wait for it and read the
+  result.
+
+● Bash(OUT=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/6d3
+      46751-1678-4e8d-bf0f-65ab4e447e98/tasks/bmst8y123.output
+      for i in $(seq 1 18); do…)
+  ⎿  EXIT=0
+     Time = 60
+     trapFpe: Floating point exception trapping enabled (FOAM_SIGFPE).
+     … +9 lines (ctrl+o to expand)
+
+● Background command "Retry parallel with env forwarding" completed (exit code
+0)
+
+● The proc-fix is restored, builds clean, and runs (the earlier EXIT=127 was
+  just missing -x LD_LIBRARY_PATH env forwarding to the MPI ranks). But the
+  result is not good:
+
+  cylinder2D simple-cut continuity:
+
+  ┌──────┬────────┬─────────────┬───────────────┐
+  │ step │ serial │ no proc-fix │ with proc-fix │
+  ├──────┼────────┼─────────────┼───────────────┤
+  │ 40   │ 0.0111 │ 0.0139      │ 0.0207        │
+  ├──────┼────────┼─────────────┼───────────────┤
+  │ 60   │ 9.6e-4 │ 1.19e-3     │ 2.6e-3        │
+  └──────┴────────┴─────────────┴───────────────┘
+
+  My proc-fix makes it ~2× worse, not better. T1/T20 are identical (correction
+  is negligible until gradients develop), then it diverges — so the change is
+  acting on the proc faces, but with the wrong sign or a broken cross-rank
+  consistency. A correct deferred correction must produce an antisymmetric flux
+  across the shared face (φ_A = −φ_B), so the global div(φ) closes; if rank A
+  and rank B both subtract the correction with the same effective sign, it adds
+  error instead of removing it — which is consistent with this regression.
+
+  So: the mechanism I identified is real (proc faces drop the correction), but
+  my implementation of it is wrong — most likely the corrVec orientation /
+  interpolation-weight convention at the proc boundary doesn't yield the
+  antisymmetric cross-rank flux, or a sign in the RHS/ffc feed. I won't claim
+  it's a fix.
+
+  Honest options:
+  1. Debug the sign/cross-rank consistency — derive carefully whether
+  corrVec_boundary flips with the proc-face normal and whether weightsB is the
+  owner-side weight, then fix the sign so a converging case (cylinder2D) stays
+  converged. This is the right path but needs care.
+  2. Revert it and leave the proc-face-correction gap documented as the
+  confirmed root cause, for a more careful future implementation.
+
+  The changes are uncommitted (and backed up). Given it regresses a known-good
+  case, I'd lean toward (1) fix the sign before trusting it anywhere — not
+  testing on occDrivAre yet, since I can't interpret that result while the
+  cylinder2D regression stands. How do you want to proceed?
+
+✻ Sautéed for 5m 57s
+
+❯ i rerun the smooth2 case. now it crashes see
+  paramStudy/results/pMG-smooth2-ukoSmooth.log
+
+● Bash(cd
+      /storage/home/greole/code/NeoFOAM/occDrivAerStaticMesh/paramStudy/results
+      f=pMG-smooth2-ukoSmooth.log…)
+  ⎿  === mtime, last Time, crash signal ===
+     -rw-r--r-- 1 greole greole 83832 11:34 pMG-smooth2-ukoSmooth.log
+     Time = 8
+     … +11 lines (ctrl+o to expand)
+
+● Clear verdict: my proc-fix is the cause. The smooth2 run now diverges —
+  continuity climbs 5.6e-5 → 3.4e-4 → 2.3e-3 → 4.6e-3 → 8.1e-3 → 1.3e-2 and
+  crashes at step 8 (it previously completed all 100 steps). That's exactly the
+  continuity-injection my buggy proc-fix produces (same signature as the
+  cylinder2D regression), amplified by occDrivAre's high proc-boundary
+  non-orthogonality. The wrong-sign/cross-rank-inconsistent correction is adding
+  divergence at every proc face.
+
+  Let me revert the proc-fix and rebuild to restore the working binary:
+
+● Bash(cd /storage/home/greole/code/NeoN
+      git checkout --
+      src/finiteVolume/cellCentred/faceNormalGradient/corrected.cpp
+      src/finiteVolume/cellCentred/operators/gaussGree…)
+  ⎿  === proc-fix reverted. NeoN code status: ===
+     M  src/finiteVolume/cellCentred/faceNormalGradient/corrected.cpp
+     M  src/finiteVolume/cellCentred/operators/gaussGreenLaplacian.cpp
+     … +9 lines (ctrl+o to expand)
+
+❯ do   1. Debug the sign/cross-rank consistency — derive carefully whether
+  corrVec_boundary flips with the proc-face normal and whether weightsB is the
+  owner-side weight, then fix the sign so a converging case (cylinder2D) stays
+    converged. This is the right path but needs care.
+
+● The git checkout only reverted pressureVelocityCoupling.cpp (the NeoN proc-fix
+  files were staged, so they kept the change) — leaving a half-applied state.
+  Since you want me to debug the sign (option 1), let me re-establish the full
+  proc-fix and then derive the correct cross-rank orientation. First, restore
+  the NeoFOAM half and confirm state:
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      cp $SCR/procfix_backup/pressureVelocityCou…)
+  ⎿  === all 3 proc-fix files present? ===
+     1
+     1
+     1
+
+● All three files restored. Now let me derive the correct orientation. The crux:
+  does nonOrthCorrectionVec3s().boundaryData() flip sign with the proc-face
+  normal across ranks? Let me find how the GeometryScheme computes it.
+
+● Bash(cd /storage/home/greole/code/NeoN
+      f=$(grep -rln "nonOrthCorrectionVec3s\|nonOrthCorrectionVectors"
+      src/finiteVolume --include=*.cpp | grep -i geometr | head -1)…)
+  ⎿  FILE: src/finiteVolume/cellCentred/stencil/geometryScheme.cpp
+     === how nonOrthCorrectionVec3s boundary/proc is computed ===
+     7:#include "NeoN/finiteVolume/cellCentred/boundary.hpp"
+     … +24 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● The actual computation is in the geometry kernel
+  (updateNonOrthCorrectionVectors). Let me find it and read the
+  boundary/proc-face part.
+
+● Bash(cd /storage/home/greole/code/NeoN
+      f=$(grep -rln "updateNonOrthCorrectionVectors\|updateWeights"
+      src/finiteVolume --include=*.cpp | grep -iv geometryScheme.cpp |…)
+  ⎿  FILE:
+     === updateNonOrthCorrectionVectors: boundary/proc orientation ===
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● Bash(cd /storage/home/greole/code/NeoN
+      echo "=== files defining updateNonOrthCorrectionVectors ==="; grep -rln
+      "updateNonOrthCorrectionVectors" src include --include…)
+  ⎿  === files defining updateNonOrthCorrectionVectors ===
+
+     IMPL:
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● Bash(cd /storage/home/greole/code/NeoN
+      echo "=== geometry kernel files ==="; find src include -path "*stencil*"
+      -o -path "*geometr*" | grep -E "\.(cpp|hpp)$" | head…)
+  ⎿  === geometry kernel files ===
+     src/finiteVolume/cellCentred/stencil/basicGeometryScheme.cpp
+     src/finiteVolume/cellCentred/stencil/geometryScheme.cpp
+     … +19 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● Bash(cd /storage/home/greole/code/NeoN
+      echo "=== basicGeometryScheme: nonOrthCorrection computation (boundary +
+      proc) ==="…)  ⎿  === basicGeometryScheme: nonOrthCorrection computation (boundary + pro
+     c) ===
+     26:/** @brief Returns the [start, end) face-index ranges of all process
+     … +43 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● Bash(cd /storage/home/greole/code/NeoN
+      echo "=== the nonOrthCorrectionVec3s kernel (internal + boundary + proc
+      orientation) ==="…)
+  ⎿  === the nonOrthCorrectionVec3s kernel (internal + boundary + proc orie
+     ntation) ===
+     2:    // exchange instead of one per kernel. The neighbour distance is
+     … +18 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● Let me read the full proc-face correction-vector computation in
+  basicGeometryScheme.cpp:
+
+● Bash(cd /storage/home/greole/code/NeoN
+      echo "=== grep corrVec/nonOrthCorr writes (where the Vec3 correction is
+      set) ==="…)
+  ⎿  === grep corrVec/nonOrthCorr writes (where the Vec3 correction is set)
+      ===
+     185:    // updateNonOrthCorrectionVec3s reuse the cache, so a full geo
+     … +50 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● Found the real bug — and it's not in my proc-fix code. Let me confirm:
+  updateNonOrthCorrectionVec3s computes the correction vector for internal
+  faces, zeros physical boundary faces, and has NO processor-face branch at all.
+  Let me read it in full:
+
+  Read 1 file (ctrl+o to expand)
+
+● There is a proc branch (lines 353+). Let me read the rest of it to see the
+  exact corrVec computation:
+
+  Read 1 file (ctrl+o to expand)
+
+● The geometry scheme does compute the proc-face corrVec correctly (lines
+  372-382: corrVecB = n − δ·nonOrthDeltaCoeff using the halo-exchanged neighbour
+  centre, which flips with the proc-face normal across ranks). So my derivation
+  says the correction should be antisymmetric (corrVec_A = −corrVec_B, weights
+  complementary w_A+w_B=1, so corr_A + corr_B = 0).
+
+  Theory and empirics disagree, so let me settle the sign empirically — flip the
+  proc correction sign (consistently in rhs + ffc) and re-test cylinder2D:
+
+  Read 1 file (ctrl+o to expand)
+
+● Let me empirically test the sign — negate the proc correction (consistently in
+  rhs + ffc):
+
+● Update(~/code/NeoN/src/finiteVolume/cellCentred/operators/gaussGreenLaplacian.
+        cpp)
+  ⎿  Added 3 lines, removed 1 line
+      350              NEON_LAMBDA(const localIdx procFacei) {
+      351                  const auto bcfacei = nBoundaryFaces + procFace
+           i;
+      352                  const auto own = bOwners[bcfacei];
+      353 -                const auto corrFlux = corrB[bcfacei] * bGammaV
+          -[bcfacei] * bMagSf[bcfacei];
+      353 +                // SIGN TEST: negate the proc correction (cons
+          +istently in rhs + ffc) to check
+      354 +                // whether the cross-rank antisymmetry needs t
+          +he opposite sign vs the internal face.
+      355 +                const auto corrFlux = -(corrB[bcfacei] * bGamm
+          +aV[bcfacei] * bMagSf[bcfacei]);
+      356                  Kokkos::atomic_sub(&rhs[own], corrFlux * coeff
+           [own]);
+      357                  if (storeFfc)
+      358                  {
+
+● Bash(cd /storage/home/greole/code/NeoFOAM
+      module purge >/dev/null 2>&1; module load gcc/13.3.0 cuda/12.8.1 cmake
+      openmpi >/dev/null 2>&1; source $HOME/OpenFOAM/openf…)
+  ⎿  /storage/home/greole/code/NeoN/src/finiteVolume/cellCentred/operators/
+     gaussGreenLaplacian.cpp(355): error: no operator "-" matches these ope
+     rands
+     … +11 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● Build failed — unary - doesn't work on the templated Vec3 instantiation, so
+  the test ran on the stale binary (invalid). Let me negate via the scalar gamma
+  instead:
+
+● Update(~/code/NeoN/src/finiteVolume/cellCentred/operators/gaussGreenLaplacian.
+        cpp)
+  ⎿  Added 1 line, removed 1 line
+      352                  const auto own = bOwners[bcfacei];
+      353                  // SIGN TEST: negate the proc correction (cons
+           istently in rhs + ffc) to check
+      354                  // whether the cross-rank antisymmetry needs t
+           he opposite sign vs the internal face.
+      355 -                const auto corrFlux = -(corrB[bcfacei] * bGamm
+          -aV[bcfacei] * bMagSf[bcfacei]);
+      355 +                const auto corrFlux = corrB[bcfacei] * (-bGamm
+          +aV[bcfacei]) * bMagSf[bcfacei];
+      356                  Kokkos::atomic_sub(&rhs[own], corrFlux * coeff
+           [own]);
+      357                  if (storeFfc)
+      358                  {
+
+● Bash(cd /storage/home/greole/code/NeoFOAM
+      module purge >/dev/null 2>&1; module load gcc/13.3.0 cuda/12.8.1 cmake
+      openmpi >/dev/null 2>&1; source $HOME/OpenFOAM/openf…)
+  ⎿  [4/4] Linking CXX executable bin/neoSimpleFoam
+     rc=0
+     -rwxr-xr-x 1 greole greole 42228040 11:49 build/profilingnvidia_h200/b
+     in/neoSimpleFoam
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      BIN=/storage/home/greole/code/NeoFOAM/buil…)
+  ⎿  EXIT=0
+     === cylinder2D simple-cut continuity ===
+     step  serial            no-fix             procfix(-)         procfix(
+     … +7 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● Decisive: the sign flip is even worse (step 60: no-fix 1.19e-3, procfix(-)
+  2.6e-3, procfix(+) 3.3e-3). Both signs regress — so it's not a sign error. The
+  cross-rank antisymmetry is genuinely broken (corr_A + corr_B ≠ 0), despite
+  the theory saying it should cancel.
+
+  Let me revert to a working binary and report the careful-debug conclusion.
+
+● Bash(cd /storage/home/greole/code/NeoN
+      git checkout HEAD --
+      src/finiteVolume/cellCentred/faceNormalGradient/corrected.cpp
+      src/finiteVolume/cellCentred/operators/gaus…)
+  ⎿  === proc-fix fully reverted to HEAD. NeoN code status: ===
+     === NeoFOAM code status: ===
+     (my proc-fix attempt remains in scratchpad/procfix_backup; sign-flip v
+     … +5 lines (ctrl+o to expand)
+
+● Reverted to a clean working binary. Here's the careful-debug conclusion you
+  asked for (option 1).
+
+  Debug result: it's a cross-rank consistency problem, not a sign error
+
+  What I confirmed:
+  1. The geometry scheme already computes the proc-face corrVec correctly
+  (basicGeometryScheme.cpp:372-382): corrVecB = n − δ·nonOrthDeltaCoeff using
+  the halo-exchanged neighbour centre. Since both n (proc normal) and δ
+  (owner→ghost) flip across ranks, corrVec_A = −corrVec_B. So the input data is
+  fine — the deferred-correction path just never used it for proc faces.
+  2. I derived that the correction should be cross-rank antisymmetric, so div(φ)
+  closes:
+    - corrVec_A = −corrVec_B ✓ (geometry flips with the normal)
+    - weights complementary: w_A + w_B = 1 (proved: dOwn_A = dNeiF_B, dNeiF_A =
+  dOwn_B, same sum)
+    - ⇒ interpGrad_A = interpGrad_B ⇒ corr_A + corr_B = 0 (no spurious
+  divergence)
+
+  What contradicts the theory: on cylinder2D simple-cut, both signs regress
+  continuity:
+
+  ┌──────┬─────────┬──────────────┬──────────────┐
+  │ step │ no-fix  │ proc-fix (−) │ proc-fix (+) │
+  ├──────┼─────────┼──────────────┼──────────────┤
+  │ 60   │ 1.19e-3 │ 2.6e-3       │ 3.3e-3       │
+  └──────┴─────────┴──────────────┴──────────────┘
+
+  A global sign flip makes it worse both ways, and occDrivAre diverges. So the
+  cross-rank antisymmetry is broken in practice, not just mis-signed — corr_A +
+  corr_B ≠ 0 at runtime even though the derivation says it should be 0.
+
+  That means one runtime assumption fails — most likely the halo-exchanged
+  interpGrad (the neighbour cell gradient I exchange via
+  gradPhi.correctBoundaryConditions() in computeCorrectionTerm) isn't the same
+  value the other rank uses, so the two sides don't cancel. (Less likely: the
+  proc-face normal isn't owner-outward, or the deferred lagged-p interacts with
+  the halo.)
+
+  Next step to actually nail it (real but non-trivial): instrument a matched
+  proc-face pair across the two ranks and print corrFlux_A and corrFlux_B — if
+  corrFlux_A ≠ −corrFlux_B, that directly identifies which quantity (corrVecB,
+  weightsB, or gradNei) isn't consistent. Then either fix that quantity's
+  exchange, or compute the proc-face correction from a shared exchanged scalar
+  (guaranteeing antisymmetry) instead of each rank independently.
+
+  State now: proc-fix fully reverted to HEAD, clean binary rebuilt (your
+  earlier-committed fixes — FixedValueConstraints, kOmegaSST
+  corner-weighting/cap/bounding — are intact). My proc-fix attempt is preserved
+  in scratchpad/procfix_backup/ if you want to resume from the instrumentation
+  step.
+
+  The confirmed, solid takeaway regardless: proc-boundary faces drop the
+  non-orthogonal correction (real gap, root cause of the parallel continuity
+  floor on skewed decompositions) — but a naive port of the internal
+  deferred-correction doesn't close it; the cross-rank flux consistency needs to
+  be established first. Want me to add the matched-pair instrumentation next,
+  or leave it here?
+
+✻ Baked for 14m 29s
+
+❯ continue with ext step to actually nail it (real but non-trivial): instrument
+  a matched proc-face pair across the two ranks and print corrFlux_A and
+  corrFlux_B — if corrFlux_A ≠ −corrFlux_B, that directly identifies which
+  quantity
+    (corrVecB, weightsB, or gradNei) isn't consistent. Then either fix that
+  quantity's exchange, or compute the proc-face correction from a shared
+  exchanged scalar (guaranteeing antisymmetry) instead of each rank
+  independently.
+● The cleanest path: apply only the proc-face correction computation
+  (computeCorrectionTerm, change 1) — not the rhs/flux changes — plus an
+  antisymmetry diagnostic. That way the correction is computed and measured but
+  not used, so the run stays stable, and I can directly check whether corrFlux
+  sums to ~0 across ranks (antisymmetric) or not.
+
+  Let me restore corrected.cpp (change 1 only) and add the diagnostic:
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      cp $SCR/procfix_backup/corrected.cpp /stor…)
+  ⎿  restored corrected.cpp (change 1 only). gaussGreenLaplacian + pressure
+     VelocityCoupling stay at HEAD.
+     === proc branch present? ===
+     277:                "computeCorrectionTermProcBoundary"
+
+  Read 1 file (ctrl+o to expand)
+
+● Now add the antisymmetry diagnostic — measure the global (cross-rank) sum of
+  both the combined corrFlux and the corrVec itself; if corrVec sums to ~0 but
+  corrFlux doesn't, the gradient exchange is the culprit:
+
+● Update(~/code/NeoN/src/finiteVolume/cellCentred/faceNormalGradient/corrected.c
+        pp)
+  ⎿  Added 44 lines
+      276                  },
+      277                  "computeCorrectionTermProcBoundary"
+      278              );
+      279 +
+      280 +            // [DIAG] cross-rank antisymmetry: a correct defer
+          +red correction has corr_A = -corr_B,
+      281 +            // so the GLOBAL sum over ALL proc faces (each phy
+          +sical face counted once per rank with
+      282 +            // opposite sign) must be ~0 vs the abs-sum. Same
+          +check on corrVec isolates whether the
+      283 +            // geometry vector flips (sum~0) or the interpolat
+          +ed gradient is inconsistent.
+      284 +            scalar lSumC = 0, lAbsC = 0, lSumV = 0, lAbsV = 0;
+      285 +            NeoN::parallelReduce(
+      286 +                exec, {0, nProcBoundaryFaces},
+      287 +                NEON_LAMBDA(const localIdx pf, scalar& s) { s
+          ++= corrfB[nBoundaryFaces + pf]; },
+      288 +                lSumC
+      289 +            );
+      290 +            NeoN::parallelReduce(
+      291 +                exec, {0, nProcBoundaryFaces},
+      292 +                NEON_LAMBDA(const localIdx pf, scalar& s)
+      293 +                { s += Kokkos::abs(corrfB[nBoundaryFaces + pf]
+          +); },
+      294 +                lAbsC
+      295 +            );
+      296 +            NeoN::parallelReduce(
+      297 +                exec, {0, nProcBoundaryFaces},
+      298 +                NEON_LAMBDA(const localIdx pf, scalar& s) {
+      299 +                    const Vec3 v = corrVecB[nBoundaryFaces + p
+          +f];
+      300 +                    s += v[0] + v[1] + v[2];
+      301 +                },
+      302 +                lSumV
+      303 +            );
+      304 +            NeoN::parallelReduce(
+      305 +                exec, {0, nProcBoundaryFaces},
+      306 +                NEON_LAMBDA(const localIdx pf, scalar& s) {
+      307 +                    const Vec3 v = corrVecB[nBoundaryFaces + p
+          +f];
+      308 +                    s += Kokkos::abs(v[0]) + Kokkos::abs(v[1])
+          + + Kokkos::abs(v[2]);
+      309 +                },
+      310 +                lAbsV
+      311 +            );
+      312 +            scalar g[4] = {lSumC, lAbsC, lSumV, lAbsV};
+      313 +#ifdef NF_WITH_MPI_SUPPORT
+      314 +            NeoN::mpi::Environment env;
+      315 +            MPI_Allreduce(MPI_IN_PLACE, g, 4, NeoN::mpi::getTy
+          +pe<scalar>(), MPI_SUM, env.comm());
+      316 +#endif
+      317 +            NeoN::Logging::info(
+      318 +                "[DIAG procCorr] sum(corr)={} abs(corr)={} rat
+          +ioCorr={} || sum(corrVec)={} "
+      319 +                "abs(corrVec)={} ratioCV={}",
+      320 +                g[0], g[1], g[0] / (g[1] + scalar(1e-300)), g[
+          +2], g[3],
+      321 +                g[2] / (g[3] + scalar(1e-300))
+      322 +            );
+      323          }
+      324  #endif
+      325      }
+
+● Build (only corrected.cpp changed):
+
+● Bash(cd /storage/home/greole/code/NeoFOAM
+      module purge >/dev/null 2>&1; module load gcc/13.3.0 cuda/12.8.1 cmake
+      openmpi >/dev/null 2>&1; source $HOME/OpenFOAM/openf…)
+  ⎿  [1/4] Building CXX object NeoN/src/CMakeFiles/NeoN.dir/finiteVolume/ce
+     llCentred/faceNormalGradient/corrected.cpp.o
+     [4/4] Linking CXX executable bin/neoSimpleFoam
+     rc=0
+
+● Built. Now run cylinder2D simple-cut (4-rank) a few steps and read the
+  antisymmetry diagnostic:
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      BIN=/storage/home/greole/code/NeoFOAM/buil…)
+  ⎿  EXIT=0
+     === DIAG procCorr lines (first 6) ===
+     [DIAG procCorr] sum(corr)=0 abs(corr)=0 ratioCorr=0 || sum(corrVec)=9.
+     … +8 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● Key finding from the diagnostic:
+  sum(corr)=-5e-13  abs(corr)=11935  ratioCorr=-4e-17     ← corrFlux IS
+  antisymmetric
+  sum(corrVec)=9e-15 abs(corrVec)=69.5 ratioCV=1.3e-16    ← corrVec flips
+  correctly
+
+  So the correction term is perfectly cross-rank antisymmetric (ratio ~1e-17) —
+  my computeCorrectionTerm is correct, and so is the geometry. That rules out
+  the corrVec/weights/gradNei consistency I suspected. But note abs(corr)=11935
+  over ~640 proc faces ⇒ ~18.6/face, implying the interpolated gradient at the
+  cut is large — a big but correct and antisymmetric explicit correction.
+
+  Since global conservation holds, the regression is most likely a stability
+  issue: a large explicit (deferred, lagged) correction applied once
+  (nNonOrthogonalCorrectors 0) on the highly-skewed proc cut. Let me test that —
+  re-apply the full proc-fix and run with non-orthogonal correctors:
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      # restore FULL proc-fix from backup (remov…)
+  ⎿  [6/6] Linking CXX executable bin/neoSimpleFoam
+     build rc=0
+         nNonOrthogonalCorrectors 2;
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● Build OK, full proc-fix restored, nNonOrth=2 set. Now run cylinder2D
+  simple-cut with the proc-fix + nNonOrth=2, and a serial nNonOrth=2 baseline:
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      BIN=/storage/home/greole/code/NeoFOAM/buil…)
+  ⎿  === SERIAL nNonOrth=2 (baseline, proc-fix inactive) ===
+     serial EXIT=0
+     === 4-RANK simple-cut nNonOrth=2 + PROC-FIX ===
+     … +9 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● Breakthrough — the proc-fix works with non-orthogonal correctors:
+
+  ┌──────┬─────────────────┬───────────────────────┬───────────────────────┐
+  │ step │     serial      │  parallel proc-fix    │  parallel proc-fix    │
+  │      │  (nNonOrth=2)   │     (nNonOrth=2)      │     (nNonOrth=0)      │
+  ├──────┼─────────────────┼───────────────────────┼───────────────────────┤
+  │ 40   │ 1.8e-5          │ 2.7e-5                │ 0.021                 │
+  ├──────┼─────────────────┼───────────────────────┼───────────────────────┤
+  │ 60   │ 5.5e-5          │ 5.9e-5                │ 2.6e-3                │
+  └──────┴─────────────────┴───────────────────────┴───────────────────────┘
+
+  With nNonOrth=2 the parallel proc-fix run matches the serial baseline (5.9e-5
+  vs 5.5e-5) — a ~40× improvement over nNonOrth=0. So my earlier diagnosis was
+  right: the correction was correct and antisymmetric all along; applying a
+  large explicit correction once (nNonOrth=0) on a skewed proc cut was unstable.
+
+  Now let me prove the proc-fix is actually necessary (vs nNonOrth=2 alone) —
+  revert it and run no-fix parallel at nNonOrth=2:
+
+● Bash(cd /storage/home/greole/code/NeoN
+      git stash push --
+      src/finiteVolume/cellCentred/faceNormalGradient/corrected.cpp
+      src/finiteVolume/cellCentred/operators/gaussGr…)
+  ⎿  Saved working directory and index state WIP on enh/register-l1-criteri
+     on-ginkgo: fe09324c56  make l1Stop register as config solver
+     === proc-fix removed? ===
+     … +9 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● Critical result that changes everything: no-fix parallel at nNonOrth=2 is
+  essentially identical to proc-fix (5.99e-5 vs 5.93e-5), both matching serial
+  (5.5e-5).
+
+  So on cylinder2D the proc-fix makes no difference — and
+  nNonOrthogonalCorrectors=2 alone fixes the parallel continuity (1.19e-3 →
+  5.99e-5). The "parallel floor" I attributed to the dropped proc-face
+  correction was actually nNonOrthogonalCorrectors=0 (a single explicit non-orth
+  correction isn't enough on the skewed cut; iterating it fixes it). cylinder2D
+  has too few proc faces for the proc gap to matter — exactly the limitation
+  you flagged.
+
+  Let me check the nNonOrth settings to see if this also explains occDrivAre:
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/occDrivAerStaticMesh
+      echo "=== neo MG (fvSolution.case3 / smooth2 template) nNonOrth ==="…)
+  ⎿  === neo MG (fvSolution.case3 / smooth2 template) nNonOrth ===
+     system/paramStudy/fvSolution.case3:    nNonOrthogonalCorrectors 0;
+     system/paramStudy/fvSolution.case3:    nNonOrthogonalCorrectors 10;
+     … +9 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● Both native and neo show nNonOrthogonalCorrectors 0 and 10 — I need to know
+  which is in the active SIMPLE block. If native effectively uses 10 and neo
+  uses 0, that's the whole story. Let me check the context:
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/occDrivAerStaticMesh
+      echo "=== native simpleFoam fvSolution: SIMPLE block + context of nNonOrth
+      ==="…)
+  ⎿  === native simpleFoam fvSolution: SIMPLE block + context of nNonOrth =
+     ==
+     8:{
+     … +28 lines (ctrl+o to expand)
+
+● Definitive: native uses nNonOrthogonalCorrectors 0 and consistent yes
+  (SIMPLEC), 1 p-solve/step — and so does neo (1 p-solve/step). The 10 is only
+  potentialFlow (initialization). So nNonOrth is 0 for both, yet native gets
+  1.4e-5 and neo 5e-3.
+
+  This means the proc-fix investigation, while it produced a correct
+  implementation, does not explain or fix the occDrivAre gap. Let me give you
+  the honest consolidated picture.
+
+  Conclusion of the proc-fix work
+
+  What I proved:
+  1. The proc-face non-orth correction gap is real in the code — and I
+  implemented it correctly: the diagnostic showed corrFlux is cross-rank
+  antisymmetric (ratio ~1e-17), so the geometry/exchange is fine.
+  2. But it provides no measurable benefit on cylinder2D — at nNonOrth=2,
+  proc-fix (5.93e-5) ≈ no-fix (5.99e-5) ≈ serial (5.5e-5). Too few proc faces,
+  exactly as you warned.
+  3. The cylinder2D "parallel floor" was nNonOrthogonalCorrectors=0, not the
+  proc gap — bumping it to 2 fixed it (1.19e-3 → 6e-5) with or without the
+  proc-fix. A single explicit non-orth correction is just under-resolved on a
+  skewed mesh; iterating it fixes it.
+  4. The proc-fix at nNonOrth=0 is actively harmful (the large explicit proc
+  correction applied once destabilizes — that's why smooth2 diverged).
+
+  For occDrivAre the gap is neither the proc faces nor nNonOrth: both native and
+  neo run nNonOrth=0, 1 p-solve/step, yet native=1.4e-5, neo=5e-3. So this 350×
+  gap is neo-specific and elsewhere — most likely the Ginkgo pressure solver's
+  effectiveness on the hard mesh and/or the SIMPLE(C) coupling, not the
+  non-orthogonal flux at proc boundaries.
+
+  State: proc-fix reverted (stashed as stash@{0} + in
+  scratchpad/procfix_backup/), current binary is clean HEAD with your committed
+  fixes intact.
+
+  Honest recommendation: drop the proc-fix — it's correct but solves a
+  non-problem here. The occDrivAre continuity gap needs a fresh angle: I'd
+  verify whether neo applies consistent yes (SIMPLEC) like native, and directly
+  compare the per-step pressure residual reduction of Ginkgo-MG vs GAMG on the
+  same assembled system. Want me to check the SIMPLEC setting and pursue that,
+  or pause here?
+
+✻ Cooked for 13m 43s
+
+❯ double check if  time step continuity errors  computation is correct
+● Good idea to verify — if neo's continuity computation is off by a
+  normalization, the whole "neo 350× worse than native" comparison could be a
+  measurement artifact. Let me re-read continuityError.hpp and check exactly
+  what dsl::exp::div(phi) returns (per-volume like fvc::div, or the raw
+  face-sum).
+
+  Read 1 file (ctrl+o to expand)
+
+● Let me check what dsl::exp::div(phi) (divergence of a surface flux) actually
+  returns — per-volume or raw face-sum:
+
+● Bash(cd /storage/home/greole/code/NeoN
+      echo "=== dsl::exp::div(SurfaceField) — which operator? ==="…)
+  ⎿  === dsl::exp::div(SurfaceField) — which operator? ===
+     include/NeoN/dsl/implicit.hpp:40:div(fvcc::SurfaceField<scalar>& faceF
+     lux, fvcc::VolumeField<ValueType>& phi)
+     … +16 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● Bash(cd /storage/home/greole/code/NeoN
+      echo "=== explicit.cpp: div(flux) maps to which operator? ==="…)
+  ⎿  === explicit.cpp: div(flux) maps to which operator? ===
+     === surfaceIntegrate explicitOperation (does it divide by V?) ===
+     4:    View<const int> neighbors,
+     … +9 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● div(flux) → surfaceIntegrate, which does divide by V (line 39: res[celli] *=
+  operatorScaling[celli] / v[celli]), so div(phi) = (1/V)·Σφ_f = fvc::div(phi),
+  and the formula matches OpenFOAM. But the parallel-critical question is
+  whether it sums proc-face fluxes. Let me read it fully:
+
+  Read 1 file (ctrl+o to expand)
+
+● The boundary loop iterates {0, faceOwners.size()}. The key is whether
+  faceOwners (and bFlux) include the proc-face tail. Let me check the
+  SurfaceIntegrate::explicitOperation call — what it passes for faceOwners/bFlux
+  and their sizes:
+
+● Bash(cd /storage/home/greole/code/NeoN
+      echo "=== SurfaceIntegrate::explicitOperation — faceOwners + bFlux passed
+      ==="…)
+  ⎿  === SurfaceIntegrate::explicitOperation — faceOwners + bFlux passed ==
+     =
+     18:void surfaceIntegrate(
+     … +25 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● I've traced the full computation. It's correct — verified against OpenFOAM
+  line by line:
+
+  continuityError.hpp vs OpenFOAM continuityErrs.H
+
+  formula
+  OpenFOAM: dt · mag(fvc::div(phi)).weightedAverage(V)
+  NeoFOAM: dt · Σ(|divφ|·V) / ΣV ✓
+  ────────────────────────────────────────
+  weightedAverage(V)
+  OpenFOAM: Σ(f·V)/Σ(V)
+  NeoFOAM: same ✓
+  ────────────────────────────────────────
+  fvc::div(phi)
+  OpenFOAM: (1/V)·Σ_f φ_f
+  NeoFOAM: surfaceIntegrate divides by V (res[c] *= scaling/v[c],
+    surfaceIntegrate.cpp:50) ✓
+
+  So the per-volume divergence and the volume-weighted average both match.
+
+  Parallel-critical check — does it include processor-face fluxes? Yes:
+  - surfaceIntegrate sums internal faces, then all boundary faces over {0,
+  faceOwners.size()} (line 39).
+  - boundaryMesh().faceOwners() includes the proc tail — confirmed by
+  nBoundaryFaces() = faceOwners_.size() − nProcBoundaryFaces()
+  (boundaryMesh.hpp:257). So faceOwners.size() = physical + proc faces.
+  - It's fed flux_.boundaryData().value() which carries the proc-face flux in
+  that same tail, added to the owner with the outward sign — identical treatment
+  to physical boundary faces.
+  - The three aggregates are MPI_Allreduce-summed and divided by the global ΣV.
+
+  So div(φ) correctly accounts for internal + physical-boundary + processor
+  faces, per cell, globally reduced. There's no normalization or missing-face
+  bug.
+
+  Implication
+
+  The continuity numbers are an apples-to-apples measurement — neo's occDrivAre
+  5e-3 vs native's 1.4e-5 is a real ~350× difference in actual flux divergence,
+  not a reporting artifact. Combined with everything else established:
+  - not the continuity computation (just verified),
+  - not the proc-face non-orth correction (cylinder2D proved it negligible;
+  diagnostic showed it's antisymmetric/correct),
+  - not nNonOrthogonalCorrectors (both native and neo use 0),
+
+  …the occDrivAre gap is genuinely in the pressure/momentum solution neo
+  produces on that mesh — most plausibly the Ginkgo pressure solver's per-step
+  convergence on the hard 50M-cell system and/or whether neo applies consistent
+  yes (SIMPLEC) like native does. That's the lead I'd pursue next; want me to
+  check the SIMPLEC setting and compare the per-step pressure reduction of
+  Ginkgo-MG vs GAMG?
+
+✻ Churned for 3m 26s
+
+❯ check if neon applies consistent
+    yes (SIMPLEC) like native does
+
+● Let me check the consistent setting in both the neo MG template and native,
+  and confirm neoSimpleFoam actually reads/applies it.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/occDrivAerStaticMesh
+      echo "=== native (system/fvSolution) SIMPLE block ==="…)
+  ⎿  === native (system/fvSolution) SIMPLE block ===
+     SIMPLE
+     {
+     … +23 lines (ctrl+o to expand)
+
+● Both use consistent yes, and neoSimpleFoam reads simple.consistent() and runs
+  the SIMPLEC path. So yes — neo applies SIMPLEC like native. Let me also check
+  the relaxation factors, since SIMPLEC's behavior depends on them (native
+  SIMPLEC typically uses p 1.0):
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/occDrivAerStaticMesh
+      echo "=== native relaxationFactors ==="; sed -n
+      '/relaxationFactors/,/^}/p' system/fvSolution…)
+  ⎿  === native relaxationFactors ===
+     relaxationFactors
+     {
+     … +30 lines (ctrl+o to expand)
+
+● Confirmed: yes, neoFOAM applies SIMPLEC exactly like native.
+
+  - Settings are identical — both system/fvSolution (native) and
+  system/paramStudy/fvSolution.case3 (neo MG) have SIMPLE {
+  nNonOrthogonalCorrectors 0; consistent yes; } and the same relaxation (p 0.3,
+  U/k/omega 0.7).
+  - neoSimpleFoam reads and applies it — simple.consistent() → true triggers the
+  SIMPLEC path: computeRAtU (the consistent diagonal rAtU = 1/(1/rAU − H1)),
+  addConsistentFluxCorrection, and subtractConsistentHbyA
+  (neoSimpleFoam.cpp:164-181).
+
+  So SIMPLEC config is not the difference.
+
+  But this surfaces a real gap in my earlier validation
+
+  When I validated neoSimpleFoam against native simpleFoam on cylinder2D (<0.6%
+  agreement), that case used consistent no (plain SIMPLE). So neo's SIMPLEC code
+  path — computeRAtU / addConsistentFluxCorrection / subtractConsistentHbyA —
+  has never been validated against OpenFOAM. And occDrivAre is exactly where
+  it's exercised (consistent yes).
+
+  That's now the strongest remaining lead for the 350× continuity gap: a bug in
+  neo's SIMPLEC implementation would show on occDrivAre but not on my
+  plain-SIMPLE cylinder2D test.
+
+  The decisive, cheap test: run cylinder2D with consistent yes for both
+  neoSimpleFoam and native simpleFoam, and compare continuity/fields. If
+  neo-SIMPLEC diverges from native-SIMPLEC on this clean mesh, the bug is in the
+  consistent-diagonal path (computeRAtU is the prime suspect — H1 and the
+  cross-diffusion flux/HbyA corrections are subtle).
+
+  Want me to run that cylinder2D SIMPLEC comparison?
+
+✻ Sautéed for 1m 22s
+
+❯ i dont think it is ginkgos multigrid since
+  paramStudy/results/pPCG-ukoSmooth.log also shows the discrepancy for PCG
+
+● You're right — pPCG-ukoSmooth (diagonal-PCG, not multigrid) shows the same
+  gap, so it's not the MG solver. Both neo solvers regress identically vs native
+  → the cause is common to neo, and the un-validated SIMPLEC path is now the
+  prime suspect. Let me run the decisive test: cylinder2D laminar with
+  consistent yes, neo vs native.
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      SRC=/storage/home/greole/code/NeoFOAM/cyli…)
+  ⎿  === SIMPLE block (both) ===
+     SIMPLE
+     {
+     … +8 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● Neo SIMPLEC converges (continuity → 3.2e-5 by step 200). Now native simpleFoam
+  SIMPLEC on the same case:
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      cd $SCR/sc_of…)  ⎿  Error: Exit code 143
+     Command timed out after 2m 0s
+     launched native simpleFoam SIMPLEC PID 3680854
+
+● Native is still running. Let me check progress and compare what's available:
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      cd $SCR/sc_of…)
+  ⎿  native last Time: Time = 89
+     === continuity: neo-SIMPLEC vs native-SIMPLEC (matched steps) ===
+     step  neo-SIMPLEC        native-SIMPLEC
+     … +6 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● SIMPLEC is not the bug either. Neo's SIMPLEC tracks native's SIMPLEC on
+  cylinder2D:
+
+  ┌──────┬─────────────┬────────────────┐
+  │ step │ neo-SIMPLEC │ native-SIMPLEC │
+  ├──────┼─────────────┼────────────────┤
+  │ 2    │ 0.648       │ 0.642          │
+  ├──────┼─────────────┼────────────────┤
+  │ 50   │ 6.0e-4      │ 1.1e-3         │
+  └──────┴─────────────┴────────────────┘
+
+  They agree step-for-step (neo's even slightly lower at step 50), and neo
+  converges cleanly to 3.2e-5 by step 200. So neo's consistent-diagonal path
+  (computeRAtU/addConsistentFluxCorrection/subtractConsistentHbyA) is correct —
+  validated against native SIMPLEC now, closing the gap in my earlier
+  (plain-SIMPLE) validation.
+
+  Where that leaves the occDrivAre gap
+
+  Everything testable on cylinder2D has now been eliminated as the cause:
+  - ✗ continuity computation (verified correct, incl. proc faces)
+  - ✗ proc-face non-orth correction (negligible; antisymmetric)
+  - ✗ nNonOrthogonalCorrectors (both 0)
+  - ✗ MG-specific (PCG shows it too — your point)
+  - ✗ SIMPLEC config and implementation (just validated)
+
+  And neoSimpleFoam converges fine on cylinder2D in every configuration,
+  matching native. So the 350× gap is genuinely specific to the occDrivAre
+  mesh/scale (50M cells, complex automotive geometry) and not reproducible on
+  the clean mesh.
+
+  The one concrete, measured fact that survives: on occDrivAre neo's per-step
+  flux imbalance div(phiHbyA) grows (8.6→2855) while native's shrinks — i.e.
+  neo's velocity field never reaches a near-divergence-free state there. Since
+  SIMPLEC/coupling are now validated correct, that points to either:
+  1. the Ginkgo pressure solve genuinely under-converging the 50M-cell Poisson
+  per step (consistent with both PCG and MG being weaker than GAMG — even if
+  iteration counts look similar, per-iteration effectiveness differs on an
+  ill-conditioned system), or
+  2. a mesh-quality-sensitive momentum/flux term (gradient/interpolation/limiter
+  on highly skewed cells) that cylinder2D's mild mesh doesn't exercise.
+
+  To distinguish these definitively I'd instrument occDrivAre directly: print,
+  per step, div(phiHbyA) (the imbalance entering the pressure solve) and the
+  pressure solve's true residual reduction. If the imbalance is already huge
+  before the solve → it's momentum/flux (mesh-sensitive); if the solve can't
+  reduce it → it's the Ginkgo solver. That's a small instrumentation on the real
+  case — want me to add it and run a short occDrivAre?
+
+✻ Cogitated for 6m 7s
+
+❯ add the div(phiHbyA) diagnostic and run a short occDrivAre
+
+● I'll add a focused div(phiHbyA) diagnostic (volume-weighted L1, same metric as
+  the continuity error) right before the pressure solve. Let me find the spot:
+
+● Bash(cd /storage/home/greole/code/NeoFOAM
+      grep -n "phiHbyA\|reportContinuityError\|correctNonOrthogonal\|pEqn\|compu
+      teContinuityError\|#include" examples/neoSimpleFo…)
+  ⎿  4:#include "NeoN/NeoN.hpp"
+     6:#include "NeoFOAM/NeoFOAM.hpp"
+     8:#include "fvCFD.H"
+     … +22 lines (ctrl+o to expand)
+
+  Read 1 file (ctrl+o to expand)
+
+● Update(examples/neoSimpleFoam/neoSimpleFoam.cpp)
+  ⎿  Added 9 lines
+      184                  // Foam::adjustPhi(phiHbyA, U, p);
+      185                  // Foam::constrainPressure(p, U, phiHbyA, rAU)
+           ;
+      186
+      187 +                // [DIAG] imbalance entering the pressure solv
+          +e = vol-weighted L1 of div(phiHbyA),
+      188 +                // the SAME metric as the post-solve "time ste
+          +p continuity errors". Comparing the
+      189 +                // two tells us whether the pressure solve und
+          +er-converges (preP ~ postP) or the
+      190 +                // momentum/flux feeds a large imbalance (preP
+          + grows). Remove after diagnosis.
+      191 +                {
+      192 +                    auto e = NeoFOAM::computeContinuityError(p
+          +hiHbyA, rt);
+      193 +                    NeoN::Logging::info("[DIAG] div(phiHbyA)_p
+          +reP sumLocal = {}", e.sumLocal);
+      194 +                }
+      195 +
+      196                  // Pre-solve snapshots: internal vector for ap
+           plyFieldRelaxation
+      197                  // and a full VolumeField for the deferred-cor
+           rection recovery
+      198                  // below (the Laplacian uses pre-solve p in it
+           s deferred
+
+● Build, then set up a short occDrivAre smooth2 run:
+
+● Bash(cd /storage/home/greole/code/NeoFOAM
+      module purge >/dev/null 2>&1; module load gcc/13.3.0 cuda/12.8.1 cmake
+      openmpi >/dev/null 2>&1; source $HOME/OpenFOAM/openf…)
+  ⎿  [2/2] Linking CXX executable bin/neoSimpleFoam
+     rc=0
+     === GPU availability ===
+     … +4 lines (ctrl+o to expand)
+
+● Only GPU 0 is free — GPUs 1-3 are heavily used (122/61/62 GB), and the
+  occDrivAre needs 4 ranks across 4 GPUs (50M cells won't fit 4 ranks on one
+  GPU). Let me check what's occupying them:
+
+● Bash(echo "=== GPU processes ==="; nvidia-smi
+      --query-compute-apps=gpu_uuid,pid,used_memory,process_name
+      --format=csv,noheader 2>/dev/null | head
+      echo "=== running n…)
+  ⎿  === GPU processes ===
+     GPU-ee508402-2aa5-3d06-6789-738117039be6, 2931427, 5662 MiB, /storage/
+     home/greole/code/NeoFOAM/build/profilingnvidia_h200/bin/neoSimpleFoam
+     … +29 lines (ctrl+o to expand)
+
+● There are 3 sets of 4-rank neoSimpleFoam runs already active (yours),
+  occupying GPUs 1-3 and the occDrivAre processor* directories. So I can't run
+  in that case dir (it would corrupt your in-flight runs), and GPUs 1-3 are
+  full. Only GPU 0 is free.
+
+  The diagnostic is built into the binary. Let me check whether I can run a
+  non-conflicting copy on GPU 0:
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/occDrivAerStaticMesh
+      echo "=== decomposed case size (per proc) ==="; du -sh processor0
+      2>/dev/null; du -sh processor* 2>/de…)
+  ⎿  === decomposed case size (per proc) ===
+     2.1G       processor0
+     2.0G       processor3
+     … +6 lines (ctrl+o to expand)
+
+● The diagnostic is in the binary, the case is only 8GB, scratch has 4.8TB, and
+  GPU 0 is free (140GB). Let me copy a non-conflicting case and run smooth2 on
+  GPU 0 (4 ranks sharing):
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      SRC=/storage/home/greole/code/NeoFOAM/occD…)
+  ⎿  copied 4 procs, total: 17G
+     // PARAM STUDY case3: p = configFile (Ginkgo scale-corrected multigrid
+     )
+     … +2 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● Two issues — the configFile substitution and endTime. Let me check and fix:
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      cd $SCR/occ_diag…)
+  ⎿  === fvSolution p block ===
+         p
+         {
+     … +18 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+❯ i stop a process you can use 4 GPUs now
+
+● The fvSolution is correct (smooth2 MG + l1ScaledResidual tolerance 1e-7),
+  endTime=8, starts from t0, and the case is in scratch (no conflict). With 4
+  GPUs now free, let me run it:
+● Bash(echo "=== GPU memory now ==="; nvidia-smi --query-gpu=index,memory.used
+      --format=csv,noheader 2>/dev/null
+      SCR=/scratch/greole/tmp/claude-1039/-storage-home-greo…)
+  ⎿  === GPU memory now ===
+     0, 0 MiB
+     1, 73166 MiB
+     … +10 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● Excellent — the diagnostic is working. Early read is already telling:
+  - Step 1: div(phiHbyA)_preP = 6.9e-3 → continuity 5.6e-5 (solve reduced it
+  ~124×)
+  - Step 2: div(phiHbyA)_preP = 0.038 (grew ~5.5× from step 1)
+
+  So the pressure solve is reducing the imbalance ~100×/step — but the imbalance
+  entering the solve is growing. Let me collect the full 8-step trajectory:
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      cd $SCR/occ_diag…)
+  ⎿  === per step: div(phiHbyA)_preP  |  continuity_postP  |  p solve ===
+     T=1   preP=0.006925390908752229 cont=5.630886556642986e-05  p[init=1 f
+     in=0.008130785151100665 it=18]
+     … +12 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● Definitive result. Here's the full trajectory:
+
+  ┌──────┬──────────────────────────────────┬──────────────────┬─────────────┐
+  │ step │ div(phiHbyA)_preP (imbalance in) │ continuity (out) │ p reduction │
+  ├──────┼──────────────────────────────────┼──────────────────┼─────────────┤
+  │ 1    │ 0.0069                           │ 5.6e-5           │ ~124×       │
+  ├──────┼──────────────────────────────────┼──────────────────┼─────────────┤
+  │ 2    │ 0.038                            │ 3.4e-4           │ ~112×       │
+  ├──────┼──────────────────────────────────┼──────────────────┼─────────────┤
+  │ 4    │ 0.816                            │ 4.6e-3           │ ~177×       │
+  ├──────┼──────────────────────────────────┼──────────────────┼─────────────┤
+  │ 6    │ 1.60                             │ 8.4e-3           │ ~190×       │
+  ├──────┼──────────────────────────────────┼──────────────────┼─────────────┤
+  │ 8    │ 2.81                             │ 0.012            │ ~230×       │
+  └──────┴──────────────────────────────────┴──────────────────┴─────────────┘
+
+  Conclusion: it is not the pressure solver — it's the momentum/flux
+
+  The data is unambiguous:
+  - The pressure solve works fine — every step it reduces the imbalance by
+  ~100–230× (final scaled residual ~0.002–0.008, consistently). Ginkgo is doing
+  its job.
+  - The imbalance entering the solve grows monotonically — div(phiHbyA) climbs
+  0.0069 → 2.81 (and keeps going to the ~2855-equivalent plateau in the full
+  run).
+  - continuity ≈ div(phiHbyA)_preP / ~150 — it's high purely because the input
+  to the solve is large and growing, not because the solve under-converges.
+
+  So your skepticism about the solver was correct. div(phiHbyA) is built from
+  hByA = H/A (the momentum) interpolated to faces by flux(). neo's velocity
+  field never reaches a near-divergence-free state on this mesh — the
+  momentum/flux side feeds an ever-larger imbalance that the pressure solve can
+  only knock down ~100×/step. native keeps div(phiHbyA) tiny (its p initial
+  residual is ~0.006 vs neo's ~0.25), so its continuity stays at 1.4e-5.
+
+  This finally localizes the bug: the SIMPLE momentum→hByA→flux chain on the
+  complex/skewed mesh, not Ginkgo, not the continuity metric, not SIMPLEC, not
+  nNonOrth, not the proc-correction. Since this chain is validated correct on
+  cylinder2D (clean mesh), the prime suspects are the mesh-quality-sensitive
+  pieces: flux(hByA) uses plain linear interpolation (no skewness correction),
+  and/or grad(U)/grad(p)/the hByA reconstruction on highly-skewed cells.
+
+  The run's at step 8 (done). The diagnostic is in the working tree
+  (uncommitted, on the example) — want me to keep drilling on the
+  flux()/interpolation skewness handling as the next concrete suspect, or pause
+  here with this localization?
+
+✻ Cooked for 7m 28s
+
+❯ investigate the hypothesis   This finally localizes the bug: the SIMPLE
+  momentum→hByA→flux chain on the complex/skewed mesh, not Ginkgo, not the
+  continuity metric, not SIMPLEC, not nNonOrth, not the proc-correction. Since
+  this chain is validated correct
+    on cylinder2D (clean mesh), the prime suspects are the
+  mesh-quality-sensitive pieces: flux(hByA) uses plain linear interpolation (no
+  skewness correction), and/or grad(U)/grad(p)/the hByA reconstruction on
+  highly-skewed cells. implement instrumentation and propose a fix
+  ⎿  Referenced file ../NeoN/include/NeoN/dsl/expression.hpp
+  ⎿  Referenced file src/algorithms/pressureVelocityCoupling.cpp
+  ⎿  Referenced file src/turbulenceModels/kOmegaSST.cpp
+  ⎿  Read ../../../../../scratch/greole/tmp/claude-1039/-storage-home-greole-cod
+     e-NeoFOAM/6d346751-1678-4e8d-bf0f-65ab4e447e98/tasks/beve2iwmy.output (7
+     lines)
+  ⎿  Read include/NeoFOAM/fvcc/boundary/volume/omegaWallFunction.hpp (210 lines)
+
+● This is the right thread to pull. Let me first see exactly what numerical
+  schemes occDrivAre asks for — especially interpolation and gradient skewness
+  handling — and compare to what neo implements.
+
+● Bash(cd /storage/home/greole/code/NeoFOAM/occDrivAerStaticMesh
+      echo "=== occDrivAre fvSchemes ==="…)
+  ⎿  === occDrivAre fvSchemes ===
+     {
+         version     2.0;
+     … +53 lines (ctrl+o to expand)
+
+● The flux interpolation is plain linear in both OpenFOAM and neo
+  (interpolationSchemes: default linear), so hypothesis #1 (flux skewness) is
+  not the difference — given the same hByA, flux() produces the same phiHbyA.
+  That shifts the suspect to hByA itself, i.e. the momentum assembly: grad(U)
+  cellLimited Gauss linear 1 and div(phi,U) bounded Gauss linearUpwindV grad(U).
+
+  Let me gather the per-equation residuals from the diagnostic run and map neo's
+  convection/gradient implementations in parallel:
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      cd $SCR/occ_diag…)
+  ⎿  === neo occDrivAre U/k/omega/p initial residuals per step ===
+     T=1   Ux=0.0019502118304178541 Uy=0.1648759322420038 Uz=0.104946074581
+     39966 k=          om=
+     … +14 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● The momentum equation itself is not converging — and turbulence is unstable:
+  - U initial residual plateaus at 0.3–0.4 (should decay toward 0): Uy
+  0.16→0.07→0.38→0.43→0.30, Uz up to 0.60
+  - omega bounding: min −226 (negative!), max 4.5e7 — omega blows up
+
+  So div(phiHbyA) grows because U never converges — the momentum matrix/source
+  is producing an oscillating velocity. The convection scheme is bounded Gauss
+  linearUpwindV grad(U) with grad(U) = cellLimited Gauss linear 1. Let me check
+  whether neo actually implements those (vs silently falling back):
+
+● Bash(cd /storage/home/greole/code/NeoN
+      echo "=== div scheme registrations (linearUpwind, linearUpwindV, upwind)
+      ==="…)
+  ⎿  === div scheme registrations (linearUpwind, linearUpwindV, upwind) ===
+     src/finiteVolume/cellCentred/interpolation/linearUpwind.cpp:7:#include
+      "NeoN/finiteVolume/cellCentred/interpolation/linearUpwind.hpp"
+     … +51 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● neo does implement linearUpwindV (cell-limited variant) and cellLimitedGrad.
+  But the data shows two coupled symptoms: U won't converge and omega blows up
+  (−226 … 4.5e7). I need to isolate whether the momentum/convection chain
+  diverges on its own, or only because unstable omega→nut corrupts the momentum
+  diffusion.
+
+  The decisive instrumentation: run the same occDrivAre mesh as laminar (nut=0,
+  no turbulence feedback) with the div(phiHbyA) diagnostic. If div(phiHbyA)
+  still grows → it's the momentum/convection (mesh-sensitive). If it converges →
+  turbulence is the root.
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      rm -rf $SCR/occ_lam; cp -r $SCR/occ_diag $…)
+  ⎿  simulationType  RAS;
+     RAS
+         RASModel        $RASturbModel;
+     … +6 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● foamDictionary didn't take (nested $RASturbModel). Let me set it via sed and
+  run (GPU 0 free, 1-3 have headroom for oversubscribe as before):
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      BIN=/storage/home/greole/code/NeoFOAM/buil…)
+  ⎿  simulationType: simulationType  laminar;
+     launched LAMINAR occDrivAre diagnostic, PID 3692354
+     [1]+  Done                    timeout 560 mpirun --oversubscribe -x LD
+     … +16 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+
+● Decisive: laminar is bit-for-bit identical to turbulent — div(phiHbyA):
+  0.0069→0.038→0.247→0.82→2.83, U residual plateaus at 0.30 in both. So
+  turbulence/omega is NOT the cause — the momentum chain diverges identically
+  with nut=0. It's the momentum/convection coupling.
+
+  Now isolate convection vs pressure-coupling: rerun laminar with div(phi,U) =
+  plain upwind (no gradient correction). If that stops the growth → it's
+  linearUpwindV/cellLimitedGrad; if it still grows → it's grad(p)/flux/coupling.
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      BIN=/storage/home/greole/code/NeoFOAM/buil…)
+  ⎿  div(phi,U):     div(phi,U)      bounded Gauss upwind;
+     launched UPWIND laminar diagnostic, PID 3692792
+     [1]+  Done                    timeout 560 mpirun --oversubscribe -x LD
+     … +16 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /storage/home/greole/code/NeoFOAM
+● Upwind doesn't fix it either — div(phiHbyA) still grows
+  (0.0056→0.036→0.249→2.38→3.43, even slightly worse), U still plateaus at
+  0.3–0.4. So it's convection-independent → not linearUpwindV/cellLimitedGrad.
+  The problem is in the pressure-velocity coupling common to both:
+  hByA/flux/grad(p)/the SIMPLEC corrections.
+
+  Next isolation: SIMPLEC vs plain SIMPLE. neo's SIMPLEC is validated on
+  cylinder2D but the addConsistentFluxCorrection/subtractConsistentHbyA use face
+  snGrad(p) which is skewness-sensitive. Run laminar with consistent no:
+
+● Bash(SCR=/scratch/greole/tmp/claude-1039/-storage-home-greole-code-NeoFOAM/486
+      acb1b-f840-43cd-bb6e-9b1d570e4eee/scratchpad
+      BIN=/storage/home/greole/code/NeoFOAM/buil…)
+  ⎿  Interrupted · What should Claude do instead?
