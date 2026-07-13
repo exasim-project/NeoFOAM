@@ -22,8 +22,17 @@ def _load_incompressible_fluid() -> Any:
     return incompressibleFluid
 
 
+def _load_incompressible_fluid_neon() -> Any:
+    from neofoam.solver.incompressibleFluidNeoN.incompressibleFluidNeoN import (
+        incompressibleFluidNeoN,
+    )
+
+    return incompressibleFluidNeoN
+
+
 SOLVER_LOADERS: dict[str, Callable[[], Any]] = {
     "incompressibleFluid": _load_incompressible_fluid,
+    "incompressibleFluidNeoN": _load_incompressible_fluid_neon,
 }
 
 

@@ -70,6 +70,10 @@ docs = [
     # GIF animations from pl.open_gif() / pl.write_frame() in
     # tutorials 02 and 03.
     "imageio",
+    # The telemetry how-to (example_trace_solver_performance) traces a
+    # real solver run at gallery-build time.
+    "opentelemetry-api>=1.20",
+    "opentelemetry-sdk>=1.20",
 ]
 agent = [
     # OpenAI-compatible client (local Ollama, OpenAI-style endpoints) plus the
@@ -84,8 +88,17 @@ mcp = [
     "uvicorn",
     "httpx",
 ]
+telemetry = [
+    # Opt-in performance tracing (neofoam.telemetry); the shim itself works
+    # without these — only activating telemetry requires the SDK.
+    "opentelemetry-api>=1.20",
+    "opentelemetry-sdk>=1.20",
+    # neofoam.telemetry.report renders the emitted trace: the Chrome/Perfetto
+    # export is dependency-free, the summary bar chart needs matplotlib.
+    "matplotlib>=3.5",
+]
 all = [
-    "neofoam[dev,docs,agent,mcp]",
+    "neofoam[dev,docs,agent,mcp,telemetry]",
 ]
 
 [project.scripts]
@@ -112,6 +125,9 @@ NEOFOAM_BUILD_PYTHON_BINDINGS = "ON"
 
 [tool.uv]
 no-build-isolation-package = ["neofoam"]
+
+[tool.uv.sources]
+pybFoam = { path = "/home/henning/libsAndApps/pybFoam", editable = true }
 
 [tool.ruff]
 line-length = 100
@@ -152,6 +168,11 @@ exclude = [
 module = ["NeoN", "NeoN.*", "pybFoam", "pybFoam.*", "neon", "neon.*"]
 ignore_missing_imports = true
 follow_imports = "skip"
+
+# opentelemetry is the optional [telemetry] extra — absent in most envs.
+[[tool.mypy.overrides]]
+module = ["opentelemetry", "opentelemetry.*"]
+ignore_missing_imports = true
 
 [tool.poe.tasks]
 test = "pytest"

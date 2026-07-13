@@ -6,6 +6,8 @@
 
 from typing import Any
 
+from neofoam import telemetry
+
 from ..init_step import InitStep, InitStepExecutionError
 from .init_result import InitResult
 from .ordering import _topological_sort
@@ -22,7 +24,8 @@ def execute_step(step: InitStep, context: dict[str, Any]) -> Any:
         raise ValueError(f"InitStep '{step.name}' has no initializer function")
 
     try:
-        return step.initializer(context)
+        with telemetry.span(f"init.{step.name}", category=step.category):
+            return step.initializer(context)
     except (ValueError, TypeError):
         raise
     except Exception as exc:
@@ -37,16 +40,17 @@ def execute_lazy_inits(
     context: dict[str, Any] = {}
     results: list[InitResult] = []
 
-    for lazy_init in sorted_inits:
-        obj = execute_step(lazy_init, context)
-        context[lazy_init.name] = obj
-        results.append(
-            InitResult(
-                name=lazy_init.name,
-                category=lazy_init.category,
-                value=obj,
-                write=lazy_init.write,
+    with telemetry.span("initialization"):
+        for lazy_init in sorted_inits:
+            obj = execute_step(lazy_init, context)
+            context[lazy_init.name] = obj
+            results.append(
+                InitResult(
+                    name=lazy_init.name,
+                    category=lazy_init.category,
+                    value=obj,
+                    write=lazy_init.write,
+                )
             )
-        )
 
     return results

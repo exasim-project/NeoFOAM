@@ -21,12 +21,14 @@
 - Add the spec-loop engineering workflow (`write-spec`/`spec-loop` skills + planner/implementer/reviewer agents) [#342](https://github.com/exasim-project/NeoFOAM/pull/342)
 - Add in-process mesh preprocessing tools (`blockMesh`/`snappyHexMesh`/`checkMesh`) that run before the time loop via the init DAG, opt-in through `system/preprocess.yaml` with per-tool `depends_on`; self-registering `Tool` registry (`neofoam.tools`) and a standalone `neofoam preprocess` command [#346](https://github.com/exasim-project/NeoFOAM/pull/346)
 - Port `examples/neoPimpleFoam/neoPimpleFoam.cpp` (PIMPLE/PISO + SA-DDES turbulence) to Python (`neofoam.solver.neoPimpleFoam`) with supporting bindings (PimpleControl, viscous stress, GaussGreenGrad, turbulence model); fidelity-tested against the C++ neoPimpleFoam [#348](https://github.com/exasim-project/NeoFOAM/pull/348)
+- Port `neoPimpleFoam` (PIMPLE/PISO + turbulence) to the solver framework as `incompressibleFluidNeoN` (SolverSpec + solutionLoop), bitwise-parity verified against the legacy Python port [#353](https://github.com/exasim-project/NeoFOAM/pull/353)
 - Add config-driven case configuration for incompressibleFluid [#340](https://github.com/exasim-project/NeoFOAM/pull/340)
 - Add solver config introspection (model catalog + per-config schema) [#340](https://github.com/exasim-project/NeoFOAM/pull/340)
 - Add an interactive marimo case wizard [#340](https://github.com/exasim-project/NeoFOAM/pull/340)
 - Add an AI case-fill agent (`neofoam agent fill`) [#340](https://github.com/exasim-project/NeoFOAM/pull/340)
 - Add an MCP server for case setup (`neofoam mcp serve`) [#340](https://github.com/exasim-project/NeoFOAM/pull/340)
 - Require Python >=3.10 [#340](https://github.com/exasim-project/NeoFOAM/pull/340)
+- Add opt-in OpenTelemetry tracing for solver operations and init steps: per-rank JSONL span export, Perfetto trace export, and a built-in summary plot; enabled through a `telemetry` sub-dict in `system/controlDict` [#352](https://github.com/exasim-project/NeoFOAM/pull/352)
 
 ## Development
 - Update submodule regularly by dependabot [#209](https://github.com/exasim-project/NeoFOAM/pull/209)
@@ -36,6 +38,10 @@
 - Fix spurious bad_any_cast errors when reading fixedValue boundaries [#194](https://github.com/exasim-project/NeoFOAM/pull/194)
 - Distributed/restart robustness: preserve OpenFOAM BC types and promote vector BC components on read for restart; default the smoothSolver preconditioner to diagonal (avoids a ParIc FPE on the non-symmetric momentum matrix) [#310](https://github.com/exasim-project/NeoFOAM/pull/310)
 - Build the Python bindings (`_neon`, `neofoam_bindings`) with nanobind `NB_SHARED` so they share one nanobind runtime with pybFoam — fixes cross-module type exchange (e.g. `create_adapter_run_time` rejecting pybFoam's `Foam::Time` in CI, where the static-nanobind modules got isolated type registries) [#348](https://github.com/exasim-project/NeoFOAM/pull/348)
+- Validate the turbulence model before the first solve (`turbulence->validate()` / `correctNut`) in incompressibleFluid and the plain pybFoam port, so `nut` is initialised from `k`/`epsilon` instead of the `0/nut` placeholder — the framework is now bit-identical to native `pimpleFoam` on pitzDaily (requires pybFoam>=0.4.6, which binds `incompressibleTurbulenceModel::validate`) [#352](https://github.com/exasim-project/NeoFOAM/pull/352)
+- Fix the incompressibleFluid `-parallel` path: keep the `argList` (and the MPI session it owns) alive for the whole run so MPI is not finalised mid-solve; the framework now matches native `pimpleFoam -parallel` [#352](https://github.com/exasim-project/NeoFOAM/pull/352)
+- Add missing `<field>Final` linear-solver entries (`sFinal`, `UFinal`, `pFinal`) to the passive-scalar tutorial case and the `per_model_fvSolution.yaml` example so the documentation gallery builds [#352](https://github.com/exasim-project/NeoFOAM/pull/352)
+- Add the `incompressibleVoF` solver (interFoam-style VoF on the SolverSpec/ModelSpec framework) with a runtime-switchable phase-fraction advection family: `MULES` (algebraic, default) and `isoAdvector` (geometric, interIsoFoam), selected via an `advectionScheme` key in `system/fvSolution`; both bitwise-parity-verified on damBreak against native interFoam / interIsoFoam [#354](https://github.com/exasim-project/NeoFOAM/pull/354)
 
 # Version 0.2.0 (2025.12.01)
 - Use NeoN logging functionality [#144](https://github.com/exasim-project/NeoFOAM/pull/144)
