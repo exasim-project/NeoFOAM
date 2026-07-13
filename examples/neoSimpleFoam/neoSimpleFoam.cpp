@@ -13,6 +13,7 @@ Description
 #include "NeoN/NeoN.hpp"
 
 #include "NeoFOAM/NeoFOAM.hpp"
+#include "NeoFOAM/compatibility/fvSolution.hpp"
 
 #include "fvCFD.H"
 #include "simpleControl.H"
@@ -28,25 +29,6 @@ namespace fvc = Foam::fvc;
 namespace dsl = NeoN::dsl;
 namespace fvcc = NeoN::finiteVolume::cellCentred;
 namespace nf = NeoFOAM;
-
-namespace
-{
-
-// Returns the field under-relaxation factor for fieldName from
-// fvSolution.relaxationFactors.fields, or 1.0 if the entry is absent.
-NeoN::scalar
-readFieldRelaxationFactor(const NeoN::Dictionary& fvSolutionDict, const std::string& fieldName)
-{
-    if (!fvSolutionDict.contains("relaxationFactors")) return NeoN::scalar(1);
-    const auto& rf = fvSolutionDict.subDict("relaxationFactors");
-    if (!rf.contains("fields")) return NeoN::scalar(1);
-    const auto& fields = rf.subDict("fields");
-    if (!fields.contains(fieldName)) return NeoN::scalar(1);
-    if (fields.isType<int>(fieldName)) return NeoN::scalar(fields.get<int>(fieldName));
-    return fields.get<NeoN::scalar>(fieldName);
-}
-
-} // namespace
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -167,7 +149,8 @@ int main(int argc, char* argv[])
                 NeoN::dsl::applyFieldRelaxation(
                     p,
                     pPrev,
-                    readFieldRelaxationFactor(rt.fvSolutionDict, "p")
+                    nf::lookupFieldRelaxation(rt.fvSolutionDict, "p", false)
+                        .value_or(NeoN::scalar(1))
                 );
                 p.correctBoundaryConditions();
 
