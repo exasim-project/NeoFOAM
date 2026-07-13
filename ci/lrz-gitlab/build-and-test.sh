@@ -179,7 +179,7 @@ if [[ "$SKIP_SIMPLE_SMOKETEST" != "true" ]]; then
         -decomposeParDict system/decomposeParDict.6 > log.potentialFoam 2>&1
     foamDictionary -entry endTime -set 5 system/controlDict
     foamDictionary -entry executor -set GPU system/controlDict
-    if ! mpirun -np 6 "../../build/$PRESET/bin/neoSimpleFoam" -parallel \
+    if ! mpirun -np 6 "../../../build/$PRESET/bin/neoSimpleFoam" -parallel \
             -decomposeParDict system/decomposeParDict.6 > log.neoSimpleFoam 2>&1; then
         cat log.neoSimpleFoam; exit 1
     fi
