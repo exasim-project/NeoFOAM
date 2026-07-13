@@ -178,10 +178,19 @@ if [[ "$SKIP_SIMPLE_SMOKETEST" != "true" ]]; then
     mpirun -np 6 potentialFoam -parallel -writephi \
         -decomposeParDict system/decomposeParDict.6 > log.potentialFoam 2>&1
     foamDictionary -entry endTime -set 5 system/controlDict
-    foamDictionary -entry executor -set GPU system/controlDict
-    if ! mpirun -np 6 "../../../build/$PRESET/bin/neoSimpleFoam" -parallel \
-            -decomposeParDict system/decomposeParDict.6 > log.neoSimpleFoam 2>&1; then
-        cat log.neoSimpleFoam; exit 1
+    # Ginkgo DPC++ backend lacks build_mapping for distributed solvers; run serial on Intel PVC
+    if [[ "${GPU_VENDOR:-}" == "intel" ]]; then
+        reconstructPar > log.reconstructPar 2>&1
+        if ! "../../../build/$PRESET/bin/neoSimpleFoam" \
+                -executor GPU > log.neoSimpleFoam 2>&1; then
+            cat log.neoSimpleFoam; exit 1
+        fi
+    else
+        if ! mpirun -np 6 "../../../build/$PRESET/bin/neoSimpleFoam" -parallel \
+                -executor GPU \
+                -decomposeParDict system/decomposeParDict.6 > log.neoSimpleFoam 2>&1; then
+            cat log.neoSimpleFoam; exit 1
+        fi
     fi
     popd >/dev/null
 else
