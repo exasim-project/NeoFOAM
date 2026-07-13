@@ -68,5 +68,5 @@ def test_config_schema_resource_returns_schema() -> None:
     payload = _resource_json(
         "neofoam://incompressibleFluid/config/ControlDictConfig/schema"
     )
-    assert payload["name"] == "ControlDictConfig"
+    assert payload["name"] == "control_dict_config"
     assert "properties" in payload["json_schema"]

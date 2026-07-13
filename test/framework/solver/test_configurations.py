@@ -256,6 +256,7 @@ def test_incompressible_fluid_boussinesq_label_in_catalog() -> None:
     assert bouss.label == "Buoyancy (Boussinesq)"
     assert {c.__name__ for c in bouss.dicts} == {
         "BoussinesqConfig",
+        "GravityConfig",
         "boussinesq_fvSchemes",
         "boussinesq_fvSolution",
     }

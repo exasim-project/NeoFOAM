@@ -251,6 +251,31 @@ def test_fill_case_no_llm_produces_a_runnable_case(tmp_path: Path) -> None:
     assert len(time_dirs) >= 2, f"only saw time dirs {time_dirs}"
 
 
+def test_fill_case_rejects_a_missing_source_before_calling_the_agent(
+    tmp_path: Path,
+) -> None:
+    """A missing ``source_case`` raises before any agent is built or run.
+
+    Ports the guard the removed MCP ``fill_case`` tool carried (finding M4): a
+    contentless prompt must never burn an LLM API call. The recording agent flips
+    a flag on construction/run — it must stay unset.
+    """
+
+    class _RecordingAgent:
+        def __init__(self) -> None:
+            self.called = False
+
+        def run_sync(self, prompt: str) -> object:
+            self.called = True
+            raise AssertionError("agent.run_sync must not be reached")
+
+    agent = _RecordingAgent()
+    missing = tmp_path / "no_such_source"
+    with pytest.raises(ValueError, match="source_case"):
+        fill_case(missing, tmp_path / "target", agent=agent, copy_static=False)
+    assert agent.called is False
+
+
 def test_cli_agent_fill_no_llm(tmp_path: Path) -> None:
     """``neofoam agent fill --no-llm`` writes the configs end-to-end."""
     import typer.testing

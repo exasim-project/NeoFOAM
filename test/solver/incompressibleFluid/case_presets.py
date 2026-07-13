@@ -65,6 +65,7 @@ def lid_driven_cavity(
                 "grad(U)": "Gauss linear",
                 "grad(p)": "Gauss linear",
                 "grad(p_rgh)": "Gauss linear",
+                "grad(rhok)": "Gauss linear",
             },
             "laplacianSchemes": {
                 "default": "Gauss linear corrected",

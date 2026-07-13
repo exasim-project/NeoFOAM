@@ -52,7 +52,14 @@ def resolve_tools(tools: List[ToolSpec], cfg: PreprocessConfig) -> List[ToolRunt
     return runtimes
 
 
-def tool_graph_steps(runtimes: List[ToolRuntime]) -> List[InitStep]:
+#: Step name of the injected disk-read mesh source (standalone pipelines only).
+DISK_MESH_STEP = "_disk_mesh"
+
+
+def tool_graph_steps(
+    runtimes: List[ToolRuntime],
+    mesh_source: Optional[Callable[[dict[str, Any]], Any]] = None,
+) -> List[InitStep]:
     """Wire each tool's build step into the init DAG from its ``depends_on``.
 
     Each runtime becomes an ``InitStep`` whose ``depends_on`` is ``_foam_time`` plus
@@ -64,6 +71,13 @@ def tool_graph_steps(runtimes: List[ToolRuntime]) -> List[InitStep]:
     A declared dependency naming a tool not in the file (or a cycle) is left for the
     existing DAG validation to reject with ``InitializationGraphError``. Returns ``[]``
     for an empty pipeline.
+
+    ``mesh_source`` (standalone runners only): a mesh-consuming tool with NO
+    declared dependency — e.g. a single-tool snappyHexMesh pipeline resuming
+    from a mesh already on disk — gets ``_prev_mesh`` from this initializer
+    (emitted once as the ``_disk_mesh`` step). Without a ``mesh_source`` such a
+    pipeline is rejected with a clear error. The solver path passes nothing:
+    a full pipeline starts at a mesh-creating tool.
     """
     if not runtimes:
         return []
@@ -72,7 +86,22 @@ def tool_graph_steps(runtimes: List[ToolRuntime]) -> List[InitStep]:
     for rt in runtimes:
         depended.update(rt.depends_on)
 
+    needs_disk_mesh = [
+        rt for rt in runtimes if not rt.depends_on and rt.spec.consumes_mesh
+    ]
+    if needs_disk_mesh and mesh_source is None:
+        names = ", ".join(rt.spec.name for rt in needs_disk_mesh)
+        raise ValueError(
+            f"preprocess tool(s) [{names}] consume a mesh but declare no "
+            f"depends_on and no mesh source is available — either add a "
+            f"depends_on on a mesh-creating tool or run through a caller that "
+            f"provides a disk-read mesh (neofoam preprocess)"
+        )
+
     steps: List[InitStep] = []
+    if needs_disk_mesh and mesh_source is not None:
+        steps.append(lazy(DISK_MESH_STEP, mesh_source, depends_on=["_foam_time"]))
+
     for rt in runtimes:
         built = rt.run_build()
         if not built:
@@ -90,8 +119,15 @@ def tool_graph_steps(runtimes: List[ToolRuntime]) -> List[InitStep]:
                 f"{len(rt.depends_on)} dependencies [{dep_names}]; mesh threading "
                 f"is single-predecessor by design — declare at most one depends_on"
             )
-        # Exactly one declared dependency → thread its output mesh as _prev_mesh.
-        mk = f"preprocess.{rt.depends_on[0]}" if len(rt.depends_on) == 1 else None
+        # Exactly one declared dependency → thread its output mesh as _prev_mesh;
+        # a dependency-less mesh consumer threads the injected disk-read mesh.
+        if len(rt.depends_on) == 1:
+            mk: Optional[str] = f"preprocess.{rt.depends_on[0]}"
+        elif rt.spec.consumes_mesh:
+            mk = DISK_MESH_STEP
+            deps = [*deps, DISK_MESH_STEP]
+        else:
+            mk = None
 
         def chained(
             ctx: dict[str, Any],

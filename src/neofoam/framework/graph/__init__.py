@@ -34,6 +34,9 @@ The package exposes its public symbols across five modules:
   the two domain exceptions the resolver can raise.
 - :func:`dependency_dag`, :func:`digraph_to_pyvis_html` — compose
   per-domain DAGs and render them to an interactive HTML page.
+- :func:`format_digraph`, :func:`digraph_to_dot`,
+  :func:`write_digraph` — render any annotated ``DiGraph`` as a numbered
+  text report or Graphviz DOT, and write it (format picked by suffix).
 
 See :doc:`/explanation/operations-and-the-dag` for the design
 rationale and where the resolver fits into the solver lifecycle.
@@ -51,7 +54,15 @@ from .validation import (
     build_dependency_digraph,
     validate_dependency_graph,
 )
-from .visualization import dependency_dag, digraph_to_pyvis_html
+from .visualization import (
+    dependency_dag,
+    digraph_to_dot,
+    digraph_to_pyvis_html,
+    format_digraph,
+    operation_order,
+    operations_dag,
+    write_digraph,
+)
 
 __all__ = [
     "GraphValidationReport",
@@ -65,4 +76,9 @@ __all__ = [
     "dependency_dag",
     "validate_dependency_graph",
     "digraph_to_pyvis_html",
+    "digraph_to_dot",
+    "format_digraph",
+    "operation_order",
+    "operations_dag",
+    "write_digraph",
 ]

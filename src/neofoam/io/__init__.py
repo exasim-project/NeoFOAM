@@ -24,6 +24,24 @@ from neofoam.io.input_validation import validate_models
 from neofoam.io.scaffold import collect_config_classes, save_configs
 from neofoam.io.write_configs import write_configs
 from neofoam.io.pydantic_schema import default_values, rjsf_uischema, slice_schema
+from neofoam.io.schema import (
+    ConfigInfo,
+    ConfigSchema,
+    ModelSummary,
+    ToolInfo,
+    config_schema,
+    list_configs,
+    model_catalog,
+    tool_catalog,
+)
+from neofoam.io.dictread import (
+    Unreadable,
+    Value,
+    read_entry,
+    read_keys,
+    read_section,
+    read_toplevel,
+)
 
 __all__ = [
     # IO metadata
@@ -54,4 +72,20 @@ __all__ = [
     "default_values",
     "rjsf_uischema",
     "slice_schema",
+    # Config-introspection surface
+    "ConfigInfo",
+    "ConfigSchema",
+    "ModelSummary",
+    "ToolInfo",
+    "config_schema",
+    "list_configs",
+    "model_catalog",
+    "tool_catalog",
+    # Typed OpenFOAM-dict leaf reader
+    "Value",
+    "Unreadable",
+    "read_section",
+    "read_entry",
+    "read_keys",
+    "read_toplevel",
 ]

@@ -234,14 +234,17 @@ def build_case_agent(
     model_name: str = "claude-haiku-4-5",
     system_prompt: str = DEFAULT_CASE_SYSTEM_PROMPT,
     output_model_name: str = "CaseSpec",
+    output_type: Optional[type[BaseModel]] = None,
     **agent_kwargs: Any,
 ) -> Any:
     """Build a pydantic-ai ``Agent`` returning a filled aggregate ``CaseSpec``.
 
     By default uses the Anthropic backend with ``claude-haiku-4-5``; pass a
     pre-built ``model`` to use the local-Ollama scaffold from
-    :mod:`neofoam.agent.agent` instead. Extra ``agent_kwargs`` are forwarded
-    to :class:`pydantic_ai.Agent`.
+    :mod:`neofoam.agent.agent` instead. Pass ``output_type`` to make the agent
+    emit that model directly (e.g. a custom aggregate) instead of the synthesised
+    per-solver ``CaseSpec``. Extra ``agent_kwargs`` are forwarded to
+    :class:`pydantic_ai.Agent`.
     """
     from pydantic_ai import Agent
 
@@ -250,10 +253,12 @@ def build_case_agent(
 
         model = AnthropicModel(model_name)
 
-    output_type = build_case_output_model(solver=solver, model_name=output_model_name)
+    out_type = output_type or build_case_output_model(
+        solver=solver, model_name=output_model_name
+    )
     return Agent(
         model,
-        output_type=output_type,
+        output_type=out_type,
         system_prompt=system_prompt,
         **agent_kwargs,
     )
@@ -294,10 +299,19 @@ def fill_case(
       tests and by the CLI's ``--no-llm`` mode.
 
     Returns the validated aggregate that was saved.
+
+    A missing/invalid ``source_case`` raises :class:`ValueError` **before** any
+    static-asset copy or agent call, so a bad source never burns an LLM API call on
+    a contentless prompt (the guard the removed MCP ``fill_case`` tool used to carry).
     """
     solver = solver or _solver()
     source_case = Path(source_case)
     target_case = Path(target_case)
+
+    if not source_case.is_dir():
+        raise ValueError(
+            f"source_case does not exist or is not a directory: {str(source_case)!r}"
+        )
 
     if copy_static:
         _copy_static_assets(source_case, target_case)

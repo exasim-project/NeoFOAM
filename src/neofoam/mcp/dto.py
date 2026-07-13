@@ -13,36 +13,37 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from neofoam.framework.validation import (
+    Finding as FindingDTO,
+    ValidationReport as ValidationReportDTO,
+)
+from neofoam.io.schema import (
+    ConfigInfo as ConfigInfoDTO,
+    ConfigSchema as ConfigSchemaDTO,
+    ModelSummary as ModelEntryDTO,
+    ToolInfo as ToolInfoDTO,
+)
 
-class ConfigInfoDTO(BaseModel):
+__all__ = [
+    "ConfigInfoDTO",
+    "ConfigSchemaDTO",
+    "ModelEntryDTO",
+    "ToolInfoDTO",
+    "PatchDTO",
+    "FindingDTO",
+    "ValidationReportDTO",
+    "CaseTextDTO",
+    "CaseSpecDTO",
+    "SaveResultDTO",
+]
+
+
+class PatchDTO(BaseModel):
+    """One boundary patch of a staged case (from its geometry manifest)."""
+
     name: str
-    cls_name: str
-    file: str | None = None
-
-
-class ModelEntryDTO(BaseModel):
-    name: str
-    label: str
-    required: bool
-    dicts: list[str]
-    fields: list[str]
-
-    @classmethod
-    def from_entry(cls, entry: Any) -> "ModelEntryDTO":
-        return cls(
-            name=entry.name,
-            label=entry.label,
-            required=entry.required,
-            dicts=[c.__name__ for c in entry.dicts],
-            fields=[c.__name__ for c in entry.fields],
-        )
-
-
-class ConfigSchemaDTO(BaseModel):
-    name: str
-    json_schema: dict[str, Any]
-    ui_schema: dict[str, Any]
-    defaults: dict[str, Any]
+    role: str
+    stl: str | None = None
 
 
 class CaseTextDTO(BaseModel):

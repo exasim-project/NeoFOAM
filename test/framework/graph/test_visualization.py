@@ -6,7 +6,17 @@
 
 from pathlib import Path
 
-from neofoam.framework.graph import dependency_dag, digraph_to_pyvis_html
+import networkx as nx
+
+from neofoam.framework.graph import (
+    dependency_dag,
+    digraph_to_dot,
+    digraph_to_pyvis_html,
+    format_digraph,
+    operation_order,
+    operations_dag,
+    write_digraph,
+)
 from neofoam.framework.graph.visualization import (
     _build_dag,
     _build_global_dag,
@@ -31,10 +41,11 @@ def _meta(name, depends_on=None, operation_number=None, shape="box", color="ligh
     )
 
 
-def _op(name, depends_on=None):
+def _op(name, depends_on=None, sub_operations=None):
     return Operation(
         func=SequentialOp(lambda ctx: None),
         metadata=OperationMetadata(op_name=name, depends_on=depends_on or []),
+        sub_operations=sub_operations or [],
     )
 
 
@@ -107,6 +118,68 @@ def test_compute_steps_order_returns_sorted_operations():
     assert sorted_ops.ops[2] is op_c
 
 
+def _annotated_diamond() -> nx.DiGraph:
+    """A diamond with an external dependency ``root`` that is not a node.
+
+    Steps ``a``/``b`` depend on ``root`` (never declared), ``c`` depends on both.
+    ``b`` is flagged for writing.
+    """
+    graph = nx.DiGraph()
+    graph.add_node("a", category="fields", write=False, depends_on=["root"])
+    graph.add_node("b", category="models", write=True, depends_on=["root"])
+    graph.add_node("c", category="fields", write=False, depends_on=["a", "b"])
+    for source, target in [("root", "a"), ("root", "b"), ("a", "c"), ("b", "c")]:
+        graph.add_edge(source, target)
+    return graph
+
+
+def test_digraph_to_dot_has_nodes_and_edges():
+    dot = digraph_to_dot(_annotated_diamond(), order=["a", "b", "c"], name="init")
+
+    assert dot.startswith("digraph init {")
+    assert dot.rstrip().endswith("}")
+    # edges are drawn dependency -> node, including the external ``root``
+    assert '"root" -> "a";' in dot
+    assert '"a" -> "c";' in dot
+    # an ordered node's label carries its execution index and category, with a
+    # real DOT line-break (single backslash-n), not an escaped literal ``\\n``
+    assert 'label="1: a\\n[fields]"' in dot
+    assert "\\\\n" not in dot
+
+
+def test_format_digraph_numbers_in_order_and_omits_externals():
+    text = format_digraph(
+        _annotated_diamond(),
+        order=["a", "b", "c"],
+        title="my dag",
+    )
+    lines = [ln for ln in text.splitlines() if ln and not ln.startswith("#")]
+
+    assert "# my dag" in text
+    assert lines[0].startswith("   1. a")
+    # dependencies come from the declared ``depends_on`` attribute
+    assert "deps: a, b" in text
+    # the write flag is surfaced for step ``b``
+    assert "*write" in text
+    # only the three declared steps are numbered; the external ``root`` (which
+    # still appears as a dependency) is not listed as a step of its own
+    assert len(lines) == 3
+    assert not any(ln.split(".", 1)[1].strip().startswith("root") for ln in lines)
+
+
+def test_write_digraph_picks_format_from_suffix(tmp_path: Path):
+    graph = _annotated_diamond()
+    order = ["a", "b", "c"]
+
+    txt = write_digraph(graph, tmp_path / "dag.txt", order=order, title="t")
+    dot = write_digraph(graph, tmp_path / "dag.dot", order=order)
+    html = write_digraph(graph, tmp_path / "dag.html", order=order)
+
+    assert txt.read_text().startswith("# t")
+    assert dot.read_text().startswith("digraph dag {")
+    assert "<html" in html.read_text().lower()
+
+
 def test_digraph_to_pyvis_html_writes_file(tmp_path: Path):
     node1 = _meta("node1", operation_number=OperationNumber("1.0.0"), color="red")
     node2 = _meta(
@@ -127,3 +200,50 @@ def test_digraph_to_pyvis_html_writes_file(tmp_path: Path):
     assert '"from": "node1"' in contents and '"to": "node2"' in contents
     # Node labels are rendered so both operations are identifiable in the graph.
     assert '"label": "node1"' in contents and '"label": "node2"' in contents
+
+
+def test_operations_dag_captures_nesting_and_dependencies():
+    momentum = _op("momentum")
+    continuity = _op("continuity", depends_on=["momentum"])
+    inner = _op("inner_loop", sub_operations=[momentum, continuity])
+    time_loop = _op("time_loop", sub_operations=[inner])
+    operations = OperationCollection(operations=[time_loop])
+
+    graph = operations_dag(operations)
+
+    assert set(graph.nodes) == {"time_loop", "inner_loop", "momentum", "continuity"}
+    # containment edges: parent -> each direct child
+    assert graph.has_edge("time_loop", "inner_loop")
+    assert graph.has_edge("inner_loop", "momentum")
+    assert graph.has_edge("inner_loop", "continuity")
+    # dependency edge from ``depends_on``
+    assert graph.has_edge("momentum", "continuity")
+
+
+def test_operation_order_is_preorder_walk():
+    momentum = _op("momentum")
+    continuity = _op("continuity", depends_on=["momentum"])
+    inner = _op("inner_loop", sub_operations=[momentum, continuity])
+    time_loop = _op("time_loop", sub_operations=[inner, _op("write_output")])
+    operations = OperationCollection(operations=[time_loop])
+
+    # depth-first pre-order: a parent precedes its children, siblings in order
+    assert operation_order(operations) == [
+        "time_loop",
+        "inner_loop",
+        "momentum",
+        "continuity",
+        "write_output",
+    ]
+
+
+def test_operations_dag_without_nesting_drops_containment_edges():
+    child = _op("child")
+    parent = _op("parent", sub_operations=[child])
+    operations = OperationCollection(operations=[parent])
+
+    graph = operations_dag(operations, include_nesting=False)
+
+    assert set(graph.nodes) == {"parent", "child"}
+    # no containment edge when nesting is disabled
+    assert not graph.has_edge("parent", "child")
