@@ -170,7 +170,7 @@ if [[ "$SKIP_SIMPLE_SMOKETEST" != "true" ]]; then
     surfaceFeatureExtract > log.surfaceFeatureExtract 2>&1
     blockMesh > log.blockMesh 2>&1
     decomposePar -decomposeParDict system/decomposeParDict.6 > log.decomposePar 2>&1
-    restore0Dir -processor
+    for proc in processor*/; do rm -rf "${proc}0" && cp -r 0.orig "${proc}0"; done
     mpirun -np 6 snappyHexMesh -parallel -overwrite \
         -decomposeParDict system/decomposeParDict.6 > log.snappyHexMesh 2>&1
     mpirun -np 6 topoSet -parallel \
