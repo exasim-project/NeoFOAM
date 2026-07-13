@@ -14,7 +14,7 @@ Companion to ``test_damBreak_isoAdvector_comparison.py`` (the isoAdvector
 scheme vs interIsoFoam); the shared body lives in ``comparison_helpers``.
 """
 
-from incompressibleVoF.comparison_helpers import run_dambreak_comparison
+from .comparison_helpers import run_dambreak_comparison
 
 
 def test_damBreak_solver_comparison():

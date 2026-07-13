@@ -10,13 +10,13 @@ the bindings end to end.
 """
 
 import os
-import shutil
 import types
 from pathlib import Path
 
 import pytest
 
 import neofoam.tools.run as run_mod
+from neofoam.casebuild import from_template
 from neofoam.tools import block_mesh, check_mesh, snappy_hex_mesh
 from neofoam.tools.block_mesh import BlockMeshStep
 from neofoam.tools.check_mesh import CheckMeshStep
@@ -100,12 +100,11 @@ def test_run_preprocess_runs_dag_without_solver(
 
 
 def test_run_preprocess_real(tmp_path: Path) -> None:
-    case = tmp_path / "case"
-    shutil.copytree(CASE, case)
+    case_dir = from_template(CASE).build_at(tmp_path / "case")
     cwd = Path.cwd()
-    os.chdir(case)
+    os.chdir(case_dir.path)
     try:
-        ctx = run_preprocess(["preprocess", "-case", str(case)])
+        ctx = run_preprocess(["preprocess", "-case", str(case_dir.path)])
         assert ctx.mesh.nCells() > 0
         assert "U" not in ctx.fields
     finally:

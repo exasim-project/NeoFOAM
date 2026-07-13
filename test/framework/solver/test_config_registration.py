@@ -14,9 +14,7 @@ Locks in:
 """
 
 from typing import Annotated, Any, Optional
-import dataclasses
 
-import pytest
 
 from neofoam.framework.context import Context
 from neofoam.framework.initialization import Depends
@@ -27,7 +25,6 @@ from neofoam.framework.initialization.staged.spec import (
 )
 from neofoam.framework.operations import Operations, StepBuilder
 from neofoam.framework.solver import Solver
-from neofoam.framework.solver.runtime import SolverRuntime
 from neofoam.io import BaseConfig
 
 
@@ -35,10 +32,12 @@ class DummySolverConfig(BaseConfig):
     max_iter: int = 10
 
 
-def test_solver_runtime_has_config_field() -> None:
-    """SolverRuntime exposes a ``config`` field (default None)."""
-    fields = {f.name for f in dataclasses.fields(SolverRuntime)}
-    assert "config" in fields
+def test_solver_runtime_config_defaults_to_none_and_is_assignable() -> None:
+    """A bare SolverRuntime carries ``config`` (None until populated) and holds it."""
+    runtime = Solver("Bare").instantiate()
+    assert runtime.config is None
+    runtime.config = DummySolverConfig(max_iter=3)
+    assert runtime.config.max_iter == 3
 
 
 def test_solver_spec_config_registers_class() -> None:
@@ -131,7 +130,3 @@ def test_runtime_config_stays_none_when_no_class_registered() -> None:
     runtime = spec.instantiate()
     runtime.initialize()
     assert runtime.config is None
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])

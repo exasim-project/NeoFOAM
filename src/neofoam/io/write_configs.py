@@ -24,7 +24,8 @@ from typing import Any, Iterable, Union
 
 from pydantic import BaseModel
 
-from neofoam.io.strategies.openfoam_strategy import OpenFOAMStrategy, foam_header
+from neofoam.io.dictfile import _write_payload
+from neofoam.io.strategies.openfoam_strategy import OpenFOAMStrategy
 
 __all__ = ["write_configs"]
 
@@ -104,23 +105,15 @@ def write_configs(
 
 
 def _write_merged_payload(strategy: Any, path: Path, data: dict[str, Any]) -> None:
-    """Strategy-aware emit for a pre-merged dict.
+    """Emit a pre-merged (whole-file) payload through the shared write engine.
 
-    Mirrors the file/dir handling in the strategy's own ``write`` but skips the
-    per-instance ``model_dump`` (the caller already merged in Python). Reuses
-    ``OpenFOAMStrategy._write`` so encoding matches single-instance writes, and
-    injects a ``FoamFile`` header for headerless dict configs.
+    The caller already merged co-owners in Python, so this hands the payload to
+    :func:`neofoam.io.dictfile._write_payload` -- the same engine behind
+    ``BaseConfig.save`` -- which injects a ``FoamFile`` header for header-less
+    dict configs.
     """
     if isinstance(strategy, OpenFOAMStrategy):
-        import pybFoam as pyf  # lazy: keep ``neofoam.io`` import light
-
-        path.parent.mkdir(parents=True, exist_ok=True)
-        root = pyf.dictionary.read(str(path)) if path.exists() else pyf.dictionary()
-        root.clear()
-        if "FoamFile" not in data:
-            strategy._write(root, {"FoamFile": foam_header(path)})
-        strategy._write(root, data)
-        root.write(str(path))
+        _write_payload(path, data, (), "openfoam")
         return
     raise NotImplementedError(
         f"write_configs: no merged-write path for {type(strategy).__name__}"

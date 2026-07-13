@@ -2,6 +2,8 @@
 #
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
+"""Tests for dependency-graph validation (duplicates, missing deps, cycles)."""
+
 from neofoam.framework.graph import (
     build_dependency_digraph,
     validate_dependency_graph,

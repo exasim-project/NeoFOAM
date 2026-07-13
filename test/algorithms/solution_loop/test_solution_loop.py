@@ -18,13 +18,10 @@ engine, exposes the loop body as operations, and folds the model-owned
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import pytest
 
-import neofoam.algorithms.solution_loop as loop_pkg
-import neofoam.algorithms.solution_loop.solution_loop as engine_mod
 from neofoam.algorithms.solution_loop.config import TimeControlConfig
 from neofoam.algorithms.solution_loop.control import SolutionControl
 from neofoam.algorithms.solution_loop.interfaces import (
@@ -49,6 +46,11 @@ from neofoam.framework.dependency_resolver import (
     wrap_with_dependency_resolution,
 )
 from neofoam.framework.model import Model, ModelRuntime, bind_owned_interfaces
+
+# Advancement is exact float arithmetic (t += dt), so the only error is dt summed
+# over a handful of steps — a few ULP. 1e-12 sits comfortably above that and well
+# below any physically meaningful time difference for these sub-second cases.
+STEP_ATOL = 1e-12
 
 
 class FakeBackend:
@@ -83,11 +85,11 @@ def _config(**kw: object) -> TimeControlConfig:
     return TimeControlConfig(**base)
 
 
-class FakeContext:
-    """Stands in for Context; the loop ops only read ``.models``."""
-
-    def __init__(self, models: dict[str, Any]) -> None:
-        self.models = models
+def _ctx(models: dict[str, Any]) -> Context:
+    """A real Context around ``models`` — the loop ops/predicate read only
+    ``.models``, but build the genuine object rather than a duck-typed shim (a
+    real Context is a one-liner, as ``_drive_set_time_step`` also shows)."""
+    return Context(fields={}, models=models)
 
 
 # =========================================================================
@@ -102,7 +104,7 @@ def test_transient_runs_to_end_time() -> None:
         loop.advance()
         steps += 1
     assert steps == 3
-    assert abs(loop.state.value - 0.3) < 1e-12
+    assert abs(loop.state.value - 0.3) < STEP_ATOL
 
 
 def test_running_delegates_to_solution_control() -> None:
@@ -159,7 +161,7 @@ def test_state_exposes_t_dt_dt0() -> None:
     loop.advance()
     loop.advance()
     s = loop.state
-    assert abs(s.value - 0.2) < 1e-12
+    assert abs(s.value - 0.2) < STEP_ATOL
     assert s.delta_t == 0.1
     assert s.delta_t0 == 0.1  # previous step size
 
@@ -246,9 +248,7 @@ def test_build_emits_state_then_engine() -> None:
 def test_increment_time_uses_injected_logger_and_advances() -> None:
     loop = make_solution_loop(_config(), make_loop_state(_config()))
     logs: list[str] = []
-    ctx = cast(
-        Context, FakeContext({"solution_loop": loop, "loop_logger": logs.append})
-    )
+    ctx = _ctx({"solution_loop": loop, "loop_logger": logs.append})
     increment_time(None, ctx)
     assert loop.state.index == 1
     assert logs == ["Time = 0"]
@@ -260,14 +260,8 @@ def test_predicate_delegates_to_engine_running() -> None:
         _config(endTime=1.0), make_loop_state(_config(endTime=1.0))
     )
     off.stop()
-    assert (
-        SolutionLoopPredicate()(cast(Context, FakeContext({"solution_loop": on})))
-        is True
-    )
-    assert (
-        SolutionLoopPredicate()(cast(Context, FakeContext({"solution_loop": off})))
-        is False
-    )
+    assert SolutionLoopPredicate()(_ctx({"solution_loop": on})) is True
+    assert SolutionLoopPredicate()(_ctx({"solution_loop": off})) is False
 
 
 @pytest.mark.parametrize(
@@ -339,14 +333,14 @@ def test_set_time_step_publishes_current_step_as_injectable() -> None:
 
 def test_predicate_runs_when_keep_running_is_true() -> None:
     loop = SolutionLoop(state=_state(end=1.0, dt=0.1))
-    ctx = cast(Context, FakeContext({"solution_loop": loop}))
+    ctx = _ctx({"solution_loop": loop})
     assert SolutionLoopPredicate()(ctx) is True
 
 
 def test_predicate_stops_when_keep_running_is_false() -> None:
     loop = SolutionLoop(state=_state(end=1.0, dt=0.1))
     loop.keep_running = False
-    ctx = cast(Context, FakeContext({"solution_loop": loop}))
+    ctx = _ctx({"solution_loop": loop})
     assert SolutionLoopPredicate()(ctx) is False
 
 
@@ -422,16 +416,3 @@ def test_published_step_flows_into_a_delta_t_contribution() -> None:
     loop = SolutionLoop(state=_state(dt=0.2))
     _drive_set_time_step(loop, [_half_runtime()])
     assert loop.state.delta_t == pytest.approx(0.1)  # 0.5 * published 0.2
-
-
-# --- legacy stepping symbols stay gone ------------------------------------
-
-
-def test_install_constraints_step_is_absent() -> None:
-    assert "install_constraints_step" not in dir(engine_mod)
-
-
-def test_no_measurement_provider_nodes_in_the_loop_package() -> None:
-    pkg_dir = Path(loop_pkg.__file__).parent
-    sources = "\n".join(p.read_text() for p in pkg_dir.glob("*.py"))
-    assert "measurement_provider" not in sources

@@ -8,17 +8,16 @@ OF case drives the real bindings against the ``preprocess_case`` fixture.
 """
 
 import os
-import shutil
 import types
 from pathlib import Path
 from typing import Any
 
 import pytest
 
-
-from neofoam.framework.tools import ToolRuntime  # noqa: E402
-from neofoam.tools import snappy_hex_mesh  # noqa: E402
-from neofoam.tools.snappy_hex_mesh import (  # noqa: E402
+from neofoam.casebuild import from_template
+from neofoam.framework.tools import ToolRuntime
+from neofoam.tools import snappy_hex_mesh
+from neofoam.tools.snappy_hex_mesh import (
     SnappyHexMeshStep,
     snappyHexMeshTool,
 )
@@ -62,10 +61,9 @@ def test_snappy_refines_prior_mesh(tmp_path: Path) -> None:
     from pybFoam.meshing import generate_blockmesh, generate_snappy_hex_mesh
 
     assert not (CASE / "constant" / "polyMesh").exists()
-    case = tmp_path / "case"
-    shutil.copytree(CASE, case)
+    case_dir = from_template(CASE).build_at(tmp_path / "case")
     cwd = Path.cwd()
-    os.chdir(case)
+    os.chdir(case_dir.path)
     try:
         time = pyf.Time(pyf.argList(["preprocess"]))
         block_mesh = generate_blockmesh(

@@ -18,7 +18,6 @@ from neofoam.mcp.dto import (
 )
 from neofoam.mcp.tools import ALL_TOOL_NAMES
 
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SOURCE_CASE = REPO_ROOT / "test" / "solver" / "incompressibleFluid" / "val_pitzDaily"
 

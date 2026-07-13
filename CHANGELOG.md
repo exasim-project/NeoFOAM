@@ -29,8 +29,11 @@
 - Add an MCP server for case setup (`neofoam mcp serve`) [#340](https://github.com/exasim-project/NeoFOAM/pull/340)
 - Require Python >=3.10 [#340](https://github.com/exasim-project/NeoFOAM/pull/340)
 - Add opt-in OpenTelemetry tracing for solver operations and init steps: per-rank JSONL span export, Perfetto trace export, and a built-in summary plot; enabled through a `telemetry` sub-dict in `system/controlDict` [#352](https://github.com/exasim-project/NeoFOAM/pull/352)
+- Add `neofoam.casebuild`, a pipe-composed OpenFOAM case builder for tests: `empty`/`from_template` composed with `| block_mesh()/box()/snappy_hex_mesh()/patch()/configs()/unset()` and materialized via `.build_at(dest)` (injectable meshing strategies reuse `neofoam.tools`); adds `CaseDir.read_field` [#349](https://github.com/exasim-project/NeoFOAM/pull/349)
+- Refactor sub-dict IO: introduce `DictFile` and drop `SubdictMixin`/`_foamdict` and the `subdict` strategy [#349](https://github.com/exasim-project/NeoFOAM/pull/349)
 
 ## Development
+- Simplify and standardize the Python `test/` suite to `.claude/TEST_STYLE.md`: migrate solver/tools tests onto the casebuild pipeline, drop pybFoam/OpenFOAM `importorskip` guards (they are hard deps), load real committed case files instead of dict-as-string content, and align `test/framework`, `test/fields`, and `test/algorithms` [#349](https://github.com/exasim-project/NeoFOAM/pull/349)
 - Update submodule regularly by dependabot [#209](https://github.com/exasim-project/NeoFOAM/pull/209)
 - Allow auto grabbing version from submodule without initialization and update the documentation [#210](https://github.com/exasim-project/NeoFOAM/pull/210)
 
