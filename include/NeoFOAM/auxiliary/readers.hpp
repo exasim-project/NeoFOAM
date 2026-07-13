@@ -175,24 +175,24 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
          {
              dict.insert("type", std::string("inletOutlet"));
              NeoN::TokenList tokenList = dict.template get<NeoN::TokenList>("inletValue");
-             if (tokenList.size() > 1)
+             if constexpr (std::is_same<type_primitive_t, NeoN::Vec3>::value)
              {
-                 if constexpr (std::is_same<type_primitive_t, NeoN::Vec3>::value)
+                 NeoN::Vec3 inletValue {};
+                 if (tokenList.size() >= 4)
                  {
-                     NeoN::Vec3 inletValue {};
                      inletValue[0] = detail::tokenAsScalar(tokenList, 1);
                      inletValue[1] = detail::tokenAsScalar(tokenList, 2);
                      inletValue[2] = detail::tokenAsScalar(tokenList, 3);
-                     dict.insert("inletValue", inletValue);
                  }
-                 else
-                 {
-                     dict.insert("inletValue", detail::tokenAsScalar(tokenList, 1));
-                 }
+                 dict.insert("inletValue", inletValue);
              }
              else
              {
-                 dict.insert("inletValue", type_primitive_t {});
+                 dict.insert(
+                     "inletValue",
+                     tokenList.size() >= 2 ? detail::tokenAsScalar(tokenList, 1)
+                                           : type_primitive_t {}
+                 );
              }
          }}
     };
