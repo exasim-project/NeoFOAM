@@ -93,7 +93,7 @@ int main(int argc, char* argv[])
             }
             else
             {
-                UEqn.assemble();
+                UEqn.assembleAndRelax();
             }
 
             // SIMPLE / SIMPLEC pressure-velocity coupling (single pass, no inner PISO loop)
