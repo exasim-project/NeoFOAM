@@ -1,0 +1,166 @@
+\doxysection{NeoN\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::Inlet\+Outlet\texorpdfstring{$<$}{<} Value\+Type \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet}{}\label{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet}\index{NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$@{NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$}}
+
+
+Mixed outflow/inflow BC\+: zero\+Gradient on faces with outward flux, fixed\+Value (inlet\+Value) on faces with inward flux. Mirrors Open\+FOAM\textquotesingle{}s inlet\+Outlet\+Fv\+Patch\+Field.  
+
+
+
+
+{\ttfamily \#include $<$inlet\+Outlet.\+hpp$>$}
+
+Inheritance diagram for NeoN\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::Inlet\+Outlet\texorpdfstring{$<$}{<} Value\+Type \texorpdfstring{$>$}{>}\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet_ae8f68f9076952d0c676ffd46ed986675}{Inlet\+Outlet}} (const Unstructured\+Mesh \&mesh, const Dictionary \&dict, local\+Idx patch\+ID)
+\item 
+void \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet_acf4878ffca6c4faaa04b6486cc1a59c5}{set}} (Field$<$ Value\+Type $>$ \&domain\+Vector) final
+\item 
+void \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet_ab834d1159f283c26473fb4d19ce9f847}{correct\+Boundary\+Condition}} (Field$<$ Value\+Type $>$ \&domain\+Vector) final
+\item 
+void \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet_a94dc84b0d9edb1178e9ac348d5939eb6}{correct\+Boundary\+Condition}} (Field$<$ Value\+Type $>$ \&domain\+Vector, const fvcc\+::\+Boundary\+Context \&ctx) final
+\item 
+std\+::string \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet_a434731117bfef9c474222248b73298ac}{get\+Name}} () const override
+\item 
+std\+::unique\+\_\+ptr$<$ Volume\+Boundary\+Factory$<$ Value\+Type $>$ $>$ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet_a5de9567d2693324b1c1e485362e20cb0}{clone}} () const final
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static std\+::string \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet_a84de7cf422d4f2e3e30e4f21f8777172}{name}} ()
+\item 
+static std\+::string \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet_aed1d34758231d533b17fb1f6222f4b21}{doc}} ()
+\item 
+static std\+::string \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet_a56a51244699633e1a2118e64071b452d}{schema}} ()
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+\subsubsection*{template$<$typename Value\+Type$>$\newline
+class Neo\+N\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::\+Inlet\+Outlet$<$ Value\+Type $>$}
+Mixed outflow/inflow BC\+: zero\+Gradient on faces with outward flux, fixed\+Value (inlet\+Value) on faces with inward flux. Mirrors Open\+FOAM\textquotesingle{}s inlet\+Outlet\+Fv\+Patch\+Field. 
+
+Flow direction is determined from the boundary face velocity\+:
+\begin{DoxyItemize}
+\item For Vec3 fields\+: reads lagged boundary velocity from domain\+Vector.\+boundary\+Data().value().
+\item For scalar fields\+: requires "{}\+U"{} in Boundary\+Context; defaults to zero\+Gradient without it. 
+\end{DoxyItemize}
+
+Definition at line \mbox{\hyperlink{inletOutlet_8hpp_source_l00027}{27}} of file \mbox{\hyperlink{inletOutlet_8hpp_source}{inlet\+Outlet.\+hpp}}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet_ae8f68f9076952d0c676ffd46ed986675}\label{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet_ae8f68f9076952d0c676ffd46ed986675} 
+\index{NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$@{NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$}!InletOutlet@{InletOutlet}}
+\index{InletOutlet@{InletOutlet}!NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$@{NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{InletOutlet()}{InletOutlet()}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet}{Neo\+N\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::\+Inlet\+Outlet}}$<$ Value\+Type $>$\+::\+Inlet\+Outlet (\begin{DoxyParamCaption}\item[{const Unstructured\+Mesh \&}]{mesh,  }\item[{const Dictionary \&}]{dict,  }\item[{local\+Idx}]{patch\+ID }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \mbox{\hyperlink{inletOutlet_8hpp_source_l00036}{36}} of file \mbox{\hyperlink{inletOutlet_8hpp_source}{inlet\+Outlet.\+hpp}}.
+
+
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet_a5de9567d2693324b1c1e485362e20cb0}\label{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet_a5de9567d2693324b1c1e485362e20cb0} 
+\index{NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$@{NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$}!clone@{clone}}
+\index{clone@{clone}!NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$@{NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{clone()}{clone()}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+std\+::unique\+\_\+ptr$<$ Volume\+Boundary\+Factory$<$ Value\+Type $>$ $>$ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet}{Neo\+N\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::\+Inlet\+Outlet}}$<$ Value\+Type $>$\+::clone (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [final]}}
+
+
+
+Definition at line \mbox{\hyperlink{inletOutlet_8hpp_source_l00082}{82}} of file \mbox{\hyperlink{inletOutlet_8hpp_source}{inlet\+Outlet.\+hpp}}.
+
+\Hypertarget{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet_ab834d1159f283c26473fb4d19ce9f847}\label{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet_ab834d1159f283c26473fb4d19ce9f847} 
+\index{NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$@{NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$}!correctBoundaryCondition@{correctBoundaryCondition}}
+\index{correctBoundaryCondition@{correctBoundaryCondition}!NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$@{NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{correctBoundaryCondition()}{correctBoundaryCondition()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+void \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet}{Neo\+N\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::\+Inlet\+Outlet}}$<$ Value\+Type $>$\+::correct\+Boundary\+Condition (\begin{DoxyParamCaption}\item[{Field$<$ Value\+Type $>$ \&}]{domain\+Vector }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [final]}}
+
+
+
+Definition at line \mbox{\hyperlink{inletOutlet_8hpp_source_l00046}{46}} of file \mbox{\hyperlink{inletOutlet_8hpp_source}{inlet\+Outlet.\+hpp}}.
+
+\Hypertarget{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet_a94dc84b0d9edb1178e9ac348d5939eb6}\label{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet_a94dc84b0d9edb1178e9ac348d5939eb6} 
+\index{NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$@{NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$}!correctBoundaryCondition@{correctBoundaryCondition}}
+\index{correctBoundaryCondition@{correctBoundaryCondition}!NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$@{NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{correctBoundaryCondition()}{correctBoundaryCondition()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+void \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet}{Neo\+N\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::\+Inlet\+Outlet}}$<$ Value\+Type $>$\+::correct\+Boundary\+Condition (\begin{DoxyParamCaption}\item[{Field$<$ Value\+Type $>$ \&}]{domain\+Vector,  }\item[{const fvcc\+::\+Boundary\+Context \&}]{ctx }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [final]}}
+
+
+
+Definition at line \mbox{\hyperlink{inletOutlet_8hpp_source_l00059}{59}} of file \mbox{\hyperlink{inletOutlet_8hpp_source}{inlet\+Outlet.\+hpp}}.
+
+\Hypertarget{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet_aed1d34758231d533b17fb1f6222f4b21}\label{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet_aed1d34758231d533b17fb1f6222f4b21} 
+\index{NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$@{NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$}!doc@{doc}}
+\index{doc@{doc}!NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$@{NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{doc()}{doc()}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+static std\+::string \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet}{Neo\+N\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::\+Inlet\+Outlet}}$<$ Value\+Type $>$\+::doc (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Definition at line \mbox{\hyperlink{inletOutlet_8hpp_source_l00075}{75}} of file \mbox{\hyperlink{inletOutlet_8hpp_source}{inlet\+Outlet.\+hpp}}.
+
+\Hypertarget{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet_a434731117bfef9c474222248b73298ac}\label{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet_a434731117bfef9c474222248b73298ac} 
+\index{NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$@{NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$}!getName@{getName}}
+\index{getName@{getName}!NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$@{NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{getName()}{getName()}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+std\+::string \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet}{Neo\+N\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::\+Inlet\+Outlet}}$<$ Value\+Type $>$\+::get\+Name (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}}
+
+
+
+Definition at line \mbox{\hyperlink{inletOutlet_8hpp_source_l00073}{73}} of file \mbox{\hyperlink{inletOutlet_8hpp_source}{inlet\+Outlet.\+hpp}}.
+
+\Hypertarget{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet_a84de7cf422d4f2e3e30e4f21f8777172}\label{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet_a84de7cf422d4f2e3e30e4f21f8777172} 
+\index{NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$@{NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$}!name@{name}}
+\index{name@{name}!NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$@{NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{name()}{name()}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+static std\+::string \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet}{Neo\+N\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::\+Inlet\+Outlet}}$<$ Value\+Type $>$\+::name (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Definition at line \mbox{\hyperlink{inletOutlet_8hpp_source_l00071}{71}} of file \mbox{\hyperlink{inletOutlet_8hpp_source}{inlet\+Outlet.\+hpp}}.
+
+\Hypertarget{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet_a56a51244699633e1a2118e64071b452d}\label{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet_a56a51244699633e1a2118e64071b452d} 
+\index{NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$@{NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$}!schema@{schema}}
+\index{schema@{schema}!NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$@{NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{schema()}{schema()}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+static std\+::string \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet}{Neo\+N\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::\+Inlet\+Outlet}}$<$ Value\+Type $>$\+::schema (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Definition at line \mbox{\hyperlink{inletOutlet_8hpp_source_l00080}{80}} of file \mbox{\hyperlink{inletOutlet_8hpp_source}{inlet\+Outlet.\+hpp}}.
+
+\Hypertarget{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet_acf4878ffca6c4faaa04b6486cc1a59c5}\label{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet_acf4878ffca6c4faaa04b6486cc1a59c5} 
+\index{NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$@{NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$}!set@{set}}
+\index{set@{set}!NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$@{NeoN::finiteVolume::cellCentred::volumeBoundary::InletOutlet$<$ ValueType $>$}}
+\doxysubsubsection{\texorpdfstring{set()}{set()}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+void \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1InletOutlet}{Neo\+N\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::\+Inlet\+Outlet}}$<$ Value\+Type $>$\+::set (\begin{DoxyParamCaption}\item[{Field$<$ Value\+Type $>$ \&}]{domain\+Vector }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [final]}}
+
+
+
+Definition at line \mbox{\hyperlink{inletOutlet_8hpp_source_l00043}{43}} of file \mbox{\hyperlink{inletOutlet_8hpp_source}{inlet\+Outlet.\+hpp}}.
+
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/runner/work/\+Neo\+FOAM/\+Neo\+FOAM/include/\+Neo\+FOAM/fvcc/boundary/volume/\mbox{\hyperlink{inletOutlet_8hpp}{inlet\+Outlet.\+hpp}}\end{DoxyCompactItemize}
