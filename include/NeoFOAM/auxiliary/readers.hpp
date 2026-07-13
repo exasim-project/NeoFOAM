@@ -10,8 +10,6 @@
 #include "NeoFOAM/auxiliary/convert.hpp"
 #include "NeoFOAM/auxiliary/typeConversion.hpp"
 #include "NeoFOAM/auxiliary/fieldTraits.hpp"
-#include "NeoFOAM/fvcc/boundary/volume/inletOutlet.hpp"
-
 #include "processorFvPatch.H"
 
 namespace fvcc = NeoN::finiteVolume::cellCentred;

@@ -27,7 +27,6 @@ target_sources(
           "turbulenceModels/kOmegaSST.cpp"
           "turbulenceModels/kOmegaSSTKernels.cpp"
           "turbulenceModels/kEpsilon.cpp"
-          "fvcc/boundary/inletOutlet.cpp"
           "fvcc/operators/viscousStressOperator.cpp"
           "functionObjects/functionObjectIO.cpp"
           "functionObjects/forces.cpp"
