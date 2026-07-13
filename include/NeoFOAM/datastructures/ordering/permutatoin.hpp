@@ -4,9 +4,21 @@
 /*
 A Permutation is an immutable value type representing a bijective mapping between 
 two index spaces and providing efficient operations on that mapping.
+
+Invariant:
+
+- oldToNew_.size() == newToOld_.size()
+
+- oldToNew_ is bijective
+
+- newToOld_ is the inverse of oldToNew_
+
+- indices lie in [0,size())
 */
 #pragma once
 #include "NeoN/NeoN.hpp"
+#include <vector>
+#include <span>
 
 class Permutation
 {
@@ -15,9 +27,9 @@ class Permutation
 
         explicit Permutation(std::vector<IndexType> oldToNew);
 
-        static Permutation identity(std::size_t size);
+        static Permutation identity(std::size_t size) const noexcept;
 
-        [[nodiscard]] std::size_t size() const { return oldToNew_.size(); }
+        [[nodiscard]] std::size_t size() const { return oldToNew_.size(); } const noexcept; 
 
         [[nodiscard]] IndexType oldToNew(IndexType oldIndex) const;
 
