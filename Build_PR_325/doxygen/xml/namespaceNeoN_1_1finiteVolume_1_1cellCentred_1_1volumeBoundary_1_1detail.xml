@@ -183,6 +183,21 @@
         </inbodydescription>
         <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fvcc/boundary/volume/omegaWallFunction.hpp" line="27" column="25" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fvcc/boundary/volume/omegaWallFunction.hpp" bodystart="27" bodyend="-1"/>
       </memberdef>
+      <memberdef kind="variable" id="namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_1a0b6cb2d36a5fb53f61f7960a207b9ddd" prot="public" static="no" constexpr="yes" mutable="no">
+        <type>constexpr <ref refid="pressureVelocityCoupling_8hpp_1acc912e7a5a44b028589fda3fd76ba7ea" kindref="member">scalar</ref></type>
+        <definition>constexpr scalar NeoN::finiteVolume::cellCentred::volumeBoundary::detail::OMEGA_WF_OMEGA_MAX</definition>
+        <argsstring></argsstring>
+        <name>OMEGA_WF_OMEGA_MAX</name>
+        <qualifiedname>NeoN::finiteVolume::cellCentred::volumeBoundary::detail::OMEGA_WF_OMEGA_MAX</qualifiedname>
+        <initializer>= <ref refid="pressureVelocityCoupling_8hpp_1acc912e7a5a44b028589fda3fd76ba7ea" kindref="member">scalar</ref>(1e12)</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fvcc/boundary/volume/omegaWallFunction.hpp" line="29" column="25" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fvcc/boundary/volume/omegaWallFunction.hpp" bodystart="29" bodyend="-1"/>
+      </memberdef>
     </sectiondef>
     <sectiondef kind="func">
       <memberdef kind="function" id="namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_1a120167fa099bf5cc1dacc7367e1cc66e" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
@@ -361,10 +376,10 @@
         </inbodydescription>
         <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fvcc/boundary/volume/nutWallFunction.hpp" line="63" column="13" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fvcc/boundary/volume/nutWallFunction.hpp" bodystart="63" bodyend="124"/>
       </memberdef>
-      <memberdef kind="function" id="namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_1ab63e24f7dbd2ddfe6e23b8d941c4cc48" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+      <memberdef kind="function" id="namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_1ac4ccace2b5c8b2c1a97c0132f4f76a9a" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
         <type>void</type>
         <definition>void NeoN::finiteVolume::cellCentred::volumeBoundary::detail::setOmegaWallFunction</definition>
-        <argsstring>(Field&lt; scalar &gt; &amp;omega, const fvcc::VolumeField&lt; scalar &gt; &amp;k, const fvcc::VolumeField&lt; scalar &gt; &amp;nu, const fvcc::VolumeField&lt; scalar &gt; &amp;nearWallDist, const UnstructuredMesh &amp;mesh, std::pair&lt; localIdx, localIdx &gt; range, scalar beta1, scalar Cmu, scalar kappa)</argsstring>
+        <argsstring>(Field&lt; scalar &gt; &amp;omega, const fvcc::VolumeField&lt; scalar &gt; &amp;k, const fvcc::VolumeField&lt; scalar &gt; &amp;nu, const fvcc::VolumeField&lt; scalar &gt; &amp;nearWallDist, const UnstructuredMesh &amp;mesh, std::pair&lt; localIdx, localIdx &gt; range, scalar beta1, scalar cmu, scalar kappa)</argsstring>
         <name>setOmegaWallFunction</name>
         <qualifiedname>NeoN::finiteVolume::cellCentred::volumeBoundary::detail::setOmegaWallFunction</qualifiedname>
         <param>
@@ -397,7 +412,7 @@
         </param>
         <param>
           <type><ref refid="pressureVelocityCoupling_8hpp_1acc912e7a5a44b028589fda3fd76ba7ea" kindref="member">scalar</ref></type>
-          <declname>Cmu</declname>
+          <declname>cmu</declname>
         </param>
         <param>
           <type><ref refid="pressureVelocityCoupling_8hpp_1acc912e7a5a44b028589fda3fd76ba7ea" kindref="member">scalar</ref></type>
@@ -406,10 +421,17 @@
         <briefdescription>
         </briefdescription>
         <detaileddescription>
+<para>Applies the omegaWallFunction kernel face-by-face.</para>
+<para>ω_vis = 6ν / (β₁·y²) (viscous-sublayer estimate) ω_log = √k / (C_µ^0.25·κ·y) (log-layer estimate) ω_w = √(ω_vis² + ω_log²) (BINOMIAL n=2 blend)</para>
+<para>Known limitations:<itemizedlist>
+<listitem><para>Single-patch-corner only: each wall cell is assumed to see at most one wall-function face.</para>
+</listitem><listitem><para>G (production) accumulation is not applied here; kOmegaSST computes G internally from nut·GbyNu0. </para>
+</listitem></itemizedlist>
+</para>
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fvcc/boundary/volume/omegaWallFunction.hpp" line="48" column="13" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fvcc/boundary/volume/omegaWallFunction.hpp" bodystart="48" bodyend="108"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fvcc/boundary/volume/omegaWallFunction.hpp" line="44" column="13" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/fvcc/boundary/volume/omegaWallFunction.hpp" bodystart="44" bodyend="103"/>
       </memberdef>
     </sectiondef>
     <briefdescription>

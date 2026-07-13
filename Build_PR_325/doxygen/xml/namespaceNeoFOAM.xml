@@ -15,9 +15,10 @@
     <innerclass refid="classNeoFOAM_1_1KOmegaSSTModel" prot="public">NeoFOAM::KOmegaSSTModel</innerclass>
     <innerclass refid="classNeoFOAM_1_1Laminar" prot="public">NeoFOAM::Laminar</innerclass>
     <innerclass refid="classNeoFOAM_1_1MeshAdapter" prot="public">NeoFOAM::MeshAdapter</innerclass>
-    <innerclass refid="classNeoFOAM_1_1PDESolver" prot="public">NeoFOAM::PDESolver</innerclass>
+    <innerclass refid="classNeoFOAM_1_1PDE" prot="public">NeoFOAM::PDE</innerclass>
     <innerclass refid="classNeoFOAM_1_1PimpleControl" prot="public">NeoFOAM::PimpleControl</innerclass>
     <innerclass refid="structNeoFOAM_1_1RunTime" prot="public">NeoFOAM::RunTime</innerclass>
+    <innerclass refid="classNeoFOAM_1_1Solver" prot="public">NeoFOAM::Solver</innerclass>
     <innerclass refid="classNeoFOAM_1_1SpalartAllmarasDDES" prot="public">NeoFOAM::SpalartAllmarasDDES</innerclass>
     <innerclass refid="classNeoFOAM_1_1TurbulenceModel" prot="public">NeoFOAM::TurbulenceModel</innerclass>
     <innerclass refid="structNeoFOAM_1_1TypeMap" prot="public">NeoFOAM::TypeMap</innerclass>
@@ -31,6 +32,33 @@
     <innerclass refid="structNeoFOAM_1_1TypeMap_3_01Foam_1_1List_3_01Foam_1_1scalar_01_4_01_4" prot="public">NeoFOAM::TypeMap&lt; Foam::List&lt; Foam::scalar &gt; &gt;</innerclass>
     <innernamespace refid="namespaceNeoFOAM_1_1detail">NeoFOAM::detail</innernamespace>
     <sectiondef kind="typedef">
+      <memberdef kind="typedef" id="namespaceNeoFOAM_1ad2b650b0f01b7ad8cfa22d43c5a77c37" prot="public" static="no">
+        <templateparamlist>
+          <param>
+            <type>typename ValueType</type>
+          </param>
+          <param>
+            <type>typename MatrixValueType</type>
+            <defval><ref refid="pressureVelocityCoupling_8hpp_1acc912e7a5a44b028589fda3fd76ba7ea" kindref="member">NeoN::scalar</ref></defval>
+          </param>
+          <param>
+            <type>typename IndexType</type>
+            <defval>NeoN::localIdx</defval>
+          </param>
+        </templateparamlist>
+        <type><ref refid="classNeoFOAM_1_1PDE" kindref="compound">PDE</ref>&lt; ValueType, MatrixValueType, IndexType &gt;</type>
+        <definition>using NeoFOAM::PDESolver = typedef PDE&lt;ValueType, MatrixValueType, IndexType&gt;</definition>
+        <argsstring></argsstring>
+        <name>PDESolver</name>
+        <qualifiedname>NeoFOAM::PDESolver</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp" line="662" column="1" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp" bodystart="662" bodyend="-1"/>
+      </memberdef>
       <memberdef kind="typedef" id="namespaceNeoFOAM_1a72ecdf875c1b4d9e941284f6f5351752" prot="public" static="no">
         <type>std::pair&lt; NeoN::scalar, NeoN::scalar &gt;</type>
         <definition>using NeoFOAM::FieldResidual = typedef std::pair&lt;NeoN::scalar, NeoN::scalar&gt;</definition>
@@ -87,14 +115,14 @@
         </inbodydescription>
         <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/pressureVelocityCoupling.hpp" line="34" column="6" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/pressureVelocityCoupling.hpp" declline="34" declcolumn="6"/>
       </memberdef>
-      <memberdef kind="function" id="namespaceNeoFOAM_1a1be6b4e6d34b984c97e0bb2d6f1f203a" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="namespaceNeoFOAM_1a74cc48fddc351d5e37ae614dda7bd934" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>nnfvcc::VolumeField&lt; <ref refid="pressureVelocityCoupling_8hpp_1acc912e7a5a44b028589fda3fd76ba7ea" kindref="member">scalar</ref> &gt;</type>
         <definition>nnfvcc::VolumeField&lt; scalar &gt; NeoFOAM::computeRAU</definition>
-        <argsstring>(const PDESolver&lt; Vec3 &gt; &amp;expr)</argsstring>
+        <argsstring>(const PDE&lt; Vec3 &gt; &amp;expr)</argsstring>
         <name>computeRAU</name>
         <qualifiedname>NeoFOAM::computeRAU</qualifiedname>
         <param>
-          <type>const <ref refid="classNeoFOAM_1_1PDESolver" kindref="compound">PDESolver</ref>&lt; <ref refid="pressureVelocityCoupling_8hpp_1ae261b7f2859c508a432e8a334ad179d2" kindref="member">Vec3</ref> &gt; &amp;</type>
+          <type>const <ref refid="classNeoFOAM_1_1PDE" kindref="compound">PDE</ref>&lt; <ref refid="pressureVelocityCoupling_8hpp_1ae261b7f2859c508a432e8a334ad179d2" kindref="member">Vec3</ref> &gt; &amp;</type>
           <declname>expr</declname>
         </param>
         <briefdescription>
@@ -105,14 +133,14 @@
         </inbodydescription>
         <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/pressureVelocityCoupling.hpp" line="46" column="21" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/pressureVelocityCoupling.hpp" declline="46" declcolumn="21"/>
       </memberdef>
-      <memberdef kind="function" id="namespaceNeoFOAM_1a5e7536121d9a45374ff8b89da6ffa683" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="namespaceNeoFOAM_1afbb950ff446ab9ad8e13e28325d4ded0" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>std::tuple&lt; nnfvcc::VolumeField&lt; <ref refid="pressureVelocityCoupling_8hpp_1acc912e7a5a44b028589fda3fd76ba7ea" kindref="member">scalar</ref> &gt;, nnfvcc::VolumeField&lt; <ref refid="pressureVelocityCoupling_8hpp_1ae261b7f2859c508a432e8a334ad179d2" kindref="member">Vec3</ref> &gt; &gt;</type>
         <definition>std::tuple&lt; nnfvcc::VolumeField&lt; scalar &gt;, nnfvcc::VolumeField&lt; Vec3 &gt; &gt; NeoFOAM::computeRAUandHByA</definition>
-        <argsstring>(const PDESolver&lt; Vec3 &gt; &amp;expr)</argsstring>
+        <argsstring>(const PDE&lt; Vec3 &gt; &amp;expr)</argsstring>
         <name>computeRAUandHByA</name>
         <qualifiedname>NeoFOAM::computeRAUandHByA</qualifiedname>
         <param>
-          <type>const <ref refid="classNeoFOAM_1_1PDESolver" kindref="compound">PDESolver</ref>&lt; <ref refid="pressureVelocityCoupling_8hpp_1ae261b7f2859c508a432e8a334ad179d2" kindref="member">Vec3</ref> &gt; &amp;</type>
+          <type>const <ref refid="classNeoFOAM_1_1PDE" kindref="compound">PDE</ref>&lt; <ref refid="pressureVelocityCoupling_8hpp_1ae261b7f2859c508a432e8a334ad179d2" kindref="member">Vec3</ref> &gt; &amp;</type>
           <declname>expr</declname>
         </param>
         <briefdescription>
@@ -123,10 +151,92 @@
         </inbodydescription>
         <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/pressureVelocityCoupling.hpp" line="57" column="1" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/pressureVelocityCoupling.hpp" declline="57" declcolumn="1"/>
       </memberdef>
-      <memberdef kind="function" id="namespaceNeoFOAM_1afc1d72b867bd234d1acdac0bf9f77bc5" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="namespaceNeoFOAM_1a7ac002854692394b57a0bc5c93179cdc" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>nnfvcc::VolumeField&lt; <ref refid="pressureVelocityCoupling_8hpp_1acc912e7a5a44b028589fda3fd76ba7ea" kindref="member">scalar</ref> &gt;</type>
+        <definition>nnfvcc::VolumeField&lt; scalar &gt; NeoFOAM::computeRAtU</definition>
+        <argsstring>(const PDESolver&lt; Vec3 &gt; &amp;expr, const nnfvcc::VolumeField&lt; scalar &gt; &amp;rAU)</argsstring>
+        <name>computeRAtU</name>
+        <qualifiedname>NeoFOAM::computeRAtU</qualifiedname>
+        <param>
+          <type>const <ref refid="namespaceNeoFOAM_1ad2b650b0f01b7ad8cfa22d43c5a77c37" kindref="member">PDESolver</ref>&lt; <ref refid="pressureVelocityCoupling_8hpp_1ae261b7f2859c508a432e8a334ad179d2" kindref="member">Vec3</ref> &gt; &amp;</type>
+          <declname>expr</declname>
+        </param>
+        <param>
+          <type>const nnfvcc::VolumeField&lt; <ref refid="pressureVelocityCoupling_8hpp_1acc912e7a5a44b028589fda3fd76ba7ea" kindref="member">scalar</ref> &gt; &amp;</type>
+          <declname>rAU</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/pressureVelocityCoupling.hpp" line="74" column="1" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/pressureVelocityCoupling.hpp" declline="74" declcolumn="1"/>
+      </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1aded81810e17d738be38ec5fb19f02870" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void NeoFOAM::addConsistentFluxCorrection</definition>
+        <argsstring>(nnfvcc::SurfaceField&lt; scalar &gt; &amp;phiHbyA, const nnfvcc::VolumeField&lt; scalar &gt; &amp;rAU, const nnfvcc::VolumeField&lt; scalar &gt; &amp;rAtU, const nnfvcc::VolumeField&lt; scalar &gt; &amp;p)</argsstring>
+        <name>addConsistentFluxCorrection</name>
+        <qualifiedname>NeoFOAM::addConsistentFluxCorrection</qualifiedname>
+        <param>
+          <type>nnfvcc::SurfaceField&lt; <ref refid="pressureVelocityCoupling_8hpp_1acc912e7a5a44b028589fda3fd76ba7ea" kindref="member">scalar</ref> &gt; &amp;</type>
+          <declname>phiHbyA</declname>
+        </param>
+        <param>
+          <type>const nnfvcc::VolumeField&lt; <ref refid="pressureVelocityCoupling_8hpp_1acc912e7a5a44b028589fda3fd76ba7ea" kindref="member">scalar</ref> &gt; &amp;</type>
+          <declname>rAU</declname>
+        </param>
+        <param>
+          <type>const nnfvcc::VolumeField&lt; <ref refid="pressureVelocityCoupling_8hpp_1acc912e7a5a44b028589fda3fd76ba7ea" kindref="member">scalar</ref> &gt; &amp;</type>
+          <declname>rAtU</declname>
+        </param>
+        <param>
+          <type>const nnfvcc::VolumeField&lt; <ref refid="pressureVelocityCoupling_8hpp_1acc912e7a5a44b028589fda3fd76ba7ea" kindref="member">scalar</ref> &gt; &amp;</type>
+          <declname>p</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/pressureVelocityCoupling.hpp" line="82" column="6" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/pressureVelocityCoupling.hpp" declline="82" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1a222e258d8cf0cd2d7f3134c2df8d6342" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void NeoFOAM::subtractConsistentHbyA</definition>
+        <argsstring>(nnfvcc::VolumeField&lt; Vec3 &gt; &amp;hByA, const nnfvcc::VolumeField&lt; scalar &gt; &amp;rAU, const nnfvcc::VolumeField&lt; scalar &gt; &amp;rAtU, const nnfvcc::VolumeField&lt; scalar &gt; &amp;p)</argsstring>
+        <name>subtractConsistentHbyA</name>
+        <qualifiedname>NeoFOAM::subtractConsistentHbyA</qualifiedname>
+        <param>
+          <type>nnfvcc::VolumeField&lt; <ref refid="pressureVelocityCoupling_8hpp_1ae261b7f2859c508a432e8a334ad179d2" kindref="member">Vec3</ref> &gt; &amp;</type>
+          <declname>hByA</declname>
+        </param>
+        <param>
+          <type>const nnfvcc::VolumeField&lt; <ref refid="pressureVelocityCoupling_8hpp_1acc912e7a5a44b028589fda3fd76ba7ea" kindref="member">scalar</ref> &gt; &amp;</type>
+          <declname>rAU</declname>
+        </param>
+        <param>
+          <type>const nnfvcc::VolumeField&lt; <ref refid="pressureVelocityCoupling_8hpp_1acc912e7a5a44b028589fda3fd76ba7ea" kindref="member">scalar</ref> &gt; &amp;</type>
+          <declname>rAtU</declname>
+        </param>
+        <param>
+          <type>const nnfvcc::VolumeField&lt; <ref refid="pressureVelocityCoupling_8hpp_1acc912e7a5a44b028589fda3fd76ba7ea" kindref="member">scalar</ref> &gt; &amp;</type>
+          <declname>p</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/pressureVelocityCoupling.hpp" line="95" column="6" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/pressureVelocityCoupling.hpp" declline="95" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1adf06ff73f2db547389c03e2181600d76" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>void</type>
         <definition>void NeoFOAM::updateFaceVelocity</definition>
-        <argsstring>(const nnfvcc::SurfaceField&lt; scalar &gt; &amp;predictedPhi, const PDESolver&lt; scalar &gt; &amp;expr, nnfvcc::SurfaceField&lt; scalar &gt; &amp;phi)</argsstring>
+        <argsstring>(const nnfvcc::SurfaceField&lt; scalar &gt; &amp;predictedPhi, const PDE&lt; scalar &gt; &amp;expr, nnfvcc::SurfaceField&lt; scalar &gt; &amp;phi)</argsstring>
         <name>updateFaceVelocity</name>
         <qualifiedname>NeoFOAM::updateFaceVelocity</qualifiedname>
         <param>
@@ -134,7 +244,7 @@
           <declname>predictedPhi</declname>
         </param>
         <param>
-          <type>const <ref refid="classNeoFOAM_1_1PDESolver" kindref="compound">PDESolver</ref>&lt; <ref refid="pressureVelocityCoupling_8hpp_1acc912e7a5a44b028589fda3fd76ba7ea" kindref="member">scalar</ref> &gt; &amp;</type>
+          <type>const <ref refid="classNeoFOAM_1_1PDE" kindref="compound">PDE</ref>&lt; <ref refid="pressureVelocityCoupling_8hpp_1acc912e7a5a44b028589fda3fd76ba7ea" kindref="member">scalar</ref> &gt; &amp;</type>
           <declname>expr</declname>
         </param>
         <param>
@@ -147,7 +257,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/pressureVelocityCoupling.hpp" line="71" column="6" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/pressureVelocityCoupling.hpp" declline="71" declcolumn="6"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/pressureVelocityCoupling.hpp" line="114" column="6" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/pressureVelocityCoupling.hpp" declline="114" declcolumn="6"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1af74166d4a917f022e9371fa7a13cbc6a" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>void</type>
@@ -177,7 +287,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/pressureVelocityCoupling.hpp" line="85" column="6" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/pressureVelocityCoupling.hpp" declline="85" declcolumn="6"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/pressureVelocityCoupling.hpp" line="128" column="6" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/pressureVelocityCoupling.hpp" declline="128" declcolumn="6"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1a0d9937816ddfe9d997066890d86705a3" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>nnfvcc::SurfaceField&lt; <ref refid="pressureVelocityCoupling_8hpp_1acc912e7a5a44b028589fda3fd76ba7ea" kindref="member">scalar</ref> &gt;</type>
@@ -195,7 +305,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/pressureVelocityCoupling.hpp" line="96" column="22" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/pressureVelocityCoupling.hpp" declline="96" declcolumn="22"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/pressureVelocityCoupling.hpp" line="139" column="22" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/pressureVelocityCoupling.hpp" declline="139" declcolumn="22"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1adb3f301260a65dd30182893f75665a8a" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
@@ -610,7 +720,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="62" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="62" bodyend="278"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="62" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="62" bodyend="271"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1adb365cf8e725db6dbfc0a758c392e2b1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
@@ -637,7 +747,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="281" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="281" bodyend="377"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="274" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="274" bodyend="370"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1ab7276ff683225b6140acfa56618926b5" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
@@ -668,7 +778,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="380" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="380" bodyend="489"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="373" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="373" bodyend="482"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1a999cf2f9840de1da0b4265f93d4a6006" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
@@ -714,7 +824,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="557" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="557" bodyend="560"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="550" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="550" bodyend="553"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1a48fbbbb3755e34d928cf0d189532d93c" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
@@ -751,7 +861,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="564" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="564" bodyend="586"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="557" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="557" bodyend="579"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1a39bc76acefb5a1dd3074b0feba5864eb" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>void</type>
@@ -1510,9 +1620,9 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pdeSolver.hpp" line="364" column="46" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pdeSolver.hpp" bodystart="364" bodyend="379"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp" line="665" column="46" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp" bodystart="665" bodyend="680"/>
       </memberdef>
-      <memberdef kind="function" id="namespaceNeoFOAM_1a5632c3b06d59dbeabc41aba73af8d95d" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="namespaceNeoFOAM_1a999e61dc6e0868f9fe6cd7e4ea91f917" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
           <param>
             <type>typename ValueType</type>
@@ -1520,11 +1630,11 @@
         </templateparamlist>
         <type>NeoN::finiteVolume::cellCentred::VolumeField&lt; ValueType &gt;</type>
         <definition>NeoN::finiteVolume::cellCentred::VolumeField&lt; ValueType &gt; NeoFOAM::operator&amp;</definition>
-        <argsstring>(const PDESolver&lt; ValueType &gt; &amp;expr, const NeoN::finiteVolume::cellCentred::VolumeField&lt; ValueType &gt; &amp;psi)</argsstring>
+        <argsstring>(const PDE&lt; ValueType &gt; &amp;expr, const NeoN::finiteVolume::cellCentred::VolumeField&lt; ValueType &gt; &amp;psi)</argsstring>
         <name>operator&amp;</name>
         <qualifiedname>NeoFOAM::operator&amp;</qualifiedname>
         <param>
-          <type>const <ref refid="classNeoFOAM_1_1PDESolver" kindref="compound">PDESolver</ref>&lt; ValueType &gt; &amp;</type>
+          <type>const <ref refid="classNeoFOAM_1_1PDE" kindref="compound">PDE</ref>&lt; ValueType &gt; &amp;</type>
           <declname>expr</declname>
         </param>
         <param>
@@ -1537,7 +1647,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pdeSolver.hpp" line="383" column="46" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pdeSolver.hpp" bodystart="383" bodyend="389"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp" line="684" column="46" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/pde.hpp" bodystart="684" bodyend="690"/>
       </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1ae3448b9356abfd01a14f812c7acffc7c" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
@@ -1573,6 +1683,31 @@
         <inbodydescription>
         </inbodydescription>
         <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/runTime.hpp" line="40" column="16" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/runTime.hpp" bodystart="40" bodyend="47"/>
+      </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1aecef654291f22551aa7a3b014e46cb67" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename ValueType</type>
+          </param>
+        </templateparamlist>
+        <type></type>
+        <definition>NeoFOAM::Solver</definition>
+        <argsstring>(NeoN::finiteVolume::cellCentred::VolumeField&lt; ValueType &gt; &amp;, RunTime &amp;) -&gt; Solver&lt; ValueType &gt;</argsstring>
+        <name>Solver</name>
+        <qualifiedname>NeoFOAM::Solver</qualifiedname>
+        <param>
+          <type>NeoN::finiteVolume::cellCentred::VolumeField&lt; ValueType &gt; &amp;</type>
+        </param>
+        <param>
+          <type><ref refid="structNeoFOAM_1_1RunTime" kindref="compound">RunTime</ref> &amp;</type>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/solver.hpp" line="84" column="1" declfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/datastructures/solver.hpp" declline="84" declcolumn="1"/>
       </memberdef>
     </sectiondef>
     <briefdescription>

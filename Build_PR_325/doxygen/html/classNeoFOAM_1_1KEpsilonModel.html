@@ -107,6 +107,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ad1abdf39959d54c02a3768d2efaadfab"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa54a489f48cd572a1ca96c7d7197a0b2" id="r_aa54a489f48cd572a1ca96c7d7197a0b2"><td class="memItemLeft" align="right" valign="top">const nnfvcc::VolumeField&lt; NeoN::Tensor &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1KEpsilonModel.html#aa54a489f48cd572a1ca96c7d7197a0b2">gradU</a> () const override</td></tr>
 <tr class="separator:aa54a489f48cd572a1ca96c7d7197a0b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af1460f777d1d15d350f228c6586fbba4" id="r_af1460f777d1d15d350f228c6586fbba4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1KEpsilonModel.html#af1460f777d1d15d350f228c6586fbba4">updateGradU</a> (const nnfvcc::VolumeField&lt; <a class="el" href="pressureVelocityCoupling_8hpp.html#ae261b7f2859c508a432e8a334ad179d2">Vec3</a> &gt; &amp;U) override</td></tr>
+<tr class="separator:af1460f777d1d15d350f228c6586fbba4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2e800ed3faaf880b86855cd920b807c0" id="r_a2e800ed3faaf880b86855cd920b807c0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1KEpsilonModel.html#a2e800ed3faaf880b86855cd920b807c0">write</a> (<a class="el" href="classNeoFOAM_1_1MeshAdapter.html">MeshAdapter</a> &amp;mesh) const override</td></tr>
 <tr class="separator:a2e800ed3faaf880b86855cd920b807c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a00304067c26e23ed40d25d3b9ccafced" id="r_a00304067c26e23ed40d25d3b9ccafced"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classNeoFOAM_1_1KEpsilonModel.html#a00304067c26e23ed40d25d3b9ccafced">rotateOldTimes</a> () override</td></tr>
@@ -125,7 +127,7 @@ Static Public Member Functions</h2></td></tr>
 <div class="textblock"><p>TurbulenceModel-factory wrapper for k-epsilon. </p>
 <p>Owns k, epsilon and nut; reads them from disk in the constructor, delegates physics to <a class="el" href="classNeoFOAM_1_1KEpsilon.html" title="NeoFOAM-level wrapper for the standard k-ε turbulence model (Launder &amp; Spalding 1974).">KEpsilon</a>. Registered as "kEpsilon" in the <a class="el" href="classNeoFOAM_1_1TurbulenceModel.html" title="Abstract base for NeoFOAM turbulence models with runtime selection.">TurbulenceModel</a> factory so <a class="el" href="classNeoFOAM_1_1TurbulenceModel.html#a49dee8641d6055c7fa2b88be94e8448a" title="Read the model name from constant/turbulenceProperties and create the model.">TurbulenceModel::create()</a> can instantiate it from a RAS turbulenceProperties block. </p>
 
-<p class="definition">Definition at line <a class="el" href="kEpsilon_8hpp_source.html#l00197">197</a> of file <a class="el" href="kEpsilon_8hpp_source.html">kEpsilon.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="kEpsilon_8hpp_source.html#l00196">196</a> of file <a class="el" href="kEpsilon_8hpp_source.html">kEpsilon.hpp</a>.</p>
 </div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="ac49be3df6bd744bd61560c8a01b0ee74" name="ac49be3df6bd744bd61560c8a01b0ee74"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ac49be3df6bd744bd61560c8a01b0ee74">&#9670;&#160;</a></span>KEpsilonModel()</h2>
@@ -221,7 +223,7 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="kEpsilon_8hpp_source.html#l00202">202</a> of file <a class="el" href="kEpsilon_8hpp_source.html">kEpsilon.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="kEpsilon_8hpp_source.html#l00201">201</a> of file <a class="el" href="kEpsilon_8hpp_source.html">kEpsilon.hpp</a>.</p>
 
 </div>
 </div>
@@ -273,7 +275,7 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="kEpsilon_8hpp_source.html#l00201">201</a> of file <a class="el" href="kEpsilon_8hpp_source.html">kEpsilon.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="kEpsilon_8hpp_source.html#l00200">200</a> of file <a class="el" href="kEpsilon_8hpp_source.html">kEpsilon.hpp</a>.</p>
 
 </div>
 </div>
@@ -375,7 +377,33 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="kEpsilon_8hpp_source.html#l00203">203</a> of file <a class="el" href="kEpsilon_8hpp_source.html">kEpsilon.hpp</a>.</p>
+<p class="definition">Definition at line <a class="el" href="kEpsilon_8hpp_source.html#l00202">202</a> of file <a class="el" href="kEpsilon_8hpp_source.html">kEpsilon.hpp</a>.</p>
+
+</div>
+</div>
+<a id="af1460f777d1d15d350f228c6586fbba4" name="af1460f777d1d15d350f228c6586fbba4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af1460f777d1d15d350f228c6586fbba4">&#9670;&#160;</a></span>updateGradU()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void NeoFOAM::KEpsilonModel::updateGradU </td>
+          <td>(</td>
+          <td class="paramtype">const nnfvcc::VolumeField&lt; <a class="el" href="pressureVelocityCoupling_8hpp.html#ae261b7f2859c508a432e8a334ad179d2">Vec3</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>U</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">override</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
 
 </div>
 </div>

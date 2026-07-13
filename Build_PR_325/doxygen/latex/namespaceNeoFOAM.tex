@@ -34,12 +34,14 @@ class \mbox{\hyperlink{classNeoFOAM_1_1Laminar}{Laminar}}
 \begin{DoxyCompactList}\small\item\em No-\/op turbulence model for laminar flow. \end{DoxyCompactList}\item 
 class \mbox{\hyperlink{classNeoFOAM_1_1MeshAdapter}{Mesh\+Adapter}}
 \item 
-class \mbox{\hyperlink{classNeoFOAM_1_1PDESolver}{PDESolver}}
+class \mbox{\hyperlink{classNeoFOAM_1_1PDE}{PDE}}
 \item 
 class \mbox{\hyperlink{classNeoFOAM_1_1PimpleControl}{Pimple\+Control}}
 \begin{DoxyCompactList}\small\item\em Neo\+FOAM-\/native outer PIMPLE loop control. \end{DoxyCompactList}\item 
 struct \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}}
 \item 
+class \mbox{\hyperlink{classNeoFOAM_1_1Solver}{Solver}}
+\begin{DoxyCompactList}\small\item\em Caches a Neo\+N\+::la\+::\+Solver instance for a given field to avoid reconstructing it (and re-\/parsing the solver dictionary) on every time-\/step iteration. \end{DoxyCompactList}\item 
 class \mbox{\hyperlink{classNeoFOAM_1_1SpalartAllmarasDDES}{Spalart\+Allmaras\+DDES}}
 \begin{DoxyCompactList}\small\item\em Spalart-\/\+Allmaras DDES turbulence model. \end{DoxyCompactList}\item 
 class \mbox{\hyperlink{classNeoFOAM_1_1TurbulenceModel}{Turbulence\+Model}}
@@ -65,6 +67,8 @@ struct \mbox{\hyperlink{structNeoFOAM_1_1TypeMap_3_01Foam_1_1List_3_01Foam_1_1sc
 \doxysubsubsection*{Typedefs}
 \begin{DoxyCompactItemize}
 \item 
+{\footnotesize template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx$>$ }\\using \mbox{\hyperlink{namespaceNeoFOAM_ad2b650b0f01b7ad8cfa22d43c5a77c37}{PDESolver}} = \mbox{\hyperlink{classNeoFOAM_1_1PDE}{PDE}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$
+\item 
 using \mbox{\hyperlink{namespaceNeoFOAM_a72ecdf875c1b4d9e941284f6f5351752}{Field\+Residual}} = std\+::pair$<$ Neo\+N\+::scalar, Neo\+N\+::scalar $>$
 \item 
 using \mbox{\hyperlink{namespaceNeoFOAM_ad7da788dc1fc4af69c98dea808d84073}{Residual\+Map}} = std\+::map$<$ std\+::string, \mbox{\hyperlink{namespaceNeoFOAM_a72ecdf875c1b4d9e941284f6f5351752}{Field\+Residual}} $>$
@@ -74,11 +78,17 @@ using \mbox{\hyperlink{namespaceNeoFOAM_ad7da788dc1fc4af69c98dea808d84073}{Resid
 \item 
 void \mbox{\hyperlink{namespaceNeoFOAM_a386425b9e39dc89773b9248909cf4139}{constrain\+HbyA}} (const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&U, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&p, nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&HbyA)
 \item 
-nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \mbox{\hyperlink{namespaceNeoFOAM_a1be6b4e6d34b984c97e0bb2d6f1f203a}{compute\+RAU}} (const \mbox{\hyperlink{classNeoFOAM_1_1PDESolver}{PDESolver}}$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&expr)
+nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \mbox{\hyperlink{namespaceNeoFOAM_a74cc48fddc351d5e37ae614dda7bd934}{compute\+RAU}} (const \mbox{\hyperlink{classNeoFOAM_1_1PDE}{PDE}}$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&expr)
 \item 
-std\+::tuple$<$ nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$, nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ $>$ \mbox{\hyperlink{namespaceNeoFOAM_a5e7536121d9a45374ff8b89da6ffa683}{compute\+RAUand\+HByA}} (const \mbox{\hyperlink{classNeoFOAM_1_1PDESolver}{PDESolver}}$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&expr)
+std\+::tuple$<$ nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$, nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ $>$ \mbox{\hyperlink{namespaceNeoFOAM_afbb950ff446ab9ad8e13e28325d4ded0}{compute\+RAUand\+HByA}} (const \mbox{\hyperlink{classNeoFOAM_1_1PDE}{PDE}}$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&expr)
 \item 
-void \mbox{\hyperlink{namespaceNeoFOAM_afc1d72b867bd234d1acdac0bf9f77bc5}{update\+Face\+Velocity}} (const nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&predicted\+Phi, const \mbox{\hyperlink{classNeoFOAM_1_1PDESolver}{PDESolver}}$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&expr, nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&phi)
+nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \mbox{\hyperlink{namespaceNeoFOAM_a7ac002854692394b57a0bc5c93179cdc}{compute\+RAtU}} (const \mbox{\hyperlink{namespaceNeoFOAM_ad2b650b0f01b7ad8cfa22d43c5a77c37}{PDESolver}}$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&expr, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&r\+AU)
+\item 
+void \mbox{\hyperlink{namespaceNeoFOAM_aded81810e17d738be38ec5fb19f02870}{add\+Consistent\+Flux\+Correction}} (nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&phi\+HbyA, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&r\+AU, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&r\+AtU, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&p)
+\item 
+void \mbox{\hyperlink{namespaceNeoFOAM_a222e258d8cf0cd2d7f3134c2df8d6342}{subtract\+Consistent\+HbyA}} (nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&h\+ByA, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&r\+AU, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&r\+AtU, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&p)
+\item 
+void \mbox{\hyperlink{namespaceNeoFOAM_adf06ff73f2db547389c03e2181600d76}{update\+Face\+Velocity}} (const nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&predicted\+Phi, const \mbox{\hyperlink{classNeoFOAM_1_1PDE}{PDE}}$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&expr, nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&phi)
 \item 
 void \mbox{\hyperlink{namespaceNeoFOAM_af74166d4a917f022e9371fa7a13cbc6a}{update\+Velocity}} (const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&h\+ByA, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&r\+AU, const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&p, nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&U)
 \item 
@@ -188,10 +198,12 @@ std\+::unique\+\_\+ptr$<$ Foam\+::fv\+Mesh $>$ \mbox{\hyperlink{namespaceNeoFOAM
 \item 
 {\footnotesize template$<$typename Value\+Type , typename Index\+Type  = Neo\+N\+::local\+Idx$>$ }\\Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Value\+Type $>$ \mbox{\hyperlink{namespaceNeoFOAM_a1a20de9aeea93a39b256d91014ce9039}{apply\+Operator}} (const la\+::\+Linear\+System$<$ Value\+Type $>$ \&ls, const Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Value\+Type $>$ \&psi)
 \item 
-{\footnotesize template$<$typename Value\+Type $>$ }\\Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Value\+Type $>$ \mbox{\hyperlink{namespaceNeoFOAM_a5632c3b06d59dbeabc41aba73af8d95d}{operator\&}} (const \mbox{\hyperlink{classNeoFOAM_1_1PDESolver}{PDESolver}}$<$ Value\+Type $>$ \&expr, const Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Value\+Type $>$ \&psi)
+{\footnotesize template$<$typename Value\+Type $>$ }\\Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Value\+Type $>$ \mbox{\hyperlink{namespaceNeoFOAM_a999e61dc6e0868f9fe6cd7e4ea91f917}{operator\&}} (const \mbox{\hyperlink{classNeoFOAM_1_1PDE}{PDE}}$<$ Value\+Type $>$ \&expr, const Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Value\+Type $>$ \&psi)
 \item 
 {\footnotesize template$<$typename Registered\+Type , typename Initializer\+Type $>$ }\\Registered\+Type \& \mbox{\hyperlink{namespaceNeoFOAM_ae3448b9356abfd01a14f812c7acffc7c}{read\+Or\+Create}} (\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&run\+Time, std\+::string name, Initializer\+Type init)
-\begin{DoxyCompactList}\small\item\em convenience function to avoid recreating objects by storing them in the runtime db \end{DoxyCompactList}\end{DoxyCompactItemize}
+\begin{DoxyCompactList}\small\item\em convenience function to avoid recreating objects by storing them in the runtime db \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename Value\+Type $>$ }\\\mbox{\hyperlink{namespaceNeoFOAM_aecef654291f22551aa7a3b014e46cb67}{Solver}} (Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Value\+Type $>$ \&, \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&) -\/$>$ \mbox{\hyperlink{classNeoFOAM_1_1Solver}{Solver}}$<$ Value\+Type $>$
+\end{DoxyCompactItemize}
 
 
 \doxysubsection{Typedef Documentation}
@@ -204,6 +216,17 @@ std\+::unique\+\_\+ptr$<$ Foam\+::fv\+Mesh $>$ \mbox{\hyperlink{namespaceNeoFOAM
 
 
 Definition at line \mbox{\hyperlink{pimpleControl_8hpp_source_l00019}{19}} of file \mbox{\hyperlink{pimpleControl_8hpp_source}{pimple\+Control.\+hpp}}.
+
+\Hypertarget{namespaceNeoFOAM_ad2b650b0f01b7ad8cfa22d43c5a77c37}\label{namespaceNeoFOAM_ad2b650b0f01b7ad8cfa22d43c5a77c37} 
+\index{NeoFOAM@{NeoFOAM}!PDESolver@{PDESolver}}
+\index{PDESolver@{PDESolver}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{PDESolver}{PDESolver}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx$>$ \\
+using \mbox{\hyperlink{namespaceNeoFOAM_ad2b650b0f01b7ad8cfa22d43c5a77c37}{Neo\+FOAM\+::\+PDESolver}} = typedef \mbox{\hyperlink{classNeoFOAM_1_1PDE}{PDE}}$<$Value\+Type, Matrix\+Value\+Type, Index\+Type$>$}
+
+
+
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00662}{662}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_ad7da788dc1fc4af69c98dea808d84073}\label{namespaceNeoFOAM_ad7da788dc1fc4af69c98dea808d84073} 
 \index{NeoFOAM@{NeoFOAM}!ResidualMap@{ResidualMap}}
@@ -218,6 +241,12 @@ Definition at line \mbox{\hyperlink{pimpleControl_8hpp_source_l00020}{20}} of fi
 
 
 \doxysubsection{Function Documentation}
+\Hypertarget{namespaceNeoFOAM_aded81810e17d738be38ec5fb19f02870}\label{namespaceNeoFOAM_aded81810e17d738be38ec5fb19f02870} 
+\index{NeoFOAM@{NeoFOAM}!addConsistentFluxCorrection@{addConsistentFluxCorrection}}
+\index{addConsistentFluxCorrection@{addConsistentFluxCorrection}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{addConsistentFluxCorrection()}{addConsistentFluxCorrection()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::add\+Consistent\+Flux\+Correction (\begin{DoxyParamCaption}\item[{nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{phi\+HbyA,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{r\+AU,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{r\+AtU,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{p }\end{DoxyParamCaption})}
+
 \Hypertarget{namespaceNeoFOAM_a1a20de9aeea93a39b256d91014ce9039}\label{namespaceNeoFOAM_a1a20de9aeea93a39b256d91014ce9039} 
 \index{NeoFOAM@{NeoFOAM}!applyOperator@{applyOperator}}
 \index{applyOperator@{applyOperator}!NeoFOAM@{NeoFOAM}}
@@ -227,7 +256,7 @@ Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Value\+Type $>$ 
 
 
 
-Definition at line \mbox{\hyperlink{pdeSolver_8hpp_source_l00364}{364}} of file \mbox{\hyperlink{pdeSolver_8hpp_source}{pde\+Solver.\+hpp}}.
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00665}{665}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_a59b79053c26ad967a2ac57d1e4d0b9bb}\label{namespaceNeoFOAM_a59b79053c26ad967a2ac57d1e4d0b9bb} 
 \index{NeoFOAM@{NeoFOAM}!checkEntryType@{checkEntryType}}
@@ -287,17 +316,23 @@ Definition at line \mbox{\hyperlink{continuityError_8hpp_source_l00028}{28}} of 
 \doxysubsubsection{\texorpdfstring{computeProcBoundaryPatches()}{computeProcBoundaryPatches()}}
 {\footnotesize\ttfamily Neo\+N\+::local\+Idx Neo\+FOAM\+::compute\+Proc\+Boundary\+Patches (\begin{DoxyParamCaption}\item[{const Foam\+::fv\+Mesh \&}]{mesh }\end{DoxyParamCaption})}
 
-\Hypertarget{namespaceNeoFOAM_a1be6b4e6d34b984c97e0bb2d6f1f203a}\label{namespaceNeoFOAM_a1be6b4e6d34b984c97e0bb2d6f1f203a} 
+\Hypertarget{namespaceNeoFOAM_a7ac002854692394b57a0bc5c93179cdc}\label{namespaceNeoFOAM_a7ac002854692394b57a0bc5c93179cdc} 
+\index{NeoFOAM@{NeoFOAM}!computeRAtU@{computeRAtU}}
+\index{computeRAtU@{computeRAtU}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{computeRAtU()}{computeRAtU()}}
+{\footnotesize\ttfamily nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ Neo\+FOAM\+::compute\+RAtU (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{namespaceNeoFOAM_ad2b650b0f01b7ad8cfa22d43c5a77c37}{PDESolver}}$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&}]{expr,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{r\+AU }\end{DoxyParamCaption})}
+
+\Hypertarget{namespaceNeoFOAM_a74cc48fddc351d5e37ae614dda7bd934}\label{namespaceNeoFOAM_a74cc48fddc351d5e37ae614dda7bd934} 
 \index{NeoFOAM@{NeoFOAM}!computeRAU@{computeRAU}}
 \index{computeRAU@{computeRAU}!NeoFOAM@{NeoFOAM}}
 \doxysubsubsection{\texorpdfstring{computeRAU()}{computeRAU()}}
-{\footnotesize\ttfamily nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ Neo\+FOAM\+::compute\+RAU (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{classNeoFOAM_1_1PDESolver}{PDESolver}}$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&}]{expr }\end{DoxyParamCaption})}
+{\footnotesize\ttfamily nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ Neo\+FOAM\+::compute\+RAU (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{classNeoFOAM_1_1PDE}{PDE}}$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&}]{expr }\end{DoxyParamCaption})}
 
-\Hypertarget{namespaceNeoFOAM_a5e7536121d9a45374ff8b89da6ffa683}\label{namespaceNeoFOAM_a5e7536121d9a45374ff8b89da6ffa683} 
+\Hypertarget{namespaceNeoFOAM_afbb950ff446ab9ad8e13e28325d4ded0}\label{namespaceNeoFOAM_afbb950ff446ab9ad8e13e28325d4ded0} 
 \index{NeoFOAM@{NeoFOAM}!computeRAUandHByA@{computeRAUandHByA}}
 \index{computeRAUandHByA@{computeRAUandHByA}!NeoFOAM@{NeoFOAM}}
 \doxysubsubsection{\texorpdfstring{computeRAUandHByA()}{computeRAUandHByA()}}
-{\footnotesize\ttfamily std\+::tuple$<$ nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$, nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ $>$ Neo\+FOAM\+::compute\+RAUand\+HByA (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{classNeoFOAM_1_1PDESolver}{PDESolver}}$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&}]{expr }\end{DoxyParamCaption})}
+{\footnotesize\ttfamily std\+::tuple$<$ nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$, nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ $>$ Neo\+FOAM\+::compute\+RAUand\+HByA (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{classNeoFOAM_1_1PDE}{PDE}}$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&}]{expr }\end{DoxyParamCaption})}
 
 \Hypertarget{namespaceNeoFOAM_a999cf2f9840de1da0b4265f93d4a6006}\label{namespaceNeoFOAM_a999cf2f9840de1da0b4265f93d4a6006} 
 \index{NeoFOAM@{NeoFOAM}!constFromMany@{constFromMany}}
@@ -320,7 +355,7 @@ Tuple containing the fields
 \end{DoxyReturn}
 
 
-Definition at line \mbox{\hyperlink{readers_8hpp_source_l00557}{557}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
+Definition at line \mbox{\hyperlink{readers_8hpp_source_l00550}{550}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_a386425b9e39dc89773b9248909cf4139}\label{namespaceNeoFOAM_a386425b9e39dc89773b9248909cf4139} 
 \index{NeoFOAM@{NeoFOAM}!constrainHbyA@{constrainHbyA}}
@@ -341,7 +376,7 @@ construct an NF field from a given OF field and register
 
 
 
-Definition at line \mbox{\hyperlink{readers_8hpp_source_l00564}{564}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
+Definition at line \mbox{\hyperlink{readers_8hpp_source_l00557}{557}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_ab7276ff683225b6140acfa56618926b5}\label{namespaceNeoFOAM_ab7276ff683225b6140acfa56618926b5} 
 \index{NeoFOAM@{NeoFOAM}!constructFrom@{constructFrom}}
@@ -352,7 +387,7 @@ auto Neo\+FOAM\+::construct\+From (\begin{DoxyParamCaption}\item[{const Neo\+N\+
 
 
 
-Definition at line \mbox{\hyperlink{readers_8hpp_source_l00380}{380}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
+Definition at line \mbox{\hyperlink{readers_8hpp_source_l00373}{373}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_a75a914fbbb00d2f6a71272c9a1b85b43}\label{namespaceNeoFOAM_a75a914fbbb00d2f6a71272c9a1b85b43} 
 \index{NeoFOAM@{NeoFOAM}!convert@{convert}}
@@ -542,16 +577,16 @@ Definition at line \mbox{\hyperlink{convert_8hpp_source_l00066}{66}} of file \mb
 \doxysubsubsection{\texorpdfstring{mapFvSolution()}{mapFvSolution()}}
 {\footnotesize\ttfamily Neo\+N\+::\+Dictionary Neo\+FOAM\+::map\+Fv\+Solution (\begin{DoxyParamCaption}\item[{const Neo\+N\+::\+Dictionary \&}]{solver\+Dict }\end{DoxyParamCaption})}
 
-\Hypertarget{namespaceNeoFOAM_a5632c3b06d59dbeabc41aba73af8d95d}\label{namespaceNeoFOAM_a5632c3b06d59dbeabc41aba73af8d95d} 
+\Hypertarget{namespaceNeoFOAM_a999e61dc6e0868f9fe6cd7e4ea91f917}\label{namespaceNeoFOAM_a999e61dc6e0868f9fe6cd7e4ea91f917} 
 \index{NeoFOAM@{NeoFOAM}!operator\&@{operator\&}}
 \index{operator\&@{operator\&}!NeoFOAM@{NeoFOAM}}
 \doxysubsubsection{\texorpdfstring{operator\&()}{operator\&()}}
 {\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
-Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Value\+Type $>$ Neo\+FOAM\+::operator\& (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{classNeoFOAM_1_1PDESolver}{PDESolver}}$<$ Value\+Type $>$ \&}]{expr,  }\item[{const Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Value\+Type $>$ \&}]{psi }\end{DoxyParamCaption})}
+Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Value\+Type $>$ Neo\+FOAM\+::operator\& (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{classNeoFOAM_1_1PDE}{PDE}}$<$ Value\+Type $>$ \&}]{expr,  }\item[{const Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Value\+Type $>$ \&}]{psi }\end{DoxyParamCaption})}
 
 
 
-Definition at line \mbox{\hyperlink{pdeSolver_8hpp_source_l00383}{383}} of file \mbox{\hyperlink{pdeSolver_8hpp_source}{pde\+Solver.\+hpp}}.
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00684}{684}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_aa63d77fd599301dc114f8358d866b805}\label{namespaceNeoFOAM_aa63d77fd599301dc114f8358d866b805} 
 \index{NeoFOAM@{NeoFOAM}!operator==@{operator==}}
@@ -617,7 +652,7 @@ auto Neo\+FOAM\+::read\+Surface\+Boundary\+Conditions (\begin{DoxyParamCaption}\
 
 
 
-Definition at line \mbox{\hyperlink{readers_8hpp_source_l00281}{281}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
+Definition at line \mbox{\hyperlink{readers_8hpp_source_l00274}{274}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_a6cb4d89d1e44667e5a66f5119bad9206}\label{namespaceNeoFOAM_a6cb4d89d1e44667e5a66f5119bad9206} 
 \index{NeoFOAM@{NeoFOAM}!readVolBoundaryConditions@{readVolBoundaryConditions}}
@@ -659,6 +694,19 @@ Definition at line \mbox{\hyperlink{continuityError_8hpp_source_l00102}{102}} of
 \doxysubsubsection{\texorpdfstring{setDeltaT()}{setDeltaT()}}
 {\footnotesize\ttfamily void Neo\+FOAM\+::set\+DeltaT (\begin{DoxyParamCaption}\item[{Foam\+::\+Time \&}]{of\+Run\+Time,  }\item[{\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&}]{nf\+Run\+Time,  }\item[{Foam\+::scalar}]{co\+Num }\end{DoxyParamCaption})}
 
+\Hypertarget{namespaceNeoFOAM_aecef654291f22551aa7a3b014e46cb67}\label{namespaceNeoFOAM_aecef654291f22551aa7a3b014e46cb67} 
+\index{NeoFOAM@{NeoFOAM}!Solver@{Solver}}
+\index{Solver@{Solver}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{Solver()}{Solver()}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+\mbox{\hyperlink{classNeoFOAM_1_1Solver}{Neo\+FOAM\+::\+Solver}} (\begin{DoxyParamCaption}\item[{Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Volume\+Field$<$ Value\+Type $>$ \&}]{,  }\item[{\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&}]{ }\end{DoxyParamCaption}) -\/$>$  \mbox{\hyperlink{classNeoFOAM_1_1Solver}{Solver}}$<$ Value\+Type $>$}
+
+\Hypertarget{namespaceNeoFOAM_a222e258d8cf0cd2d7f3134c2df8d6342}\label{namespaceNeoFOAM_a222e258d8cf0cd2d7f3134c2df8d6342} 
+\index{NeoFOAM@{NeoFOAM}!subtractConsistentHbyA@{subtractConsistentHbyA}}
+\index{subtractConsistentHbyA@{subtractConsistentHbyA}!NeoFOAM@{NeoFOAM}}
+\doxysubsubsection{\texorpdfstring{subtractConsistentHbyA()}{subtractConsistentHbyA()}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::subtract\+Consistent\+HbyA (\begin{DoxyParamCaption}\item[{nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_ae261b7f2859c508a432e8a334ad179d2}{Vec3}} $>$ \&}]{h\+ByA,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{r\+AU,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{r\+AtU,  }\item[{const nnfvcc\+::\+Volume\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{p }\end{DoxyParamCaption})}
+
 \Hypertarget{namespaceNeoFOAM_aff116721405a6ad86fee9675a3cc3156}\label{namespaceNeoFOAM_aff116721405a6ad86fee9675a3cc3156} 
 \index{NeoFOAM@{NeoFOAM}!syncRunTimes@{syncRunTimes}}
 \index{syncRunTimes@{syncRunTimes}!NeoFOAM@{NeoFOAM}}
@@ -671,11 +719,11 @@ Definition at line \mbox{\hyperlink{continuityError_8hpp_source_l00102}{102}} of
 \doxysubsubsection{\texorpdfstring{updateDdtSchemes()}{updateDdtSchemes()}}
 {\footnotesize\ttfamily void Neo\+FOAM\+::update\+Ddt\+Schemes (\begin{DoxyParamCaption}\item[{Neo\+N\+::\+Dictionary \&}]{solver\+Dict }\end{DoxyParamCaption})}
 
-\Hypertarget{namespaceNeoFOAM_afc1d72b867bd234d1acdac0bf9f77bc5}\label{namespaceNeoFOAM_afc1d72b867bd234d1acdac0bf9f77bc5} 
+\Hypertarget{namespaceNeoFOAM_adf06ff73f2db547389c03e2181600d76}\label{namespaceNeoFOAM_adf06ff73f2db547389c03e2181600d76} 
 \index{NeoFOAM@{NeoFOAM}!updateFaceVelocity@{updateFaceVelocity}}
 \index{updateFaceVelocity@{updateFaceVelocity}!NeoFOAM@{NeoFOAM}}
 \doxysubsubsection{\texorpdfstring{updateFaceVelocity()}{updateFaceVelocity()}}
-{\footnotesize\ttfamily void Neo\+FOAM\+::update\+Face\+Velocity (\begin{DoxyParamCaption}\item[{const nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{predicted\+Phi,  }\item[{const \mbox{\hyperlink{classNeoFOAM_1_1PDESolver}{PDESolver}}$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{expr,  }\item[{nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{phi }\end{DoxyParamCaption})}
+{\footnotesize\ttfamily void Neo\+FOAM\+::update\+Face\+Velocity (\begin{DoxyParamCaption}\item[{const nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{predicted\+Phi,  }\item[{const \mbox{\hyperlink{classNeoFOAM_1_1PDE}{PDE}}$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{expr,  }\item[{nnfvcc\+::\+Surface\+Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{phi }\end{DoxyParamCaption})}
 
 \Hypertarget{namespaceNeoFOAM_a8c1ca67d102991ab4a3c1bc3a2a8fb03}\label{namespaceNeoFOAM_a8c1ca67d102991ab4a3c1bc3a2a8fb03} 
 \index{NeoFOAM@{NeoFOAM}!updatePreconditioner@{updatePreconditioner}}
