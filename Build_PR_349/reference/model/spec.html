@@ -219,6 +219,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_visualize_the_operation_dag.html">Visualize the operation DAG</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_use_depends_for_injection.html">Inject dependencies into operations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_use_an_interface.html">Gather contributions from many models with a model-owned interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_trace_solver_performance.html">Trace solver performance with OpenTelemetry</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul class="current">
@@ -348,6 +349,23 @@ ModelRuntime so that multiple runtimes can coexist independently.</p>
 <span class="sig-name descname"><span class="pre">build</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/model/spec.html#ModelSpec.build"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.model.spec.ModelSpec.build" title="Link to this definition">¶</a></dt>
 <dd><p>Register the BUILD function.</p>
 <p>Signature: <code class="docutils literal notranslate"><span class="pre">def</span> <span class="pre">build(config:</span> <span class="pre">MyConfig)</span> <span class="pre">-&gt;</span> <span class="pre">list[InitStep]</span></code></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.framework.model.spec.ModelSpec.build_operations_for">
+<span class="sig-name descname"><span class="pre">build_operations_for</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">runtime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../framework/operations.html#neofoam.framework.operations.Operation" title="neofoam.framework.operations.Operation"><span class="pre">Operation</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/model/spec.html#ModelSpec.build_operations_for"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.model.spec.ModelSpec.build_operations_for" title="Link to this definition">¶</a></dt>
+<dd><p>Build this spec’s Operations with <code class="docutils literal notranslate"><span class="pre">runtime</span></code> as the <code class="docutils literal notranslate"><span class="pre">self</span></code> binding.</p>
+<p><code class="docutils literal notranslate"><span class="pre">runtime</span></code> is a ModelRuntime — or the bare spec itself for specs used
+as their own runtime.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.framework.model.spec.ModelSpec.build_steps">
+<span class="sig-name descname"><span class="pre">build_steps</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/model/spec.html#ModelSpec.build_steps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.model.spec.ModelSpec.build_steps" title="Link to this definition">¶</a></dt>
+<dd><p>Run the registered <code class="docutils literal notranslate"><span class="pre">&#64;build</span></code> function with this spec as its binding.</p>
+<p>For specs used as their own runtime (core models composed without
+<code class="docutils literal notranslate"><span class="pre">instantiate</span></code>): emits the spec’s InitSteps, or an empty list when no
+<code class="docutils literal notranslate"><span class="pre">&#64;build</span></code> is registered.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -498,6 +516,14 @@ model’s family is required; defaults to the model name.</p>
 <dd><p>Return True if the detect predicate passes (default: True).</p>
 </dd></dl>
 
+<dl class="py method">
+<dt class="sig sig-object py" id="neofoam.framework.model.spec.ModelSpec.wrap_operation">
+<span class="sig-name descname"><span class="pre">wrap_operation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">runtime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">...</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../_modules/neofoam/framework/model/spec.html#ModelSpec.wrap_operation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.framework.model.spec.ModelSpec.wrap_operation" title="Link to this definition">¶</a></dt>
+<dd><p>Wrap <code class="docutils literal notranslate"><span class="pre">func</span></code> with this spec’s dependency resolution.</p>
+<p>For <code class="docutils literal notranslate"><span class="pre">&#64;operation_collection</span></code> bodies, which bypass the spec’s default
+operation wrapping and must wrap each exposed operation themselves.</p>
+</dd></dl>
+
 </dd></dl>
 
 </section>
@@ -561,6 +587,8 @@ model’s family is required; defaults to the model name.</p>
 <li><a class="reference internal" href="#neofoam.framework.model.spec.Model"><code class="docutils literal notranslate"><span class="pre">Model()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec"><code class="docutils literal notranslate"><span class="pre">ModelSpec</span></code></a><ul>
 <li><a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec.build"><code class="docutils literal notranslate"><span class="pre">ModelSpec.build()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec.build_operations_for"><code class="docutils literal notranslate"><span class="pre">ModelSpec.build_operations_for()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec.build_steps"><code class="docutils literal notranslate"><span class="pre">ModelSpec.build_steps()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec.config"><code class="docutils literal notranslate"><span class="pre">ModelSpec.config()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec.contributes"><code class="docutils literal notranslate"><span class="pre">ModelSpec.contributes()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec.declared_interfaces"><code class="docutils literal notranslate"><span class="pre">ModelSpec.declared_interfaces</span></code></a></li>
@@ -576,6 +604,7 @@ model’s family is required; defaults to the model name.</p>
 <li><a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec.register_with"><code class="docutils literal notranslate"><span class="pre">ModelSpec.register_with()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec.resolve"><code class="docutils literal notranslate"><span class="pre">ModelSpec.resolve()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec.run_detect"><code class="docutils literal notranslate"><span class="pre">ModelSpec.run_detect()</span></code></a></li>
+<li><a class="reference internal" href="#neofoam.framework.model.spec.ModelSpec.wrap_operation"><code class="docutils literal notranslate"><span class="pre">ModelSpec.wrap_operation()</span></code></a></li>
 </ul>
 </li>
 </ul>
