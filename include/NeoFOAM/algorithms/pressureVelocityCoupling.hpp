@@ -56,6 +56,49 @@ nnfvcc::VolumeField<scalar> computeRAU(const PDE<Vec3>& expr);
 std::tuple<nnfvcc::VolumeField<scalar>, nnfvcc::VolumeField<Vec3>>
 computeRAUandHByA(const PDE<Vec3>& expr);
 
+/* @brief consistent (SIMPLEC) reciprocal diagonal rAtU
+ *
+ * @details Implements OpenFOAM's `rAtU = 1/(1/rAU - UEqn.H1())` (simpleFoam/pEqn.H,
+ * enabled by `SIMPLE/consistent yes`). H1 is the OpenFOAM fvMatrix::H1() analogue:
+ * the negated sum of the off-diagonal coefficients of a row divided by the cell
+ * volume (lduMatrix::H1 subtracts every off-diagonal; fvMatrix::H1 then divides by V
+ * and folds in the coupled-patch coupling). With A = 1/rAU = diag/V the denominator
+ * becomes (diag + sum_offDiag)/V, so the consistent diagonal absorbs the neighbour
+ * coupling that plain SIMPLE drops — letting the pressure equation stay consistent at
+ * an under-relaxation factor of 1.
+ *
+ * @note assumes an assembled system matrix; the off-diagonal coupling of processor
+ * boundary faces is folded in the same way computeRAUandHByA handles it.
+ */
+nnfvcc::VolumeField<scalar>
+computeRAtU(const PDESolver<Vec3>& expr, const nnfvcc::VolumeField<scalar>& rAU);
+
+/* @brief SIMPLEC flux correction: phiHbyA += interpolate(rAtU - rAU)*snGrad(p)*magSf
+ *
+ * @details Mirrors the `phiHbyA += fvc::interpolate(rAtU() - rAU)*fvc::snGrad(p)*mesh.magSf()`
+ * term in simpleFoam/pEqn.H. snGrad(p) uses the corrected face-normal gradient so the
+ * non-orthogonal part is retained. Applied to internal and boundary faces.
+ */
+void addConsistentFluxCorrection(
+    nnfvcc::SurfaceField<scalar>& phiHbyA,
+    const nnfvcc::VolumeField<scalar>& rAU,
+    const nnfvcc::VolumeField<scalar>& rAtU,
+    const nnfvcc::VolumeField<scalar>& p
+);
+
+/* @brief SIMPLEC HbyA correction: HbyA -= (rAU - rAtU)*grad(p)
+ *
+ * @details Mirrors `HbyA -= (rAU - rAtU())*fvc::grad(p)` in simpleFoam/pEqn.H. Combined
+ * with the velocity corrector U = HbyA - rAtU*grad(p) this reproduces the plain-SIMPLE
+ * reconstruction U = HbyA0 - rAU*grad(p) at convergence (where p has stopped changing).
+ */
+void subtractConsistentHbyA(
+    nnfvcc::VolumeField<Vec3>& hByA,
+    const nnfvcc::VolumeField<scalar>& rAU,
+    const nnfvcc::VolumeField<scalar>& rAtU,
+    const nnfvcc::VolumeField<scalar>& p
+);
+
 /* @brief computes phi = phiHbyA - pEqn.flux();
  * where pEqn.flux() = (orthogonal matrix-coefficient flux) + faceFluxCorrection
  *

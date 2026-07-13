@@ -1,0 +1,55 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+
+streamLines
+{
+    type    streamLine;
+    libs    (fieldFunctionObjects);
+
+    // Output every
+    writeControl    writeTime;
+    // writeInterval 10;
+
+    setFormat   vtk;
+
+    // Tracking direction (forward | backward | bidirectional)
+    direction   forward;
+
+    // Fields to sample
+    fields      (p U k);
+
+    // Steps particles can travel before being removed
+    lifeTime    10000;
+
+    //- Specify either absolute length of steps (trackLength) or a number
+    //  of subcycling steps per cell (nSubCycle)
+
+    // Size of single track segment [m]
+    //trackLength 1e-3;
+
+    // Number of steps per cell (estimate). Set to 1 to disable subcycling.
+    nSubCycle   5;
+
+    // Cloud name to use
+    cloud       particleTracks;
+
+    // Seeding method.
+    seedSampleSet
+    {
+        type        uniform;
+        axis        x;  //distance;
+
+        // Note: tracks slightly offset so as not to be on a face
+        start       (-1.001 -0.05 0.0011);
+        end         (-1.001 -0.05 1.0011);
+        nPoints     20;
+    }
+}
+
+
+// ************************************************************************* //
