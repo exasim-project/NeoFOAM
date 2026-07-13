@@ -185,14 +185,6 @@ public:
     /** @brief When true, selects the <field>Final relaxation factor and solver subdict. */
     void setFinalIter(bool finalIter) { finalIter_ = finalIter; }
 
-    /** @brief Hard-pin a set of cells to prescribed values after assembly (omega wall function). */
-    void
-    setConstraints(const NeoN::Vector<NeoN::scalar>& mask, const NeoN::Vector<ValueType>& values)
-    {
-        constraintMask_ = &mask;
-        constraintValues_ = &values;
-    }
-
     /** @brief assemble the linear system owned by the solver based on the current expression */
     LinearSystem& assemble()
     {
@@ -277,11 +269,12 @@ public:
         // Persist the NeoN solver across iterations (Strategy 1a), exactly like solveImpl does for
         // the scalar (pressure) path. The momentum predictor previously created a FRESH
         // NeoN::la::Solver every step here, which discarded the GinkgoSolver's distributed-topology
-        // caches (index_map / non-local Coo) and forced them to be rebuilt 3x per step (once per Ux,
-        // Uy, Uz) -- the dominant cost in the profiled momentumPredictor region (~34% of wall, while
-        // the actual velocity solve is only ~3%). Keeping one solver alive per field lets those
-        // caches (and any solver/workspace reuse) survive across timesteps. Stored as a shared_ptr
-        // so Dictionary's std::any copy never clones the Solver (GinkgoSolver::clone aborts).
+        // caches (index_map / non-local Coo) and forced them to be rebuilt 3x per step (once per
+        // Ux, Uy, Uz) -- the dominant cost in the profiled momentumPredictor region (~34% of wall,
+        // while the actual velocity solve is only ~3%). Keeping one solver alive per field lets
+        // those caches (and any solver/workspace reuse) survive across timesteps. Stored as a
+        // shared_ptr so Dictionary's std::any copy never clones the Solver (GinkgoSolver::clone
+        // aborts).
         const std::string solverKey = "solver:" + (useFinal ? finalKey : psi_->name);
         auto& solver = readOrCreate<std::shared_ptr<NeoN::la::Solver>>(
             *runTime_,
@@ -657,8 +650,6 @@ private:
     const NeoN::Vector<NeoN::scalar>* constraintMask_ = nullptr;
     const NeoN::Vector<ValueType>* constraintValues_ = nullptr;
     bool finalIter_ = false;
-    const NeoN::Vector<NeoN::scalar>* constraintMask_ = nullptr;
-    const NeoN::Vector<ValueType>* constraintValues_ = nullptr;
 };
 
 // Backward-compatibility alias: PDE was previously named PDESolver. Existing consumers
@@ -669,10 +660,6 @@ template<
     typename MatrixValueType = NeoN::scalar,
     typename IndexType = NeoN::localIdx>
 using PDESolver = PDE<ValueType, MatrixValueType, IndexType>;
-
-
-template<typename ValueType>
-using PDESolver = PDE<ValueType>;
 
 template<typename ValueType, typename IndexType = NeoN::localIdx>
 NeoN::finiteVolume::cellCentred::VolumeField<ValueType> applyOperator(
