@@ -284,6 +284,7 @@ void KOmegaSST::correct(
 
     fvcc::BoundaryContext ctx;
     ctx.insert("U", U);
+    ctx.insert("phi", phi);
     ctx.insert("k", k);
     ctx.insert("nu", nu_);
     ctx.insert("nearWallDist", nearWallDistTmp_);
