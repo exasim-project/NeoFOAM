@@ -23,6 +23,10 @@ class Permutation
 
         [[nodiscard]] IndexType newToOld(IndexType newIndex) const;
 
+        [[nodiscard]] std::span<const IndexType> oldToNew() const noexcept;
+
+        [[nodiscard]] std::span<const IndexType> newToOld() const noexcept;
+
         [[nodiscard]] Permutation inverse() const;
 
         [[nodiscard]] Permutation compose(const Permutation& other) const;
