@@ -253,24 +253,24 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>         {</div>
 <div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span>             dict.insert(<span class="stringliteral">&quot;type&quot;</span>, std::string(<span class="stringliteral">&quot;inletOutlet&quot;</span>));</div>
 <div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span>             NeoN::TokenList tokenList = dict.template get&lt;NeoN::TokenList&gt;(<span class="stringliteral">&quot;inletValue&quot;</span>);</div>
-<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>             <span class="keywordflow">if</span> (tokenList.size() &gt; 1)</div>
+<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span>             <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::is_same&lt;type_primitive_t, NeoN::Vec3&gt;::value)</div>
 <div class="line"><a id="l00179" name="l00179"></a><span class="lineno">  179</span>             {</div>
-<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span>                 <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::is_same&lt;type_primitive_t, NeoN::Vec3&gt;::value)</div>
-<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>                 {</div>
-<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>                     NeoN::Vec3 inletValue {};</div>
+<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span>                 NeoN::Vec3 inletValue {};</div>
+<div class="line"><a id="l00181" name="l00181"></a><span class="lineno">  181</span>                 <span class="keywordflow">if</span> (tokenList.size() &gt;= 4)</div>
+<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span>                 {</div>
 <div class="line"><a id="l00183" name="l00183"></a><span class="lineno">  183</span>                     inletValue[0] = <a class="code hl_function" href="namespaceNeoFOAM_1_1detail.html#a2f0eec60b1c730f1f28d6bf8bd1fbf0f">detail::tokenAsScalar</a>(tokenList, 1);</div>
 <div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>                     inletValue[1] = <a class="code hl_function" href="namespaceNeoFOAM_1_1detail.html#a2f0eec60b1c730f1f28d6bf8bd1fbf0f">detail::tokenAsScalar</a>(tokenList, 2);</div>
 <div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>                     inletValue[2] = <a class="code hl_function" href="namespaceNeoFOAM_1_1detail.html#a2f0eec60b1c730f1f28d6bf8bd1fbf0f">detail::tokenAsScalar</a>(tokenList, 3);</div>
-<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>                     dict.insert(<span class="stringliteral">&quot;inletValue&quot;</span>, inletValue);</div>
-<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>                 }</div>
-<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>                 <span class="keywordflow">else</span></div>
-<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>                 {</div>
-<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>                     dict.insert(<span class="stringliteral">&quot;inletValue&quot;</span>, <a class="code hl_function" href="namespaceNeoFOAM_1_1detail.html#a2f0eec60b1c730f1f28d6bf8bd1fbf0f">detail::tokenAsScalar</a>(tokenList, 1));</div>
-<div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span>                 }</div>
-<div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span>             }</div>
-<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>             <span class="keywordflow">else</span></div>
-<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span>             {</div>
-<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span>                 dict.insert(<span class="stringliteral">&quot;inletValue&quot;</span>, type_primitive_t {});</div>
+<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>                 }</div>
+<div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>                 dict.insert(<span class="stringliteral">&quot;inletValue&quot;</span>, inletValue);</div>
+<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>             }</div>
+<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>             <span class="keywordflow">else</span></div>
+<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>             {</div>
+<div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span>                 dict.insert(</div>
+<div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span>                     <span class="stringliteral">&quot;inletValue&quot;</span>,</div>
+<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>                     tokenList.size() &gt;= 2 ? <a class="code hl_function" href="namespaceNeoFOAM_1_1detail.html#a2f0eec60b1c730f1f28d6bf8bd1fbf0f">detail::tokenAsScalar</a>(tokenList, 1)</div>
+<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span>                                           : type_primitive_t {}</div>
+<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span>                 );</div>
 <div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>             }</div>
 <div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span>         }}</div>
 <div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span>    };</div>

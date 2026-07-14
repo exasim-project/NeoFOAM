@@ -168,24 +168,24 @@
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00175}00175\ \ \ \ \ \ \ \ \ \ \{}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00176}00176\ \ \ \ \ \ \ \ \ \ \ \ \ \ dict.insert(\textcolor{stringliteral}{"{}type"{}},\ std::string(\textcolor{stringliteral}{"{}inletOutlet"{}}));}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00177}00177\ \ \ \ \ \ \ \ \ \ \ \ \ \ NeoN::TokenList\ tokenList\ =\ dict.template\ get<NeoN::TokenList>(\textcolor{stringliteral}{"{}inletValue"{}});}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00178}00178\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (tokenList.size()\ >\ 1)}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00178}00178\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (std::is\_same<type\_primitive\_t,\ NeoN::Vec3>::value)}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00179}00179\ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00180}00180\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (std::is\_same<type\_primitive\_t,\ NeoN::Vec3>::value)}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00181}00181\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00182}00182\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NeoN::Vec3\ inletValue\ \{\};}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00180}00180\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ NeoN::Vec3\ inletValue\ \{\};}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00181}00181\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (tokenList.size()\ >=\ 4)}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00182}00182\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00183}00183\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ inletValue[0]\ =\ \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a2f0eec60b1c730f1f28d6bf8bd1fbf0f}{detail::tokenAsScalar}}(tokenList,\ 1);}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00184}00184\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ inletValue[1]\ =\ \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a2f0eec60b1c730f1f28d6bf8bd1fbf0f}{detail::tokenAsScalar}}(tokenList,\ 2);}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00185}00185\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ inletValue[2]\ =\ \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a2f0eec60b1c730f1f28d6bf8bd1fbf0f}{detail::tokenAsScalar}}(tokenList,\ 3);}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00186}00186\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dict.insert(\textcolor{stringliteral}{"{}inletValue"{}},\ inletValue);}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00187}00187\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00188}00188\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00189}00189\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00190}00190\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dict.insert(\textcolor{stringliteral}{"{}inletValue"{}},\ \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a2f0eec60b1c730f1f28d6bf8bd1fbf0f}{detail::tokenAsScalar}}(tokenList,\ 1));}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00191}00191\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00192}00192\ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00193}00193\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00194}00194\ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00195}00195\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dict.insert(\textcolor{stringliteral}{"{}inletValue"{}},\ type\_primitive\_t\ \{\});}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00186}00186\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00187}00187\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dict.insert(\textcolor{stringliteral}{"{}inletValue"{}},\ inletValue);}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00188}00188\ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00189}00189\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00190}00190\ \ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00191}00191\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dict.insert(}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00192}00192\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}inletValue"{}},}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00193}00193\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ tokenList.size()\ >=\ 2\ ?\ \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a2f0eec60b1c730f1f28d6bf8bd1fbf0f}{detail::tokenAsScalar}}(tokenList,\ 1)}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00194}00194\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ type\_primitive\_t\ \{\}}
+\DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00195}00195\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ );}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00196}00196\ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00197}00197\ \ \ \ \ \ \ \ \ \ \}\}}
 \DoxyCodeLine{\Hypertarget{readers_8hpp_source_l00198}00198\ \ \ \ \ \};}
