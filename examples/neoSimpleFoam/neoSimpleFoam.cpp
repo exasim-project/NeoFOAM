@@ -50,6 +50,11 @@ int main(int argc, char* argv[])
         auto& solverDict = rt.fvSolutionDict.subDict("solvers");
         solverDict.subDict("p") = nf::mapFvSolution(solverDict.subDict("p"));
         solverDict.subDict("U") = nf::mapFvSolution(solverDict.subDict("U"));
+        for (const auto& field : {"k", "omega", "epsilon"})
+        {
+            if (solverDict.contains(field))
+                solverDict.subDict(field) = nf::mapFvSolution(solverDict.subDict(field));
+        }
         auto& schemesDict = rt.fvSchemesDict;
         schemesDict = nf::mapFvSchemes(rt.fvSchemesDict);
 
