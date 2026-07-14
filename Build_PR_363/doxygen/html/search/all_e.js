@@ -8,7 +8,7 @@ var searchData=
   ['setreference_5',['setReference',['../classNeoFOAM_1_1PDE.html#a761c2d04db4af1d188d452bda66ac827',1,'NeoFOAM::PDE']]],
   ['setup_2ehpp_6',['setup.hpp',['../setup_8hpp.html',1,'']]],
   ['sigmanut_7',['sigmaNut',['../structNeoFOAM_1_1SpalartAllmarasDDES_1_1Coefficients.html#a9dc275051b5337f7ed4339990154d567',1,'NeoFOAM::SpalartAllmarasDDES::Coefficients']]],
-  ['size_8',['size',['../classPermutation.html#a382e3c34a0b001ce2fa5307f8c9e93c8',1,'Permutation']]],
+  ['size_8',['size',['../classNeoFOAM_1_1Permutation.html#a0d41ddb1758438e1fb962ceeac6ae228',1,'NeoFOAM::Permutation']]],
   ['solve_9',['solve',['../classNeoFOAM_1_1PDE.html#adc6783a51aa3e6a0b2bf822e8d354c95',1,'NeoFOAM::PDE::solve()'],['../classNeoFOAM_1_1PDE.html#a1a19c403768745a0a9a3b7637335f2ac',1,'NeoFOAM::PDE::solve(dsl::SpatialOperator&lt; NeoN::Vec3 &gt; &amp;&amp;rhs)'],['../classNeoFOAM_1_1Solver.html#ac9fb3f3e3beac5ea3e1f4f2259681c60',1,'NeoFOAM::Solver::solve(PDEType &amp;pde)'],['../classNeoFOAM_1_1Solver.html#a87eb53fbec90b0a7353071be63386f2d',1,'NeoFOAM::Solver::solve(PDEType &amp;pde, dsl::SpatialOperator&lt; ValueType &gt; &amp;&amp;rhs)']]],
   ['solveimpl_10',['solveImpl',['../classNeoFOAM_1_1PDE.html#a665045e1ab13f9c86f3b80f70827288e',1,'NeoFOAM::PDE']]],
   ['solver_11',['solver',['../classNeoFOAM_1_1Solver.html#af4ade45d4be71a39d82d8717b5a439c9',1,'NeoFOAM::Solver::Solver()'],['../namespaceNeoFOAM.html#aecef654291f22551aa7a3b014e46cb67',1,'NeoFOAM::Solver(NeoN::finiteVolume::cellCentred::VolumeField&lt; ValueType &gt; &amp;, RunTime &amp;) -&gt; Solver&lt; ValueType &gt;'],['../classNeoFOAM_1_1Solver.html',1,'NeoFOAM::Solver&lt; ValueType, MatrixValueType, IndexType &gt;']]],

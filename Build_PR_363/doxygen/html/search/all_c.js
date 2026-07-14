@@ -4,7 +4,7 @@ var searchData=
   ['patchnames_5f_1',['patchNames_',['../classNeoFOAM_1_1Forces.html#aa9bc2a0ad5d0d9b689ed644a03abe2c8',1,'NeoFOAM::Forces']]],
   ['pde_2',['pde',['../classNeoFOAM_1_1PDE.html',1,'NeoFOAM::PDE&lt; ValueType, MatrixValueType, IndexType &gt;'],['../classNeoFOAM_1_1PDE.html#a68afddbbdb4f8a60bcb1acc7ad045587',1,'NeoFOAM::PDE::PDE(const PDE &amp;expr)'],['../classNeoFOAM_1_1PDE.html#aa50cadcb517785b86e8ad4f806a38e95',1,'NeoFOAM::PDE::PDE(dsl::Expression&lt; ValueType &gt; expr)'],['../classNeoFOAM_1_1PDE.html#a41bcce83d26dafe9c61220a63731831b',1,'NeoFOAM::PDE::PDE(dsl::Expression&lt; ValueType &gt; expr, VolumeField &amp;psi, RunTime &amp;runTime)']]],
   ['pde_2ehpp_3',['pde.hpp',['../pde_8hpp.html',1,'']]],
-  ['permutation_4',['permutation',['../classPermutation.html',1,'Permutation'],['../classPermutation.html#aa24203b945921e3d8fc37fbd8c2d69d0',1,'Permutation::Permutation()']]],
+  ['permutation_4',['permutation',['../classNeoFOAM_1_1Permutation.html',1,'NeoFOAM::Permutation'],['../classNeoFOAM_1_1Permutation.html#a6afd53119b58e5a848ec39ee6ae9a4a1',1,'NeoFOAM::Permutation::Permutation()']]],
   ['permutation_2ehpp_5',['permutation.hpp',['../permutation_8hpp.html',1,'']]],
   ['pimplecontrol_6',['pimplecontrol',['../classNeoFOAM_1_1PimpleControl.html',1,'NeoFOAM::PimpleControl'],['../classNeoFOAM_1_1PimpleControl.html#a64a14f955ef306f87b131076ea63a3b7',1,'NeoFOAM::PimpleControl::PimpleControl()']]],
   ['pimplecontrol_2ehpp_7',['pimpleControl.hpp',['../pimpleControl_8hpp.html',1,'']]],

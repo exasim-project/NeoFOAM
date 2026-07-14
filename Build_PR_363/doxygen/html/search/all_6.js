@@ -1,12 +1,12 @@
 var searchData=
 [
-  ['identity_0',['identity',['../classPermutation.html#a4cb64d2c4631d68adf7bc8e38371b26f',1,'Permutation']]],
+  ['identity_0',['identity',['../classNeoFOAM_1_1Permutation.html#a303b59072f67ad6a6acf87246013a620',1,'NeoFOAM::Permutation']]],
   ['implicitoperation_1',['implicitOperation',['../classNeoN_1_1finiteVolume_1_1cellCentred_1_1ViscousStressOperator.html#af6dadfefe54f0a91521c12ae2c85717e',1,'NeoN::finiteVolume::cellCentred::ViscousStressOperator']]],
-  ['indextype_2',['IndexType',['../classPermutation.html#a071faf4580fbea30cedd4425e1182030',1,'Permutation']]],
+  ['indextype_2',['IndexType',['../classNeoFOAM_1_1Permutation.html#a38e79e634c56d4e0fa471d58b70b59fc',1,'NeoFOAM::Permutation']]],
   ['initialize_3',['initialize',['../classNeoFOAM_1_1SpalartAllmarasDDES.html#ac43050c3c177a80bad14cf5a56284c6c',1,'NeoFOAM::SpalartAllmarasDDES::initialize()'],['../classNeoFOAM_1_1TurbulenceModel.html#ad6c3e347eb9ee939dfb3a1d10f5836de',1,'NeoFOAM::TurbulenceModel::initialize()']]],
   ['insert_4',['insert',['../namespaceNeoFOAM.html#af3b37c9dbbd37df8a0849a0f383f06d9',1,'NeoFOAM']]],
-  ['inverse_5',['inverse',['../classPermutation.html#af906faaa87c2727bf4be22b32092c313',1,'Permutation']]],
-  ['isidentity_6',['isIdentity',['../classPermutation.html#af9c45bb17e49898032bcde38579469f3',1,'Permutation']]],
+  ['inverse_5',['inverse',['../classNeoFOAM_1_1Permutation.html#a6e8bea34e16952e8eac69fd58083224c',1,'NeoFOAM::Permutation']]],
+  ['isidentity_6',['isIdentity',['../classNeoFOAM_1_1Permutation.html#a3e4ba6a76cf415a2a44d202927b717df',1,'NeoFOAM::Permutation']]],
   ['issurfacefield_7',['issurfacefield',['../structNeoFOAM_1_1detail_1_1IsSurfaceField.html',1,'NeoFOAM::detail::IsSurfaceField&lt; ContainerType &gt;'],['../namespaceNeoFOAM_1_1detail.html#ab279b37af86eb68b39242b6bf49e208d',1,'NeoFOAM::detail::isSurfaceField']]],
   ['issurfacefield_3c_20fvcc_3a_3asurfacefield_3c_20valuetype_20_3e_20_3e_8',['IsSurfaceField&lt; fvcc::SurfaceField&lt; ValueType &gt; &gt;',['../structNeoFOAM_1_1detail_1_1IsSurfaceField_3_01fvcc_1_1SurfaceField_3_01ValueType_01_4_01_4.html',1,'NeoFOAM::detail']]],
   ['isvolumefield_9',['isvolumefield',['../structNeoFOAM_1_1detail_1_1IsVolumeField.html',1,'NeoFOAM::detail::IsVolumeField&lt; ContainerType &gt;'],['../namespaceNeoFOAM_1_1detail.html#a5376cc046ea43727dbdeedf0f7b2614c',1,'NeoFOAM::detail::isVolumeField']]],
