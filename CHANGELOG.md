@@ -1,4 +1,5 @@
 # Version 0.3.0 (unreleased)
+- Add neoSimpleFoam steady-state incompressible SIMPLE/SIMPLEC solver with motorBike tutorial, SIMPLEC rAtU/flux corrections, inletOutlet BC parsing, bounded-scheme prefix stripping, and CI smoke test [#362](https://github.com/exasim-project/NeoFOAM/pull/362)
 - Add kEpsilon and kOmegaSST turbulence models [#337](https://github.com/exasim-project/NeoFOAM/pull/337)
 - Add neoPimpleFoam solver with PIMPLE outer-loop control and SA-DDES turbulence support [#337](https://github.com/exasim-project/NeoFOAM/pull/337)
 - Wire equation and field under-relaxation (URF) into PDESolver [#337](https://github.com/exasim-project/NeoFOAM/pull/337)
