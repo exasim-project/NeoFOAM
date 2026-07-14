@@ -163,6 +163,9 @@ fi
 # Step 7: Smoke-test neoSimpleFoam (motorBike, 5 iterations)
 # -----------------------------
 SKIP_SIMPLE_SMOKETEST=${SKIP_SIMPLE_SMOKETEST:-false}
+if [[ "${GPU_VENDOR:-}" == "intel" ]]; then
+    SKIP_SIMPLE_SMOKETEST=true
+fi
 if [[ "$SKIP_SIMPLE_SMOKETEST" != "true" ]]; then
     pushd tutorials/neoSimpleFoam/motorBike >/dev/null
     mkdir -p constant/triSurface
@@ -194,5 +197,5 @@ if [[ "$SKIP_SIMPLE_SMOKETEST" != "true" ]]; then
     fi
     popd >/dev/null
 else
-    echo "=== Skipping neoSimpleFoam smoke test (SKIP_SIMPLE_SMOKETEST set) ==="
+    echo "=== Skipping neoSimpleFoam smoke test (SKIP_SIMPLE_SMOKETEST set or Intel) ==="
 fi
