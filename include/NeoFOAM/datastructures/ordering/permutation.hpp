@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
 /*
-A Permutation is an immutable value type representing a bijective mapping between 
+A Permutation is an immutable value type representing a bijective mapping between
 two index spaces and providing efficient operations on that mapping.
 
 Invariant:
@@ -16,36 +16,55 @@ Invariant:
 - indices lie in [0,size())
 */
 #pragma once
+
 #include "NeoN/NeoN.hpp"
-#include <vector>
+
+#include <cstddef>
 #include <span>
+#include <vector>
 
 class Permutation
 {
-    public:
-        using IndexType = NeoN::label;
+public:
 
-        explicit Permutation(std::vector<IndexType> oldToNew);
+    using IndexType = NeoN::label;
 
-        static Permutation identity(std::size_t size) const noexcept;
+    explicit Permutation(std::vector<IndexType> oldToNew);
 
-        [[nodiscard]] std::size_t size() const { return oldToNew_.size(); } const noexcept; 
+    [[nodiscard]]
+    static Permutation identity(std::size_t size);
 
-        [[nodiscard]] IndexType oldToNew(IndexType oldIndex) const;
+    [[nodiscard]]
+    std::size_t size() const noexcept
+    {
+        return oldToNew_.size();
+    }
 
-        [[nodiscard]] IndexType newToOld(IndexType newIndex) const;
+    [[nodiscard]]
+    IndexType oldToNew(IndexType oldIndex) const;
 
-        [[nodiscard]] std::span<const IndexType> oldToNew() const noexcept;
+    [[nodiscard]]
+    IndexType newToOld(IndexType newIndex) const;
 
-        [[nodiscard]] std::span<const IndexType> newToOld() const noexcept;
+    [[nodiscard]]
+    std::span<const IndexType> oldToNew() const noexcept;
 
-        [[nodiscard]] Permutation inverse() const;
+    [[nodiscard]]
+    std::span<const IndexType> newToOld() const noexcept;
 
-        [[nodiscard]] Permutation compose(const Permutation& other) const;
+    [[nodiscard]]
+    Permutation inverse() const;
 
-        [[nodiscard]] bool isIdentity() const;
-    
-    private:
-        std::vector<IndexType> oldToNew_;
-        std::vector<IndexType> newToOld_;
-}
+    // [[nodiscard]]
+    // Permutation compose(
+    //     const Permutation& other
+    // ) const;
+
+    [[nodiscard]]
+    bool isIdentity() const noexcept;
+
+private:
+
+    std::vector<IndexType> oldToNew_;
+    std::vector<IndexType> newToOld_;
+};
