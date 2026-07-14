@@ -2,135 +2,224 @@
 // SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
 #define CATCH_CONFIG_RUNNER
-#include "common.hpp"
 
-#include <initializer_list>
+#include <cstddef>
+#include <span>
+#include <stdexcept>
 #include <type_traits>
 #include <utility>
 #include <vector>
 
+#include <catch2/catch_test_macros.hpp>
+
 #include "NeoFOAM/datastructures/ordering/permutation.hpp"
 
-namespace {
-
-template<typename T, typename = void>
-struct has_size : std::false_type {};
-
-template<typename T>
-struct has_size<T, std::void_t<decltype(std::declval<const T&>().size())>> : std::true_type {};
-
-template<typename T, typename = void>
-struct has_index_operator : std::false_type {};
-
-template<typename T>
-struct has_index_operator<T, std::void_t<decltype(std::declval<const T&>()[std::declval<label>()])>>
-    : std::true_type {};
-
-template<typename T, typename = void>
-struct has_is_identity : std::false_type {};
-
-template<typename T>
-struct has_is_identity<T, std::void_t<decltype(std::declval<const T&>().isIdentity())>>
-    : std::true_type {};
-
-template<typename T>
-auto sizeOf(const T& value) -> decltype(value.size())
+namespace
 {
-    return value.size();
-}
 
-template<typename T>
-auto indexOf(const T& value, label index) -> decltype(value[index])
-{
-    return value[index];
-}
-
-template<typename T>
-auto makeIdentityPermutation(label size)
-    -> typename std::enable_if<std::is_constructible<T, label>::value, T>::type
-{
-    return T(size);
-}
-
-template<typename T>
-auto makeIdentityPermutation(label)
-    -> typename std::enable_if<!std::is_constructible<T, label>::value && std::is_default_constructible<T>::value, T>::type
-{
-    return T{};
-}
-
-template<typename T>
-auto makePermutationFromValues(std::initializer_list<label> values)
-    -> typename std::enable_if<std::is_constructible<T, std::initializer_list<label>>::value, T>::type
-{
-    return T{values};
-}
-
-template<typename T>
-auto makePermutationFromValues(std::initializer_list<label> values)
-    -> typename std::enable_if<!std::is_constructible<T, std::initializer_list<label>>::value &&
-                                std::is_constructible<T, std::vector<label>>::value, T>::type
-{
-    return T(std::vector<label>(values));
-}
-
-template<typename T>
-auto makePermutationFromValues(std::initializer_list<label>)
-    -> typename std::enable_if<!std::is_constructible<T, std::initializer_list<label>>::value &&
-                                !std::is_constructible<T, std::vector<label>>::value, T>::type
-{
-    return T{};
-}
+using NeoFOAM::Permutation;
+using IndexType = Permutation::IndexType;
 
 } // namespace
 
-TEST_CASE("Permutation exposes identity semantics", "[permutation]")
+
+TEST_CASE("Permutation can be constructed from a valid old-to-new mapping", "[permutation]")
 {
-    using Permutation = NeoFOAM::Permutation;
+    const Permutation permutation {std::vector<IndexType> {2, 0, 3, 1}};
 
-    auto permutation = makeIdentityPermutation<Permutation>(4);
+    REQUIRE(permutation.size() == 4);
 
-    if constexpr (has_size<Permutation>::value)
+    SECTION("old-to-new mapping is preserved")
     {
-        REQUIRE(sizeOf(permutation) == 4);
+        REQUIRE(permutation.oldToNew(0) == 2);
+        REQUIRE(permutation.oldToNew(1) == 0);
+        REQUIRE(permutation.oldToNew(2) == 3);
+        REQUIRE(permutation.oldToNew(3) == 1);
     }
 
-    if constexpr (has_index_operator<Permutation>::value)
+    SECTION("new-to-old mapping is constructed correctly")
     {
-        REQUIRE(indexOf(permutation, 0) == 0);
-        REQUIRE(indexOf(permutation, 1) == 1);
-        REQUIRE(indexOf(permutation, 2) == 2);
-        REQUIRE(indexOf(permutation, 3) == 3);
+        REQUIRE(permutation.newToOld(0) == 1);
+        REQUIRE(permutation.newToOld(1) == 3);
+        REQUIRE(permutation.newToOld(2) == 0);
+        REQUIRE(permutation.newToOld(3) == 2);
     }
 
-    if constexpr (has_is_identity<Permutation>::value)
-    {
-        REQUIRE(permutation.isIdentity());
-    }
-}
-
-TEST_CASE("Permutation preserves an explicit ordering", "[permutation]")
-{
-    using Permutation = NeoFOAM::Permutation;
-
-    auto permutation = makePermutationFromValues<Permutation>({2, 0, 3, 1});
-
-    if constexpr (has_size<Permutation>::value)
-    {
-        REQUIRE(sizeOf(permutation) == 4);
-    }
-
-    if constexpr (has_index_operator<Permutation>::value)
-    {
-        REQUIRE(indexOf(permutation, 0) == 2);
-        REQUIRE(indexOf(permutation, 1) == 0);
-        REQUIRE(indexOf(permutation, 2) == 3);
-        REQUIRE(indexOf(permutation, 3) == 1);
-    }
-
-    if constexpr (has_is_identity<Permutation>::value)
+    SECTION("the permutation is not identified as identity")
     {
         REQUIRE_FALSE(permutation.isIdentity());
     }
 }
 
+
+TEST_CASE("Permutation creates an identity mapping", "[permutation]")
+{
+    const auto permutation = Permutation::identity(4);
+
+    REQUIRE(permutation.size() == 4);
+
+    SECTION("every old index maps to itself")
+    {
+        for (IndexType index = 0; index < static_cast<IndexType>(permutation.size()); ++index)
+        {
+            REQUIRE(permutation.oldToNew(index) == index);
+        }
+    }
+
+    SECTION("every new index maps to itself")
+    {
+        for (IndexType index = 0; index < static_cast<IndexType>(permutation.size()); ++index)
+        {
+            REQUIRE(permutation.newToOld(index) == index);
+        }
+    }
+
+    SECTION("the permutation is identified as identity") { REQUIRE(permutation.isIdentity()); }
+}
+
+
+TEST_CASE("Permutation supports an empty identity mapping", "[permutation]")
+{
+    const auto permutation = Permutation::identity(0);
+
+    REQUIRE(permutation.size() == 0);
+    REQUIRE(permutation.oldToNew().empty());
+    REQUIRE(permutation.newToOld().empty());
+    REQUIRE(permutation.isIdentity());
+}
+
+
+TEST_CASE("Permutation exposes the complete old-to-new mapping", "[permutation]")
+{
+    const Permutation permutation {std::vector<IndexType> {2, 0, 3, 1}};
+
+    const auto oldToNew = permutation.oldToNew();
+
+    REQUIRE(oldToNew.size() == 4);
+
+    REQUIRE(oldToNew[0] == 2);
+    REQUIRE(oldToNew[1] == 0);
+    REQUIRE(oldToNew[2] == 3);
+    REQUIRE(oldToNew[3] == 1);
+}
+
+
+TEST_CASE("Permutation exposes the complete new-to-old mapping", "[permutation]")
+{
+    const Permutation permutation {std::vector<IndexType> {2, 0, 3, 1}};
+
+    const auto newToOld = permutation.newToOld();
+
+    REQUIRE(newToOld.size() == 4);
+
+    REQUIRE(newToOld[0] == 1);
+    REQUIRE(newToOld[1] == 3);
+    REQUIRE(newToOld[2] == 0);
+    REQUIRE(newToOld[3] == 2);
+}
+
+
+TEST_CASE("Old-to-new and new-to-old mappings are inverses", "[permutation]")
+{
+    const Permutation permutation {std::vector<IndexType> {2, 0, 4, 1, 3}};
+
+    for (IndexType oldIndex = 0; oldIndex < static_cast<IndexType>(permutation.size()); ++oldIndex)
+    {
+        const auto newIndex = permutation.oldToNew(oldIndex);
+
+        REQUIRE(permutation.newToOld(newIndex) == oldIndex);
+    }
+
+    for (IndexType newIndex = 0; newIndex < static_cast<IndexType>(permutation.size()); ++newIndex)
+    {
+        const auto oldIndex = permutation.newToOld(newIndex);
+
+        REQUIRE(permutation.oldToNew(oldIndex) == newIndex);
+    }
+}
+
+
+TEST_CASE("Inverse swaps the old-to-new and new-to-old mappings", "[permutation]")
+{
+    const Permutation permutation {std::vector<IndexType> {2, 0, 3, 1}};
+
+    const auto inverse = permutation.inverse();
+
+    REQUIRE(inverse.size() == permutation.size());
+
+    for (IndexType index = 0; index < static_cast<IndexType>(permutation.size()); ++index)
+    {
+        REQUIRE(inverse.oldToNew(index) == permutation.newToOld(index));
+
+        REQUIRE(inverse.newToOld(index) == permutation.oldToNew(index));
+    }
+}
+
+
+TEST_CASE("Inverting a permutation twice recovers the original mapping", "[permutation]")
+{
+    const Permutation permutation {std::vector<IndexType> {2, 0, 4, 1, 3}};
+
+    const auto doubleInverse = permutation.inverse().inverse();
+
+    REQUIRE(doubleInverse.oldToNew() == permutation.oldToNew());
+
+    REQUIRE(doubleInverse.newToOld() == permutation.newToOld());
+}
+
+
+TEST_CASE("The inverse of an identity permutation is identity", "[permutation]")
+{
+    const auto identity = Permutation::identity(5);
+
+    const auto inverse = identity.inverse();
+
+    REQUIRE(inverse.isIdentity());
+
+    REQUIRE(inverse.oldToNew() == identity.oldToNew());
+
+    REQUIRE(inverse.newToOld() == identity.newToOld());
+}
+
+TEST_CASE("Permutation rejects duplicate new indices", "[permutation][validation]")
+{
+    REQUIRE_THROWS_AS(Permutation(std::vector<IndexType> {0, 1, 1, 3}), std::invalid_argument);
+}
+
+
+TEST_CASE("Permutation rejects an index outside its valid range", "[permutation][validation]")
+{
+    REQUIRE_THROWS_AS(Permutation(std::vector<IndexType> {0, 1, 2, 4}), std::invalid_argument);
+}
+
+
+TEST_CASE("Permutation rejects a negative index", "[permutation][validation]")
+{
+    if constexpr (std::is_signed_v<IndexType>)
+    {
+        REQUIRE_THROWS_AS(Permutation(std::vector<IndexType> {0, 1, -1, 2}), std::invalid_argument);
+    }
+}
+
+TEST_CASE("Permutation has value semantics", "[permutation]")
+{
+    static_assert(std::is_copy_constructible_v<Permutation>);
+
+    static_assert(std::is_move_constructible_v<Permutation>);
+
+    static_assert(std::is_copy_assignable_v<Permutation>);
+
+    static_assert(std::is_move_assignable_v<Permutation>);
+}
+
+
+TEST_CASE("Permutation mapping views provide read-only access", "[permutation]")
+{
+    using OldToNewView = decltype(std::declval<const Permutation&>().oldToNew());
+
+    using NewToOldView = decltype(std::declval<const Permutation&>().newToOld());
+
+    static_assert(std::is_same_v<OldToNewView, std::span<const IndexType>>);
+
+    static_assert(std::is_same_v<NewToOldView, std::span<const IndexType>>);
+}
