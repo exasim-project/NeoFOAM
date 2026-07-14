@@ -23,6 +23,8 @@ Invariant:
 #include <span>
 #include <vector>
 
+namespace NeoFOAM
+{
 class Permutation
 {
 public:
@@ -68,3 +70,4 @@ private:
     std::vector<IndexType> oldToNew_;
     std::vector<IndexType> newToOld_;
 };
+} // namespace NeoFOAM
