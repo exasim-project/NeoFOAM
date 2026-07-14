@@ -5,7 +5,7 @@ var searchData=
   ['setfinaliter_2',['setFinalIter',['../classNeoFOAM_1_1PDE.html#a12a547d6a089a5805df40f91c0a48318',1,'NeoFOAM::PDE']]],
   ['setnutuspaldingwallfunction_3',['setNutUSpaldingWallFunction',['../namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail.html#aae1a87a0c4d00386db2c7df821ec128f',1,'NeoN::finiteVolume::cellCentred::volumeBoundary::detail']]],
   ['setreference_4',['setReference',['../classNeoFOAM_1_1PDE.html#a761c2d04db4af1d188d452bda66ac827',1,'NeoFOAM::PDE']]],
-  ['size_5',['size',['../classPermutation.html#a5635c3096949081c230869c94b7f0bd3',1,'Permutation']]],
+  ['size_5',['size',['../classPermutation.html#a382e3c34a0b001ce2fa5307f8c9e93c8',1,'Permutation']]],
   ['solve_6',['solve',['../classNeoFOAM_1_1PDE.html#adc6783a51aa3e6a0b2bf822e8d354c95',1,'NeoFOAM::PDE::solve()'],['../classNeoFOAM_1_1PDE.html#a1a19c403768745a0a9a3b7637335f2ac',1,'NeoFOAM::PDE::solve(dsl::SpatialOperator&lt; NeoN::Vec3 &gt; &amp;&amp;rhs)'],['../classNeoFOAM_1_1Solver.html#ac9fb3f3e3beac5ea3e1f4f2259681c60',1,'NeoFOAM::Solver::solve(PDEType &amp;pde)'],['../classNeoFOAM_1_1Solver.html#a87eb53fbec90b0a7353071be63386f2d',1,'NeoFOAM::Solver::solve(PDEType &amp;pde, dsl::SpatialOperator&lt; ValueType &gt; &amp;&amp;rhs)']]],
   ['solveimpl_7',['solveImpl',['../classNeoFOAM_1_1PDE.html#a665045e1ab13f9c86f3b80f70827288e',1,'NeoFOAM::PDE']]],
   ['solver_8',['solver',['../classNeoFOAM_1_1Solver.html#af4ade45d4be71a39d82d8717b5a439c9',1,'NeoFOAM::Solver::Solver()'],['../namespaceNeoFOAM.html#aecef654291f22551aa7a3b014e46cb67',1,'NeoFOAM::Solver()']]],

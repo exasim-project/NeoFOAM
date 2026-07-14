@@ -6,7 +6,7 @@
 \DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00002}00002\ \textcolor{comment}{//\ SPDX-\/FileCopyrightText:\ 2026\ NeoFOAM\ authors}}
 \DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00003}00003\ }
 \DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00004}00004\ \textcolor{comment}{/*}}
-\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00005}00005\ \textcolor{comment}{A\ Permutation\ is\ an\ immutable\ value\ type\ representing\ a\ bijective\ mapping\ between\ }}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00005}00005\ \textcolor{comment}{A\ Permutation\ is\ an\ immutable\ value\ type\ representing\ a\ bijective\ mapping\ between}}
 \DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00006}00006\ \textcolor{comment}{two\ index\ spaces\ and\ providing\ efficient\ operations\ on\ that\ mapping.}}
 \DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00007}00007\ \textcolor{comment}{}}
 \DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00008}00008\ \textcolor{comment}{Invariant:}}
@@ -20,38 +20,57 @@
 \DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00016}00016\ \textcolor{comment}{-\/\ indices\ lie\ in\ [0,size())}}
 \DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00017}00017\ \textcolor{comment}{*/}}
 \DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00018}00018\ \textcolor{preprocessor}{\#pragma\ once}}
-\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00019}00019\ \textcolor{preprocessor}{\#include\ "{}NeoN/NeoN.hpp"{}}}
-\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00020}00020\ \textcolor{preprocessor}{\#include\ <vector>}}
-\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00021}00021\ \textcolor{preprocessor}{\#include\ <span>}}
-\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00022}00022\ }
-\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00023}\mbox{\hyperlink{classPermutation}{00023}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classPermutation}{Permutation}}}
-\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00024}00024\ \{}
-\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00025}00025\ \ \ \ \ \textcolor{keyword}{public}:}
-\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00026}\mbox{\hyperlink{classPermutation_a071faf4580fbea30cedd4425e1182030}{00026}}\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classPermutation_a071faf4580fbea30cedd4425e1182030}{IndexType}}\ =\ NeoN::label;}
-\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00027}00027\ }
-\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00028}\mbox{\hyperlink{classPermutation_aa24203b945921e3d8fc37fbd8c2d69d0}{00028}}\ \ \ \ \ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classPermutation_aa24203b945921e3d8fc37fbd8c2d69d0}{Permutation}}(std::vector<IndexType>\ \mbox{\hyperlink{classPermutation_a9240fabc681418fe4a23531157e41810}{oldToNew}});}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00019}00019\ }
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00020}00020\ \textcolor{preprocessor}{\#include\ "{}NeoN/NeoN.hpp"{}}}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00021}00021\ }
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00022}00022\ \textcolor{preprocessor}{\#include\ <cstddef>}}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00023}00023\ \textcolor{preprocessor}{\#include\ <span>}}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00024}00024\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00025}00025\ }
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00026}\mbox{\hyperlink{classPermutation}{00026}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classPermutation}{Permutation}}}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00027}00027\ \{}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00028}00028\ \textcolor{keyword}{public}:}
 \DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00029}00029\ }
-\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00030}\mbox{\hyperlink{classPermutation_aa9c31a14d7c30cec0927ed7b473e4c0a}{00030}}\ \ \ \ \ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classPermutation}{Permutation}}\ \mbox{\hyperlink{classPermutation_aa9c31a14d7c30cec0927ed7b473e4c0a}{identity}}(std::size\_t\ \mbox{\hyperlink{classPermutation_a5635c3096949081c230869c94b7f0bd3}{size}})\ \textcolor{keyword}{const}\ \textcolor{keyword}{noexcept};}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00030}\mbox{\hyperlink{classPermutation_a071faf4580fbea30cedd4425e1182030}{00030}}\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classPermutation_a071faf4580fbea30cedd4425e1182030}{IndexType}}\ =\ NeoN::label;}
 \DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00031}00031\ }
-\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00032}\mbox{\hyperlink{classPermutation_ad665058b86daee38b1126566e2ba3bea}{00032}}\ \ \ \ \ \ \ \ \ [[nodiscard]]\ std::size\_t\ \mbox{\hyperlink{classPermutation_a5635c3096949081c230869c94b7f0bd3}{size}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ oldToNew\_.size();\ \}\ \textcolor{keyword}{const}\ \textcolor{keyword}{noexcept};\ }
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00032}\mbox{\hyperlink{classPermutation_aa24203b945921e3d8fc37fbd8c2d69d0}{00032}}\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classPermutation_aa24203b945921e3d8fc37fbd8c2d69d0}{Permutation}}(std::vector<IndexType>\ \mbox{\hyperlink{classPermutation_a9240fabc681418fe4a23531157e41810}{oldToNew}});}
 \DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00033}00033\ }
-\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00034}\mbox{\hyperlink{classPermutation_ad95660343e3cf4195de6669b2aabc564}{00034}}\ \ \ \ \ \ \ \ \ [[nodiscard]]\ \mbox{\hyperlink{classPermutation_a071faf4580fbea30cedd4425e1182030}{IndexType}}\ \mbox{\hyperlink{classPermutation_ad95660343e3cf4195de6669b2aabc564}{oldToNew}}(\mbox{\hyperlink{classPermutation_a071faf4580fbea30cedd4425e1182030}{IndexType}}\ oldIndex)\ \textcolor{keyword}{const};}
-\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00035}00035\ }
-\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00036}\mbox{\hyperlink{classPermutation_a161cd0f58f80e5f13b937ab374c1ea9a}{00036}}\ \ \ \ \ \ \ \ \ [[nodiscard]]\ \mbox{\hyperlink{classPermutation_a071faf4580fbea30cedd4425e1182030}{IndexType}}\ \mbox{\hyperlink{classPermutation_a161cd0f58f80e5f13b937ab374c1ea9a}{newToOld}}(\mbox{\hyperlink{classPermutation_a071faf4580fbea30cedd4425e1182030}{IndexType}}\ newIndex)\ \textcolor{keyword}{const};}
-\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00037}00037\ }
-\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00038}\mbox{\hyperlink{classPermutation_a9240fabc681418fe4a23531157e41810}{00038}}\ \ \ \ \ \ \ \ \ [[nodiscard]]\ std::span<const\ IndexType>\ \mbox{\hyperlink{classPermutation_a9240fabc681418fe4a23531157e41810}{oldToNew}}()\ const\ \mbox{\hyperlink{classPermutation_ad665058b86daee38b1126566e2ba3bea}{noexcept}};}
-\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00039}00039\ }
-\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00040}\mbox{\hyperlink{classPermutation_a1c3aa6d22d0a6701eba631798a995af3}{00040}}\ \ \ \ \ \ \ \ \ [[nodiscard]]\ std::span<const\ \mbox{\hyperlink{classPermutation_a071faf4580fbea30cedd4425e1182030}{IndexType}}>\ \mbox{\hyperlink{classPermutation_a1c3aa6d22d0a6701eba631798a995af3}{newToOld}}()\ const\ \mbox{\hyperlink{classPermutation_ad665058b86daee38b1126566e2ba3bea}{noexcept}};}
-\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00041}00041\ }
-\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00042}\mbox{\hyperlink{classPermutation_af906faaa87c2727bf4be22b32092c313}{00042}}\ \ \ \ \ \ \ \ \ [[nodiscard]]\ \mbox{\hyperlink{classPermutation}{Permutation}}\ \mbox{\hyperlink{classPermutation_af906faaa87c2727bf4be22b32092c313}{inverse}}()\ const;}
-\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00043}00043\ }
-\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00044}\mbox{\hyperlink{classPermutation_a646fcdeac25d51e23e47de92b5f69664}{00044}}\ \ \ \ \ \ \ \ \ [[nodiscard]]\ \mbox{\hyperlink{classPermutation}{Permutation}}\ \mbox{\hyperlink{classPermutation_a646fcdeac25d51e23e47de92b5f69664}{compose}}(const\ \mbox{\hyperlink{classPermutation}{Permutation}}\&\ other)\ const;}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00034}00034\ \ \ \ \ [[nodiscard]]}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00035}\mbox{\hyperlink{classPermutation_a4cb64d2c4631d68adf7bc8e38371b26f}{00035}}\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{classPermutation}{Permutation}}\ \mbox{\hyperlink{classPermutation_a4cb64d2c4631d68adf7bc8e38371b26f}{identity}}(std::size\_t\ \mbox{\hyperlink{classPermutation_a382e3c34a0b001ce2fa5307f8c9e93c8}{size}});}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00036}00036\ }
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00037}00037\ \ \ \ \ [[nodiscard]]}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00038}\mbox{\hyperlink{classPermutation_a382e3c34a0b001ce2fa5307f8c9e93c8}{00038}}\ \ \ \ \ std::size\_t\ \mbox{\hyperlink{classPermutation_a382e3c34a0b001ce2fa5307f8c9e93c8}{size}}()\ const\ noexcept}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00039}00039\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00040}00040\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ oldToNew\_.size();}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00041}00041\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00042}00042\ }
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00043}00043\ \ \ \ \ [[nodiscard]]}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00044}\mbox{\hyperlink{classPermutation_ad95660343e3cf4195de6669b2aabc564}{00044}}\ \ \ \ \ \mbox{\hyperlink{classPermutation_a071faf4580fbea30cedd4425e1182030}{IndexType}}\ \mbox{\hyperlink{classPermutation_ad95660343e3cf4195de6669b2aabc564}{oldToNew}}(\mbox{\hyperlink{classPermutation_a071faf4580fbea30cedd4425e1182030}{IndexType}}\ oldIndex)\ \textcolor{keyword}{const};}
 \DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00045}00045\ }
-\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00046}\mbox{\hyperlink{classPermutation_aaada3cb8dad4be4032dc12c349479ff2}{00046}}\ \ \ \ \ \ \ \ \ [[nodiscard]]\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classPermutation_aaada3cb8dad4be4032dc12c349479ff2}{isIdentity}}()\ const;}
-\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00047}00047\ \ \ \ \ }
-\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00048}00048\ \ \ \ \ private:}
-\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00049}00049\ \ \ \ \ \ \ \ \ std::vector<\mbox{\hyperlink{classPermutation_a071faf4580fbea30cedd4425e1182030}{IndexType}}>\ oldToNew\_;}
-\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00050}00050\ \ \ \ \ \ \ \ \ std::vector<\mbox{\hyperlink{classPermutation_a071faf4580fbea30cedd4425e1182030}{IndexType}}>\ newToOld\_;}
-\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00051}00051\ \}}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00046}00046\ \ \ \ \ [[nodiscard]]}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00047}\mbox{\hyperlink{classPermutation_a161cd0f58f80e5f13b937ab374c1ea9a}{00047}}\ \ \ \ \ \mbox{\hyperlink{classPermutation_a071faf4580fbea30cedd4425e1182030}{IndexType}}\ \mbox{\hyperlink{classPermutation_a161cd0f58f80e5f13b937ab374c1ea9a}{newToOld}}(\mbox{\hyperlink{classPermutation_a071faf4580fbea30cedd4425e1182030}{IndexType}}\ newIndex)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00048}00048\ }
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00049}00049\ \ \ \ \ [[nodiscard]]}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00050}\mbox{\hyperlink{classPermutation_a9240fabc681418fe4a23531157e41810}{00050}}\ \ \ \ \ std::span<const\ IndexType>\ \mbox{\hyperlink{classPermutation_a9240fabc681418fe4a23531157e41810}{oldToNew}}()\ const\ noexcept;}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00051}00051\ }
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00052}00052\ \ \ \ \ [[nodiscard]]}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00053}\mbox{\hyperlink{classPermutation_a1c3aa6d22d0a6701eba631798a995af3}{00053}}\ \ \ \ \ std::span<const\ \mbox{\hyperlink{classPermutation_a071faf4580fbea30cedd4425e1182030}{IndexType}}>\ \mbox{\hyperlink{classPermutation_a1c3aa6d22d0a6701eba631798a995af3}{newToOld}}()\ const\ noexcept;}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00054}00054\ }
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00055}00055\ \ \ \ \ [[nodiscard]]}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00056}\mbox{\hyperlink{classPermutation_af906faaa87c2727bf4be22b32092c313}{00056}}\ \ \ \ \ \mbox{\hyperlink{classPermutation}{Permutation}}\ \mbox{\hyperlink{classPermutation_af906faaa87c2727bf4be22b32092c313}{inverse}}()\ const;}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00057}00057\ }
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00058}00058\ \ \ \ \ \textcolor{comment}{//\ [[nodiscard]]}}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00059}00059\ \ \ \ \ \textcolor{comment}{//\ Permutation\ compose(}}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00060}00060\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ const\ Permutation\&\ other}}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00061}00061\ \ \ \ \ \textcolor{comment}{//\ )\ const;}}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00062}00062\ }
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00063}00063\ \ \ \ \ [[nodiscard]]}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00064}\mbox{\hyperlink{classPermutation_af9c45bb17e49898032bcde38579469f3}{00064}}\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classPermutation_af9c45bb17e49898032bcde38579469f3}{isIdentity}}()\ const\ noexcept;}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00065}00065\ }
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00066}00066\ private:}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00067}00067\ }
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00068}00068\ \ \ \ \ std::vector<\mbox{\hyperlink{classPermutation_a071faf4580fbea30cedd4425e1182030}{IndexType}}>\ oldToNew\_;}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00069}00069\ \ \ \ \ std::vector<\mbox{\hyperlink{classPermutation_a071faf4580fbea30cedd4425e1182030}{IndexType}}>\ newToOld\_;}
+\DoxyCodeLine{\Hypertarget{permutation_8hpp_source_l00070}00070\ \};}
 
 \end{DoxyCode}
