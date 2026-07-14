@@ -27,6 +27,7 @@ var searchData=
   ['spomegafield_24',['spOmegaField',['../classNeoFOAM_1_1KOmegaSST.html#aa662abe259d497281375c1dfe233792a',1,'NeoFOAM::KOmegaSST']]],
   ['stripneofoamkeys_25',['stripNeoFOAMKeys',['../classNeoFOAM_1_1PDE.html#a4e30324f164b229f31bedac3d023484c',1,'NeoFOAM::PDE']]],
   ['subcycleindex_26',['subCycleIndex',['../classNeoFOAM_1_1CreateFromFoamField.html#a0b659c2eb72285147dd9d0622203c9c7',1,'NeoFOAM::CreateFromFoamField']]],
-  ['sumlocal_27',['sumLocal',['../structNeoFOAM_1_1ContinuityErrors.html#aff5b9f9bc60466ce0ae2479324be7f0a',1,'NeoFOAM::ContinuityErrors']]],
-  ['syncruntimes_28',['syncRunTimes',['../namespaceNeoFOAM.html#aff116721405a6ad86fee9675a3cc3156',1,'NeoFOAM']]]
+  ['subtractconsistenthbya_27',['subtractConsistentHbyA',['../namespaceNeoFOAM.html#a222e258d8cf0cd2d7f3134c2df8d6342',1,'NeoFOAM']]],
+  ['sumlocal_28',['sumLocal',['../structNeoFOAM_1_1ContinuityErrors.html#aff5b9f9bc60466ce0ae2479324be7f0a',1,'NeoFOAM::ContinuityErrors']]],
+  ['syncruntimes_29',['syncRunTimes',['../namespaceNeoFOAM.html#aff116721405a6ad86fee9675a3cc3156',1,'NeoFOAM']]]
 ];

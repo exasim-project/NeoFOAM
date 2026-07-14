@@ -18,5 +18,6 @@ var searchData=
   ['spkfield_15',['spkfield',['../classNeoFOAM_1_1KEpsilon.html#a1a6eafc6f769f0a1eb994c2de0c0edf1',1,'NeoFOAM::KEpsilon::spKField()'],['../classNeoFOAM_1_1KOmegaSST.html#ab9773af332df7754762363eef11381a5',1,'NeoFOAM::KOmegaSST::spKField() const']]],
   ['spomegafield_16',['spOmegaField',['../classNeoFOAM_1_1KOmegaSST.html#aa662abe259d497281375c1dfe233792a',1,'NeoFOAM::KOmegaSST']]],
   ['stripneofoamkeys_17',['stripNeoFOAMKeys',['../classNeoFOAM_1_1PDE.html#a4e30324f164b229f31bedac3d023484c',1,'NeoFOAM::PDE']]],
-  ['syncruntimes_18',['syncRunTimes',['../namespaceNeoFOAM.html#aff116721405a6ad86fee9675a3cc3156',1,'NeoFOAM']]]
+  ['subtractconsistenthbya_18',['subtractConsistentHbyA',['../namespaceNeoFOAM.html#a222e258d8cf0cd2d7f3134c2df8d6342',1,'NeoFOAM']]],
+  ['syncruntimes_19',['syncRunTimes',['../namespaceNeoFOAM.html#aff116721405a6ad86fee9675a3cc3156',1,'NeoFOAM']]]
 ];
