@@ -35,11 +35,12 @@ namespace nf = NeoFOAM;
 int main(int argc, char* argv[])
 {
 #include "addCheckCaseOptions.H"
+    Foam::argList::addOption("executor", "word", "NeoN executor type (Serial/CPU/GPU/default)");
 #include "setRootCase.H"
 #include "createTime.H"
     NeoN::initialize(argc, argv);
     {
-        auto rt = nf::createAdapterRunTime(runTime);
+        auto rt = nf::createAdapterRunTime(runTime, args);
         auto& mesh = rt.mesh;
 
         Foam::simpleControl simple(mesh);
