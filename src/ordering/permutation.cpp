@@ -1,4 +1,4 @@
-#include "NeoFOAM/datastructures/ordering/permutation.hpp"
+#include "NeoFOAM/ordering/permutation.hpp"
 
 #include <algorithm>
 #include <limits>
