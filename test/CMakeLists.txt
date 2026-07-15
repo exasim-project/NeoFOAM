@@ -326,7 +326,7 @@ neofoam_unit_test(snGrad setup_snGrad)
 neofoam_unit_test(residual setup_pressureVelocityCoupling)
 neofoam_unit_test(continuityError setup_pressureVelocityCoupling)
 neofoam_unit_test(forceCoeffs setup_pressureVelocityCoupling SOURCE test_forceCoeffs.cpp)
-neofoam_unit_test(permutation setup_permutation)
 
 add_subdirectory(distributed)
 add_subdirectory(turbulence)
+add_subdirectory(ordering)

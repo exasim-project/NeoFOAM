@@ -12,7 +12,7 @@
 #include <utility>
 #include <vector>
 
-#include "NeoFOAM/datastructures/ordering/permutation.hpp"
+#include "NeoFOAM/ordering/permutation.hpp"
 
 namespace
 {

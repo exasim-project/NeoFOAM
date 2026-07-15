@@ -1,0 +1,2 @@
+neofoam_unit_test(permutation setup_permutation)
+# neofoam_unit_test(identityOrdering ordering)
