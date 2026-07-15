@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['laminar_2ehpp_0',['laminar.hpp',['../laminar_8hpp.html',1,'']]]
+  ['identityordering_2ehpp_0',['identityOrdering.hpp',['../identityOrdering_8hpp.html',1,'']]]
 ];
