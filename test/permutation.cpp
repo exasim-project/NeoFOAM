@@ -19,62 +19,41 @@ namespace
 
 using NeoFOAM::Permutation;
 using IndexType = Permutation::IndexType;
+using Catch::Matchers::RangeEquals;
 
 } // namespace
 
 
 TEST_CASE("Permutation can be constructed from a valid old-to-new mapping", "[permutation]")
 {
-    const Permutation permutation {std::vector<IndexType> {2, 0, 3, 1}};
+    const std::vector<IndexType> oldToNew {2, 0, 3, 1};
+    const std::vector<IndexType> newToOld {1, 3, 0, 2};
 
-    REQUIRE(permutation.size() == 4);
+    const Permutation permutation {oldToNew};
 
-    SECTION("old-to-new mapping is preserved")
-    {
-        REQUIRE(permutation.oldToNew(0) == 2);
-        REQUIRE(permutation.oldToNew(1) == 0);
-        REQUIRE(permutation.oldToNew(2) == 3);
-        REQUIRE(permutation.oldToNew(3) == 1);
-    }
+    REQUIRE(permutation.size() == oldToNew.size());
 
-    SECTION("new-to-old mapping is constructed correctly")
-    {
-        REQUIRE(permutation.newToOld(0) == 1);
-        REQUIRE(permutation.newToOld(1) == 3);
-        REQUIRE(permutation.newToOld(2) == 0);
-        REQUIRE(permutation.newToOld(3) == 2);
-    }
+    REQUIRE_THAT(permutation.oldToNew(), Catch::Matchers::RangeEquals(oldToNew));
 
-    SECTION("the permutation is not identified as identity")
-    {
-        REQUIRE_FALSE(permutation.isIdentity());
-    }
+    REQUIRE_THAT(permutation.newToOld(), Catch::Matchers::RangeEquals(newToOld));
+
+    REQUIRE_FALSE(permutation.isIdentity());
 }
 
 
 TEST_CASE("Permutation creates an identity mapping", "[permutation]")
 {
-    const auto permutation = Permutation::identity(4);
+    const std::vector<IndexType> identity {0, 1, 2, 3};
 
-    REQUIRE(permutation.size() == 4);
+    const auto permutation = Permutation::identity(identity.size());
 
-    SECTION("every old index maps to itself")
-    {
-        for (IndexType index = 0; index < static_cast<IndexType>(permutation.size()); ++index)
-        {
-            REQUIRE(permutation.oldToNew(index) == index);
-        }
-    }
+    REQUIRE(permutation.size() == identity.size());
 
-    SECTION("every new index maps to itself")
-    {
-        for (IndexType index = 0; index < static_cast<IndexType>(permutation.size()); ++index)
-        {
-            REQUIRE(permutation.newToOld(index) == index);
-        }
-    }
+    REQUIRE_THAT(permutation.oldToNew(), Catch::Matchers::RangeEquals(identity));
 
-    SECTION("the permutation is identified as identity") { REQUIRE(permutation.isIdentity()); }
+    REQUIRE_THAT(permutation.newToOld(), Catch::Matchers::RangeEquals(identity));
+
+    REQUIRE(permutation.isIdentity());
 }
 
 
@@ -91,16 +70,11 @@ TEST_CASE("Permutation supports an empty identity mapping", "[permutation]")
 
 TEST_CASE("Permutation exposes the complete old-to-new mapping", "[permutation]")
 {
-    const Permutation permutation {std::vector<IndexType> {2, 0, 3, 1}};
+    const std::vector<IndexType> expected {2, 0, 3, 1};
 
-    const auto oldToNew = permutation.oldToNew();
+    const Permutation permutation {expected};
 
-    REQUIRE(oldToNew.size() == 4);
-
-    REQUIRE(oldToNew[0] == 2);
-    REQUIRE(oldToNew[1] == 0);
-    REQUIRE(oldToNew[2] == 3);
-    REQUIRE(oldToNew[3] == 1);
+    REQUIRE_THAT(permutation.oldToNew(), Catch::Matchers::RangeEquals(expected));
 }
 
 
@@ -108,14 +82,9 @@ TEST_CASE("Permutation exposes the complete new-to-old mapping", "[permutation]"
 {
     const Permutation permutation {std::vector<IndexType> {2, 0, 3, 1}};
 
-    const auto newToOld = permutation.newToOld();
+    const std::vector<IndexType> expected {1, 3, 0, 2};
 
-    REQUIRE(newToOld.size() == 4);
-
-    REQUIRE(newToOld[0] == 1);
-    REQUIRE(newToOld[1] == 3);
-    REQUIRE(newToOld[2] == 0);
-    REQUIRE(newToOld[3] == 2);
+    REQUIRE_THAT(permutation.newToOld(), Catch::Matchers::RangeEquals(expected));
 }
 
 
@@ -149,9 +118,9 @@ TEST_CASE("Inverse swaps the old-to-new and new-to-old mappings", "[permutation]
 
     for (IndexType index = 0; index < static_cast<IndexType>(permutation.size()); ++index)
     {
-        // REQUIRE(inverse.oldToNew(index) == permutation.newToOld(index));
+        REQUIRE(inverse.oldToNew(index) == permutation.newToOld(index));
 
-        // REQUIRE(inverse.newToOld(index) == permutation.oldToNew(index));
+        REQUIRE(inverse.newToOld(index) == permutation.oldToNew(index));
     }
 }
 
@@ -162,9 +131,9 @@ TEST_CASE("Inverting a permutation twice recovers the original mapping", "[permu
 
     const auto doubleInverse = permutation.inverse().inverse();
 
-    // REQUIRE(doubleInverse.oldToNew() == permutation.oldToNew());
+    REQUIRE_THAT(doubleInverse.oldToNew(), RangeEquals(permutation.oldToNew()));
 
-    // REQUIRE(doubleInverse.newToOld() == permutation.newToOld());
+    REQUIRE_THAT(doubleInverse.newToOld(), RangeEquals(permutation.newToOld()));
 }
 
 
@@ -176,9 +145,9 @@ TEST_CASE("The inverse of an identity permutation is identity", "[permutation]")
 
     REQUIRE(inverse.isIdentity());
 
-    // REQUIRE(inverse.oldToNew() == identity.oldToNew());
+    REQUIRE_THAT(inverse.oldToNew(), RangeEquals(identity.oldToNew()));
 
-    // REQUIRE(inverse.newToOld() == identity.newToOld());
+    REQUIRE_THAT(inverse.newToOld(), RangeEquals(identity.newToOld()));
 }
 
 TEST_CASE("Permutation rejects duplicate new indices", "[permutation][validation]")
