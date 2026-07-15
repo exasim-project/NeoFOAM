@@ -109,3 +109,20 @@ def test_run_preprocess_real(tmp_path: Path) -> None:
         assert "U" not in ctx.fields
     finally:
         os.chdir(cwd)
+
+
+def test_run_preprocess_real_from_outside_case(tmp_path: Path) -> None:
+    # run_preprocess resolves -case and chdirs into it, so preprocessing a case
+    # from an unrelated cwd builds the mesh (the tools read system/blockMeshDict
+    # relative to the working dir) and restores the original cwd afterwards.
+    case_dir = from_template(CASE).build_at(tmp_path / "case")
+    outside = tmp_path / "elsewhere"
+    outside.mkdir()
+    cwd = Path.cwd()
+    os.chdir(outside)
+    try:
+        ctx = run_preprocess(["preprocess", "-case", str(case_dir.path)])
+        assert ctx.mesh.nCells() > 0
+        assert Path.cwd() == outside  # cwd restored
+    finally:
+        os.chdir(cwd)
