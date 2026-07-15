@@ -339,12 +339,12 @@ def run_tool_command(
     ``system/preprocess.yaml`` entry (minus ``depends_on`` — chaining is Snakemake's
     job here); that entry is written back to ``case_dir/system/preprocess.yaml`` as a
     single-tool slice (provenance) and the tool is then driven in-process against
-    ``case_dir`` via :func:`neofoam.tooling.casebuild.run_tool` — the same engine the
+    ``case_dir`` via :func:`neofoam.tooling.casebuild.meshing.run_tool` — the same engine the
     casebuild meshing steps use (a two-arg Foam ``Time``, absolute ``dict_file``, no
     ``chdir``). Any tool other than ``blockMesh`` runs against the
     ``constant/polyMesh`` already on disk, seeded as ``_prev_mesh``.
     """
-    from neofoam.tooling.casebuild import run_tool
+    from neofoam.tooling.casebuild.meshing import run_tool
     from neofoam.tools.registry import available_tools
     from neofoam.tooling.workflow.paramspace import write_if_changed
 

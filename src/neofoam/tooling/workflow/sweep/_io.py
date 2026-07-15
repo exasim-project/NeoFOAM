@@ -40,12 +40,12 @@ from neofoam.tooling.workflow.rules import (
     RuleRegistry,
     default_registry,
 )
-from neofoam.tooling.workflow.sweep_canvas import SETUP_RULE
-from neofoam.tooling.workflow.sweep_codegen import (
+from neofoam.tooling.workflow.sweep._canvas import SETUP_RULE
+from neofoam.tooling.workflow.sweep._codegen import (
     _check_composite_mesh_names,
     sweep_snakefile,
 )
-from neofoam.tooling.workflow.sweep_validate import (
+from neofoam.tooling.workflow.sweep._validate import (
     validate_cad_dimension,
     validate_dimensions,
     validate_mesh_dimension,
@@ -56,6 +56,38 @@ CAD_RULE = "cad_geometry"
 
 #: Sidecar holding the read-back metadata (the inverse of the Snakefile header).
 SWEEP_META_FILE = "sweep.meta.json"
+
+
+def merge_cad(
+    dimensions: Mapping[str, Mapping[str, Any]],
+    cad: Mapping[str, Mapping[str, Any]] | None,
+) -> tuple[dict[str, dict[str, Any]], str | None]:
+    """Fold the CAD axis' variants into the dimension map; return (dims, cad_model).
+
+    A CAD axis exists only once it carries variants — an empty/absent ``cad`` dict
+    leaves the dimensions untouched and returns ``cad_model=None`` (a mesh-only
+    sweep). Shared by :func:`export_sweep` and :class:`~…sweep.Sweep` so both derive
+    the same effective dimensions and model path.
+    """
+    dims = {d: dict(v) for d, v in dimensions.items()}
+    info = (cad or {}).get(CAD_DIM) or {}
+    variants = info.get("variants")
+    if variants:
+        dims[CAD_DIM] = {k: dict(v) for k, v in variants.items()}
+    cad_model = str(info["model"]) if CAD_DIM in dims else None
+    return dims, cad_model
+
+
+def plan_enabled_with_cad(
+    enabled: Sequence[str] | None, *, has_cad: bool
+) -> Sequence[str] | None:
+    """Add the opt-in ``cad_geometry`` rule to *enabled* when a CAD axis is present."""
+    if not has_cad:
+        return enabled
+    base = list(DEFAULT_ENABLED if enabled is None else enabled)
+    if CAD_RULE not in base:
+        base.append(CAD_RULE)
+    return base
 
 
 def cross_product(
@@ -129,15 +161,10 @@ def export_sweep(
             ``cad_geometry`` rule is enabled and the model path is threaded into
             the Snakefile.
     """
-    dimensions = {d: dict(v) for d, v in dimensions.items()}
-    info = (cad or {}).get(CAD_DIM) or {}
-    variants = info.get("variants")
-    if variants:
-        dimensions[CAD_DIM] = {k: dict(v) for k, v in variants.items()}
     # A CAD axis exists only once it carries variants — an empty cad dict emits
     # no CAD_MODEL / cad_axis / configs/cad and behaves like a mesh-only sweep.
+    dimensions, cad_model = merge_cad(dimensions, cad)
     has_cad = CAD_DIM in dimensions
-    cad_model: str | None = str(info["model"]) if has_cad else None
     if has_cad:
         validate_cad_dimension(dimensions[CAD_DIM])
 
@@ -156,12 +183,7 @@ def export_sweep(
 
     # The CAD chain is opt-in (like post): enable it only when a CAD axis is on
     # the canvas so mesh-only sweeps stay untouched.
-    plan_enabled: Sequence[str] | None = enabled
-    if has_cad:
-        base_enabled = list(DEFAULT_ENABLED if enabled is None else enabled)
-        if CAD_RULE not in base_enabled:
-            base_enabled.append(CAD_RULE)
-        plan_enabled = base_enabled
+    plan_enabled = plan_enabled_with_cad(enabled, has_cad=has_cad)
 
     reg = registry or default_registry()
     out = Path(out_dir)

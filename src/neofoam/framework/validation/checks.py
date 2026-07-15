@@ -125,7 +125,7 @@ def _manifest_constraint_types(case: Path) -> dict[str, str]:
     if not manifest.is_file():
         return {}
     try:
-        from neofoam.tooling.workflow.patch_set import PatchSet
+        from neofoam.tooling.workflow.geometry import PatchSet
 
         patch_set = PatchSet.load(manifest)
     except Exception:

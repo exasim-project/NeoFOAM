@@ -11,11 +11,13 @@ from typing import Any
 import pytest
 from pydantic import BaseModel
 
+from neofoam.tooling.workflow.rules import default_registry
 from neofoam.tooling.workflow.sweep import (
     ALL_RULE,
     DIM_NODE_TYPE,
     SETUP_RULE,
     SOLVE_RULE,
+    Sweep,
     SweepDimension,
     autowire,
     cross_product,
@@ -614,3 +616,76 @@ def test_export_sweep_with_mesh_dimension(tmp_path: Path) -> None:
         validate_mesh_dimension(
             {"bad": {"block_mesh_dict_config": {"scale": "not-a-number"}}}, classes
         )
+
+
+# -- the Sweep façade -------------------------------------------------------
+# One object owns the round-trip: its derived views (.rows / .plan / .snakefile)
+# agree with the free functions it composes, and .export / .load round-trip.
+
+_SWEEP_DIMS = {
+    "transport": {
+        "nu1": {"transportModel": "Newtonian", "nu": 1e-5},
+        "nu2": {"transportModel": "Newtonian", "nu": 2e-5},
+    },
+    "control": {"base": {"endTime": 1.0, "deltaT": 0.001}},
+}
+_SWEEP_CLASSES = {"transport": _Transport, "control": _Control}
+
+
+def _sweep(**kw: Any) -> Sweep:
+    args: dict[str, Any] = dict(
+        dimensions=_SWEEP_DIMS,
+        solver_name="incompressibleFluid",
+        base_case="/tmp/base",
+        classes=_SWEEP_CLASSES,
+    )
+    args.update(kw)
+    return Sweep(**args)
+
+
+def test_sweep_derived_views_match_free_functions() -> None:
+    sweep = _sweep()
+    assert sweep.rows == cross_product(_SWEEP_DIMS)
+    assert sweep.plan.names == default_registry().plan().names
+    assert sweep.snakefile == sweep_snakefile(
+        "incompressibleFluid", "/tmp/base", sorted(_SWEEP_DIMS)
+    )
+
+
+def test_sweep_export_matches_export_sweep(tmp_path: Path) -> None:
+    from_object = _sweep(base_case=tmp_path / "base").export(tmp_path / "obj")
+    from_func = export_sweep(
+        tmp_path / "fn",
+        solver_name="incompressibleFluid",
+        base_case=tmp_path / "base",
+        dimensions=_SWEEP_DIMS,
+        classes=_SWEEP_CLASSES,
+    )
+    assert from_object.sweep_csv.read_text() == from_func.sweep_csv.read_text()
+    assert from_object.snakefile.read_text() == from_func.snakefile.read_text()
+    assert from_object.params_yaml.read_text() == from_func.params_yaml.read_text()
+
+
+def test_sweep_load_round_trips(tmp_path: Path) -> None:
+    enabled = ["all", "setup_mesh", "blockMesh", "setup", "solve"]
+    _sweep(base_case=tmp_path / "base", enabled=enabled).export(tmp_path / "sweep")
+
+    loaded = Sweep.load(tmp_path / "sweep")
+    assert loaded.solver_name == "incompressibleFluid"
+    assert loaded.base_case == str((tmp_path / "base").resolve())
+    assert loaded.dimensions == _SWEEP_DIMS
+    assert set(loaded.enabled or []) == set(enabled)
+    # Derived views work on a loaded sweep (no config classes needed).
+    assert loaded.rows == cross_product(_SWEEP_DIMS)
+    assert "snappyHexMesh" not in loaded.plan.names
+
+
+def test_sweep_validates_on_export(tmp_path: Path) -> None:
+    bad = Sweep(
+        dimensions={"transport": {"bad": {"nu": "not-a-number"}}},
+        solver_name="incompressibleFluid",
+        base_case=tmp_path / "base",
+        classes=_SWEEP_CLASSES,
+    )
+    with pytest.raises(ValueError, match="failed validation"):
+        bad.export(tmp_path / "out")

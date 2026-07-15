@@ -102,9 +102,9 @@ def manifest_schema() -> ManifestSchemaDTO:
 
     Makes the ``manifest`` argument self-describing — an agent learns the required
     ``geometry_source``/``bbox``/``location_in_mesh``/``length_scale`` keys and the
-    per-patch shape without reading ``workflow/patch_set.py``.
+    per-patch shape without reading ``workflow/geometry.py``.
     """
-    from neofoam.tooling.workflow.patch_set import PatchSet
+    from neofoam.tooling.workflow.geometry import PatchSet
 
     schema = PatchSet.model_json_schema()
     required = list(schema.get("required", []))
@@ -156,7 +156,7 @@ def import_geometry(
     Paths are confined through ``workspace`` when given; a missing STL raises before
     the manifest is written, so a half-staged case is never left behind.
     """
-    from neofoam.tooling.workflow.patch_set import PatchSet
+    from neofoam.tooling.workflow.geometry import PatchSet
 
     case = _confine(case_dir, workspace)
     case.mkdir(parents=True, exist_ok=True)
@@ -205,7 +205,7 @@ def case_patches(
     the geometry is a given, extracted upstream and written to the manifest.
     ``case_dir`` is confined through ``workspace`` (when given) and must exist.
     """
-    from neofoam.tooling.workflow.patch_set import PatchSet
+    from neofoam.tooling.workflow.geometry import PatchSet
 
     case = _confine_existing(case_dir, workspace)
     manifest = Path(case) / "manifest.json"
@@ -233,8 +233,8 @@ def build_mesh_inputs(
     a manifest.
     """
     from neofoam.io import write_configs
-    from neofoam.tooling.workflow.mesh_inputs import build_mesh_inputs as _build
-    from neofoam.tooling.workflow.patch_set import PatchSet
+    from neofoam.tooling.workflow.geometry import PatchSet
+    from neofoam.tooling.workflow.geometry import build_mesh_inputs as _build
 
     case = _confine_existing(case_dir, workspace)
     manifest = Path(case) / "manifest.json"

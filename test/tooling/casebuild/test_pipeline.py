@@ -13,7 +13,8 @@ from pathlib import Path
 import pybFoam as pyf
 import pytest
 
-from neofoam.tooling.casebuild import block_mesh, empty, from_template, patch, pipe
+from neofoam.tooling.casebuild import block_mesh, empty, from_template, patch
+from neofoam.tooling.casebuild.pipeline import pipe
 
 CAVITY = Path(__file__).parent / "cases" / "cavity"
 

@@ -24,7 +24,10 @@ import shutil
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Union
+from typing import TYPE_CHECKING, Union
+
+if TYPE_CHECKING:
+    import numpy as np
 
 #: Populates a (not-yet-existing) destination directory.
 Start = Callable[[Path], None]
@@ -34,8 +37,8 @@ Start = Callable[[Path], None]
 class CaseDir:
     """A materialized case directory.
 
-    A pure case-*construction* handle. Reading a field back is a separate concern —
-    see :func:`neofoam.tooling.casebuild.reader.read_field`.
+    A case-*construction* handle: compose more steps with ``|``, and read a field
+    back with :meth:`read_field`.
     """
 
     path: Path
@@ -43,6 +46,19 @@ class CaseDir:
     def __or__(self, step: "Step") -> "Pipeline":
         """Fork: a new pipeline that copies this case, then applies *step*."""
         return Pipeline(_copy_from(self.path), (step,))
+
+    def read_field(self, name: str, *, time: str = "latest") -> "np.ndarray":
+        """Read field *name*'s internal field back as a numpy array.
+
+        Delegates to :func:`neofoam.tooling.casebuild.reader.read_field`, which runs
+        the read in a fresh subprocess (constructing ``Foam::Time`` twice in one
+        interpreter corrupts OpenFOAM global state). Imported lazily so ``pipeline.py``
+        stays free of numpy/subprocess at module top — reading is a separate concern
+        from building.
+        """
+        from neofoam.tooling.casebuild.reader import read_field
+
+        return read_field(self, name, time=time)
 
 
 #: A build step: mutates a materialized case in place.

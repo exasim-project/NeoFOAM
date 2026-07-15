@@ -20,6 +20,21 @@ The default pipeline::
 
 Each ``.smk`` file documents the header globals it consumes. This module is
 stdlib-only — generated Snakefiles import it at parse time.
+
+Interface (``__all__`` — the rule model only):
+
+* **Rule model** (the deep part — hides all Snakemake wiring): :class:`RuleKind`,
+  :class:`RuleSpec`, :class:`RuleRegistry`, :class:`RulePlan`,
+  :func:`default_registry`, :func:`rules_dir`.
+* **Reserved dimension names**: :data:`MESH_DIM`, :data:`CAD_DIM`.
+* **Default selection**: :data:`DEFAULT_ENABLED`.
+
+The ``{case}``/``{mesh}`` file-pattern constants (``MESH_CONFIG_PATTERN``,
+``SETUP_STAMP_PATTERN``, ``RUN_DONE_PATTERN``, …) are defined below but are **not**
+on the interface: they are shared internals the codegen and the packaged ``.smk``
+bodies must agree on verbatim, not something a rule-graph consumer needs to learn.
+They remain importable by name (``from …rules import RUN_DONE_PATTERN``) for the
+codegen; a caller who only wants the rule graph uses the model above.
 """
 
 from __future__ import annotations
@@ -31,21 +46,13 @@ from enum import Enum
 from pathlib import Path
 
 __all__ = [
-    "CAD_CONFIG_PATTERN",
     "CAD_DIM",
-    "CAD_STAMP",
     "DEFAULT_ENABLED",
-    "MESH_CONFIG_PATTERN",
     "MESH_DIM",
-    "MESH_STAGE_STAMP",
-    "POST_DONE_PATTERN",
-    "RUN_DONE_PATTERN",
     "RuleKind",
     "RulePlan",
     "RuleRegistry",
     "RuleSpec",
-    "SETUP_CONFIG_PATTERN",
-    "SETUP_STAMP_PATTERN",
     "default_registry",
     "rules_dir",
 ]

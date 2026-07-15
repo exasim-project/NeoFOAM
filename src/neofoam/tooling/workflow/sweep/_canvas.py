@@ -9,9 +9,9 @@ trame-flow canvas renders, and reads the canvas back into a
 ``{dim: {variant: payload}}`` mapping (:func:`nodes_to_dimensions`). No trame
 imports — the shapes are plain JSON so this stays exercisable headless.
 
-Validation lives in :mod:`neofoam.tooling.workflow.sweep_validate`; Snakefile
-generation in :mod:`~neofoam.tooling.workflow.sweep_codegen`; the export/load
-round-trip in :mod:`~neofoam.tooling.workflow.sweep_io`.
+Validation lives in :mod:`neofoam.tooling.workflow.sweep._validate`; Snakefile
+generation in :mod:`~neofoam.tooling.workflow.sweep._codegen`; the export/load
+round-trip in :mod:`~neofoam.tooling.workflow.sweep._io`.
 """
 
 from __future__ import annotations

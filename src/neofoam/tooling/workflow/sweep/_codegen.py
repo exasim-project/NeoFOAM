@@ -12,7 +12,7 @@ keying the header composes when a CAD axis is present.
 
 The metadata a reader needs to reconstruct the sweep (solver, base case, enabled
 rules, CAD model) is written separately as a JSON sidecar by
-:mod:`neofoam.tooling.workflow.sweep_io` — this module only produces the executable
+:mod:`neofoam.tooling.workflow.sweep._io` — this module only produces the executable
 workflow, never the read-back contract.
 """
 
@@ -131,7 +131,7 @@ def _check_composite_mesh_names(
     name may itself contain ``__``, so distinct ``(cad, mesh)`` pairs could
     collapse to the same directory (and Snakemake would then misroute the
     wildcard split). Raise before any file is written, mirroring
-    :func:`neofoam.tooling.workflow.sweep_io.cross_product`'s case-name guard.
+    :func:`neofoam.tooling.workflow.sweep._io.cross_product`'s case-name guard.
     """
     cad_names = sorted(dimensions.get(CAD_DIM, {}))
     mesh_names = sorted(dimensions.get(MESH_DIM, {})) or ["base"]

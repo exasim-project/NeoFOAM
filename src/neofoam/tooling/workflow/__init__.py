@@ -1,78 +1,40 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Case-staging workflow: the geometry contract and the deterministic mesh mappers.
+"""Case-staging workflow: geometry → mesh, parameter sweeps, and their rule library.
 
-* :mod:`neofoam.tooling.workflow.patch_set` — the :class:`~neofoam.tooling.workflow.patch_set.PatchSet`
-  schema (``<case>/manifest.json``): named boundary patches with CFD roles, the
-  bounding box and mesh sizing facts. It ties geometry → mesh → boundary conditions
-  together; :func:`neofoam.mcp.tools.case_patches` reads it so an agent never invents
-  patch names or roles.
-* :mod:`neofoam.tooling.workflow.mesh_inputs` maps a ``PatchSet`` to the ``blockMeshDict`` /
-  ``snappyHexMeshDict`` configs (deterministic, no OpenFOAM, no LLM).
-* :mod:`neofoam.tooling.workflow.sweep` + :mod:`neofoam.tooling.workflow.paramspace` — parameter
-  sweeps over a saved base case: named config variants (``params.yaml``), their
-  cross product (``sweep.csv``) and a generated Snakemake workflow composed from
-  the packaged rule library (:mod:`neofoam.tooling.workflow.rules`): per mesh variant
-  ``setup_mesh`` → blockMesh → snappyHexMesh → checkMesh (built ONCE under
-  ``meshes/{variant}/``), then per case ``setup`` (clone base + apply configs +
-  copy the variant's mesh, via :mod:`neofoam.tooling.workflow.sweep_runner`) → ``solve``.
-  The wizard's Parameters step drives this canvas.
-* :mod:`neofoam.tooling.workflow.snakemake_dag` — renders an exported sweep's
-  ``snakemake --dag`` / ``--rulegraph`` as canvas nodes and edges (the DAG view
-  below the wizard's Parameters canvas).
+This package is a *directory of deep sub-modules*, not one flat namespace — import
+from the sub-module that owns your concern, each of which states its own interface:
+
+* :mod:`neofoam.tooling.workflow.geometry` — the ``manifest.json`` schema
+  (:class:`~neofoam.tooling.workflow.geometry.PatchSet`) and the deterministic
+  ``PatchSet`` → mesh-dict mappers (:func:`~neofoam.tooling.workflow.geometry.build_mesh_inputs`).
+  The one entry point for going from staged geometry to mesh inputs.
+* :mod:`neofoam.tooling.workflow.sweep` — parameter sweeps over a saved base case:
+  the :class:`~neofoam.tooling.workflow.sweep.Sweep` object owns the round-trip
+  (export a runnable Snakemake workflow dir, read it back), plus the wizard's canvas
+  node/edge model.
+* :mod:`neofoam.tooling.workflow.rules` — the packaged Snakemake rule library the
+  generated sweep workflow is composed from (per mesh variant ``setup_mesh`` →
+  blockMesh → snappyHexMesh → checkMesh, then per case ``setup`` → ``solve``).
+* :mod:`neofoam.tooling.workflow.dag` — render an exported sweep's
+  ``snakemake --dag`` / ``--rulegraph`` as canvas nodes and edges.
+* :mod:`neofoam.tooling.workflow.paramspace` — the swept-dimension csv/yaml layer
+  the sweep persistence builds on.
+* :mod:`neofoam.tooling.workflow.sweep_runner` — the ``python -m …sweep_runner`` CLI
+  the generated Snakefile shells out to (mesh staging, per-tool runs, case setup).
 
 Where the STLs come from is out of scope — any upstream tool that writes
-``constant/triSurface/*.stl`` plus a ``manifest.json`` plugs in here (the interactive
-wizard's :mod:`neofoam.ui.geometry` derives the same facts straight from the STLs).
+``constant/triSurface/*.stl`` plus a ``manifest.json`` plugs in at
+:mod:`~neofoam.tooling.workflow.geometry`.
+
+This top-level ``__init__`` intentionally re-exports **nothing**: the six concerns
+above used to share one 21-name flat namespace; keeping the surface on the
+sub-modules is what makes each a small, deep interface. Import
+``from neofoam.tooling.workflow.geometry import PatchSet``, not
+``from neofoam.tooling.workflow import PatchSet``.
 """
 
-from neofoam.tooling.workflow.patch_set import (
-    BoundingBox,
-    PatchEntry,
-    PatchSet,
-    PatchRole,
-)
-from neofoam.tooling.workflow.mesh_inputs import block_mesh_dict, snappy_dict
-from neofoam.tooling.workflow.paramspace import KeyedDim, YamlParamSpace
-from neofoam.tooling.workflow.rules import (
-    RuleKind,
-    RulePlan,
-    RuleRegistry,
-    RuleSpec,
-    default_registry,
-    rules_dir,
-)
-from neofoam.tooling.workflow.snakemake_dag import dag_graph
-from neofoam.tooling.workflow.sweep import (
-    LoadedSweep,
-    SweepDimension,
-    cross_product,
-    export_sweep,
-    load_sweep,
-    sweep_snakefile,
-)
+from __future__ import annotations
 
-__all__ = [
-    "BoundingBox",
-    "KeyedDim",
-    "LoadedSweep",
-    "PatchEntry",
-    "PatchSet",
-    "PatchRole",
-    "RuleKind",
-    "RulePlan",
-    "RuleRegistry",
-    "RuleSpec",
-    "SweepDimension",
-    "YamlParamSpace",
-    "block_mesh_dict",
-    "cross_product",
-    "dag_graph",
-    "default_registry",
-    "export_sweep",
-    "load_sweep",
-    "rules_dir",
-    "snappy_dict",
-    "sweep_snakefile",
-]
+__all__: list[str] = []

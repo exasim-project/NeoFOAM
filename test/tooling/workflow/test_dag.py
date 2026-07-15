@@ -9,7 +9,7 @@ import shutil
 
 import pytest
 
-from neofoam.tooling.workflow.snakemake_dag import (
+from neofoam.tooling.workflow.dag import (
     dag_graph,
     layered_layout,
     parse_dot,
@@ -91,20 +91,18 @@ def test_snakemake_dot_reports_missing_binary(tmp_path, monkeypatch):
     def _no_binary(*args, **kwargs):
         raise FileNotFoundError("snakemake")
 
-    monkeypatch.setattr("neofoam.tooling.workflow.snakemake_dag.subprocess.run", _no_binary)
+    monkeypatch.setattr("neofoam.tooling.workflow.dag.subprocess.run", _no_binary)
     with pytest.raises(RuntimeError, match="not installed"):
         snakemake_dot(tmp_path, "dag")
 
 
 def test_dag_graph_falls_back_to_layered_layout_without_dot(tmp_path, monkeypatch):
     monkeypatch.setattr(
-        "neofoam.tooling.workflow.snakemake_dag.snakemake_dot", lambda *a, **k: _DOT
+        "neofoam.tooling.workflow.dag.snakemake_dot", lambda *a, **k: _DOT
     )
     # No `dot` binary → _graphviz_layout returns None and dag_graph uses the
     # pure-Python layered fallback, which still orders dependents below deps.
-    monkeypatch.setattr(
-        "neofoam.tooling.workflow.snakemake_dag.shutil.which", lambda name: None
-    )
+    monkeypatch.setattr("neofoam.tooling.workflow.dag.shutil.which", lambda name: None)
     nodes, _ = dag_graph(tmp_path, "dag")
     by_id = {n["id"]: n for n in nodes}
     assert (
