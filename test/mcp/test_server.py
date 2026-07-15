@@ -41,6 +41,18 @@ def test_registered_tools_are_the_full_set_and_no_run() -> None:
     assert not (names & forbidden)
 
 
+def test_registered_tools_carry_grouping_tags_and_meta() -> None:
+    # Curated tags/meta sharpen tool selection + let a client filter by group.
+    registered = asyncio.run(mcp.list_tools())
+    by_name = {t.name: t for t in registered}
+    assert "introspection" in by_name["model_catalog"].tags
+    assert "geometry" in by_name["import_geometry"].tags
+    assert "workspace" in by_name["workspace_info"].tags
+    # every tool carries the shared provenance meta
+    for tool in registered:
+        assert (tool.meta or {}).get("package") == "neofoam"
+
+
 def test_tool_takes_solver_argument_with_default() -> None:
     # @mcp.tool leaves the function callable; the solver arg defaults to the
     # registered default and accepts an explicit registered name.

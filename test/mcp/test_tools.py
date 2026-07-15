@@ -36,7 +36,12 @@ def test_all_tool_names_match_the_spec_literal_list() -> None:
         "tool_catalog",
         "list_configs",
         "config_schema",
+        "case_spec_schema",
+        "manifest_schema",
+        "workspace_info",
+        "import_geometry",
         "case_patches",
+        "build_mesh_inputs",
         "validate_case",
         "read_case",
         "load_case",
@@ -112,9 +117,33 @@ def test_config_schema_accepts_snake_case_name(solver: Any) -> None:
     assert dto.json_schema and "properties" in dto.json_schema
 
 
+def test_case_spec_schema_describes_the_save_case_envelope(solver: Any) -> None:
+    """case_spec_schema lists the snake-case config keys save_case accepts."""
+    dto = tools.case_spec_schema(solver)
+    assert dto.json_schema and "properties" in dto.json_schema
+    # the keys are exactly the schema's properties, and cover the always-needed configs
+    assert set(dto.config_keys) == set(dto.json_schema["properties"])
+    assert {
+        "control_dict_config",
+        "transport_properties_config",
+        "pimple_fv_schemes",
+    } <= set(dto.config_keys)
+    # every field is optional (fill only the case's subset) → no required keys
+    assert dto.json_schema.get("required", []) == []
+
+
+def test_manifest_schema_lists_geometry_source_as_required() -> None:
+    """manifest_schema is self-describing: the manifest's required keys are surfaced."""
+    dto = tools.manifest_schema()
+    assert dto.json_schema and "properties" in dto.json_schema
+    assert "geometry_source" in dto.required
+    assert {"bbox", "location_in_mesh", "length_scale"} <= set(dto.required)
+    assert "geometry_source" in dto.json_schema["properties"]
+
+
 def test_case_patches_reads_staged_manifest(tmp_path: Path) -> None:
     """case_patches returns the boundary patches (name + role) from the manifest."""
-    from neofoam.workflow.patch_set import PatchSet
+    from neofoam.tooling.workflow.patch_set import PatchSet
 
     manifest = TUBE_BANK / "manifest.json"
     PatchSet.load(manifest).save(tmp_path / "manifest.json")
@@ -133,6 +162,33 @@ def test_case_patches_missing_manifest_raises(tmp_path: Path) -> None:
         tools.case_patches(str(tmp_path))  # dir exists but has no manifest.json
 
 
+def test_build_mesh_inputs_writes_mesh_dicts_from_manifest(tmp_path: Path) -> None:
+    """build_mesh_inputs renders the mesh dicts + preprocess enable-list from the
+    staged manifest (no hand-authored blockMeshDict/preprocess.yaml)."""
+    from neofoam.tooling.workflow.patch_set import PatchSet
+
+    ps = PatchSet.load(TUBE_BANK / "manifest.json")
+    ps.save(tmp_path / "manifest.json")
+
+    dto = tools.build_mesh_inputs(str(tmp_path))
+
+    assert "system/blockMeshDict" in dto.written
+    assert "system/preprocess.yaml" in dto.written
+    assert (tmp_path / "system" / "blockMeshDict").is_file()
+    # preprocess.yaml is a YAMLStrategy config — it must actually land on disk
+    # (the write_configs YAML merged-write path).
+    assert (tmp_path / "system" / "preprocess.yaml").is_file()
+    # This manifest has a snappy surface (``tubes``), so a snappyHexMeshDict is written.
+    has_snappy = any(p.is_snappy_surface for p in ps.patches)
+    assert dto.has_snappy == has_snappy
+    assert ("system/snappyHexMeshDict" in dto.written) == has_snappy
+
+
+def test_build_mesh_inputs_missing_manifest_raises(tmp_path: Path) -> None:
+    with pytest.raises(ValueError):
+        tools.build_mesh_inputs(str(tmp_path))  # dir exists but has no manifest.json
+
+
 def _stage_mesh_dicts_with_u(tmp_path: Path, frontback_bc: str) -> Any:
     """Stage the tube-bank mesh dicts + a 0/U whose frontBack BC is ``frontback_bc``.
 
@@ -140,7 +196,7 @@ def _stage_mesh_dicts_with_u(tmp_path: Path, frontback_bc: str) -> Any:
     ``frontBack`` patch is what validate_case cross-checks against 0/U); only the U
     field varies per test, so the validator sees a real staged case.
     """
-    from neofoam.workflow.patch_set import PatchSet
+    from neofoam.tooling.workflow.patch_set import PatchSet
     from neofoam.framework.solver.configurations import configurations
     from neofoam.io import write_configs
     from neofoam.solver.incompressibleFluid.incompressibleFluid import (
@@ -364,6 +420,134 @@ def test_save_case_rejects_an_escaping_target(solver: Any, tmp_path: Path) -> No
     ws = Workspace.at(tmp_path)
     with pytest.raises(CaseAccessError):
         tools.save_case(solver, {}, "../escape", workspace=ws)
+
+
+def test_workspace_info_reports_unconfined_by_default() -> None:
+    info = tools.workspace_info()
+    assert info.confined is False and info.root is None
+
+
+def test_workspace_info_reports_the_active_root_when_confined(tmp_path: Path) -> None:
+    from neofoam.tooling import Workspace
+
+    info = tools.workspace_info(workspace=Workspace.at(tmp_path))
+    assert info.confined is True
+    assert info.root == str(tmp_path.resolve())
+
+
+def _manifest_dict() -> dict[str, Any]:
+    """A minimal two-patch PatchSet dump (no case_dir — import_geometry sets it)."""
+    return {
+        "geometry_source": "unit_test",
+        "bbox": {"min": [0.0, 0.0, 0.0], "max": [1.0, 1.0, 1.0]},
+        "location_in_mesh": [0.5, 0.5, 0.5],
+        "length_scale": 0.1,
+        "patches": [
+            {"name": "inlet", "stl": "constant/triSurface/inlet.stl", "role": "inlet"},
+            {
+                "name": "frontBack",
+                "stl": "constant/triSurface/frontBack.stl",
+                "role": "empty",
+            },
+        ],
+    }
+
+
+def test_import_geometry_writes_manifest_read_back_by_case_patches(
+    tmp_path: Path,
+) -> None:
+    """import_geometry stages the manifest; case_patches then reads its patches (F1)."""
+    tri = tmp_path / "constant" / "triSurface"
+    tri.mkdir(parents=True)
+    for name in ("inlet", "frontBack"):
+        (tri / f"{name}.stl").write_text("solid\nendsolid\n")
+
+    result = tools.import_geometry(str(tmp_path), _manifest_dict())
+
+    assert Path(result.manifest) == tmp_path / "manifest.json"
+    assert (tmp_path / "manifest.json").is_file()
+    assert {p.name: p.role for p in result.patches} == {
+        "inlet": "inlet",
+        "frontBack": "empty",
+    }
+    # the hand-off round-trips: case_patches reads what import_geometry wrote
+    assert {p.name for p in tools.case_patches(str(tmp_path))} == {"inlet", "frontBack"}
+
+
+def test_import_geometry_stages_stls_from_a_source_dir(tmp_path: Path) -> None:
+    """With stl_source_dir the STLs are copied into constant/triSurface (F1)."""
+    src = tmp_path / "stls"
+    src.mkdir()
+    for name in ("inlet", "frontBack"):
+        (src / f"{name}.stl").write_text("solid\nendsolid\n")
+    case = tmp_path / "case"
+    case.mkdir()
+
+    tools.import_geometry(str(case), _manifest_dict(), stl_source_dir=str(src))
+
+    for name in ("inlet", "frontBack"):
+        assert (case / "constant" / "triSurface" / f"{name}.stl").is_file()
+
+
+def test_import_geometry_missing_stl_raises_before_writing_manifest(
+    tmp_path: Path,
+) -> None:
+    """A patch whose STL is absent is an error, and no half-staged manifest is left."""
+    with pytest.raises(ValueError, match="inlet"):
+        tools.import_geometry(str(tmp_path), _manifest_dict())
+    assert not (tmp_path / "manifest.json").exists()
+
+
+def test_load_case_surfaces_dropped_configs_as_warnings(
+    solver: Any, tmp_path: Path
+) -> None:
+    """A present-but-invalid config is reported in warnings, not silently nulled (F5)."""
+    # A transportProperties that parses as OpenFOAM but does NOT validate into
+    # TransportPropertiesConfig (``nu`` is a scalar; a vector fails the schema). This
+    # is the F5 case — present but schema-invalid — and it raises a catchable Python
+    # error. A *syntactically* malformed dict is a different beast: OpenFOAM's
+    # tokenizer calls ``FatalIOError::exit()`` at the C++ level (pybFoam exposes no
+    # ``throwExceptions``), which aborts the process and no ``except`` can catch — so
+    # it is out of scope for this Python-level warning path.
+    (tmp_path / "constant").mkdir()
+    (tmp_path / "constant" / "transportProperties").write_text(
+        "transportModel   Newtonian;\nnu   ( 1 2 3 );\n"
+    )
+
+    dto = tools.load_case(solver, str(tmp_path))
+
+    assert dto.values["transport_properties_config"] is None
+    hit = next(w for w in dto.warnings if w.file == "constant/transportProperties")
+    assert hit.config == "TransportPropertiesConfig" and hit.reason
+
+
+def test_load_case_has_no_warnings_for_a_clean_case(solver: Any) -> None:
+    """The well-formed reference case round-trips with an empty warnings list (F5)."""
+    assert tools.load_case(solver, str(SOURCE_CASE)).warnings == []
+
+
+def test_validate_case_reads_constraint_patches_from_manifest_pre_mesh(
+    solver: Any, tmp_path: Path
+) -> None:
+    """Before any mesh dict, a manifest's constraint patch drives the BC check (F4)."""
+    tri = tmp_path / "constant" / "triSurface"
+    tri.mkdir(parents=True)
+    for name in ("inlet", "frontBack"):
+        (tri / f"{name}.stl").write_text("solid\nendsolid\n")
+    tools.import_geometry(str(tmp_path), _manifest_dict())
+    # frontBack is an 'empty' constraint patch in the manifest; a mismatched BC on it
+    # must be flagged even though no blockMeshDict/polyMesh exists yet.
+    _write(
+        tmp_path / "0" / "U",
+        "dimensions [0 1 -1 0 0 0 0];\ninternalField uniform (0 0 0);\n"
+        "boundaryField{ frontBack{ type symmetry; }\n"
+        "  inlet{ type fixedValue; value uniform (1 0 0); } }\n",
+    )
+    report = tools.validate_case(solver, str(tmp_path))
+    assert any(
+        f.file == "0/U" and "frontBack" in f.message and "empty" in f.message
+        for f in report.findings
+    )
 
 
 @pytest.mark.parametrize(

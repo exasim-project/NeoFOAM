@@ -107,21 +107,54 @@ def _boussinesq_or_error(
 # -- non-leaf reads (moved verbatim from mcp/tools.py) -------------------------
 
 
+# Geometry-manifest patch roles that map to an OpenFOAM constraint patch type, so a
+# staged (but not-yet-meshed) case still exposes its constraint patches to the check.
+_ROLE_TO_CONSTRAINT_TYPE = {"symmetry": "symmetry", "empty": "empty"}
+
+
+def _manifest_constraint_types(case: Path) -> dict[str, str]:
+    """Constraint patch types the geometry ``manifest.json`` declares, or ``{}``.
+
+    Lets :func:`check_constraint_patches` work *before* the mesh is built (F4): the
+    manifest (written by ``import_geometry``) records each patch's CFD role, and the
+    constraint roles (``symmetry``/``empty``) map to the same mesh patch type. A missing
+    or unreadable manifest yields ``{}`` — it is an optional pre-mesh supplement, never a
+    hard dependency, and the mesh dicts take precedence when both are present.
+    """
+    manifest = case / "manifest.json"
+    if not manifest.is_file():
+        return {}
+    try:
+        from neofoam.tooling.workflow.patch_set import PatchSet
+
+        patch_set = PatchSet.load(manifest)
+    except Exception:
+        return {}
+    return {
+        p.name: _ROLE_TO_CONSTRAINT_TYPE[p.role.value]
+        for p in patch_set.patches
+        if p.role.value in _ROLE_TO_CONSTRAINT_TYPE
+    }
+
+
 def mesh_patch_types(case: Path) -> Union[dict[str, str], Unreadable]:
     """{patch name -> mesh patch type} from blockMeshDict boundary + snappy surfaces.
 
-    A present-but-unparseable blockMeshDict/snappyHexMeshDict escalates to an
+    A present-but-unparsable blockMeshDict/snappyHexMeshDict escalates to an
     :class:`Unreadable` (couldn't-check ⇒ error at the call site) instead of silently
     downgrading to an empty set — the non-leaf level of the honest-validation gap.
     Routing this through :mod:`neofoam.io.dictread` is not feasible: the patch contract
     is a *config* load (a list-valued ``boundary`` + nested ``refinementSurfaces``), not
     a flat leaf section, so the read seam kept here is ``Config.load`` and its failure is
     surfaced as ``Unreadable``.
+
+    The geometry ``manifest.json`` (when present) supplies constraint patch types too,
+    so the check runs *pre-mesh* on a staged case (F4); the mesh dicts win on conflict.
     """
     from neofoam.tools.block_mesh import BlockMeshDictConfig
     from neofoam.tools.snappy_hex_mesh import SnappyHexMeshDictConfig
 
-    types: dict[str, str] = {}
+    types: dict[str, str] = _manifest_constraint_types(case)
     bmd = case / "system" / "blockMeshDict"
     if bmd.is_file():
         try:
