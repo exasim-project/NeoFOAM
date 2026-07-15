@@ -1,6 +1,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
+"""The ``Workspace`` path sandbox: relative-only resolution under a fixed root.
+
+Covers the two contracts callers depend on — a path inside the root resolves to an
+absolute path, and any escape (absolute input, ``..`` traversal, symlink out) raises
+``CaseAccessError`` rather than reaching outside the root. One subprocess case guards a
+separate promise of the package init: ``import neofoam.tooling`` stays stdlib-only and
+pulls in no optional frontend extras (mcp/ui).
+"""
+
 import os
 import subprocess
 import sys

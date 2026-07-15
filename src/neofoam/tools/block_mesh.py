@@ -117,7 +117,7 @@ class BlockMeshDictConfig(BaseConfig):
     projected ``faces``, the legacy ``patches`` form, ``defaultPatch``, grading
     variables, ...) as opaque passthroughs, so it can load, write and reproduce
     arbitrary tutorial dicts. Construct one directly (or via
-    :func:`neofoam.workflow.mesh_inputs.block_mesh_dict`) to scaffold a case.
+    :func:`neofoam.tooling.workflow.mesh_inputs.block_mesh_dict`) to scaffold a case.
 
     ``vertices`` / ``blocks`` / ``boundary`` are ``list | str``: normally the
     structured list, but a section that does not fit the structured grammar

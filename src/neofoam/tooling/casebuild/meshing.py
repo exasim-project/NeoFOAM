@@ -6,11 +6,14 @@
 There is deliberately no default meshing verb — a case's mesh is chosen by injecting
 one of these steps. Each reuses the shared ``neofoam.tools`` mesh tools
 (``blockMeshTool`` / ``snappyHexMeshTool`` + their pydantic step configs) rather than
-re-wrapping ``pybFoam.meshing``: :func:`_run_tool` drives a tool's ``InitStep`` objects
+re-wrapping ``pybFoam.meshing``: :func:`run_tool` drives a tool's ``InitStep`` objects
 directly against a :class:`CaseDir`, seeding the ``ctx`` the tool expects
-(``_foam_time``, and ``_prev_mesh`` for snappy). A tool's ``dict_file`` is passed as an
-absolute path so the Foam ``Time`` can use the two-arg (root, case) form — no ``chdir``
-and no ``argList`` lifetime hazard.
+(``_foam_time``, and ``_prev_mesh`` for mesh-consuming tools). A tool's ``dict_file``
+option is absolutized against the case so the Foam ``Time`` can use the two-arg
+(root, case) form — no ``chdir`` and no ``argList`` lifetime hazard.
+
+:func:`run_tool` is the single in-process tool engine: these steps and the sweep
+runner (:mod:`neofoam.tooling.workflow.sweep_runner`) both drive mesh tools through it.
 
 ``block_mesh`` reads a committed ``blockMeshDict``; ``box`` synthesizes one from
 ``n``/``dims`` (the OpenFOAM ``blocks``/``boundary`` grammar can't be built through the
@@ -20,35 +23,70 @@ a prior ``block_mesh`` left on disk (reconstructed via ``pyf.fvMesh``).
 
 from __future__ import annotations
 
-from typing import Any
+from collections.abc import Mapping
+from pathlib import Path
+from typing import Any, Optional
 
 import pybFoam as pyf
 from pydantic import BaseModel
 
+from neofoam.framework.tools.spec import ToolSpec
 from neofoam.tooling.casebuild.pipeline import CaseDir, Step
 from neofoam.tools.block_mesh import blockMeshTool
 from neofoam.tools.snappy_hex_mesh import snappyHexMeshTool
 
 
-def _run_tool(
-    case: CaseDir,
-    tool: Any,
-    entry: dict[str, Any],
-    *,
-    needs_prev_mesh: bool = False,
-) -> None:
-    """Drive *tool*'s InitSteps against *case* with a seeded ``ctx``.
+def seed_tool_ctx(case: CaseDir, *, needs_prev_mesh: bool) -> dict[str, Any]:
+    """Build the init ``ctx`` a tool's ``@build`` reads for an in-process run.
 
-    Builds the Foam ``Time`` with the two-arg (root, case) form so no ``chdir`` is
-    needed (the tool's ``dict_file`` in *entry* must be absolute). When
-    *needs_prev_mesh*, reconstructs the on-disk mesh (left by a prior ``block_mesh``)
-    as ``ctx['_prev_mesh']`` — the input snappy refines.
+    The single place the Foam objects are constructed for a one-shot tool run: a
+    two-arg (root, case) ``pyf.Time`` seeded as ``_foam_time`` (so no ``chdir`` and no
+    ``argList`` lifetime hazard), plus — when *needs_prev_mesh* — ``_prev_mesh``
+    reconstructed via ``pyf.fvMesh`` from the on-disk mesh a prior ``block_mesh`` left,
+    the input a refiner (snappy) or validator (checkMesh) reads.
+
+    This is deliberately NOT shared with :func:`neofoam.framework.tools.graph.tool_graph_steps`:
+    that engine is a DAG *chainer* that receives ``_foam_time`` from the solver Context
+    and threads ``_prev_mesh`` between ``InitStep`` outputs — it never constructs a
+    ``Time``/``fvMesh`` itself, so there is nothing to fold together.
     """
     time = pyf.Time(str(case.path.parent), case.path.name)
     ctx: dict[str, Any] = {"_foam_time": time}
     if needs_prev_mesh:
         ctx["_prev_mesh"] = pyf.fvMesh(time)
-    runtime = tool.instantiate(entry)
+    return ctx
+
+
+def run_tool(
+    case: CaseDir,
+    tool: ToolSpec,
+    *,
+    options: Optional[Mapping[str, Any]] = None,
+    needs_prev_mesh: Optional[bool] = None,
+) -> None:
+    """Run one preprocessing *tool* in-process against *case*.
+
+    Drives the tool's ``InitStep`` objects with a ``ctx`` seeded by
+    :func:`seed_tool_ctx`. Any ``dict_file`` in *options* (or the tool's default) is
+    absolutized against the case, so a relative dict path resolves without changing the
+    working directory.
+
+    *needs_prev_mesh* seeds ``ctx['_prev_mesh']`` from the on-disk mesh a prior
+    ``block_mesh`` left — the input a refiner (snappy) or validator (checkMesh) reads.
+    When ``None`` it defaults to the tool's ``consumes_mesh`` flag; a caller running a
+    single tool against an existing mesh (the sweep runner) passes it explicitly.
+    """
+    opts: dict[str, Any] = dict(options or {})
+    config_type = tool.step_config_type
+    if config_type is not None and "dict_file" in config_type.model_fields:
+        rel = opts.get("dict_file", config_type.model_fields["dict_file"].default)
+        if not Path(rel).is_absolute():
+            opts["dict_file"] = str(case.path / rel)
+    if needs_prev_mesh is None:
+        needs_prev_mesh = tool.consumes_mesh
+
+    ctx = seed_tool_ctx(case, needs_prev_mesh=needs_prev_mesh)
+    runtime = tool.instantiate({"tool": tool.name, **opts})
     for step in runtime.run_build():
         step.initializer(ctx)
 
@@ -59,12 +97,9 @@ def block_mesh(
     """Generate the base mesh from a committed ``blockMeshDict`` (via ``blockMeshTool``)."""
 
     def step(case: CaseDir) -> None:
-        entry = {
-            "tool": "blockMesh",
-            "dict_file": str(case.path / dict_file),
-            "verbose": verbose,
-        }
-        _run_tool(case, blockMeshTool, entry)
+        run_tool(
+            case, blockMeshTool, options={"dict_file": dict_file, "verbose": verbose}
+        )
 
     return step
 
@@ -82,13 +117,15 @@ def snappy_hex_mesh(
     """
 
     def step(case: CaseDir) -> None:
-        entry = {
-            "tool": "snappyHexMesh",
-            "dict_file": str(case.path / dict_file),
-            "overwrite": overwrite,
-            "verbose": verbose,
-        }
-        _run_tool(case, snappyHexMeshTool, entry, needs_prev_mesh=True)
+        run_tool(
+            case,
+            snappyHexMeshTool,
+            options={
+                "dict_file": dict_file,
+                "overwrite": overwrite,
+                "verbose": verbose,
+            },
+        )
 
     return step
 
@@ -153,7 +190,6 @@ def box(
         target = case.path / dict_file
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(_render_box_blockmeshdict(cfg))
-        entry = {"tool": "blockMesh", "dict_file": str(target), "verbose": False}
-        _run_tool(case, blockMeshTool, entry)
+        run_tool(case, blockMeshTool, options={"dict_file": str(target)})
 
     return step

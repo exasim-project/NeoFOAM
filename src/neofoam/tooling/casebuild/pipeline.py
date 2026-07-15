@@ -21,16 +21,10 @@ the destination with ``.build_at()``:
 from __future__ import annotations
 
 import shutil
-import subprocess
-import sys
-import tempfile
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Union
-
-if TYPE_CHECKING:
-    import numpy as np
+from typing import Union
 
 #: Populates a (not-yet-existing) destination directory.
 Start = Callable[[Path], None]
@@ -38,41 +32,17 @@ Start = Callable[[Path], None]
 
 @dataclass(frozen=True)
 class CaseDir:
-    """A materialized case directory."""
+    """A materialized case directory.
+
+    A pure case-*construction* handle. Reading a field back is a separate concern —
+    see :func:`neofoam.tooling.casebuild.reader.read_field`.
+    """
 
     path: Path
 
     def __or__(self, step: "Step") -> "Pipeline":
         """Fork: a new pipeline that copies this case, then applies *step*."""
         return Pipeline(_copy_from(self.path), (step,))
-
-    def read_field(self, name: str, *, time: str = "latest") -> "np.ndarray":
-        """Read field *name*'s internal field (``time`` = ``"latest"`` or a dir name).
-
-        Runs the read in a fresh subprocess: constructing ``Foam::Time`` twice in one
-        interpreter corrupts OpenFOAM global state (later reads return ``nan``), so a
-        per-read process is the only safe way to read more than one field from Python.
-        Returns the internal field as a numpy array (``(N,)`` scalar, ``(N, 3)`` vector).
-        """
-        import numpy as np
-
-        with tempfile.TemporaryDirectory() as tmp:
-            out = Path(tmp) / f"{name}.npy"
-            subprocess.run(
-                [
-                    sys.executable,
-                    "-m",
-                    "neofoam.tooling.casebuild._reader",
-                    str(self.path),
-                    time,
-                    name,
-                    str(out),
-                ],
-                check=True,
-                capture_output=True,
-                text=True,
-            )
-            return np.asarray(np.load(out))
 
 
 #: A build step: mutates a materialized case in place.

@@ -18,6 +18,7 @@ from neofoam.tooling.casebuild.meshing import (
     BoxMeshStep,
     block_mesh,
     box,
+    run_tool,
     snappy_hex_mesh,
 )
 from neofoam.tooling.casebuild.pipeline import (
@@ -28,6 +29,7 @@ from neofoam.tooling.casebuild.pipeline import (
     from_template,
     pipe,
 )
+from neofoam.tooling.casebuild.reader import read_field
 from neofoam.tooling.casebuild.steps import configs, patch
 
 __all__ = [
@@ -41,6 +43,8 @@ __all__ = [
     "patch",
     "block_mesh",
     "box",
+    "read_field",
+    "run_tool",
     "snappy_hex_mesh",
     "BoxMeshStep",
 ]

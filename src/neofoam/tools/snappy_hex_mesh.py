@@ -149,7 +149,7 @@ class SnappyHexMeshDictConfig(BaseConfig):
     unmodeled top-level keys are kept via ``extra="allow"``. So an existing dict
     round-trips (to ``pybFoam``'s 6-significant-figure write precision). Build a
     fresh castellate+snap dict with :meth:`castellate_and_snap` (used by
-    :func:`neofoam.workflow.mesh_inputs.snappy_dict`).
+    :func:`neofoam.tooling.workflow.mesh_inputs.snappy_dict`).
     """
 
     model_config = ConfigDict(extra="allow", populate_by_name=True)

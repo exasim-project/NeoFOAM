@@ -4,7 +4,7 @@
 """The :class:`PatchSet` -- the geometry contract between staging and case filling.
 
 Whatever stages a case's geometry writes ``<case>/manifest.json``; the downstream
-consumers (:mod:`neofoam.workflow.mesh_inputs` for the mesh dicts,
+consumers (:mod:`neofoam.tooling.workflow.mesh_inputs` for the mesh dicts,
 :func:`neofoam.mcp.tools.case_patches` for boundary-condition filling) read it
 back, so the filesystem is the hand-off boundary and this module is the single
 schema both sides agree on. All coordinates are in **metres** (``scale_to_meters``
