@@ -239,6 +239,78 @@ def test_fvsolution_passes_through_extra_sections() -> None:
 
 
 # ---------------------------------------------------------------------------
+# form_defaults — runnable starter prefill for the required-but-defaultless fields
+# ---------------------------------------------------------------------------
+
+
+def test_fvschemes_form_defaults_is_a_valid_runnable_scaffold() -> None:
+    # G2: the scheme fields are required-but-defaultless, so the form prefill would be
+    # empty; form_defaults hands back a canonical scaffold that round-trips through the
+    # subclass (a save-able starter), keyed by OpenFOAM alias.
+    spec = Model("SchemeDefaults")
+    Sub = spec.config(fvSchemes)
+    Sub.add(
+        ddt="ddt(U)",
+        div=["div(phi,U)", "div((nuEff*dev2(T(grad(U)))))"],
+        grad="grad(U)",
+        laplacian="laplacian(nuEff,U)",
+        snGrad="snGrad(p)",
+        interpolation="interpolate(rAU)",
+    )
+
+    scaffold = Sub.form_defaults()
+    assert scaffold is not None
+    # a convection div (a flux) gets bounded upwind; the stress divergence stays linear
+    assert scaffold["divSchemes"]["div(phi,U)"] == "Gauss upwind"
+    assert scaffold["divSchemes"]["div((nuEff*dev2(T(grad(U)))))"] == "Gauss linear"
+    assert scaffold["ddtSchemes"]["ddt(U)"] == "Euler"
+    assert (
+        scaffold["laplacianSchemes"]["laplacian(nuEff,U)"] == "Gauss linear corrected"
+    )
+    # and it actually validates as an instance of the config
+    Sub.model_validate(scaffold)
+
+
+def test_fvsolution_form_defaults_blocks_by_field_kind() -> None:
+    spec = Model("SolverDefaults")
+    Sub = spec.config(fvSolution)
+    Sub.add("U", "p")
+
+    scaffold = Sub.form_defaults()
+    assert scaffold is not None
+    solvers = scaffold["solvers"]
+    # pressure → symmetric PCG/DIC; velocity → smoothSolver; Final tightens relTol to 0
+    assert solvers["p"]["solver"] == "PCG"
+    assert solvers["U"]["solver"] == "smoothSolver"
+    assert solvers["pFinal"]["relTol"] == 0.0
+    assert solvers["UFinal"]["relTol"] == 0.0
+    Sub.model_validate(scaffold)
+
+
+def test_fvsolution_form_defaults_includes_runnable_control_block() -> None:
+    # A declared control section (PIMPLE) gets a runnable block — correctors keyed by
+    # the section name plus the closed-domain pressure reference — so the starter runs
+    # (the solver reads PIMPLE at run time though the schema models it as optional).
+    spec = Model("SolverControls")
+    Sub = spec.config(fvSolution)
+    Sub.add("U", "p")
+    Sub.add_controls("PIMPLE", pRefCell=int, pRefValue=float)
+
+    scaffold = Sub.form_defaults()
+    assert scaffold is not None
+    pimple = scaffold["PIMPLE"]
+    assert pimple["nCorrectors"] == 2
+    assert pimple["pRefCell"] == 0 and pimple["pRefValue"] == 0
+    Sub.model_validate(scaffold)
+
+
+def test_form_defaults_none_when_nothing_declared() -> None:
+    # An empty subclass has no required scheme/solver fields → no scaffold to offer.
+    assert Model("EmptySchemes").config(fvSchemes).form_defaults() is None
+    assert Model("EmptySolvers").config(fvSolution).form_defaults() is None
+
+
+# ---------------------------------------------------------------------------
 # OpenFOAM ``default`` shorthand — expands to the required per-operator keys
 # ---------------------------------------------------------------------------
 

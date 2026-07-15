@@ -66,7 +66,12 @@ the CLI to run. Intended tool order:
 
   1. workspace_info      — learn the path rules (see "Workspace" below) first.
   2. list_solvers / model_catalog / list_configs / config_schema — introspect the
-     solver's models and each config's JSON Schema + defaults. case_spec_schema
+     solver's models and each config's JSON Schema + defaults. IMPORTANT:
+     model_catalog lists only *model-owned* configs; a solver also has
+     always-declared configs (transportProperties/turbulenceProperties/gravity) that
+     no model owns. list_configs marks those with origin == "solver" — author every
+     origin=="solver" (physics/time) and every required-model config, or the run
+     fails to find e.g. constant/g or constant/transportProperties. case_spec_schema
      describes the save_case envelope; manifest_schema describes import_geometry's
      manifest — so both authoring payloads are self-describing (no source reads).
   3. import_geometry      — stage geometry (writes <case>/manifest.json, the geometry

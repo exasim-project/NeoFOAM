@@ -13,7 +13,7 @@ lazy inside the functions so ``import neofoam.io`` pulls no ``pybFoam``.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel
 
@@ -32,11 +32,22 @@ __all__ = [
 
 
 class ConfigInfo(BaseModel):
-    """One config class a solver may consume (snake name + class name + file)."""
+    """One config class a solver may consume (snake name + class name + file + origin).
+
+    ``origin`` tells a caller *whether it must author this config*:
+
+    * ``"solver"`` — the solver's own always-declared config (controlDict,
+      transportProperties, turbulenceProperties, gravity, the mesh dicts). These
+      always apply and are **not** listed by :func:`model_catalog`; author the
+      physics/time ones for every case (the mesh dicts only when meshing).
+    * ``"required_model"`` — owned by a required model family (always active).
+    * ``"optional_model"`` — owned by an optional model; author only to enable it.
+    """
 
     name: str
     cls_name: str
     file: str | None = None
+    origin: Literal["solver", "required_model", "optional_model"] = "solver"
     description: str | None = None
 
 
@@ -92,8 +103,35 @@ def _describe(obj: Any, *, fallback: str | None = None) -> str | None:
 
 
 def list_configs(solver: Any) -> list[ConfigInfo]:
-    """Every config class ``solver`` may consume (snake name/cls_name/file)."""
-    from neofoam.framework.solver.configurations import _snake_case, configurations
+    """Every config class ``solver`` may consume (snake name/cls_name/file/origin).
+
+    Each entry's ``origin`` classifies where the config comes from — ``"solver"``
+    (always-declared, e.g. transportProperties/turbulenceProperties/gravity — **not**
+    in :func:`model_catalog`, author them anyway), ``"required_model"`` (always
+    active), or ``"optional_model"`` (author only to enable that model). This is the
+    surface that tells an agent what it must author for a runnable case: the
+    ``model_catalog`` model-owned configs are a *subset* of the required inputs; the
+    ``"solver"``-origin physics/time dicts complete them.
+    """
+    from neofoam.framework.solver.configurations import (
+        _snake_case,
+        configurations,
+        model_catalog as _model_catalog,
+    )
+
+    required_owned: set[type] = set()
+    optional_owned: set[type] = set()
+    for entry in _model_catalog(solver):
+        target = required_owned if entry.required else optional_owned
+        target.update(entry.dicts)
+        target.update(entry.fields)
+
+    def _origin(cls: type) -> Literal["solver", "required_model", "optional_model"]:
+        if cls in required_owned:
+            return "required_model"
+        if cls in optional_owned:
+            return "optional_model"
+        return "solver"
 
     out: list[ConfigInfo] = []
     for cls in configurations(solver).classes:
@@ -104,6 +142,7 @@ def list_configs(solver: Any) -> list[ConfigInfo]:
                 name=_snake_case(cls.__name__),
                 cls_name=cls.__name__,
                 file=file,
+                origin=_origin(cls),
                 # synthesised field/fv configs carry no docstring; fall back to the file
                 description=_describe(
                     cls, fallback=f"Config for {file}" if file else None
@@ -177,7 +216,14 @@ def tool_catalog(solver: Any) -> list[ToolInfo]:
 
 
 def model_catalog(solver: Any) -> list[ModelSummary]:
-    """Every model of ``solver`` with its required flag + owned configs."""
+    """Every model of ``solver`` with its required flag + owned configs.
+
+    This lists **model-owned** configs only. A solver also has always-declared
+    configs (controlDict, transportProperties, turbulenceProperties, gravity) that
+    no model owns — these are **not** here; find them in :func:`list_configs` with
+    ``origin == "solver"``. Author the model-owned *and* the ``"solver"``-origin
+    configs for a runnable case; this catalog alone is not the full required set.
+    """
     from neofoam.framework.solver.configurations import model_catalog as _model_catalog
 
     return [ModelSummary.from_entry(e) for e in _model_catalog(solver)]

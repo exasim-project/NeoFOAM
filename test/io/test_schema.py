@@ -60,6 +60,35 @@ def test_list_configs_uses_snake_name_and_reports_file(solver: Any) -> None:
     assert cd.file == "system/controlDict"
 
 
+def test_list_configs_classifies_origin(solver: Any) -> None:
+    # origin tells a caller what it must author: controlDict is solver-declared
+    # (always applies, not model-owned); transport/turbulence are owned by the
+    # required Newtonian/laminar models; gravity is owned by the optional boussinesq.
+    by_cls = {c.cls_name: c for c in list_configs(solver)}
+    assert by_cls["ControlDictConfig"].origin == "solver"
+    assert by_cls["TransportPropertiesConfig"].origin == "required_model"
+    assert by_cls["TurbulencePropertiesConfig"].origin == "required_model"
+    assert by_cls["GravityConfig"].origin == "optional_model"
+
+
+def test_list_configs_neon_transport_turbulence_are_solver_origin() -> None:
+    # G1 regression: incompressibleFluidNeoN has no Newtonian/laminar model, so its
+    # transportProperties/turbulenceProperties are solver-declared always-apply
+    # configs. model_catalog omits them; list_configs must flag them origin="solver"
+    # so an agent authors them (missing either → runtime FATAL ERROR).
+    from neofoam.solver.incompressibleFluidNeoN.incompressibleFluidNeoN import (
+        incompressibleFluidNeoN,
+    )
+
+    by_cls = {c.cls_name: c for c in list_configs(incompressibleFluidNeoN)}
+    assert by_cls["TransportPropertiesConfig"].origin == "solver"
+    assert by_cls["TurbulencePropertiesConfig"].origin == "solver"
+    # none of the NeoN models owns them, so model_catalog does not list them
+    owned = {d for e in model_catalog(incompressibleFluidNeoN) for d in e.dicts}
+    assert "TransportPropertiesConfig" not in owned
+    assert "TurbulencePropertiesConfig" not in owned
+
+
 def test_config_schema_returns_schema_ui_and_defaults(solver: Any) -> None:
     dto = config_schema(solver, "ControlDictConfig")
     assert isinstance(dto, ConfigSchema)
