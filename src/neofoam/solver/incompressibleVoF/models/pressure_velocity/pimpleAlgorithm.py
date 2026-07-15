@@ -194,9 +194,8 @@ def build(self: object) -> list[object]:  # noqa: C901
         p_rgh = context["fields.p_rgh"]
         fv_solution = pyf.dictionary.read("system/fvSolution")
         algo_dict = fv_solution.subDict("PIMPLE")
-        # Two-field setRefCell(p, p_rgh, dict) — the stub only knows the
-        # single-field overload.
-        pRefCell, pRefValue = pyf.setRefCell(p, p_rgh, algo_dict, False)  # type: ignore[call-arg, arg-type]
+        # Two-field setRefCell(p, p_rgh, dict) overload.
+        pRefCell, pRefValue = pyf.setRefCell(p, p_rgh, algo_dict, False)
         return {"pRefCell": pRefCell, "pRefValue": pRefValue}
 
     # ------------------------------------------------------------------ #

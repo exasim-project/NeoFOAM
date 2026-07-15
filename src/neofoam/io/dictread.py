@@ -128,7 +128,7 @@ def read_keys(path: Path) -> Union[frozenset[str], Unreadable, None]:
     :class:`Unreadable` when the file is present but will not parse, so a caller that
     needs mere *presence* of a key (not its value) still distinguishes a corrupt dict
     from a key that is simply not there. No leaf value is rendered, so a dimensioned
-    entry (``beta``/``TRef``) never mis-classifies as unreadable.
+    entry (``beta``/``TRef``) is never misclassified as unreadable.
     """
     if not path.is_file():
         return None

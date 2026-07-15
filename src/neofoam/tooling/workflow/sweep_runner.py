@@ -414,7 +414,9 @@ def _load_parametric_model(model_path: str) -> Any:
         ImportError: With an install hint when foamcadagent is absent.
     """
     try:
-        from foamcadagent.parametric import FreeCADParametricModel
+        from foamcadagent.parametric import (  # type: ignore[import-not-found]
+            FreeCADParametricModel,
+        )
     except ImportError as exc:
         msg = (
             "CAD sweeps need foamcadagent + FreeCAD; install with "

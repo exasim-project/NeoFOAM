@@ -165,7 +165,11 @@ def test_write_configs_writes_yaml_strategy_config(tmp_path: Path) -> None:
         {
             "tools": [
                 {"tool": "blockMesh"},
-                {"tool": "checkMesh", "depends_on": ["blockMesh"], "fail_on_error": False},
+                {
+                    "tool": "checkMesh",
+                    "depends_on": ["blockMesh"],
+                    "fail_on_error": False,
+                },
             ]
         }
     )

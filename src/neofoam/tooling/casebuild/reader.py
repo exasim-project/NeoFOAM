@@ -19,7 +19,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from neofoam.tooling.casebuild.pipeline import CaseDir
 
@@ -27,7 +27,9 @@ if TYPE_CHECKING:
     import numpy as np
 
 
-def read_field(case: CaseDir, name: str, *, time: str = "latest") -> "np.ndarray":
+def read_field(
+    case: CaseDir, name: str, *, time: str = "latest"
+) -> "np.ndarray[Any, Any]":
     """Read field *name*'s internal field from *case* (``time`` = ``"latest"`` or a dir).
 
     Runs the read in a fresh subprocess (see the module docstring). Returns the

@@ -107,7 +107,7 @@ def test_read_keys_missing_file_is_none() -> None:
 
 def test_read_keys_does_not_render_dimensioned_values() -> None:
     # Presence-only: a dimensionedScalar (beta/TRef) is reported by name without a
-    # value render, so a valid buoyant dict never mis-escalates to Unreadable.
+    # value render, so a valid buoyant dict is never wrongly escalated to Unreadable.
     pytest.importorskip("pybFoam")
     keys = read_keys(CASES / "transportProperties")
     assert not isinstance(keys, Unreadable)
