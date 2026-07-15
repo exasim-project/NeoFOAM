@@ -45,6 +45,8 @@ from .incompressibleFluidModel import Model, incompressibleFluidModel
 
 
 class ThermalTurbulenceModel(Protocol):
+    def has_nut(self) -> bool: ...
+
     def nut(self) -> Any: ...
 
     def nu(self) -> Any: ...
@@ -53,6 +55,25 @@ class ThermalTurbulenceModel(Protocol):
 def _fmt_component(x: float) -> str:
     """Render a vector component with no gratuitous ``.0`` (``0.0`` -> ``0``)."""
     return str(int(x)) if x == int(x) else repr(x)
+
+
+def _divide(numerator: Any, denominator: Any) -> Any:
+    """``numerator / denominator``, rebuilding the quotient when pybFoam binds no
+    ``dimensionedScalar / dimensionedScalar``.
+
+    A field numerator (the eddy-viscosity fallback) divides directly; laminar ``nu``
+    is a plain ``dimensionedScalar``, and scalar/scalar has no bound operator — so it
+    is rebuilt as a ``dimensionedScalar``. Mirrors
+    :func:`neofoam.turbulence.stress._add_viscosity`.
+    """
+    try:
+        return numerator / denominator
+    except TypeError:
+        return pyf.dimensionedScalar(
+            pyf.Word(f"({numerator.name()}|{denominator.name()})"),
+            numerator.dimensions() / denominator.dimensions(),
+            numerator.value() / denominator.value(),
+        )
 
 
 class _GravityHeader(BaseModel):
@@ -349,10 +370,16 @@ def solve_energy(
     pr = pyf.dimensionedScalar("Pr", pyf.dimless, configs.Pr)
     prt = pyf.dimensionedScalar("Prt", pyf.dimless, configs.Prt)
 
-    alphat.assign(turbulence.nut() / prt)
+    if turbulence.has_nut():
+        alphat.assign(turbulence.nut() / prt)
+    else:
+        # Laminar: no eddy viscosity ⇒ alphat ≡ 0, so alpha_eff = nu/Pr (the
+        # molecular thermal diffusivity). Zero alphat in place, keeping its dims.
+        zero = pyf.dimensionedScalar("zero", pyf.dimless, 0.0)
+        alphat.assign(alphat * zero)
     alphat.correctBoundaryConditions()
 
-    alpha_eff = turbulence.nu() / pr + alphat
+    alpha_eff = _divide(turbulence.nu(), pr) + alphat
     t_eqn = pyf.fvScalarMatrix(
         fvm.ddt(T) + fvm.div(phi, T) - fvm.laplacian(alpha_eff, T)
     )

@@ -58,6 +58,43 @@ class SpecMomentumTransport:
 
     def __init__(self, runtime: ModelRuntime) -> None:
         self._runtime = runtime
+        self._nu: Any = None
+        self._nut: Any = None
+
+    def bind_viscosity(self, nu: Any, nut: Any = None) -> None:
+        """Bind the Context ``nu`` (and eddy ``nut``) this model reads back.
+
+        The molecular ``nu`` is a Context field the viscosity model owns; ``nut``
+        exists only for an eddy-viscosity closure (kEpsilon, …) — laminar registers
+        none, so ``nut`` stays ``None`` and :meth:`has_nut` reports ``False``. Bound
+        once during initialization by ``create_fields`` so consumers of the read
+        interface (e.g. Boussinesq's energy equation) resolve them uniformly, the
+        same way the OpenFOAM fallback exposes its own ``nu``/``nut``.
+        """
+        self._nu = nu
+        self._nut = nut
+
+    def has_nut(self) -> bool:
+        """Whether this model has an eddy viscosity (``False`` for laminar)."""
+        return self._nut is not None
+
+    def nu(self) -> Any:
+        """The molecular kinematic viscosity (Context ``nu``)."""
+        if self._nu is None:
+            raise RuntimeError(
+                "SpecMomentumTransport.nu(): viscosity not bound — "
+                "bind_viscosity() must run during initialization"
+            )
+        return self._nu
+
+    def nut(self) -> Any:
+        """The eddy viscosity. Only valid when :meth:`has_nut` is ``True``."""
+        if self._nut is None:
+            raise RuntimeError(
+                "SpecMomentumTransport.nut(): this model has no eddy viscosity "
+                "(laminar) — guard with has_nut()"
+            )
+        return self._nut
 
     @property
     def operations(self) -> Any:
