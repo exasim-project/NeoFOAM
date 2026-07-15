@@ -24,7 +24,7 @@ import shutil
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Any, Union
 
 if TYPE_CHECKING:
     import numpy as np
@@ -47,7 +47,7 @@ class CaseDir:
         """Fork: a new pipeline that copies this case, then applies *step*."""
         return Pipeline(_copy_from(self.path), (step,))
 
-    def read_field(self, name: str, *, time: str = "latest") -> "np.ndarray":
+    def read_field(self, name: str, *, time: str = "latest") -> "np.ndarray[Any, Any]":
         """Read field *name*'s internal field back as a numpy array.
 
         Delegates to :func:`neofoam.tooling.casebuild.reader.read_field`, which runs
