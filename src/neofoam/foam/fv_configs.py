@@ -26,7 +26,7 @@ from __future__ import annotations
 
 from typing import Any, Callable, ClassVar, Optional
 
-from pydantic import ConfigDict, Field, create_model
+from pydantic import ConfigDict, Field, create_model, model_validator
 from pydantic.fields import FieldInfo
 
 from neofoam.foam.schemes import (
@@ -91,6 +91,43 @@ def _register_entry(
     section.setdefault(attr_name, (value_type, key, optional))
 
 
+def _expand_default(cls: type, data: Any) -> Any:
+    """Fill missing required entries from an OpenFOAM ``default`` shorthand.
+
+    A scheme section may name every operator explicitly *or* give a single
+    ``default`` (``gradSchemes { default Gauss linear; }``) that OpenFOAM applies
+    to every operator it doesn't spell out. The typed per-operator fields are
+    required, so a tutorial that leans on ``default`` would fail to load. This
+    before-validator expands ``default`` into any declared field the input omits
+    (explicit entries always win), so real cases round-trip while validation still
+    proves each operator the solver needs is covered.
+    """
+    if not isinstance(data, dict) or "default" not in data:
+        return data
+    default_value = data["default"]
+    # ``default none`` is OpenFOAM's *sentinel* — "no default; an unlisted operator
+    # is an error" — not a value to fill with. Expanding it would fabricate an
+    # invalid ``none`` scheme; leave the required keys missing so the real gap shows.
+    if isinstance(default_value, str) and default_value.strip() == "none":
+        return data
+    out = dict(data)
+    for name, field_info in cls.model_fields.items():  # type: ignore[attr-defined]
+        alias = field_info.alias or name
+        if alias == "default":
+            continue
+        if alias not in out and name not in out and field_info.is_required():
+            out[alias] = default_value
+    return out
+
+
+# The decorated before-validator, built once and attached to every synthesized
+# section model. Typed ``Any``: create_model's ``__validators__`` wants decorated
+# validators, whose pydantic descriptor type isn't expressible at the call site.
+_EXPAND_DEFAULT_VALIDATOR: Any = model_validator(mode="before")(
+    classmethod(_expand_default)  # type: ignore[arg-type]
+)
+
+
 def _rebuild_sections(cls: type) -> None:
     """(Re)synthesise every section submodel and re-attach to ``cls``.
 
@@ -113,6 +150,9 @@ def _rebuild_sections(cls: type) -> None:
         fresh = create_model(
             f"_{section_name}",
             __config__=ConfigDict(extra="allow", populate_by_name=True),
+            # Attach the ``default``-expansion before-validator to the synthesized
+            # section model so a tutorial that leans on ``default`` round-trips.
+            __validators__={"_expand_default": _EXPAND_DEFAULT_VALIDATOR},
             **field_defs,
         )
         cls.model_fields[section_name] = FieldInfo(  # type: ignore[attr-defined]

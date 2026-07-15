@@ -238,5 +238,78 @@ def test_fvsolution_passes_through_extra_sections() -> None:
     assert getattr(inst, "PIMPLE") == {"nOuterCorrectors": 1, "nCorrectors": 2}
 
 
+# ---------------------------------------------------------------------------
+# OpenFOAM ``default`` shorthand — expands to the required per-operator keys
+# ---------------------------------------------------------------------------
+
+
+def test_default_shorthand_fills_missing_required_entries() -> None:
+    """A section giving only ``default`` satisfies every required operator.
+
+    OpenFOAM applies ``gradSchemes { default Gauss linear; }`` to every operator
+    not spelled out. The typed per-operator fields are required, so without
+    expansion a tutorial (or a minimally-authored case) that leans on ``default``
+    fails to load. The before-validator fills the missing keys from ``default``.
+    """
+    spec = Model("DefaultFill")
+    Sub = spec.config(fvSchemes)
+    Sub.add(grad=["grad(U)", "grad(p)"])
+
+    inst = Sub.model_validate({"gradSchemes": {"default": "Gauss linear"}})
+    assert inst.gradSchemes.grad_U.type == "Gauss"
+    assert inst.gradSchemes.grad_p.type == "Gauss"
+
+
+def test_default_shorthand_does_not_override_explicit_entries() -> None:
+    """Explicitly-named operators win; ``default`` only fills the gaps."""
+    spec = Model("DefaultNoOverride")
+    Sub = spec.config(fvSchemes)
+    Sub.add(div=["div(phi,U)", "div(phi,T)"])
+
+    inst = Sub.model_validate(
+        {
+            "divSchemes": {
+                "default": "Gauss upwind",
+                "div(phi,U)": "Gauss linearUpwind grad(U)",
+            }
+        }
+    )
+    # explicit override kept verbatim
+    assert inst.divSchemes.div_phi_U.type == "Gauss"
+    dumped = inst.model_dump(by_alias=True)["divSchemes"]
+    assert dumped["div(phi,U)"] == "Gauss linearUpwind grad(U)"
+    # the omitted operator is filled from the (real) default
+    assert dumped["div(phi,T)"] == "Gauss upwind"
+
+
+def test_default_none_sentinel_is_not_expanded() -> None:
+    """``default none`` is OpenFOAM's *no-default* sentinel — it must not fabricate a
+    ``none`` value for an unlisted operator; the missing required key still fails."""
+    spec = Model("DefaultNoneSentinel")
+    Sub = spec.config(fvSchemes)
+    Sub.add(div=["div(phi,U)", "div(phi,T)"])
+
+    with pytest.raises(ValidationError):
+        # only div(phi,U) is spelled out; ``default none`` must NOT fill div(phi,T)
+        Sub.model_validate(
+            {"divSchemes": {"default": "none", "div(phi,U)": "Gauss upwind"}}
+        )
+
+
+def test_without_default_missing_required_entry_still_raises() -> None:
+    """No ``default`` ⇒ a genuinely missing required operator still fails.
+
+    Expansion must not weaken validation: a case that omits an operator and gives
+    no ``default`` is incomplete and must be rejected, so validate_case keeps
+    catching real gaps.
+    """
+    spec = Model("DefaultAbsent")
+    Sub = spec.config(fvSchemes)
+    Sub.add(grad=["grad(U)", "grad(p)"])
+
+    with pytest.raises(ValidationError):
+        Sub.model_validate({"gradSchemes": {"grad(U)": "Gauss linear"}})
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

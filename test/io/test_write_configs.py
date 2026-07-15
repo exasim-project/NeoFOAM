@@ -151,3 +151,32 @@ def test_round_tripped_foamfile_header_is_written_first(tmp_path: Path) -> None:
     root = pyf.dictionary.read(str(tmp_path / "system" / "controlDict"))
     assert str(root.subDict("FoamFile").get[str]("object")) == "controlDict"
     assert text.count("FoamFile") == 1
+
+
+def test_write_configs_writes_yaml_strategy_config(tmp_path: Path) -> None:
+    # ``PreprocessConfig`` is a YAMLStrategy config (``system/preprocess.yaml``).
+    # Before the YAML merged-write path, ``write_configs`` raised
+    # ``NotImplementedError: no merged-write path for YAMLStrategy`` — so a case
+    # authored through the MCP ``save_case`` tool could not emit its preprocess
+    # enable-list. It must now write and round-trip like the OpenFOAM configs.
+    from neofoam.framework.tools.graph import PreprocessConfig
+
+    cfg = PreprocessConfig.model_validate(
+        {
+            "tools": [
+                {"tool": "blockMesh"},
+                {"tool": "checkMesh", "depends_on": ["blockMesh"], "fail_on_error": False},
+            ]
+        }
+    )
+
+    report = write_configs([cfg], case_dir=tmp_path)
+    assert report["system/preprocess.yaml"] == ["PreprocessConfig"]
+
+    path = tmp_path / "system" / "preprocess.yaml"
+    assert path.is_file()
+    # No OpenFOAM ``FoamFile`` header leaks into a YAML file.
+    assert "FoamFile" not in path.read_text()
+
+    loaded = PreprocessConfig.load(case_dir=tmp_path)
+    assert [t["tool"] for t in loaded.tools] == ["blockMesh", "checkMesh"]
