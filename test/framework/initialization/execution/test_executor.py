@@ -2,6 +2,8 @@
 #
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
+"""Unit tests for executing lazy init steps in dependency order."""
+
 import importlib.util
 import json
 from pathlib import Path

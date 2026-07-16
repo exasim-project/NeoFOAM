@@ -10,8 +10,8 @@ from pathlib import Path
 
 import pytest
 
-
 from neofoam.algorithms.solution_loop.interfaces import VGREAT, timeStepConstraint
+from neofoam.tooling.casebuild import from_template, patch
 from neofoam.framework.context import Context
 from neofoam.framework.model import BoundModelInterface, ModelRuntime
 from neofoam.solver.incompressibleFluid.models.courant import (
@@ -28,6 +28,7 @@ courant_mod = importlib.import_module(
 )
 
 _CASES = Path(__file__).parent / "cases"
+_BASE = _CASES / "controldict_base"
 
 
 def _courant_runtime(max_co: float = 1.0) -> ModelRuntime:
@@ -74,26 +75,48 @@ def test_model_and_config_discoverable_without_a_case() -> None:
     assert courant._config_class is CourantConfig
 
 
-def test_config_presence_drives_detection(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.chdir(_CASES / "maxCo_present")
-    on = {rt.name for rt in incompressibleFluidModel.detect_models(Path("."))}
-    assert "courant" in on
-    assert "maxDeltaT" not in on
+# The base controlDict deliberately omits adjustTimeStep, so each scenario opts in
+# explicitly — the "key absent" case is simply the row that never sets it, and no
+# line-removal (which `patch` can't express) is needed.
+@pytest.mark.parametrize(
+    ("overrides", "expect_courant"),
+    [
+        (
+            {"adjustTimeStep": True, "maxCo": 1.0},
+            True,
+        ),  # maxCo present, adjustTimeStep yes
+        ({"adjustTimeStep": True}, False),  # adjustTimeStep yes but no maxCo
+        (
+            {"adjustTimeStep": False, "maxCo": 1.0},
+            False,
+        ),  # maxCo present but adjustTimeStep no
+        ({"maxCo": 1.0}, False),  # adjustTimeStep key absent entirely
+    ],
+    ids=[
+        "maxCo_present",
+        "maxDeltaT_absent",
+        "maxCo_no_adjust",
+        "no_adjust_key",
+    ],
+)
+def test_config_presence_drives_detection(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    overrides: dict,
+    expect_courant: bool,
+) -> None:
+    case = (from_template(_BASE) | patch("system/controlDict", overrides)).build_at(
+        tmp_path / "case"
+    )
+    monkeypatch.chdir(case.path)
 
-    monkeypatch.chdir(_CASES / "maxDeltaT_absent")
-    off = {rt.name for rt in incompressibleFluidModel.detect_models(Path("."))}
-    assert "courant" not in off
+    detected = {rt.name for rt in incompressibleFluidModel.detect_models(Path("."))}
 
-    # maxCo present but adjustTimeStep no: OpenFOAM keeps a fixed step, so courant
-    # must stay inactive (preserves the hotRoom/cavity/cylinder2D fixed-step parity).
-    monkeypatch.chdir(_CASES / "maxCo_no_adjust")
-    fixed = {rt.name for rt in incompressibleFluidModel.detect_models(Path("."))}
-    assert "courant" not in fixed
-
-    # adjustTimeStep key omitted entirely: the short-circuit on a missing key -> inactive.
-    monkeypatch.chdir(_CASES / "no_adjust_key")
-    no_key = {rt.name for rt in incompressibleFluidModel.detect_models(Path("."))}
-    assert "courant" not in no_key
+    if expect_courant:
+        assert "courant" in detected
+        assert "maxDeltaT" not in detected
+    else:
+        assert "courant" not in detected
 
 
 def test_contribution_resolves_live_phi_and_config_at_call_time(

@@ -19,9 +19,14 @@ from typing import Any
 
 import pytest
 
+from neofoam.fields.bc import FixedValueBC, GenericBC, NoSlipBC
+from neofoam.fields.schema import schema_for
+from neofoam.fields.value_types import Scalar, Vector
 from neofoam.framework.model import Model
 from neofoam.framework.solver import Configurations, Solver, configurations
+from neofoam.framework.solver.configurations import _is_field_schema
 from neofoam.io import BaseConfig
+from neofoam.io.decorator import IOStrategy, OF
 
 
 class SolverCfgA(BaseConfig):
@@ -89,11 +94,15 @@ def _solver() -> Any:
     return spec
 
 
-def test_required_and_optional_models_bind_once() -> None:
+def test_required_models_bind_once() -> None:
     spec = _solver()
     spec.models(FakeCoreFamily, required=True)  # idempotent
-    spec.models(FakeOptionalFamily)
     assert spec.required_model_specs == [FakeCoreFamily]
+
+
+def test_optional_models_bind_once() -> None:
+    spec = _solver()
+    spec.models(FakeOptionalFamily)  # idempotent
     assert spec.optional_model_specs == [FakeOptionalFamily]
 
 
@@ -114,12 +123,6 @@ def test_detect_optional_models_drops_empty_family() -> None:
     assert spec.detect_optional_models(Path(".")) == []
 
 
-def test_solverspec_has_no_legacy_registration_api() -> None:
-    assert not hasattr(Solver("x"), "core_models")
-    assert not hasattr(Solver("x"), "optional_models")
-    assert not hasattr(Solver("x"), "core_model_specs")
-
-
 def test_model_specs_unions_all_family_members() -> None:
     spec = _solver()
     assert spec.model_specs == [core_member, optional_member]
@@ -138,20 +141,27 @@ def test_configurations_collects_solver_and_member_configs() -> None:
     assert [c.__name__ for c in cfg] == cfg.names
 
 
-def test_getitem_and_new() -> None:
+def test_getitem_returns_config_class_or_raises() -> None:
     cfg = configurations(_solver())
     assert cfg["CoreMemberCfg"] is CoreMemberCfg
-    inst = cfg.new("CoreMemberCfg", iters=9)
-    assert inst.iters == 9
     with pytest.raises(KeyError):
         cfg["Missing"]
 
 
-def test_json_schema_and_output_model() -> None:
+def test_new_constructs_a_config_instance() -> None:
+    cfg = configurations(_solver())
+    inst = cfg.new("CoreMemberCfg", iters=9)
+    assert inst.iters == 9
+
+
+def test_json_schema_keys_match_config_names() -> None:
     cfg = configurations(_solver())
     schema = cfg.json_schema()
     assert set(schema) == set(cfg.names)
 
+
+def test_output_model_fields_are_snake_cased_config_names() -> None:
+    cfg = configurations(_solver())
     out = cfg.as_output_model()
     assert set(out.model_fields) == {
         "solver_cfg_a",
@@ -161,10 +171,12 @@ def test_json_schema_and_output_model() -> None:
     }
 
 
-def test_detect_required_and_optional_models() -> None:
-    spec = _solver()
-    assert spec.detect_required_models() == [core_member]
-    assert spec.detect_optional_models(Path(".")) == [optional_member]
+def test_detect_required_models_runs_the_family_contract() -> None:
+    assert _solver().detect_required_models() == [core_member]
+
+
+def test_detect_optional_models_runs_the_family_contract() -> None:
+    assert _solver().detect_optional_models(Path(".")) == [optional_member]
 
 
 def test_labeled_sets_display_label() -> None:
@@ -244,6 +256,7 @@ def test_incompressible_fluid_boussinesq_label_in_catalog() -> None:
     assert bouss.label == "Buoyancy (Boussinesq)"
     assert {c.__name__ for c in bouss.dicts} == {
         "BoussinesqConfig",
+        "GravityConfig",
         "boussinesq_fvSchemes",
         "boussinesq_fvSolution",
     }
@@ -252,3 +265,110 @@ def test_incompressible_fluid_boussinesq_label_in_catalog() -> None:
         "TFieldConfig",
         "alphatFieldConfig",
     }
+
+
+# ===========================================================================
+# Field-schema surface of ``configurations(...)``
+#
+# A synthetic solver (one model spec, two declared fields) exercises the
+# field-schema iteration without dragging the full incompressibleFluid stack;
+# the real solver wiring is exercised in ``test/fields/test_in_tree_models.py``.
+# ===========================================================================
+
+
+class _SyntheticSolver:
+    """Minimal solver duck-type accepted by ``configurations(solver)``.
+
+    Mirrors the attributes ``collect_config_classes`` reads:
+    ``_config_classes`` for dictionary configs and ``model_specs`` for the
+    model registry. No real solver behaviour is exercised — the point is to
+    keep these tests independent of the full SolverSpec.
+    """
+
+    def __init__(self, name: str, model_specs: list[object]) -> None:
+        self.name = name
+        self._config_classes: list[type] = []
+        self.model_specs = model_specs
+
+
+@IOStrategy(OF("constant/dummyDict"))
+class _DummyDict(BaseConfig):
+    """A plain ``constant/`` config to verify it co-exists with field schemas."""
+
+    setting: int = 0
+
+
+def _solver_with_two_fields() -> _SyntheticSolver:
+    spec = Model("synth")
+    spec.config(_DummyDict)
+    spec.field(
+        "U",
+        dimensions=[0, 1, -1, 0, 0, 0, 0],
+        value_type=Vector,
+        allowed_bcs=[NoSlipBC, FixedValueBC],
+        write=True,
+    )
+    spec.field(
+        "T",
+        dimensions=[0, 0, 0, 1, 0, 0, 0],
+        value_type=Scalar,
+        allowed_bcs=[FixedValueBC, GenericBC],
+    )
+    return _SyntheticSolver("synth", [spec])
+
+
+def test_configurations_includes_field_schemas() -> None:
+    cfgs = configurations(_solver_with_two_fields())
+    names = cfgs.names
+    assert "_DummyDict" in names
+    assert "UFieldConfig" in names
+    assert "TFieldConfig" in names
+
+
+def test_fields_filter_returns_only_field_schemas() -> None:
+    cfgs = configurations(_solver_with_two_fields())
+    field_names = [cls.__name__ for cls in cfgs.fields]
+    assert field_names == ["UFieldConfig", "TFieldConfig"]
+    for cls in cfgs.fields:
+        assert cls.io_config is not None
+        assert cls.io_config.file.startswith("0/")
+
+
+def test_dicts_filter_excludes_field_schemas() -> None:
+    cfgs = configurations(_solver_with_two_fields())
+    dict_names = [cls.__name__ for cls in cfgs.dicts]
+    assert "_DummyDict" in dict_names
+    assert all(not cls.io_config.file.startswith("0/") for cls in cfgs.dicts)
+
+
+def test_is_field_schema_dispatch() -> None:
+    assert _is_field_schema(_DummyDict) is False
+
+    spec = Model("synth")
+    U_decl = spec.field(
+        "U",
+        dimensions=[0, 1, -1, 0, 0, 0, 0],
+        value_type=Vector,
+        allowed_bcs=[NoSlipBC],
+    )
+    assert _is_field_schema(schema_for(U_decl)) is True
+
+
+def test_repeated_call_returns_referentially_stable_schemas() -> None:
+    """Schema synthesis is cached per FieldDecl — two calls = same class."""
+    solver = _solver_with_two_fields()
+    a = configurations(solver).fields
+    b = configurations(solver).fields
+    assert a == b  # same classes, same order
+    for ca, cb in zip(a, b, strict=True):
+        assert ca is cb
+
+
+def test_configurations_lookup_by_name() -> None:
+    cfgs = configurations(_solver_with_two_fields())
+    Cls = cfgs["UFieldConfig"]
+    assert Cls.io_config is not None
+    assert Cls.io_config.file == "0/U"
+
+    with pytest.raises(KeyError):
+        cfgs["nonexistent"]

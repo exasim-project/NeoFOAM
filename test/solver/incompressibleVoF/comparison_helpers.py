@@ -17,11 +17,9 @@ from pathlib import Path
 
 from neofoam.solver.incompressibleVoF import run
 
-# Re-use the comparison helpers from the incompressibleFluid test package.
-# ``test/solver`` is not a package, so incompressibleFluid / incompressibleVoF
-# are sibling top-level packages on sys.path — reach the helper by absolute
-# import rather than a ``..`` relative one (which would escape the top level).
-from incompressibleFluid.comparison_helpers import (
+# Re-use the comparison helpers from the sibling incompressibleFluid test
+# package (``test/solver`` is a package, so a ``..`` relative import reaches it).
+from ..incompressibleFluid.comparison_helpers import (
     compare_solver_fields,
     setup_case,
 )

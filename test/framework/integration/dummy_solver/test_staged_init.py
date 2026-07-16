@@ -9,8 +9,6 @@ Internal StagedInitSpec / StagedInitRunner behavior is covered under
 full LOAD → RESOLVE → BUILD flow via ``dummy_init.create_init``.
 """
 
-import pytest
-
 from .dummy_init import create_init
 
 
@@ -32,7 +30,8 @@ def test_dummy_init_staged_full_run() -> None:
     assert "core2" in ctx.models
     assert "config" in ctx.models
 
-    assert "mesh" in ctx.mesh or hasattr(ctx, "mesh")
+    assert ctx.mesh["name"] == "test_domain"
+    assert ctx.mesh["nPoints"] == 500
 
 
 def test_optional_models_integration() -> None:
@@ -45,9 +44,11 @@ def test_optional_models_integration() -> None:
     optional_model_keys = ["model_field1", "model_field2", "model_field3"]
     detected_optional_fields = [k for k in optional_model_keys if k in ctx.fields]
 
+    # The DummySolver always registers the optional family, so these hold
+    # unconditionally — no guard that could silently skip the assertion.
     optional_models = init_instance.optional_models
-    if len(optional_models) > 0:
-        assert len(detected_optional_fields) > 0
+    assert len(optional_models) > 0
+    assert len(detected_optional_fields) > 0
 
     algorithm = ctx.models.get("algorithm")
     assert algorithm is not None
@@ -62,9 +63,5 @@ def test_optional_models_integration() -> None:
         ),
         None,
     )
-    if rt_m1:
-        assert rt_m1.config is not None
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+    assert rt_m1 is not None
+    assert rt_m1.config is not None

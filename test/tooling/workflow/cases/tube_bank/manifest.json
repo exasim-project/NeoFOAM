@@ -1,0 +1,69 @@
+{
+  "case_dir": "test/e2e/cases/tube_bank",
+  "geometry_source": "tube_bank.FCStd",
+  "source_units": "mm",
+  "scale_to_meters": 0.001,
+  "bbox": {
+    "min": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "max": [
+      0.576,
+      0.16,
+      0.02
+    ]
+  },
+  "location_in_mesh": [
+    0.08,
+    0.08,
+    0.01
+  ],
+  "length_scale": 0.016,
+  "patches": [
+    {
+      "name": "inlet",
+      "stl": "constant/triSurface/inlet.stl",
+      "role": "inlet",
+      "box_faces": [
+        "x_min"
+      ]
+    },
+    {
+      "name": "outlet",
+      "stl": "constant/triSurface/outlet.stl",
+      "role": "outlet",
+      "box_faces": [
+        "x_max"
+      ]
+    },
+    {
+      "name": "walls",
+      "stl": "constant/triSurface/walls.stl",
+      "role": "wall",
+      "box_faces": [
+        "y_min",
+        "y_max"
+      ]
+    },
+    {
+      "name": "tubes",
+      "stl": "constant/triSurface/tubes.stl",
+      "role": "wall",
+      "surface_refinement": [
+        1,
+        2
+      ]
+    },
+    {
+      "name": "frontBack",
+      "stl": "constant/triSurface/frontBack.stl",
+      "role": "empty",
+      "box_faces": [
+        "z_max",
+        "z_min"
+      ]
+    }
+  ]
+}

@@ -56,7 +56,7 @@ def test_init_step_accepts_arbitrary_category_string() -> None:
 
 
 def test_execute_no_args() -> None:
-    """Test executing InitStep with context-aware initializer."""
+    """Test executing InitStep whose initializer ignores the context."""
     lazy = InitStep(name="answer", initializer=lambda _ctx: 42)
     result = execute_step(lazy, {})
     assert result == 42

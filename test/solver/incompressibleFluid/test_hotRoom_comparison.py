@@ -15,15 +15,13 @@ criterion.
 
 import os
 import re
-import shutil
 import subprocess
 from pathlib import Path
 
+from neofoam.tooling.casebuild import from_template, block_mesh, patch
 from neofoam.solver.incompressibleFluid import run
 
-from .comparison_helpers import (
-    setup_case,
-)
+from .._run_case import cwd
 
 # Disable OpenFOAM floating-point exception trapping for in-process runs;
 # the solver constructs intermediate fields whose deltas legitimately
@@ -40,84 +38,102 @@ def _extract_residual_fields(log: str) -> list[str]:
     return pattern.findall(log)
 
 
-def test_hotRoom_solver_comparison() -> None:
+def test_hotRoom_solver_comparison(tmp_path: Path) -> None:
     """Compare incompressibleFluid+boussinesq vs buoyantBoussinesqPimpleFoam."""
     repo_root = Path(__file__).parent.parent.parent.parent
     source_case = repo_root / "tutorials" / "hotRoom"
 
-    test_case_custom = repo_root / "test_cases" / "hotRoom_custom_solver"
-    test_case_native = repo_root / "test_cases" / "hotRoom_native_solver"
-
     end_time = 1000.0
     write_interval = 200.0
 
-    try:
-        setup_case(
-            source_case,
-            test_case_custom,
-            end_time,
-            write_interval,
-            run_setfields=True,
+    # Build custom case: copy, mesh, patch timing.
+    custom_case = (
+        from_template(source_case)
+        | block_mesh()
+        | patch(
+            "system/controlDict",
+            {
+                "endTime": end_time,
+                "writeControl": "adjustable",
+                "writeInterval": write_interval,
+            },
         )
-        setup_case(
-            source_case,
-            test_case_native,
-            end_time,
-            write_interval,
-            run_setfields=True,
+    ).build_at(tmp_path / "hotRoom_custom_solver")
+
+    # setFields has no casebuild step yet.
+    result = subprocess.run(
+        ["setFields", "-case", str(custom_case.path)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, f"setFields failed: {result.stderr}"
+
+    # Build native case: copy, mesh, patch timing.
+    native_case = (
+        from_template(source_case)
+        | block_mesh()
+        | patch(
+            "system/controlDict",
+            {
+                "endTime": end_time,
+                "writeControl": "adjustable",
+                "writeInterval": write_interval,
+            },
         )
+    ).build_at(tmp_path / "hotRoom_native_solver")
 
-        original_dir = Path.cwd()
-        os.chdir(test_case_custom)
-        custom_log = test_case_custom / "solver.log"
-        try:
-            run(["incompressibleFluid"], log_file=custom_log)
-        finally:
-            os.chdir(original_dir)
+    # setFields has no casebuild step yet.
+    result = subprocess.run(
+        ["setFields", "-case", str(native_case.path)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, f"setFields failed: {result.stderr}"
 
-        custom_output = custom_log.read_text() if custom_log.exists() else ""
+    custom_log = custom_case.path / "solver.log"
+    with cwd(custom_case.path):
+        run(["incompressibleFluid"], log_file=custom_log)
 
-        native_log = test_case_native / "solver.log"
-        with open(native_log, "w") as f:
-            result = subprocess.run(
-                ["buoyantBoussinesqPimpleFoam", "-case", str(test_case_native)],
-                stdout=f,
-                stderr=subprocess.STDOUT,
-                text=True,
-                timeout=120,
-            )
-        assert result.returncode == 0, (
-            f"buoyantBoussinesqPimpleFoam failed with returncode {result.returncode}"
+    custom_output = custom_log.read_text() if custom_log.exists() else ""
+
+    native_log = native_case.path / "solver.log"
+    with open(native_log, "w") as f:
+        result = subprocess.run(
+            ["buoyantBoussinesqPimpleFoam", "-case", str(native_case.path)],
+            stdout=f,
+            stderr=subprocess.STDOUT,
+            text=True,
+            timeout=120,
         )
-        native_output = native_log.read_text()
+    assert result.returncode == 0, (
+        f"buoyantBoussinesqPimpleFoam failed with returncode {result.returncode}"
+    )
+    native_output = native_log.read_text()
 
-        custom_fields = _extract_residual_fields(custom_output)
-        native_fields = _extract_residual_fields(native_output)
+    custom_fields = _extract_residual_fields(custom_output)
+    native_fields = _extract_residual_fields(native_output)
 
-        assert len(custom_fields) > 0, (
-            f"Custom solver did not solve any equations.\nLog:\n{custom_output}"
-        )
+    assert len(custom_fields) > 0, (
+        f"Custom solver did not solve any equations.\nLog:\n{custom_output}"
+    )
 
-        assert custom_fields == native_fields, (
-            f"Solved fields differ.\n"
-            f"Custom: {custom_fields}\n"
-            f"Native: {native_fields}\n\n"
-            f"Custom log:\n{custom_output}\n\n"
-            f"Native log:\n{native_output}"
-        )
+    assert custom_fields == native_fields, (
+        f"Solved fields differ.\n"
+        f"Custom: {custom_fields}\n"
+        f"Native: {native_fields}\n\n"
+        f"Custom log:\n{custom_output}\n\n"
+        f"Native log:\n{native_output}"
+    )
 
-        custom_solving = _extract_solving_lines(custom_output)
-        native_solving = _extract_solving_lines(native_output)
+    custom_solving = _extract_solving_lines(custom_output)
+    native_solving = _extract_solving_lines(native_output)
 
-        assert len(custom_solving) == len(native_solving), (
-            f"Number of solving lines differs.\n"
-            f"Custom ({len(custom_solving)}):\n"
-            + "\n".join(custom_solving)
-            + f"\n\nNative ({len(native_solving)}):\n"
-            + "\n".join(native_solving)
-        )
-
-    finally:
-        for tc in [test_case_custom, test_case_native]:
-            if tc.exists():
-                shutil.rmtree(tc)
+    assert len(custom_solving) == len(native_solving), (
+        f"Number of solving lines differs.\n"
+        f"Custom ({len(custom_solving)}):\n"
+        + "\n".join(custom_solving)
+        + f"\n\nNative ({len(native_solving)}):\n"
+        + "\n".join(native_solving)
+    )

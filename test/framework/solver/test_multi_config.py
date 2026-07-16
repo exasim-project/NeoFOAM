@@ -52,18 +52,23 @@ def _build_runner(*instances: Any) -> StagedInitRunner:
     return StagedInitRunner(init.finalize())
 
 
-def test_single_registration_yields_instance() -> None:
-    spec = Solver("S1")
-    spec.config(ConfigA)
-
-    cfg_a = ConfigA(a=5)
-    runner = _build_runner(cfg_a)
+def _attach_initializer(spec: Any, runner: StagedInitRunner) -> None:
+    """Register the standard ``@spec.initializer`` that just runs *runner*."""
 
     @spec.initializer
     def _init(
         self: Any, init: Annotated[StagedInitRunner, Depends(lambda: runner)]
     ) -> Context:
         return init.run()
+
+
+def test_single_registration_yields_instance() -> None:
+    spec = Solver("S1")
+    spec.config(ConfigA)
+
+    cfg_a = ConfigA(a=5)
+    runner = _build_runner(cfg_a)
+    _attach_initializer(spec, runner)
 
     runtime = spec.instantiate()
     runtime.initialize()
@@ -77,12 +82,7 @@ def test_multi_registration_yields_namespace() -> None:
 
     cfg_a, cfg_b = ConfigA(a=3), ConfigB(b="hi")
     runner = _build_runner(cfg_a, cfg_b)
-
-    @spec.initializer
-    def _init(
-        self: Any, init: Annotated[StagedInitRunner, Depends(lambda: runner)]
-    ) -> Context:
-        return init.run()
+    _attach_initializer(spec, runner)
 
     runtime = spec.instantiate()
     runtime.initialize()
@@ -100,12 +100,7 @@ def test_multi_registration_with_missing_instance() -> None:
 
     cfg_a = ConfigA(a=11)
     runner = _build_runner(cfg_a)  # no ConfigB instance
-
-    @spec.initializer
-    def _init(
-        self: Any, init: Annotated[StagedInitRunner, Depends(lambda: runner)]
-    ) -> Context:
-        return init.run()
+    _attach_initializer(spec, runner)
 
     runtime = spec.instantiate()
     runtime.initialize()
@@ -125,12 +120,7 @@ def test_type_injection_walks_namespace() -> None:
     runner = _build_runner(cfg_a, cfg_b)
 
     captured: dict[str, Any] = {}
-
-    @spec.initializer
-    def _init(
-        self: Any, init: Annotated[StagedInitRunner, Depends(lambda: runner)]
-    ) -> Context:
-        return init.run()
+    _attach_initializer(spec, runner)
 
     @spec.execution_graph_step
     def _graph(

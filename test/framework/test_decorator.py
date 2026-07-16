@@ -25,16 +25,16 @@ def test_decorator_free_function() -> None:
 
     assert free_step_function(1.0) == 2.0  # type: ignore[arg-type]
 
-    free_step_function._metadata.op_type == OpType.OPERATION  # type: ignore[union-attr]
-    free_step_function._metadata.name == "free_step_function"  # type: ignore[union-attr]
+    assert free_step_function._metadata.op_type == OpType.OPERATION  # type: ignore[union-attr]
+    assert free_step_function._metadata.name == "free_step_function"  # type: ignore[union-attr]
 
     assert free_condition_function()  # type: ignore[call-arg]
 
-    free_condition_function._metadata.op_type == OpType.CONDITION  # type: ignore[union-attr]
-    free_condition_function._metadata.name == "free_condition_function"  # type: ignore[union-attr]
+    assert free_condition_function._metadata.op_type == OpType.CONDITION  # type: ignore[union-attr]
+    assert free_condition_function._metadata.name == "free_condition_function"  # type: ignore[union-attr]
 
 
-def test_decorator_free_function_type_error() -> None:
+def test_decorator_free_function_non_bool_return_annotation() -> None:
     msg = "Return type of free_condition_function must be bool not a <class 'int'>"
     with pytest.raises(TypeError) as excinfo:
 
@@ -44,6 +44,8 @@ def test_decorator_free_function_type_error() -> None:
 
     assert msg in str(excinfo.value)
 
+
+def test_decorator_free_function_missing_return_annotation() -> None:
     msg = (
         "Function free_condition_function must have a return type annotation of 'bool'"
     )
@@ -73,8 +75,8 @@ def test_decorator_member_function() -> None:
     some_instance = SomeClass()
     assert some_instance.member_function()  # type: ignore[misc]
 
-    some_instance.member_function._metadata.op_type == OpType.OPERATION  # type: ignore[misc, union-attr]
-    some_instance.member_function._metadata.name == "member_function"  # type: ignore[misc, union-attr]
+    assert some_instance.member_function._metadata.op_type == OpType.OPERATION  # type: ignore[misc, union-attr]
+    assert some_instance.member_function._metadata.name == "member_function"  # type: ignore[misc, union-attr]
 
     funcs = some_instance.list_functions()
     assert len(funcs) == 2
@@ -83,5 +85,5 @@ def test_decorator_member_function() -> None:
 
     assert some_instance.member_condition()  # type: ignore[misc]
 
-    some_instance.member_condition._metadata.op_type == OpType.CONDITION  # type: ignore[misc, union-attr]
-    some_instance.member_condition._metadata.name == "member_condition"  # type: ignore[misc, union-attr]
+    assert some_instance.member_condition._metadata.op_type == OpType.CONDITION  # type: ignore[misc, union-attr]
+    assert some_instance.member_condition._metadata.name == "member_condition"  # type: ignore[misc, union-attr]

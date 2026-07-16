@@ -89,9 +89,20 @@ def _add_turbulence_model(builder: InitializerBuilder, case_dir: Path) -> None:
     if spec is not None:
         runtime = spec.instantiate(case_dir)
         model_obj = SpecMomentumTransport(runtime)
-        builder.add(init_model("turbulence", lambda _ctx: model_obj))
         # The model's @build registers ``models.viscousStress`` (and ``fields.nut``
-        # if it has an eddy viscosity).
+        # if it has an eddy viscosity — laminar declares none).
+        has_nut = any(d.name == "nut" for d in runtime.spec._field_decls)
+        deps = ["fields.nu"] + (["fields.nut"] if has_nut else [])
+
+        def bind_turbulence(ctx: dict[str, Any]) -> Any:
+            # Bind the Context viscosity fields so the model's read interface
+            # (nu()/nut(), consumed by e.g. Boussinesq's energy equation) resolves
+            # uniformly with the OpenFOAM fallback.
+            nut = ctx["fields.nut"] if has_nut else None
+            model_obj.bind_viscosity(ctx["fields.nu"], nut)
+            return model_obj
+
+        builder.add(init_model("turbulence", bind_turbulence, depends_on=deps))
         builder.extend(runtime.run_build())
         return
 

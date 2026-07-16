@@ -125,6 +125,7 @@ HARDSET_SCHEMES: dict[str, dict[str, str]] = {
         "grad(U)": "Gauss linear",
         "grad(p)": "Gauss linear",
         "grad(p_rgh)": "Gauss linear",
+        "grad(rhok)": "Gauss linear",
     },
     "divSchemes": {"default": "none", "div(phi,U)": "Gauss upwind"},
     "laplacianSchemes": {

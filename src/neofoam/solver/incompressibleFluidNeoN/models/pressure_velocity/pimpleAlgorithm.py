@@ -262,6 +262,10 @@ def rotate_and_report(
     div=["div(phi,U)", "div((nuEff*dev2(T(grad(U)))))"],
     grad="grad(U)",
     laplacian="laplacian(nuEff,U)",
+    # ``flux(U)`` builds the initial face flux phi (``nfb.create_phi``); the NeoN
+    # runtime looks it up in interpolationSchemes, so it must be declared or the
+    # case aborts with *Entry 'flux(U)' not found*.
+    interpolation="flux(U)",
 )
 @PimpleNeoNFvSolution.add("U")
 def momentum(

@@ -89,6 +89,10 @@ class OpenFOAMTurbulenceModel:
             )
         return self._impl
 
+    def has_nut(self) -> bool:
+        """The OpenFOAM model always exposes an eddy viscosity (zero when laminar)."""
+        return True
+
     def nut(self) -> Any:
         return self._require_impl().nut()
 

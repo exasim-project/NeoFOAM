@@ -35,10 +35,7 @@ from typing import (
     get_origin,
 )
 
-import pybFoam as pyf
 from pydantic import BaseModel
-
-from neofoam.io.strategies.subdict import SubdictMixin
 
 _BOOL_TRUE = frozenset({"yes", "true", "on", "1"})
 _BOOL_FALSE = frozenset({"no", "false", "off", "0"})
@@ -150,133 +147,17 @@ def _read_fields(model_cls: type[BaseModel], data: dict[str, Any]) -> dict[str, 
     return out
 
 
-class OpenFOAMStrategy(SubdictMixin):
-    """Read/write OpenFOAM dictionaries with optional subdict support.
+class OpenFOAMStrategy:
+    """Format marker for OpenFOAM dictionary files.
 
-    Uses ``pybFoam.dictionary`` as the backend. Reads return a Python ``dict``
-    with primitive scalars coerced to the model's declared types; writes walk
-    the dumped Pydantic dict and push it back through the pybFoam API.
+    Reads and writes go through :class:`neofoam.io.DictFile`; this class survives
+    as the format tag stored in ``IOMetadata`` (carrying the optional
+    ``subdict_path``) and hosts :meth:`_write`, the ``dict`` → pybFoam-dictionary
+    walker that ``DictFile`` reuses.
     """
 
     def __init__(self, subdict_path: Optional[str] = None):
-        super().__init__(subdict_path)
-
-    def read(
-        self,
-        model_cls: type[BaseModel],
-        path: Path,
-        encoding: str = "utf-8",
-    ) -> dict[str, Any]:
-        """Read an OpenFOAM dictionary file into a coerced ``dict``.
-
-        Args:
-            model_cls: Pydantic model whose field types drive primitive
-                coercion (string → int/float/bool). Required so that
-                ``validate=False`` callers receive typed values.
-            path: Path to the OpenFOAM dictionary file.
-            encoding: Unused (kept for strategy protocol compatibility).
-
-        Returns:
-            Mapping of field-name → parsed value (full file or subdict).
-
-        Raises:
-            FileNotFoundError: If *path* does not exist.
-            KeyError: If the configured subdict path cannot be resolved.
-        """
-        if not path.exists():
-            raise FileNotFoundError(f"Configuration file not found: {path}")
-
-        root_dict = pyf.dictionary.read(str(path))
-        data = self._extract_subdict(_to_python(root_dict))
-        return _read_fields(model_cls, data)
-
-    def write(
-        self,
-        instance: BaseModel,
-        path: Path,
-        encoding: str = "utf-8",
-    ) -> None:
-        """Write a Pydantic model instance to an OpenFOAM dictionary file.
-
-        Args:
-            instance: The model instance to persist.
-            path: Path to the OpenFOAM dictionary file.
-            encoding: Unused (kept for strategy protocol compatibility).
-
-        Raises:
-            FileNotFoundError: If subdict write is requested for a missing file
-                (OpenFOAM dictionaries need their ``FoamFile`` header, so we
-                refuse to synthesise one — unlike JSON/YAML).
-            KeyError: If the configured subdict path does not exist in the file.
-        """
-        # ``by_alias=True`` so synthesised sections (``fv_configs._rebuild_sections``
-        # registers OpenFOAM keys like ``"div(phi,U)"`` as the ``Field.alias`` on a
-        # sanitised attribute) emit data keyed by the alias the writer looks up.
-        # ``context={"format": "openfoam"}`` drives the field-value types
-        # (:data:`neofoam.fields.value_types.FieldValue`) to emit OpenFOAM
-        # ``uniform`` / ``nonuniform`` literals; other writers leave values raw.
-        data = instance.model_dump(
-            mode="python",
-            exclude_none=False,
-            by_alias=True,
-            context={"format": "openfoam"},
-        )
-        path.parent.mkdir(parents=True, exist_ok=True)
-
-        if self.subdict_path:
-            if not path.exists():
-                raise FileNotFoundError(
-                    f"Configuration file not found: {path} "
-                    f"(required for subdict write '{self.subdict_path}')"
-                )
-            root_dict = pyf.dictionary.read(str(path))
-            target = self._resolve_subdict(root_dict)
-            target.clear()
-            self._write(target, data)
-            root_dict.write(str(path))
-            return
-
-        root_dict = (
-            pyf.dictionary.read(str(path)) if path.exists() else pyf.dictionary()
-        )
-        # Clear and rewrite the full file: a single config owns its file's
-        # content, so re-saving must drop keys it no longer carries (e.g. a BC
-        # flipped from fixedValue to zeroGradient must not leave a stale
-        # ``value``). Multiple configs that *share* a file are combined up front
-        # by :func:`neofoam.io.write_configs.write_configs` and handed here as one
-        # merged payload, so clearing never loses a co-owner's keys.
-        root_dict.clear()
-        # Inject a FoamFile header for headerless dict configs; field configs
-        # already carry their own ``FoamFile`` (with the right ``class``).
-        # Written first so it lands at the top of the file.
-        if "FoamFile" not in data:
-            self._write(root_dict, {"FoamFile": foam_header(path)})
-        self._write(root_dict, data)
-        root_dict.write(str(path))
-
-    def _resolve_subdict(self, root_dict: Any) -> Any:
-        """Navigate to the configured subdict in a live pybFoam dictionary.
-
-        Used only by :meth:`write`; reads go through :meth:`_to_python` first
-        and reuse :meth:`SubdictMixin._extract_subdict` on a plain ``dict``.
-        """
-        if not self.path_parts:
-            return root_dict
-
-        current = root_dict
-        traversed: list[str] = []
-        for part in self.path_parts:
-            if not current.found(part) or not current.isDict(part):
-                full_path = ".".join(self.path_parts)
-                traversed_path = ".".join(traversed) if traversed else "<root>"
-                raise KeyError(
-                    f"Subdict path '{full_path}' not found: "
-                    f"key '{part}' does not exist (or is not a sub-dictionary) "
-                    f"at '{traversed_path}'"
-                )
-            traversed.append(part)
-            current = current.subDict(part)
-        return current
+        self.subdict_path = subdict_path
 
     def _write(self, foam_dict: Any, data: dict[str, Any]) -> None:
         """Push a Pydantic-dumped ``dict`` into a pybFoam dictionary.

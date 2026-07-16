@@ -17,7 +17,7 @@ Companion to ``test_damBreak_comparison.py`` (the MULES scheme vs interFoam);
 the shared body lives in ``comparison_helpers``.
 """
 
-from incompressibleVoF.comparison_helpers import run_dambreak_comparison
+from .comparison_helpers import run_dambreak_comparison
 
 
 def test_damBreak_isoAdvector_solver_comparison():

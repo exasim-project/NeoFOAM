@@ -137,7 +137,7 @@ def test_build_bc_union_known_arms_win_over_generic() -> None:
 
 
 def test_build_bc_union_empty_raises() -> None:
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="at least one arm is required"):
         build_bc_union([])
 
 

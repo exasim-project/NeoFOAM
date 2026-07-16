@@ -26,16 +26,23 @@ from __future__ import annotations
 
 from typing import Any, Callable, ClassVar, Optional
 
-from pydantic import ConfigDict, Field, create_model
+from pydantic import ConfigDict, Field, create_model, model_validator
 from pydantic.fields import FieldInfo
 
 from neofoam.foam.schemes import (
+    Corrected,
     DdtScheme,
     DivScheme,
+    Euler,
+    GaussDiv,
+    GaussGrad,
+    GaussLaplacian,
     GradScheme,
     InterpolationScheme,
     LaplacianScheme,
+    Linear,
     SnGradScheme,
+    Upwind,
 )
 from neofoam.io import BaseConfig, IOStrategy, OF
 
@@ -91,6 +98,43 @@ def _register_entry(
     section.setdefault(attr_name, (value_type, key, optional))
 
 
+def _expand_default(cls: type, data: Any) -> Any:
+    """Fill missing required entries from an OpenFOAM ``default`` shorthand.
+
+    A scheme section may name every operator explicitly *or* give a single
+    ``default`` (``gradSchemes { default Gauss linear; }``) that OpenFOAM applies
+    to every operator it doesn't spell out. The typed per-operator fields are
+    required, so a tutorial that leans on ``default`` would fail to load. This
+    before-validator expands ``default`` into any declared field the input omits
+    (explicit entries always win), so real cases round-trip while validation still
+    proves each operator the solver needs is covered.
+    """
+    if not isinstance(data, dict) or "default" not in data:
+        return data
+    default_value = data["default"]
+    # ``default none`` is OpenFOAM's *sentinel* — "no default; an unlisted operator
+    # is an error" — not a value to fill with. Expanding it would fabricate an
+    # invalid ``none`` scheme; leave the required keys missing so the real gap shows.
+    if isinstance(default_value, str) and default_value.strip() == "none":
+        return data
+    out = dict(data)
+    for name, field_info in cls.model_fields.items():  # type: ignore[attr-defined]
+        alias = field_info.alias or name
+        if alias == "default":
+            continue
+        if alias not in out and name not in out and field_info.is_required():
+            out[alias] = default_value
+    return out
+
+
+# The decorated before-validator, built once and attached to every synthesized
+# section model. Typed ``Any``: create_model's ``__validators__`` wants decorated
+# validators, whose pydantic descriptor type isn't expressible at the call site.
+_EXPAND_DEFAULT_VALIDATOR: Any = model_validator(mode="before")(
+    classmethod(_expand_default)  # type: ignore[arg-type]
+)
+
+
 def _rebuild_sections(cls: type) -> None:
     """(Re)synthesise every section submodel and re-attach to ``cls``.
 
@@ -113,12 +157,98 @@ def _rebuild_sections(cls: type) -> None:
         fresh = create_model(
             f"_{section_name}",
             __config__=ConfigDict(extra="allow", populate_by_name=True),
+            # Attach the ``default``-expansion before-validator to the synthesized
+            # section model so a tutorial that leans on ``default`` round-trips.
+            __validators__={"_expand_default": _EXPAND_DEFAULT_VALIDATOR},
             **field_defs,
         )
         cls.model_fields[section_name] = FieldInfo(  # type: ignore[attr-defined]
             annotation=fresh, default=None
         )
     cls.model_rebuild(force=True)  # type: ignore[attr-defined]
+
+
+# ---------------------------------------------------------------------------
+# Canonical starter schemes/solvers (the form prefill — see ``form_defaults``)
+# ---------------------------------------------------------------------------
+
+
+def _canonical_scheme(section_name: str, alias: str) -> Optional[dict[str, Any]]:
+    """A runnable default value for one scheme entry, serialized as a form value.
+
+    One canonical scheme per section (``Gauss linear`` grad/div, ``corrected``
+    snGrad, …). The one nuance: a ``div`` term over a *flux* (``div(phi,U)``) gets a
+    bounded ``upwind`` interpolation, while the viscous-stress divergence stays
+    ``linear`` — the split OpenFOAM tutorials always make. Returns ``None`` for an
+    unrecognised (passthrough ``str``) section.
+    """
+    if section_name == "ddtSchemes":
+        return Euler().model_dump(by_alias=True)
+    if section_name == "gradSchemes":
+        return GaussGrad(interpolation=Linear()).model_dump(by_alias=True)
+    if section_name == "divSchemes":
+        interp = Upwind() if "phi" in alias else Linear()
+        return GaussDiv(interpolation=interp).model_dump(by_alias=True)
+    if section_name == "laplacianSchemes":
+        return GaussLaplacian(interpolation=Linear(), sn_grad=Corrected()).model_dump(
+            by_alias=True
+        )
+    if section_name == "snGradSchemes":
+        return Corrected().model_dump(by_alias=True)
+    if section_name == "interpolationSchemes":
+        return Linear().model_dump(by_alias=True)
+    return None
+
+
+#: Standard corrector counts per algorithm-control section (keyed by section name).
+_CONTROL_CORRECTORS: dict[str, dict[str, Any]] = {
+    "PIMPLE": {"nOuterCorrectors": 1, "nCorrectors": 2, "nNonOrthogonalCorrectors": 0},
+    "PISO": {"nCorrectors": 2, "nNonOrthogonalCorrectors": 0},
+    "SIMPLE": {"nNonOrthogonalCorrectors": 0},
+}
+
+
+def _canonical_controls(
+    section_name: str, declared_aliases: list[str]
+) -> dict[str, Any]:
+    """A runnable algorithm-control block (e.g. ``PIMPLE { … }``) for the scaffold.
+
+    The corrector counts come from the section name; the algorithm reads the block at
+    run time even though the schema models it as optional/extra, so a starter must
+    include it. Any declared control key (the closed-domain pressure reference
+    ``pRefCell`` / ``pRefValue``) is seeded to 0 — harmless when a pressure BC already
+    references the field, required when none does.
+    """
+    block: dict[str, Any] = dict(_CONTROL_CORRECTORS.get(section_name, {}))
+    for alias in declared_aliases:
+        block[alias] = 0
+    return block
+
+
+def _canonical_solver(alias: str) -> dict[str, Any]:
+    """A runnable linear-solver block for one ``solvers.<field>`` entry.
+
+    Pressure-like fields (``p`` / ``p_rgh`` / ``pcorr`` / ``Phi``) get a symmetric
+    ``PCG``/``DIC`` block; everything else (``U``, ``alpha.water``, …) a
+    ``smoothSolver``. A ``<field>Final`` companion tightens ``relTol`` to 0.
+    """
+    is_final = alias.endswith("Final")
+    base = alias[: -len("Final")] if is_final else alias
+    b = base.lower()
+    is_pressure = b == "p" or b.startswith("p_") or b.startswith("pcorr") or b == "phi"
+    if is_pressure:
+        return {
+            "solver": "PCG",
+            "preconditioner": "DIC",
+            "tolerance": 1e-06,
+            "relTol": 0.0 if is_final else 0.05,
+        }
+    return {
+        "solver": "smoothSolver",
+        "smoother": "symGaussSeidel",
+        "tolerance": 1e-08,
+        "relTol": 0.0 if is_final else 0.1,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -143,6 +273,28 @@ class fvSchemes(BaseConfig):
     _section_classes: ClassVar[dict[str, type]] = {}
     _pending_sections: ClassVar[dict[str, dict[str, Any]]] = {}
     _finalized: ClassVar[bool] = False
+
+    @classmethod
+    def form_defaults(cls) -> Optional[dict[str, object]]:
+        """A canonical, ready-to-edit prefill for every required scheme this spec needs.
+
+        The per-operator scheme fields are required-but-defaultless (so validation
+        proves each operator is covered), which leaves ``model_construct`` — and thus
+        the form prefill — empty. This fills each required entry with a runnable
+        canonical scheme (:func:`_canonical_scheme`), keyed by its OpenFOAM alias.
+        """
+        out: dict[str, Any] = {}
+        for section_name, entries in cls._pending_sections.items():
+            section_out: dict[str, Any] = {}
+            for _attr, (_value_type, alias, optional) in entries.items():
+                if optional:
+                    continue
+                scheme = _canonical_scheme(section_name, alias)
+                if scheme is not None:
+                    section_out[alias] = scheme
+            if section_out:
+                out[section_name] = section_out
+        return out or None
 
     @classmethod
     def add(
@@ -187,6 +339,34 @@ class fvSolution(BaseConfig):
     _synthesize_per_spec: ClassVar[bool] = True
     _pending_sections: ClassVar[dict[str, dict[str, Any]]] = {}
     _finalized: ClassVar[bool] = False
+
+    @classmethod
+    def form_defaults(cls) -> Optional[dict[str, object]]:
+        """A canonical, runnable ``fvSolution`` prefill.
+
+        Fills each required ``solvers.<field>`` entry with a runnable linear-solver
+        block (:func:`_canonical_solver`), and emits an algorithm-control block for
+        each declared control section (``PIMPLE`` / ``PISO`` / ``SIMPLE`` —
+        :func:`_canonical_controls`) so the case actually runs: the solver reads e.g.
+        ``PIMPLE`` at run time even though the schema treats it as optional/extra.
+        """
+        out: dict[str, Any] = {}
+        solvers = cls._pending_sections.get("solvers", {})
+        solvers_out: dict[str, Any] = {}
+        for _attr, (_value_type, alias, optional) in solvers.items():
+            if optional:
+                continue
+            solvers_out[alias] = _canonical_solver(alias)
+        if solvers_out:
+            out["solvers"] = solvers_out
+        for section_name, entries in cls._pending_sections.items():
+            if section_name == "solvers":
+                continue
+            aliases = [alias for _attr, (_vt, alias, _opt) in entries.items()]
+            block = _canonical_controls(section_name, aliases)
+            if block:
+                out[section_name] = block
+        return out or None
 
     @classmethod
     def add(cls, *fields: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:

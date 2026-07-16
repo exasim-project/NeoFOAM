@@ -44,6 +44,7 @@ from .div import (
 from .laplacian import (
     LaplacianScheme,
     GaussLaplacian,
+    NoneLaplacian,
 )
 
 __all__ = [
@@ -83,4 +84,5 @@ __all__ = [
     # Laplacian
     "LaplacianScheme",
     "GaussLaplacian",
+    "NoneLaplacian",
 ]

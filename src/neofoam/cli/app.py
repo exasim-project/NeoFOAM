@@ -79,6 +79,24 @@ def telemetry_plot(
 def mcp_serve(
     host: str = typer.Option("127.0.0.1", "--host", help="Bind host."),
     port: int = typer.Option(8000, "--port", help="Bind port."),
+    root: Optional[str] = typer.Option(
+        None,
+        "--root",
+        help=(
+            "Confine every case path under this directory (relative paths only; "
+            "escapes are rejected). Recommended when the server is reachable by an "
+            "untrusted client. Omit only for trusted/local use, where absolute paths "
+            "are allowed."
+        ),
+    ),
+    reload: bool = typer.Option(
+        False,
+        "--reload",
+        help=(
+            "Restart the server when the neofoam source changes (dev only; needs an "
+            "editable install). Off by default."
+        ),
+    ),
 ) -> None:
     """Start the NeoFOAM MCP server (blocking, one process).
 
@@ -87,7 +105,7 @@ def mcp_serve(
     """
     from neofoam.mcp.app import serve
 
-    serve(host=host, port=port)
+    serve(host=host, port=port, root=root, reload=reload)
 
 
 @agent_app.command("fill")
@@ -269,7 +287,11 @@ def incompressiblefluidneon(ctx: typer.Context) -> None:
 
 @app.command()
 def preprocess(case: Path) -> None:
-    """Run ONLY the mesh preprocessing pipeline for <case> and stop (no time loop)."""
+    """Run ONLY the mesh preprocessing pipeline for <case> and stop (no time loop).
+
+    <case> may be any path (absolute or relative to the cwd); the pipeline runs
+    from inside the case, so it need not be the working directory.
+    """
     from neofoam.tools.run import run_preprocess
 
     run_preprocess([sys.argv[0], "-case", str(case)])

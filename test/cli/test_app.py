@@ -9,8 +9,7 @@ from pathlib import Path
 
 import pytest
 
-
-from neofoam.solver.incompressibleFluid.create_fields import create_init  # noqa: E402
+from neofoam.solver.incompressibleFluid.create_fields import create_init
 
 CASE = Path(__file__).parents[1] / "solver" / "incompressibleFluid" / "preprocess_case"
 
