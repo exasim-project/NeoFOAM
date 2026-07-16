@@ -19,7 +19,7 @@ import pytest
 
 # Gate the whole package on the native engine being importable.
 pytest.importorskip("neon")
-import neon.blockamr as blockamr  # noqa: E402
+import blockamr  # noqa: E402
 
 os.environ.setdefault("AMREX_THE_ARENA_INIT_SIZE", "0")
 # Preallocate the JAX/XLA pool up front (a fixed fraction) — much faster than
@@ -47,7 +47,7 @@ def blockamr_session():
     that free aborts with ``CUDA error 709: context is destroyed``. Since
     ``neofoam`` is always imported here, we open the runtime but deliberately
     never run its finalizing ``__exit__`` — the OS reclaims GPU memory at process
-    exit. (Standalone ``neon.blockamr`` still finalizes normally.)
+    exit. (Standalone ``blockamr`` still finalizes normally.)
     """
     blockamr.runtime().__enter__()
     yield

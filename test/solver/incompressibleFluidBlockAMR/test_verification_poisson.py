@@ -23,8 +23,8 @@ import pytest
 
 pytest.importorskip("neon")
 
-import neon.blockamr as blockamr  # noqa: E402
-from neon.blockamr.mesh import Mesh  # noqa: E402
+import blockamr  # noqa: E402
+from blockamr.mesh import Mesh  # noqa: E402
 
 from incompressibleFluidBlockAMR.verification_helpers import (  # noqa: E402
     l2_error,

@@ -3,7 +3,7 @@
 
 """Solver-core configs for incompressibleFluidBlockAMR.
 
-The block-structured AMReX engine (``neon.blockamr``) is not backed by the
+The block-structured AMReX engine (``blockamr``) is not backed by the
 OpenFOAM objectRegistry, so the case is described by a small set of validated
 ``BaseConfig`` classes bound to plain OpenFOAM dictionaries:
 
@@ -92,7 +92,7 @@ class EmbeddedBoundaryConfig(BaseConfig):
     """Optional embedded boundary. ``none`` for box/periodic cases.
 
     ``cylinder`` is accepted by the schema but NOT supported by the vendored
-    ``neon.blockamr`` engine on this branch (no EB bindings are compiled) — the
+    ``blockamr`` engine on this branch (no EB bindings are compiled) — the
     mesh factory raises :class:`NotImplementedError`. Cylinder/EB support is
     deferred to the verification specs (02+).
     """
@@ -136,7 +136,7 @@ class MeshDictConfig(BaseConfig):
     body: EmbeddedBoundaryConfig = Field(default_factory=EmbeddedBoundaryConfig)
     # Per-face velocity BC for non-periodic domains, keyed xlo/xhi/ylo/yhi/zlo/zhi;
     # each entry is an OpenFOAM-style patch spec ({"type": ..., "value": [...]})
-    # mapped to a neon.blockamr VectorBC. Empty for fully-periodic cases.
+    # mapped to a blockamr VectorBC. Empty for fully-periodic cases.
     boundary: Dict[str, Any] = Field(default_factory=dict)
 
     @model_validator(mode="before")

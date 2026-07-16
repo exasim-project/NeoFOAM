@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""``MeshDictConfig`` → ``neon.blockamr`` mesh.
+"""``MeshDictConfig`` → ``blockamr`` mesh.
 
-Builds a single-level :class:`neon.blockamr.Mesh` (or a multi-level
-:class:`neon.blockamr.AmrMesh` when ``refinement.maxLevel > 0``) from the
+Builds a single-level :class:`blockamr.Mesh` (or a multi-level
+:class:`blockamr.AmrMesh` when ``refinement.maxLevel > 0``) from the
 validated dict config: physical ``RealBox`` extents, coarse cell counts, and
 per-axis periodicity map to the AMReX ``Geometry``.
 
@@ -12,7 +12,7 @@ Embedded boundaries (``body.type = cylinder``) are represented by a **direct-for
 immersed boundary**: the mesh stays a plain Cartesian grid and the engine pins the
 velocity to zero in the solid cells each step. The mesh factory validates the
 ``body`` block and sets the resulting geometry on ``mesh.body`` (a
-:class:`~neon.blockamr.ibm.body.Cylinder`); the IBM *method* (which per-field
+:class:`~blockamr.ibm.body.Cylinder`); the IBM *method* (which per-field
 solve pins the cells) is a separate ``fvSolution`` choice, wired up in
 :mod:`~neofoam.solver.incompressibleFluidBlockAMR.models.projection.chorinProjection`.
 """
@@ -55,14 +55,14 @@ def _validate(cfg: MeshDictConfig) -> None:
 
 
 def build_mesh(cfg: MeshDictConfig) -> Any:
-    """Construct a ``neon.blockamr`` mesh from a validated :class:`MeshDictConfig`.
+    """Construct a ``blockamr`` mesh from a validated :class:`MeshDictConfig`.
 
-    Returns a :class:`neon.blockamr.Mesh` (single level) or
-    :class:`neon.blockamr.AmrMesh` (``refinement.maxLevel > 0``).
+    Returns a :class:`blockamr.Mesh` (single level) or
+    :class:`blockamr.AmrMesh` (``refinement.maxLevel > 0``).
     """
-    import neon.blockamr as blockamr
-    from neon.blockamr.ibm.body import Cylinder
-    from neon.blockamr.mesh import AmrMesh, Mesh
+    import blockamr
+    from blockamr.ibm.body import Cylinder
+    from blockamr.mesh import AmrMesh, Mesh
 
     _validate(cfg)
 

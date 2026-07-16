@@ -64,7 +64,7 @@ def gather_field(state: Any, level: int = 0) -> FieldSnapshot:
     ``state.mesh.body`` on the same grid. ``neon`` is imported lazily so
     importing this module stays GPU-free.
     """
-    import neon.blockamr as blockamr  # noqa: PLC0415 — lazy: keep import GPU-free
+    import blockamr  # noqa: PLC0415 — lazy: keep import GPU-free
 
     geom = state.mesh.geom(level)
     dx = [float(v) for v in geom.cell_size()]
@@ -201,7 +201,7 @@ def _ibm_force_mean(
     if ibm_name is None:
         return None
 
-    from neon.blockamr.ibm import IBM  # noqa: PLC0415 — lazy: keep import GPU-free
+    from blockamr.ibm import IBM  # noqa: PLC0415 — lazy: keep import GPU-free
 
     method = IBM.lookup(ibm_name)
     data = state.mesh.ibm_data(method)

@@ -1,17 +1,17 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""OpenFOAM-style patch BCs → ``neon.blockamr`` ``VectorBC``.
+"""OpenFOAM-style patch BCs → ``blockamr`` ``VectorBC``.
 
 The block-structured domain is a Cartesian box whose six faces are keyed
 ``xlo/xhi/ylo/yhi/zlo/zhi`` (AMReX convention). A patch spec is a small dict
 ``{"type": ..., "value": [...]}`` mirroring an OpenFOAM ``boundaryField`` entry:
 
-* ``fixedValue``              → :func:`neon.blockamr.bc.fixedValue` (Dirichlet)
-* ``noSlip``                  → :func:`neon.blockamr.bc.noSlip`
-* ``zeroGradient`` / ``Neumann`` → :class:`neon.blockamr.bc.NeumannBC`
-* ``slip`` / ``symmetry`` / ``symmetryPlane`` → :func:`neon.blockamr.bc.slip`
-  (:class:`~neon.blockamr.bc.SlipBC`: no penetration + zero tangential shear)
+* ``fixedValue``              → :func:`blockamr.bc.fixedValue` (Dirichlet)
+* ``noSlip``                  → :func:`blockamr.bc.noSlip`
+* ``zeroGradient`` / ``Neumann`` → :class:`blockamr.bc.NeumannBC`
+* ``slip`` / ``symmetry`` / ``symmetryPlane`` → :func:`blockamr.bc.slip`
+  (:class:`~blockamr.bc.SlipBC`: no penetration + zero tangential shear)
 
 Periodic faces need no entry: the engine skips them from ``geom.is_periodic()``.
 """
@@ -24,8 +24,8 @@ _FACES = ("xlo", "xhi", "ylo", "yhi", "zlo", "zhi")
 
 
 def map_patch(spec: Mapping[str, Any]) -> Any:
-    """Map one OpenFOAM-style patch spec to a ``neon.blockamr`` face BC object."""
-    from neon.blockamr.bc import NeumannBC, fixedValue, noSlip, slip
+    """Map one OpenFOAM-style patch spec to a ``blockamr`` face BC object."""
+    from blockamr.bc import NeumannBC, fixedValue, noSlip, slip
 
     bc_type = spec.get("type")
     if bc_type == "fixedValue":
@@ -47,12 +47,12 @@ def map_patch(spec: Mapping[str, Any]) -> Any:
 
 
 def build_vector_bc(patches: Mapping[str, Mapping[str, Any]]) -> Any:
-    """Build a ``neon.blockamr.VectorBC`` from a ``{face: patch-spec}`` mapping.
+    """Build a ``blockamr.VectorBC`` from a ``{face: patch-spec}`` mapping.
 
     Faces are keyed ``xlo/xhi/ylo/yhi/zlo/zhi``; any omitted face defaults to
     ``noSlip`` inside ``VectorBC`` (and periodic faces are skipped by the engine).
     """
-    from neon.blockamr.bc import VectorBC
+    from blockamr.bc import VectorBC
 
     unknown = set(patches) - set(_FACES)
     if unknown:
