@@ -27,6 +27,18 @@ class BaseConfig(BaseModel):
     io_config: ClassVar[Optional[IOMetadata]] = None
 
     @classmethod
+    def form_defaults(cls) -> Optional[dict[str, object]]:
+        """A runnable starter prefill for this config, or ``None`` for "use field defaults".
+
+        Most configs derive their form prefill from their field defaults (see
+        :func:`neofoam.io.pydantic_schema.default_values`). Configs whose content is
+        modelled as *required-but-defaultless* fields — e.g. the ``fvSchemes`` /
+        ``fvSolution`` scheme/solver dicts — return ``None`` here would leave the prefill
+        empty, so they override this to hand back a canonical, ready-to-edit scaffold.
+        """
+        return None
+
+    @classmethod
     def _get_io(cls) -> IOMetadata:
         """Return ``io_config`` or raise if not registered."""
         if cls.io_config is None:

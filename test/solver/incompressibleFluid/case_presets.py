@@ -65,6 +65,7 @@ def lid_driven_cavity(
                 "grad(U)": "Gauss linear",
                 "grad(p)": "Gauss linear",
                 "grad(p_rgh)": "Gauss linear",
+                "grad(rhok)": "Gauss linear",
             },
             "laplacianSchemes": {
                 "default": "Gauss linear corrected",
@@ -167,3 +168,132 @@ def lid_driven_cavity(
         }
     )
     return [control, schemes, solution, transport, turbulence, u_field, p_field]
+
+
+def buoyant_cavity(
+    *,
+    nu: float = 1e-3,
+    beta: float = 3e-3,
+    t_hot: float = 310.0,
+    t_ref: float = 300.0,
+    end_time: float = 0.001,
+    delta_t: float = 0.001,
+) -> list[BaseConfig]:
+    """Return the configs + ``0/`` fields for a **laminar Boussinesq** cavity.
+
+    A differentially-heated closed cavity (hot ``movingWall``, cold ``fixedWalls``,
+    no lid) on :data:`CAVITY_PATCHES` — the smallest complete case that exercises
+    the native ``laminar`` momentum-transport model together with the ``boussinesq``
+    optional model (energy equation + buoyant pressure). It reuses the buoyancy-ready
+    PIMPLE schemes/solution from :func:`lid_driven_cavity` and adds ``constant/g``,
+    the Boussinesq transport params, the energy schemes/solver, and the
+    ``T``/``p_rgh``/``alphat`` fields. ``beta``/``TRef`` in ``transportProperties``
+    are what activate the boussinesq model (see its ``@detect``). Gravity acts in
+    ``-y`` (in-plane; ``frontAndBack`` is the empty ``z`` direction). Set
+    ``end_time == delta_t`` for a single solver step.
+    """
+    base = {
+        type(c).__name__: c
+        for c in lid_driven_cavity(nu=nu, end_time=end_time, delta_t=delta_t)
+    }
+    cfgs = configurations(incompressibleFluid)
+
+    # No lid: buoyancy alone drives the flow, so all walls are no-slip.
+    u_field = cfgs["UFieldConfig"].model_validate(
+        {
+            "internalField": "uniform (0 0 0)",
+            "boundaryField": {
+                "movingWall": {"type": "noSlip"},
+                "fixedWalls": {"type": "noSlip"},
+                "frontAndBack": {"type": "empty"},
+            },
+        }
+    )
+    # p is derived (p = p_rgh + rhok*gh) ⇒ calculated, like buoyantBoussinesqPimpleFoam.
+    p_field = cfgs["pFieldConfig"].model_validate(
+        {
+            "internalField": "uniform 0",
+            "boundaryField": {
+                "movingWall": {"type": "calculated", "value": "uniform 0"},
+                "fixedWalls": {"type": "calculated", "value": "uniform 0"},
+                "frontAndBack": {"type": "empty"},
+            },
+        }
+    )
+    p_rgh_field = cfgs["p_rghFieldConfig"].model_validate(
+        {
+            "internalField": "uniform 0",
+            "boundaryField": {
+                "movingWall": {"type": "fixedFluxPressure", "value": "uniform 0"},
+                "fixedWalls": {"type": "fixedFluxPressure", "value": "uniform 0"},
+                "frontAndBack": {"type": "empty"},
+            },
+        }
+    )
+    t_field = cfgs["TFieldConfig"].model_validate(
+        {
+            "internalField": f"uniform {t_ref}",
+            "boundaryField": {
+                "movingWall": {"type": "fixedValue", "value": f"uniform {t_hot}"},
+                "fixedWalls": {"type": "fixedValue", "value": f"uniform {t_ref}"},
+                "frontAndBack": {"type": "empty"},
+            },
+        }
+    )
+    # Laminar ⇒ no eddy viscosity ⇒ alphat ≡ 0 (calculated, never a wall function).
+    alphat_field = cfgs["alphatFieldConfig"].model_validate(
+        {
+            "internalField": "uniform 0",
+            "boundaryField": {
+                "movingWall": {"type": "calculated", "value": "uniform 0"},
+                "fixedWalls": {"type": "calculated", "value": "uniform 0"},
+                "frontAndBack": {"type": "empty"},
+            },
+        }
+    )
+    gravity = cfgs["GravityConfig"].model_validate({"value": [0.0, -9.81, 0.0]})
+    boussinesq = cfgs["BoussinesqConfig"].model_validate(
+        {"beta": beta, "TRef": t_ref, "Pr": 0.7, "Prt": 0.85}
+    )
+    bouss_schemes = cfgs["boussinesq_fvSchemes"].model_validate(
+        {
+            "ddtSchemes": {"default": "Euler"},
+            "divSchemes": {"div(phi,T)": "Gauss upwind"},
+            "gradSchemes": {"grad(T)": "Gauss linear"},
+            "laplacianSchemes": {"default": "Gauss linear corrected"},
+        }
+    )
+    bouss_solution = cfgs["boussinesq_fvSolution"].model_validate(
+        {
+            "solvers": {
+                "T": {
+                    "solver": "PBiCGStab",
+                    "preconditioner": "DILU",
+                    "tolerance": 1e-8,
+                    "relTol": 0.0,
+                },
+                "TFinal": {
+                    "solver": "PBiCGStab",
+                    "preconditioner": "DILU",
+                    "tolerance": 1e-8,
+                    "relTol": 0.0,
+                },
+            }
+        }
+    )
+    return [
+        base["ControlDictConfig"],
+        base["Pimple_fvSchemes"],
+        base["Pimple_fvSolution"],
+        base["TransportPropertiesConfig"],
+        base["TurbulencePropertiesConfig"],
+        u_field,
+        p_field,
+        p_rgh_field,
+        t_field,
+        alphat_field,
+        gravity,
+        boussinesq,
+        bouss_schemes,
+        bouss_solution,
+    ]

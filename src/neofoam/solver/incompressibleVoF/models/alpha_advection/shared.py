@@ -71,7 +71,7 @@ def shared_field_build_steps() -> list[Any]:
         rho2 = mixture.rho2()
         rho = volScalarField(pyf.Word("rho"), alpha1 * rho1 + alpha2 * rho2)
         # Store old-time so that fvm.ddt(rho, U) in momentum has a valid old value.
-        rho.oldTime()  # type: ignore[attr-defined]
+        rho.oldTime()
         return rho
 
     def create_rho_phi(context: dict[str, Any]) -> surfaceScalarField:

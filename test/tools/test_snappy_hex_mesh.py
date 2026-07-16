@@ -1,10 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""snappyHexMesh tool: build-step wiring (unit, faked bindings) + refine (OF).
+"""snappyHexMesh tool: build-step wiring + the ``SnappyHexMeshDictConfig`` reader/writer.
 
-The unit checks monkeypatch the module-global bindings so no mesh is built; the
-OF case drives the real bindings against the ``preprocess_case`` fixture.
+The unit checks monkeypatch the module-global bindings so no mesh is built; the OF
+case drives the real bindings against the ``preprocess_case`` fixture. The config
+test covers the ``castellate_and_snap`` constructor that the case-authoring surface
+(wizard/MCP) uses to assemble geometry + refinementSurfaces.
 """
 
 import os
@@ -14,11 +16,13 @@ from typing import Any
 
 import pytest
 
-from neofoam.casebuild import from_template
+from neofoam.tooling.casebuild import from_template
 from neofoam.framework.tools import ToolRuntime
 from neofoam.tools import snappy_hex_mesh
 from neofoam.tools.snappy_hex_mesh import (
+    SnappyHexMeshDictConfig,
     SnappyHexMeshStep,
+    SnappySurface,
     snappyHexMeshTool,
 )
 
@@ -56,6 +60,7 @@ def test_snappy_reads_prev_mesh_and_returns_it(
     assert seen["call"][3] is True  # verbose propagated
 
 
+@pytest.mark.slow
 def test_snappy_refines_prior_mesh(tmp_path: Path) -> None:
     import pybFoam as pyf
     from pybFoam.meshing import generate_blockmesh, generate_snappy_hex_mesh
@@ -79,3 +84,20 @@ def test_snappy_refines_prior_mesh(tmp_path: Path) -> None:
         assert block_mesh.nCells() != block_cells
     finally:
         os.chdir(cwd)
+
+
+# --------------------------------------------------------------------------- #
+# SnappyHexMeshDictConfig — construction                                        #
+# --------------------------------------------------------------------------- #
+
+
+def test_castellate_and_snap_builds_geometry_and_refinement() -> None:
+    """The constructor assembles geometry + refinementSurfaces + locationInMesh."""
+    cfg = SnappyHexMeshDictConfig.castellate_and_snap(
+        surfaces=[SnappySurface(name="tubes", file="tubes.stl", level=(1, 2))],
+        location_in_mesh=(0.08, 0.08, 0.01),
+    )
+    assert cfg.geometry == {"tubes": {"type": "triSurfaceMesh", "file": '"tubes.stl"'}}
+    cmc = cfg.castellatedMeshControls
+    assert cmc["refinementSurfaces"]["tubes"]["level"] == "(1 2)"
+    assert cmc["locationInMesh"] == "(0.08 0.08 0.01)"

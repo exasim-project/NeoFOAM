@@ -1,0 +1,12 @@
+# This is a committed *source* fixture (base case + split boundary STLs), not an
+# OpenFOAM run directory. Tests copy it into a tmp_path before meshing/solving, so
+# nothing here should ever produce output — but guard against a stray in-place run
+# leaving mesh/solver artifacts that then get committed. Keep only 0/ (initial
+# fields); ignore generated time directories, the built mesh, logs and .foam files.
+[1-9]*/
+0.[0-9]*/
+constant/polyMesh/
+processor*/
+postProcessing/
+log.*
+*.foam

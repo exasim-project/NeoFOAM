@@ -124,3 +124,63 @@ def test_field_config_keeps_native_header(tmp_path: Path) -> None:
     header = root.subDict("FoamFile")
     assert str(header.get[str]("class")) == "volVectorField"
     assert str(header.get[str]("object")) == "U"
+
+
+def test_round_tripped_foamfile_header_is_written_first(tmp_path: Path) -> None:
+    # A payload that came back through ``load(...)`` (AI-fill push, sweep seeds)
+    # carries ``FoamFile`` as its LAST key; OpenFOAM rejects a file whose header
+    # is not the leading entry, so the writer must hoist it to the top.
+    cfgs = _cfgs()
+    cd = cfgs["ControlDictConfig"].model_validate(
+        {
+            "endTime": 1.0,
+            "deltaT": 0.1,
+            "FoamFile": {
+                "version": "2",
+                "format": "ascii",
+                "class": "dictionary",
+                "object": "controlDict",
+            },
+        }
+    )
+    write_configs([cd], case_dir=tmp_path)
+
+    text = (tmp_path / "system" / "controlDict").read_text()
+    assert text.index("FoamFile") < text.index("endTime")
+    # And it still parses as a valid OpenFOAM dict with one header.
+    root = pyf.dictionary.read(str(tmp_path / "system" / "controlDict"))
+    assert str(root.subDict("FoamFile").get[str]("object")) == "controlDict"
+    assert text.count("FoamFile") == 1
+
+
+def test_write_configs_writes_yaml_strategy_config(tmp_path: Path) -> None:
+    # ``PreprocessConfig`` is a YAMLStrategy config (``system/preprocess.yaml``).
+    # Before the YAML merged-write path, ``write_configs`` raised
+    # ``NotImplementedError: no merged-write path for YAMLStrategy`` — so a case
+    # authored through the MCP ``save_case`` tool could not emit its preprocess
+    # enable-list. It must now write and round-trip like the OpenFOAM configs.
+    from neofoam.framework.tools.graph import PreprocessConfig
+
+    cfg = PreprocessConfig.model_validate(
+        {
+            "tools": [
+                {"tool": "blockMesh"},
+                {
+                    "tool": "checkMesh",
+                    "depends_on": ["blockMesh"],
+                    "fail_on_error": False,
+                },
+            ]
+        }
+    )
+
+    report = write_configs([cfg], case_dir=tmp_path)
+    assert report["system/preprocess.yaml"] == ["PreprocessConfig"]
+
+    path = tmp_path / "system" / "preprocess.yaml"
+    assert path.is_file()
+    # No OpenFOAM ``FoamFile`` header leaks into a YAML file.
+    assert "FoamFile" not in path.read_text()
+
+    loaded = PreprocessConfig.load(case_dir=tmp_path)
+    assert [t["tool"] for t in loaded.tools] == ["blockMesh", "checkMesh"]

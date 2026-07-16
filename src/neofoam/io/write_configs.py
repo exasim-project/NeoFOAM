@@ -26,6 +26,7 @@ from pydantic import BaseModel
 
 from neofoam.io.dictfile import _write_payload
 from neofoam.io.strategies.openfoam_strategy import OpenFOAMStrategy
+from neofoam.io.strategies.yaml_strategy import YAMLStrategy
 
 __all__ = ["write_configs"]
 
@@ -110,10 +111,21 @@ def _write_merged_payload(strategy: Any, path: Path, data: dict[str, Any]) -> No
     The caller already merged co-owners in Python, so this hands the payload to
     :func:`neofoam.io.dictfile._write_payload` -- the same engine behind
     ``BaseConfig.save`` -- which injects a ``FoamFile`` header for header-less
-    dict configs.
+    dict configs. A payload that round-tripped through ``load(...)`` (e.g. the
+    AI-fill push) carries ``FoamFile`` as its last key; hoist it to the front so
+    the header leads the file (OpenFOAM rejects a non-leading header).
     """
     if isinstance(strategy, OpenFOAMStrategy):
+        if "FoamFile" in data:
+            data = {"FoamFile": data["FoamFile"], **data}
         _write_payload(path, data, (), "openfoam")
+        return
+    if isinstance(strategy, YAMLStrategy):
+        # Whole-file YAML (e.g. ``system/preprocess.yaml``): no ``FoamFile`` header,
+        # dumped through the same engine the OpenFOAM path uses (it dispatches on the
+        # ``.yaml`` suffix / ``fmt``). Grouping is per file, so this is a whole-file
+        # write like the OpenFOAM branch.
+        _write_payload(path, data, (), "yaml")
         return
     raise NotImplementedError(
         f"write_configs: no merged-write path for {type(strategy).__name__}"
