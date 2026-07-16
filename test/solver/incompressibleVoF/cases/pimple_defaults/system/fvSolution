@@ -1,0 +1,16 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSolution;
+}
+
+// PIMPLE dict without nCorrectors: the factory must default to 2 (the PISO
+// pressure correction needs at least two corrector iterations).
+PIMPLE
+{
+    momentumPredictor   no;
+    nOuterCorrectors    1;
+    nNonOrthogonalCorrectors 0;
+}

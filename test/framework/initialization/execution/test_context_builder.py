@@ -2,6 +2,8 @@
 #
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
+"""Unit tests for routing init results into a Context via the category router."""
+
 import logging
 
 import pytest
@@ -22,38 +24,38 @@ from neofoam.framework.initialization.init_step import InitStep
 
 
 @pytest.mark.parametrize(
-    "init_results,check",
+    "init_results,expected",
     [
         (
             [
                 InitResult("fields.U", "fields", "v"),
                 InitResult("fields.p", "fields", "p"),
             ],
-            lambda c: c.fields == {"U": "v", "p": "p"},
+            {"fields": {"U": "v", "p": "p"}},
         ),
         (
             [InitResult("models.algo", "models", "a")],
-            lambda c: c.models == {"algo": "a"},
+            {"models": {"algo": "a"}},
         ),
         (
             [InitResult("operators.mom", "operators", "m")],
-            lambda c: c.models == {"mom": "m"},
+            {"models": {"mom": "m"}},
         ),
         (
             [InitResult("mesh", "resource", "m")],
-            lambda c: c.mesh == "m",
+            {"mesh": "m"},
         ),
         (
             [InitResult("time", "resource", "r")],
-            lambda c: c.time == "r",
+            {"time": "r"},
         ),
         (
             [InitResult("custom", "resource", "c")],
-            lambda c: c.models == {"custom": "c"},
+            {"models": {"custom": "c"}},
         ),
         (
             [InitResult("_foam_time", "resource", "hidden")],
-            lambda c: c.models == {} and c.time is None,
+            {"models": {}, "time": None},
         ),
     ],
     ids=[
@@ -66,9 +68,12 @@ from neofoam.framework.initialization.init_step import InitStep
         "init_only",
     ],
 )
-def test_default_router_routing(init_results, check):
+def test_default_router_routing(init_results, expected):
     ctx = build_context_from_results(init_results)
-    assert check(ctx)
+    assert ctx.fields == expected.get("fields", {})
+    assert ctx.models == expected.get("models", {})
+    assert ctx.mesh == expected.get("mesh")
+    assert ctx.time == expected.get("time")
 
 
 def test_write_flag_collected_into_write_fields() -> None:

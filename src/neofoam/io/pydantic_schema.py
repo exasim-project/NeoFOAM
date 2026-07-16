@@ -20,15 +20,23 @@ from typing import Any, Iterable
 
 from pydantic import BaseModel
 
+from neofoam.io.base import BaseConfig
+
 __all__ = ["default_values", "rjsf_uischema", "slice_schema"]
 
 
 def default_values(cls: type[BaseModel]) -> dict[str, Any]:
     """Return a config's defaults as a form value (no validation).
 
-    Uses ``model_construct`` so configs with required-but-defaultless fields
-    still yield a (partial) prefill instead of raising.
+    A config may supply a ready-to-edit scaffold via
+    :meth:`~neofoam.io.base.BaseConfig.form_defaults` (fvSchemes/fvSolution do, whose
+    fields are required-but-defaultless so ``model_construct`` alone yields ``{}``);
+    otherwise the prefill comes from ``model_construct`` (partial, no validation).
     """
+    if isinstance(cls, type) and issubclass(cls, BaseConfig):
+        scaffold = cls.form_defaults()
+        if scaffold:
+            return dict(scaffold)
     try:
         return cls.model_construct().model_dump(by_alias=True, exclude_none=True)
     except Exception:

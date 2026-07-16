@@ -16,12 +16,6 @@ from neofoam.framework.initialization.staged.spec import (
 )
 
 
-def _runner(name: str) -> tuple[StagedInitRunner, StagedInitSpec]:
-    """Helper: create a (runner, spec) pair for tests that need the builder."""
-    builder = StagedInitSpec.build(name)
-    return StagedInitRunner(builder.finalize()), builder.finalize()
-
-
 # --- Construction & defaults ---
 
 
@@ -120,8 +114,8 @@ def test_run_full_pipeline():
     assert isinstance(observed["resolve_cfg"], ConfigContext)
     assert len(runner.core_models) == 1
     assert len(runner.optional_models) == 1
-    assert getattr(runner.core_models[0], "name") == "core1"
-    assert getattr(runner.optional_models[0], "name") == "opt1"
+    assert runner.core_models[0].name == "core1"
+    assert runner.optional_models[0].name == "opt1"
 
 
 def test_run_without_resolve():
@@ -218,15 +212,13 @@ def test_run_load_no_func_raises():
         runner.run_load()
 
 
-def test_run_build_returns_lazy_inits_and_passes_models():
+def test_run_build_returns_lazy_inits():
     builder = StagedInitSpec.build("X")
-    captured: dict = {}
 
     @builder.build
     def build(core, opt):
-        captured["core"] = core
-        captured["opt"] = opt
-        return [lazy("mesh", create=lambda _ctx: f"mesh_from_{len(core)}_core")]
+        _ = (core, opt)
+        return [lazy("mesh", create=lambda _ctx: "mesh_obj")]
 
     runner = StagedInitRunner(builder.finalize())
     runner.core_models = ["c1", "c2"]
@@ -235,6 +227,23 @@ def test_run_build_returns_lazy_inits_and_passes_models():
     result = runner.run_build()
     assert len(result) == 1
     assert result[0].name == "mesh"
+
+
+def test_run_build_passes_models():
+    builder = StagedInitSpec.build("X")
+    captured: dict = {}
+
+    @builder.build
+    def build(core, opt):
+        captured["core"] = core
+        captured["opt"] = opt
+        return [lazy("mesh", create=lambda _ctx: "mesh_obj")]
+
+    runner = StagedInitRunner(builder.finalize())
+    runner.core_models = ["c1", "c2"]
+    runner.optional_models = ["o1"]
+
+    runner.run_build()
     assert captured["core"] == ["c1", "c2"]
     assert captured["opt"] == ["o1"]
 
@@ -246,7 +255,7 @@ def test_run_build_no_func_raises():
         runner.run_build()
 
 
-def test_run_resolve_passes_config_and_is_optional_noop():
+def test_run_resolve_passes_config():
     builder = StagedInitSpec.build("X")
     config = ConfigContext()
     captured: dict = {}
@@ -259,5 +268,7 @@ def test_run_resolve_passes_config_and_is_optional_noop():
     runner.run_resolve(config)
     assert captured["cfg"] is config
 
+
+def test_run_resolve_without_resolve_is_noop():
     spec_no_resolve = StagedInitSpec.build("Y").finalize()
     StagedInitRunner(spec_no_resolve).run_resolve(ConfigContext())

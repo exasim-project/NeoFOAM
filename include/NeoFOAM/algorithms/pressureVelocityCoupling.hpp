@@ -89,7 +89,6 @@ void updateVelocity(
     nnfvcc::VolumeField<Vec3>& U
 );
 
-
 /* @brief Reimplementation of OpenFOAMs fvMatrix.flux()
  * @return flux surface field
  */

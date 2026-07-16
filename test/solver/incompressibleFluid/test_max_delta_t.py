@@ -10,11 +10,10 @@ from typing import Any, cast
 
 import pytest
 
-pytest.importorskip("pybFoam")
-
 from pydantic import ValidationError
 
 from neofoam.algorithms.solution_loop.interfaces import VGREAT, timeStepConstraint
+from neofoam.tooling.casebuild import from_template, patch
 from neofoam.framework.context import Context
 from neofoam.framework.model import BoundModelInterface, ModelRuntime
 from neofoam.solver.incompressibleFluid.models.incompressibleFluidModel import (
@@ -26,6 +25,7 @@ from neofoam.solver.incompressibleFluid.models.max_delta_t import (
 )
 
 _CASES = Path(__file__).parent / "cases"
+_BASE = _CASES / "controldict_base"
 
 
 def _max_runtime(cap: float = 0.5) -> ModelRuntime:
@@ -83,9 +83,14 @@ def test_fold_raises_when_config_is_absent() -> None:
 
 
 def test_config_presence_activates_contribution_through_detection(
-    monkeypatch: pytest.MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    monkeypatch.chdir(_CASES / "maxDeltaT_present")
+    case = (
+        from_template(_BASE)
+        | patch("system/controlDict", {"adjustTimeStep": True, "maxDeltaT": 0.5})
+    ).build_at(tmp_path / "case")
+    monkeypatch.chdir(case.path)
+
     detected = {rt.name: rt for rt in incompressibleFluidModel.detect_models(Path("."))}
     assert "maxDeltaT" in detected
     ctx = Context(fields={}, models={})
@@ -94,9 +99,13 @@ def test_config_presence_activates_contribution_through_detection(
 
 
 def test_absent_config_leaves_contribution_unfolded_through_detection(
-    monkeypatch: pytest.MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    monkeypatch.chdir(_CASES / "maxDeltaT_absent")
+    case = (
+        from_template(_BASE) | patch("system/controlDict", {"adjustTimeStep": True})
+    ).build_at(tmp_path / "case")
+    monkeypatch.chdir(case.path)
+
     detected = {rt.name: rt for rt in incompressibleFluidModel.detect_models(Path("."))}
     assert "maxDeltaT" not in detected
     ctx = Context(fields={}, models={})
@@ -105,16 +114,25 @@ def test_absent_config_leaves_contribution_unfolded_through_detection(
 
 
 def test_two_runs_in_one_process_flip_participation(
-    monkeypatch: pytest.MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    monkeypatch.chdir(_CASES / "maxDeltaT_present")
+    case1 = (
+        from_template(_BASE)
+        | patch("system/controlDict", {"adjustTimeStep": True, "maxDeltaT": 0.5})
+    ).build_at(tmp_path / "case1")
+    monkeypatch.chdir(case1.path)
+
     m1 = {rt.name: rt for rt in incompressibleFluidModel.detect_models(Path("."))}
     b1 = BoundModelInterface(
         timeStepConstraint, [m1["maxDeltaT"]], Context(fields={}, models={})
     )
     assert b1() == pytest.approx(0.5)
 
-    monkeypatch.chdir(_CASES / "maxDeltaT_absent")
+    case2 = (
+        from_template(_BASE) | patch("system/controlDict", {"adjustTimeStep": True})
+    ).build_at(tmp_path / "case2")
+    monkeypatch.chdir(case2.path)
+
     m2 = {rt.name: rt for rt in incompressibleFluidModel.detect_models(Path("."))}
     b2 = BoundModelInterface(
         timeStepConstraint, list(m2.values()), Context(fields={}, models={})
@@ -130,19 +148,30 @@ def test_model_inactive_when_no_control_dict_is_present(
 
 
 def test_max_delta_t_inactive_when_adjust_time_step_is_off(
-    monkeypatch: pytest.MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     # maxDeltaT present but adjustTimeStep no: OpenFOAM keeps a fixed step, so the
     # contribution must stay inactive (the symmetric guard to courant's no-adjust arm).
-    monkeypatch.chdir(_CASES / "maxDeltaT_no_adjust")
+    case = (
+        from_template(_BASE)
+        | patch("system/controlDict", {"adjustTimeStep": False, "maxDeltaT": 0.5})
+    ).build_at(tmp_path / "case")
+    monkeypatch.chdir(case.path)
+
     detected = {rt.name for rt in incompressibleFluidModel.detect_models(Path("."))}
     assert "maxDeltaT" not in detected
 
 
 def test_max_delta_t_inactive_when_adjust_time_step_key_is_absent(
-    monkeypatch: pytest.MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     # The adjustTimeStep key omitted entirely short-circuits detection -> inactive.
-    monkeypatch.chdir(_CASES / "no_adjust_key")
+    # The base controlDict already omits adjustTimeStep, so patching maxDeltaT alone
+    # reproduces the "key absent" case without any line removal.
+    case = (
+        from_template(_BASE) | patch("system/controlDict", {"maxDeltaT": 0.5})
+    ).build_at(tmp_path / "case")
+    monkeypatch.chdir(case.path)
+
     detected = {rt.name for rt in incompressibleFluidModel.detect_models(Path("."))}
     assert "maxDeltaT" not in detected

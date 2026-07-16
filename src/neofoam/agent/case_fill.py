@@ -137,6 +137,7 @@ def load_case_from_disk(
     *,
     solver: Optional[Any] = None,
     output_model: Optional[type[BaseModel]] = None,
+    warnings: Optional[list[dict[str, str]]] = None,
 ) -> BaseModel:
     """Build a ``CaseSpec`` by loading each config from disk (no LLM).
 
@@ -144,6 +145,11 @@ def load_case_from_disk(
     is not present — the resulting aggregate carries ``None`` in those
     fields, which :func:`save_case` then skips. This is the deterministic
     roundtrip path used by tests.
+
+    Pass a ``warnings`` list to surface configs that are *present on disk but
+    don't validate* (e.g. a ``turbulenceProperties`` selecting a model we don't
+    represent): each is appended as ``{"file", "config", "reason"}`` instead of
+    only silently nulling the field — so a caller can report the gap (F5).
     """
     solver = solver or _solver()
     output_model = output_model or build_case_output_model(solver=solver)
@@ -158,12 +164,46 @@ def load_case_from_disk(
             continue
         try:
             values[_snake_case(cls.__name__)] = cls.load(case_dir=case_dir)
-        except Exception:
-            # File present but doesn't validate against this schema (e.g. a
-            # turbulenceProperties that selects a model we don't represent).
-            # Leave as None; the caller can surface the gap.
+        except Exception as exc:
+            # File present but doesn't validate against this schema. Distinguish two
+            # cases (F5): a config whose failure is only *missing required keys* is a
+            # completeness gap — the file simply doesn't carry this (often optional)
+            # config, e.g. a plain case's shared ``controlDict`` has no ``maxCo`` for
+            # ``CourantConfig``, or a non-buoyant ``fvSchemes`` has no ``div(phi,T)``
+            # for the boussinesq slice. Those are ``validate_case``'s job, not a load
+            # warning, so leave the field ``None`` silently. Only *present but invalid*
+            # data (a value that fails validation) is surfaced as a warning.
+            if warnings is not None and not _is_absence(exc):
+                warnings.append(
+                    {
+                        "file": io.file,
+                        "config": cls.__name__,
+                        "reason": str(exc).strip() or type(exc).__name__,
+                    }
+                )
             continue
     return output_model(**values)
+
+
+def _is_absence(exc: Exception) -> bool:
+    """True when ``exc`` signals the config is *absent*, not present-but-invalid.
+
+    Two completeness gaps count as absence (both are ``validate_case``'s domain, not
+    a load warning): a pydantic ``ValidationError`` whose every error is a *missing
+    required field* (the file carries none of this config's keys), and a ``KeyError``
+    from a config bound to a sub-dict whose block isn't in the file (e.g.
+    ``TelemetryDictConfig`` → ``controlDict{telemetry}`` on a case with no telemetry
+    block). Anything else — a value that fails validation — is present-but-invalid.
+    """
+    from pydantic import ValidationError
+
+    if isinstance(exc, ValidationError):
+        errors = exc.errors()
+        return bool(errors) and all(e.get("type") == "missing" for e in errors)
+    if isinstance(exc, KeyError):
+        message = str(exc)
+        return "Subdict" in message and "not found" in message
+    return False
 
 
 def save_case(
@@ -234,14 +274,17 @@ def build_case_agent(
     model_name: str = "claude-haiku-4-5",
     system_prompt: str = DEFAULT_CASE_SYSTEM_PROMPT,
     output_model_name: str = "CaseSpec",
+    output_type: Optional[type[BaseModel]] = None,
     **agent_kwargs: Any,
 ) -> Any:
     """Build a pydantic-ai ``Agent`` returning a filled aggregate ``CaseSpec``.
 
     By default uses the Anthropic backend with ``claude-haiku-4-5``; pass a
     pre-built ``model`` to use the local-Ollama scaffold from
-    :mod:`neofoam.agent.agent` instead. Extra ``agent_kwargs`` are forwarded
-    to :class:`pydantic_ai.Agent`.
+    :mod:`neofoam.agent.agent` instead. Pass ``output_type`` to make the agent
+    emit that model directly (e.g. a custom aggregate) instead of the synthesised
+    per-solver ``CaseSpec``. Extra ``agent_kwargs`` are forwarded to
+    :class:`pydantic_ai.Agent`.
     """
     from pydantic_ai import Agent
 
@@ -250,10 +293,12 @@ def build_case_agent(
 
         model = AnthropicModel(model_name)
 
-    output_type = build_case_output_model(solver=solver, model_name=output_model_name)
+    out_type = output_type or build_case_output_model(
+        solver=solver, model_name=output_model_name
+    )
     return Agent(
         model,
-        output_type=output_type,
+        output_type=out_type,
         system_prompt=system_prompt,
         **agent_kwargs,
     )
@@ -294,10 +339,19 @@ def fill_case(
       tests and by the CLI's ``--no-llm`` mode.
 
     Returns the validated aggregate that was saved.
+
+    A missing/invalid ``source_case`` raises :class:`ValueError` **before** any
+    static-asset copy or agent call, so a bad source never burns an LLM API call on
+    a contentless prompt (the guard the removed MCP ``fill_case`` tool used to carry).
     """
     solver = solver or _solver()
     source_case = Path(source_case)
     target_case = Path(target_case)
+
+    if not source_case.is_dir():
+        raise ValueError(
+            f"source_case does not exist or is not a directory: {str(source_case)!r}"
+        )
 
     if copy_static:
         _copy_static_assets(source_case, target_case)

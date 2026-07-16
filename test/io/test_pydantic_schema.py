@@ -47,6 +47,31 @@ def test_default_values_never_raises() -> None:
     assert isinstance(default_values(Req), dict)
 
 
+def test_default_values_prefers_form_defaults_scaffold() -> None:
+    # A config whose fields are required-but-defaultless (model_construct → {}) can
+    # supply a ready-to-edit scaffold via form_defaults; default_values returns it.
+    from neofoam.io.base import BaseConfig
+
+    class _Scaffolded(BaseConfig):
+        needed: int  # required, no default
+
+        @classmethod
+        def form_defaults(cls) -> dict[str, object]:
+            return {"needed": 42}
+
+    assert default_values(_Scaffolded) == {"needed": 42}
+
+
+def test_default_values_falls_back_when_no_scaffold() -> None:
+    # BaseConfig.form_defaults returns None by default → the model_construct path.
+    from neofoam.io.base import BaseConfig
+
+    class _Plain(BaseConfig):
+        a: int = 3
+
+    assert default_values(_Plain) == {"a": 3}
+
+
 def test_slice_schema_keeps_named_props_and_filters_required() -> None:
     schema = {
         "type": "object",

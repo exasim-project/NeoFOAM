@@ -2,6 +2,8 @@
 #
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
+"""Tests for the networkx topological sorter (ordering and tie-breaking)."""
+
 from neofoam.framework.graph import (
     NetworkxTopologicalSorter,
     build_dependency_digraph,

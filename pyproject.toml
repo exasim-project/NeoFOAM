@@ -18,7 +18,7 @@ dependencies = [
     "numpy",
     "matplotlib",
     "foamlib",
-    "pybFoam>=0.4.6",
+    "pybFoam>=0.5.1",
     "typer",
     "pydantic>=2.0.0",
     "networkx>=3.0",
@@ -165,6 +165,9 @@ NeoN_WITH_AMREX = "ON"
 [tool.uv]
 no-build-isolation-package = ["neofoam"]
 
+[tool.uv.sources]
+pybFoam = { path = "/home/henning/libsAndApps/pybFoam", editable = true }
+
 [tool.ruff]
 line-length = 100
 target-version = "py310"
@@ -185,6 +188,9 @@ minversion = "6.0"
 addopts = "-ra --showlocals"
 testpaths = [
     "test"
+]
+markers = [
+    "slow: mesh-building tests (blockMesh/snappyHexMesh + checkMesh); deselect with -m 'not slow'",
 ]
 
 [tool.mypy]
