@@ -30,6 +30,7 @@ from neofoam.framework.types import OperationMetadata
 from neofoam.solver.neon_runtime import ensure_neon_initialized
 from neofoam.tools.block_mesh import BlockMeshDictConfig
 from neofoam.tools.snappy_hex_mesh import SnappyHexMeshDictConfig
+from neofoam.turbulence import momentumTransportModel
 from neofoam.turbulence.config import TurbulencePropertiesConfig
 from neofoam.viscosity.config import TransportPropertiesConfig
 
@@ -73,6 +74,10 @@ incompressibleFluidNeoN.config(TransportPropertiesConfig)  # molecular nu
 incompressibleFluidNeoN.config(TurbulencePropertiesConfig)  # simulationType
 
 incompressibleFluidNeoN.models(PressureVelocityAlgorithmNeoN, required=True)  # pick ONE
+# The single turbulence family, shared with incompressibleFluid: binding it makes
+# every registered turbulence model discoverable via the MCP model_catalog for the
+# NeoN solver too (create_fields selects the native member with fallback=False).
+incompressibleFluidNeoN.models(momentumTransportModel, required=True)  # nut + stress
 incompressibleFluidNeoN.models(incompressibleFluidNeoNModel)  # optional: zero or more
 
 

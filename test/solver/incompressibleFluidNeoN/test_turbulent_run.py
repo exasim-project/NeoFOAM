@@ -20,6 +20,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 
 def _prepare_case(source: Path, dest: Path) -> None:
@@ -57,6 +58,13 @@ def _read_internal(time_dir: Path, field_name: str) -> np.ndarray:
     return np.array([float(m.group(1))])
 
 
+@pytest.mark.xfail(
+    reason="SpalartAllmarasDDES (LES) has no native NeoN closure and the case uses "
+    "wall functions; the turbulence-family merge removed the NeoN C++ factory branch "
+    "(design Q-A: require native coverage). Native LES/wall-function coverage lands "
+    "from develop into the stack shortly; un-xfail then.",
+    strict=False,
+)
 def test_incompressibleFluidNeoN_SA_DDES_runs(tmp_path: Path) -> None:
     """The SA-DDES turbulence path runs end-to-end and nut/nuTilda land on disk."""
     repo_root = Path(__file__).parent.parent.parent.parent

@@ -44,6 +44,11 @@ _MODELS = _HERE / "parity_models"  # per-model constant/turbulenceProperties ove
 #: ``parity_models/<name>/`` and listing it here.
 CASES = ["laminar", "kEpsilon", "SpalartAllmaras", "kOmegaSST"]
 
+#: Models exercised on the pybFoam **fallback** path (``select(fallback=True)``).
+#: Every dual model plus the fallback-only ``realizableKE`` (which has no native
+#: subject — only the fallback op).
+FALLBACK_CASES = CASES + ["realizableKE"]
+
 
 def _run_worker(role: str, case: Path) -> None:
     """Run one worker role in a fresh process (one ``Foam::Time`` per process)."""
@@ -97,3 +102,36 @@ def test_neon_nut_matches_pybfoam(name: str, tmp_path: Path) -> None:
         compared.append(field)
 
     assert "nut" in compared, f"{name}: nut was not compared"
+
+
+@pytest.mark.parametrize("name", FALLBACK_CASES)
+def test_fallback_nut_matches_pybfoam(name: str, tmp_path: Path) -> None:
+    """The ``fallback=True`` path advances ``nut`` via the model's fallback op.
+
+    ``select_turbulence_model(fallback=True)`` returns a ``FallbackHandle`` whose
+    scheduled op wraps the pybFoam model — so its ``nut`` equals the pybFoam
+    reference. This proves the FallbackHandle + op-dispatch wiring (the path
+    ``incompressibleFluid`` uses), including for the fallback-only ``realizableKE``,
+    which has no native NeoN closure.
+    """
+    case = tmp_path / "case"
+    shutil.copytree(_BASE_CASE, case)
+    shutil.copyfile(
+        _MODELS / name / "turbulenceProperties",
+        case / "constant" / "turbulenceProperties",
+    )
+
+    _run_worker("setup", case)  # mesh + identical random U / k / epsilon on disk
+    _run_worker("reference", case)  # pybFoam fields → reference_nut.npy
+    _run_worker("subject_fb", case)  # fallback handle + op → subject_fb_nut.npy
+
+    reference = np.load(case / "reference_nut.npy")
+    result = np.load(case / "subject_fb_nut.npy")
+    peak = float(np.max(np.abs(reference))) or 1.0
+    np.testing.assert_allclose(
+        result,
+        reference,
+        rtol=1e-8,
+        atol=1e-10 * peak,
+        err_msg=f"{name}: fallback nut differs from the pybFoam reference",
+    )

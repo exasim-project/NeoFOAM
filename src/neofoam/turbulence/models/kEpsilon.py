@@ -5,7 +5,7 @@
 
 The NeoN mirror of :mod:`neofoam.turbulence.models.laminar`, but a real
 two-equation closure: registered with the runtime-selectable
-:class:`~neofoam.turbulence.neon.neonMomentumTransportModel` family under the
+:class:`~neofoam.turbulence.momentumTransport.momentumTransportModel` family under the
 ``turbulenceProperties`` name ``kEpsilon``, it owns the transport fields ``k`` and
 ``epsilon`` and defines an eddy viscosity ``nut = Cmu k^2 / epsilon``.
 
@@ -43,9 +43,9 @@ from neofoam.framework.initialization import field as init_field
 from neofoam.framework.initialization import model as init_model
 
 from ..config import TurbulencePropertiesConfig
-from ..neon import Model, neonMomentumTransportModel
+from ..momentumTransport import Model, momentumTransportModel
 
-__all__ = ["neon_kEpsilon"]
+__all__ = ["kEpsilon"]
 
 # OpenFOAM kEpsilon default coefficients.
 Cmu = 0.09
@@ -57,11 +57,11 @@ sigmaEps = 1.3
 kMin = 1e-15
 epsilonMin = 1e-15
 
-neon_kEpsilon = Model("kEpsilon").register_with(neonMomentumTransportModel)
-neon_kEpsilon.config(TurbulencePropertiesConfig)
+kEpsilon = Model("kEpsilon").register_with(momentumTransportModel)
+kEpsilon.config(TurbulencePropertiesConfig)
 
 
-@neon_kEpsilon.build
+@kEpsilon.build
 def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
     """Read + seed ``k`` / ``epsilon`` / ``nut`` / ``nuEff`` and the helper operators.
 
@@ -126,7 +126,7 @@ def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
 # between stages: ``production`` publishes ``G``; the transport stages read it.
 
 
-@neon_kEpsilon.operation(name="kEpsilonProduction")
+@kEpsilon.operation(name="kEpsilonProduction")
 def production(
     self: Any,
     kEpsilon_grad: Annotated[Any, "models"],
@@ -138,7 +138,7 @@ def production(
     return FieldUpdates({"G": nut * nfb.strain_production(grad_u)})
 
 
-@neon_kEpsilon.operation(name="kEpsilonCorrectEpsilon")
+@kEpsilon.operation(name="kEpsilonCorrectEpsilon")
 def correct_epsilon(
     self: Any,
     neon_runtime: Annotated[Any, "models"],
@@ -179,7 +179,7 @@ def correct_epsilon(
     return FieldUpdates({"epsilon": epsilon})
 
 
-@neon_kEpsilon.operation(name="kEpsilonCorrectK")
+@kEpsilon.operation(name="kEpsilonCorrectK")
 def correct_k(
     self: Any,
     neon_runtime: Annotated[Any, "models"],
@@ -214,7 +214,7 @@ def correct_k(
     return FieldUpdates({"k": k})
 
 
-@neon_kEpsilon.operation(name="kEpsilonCorrectNut")
+@kEpsilon.operation(name="kEpsilonCorrectNut")
 def correct_nut(
     self: Any,
     nu_vol: Annotated[Any, "models"],
@@ -227,3 +227,19 @@ def correct_nut(
     nut.assign(Cmu * (k * k) / epsilon)
     nut.correct_boundary_conditions()
     return FieldUpdates({"nut": nut, "nuEff": kEpsilon_surf.interpolate(nut + nu_vol)})
+
+
+@kEpsilon.operation(name="kEpsilonCorrect", fallback=True)
+def correct(
+    self: Any,
+    turbulence: Annotated[Any, "models"],  # the wrapped pybFoam handle
+) -> FieldUpdates:
+    """Fallback path (incompressibleFluid): advance OpenFOAM's own kEpsilon.
+
+    Scheduled only when a solver selects fallback=True; the native NeoN
+    transport @operations above are skipped. The pybFoam handle owns nut
+    and its stress. Resolved from the Context, never captured in the closure
+    (see [[project_pybfoam_op_closure_cycle]]).
+    """
+    turbulence.correct()
+    return FieldUpdates({})

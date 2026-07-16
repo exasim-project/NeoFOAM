@@ -5,7 +5,7 @@
 
 A one-equation eddy-viscosity closure: it owns the transport unknown ``nuTilda``
 and defines ``nut = nuTilda * fv1(chi)``. Registered with the runtime-selectable
-:class:`~neofoam.turbulence.neon.neonMomentumTransportModel` family under the
+:class:`~neofoam.turbulence.momentumTransport.momentumTransportModel` family under the
 ``turbulenceProperties`` name ``SpalartAllmaras``.
 
 It matches ``Foam::RASModels::SpalartAllmaras::correct`` term for term for the
@@ -37,9 +37,9 @@ from neofoam.framework.initialization import field as init_field
 from neofoam.framework.initialization import model as init_model
 
 from ..config import TurbulencePropertiesConfig
-from ..neon import Model, neonMomentumTransportModel
+from ..momentumTransport import Model, momentumTransportModel
 
-__all__ = ["neon_spalartAllmaras"]
+__all__ = ["spalartAllmaras"]
 
 # OpenFOAM SpalartAllmaras default coefficients.
 sigmaNut = 0.66666
@@ -62,13 +62,11 @@ def _fv1(chi: Any) -> Any:
     return chi3 / (chi3 + Cv1**3)
 
 
-neon_spalartAllmaras = Model("SpalartAllmaras").register_with(
-    neonMomentumTransportModel
-)
-neon_spalartAllmaras.config(TurbulencePropertiesConfig)
+spalartAllmaras = Model("SpalartAllmaras").register_with(momentumTransportModel)
+spalartAllmaras.config(TurbulencePropertiesConfig)
 
 
-@neon_spalartAllmaras.build
+@spalartAllmaras.build
 def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
     """Read ``nuTilda``, seed ``nut = nuTilda fv1``, and own the helper operators.
 
@@ -124,7 +122,7 @@ def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
     ]
 
 
-@neon_spalartAllmaras.operation(name="spalartAllmarasCorrectNuTilda")
+@spalartAllmaras.operation(name="spalartAllmarasCorrectNuTilda")
 def correct_nutilda(
     self: Any,
     neon_runtime: Annotated[Any, "models"],
@@ -183,7 +181,7 @@ def correct_nutilda(
     return FieldUpdates({"nuTilda": nuTilda})
 
 
-@neon_spalartAllmaras.operation(name="spalartAllmarasCorrectNut")
+@spalartAllmaras.operation(name="spalartAllmarasCorrectNut")
 def correct_nut(
     self: Any,
     neon_runtime: Annotated[Any, "models"],
@@ -197,3 +195,19 @@ def correct_nut(
     nut.assign(nuTilda * _fv1(nuTilda / nu))
     nut.correct_boundary_conditions()
     return FieldUpdates({"nut": nut, "nuEff": sa_surf.interpolate(nut + nu_vol)})
+
+
+@spalartAllmaras.operation(name="spalartAllmarasCorrect", fallback=True)
+def correct(
+    self: Any,
+    turbulence: Annotated[Any, "models"],  # the wrapped pybFoam handle
+) -> FieldUpdates:
+    """Fallback path (incompressibleFluid): advance OpenFOAM's own spalartAllmaras.
+
+    Scheduled only when a solver selects fallback=True; the native NeoN
+    transport @operations above are skipped. The pybFoam handle owns nut
+    and its stress. Resolved from the Context, never captured in the closure
+    (see [[project_pybfoam_op_closure_cycle]]).
+    """
+    turbulence.correct()
+    return FieldUpdates({})

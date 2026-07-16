@@ -5,7 +5,7 @@
 
 Menter's two-equation ``k``/``omega`` SST closure, authored as **on-device field
 maths** (CPU or GPU). Registered with the runtime-selectable
-:class:`~neofoam.turbulence.neon.neonMomentumTransportModel` family under the
+:class:`~neofoam.turbulence.momentumTransport.momentumTransportModel` family under the
 ``turbulenceProperties`` name ``kOmegaSST``.
 
 It matches ``Foam::RASModels::kOmegaSSTBase::correct`` term for term for the
@@ -43,9 +43,9 @@ from neofoam.framework.initialization import field as init_field
 from neofoam.framework.initialization import model as init_model
 
 from ..config import TurbulencePropertiesConfig
-from ..neon import Model, neonMomentumTransportModel
+from ..momentumTransport import Model, momentumTransportModel
 
-__all__ = ["neon_kOmegaSST"]
+__all__ = ["kOmegaSST"]
 
 # OpenFOAM kOmegaSST default coefficients.
 alphaK1 = 0.85
@@ -102,11 +102,11 @@ def _correct_nut(k: Any, omega: Any, f23: Any, s2: Any) -> Any:
     return a1 * k / nn.field_max(a1 * omega, (b1 * f23) * nn.sqrt(s2))
 
 
-neon_kOmegaSST = Model("kOmegaSST").register_with(neonMomentumTransportModel)
-neon_kOmegaSST.config(TurbulencePropertiesConfig)
+kOmegaSST = Model("kOmegaSST").register_with(momentumTransportModel)
+kOmegaSST.config(TurbulencePropertiesConfig)
 
 
-@neon_kOmegaSST.build
+@kOmegaSST.build
 def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
     """Read ``k`` / ``omega``, seed ``nut`` (correctNut), own the helper operators."""
 
@@ -175,7 +175,7 @@ def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
     ]
 
 
-@neon_kOmegaSST.operation(name="kOmegaSSTBlend")
+@kOmegaSST.operation(name="kOmegaSSTBlend")
 def blend(
     self: Any,
     neon_runtime: Annotated[Any, "models"],
@@ -221,7 +221,7 @@ def blend(
     )
 
 
-@neon_kOmegaSST.operation(name="kOmegaSSTCorrectOmega")
+@kOmegaSST.operation(name="kOmegaSSTCorrectOmega")
 def correct_omega(
     self: Any,
     neon_runtime: Annotated[Any, "models"],
@@ -259,7 +259,7 @@ def correct_omega(
     return FieldUpdates({"omega": omega})
 
 
-@neon_kOmegaSST.operation(name="kOmegaSSTCorrectK")
+@kOmegaSST.operation(name="kOmegaSSTCorrectK")
 def correct_k(
     self: Any,
     neon_runtime: Annotated[Any, "models"],
@@ -294,7 +294,7 @@ def correct_k(
     return FieldUpdates({"k": k})
 
 
-@neon_kOmegaSST.operation(name="kOmegaSSTCorrectNut")
+@kOmegaSST.operation(name="kOmegaSSTCorrectNut")
 def correct_nut(
     self: Any,
     neon_runtime: Annotated[Any, "models"],
@@ -314,3 +314,19 @@ def correct_nut(
     nut.assign(_correct_nut(k, omega, _f2(k, omega, y, nu), s2))
     nut.correct_boundary_conditions()
     return FieldUpdates({"nut": nut, "nuEff": komega_surf.interpolate(nut + nu_vol)})
+
+
+@kOmegaSST.operation(name="kOmegaSSTCorrect", fallback=True)
+def correct(
+    self: Any,
+    turbulence: Annotated[Any, "models"],  # the wrapped pybFoam handle
+) -> FieldUpdates:
+    """Fallback path (incompressibleFluid): advance OpenFOAM's own kOmegaSST.
+
+    Scheduled only when a solver selects fallback=True; the native NeoN
+    transport @operations above are skipped. The pybFoam handle owns nut
+    and its stress. Resolved from the Context, never captured in the closure
+    (see [[project_pybfoam_op_closure_cycle]]).
+    """
+    turbulence.correct()
+    return FieldUpdates({})

@@ -71,22 +71,25 @@ def test_list_configs_classifies_origin(solver: Any) -> None:
     assert by_cls["GravityConfig"].origin == "optional_model"
 
 
-def test_list_configs_neon_transport_turbulence_are_solver_origin() -> None:
-    # G1 regression: incompressibleFluidNeoN has no Newtonian/laminar model, so its
-    # transportProperties/turbulenceProperties are solver-declared always-apply
-    # configs. model_catalog omits them; list_configs must flag them origin="solver"
-    # so an agent authors them (missing either → runtime FATAL ERROR).
+def test_list_configs_neon_transport_is_solver_turbulence_is_model_owned() -> None:
+    # After the turbulence-family merge incompressibleFluidNeoN binds the single
+    # momentumTransportModel family (its members own turbulenceProperties), so
+    # TurbulencePropertiesConfig is now required-model-owned — the same as the
+    # pybFoam incompressibleFluid solver. Viscosity is still NOT a Python family on
+    # NeoN (the C++ factory reads transportProperties directly), so
+    # TransportPropertiesConfig stays solver-declared always-apply.
     from neofoam.solver.incompressibleFluidNeoN.incompressibleFluidNeoN import (
         incompressibleFluidNeoN,
     )
 
     by_cls = {c.cls_name: c for c in list_configs(incompressibleFluidNeoN)}
     assert by_cls["TransportPropertiesConfig"].origin == "solver"
-    assert by_cls["TurbulencePropertiesConfig"].origin == "solver"
-    # none of the NeoN models owns them, so model_catalog does not list them
+    assert by_cls["TurbulencePropertiesConfig"].origin == "required_model"
+    # transportProperties is not model-owned (no viscosity family), but
+    # turbulenceProperties now is, so model_catalog lists it.
     owned = {d for e in model_catalog(incompressibleFluidNeoN) for d in e.dicts}
     assert "TransportPropertiesConfig" not in owned
-    assert "TurbulencePropertiesConfig" not in owned
+    assert "TurbulencePropertiesConfig" in owned
 
 
 def test_config_schema_returns_schema_ui_and_defaults(solver: Any) -> None:

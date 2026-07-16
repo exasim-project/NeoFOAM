@@ -200,7 +200,7 @@ def role_subject(case: Path) -> None:
 
     from neofoam import neofoam_bindings as nfb
     from neofoam.turbulence.config import TurbulencePropertiesConfig
-    from neofoam.turbulence.neon import build_neon_turbulence
+    from neofoam.turbulence.selection import select_turbulence_model
 
     cfg = TurbulencePropertiesConfig.load(case_dir=str(case))
 
@@ -232,7 +232,9 @@ def role_subject(case: Path) -> None:
     U_neon = nfb.read_vector_volume_field(rt, "U")
     phi_neon = nfb.create_phi(rt, "U")
     nu = nfb.create_uniform_volume_field(rt, "nu", nfb.read_transport_viscosity(rt))
-    turbulence = build_neon_turbulence(cfg, rt, nu, case)
+    turbulence = select_turbulence_model(
+        cfg, fallback=False, runtime=rt, nu=nu, case_dir=case
+    )
     turbulence.validate(U_neon)
     turbulence.correct(U_neon, phi_neon, rt)
 
@@ -247,7 +249,57 @@ def role_subject(case: Path) -> None:
         )
 
 
-_ROLES = {"setup": role_setup, "reference": role_reference, "subject": role_subject}
+def role_subject_fb(case: Path) -> None:
+    """pybFoam-fallback handle via ``select(fallback=True)``, one op step → ``subject_fb_nut.npy``.
+
+    Builds the model the way ``incompressibleFluid`` does — the merged-family
+    :func:`select_turbulence_model` with ``fallback=True`` returns a
+    :class:`FallbackHandle` whose ``.operations`` is the model file's
+    ``fallback=True`` ``correct`` op. Running that op advances the wrapped pybFoam
+    model's ``nut``. Because the fallback *is* pybFoam, this equals the reference —
+    the point is to prove the handle + op-dispatch wiring actually advances ``nut``,
+    not that two engines agree.
+    """
+    import pybFoam as pyf
+    from pybFoam.turbulence import singlePhaseTransportModel
+
+    from neofoam.framework.context import Context
+    from neofoam.turbulence.config import TurbulencePropertiesConfig
+    from neofoam.turbulence.selection import select_turbulence_model
+
+    of_time = pyf.Time(str(case.parent), case.name)
+    of_mesh = pyf.fvMesh(of_time)
+    U = pyf.volVectorField.read_field(of_mesh, "U")
+    phi = pyf.createPhi(U)
+    transport = singlePhaseTransportModel(U, phi)
+    cfg = TurbulencePropertiesConfig.load(case_dir=str(case))
+
+    handle = select_turbulence_model(
+        cfg, fallback=True, case_dir=str(case), U=U, phi=phi, transport=transport
+    ).build()
+    # The solver resolves the handle from ctx.models["turbulence"]; the fallback op
+    # calls its no-arg correct().
+    ctx = Context(fields={}, models={"turbulence": handle})
+    for op in handle.operations:
+        op.run(ctx)
+
+    registered = pyf.volScalarField.from_registry(of_mesh, "nut")
+    if registered is not None:
+        np.save(case / "subject_fb_nut.npy", np.asarray(registered.internalField()))
+    else:
+        # laminar registers no nut; nut() is a fresh non-const zero tmp.
+        np.save(
+            case / "subject_fb_nut.npy",
+            np.asarray(handle.nut().ref().internalField()),
+        )
+
+
+_ROLES = {
+    "setup": role_setup,
+    "reference": role_reference,
+    "subject": role_subject,
+    "subject_fb": role_subject_fb,
+}
 
 
 def main() -> None:
