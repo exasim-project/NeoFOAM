@@ -2,6 +2,8 @@
 #
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
+"""Unit tests for init-graph validation diagnostics and errors."""
+
 import pytest
 
 from neofoam.framework.initialization.execution.validation import (

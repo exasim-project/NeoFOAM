@@ -3,15 +3,14 @@
 
 """BaseConfig — Pydantic model with automatic IO strategy registration."""
 
-from typing import ClassVar, Optional, Type, TypeVar, Union, cast
+from typing import ClassVar, Optional, Type, TypeVar, Union
 from pathlib import Path
 
 from pydantic import BaseModel, ValidationError
 
+from neofoam.io.dictfile import DictFile
 from neofoam.io.validation_types import (
     IOMetadata,
-    ReadingStrategy,
-    WritingStrategy,
     ValidationErrors,
 )
 
@@ -28,6 +27,18 @@ class BaseConfig(BaseModel):
     io_config: ClassVar[Optional[IOMetadata]] = None
 
     @classmethod
+    def form_defaults(cls) -> Optional[dict[str, object]]:
+        """A runnable starter prefill for this config, or ``None`` for "use field defaults".
+
+        Most configs derive their form prefill from their field defaults (see
+        :func:`neofoam.io.pydantic_schema.default_values`). Configs whose content is
+        modelled as *required-but-defaultless* fields — e.g. the ``fvSchemes`` /
+        ``fvSolution`` scheme/solver dicts — return ``None`` here would leave the prefill
+        empty, so they override this to hand back a canonical, ready-to-edit scaffold.
+        """
+        return None
+
+    @classmethod
     def _get_io(cls) -> IOMetadata:
         """Return ``io_config`` or raise if not registered."""
         if cls.io_config is None:
@@ -40,24 +51,16 @@ class BaseConfig(BaseModel):
         return Path(case_dir) / cls._get_io().file
 
     @classmethod
-    def get_reading_strategy(cls) -> ReadingStrategy:
-        """Get the reading strategy for this config class."""
-        return cls._get_io().reader
-
-    @classmethod
-    def get_writing_strategy(cls) -> WritingStrategy:
-        """Get the writing strategy for this config class."""
-        return cls._get_io().writer
-
-    @classmethod
-    def set_reading_strategy(cls, strategy: ReadingStrategy) -> None:
-        """Set custom reading strategy for this config class."""
-        cls._get_io().reader = strategy
-
-    @classmethod
-    def set_writing_strategy(cls, strategy: WritingStrategy) -> None:
-        """Set custom writing strategy for this config class."""
-        cls._get_io().writer = strategy
+    def _resolve_path(cls, case_dir: Union[Path, str], file: Optional[str]) -> Path:
+        """Resolve the on-disk path: explicit file, *file* override, or default."""
+        case_dir_path = Path(case_dir)
+        if case_dir_path.is_file() or (
+            not case_dir_path.exists() and case_dir_path.suffix
+        ):
+            return case_dir_path  # case_dir is an explicit file path
+        if file is not None:
+            return case_dir_path / file  # override filename, relative to case_dir
+        return cls.get_default_path(case_dir)
 
     @classmethod
     def load(
@@ -68,22 +71,18 @@ class BaseConfig(BaseModel):
         validate: bool = True,
         encoding: str = "utf-8",
     ) -> T:
-        """Load configuration from file using registered strategy.
+        """Load configuration from file via :class:`~neofoam.io.DictFile`.
 
-        Reads the file via the registered strategy, then optionally validates
-        the data against the model's field types and constraints.
-
-        When ``validate=True`` (default), data is loaded and validated via
-        ``model_validate``. This ensures **all** validation errors are
-        captured and reported in a single ``ValidationError``.
-
-        When ``validate=False``, data is loaded via ``model_construct`` only,
-        skipping validation entirely (useful for inspection or migration).
+        Opens the resolved file with ``DictFile`` (format inferred from the name)
+        and fills this config out of its declared sub-dict. When ``validate=True``
+        (default) the data is validated via ``model_validate`` (a single
+        ``ValidationError`` reports every problem); when ``validate=False`` it is
+        coerced but built via ``model_construct`` only (inspection / migration).
 
         Args:
             case_dir: Directory containing the configuration file or explicit file path
-            encoding: File encoding (default: utf-8)
-            validate: If True, validate data after loading and raise
+            encoding: Accepted for compatibility; ``DictFile`` reads as UTF-8.
+            validate: If True, validate after loading and raise
                       ``pydantic.ValidationError`` on failure (default: True)
             file: Optional filename override. When provided, resolves relative
                   to ``case_dir`` instead of using the registered default path.
@@ -96,25 +95,8 @@ class BaseConfig(BaseModel):
             KeyError: If a configured subdict path doesn't resolve
             pydantic.ValidationError: If validate=True and data has errors
         """
-        case_dir_path = Path(case_dir)
-        if case_dir_path.is_file() or (
-            not case_dir_path.exists() and case_dir_path.suffix
-        ):
-            # case_dir is an explicit file path
-            path = case_dir_path
-        elif file is not None:
-            # Override filename, resolve relative to case_dir
-            path = case_dir_path / file
-        else:
-            path = cls.get_default_path(case_dir)
-
-        reading_strategy = cls.get_reading_strategy()
-        data = reading_strategy.read(cls, path, encoding=encoding)
-
-        if validate:
-            return cls.model_validate(data)
-
-        return cast(T, cls.model_construct(**data))
+        path = cls._resolve_path(case_dir, file)
+        return DictFile(path).fill(cls, validate=validate)
 
     @property
     def configs(self) -> list["BaseConfig"]:
@@ -176,11 +158,15 @@ class BaseConfig(BaseModel):
         encoding: str = "utf-8",
         file: Optional[str] = None,
     ) -> None:
-        """Save configuration to file using registered strategy.
+        """Save configuration to file via :class:`~neofoam.io.DictFile`.
+
+        The target file's format is chosen from its name and this config is
+        written under its declared sub-dict, creating the file/dirs as needed
+        (a ``FoamFile`` header is synthesised for header-less OpenFOAM configs).
 
         Args:
             case_dir: Directory to save the configuration file or explicit file path
-            encoding: File encoding (default: utf-8)
+            encoding: Accepted for compatibility; ``DictFile`` writes UTF-8.
             file: Optional filename override. When provided, resolves relative
                   to ``case_dir`` instead of using the registered default path.
         """
@@ -192,8 +178,7 @@ class BaseConfig(BaseModel):
         else:
             path = self.__class__.get_default_path(case_dir)
 
-        writing_strategy = self.__class__.get_writing_strategy()
-        writing_strategy.write(self, path, encoding=encoding)
+        DictFile.save(self, path)
 
     # ------------------------------------------------------------------
     # Validation helpers

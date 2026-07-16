@@ -85,9 +85,3 @@ def test_detect_optional_models_instantiates_runtimes() -> None:
         "CoupledModel",
         "MultiModel",
     }
-
-
-if __name__ == "__main__":
-    import pytest
-
-    pytest.main([__file__, "-v"])

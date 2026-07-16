@@ -5,10 +5,10 @@
 
 from __future__ import annotations
 
-import pytest
-from pydantic import BaseModel
-
 from typing import Any
+
+import pytest
+from pydantic import BaseModel, ValidationError
 
 from neofoam.fields.value_types import (
     FieldValue,
@@ -148,9 +148,7 @@ def test_field_value_any_accepts_scalar_and_vector() -> None:
 
 
 def test_field_value_scalar_rejects_vector() -> None:
-    import pytest as _pytest
-
-    with _pytest.raises(Exception):
+    with pytest.raises(ValidationError):
         _ScalarHolder(v=[1, 0, 0])
 
 

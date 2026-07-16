@@ -1,9 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-import pytest
-
-pytest.importorskip("pybFoam")
 
 from neofoam.telemetry.mpi import current_mpi_info  # noqa: E402
 

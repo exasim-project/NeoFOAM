@@ -405,6 +405,37 @@ class ModelSpec:
         return ops
 
     # ------------------------------------------------------------------
+    # Public spec-as-runtime helpers (used by solver entrypoints)
+    # ------------------------------------------------------------------
+
+    def build_steps(self) -> list[Any]:
+        """Run the registered ``@build`` function with this spec as its binding.
+
+        For specs used as their own runtime (core models composed without
+        ``instantiate``): emits the spec's InitSteps, or an empty list when no
+        ``@build`` is registered.
+        """
+        return list(self._build_func(self)) if self._build_func is not None else []
+
+    def build_operations_for(self, runtime: Any) -> list[Operation]:
+        """Build this spec's Operations with ``runtime`` as the ``self`` binding.
+
+        ``runtime`` is a ModelRuntime — or the bare spec itself for specs used
+        as their own runtime.
+        """
+        return self._build_operations_for(runtime)
+
+    def wrap_operation(
+        self, func: Callable[..., Any], runtime: Any
+    ) -> Callable[..., Any]:
+        """Wrap ``func`` with this spec's dependency resolution.
+
+        For ``@operation_collection`` bodies, which bypass the spec's default
+        operation wrapping and must wrap each exposed operation themselves.
+        """
+        return wrap_with_dependency_resolution(func, runtime, self._dependency_resolver)
+
+    # ------------------------------------------------------------------
     # Plugin registration
     # ------------------------------------------------------------------
 

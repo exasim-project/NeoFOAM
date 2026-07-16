@@ -18,7 +18,6 @@ from typing import Any
 
 import pytest
 
-pytest.importorskip("pybFoam")
 pytest.importorskip("opentelemetry")
 
 from neofoam.solver.incompressibleFluid import run  # noqa: E402

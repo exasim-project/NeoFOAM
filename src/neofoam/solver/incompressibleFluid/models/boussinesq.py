@@ -20,6 +20,7 @@ from typing import Annotated, Any, Protocol
 
 import pybFoam as pyf
 from pybFoam import fvm, surfaceScalarField, volScalarField
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
 
 from neofoam.fields import (
     AlphatWallFunctionBC,
@@ -44,9 +45,89 @@ from .incompressibleFluidModel import Model, incompressibleFluidModel
 
 
 class ThermalTurbulenceModel(Protocol):
+    def has_nut(self) -> bool: ...
+
     def nut(self) -> Any: ...
 
     def nu(self) -> Any: ...
+
+
+def _fmt_component(x: float) -> str:
+    """Render a vector component with no gratuitous ``.0`` (``0.0`` -> ``0``)."""
+    return str(int(x)) if x == int(x) else repr(x)
+
+
+def _divide(numerator: Any, denominator: Any) -> Any:
+    """``numerator / denominator``, rebuilding the quotient when pybFoam binds no
+    ``dimensionedScalar / dimensionedScalar``.
+
+    A field numerator (the eddy-viscosity fallback) divides directly; laminar ``nu``
+    is a plain ``dimensionedScalar``, and scalar/scalar has no bound operator — so it
+    is rebuilt as a ``dimensionedScalar``. Mirrors
+    :func:`neofoam.turbulence.stress._add_viscosity`.
+    """
+    try:
+        return numerator / denominator
+    except TypeError:
+        return pyf.dimensionedScalar(
+            pyf.Word(f"({numerator.name()}|{denominator.name()})"),
+            numerator.dimensions() / denominator.dimensions(),
+            numerator.value() / denominator.value(),
+        )
+
+
+class _GravityHeader(BaseModel):
+    """The ``FoamFile`` header that identifies ``constant/g`` to OpenFOAM.
+
+    ``class`` is pinned to ``uniformDimensionedVectorField`` (not the generic
+    ``dictionary`` the writer injects for headerless configs) so OpenFOAM reads
+    the file as a gravity field.
+    """
+
+    model_config = ConfigDict(extra="allow", populate_by_name=True)
+
+    version: str = "2.0"
+    format: str = "ascii"
+    field_class: str = Field(default="uniformDimensionedVectorField", alias="class")
+    object: str = "g"
+
+
+@IOStrategy(OF("constant/g"))
+class GravityConfig(BaseConfig):
+    """``constant/g`` -- the uniform gravitational acceleration buoyancy needs.
+
+    The Boussinesq ``@build`` reads ``g`` at init (see ``_gh_ref``) to form the
+    geopotential ``gh``/``ghf``; without this file the solver aborts with
+    *cannot find file "constant/g"*. Defaults are Earth gravity acting in -y:
+    ``dimensions [0 1 -2 0 0 0 0]``, ``value (0 -9.81 0)``. ``dimensions`` and
+    ``value`` round-trip OpenFOAM's bracket/paren tokens as Python lists.
+    """
+
+    FoamFile: _GravityHeader = Field(default_factory=_GravityHeader)
+    dimensions: list[int] = Field(default_factory=lambda: [0, 1, -2, 0, 0, 0, 0])
+    value: list[float] = Field(default_factory=lambda: [0.0, -9.81, 0.0])
+
+    @field_validator("dimensions", mode="before")
+    @classmethod
+    def _parse_dimensions(cls, value: Any) -> list[int]:
+        if isinstance(value, str):
+            return [int(p) for p in value.strip().strip("[]").split()]
+        return [int(v) for v in value]
+
+    @field_validator("value", mode="before")
+    @classmethod
+    def _parse_value(cls, value: Any) -> list[float]:
+        if isinstance(value, str):
+            return [float(p) for p in value.strip().strip("()").split()]
+        return [float(v) for v in value]
+
+    @field_serializer("dimensions", when_used="always")
+    def _serialize_dimensions(self, value: list[int]) -> str:
+        return "[" + " ".join(str(int(v)) for v in value) + "]"
+
+    @field_serializer("value", when_used="always")
+    def _serialize_value(self, value: list[float]) -> str:
+        return "(" + " ".join(_fmt_component(v) for v in value) + ")"
 
 
 @IOStrategy(OF("constant/transportProperties"))
@@ -89,6 +170,7 @@ boussinesq = (
 # declared schema set (``collect_config_classes``) — the ``@load`` path
 # still drives instantiation, so this does not change loading behaviour.
 boussinesq.config(BoussinesqConfig)
+boussinesq.config(GravityConfig)
 
 # Per-spec fvSchemes / fvSolution slices for the energy equation.
 BoussinesqFvSchemes = boussinesq.config(fvSchemes)
@@ -215,7 +297,17 @@ def build(configs: BoussinesqConfig) -> list[object]:
     """
 
     def create_rhok(context: dict[str, Any]) -> volScalarField:
-        return volScalarField.read_field(context["mesh"], "rhok")
+        # rhok is the Boussinesq density factor: a *computed* field, not read
+        # from disk. Mirror OpenFOAM buoyantBoussinesqPimpleFoam createFields.H
+        # (rhok = 1 - beta*(T - TRef), NO_READ) so a case never needs a 0/rhok
+        # file — it is constructed from T here and refreshed by ``update_rhok``.
+        temperature = context["fields.T"]
+        beta = pyf.dimensionedScalar(
+            "beta", pyf.dimless / pyf.dimTemperature, configs.beta
+        )
+        t_ref = pyf.dimensionedScalar("TRef", pyf.dimTemperature, configs.TRef)
+        one = pyf.dimensionedScalar("one", pyf.dimless, 1.0)
+        return volScalarField(pyf.Word("rhok"), one - beta * (temperature - t_ref))
 
     def _gh_ref(context: dict[str, Any]) -> tuple[Any, Any]:
         mesh = context["mesh"]
@@ -263,7 +355,9 @@ def build(configs: BoussinesqConfig) -> list[object]:
 
 
 @boussinesq.operation(operation_number="2.5", depends_on=["momentum"])
-@BoussinesqFvSchemes.add(ddt="default", div="div(phi,T)", laplacian="default")
+@BoussinesqFvSchemes.add(
+    ddt="default", div="div(phi,T)", grad="grad(T)", laplacian="default"
+)
 @BoussinesqFvSolution.add("T")
 def solve_energy(
     self: Any,
@@ -276,10 +370,16 @@ def solve_energy(
     pr = pyf.dimensionedScalar("Pr", pyf.dimless, configs.Pr)
     prt = pyf.dimensionedScalar("Prt", pyf.dimless, configs.Prt)
 
-    alphat.assign(turbulence.nut() / prt)
+    if turbulence.has_nut():
+        alphat.assign(turbulence.nut() / prt)
+    else:
+        # Laminar: no eddy viscosity ⇒ alphat ≡ 0, so alpha_eff = nu/Pr (the
+        # molecular thermal diffusivity). Zero alphat in place, keeping its dims.
+        zero = pyf.dimensionedScalar("zero", pyf.dimless, 0.0)
+        alphat.assign(alphat * zero)
     alphat.correctBoundaryConditions()
 
-    alpha_eff = turbulence.nu() / pr + alphat
+    alpha_eff = _divide(turbulence.nu(), pr) + alphat
     t_eqn = pyf.fvScalarMatrix(
         fvm.ddt(T) + fvm.div(phi, T) - fvm.laplacian(alpha_eff, T)
     )

@@ -307,3 +307,66 @@ def test_graph_loads_open_entries_with_depends_on() -> None:
 def test_absent_file_raises_file_not_found(tmp_path: Path) -> None:
     with pytest.raises(FileNotFoundError):
         PreprocessConfig.load(case_dir=tmp_path)
+
+
+def _consuming_tool(name: str, seen: dict[str, Any]) -> Any:
+    """A consumes_mesh tool (snappy-like): its build reads ``_prev_mesh``."""
+    t = Tool(name, consumes_mesh=True)
+    out: Any = object()
+
+    @t.build
+    def _b(cfg: Any) -> list[InitStep]:
+        def init(ctx: dict[str, Any]) -> Any:
+            seen[name] = ctx["_prev_mesh"]
+            return out
+
+        return [InitStep(name=f"preprocess.{name}", initializer=init)]
+
+    return t
+
+
+def test_dependency_less_consumer_seeded_from_mesh_source() -> None:
+    # A single-tool snappy-like slice resumes from a mesh already on disk: the
+    # injected mesh_source provides _prev_mesh.
+    seen: dict[str, Any] = {}
+    disk_mesh = object()
+    rt = _consuming_tool("snappyLike", seen).instantiate({"tool": "snappyLike"})
+
+    steps = tool_graph_steps([rt], mesh_source=lambda ctx: disk_mesh)
+    steps.append(lazy("_foam_time", lambda ctx: object()))
+    ctx = execute_initialization(steps)
+    assert seen["snappyLike"] is disk_mesh
+    # The consumer is still the sink → published as the terminal mesh alias.
+    assert ctx.mesh is not None
+
+
+def test_dependency_less_consumer_without_mesh_source_raises() -> None:
+    rt = _consuming_tool("snappyLike", {}).instantiate({"tool": "snappyLike"})
+    with pytest.raises(ValueError, match="snappyLike.*no mesh source"):
+        tool_graph_steps([rt])
+
+
+def test_mesh_source_not_used_for_creators_or_chained_consumers() -> None:
+    # A full blockMesh -> snappy chain must NOT read the disk mesh: snappy's
+    # _prev_mesh is its declared dependency's output, exactly as before.
+    seen: dict[str, Any] = {}
+    produced: dict[str, Any] = {}
+    creator = _stub_tool("creatorTool", seen, produced)
+    consumer = _consuming_tool("chainedConsumer", seen)
+    runtimes = [
+        creator.instantiate({"tool": "creatorTool"}),
+        consumer.instantiate(
+            {"tool": "chainedConsumer", "depends_on": ["creatorTool"]}
+        ),
+    ]
+    disk_reads: list[bool] = []
+
+    def source(ctx: dict[str, Any]) -> Any:
+        disk_reads.append(True)
+        return object()
+
+    steps = tool_graph_steps(runtimes, mesh_source=source)
+    steps.append(lazy("_foam_time", lambda ctx: object()))
+    execute_initialization(steps)
+    assert seen["chainedConsumer"] is produced["creatorTool"]
+    assert disk_reads == []  # lazily declared, never needed → never read

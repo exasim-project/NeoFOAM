@@ -2,6 +2,8 @@
 #
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
+"""Unit tests for topological ordering of init steps by dependency."""
+
 import pytest
 
 from neofoam.framework.initialization.execution.ordering import _topological_sort

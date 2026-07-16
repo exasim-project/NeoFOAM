@@ -18,7 +18,6 @@ from neofoam.framework.graph import (
     MissingDependencyError,
     NetworkxTopologicalSorter,
 )
-from neofoam.framework.graph import resolver as resolver_module
 from neofoam.framework.graph.resolver import (
     _build_global_graph as build_global_graph,
     _collect_tagged_ops as collect_tagged_ops,
@@ -136,72 +135,69 @@ def test_collect_flat_builder() -> None:
     assert scopes == {"A": "root", "B": "root"}
 
 
-def test_collect_single_loop_scopes() -> None:
-    """Loop op is tagged with parent scope; its children with the loop scope."""
-    builder = _build_single_loop()
-    tagged = collect_tagged_ops(builder, Operations())
-    scopes = {op.operation_name: scope for scope, op in tagged}
+@pytest.mark.parametrize(
+    "builder, model_ops, expected",
+    [
+        (
+            _build_single_loop(),
+            Operations(),
+            {
+                "time_loop": "root",
+                "step1": "time_loop",
+                "step2": "time_loop",
+                "step3": "time_loop",
+            },
+        ),
+        (
+            _build_nested(),
+            Operations(),
+            {
+                "time_loop": "root",
+                "inner_loop": "time_loop",
+                "step1": "inner_loop",
+                "step2": "inner_loop",
+                "step3": "inner_loop",
+            },
+        ),
+        (
+            _build_single_loop(),
+            Operations([_seq("M1", number="1.5", depends_on=["step1"])]),
+            {"M1": "time_loop"},
+        ),
+        (
+            _build_single_loop(),
+            Operations(
+                [
+                    _seq("M1", number="1.5", depends_on=["step1"]),
+                    _seq("M2", number="1.7", depends_on=["M1"]),
+                ]
+            ),
+            {"M1": "time_loop", "M2": "time_loop"},
+        ),
+        (
+            _build_nested(),
+            Operations([_seq("M_free", number="0.5")]),
+            {"M_free": "inner_loop"},
+        ),
+    ],
+    ids=[
+        "single_loop_scopes",
+        "nested_loop_scopes",
+        "model_ops_with_deps_placed_in_loop",
+        "model_ops_chained",
+        "model_ops_no_deps_default_to_innermost",
+    ],
+)
+def test_collect_scopes(builder, model_ops, expected) -> None:
+    """Loop/model ops are tagged with the expected scope at each nesting level.
 
-    assert scopes["time_loop"] == "root"
-    assert scopes["step1"] == "time_loop"
-    assert scopes["step2"] == "time_loop"
-    assert scopes["step3"] == "time_loop"
-
-
-def test_collect_nested_loop_scopes() -> None:
-    """Nested loops assign scopes correctly at each level."""
-    builder = _build_nested()
-    tagged = collect_tagged_ops(builder, Operations())
-    scopes = {op.operation_name: scope for scope, op in tagged}
-
-    assert scopes["time_loop"] == "root"
-    assert scopes["inner_loop"] == "time_loop"
-    assert scopes["step1"] == "inner_loop"
-    assert scopes["step2"] == "inner_loop"
-    assert scopes["step3"] == "inner_loop"
-
-
-def test_collect_model_ops_with_deps_placed_in_loop() -> None:
-    """Model ops depending on loop-body ops are placed in that loop's scope."""
-    builder = _build_single_loop()
-    model_ops = Operations(
-        [
-            _seq("M1", number="1.5", depends_on=["step1"]),
-        ]
-    )
-
+    Each case asserts the scope of the named ops it cares about (the builder may
+    contain more ops than the case checks).
+    """
     tagged = collect_tagged_ops(builder, model_ops)
     scopes = {op.operation_name: scope for scope, op in tagged}
-
-    assert scopes["M1"] == "time_loop"
-
-
-def test_collect_model_ops_chained() -> None:
-    """Chained model ops: second finds first's scope via updated lookup."""
-    builder = _build_single_loop()
-    model_ops = Operations(
-        [
-            _seq("M1", number="1.5", depends_on=["step1"]),
-            _seq("M2", number="1.7", depends_on=["M1"]),
-        ]
-    )
-
-    tagged = collect_tagged_ops(builder, model_ops)
-    scopes = {op.operation_name: scope for scope, op in tagged}
-
-    assert scopes["M1"] == "time_loop"
-    assert scopes["M2"] == "time_loop"
-
-
-def test_collect_model_ops_no_deps_default_to_innermost() -> None:
-    """Model ops without deps default to innermost loop scope."""
-    builder = _build_nested()
-    model_ops = Operations([_seq("M_free", number="0.5")])
-
-    tagged = collect_tagged_ops(builder, model_ops)
-    scopes = {op.operation_name: scope for scope, op in tagged}
-
-    assert scopes["M_free"] == "inner_loop"
+    for name, scope in expected.items():
+        assert scopes[name] == scope
 
 
 def test_collect_empty_builder_no_model_ops() -> None:
@@ -216,96 +212,79 @@ def test_collect_empty_builder_no_model_ops() -> None:
 # ===========================================================================
 
 
-def test_infer_scope_from_depends_on() -> None:
-    """Scope inferred from depends_on target's scope."""
-    op = _seq("M1", depends_on=["step1"])
-    scope = infer_target_scope(
-        op,
-        op_to_scope={"step1": "time_loop"},
-        all_scopes={"root", "time_loop"},
-    )
-    assert scope == "time_loop"
-
-
-def test_infer_scope_from_before() -> None:
-    """Scope inferred from before target's scope."""
-    op = _seq("M1", before=["step2"])
-    scope = infer_target_scope(
-        op,
-        op_to_scope={"step2": "inner_loop"},
-        all_scopes={"root", "time_loop", "inner_loop"},
-    )
-    assert scope == "inner_loop"
-
-
-def test_infer_scope_prefers_non_root() -> None:
-    """When deps span root and a loop scope, prefer the loop scope."""
-    op = _seq("M1", depends_on=["root_op", "loop_op"])
-    scope = infer_target_scope(
-        op,
-        op_to_scope={"root_op": "root", "loop_op": "time_loop"},
-        all_scopes={"root", "time_loop"},
-    )
-    assert scope == "time_loop"
-
-
-def test_infer_scope_all_root_returns_root() -> None:
-    """When all deps are in root scope, return root."""
-    op = _seq("M1", depends_on=["A"])
-    scope = infer_target_scope(
-        op,
-        op_to_scope={"A": "root"},
-        all_scopes={"root", "time_loop"},
-    )
-    assert scope == "root"
-
-
-def test_infer_scope_no_deps_falls_back_to_deepest() -> None:
-    """No deps/before → falls back to deepest scope using nesting depth."""
-    op = _seq("M1")
-    scope = infer_target_scope(
-        op,
-        op_to_scope={},
-        all_scopes={"root", "inner_loop", "time_loop"},
-        scope_depth={"root": 0, "time_loop": 1, "inner_loop": 2},
-    )
-    assert scope == "inner_loop"
-
-
-def test_infer_scope_no_deps_falls_back_to_deepest_adversarial_names() -> None:
-    """Nesting depth beats alphabetical order for adversarial scope names."""
-    op = _seq("M1")
-    # "a_outer" < "z_inner" alphabetically, but z_inner is deeper
-    scope = infer_target_scope(
-        op,
-        op_to_scope={},
-        all_scopes={"root", "a_outer", "z_inner"},
-        scope_depth={"root": 0, "a_outer": 1, "z_inner": 2},
-    )
-    assert scope == "z_inner"
-
-
-def test_infer_scope_no_deps_no_loops_returns_root() -> None:
-    """No deps and no loop scopes → root."""
-    op = _seq("M1")
-    scope = infer_target_scope(
-        op,
-        op_to_scope={},
-        all_scopes={"root"},
-    )
-    assert scope == "root"
-
-
-def test_infer_scope_unknown_dep_ignored() -> None:
-    """Dependencies not in op_to_scope are silently ignored."""
-    op = _seq("M1", depends_on=["unknown_op"])
-    scope = infer_target_scope(
-        op,
-        op_to_scope={"step1": "time_loop"},
-        all_scopes={"root", "time_loop"},
-    )
-    # No known dep scopes → falls back to deepest loop
-    assert scope == "time_loop"
+@pytest.mark.parametrize(
+    "op, kwargs, expected",
+    [
+        (
+            _seq("M1", depends_on=["step1"]),
+            dict(op_to_scope={"step1": "time_loop"}, all_scopes={"root", "time_loop"}),
+            "time_loop",
+        ),
+        (
+            _seq("M1", before=["step2"]),
+            dict(
+                op_to_scope={"step2": "inner_loop"},
+                all_scopes={"root", "time_loop", "inner_loop"},
+            ),
+            "inner_loop",
+        ),
+        (
+            _seq("M1", depends_on=["root_op", "loop_op"]),
+            dict(
+                op_to_scope={"root_op": "root", "loop_op": "time_loop"},
+                all_scopes={"root", "time_loop"},
+            ),
+            "time_loop",
+        ),
+        (
+            _seq("M1", depends_on=["A"]),
+            dict(op_to_scope={"A": "root"}, all_scopes={"root", "time_loop"}),
+            "root",
+        ),
+        (
+            _seq("M1"),
+            dict(
+                op_to_scope={},
+                all_scopes={"root", "inner_loop", "time_loop"},
+                scope_depth={"root": 0, "time_loop": 1, "inner_loop": 2},
+            ),
+            "inner_loop",
+        ),
+        (
+            _seq("M1"),
+            dict(
+                op_to_scope={},
+                all_scopes={"root", "a_outer", "z_inner"},
+                scope_depth={"root": 0, "a_outer": 1, "z_inner": 2},
+            ),
+            "z_inner",
+        ),
+        (
+            _seq("M1"),
+            dict(op_to_scope={}, all_scopes={"root"}),
+            "root",
+        ),
+        (
+            _seq("M1", depends_on=["unknown_op"]),
+            dict(op_to_scope={"step1": "time_loop"}, all_scopes={"root", "time_loop"}),
+            "time_loop",
+        ),
+    ],
+    ids=[
+        "from_depends_on",
+        "from_before",
+        "prefers_non_root",
+        "all_root_returns_root",
+        "no_deps_falls_back_to_deepest",
+        "no_deps_deepest_adversarial_names",
+        "no_deps_no_loops_returns_root",
+        "unknown_dep_ignored",
+    ],
+)
+def test_infer_target_scope(op, kwargs, expected) -> None:
+    """Scope is inferred from deps/before targets, preferring deeper loop scopes,
+    falling back to the deepest scope by nesting depth when there are no deps."""
+    assert infer_target_scope(op, **kwargs) == expected
 
 
 # ===========================================================================
@@ -378,18 +357,16 @@ def test_graph_diamond_edges() -> None:
     assert len(graph.edges) == 4
 
 
-def test_graph_missing_dependency_raises() -> None:
-    """Depending on non-existent op raises MissingDependencyError."""
-    tagged = [("root", _seq("A", depends_on=["ghost"]))]
-
-    with pytest.raises(MissingDependencyError, match="ghost"):
-        build_global_graph(tagged)
-
-
-def test_graph_missing_before_target_raises() -> None:
-    """before targeting non-existent op raises MissingDependencyError."""
-    tagged = [("root", _seq("A", before=["ghost"]))]
-
+@pytest.mark.parametrize(
+    "tagged",
+    [
+        [("root", _seq("A", depends_on=["ghost"]))],
+        [("root", _seq("A", before=["ghost"]))],
+    ],
+    ids=["missing_depends_on", "missing_before_target"],
+)
+def test_graph_missing_target_raises(tagged) -> None:
+    """depends_on / before targeting a non-existent op raises MissingDependencyError."""
     with pytest.raises(MissingDependencyError, match="ghost"):
         build_global_graph(tagged)
 
@@ -422,31 +399,79 @@ def test_graph_scope_stored_as_node_attribute() -> None:
 # ===========================================================================
 
 
-def test_sort_independent_by_operation_number() -> None:
-    """Independent ops sorted by OperationNumber as tie-breaker."""
-    tagged = [
-        ("root", _seq("C", number="3")),
-        ("root", _seq("A", number="1")),
-        ("root", _seq("B", number="2")),
-    ]
+@pytest.mark.parametrize(
+    "tagged, expected",
+    [
+        (
+            [
+                ("root", _seq("C", number="3")),
+                ("root", _seq("A", number="1")),
+                ("root", _seq("B", number="2")),
+            ],
+            ["A", "B", "C"],
+        ),
+        (
+            [
+                ("root", _seq("C", number="3", depends_on=["B"])),
+                ("root", _seq("A", number="1")),
+                ("root", _seq("B", number="2", depends_on=["A"])),
+            ],
+            ["A", "B", "C"],
+        ),
+        (
+            [
+                ("root", _seq("op_2", number="2")),
+                ("root", _seq("op_1_1", number="1.1")),
+                ("root", _seq("op_1", number="1")),
+                ("root", _seq("op_1_0_1", number="1.0.1")),
+            ],
+            ["op_1", "op_1_0_1", "op_1_1", "op_2"],
+        ),
+    ],
+    ids=[
+        "independent_by_operation_number",
+        "chain_dependency",
+        "sub_version_numbers",
+    ],
+)
+def test_sort_root_exact_order(tagged, expected) -> None:
+    """Root-scope ops sort into the exact expected order (number + dependency edges)."""
     graph, op_map = build_global_graph(tagged)
     result = sort_global(graph, op_map, tagged)
 
     names = [op.operation_name for op in result["root"]]
-    assert names == ["A", "B", "C"]
+    assert names == expected
 
 
-def test_sort_dependency_overrides_number() -> None:
-    """Dependency edges override OperationNumber ordering."""
-    tagged = [
-        ("root", _seq("A", number="1", depends_on=["B"])),
-        ("root", _seq("B", number="5")),
-    ]
+@pytest.mark.parametrize(
+    "tagged, earlier, later",
+    [
+        (
+            [
+                ("root", _seq("A", number="1", depends_on=["B"])),
+                ("root", _seq("B", number="5")),
+            ],
+            "B",
+            "A",
+        ),
+        (
+            [
+                ("root", _seq("numbered", number="1")),
+                ("root", _seq("unnumbered", number=None)),
+            ],
+            "numbered",
+            "unnumbered",
+        ),
+    ],
+    ids=["dependency_overrides_number", "unnumbered_after_numbered"],
+)
+def test_sort_root_relative_order(tagged, earlier, later) -> None:
+    """*earlier* sorts before *later* (dependency edges and number tie-breaking)."""
     graph, op_map = build_global_graph(tagged)
     result = sort_global(graph, op_map, tagged)
 
     names = [op.operation_name for op in result["root"]]
-    assert names.index("B") < names.index("A")
+    assert names.index(earlier) < names.index(later)
 
 
 def test_sort_groups_by_scope() -> None:
@@ -489,48 +514,6 @@ def test_sort_cyclic_raises() -> None:
 
     with pytest.raises(CyclicDependencyError):
         sort_global(graph, op_map, tagged)
-
-
-def test_sort_unnumbered_after_numbered() -> None:
-    """Ops without OperationNumber sort after numbered (tie-breaker)."""
-    tagged = [
-        ("root", _seq("numbered", number="1")),
-        ("root", _seq("unnumbered", number=None)),
-    ]
-    graph, op_map = build_global_graph(tagged)
-    result = sort_global(graph, op_map, tagged)
-
-    names = [op.operation_name for op in result["root"]]
-    assert names.index("numbered") < names.index("unnumbered")
-
-
-def test_sort_chain_dependency() -> None:
-    """A → B → C chain preserved in sorted output."""
-    tagged = [
-        ("root", _seq("C", number="3", depends_on=["B"])),
-        ("root", _seq("A", number="1")),
-        ("root", _seq("B", number="2", depends_on=["A"])),
-    ]
-    graph, op_map = build_global_graph(tagged)
-    result = sort_global(graph, op_map, tagged)
-
-    names = [op.operation_name for op in result["root"]]
-    assert names == ["A", "B", "C"]
-
-
-def test_sort_sub_version_numbers() -> None:
-    """OperationNumber sub-versions (1, 1.0.1, 1.1, 2) sort correctly."""
-    tagged = [
-        ("root", _seq("op_2", number="2")),
-        ("root", _seq("op_1_1", number="1.1")),
-        ("root", _seq("op_1", number="1")),
-        ("root", _seq("op_1_0_1", number="1.0.1")),
-    ]
-    graph, op_map = build_global_graph(tagged)
-    result = sort_global(graph, op_map, tagged)
-
-    names = [op.operation_name for op in result["root"]]
-    assert names == ["op_1", "op_1_0_1", "op_1_1", "op_2"]
 
 
 # ===========================================================================
@@ -892,9 +875,3 @@ def test_runnable_loop_execution_order_with_model_ops() -> None:
 
     # 2 iterations × (S1, M1, S2) = [S1, M1, S2, S1, M1, S2]
     assert log == ["S1", "M1", "S2", "S1", "M1", "S2"]
-
-
-def test_walk_is_module_level() -> None:
-    """Internal ``_walk`` helper lives at module scope (not nested)."""
-    assert callable(resolver_module._walk)
-    assert resolver_module._walk.__module__ == resolver_module.__name__

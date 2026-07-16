@@ -2,6 +2,8 @@
 #
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
+"""Tests for the graph visualization helpers (DAG building and pyvis rendering)."""
+
 from pathlib import Path
 
 from neofoam.framework.graph import dependency_dag, digraph_to_pyvis_html
@@ -11,7 +13,11 @@ from neofoam.framework.graph.visualization import (
     _compute_nodes_order,
     _compute_steps_order,
 )
-from neofoam.framework.operations import Operation, OperationCollection
+from neofoam.framework.operations import (
+    Operation,
+    OperationCollection,
+    SequentialOp,
+)
 from neofoam.framework.types import OperationMetadata, OperationNumber
 
 
@@ -22,6 +28,13 @@ def _meta(name, depends_on=None, operation_number=None, shape="box", color="ligh
         operation_number=operation_number,
         shape=shape,
         color=color,
+    )
+
+
+def _op(name, depends_on=None):
+    return Operation(
+        func=SequentialOp(lambda ctx: None),
+        metadata=OperationMetadata(op_name=name, depends_on=depends_on or []),
     )
 
 
@@ -81,14 +94,6 @@ def test_compute_nodes_order_dependency_respected():
 
 
 def test_compute_steps_order_returns_sorted_operations():
-    from neofoam.framework.operations import SequentialOp
-
-    def _op(name, depends_on=None):
-        return Operation(
-            func=SequentialOp(lambda ctx: None),
-            metadata=OperationMetadata(op_name=name, depends_on=depends_on or []),
-        )
-
     op_a = _op("A")
     op_b = _op("B", depends_on=["A"])
     op_c = _op("C", depends_on=["B"])
@@ -118,3 +123,7 @@ def test_digraph_to_pyvis_html_writes_file(tmp_path: Path):
     assert out.exists()
     contents = out.read_text()
     assert "node1" in contents and "node2" in contents
+    # The node1 -> node2 dependency edge is rendered into the pyvis graph.
+    assert '"from": "node1"' in contents and '"to": "node2"' in contents
+    # Node labels are rendered so both operations are identifiable in the graph.
+    assert '"label": "node1"' in contents and '"label": "node2"' in contents

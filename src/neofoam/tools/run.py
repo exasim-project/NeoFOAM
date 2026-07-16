@@ -9,6 +9,7 @@ mesh DAG (+ ``_foam_time``) — no solver, fields, models, or time loop. This is
 without OpenFOAM.
 """
 
+import os
 from pathlib import Path
 from typing import Any, Optional
 
@@ -44,14 +45,40 @@ def _case_dir_from_argv(argv: list[str]) -> str:
     return "."
 
 
+def _with_absolute_case(argv: list[str], case_dir: Path) -> list[str]:
+    """Rewrite the ``-case`` value to ``case_dir`` (absolute), else append it.
+
+    We chdir into the case before running so the tools' relative ``dict_file``
+    reads (``system/blockMeshDict`` …) resolve; a relative ``-case`` in argv would
+    then be re-interpreted against the new cwd and break, so pin it absolute.
+    """
+    out = list(argv)
+    for i, token in enumerate(out):
+        if token == "-case" and i + 1 < len(out):
+            out[i + 1] = str(case_dir)
+            return out
+    return out + ["-case", str(case_dir)]
+
+
 def run_preprocess(argv: Optional[list[str]] = None) -> Context:
-    """Build ``_foam_time`` + the resolved tool DAG and execute it; return the Context."""
+    """Build ``_foam_time`` + the resolved tool DAG and execute it; return the Context.
+
+    Resolves ``-case`` to an absolute path and runs the DAG from inside it, so
+    ``neofoam preprocess <case>`` works from any cwd (the tools read their dict
+    files relative to the working directory). The original cwd is always restored.
+    """
     resolved_argv = argv or []
+    case_dir = Path(_case_dir_from_argv(resolved_argv)).resolve()
+    foam_argv = _with_absolute_case(resolved_argv, case_dir)
 
     def create_foam_time(_ctx: dict[str, Any]) -> Any:
-        return pyf.Time(pyf.argList(resolved_argv))
+        return pyf.Time(pyf.argList(foam_argv))
 
-    case_dir = Path(_case_dir_from_argv(resolved_argv))
     steps = [lazy("_foam_time", create_foam_time)]
     steps.extend(tool_graph_steps(detect_tools(case_dir)))
-    return execute_initialization(steps)
+    prev_cwd = Path.cwd()
+    os.chdir(case_dir)
+    try:
+        return execute_initialization(steps)
+    finally:
+        os.chdir(prev_cwd)

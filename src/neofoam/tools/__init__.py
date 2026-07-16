@@ -7,10 +7,21 @@ Importing this package self-registers every built-in tool into the shared regist
 """
 
 from . import block_mesh, check_mesh, snappy_hex_mesh  # noqa: F401  (populate registry)
-from .block_mesh import BlockMeshStep, blockMeshTool
+from .block_mesh import (
+    Block,
+    BlockMeshDictConfig,
+    BlockMeshStep,
+    BlockPatch,
+    blockMeshTool,
+)
 from .check_mesh import CheckMeshStep, checkMeshTool
 from .registry import available_tools, register_tool
-from .snappy_hex_mesh import SnappyHexMeshStep, snappyHexMeshTool
+from .snappy_hex_mesh import (
+    SnappyHexMeshDictConfig,
+    SnappyHexMeshStep,
+    SnappySurface,
+    snappyHexMeshTool,
+)
 
 __all__ = [
     "available_tools",
@@ -21,4 +32,9 @@ __all__ = [
     "BlockMeshStep",
     "SnappyHexMeshStep",
     "CheckMeshStep",
+    "BlockMeshDictConfig",
+    "SnappyHexMeshDictConfig",
+    "Block",
+    "BlockPatch",
+    "SnappySurface",
 ]

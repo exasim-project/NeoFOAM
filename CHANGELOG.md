@@ -29,8 +29,12 @@
 - Add an MCP server for case setup (`neofoam mcp serve`) [#340](https://github.com/exasim-project/NeoFOAM/pull/340)
 - Require Python >=3.10 [#340](https://github.com/exasim-project/NeoFOAM/pull/340)
 - Add opt-in OpenTelemetry tracing for solver operations and init steps: per-rank JSONL span export, Perfetto trace export, and a built-in summary plot; enabled through a `telemetry` sub-dict in `system/controlDict` [#352](https://github.com/exasim-project/NeoFOAM/pull/352)
+- Add `neofoam.casebuild`, a pipe-composed OpenFOAM case builder for tests: `empty`/`from_template` composed with `| block_mesh()/box()/snappy_hex_mesh()/patch()/configs()/unset()` and materialized via `.build_at(dest)` (injectable meshing strategies reuse `neofoam.tools`); adds `CaseDir.read_field` [#349](https://github.com/exasim-project/NeoFOAM/pull/349)
+- Refactor sub-dict IO: introduce `DictFile` and drop `SubdictMixin`/`_foamdict` and the `subdict` strategy [#349](https://github.com/exasim-project/NeoFOAM/pull/349)
+- Extend the MCP case-authoring server: a solver-generic model/config registry with geometry/mesh-input tools (`import_geometry`/`build_mesh_inputs`/`case_patches`), `list_configs` now tags each config's `origin` (`solver`/`required_model`/`optional_model`) so agents author every solver-required file, and `config_schema` returns runnable fvSchemes/fvSolution scaffolds in `defaults`; consolidate case-construction helpers under `neofoam.tooling` [#364](https://github.com/exasim-project/NeoFOAM/pull/364)
 
 ## Development
+- Simplify and standardize the Python `test/` suite to `.claude/TEST_STYLE.md`: migrate solver/tools tests onto the casebuild pipeline, drop pybFoam/OpenFOAM `importorskip` guards (they are hard deps), load real committed case files instead of dict-as-string content, and align `test/framework`, `test/fields`, and `test/algorithms` [#349](https://github.com/exasim-project/NeoFOAM/pull/349)
 - Update submodule regularly by dependabot [#209](https://github.com/exasim-project/NeoFOAM/pull/209)
 - Allow auto grabbing version from submodule without initialization and update the documentation [#210](https://github.com/exasim-project/NeoFOAM/pull/210)
 
@@ -41,6 +45,7 @@
 - Validate the turbulence model before the first solve (`turbulence->validate()` / `correctNut`) in incompressibleFluid and the plain pybFoam port, so `nut` is initialised from `k`/`epsilon` instead of the `0/nut` placeholder — the framework is now bit-identical to native `pimpleFoam` on pitzDaily (requires pybFoam>=0.4.6, which binds `incompressibleTurbulenceModel::validate`) [#352](https://github.com/exasim-project/NeoFOAM/pull/352)
 - Fix the incompressibleFluid `-parallel` path: keep the `argList` (and the MPI session it owns) alive for the whole run so MPI is not finalised mid-solve; the framework now matches native `pimpleFoam -parallel` [#352](https://github.com/exasim-project/NeoFOAM/pull/352)
 - Add missing `<field>Final` linear-solver entries (`sFinal`, `UFinal`, `pFinal`) to the passive-scalar tutorial case and the `per_model_fvSolution.yaml` example so the documentation gallery builds [#352](https://github.com/exasim-project/NeoFOAM/pull/352)
+- Add the `incompressibleVoF` solver (interFoam-style VoF on the SolverSpec/ModelSpec framework) with a runtime-switchable phase-fraction advection family: `MULES` (algebraic, default) and `isoAdvector` (geometric, interIsoFoam), selected via an `advectionScheme` key in `system/fvSolution`; both bitwise-parity-verified on damBreak against native interFoam / interIsoFoam [#354](https://github.com/exasim-project/NeoFOAM/pull/354)
 
 # Version 0.2.0 (2025.12.01)
 - Use NeoN logging functionality [#144](https://github.com/exasim-project/NeoFOAM/pull/144)
