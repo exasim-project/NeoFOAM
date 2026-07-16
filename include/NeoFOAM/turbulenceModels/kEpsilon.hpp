@@ -166,6 +166,18 @@ private:
     nnfvcc::VolumeField<scalar> epsilonSource_;
     nnfvcc::VolumeField<scalar> spEpsilon_;
 
+    // Per-cell epsilon wall-function constraint, rebuilt each correct():
+    // epsilonWallMask_[c] != 0 marks a wall-adjacent cell whose epsilon is
+    // hard-pinned to epsilonWallValue_[c] (the blended viscous/log wall value,
+    // OpenFOAM epsilonWallFunction::manipulateMatrix equivalent). See the
+    // matching omega members in kOmegaSST.
+    NeoN::Vector<scalar> epsilonWallValue_;
+    NeoN::Vector<scalar> epsilonWallMask_;
+    // cornerWeight_[c] = 1/(number of epsilonWallFunction faces touching c);
+    // built once (static wall topology).
+    NeoN::Vector<scalar> cornerWeight_;
+    bool cornerWeightsBuilt_ = false;
+
     // Surface fields
     nnfvcc::SurfaceField<scalar> surfNut_;
     nnfvcc::SurfaceField<scalar> nuEff_;

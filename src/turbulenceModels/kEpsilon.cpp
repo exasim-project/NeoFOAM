@@ -4,6 +4,12 @@
 #include "NeoN/NeoN.hpp"
 
 #include "NeoFOAM/fvcc/boundary/volume/kqRWallFunction.hpp"
+// Included for factory registration: reading a case whose 0/epsilon / 0/nut
+// carry these wall functions constructs them through the volume-boundary
+// factory, and header inclusion in a TU is what registers them (as with
+// kqRWallFunction above / omegaWallFunction in kOmegaSST.cpp).
+#include "NeoFOAM/fvcc/boundary/volume/epsilonWallFunction.hpp"
+#include "NeoFOAM/fvcc/boundary/volume/nutkWallFunction.hpp"
 #include "NeoFOAM/turbulenceModels/kEpsilon.hpp"
 #include "NeoFOAM/auxiliary/readers.hpp"
 #include "NeoFOAM/auxiliary/writers.hpp"
@@ -248,6 +254,9 @@ KEpsilon::KEpsilon(
           mesh,
           fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<scalar>>(mesh)
       )
+    , epsilonWallValue_(exec, static_cast<NeoN::localIdx>(mesh.nCells()), scalar(0))
+    , epsilonWallMask_(exec, static_cast<NeoN::localIdx>(mesh.nCells()), scalar(0))
+    , cornerWeight_(exec, static_cast<NeoN::localIdx>(mesh.nCells()), scalar(0))
     , surfNut_(
           exec,
           "surfNut",
@@ -329,17 +338,24 @@ void KEpsilon::correct(
     calcDiffusivities(nut);
 
     // OF feedback: overwrite Pk_ at wall-function cells with the epsilon wall
-    // function's G formula. Mirrors OpenFOAM
-    //   epsilonWallFunctionFvPatchScalarField::calculate() (epsilon.C:316-336):
+    // function's G formula, and build the near-wall epsilon cell PIN. Mirrors
+    // OpenFOAM epsilonWallFunctionFvPatchScalarField::calculate()
+    // (epsilon.C:316-336) + manipulateMatrix (setValues):
     //     G[wall_cell] = (ν_t_w + ν_w) · |∂U/∂n|_w · C_µ^0.25 · √k / (κ · y)
+    //     ε[wall_cell] = √(ε_vis² + ε_log²)   (BINOMIAL n=2, same blend as the
+    //                                          EpsilonWallFunction face BC)
     // The standard formula Pk = ν_t · GbyNu0 underestimates near-wall
-    // production at refined meshes; the wall-function form uses the log-law
-    // gradient directly. Without this overwrite the k equation lacks the
-    // source that balances the wall-function ε boundary value.
+    // production; without the cell pin the near-wall ε is governed only by
+    // the transport balance and drifts from the wall-function value the face
+    // BC prescribes. Structure copied from kOmegaSST's omega equivalents
+    // (corner-weighted atomic accumulation for cells touching several wall
+    // faces, mirroring OF's createAveragingWeights).
     //
     // Identifies wall-function patches by name on epsilon's BC list.
+    bool anyEpsilonWF = false;
     {
         const scalar Cmu25 = Kokkos::pow(coeffs_.Cmu, scalar(0.25));
+        const scalar Cmu75 = Kokkos::pow(coeffs_.Cmu, scalar(0.75));
         const scalar kappa_ = scalar(0.41); // matches epsilonWallFunction default
         const auto& epsilonBCs = epsilon.boundaryConditions();
         const auto faceOwnersV = mesh_.boundaryMesh().faceOwners().view();
@@ -351,6 +367,58 @@ void KEpsilon::correct(
         const auto yBoundaryV = nearWallDist_.boundaryData().value().view();
         const auto kInternalV = k.internalVector().view();
         auto pkInternalV = Pk_.internalVector().view();
+        const auto nCells = static_cast<NeoN::localIdx>(mesh_.nCells());
+
+        // One-time: cornerWeight_[c] = 1/(number of epsilonWallFunction faces
+        // touching cell c), 0 for non-wall cells (static wall topology).
+        if (!cornerWeightsBuilt_)
+        {
+            NeoN::fill(cornerWeight_, scalar(0));
+            auto cwBuild = cornerWeight_.view();
+            for (NeoN::localIdx patchID = 0;
+                 patchID < static_cast<NeoN::localIdx>(epsilonBCs.size());
+                 ++patchID)
+            {
+                if (epsilonBCs[static_cast<size_t>(patchID)].name() != "epsilonWallFunction")
+                    continue;
+                const auto [start, end] = epsilon.boundaryData().range(patchID);
+                NeoN::parallelFor(
+                    exec_,
+                    {start, end},
+                    NEON_LAMBDA(const NeoN::localIdx i) {
+                        Kokkos::atomic_add(&cwBuild[faceOwnersV[i]], scalar(1));
+                    },
+                    "kEpsilon::epsilonWFCountFaces"
+                );
+            }
+            NeoN::parallelFor(
+                exec_,
+                {0, nCells},
+                NEON_LAMBDA(const NeoN::localIdx c) {
+                    if (cwBuild[c] > scalar(0)) cwBuild[c] = scalar(1) / cwBuild[c];
+                },
+                "kEpsilon::epsilonWFInvertCount"
+            );
+            cornerWeightsBuilt_ = true;
+        }
+        const auto cornerWeightV = cornerWeight_.view();
+
+        // Per-step reset: the pin mask, the accumulated pin value, and Pk_ at
+        // the wall cells (computeSources wrote the bulk production there; the
+        // wall log-law production replaces it via the weighted sum below).
+        NeoN::fill(epsilonWallMask_, scalar(0));
+        NeoN::fill(epsilonWallValue_, scalar(0));
+        auto epsilonWallValueV = epsilonWallValue_.view();
+        auto epsilonWallMaskV = epsilonWallMask_.view();
+        NeoN::parallelFor(
+            exec_,
+            {0, nCells},
+            NEON_LAMBDA(const NeoN::localIdx c) {
+                if (cornerWeightV[c] > scalar(0)) pkInternalV[c] = scalar(0);
+            },
+            "kEpsilon::epsilonWFZeroWallPk"
+        );
+        NeoN::fence(exec_); // zeroing must complete before the atomic accumulation below
 
         for (NeoN::localIdx patchID = 0; patchID < static_cast<NeoN::localIdx>(epsilonBCs.size());
              ++patchID)
@@ -359,12 +427,14 @@ void KEpsilon::correct(
             {
                 continue;
             }
+            anyEpsilonWF = true;
             const auto [start, end] = epsilon.boundaryData().range(patchID);
             NeoN::parallelFor(
                 exec_,
                 {start, end},
                 NEON_LAMBDA(const NeoN::localIdx i) {
                     const auto owner = faceOwnersV[i];
+                    const scalar cw = cornerWeightV[owner];
                     const NeoN::Vec3 uOwn = uInternalV[owner];
                     const NeoN::Vec3 uWall = uBoundaryV[i];
                     const scalar deltaInv = deltaCoeffsV[i];
@@ -376,7 +446,17 @@ void KEpsilon::correct(
                     const scalar kc = Kokkos::max(kInternalV[owner], scalar(0));
                     const scalar gWall =
                         (nutw + nuw) * magGradUw * Cmu25 * Kokkos::sqrt(kc) / (kappa_ * y);
-                    pkInternalV[owner] = gWall;
+
+                    // Wall ε (same formula as the EpsilonWallFunction face BC):
+                    // log-layer C_µ^0.75 k^1.5/(κ y) only — the upstream v2406
+                    // default (STEPWISE blender, lowReCorrection off); the cell
+                    // pin and the face value stay identical.
+                    const scalar ySafe = Kokkos::max(y, scalar(1e-30));
+                    const scalar eWall = Cmu75 * Kokkos::pow(kc, scalar(1.5)) / (kappa_ * ySafe);
+
+                    Kokkos::atomic_add(&pkInternalV[owner], cw * gWall);
+                    Kokkos::atomic_add(&epsilonWallValueV[owner], cw * eWall);
+                    epsilonWallMaskV[owner] = scalar(1);
                 },
                 "kEpsilon::epsilonWFGFeedback"
             );
@@ -393,6 +473,12 @@ void KEpsilon::correct(
         epsilon,
         rt
     );
+    // Hard-pin the near-wall cells to the wall ε built above (OpenFOAM's
+    // epsilonWallFunction::manipulateMatrix(setValues) equivalent).
+    if (anyEpsilonWF)
+    {
+        epsEqn.setConstraints(epsilonWallMask_, epsilonWallValue_);
+    }
     epsEqn.solve();
 
     // Bound ε > 0
@@ -513,6 +599,19 @@ void KEpsilon::correctNutInternal(
         k.internalVector(),
         epsilon.internalVector(),
         nut.internalVector(),
+        coeffs_.Cmu
+    );
+    // OpenFOAM's ``nut = Cmu*sqr(k)/epsilon`` is a GeometricField assignment:
+    // it evaluates the boundary values too. NeoN's ``calculated`` BC correction
+    // is a no-op, so without this the inlet/outlet nut boundary values stay at
+    // their on-disk state and the interpolated nuEff wall/inlet faces go stale.
+    // The follow-up correctBoundaryConditions(ctx) re-corrects wall-function
+    // patches on top, matching the native evaluation order.
+    kernelCorrectNutInternal(
+        exec_,
+        k.boundaryData().value(),
+        epsilon.boundaryData().value(),
+        nut.boundaryData().value(),
         coeffs_.Cmu
     );
 }

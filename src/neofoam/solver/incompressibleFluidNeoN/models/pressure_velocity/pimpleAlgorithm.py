@@ -123,13 +123,15 @@ def _read_int(d: Any, key: str, default: int) -> int:
 
 
 def _read_switch(d: Any, key: str, default: bool) -> bool:
-    """Read an OpenFOAM on/off switch, tolerating word or bool storage."""
+    """Read an OpenFOAM on/off switch from a converted NeoN dictionary.
+
+    The OpenFOAM→NeoN dict conversion stores switch words (``yes``/``no``)
+    as strings; a wrong-typed ``get_*`` is fatal in NeoN (no catchable
+    exception), so this must read the string directly.
+    """
     if not d.contains(key):
         return default
-    try:
-        return bool(d.get_bool(key))
-    except Exception:
-        return d.get_string(key).strip().lower() in ("yes", "true", "on", "1")
+    return d.get_string(key).strip().lower() in ("yes", "true", "on", "1")
 
 
 def _reduce_u(stats: Any) -> tuple[float, float]:

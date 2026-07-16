@@ -208,6 +208,16 @@ def test_simple_single_inner_pass_and_non_ortho_count() -> None:
 
     assert non_ortho_count == 3
 
+    # Closing the pass re-arms the non-orthogonal corrector: the next outer
+    # iteration must run its pressure solves again (regression: only the
+    # first SIMPLE iteration ever solved p).
+    assert control.loop() is False
+    assert control.loop() is True
+    non_ortho_count = 0
+    while control.correctNonOrthogonal():
+        non_ortho_count += 1
+    assert non_ortho_count == 3
+
 
 def test_simple_flags_are_exposed() -> None:
     control = SimpleControl(

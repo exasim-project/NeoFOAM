@@ -78,6 +78,26 @@ def _optional_models_by_name(optional_models: list[Any]) -> dict[str, Any]:
     return {m.name: m for m in optional_models}
 
 
+#: 0/<name> turbulence fields whose boundary conditions decide the
+#: implementation: any ``*WallFunction`` BC routes to the C++ factory.
+_TURBULENCE_FIELD_NAMES = ("nut", "k", "epsilon", "omega", "nuTilda")
+
+
+def _case_uses_wall_functions(case_dir: Path) -> bool:
+    """True when any start-time turbulence field carries a wall-function BC.
+
+    The pure-Python NeoN closures deliberately implement no wall functions
+    (kqR/epsilon/omega/nutk overwrite near-wall values); such cases route to
+    the C++ factory models, which do. A plain text scan of the ``0/<name>``
+    files suffices — OpenFOAM BC type tokens are literal words.
+    """
+    for name in _TURBULENCE_FIELD_NAMES:
+        field_file = case_dir / "0" / name
+        if field_file.is_file() and "WallFunction" in field_file.read_text():
+            return True
+    return False
+
+
 def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
     """Build a fresh :class:`StagedInitRunner` for incompressibleFluidNeoN.
 
@@ -172,9 +192,11 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             # Runtime-selected turbulence model (per constant/turbulenceProperties):
             # a registered pure-Python NeoN ModelSpec model (laminar / kEpsilon /
             # SpalartAllmaras / kOmegaSST) when one matches the configured name,
-            # else the C++ factory (e.g. LES SpalartAllmarasDDES). Both expose the
-            # same handle surface (nut / nu_eff / rotate_old_times / correct /
-            # write); for laminar nut = 0 and nuEff = nu.
+            # else the C++ factory (e.g. LES SpalartAllmarasDDES, or any case
+            # whose turbulence fields carry wall-function BCs — the Python
+            # closures implement none). Both expose the same handle surface
+            # (nut / nu_eff / rotate_old_times / correct / write); for laminar
+            # nut = 0 and nuEff = nu.
             rt = ctx["_neon_runtime"]
             # Validated load: with ``validate=False`` the RAS/LES sub-configs stay
             # plain dicts and ``model_name`` cannot resolve the RAS/LES model name.
@@ -183,6 +205,7 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             if (
                 name is not None
                 and neonMomentumTransportModel.find_spec(name) is not None
+                and not _case_uses_wall_functions(resolved_case_dir)
             ):
                 turb: Any = build_neon_turbulence(
                     turb_config, rt, ctx["models.nu_vol"], resolved_case_dir

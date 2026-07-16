@@ -3,11 +3,12 @@
 
 """Pressure-velocity coupling dispatcher for the NeoN solver.
 
-Detects which algorithm to instantiate from ``system/fvSolution``. Only
-PIMPLE is supported — SIMPLE / PISO fall back to PIMPLE rather than
-producing a missing-algorithm error, so existing tutorial cases that
-specify them still run (the legacy ``neoPimpleFoam`` also reads its
-corrector counts from the ``PIMPLE`` subdict only).
+Detects which algorithm to instantiate from ``system/fvSolution``.
+PIMPLE (transient) and SIMPLE (steady state) are wired up; PISO falls
+back to PIMPLE rather than producing a missing-algorithm error, so
+existing tutorial cases that specify it still run (the legacy
+``neoPimpleFoam`` also reads its corrector counts from the ``PIMPLE``
+subdict only).
 """
 
 from typing import Any
@@ -15,6 +16,7 @@ from typing import Any
 import pybFoam as pyf
 
 from .pimpleAlgorithm import pimpleNeoN
+from .simpleAlgorithm import simpleNeoN
 
 
 class PressureVelocityAlgorithmNeoN:
@@ -23,7 +25,7 @@ class PressureVelocityAlgorithmNeoN:
     @classmethod
     def all_specs(cls) -> list[Any]:
         """Every member spec of the family, case-free (no detection)."""
-        return [pimpleNeoN]
+        return [pimpleNeoN, simpleNeoN]
 
     @classmethod
     def detect_and_create(cls) -> Any:
@@ -39,17 +41,20 @@ class PressureVelocityAlgorithmNeoN:
         else:
             algorithm_type = "PIMPLE"
 
-        algorithm_model = pimpleNeoN
+        algorithm_model = simpleNeoN if algorithm_type == "SIMPLE" else pimpleNeoN
         algorithm_model.algorithm_type = algorithm_type  # type: ignore[attr-defined]
         return algorithm_model
 
     @classmethod
     def create(cls, *, algorithm_type: str) -> Any:
-        """Programmatically create the PIMPLE algorithm model."""
+        """Programmatically create a pressure-velocity algorithm model."""
+        if algorithm_type in {"Simple", "SIMPLE"}:
+            simpleNeoN.algorithm_type = "SIMPLE"  # type: ignore[attr-defined]
+            return simpleNeoN
         if algorithm_type not in {"Pimple", "PIMPLE"}:
             raise ValueError(
-                f"incompressibleFluidNeoN only supports the PIMPLE algorithm; "
-                f"requested {algorithm_type!r}."
+                f"incompressibleFluidNeoN only supports the PIMPLE and SIMPLE "
+                f"algorithms; requested {algorithm_type!r}."
             )
         pimpleNeoN.algorithm_type = "PIMPLE"  # type: ignore[attr-defined]
         return pimpleNeoN
