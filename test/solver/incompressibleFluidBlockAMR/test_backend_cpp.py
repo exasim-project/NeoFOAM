@@ -16,7 +16,7 @@ import pytest
 
 pytest.importorskip("neon")
 
-import neon.blockamr.backends as backends  # noqa: E402
+import blockamr.backends as backends  # noqa: E402
 
 from neofoam.solver.incompressibleFluidBlockAMR import run  # noqa: E402
 

@@ -6,7 +6,7 @@
 Two algebraic properties the incompressible projection depends on, both checked
 through the framework blockAMR operators:
 
-* **Adjoint consistency** — the discrete gradient (``neon.blockamr.dsl.exp.grad``,
+* **Adjoint consistency** — the discrete gradient (``blockamr.dsl.exp.grad``,
   the central-difference ``Grad`` the solver uses) and its induced divergence are
   exact negative adjoints on the periodic domain: ``<div u, phi> = -<u, grad phi>``
   to machine epsilon, independent of resolution. This is summation-by-parts: it is
@@ -23,11 +23,11 @@ import pytest
 pytest.importorskip("neon")
 
 import jax.numpy as jnp  # noqa: E402
-import neon.blockamr as blockamr  # noqa: E402
-from neon.blockamr.dsl import exp  # noqa: E402
-from neon.blockamr.incompressible import build_incompressible, step  # noqa: E402
-from neon.blockamr.field import CellField  # noqa: E402
-from neon.blockamr.fillpatch import FillPatchCellConservative  # noqa: E402
+import blockamr  # noqa: E402
+from blockamr.dsl import exp  # noqa: E402
+from blockamr.incompressible import build_incompressible, step  # noqa: E402
+from blockamr.field import CellField  # noqa: E402
+from blockamr.fillpatch import FillPatchCellConservative  # noqa: E402
 
 from neofoam.solver.incompressibleFluidBlockAMR.configs import (  # noqa: E402
     MeshDictConfig,

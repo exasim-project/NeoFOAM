@@ -98,7 +98,7 @@ telemetry = [
     "matplotlib>=3.5",
 ]
 blockamr = [
-    # Runtime deps of the vendored `neon.blockamr` engine (built from src/NeoN
+    # Runtime deps of the vendored `blockamr` engine (built from src/NeoN
     # when NeoN_WITH_AMREX is ON below). The AMReX MLMG solve is C++, but the DSL
     # stencil kernels are JAX + Triton/Pallas and run on the GPU — a CUDA jaxlib
     # is required (there is no CPU lowering for the Pallas kernels).
@@ -138,9 +138,9 @@ editable.rebuild = false
 
 [tool.scikit-build.cmake.define]
 NEOFOAM_BUILD_PYTHON_BINDINGS = "ON"
-# Build the block-structured AMReX engine + its bindings (neon.blockamr) as part
+# Build the block-structured AMReX engine + its bindings (blockamr) as part
 # of the same wheel: AMReX is fetched from source via CPM under SKBUILD, and
-# _blockamr.so + neon/blockamr/*.py install alongside _neon. This makes
+# _blockamr.so + blockamr/*.py install alongside _neon. This makes
 # `pip install .[all] -v` provide the full incompressibleFluidBlockAMR stack in
 # one interpreter.
 #

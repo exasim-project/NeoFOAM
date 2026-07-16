@@ -10,7 +10,7 @@ solution of incompressible Navier-Stokes::
     v =  sin(x) cos(y) e^{-2 nu t}
     p = -1/4 (cos 2x + cos 2y) e^{-4 nu t}
 
-Driving ``incompressibleFluidBlockAMR``'s ``neon.blockamr`` DSL projection with
+Driving ``incompressibleFluidBlockAMR``'s ``blockamr`` DSL projection with
 the exact field as initial condition exercises every term at once — advection,
 diffusion, the MAC projection, the pressure solve, and the coupled time advance.
 Three checks:
@@ -31,10 +31,10 @@ import pytest
 pytest.importorskip("neon")
 
 import jax.numpy as jnp  # noqa: E402
-import neon.blockamr as blockamr  # noqa: E402
-from neon.blockamr.incompressible import build_incompressible, step  # noqa: E402
-from neon.blockamr.fillpatch import FillPatchCellConservative  # noqa: E402
-from neon.blockamr.schemes.div_schemes import Linear  # noqa: E402
+import blockamr  # noqa: E402
+from blockamr.incompressible import build_incompressible, step  # noqa: E402
+from blockamr.fillpatch import FillPatchCellConservative  # noqa: E402
+from blockamr.schemes.div_schemes import Linear  # noqa: E402
 
 from incompressibleFluidBlockAMR.verification_helpers import (  # noqa: E402
     l2_error,

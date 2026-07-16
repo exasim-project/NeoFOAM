@@ -19,7 +19,7 @@ from neofoam.solver.incompressibleFluidBlockAMR import run  # noqa: E402
 
 
 def test_cylinder_case_runs_and_enforces_body(blockamr_session, cylinder_case):
-    from neon.blockamr.ibm import DirectForcing
+    from blockamr.ibm import DirectForcing
 
     ctx = run(["incompressibleFluidBlockAMR"])
     engine = ctx.models["projection_state"]

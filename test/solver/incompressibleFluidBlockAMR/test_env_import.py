@@ -3,7 +3,7 @@
 
 """INT-1 / C1 — the environment gate.
 
-``neon.blockamr`` + ``jax`` import in the neofoam venv, and a small periodic
+``blockamr`` + ``jax`` import in the neofoam venv, and a small periodic
 projection state constructs in-process.
 """
 
@@ -11,10 +11,10 @@ import pytest
 
 pytest.importorskip("neon")
 
-import neon.blockamr as blockamr  # noqa: E402
-from neon.blockamr.incompressible import build_incompressible  # noqa: E402
-from neon.blockamr.fillpatch import FillPatchCellConservative  # noqa: E402
-from neon.blockamr.mesh import Mesh  # noqa: E402
+import blockamr  # noqa: E402
+from blockamr.incompressible import build_incompressible  # noqa: E402
+from blockamr.fillpatch import FillPatchCellConservative  # noqa: E402
+from blockamr.mesh import Mesh  # noqa: E402
 
 
 def test_jax_imports():

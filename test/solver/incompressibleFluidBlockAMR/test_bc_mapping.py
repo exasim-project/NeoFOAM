@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""INT-5 / C5 — OpenFOAM-style patch BCs map to neon.blockamr VectorBC.
+"""INT-5 / C5 — OpenFOAM-style patch BCs map to blockamr VectorBC.
 
 Supported: inlet ``fixedValue`` (Dirichlet), outlet ``zeroGradient`` (Neumann),
 wall ``noSlip``, and free-slip ``slip`` / ``symmetry`` / ``symmetryPlane``
@@ -12,7 +12,7 @@ import pytest
 
 pytest.importorskip("neon")
 
-from neon.blockamr.bc import NeumannBC, SlipBC, VectorDirichletBC  # noqa: E402
+from blockamr.bc import NeumannBC, SlipBC, VectorDirichletBC  # noqa: E402
 
 from neofoam.solver.incompressibleFluidBlockAMR.models.bc_mapping import (  # noqa: E402
     build_vector_bc,

@@ -4,7 +4,7 @@
 """blockAMR projection (pressure-velocity) model package.
 
 Only the Chorin fractional-step projection is wired up (MAC + nodal projection
-via the ``neon.blockamr`` DSL).
+via the ``blockamr`` DSL).
 """
 
 from .base import ProjectionAlgorithm

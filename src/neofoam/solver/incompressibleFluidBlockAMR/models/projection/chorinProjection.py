@@ -4,11 +4,11 @@
 # NB: no ``from __future__ import annotations`` — the dependency_resolver matches
 # ``Annotated[..., "models"]`` / ``param.annotation is Context`` live.
 
-"""Chorin fractional-step projection backed by ``neon.blockamr``.
+"""Chorin fractional-step projection backed by ``blockamr``.
 
 One member of the projection family. ``@build`` constructs the fields
 (``U`` / ``p`` / ``phi``) and the two ``Equation``s directly (via
-``neon.blockamr.incompressible.build_incompressible``) from the mesh + configs
+``blockamr.incompressible.build_incompressible``) from the mesh + configs
 assembled in ``create_fields``, registers the fields into the Context, and
 registers the projection **state** (fields + equations + solve settings) as
 ``models.projection_state``.
@@ -43,8 +43,8 @@ def build(self: Any) -> list[Any]:
     """
 
     def create_state(context: dict[str, Any]) -> Any:
-        from neon.blockamr.fillpatch import FillPatchCellConservative
-        from neon.blockamr.incompressible import build_incompressible
+        from blockamr.fillpatch import FillPatchCellConservative
+        from blockamr.incompressible import build_incompressible
 
         mesh = context["_blockamr_mesh"]
         mesh_cfg = context["_mesh_cfg"]
@@ -131,11 +131,11 @@ def project(
     ``step()`` order (BC fills, ``pEqn.sigma = dt``, post-``correct`` IBM apply);
     the numerics oracle is identical.
     """
-    from neon.blockamr.dsl import exp
-    from neon.blockamr.ibm import IBM
-    from neon.blockamr.operators.correct import correct
-    from neon.blockamr.operators.interpolate import interpolate
-    from neon.blockamr.operators.mac_project import mac_project
+    from blockamr.dsl import exp
+    from blockamr.ibm import IBM
+    from blockamr.operators.correct import correct
+    from blockamr.operators.interpolate import interpolate
+    from blockamr.operators.mac_project import mac_project
 
     st = projection_state
     dt = st.dt

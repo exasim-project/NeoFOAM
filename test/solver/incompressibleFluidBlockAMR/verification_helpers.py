@@ -58,7 +58,7 @@ def run_at_resolution(
     ``cell_vol``. ``neon`` is imported lazily here so importing this module stays
     GPU-free (the pure-math helpers above never touch the engine).
     """
-    import neon.blockamr as blockamr  # noqa: PLC0415 — lazy: keep module import GPU-free
+    import blockamr  # noqa: PLC0415 — lazy: keep module import GPU-free
 
     solver, mesh = case_builder(N)
     geom = mesh.geom(0)

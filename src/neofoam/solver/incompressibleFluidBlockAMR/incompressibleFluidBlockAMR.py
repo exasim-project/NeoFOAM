@@ -5,7 +5,7 @@
 
 A framework ``SolverSpec`` mirroring ``incompressibleFluid``'s composition
 (SolverSpec / ModelSpec / StagedInit) but backed by the block-structured AMReX
-DSL ``neon.blockamr`` instead of pybFoam.
+DSL ``blockamr`` instead of pybFoam.
 
 One time step is a Chorin fractional-step projection::
 
@@ -130,7 +130,7 @@ def run(
     import sys
     from pathlib import Path
 
-    import neon.blockamr as blockamr
+    import blockamr
 
     redirect = log_file is not None
     saved_fd: Optional[int] = None

@@ -68,7 +68,7 @@ class PlotfileWriteHook(FieldHook):
 
     Receives only the ``write=True`` fields (``U`` / ``p``) — the same
     ``CellField`` objects the projection state owns — and hands them to the
-    ``neon.blockamr`` free ``write_plotfile``, stamped with the state's current
+    ``blockamr`` free ``write_plotfile``, stamped with the state's current
     simulation time. Plotfile directories are named ``plt<NNNNN>`` by write index
     (AMReX convention).
     """
@@ -79,7 +79,7 @@ class PlotfileWriteHook(FieldHook):
     count: int = 0
 
     def write_fields(self, fields: Mapping[str, Any]) -> None:
-        from neon.blockamr.incompressible import write_plotfile
+        from blockamr.incompressible import write_plotfile
 
         to_write = [fields[n] for n in ("U", "p") if n in fields] or [self.state.U]
         name = f"{self.directory.rstrip('/')}/plt{self.count:05d}"

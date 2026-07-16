@@ -113,11 +113,11 @@ if(DEFINED SKBUILD AND TARGET _neon)
   set_target_properties(_neon PROPERTIES INSTALL_RPATH "${_neon_rpath}")
 endif()
 
-# _blockamr installs one level deeper (site-packages/neon/blockamr/) and NeoN
-# hard-sets its RPATH to "$ORIGIN/../../lib"; the native libs (libamrex_3d.so,
+# _blockamr installs as a top-level package (site-packages/blockamr/) and NeoN
+# hard-sets its RPATH to "$ORIGIN/../lib"; the native libs (libamrex_3d.so,
 # libNeoN.so, kokkos) actually live in neofoam/lib, so point it there.
 if(DEFINED SKBUILD AND TARGET _blockamr)
-  set(_blockamr_rpath "$ORIGIN/../../neofoam/lib;$ORIGIN/../../lib")
+  set(_blockamr_rpath "$ORIGIN/../neofoam/lib;$ORIGIN/../lib")
   set_target_properties(_blockamr PROPERTIES INSTALL_RPATH "${_blockamr_rpath}")
 endif()
 

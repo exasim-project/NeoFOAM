@@ -27,10 +27,10 @@ import pytest
 pytest.importorskip("neon")
 
 import jax.numpy as jnp  # noqa: E402
-import neon.blockamr as blockamr  # noqa: E402
-from neon.blockamr.incompressible import build_incompressible, step  # noqa: E402
-from neon.blockamr.fillpatch import FillPatchCellConservative  # noqa: E402
-from neon.blockamr.schemes.div_schemes import Linear  # noqa: E402
+import blockamr  # noqa: E402
+from blockamr.incompressible import build_incompressible, step  # noqa: E402
+from blockamr.fillpatch import FillPatchCellConservative  # noqa: E402
+from blockamr.schemes.div_schemes import Linear  # noqa: E402
 
 from incompressibleFluidBlockAMR.verification_helpers import (  # noqa: E402
     l2_error,

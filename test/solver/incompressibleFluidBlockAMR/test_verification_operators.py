@@ -4,7 +4,7 @@
 """Operator patch tests on the framework blockAMR path.
 
 Drives the same DSL grad/div/laplacian operators the ``incompressibleFluidBlockAMR``
-solver uses (``neon.blockamr.dsl.exp`` / ``.dsl.solve``) on a mesh built through the
+solver uses (``blockamr.dsl.exp`` / ``.dsl.solve``) on a mesh built through the
 framework's config->mesh factory (``build_mesh(MeshDictConfig)``), and checks:
 linear/uniform fields are differentiated exactly (machine epsilon), trig fields
 converge at 2nd order under grid refinement. Order is measured with the refinement
@@ -19,13 +19,13 @@ import pytest
 pytest.importorskip("neon")
 
 import jax.numpy as jnp  # noqa: E402
-import neon.blockamr as blockamr  # noqa: E402
-from neon.blockamr.dsl import exp  # noqa: E402
-from neon.blockamr.dsl.solve import evaluate  # noqa: E402
-from neon.blockamr.field import CellField, FaceField  # noqa: E402
-from neon.blockamr.operators.div import Div, update_face_fluxes  # noqa: E402
-from neon.blockamr.operators.grad import Grad  # noqa: E402
-from neon.blockamr.schemes.div_schemes import Linear  # noqa: E402
+import blockamr  # noqa: E402
+from blockamr.dsl import exp  # noqa: E402
+from blockamr.dsl.solve import evaluate  # noqa: E402
+from blockamr.field import CellField, FaceField  # noqa: E402
+from blockamr.operators.div import Div, update_face_fluxes  # noqa: E402
+from blockamr.operators.grad import Grad  # noqa: E402
+from blockamr.schemes.div_schemes import Linear  # noqa: E402
 
 from incompressibleFluidBlockAMR.verification_helpers import (  # noqa: E402
     observed_order,

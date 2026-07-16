@@ -22,10 +22,10 @@ import pytest
 
 pytest.importorskip("neon")
 
-import neon.blockamr as blockamr  # noqa: E402
-from neon.blockamr.bc import VectorBC, fixedValue, noSlip  # noqa: E402
-from neon.blockamr.incompressible import build_incompressible, step  # noqa: E402
-from neon.blockamr.mesh import Mesh  # noqa: E402
+import blockamr  # noqa: E402
+from blockamr.bc import VectorBC, fixedValue, noSlip  # noqa: E402
+from blockamr.incompressible import build_incompressible, step  # noqa: E402
+from blockamr.mesh import Mesh  # noqa: E402
 
 WALL_SPEED = 1.0
 HEIGHT = 1.0

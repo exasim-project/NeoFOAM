@@ -6,14 +6,14 @@
 LOAD    → detect the projection algorithm + any optional models; instantiate the
           reused ``solutionLoop`` / ``fieldWriter`` core Models.
 RESOLVE → wire optional-model dependencies via ConfigContext.
-BUILD   → emit lazy InitSteps that construct the ``neon.blockamr`` mesh + the
+BUILD   → emit lazy InitSteps that construct the ``blockamr`` mesh + the
           projection state (fields + equations), register ``U`` / ``p`` / ``phi``
           + the state into the Context, and inject the blockAMR loop/writer
           backends through the framework seams.
 
 Unlike the pybFoam / NeoN solvers there is no ``Foam::Time`` / OpenFOAM mesh: the
 framework core Models are pure-Python (``LoopState`` + ``FieldWriter``), and the
-block-structured DSL (``neon.blockamr``) carries the physics. The mesh and the
+block-structured DSL (``blockamr``) carries the physics. The mesh and the
 validated dict configs are init-only resources (leading underscore keeps them off
 the Context); the projection state is re-exposed as ``models.projection_state`` so
 the ``project`` operation injects it by name.
