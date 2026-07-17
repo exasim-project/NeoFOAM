@@ -16,7 +16,7 @@ framework core Models are pure-Python (``LoopState`` + ``FieldWriter``), and the
 block-structured DSL (``blockamr``) carries the physics. The mesh and the
 validated dict configs are init-only resources (leading underscore keeps them off
 the Context); the projection state is re-exposed as ``models.projection_state`` so
-the ``project`` operation injects it by name.
+the ``momentum`` / ``continuity`` operations inject it by name.
 """
 
 from pathlib import Path
