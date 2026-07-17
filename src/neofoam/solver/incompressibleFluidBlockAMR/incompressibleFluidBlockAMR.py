@@ -11,14 +11,17 @@ One time step is a Chorin fractional-step projection::
 
     set_time_step     # fold time-step constraints; push dt onto the state
     increment_time    # "Time = ..." print; advance the LoopState
-    project           # worked example: interpolate -> MAC project -> predictor
-                      #                -> pressure Poisson -> velocity correct
+    momentum          # interpolate -> MAC project -> momentum predictor
+    continuity        # pressure Poisson -> velocity correct -> IBM apply
     write_output      # PlotfileWriteHook writes an AMReX plotfile on write steps
 
 The outer time loop, write control, and field-writer are the reused framework
 core Models; the block-structured backends are injected in ``create_fields``.
 """
 
+import os
+import sys
+from pathlib import Path
 from typing import Annotated, Any, Optional
 
 from neofoam.framework.context import Context
@@ -104,7 +107,8 @@ def execution_graph(
     with builder.loop(time_loop_op) as time_builder:
         time_builder.step(loop_ops["set_time_step"])
         time_builder.step(loop_ops["increment_time"])
-        time_builder.step(algo_ops["project"])
+        time_builder.step(algo_ops["momentum"])
+        time_builder.step(algo_ops["continuity"])
         time_builder.step(writer_ops["write_output"])
 
     model_ops = Operations()
@@ -126,11 +130,10 @@ def run(
 
     If ``log_file`` is given, fd 1 (stdout) is redirected there for the solve.
     """
-    import os
-    import sys
-    from pathlib import Path
-
-    import blockamr
+    # blockamr stays a local import: it pulls the AMReX/GPU extension, and the
+    # package is kept importable GPU-free (config introspection, CLI listing)
+    # by never importing it at module scope.
+    import blockamr  # noqa: PLC0415
 
     redirect = log_file is not None
     saved_fd: Optional[int] = None

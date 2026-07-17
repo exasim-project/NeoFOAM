@@ -13,11 +13,12 @@ assembled in ``create_fields``, registers the fields into the Context, and
 registers the projection **state** (fields + equations + solve settings) as
 ``models.projection_state``.
 
-The single ``project`` operation is the API doc's worked example: interpolate →
-MAC-project φ → momentum predictor → pressure Poisson → velocity correct → IBM
-apply, leaving ``U`` divergence-free. State + fields are resolved from the
-Context at run time (``ctx.models`` / ``ctx.fields``), never captured in the
-operation closure — mirroring the op-closure-cycle rule.
+The fractional step is exposed as two operations mirroring PIMPLE's
+``momentum`` / ``continuity`` split: ``momentum`` does interpolate →
+MAC-project φ → momentum predictor; ``continuity`` does pressure Poisson →
+velocity correct → IBM apply, leaving ``U`` divergence-free. State + fields are
+resolved from the Context at run time (``ctx.models`` / ``ctx.fields``), never
+captured in the operation closure — mirroring the op-closure-cycle rule.
 """
 
 from typing import Annotated, Any, Callable
@@ -116,32 +117,28 @@ def build(self: Any) -> list[Any]:
     ]
 
 
-@chorinProjection.operation(operation_number="2.0")
-def project(
+@chorinProjection.operation(operation_number="2.1")
+def momentum(
     projection_state: Annotated[Any, "models"],
     U: Annotated[Any, "fields"],
-    p: Annotated[Any, "fields"],
     phi: Annotated[Any, "fields"],
 ) -> None:
-    """Advance one fractional step (projection keeps U divergence-free).
+    """Momentum predictor — first half of the Chorin fractional step.
 
-    The API doc's worked example, written in the DSL. Mutates ``U`` / ``p`` /
-    ``phi`` in place — the same objects registered in ``ctx.fields`` — so no
-    ``FieldUpdates`` are needed. Faithfully reproduces the pre-refactor
-    ``step()`` order (BC fills, ``pEqn.sigma = dt``, post-``correct`` IBM apply);
-    the numerics oracle is identical.
+    Mirrors PIMPLE's ``momentum``: fill BCs, interpolate ``U`` to the faces,
+    MAC-project the face flux ``phi`` divergence-free, solve the momentum
+    equation for the predicted (non-solenoidal) velocity, and refill BCs ready
+    for the pressure solve. Mutates ``U`` / ``phi`` in place — the same objects
+    registered in ``ctx.fields`` — so no ``FieldUpdates`` are needed. State +
+    fields are resolved from the Context at run time.
     """
-    from blockamr.dsl import exp
-    from blockamr.ibm import IBM
-    from blockamr.operators.correct import correct
     from blockamr.operators.interpolate import interpolate
     from blockamr.operators.mac_project import mac_project
 
     st = projection_state
     dt = st.dt
     t = st.t
-    mesh = U.mesh
-    n_levels = mesh.n_levels()
+    n_levels = U.mesh.n_levels()
 
     for lev in range(n_levels):
         U.fill_patch(lev, t)
@@ -153,6 +150,31 @@ def project(
 
     for lev in range(n_levels):
         U.fill_patch(lev, t)
+
+
+@chorinProjection.operation(operation_number="2.2", depends_on=["momentum"])
+def continuity(
+    projection_state: Annotated[Any, "models"],
+    U: Annotated[Any, "fields"],
+    p: Annotated[Any, "fields"],
+) -> None:
+    """Pressure projection — second half of the Chorin fractional step.
+
+    Mirrors PIMPLE's ``continuity``: solve the pressure Poisson equation,
+    correct the predicted velocity by ``-dt·grad(p)`` so ``U`` is
+    divergence-free, apply the immersed-boundary forcing, and advance the
+    projection clock. Mutates ``U`` / ``p`` in place. Faithfully reproduces the
+    pre-refactor ``step()`` order (``pEqn.sigma = dt``, post-``correct`` IBM
+    apply); the numerics oracle is identical.
+    """
+    from blockamr.dsl import exp
+    from blockamr.ibm import IBM
+    from blockamr.operators.correct import correct
+
+    st = projection_state
+    dt = st.dt
+    t = st.t
+    mesh = U.mesh
 
     st.pEqn.implicit_lhs.sigma = dt
     st.pEqn.implicit_lhs.coefficient = dt
@@ -190,12 +212,20 @@ def _alias_operation(
 
 @chorinProjection.operation_collection
 def collected_operations(self: Any) -> Operations:
-    """Expose the single ``project`` op for the solver's execution graph."""
+    """Expose the momentum + continuity ops for the solver's execution graph."""
     model_ops = Operations()
-    wrapped_project = wrap_with_dependency_resolution(
-        project, self, chorinProjection._dependency_resolver
+    wrapped_momentum = wrap_with_dependency_resolution(
+        momentum, self, chorinProjection._dependency_resolver
+    )
+    wrapped_continuity = wrap_with_dependency_resolution(
+        continuity, self, chorinProjection._dependency_resolver
     )
     model_ops.add(
-        _alias_operation(wrapped_project, operation_name="project", depends_on=[])
+        _alias_operation(wrapped_momentum, operation_name="momentum", depends_on=[])
+    )
+    model_ops.add(
+        _alias_operation(
+            wrapped_continuity, operation_name="continuity", depends_on=["momentum"]
+        )
     )
     return model_ops
