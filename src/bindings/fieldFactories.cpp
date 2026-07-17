@@ -11,6 +11,11 @@
 // NeoFOAM headers
 #include "NeoFOAM/datastructures/runTime.hpp"
 #include "NeoFOAM/auxiliary/readers.hpp"
+#include "NeoFOAM/fvcc/boundary/volume/epsilonWallFunction.hpp"
+#include "NeoFOAM/fvcc/boundary/volume/kqRWallFunction.hpp"
+#include "NeoFOAM/fvcc/boundary/volume/nutkWallFunction.hpp"
+#include "NeoFOAM/fvcc/boundary/volume/omegaWallFunction.hpp"
+#include "NeoFOAM/fvcc/boundary/volume/nutWallFunction.hpp"
 
 // OpenFOAM headers
 #include "fvCFD.H"
@@ -22,6 +27,27 @@ using namespace nb::literals;
 
 namespace fvcc = NeoN::finiteVolume::cellCentred;
 namespace nf = NeoFOAM;
+
+// Force CRTP self-registration of the turbulence wall-function volume BCs into
+// libNeoN's VolumeBoundaryFactory<scalar> runtime-selection table, without
+// modifying the NeoN submodule. Each header defines a self-registering
+// Register<>::REGISTERED static (its initialiser calls addSubType()); taking its
+// address ODR-uses it in this TU, which is compiled into neofoam_bindings and
+// links libNeoN, so the initialiser runs at module load and inserts the creator
+// keyed by name() (e.g. "epsilonWallFunction") into the shared singleton table.
+namespace
+{
+namespace vb = NeoN::finiteVolume::cellCentred::volumeBoundary;
+using ScalarVolBCFactory = NeoN::finiteVolume::cellCentred::VolumeBoundaryFactory<NeoN::scalar>;
+
+[[maybe_unused]] const bool* const registerWallFunctionBCs[] = {
+    &ScalarVolBCFactory::Register<vb::EpsilonWallFunction>::REGISTERED,
+    &ScalarVolBCFactory::Register<vb::KqRWallFunction>::REGISTERED,
+    &ScalarVolBCFactory::Register<vb::NutkWallFunction>::REGISTERED,
+    &ScalarVolBCFactory::Register<vb::OmegaWallFunction>::REGISTERED,
+    &ScalarVolBCFactory::Register<vb::NutUSpaldingWallFunction>::REGISTERED,
+};
+} // namespace
 
 namespace NeoFOAM::bindings
 {

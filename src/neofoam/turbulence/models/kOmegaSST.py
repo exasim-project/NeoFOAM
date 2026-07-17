@@ -128,6 +128,11 @@ def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
     def read_wall_dist(ctx: dict[str, Any]) -> Any:
         return nfb.read_wall_distance(ctx["models.neon_runtime"])
 
+    def create_near_wall_dist(ctx: dict[str, Any]) -> Any:
+        # nearWallDist: boundary faces hold the owner-cell wall distance — the input
+        # the omega/nutk wall functions read via the BoundaryContext.
+        return nfb.build_near_wall_dist(ctx["models.neon_runtime"])
+
     def seed_nut(ctx: dict[str, Any]) -> Any:
         rt = ctx["models.neon_runtime"]
         nut = nfb.read_scalar_volume_field(rt, "nut")
@@ -138,7 +143,10 @@ def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
         grad_u = ctx["models.komega_grad"].grad_tensor(ctx["fields.U"])
         s2 = nfb.strain_magnitude_sqr(grad_u)
         nut.assign(_correct_nut(k, omega, _f2(k, omega, y, nu), s2))
-        nut.correct_boundary_conditions()
+        # nutkWallFunction sets nut's wall faces from (k, nu, nearWallDist).
+        nfb.correct_scalar_bc_ctx(
+            nut, k, ctx["models.nu_vol"], ctx["models.komega_nearWallDist"]
+        )
         return nut
 
     def create_nu_eff(ctx: dict[str, Any]) -> Any:
@@ -155,6 +163,11 @@ def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
         init_model(
             "komega_wall_dist", read_wall_dist, depends_on=["models.neon_runtime"]
         ),
+        init_model(
+            "komega_nearWallDist",
+            create_near_wall_dist,
+            depends_on=["models.neon_runtime"],
+        ),
         init_field(
             "nut",
             seed_nut,
@@ -165,6 +178,8 @@ def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
                 "fields.U",
                 "models.komega_grad",
                 "models.komega_wall_dist",
+                "models.komega_nearWallDist",
+                "models.nu_vol",
             ],
         ),
         init_field(
@@ -179,8 +194,10 @@ def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
 def blend(
     self: Any,
     neon_runtime: Annotated[Any, "models"],
+    nu_vol: Annotated[Any, "models"],
     komega_grad: Annotated[Any, "models"],
     komega_wall_dist: Annotated[Any, "models"],
+    komega_nearWallDist: Annotated[Any, "models"],
     U: Annotated[Any, "fields"],
     k: Annotated[Any, "fields"],
     omega: Annotated[Any, "fields"],
@@ -199,7 +216,12 @@ def blend(
     gamma = _blend(f1, gamma1, gamma2)
     beta = _blend(f1, beta1, beta2)
 
-    # Production: omega uses the strain-limited GbyNu0; k uses G = nut*GbyNu0 capped by Pk.
+    # Production: omega uses the strain-limited GbyNu0; k uses the raw G = nut*GbyNu0
+    # with the near-wall cells overridden by the log-law form. The k-equation cap
+    # ``min(G, c1*betaStar*k*omega)`` is applied later in correct_k, with the
+    # *post-solve* (pinned) omega — mirroring kOmegaSSTBase::Pk(G), which is
+    # evaluated after the omega solve so the wall cap binds against the pinned
+    # omega. (kEpsilon has no such cap, so its wall production is never limited.)
     gbynu0_lim = nn.field_min(
         gbynu0,
         (c1 / a1)
@@ -208,7 +230,23 @@ def blend(
         * nn.field_max(a1 * omega, (b1 * f23) * nn.sqrt(s2)),
     )
     g = nut * gbynu0
-    pk = nn.field_min(g, (c1 * betaStar) * k * omega)
+    # omegaWallFunction overrides the near-wall G with the log-law form — identical
+    # to epsilonWallFunction's (cmu=betaStar). Reuses the shared binding; scans
+    # omega's boundary for the "omegaWallFunction" patch. A no-op when no
+    # wall-function patch exists (e.g. the no-WF turbulentBox case).
+    g_wall = nfb.epsilon_wall_production(
+        g,
+        omega,
+        U,
+        k,
+        nu_vol,
+        nut,
+        komega_nearWallDist,
+        neon_runtime,
+        betaStar,
+        0.41,
+        "omegaWallFunction",
+    )
 
     return FieldUpdates(
         {
@@ -216,7 +254,7 @@ def blend(
             "komega_omega_prod": gamma * gbynu0_lim,
             "komega_omega_sp": beta * omega,  # Sp(beta*omega, omega), coeff frozen
             "komega_omega_susp": (f1 - 1.0) * cd_komega / omega,  # SuSp, coeff frozen
-            "komega_k_prod": pk,
+            "komega_G": g_wall,  # wall-overridden, uncapped G (Pk cap applied in k)
         }
     )
 
@@ -227,11 +265,13 @@ def correct_omega(
     neon_runtime: Annotated[Any, "models"],
     nu_vol: Annotated[Any, "models"],
     komega_surf: Annotated[Any, "models"],
+    komega_nearWallDist: Annotated[Any, "models"],
     komega_F1: Annotated[Any, "fields"],
     komega_omega_prod: Annotated[Any, "fields"],
     komega_omega_sp: Annotated[Any, "fields"],
     komega_omega_susp: Annotated[Any, "fields"],
     phi: Annotated[Any, "fields"],
+    k: Annotated[Any, "fields"],
     omega: Annotated[Any, "fields"],
     nut: Annotated[Any, "fields"],
 ) -> FieldUpdates:
@@ -252,10 +292,14 @@ def correct_omega(
         neon_runtime,
     )
     eqn.set_final_iter(False)
+    # omegaWallFunction pins the near-wall CELL omega to the blended wall value
+    # (OpenFOAM's matrix.setValues); apply it after assembly, before solve.
+    nfb.pin_omega_wall_cells(eqn, omega, k, nu_vol, komega_nearWallDist, neon_runtime)
     eqn.solve()
     omega.assign(nn.field_max(omega, omegaMin))
     # OpenFOAM's fvMatrix::solve corrects the solved field's BCs; NeoN's does not.
-    omega.correct_boundary_conditions()
+    # The omegaWallFunction sets the wall face value from (k, nu, nearWallDist).
+    nfb.correct_scalar_bc_ctx(omega, k, nu_vol, komega_nearWallDist)
     return FieldUpdates({"omega": omega})
 
 
@@ -265,8 +309,9 @@ def correct_k(
     neon_runtime: Annotated[Any, "models"],
     nu_vol: Annotated[Any, "models"],
     komega_surf: Annotated[Any, "models"],
+    komega_nearWallDist: Annotated[Any, "models"],
     komega_F1: Annotated[Any, "fields"],
-    komega_k_prod: Annotated[Any, "fields"],
+    komega_G: Annotated[Any, "fields"],
     phi: Annotated[Any, "fields"],
     k: Annotated[Any, "fields"],
     omega: Annotated[Any, "fields"],
@@ -277,11 +322,17 @@ def correct_k(
     nu = nfb.read_transport_viscosity(neon_runtime)
     d_k = komega_surf.interpolate(_blend(komega_F1, alphaK1, alphaK2) * nut + nu)
     eps_by_k = betaStar * omega  # epsilonByk, uses the updated omega
+    # Pk = min(G, c1*betaStar*k*omega) — kOmegaSSTBase::Pk(G), evaluated here (after
+    # the omega solve) so the near-wall log-law G is capped against the *pinned*
+    # omega. omega is huge at the wall, so the cap normally only binds at high-shear
+    # wall cells (e.g. the inlet/wall corner), which is exactly where the raw
+    # log-law G overshoots.
+    pk = nn.field_min(komega_G, (c1 * betaStar) * k * omega)
     eqn = nfb.PDESolverScalar(
         nn.imp.ddt(k)
         + nn.imp.div(phi, k)
         - nn.imp.laplacian(d_k, k)
-        - nn.exp.source(komega_k_prod)
+        - nn.exp.source(pk)
         + nn.imp.source(eps_by_k, k),
         k,
         neon_runtime,
@@ -290,7 +341,8 @@ def correct_k(
     eqn.solve()
     k.assign(nn.field_max(k, kMin))
     # OpenFOAM's fvMatrix::solve corrects the solved field's BCs; NeoN's does not.
-    k.correct_boundary_conditions()
+    # kqRWallFunction (zero-gradient) applies through the context correction too.
+    nfb.correct_scalar_bc_ctx(k, k, nu_vol, komega_nearWallDist)
     return FieldUpdates({"k": k})
 
 
@@ -302,6 +354,7 @@ def correct_nut(
     komega_surf: Annotated[Any, "models"],
     komega_grad: Annotated[Any, "models"],
     komega_wall_dist: Annotated[Any, "models"],
+    komega_nearWallDist: Annotated[Any, "models"],
     U: Annotated[Any, "fields"],
     k: Annotated[Any, "fields"],
     omega: Annotated[Any, "fields"],
@@ -312,7 +365,8 @@ def correct_nut(
     y = komega_wall_dist
     s2 = nfb.strain_magnitude_sqr(komega_grad.grad_tensor(U))
     nut.assign(_correct_nut(k, omega, _f2(k, omega, y, nu), s2))
-    nut.correct_boundary_conditions()
+    # nutkWallFunction sets nut's wall faces from (k, nu, nearWallDist).
+    nfb.correct_scalar_bc_ctx(nut, k, nu_vol, komega_nearWallDist)
     return FieldUpdates({"nut": nut, "nuEff": komega_surf.interpolate(nut + nu_vol)})
 
 

@@ -47,6 +47,26 @@ solvers
         maxIter         2000;
         l1ScaledResidual true;
     }
+
+    omega
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-13;
+        relTol          0;
+        maxIter         2000;
+        l1ScaledResidual true;
+    }
+
+    nuTilda
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-13;
+        relTol          0;
+        maxIter         2000;
+        l1ScaledResidual true;
+    }
 }
 
 SIMPLE
@@ -66,6 +86,8 @@ relaxationFactors
         U               0.7;
         k               0.3;
         epsilon         0.3;
+        omega           0.3;
+        nuTilda         0.3;
     }
 }
 

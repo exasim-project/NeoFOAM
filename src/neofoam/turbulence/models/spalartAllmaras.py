@@ -90,6 +90,11 @@ def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
     def read_wall_dist(ctx: dict[str, Any]) -> Any:
         return nfb.read_wall_distance(ctx["models.neon_runtime"])
 
+    def create_near_wall_dist(ctx: dict[str, Any]) -> Any:
+        # nearWallDist: boundary faces hold the owner-cell wall distance — the input
+        # the nutUSpaldingWallFunction reads via the BoundaryContext.
+        return nfb.build_near_wall_dist(ctx["models.neon_runtime"])
+
     def seed_nut(ctx: dict[str, Any]) -> Any:
         # nut = nuTilda * fv1(chi) — OpenFOAM correctNut in on-device field maths.
         rt = ctx["models.neon_runtime"]
@@ -97,7 +102,10 @@ def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
         nu = nfb.read_transport_viscosity(rt)
         nuTilda = ctx["fields.nuTilda"]
         nut.assign(nuTilda * _fv1(nuTilda / nu))
-        nut.correct_boundary_conditions()
+        # nutUSpaldingWallFunction sets nut's wall faces from (U, nu, nearWallDist).
+        nfb.correct_scalar_bc_ctx_u(
+            nut, ctx["fields.U"], ctx["models.nu_vol"], ctx["models.sa_nearWallDist"]
+        )
         return nut
 
     def create_nu_eff(ctx: dict[str, Any]) -> Any:
@@ -111,8 +119,21 @@ def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
         init_model("sa_surf", create_surf, depends_on=["models.neon_runtime"]),
         init_model("sa_grad", create_grad, depends_on=["models.neon_runtime"]),
         init_model("sa_wall_dist", read_wall_dist, depends_on=["models.neon_runtime"]),
+        init_model(
+            "sa_nearWallDist",
+            create_near_wall_dist,
+            depends_on=["models.neon_runtime"],
+        ),
         init_field(
-            "nut", seed_nut, depends_on=["models.neon_runtime", "fields.nuTilda"]
+            "nut",
+            seed_nut,
+            depends_on=[
+                "models.neon_runtime",
+                "fields.nuTilda",
+                "fields.U",
+                "models.nu_vol",
+                "models.sa_nearWallDist",
+            ],
         ),
         init_field(
             "nuEff",
@@ -187,13 +208,16 @@ def correct_nut(
     neon_runtime: Annotated[Any, "models"],
     nu_vol: Annotated[Any, "models"],
     sa_surf: Annotated[Any, "models"],
+    sa_nearWallDist: Annotated[Any, "models"],
+    U: Annotated[Any, "fields"],
     nuTilda: Annotated[Any, "fields"],
     nut: Annotated[Any, "fields"],
 ) -> FieldUpdates:
     """correctNut: ``nut = nuTilda fv1(chi)``, then refresh the effective viscosity ``nuEff``."""
     nu = nfb.read_transport_viscosity(neon_runtime)
     nut.assign(nuTilda * _fv1(nuTilda / nu))
-    nut.correct_boundary_conditions()
+    # nutUSpaldingWallFunction sets nut's wall faces from (U, nu, nearWallDist).
+    nfb.correct_scalar_bc_ctx_u(nut, U, nu_vol, sa_nearWallDist)
     return FieldUpdates({"nut": nut, "nuEff": sa_surf.interpolate(nut + nu_vol)})
 
 

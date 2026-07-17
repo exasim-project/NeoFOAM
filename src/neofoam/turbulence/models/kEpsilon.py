@@ -85,6 +85,11 @@ def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
     def create_grad(ctx: dict[str, Any]) -> Any:
         return nfb.GaussGreenGrad(ctx["models.neon_runtime"])
 
+    def create_near_wall_dist(ctx: dict[str, Any]) -> Any:
+        # nearWallDist: boundary faces hold the owner-cell wall distance — the input
+        # the epsilon/nutk wall functions read via the BoundaryContext.
+        return nfb.build_near_wall_dist(ctx["models.neon_runtime"])
+
     def seed_nut(ctx: dict[str, Any]) -> Any:
         # nut = Cmu k^2 / epsilon — OpenFOAM ``correctNut`` in Python field maths.
         # Parenthesise sqr(k) to match OpenFOAM's Cmu*sqr(k)/epsilon evaluation order.
@@ -92,7 +97,10 @@ def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
         k = ctx["fields.k"]
         epsilon = ctx["fields.epsilon"]
         nut.assign(Cmu * (k * k) / epsilon)
-        nut.correct_boundary_conditions()
+        # nutkWallFunction sets nut's wall faces from (k, nu, nearWallDist).
+        nfb.correct_scalar_bc_ctx(
+            nut, k, ctx["models.nu_vol"], ctx["models.kEpsilon_nearWallDist"]
+        )
         return nut
 
     def create_nu_eff(ctx: dict[str, Any]) -> Any:
@@ -105,10 +113,21 @@ def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
         init_field("epsilon", read_epsilon, depends_on=["models.neon_runtime"]),
         init_model("kEpsilon_surf", create_surf, depends_on=["models.neon_runtime"]),
         init_model("kEpsilon_grad", create_grad, depends_on=["models.neon_runtime"]),
+        init_model(
+            "kEpsilon_nearWallDist",
+            create_near_wall_dist,
+            depends_on=["models.neon_runtime"],
+        ),
         init_field(
             "nut",
             seed_nut,
-            depends_on=["models.neon_runtime", "fields.k", "fields.epsilon"],
+            depends_on=[
+                "models.neon_runtime",
+                "fields.k",
+                "fields.epsilon",
+                "models.nu_vol",
+                "models.kEpsilon_nearWallDist",
+            ],
         ),
         init_field(
             "nuEff",
@@ -130,12 +149,29 @@ def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
 def production(
     self: Any,
     kEpsilon_grad: Annotated[Any, "models"],
+    neon_runtime: Annotated[Any, "models"],
+    nu_vol: Annotated[Any, "models"],
+    kEpsilon_nearWallDist: Annotated[Any, "models"],
     U: Annotated[Any, "fields"],
     nut: Annotated[Any, "fields"],
+    k: Annotated[Any, "fields"],
+    epsilon: Annotated[Any, "fields"],
 ) -> FieldUpdates:
-    """Turbulent production ``G = nut (dev(twoSymm(gradU)) && gradU)``, published as a field."""
+    """Turbulent production ``G = nut (dev(twoSymm(gradU)) && gradU)``.
+
+    Publishes two fields: the bulk ``G`` the epsilon equation consumes, and ``Gk``
+    — the same production with the near-wall cells overwritten by the
+    epsilonWallFunction log-law form ``(nut+nu)|dU/dn| Cmu^0.25 sqrt(k)/(kappa y)``
+    — which the k equation consumes. The override is the model-side half of the
+    wall function (the BC only sets the wall *face* value); without it the k
+    equation lacks the source that balances the wall-function epsilon.
+    """
     grad_u = kEpsilon_grad.grad_tensor(U)
-    return FieldUpdates({"G": nut * nfb.strain_production(grad_u)})
+    G = nut * nfb.strain_production(grad_u)
+    Gk = nfb.epsilon_wall_production(
+        G, epsilon, U, k, nu_vol, nut, kEpsilon_nearWallDist, neon_runtime
+    )
+    return FieldUpdates({"G": G, "Gk": Gk})
 
 
 @kEpsilon.operation(name="kEpsilonCorrectEpsilon")
@@ -144,6 +180,7 @@ def correct_epsilon(
     neon_runtime: Annotated[Any, "models"],
     nu_vol: Annotated[Any, "models"],
     kEpsilon_surf: Annotated[Any, "models"],
+    kEpsilon_nearWallDist: Annotated[Any, "models"],
     G: Annotated[Any, "fields"],
     phi: Annotated[Any, "fields"],
     k: Annotated[Any, "fields"],
@@ -172,10 +209,14 @@ def correct_epsilon(
         neon_runtime,
     )
     eps_eqn.set_final_iter(False)
+    # epsilonWallFunction pins the near-wall CELL epsilon to the log-law value
+    # (OpenFOAM's matrix.setValues); apply it after assembly, before solve.
+    nfb.pin_epsilon_wall_cells(eps_eqn, epsilon, k, kEpsilon_nearWallDist, neon_runtime)
     eps_eqn.solve()
     epsilon.assign(nn.field_max(epsilon, epsilonMin))
     # OpenFOAM's fvMatrix::solve corrects the solved field's BCs; NeoN's does not.
-    epsilon.correct_boundary_conditions()
+    # The epsilonWallFunction sets the wall face value from (k, nu, nearWallDist).
+    nfb.correct_scalar_bc_ctx(epsilon, k, nu_vol, kEpsilon_nearWallDist)
     return FieldUpdates({"epsilon": epsilon})
 
 
@@ -185,13 +226,18 @@ def correct_k(
     neon_runtime: Annotated[Any, "models"],
     nu_vol: Annotated[Any, "models"],
     kEpsilon_surf: Annotated[Any, "models"],
-    G: Annotated[Any, "fields"],
+    kEpsilon_nearWallDist: Annotated[Any, "models"],
+    Gk: Annotated[Any, "fields"],
     phi: Annotated[Any, "fields"],
     k: Annotated[Any, "fields"],
     epsilon: Annotated[Any, "fields"],
     nut: Annotated[Any, "fields"],
 ) -> FieldUpdates:
-    """k transport: ddt + div - laplacian == G - Sp(eps/k, k); bound (uses the new epsilon)."""
+    """k transport: ddt + div - laplacian == Gk - Sp(eps/k, k); bound (uses the new epsilon).
+
+    Uses ``Gk`` — the production with the near-wall cells overwritten by the
+    epsilonWallFunction G form — not the bulk ``G`` the epsilon equation uses.
+    """
     nn.rotate_old_times(k)  # old := current k (still initial — k solved after epsilon)
     # Bind operands to locals (operator-operand lifetime — see correct_epsilon).
     eps_over_k = epsilon / k
@@ -201,7 +247,7 @@ def correct_k(
         nn.imp.ddt(k)
         + nn.imp.div(phi, k)
         - nn.imp.laplacian(d_k, k)
-        - nn.exp.source(G)
+        - nn.exp.source(Gk)
         + nn.imp.source(eps_over_k, k),
         k,
         neon_runtime,
@@ -210,7 +256,8 @@ def correct_k(
     k_eqn.solve()
     k.assign(nn.field_max(k, kMin))
     # OpenFOAM's fvMatrix::solve corrects the solved field's BCs; NeoN's does not.
-    k.correct_boundary_conditions()
+    # kqRWallFunction (zero-gradient) applies through the context correction too.
+    nfb.correct_scalar_bc_ctx(k, k, nu_vol, kEpsilon_nearWallDist)
     return FieldUpdates({"k": k})
 
 
@@ -219,13 +266,15 @@ def correct_nut(
     self: Any,
     nu_vol: Annotated[Any, "models"],
     kEpsilon_surf: Annotated[Any, "models"],
+    kEpsilon_nearWallDist: Annotated[Any, "models"],
     k: Annotated[Any, "fields"],
     epsilon: Annotated[Any, "fields"],
     nut: Annotated[Any, "fields"],
 ) -> FieldUpdates:
     """correctNut: ``nut = Cmu k^2 / epsilon``, then refresh the effective viscosity ``nuEff``."""
     nut.assign(Cmu * (k * k) / epsilon)
-    nut.correct_boundary_conditions()
+    # nutkWallFunction sets nut's wall faces from (k, nu, nearWallDist).
+    nfb.correct_scalar_bc_ctx(nut, k, nu_vol, kEpsilon_nearWallDist)
     return FieldUpdates({"nut": nut, "nuEff": kEpsilon_surf.interpolate(nut + nu_vol)})
 
 

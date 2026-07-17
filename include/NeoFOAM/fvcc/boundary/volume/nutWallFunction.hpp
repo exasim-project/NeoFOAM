@@ -17,7 +17,10 @@ namespace detail
 {
 
 static constexpr label MAX_ITER = 10;
-static constexpr scalar TOLERANCE = 1e-9;
+// OpenFOAM nutUSpaldingWallFunction defaults (maxIter=10, tolerance=0.01). The
+// Newton loop must stop at the same err threshold as upstream, otherwise the
+// wall nut converges to a slightly different uTau and the momentum solve drifts.
+static constexpr scalar TOLERANCE = 0.01;
 static constexpr scalar KAPPA = 0.41;
 static constexpr scalar E_COEFF = 9.8;
 
@@ -102,17 +105,12 @@ inline void setNutUSpaldingWallFunction(
             scalar err = 0.0;
             const scalar uTau = computeUTau(magGradU, magUp, y, nuw, currentNut, err, MAX_ITER);
 
-            // Mirrors OF nutUSpaldingWallFunctionFvPatchScalarField::calcNut restart-
-            // preservation block: if the current nutw already satisfies the Spalding
-            // relation to within tolerance (measured by err after one Newton step from
-            // the current state), keep it. Avoids drifting onto a different Newton
-            // basin when re-entering the wall function from a converged state.
-            scalar errOneIter = 0.0;
-            computeUTau(magGradU, magUp, y, nuw, currentNut, errOneIter, 1);
-
+            // OF nutUSpaldingWallFunctionFvPatchScalarField::calcNut: at the default
+            // tolerance (0.01) the restart-preservation branch (kept only for a
+            // user-overridden tolerance) is skipped, so nutw is taken straight from
+            // the freshly-solved uTau: max(0, uTau^2/magGradU - nuw).
             const scalar nutCandidate = (uTau * uTau) / (magGradU + ROOTVSMALL) - nuw;
-            const scalar nutCandidateClamped = nutCandidate > 0.0 ? nutCandidate : 0.0;
-            const scalar nutw = (errOneIter < TOLERANCE) ? currentNut : nutCandidateClamped;
+            const scalar nutw = nutCandidate > 0.0 ? nutCandidate : 0.0;
 
             refValue[i] = nutw;
             value[i] = nutw;

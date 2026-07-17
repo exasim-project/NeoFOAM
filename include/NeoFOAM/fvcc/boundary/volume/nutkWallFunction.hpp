@@ -50,6 +50,14 @@ inline void setNutkWallFunction(
 {
     const scalar Cmu25 = Kokkos::pow(Cmu, scalar(0.25));
 
+    // yPlusLam: the STEPWISE viscous/log switch-over point. Matches OpenFOAM
+    // wallFunctionCoefficients::calcYPlusLam (10 fixed-point iterations from 11).
+    scalar yPlusLam = scalar(11);
+    for (int it = 0; it < 10; ++it)
+    {
+        yPlusLam = Kokkos::log(Kokkos::max(E * yPlusLam, scalar(1))) / kappa;
+    }
+
     const auto kInternal = k.internalVector().view();
     const auto nuBoundary = nu.boundaryData().value().view();
     const auto nearWallBoundary = nearWallDist.boundaryData().value().view();
@@ -71,10 +79,16 @@ inline void setNutkWallFunction(
             const scalar nuw = nuBoundary[i];
             const scalar kw = Kokkos::max(kInternal[owner], scalar(0));
 
+            // STEPWISE blender (OpenFOAM v2406 nutk default): turbulent nut is the
+            // log-law value minus the molecular nu above yPlusLam, else zero.
             const scalar yPlus = Cmu25 * y * Kokkos::sqrt(kw) / nuw;
-            const scalar nutLog =
-                nuw * yPlus * kappa / Kokkos::log(Kokkos::max(E * yPlus, scalar(1) + scalar(1e-4)));
-            const scalar nutw = Kokkos::sqrt(nuw * nuw + nutLog * nutLog);
+            scalar nutw = scalar(0);
+            if (yPlus > yPlusLam)
+            {
+                const scalar nutLog = nuw * yPlus * kappa
+                                    / Kokkos::log(Kokkos::max(E * yPlus, scalar(1) + scalar(1e-4)));
+                nutw = nutLog - nuw;
+            }
 
             value[i] = nutw;
             refValue[i] = nutw;

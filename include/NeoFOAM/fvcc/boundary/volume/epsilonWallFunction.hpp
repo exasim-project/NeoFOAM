@@ -48,8 +48,8 @@ inline void setEpsilonWallFunction(
     const scalar Cmu75 = Kokkos::pow(Cmu, scalar(0.75));
 
     auto kInternal = k.internalVector().view();
-    const auto nuBoundary = nu.boundaryData().value().view();
     const auto nearWallBoundary = nearWallDist.boundaryData().value().view();
+    (void)nu; // molecular viscosity only used by the (disabled) viscous-sublayer branch
 
     auto [refGrad, value, valueFraction, refValue, faceOwners] = views(
         epsilon.boundaryData().refGrad(),
@@ -65,12 +65,13 @@ inline void setEpsilonWallFunction(
         NEON_LAMBDA(const localIdx i) {
             const localIdx owner = faceOwners[i];
             const scalar y = nearWallBoundary[i];
-            const scalar nuw = nuBoundary[i];
             const scalar kw = Kokkos::max(kInternal[owner], scalar(0));
 
-            const scalar eVis = scalar(2) * kw * nuw / (y * y);
+            // STEPWISE blender (OpenFOAM v2406 default) with lowReCorrection off:
+            // epsilon0 = epsilonLog = Cmu^0.75 k^1.5 / (kappa y). (The viscous
+            // sublayer branch is only taken when lowReCorrection && yPlus < yPlusLam.)
             const scalar eLog = Cmu75 * Kokkos::pow(kw, scalar(1.5)) / (kappa * y);
-            const scalar eOmega = Kokkos::sqrt(eVis * eVis + eLog * eLog);
+            const scalar eOmega = eLog;
 
             value[i] = eOmega;
             refValue[i] = eOmega;
