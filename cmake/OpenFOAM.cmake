@@ -58,9 +58,23 @@ target_include_directories(
 target_compile_definitions(OpenFOAM INTERFACE WM_LABEL_SIZE=$ENV{WM_LABEL_SIZE} NoRepository
                                               WM_$ENV{WM_PRECISION_OPTION} OPENFOAM=$ENV{FOAM_API})
 
-# Foam exposes WM_LABEL_SIZE (32/64); propagate to NeoN's label width
+# OpenFOAM exposes its label width via WM_LABEL_SIZE (32/64). Configure NeoN's
+# corresponding CMake option before it is added as a subdirectory so that NeoN
+# can set its own public compile definitions (NeoN_DP_LABEL) consistently.
 if($ENV{WM_LABEL_SIZE} EQUAL 64)
-  target_compile_definitions(NeoN PUBLIC NeoN_DP_LABEL)
+    set(
+        NeoN_DEFINE_DP_LABEL
+        ON
+        CACHE BOOL
+        "Use 64-bit labels to match OpenFOAM"
+        FORCE)
+else()
+    set(
+        NeoN_DEFINE_DP_LABEL
+        OFF
+        CACHE BOOL
+        "Use 32-bit labels to match OpenFOAM"
+        FORCE)
 endif()
 
 importoflibrary(OpenFOAM)
