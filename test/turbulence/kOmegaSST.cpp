@@ -300,10 +300,10 @@ TEST_CASE("kOmegaSST: component kernels match OpenFOAM")
     }
 
     // --- Compare F1 ---
-    REQUIRE_THAT(turbNF.F1Field(), EqualsInternal(ofF1, ApproxScalar(1e-10)));
+    REQUIRE_THAT(turbNF.f1Field(), EqualsInternal(ofF1, ApproxScalar(1e-10)));
 
     // --- Compare Pk ---
-    REQUIRE_THAT(turbNF.PkField(), EqualsInternal(ofPk, ApproxScalar(1e-10)));
+    REQUIRE_THAT(turbNF.pkField(), EqualsInternal(ofPk, ApproxScalar(1e-10)));
 
     // --- Compare spK ---
     REQUIRE_THAT(turbNF.spKField(), EqualsInternal(ofSpK, ApproxScalar(1e-10)));

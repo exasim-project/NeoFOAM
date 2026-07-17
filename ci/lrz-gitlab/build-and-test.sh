@@ -158,3 +158,44 @@ if [[ "$SKIP_VALIDATION" != "true" ]]; then
 else
     echo "=== Skipping validation (skip-validation label set) ==="
 fi
+
+# -----------------------------
+# Step 7: Smoke-test neoSimpleFoam (motorBike, 5 iterations)
+# -----------------------------
+SKIP_SIMPLE_SMOKETEST=${SKIP_SIMPLE_SMOKETEST:-false}
+if [[ "${GPU_VENDOR:-}" == "intel" ]]; then
+    SKIP_SIMPLE_SMOKETEST=true
+fi
+if [[ "$SKIP_SIMPLE_SMOKETEST" != "true" ]]; then
+    pushd tutorials/neoSimpleFoam/motorBike >/dev/null
+    mkdir -p constant/triSurface
+    cp -f "$FOAM_TUTORIALS"/resources/geometry/motorBike.obj.gz constant/triSurface/
+    surfaceFeatureExtract > log.surfaceFeatureExtract 2>&1
+    blockMesh > log.blockMesh 2>&1
+    decomposePar -decomposeParDict system/decomposeParDict.6 > log.decomposePar 2>&1
+    for proc in processor*/; do rm -rf "${proc}0" && cp -r 0.orig "${proc}0"; done
+    mpirun -np 6 snappyHexMesh -parallel -overwrite \
+        -decomposeParDict system/decomposeParDict.6 > log.snappyHexMesh 2>&1
+    mpirun -np 6 topoSet -parallel \
+        -decomposeParDict system/decomposeParDict.6 > log.topoSet 2>&1
+    mpirun -np 6 potentialFoam -parallel -writephi \
+        -decomposeParDict system/decomposeParDict.6 > log.potentialFoam 2>&1
+    foamDictionary -entry endTime -set 5 system/controlDict
+    # Ginkgo DPC++ backend lacks build_mapping for distributed solvers; run serial on Intel PVC
+    if [[ "${GPU_VENDOR:-}" == "intel" ]]; then
+        reconstructPar > log.reconstructPar 2>&1
+        if ! "../../../build/$PRESET/bin/neoSimpleFoam" \
+                -executor GPU > log.neoSimpleFoam 2>&1; then
+            cat log.neoSimpleFoam; exit 1
+        fi
+    else
+        if ! mpirun -np 6 "../../../build/$PRESET/bin/neoSimpleFoam" -parallel \
+                -executor GPU \
+                -decomposeParDict system/decomposeParDict.6 > log.neoSimpleFoam 2>&1; then
+            cat log.neoSimpleFoam; exit 1
+        fi
+    fi
+    popd >/dev/null
+else
+    echo "=== Skipping neoSimpleFoam smoke test (SKIP_SIMPLE_SMOKETEST set or Intel) ==="
+fi

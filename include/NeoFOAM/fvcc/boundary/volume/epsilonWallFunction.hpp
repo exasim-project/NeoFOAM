@@ -26,18 +26,18 @@ inline constexpr scalar EPSILON_WF_DEFAULT_KAPPA = 0.41;
 /**
  * @brief Apply the epsilonWallFunction kernel face-by-face.
  *
- * Mirrors Foam::epsilonWallFunctionFvPatchScalarField::calculate() with the
- * upstream v2406 defaults (blender STEPWISE, lowReCorrection off), which
- * reduce to the log-layer estimate only:
- *   - ε_w = ε_log = C_µ^0.75·k^1.5/(κ·y)
+ * Mirrors Foam::epsilonWallFunctionFvPatchScalarField::calculate() for the
+ * BINOMIAL n=2 blender:
+ *   - ε_vis = 2·k·ν/y²            (viscous-sublayer)
+ *   - ε_log = C_µ^0.75·k^1.5/(κ·y) (log-layer)
+ *   - ε_w   = √(ε_vis² + ε_log²)  (blend)
  *
- * (The viscous-sublayer 2νk/y² branch only enters with lowReCorrection.)
  * Only sets the wall face value; does NOT write to epsilon.internal[wall_cell].
  */
 inline void setEpsilonWallFunction(
     Field<scalar>& epsilon,
     const fvcc::VolumeField<scalar>& k,
-    const fvcc::VolumeField<scalar>& /*nu*/,
+    const fvcc::VolumeField<scalar>& nu,
     const fvcc::VolumeField<scalar>& nearWallDist,
     const UnstructuredMesh& mesh,
     std::pair<localIdx, localIdx> range,
@@ -48,6 +48,7 @@ inline void setEpsilonWallFunction(
     const scalar Cmu75 = Kokkos::pow(Cmu, scalar(0.75));
 
     auto kInternal = k.internalVector().view();
+    const auto nuBoundary = nu.boundaryData().value().view();
     const auto nearWallBoundary = nearWallDist.boundaryData().value().view();
 
     auto [refGrad, value, valueFraction, refValue, faceOwners] = views(
@@ -64,12 +65,15 @@ inline void setEpsilonWallFunction(
         NEON_LAMBDA(const localIdx i) {
             const localIdx owner = faceOwners[i];
             const scalar y = nearWallBoundary[i];
+            const scalar nuw = nuBoundary[i];
             const scalar kw = Kokkos::max(kInternal[owner], scalar(0));
 
+            const scalar eVis = scalar(2) * kw * nuw / (y * y);
             const scalar eLog = Cmu75 * Kokkos::pow(kw, scalar(1.5)) / (kappa * y);
+            const scalar eOmega = Kokkos::sqrt(eVis * eVis + eLog * eLog);
 
-            value[i] = eLog;
-            refValue[i] = eLog;
+            value[i] = eOmega;
+            refValue[i] = eOmega;
             valueFraction[i] = 1.0;
             refGrad[i] = 0.0;
         },
@@ -82,9 +86,8 @@ inline void setEpsilonWallFunction(
 /**
  * @brief Turbulent dissipation rate wall function BC.
  *
- * Mirrors Foam::epsilonWallFunctionFvPatchScalarField with the upstream
- * v2406 defaults (STEPWISE blender, lowReCorrection off): sets the wall face
- * value to the log-layer estimate C_µ^0.75·k^1.5/(κ·y).
+ * Mirrors Foam::epsilonWallFunctionFvPatchScalarField: blends viscous and
+ * log-layer ε estimates (BINOMIAL n=2) and sets the wall face value.
  *
  * Required BoundaryContext fields:
  *   - @c "k"            VolumeField<scalar> — turbulent kinetic energy
@@ -133,11 +136,11 @@ public:
 
     static std::string doc()
     {
-        return "Dissipation rate wall function. Sets the wall face value to "
-               "the log-layer estimate C_µ^0.75·k^1.5/(κ·y) (upstream v2406 "
-               "default: STEPWISE blender, lowReCorrection off). Does NOT "
-               "overwrite the wall cell internal value. Single-patch-corner "
-               "only; G is fed back through kEpsilon.";
+        return "Dissipation rate wall function. Blends viscous "
+               "(2νk/y²) and log-layer (C_µ^0.75·k^1.5/(κ·y)) ε contributions "
+               "with the BINOMIAL n=2 blender (upstream default) and sets the "
+               "wall face value. Does NOT overwrite the wall cell internal "
+               "value. Single-patch-corner only; G is fed back through kEpsilon.";
     }
 
     static std::string schema() { return "none"; }

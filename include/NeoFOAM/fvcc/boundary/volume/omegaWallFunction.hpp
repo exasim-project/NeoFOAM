@@ -51,11 +51,11 @@ inline void setOmegaWallFunction(
     const UnstructuredMesh& mesh,
     std::pair<localIdx, localIdx> range,
     scalar beta1,
-    scalar Cmu,
+    scalar cmu,
     scalar kappa
 )
 {
-    const scalar Cmu25 = Kokkos::pow(Cmu, scalar(0.25));
+    const scalar cmu25 = Kokkos::pow(cmu, scalar(0.25));
     // Function-local copy: a namespace-scope constexpr cannot be referenced inside a
     // __host__ __device__ lambda (it is "undefined in device code"); bind it here first.
     const scalar omegaMax = OMEGA_WF_OMEGA_MAX;
@@ -85,7 +85,7 @@ inline void setOmegaWallFunction(
             const scalar wVis = 6.0 * nuw / (beta1 * y * y);
 
             // Log layer: √k / (C_µ^0.25·κ·y)   (omega.C:226-234)
-            const scalar wLog = Kokkos::sqrt(kw) / (Cmu25 * kappa * y);
+            const scalar wLog = Kokkos::sqrt(kw) / (cmu25 * kappa * y);
 
             // BINOMIAL blender, n = 2 (upstream default at omega.C:396) —
             // closed form: ω = √(ωᵥᵢₛ² + ωₗₒg²). Clamped to OMEGA_WF_OMEGA_MAX so this face
@@ -138,7 +138,7 @@ public:
         , beta1_(
               dict.contains("beta1") ? dict.get<scalar>("beta1") : detail::OMEGA_WF_DEFAULT_BETA1
           )
-        , Cmu_(dict.contains("Cmu") ? dict.get<scalar>("Cmu") : detail::OMEGA_WF_DEFAULT_CMU)
+        , cmu_(dict.contains("Cmu") ? dict.get<scalar>("Cmu") : detail::OMEGA_WF_DEFAULT_CMU)
         , kappa_(
               dict.contains("kappa") ? dict.get<scalar>("kappa") : detail::OMEGA_WF_DEFAULT_KAPPA
           )
@@ -157,7 +157,7 @@ public:
             mesh_,
             this->range(),
             beta1_,
-            Cmu_,
+            cmu_,
             kappa_
         );
     }
@@ -187,7 +187,7 @@ private:
 
     const UnstructuredMesh& mesh_;
     scalar beta1_;
-    scalar Cmu_;
+    scalar cmu_;
     scalar kappa_;
 };
 

@@ -40,7 +40,7 @@ public:
 
     struct Coefficients
     {
-        scalar Cmu = 0.09;
+        scalar cmu = 0.09;
         scalar C1 = 1.44;
         scalar C2 = 1.92;
         scalar sigmaK = 1.0;
@@ -88,10 +88,10 @@ public:
     nnfvcc::SurfaceField<scalar>& nuEff();
 
     /// @brief Effective k diffusion coefficient on faces: ν_t/σ_k + ν
-    nnfvcc::SurfaceField<scalar>& DkEff();
+    nnfvcc::SurfaceField<scalar>& dkEff();
 
     /// @brief Effective ε diffusion coefficient on faces: ν_t/σ_ε + ν
-    nnfvcc::SurfaceField<scalar>& DepsilonEff();
+    nnfvcc::SurfaceField<scalar>& depsilonEff();
 
     /// @brief Velocity gradient tensor (updated each correct() call)
     const nnfvcc::VolumeField<NeoN::Tensor>& gradU() const;
@@ -106,7 +106,7 @@ public:
     const Coefficients& coeffs() const { return coeffs_; }
 
     // Internal result fields — read-only access for testing
-    const nnfvcc::VolumeField<scalar>& PkField() const { return Pk_; }
+    const nnfvcc::VolumeField<scalar>& pkField() const { return Pk_; }
     const nnfvcc::VolumeField<scalar>& spKField() const { return spK_; }
     const nnfvcc::VolumeField<scalar>& epsilonSourceField() const { return epsilonSource_; }
     const nnfvcc::VolumeField<scalar>& spEpsilonField() const { return spEpsilon_; }
@@ -138,7 +138,7 @@ public:
     /**
      * @brief Recompute surface diffusivity fields from current ν_t.
      *
-     * Interpolates ν_t → surfNut_, then fills nuEff_, DkEffF_, DepsilonEffF_.
+     * Interpolates ν_t → surfNut_, then fills nuEff_, dkEffF_, depsilonEffF_.
      */
     void calcDiffusivities(const nnfvcc::VolumeField<scalar>& nut);
 
@@ -166,23 +166,11 @@ private:
     nnfvcc::VolumeField<scalar> epsilonSource_;
     nnfvcc::VolumeField<scalar> spEpsilon_;
 
-    // Per-cell epsilon wall-function constraint, rebuilt each correct():
-    // epsilonWallMask_[c] != 0 marks a wall-adjacent cell whose epsilon is
-    // hard-pinned to epsilonWallValue_[c] (the blended viscous/log wall value,
-    // OpenFOAM epsilonWallFunction::manipulateMatrix equivalent). See the
-    // matching omega members in kOmegaSST.
-    NeoN::Vector<scalar> epsilonWallValue_;
-    NeoN::Vector<scalar> epsilonWallMask_;
-    // cornerWeight_[c] = 1/(number of epsilonWallFunction faces touching c);
-    // built once (static wall topology).
-    NeoN::Vector<scalar> cornerWeight_;
-    bool cornerWeightsBuilt_ = false;
-
     // Surface fields
     nnfvcc::SurfaceField<scalar> surfNut_;
     nnfvcc::SurfaceField<scalar> nuEff_;
-    nnfvcc::SurfaceField<scalar> DkEffF_;
-    nnfvcc::SurfaceField<scalar> DepsilonEffF_;
+    nnfvcc::SurfaceField<scalar> dkEffF_;
+    nnfvcc::SurfaceField<scalar> depsilonEffF_;
 
     // Cached operators (constructed once)
     nnfvcc::GaussGreenGrad gradOp_;
@@ -190,6 +178,11 @@ private:
 
     // Model coefficients
     Coefficients coeffs_;
+
+    // Corner-averaging weights for wall-function G feedback (1/N per wall cell, 0 elsewhere).
+    // Built once on first correct() since wall topology is static.
+    NeoN::Vector<scalar> cornerWeight_;
+    bool cornerWeightsBuilt_ = false;
 };
 
 /**

@@ -24,25 +24,14 @@ inline constexpr scalar NUTK_WF_DEFAULT_CMU = 0.09;
 inline constexpr scalar NUTK_WF_DEFAULT_KAPPA = 0.41;
 inline constexpr scalar NUTK_WF_DEFAULT_E = 9.8;
 
-/// Intersection of the viscous and log-law layers, y⁺_lam = log(E·y⁺_lam)/κ
-/// (Foam::nutWallFunctionFvPatchScalarField::yPlusLam fixed-point iteration).
-inline scalar nutWallFunctionYPlusLam(scalar kappa, scalar E)
-{
-    scalar ypl = 11.0;
-    for (int i = 0; i < 10; ++i)
-    {
-        ypl = Kokkos::log(Kokkos::max(E * ypl, scalar(1))) / kappa;
-    }
-    return ypl;
-}
-
 /**
  * @brief Apply the nutkWallFunction kernel face-by-face.
  *
- * Mirrors Foam::nutkWallFunctionFvPatchScalarField::calcNut() with the
- * upstream v2406 defaults (blender STEPWISE):
- *   - y⁺    = C_µ^0.25·y·√k/ν
- *   - ν_t,w = y⁺ > y⁺_lam ? ν·(y⁺·κ/log(E·y⁺) − 1) : 0
+ * Mirrors Foam::nutkWallFunctionFvPatchScalarField::calcNut() for the BINOMIAL n=2 blender:
+ *   - y⁺       = C_µ^0.25·y·√k/ν
+ *   - ν_t,log  = ν·y⁺·κ/log(max(E·y⁺, 1+1e-4))
+ *   - ν_t,vis  = ν   (viscous sublayer)
+ *   - ν_t,w    = √(ν_t,vis² + ν_t,log²)
  *
  * k is read from the BoundaryContext; the boundary face value is written,
  * no internal-cell stomp.
@@ -60,7 +49,6 @@ inline void setNutkWallFunction(
 )
 {
     const scalar Cmu25 = Kokkos::pow(Cmu, scalar(0.25));
-    const scalar yPlusLam = nutWallFunctionYPlusLam(kappa, E);
 
     const auto kInternal = k.internalVector().view();
     const auto nuBoundary = nu.boundaryData().value().view();
@@ -84,9 +72,9 @@ inline void setNutkWallFunction(
             const scalar kw = Kokkos::max(kInternal[owner], scalar(0));
 
             const scalar yPlus = Cmu25 * y * Kokkos::sqrt(kw) / nuw;
-            const scalar nutw = yPlus > yPlusLam
-                                  ? nuw * (yPlus * kappa / Kokkos::log(E * yPlus) - scalar(1))
-                                  : scalar(0);
+            const scalar nutLog =
+                nuw * yPlus * kappa / Kokkos::log(Kokkos::max(E * yPlus, scalar(1) + scalar(1e-4)));
+            const scalar nutw = Kokkos::sqrt(nuw * nuw + nutLog * nutLog);
 
             value[i] = nutw;
             refValue[i] = nutw;
@@ -152,9 +140,8 @@ public:
     static std::string doc()
     {
         return "k-based turbulent viscosity wall function. y+ derived from "
-               "k (not from |∂U/∂n| like Spalding). Upstream v2406 default "
-               "(STEPWISE): nut = nu*(y+*kappa/log(E*y+) - 1) above y+_lam, "
-               "0 below.";
+               "k (not from |∂U/∂n| like Spalding). BINOMIAL n=2 blend of "
+               "viscous (nu) and log-layer (nu·y+·κ/log(E·y+)) contributions.";
     }
 
     static std::string schema() { return "none"; }
