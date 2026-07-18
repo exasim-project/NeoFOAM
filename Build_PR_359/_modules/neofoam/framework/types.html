@@ -402,6 +402,13 @@
 
     <span class="n">op_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
+    <span class="c1"># When True the operation is a *fallback* op — scheduled only when a</span>
+    <span class="c1"># consumer selects the model&#39;s fallback backend (e.g. the pybFoam-OpenFOAM</span>
+    <span class="c1"># turbulence path in incompressibleFluid). Native (non-fallback) ops and</span>
+    <span class="c1"># fallback ops are partitioned by ``ModelRuntime.native_operations()`` /</span>
+    <span class="c1"># ``fallback_operations()``; ``.operations`` still returns both.</span>
+    <span class="n">fallback</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+
     <span class="c1"># Optional metadata</span>
     <span class="n">op_type</span><span class="p">:</span> <span class="n">OpType</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
