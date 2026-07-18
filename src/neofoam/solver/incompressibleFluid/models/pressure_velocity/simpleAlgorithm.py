@@ -180,7 +180,7 @@ def momentum(
     # ``storePrevIterFields()`` natively so that ``p.relax()`` (explicit field
     # under-relaxation in the pressure corrector) has a previous state; p is
     # untouched until the pressure solve, so storing here is equivalent.
-    p.storePrevIter()  # type: ignore[attr-defined]
+    p.storePrevIter()
 
     # Refresh nuEff where it is consumed (see pimpleAlgorithm.momentum).
     with telemetry.span("momentum.assemble"):

@@ -205,6 +205,12 @@ def blend(
 ) -> FieldUpdates:
     """Compute ``F1`` and the frozen production / Sp / SuSp coefficients, and publish them."""
     nu = nfb.read_transport_viscosity(neon_runtime)
+    # omegaWallFunction::updateCoeffs writes the near-wall omega CELL from the current
+    # k *before* CDkOmega/F1 (kOmegaSSTBase.C:541, "omegaWallFunctions change the cell
+    # value!"). Refresh here so the blending coefficients read current-k near-wall
+    # omega, removing the one-iteration lag (D2). A no-op without an omegaWallFunction
+    # patch (e.g. the no-WF turbulentBox case).
+    nfb.refresh_omega_wall_cells(omega, k, nu_vol, komega_nearWallDist, neon_runtime)
     y = komega_wall_dist
     grad_u = komega_grad.grad_tensor(U)
     s2 = nfb.strain_magnitude_sqr(grad_u)
@@ -250,6 +256,7 @@ def blend(
 
     return FieldUpdates(
         {
+            "omega": omega,  # near-wall cells refreshed in-place (updateCoeffs, D2)
             "komega_F1": f1,
             "komega_omega_prod": gamma * gbynu0_lim,
             "komega_omega_sp": beta * omega,  # Sp(beta*omega, omega), coeff frozen

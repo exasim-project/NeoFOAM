@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/map.h>
 #include <nanobind/stl/pair.h>
+#include <nanobind/stl/string.h>
 #include <nanobind/stl/tuple.h>
 
 // NeoN headers
@@ -11,6 +13,9 @@
 // NeoFOAM headers
 #include "NeoFOAM/algorithms/pressureVelocityCoupling.hpp"
 #include "NeoFOAM/datastructures/pde.hpp"
+#include "NeoFOAM/datastructures/runTime.hpp"
+#include "NeoFOAM/solutionControl/pimpleControl.hpp"
+#include "NeoFOAM/auxiliary/continuityError.hpp"
 
 #include "bindings.hpp"
 
@@ -89,6 +94,43 @@ void registerPressureVelocityCoupling(nb::module_& m)
         "dt"_a,
         "scheme"_a,
         "Compute ddt flux correction for PISO loop (BDF1/BDF2)"
+    );
+
+    // -------------------------------------------------------------------
+    // Outer PIMPLE loop control (NeoFOAM-native, residual-driven).
+    // residuals is a {field: (initResNorm, finalResNorm)} dict fed each pass.
+    // -------------------------------------------------------------------
+    nb::class_<nf::PimpleControl>(m, "PimpleControl")
+        .def(
+            "__init__",
+            [](nf::PimpleControl* self, const NeoN::Dictionary& fvSolution)
+            { new (self) nf::PimpleControl(fvSolution); },
+            "fv_solution"_a,
+            "Construct from the fvSolution dict (reads the PIMPLE subdict)"
+        )
+        .def(
+            "loop",
+            &nf::PimpleControl::loop,
+            "residuals"_a,
+            "Advance the outer corrector; returns True while another pass should run"
+        )
+        .def("final_iter", &nf::PimpleControl::finalIter, "True on the last outer pass")
+        .def("first_iter", &nf::PimpleControl::firstIter, "True on the first outer pass")
+        .def("n_outer_correctors", &nf::PimpleControl::nOuterCorrectors);
+
+    // -------------------------------------------------------------------
+    // Continuity-error report (sum local, global) — matches continuityErrs.H.
+    // -------------------------------------------------------------------
+    m.def(
+        "compute_continuity_error",
+        [](const fvcc::SurfaceField<NeoN::scalar>& phi, const nf::RunTime& rt)
+        {
+            const auto errs = nf::computeContinuityError(phi, rt);
+            return std::make_pair(errs.sumLocal, errs.global);
+        },
+        "phi"_a,
+        "runtime"_a,
+        "Return (sum_local, global) time-step continuity errors from the face flux"
     );
 }
 

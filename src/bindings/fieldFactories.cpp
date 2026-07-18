@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include <nanobind/nanobind.h>
+#include <nanobind/ndarray.h> // copy_from_host (host array -> field)
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/tuple.h>
 
@@ -207,6 +208,47 @@ void registerFieldFactories(nb::module_& m)
         "field_name"_a = std::string("p"),
         "piso_dict"_a = std::string("PISO"),
         "Get (refCell, refValue, needsReference) from fvSolution"
+    );
+
+    // -------------------------------------------------------------------
+    // Uniform volume scalar field (nu, nut=0) for the explicit viscous stress.
+    // Mirrors create_uniform_surface_field but on a VolumeField.
+    // -------------------------------------------------------------------
+    m.def(
+        "create_uniform_volume_field",
+        [](nf::RunTime& rt, const std::string& name, double value)
+        {
+            auto bcs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<NeoN::scalar>>(rt.nfMesh);
+            fvcc::VolumeField<NeoN::scalar> field(rt.exec, name, rt.nfMesh, bcs);
+            NeoN::fill(field.internalVector(), value);
+            NeoN::fill(field.boundaryData().value(), value);
+            return field;
+        },
+        "runtime"_a,
+        "name"_a,
+        "value"_a,
+        "Create a uniform scalar volume field (e.g. nu or nut=0)"
+    );
+
+    // Overwrite a scalar field's internal values from a host array (the closure's
+    // nonlinear scalar maths — chi, fv1, fw, ... — is authored in plain NumPy).
+    m.def(
+        "copy_from_host",
+        [](fvcc::VolumeField<NeoN::scalar>& field,
+           nb::ndarray<const NeoN::scalar, nb::ndim<1>, nb::c_contig, nb::device::cpu> values)
+        {
+            const auto n = field.internalVector().size();
+            if (static_cast<std::size_t>(values.shape(0)) != static_cast<std::size_t>(n))
+            {
+                throw std::runtime_error("copy_from_host: array size != field size");
+            }
+            field.internalVector() =
+                NeoN::Vector<NeoN::scalar>(field.exec(), values.data(), n, NeoN::SerialExecutor());
+            field.correctBoundaryConditions();
+        },
+        "field"_a,
+        "values"_a,
+        "Overwrite a scalar field's internal values from a host array; corrects BCs"
     );
 }
 

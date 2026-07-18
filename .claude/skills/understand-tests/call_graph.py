@@ -76,7 +76,9 @@ class ImportRef:
     """A name bound by an import, and what it points at."""
 
     module: str  # dotted module the name resolves into
-    symbol: str | None  # symbol name if `from mod import symbol`, else None (a module alias)
+    symbol: (
+        str | None
+    )  # symbol name if `from mod import symbol`, else None (a module alias)
 
 
 @dataclass
@@ -211,7 +213,9 @@ def collect_definitions(mod: ModuleInfo) -> list[Definition]:
                         end_lineno=child.end_lineno or child.lineno,
                         file=str(mod.path),
                         class_name=class_name,
-                        is_test=mod.is_test and class_name is None and _is_test_func(child.name),
+                        is_test=mod.is_test
+                        and class_name is None
+                        and _is_test_func(child.name),
                     )
                 )
                 # nested functions: descend but keep class context None
@@ -295,7 +299,11 @@ class CallResolver:
             if cand in self.defindex:
                 return cand, tail, "resolved"
             # a method of this neofoam class we couldn't index (inherited?) -> internal
-            return (None, tail, "internal") if self.in_scope(caller_mod) else (None, tail, "external")
+            return (
+                (None, tail, "internal")
+                if self.in_scope(caller_mod)
+                else (None, tail, "external")
+            )
 
         # imported name
         if head in imports:
@@ -358,7 +366,9 @@ def analyze(
     scope: str | None,
 ) -> dict:
     mods: dict[str, ModuleInfo] = {}
-    for path, is_test in [(p, False) for p in source_files] + [(p, True) for p in test_files]:
+    for path, is_test in [(p, False) for p in source_files] + [
+        (p, True) for p in test_files
+    ]:
         try:
             tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
         except (SyntaxError, UnicodeDecodeError) as exc:
@@ -380,7 +390,9 @@ def analyze(
     def_by_qual = {d.qualname: d for d in all_defs}
     source_mods = {m.dotted for m in mods.values() if not m.is_test}
 
-    in_scope = lambda m: scope is None or m == scope or m.startswith(scope + ".")
+    def in_scope(m: str) -> bool:
+        return scope is None or m == scope or m.startswith(scope + ".")
+
     resolver = CallResolver(mods, defindex, classes, in_scope)
 
     # ---- call edges (neofoam-relevant only; external calls dropped) -------- #
@@ -433,8 +445,14 @@ def analyze(
 
     # source functions no test statically reaches (candidates for "untested by design")
     reached_any = {q for reach in test_reach.values() for q in reach}
-    source_fns = [d.qualname for d in all_defs if d.module in source_mods and not d.qualname.endswith(".__init__")]
-    unreached = sorted(q for q in source_fns if q not in reached_any) if test_files else []
+    source_fns = [
+        d.qualname
+        for d in all_defs
+        if d.module in source_mods and not d.qualname.endswith(".__init__")
+    ]
+    unreached = (
+        sorted(q for q in source_fns if q not in reached_any) if test_files else []
+    )
 
     # ---- test stratification (altitude) ----------------------------------- #
     # Classify each test by how many SOURCE MODULES it can reach: a proxy for
@@ -445,7 +463,15 @@ def analyze(
     RANK = {lv: i for i, lv in enumerate(LEVELS)}
 
     def _level(n_mods: int) -> str:
-        return LEVELS[0] if n_mods == 0 else LEVELS[1] if n_mods == 1 else LEVELS[2] if n_mods <= 3 else LEVELS[3]
+        return (
+            LEVELS[0]
+            if n_mods == 0
+            else LEVELS[1]
+            if n_mods == 1
+            else LEVELS[2]
+            if n_mods <= 3
+            else LEVELS[3]
+        )
 
     strata: list[dict] = []
     for d in all_defs:
@@ -462,7 +488,9 @@ def analyze(
             }
         )
     strata.sort(key=lambda s: (-RANK[s["level"]], -s["src_modules"], -s["src_fns"]))
-    level_hist = {lv: sum(1 for s in strata if s["level"] == lv) for lv in reversed(LEVELS)}
+    level_hist = {
+        lv: sum(1 for s in strata if s["level"] == lv) for lv in reversed(LEVELS)
+    }
 
     # ---- feature coverage: source API surface × best covering test level -- #
     # in-degree over SOURCE callees only (test-module helpers excluded), and for
@@ -546,12 +574,22 @@ def _walk_calls(mod, resolver, call_edges, unresolved, external_count):
                     external_count[0] += 1
                 elif category == "resolved":
                     call_edges.append(
-                        {"caller": caller_qual, "callee": callee, "line": child.lineno, "tail": tail}
+                        {
+                            "caller": caller_qual,
+                            "callee": callee,
+                            "line": child.lineno,
+                            "tail": tail,
+                        }
                     )
                 else:  # internal — neofoam-related but not pinned to a def
                     unresolved[tail] += 1
                     call_edges.append(
-                        {"caller": caller_qual, "callee": None, "line": child.lineno, "tail": tail}
+                        {
+                            "caller": caller_qual,
+                            "callee": None,
+                            "line": child.lineno,
+                            "tail": tail,
+                        }
                     )
                 visit(child, caller_qual, class_ctx)  # args may contain calls
             else:
@@ -569,7 +607,11 @@ def _short(qual: str) -> str:
 
 
 def write_dot_modules(report: dict, out: Path) -> None:
-    lines = ["digraph modules {", "  rankdir=LR;", "  node [shape=box, fontname=Helvetica];"]
+    lines = [
+        "digraph modules {",
+        "  rankdir=LR;",
+        "  node [shape=box, fontname=Helvetica];",
+    ]
     nodes = set()
     for e in report["module_edges"]:
         nodes.add(e["src"])
@@ -577,14 +619,18 @@ def write_dot_modules(report: dict, out: Path) -> None:
     for n in sorted(nodes):
         lines.append(f'  "{n}";')
     for e in report["module_edges"]:
-        style = ' [style=dashed]' if e["src_is_test"] else ""
+        style = " [style=dashed]" if e["src_is_test"] else ""
         lines.append(f'  "{e["src"]}" -> "{e["dst"]}"{style};')
     lines.append("}")
     out.write_text("\n".join(lines) + "\n")
 
 
 def write_dot_calls(report: dict, out: Path, cap: int = 600) -> None:
-    lines = ["digraph calls {", "  rankdir=LR;", "  node [shape=box, fontname=Helvetica, fontsize=9];"]
+    lines = [
+        "digraph calls {",
+        "  rankdir=LR;",
+        "  node [shape=box, fontname=Helvetica, fontsize=9];",
+    ]
     n = 0
     for e in report["call_edges"]:
         if e["callee"] is None:
@@ -592,7 +638,7 @@ def write_dot_calls(report: dict, out: Path, cap: int = 600) -> None:
         lines.append(f'  "{_short(e["caller"])}" -> "{_short(e["callee"])}";')
         n += 1
         if n >= cap:
-            lines.append(f'  // truncated at {cap} edges')
+            lines.append(f"  // truncated at {cap} edges")
             break
     lines.append("}")
     out.write_text("\n".join(lines) + "\n")
@@ -629,47 +675,80 @@ def write_markdown(report: dict, out: Path) -> None:
         a, b = nid(e["src"]), nid(e["dst"])
         arrow = "-.->" if e["src_is_test"] else "-->"
         md.append(f'    {a}["{e["src"]}"] {arrow} {b}["{e["dst"]}"]')
-    md += ["```", "", "## Module edges (import-derived, authoritative)", "",
-           "| src | → | dst | test? | symbols |", "|---|---|---|---|---|"]
+    md += [
+        "```",
+        "",
+        "## Module edges (import-derived, authoritative)",
+        "",
+        "| src | → | dst | test? | symbols |",
+        "|---|---|---|---|---|",
+    ]
     for e in report["module_edges"]:
         md.append(
             f"| `{e['src']}` | → | `{e['dst']}` | {'test' if e['src_is_test'] else ''} "
-            f"| {', '.join('`'+x+'`' for x in e['symbols'][:8])} |"
+            f"| {', '.join('`' + x + '`' for x in e['symbols'][:8])} |"
         )
     if report["top_unresolved"]:
-        md += ["", "## Top unresolved call names (dynamic / external)", "",
-               "| name | sites |", "|---|---|"]
+        md += [
+            "",
+            "## Top unresolved call names (dynamic / external)",
+            "",
+            "| name | sites |",
+            "|---|---|",
+        ]
         for name, cnt in report["top_unresolved"]:
             md.append(f"| `{name}` | {cnt} |")
     if report.get("test_strata"):
         hist = report["summary"]["test_level_histogram"]
-        md += ["", "## Test stratification — read top-down (e2e → unit)", "",
-               "Each test's **altitude** = how many source *modules* it can reach "
-               "(`integration` ≥4 · `component` 2–3 · `unit` 1 · `isolated` 0). This "
-               "is *touch surface*, not assertion focus — a test that boots the whole "
-               "app reaches everything it fans out to. Read the top rows first to grasp "
-               "what the suite claims the system does end-to-end.", "",
-               f"Levels: " + " · ".join(f"**{k}**={v}" for k, v in hist.items()), "",
-               "| level | test | src modules | src fns |", "|---|---|---|---|"]
+        md += [
+            "",
+            "## Test stratification — read top-down (e2e → unit)",
+            "",
+            "Each test's **altitude** = how many source *modules* it can reach "
+            "(`integration` ≥4 · `component` 2–3 · `unit` 1 · `isolated` 0). This "
+            "is *touch surface*, not assertion focus — a test that boots the whole "
+            "app reaches everything it fans out to. Read the top rows first to grasp "
+            "what the suite claims the system does end-to-end.",
+            "",
+            "Levels: " + " · ".join(f"**{k}**={v}" for k, v in hist.items()),
+            "",
+            "| level | test | src modules | src fns |",
+            "|---|---|---|---|",
+        ]
         for s in report["test_strata"]:
-            md.append(f"| {s['level']} | `{_short(s['test'])}` | {s['src_modules']} | {s['src_fns']} |")
+            md.append(
+                f"| {s['level']} | `{_short(s['test'])}` | {s['src_modules']} | {s['src_fns']} |"
+            )
     if report.get("feature_coverage"):
         api = report["summary"]
-        md += ["", "## Feature coverage — is each important feature proven?", "",
-               f"Public source functions ({api['public_api_fns']} total, "
-               f"**{api['public_api_static_gaps']} with no test statically reaching "
-               "them**), ranked by in-degree (how many source calls depend on them — a "
-               "centrality proxy for 'important'). `best_test_level` is the *highest* "
-               "test altitude that reaches the fn; **GAP** = no test reaches it "
-               "statically. Confirm GAPs against the dynamic pass before acting.", "",
-               "| in-deg | fn | best test level |", "|---|---|---|"]
+        md += [
+            "",
+            "## Feature coverage — is each important feature proven?",
+            "",
+            f"Public source functions ({api['public_api_fns']} total, "
+            f"**{api['public_api_static_gaps']} with no test statically reaching "
+            "them**), ranked by in-degree (how many source calls depend on them — a "
+            "centrality proxy for 'important'). `best_test_level` is the *highest* "
+            "test altitude that reaches the fn; **GAP** = no test reaches it "
+            "statically. Confirm GAPs against the dynamic pass before acting.",
+            "",
+            "| in-deg | fn | best test level |",
+            "|---|---|---|",
+        ]
         for r in report["feature_coverage"][:40]:
             flag = "**GAP**" if r["best_test_level"] == "GAP" else r["best_test_level"]
-            md.append(f"| {r['in_degree']} | `{r['fn'].split('neofoam.')[-1]}` | {flag} |")
+            md.append(
+                f"| {r['in_degree']} | `{r['fn'].split('neofoam.')[-1]}` | {flag} |"
+            )
     if report["statically_unreached_source_fns"]:
-        md += ["", "## Source functions no test statically reaches", "",
-               "Candidates for missing coverage (or dead code). Confirm against the "
-               "dynamic coverage pass before concluding.", ""]
+        md += [
+            "",
+            "## Source functions no test statically reaches",
+            "",
+            "Candidates for missing coverage (or dead code). Confirm against the "
+            "dynamic coverage pass before concluding.",
+            "",
+        ]
         for q in report["statically_unreached_source_fns"]:
             md.append(f"- `{q}`")
     out.write_text("\n".join(md) + "\n")
@@ -677,19 +756,38 @@ def write_markdown(report: dict, out: Path) -> None:
 
 # --------------------------------------------------------------------------- #
 def main() -> int:
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--source", action="append", default=[], required=True,
-                    help="Source dir(s) or file(s) to analyze (repeatable / comma-sep).")
-    ap.add_argument("--tests", action="append", default=[],
-                    help="Test dir(s) or file(s) (optional; enables reachability).")
-    ap.add_argument("--pkg-root", default=None,
-                    help="Optional override for the dotted-name root (e.g. src). "
-                         "By default each file's root is auto-detected from its "
-                         "__init__.py ancestry, which handles src/ and test/ alike.")
-    ap.add_argument("--scope", default=None,
-                    help="Keep only edges whose target module starts with this "
-                         "prefix (e.g. neofoam). Omit to keep all.")
-    ap.add_argument("--out", required=True, help="Output directory (created if missing).")
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    ap.add_argument(
+        "--source",
+        action="append",
+        default=[],
+        required=True,
+        help="Source dir(s) or file(s) to analyze (repeatable / comma-sep).",
+    )
+    ap.add_argument(
+        "--tests",
+        action="append",
+        default=[],
+        help="Test dir(s) or file(s) (optional; enables reachability).",
+    )
+    ap.add_argument(
+        "--pkg-root",
+        default=None,
+        help="Optional override for the dotted-name root (e.g. src). "
+        "By default each file's root is auto-detected from its "
+        "__init__.py ancestry, which handles src/ and test/ alike.",
+    )
+    ap.add_argument(
+        "--scope",
+        default=None,
+        help="Keep only edges whose target module starts with this "
+        "prefix (e.g. neofoam). Omit to keep all.",
+    )
+    ap.add_argument(
+        "--out", required=True, help="Output directory (created if missing)."
+    )
     args = ap.parse_args()
 
     pkg_root = Path(args.pkg_root) if args.pkg_root else None
@@ -711,21 +809,31 @@ def main() -> int:
 
     s = report["summary"]
     print(f"\n==== CALL GRAPH ({', '.join(args.source)}) ====")
-    print(f"  {s['source_modules']} source + {s['test_modules']} test modules · "
-          f"{s['definitions']} defs · {s['neofoam_call_sites']} neofoam call sites "
-          f"({s['external_call_sites_dropped']} external dropped)")
-    print(f"  resolution confidence {s['resolution_confidence_pct']}% "
-          f"({s['resolved_call_sites']}/{s['neofoam_call_sites']})")
+    print(
+        f"  {s['source_modules']} source + {s['test_modules']} test modules · "
+        f"{s['definitions']} defs · {s['neofoam_call_sites']} neofoam call sites "
+        f"({s['external_call_sites_dropped']} external dropped)"
+    )
+    print(
+        f"  resolution confidence {s['resolution_confidence_pct']}% "
+        f"({s['resolved_call_sites']}/{s['neofoam_call_sites']})"
+    )
     print(f"  {s['module_edges']} in-scope module dependency edges")
     if report.get("test_strata"):
         hist = s["test_level_histogram"]
         print("  test levels: " + " · ".join(f"{k}={v}" for k, v in hist.items()))
-        print(f"  public API: {s['public_api_fns']} fns, "
-              f"{s['public_api_static_gaps']} with NO test statically reaching them")
+        print(
+            f"  public API: {s['public_api_fns']} fns, "
+            f"{s['public_api_static_gaps']} with NO test statically reaching them"
+        )
     if report["statically_unreached_source_fns"]:
-        print(f"  {len(report['statically_unreached_source_fns'])} source fns no test statically reaches")
-    print(f"\nWrote {out/'callgraph.json'}, {out/'callgraph.md'}, "
-          f"{out/'modules.dot'}, {out/'callgraph.dot'}")
+        print(
+            f"  {len(report['statically_unreached_source_fns'])} source fns no test statically reaches"
+        )
+    print(
+        f"\nWrote {out / 'callgraph.json'}, {out / 'callgraph.md'}, "
+        f"{out / 'modules.dot'}, {out / 'callgraph.dot'}"
+    )
     return 0
 
 

@@ -58,7 +58,11 @@ def _dynamic_verdicts(cov: dict, defs: list[dict]) -> dict[str, str]:
             continue
         missing_frac = len(body & miss_by_suffix[key]) / len(body)
         out[d["qualname"]] = (
-            "covered" if missing_frac == 0 else "uncovered" if missing_frac >= 0.7 else "partial"
+            "covered"
+            if missing_frac == 0
+            else "uncovered"
+            if missing_frac >= 0.7
+            else "partial"
         )
     return out
 
@@ -69,17 +73,23 @@ def main() -> int:
     ap.add_argument("--out", required=True, help="Output image path (.png/.svg).")
     ap.add_argument("--top", type=int, default=30, help="Show the top-N central fns.")
     ap.add_argument("--title", default=None, help="Override the chart title.")
-    ap.add_argument("--coverage-json", default=None,
-                    help="Optional coverage_contexts.py coverage.json. When given, "
-                         "bars are colored by DYNAMIC per-fn coverage (covered / "
-                         "partial / uncovered) instead of static test level — i.e. "
-                         "'green = lines actually ran', not 'a test touches it'.")
+    ap.add_argument(
+        "--coverage-json",
+        default=None,
+        help="Optional coverage_contexts.py coverage.json. When given, "
+        "bars are colored by DYNAMIC per-fn coverage (covered / "
+        "partial / uncovered) instead of static test level — i.e. "
+        "'green = lines actually ran', not 'a test touches it'.",
+    )
     args = ap.parse_args()
 
     report = json.loads(Path(args.json).read_text())
     feats = report.get("feature_coverage")
     if not feats:
-        print("No feature_coverage in JSON (run call_graph.py with --tests).", file=sys.stderr)
+        print(
+            "No feature_coverage in JSON (run call_graph.py with --tests).",
+            file=sys.stderr,
+        )
         return 2
 
     dyn = None
@@ -106,7 +116,9 @@ def main() -> int:
 
     rows = feats[: args.top][::-1]
     names = [_short(r["fn"]) for r in rows]
-    vals = [max(r["in_degree"], 0.4) for r in rows]  # floor so 0-in-degree GAPs are visible
+    vals = [
+        max(r["in_degree"], 0.4) for r in rows
+    ]  # floor so 0-in-degree GAPs are visible
     if dyn is not None:
         keys = [dyn.get(r["fn"], "unknown") for r in rows]
         colors = [DYN_STYLE[k][0] for k in keys]
@@ -123,7 +135,10 @@ def main() -> int:
     ax.barh(range(n), vals, color=colors, edgecolor="white", linewidth=0.5)
     ax.set_yticks(range(n))
     ax.set_yticklabels(names, fontsize=8, fontfamily="monospace")
-    ax.set_xlabel("in-degree  (source calls depending on this fn  ≈  centrality / importance)", fontsize=9)
+    ax.set_xlabel(
+        "in-degree  (source calls depending on this fn  ≈  centrality / importance)",
+        fontsize=9,
+    )
     default_title = f"Feature coverage — {s.get('scope') or 'module'}"
     ax.set_title(args.title or default_title, fontsize=13, fontweight="bold", pad=14)
 
@@ -141,15 +156,21 @@ def main() -> int:
             f"{s.get('public_api_static_gaps', '?')} with NO test reaching them   |   "
             f"tests: " + " · ".join(f"{k} {v}" for k, v in hist.items())
         )
-    ax.text(0, 1.005, sub, transform=ax.transAxes, fontsize=8.5, color="#444", va="bottom")
+    ax.text(
+        0, 1.005, sub, transform=ax.transAxes, fontsize=8.5, color="#444", va="bottom"
+    )
 
-    handles = [mpatches.Patch(color=c, label=lbl) for k, (c, lbl) in style.items() if k in present]
+    handles = [
+        mpatches.Patch(color=c, label=lbl)
+        for k, (c, lbl) in style.items()
+        if k in present
+    ]
     ax.legend(handles=handles, loc="lower right", fontsize=8, framealpha=0.9)
     ax.margins(y=0.01)
     footer = (
         "Bars colored by measured line coverage (lines that actually ran). Coverage proves execution, not assertion strength."
-        if dyn is not None else
-        "Static best-effort. Altitude = touch surface, not assertion focus; GAP is static — confirm against the dynamic coverage pass."
+        if dyn is not None
+        else "Static best-effort. Altitude = touch surface, not assertion focus; GAP is static — confirm against the dynamic coverage pass."
     )
     fig.text(0.01, 0.005, footer, fontsize=7, color="#888")
     fig.tight_layout(rect=(0, 0.02, 1, 1))
