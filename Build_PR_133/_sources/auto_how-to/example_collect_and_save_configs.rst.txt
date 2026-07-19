@@ -117,7 +117,7 @@ works for any solver, because the classes are declared on its spec.
 
  .. code-block:: none
 
-    config classes: ['ControlDictConfig', 'PreprocessConfig', 'BlockMeshDictConfig', 'SnappyHexMeshDictConfig', 'TelemetryDictConfig', 'Pimple_fvSchemes', 'Pimple_fvSolution', 'UFieldConfig', 'pFieldConfig', 'TransportPropertiesConfig', 'TurbulencePropertiesConfig', 'BoussinesqConfig', 'GravityConfig', 'boussinesq_fvSchemes', 'boussinesq_fvSolution', 'p_rghFieldConfig', 'TFieldConfig', 'alphatFieldConfig', 'CourantConfig', 'MaxDeltaTConfig']
+    config classes: ['ControlDictConfig', 'PreprocessConfig', 'BlockMeshDictConfig', 'SnappyHexMeshDictConfig', 'TelemetryDictConfig', 'Pimple_fvSchemes', 'Pimple_fvSolution', 'UFieldConfig', 'pFieldConfig', 'Simple_fvSchemes', 'Simple_fvSolution', 'UFieldConfig', 'pFieldConfig', 'TransportPropertiesConfig', 'TurbulencePropertiesConfig', 'BoussinesqConfig', 'GravityConfig', 'boussinesq_fvSchemes', 'boussinesq_fvSolution', 'p_rghFieldConfig', 'TFieldConfig', 'alphatFieldConfig', 'CourantConfig', 'MaxDeltaTConfig']
     ControlDictConfig            fields: ['application', 'deltaT', 'endTime', 'startTime', 'writeBackend', 'writeControl', 'writeInterval']
     PreprocessConfig             fields: ['tools']
     BlockMeshDictConfig          fields: ['blocks', 'boundary', 'edges', 'merge_patch_pairs', 'scale', 'vertices']
@@ -125,6 +125,10 @@ works for any solver, because the classes are declared on its spec.
     TelemetryDictConfig          fields: ['directory', 'enabled', 'summary']
     Pimple_fvSchemes             fields: ['ddtSchemes', 'divSchemes', 'gradSchemes', 'interpolationSchemes', 'laplacianSchemes', 'snGradSchemes']
     Pimple_fvSolution            fields: ['PIMPLE', 'solvers']
+    UFieldConfig                 fields: ['FoamFile', 'boundaryField', 'dimensions', 'internalField']
+    pFieldConfig                 fields: ['FoamFile', 'boundaryField', 'dimensions', 'internalField']
+    Simple_fvSchemes             fields: ['ddtSchemes', 'divSchemes', 'gradSchemes', 'interpolationSchemes', 'laplacianSchemes', 'snGradSchemes']
+    Simple_fvSolution            fields: ['SIMPLE', 'solvers']
     UFieldConfig                 fields: ['FoamFile', 'boundaryField', 'dimensions', 'internalField']
     pFieldConfig                 fields: ['FoamFile', 'boundaryField', 'dimensions', 'internalField']
     TransportPropertiesConfig    fields: ['nu', 'transportModel']
@@ -170,8 +174,8 @@ adds ``0/p_rgh`` / ``0/T`` / ``0/alphat``.
 
  .. code-block:: none
 
-    dict files: ['constant/g', 'constant/transportProperties', 'constant/transportProperties', 'constant/turbulenceProperties', 'system/blockMeshDict', 'system/controlDict', 'system/controlDict', 'system/controlDict', 'system/controlDict', 'system/fvSchemes', 'system/fvSchemes', 'system/fvSolution', 'system/fvSolution', 'system/preprocess.yaml', 'system/snappyHexMeshDict']
-    0/* fields: ['0/T', '0/U', '0/alphat', '0/p', '0/p_rgh']
+    dict files: ['constant/g', 'constant/transportProperties', 'constant/transportProperties', 'constant/turbulenceProperties', 'system/blockMeshDict', 'system/controlDict', 'system/controlDict', 'system/controlDict', 'system/controlDict', 'system/fvSchemes', 'system/fvSchemes', 'system/fvSchemes', 'system/fvSolution', 'system/fvSolution', 'system/fvSolution', 'system/preprocess.yaml', 'system/snappyHexMeshDict']
+    0/* fields: ['0/T', '0/U', '0/U', '0/alphat', '0/p', '0/p', '0/p_rgh']
 
 
 
@@ -218,7 +222,7 @@ JSON Schema of every class — the form most agent / UI tooling consumes.
  .. code-block:: none
 
     ControlDictConfig fields: ['application', 'deltaT', 'endTime', 'startTime', 'writeBackend', 'writeControl', 'writeInterval']
-    JSON schema keys        : ['ControlDictConfig', 'PreprocessConfig', 'BlockMeshDictConfig', 'SnappyHexMeshDictConfig', 'TelemetryDictConfig', 'Pimple_fvSchemes', 'Pimple_fvSolution', 'UFieldConfig', 'pFieldConfig', 'TransportPropertiesConfig', 'TurbulencePropertiesConfig', 'BoussinesqConfig', 'GravityConfig', 'boussinesq_fvSchemes', 'boussinesq_fvSolution', 'p_rghFieldConfig', 'TFieldConfig', 'alphatFieldConfig', 'CourantConfig', 'MaxDeltaTConfig']
+    JSON schema keys        : ['ControlDictConfig', 'PreprocessConfig', 'BlockMeshDictConfig', 'SnappyHexMeshDictConfig', 'TelemetryDictConfig', 'Pimple_fvSchemes', 'Pimple_fvSolution', 'UFieldConfig', 'pFieldConfig', 'Simple_fvSchemes', 'Simple_fvSolution', 'TransportPropertiesConfig', 'TurbulencePropertiesConfig', 'BoussinesqConfig', 'GravityConfig', 'boussinesq_fvSchemes', 'boussinesq_fvSolution', 'p_rghFieldConfig', 'TFieldConfig', 'alphatFieldConfig', 'CourantConfig', 'MaxDeltaTConfig']
 
 
 
@@ -585,7 +589,7 @@ See also
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** (0 minutes 0.075 seconds)
+   **Total running time of the script:** (0 minutes 0.110 seconds)
 
 
 .. _sphx_glr_download_auto_how-to_example_collect_and_save_configs.py:

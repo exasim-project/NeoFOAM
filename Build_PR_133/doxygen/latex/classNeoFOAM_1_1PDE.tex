@@ -35,6 +35,8 @@ void \mbox{\hyperlink{classNeoFOAM_1_1PDE_a12a547d6a089a5805df40f91c0a48318}{set
 \begin{DoxyCompactList}\small\item\em When true, selects the $<$field$>$Final relaxation factor and solver subdict. \end{DoxyCompactList}\item 
 void \mbox{\hyperlink{classNeoFOAM_1_1PDE_afa2dcd0c96d7c1593df5b41cbb867ab2}{set\+Constraints}} (const Neo\+N\+::\+Vector$<$ Neo\+N\+::scalar $>$ \&mask, const Neo\+N\+::\+Vector$<$ Value\+Type $>$ \&values)
 \begin{DoxyCompactList}\small\item\em Hard-\/pin a set of cells to prescribed values after assembly (omega wall function). \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1PDE_a7fb01b4186f1c67e04c5bdd5fc5bee2e}{set\+Constraints\+Owned}} (const Neo\+N\+::\+Vector$<$ Neo\+N\+::scalar $>$ \&mask, const Neo\+N\+::\+Vector$<$ Value\+Type $>$ \&values)
+\begin{DoxyCompactList}\small\item\em As set\+Constraints, but the \doxylink{classNeoFOAM_1_1PDE}{PDE} keeps its own copies of the mask/values so the caller need not keep them alive until \doxylink{classNeoFOAM_1_1PDE_adc6783a51aa3e6a0b2bf822e8d354c95}{solve()} — used by the Python one-\/shot epsilon-\/wall-\/cell pin helper (epsilon\+Wall\+Function). \end{DoxyCompactList}\item 
 Linear\+System \& \mbox{\hyperlink{classNeoFOAM_1_1PDE_a56dc3d06d1616cf7726cee7c009fa756}{assemble}} ()
 \begin{DoxyCompactList}\small\item\em assemble the linear system owned by the solver based on the current expression \end{DoxyCompactList}\item 
 Linear\+System \& \mbox{\hyperlink{classNeoFOAM_1_1PDE_aed5b3fe4bae15d1c14be3b651f750f9c}{assemble}} (Volume\+Field \&psi, \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&rt)
@@ -132,7 +134,7 @@ assemble the linear system owned by the solver based on the current expression
 
 
 
-Definition at line \mbox{\hyperlink{pde_8hpp_source_l00179}{179}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00193}{193}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1PDE_a609089ce3754f0e97385b3824ed0acca}\label{classNeoFOAM_1_1PDE_a609089ce3754f0e97385b3824ed0acca} 
 \index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!assemble@{assemble}}
@@ -152,7 +154,7 @@ the following assembly logic is applied
 \item the new linear system with rhs is returned 
 \end{DoxyEnumerate}
 
-Definition at line \mbox{\hyperlink{pde_8hpp_source_l00214}{214}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00228}{228}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1PDE_aed5b3fe4bae15d1c14be3b651f750f9c}\label{classNeoFOAM_1_1PDE_aed5b3fe4bae15d1c14be3b651f750f9c} 
 \index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!assemble@{assemble}}
@@ -167,7 +169,7 @@ assemble using injected field and run\+Time (for lazy-\/init \doxylink{classNeoF
 
 
 
-Definition at line \mbox{\hyperlink{pde_8hpp_source_l00187}{187}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00201}{201}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1PDE_a8fd8c810990be74009144741fe40dced}\label{classNeoFOAM_1_1PDE_a8fd8c810990be74009144741fe40dced} 
 \index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!assembleAndRelax@{assembleAndRelax}}
@@ -182,7 +184,7 @@ Assemble and relax the owned ls\+\_\+ without solving.
 
 Ensures compute\+RAUand\+HByA reads the relaxed diagonal even when the momentum predictor is disabled. With no relaxation factor configured, this is a no-\/op. 
 
-Definition at line \mbox{\hyperlink{pde_8hpp_source_l00200}{200}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00214}{214}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1PDE_a56b8e0f478755f95fa476022d5947523}\label{classNeoFOAM_1_1PDE_a56b8e0f478755f95fa476022d5947523} 
 \index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!ddtScheme@{ddtScheme}}
@@ -270,7 +272,7 @@ void \mbox{\hyperlink{classNeoFOAM_1_1PDE}{Neo\+FOAM\+::\+PDE}}$<$ Value\+Type, 
 
 
 
-Definition at line \mbox{\hyperlink{pde_8hpp_source_l00426}{426}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00440}{440}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1PDE_afa2dcd0c96d7c1593df5b41cbb867ab2}\label{classNeoFOAM_1_1PDE_afa2dcd0c96d7c1593df5b41cbb867ab2} 
 \index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!setConstraints@{setConstraints}}
@@ -286,6 +288,21 @@ Hard-\/pin a set of cells to prescribed values after assembly (omega wall functi
 
 
 Definition at line \mbox{\hyperlink{pde_8hpp_source_l00172}{172}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1PDE_a7fb01b4186f1c67e04c5bdd5fc5bee2e}\label{classNeoFOAM_1_1PDE_a7fb01b4186f1c67e04c5bdd5fc5bee2e} 
+\index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!setConstraintsOwned@{setConstraintsOwned}}
+\index{setConstraintsOwned@{setConstraintsOwned}!NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}}
+\doxysubsubsection{\texorpdfstring{setConstraintsOwned()}{setConstraintsOwned()}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx$>$ \\
+void \mbox{\hyperlink{classNeoFOAM_1_1PDE}{Neo\+FOAM\+::\+PDE}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$\+::set\+Constraints\+Owned (\begin{DoxyParamCaption}\item[{const Neo\+N\+::\+Vector$<$ Neo\+N\+::scalar $>$ \&}]{mask,  }\item[{const Neo\+N\+::\+Vector$<$ Value\+Type $>$ \&}]{values }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+As set\+Constraints, but the \doxylink{classNeoFOAM_1_1PDE}{PDE} keeps its own copies of the mask/values so the caller need not keep them alive until \doxylink{classNeoFOAM_1_1PDE_adc6783a51aa3e6a0b2bf822e8d354c95}{solve()} — used by the Python one-\/shot epsilon-\/wall-\/cell pin helper (epsilon\+Wall\+Function). 
+
+
+
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00181}{181}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1PDE_a12a547d6a089a5805df40f91c0a48318}\label{classNeoFOAM_1_1PDE_a12a547d6a089a5805df40f91c0a48318} 
 \index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!setFinalIter@{setFinalIter}}
@@ -322,7 +339,7 @@ Neo\+N\+::la\+::\+Solver\+Stats \mbox{\hyperlink{classNeoFOAM_1_1PDE}{Neo\+FOAM\
 
 
 
-Definition at line \mbox{\hyperlink{pde_8hpp_source_l00224}{224}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00238}{238}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1PDE_a1a19c403768745a0a9a3b7637335f2ac}\label{classNeoFOAM_1_1PDE_a1a19c403768745a0a9a3b7637335f2ac} 
 \index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!solve@{solve}}
@@ -341,7 +358,7 @@ This function will create two versions of the linear system corresponding to the
 \item a temporary linear system with rhs assembled and solved 
 \end{DoxyEnumerate}
 
-Definition at line \mbox{\hyperlink{pde_8hpp_source_l00236}{236}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00250}{250}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1PDE_a665045e1ab13f9c86f3b80f70827288e}\label{classNeoFOAM_1_1PDE_a665045e1ab13f9c86f3b80f70827288e} 
 \index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!solveImpl@{solveImpl}}
@@ -352,7 +369,7 @@ Neo\+N\+::la\+::\+Solver\+Stats \mbox{\hyperlink{classNeoFOAM_1_1PDE}{Neo\+FOAM\
 
 
 
-Definition at line \mbox{\hyperlink{pde_8hpp_source_l00365}{365}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00379}{379}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1PDE_a3c38e63ceabdeecad3f7eea2d76fb4e0}\label{classNeoFOAM_1_1PDE_a3c38e63ceabdeecad3f7eea2d76fb4e0} 
 \index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!solveWith@{solveWith}}
@@ -367,7 +384,7 @@ solve using a pre-\/created, cached Neo\+N\+::la\+::\+Solver
 
 
 
-Definition at line \mbox{\hyperlink{pde_8hpp_source_l00270}{270}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00284}{284}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1PDE_ad0e998954abbcf1d08baf590b1e6c3cb}\label{classNeoFOAM_1_1PDE_ad0e998954abbcf1d08baf590b1e6c3cb} 
 \index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!solveWith@{solveWith}}
@@ -382,7 +399,7 @@ solve with additional rhs using a pre-\/created, cached Neo\+N\+::la\+::\+Solver
 
 
 
-Definition at line \mbox{\hyperlink{pde_8hpp_source_l00315}{315}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00329}{329}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
 
 \Hypertarget{classNeoFOAM_1_1PDE_a4e30324f164b229f31bedac3d023484c}\label{classNeoFOAM_1_1PDE_a4e30324f164b229f31bedac3d023484c} 
 \index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!stripNeoFOAMKeys@{stripNeoFOAMKeys}}
@@ -393,7 +410,7 @@ static void \mbox{\hyperlink{classNeoFOAM_1_1PDE}{Neo\+FOAM\+::\+PDE}}$<$ Value\
 
 
 
-Definition at line \mbox{\hyperlink{pde_8hpp_source_l00436}{436}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00450}{450}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
 
 
 

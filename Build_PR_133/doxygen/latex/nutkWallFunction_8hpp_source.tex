@@ -41,102 +41,116 @@
 \DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00050}00050\ \{}
 \DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00051}00051\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ Cmu25\ =\ Kokkos::pow(Cmu,\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}(0.25));}
 \DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00052}00052\ }
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00053}00053\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ kInternal\ =\ k.internalVector().view();}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00054}00054\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ nuBoundary\ =\ nu.boundaryData().value().view();}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00055}00055\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ nearWallBoundary\ =\ nearWallDist.boundaryData().value().view();}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00056}00056\ }
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00057}00057\ \ \ \ \ \textcolor{keyword}{auto}\ [refGradient,\ value,\ valueFraction,\ refValue,\ faceCells]\ =\ views(}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00058}00058\ \ \ \ \ \ \ \ \ domainVector.boundaryData().refGrad(),}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00059}00059\ \ \ \ \ \ \ \ \ domainVector.boundaryData().value(),}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00060}00060\ \ \ \ \ \ \ \ \ domainVector.boundaryData().valueFraction(),}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00061}00061\ \ \ \ \ \ \ \ \ domainVector.boundaryData().refValue(),}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00062}00062\ \ \ \ \ \ \ \ \ mesh.boundaryMesh().faceOwners()}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00063}00063\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00053}00053\ \ \ \ \ \textcolor{comment}{//\ yPlusLam:\ the\ STEPWISE\ viscous/log\ switch-\/over\ point.\ Matches\ OpenFOAM}}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00054}00054\ \ \ \ \ \textcolor{comment}{//\ wallFunctionCoefficients::calcYPlusLam\ (10\ fixed-\/point\ iterations\ from\ 11).}}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00055}00055\ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ yPlusLam\ =\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}(11);}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00056}00056\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ it\ =\ 0;\ it\ <\ 10;\ ++it)}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00057}00057\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00058}00058\ \ \ \ \ \ \ \ \ yPlusLam\ =\ Kokkos::log(Kokkos::max(E\ *\ yPlusLam,\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}(1)))\ /\ kappa;}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00059}00059\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00060}00060\ }
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00061}00061\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ kInternal\ =\ k.internalVector().view();}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00062}00062\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ nuBoundary\ =\ nu.boundaryData().value().view();}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00063}00063\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ nearWallBoundary\ =\ nearWallDist.boundaryData().value().view();}
 \DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00064}00064\ }
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00065}00065\ \ \ \ \ NeoN::parallelFor(}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00066}00066\ \ \ \ \ \ \ \ \ domainVector.exec(),}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00067}00067\ \ \ \ \ \ \ \ \ range,}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00068}00068\ \ \ \ \ \ \ \ \ NEON\_LAMBDA(\textcolor{keyword}{const}\ localIdx\ i)\ \{}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00069}00069\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ localIdx\ owner\ =\ faceCells[i];}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00070}00070\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ y\ =\ nearWallBoundary[i];}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00071}00071\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ nuw\ =\ nuBoundary[i];}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00072}00072\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ kw\ =\ Kokkos::max(kInternal[owner],\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}(0));}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00073}00073\ }
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00074}00074\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ yPlus\ =\ Cmu25\ *\ y\ *\ Kokkos::sqrt(kw)\ /\ nuw;}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00075}00075\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ nutLog\ =}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00076}00076\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nuw\ *\ yPlus\ *\ kappa\ /\ Kokkos::log(Kokkos::max(E\ *\ yPlus,\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}(1)\ +\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}(1e-\/4)));}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00077}00077\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ nutw\ =\ Kokkos::sqrt(nuw\ *\ nuw\ +\ nutLog\ *\ nutLog);}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00078}00078\ }
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00079}00079\ \ \ \ \ \ \ \ \ \ \ \ \ value[i]\ =\ nutw;}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00080}00080\ \ \ \ \ \ \ \ \ \ \ \ \ refValue[i]\ =\ nutw;}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00081}00081\ \ \ \ \ \ \ \ \ \ \ \ \ valueFraction[i]\ =\ 1.0;}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00082}00082\ \ \ \ \ \ \ \ \ \ \ \ \ refGradient[i]\ =\ 0.0;}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00083}00083\ \ \ \ \ \ \ \ \ \},}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00084}00084\ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}setNutkWallFunction"{}}}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00085}00085\ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00086}00086\ \}}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00087}00087\ }
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00088}00088\ \}\ \textcolor{comment}{//\ namespace\ detail}}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00089}00089\ }
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00090}00090\ }
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00104}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction}{00104}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction}{NutkWallFunction}}\ :\ \textcolor{keyword}{public}\ VolumeBoundaryFactory<scalar>::template\ Register<NutkWallFunction>}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00105}00105\ \{}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00106}00106\ \ \ \ \ \textcolor{keyword}{using\ }Base\ =\ VolumeBoundaryFactory<scalar>::template\ Register<NutkWallFunction>;}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00107}00107\ }
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00108}00108\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00109}00109\ }
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00110}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction_afd267d95ac5f8c0c3287340744b07c15}{00110}}\ \ \ \ \ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction_afd267d95ac5f8c0c3287340744b07c15}{NutkWallFunction}}(\textcolor{keyword}{const}\ UnstructuredMesh\&\ mesh,\ \textcolor{keyword}{const}\ Dictionary\&\ dict,\ localIdx\ patchID)}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00111}00111\ \ \ \ \ \ \ \ \ :\ Base(mesh,\ dict,\ patchID,\ \{.assignable\ =\ \textcolor{keyword}{false},\ .fixesValue\ =\ \textcolor{keyword}{true}\})}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00112}00112\ \ \ \ \ \ \ \ \ ,\ mesh\_(mesh)}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00113}00113\ \ \ \ \ \ \ \ \ ,\ Cmu\_(dict.contains(\textcolor{stringliteral}{"{}Cmu"{}})\ ?\ dict.get<\mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}>(\textcolor{stringliteral}{"{}Cmu"{}})\ :\ detail::NUTK\_WF\_DEFAULT\_CMU)}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00114}00114\ \ \ \ \ \ \ \ \ ,\ kappa\_(dict.contains(\textcolor{stringliteral}{"{}kappa"{}})\ ?\ dict.get<\mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}>(\textcolor{stringliteral}{"{}kappa"{}})\ :\ detail::NUTK\_WF\_DEFAULT\_KAPPA)}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00115}00115\ \ \ \ \ \ \ \ \ ,\ E\_(dict.contains(\textcolor{stringliteral}{"{}E"{}})\ ?\ dict.get<\mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}>(\textcolor{stringliteral}{"{}E"{}})\ :\ detail::NUTK\_WF\_DEFAULT\_E)}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00116}00116\ \ \ \ \ \{\}}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00117}00117\ }
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00118}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction_ac3ed970e8b0bae65bf2561d202540cab}{00118}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction_ac3ed970e8b0bae65bf2561d202540cab}{correctBoundaryCondition}}(Field<scalar>\&\ \textcolor{comment}{/*domainVector*/})\ \textcolor{keyword}{final}\ \{\}}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00119}00119\ }
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00120}00120\ \ \ \ \ \textcolor{keywordtype}{void}}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00121}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction_ada5f95be0e91efb85a34881be09352f1}{00121}}\ \ \ \ \ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction_ada5f95be0e91efb85a34881be09352f1}{correctBoundaryCondition}}(Field<scalar>\&\ domainVector,\ \textcolor{keyword}{const}\ fvcc::BoundaryContext\&\ ctx)\ \textcolor{keyword}{final}}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00122}00122\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00123}00123\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_a87f4e12c3134a79f464aeb051efba390}{detail::setNutkWallFunction}}(}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00124}00124\ \ \ \ \ \ \ \ \ \ \ \ \ domainVector,}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00125}00125\ \ \ \ \ \ \ \ \ \ \ \ \ ctx.scalarFieldPtr(\textcolor{stringliteral}{"{}k"{}}),}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00126}00126\ \ \ \ \ \ \ \ \ \ \ \ \ ctx.scalarFieldPtr(\textcolor{stringliteral}{"{}nu"{}}),}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00127}00127\ \ \ \ \ \ \ \ \ \ \ \ \ ctx.scalarFieldPtr(\textcolor{stringliteral}{"{}nearWallDist"{}}),}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00128}00128\ \ \ \ \ \ \ \ \ \ \ \ \ mesh\_,}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00129}00129\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>range(),}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00130}00130\ \ \ \ \ \ \ \ \ \ \ \ \ Cmu\_,}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00131}00131\ \ \ \ \ \ \ \ \ \ \ \ \ kappa\_,}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00132}00132\ \ \ \ \ \ \ \ \ \ \ \ \ E\_}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00133}00133\ \ \ \ \ \ \ \ \ );}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00134}00134\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00135}00135\ }
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00136}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction_aa5098a7be76aa86907b95db2d89d7a50}{00136}}\ \ \ \ \ \textcolor{keyword}{static}\ std::string\ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction_aa5098a7be76aa86907b95db2d89d7a50}{name}}()\ \{\ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}nutkWallFunction"{}};\ \}}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00137}00137\ }
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00138}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction_a8b85317f321b06cb282be727b4a42cbf}{00138}}\ \ \ \ \ std::string\ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction_a8b85317f321b06cb282be727b4a42cbf}{getName}}()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction_aa5098a7be76aa86907b95db2d89d7a50}{name}}();\ \}}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00139}00139\ }
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00140}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction_a5def0bf8d207350641aa00c17a4739df}{00140}}\ \ \ \ \ \textcolor{keyword}{static}\ std::string\ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction_a5def0bf8d207350641aa00c17a4739df}{doc}}()}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00141}00141\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00142}00142\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}k-\/based\ turbulent\ viscosity\ wall\ function.\ y+\ derived\ from\ "{}}}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00143}00143\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}k\ (not\ from\ |∂U/∂n|\ like\ Spalding).\ BINOMIAL\ n=2\ blend\ of\ "{}}}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00144}00144\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}viscous\ (nu)\ and\ log-\/layer\ (nu·y+·κ/log(E·y+))\ contributions."{}};}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00145}00145\ \ \ \ \ \}}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00146}00146\ }
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00147}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction_a3773f467f77ea5432fdd9025f4fcb963}{00147}}\ \ \ \ \ \textcolor{keyword}{static}\ std::string\ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction_a3773f467f77ea5432fdd9025f4fcb963}{schema}}()\ \{\ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}none"{}};\ \}}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00148}00148\ }
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00149}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction_a693b170ee056702c899fc73c1ecf2c14}{00149}}\ \ \ \ \ std::unique\_ptr<VolumeBoundaryFactory<scalar>>\ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction_a693b170ee056702c899fc73c1ecf2c14}{clone}}()\ const\ final}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00150}00150\ \ \ \ \ \{}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00151}00151\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::make\_unique<NutkWallFunction>(*\textcolor{keyword}{this});}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00152}00152\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00065}00065\ \ \ \ \ \textcolor{keyword}{auto}\ [refGradient,\ value,\ valueFraction,\ refValue,\ faceCells]\ =\ views(}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00066}00066\ \ \ \ \ \ \ \ \ domainVector.boundaryData().refGrad(),}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00067}00067\ \ \ \ \ \ \ \ \ domainVector.boundaryData().value(),}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00068}00068\ \ \ \ \ \ \ \ \ domainVector.boundaryData().valueFraction(),}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00069}00069\ \ \ \ \ \ \ \ \ domainVector.boundaryData().refValue(),}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00070}00070\ \ \ \ \ \ \ \ \ mesh.boundaryMesh().faceOwners()}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00071}00071\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00072}00072\ }
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00073}00073\ \ \ \ \ NeoN::parallelFor(}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00074}00074\ \ \ \ \ \ \ \ \ domainVector.exec(),}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00075}00075\ \ \ \ \ \ \ \ \ range,}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00076}00076\ \ \ \ \ \ \ \ \ NEON\_LAMBDA(\textcolor{keyword}{const}\ localIdx\ i)\ \{}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00077}00077\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ localIdx\ owner\ =\ faceCells[i];}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00078}00078\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ y\ =\ nearWallBoundary[i];}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00079}00079\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ nuw\ =\ nuBoundary[i];}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00080}00080\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ kw\ =\ Kokkos::max(kInternal[owner],\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}(0));}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00081}00081\ }
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00082}00082\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ STEPWISE\ blender\ (OpenFOAM\ v2406\ nutk\ default):\ turbulent\ nut\ is\ the}}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00083}00083\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ log-\/law\ value\ minus\ the\ molecular\ nu\ above\ yPlusLam,\ else\ zero.}}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00084}00084\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ yPlus\ =\ Cmu25\ *\ y\ *\ Kokkos::sqrt(kw)\ /\ nuw;}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00085}00085\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ nutw\ =\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}(0);}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00086}00086\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (yPlus\ >\ yPlusLam)}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00087}00087\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00088}00088\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ nutLog\ =\ nuw\ *\ yPlus\ *\ kappa}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00089}00089\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ /\ Kokkos::log(Kokkos::max(E\ *\ yPlus,\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}(1)\ +\ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}(1e-\/4)));}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00090}00090\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nutw\ =\ nutLog\ -\/\ nuw;}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00091}00091\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00092}00092\ }
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00093}00093\ \ \ \ \ \ \ \ \ \ \ \ \ value[i]\ =\ nutw;}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00094}00094\ \ \ \ \ \ \ \ \ \ \ \ \ refValue[i]\ =\ nutw;}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00095}00095\ \ \ \ \ \ \ \ \ \ \ \ \ valueFraction[i]\ =\ 1.0;}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00096}00096\ \ \ \ \ \ \ \ \ \ \ \ \ refGradient[i]\ =\ 0.0;}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00097}00097\ \ \ \ \ \ \ \ \ \},}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00098}00098\ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}setNutkWallFunction"{}}}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00099}00099\ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00100}00100\ \}}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00101}00101\ }
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00102}00102\ \}\ \textcolor{comment}{//\ namespace\ detail}}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00103}00103\ }
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00104}00104\ }
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00118}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction}{00118}}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction}{NutkWallFunction}}\ :\ \textcolor{keyword}{public}\ VolumeBoundaryFactory<scalar>::template\ Register<NutkWallFunction>}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00119}00119\ \{}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00120}00120\ \ \ \ \ \textcolor{keyword}{using\ }Base\ =\ VolumeBoundaryFactory<scalar>::template\ Register<NutkWallFunction>;}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00121}00121\ }
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00122}00122\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00123}00123\ }
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00124}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction_afd267d95ac5f8c0c3287340744b07c15}{00124}}\ \ \ \ \ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction_afd267d95ac5f8c0c3287340744b07c15}{NutkWallFunction}}(\textcolor{keyword}{const}\ UnstructuredMesh\&\ mesh,\ \textcolor{keyword}{const}\ Dictionary\&\ dict,\ localIdx\ patchID)}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00125}00125\ \ \ \ \ \ \ \ \ :\ Base(mesh,\ dict,\ patchID,\ \{.assignable\ =\ \textcolor{keyword}{false},\ .fixesValue\ =\ \textcolor{keyword}{true}\})}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00126}00126\ \ \ \ \ \ \ \ \ ,\ mesh\_(mesh)}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00127}00127\ \ \ \ \ \ \ \ \ ,\ Cmu\_(dict.contains(\textcolor{stringliteral}{"{}Cmu"{}})\ ?\ dict.get<\mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}>(\textcolor{stringliteral}{"{}Cmu"{}})\ :\ detail::NUTK\_WF\_DEFAULT\_CMU)}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00128}00128\ \ \ \ \ \ \ \ \ ,\ kappa\_(dict.contains(\textcolor{stringliteral}{"{}kappa"{}})\ ?\ dict.get<\mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}>(\textcolor{stringliteral}{"{}kappa"{}})\ :\ detail::NUTK\_WF\_DEFAULT\_KAPPA)}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00129}00129\ \ \ \ \ \ \ \ \ ,\ E\_(dict.contains(\textcolor{stringliteral}{"{}E"{}})\ ?\ dict.get<\mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}>(\textcolor{stringliteral}{"{}E"{}})\ :\ detail::NUTK\_WF\_DEFAULT\_E)}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00130}00130\ \ \ \ \ \{\}}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00131}00131\ }
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00132}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction_ac3ed970e8b0bae65bf2561d202540cab}{00132}}\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction_ac3ed970e8b0bae65bf2561d202540cab}{correctBoundaryCondition}}(Field<scalar>\&\ \textcolor{comment}{/*domainVector*/})\ \textcolor{keyword}{final}\ \{\}}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00133}00133\ }
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00134}00134\ \ \ \ \ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00135}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction_ada5f95be0e91efb85a34881be09352f1}{00135}}\ \ \ \ \ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction_ada5f95be0e91efb85a34881be09352f1}{correctBoundaryCondition}}(Field<scalar>\&\ domainVector,\ \textcolor{keyword}{const}\ fvcc::BoundaryContext\&\ ctx)\ \textcolor{keyword}{final}}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00136}00136\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00137}00137\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1detail_a87f4e12c3134a79f464aeb051efba390}{detail::setNutkWallFunction}}(}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00138}00138\ \ \ \ \ \ \ \ \ \ \ \ \ domainVector,}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00139}00139\ \ \ \ \ \ \ \ \ \ \ \ \ ctx.scalarFieldPtr(\textcolor{stringliteral}{"{}k"{}}),}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00140}00140\ \ \ \ \ \ \ \ \ \ \ \ \ ctx.scalarFieldPtr(\textcolor{stringliteral}{"{}nu"{}}),}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00141}00141\ \ \ \ \ \ \ \ \ \ \ \ \ ctx.scalarFieldPtr(\textcolor{stringliteral}{"{}nearWallDist"{}}),}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00142}00142\ \ \ \ \ \ \ \ \ \ \ \ \ mesh\_,}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00143}00143\ \ \ \ \ \ \ \ \ \ \ \ \ this-\/>range(),}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00144}00144\ \ \ \ \ \ \ \ \ \ \ \ \ Cmu\_,}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00145}00145\ \ \ \ \ \ \ \ \ \ \ \ \ kappa\_,}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00146}00146\ \ \ \ \ \ \ \ \ \ \ \ \ E\_}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00147}00147\ \ \ \ \ \ \ \ \ );}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00148}00148\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00149}00149\ }
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00150}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction_aa5098a7be76aa86907b95db2d89d7a50}{00150}}\ \ \ \ \ \textcolor{keyword}{static}\ std::string\ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction_aa5098a7be76aa86907b95db2d89d7a50}{name}}()\ \{\ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}nutkWallFunction"{}};\ \}}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00151}00151\ }
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00152}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction_a8b85317f321b06cb282be727b4a42cbf}{00152}}\ \ \ \ \ std::string\ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction_a8b85317f321b06cb282be727b4a42cbf}{getName}}()\textcolor{keyword}{\ const\ override\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction_aa5098a7be76aa86907b95db2d89d7a50}{name}}();\ \}}
 \DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00153}00153\ }
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00154}00154\ \textcolor{keyword}{private}:}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00155}00155\ }
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00156}00156\ \ \ \ \ \textcolor{keyword}{const}\ UnstructuredMesh\&\ mesh\_;}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00157}00157\ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ Cmu\_;}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00158}00158\ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ kappa\_;}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00159}00159\ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ E\_;}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00160}00160\ \};}
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00161}00161\ }
-\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00162}00162\ \}\ \textcolor{comment}{//\ namespace\ NeoN::finiteVolume::cellCentred::volumeBoundary}}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00154}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction_a5def0bf8d207350641aa00c17a4739df}{00154}}\ \ \ \ \ \textcolor{keyword}{static}\ std::string\ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction_a5def0bf8d207350641aa00c17a4739df}{doc}}()}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00155}00155\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00156}00156\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}k-\/based\ turbulent\ viscosity\ wall\ function.\ y+\ derived\ from\ "{}}}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00157}00157\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}k\ (not\ from\ |∂U/∂n|\ like\ Spalding).\ BINOMIAL\ n=2\ blend\ of\ "{}}}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00158}00158\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}viscous\ (nu)\ and\ log-\/layer\ (nu·y+·κ/log(E·y+))\ contributions."{}};}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00159}00159\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00160}00160\ }
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00161}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction_a3773f467f77ea5432fdd9025f4fcb963}{00161}}\ \ \ \ \ \textcolor{keyword}{static}\ std::string\ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction_a3773f467f77ea5432fdd9025f4fcb963}{schema}}()\ \{\ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}none"{}};\ \}}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00162}00162\ }
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00163}\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction_a693b170ee056702c899fc73c1ecf2c14}{00163}}\ \ \ \ \ std::unique\_ptr<VolumeBoundaryFactory<scalar>>\ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1NutkWallFunction_a693b170ee056702c899fc73c1ecf2c14}{clone}}()\ const\ final}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00164}00164\ \ \ \ \ \{}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00165}00165\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::make\_unique<NutkWallFunction>(*\textcolor{keyword}{this});}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00166}00166\ \ \ \ \ \}}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00167}00167\ }
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00168}00168\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00169}00169\ }
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00170}00170\ \ \ \ \ \textcolor{keyword}{const}\ UnstructuredMesh\&\ mesh\_;}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00171}00171\ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ Cmu\_;}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00172}00172\ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ kappa\_;}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00173}00173\ \ \ \ \ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}}\ E\_;}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00174}00174\ \};}
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00175}00175\ }
+\DoxyCodeLine{\Hypertarget{nutkWallFunction_8hpp_source_l00176}00176\ \}\ \textcolor{comment}{//\ namespace\ NeoN::finiteVolume::cellCentred::volumeBoundary}}
 
 \end{DoxyCode}
