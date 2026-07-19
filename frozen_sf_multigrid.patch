@@ -1,0 +1,176 @@
+diff --git a/core/solver/multigrid.cpp b/core/solver/multigrid.cpp
+index b23eb81e1..0098cfc00 100644
+--- a/core/solver/multigrid.cpp
++++ b/core/solver/multigrid.cpp
+@@ -5,6 +5,7 @@
+ #include "ginkgo/core/solver/multigrid.hpp"
+ 
+ #include <complex>
++#include <cstdlib>
+ #include <string>
+ 
+ #include <ginkgo/core/base/exception.hpp>
+@@ -285,6 +286,21 @@ public:
+     size_type nrhs;
+     solver::Workspace* ws_node = nullptr;
+     std::vector<solver::Workspace*> level_nodes;
++
++    // --- [prototype] frozen scale-correction (sf) cache ---------------------------------------
++    // The Rayleigh scale factors sf = (delta.b)/(delta.A delta) are normally recomputed on every
++    // V-cycle at every level (two compute_dot allreduces per correction point, down and up). These
++    // fields let them be computed once and reused. Controlled by env GKO_SC_RECOMPUTE_INTERVAL
++    // (read in generate()):  1 (default) = recompute every cycle (original behaviour),
++    // 0 = compute once then freeze until regenerate, N = recompute every N-th cycle.
++    int sc_interval_ = 1;
++    size_type sc_counter_ = 0;   // V-cycles since generate()
++    bool sc_recompute_ = true;   // decided per V-cycle at level 0, read at every level
++    bool sc_valid_ = false;      // has at least one recompute populated the cache?
++    std::vector<std::shared_ptr<LinOp>> sc_pre_sf_;   // frozen downward sf, per level
++    std::vector<std::shared_ptr<LinOp>> sc_post_sf_;  // frozen upward sf, per level
++    std::vector<char> sc_pre_active_;                 // was the downward correction applied?
++    std::vector<char> sc_post_active_;                // was the upward correction applied?
+ };
+ 
+ 
+@@ -309,6 +325,21 @@ void MultigridState::generate(const LinOp* system_matrix_in,
+         level_nodes.push_back(
+             ws_node->get_or_create_child("level_" + std::to_string(i)));
+     }
++    // [prototype] reset the frozen scale-correction cache for this (re)generation and read the
++    // recompute interval from the environment (see the sc_* members / run_cycle).
++    sc_counter_ = 0;
++    sc_valid_ = false;
++    sc_pre_sf_.clear();
++    sc_post_sf_.clear();
++    sc_pre_active_.clear();
++    sc_post_active_.clear();
++    sc_interval_ = 1;
++    if (const char* env = std::getenv("GKO_SC_RECOMPUTE_INTERVAL")) {
++        sc_interval_ = std::atoi(env);
++        if (sc_interval_ < 0) {
++            sc_interval_ = 1;
++        }
++    }
+     // Allocate memory first such that reusing allocation in each iter.
+     for (int i = 0; i < mg_level_list.size(); i++) {
+         auto next_nrows = mg_level_list.at(i)->get_coarse_op()->get_size()[0];
+@@ -615,6 +646,32 @@ void MultigridState::run_cycle(multigrid::cycle cycle, size_type level,
+     using value_type = typename VectorType::value_type;
+     auto total_level = multigrid->get_mg_level_list().size();
+ 
++    // [prototype] decide once per V-cycle (at the top level) whether to (re)compute the Rayleigh
++    // scale factors this cycle or reuse the cached ones; the choice is applied at every level.
++    if (level == 0) {
++        if (sc_pre_sf_.size() != total_level) {
++            sc_pre_sf_.assign(total_level, nullptr);
++            sc_post_sf_.assign(total_level, nullptr);
++            sc_pre_active_.assign(total_level, char{0});
++            sc_post_active_.assign(total_level, char{0});
++        }
++        const bool first = !sc_valid_;
++        if (sc_interval_ == 1) {
++            sc_recompute_ = true;  // recompute every cycle (default / original behaviour)
++        } else if (first) {
++            sc_recompute_ = true;  // must populate the cache on the first cycle
++        } else if (sc_interval_ == 0) {
++            sc_recompute_ = false;  // freeze until the next generate()
++        } else {
++            sc_recompute_ =
++                (sc_counter_ % static_cast<size_type>(sc_interval_) == 0);
++        }
++        ++sc_counter_;
++        if (sc_recompute_) {
++            sc_valid_ = true;
++        }
++    }
++
+     auto& level_storage = *level_nodes[level];
+     auto* r = level_storage.get_mutable_op(0);
+     auto* g = level_storage.get_mutable_op(1);
+@@ -670,13 +727,35 @@ void MultigridState::run_cycle(multigrid::cycle cycle, size_type level,
+         auto* denom_dense =
+             as<matrix::Dense<value_type>>(level_storage.get_mutable_op(9));
+ 
+-        matrix->apply(x, acf);  // acf = A * δ_pre
+-        as<VectorType>(x)->compute_dot(b, level_storage.get_mutable_op(8));
+-        as<VectorType>(x)->compute_dot(acf, level_storage.get_mutable_op(9));
+-        if (exec->copy_val_to_host(denom_dense->get_const_values()) !=
+-            zero<value_type>()) {
+-            alpha_dense->inv_scale(denom_dense);  // sf = (δ·b)/(δ·Aδ)
+-
++        matrix->apply(x, acf);  // acf = A * δ_pre  (needed even when sf is frozen)
++
++        // [prototype] recompute sf (2 dot-allreduces) or reuse the cached value for this level.
++        bool active;
++        if (sc_recompute_) {
++            as<VectorType>(x)->compute_dot(b, level_storage.get_mutable_op(8));
++            as<VectorType>(x)->compute_dot(acf, level_storage.get_mutable_op(9));
++            active = (exec->copy_val_to_host(denom_dense->get_const_values()) !=
++                      zero<value_type>());
++            if (active) {
++                alpha_dense->inv_scale(denom_dense);  // sf = (δ·b)/(δ·Aδ)
++            }
++            if (sc_interval_ != 1) {  // stash sf + active for reuse on later cycles
++                if (!sc_pre_sf_[level]) {
++                    sc_pre_sf_[level] = matrix::Dense<value_type>::create(
++                        exec, dim<2>{1, alpha_dense->get_size()[1]});
++                }
++                as<matrix::Dense<value_type>>(sc_pre_sf_[level].get())
++                    ->copy_from(alpha_dense);
++                sc_pre_active_[level] = active ? char{1} : char{0};
++            }
++        } else {
++            active = sc_pre_active_[level] != char{0};
++            if (active) {
++                alpha_dense->copy_from(
++                    as<matrix::Dense<value_type>>(sc_pre_sf_[level].get()));
++            }
++        }
++        if (active) {
+             // r temporarily holds r_scaled = b − sf * Aδ
+             as<VectorType>(acf)->scale(alpha_dense);  // acf = sf * Aδ
+             r->copy_from(b);
+@@ -752,13 +831,36 @@ void MultigridState::run_cycle(multigrid::cycle cycle, size_type level,
+         as<VectorType>(acf)->fill(zero<value_type>());
+         mg_level->get_prolong_op()->apply(next_one, e, next_one, acf);
+ 
+-        matrix->apply(acf, dp);  // dp = A * δ_c
+-        as<VectorType>(acf)->compute_dot(r, level_storage.get_mutable_op(8));
+-        as<VectorType>(acf)->compute_dot(dp, level_storage.get_mutable_op(9));
+-        if (exec->copy_val_to_host(denom_dense->get_const_values()) !=
+-            zero<value_type>()) {
+-            alpha_dense->inv_scale(denom_dense);  // sf = (δ_c·r)/(δ_c·Aδ_c)
+-
++        matrix->apply(acf, dp);  // dp = A * δ_c  (needed even when sf is frozen)
++
++        // [prototype] recompute sf (2 dot-allreduces) or reuse the cached value for this level.
++        bool active;
++        if (sc_recompute_) {
++            as<VectorType>(acf)->compute_dot(r, level_storage.get_mutable_op(8));
++            as<VectorType>(acf)->compute_dot(dp,
++                                             level_storage.get_mutable_op(9));
++            active = (exec->copy_val_to_host(denom_dense->get_const_values()) !=
++                      zero<value_type>());
++            if (active) {
++                alpha_dense->inv_scale(denom_dense);  // sf = (δ_c·r)/(δ_c·Aδ_c)
++            }
++            if (sc_interval_ != 1) {
++                if (!sc_post_sf_[level]) {
++                    sc_post_sf_[level] = matrix::Dense<value_type>::create(
++                        exec, dim<2>{1, alpha_dense->get_size()[1]});
++                }
++                as<matrix::Dense<value_type>>(sc_post_sf_[level].get())
++                    ->copy_from(alpha_dense);
++                sc_post_active_[level] = active ? char{1} : char{0};
++            }
++        } else {
++            active = sc_post_active_[level] != char{0};
++            if (active) {
++                alpha_dense->copy_from(
++                    as<matrix::Dense<value_type>>(sc_post_sf_[level].get()));
++            }
++        }
++        if (active) {
+             // r temporarily holds r_scaled = r − sf * Aδ_c
+             as<VectorType>(dp)->scale(alpha_dense);      // dp = sf * Aδ_c
+             as<VectorType>(r)->add_scaled(neg_one, dp);  // r = r − sf*Aδ_c

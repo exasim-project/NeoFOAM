@@ -1,0 +1,81 @@
+{
+    "type": "solver::Cg",
+    "preconditioner": {
+        "type": "preconditioner::Schwarz",
+        "local_solver": {
+            "type": "solver::Multigrid",
+            "max_levels": 20,
+            "min_coarse_rows": 64,
+            "cycle": "v",
+            "default_initial_guess": "zero",
+            "post_uses_pre": false,
+            "mg_level": [
+                {
+                    "type": "multigrid::Pgm",
+                    "deterministic": true
+                }
+            ],
+            "pre_smoother": [
+                {
+                    "type": "solver::Ir",
+                    "relaxation_factor": 0.9,
+                    "scale_correction": "none",
+                    "solver": {
+                        "type": "preconditioner::Jacobi",
+                        "max_block_size": 1
+                    },
+                    "criteria": [
+                        {
+                            "type": "Iteration",
+                            "max_iters": 1
+                        }
+                    ]
+                }
+            ],
+            "post_smoother": [
+                {
+                    "type": "solver::Ir",
+                    "relaxation_factor": 0.9,
+                    "scale_correction": "none",
+                    "solver": {
+                        "type": "preconditioner::Jacobi",
+                        "max_block_size": 1
+                    },
+                    "criteria": [
+                        {
+                            "type": "Iteration",
+                            "max_iters": 1
+                        }
+                    ]
+                }
+            ],
+            "coarsest_solver": {
+                "type": "solver::Cg",
+                "preconditioner": {
+                    "type": "preconditioner::Jacobi",
+                    "max_block_size": 1
+                },
+                "criteria": [
+                    {
+                        "type": "Iteration",
+                        "max_iters": 16
+                    }
+                ]
+            },
+            "criteria": [
+                {
+                    "type": "Iteration",
+                    "max_iters": 1
+                }
+            ]
+        },
+        "value_type": "float32"
+    },
+    "criteria": [
+        {
+            "type": "Iteration",
+            "max_iters": 150
+        },
+        "neon::l1ScaledResidual"
+    ]
+}

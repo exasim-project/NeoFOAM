@@ -1,0 +1,222 @@
+diff --git a/common/cuda_hip/matrix/sparsity_csr_kernels.cpp b/common/cuda_hip/matrix/sparsity_csr_kernels.cpp
+index a65836561..cb25099de 100644
+--- a/common/cuda_hip/matrix/sparsity_csr_kernels.cpp
++++ b/common/cuda_hip/matrix/sparsity_csr_kernels.cpp
+@@ -5,6 +5,7 @@
+ #include "core/matrix/sparsity_csr_kernels.hpp"
+ 
+ #include <optional>
++#include <vector>
+ 
+ #include <thrust/sort.h>
+ 
+@@ -147,7 +148,43 @@ template <typename ValueType, typename IndexType>
+ void transpose(std::shared_ptr<const DefaultExecutor> exec,
+                const matrix::SparsityCsr<ValueType, IndexType>* orig,
+                matrix::SparsityCsr<ValueType, IndexType>* trans)
+-    GKO_NOT_IMPLEMENTED;
++{
++    // Upstream leaves the device sparsity-pattern transpose unimplemented
++    // (GKO_NOT_IMPLEMENTED, Ginkgo PR #2037). PMIS coarsening needs it once per level
++    // during hierarchy SETUP (not in the solve loop), so a host round-trip is correct
++    // and cheap: copy the pattern to the host, transpose (CSR -> CSC), copy back.
++    const auto num_rows = static_cast<size_type>(orig->get_size()[0]);
++    const auto num_cols = static_cast<size_type>(orig->get_size()[1]);
++    const auto nnz = orig->get_num_nonzeros();
++    auto master = exec->get_master();
++
++    std::vector<IndexType> row_ptrs(num_rows + 1);
++    std::vector<IndexType> col_idxs(nnz);
++    master->copy_from(exec, num_rows + 1, orig->get_const_row_ptrs(),
++                      row_ptrs.data());
++    master->copy_from(exec, nnz, orig->get_const_col_idxs(), col_idxs.data());
++
++    std::vector<IndexType> t_row_ptrs(num_cols + 1, IndexType{});
++    std::vector<IndexType> t_col_idxs(nnz);
++    // counting sort by column == CSR -> CSC (the transposed sparsity pattern)
++    for (size_type i = 0; i < nnz; i++) {
++        t_row_ptrs[col_idxs[i] + 1]++;
++    }
++    for (size_type i = 0; i < num_cols; i++) {
++        t_row_ptrs[i + 1] += t_row_ptrs[i];
++    }
++    std::vector<IndexType> next(t_row_ptrs.begin(), t_row_ptrs.end());
++    for (size_type row = 0; row < num_rows; row++) {
++        for (IndexType k = row_ptrs[row]; k < row_ptrs[row + 1]; k++) {
++            const auto col = static_cast<size_type>(col_idxs[k]);
++            t_col_idxs[next[col]++] = static_cast<IndexType>(row);
++        }
++    }
++
++    exec->copy_from(master, num_cols + 1, t_row_ptrs.data(),
++                    trans->get_row_ptrs());
++    exec->copy_from(master, nnz, t_col_idxs.data(), trans->get_col_idxs());
++}
+ 
+ GKO_INSTANTIATE_FOR_EACH_VALUE_AND_INDEX_TYPE(
+     GKO_DECLARE_SPARSITY_CSR_TRANSPOSE_KERNEL);
+diff --git a/core/config/config_helper.hpp b/core/config/config_helper.hpp
+index 2a88d73a5..a49fa8cab 100644
+--- a/core/config/config_helper.hpp
++++ b/core/config/config_helper.hpp
+@@ -72,6 +72,7 @@ enum class LinOpFactoryType : int {
+     Multigrid,
+     Pgm,
+     Rs,
++    Pmis,
+     Schwarz
+ };
+ 
+diff --git a/core/config/multigrid_config.cpp b/core/config/multigrid_config.cpp
+index 38feec1f9..3ebaaa33c 100644
+--- a/core/config/multigrid_config.cpp
++++ b/core/config/multigrid_config.cpp
+@@ -3,6 +3,7 @@
+ // SPDX-License-Identifier: BSD-3-Clause
+ 
+ #include <ginkgo/core/multigrid/pgm.hpp>
++#include <ginkgo/core/multigrid/pmis.hpp>
+ #include <ginkgo/core/multigrid/rs.hpp>
+ 
+ #include "core/config/parse_macro.hpp"
+@@ -13,6 +14,7 @@ namespace config {
+ 
+ 
+ GKO_PARSE_VALUE_AND_INDEX_TYPE(Pgm, gko::multigrid::Pgm);
++GKO_PARSE_VALUE_AND_INDEX_TYPE(Pmis, gko::multigrid::Pmis);
+ GKO_PARSE_VALUE_AND_INDEX_TYPE(Rs, gko::multigrid::Rs);
+ 
+ 
+diff --git a/core/config/registry.cpp b/core/config/registry.cpp
+index 9df97c1ad..cd377f617 100644
+--- a/core/config/registry.cpp
++++ b/core/config/registry.cpp
+@@ -52,6 +52,7 @@ configuration_map generate_config_map()
+             {"preconditioner::Sor", parse<LinOpFactoryType::Sor>},
+             {"solver::Multigrid", parse<LinOpFactoryType::Multigrid>},
+             {"multigrid::Pgm", parse<LinOpFactoryType::Pgm>},
++            {"multigrid::Pmis", parse<LinOpFactoryType::Pmis>},
+             {"multigrid::Rs", parse<LinOpFactoryType::Rs>},
+ #if GINKGO_BUILD_MPI
+         {
+diff --git a/core/multigrid/pmis.cpp b/core/multigrid/pmis.cpp
+index de1c1fa86..6fa611fdf 100644
+--- a/core/multigrid/pmis.cpp
++++ b/core/multigrid/pmis.cpp
+@@ -86,6 +86,29 @@ void Pmis<ValueType, IndexType>::generate()
+         this->set_fine_op(pmis_op);
+     }
+ 
++    // PMIS's device coarsening (the unified classify kernel shared by CUDA/HIP/OMP) is
++    // incomplete upstream (PR #2037 -> "no progress in Pmis"); only the hand-written
++    // reference backend implements it correctly. On a non-reference executor, run the whole
++    // coarsening on a ReferenceExecutor (host) and copy the resulting prolong/coarse/restrict
++    // operators to the device. Coarsening is a one-time setup cost (and the MG hierarchy is
++    // cached and refreshed in place), so the host detour is acceptable.
++    if (!dynamic_cast<const ReferenceExecutor*>(exec.get())) {
++        auto ref_exec = ReferenceExecutor::create();
++        auto host_op = share(clone(ref_exec, pmis_op));
++        auto host_level = Pmis<ValueType, IndexType>::build()
++                              .with_strength_threshold(
++                                  parameters_.strength_threshold)
++                              .with_skip_sorting(true)  // host_op is already sorted
++                              .on(ref_exec)
++                              ->generate(host_op);
++        auto host_pmis = as<Pmis<ValueType, IndexType>>(host_level.get());
++        this->set_multigrid_level(
++            share(clone(exec, host_pmis->get_prolong_op())),
++            share(clone(exec, host_pmis->get_coarse_op())),
++            share(clone(exec, host_pmis->get_restrict_op())));
++        return;
++    }
++
+     array<IndexType> sparsity_rows(exec, pmis_op->get_size()[0] + 1);
+     array<remove_complex<ValueType>> row_maxabs(exec, pmis_op->get_size()[0]);
+     exec->run(
+@@ -191,6 +214,39 @@ void Pmis<ValueType, IndexType>::generate()
+ }
+ 
+ 
++template <typename ValueType, typename IndexType>
++void Pmis<ValueType, IndexType>::update_matrix_value(
++    std::shared_ptr<const LinOp> new_matrix)
++{
++    using csr_type = matrix::Csr<ValueType, IndexType>;
++    auto exec = this->get_executor();
++    system_matrix_ = new_matrix;
++    // Only support csr matrix currently. PMIS is used localized (inside Schwarz), so the
++    // new fine matrix is a local Csr block of the SAME sparsity as the one coarsened in
++    // generate(). The coarsening (prolong/restrict operators) is therefore unchanged; only
++    // the values differ. Refresh the coarse operator by recomputing the Galerkin triple
++    // product coarse = R * A_new * P on the device, reusing the existing prolong/restrict.
++    // This is the solver-cache fast path (Multigrid::update_matrix_value) -- it avoids
++    // re-running the (host) PMIS coarsening every solve.
++    auto pmis_op = std::dynamic_pointer_cast<const csr_type>(system_matrix_);
++    if (!parameters_.skip_sorting || !pmis_op) {
++        pmis_op = convert_to_with_sorting<csr_type>(exec, system_matrix_,
++                                                    parameters_.skip_sorting);
++    }
++    this->set_fine_op(pmis_op);
++
++    auto prolongation = this->get_prolong_op();
++    auto restriction = this->get_restrict_op();
++    auto internal =
++        matrix::Csr<ValueType, IndexType>::create(exec, prolongation->get_size());
++    auto coarse = share(matrix::Csr<ValueType, IndexType>::create(
++        exec, dim<2>{prolongation->get_size()[1], prolongation->get_size()[1]}));
++    pmis_op->apply(prolongation, internal);
++    restriction->apply(internal, coarse);
++    this->set_multigrid_level(prolongation, coarse, restriction);
++}
++
++
+ #define GKO_DECLARE_PMIS(_vtype, _itype) class Pmis<_vtype, _itype>
+ GKO_INSTANTIATE_FOR_EACH_VALUE_AND_INDEX_TYPE(GKO_DECLARE_PMIS);
+ 
+diff --git a/include/ginkgo/core/multigrid/pmis.hpp b/include/ginkgo/core/multigrid/pmis.hpp
+index bae9c2c59..40906d132 100644
+--- a/include/ginkgo/core/multigrid/pmis.hpp
++++ b/include/ginkgo/core/multigrid/pmis.hpp
+@@ -42,7 +42,8 @@ namespace multigrid {
+  */
+ template <typename ValueType = default_precision, typename IndexType = int32>
+ class Pmis : public EnableLinOp<Pmis<ValueType, IndexType>>,
+-             public EnableMultigridLevel<ValueType> {
++             public EnableMultigridLevel<ValueType>,
++             public UpdateMatrixValue {
+     friend class EnableLinOp<Pmis>;
+     friend class EnablePolymorphicObject<Pmis, LinOp>;
+ 
+@@ -107,6 +108,11 @@ public:
+         const config::type_descriptor& td_for_child =
+             config::make_type_descriptor<ValueType, IndexType>());
+ 
++    // Refresh the coarse operator in place for a new fine matrix of the SAME sparsity
++    // (the solver-cache fast path, Multigrid::update_matrix_value). The PMIS coarsening
++    // (prolong/restrict) is reused; only the Galerkin coarse = R * A_new * P is recomputed.
++    void update_matrix_value(std::shared_ptr<const LinOp> new_matrix) override;
++
+ protected:
+     void apply_impl(const LinOp* b, LinOp* x) const override
+     {
+@@ -123,13 +129,14 @@ protected:
+         : EnableLinOp<Pmis>(std::move(exec))
+     {}
+ 
+-    explicit Pmis(const Factory* factory,
+-                  std::shared_ptr<const LinOp> system_matrix)
+-        : EnableLinOp<Pmis>(factory->get_executor(), system_matrix->get_size()),
+-          EnableMultigridLevel<ValueType>(system_matrix),
++    explicit Pmis(const Factory* factory, LinOpGenerateComponents components)
++        : EnableLinOp<Pmis>(factory->get_executor(),
++                            components.system_matrix->get_size()),
++          EnableMultigridLevel<ValueType>(components.system_matrix),
+           parameters_{factory->get_parameters()},
+-          system_matrix_{system_matrix},
+-          weight_(factory->get_executor(), system_matrix_->get_size()[0])
++          system_matrix_{components.system_matrix},
++          weight_(factory->get_executor(),
++                  components.system_matrix->get_size()[0])
+     {
+         GKO_ASSERT(parameters_.strength_threshold <= 1.0);
+         GKO_ASSERT(parameters_.strength_threshold >= 0.0);
