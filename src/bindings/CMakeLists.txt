@@ -33,6 +33,7 @@ nanobind_add_module(
   pdeSolver.cpp
   pressureVelocityCoupling.cpp
   utility.cpp
+  explicitOperators.cpp
   turbulenceModel.cpp
   wallFunctions.cpp
   fieldRelaxation.cpp)
