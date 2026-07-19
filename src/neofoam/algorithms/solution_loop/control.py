@@ -397,6 +397,11 @@ class SimpleControl(BaseModel):
                 self._inner_loop_open = False
                 return True
             self._inner_loop_open = True
+            # Closing the pass re-arms the non-orthogonal corrector for the
+            # next outer iteration (mirrors PimpleControl's auto-reset —
+            # without it only the first pass ever runs a pressure solve).
+            assert self._non_ortho is not None
+            self._non_ortho.reset()
             return False
 
         self._iteration_count += 1

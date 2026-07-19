@@ -175,6 +175,20 @@ public:
         constraintValues_ = &values;
     }
 
+    /** @brief As setConstraints, but the PDE keeps its own copies of the mask/values so the
+     *  caller need not keep them alive until solve() — used by the Python one-shot
+     *  epsilon-wall-cell pin helper (epsilonWallFunction). */
+    void setConstraintsOwned(
+        const NeoN::Vector<NeoN::scalar>& mask,
+        const NeoN::Vector<ValueType>& values
+    )
+    {
+        ownedConstraintMask_ = mask;
+        ownedConstraintValues_ = values;
+        constraintMask_ = &ownedConstraintMask_.value();
+        constraintValues_ = &ownedConstraintValues_.value();
+    }
+
     /** @brief assemble the linear system owned by the solver based on the current expression */
     LinearSystem& assemble()
     {
@@ -537,6 +551,9 @@ private:
     bool finalIter_ = false;
     const NeoN::Vector<NeoN::scalar>* constraintMask_ = nullptr;
     const NeoN::Vector<ValueType>* constraintValues_ = nullptr;
+    // Optional PDE-owned storage backing constraintMask_/constraintValues_ (setConstraintsOwned).
+    std::optional<NeoN::Vector<NeoN::scalar>> ownedConstraintMask_;
+    std::optional<NeoN::Vector<ValueType>> ownedConstraintValues_;
 };
 
 

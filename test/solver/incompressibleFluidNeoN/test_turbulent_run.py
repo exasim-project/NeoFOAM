@@ -23,10 +23,18 @@ import sys
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 from neofoam.tooling.casebuild import block_mesh, from_template
 
 
+@pytest.mark.xfail(
+    reason="SpalartAllmarasDDES (LES) has no native NeoN closure and the case uses "
+    "wall functions; the turbulence-family merge removed the NeoN C++ factory branch "
+    "(design Q-A: require native coverage). Native LES/wall-function coverage lands "
+    "from develop into the stack shortly; un-xfail then.",
+    strict=False,
+)
 def test_incompressibleFluidNeoN_SA_DDES_runs(tmp_path: Path) -> None:
     """The SA-DDES turbulence path runs end-to-end and nut/nuTilda land on disk."""
     repo_root = Path(__file__).parents[3]

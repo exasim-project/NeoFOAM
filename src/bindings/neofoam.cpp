@@ -20,5 +20,7 @@ NB_MODULE(neofoam_bindings, m)
     NeoFOAM::bindings::registerPDESolver(m);
     NeoFOAM::bindings::registerPressureVelocityCoupling(m);
     NeoFOAM::bindings::registerUtility(m);
-    NeoFOAM::bindings::registerPimple(m);
+    NeoFOAM::bindings::registerTurbulenceModel(m);
+    NeoFOAM::bindings::registerWallFunctions(m);
+    NeoFOAM::bindings::registerFieldRelaxation(m);
 }

@@ -24,8 +24,10 @@ from turbulence.conftest import CASES
 NATIVE_NAMES = {
     c.selection["model_name"] for c in CASES if c.selection["resolves_to"] == "native"
 }
-FALLBACK_NAMES = {
-    c.selection["model_name"] for c in CASES if c.selection["resolves_to"] == "fallback"
+UNREGISTERED_NAMES = {
+    c.selection["model_name"]
+    for c in CASES
+    if c.selection["resolves_to"] == "unregistered"
 }
 
 
@@ -51,8 +53,8 @@ def test_find_spec_round_trips_registered_names() -> None:
 
 
 def test_find_spec_unknown_returns_none() -> None:
-    # A fallback case's model name has no native spec by definition.
-    for name in FALLBACK_NAMES:
+    # An unregistered case's model name (e.g. Smagorinsky) has no spec.
+    for name in UNREGISTERED_NAMES:
         assert momentumTransportModel.find_spec(name) is None
 
 

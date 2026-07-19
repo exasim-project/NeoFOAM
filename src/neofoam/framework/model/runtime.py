@@ -83,6 +83,14 @@ class ModelRuntime:
         """Build operations with this runtime as the self binding."""
         return self.spec._build_operations_for(self)
 
+    def native_operations(self) -> list["Operation"]:
+        """Operations NOT tagged ``fallback=True`` (the model's native backend)."""
+        return [op for op in self.operations if not op.metadata.fallback]
+
+    def fallback_operations(self) -> list["Operation"]:
+        """Operations tagged ``fallback=True`` (the model's fallback backend)."""
+        return [op for op in self.operations if op.metadata.fallback]
+
     @property
     def configs(self) -> list[Any]:
         """

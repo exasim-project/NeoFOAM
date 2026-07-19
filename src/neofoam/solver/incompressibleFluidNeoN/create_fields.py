@@ -15,10 +15,13 @@ Differences from the pybFoam ``incompressibleFluid`` init graph:
 * the NeoN ``RunTime`` adapter is the central resource: an init-only
   ``_neon_runtime`` (never routed onto the Context) plus a
   ``models.neon_runtime`` alias so operations inject it by name;
-* viscosity/turbulence are not Python model families: the C++ factories are
-  already runtime-selected from ``constant/transportProperties`` /
-  ``constant/turbulenceProperties``, so one ``nu_vol`` and one ``turbulence``
-  init step each suffice.
+* viscosity is not a Python model family: the C++ factory is already
+  runtime-selected from ``constant/transportProperties``, so one ``nu_vol``
+  init step suffices;
+* turbulence is one ``turbulence`` init step selecting the native NeoN ModelSpec
+  closure by name from ``constant/turbulenceProperties`` (the single
+  :mod:`neofoam.turbulence.momentumTransport` family, ``fallback=False``); a model
+  with no native NeoN closure raises cleanly at selection time.
 """
 
 from pathlib import Path
@@ -39,6 +42,8 @@ from neofoam.framework.initialization import (
     model as init_model,
 )
 from neofoam.framework.model import ModelRuntime, bind_owned_interfaces
+from neofoam.turbulence.config import TurbulencePropertiesConfig
+from neofoam.turbulence.selection import select_turbulence_model
 
 from .configs import ControlDictConfig
 from .models.field_writer import fieldWriter, neon_writer_backend_steps
@@ -48,8 +53,23 @@ from .models.solution_loop import neon_loop_backend_steps, solutionLoop
 
 # Solver-solution subdicts mapped from OpenFOAM to NeoN/Ginkgo equivalents. The
 # base solver subdicts AND the *Final subdicts so the final outer-corrector
-# pass selects a converted dict (mirrors the legacy neoPimpleFoam port).
-_MAPPED_SOLVER_DICTS = ("p", "U", "pFinal", "UFinal", "nuTilda", "nuTildaFinal")
+# pass selects a converted dict (mirrors the legacy neoPimpleFoam port). The
+# turbulence transport unknowns are included so the pure-Python NeoN closures
+# (kEpsilon / SpalartAllmaras / kOmegaSST) find their converted solver dicts.
+_MAPPED_SOLVER_DICTS = (
+    "p",
+    "U",
+    "pFinal",
+    "UFinal",
+    "k",
+    "kFinal",
+    "epsilon",
+    "epsilonFinal",
+    "nuTilda",
+    "nuTildaFinal",
+    "omega",
+    "omegaFinal",
+)
 
 
 def _optional_models_by_name(optional_models: list[Any]) -> dict[str, Any]:
@@ -148,11 +168,25 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             )
 
         def create_turbulence(ctx: dict[str, Any]) -> Any:
-            # Runtime-selected C++ turbulence model (laminar or LES
-            # SpalartAllmarasDDES, per constant/turbulenceProperties). Owns
-            # nut / nuEff / gradU; for laminar nut = 0 and nuEff = nu.
+            # Runtime-selected turbulence model (per constant/turbulenceProperties):
+            # the native NeoN ModelSpec closure (laminar / kEpsilon /
+            # SpalartAllmaras / kOmegaSST) registered under the configured name in
+            # the single ``momentumTransportModel`` family. The native closures own
+            # their wall functions, so there is no C++ factory branch: a model with
+            # no native closure raises cleanly at selection time. The handle exposes
+            # nut / nu_eff / rotate_old_times / correct / write; for laminar nut = 0
+            # and nuEff = nu.
             rt = ctx["_neon_runtime"]
-            turb = nfb.create_turbulence_model(rt, ctx["models.nu_vol"])
+            # Validated load: with ``validate=False`` the RAS/LES sub-configs stay
+            # plain dicts and ``model_name`` cannot resolve the RAS/LES model name.
+            turb_config = TurbulencePropertiesConfig.load(case_dir=resolved_case_dir)
+            turb = select_turbulence_model(
+                turb_config,
+                fallback=False,
+                runtime=rt,
+                nu=ctx["models.nu_vol"],
+                case_dir=resolved_case_dir,
+            )
             turb.validate(ctx["fields.U"])
             return turb
 

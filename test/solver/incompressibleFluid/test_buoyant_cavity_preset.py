@@ -4,19 +4,14 @@
 """A laminar + Boussinesq case advances one step end to end.
 
 Regression for the ``laminar`` + ``boussinesq`` run blocker: the energy equation
-(``boussinesq.solve_energy``) reads the turbulence model's ``nut()``, which the
-native ``laminar`` momentum-transport model does not have — it registers no eddy
-viscosity. The suite only ever exercised Boussinesq with ``kEpsilon`` (the
-``hotRoom`` tutorial, which takes the OpenFOAM fallback), so a native
-``laminar`` + ``boussinesq`` case crashed on step 1 with
-``AttributeError: 'SpecMomentumTransport' object has no attribute 'nut'``.
-
-The fix gives the native model a ``has_nut()`` read interface (``False`` for
-laminar) and ``solve_energy`` sets ``alphat = 0`` in that case, so
-``alpha_eff = nu/Pr`` — the correct molecular thermal diffusivity. This test
-builds the smallest complete laminar-Boussinesq case (:func:`buoyant_cavity`)
-on the committed cavity mesh and runs a single step; before the fix it raised
-during the time loop.
+(``boussinesq.solve_energy``) reads the turbulence model's ``nut()``. On
+``incompressibleFluid`` every model is built through the pybFoam fallback handle,
+whose ``has_nut()`` is always ``True`` (the OpenFOAM laminar model exposes an eddy
+viscosity that is identically zero), so ``solve_energy`` computes
+``alphat = nut/Prt = 0`` and ``alpha_eff = nu/Pr`` — the correct molecular thermal
+diffusivity. This test builds the smallest complete laminar-Boussinesq case
+(:func:`buoyant_cavity`) on the committed cavity mesh and runs a single step; the
+original blocker crashed on step 1 during the time loop.
 
 Gated on pybFoam (the NeoN solver); meshing via blockMesh (native OpenFOAM utility).
 """
