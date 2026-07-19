@@ -126,7 +126,7 @@ def test_empty_allowed_bcs_is_error() -> None:
         value_type=Scalar,
         allowed_bcs=(),
     )
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="allowed_bcs is empty"):
         schema_for(decl)
 
 
@@ -140,7 +140,7 @@ def test_unsupported_value_type_is_error() -> None:
         value_type=_Bogus,
         allowed_bcs=(NoSlipBC,),
     )
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match="unsupported value_type"):
         schema_for(decl)
 
 

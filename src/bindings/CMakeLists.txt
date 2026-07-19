@@ -33,8 +33,10 @@ nanobind_add_module(
   pdeSolver.cpp
   pressureVelocityCoupling.cpp
   utility.cpp
-  pimple.cpp
-  explicitOperators.cpp)
+  explicitOperators.cpp
+  turbulenceModel.cpp
+  wallFunctions.cpp
+  fieldRelaxation.cpp)
 
 # Workaround for nvcc_wrapper failing on -Os which nanobind might add
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")

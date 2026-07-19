@@ -1,4 +1,8 @@
 # Version 0.3.0 (unreleased)
+- Add neoSimpleFoam steady-state incompressible SIMPLE/SIMPLEC solver with motorBike tutorial, SIMPLEC rAtU/flux corrections, inletOutlet BC parsing, bounded-scheme prefix stripping, and CI smoke test [#362](https://github.com/exasim-project/NeoFOAM/pull/362)
+- Add kEpsilon and kOmegaSST turbulence models [#337](https://github.com/exasim-project/NeoFOAM/pull/337)
+- Add neoPimpleFoam solver with PIMPLE outer-loop control and SA-DDES turbulence support [#337](https://github.com/exasim-project/NeoFOAM/pull/337)
+- Wire equation and field under-relaxation (URF) into PDESolver [#337](https://github.com/exasim-project/NeoFOAM/pull/337)
 - Enable mempool via controlDict [#246](https://github.com/exasim-project/NeoFOAM/pull/246)
 - Add SpalartAllmarasDDES turbulence model and integration test [#233](https://github.com/exasim-project/NeoFOAM/pull/233)
 - Added continuity error calculation [#306](https://github.com/exasim-project/NeoFOAM/pull/306)
@@ -29,8 +33,13 @@
 - Add an MCP server for case setup (`neofoam mcp serve`) [#340](https://github.com/exasim-project/NeoFOAM/pull/340)
 - Require Python >=3.10 [#340](https://github.com/exasim-project/NeoFOAM/pull/340)
 - Add opt-in OpenTelemetry tracing for solver operations and init steps: per-rank JSONL span export, Perfetto trace export, and a built-in summary plot; enabled through a `telemetry` sub-dict in `system/controlDict` [#352](https://github.com/exasim-project/NeoFOAM/pull/352)
+- Add `neofoam.casebuild`, a pipe-composed OpenFOAM case builder for tests: `empty`/`from_template` composed with `| block_mesh()/box()/snappy_hex_mesh()/patch()/configs()/unset()` and materialized via `.build_at(dest)` (injectable meshing strategies reuse `neofoam.tools`); adds `CaseDir.read_field` [#349](https://github.com/exasim-project/NeoFOAM/pull/349)
+- Refactor sub-dict IO: introduce `DictFile` and drop `SubdictMixin`/`_foamdict` and the `subdict` strategy [#349](https://github.com/exasim-project/NeoFOAM/pull/349)
+- Extend the MCP case-authoring server: a solver-generic model/config registry with geometry/mesh-input tools (`import_geometry`/`build_mesh_inputs`/`case_patches`), `list_configs` now tags each config's `origin` (`solver`/`required_model`/`optional_model`) so agents author every solver-required file, and `config_schema` returns runnable fvSchemes/fvSolution scaffolds in `defaults`; consolidate case-construction helpers under `neofoam.tooling` [#364](https://github.com/exasim-project/NeoFOAM/pull/364)
+- Add a pure-Python NeoN turbulence family on the ModelSpec framework (`laminar`/`kEpsilon`/`SpalartAllmaras`/`kOmegaSST`), unifying the NeoN and pybFoam closures behind one runtime selection and wiring them into `incompressibleFluidNeoN`; steady SIMPLE runs match native `simpleFoam` on pitzDaily, backed by new `neofoam_bindings` for wall distance, the strain/vorticity/grad-dot-grad invariants, and the epsilon/omega wall-function near-wall cell treatment [#359](https://github.com/exasim-project/NeoFOAM/pull/359)
 
 ## Development
+- Simplify and standardize the Python `test/` suite to `.claude/TEST_STYLE.md`: migrate solver/tools tests onto the casebuild pipeline, drop pybFoam/OpenFOAM `importorskip` guards (they are hard deps), load real committed case files instead of dict-as-string content, and align `test/framework`, `test/fields`, and `test/algorithms` [#349](https://github.com/exasim-project/NeoFOAM/pull/349)
 - Update submodule regularly by dependabot [#209](https://github.com/exasim-project/NeoFOAM/pull/209)
 - Allow auto grabbing version from submodule without initialization and update the documentation [#210](https://github.com/exasim-project/NeoFOAM/pull/210)
 
@@ -41,6 +50,8 @@
 - Validate the turbulence model before the first solve (`turbulence->validate()` / `correctNut`) in incompressibleFluid and the plain pybFoam port, so `nut` is initialised from `k`/`epsilon` instead of the `0/nut` placeholder — the framework is now bit-identical to native `pimpleFoam` on pitzDaily (requires pybFoam>=0.4.6, which binds `incompressibleTurbulenceModel::validate`) [#352](https://github.com/exasim-project/NeoFOAM/pull/352)
 - Fix the incompressibleFluid `-parallel` path: keep the `argList` (and the MPI session it owns) alive for the whole run so MPI is not finalised mid-solve; the framework now matches native `pimpleFoam -parallel` [#352](https://github.com/exasim-project/NeoFOAM/pull/352)
 - Add missing `<field>Final` linear-solver entries (`sFinal`, `UFinal`, `pFinal`) to the passive-scalar tutorial case and the `per_model_fvSolution.yaml` example so the documentation gallery builds [#352](https://github.com/exasim-project/NeoFOAM/pull/352)
+- Add the `incompressibleVoF` solver (interFoam-style VoF on the SolverSpec/ModelSpec framework) with a runtime-switchable phase-fraction advection family: `MULES` (algebraic, default) and `isoAdvector` (geometric, interIsoFoam), selected via an `advectionScheme` key in `system/fvSolution`; both bitwise-parity-verified on damBreak against native interFoam / interIsoFoam [#354](https://github.com/exasim-project/NeoFOAM/pull/354)
+- kOmegaSST steady near-wall parity: refresh the near-wall `omega` cell values from the current `k` before the blending coefficients (`F1`/`CDkOmega`) read them, mirroring `omegaWallFunction::updateCoeffs` (`kOmegaSSTBase.C:541`, "omegaWallFunctions change the cell value!") — removes the one-iteration near-wall lag [#359](https://github.com/exasim-project/NeoFOAM/pull/359)
 
 # Version 0.2.0 (2025.12.01)
 - Use NeoN logging functionality [#144](https://github.com/exasim-project/NeoFOAM/pull/144)

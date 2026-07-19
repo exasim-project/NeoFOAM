@@ -82,7 +82,3 @@ def test_no_config_no_callback_raises(case_dir: Path) -> None:
     spec = Model("Bare")
     with pytest.raises(ValueError, match="cannot instantiate"):
         spec.instantiate(case_dir=case_dir)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])

@@ -334,7 +334,9 @@ def continuity(
 @PimpleFvSchemes.add(
     ddt="ddt(U)",
     div=["div(phi,U)", "div((nuEff*dev2(T(grad(U)))))"],
-    grad="grad(U)",
+    # ``grad(rhok)`` is needed by the ``corrected`` ``snGrad(rhok)`` below: the
+    # non-orthogonal correction of ``fvc::snGrad(rhok)`` looks up the cell gradient.
+    grad=["grad(U)", "grad(rhok)"],
     laplacian="laplacian(nuEff,U)",
     snGrad="snGrad(rhok)",
 )

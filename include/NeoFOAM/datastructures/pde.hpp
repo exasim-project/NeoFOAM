@@ -20,6 +20,21 @@ namespace dsl = NeoN::dsl;
 namespace NeoFOAM
 {
 
+// Non-template helpers for PDE<scalar>::solveImpl. Defined in src/datastructures/pde.cpp so
+// the FixedValueConstraints and SetReference SYCL kernels are compiled only once, not in every
+// translation unit that instantiates PDE<scalar> (e.g. kOmegaSST.cpp, kEpsilon.cpp, …).
+namespace detail
+{
+using ScalarLinearSystem = NeoN::la::LinearSystem<NeoN::scalar, NeoN::scalar>;
+void applyFixedValueConstraints(
+    ScalarLinearSystem& ls,
+    NeoN::View<const NeoN::scalar> mask,
+    NeoN::View<const NeoN::scalar> values,
+    NeoN::localIdx nCells
+);
+void applySetReference(ScalarLinearSystem& ls, NeoN::localIdx refCell, NeoN::scalar refValue);
+} // namespace detail
+
 /*@brief extends expression by giving access to assembled matrix
  * @note used in neoIcoFOAM directly instead of dsl::expression
  * TODO: implement flag if matrix is assembled or not -> if not assembled call assemble
@@ -152,6 +167,28 @@ public:
     /** @brief When true, selects the <field>Final relaxation factor and solver subdict. */
     void setFinalIter(bool finalIter) { finalIter_ = finalIter; }
 
+    /** @brief Hard-pin a set of cells to prescribed values after assembly (omega wall function). */
+    void
+    setConstraints(const NeoN::Vector<NeoN::scalar>& mask, const NeoN::Vector<ValueType>& values)
+    {
+        constraintMask_ = &mask;
+        constraintValues_ = &values;
+    }
+
+    /** @brief As setConstraints, but the PDE keeps its own copies of the mask/values so the
+     *  caller need not keep them alive until solve() — used by the Python one-shot
+     *  epsilon-wall-cell pin helper (epsilonWallFunction). */
+    void setConstraintsOwned(
+        const NeoN::Vector<NeoN::scalar>& mask,
+        const NeoN::Vector<ValueType>& values
+    )
+    {
+        ownedConstraintMask_ = mask;
+        ownedConstraintValues_ = values;
+        constraintMask_ = &ownedConstraintMask_.value();
+        constraintValues_ = &ownedConstraintValues_.value();
+    }
+
     /** @brief assemble the linear system owned by the solver based on the current expression */
     LinearSystem& assemble()
     {
@@ -217,6 +254,7 @@ public:
         // beforehand and restore it after solve so ls_ retains the H-system for computeRAUandHByA.
         assemble();
         relaxOwnedLs();
+
 
         auto rhsExpr = dsl::Expression<ValueType>(-1.0 * rhs);
         rhsExpr.read(NeoFOAM::expandSchemeDefaults(runTime_->fvSchemesDict, rhsExpr, psi_->name));
@@ -354,13 +392,26 @@ public:
             lookupEqnRelaxation(runTime_->fvSolutionDict, psi_->name, finalIter_).value_or(1.0);
         NeoN::dsl::applyMatrixRelaxation(ls, *psi_, alpha);
 
-        // Apply reference-cell pinning directly (avoids object-slicing issue)
+        // Apply reference-cell pinning (kernel compiled only in pde.cpp via detail helper)
         if constexpr (std::is_same_v<ValueType, NeoN::scalar>)
         {
             if (needReference_)
             {
-                NeoN::dsl::SetReference<ValueType> refFunct(pRefCell_, pRefValue_);
-                refFunct(ls);
+                detail::applySetReference(ls, pRefCell_, pRefValue_);
+            }
+        }
+
+        if constexpr (std::is_same_v<ValueType, NeoN::scalar>)
+        {
+            if (constraintMask_ != nullptr)
+            {
+                const NeoN::localIdx nCells = psi_->mesh().nCells();
+                detail::applyFixedValueConstraints(
+                    ls,
+                    constraintMask_->view(),
+                    constraintValues_->view(),
+                    nCells
+                );
             }
         }
 
@@ -498,8 +549,16 @@ private:
     NeoN::localIdx pRefCell_ = 0;
     NeoN::scalar pRefValue_ = 0.0;
     bool finalIter_ = false;
+    const NeoN::Vector<NeoN::scalar>* constraintMask_ = nullptr;
+    const NeoN::Vector<ValueType>* constraintValues_ = nullptr;
+    // Optional PDE-owned storage backing constraintMask_/constraintValues_ (setConstraintsOwned).
+    std::optional<NeoN::Vector<NeoN::scalar>> ownedConstraintMask_;
+    std::optional<NeoN::Vector<ValueType>> ownedConstraintValues_;
 };
 
+
+template<typename ValueType>
+using PDESolver = PDE<ValueType>;
 
 template<typename ValueType, typename IndexType = NeoN::localIdx>
 NeoN::finiteVolume::cellCentred::VolumeField<ValueType> applyOperator(

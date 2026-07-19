@@ -28,7 +28,7 @@ from neofoam.framework.types import OperationMetadata
 
 from .stress import OpenFOAMStress
 
-__all__ = ["OpenFOAMTurbulenceModel", "TurbulenceFactory"]
+__all__ = ["OpenFOAMTurbulenceModel", "FallbackHandle", "TurbulenceFactory"]
 
 #: A pybFoam-style turbulence factory: ``(U, phi, transport) -> model``.
 TurbulenceFactory = Callable[[Any, Any, Any], Any]
@@ -44,9 +44,9 @@ def _default_factory() -> "TurbulenceFactory":
 class OpenFOAMTurbulenceModel:
     """The OpenFOAM fallback momentum-transport model — a peer of the native models.
 
-    Selected when no native model matches the configured turbulence model, it sits
-    at ``models.turbulence`` with the same interface as :class:`SpecMomentumTransport`.
-    Construction is side-effect free; the underlying pybFoam model is created on
+    Selected on the fallback path, it sits at ``models.turbulence`` (wrapped by
+    :class:`FallbackHandle`) as the nut/stress provider. Construction is
+    side-effect free; the underlying pybFoam model is created on
     :meth:`build`. It **defines its own stress** via :meth:`viscous_stress`,
     returning an :class:`OpenFOAMStress` that delegates to the pybFoam model's own
     ``divDevReff``.
@@ -89,6 +89,10 @@ class OpenFOAMTurbulenceModel:
             )
         return self._impl
 
+    def has_nut(self) -> bool:
+        """The OpenFOAM model always exposes an eddy viscosity (zero when laminar)."""
+        return True
+
     def nut(self) -> Any:
         return self._require_impl().nut()
 
@@ -121,6 +125,12 @@ class OpenFOAMTurbulenceModel:
         cyclic garbage that the collector frees at an unsafe time during a later
         in-process run; resolving via the (acyclic) context lets it free by
         refcount when the run ends.
+
+        .. note::
+            After the family merge the *scheduled* correct comes from the
+            model file's ``fallback=True`` op (via :class:`FallbackHandle`),
+            not this property. It is retained for the direct-use tests that
+            predate the merge.
         """
 
         def correct(ctx: Context) -> FieldUpdates:
@@ -135,3 +145,57 @@ class OpenFOAMTurbulenceModel:
                 metadata=OperationMetadata(op_name="of_correct_turbulence"),
             ),
         ]
+
+
+class FallbackHandle:
+    """The momentum-transport handle for the pybFoam-OpenFOAM fallback path.
+
+    Returned by :func:`~neofoam.turbulence.selection.select_turbulence_model`
+    when a solver selects ``fallback=True`` (today: ``incompressibleFluid``). It
+    pairs the :class:`OpenFOAMTurbulenceModel` — which owns the eddy viscosity
+    ``nut`` and assembles its own momentum stress — with the model's co-located
+    ``fallback=True`` operations (a single ``correct`` that advances the pybFoam
+    model after the pressure-velocity loop).
+
+    Satisfies :class:`~neofoam.turbulence.protocol.MomentumTransport`: it forwards
+    ``nut`` / ``has_nut`` / ``nu`` / ``viscous_stress`` / ``divDevReff`` to the OF
+    model and returns the spec's fallback ops as :attr:`operations`.
+    """
+
+    #: Descriptive tag for the stress family this handle uses.
+    stress_kind = "openfoam"
+
+    def __init__(
+        self, of_model: OpenFOAMTurbulenceModel, operations: list[Operation]
+    ) -> None:
+        self._of = of_model
+        self._operations = list(operations)
+
+    def build(self) -> "FallbackHandle":
+        """Instantiate the underlying pybFoam turbulence model (delegates)."""
+        self._of.build()
+        return self
+
+    def has_nut(self) -> bool:
+        return self._of.has_nut()
+
+    def nut(self) -> Any:
+        return self._of.nut()
+
+    def nu(self) -> Any:
+        return self._of.nu()
+
+    def divDevReff(self, U: Any, nu: Any = None, nut: Any = None) -> Any:
+        return self._of.divDevReff(U, nu, nut)
+
+    def viscous_stress(self) -> OpenFOAMStress:
+        return self._of.viscous_stress()
+
+    def correct(self) -> None:
+        """Advance the wrapped pybFoam model one step (no-arg, OpenFOAM lifecycle)."""
+        self._of.correct()
+
+    @property
+    def operations(self) -> list[Operation]:
+        """The model's ``fallback=True`` operations, stepped after the loop."""
+        return list(self._operations)

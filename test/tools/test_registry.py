@@ -14,22 +14,20 @@ from pathlib import Path
 
 import pytest
 
-pytest.importorskip("pybFoam")
-
-from neofoam.framework.initialization import (  # noqa: E402
+from neofoam.framework.initialization import (
     InitStepExecutionError,
     lazy,
 )
-from neofoam.framework.initialization.execution import (  # noqa: E402
+from neofoam.framework.initialization.execution import (
     execute_initialization,
 )
-from neofoam.framework.tools import (  # noqa: E402
+from neofoam.framework.tools import (
     PreprocessConfig,
     Tool,
     resolve_tools,
     tool_graph_steps,
 )
-from neofoam.tools import (  # noqa: E402
+from neofoam.tools import (
     available_tools,
     block_mesh,
     check_mesh,
@@ -37,10 +35,10 @@ from neofoam.tools import (  # noqa: E402
     registry,
     snappy_hex_mesh,
 )
-from neofoam.tools.block_mesh import blockMeshTool  # noqa: E402
-from neofoam.tools.check_mesh import checkMeshTool  # noqa: E402
-from neofoam.tools.run import detect_tools  # noqa: E402
-from neofoam.tools.snappy_hex_mesh import snappyHexMeshTool  # noqa: E402
+from neofoam.tools.block_mesh import blockMeshTool
+from neofoam.tools.check_mesh import checkMeshTool
+from neofoam.tools.run import detect_tools
+from neofoam.tools.snappy_hex_mesh import snappyHexMeshTool
 
 CASE = Path(__file__).parents[1] / "solver" / "incompressibleFluid" / "preprocess_case"
 

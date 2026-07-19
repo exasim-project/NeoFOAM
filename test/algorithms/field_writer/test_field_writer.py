@@ -41,14 +41,11 @@ def _state(*, write: bool) -> LoopState:
     return LoopState(value=0.0, delta_t=0.1, end_time=1.0, write_time=write)
 
 
-class FakeContext:
-    def __init__(
-        self, models: dict[str, Any], fields: dict[str, Any], time: LoopState
-    ) -> None:
-        self.models = models
-        self.fields = fields
-        self.write_fields = set(fields)
-        self.time = time
+def _ctx(*, models: dict[str, Any], fields: dict[str, Any], time: LoopState) -> Context:
+    """A real Context (all flagged fields eligible to write) — write_output reads
+    ``models``/``fields``/``write_fields``/``time`` off it, so build the genuine
+    object rather than a duck-typed stand-in."""
+    return Context(models=models, fields=fields, write_fields=set(fields), time=time)
 
 
 # --- the Model ------------------------------------------------------------
@@ -82,16 +79,13 @@ def _writer_with_hook() -> tuple[FieldWriter, FakeFieldHook]:
 def test_write_output_persists_flagged_fields_on_a_write_step() -> None:
     writer, hook = _writer_with_hook()
     reported: list[bool] = []
-    ctx = cast(
-        Context,
-        FakeContext(
-            models={
-                "writer": writer,
-                "step_reporter": lambda: reported.append(True),
-            },
-            fields={"U": object(), "p": object()},
-            time=_state(write=True),
-        ),
+    ctx = _ctx(
+        models={
+            "writer": writer,
+            "step_reporter": lambda: reported.append(True),
+        },
+        fields={"U": object(), "p": object()},
+        time=_state(write=True),
     )
     write_output(None, ctx)
     assert len(hook.calls) == 1
@@ -101,13 +95,10 @@ def test_write_output_persists_flagged_fields_on_a_write_step() -> None:
 
 def test_write_output_skips_on_a_non_write_step() -> None:
     writer, hook = _writer_with_hook()
-    ctx = cast(
-        Context,
-        FakeContext(
-            models={"writer": writer},
-            fields={"U": object()},
-            time=_state(write=False),
-        ),
+    ctx = _ctx(
+        models={"writer": writer},
+        fields={"U": object()},
+        time=_state(write=False),
     )
     write_output(None, ctx)
     assert hook.calls == []  # nothing written; missing step_reporter is fine

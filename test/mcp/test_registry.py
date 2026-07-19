@@ -18,6 +18,5 @@ def test_resolve_unknown_solver_raises_clear_error() -> None:
 
 
 def test_resolve_known_solver_returns_spec() -> None:
-    pytest.importorskip("pybFoam")
     spec = resolve_solver("incompressibleFluid")
     assert spec.name  # SolverSpec has a name

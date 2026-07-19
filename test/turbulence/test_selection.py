@@ -1,16 +1,20 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Tests for turbulence model selection (native match vs OpenFOAM fallback).
+"""Tests for turbulence model selection under the merged family + ``fallback`` flag.
 
-Parametrized over the discovered cases: the config is loaded from each real
-case, and the selected model's name/kind is checked against the case manifest.
-A registered native being dispatched (not falling back) is covered by the real
-``resolves_to: native`` cases — no throwaway registration. Each native model
-added (with its case) extends this automatically.
+One family serves both solvers; the ``fallback`` flag picks the backend:
 
-This also exercises the pybFoam-bound ``select_from_case`` entry point (absorbed
-from the old ``test_selection_from_case.py``).
+* ``fallback=False`` (incompressibleFluidNeoN) → a native
+  :class:`~neofoam.turbulence.native.NeoNHandle` for a registered model.
+* ``fallback=True`` (incompressibleFluid) → a
+  :class:`~neofoam.turbulence.fallback.FallbackHandle` for a model with a
+  co-located ``fallback=True`` op.
+
+Parametrized over the discovered cases: a ``native`` case is a registered dual
+model (both branches build); an ``unregistered`` case (e.g. Smagorinsky) has no
+spec, so **both** branches raise. This also exercises the pybFoam-bound
+``select_from_case`` entry point.
 """
 
 from types import SimpleNamespace
@@ -19,26 +23,59 @@ from unittest.mock import MagicMock
 import pytest
 
 from neofoam.turbulence.config import TurbulencePropertiesConfig
+from neofoam.turbulence.fallback import FallbackHandle
+from neofoam.turbulence.native import NeoNHandle
 from neofoam.turbulence.selection import (
     model_name,
     select_from_case,
     select_turbulence_model,
 )
 
-from turbulence.conftest import CASES, Case, assert_selection
+from turbulence.conftest import CASES, Case
 
 
 @pytest.mark.parametrize("case", CASES, ids=lambda c: c.name)
-def test_select_from_loaded_config(case: Case) -> None:
+def test_native_branch(case: Case) -> None:
     cfg = TurbulencePropertiesConfig.load(case_dir=case.path)
-    selected = select_turbulence_model(cfg, of_factory=MagicMock())
-    assert_selection(selected, case)
+    if case.selection["resolves_to"] == "native":
+        selected = select_turbulence_model(cfg, fallback=False, case_dir=case.path)
+        assert isinstance(selected, NeoNHandle)
+    else:
+        with pytest.raises(ValueError):
+            select_turbulence_model(cfg, fallback=False, case_dir=case.path)
 
 
 @pytest.mark.parametrize("case", CASES, ids=lambda c: c.name)
-def test_select_from_case(case: Case) -> None:
-    selected = select_from_case(case.path, of_factory=MagicMock())
-    assert_selection(selected, case)
+def test_fallback_branch(case: Case) -> None:
+    cfg = TurbulencePropertiesConfig.load(case_dir=case.path)
+    if case.selection["resolves_to"] == "native":  # dual model → has a fallback op
+        selected = select_turbulence_model(
+            cfg, fallback=True, case_dir=case.path, of_factory=MagicMock()
+        )
+        assert isinstance(selected, FallbackHandle)
+    else:  # unregistered → no spec → raises
+        with pytest.raises(ValueError):
+            select_turbulence_model(
+                cfg, fallback=True, case_dir=case.path, of_factory=MagicMock()
+            )
+
+
+@pytest.mark.parametrize("case", CASES, ids=lambda c: c.name)
+def test_select_from_case_fallback(case: Case) -> None:
+    if case.selection["resolves_to"] == "native":
+        selected = select_from_case(case.path, fallback=True, of_factory=MagicMock())
+        assert isinstance(selected, FallbackHandle)
+    else:
+        with pytest.raises(ValueError):
+            select_from_case(case.path, fallback=True, of_factory=MagicMock())
+
+
+def test_unregistered_model_raises_clearly() -> None:
+    cfg = SimpleNamespace(
+        simulationType="LES", RAS=None, LES=SimpleNamespace(LESModel="Smagorinsky")
+    )
+    with pytest.raises(ValueError, match="no turbulence model registered"):
+        select_turbulence_model(cfg, fallback=True)
 
 
 def test_model_name_undeterminable_is_none() -> None:

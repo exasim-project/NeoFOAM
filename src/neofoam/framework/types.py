@@ -72,6 +72,13 @@ class OperationMetadata:
 
     op_name: str | None = None
 
+    # When True the operation is a *fallback* op — scheduled only when a
+    # consumer selects the model's fallback backend (e.g. the pybFoam-OpenFOAM
+    # turbulence path in incompressibleFluid). Native (non-fallback) ops and
+    # fallback ops are partitioned by ``ModelRuntime.native_operations()`` /
+    # ``fallback_operations()``; ``.operations`` still returns both.
+    fallback: bool = False
+
     # Optional metadata
     op_type: OpType | None = None
     description: str = ""

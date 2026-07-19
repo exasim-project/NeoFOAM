@@ -5,10 +5,11 @@
 
 Pydantic ``BaseConfig`` for ``system/controlDict``, loaded via
 ``@IOStrategy(OF(...))`` — it feeds validation of the time-stepping controls
-before the solver opens any C++ runtime. ``constant/transportProperties`` /
-``constant/turbulenceProperties`` are read directly by the NeoN C++ factories
-(``read_transport_viscosity`` / ``create_turbulence_model``), so no config
-class is declared for them here.
+before the solver opens any C++ runtime. ``constant/transportProperties`` is
+read directly by the NeoN C++ factory (``read_transport_viscosity``);
+``constant/turbulenceProperties`` is loaded in ``create_fields`` to select the
+turbulence model (pure-Python NeoN family, C++ fallback) — so no config class
+is declared for them here.
 """
 
 from neofoam.algorithms.solution_loop.config import TimeControlConfig

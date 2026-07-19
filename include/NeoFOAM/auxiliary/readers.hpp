@@ -10,7 +10,6 @@
 #include "NeoFOAM/auxiliary/convert.hpp"
 #include "NeoFOAM/auxiliary/typeConversion.hpp"
 #include "NeoFOAM/auxiliary/fieldTraits.hpp"
-
 #include "processorFvPatch.H"
 
 namespace fvcc = NeoN::finiteVolume::cellCentred;
@@ -162,7 +161,81 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
         {"symmetryPlane", [](auto& dict) { dict.insert("type", std::string("symmetry")); }},
         {"symmetry", [](auto& dict) { dict.insert("type", std::string("symmetry")); }},
         {"nutUSpaldingWallFunction",
-         [](auto& dict) { dict.insert("type", std::string("nutUSpaldingWallFunction")); }}
+         [](auto& dict) { dict.insert("type", std::string("nutUSpaldingWallFunction")); }},
+        {"kqRWallFunction", [](auto& dict) { dict.insert("type", std::string("kqRWallFunction")); }
+        },
+        {"omegaWallFunction",
+         [](auto& dict) { dict.insert("type", std::string("omegaWallFunction")); }},
+        {"epsilonWallFunction",
+         [](auto& dict) { dict.insert("type", std::string("epsilonWallFunction")); }},
+        {"nutkWallFunction",
+         [](auto& dict) { dict.insert("type", std::string("nutkWallFunction")); }},
+        {"inletOutlet",
+         [](auto& dict)
+         {
+             dict.insert("type", std::string("inletOutlet"));
+             NeoN::TokenList tokenList = dict.template get<NeoN::TokenList>("inletValue");
+             if constexpr (std::is_same<type_primitive_t, NeoN::Vec3>::value)
+             {
+                 NeoN::Vec3 inletValue {};
+                 if (tokenList.size() >= 4)
+                 {
+                     inletValue[0] = detail::tokenAsScalar(tokenList, 1);
+                     inletValue[1] = detail::tokenAsScalar(tokenList, 2);
+                     inletValue[2] = detail::tokenAsScalar(tokenList, 3);
+                 }
+                 dict.insert("inletValue", inletValue);
+             }
+             else
+             {
+                 dict.insert(
+                     "inletValue",
+                     tokenList.size() >= 2 ? detail::tokenAsScalar(tokenList, 1)
+                                           : type_primitive_t {}
+                 );
+             }
+         }},
+        // Two-phase VoF outlet/pressure conditions from the damBreak case. These
+        // are outflow-dominant and are approximated here as zeroGradient so the
+        // fields can be read; a faithful treatment lands with the VoF solve.
+        {"pressureInletOutletVelocity",
+         [&](auto& dict)
+         {
+             dict.insert("type", std::string("fixedGradient"));
+             dict.insert("fixedGradient", NeoN::zero<type_primitive_t>());
+         }},
+        {"fixedFluxPressure",
+         [&](auto& dict)
+         {
+             // Faithful wall fixedFluxPressure: the per-face refGrad is set externally by
+             // NeoFOAM::constrainPressure so the projection cancels the buoyancy/capillary
+             // wall face flux. The FixedFluxPressure BC ignores the dict (refGrad is
+             // zero-initialised -> zeroGradient until the first constrainPressure).
+             dict.insert("type", std::string("fixedFluxPressure"));
+         }},
+        {"totalPressure",
+         [&](auto& dict)
+         {
+             // p_rgh atmosphere: pin the pressure datum with a fixedValue at the stored
+             // patch value so the p_rgh solve is well-posed. The dynamic-head correction
+             // is negligible for the gravity-driven damBreak first version and is deferred
+             // with surface tension. Non-scalar (or valueless) falls back to zeroGradient.
+             if constexpr (std::is_same<type_primitive_t, NeoN::scalar>::value)
+             {
+                 if (dict.contains("value"))
+                 {
+                     NeoN::TokenList tl = dict.template get<NeoN::TokenList>("value");
+                     if (tl.size() > 1)
+                     {
+                         dict.insert("type", std::string("fixedValue"));
+                         dict.insert("fixedValue", detail::tokenAsScalar(tl, 1));
+                         return;
+                     }
+                 }
+             }
+             dict.insert("type", std::string("fixedGradient"));
+             dict.insert("fixedGradient", NeoN::zero<type_primitive_t>());
+         }}
     };
 
     auto applyVolInserter =

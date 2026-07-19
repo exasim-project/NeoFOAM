@@ -16,7 +16,7 @@ from neofoam.framework.initialization.config_context import (
 # --- ConfigContext: register / get ---
 
 
-def test_register_and_get(config: ConfigContext) -> None:
+def test_register_then_get_roundtrip(config: ConfigContext) -> None:
     """Round-trip: register a model and retrieve it."""
     obj = {"viscosity": 0.01}
     config.register("transport", obj)
@@ -53,7 +53,7 @@ def test_all_returns_copy(config: ConfigContext) -> None:
 # --- Multi-region ---
 
 
-def test_multi_region_register_and_get(config: ConfigContext) -> None:
+def test_multi_region_register_then_get_roundtrip(config: ConfigContext) -> None:
     """Register in different regions and access via dot notation."""
     config.register("temperature", 300.0, region="fluid")
     config.register("temperature", 400.0, region="solid")

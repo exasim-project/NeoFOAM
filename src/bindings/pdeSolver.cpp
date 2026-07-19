@@ -28,6 +28,7 @@ void registerPDESolver(nb::module_& m)
     // -------------------------------------------------------------------
     nb::enum_<fvcc::DdtScheme>(m, "DdtScheme")
         .value("None", fvcc::DdtScheme::None)
+        .value("Steady", fvcc::DdtScheme::Steady)
         .value("BDF1", fvcc::DdtScheme::BDF1)
         .value("BDF2", fvcc::DdtScheme::BDF2);
 
