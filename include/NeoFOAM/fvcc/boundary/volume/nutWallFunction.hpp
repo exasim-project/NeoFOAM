@@ -24,6 +24,8 @@ static constexpr scalar TOLERANCE = 0.01;
 static constexpr scalar KAPPA = 0.41;
 static constexpr scalar E_COEFF = 9.8;
 
+// tolerance mirrors OpenFOAM's dict-configurable tolerance_ (default 0.01): the
+// Newton loop stops on the relative uTau update, not on full convergence.
 KOKKOS_INLINE_FUNCTION
 scalar computeUTau(
     const scalar magGradU,
@@ -32,7 +34,8 @@ scalar computeUTau(
     const scalar nuw,
     const scalar nutw,
     scalar& err,
-    const int maxIter
+    const int maxIter,
+    const scalar tolerance
 )
 {
     err = 0.0;
@@ -58,7 +61,7 @@ scalar computeUTau(
         err = NeoN::mag((ut - uTauNew) / ut);
         ut = uTauNew;
     }
-    while (ut > ROOTVSMALL && err > TOLERANCE && ++iter < maxIter);
+    while (ut > ROOTVSMALL && err > tolerance && ++iter < maxIter);
 
     return ut > 0.0 ? ut : 0.0;
 }
@@ -103,7 +106,8 @@ inline void setNutUSpaldingWallFunction(
             const scalar currentNut = value[i];
 
             scalar err = 0.0;
-            const scalar uTau = computeUTau(magGradU, magUp, y, nuw, currentNut, err, MAX_ITER);
+            const scalar uTau =
+                computeUTau(magGradU, magUp, y, nuw, currentNut, err, MAX_ITER, TOLERANCE);
 
             // OF nutUSpaldingWallFunctionFvPatchScalarField::calcNut: at the default
             // tolerance (0.01) the restart-preservation branch (kept only for a
