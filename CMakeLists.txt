@@ -24,6 +24,13 @@ option(NEOFOAM_ENABLE_KOKKOS_TOOLS "Enable Kokkos Tools" OFF)
 
 option(NEOFOAM_BUILD_PYTHON_BINDINGS "Build Python bindings" OFF)
 
+# Runtime-loader rpath token: @loader_path on macOS (dyld), $ORIGIN on Linux (ELF).
+if(APPLE)
+  set(NEOFOAM_RPATH_ORIGIN "@loader_path")
+else()
+  set(NEOFOAM_RPATH_ORIGIN "$ORIGIN")
+endif()
+
 # Detect if building with scikit-build-core
 if(DEFINED SKBUILD)
   message(STATUS "Building with scikit-build-core")
@@ -54,8 +61,9 @@ if(DEFINED SKBUILD)
   # $ORIGIN/../pybFoam reaches pybFoam's libnanobind.so: the bindings are built NB_SHARED but do NOT
   # ship their own libnanobind.so; they resolve against pybFoam's by SONAME so the whole process
   # shares ONE nanobind runtime/type registry with pybFoam (the pyOFTools pattern).
-  set(CMAKE_INSTALL_RPATH "$ORIGIN" "$ORIGIN/lib" "$ORIGIN/../lib" "$ORIGIN/../../lib"
-                          "$ORIGIN/../pybFoam")
+  set(CMAKE_INSTALL_RPATH
+      "${NEOFOAM_RPATH_ORIGIN}" "${NEOFOAM_RPATH_ORIGIN}/lib" "${NEOFOAM_RPATH_ORIGIN}/../lib"
+      "${NEOFOAM_RPATH_ORIGIN}/../../lib" "${NEOFOAM_RPATH_ORIGIN}/../pybFoam")
 endif()
 
 set(NEOFOAM_BENCHMARK_MODE
@@ -98,7 +106,9 @@ include(cmake/CxxThirdParty.cmake)
 # flat layout). _neon installs to site-packages/neon/ while the native libs live in neofoam/lib, so
 # point it at $ORIGIN/../neofoam/lib (+ $ORIGIN/../lib for camp/cpptrace, which leak to the root).
 if(DEFINED SKBUILD AND TARGET _neon)
-  set(_neon_rpath "$ORIGIN/../neofoam/lib;$ORIGIN/../lib;$ORIGIN/../pybFoam")
+  set(_neon_rpath
+      "${NEOFOAM_RPATH_ORIGIN}/../neofoam/lib;${NEOFOAM_RPATH_ORIGIN}/../lib;${NEOFOAM_RPATH_ORIGIN}/../pybFoam"
+  )
   set_target_properties(_neon PROPERTIES INSTALL_RPATH "${_neon_rpath}")
 endif()
 
@@ -113,8 +123,15 @@ endif()
 if(DEFINED SKBUILD)
   foreach(_dep umpire camp)
     if(TARGET ${_dep})
-      set_target_properties(${_dep} PROPERTIES INSTALL_RPATH "$ORIGIN")
+      set_target_properties(${_dep} PROPERTIES INSTALL_RPATH "${NEOFOAM_RPATH_ORIGIN}")
       set_target_properties(${_dep} PROPERTIES INSTALL_RPATH_USE_LINK_PATH FALSE)
+      if(APPLE)
+        # BLT also bakes an absolute LC_ID_DYLIB (install_name) pointing at the temp wheel-staging
+        # dir, so dependents resolve @rpath/lib${_dep}.dylib to that deleted path instead of the
+        # rpath above. Force the dylib's own id to be @rpath-relative like the rest of this block.
+        set_target_properties(${_dep} PROPERTIES INSTALL_NAME_DIR "@rpath")
+        set_target_properties(${_dep} PROPERTIES BUILD_WITH_INSTALL_NAME_DIR TRUE)
+      endif()
     endif()
   endforeach()
 endif()
