@@ -10,7 +10,6 @@
 #include "NeoFOAM/auxiliary/convert.hpp"
 #include "NeoFOAM/auxiliary/typeConversion.hpp"
 #include "NeoFOAM/auxiliary/fieldTraits.hpp"
-
 #include "processorFvPatch.H"
 
 namespace fvcc = NeoN::finiteVolume::cellCentred;
@@ -170,7 +169,32 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
         {"epsilonWallFunction",
          [](auto& dict) { dict.insert("type", std::string("epsilonWallFunction")); }},
         {"nutkWallFunction",
-         [](auto& dict) { dict.insert("type", std::string("nutkWallFunction")); }}
+         [](auto& dict) { dict.insert("type", std::string("nutkWallFunction")); }},
+        {"inletOutlet",
+         [](auto& dict)
+         {
+             dict.insert("type", std::string("inletOutlet"));
+             NeoN::TokenList tokenList = dict.template get<NeoN::TokenList>("inletValue");
+             if constexpr (std::is_same<type_primitive_t, NeoN::Vec3>::value)
+             {
+                 NeoN::Vec3 inletValue {};
+                 if (tokenList.size() >= 4)
+                 {
+                     inletValue[0] = detail::tokenAsScalar(tokenList, 1);
+                     inletValue[1] = detail::tokenAsScalar(tokenList, 2);
+                     inletValue[2] = detail::tokenAsScalar(tokenList, 3);
+                 }
+                 dict.insert("inletValue", inletValue);
+             }
+             else
+             {
+                 dict.insert(
+                     "inletValue",
+                     tokenList.size() >= 2 ? detail::tokenAsScalar(tokenList, 1)
+                                           : type_primitive_t {}
+                 );
+             }
+         }}
     };
 
     auto applyVolInserter =

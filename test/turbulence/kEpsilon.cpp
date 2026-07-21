@@ -35,11 +35,11 @@ extern Foam::fvMesh* meshPtr;
 Foam::volScalarField
 computeOfNutKEps(const Foam::volScalarField& k, const Foam::volScalarField& epsilon)
 {
-    const Foam::scalar Cmu = 0.09;
+    const Foam::scalar cmu = 0.09;
     const Foam::scalar rootVSmall = 1e-30;
     return Foam::volScalarField(
         "ofNutKEps",
-        Cmu * Foam::sqr(Foam::max(k, Foam::dimensionedScalar("0", k.dimensions(), 0)))
+        cmu * Foam::sqr(Foam::max(k, Foam::dimensionedScalar("0", k.dimensions(), 0)))
             / Foam::max(
                 epsilon,
                 Foam::dimensionedScalar("rootVSmall", epsilon.dimensions(), rootVSmall)
@@ -133,13 +133,13 @@ TEST_CASE("kEpsilon: computeSources matches OpenFOAM")
     );
 
     // epsilonSource = C1 * Cmu * k * GbyNu0  (= C1 * G * epsilon/k, since nut=Cmu*k²/eps)
-    const Foam::scalar Cmu = 0.09, C1 = 1.44, C2 = 1.92;
-    Foam::volScalarField ofEpsSource("ofEpsSource", C1 * Cmu * ofK * ofGbyNu0);
+    const Foam::scalar cmu = 0.09, c1 = 1.44, c2 = 1.92;
+    Foam::volScalarField ofEpsSource("ofEpsSource", c1 * cmu * ofK * ofGbyNu0);
 
     // spEpsilon = C2 * epsilon/k
     Foam::volScalarField ofSpEps(
         "ofSpEps",
-        C2 * ofEps
+        c2 * ofEps
             / Foam::max(ofK, Foam::dimensionedScalar("rootVSmall", ofK.dimensions(), rootVSmall))
     );
 
