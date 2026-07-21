@@ -57,9 +57,9 @@ void kernelComputeSources(
         exec,
         {0, static_cast<localIdx>(kVec.size())},
         NEON_LAMBDA(const localIdx i) {
-            const scalar k_i = Kokkos::max(kV[i], scalar(0));
-            const scalar eps_i = Kokkos::max(epsV[i], rootVSmall);
-            const scalar nut_i = nutV[i];
+            const scalar kI = Kokkos::max(kV[i], scalar(0));
+            const scalar epsI = Kokkos::max(epsV[i], rootVSmall);
+            const scalar nutI = nutV[i];
 
             // GbyNu0 = ∇U && devTwoSymm(∇U)
             //   = ∇U·∇U + ∇U·∇Uᵀ - (2/3)(div U)²
@@ -76,24 +76,24 @@ void kernelComputeSources(
                 }
             }
             const scalar divU = g(0, 0) + g(1, 1) + g(2, 2);
-            const scalar S2_i = normSq + dotTrans;
-            const scalar GbyNu0_i = S2_i - (scalar(2) / scalar(3)) * divU * divU;
+            const scalar s2I = normSq + dotTrans;
+            const scalar gbyNu0I = s2I - (scalar(2) / scalar(3)) * divU * divU;
 
             // Production: G = ν_t · GbyNu0
-            const scalar G_i = nut_i * GbyNu0_i;
+            const scalar gI = nutI * gbyNu0I;
 
             // k equation:
             //   source: +G
             //   implicit destruction (sp): ε/k     → spK = ε/k
-            pkV[i] = G_i;
-            spKV[i] = eps_i / Kokkos::max(k_i, rootVSmall);
+            pkV[i] = gI;
+            spKV[i] = epsI / Kokkos::max(kI, rootVSmall);
 
             // ε equation:
             //   source: +C1 · Cμ · k · GbyNu0  (since C1·G·ε/k = C1·Cμ·k·GbyNu0
             //                                    using ν_t = Cμ·k²/ε)
             //   implicit destruction (sp): C2 · ε/k → spEps = C2 · ε/k
-            epsSV[i] = C1 * cmu * k_i * GbyNu0_i;
-            spEpsV[i] = C2 * eps_i / Kokkos::max(k_i, rootVSmall);
+            epsSV[i] = C1 * cmu * kI * gbyNu0I;
+            spEpsV[i] = C2 * epsI / Kokkos::max(kI, rootVSmall);
         },
         "kEpsilon::computeSources"
     );
@@ -117,9 +117,9 @@ void kernelCorrectNutInternal(
         exec,
         {0, static_cast<localIdx>(kVec.size())},
         NEON_LAMBDA(const localIdx i) {
-            const scalar k_i = Kokkos::max(kV[i], scalar(0));
-            const scalar eps_i = Kokkos::max(epsV[i], rootVSmall);
-            nutV_[i] = cmu * k_i * k_i / eps_i;
+            const scalar kI = Kokkos::max(kV[i], scalar(0));
+            const scalar epsI = Kokkos::max(epsV[i], rootVSmall);
+            nutV_[i] = cmu * kI * kI / epsI;
         },
         "kEpsilon::correctNutInternal"
     );
@@ -466,8 +466,8 @@ void KEpsilon::correct(
             exec_,
             {0, static_cast<localIdx>(epsilon.internalVector().size())},
             NEON_LAMBDA(const localIdx i) {
-                const scalar k_i = Kokkos::max(kV[i], rootVSmall);
-                spKView[i] = epsV[i] / k_i;
+                const scalar kI = Kokkos::max(kV[i], rootVSmall);
+                spKView[i] = epsV[i] / kI;
             },
             "kEpsilon::updateSpKFromNewEpsilon"
         );
