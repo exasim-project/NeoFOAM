@@ -78,7 +78,19 @@ jobs:
           openfoam-version: 2406
 
       - name: Install dependencies
-        run: brew install ninja open-mpi
+        run: |
+          brew install ninja open-mpi gcc
+
+          # OpenFOAM v2406's Foam::ispanstream(std::string_view) constructor
+          # implicitly default-constructs its std::istream base, which
+          # libstdc++ (GCC) tolerates as a non-standard extension but libc++
+          # (Apple Clang) correctly rejects (the standard has no default
+          # constructor for std::istream). Build with Homebrew's GCC
+          # (libstdc++) instead of Apple Clang to match Linux CI and avoid
+          # needing to patch OpenFOAM's own headers.
+          GCC_VER="$(brew list --versions gcc | awk '{print $2}' | cut -d. -f1)"
+          echo "GCC_CXX=g++-${GCC_VER}" >> $GITHUB_ENV
+          echo "GCC_CC=gcc-${GCC_VER}" >> $GITHUB_ENV
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -87,7 +99,7 @@ jobs:
 
       - name: Get versions
         run: |
-          clang --version
+          "$GCC_CXX" --version
           ninja --version
           cmake --version
 
@@ -100,8 +112,8 @@ jobs:
             -DNeoN_DEVEL_TOOLS=OFF \
             -DNeoN_BUILD_TESTS=OFF \
             -DNEOFOAM_WITH_MPI=ON \
-            -DCMAKE_CXX_COMPILER=clang++ \
-            -DCMAKE_C_COMPILER=clang \
+            -DCMAKE_CXX_COMPILER=${{ env.GCC_CXX }} \
+            -DCMAKE_C_COMPILER=${{ env.GCC_CC }} \
             -DCMAKE_PREFIX_PATH=$(brew --prefix) \
             -DNeoN_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF \
             -DNEOFOAM_NEON_VERSION=${{ env.NEON_BRANCH }} \
