@@ -15,6 +15,9 @@ flags, per-time-step reset).
 
 from __future__ import annotations
 
+import pytest
+from pydantic import ValidationError
+
 from neofoam.algorithms.solution_loop.control import (
     PimpleControl,
     SimpleControl,
@@ -131,6 +134,35 @@ def test_pimple_final_iter_resets_with_the_loop() -> None:
     # next time step starts non-final again
     assert pimple.loop() is True
     assert pimple.finalIter() is False
+
+
+# --- PIMPLE schema accepts real tutorial dicts -----------------------------
+
+
+def test_pimple_accepts_ncorrectors_one() -> None:
+    # Real tutorials (movingCone, propeller, mixerVesselAMI2D, pipeCyclic PIMPLE)
+    # all carry `nCorrectors 1`; the schema must accept it (was ge=2, rejected 1).
+    control = PimpleControl(
+        nOuterCorrectors=2,
+        nCorrectors=1,
+        nNonOrthogonalCorrectors=0,
+        momentumPredictor=True,
+        turbCorr=True,
+    )
+    assert control.nCorrectors == 1
+
+    # a single corrector pass still runs exactly once per outer iteration
+    assert control.loop() is True
+    corrector_count = 0
+    while control.correct():
+        corrector_count += 1
+    assert corrector_count == 1
+
+
+def test_pimple_rejects_ncorrectors_zero() -> None:
+    # validation is not gutted: nCorrectors must still be >= 1
+    with pytest.raises(ValidationError):
+        PimpleControl(nCorrectors=0, momentumPredictor=True)
 
 
 # --- PIMPLE corrector / non-orthogonal loop mechanics ----------------------

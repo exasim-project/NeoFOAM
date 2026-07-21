@@ -35,10 +35,12 @@ def read_fields(
     runtime = pyf.Time(pyf.argList(["test"]))
     mesh = pyf.fvMesh(runtime)
     for name in field_names:
-        content = (staged / "0" / name).read_text()
-        if "volScalarField" in content:
+        # The FoamFile header is ASCII even when `writeFormat binary`, but the
+        # payload then is not — decode leniently and only sniff the header.
+        header = (staged / "0" / name).read_bytes()[:2048].decode("utf-8", "replace")
+        if "volScalarField" in header:
             field = volScalarField.read_field(mesh, name)
-        elif "volVectorField" in content:
+        elif "volVectorField" in header:
             field = volVectorField.read_field(mesh, name)
         else:
             raise ValueError(f"Unknown field type for {name}")

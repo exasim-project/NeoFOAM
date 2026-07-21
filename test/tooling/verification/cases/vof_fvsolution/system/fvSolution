@@ -1,0 +1,25 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| A minimal VoF fvSolution fixture: a solvers block and a PIMPLE block, with no  |
+| advectionScheme key (as no upstream interFoam/interIsoFoam tutorial ships one).|
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSolution;
+}
+
+solvers
+{
+    "alpha.water.*"
+    {
+        nAlphaCorr      2;
+        nAlphaSubCycles 1;
+    }
+}
+
+PIMPLE
+{
+    nCorrectors     3;
+}

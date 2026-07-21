@@ -27,14 +27,12 @@ def test_missing_ncorrectors_defaults_to_two(monkeypatch: pytest.MonkeyPatch) ->
     assert control.momentumPredictor() is False
 
 
-def test_ncorrectors_one_is_rejected_with_clear_error(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """nCorrectors 1 fails with a solver-level message (PISO needs >= 2),
-    not a raw Pydantic ValidationError."""
+def test_ncorrectors_one_is_honoured(monkeypatch: pytest.MonkeyPatch) -> None:
+    """nCorrectors 1 is read straight from the case dict (real interFoam cases
+    drive the pressure correction with a single corrector), not rejected."""
     monkeypatch.chdir(_CASES / "pimple_one_corrector")
-    with pytest.raises(ValueError, match="nCorrectors >= 2"):
-        create_pimple_control({})
+    control = create_pimple_control({})
+    assert control.nCorrectors == 1
 
 
 def test_all_pimple_keys_are_read(monkeypatch: pytest.MonkeyPatch) -> None:

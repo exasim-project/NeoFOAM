@@ -6,8 +6,8 @@ FoamFile
     object      fvSolution;
 }
 
-// nCorrectors 1 is invalid for the PISO pressure correction (needs >= 2):
-// the factory must reject it with a clear solver-level error.
+// nCorrectors 1: a single PISO corrector, as real interFoam cases use. The
+// factory must honour it (read it straight from the dict), not reject it.
 PIMPLE
 {
     momentumPredictor   yes;
