@@ -64,6 +64,9 @@ int main(int argc, char* argv[])
         auto& p = nf::constructAndRegister(vectorCollection, rt, ofP, false);
         auto& U = nf::constructAndRegister(vectorCollection, rt, ofU, false);
 
+        // grad(p) honours the configured gradSchemes (e.g. cellLimited).
+        auto gradPOp = nf::makeGradOperator(rt.exec, rt.nfMesh, rt.fvSchemesDict, "grad(p)");
+
         NeoN::Logging::info("Creating phi");
         auto& phi = nf::constructAndRegister(vectorCollection, rt, ofPhi, false);
 
@@ -160,7 +163,7 @@ int main(int argc, char* argv[])
                 );
                 p.correctBoundaryConditions();
 
-                nf::updateVelocity(hByA, crAtU, p, U);
+                nf::updateVelocity(hByA, crAtU, p, U, *gradPOp);
                 U.correctBoundaryConditions();
             }
 
