@@ -484,12 +484,6 @@ void SpalartAllmarasDDES::correct(
 {
     updateGradU(U);
 
-    nnfvcc::VolumeField<Vec3> gradNuTilda(
-        exec_,
-        "gradNuTilda",
-        mesh_,
-        fvcc::createCalculatedBCs<nnfvcc::VolumeBoundary<Vec3>>(mesh_)
-    );
     nnfvcc::VolumeField<scalar> magSqrGradNuTilda(
         exec_,
         "magSqrGradNuTilda",
@@ -520,7 +514,10 @@ void SpalartAllmarasDDES::correct(
         mesh_,
         fvcc::createCalculatedBCs<nnfvcc::SurfaceBoundary<scalar>>(mesh_)
     );
-    gradNuTildaOp_->grad(nuTilda, NeoN::dsl::Coeff {}, gradNuTilda.internalVector());
+    // The Vector-out overload accumulates into the buffer without zeroing it first (it's meant to
+    // be composed by callers who already own a zeroed accumulator), so use the value-returning
+    // overload here instead, which zero-fills and includes the boundary gradient.
+    nnfvcc::VolumeField<Vec3> gradNuTilda = gradNuTildaOp_->grad(nuTilda, NeoN::dsl::Coeff {});
     calcMagSqrVec(magSqrGradNuTilda, gradNuTilda);
 
     computeProdSpDDES(
