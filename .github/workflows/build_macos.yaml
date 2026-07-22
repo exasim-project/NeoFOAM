@@ -1,0 +1,128 @@
+name: Build NeoFOAM on macOS
+run-name: 'Build NeoFOAM on macOS'
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  schedule:
+    - cron: '00 8 * * 0'
+  workflow_dispatch:
+
+env:
+  CTEST_OUTPUT_ON_FAILURE: 1
+  OMPI_MCA_rmaps_base_oversubscribe: 1
+
+concurrency:
+  group: >
+    ${{ github.workflow }}-
+    ${{ github.event_name }}-
+    ${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  build-neofoam-macos:
+    name: Build and test ${{ github.event.repository.name }} on macOS
+    runs-on: macos-14
+    if: >
+      github.event_name != 'pull_request' ||
+      !contains(github.event.pull_request.labels.*.name, 'skip-build')
+    steps:
+      - name: Determine branch
+        run: |
+
+          # Detect current branch of NeoFOAM
+          NEOFOAM_BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          echo "Using NeoFOAM branch: $NEOFOAM_BRANCH"
+          echo "NEOFOAM_BRANCH=$NEOFOAM_BRANCH" >> $GITHUB_ENV
+
+          # Define remote repo
+          NEON_REPO="exasim-project/NeoN"
+          REPO_URL="https://github.com/${NEON_REPO}"
+
+          # Prefer a NeoN branch with the same name as this NeoFOAM branch (coordinated
+          # PRs), but only while it still has commits that are NOT yet in develop. A
+          # same-named branch already merged into / contained in develop is stale and
+          # would build against an outdated NeoN API, so fall back to develop then.
+          NEON_BRANCH="develop"
+          echo "Checking if branch '$NEOFOAM_BRANCH' exists in NeoN..."
+          if git ls-remote --exit-code --heads "$REPO_URL" "refs/heads/${NEOFOAM_BRANCH}" >/dev/null 2>&1; then
+            echo "NeoN branch exists; checking whether it is already merged into develop..."
+            # compare develop...<branch>: 'behind'/'identical' => branch fully contained in develop
+            NEON_STATUS=$(curl -s "https://api.github.com/repos/${NEON_REPO}/compare/develop...${NEOFOAM_BRANCH}" | jq -r '.status // empty' || echo "")
+            echo "compare(develop...${NEOFOAM_BRANCH}) status: ${NEON_STATUS:-<unknown>}"
+            if [ "$NEON_STATUS" = "behind" ] || [ "$NEON_STATUS" = "identical" ]; then
+              echo "NeoN branch is already merged into develop. Falling back to 'develop'."
+            else
+              echo "NeoN branch has unmerged commits (or status unknown). Using it: $NEOFOAM_BRANCH"
+              NEON_BRANCH="$NEOFOAM_BRANCH"
+            fi
+          else
+            echo "NeoN branch '$NEOFOAM_BRANCH' does not exist. Falling back to 'develop'."
+          fi
+
+          echo "Resolved NeoN ref: $NEON_BRANCH"
+          echo "NEON_BRANCH=$NEON_BRANCH" >> $GITHUB_ENV
+
+      - name: Checkout NeoFOAM
+        uses: actions/checkout@v4
+        with:
+          repository: exasim-project/NeoFOAM
+          ref: ${{ env.NEOFOAM_BRANCH }}
+          fetch-depth: 1
+
+      - name: Set up OpenFOAM
+        uses: gerlero/setup-openfoam@v1
+        with:
+          # v2406's Foam::ispanstream(std::string_view) constructor is broken
+          # under libc++/Apple Clang (initializes its std::istream base via
+          # statements in the constructor body instead of a member-initializer
+          # list). Try a newer release in case it's since been fixed upstream,
+          # since neither patching OpenFOAM's own headers nor switching to
+          # GCC (confirmed to break linking against these Apple-Clang-built
+          # libraries with ABI/undefined-symbol errors) are viable long-term.
+          openfoam-version: 2512
+
+      - name: Install dependencies
+        run: brew install ninja
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Get versions
+        run: |
+          clang --version
+          ninja --version
+          cmake --version
+
+      - name: Install python dependencies
+        run: pip install foamlib pandas pydantic defusedxml
+
+      - name: Build NeoFOAM
+        run: |
+          # Pin find_package(MPI) to OpenFOAM's own bundled Open MPI wrapper
+          # compilers (already first on PATH from the "Set up OpenFOAM" step)
+          # rather than letting it resolve to some other Open MPI. OpenFOAM's
+          # prebuilt libPstream/libOpenFOAM are linked against its bundled
+          # MPI; if NeoFOAM/NeoN link against a different Open MPI build,
+          # two incompatible MPI runtimes end up in the same process and
+          # MPI_Init segfaults at run time.
+          cmake --preset develop \
+            -DNeoN_DEVEL_TOOLS=OFF \
+            -DNeoN_BUILD_TESTS=OFF \
+            -DNEOFOAM_WITH_MPI=ON \
+            -DCMAKE_CXX_COMPILER=clang++ \
+            -DCMAKE_C_COMPILER=clang \
+            -DCMAKE_PREFIX_PATH=$(brew --prefix) \
+            -DMPI_C_COMPILER=$(command -v mpicc) \
+            -DMPI_CXX_COMPILER=$(command -v mpicxx) \
+            -DNeoN_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF \
+            -DNEOFOAM_NEON_VERSION=${{ env.NEON_BRANCH }} \
+            -DNEOFOAM_BUILD_BENCHMARKS=OFF
+          cmake --build --preset develop
+
+      - name: Execute unit tests of NeoFOAM
+        run: ctest --preset develop -E bench --output-on-failure

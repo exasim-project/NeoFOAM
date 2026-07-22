@@ -4,6 +4,7 @@
 
 #include "volFields.H"
 #include "surfaceFields.H"
+#include "DynamicField.H"
 
 #include "NeoN/NeoN.hpp"
 
@@ -58,6 +59,23 @@ struct TypeMap<Foam::Field<Foam::scalar>>
 // Specializations of TypeMap for specific type mappings.
 template<>
 struct TypeMap<Foam::Field<Foam::vector>>
+{
+    using container_type = NeoN::Vector<NeoN::Vec3>;
+    using mapped_type = NeoN::Vec3;
+};
+
+// GeometricField::primitiveField() returns a DynamicField rather than a plain
+// Field on some OpenFOAM versions (e.g. v2512), so DynamicField needs its own
+// specializations alongside Field's.
+template<>
+struct TypeMap<Foam::DynamicField<Foam::scalar>>
+{
+    using container_type = NeoN::Vector<NeoN::scalar>;
+    using mapped_type = NeoN::scalar;
+};
+
+template<>
+struct TypeMap<Foam::DynamicField<Foam::vector>>
 {
     using container_type = NeoN::Vector<NeoN::Vec3>;
     using mapped_type = NeoN::Vec3;
