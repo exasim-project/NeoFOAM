@@ -1,6 +1,0 @@
-neofoam.io.base
-===============
-
-.. automodule:: neofoam.io.base
-   :members:
-   :show-inheritance:

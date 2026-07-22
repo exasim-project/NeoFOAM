@@ -1,6 +1,0 @@
-neofoam.turbulence.stress
-=========================
-
-.. automodule:: neofoam.turbulence.stress
-   :members:
-   :show-inheritance:

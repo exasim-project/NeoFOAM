@@ -1,6 +1,0 @@
-neofoam.foam.schemes.grad
-=========================
-
-.. automodule:: neofoam.foam.schemes.grad
-   :members:
-   :show-inheritance:

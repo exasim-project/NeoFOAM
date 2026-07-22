@@ -19,16 +19,16 @@ the linked reference pages for the full API.
     ``fvSchemes``/``fvSolution`` config builders and FoamFile helpers.
 
 ``framework/``
-    The Spec/Runtime core — see :doc:`/reference/framework/index`.
+    The Spec/Runtime core — see :mod:`neofoam.framework`.
 
     - ``model/`` — ``ModelSpec``/``Model``, the decorator-driven model definition
-      and its runtime. See :doc:`/reference/model/index`.
+      and its runtime. See :mod:`neofoam.framework.model`.
     - ``solver/`` — ``SolverSpec``/``Solver``, core/optional model selection and
-      the case-free config schema. See :doc:`/reference/solver/index`.
+      the case-free config schema. See :mod:`neofoam.framework.solver`.
     - ``initialization/`` — staged init (load → resolve → build) via ``InitStep``
-      and ``InitializerBuilder``. See :doc:`/reference/initialization/index`.
+      and ``InitializerBuilder``. See :mod:`neofoam.framework.initialization`.
     - ``graph/`` — operation-graph sort, resolution, validation, and
-      visualization. See :doc:`/reference/graph/index`.
+      visualization. See :mod:`neofoam.framework.graph`.
     - ``validation/`` — case-correctness checks: a registry of isolated checks
       with a structurally honest ``ok``.
 

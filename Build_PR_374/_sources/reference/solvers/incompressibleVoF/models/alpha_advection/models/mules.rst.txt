@@ -1,6 +1,0 @@
-neofoam.solver.incompressibleVoF.models.alpha_advection.models.mules
-=====================================================================
-
-.. automodule:: neofoam.solver.incompressibleVoF.models.alpha_advection.models.mules
-   :members:
-   :show-inheritance:

@@ -1,6 +1,0 @@
-neofoam.tooling.workflow.rules
-===============================
-
-.. automodule:: neofoam.tooling.workflow.rules
-   :members:
-   :show-inheritance:

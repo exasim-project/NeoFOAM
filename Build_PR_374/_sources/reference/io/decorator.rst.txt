@@ -1,6 +1,0 @@
-neofoam.io.decorator
-====================
-
-.. automodule:: neofoam.io.decorator
-   :members:
-   :show-inheritance:
