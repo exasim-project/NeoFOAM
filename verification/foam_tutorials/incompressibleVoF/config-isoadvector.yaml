@@ -1,0 +1,36 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 NeoFOAM authors
+#
+# The incompressibleVoF study, isoAdvector variant: `neofoam solver incompressiblevof`
+# vs interFoam / interIsoFoam, but with the neofoam case (only) given an
+# `advectionScheme isoAdvector` key in system/fvSolution.
+#
+# This is a DOCUMENTED DEVIATION from the pure drop-in rule. For OpenFOAM the
+# binary *is* the scheme selector — interFoam runs MULES, interIsoFoam runs
+# isoAdvector — so no upstream tutorial ships an `advectionScheme` key. neofoam
+# instead selects the scheme from that key, so to reproduce interIsoFoam we inject
+# a key it never shipped. `neo_patch` applies this to the neo side only; the
+# native side stays a pristine tutorial.
+#
+# A case that only MATCHES here (not under the strict `config.yaml`) shows the
+# isoAdvector path itself is correct and only scheme-selection was missing.
+#
+# Run from this directory:
+#   snakemake --configfile config-isoadvector.yaml -j1
+
+title: "incompressibleVoF (isoAdvector variant) — multiphase tutorial drop-in + scheme hint"
+
+# Path (relative to this file) to the module exposing discover() and TIER_TITLES.
+discover: discover.py
+
+# Inject keys the neofoam case needs but no upstream tutorial ships. Mapping of
+# {relative dict path: {key: value, ...}}; applied to the neo side only, after
+# truncation. Absent ⇒ pure drop-in (see config.yaml).
+neo_patch:
+  system/fvSolution:
+    advectionScheme: isoAdvector
+
+# `only:` restricts the sweep to a hand-picked subset. With it removed, every
+# discovered case is swept. Example:
+#   only:
+#     - interIsoFoam/weirOverflow

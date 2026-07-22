@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 NeoFOAM authors
+#
+# The incompressibleVoF drop-in study: `neofoam solver incompressiblevof`
+# vs interFoam / interIsoFoam across the multiphase tutorials.
+#
+# Run from this directory (`-j1`: some cases run mpirun internally, so let each
+# case have the box to itself rather than oversubscribing):
+#   snakemake --configfile config.yaml -j1
+
+title: "incompressibleVoF — OpenFOAM multiphase tutorial drop-in"
+
+# Path (relative to this file) to the module exposing discover() and TIER_TITLES.
+discover: discover.py
+
+# `only:` restricts the sweep to a hand-picked subset (the slice-3 gate). With it
+# removed, every discovered case is swept. Example:
+#   only:
+#     - interFoam/laminar/damBreak/damBreak

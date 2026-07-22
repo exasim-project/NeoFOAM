@@ -1,0 +1,23 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 NeoFOAM authors
+#
+# The incompressibleFluid drop-in study: `neofoam solver incompressiblefluid`
+# vs simpleFoam / pimpleFoam across the incompressible tutorials.
+#
+# Run from this directory (`-j1`: some cases run mpirun internally, so let each
+# case have the box to itself rather than oversubscribing):
+#   snakemake --configfile config.yaml -j1
+
+title: "incompressibleFluid — OpenFOAM incompressible tutorial drop-in"
+
+# Path (relative to this file) to the module exposing discover() and TIER_TITLES.
+discover: discover.py
+
+# Candidate neofoam backends, each diffed against the native reference (which runs
+# once per case). Omit to fall back to the single app discover() assigns.
+apps:
+  - "neofoam solver incompressiblefluid"
+  - "neofoam solver incompressiblefluidneon"
+
+# `only:` restricts the sweep to a hand-picked subset (the slice-1 gate). With it
+# removed, every discovered case is swept.
