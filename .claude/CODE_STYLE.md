@@ -21,16 +21,13 @@
 
 ## Design
 
-- Prefer small, single-purpose functions; prefer early returns over
-  deep nesting. "Small" means single-purpose, not a line count — don't
-  extract a helper unless it has standalone meaning or its own test.
-- Don't abstract until there are ≥2 real call sites (no
-  speculative interfaces, factories, or config options).
+- Prefer small, single-purpose functions; prefer early returns
+  over deep nesting.
 
 ## Naming
 
 - Names describe intent, not implementation; no abbreviations
-  except domain-standard ones.
+  except domain-standard ones for CFD/Engineering.
 
 ## Error handling
 
