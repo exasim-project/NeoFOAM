@@ -85,7 +85,7 @@ jobs:
           openfoam-version: 2512
 
       - name: Install dependencies
-        run: brew install ninja open-mpi
+        run: brew install ninja
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -103,6 +103,13 @@ jobs:
 
       - name: Build NeoFOAM
         run: |
+          # Pin find_package(MPI) to OpenFOAM's own bundled Open MPI wrapper
+          # compilers (already first on PATH from the "Set up OpenFOAM" step)
+          # rather than letting it resolve to some other Open MPI. OpenFOAM's
+          # prebuilt libPstream/libOpenFOAM are linked against its bundled
+          # MPI; if NeoFOAM/NeoN link against a different Open MPI build,
+          # two incompatible MPI runtimes end up in the same process and
+          # MPI_Init segfaults at run time.
           cmake --preset develop \
             -DNeoN_DEVEL_TOOLS=OFF \
             -DNeoN_BUILD_TESTS=OFF \
@@ -110,6 +117,8 @@ jobs:
             -DCMAKE_CXX_COMPILER=clang++ \
             -DCMAKE_C_COMPILER=clang \
             -DCMAKE_PREFIX_PATH=$(brew --prefix) \
+            -DMPI_C_COMPILER=$(command -v mpicc) \
+            -DMPI_CXX_COMPILER=$(command -v mpicxx) \
             -DNeoN_ENABLE_MPI_WITH_THREAD_SUPPORT=OFF \
             -DNEOFOAM_NEON_VERSION=${{ env.NEON_BRANCH }} \
             -DNEOFOAM_BUILD_BENCHMARKS=OFF
