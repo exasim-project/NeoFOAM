@@ -1,6 +1,0 @@
-neofoam.viscosity.io
-====================
-
-.. automodule:: neofoam.viscosity.io
-   :members:
-   :show-inheritance:

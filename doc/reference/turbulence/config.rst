@@ -1,6 +1,0 @@
-neofoam.turbulence.config
-=========================
-
-.. automodule:: neofoam.turbulence.config
-   :members:
-   :show-inheritance:

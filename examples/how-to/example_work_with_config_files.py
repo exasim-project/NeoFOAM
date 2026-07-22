@@ -198,7 +198,7 @@ print("subdict path on PIMPLEConfig:", pimple.subdict)
 # See also
 # --------
 #
-# - :doc:`/reference/framework/dependency_resolver` — ``BaseConfig``
+# - :mod:`neofoam.framework.dependency_resolver` — ``BaseConfig``
 #   parameters in operations are pulled from ``runtime.config`` via
 #   the same resolver shown in
 #   :doc:`example_use_depends_for_injection`.

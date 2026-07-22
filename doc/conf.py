@@ -73,7 +73,13 @@ def _eager_import(pkg_name: str) -> None:
             pass
 
 
-for _pkg in ("neofoam.tools", "neofoam.foam", "neofoam.tooling", "neofoam.solver", "neofoam.mcp"):
+for _pkg in (
+    "neofoam.tools",
+    "neofoam.foam",
+    "neofoam.tooling",
+    "neofoam.solver",
+    "neofoam.mcp",
+):
     _eager_import(_pkg)
 
 import subprocess  # noqa: E402
@@ -90,6 +96,7 @@ author = "NeoFOAM authors"
 
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
     "sphinxcontrib.mermaid",
     "sphinx.ext.intersphinx",
     "sphinx.ext.autosectionlabel",
@@ -144,6 +151,12 @@ sphinx_gallery_conf = {
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+
+# The API reference under reference/api/ is generated at build time from the
+# ``.. autosummary:: :recursive:`` directive in reference/index.rst, using the
+# module template in _templates/autosummary/. One page per module, no
+# hand-written stubs.
+autosummary_generate = True
 
 highlight_language = "default"
 

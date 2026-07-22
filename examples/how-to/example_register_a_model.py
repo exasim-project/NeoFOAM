@@ -139,4 +139,4 @@ def _solver_build(core_models: list[Any], optional_models: list[Any]) -> list[In
 #   with typed BC unions.
 # - :doc:`/explanation/model-structure` — why the ``Spec`` / ``Runtime``
 #   split exists.
-# - :doc:`/reference/model/index` — module API reference.
+# - :mod:`neofoam.framework.model` — module API reference.

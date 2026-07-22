@@ -1,6 +1,0 @@
-neofoam.foam.initialization
-===========================
-
-.. automodule:: neofoam.foam.initialization
-   :members:
-   :show-inheritance:

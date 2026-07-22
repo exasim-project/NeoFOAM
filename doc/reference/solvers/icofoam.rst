@@ -1,6 +1,0 @@
-neofoam.solver.icofoam
-======================
-
-.. automodule:: neofoam.solver.icofoam
-   :members:
-   :show-inheritance:

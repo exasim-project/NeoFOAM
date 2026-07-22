@@ -1,6 +1,0 @@
-neofoam.tooling.casebuild.reader
-=================================
-
-.. automodule:: neofoam.tooling.casebuild.reader
-   :members:
-   :show-inheritance:

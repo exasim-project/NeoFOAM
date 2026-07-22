@@ -1,6 +1,0 @@
-neofoam.mcp.tools
-=================
-
-.. automodule:: neofoam.mcp.tools
-   :members:
-   :show-inheritance:

@@ -1,6 +1,0 @@
-neofoam.fields.bc
-=================
-
-.. automodule:: neofoam.fields.bc
-   :members:
-   :show-inheritance:

@@ -1,6 +1,0 @@
-neofoam.telemetry.settings
-==========================
-
-.. automodule:: neofoam.telemetry.settings
-   :members:
-   :show-inheritance:

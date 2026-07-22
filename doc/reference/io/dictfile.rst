@@ -1,6 +1,0 @@
-neofoam.io.dictfile
-====================
-
-.. automodule:: neofoam.io.dictfile
-   :members:
-   :show-inheritance:
