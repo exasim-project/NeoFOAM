@@ -15,7 +15,7 @@ description: How to make a git commit in this repo. Use whenever creating a comm
 ```
 type(scope): imperative subject, ≤72 chars
 
-Optional body: why the change is needed and what it does. 
+Optional body: why the change is needed and what it does.
 should be as brief as possible, but no more than 10 lines. Use bullets for multiple points.
 ```
 
