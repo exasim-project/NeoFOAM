@@ -34,7 +34,9 @@ struct ApproxScalar
 {
     Foam::scalar margin;
 
-    ApproxScalar(Foam::scalar margin) : margin(margin) {}
+    ApproxScalar(Foam::scalar margin)
+        : margin(margin)
+    {}
 
     bool operator()(double rhs, double lhs) const
     {
