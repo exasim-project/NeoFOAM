@@ -78,6 +78,11 @@ tooling, CLI entry point).
 
 Never delete or weaken an existing test to get green — surface the conflict instead.
 
+## CLI
+
+The `neofoam` command (`solver`, `preprocess`, `agent`, `mcp`, `telemetry`):
+see **[doc/reference/cli.rst](doc/reference/cli.rst)**.
+
 ## Conventions
 
 Detailed guides — read the relevant one before writing code or test

@@ -1,0 +1,6 @@
+neofoam.viscosity.fallback
+===========================
+
+.. automodule:: neofoam.viscosity.fallback
+   :members:
+   :show-inheritance:

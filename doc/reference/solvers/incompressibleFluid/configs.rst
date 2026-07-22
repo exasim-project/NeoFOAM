@@ -1,0 +1,6 @@
+neofoam.solver.incompressibleFluid.configs
+============================================
+
+.. automodule:: neofoam.solver.incompressibleFluid.configs
+   :members:
+   :show-inheritance:

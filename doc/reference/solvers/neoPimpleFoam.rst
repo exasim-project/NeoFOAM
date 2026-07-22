@@ -1,0 +1,6 @@
+neofoam.solver.neoPimpleFoam
+=============================
+
+.. automodule:: neofoam.solver.neoPimpleFoam
+   :members:
+   :show-inheritance:

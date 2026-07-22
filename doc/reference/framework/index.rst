@@ -3,12 +3,10 @@ neofoam.framework
 
 .. automodule:: neofoam.framework
 
-Root-level modules of the framework package. Sub-packages
-(``graph``, ``initialization``, ``model``, ``solver``) are documented
-under their own entries in the Reference section.
+Root-level modules of the framework package, followed by its sub-packages.
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    context
    operations
@@ -17,3 +15,8 @@ under their own entries in the Reference section.
    decorator
    config_injection
    dependency_resolver
+   /reference/model/index
+   /reference/solver/index
+   /reference/initialization/index
+   /reference/graph/index
+   /reference/validation/index
