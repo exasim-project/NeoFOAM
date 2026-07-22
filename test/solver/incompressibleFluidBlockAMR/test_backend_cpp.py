@@ -21,15 +21,17 @@ import blockamr.backends as backends  # noqa: E402
 from neofoam.solver.incompressibleFluidBlockAMR import run  # noqa: E402
 
 
-def _flat_velocity(state):
+def _flat_velocity(ctx):
     """Concatenate the projected level-0 velocity into one flat array."""
-    return np.concatenate([np.asarray(a).ravel() for a in state.U.mf[0].arrays()])
+    return np.concatenate(
+        [np.asarray(a).ravel() for a in ctx.fields["U"].mf[0].arrays()]
+    )
 
 
-def _max_divergence(state):
+def _max_divergence(ctx):
     """Discrete divergence of the projected face flux (mirrors the smoke test)."""
-    dx = state.mesh.geom(0).cell_size()
-    phi = state.phi
+    dx = ctx.fields["U"].mesh.geom(0).cell_size()
+    phi = ctx.fields["phi"]
     face_arrs = [phi[0][d].mf.arrays() for d in range(3)]
     max_div = 0.0
     for bi in range(len(face_arrs[0])):
@@ -61,7 +63,6 @@ def test_backend_cpp_threads_from_case_file_to_engine(
     monkeypatch.setattr(backends, "get", spy)
 
     ctx = run(["incompressibleFluidBlockAMR"])
-    state = ctx.models["projection_state"]
 
     # 1. The case-file token reached the engine: the only explicit backend
     #    selected across the whole run (the momentum predictor, once per step)
@@ -70,9 +71,9 @@ def test_backend_cpp_threads_from_case_file_to_engine(
     assert set(dispatched) == {"cpp"}
 
     # 2. Physically sane: finite everywhere and divergence-free after projection.
-    u_cpp = _flat_velocity(state)
+    u_cpp = _flat_velocity(ctx)
     assert np.isfinite(u_cpp).all()
-    assert _max_divergence(state) < 1e-6
+    assert _max_divergence(ctx) < 1e-6
 
     # 3. Physical correctness vs the jax path. deltaT is a negative power of two,
     #    so the jax f32 dt/coeff cast is exact and the two explicit backends
@@ -83,6 +84,6 @@ def test_backend_cpp_threads_from_case_file_to_engine(
     fvsol.write_text(fvsol.read_text().replace("backend     cpp;", "backend     jax;"))
 
     ctx_jax = run(["incompressibleFluidBlockAMR"])
-    u_jax = _flat_velocity(ctx_jax.models["projection_state"])
+    u_jax = _flat_velocity(ctx_jax)
 
     np.testing.assert_allclose(u_cpp, u_jax, rtol=1e-9, atol=1e-12)
