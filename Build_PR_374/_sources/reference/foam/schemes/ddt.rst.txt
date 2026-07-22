@@ -1,0 +1,6 @@
+neofoam.foam.schemes.ddt
+========================
+
+.. automodule:: neofoam.foam.schemes.ddt
+   :members:
+   :show-inheritance:

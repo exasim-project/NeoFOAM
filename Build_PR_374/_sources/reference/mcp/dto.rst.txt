@@ -1,0 +1,6 @@
+neofoam.mcp.dto
+===============
+
+.. automodule:: neofoam.mcp.dto
+   :members:
+   :show-inheritance:

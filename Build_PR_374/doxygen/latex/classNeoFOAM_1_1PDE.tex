@@ -1,0 +1,419 @@
+\doxysection{Neo\+FOAM\+::PDE\texorpdfstring{$<$}{<} Value\+Type, Matrix\+Value\+Type, Index\+Type \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classNeoFOAM_1_1PDE}{}\label{classNeoFOAM_1_1PDE}\index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}}
+
+
+{\ttfamily \#include $<$pde.\+hpp$>$}
+
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classNeoFOAM_1_1PDE_a41bcce83d26dafe9c61220a63731831b}{PDE}} (dsl\+::\+Expression$<$ Value\+Type $>$ expr, Volume\+Field \&psi, \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&run\+Time)
+\item 
+\mbox{\hyperlink{classNeoFOAM_1_1PDE_aa50cadcb517785b86e8ad4f806a38e95}{PDE}} (dsl\+::\+Expression$<$ Value\+Type $>$ expr)
+\begin{DoxyCompactList}\small\item\em Construct from expression only; field and \doxylink{structNeoFOAM_1_1RunTime}{Run\+Time} are injected on first assemble(psi, rt) or solve\+With(...) call via \doxylink{classNeoFOAM_1_1Solver}{Solver}. \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classNeoFOAM_1_1PDE_a68afddbbdb4f8a60bcb1acc7ad045587}{PDE}} (const \mbox{\hyperlink{classNeoFOAM_1_1PDE}{PDE}} \&expr)
+\item 
+\mbox{\hyperlink{classNeoFOAM_1_1PDE_ab86f7060a9141e2dff3187038d8a7df4}{\texorpdfstring{$\sim$}{\string~}\+PDE}} ()=default
+\item 
+Volume\+Field \& \mbox{\hyperlink{classNeoFOAM_1_1PDE_a6a6bea308f54d7402b82bcd2bdac7b8c}{get\+Field}} ()
+\item 
+const Volume\+Field \& \mbox{\hyperlink{classNeoFOAM_1_1PDE_a99011cd48e859c75de42247b19766758}{get\+Field}} () const
+\item 
+Linear\+System \& \mbox{\hyperlink{classNeoFOAM_1_1PDE_ad7837cb66df5a2d02a51079865fd9b69}{linear\+System}} ()
+\item 
+const Linear\+System \& \mbox{\hyperlink{classNeoFOAM_1_1PDE_abf7d5b6d2580ccb4c3afdb73e06e39e9}{linear\+System}} () const
+\item 
+Neo\+N\+::dsl\+::\+Expression$<$ Value\+Type $>$ \& \mbox{\hyperlink{classNeoFOAM_1_1PDE_a75272037575b36f0174dce803c71ffdf}{expression}} ()
+\item 
+const Neo\+N\+::\+Executor \& \mbox{\hyperlink{classNeoFOAM_1_1PDE_a4828a307492ac1ef4bdb58fd7f89df53}{exec}} () const
+\item 
+Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Ddt\+Scheme \mbox{\hyperlink{classNeoFOAM_1_1PDE_a56b8e0f478755f95fa476022d5947523}{ddt\+Scheme}} () const
+\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1PDE_a761c2d04db4af1d188d452bda66ac827}{set\+Reference}} (Neo\+N\+::local\+Idx p\+Ref\+Cell, Neo\+N\+::scalar p\+Ref\+Value)
+\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1PDE_a12a547d6a089a5805df40f91c0a48318}{set\+Final\+Iter}} (bool final\+Iter)
+\begin{DoxyCompactList}\small\item\em When true, selects the $<$field$>$Final relaxation factor and solver subdict. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1PDE_afa2dcd0c96d7c1593df5b41cbb867ab2}{set\+Constraints}} (const Neo\+N\+::\+Vector$<$ Neo\+N\+::scalar $>$ \&mask, const Neo\+N\+::\+Vector$<$ Value\+Type $>$ \&values)
+\begin{DoxyCompactList}\small\item\em Hard-\/pin a set of cells to prescribed values after assembly (omega wall function). \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1PDE_a7fb01b4186f1c67e04c5bdd5fc5bee2e}{set\+Constraints\+Owned}} (const Neo\+N\+::\+Vector$<$ Neo\+N\+::scalar $>$ \&mask, const Neo\+N\+::\+Vector$<$ Value\+Type $>$ \&values)
+\begin{DoxyCompactList}\small\item\em As set\+Constraints, but the \doxylink{classNeoFOAM_1_1PDE}{PDE} keeps its own copies of the mask/values so the caller need not keep them alive until \doxylink{classNeoFOAM_1_1PDE_adc6783a51aa3e6a0b2bf822e8d354c95}{solve()} — used by the Python one-\/shot epsilon-\/wall-\/cell pin helper (epsilon\+Wall\+Function). \end{DoxyCompactList}\item 
+Linear\+System \& \mbox{\hyperlink{classNeoFOAM_1_1PDE_a56dc3d06d1616cf7726cee7c009fa756}{assemble}} ()
+\begin{DoxyCompactList}\small\item\em assemble the linear system owned by the solver based on the current expression \end{DoxyCompactList}\item 
+Linear\+System \& \mbox{\hyperlink{classNeoFOAM_1_1PDE_aed5b3fe4bae15d1c14be3b651f750f9c}{assemble}} (Volume\+Field \&psi, \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&rt)
+\begin{DoxyCompactList}\small\item\em assemble using injected field and run\+Time (for lazy-\/init \doxylink{classNeoFOAM_1_1PDE}{PDE}) \end{DoxyCompactList}\item 
+Linear\+System \& \mbox{\hyperlink{classNeoFOAM_1_1PDE_a8fd8c810990be74009144741fe40dced}{assemble\+And\+Relax}} ()
+\begin{DoxyCompactList}\small\item\em Assemble and relax the owned ls\+\_\+ without solving. \end{DoxyCompactList}\item 
+Linear\+System \mbox{\hyperlink{classNeoFOAM_1_1PDE_a609089ce3754f0e97385b3824ed0acca}{assemble}} (dsl\+::\+Spatial\+Operator$<$ Neo\+N\+::\+Vec3 $>$ \&\&rhs)
+\begin{DoxyCompactList}\small\item\em assemble the linear system with an additional rhs term \end{DoxyCompactList}\item 
+Neo\+N\+::la\+::\+Solver\+Stats \mbox{\hyperlink{classNeoFOAM_1_1PDE_adc6783a51aa3e6a0b2bf822e8d354c95}{solve}} ()
+\item 
+Neo\+N\+::la\+::\+Solver\+Stats \mbox{\hyperlink{classNeoFOAM_1_1PDE_a1a19c403768745a0a9a3b7637335f2ac}{solve}} (dsl\+::\+Spatial\+Operator$<$ Neo\+N\+::\+Vec3 $>$ \&\&rhs)
+\begin{DoxyCompactList}\small\item\em solve expression with additional rhs \end{DoxyCompactList}\item 
+Neo\+N\+::la\+::\+Solver\+Stats \mbox{\hyperlink{classNeoFOAM_1_1PDE_a3c38e63ceabdeecad3f7eea2d76fb4e0}{solve\+With}} (Neo\+N\+::la\+::\+Solver \&solver, Volume\+Field \&psi, \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&rt)
+\begin{DoxyCompactList}\small\item\em solve using a pre-\/created, cached Neo\+N\+::la\+::\+Solver \end{DoxyCompactList}\item 
+Neo\+N\+::la\+::\+Solver\+Stats \mbox{\hyperlink{classNeoFOAM_1_1PDE_ad0e998954abbcf1d08baf590b1e6c3cb}{solve\+With}} (Neo\+N\+::la\+::\+Solver \&solver, Volume\+Field \&psi, \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&rt, dsl\+::\+Spatial\+Operator$<$ Value\+Type $>$ \&\&rhs)
+\begin{DoxyCompactList}\small\item\em solve with additional rhs using a pre-\/created, cached Neo\+N\+::la\+::\+Solver \end{DoxyCompactList}\item 
+Neo\+N\+::la\+::\+Solver\+Stats \mbox{\hyperlink{classNeoFOAM_1_1PDE_a665045e1ab13f9c86f3b80f70827288e}{solve\+Impl}} (dsl\+::\+Expression$<$ Value\+Type $>$ \&expr, Linear\+System \&ls)
+\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1PDE_adb2db6a18334f46d42794e5b5aef0fdb}{relax\+Owned\+Ls}} ()
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static void \mbox{\hyperlink{classNeoFOAM_1_1PDE_a4e30324f164b229f31bedac3d023484c}{strip\+Neo\+FOAMKeys}} (Neo\+N\+::\+Dictionary \&dict)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+\subsubsection*{template$<$typename Value\+Type, typename Matrix\+Value\+Type = Neo\+N\+::scalar, typename Index\+Type = Neo\+N\+::local\+Idx$>$\newline
+class Neo\+FOAM\+::\+PDE$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$}
+
+
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00048}{48}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{classNeoFOAM_1_1PDE_a41bcce83d26dafe9c61220a63731831b}\label{classNeoFOAM_1_1PDE_a41bcce83d26dafe9c61220a63731831b} 
+\index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!PDE@{PDE}}
+\index{PDE@{PDE}!NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}}
+\doxysubsubsection{\texorpdfstring{PDE()}{PDE()}\hspace{0.1cm}{\footnotesize\ttfamily [1/3]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx$>$ \\
+\mbox{\hyperlink{classNeoFOAM_1_1PDE}{Neo\+FOAM\+::\+PDE}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$\+::\+PDE (\begin{DoxyParamCaption}\item[{dsl\+::\+Expression$<$ Value\+Type $>$}]{expr,  }\item[{Volume\+Field \&}]{psi,  }\item[{\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&}]{run\+Time }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00059}{59}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1PDE_aa50cadcb517785b86e8ad4f806a38e95}\label{classNeoFOAM_1_1PDE_aa50cadcb517785b86e8ad4f806a38e95} 
+\index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!PDE@{PDE}}
+\index{PDE@{PDE}!NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}}
+\doxysubsubsection{\texorpdfstring{PDE()}{PDE()}\hspace{0.1cm}{\footnotesize\ttfamily [2/3]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx$>$ \\
+\mbox{\hyperlink{classNeoFOAM_1_1PDE}{Neo\+FOAM\+::\+PDE}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$\+::\+PDE (\begin{DoxyParamCaption}\item[{dsl\+::\+Expression$<$ Value\+Type $>$}]{expr }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Construct from expression only; field and \doxylink{structNeoFOAM_1_1RunTime}{Run\+Time} are injected on first assemble(psi, rt) or solve\+With(...) call via \doxylink{classNeoFOAM_1_1Solver}{Solver}. 
+
+
+
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00104}{104}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1PDE_a68afddbbdb4f8a60bcb1acc7ad045587}\label{classNeoFOAM_1_1PDE_a68afddbbdb4f8a60bcb1acc7ad045587} 
+\index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!PDE@{PDE}}
+\index{PDE@{PDE}!NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}}
+\doxysubsubsection{\texorpdfstring{PDE()}{PDE()}\hspace{0.1cm}{\footnotesize\ttfamily [3/3]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx$>$ \\
+\mbox{\hyperlink{classNeoFOAM_1_1PDE}{Neo\+FOAM\+::\+PDE}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$\+::\+PDE (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{classNeoFOAM_1_1PDE}{PDE}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$ \&}]{expr }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00111}{111}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1PDE_ab86f7060a9141e2dff3187038d8a7df4}\label{classNeoFOAM_1_1PDE_ab86f7060a9141e2dff3187038d8a7df4} 
+\index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!````~PDE@{\texorpdfstring{$\sim$}{\string~}PDE}}
+\index{````~PDE@{\texorpdfstring{$\sim$}{\string~}PDE}!NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}}
+\doxysubsubsection{\texorpdfstring{\texorpdfstring{$\sim$}{\string~}PDE()}{\string~PDE()}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx$>$ \\
+\mbox{\hyperlink{classNeoFOAM_1_1PDE}{Neo\+FOAM\+::\+PDE}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$\+::\texorpdfstring{$\sim$}{\string~}\mbox{\hyperlink{classNeoFOAM_1_1PDE}{PDE}} (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [default]}}
+
+
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{classNeoFOAM_1_1PDE_a56dc3d06d1616cf7726cee7c009fa756}\label{classNeoFOAM_1_1PDE_a56dc3d06d1616cf7726cee7c009fa756} 
+\index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!assemble@{assemble}}
+\index{assemble@{assemble}!NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}}
+\doxysubsubsection{\texorpdfstring{assemble()}{assemble()}\hspace{0.1cm}{\footnotesize\ttfamily [1/3]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx$>$ \\
+Linear\+System \& \mbox{\hyperlink{classNeoFOAM_1_1PDE}{Neo\+FOAM\+::\+PDE}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$\+::assemble (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+assemble the linear system owned by the solver based on the current expression 
+
+
+
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00193}{193}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1PDE_a609089ce3754f0e97385b3824ed0acca}\label{classNeoFOAM_1_1PDE_a609089ce3754f0e97385b3824ed0acca} 
+\index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!assemble@{assemble}}
+\index{assemble@{assemble}!NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}}
+\doxysubsubsection{\texorpdfstring{assemble()}{assemble()}\hspace{0.1cm}{\footnotesize\ttfamily [2/3]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx$>$ \\
+Linear\+System \mbox{\hyperlink{classNeoFOAM_1_1PDE}{Neo\+FOAM\+::\+PDE}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$\+::assemble (\begin{DoxyParamCaption}\item[{dsl\+::\+Spatial\+Operator$<$ Neo\+N\+::\+Vec3 $>$ \&\&}]{rhs }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+assemble the linear system with an additional rhs term 
+
+the following assembly logic is applied
+\begin{DoxyEnumerate}
+\item the "{}owned"{} linear system gets assembled
+\item a copy of the assembled linear system is made and the rhs is assembled
+\item the new linear system with rhs is returned 
+\end{DoxyEnumerate}
+
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00228}{228}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1PDE_aed5b3fe4bae15d1c14be3b651f750f9c}\label{classNeoFOAM_1_1PDE_aed5b3fe4bae15d1c14be3b651f750f9c} 
+\index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!assemble@{assemble}}
+\index{assemble@{assemble}!NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}}
+\doxysubsubsection{\texorpdfstring{assemble()}{assemble()}\hspace{0.1cm}{\footnotesize\ttfamily [3/3]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx$>$ \\
+Linear\+System \& \mbox{\hyperlink{classNeoFOAM_1_1PDE}{Neo\+FOAM\+::\+PDE}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$\+::assemble (\begin{DoxyParamCaption}\item[{Volume\+Field \&}]{psi,  }\item[{\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&}]{rt }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+assemble using injected field and run\+Time (for lazy-\/init \doxylink{classNeoFOAM_1_1PDE}{PDE}) 
+
+
+
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00201}{201}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1PDE_a8fd8c810990be74009144741fe40dced}\label{classNeoFOAM_1_1PDE_a8fd8c810990be74009144741fe40dced} 
+\index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!assembleAndRelax@{assembleAndRelax}}
+\index{assembleAndRelax@{assembleAndRelax}!NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}}
+\doxysubsubsection{\texorpdfstring{assembleAndRelax()}{assembleAndRelax()}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx$>$ \\
+Linear\+System \& \mbox{\hyperlink{classNeoFOAM_1_1PDE}{Neo\+FOAM\+::\+PDE}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$\+::assemble\+And\+Relax (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Assemble and relax the owned ls\+\_\+ without solving. 
+
+Ensures compute\+RAUand\+HByA reads the relaxed diagonal even when the momentum predictor is disabled. With no relaxation factor configured, this is a no-\/op. 
+
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00214}{214}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1PDE_a56b8e0f478755f95fa476022d5947523}\label{classNeoFOAM_1_1PDE_a56b8e0f478755f95fa476022d5947523} 
+\index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!ddtScheme@{ddtScheme}}
+\index{ddtScheme@{ddtScheme}!NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}}
+\doxysubsubsection{\texorpdfstring{ddtScheme()}{ddtScheme()}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx$>$ \\
+Neo\+N\+::finite\+Volume\+::cell\+Centred\+::\+Ddt\+Scheme \mbox{\hyperlink{classNeoFOAM_1_1PDE}{Neo\+FOAM\+::\+PDE}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$\+::ddt\+Scheme (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00132}{132}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1PDE_a4828a307492ac1ef4bdb58fd7f89df53}\label{classNeoFOAM_1_1PDE_a4828a307492ac1ef4bdb58fd7f89df53} 
+\index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!exec@{exec}}
+\index{exec@{exec}!NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}}
+\doxysubsubsection{\texorpdfstring{exec()}{exec()}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx$>$ \\
+const Neo\+N\+::\+Executor \& \mbox{\hyperlink{classNeoFOAM_1_1PDE}{Neo\+FOAM\+::\+PDE}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$\+::exec (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00129}{129}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1PDE_a75272037575b36f0174dce803c71ffdf}\label{classNeoFOAM_1_1PDE_a75272037575b36f0174dce803c71ffdf} 
+\index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!expression@{expression}}
+\index{expression@{expression}!NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}}
+\doxysubsubsection{\texorpdfstring{expression()}{expression()}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx$>$ \\
+Neo\+N\+::dsl\+::\+Expression$<$ Value\+Type $>$ \& \mbox{\hyperlink{classNeoFOAM_1_1PDE}{Neo\+FOAM\+::\+PDE}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$\+::expression (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00127}{127}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1PDE_a6a6bea308f54d7402b82bcd2bdac7b8c}\label{classNeoFOAM_1_1PDE_a6a6bea308f54d7402b82bcd2bdac7b8c} 
+\index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!getField@{getField}}
+\index{getField@{getField}!NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}}
+\doxysubsubsection{\texorpdfstring{getField()}{getField()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx$>$ \\
+Volume\+Field \& \mbox{\hyperlink{classNeoFOAM_1_1PDE}{Neo\+FOAM\+::\+PDE}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$\+::get\+Field (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00119}{119}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1PDE_a99011cd48e859c75de42247b19766758}\label{classNeoFOAM_1_1PDE_a99011cd48e859c75de42247b19766758} 
+\index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!getField@{getField}}
+\index{getField@{getField}!NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}}
+\doxysubsubsection{\texorpdfstring{getField()}{getField()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx$>$ \\
+const Volume\+Field \& \mbox{\hyperlink{classNeoFOAM_1_1PDE}{Neo\+FOAM\+::\+PDE}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$\+::get\+Field (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00121}{121}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1PDE_ad7837cb66df5a2d02a51079865fd9b69}\label{classNeoFOAM_1_1PDE_ad7837cb66df5a2d02a51079865fd9b69} 
+\index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!linearSystem@{linearSystem}}
+\index{linearSystem@{linearSystem}!NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}}
+\doxysubsubsection{\texorpdfstring{linearSystem()}{linearSystem()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx$>$ \\
+Linear\+System \& \mbox{\hyperlink{classNeoFOAM_1_1PDE}{Neo\+FOAM\+::\+PDE}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$\+::linear\+System (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00123}{123}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1PDE_abf7d5b6d2580ccb4c3afdb73e06e39e9}\label{classNeoFOAM_1_1PDE_abf7d5b6d2580ccb4c3afdb73e06e39e9} 
+\index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!linearSystem@{linearSystem}}
+\index{linearSystem@{linearSystem}!NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}}
+\doxysubsubsection{\texorpdfstring{linearSystem()}{linearSystem()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx$>$ \\
+const Linear\+System \& \mbox{\hyperlink{classNeoFOAM_1_1PDE}{Neo\+FOAM\+::\+PDE}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$\+::linear\+System (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00125}{125}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1PDE_adb2db6a18334f46d42794e5b5aef0fdb}\label{classNeoFOAM_1_1PDE_adb2db6a18334f46d42794e5b5aef0fdb} 
+\index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!relaxOwnedLs@{relaxOwnedLs}}
+\index{relaxOwnedLs@{relaxOwnedLs}!NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}}
+\doxysubsubsection{\texorpdfstring{relaxOwnedLs()}{relaxOwnedLs()}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx$>$ \\
+void \mbox{\hyperlink{classNeoFOAM_1_1PDE}{Neo\+FOAM\+::\+PDE}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$\+::relax\+Owned\+Ls (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00440}{440}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1PDE_afa2dcd0c96d7c1593df5b41cbb867ab2}\label{classNeoFOAM_1_1PDE_afa2dcd0c96d7c1593df5b41cbb867ab2} 
+\index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!setConstraints@{setConstraints}}
+\index{setConstraints@{setConstraints}!NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}}
+\doxysubsubsection{\texorpdfstring{setConstraints()}{setConstraints()}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx$>$ \\
+void \mbox{\hyperlink{classNeoFOAM_1_1PDE}{Neo\+FOAM\+::\+PDE}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$\+::set\+Constraints (\begin{DoxyParamCaption}\item[{const Neo\+N\+::\+Vector$<$ Neo\+N\+::scalar $>$ \&}]{mask,  }\item[{const Neo\+N\+::\+Vector$<$ Value\+Type $>$ \&}]{values }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Hard-\/pin a set of cells to prescribed values after assembly (omega wall function). 
+
+
+
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00172}{172}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1PDE_a7fb01b4186f1c67e04c5bdd5fc5bee2e}\label{classNeoFOAM_1_1PDE_a7fb01b4186f1c67e04c5bdd5fc5bee2e} 
+\index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!setConstraintsOwned@{setConstraintsOwned}}
+\index{setConstraintsOwned@{setConstraintsOwned}!NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}}
+\doxysubsubsection{\texorpdfstring{setConstraintsOwned()}{setConstraintsOwned()}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx$>$ \\
+void \mbox{\hyperlink{classNeoFOAM_1_1PDE}{Neo\+FOAM\+::\+PDE}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$\+::set\+Constraints\+Owned (\begin{DoxyParamCaption}\item[{const Neo\+N\+::\+Vector$<$ Neo\+N\+::scalar $>$ \&}]{mask,  }\item[{const Neo\+N\+::\+Vector$<$ Value\+Type $>$ \&}]{values }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+As set\+Constraints, but the \doxylink{classNeoFOAM_1_1PDE}{PDE} keeps its own copies of the mask/values so the caller need not keep them alive until \doxylink{classNeoFOAM_1_1PDE_adc6783a51aa3e6a0b2bf822e8d354c95}{solve()} — used by the Python one-\/shot epsilon-\/wall-\/cell pin helper (epsilon\+Wall\+Function). 
+
+
+
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00181}{181}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1PDE_a12a547d6a089a5805df40f91c0a48318}\label{classNeoFOAM_1_1PDE_a12a547d6a089a5805df40f91c0a48318} 
+\index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!setFinalIter@{setFinalIter}}
+\index{setFinalIter@{setFinalIter}!NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}}
+\doxysubsubsection{\texorpdfstring{setFinalIter()}{setFinalIter()}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx$>$ \\
+void \mbox{\hyperlink{classNeoFOAM_1_1PDE}{Neo\+FOAM\+::\+PDE}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$\+::set\+Final\+Iter (\begin{DoxyParamCaption}\item[{bool}]{final\+Iter }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+When true, selects the $<$field$>$Final relaxation factor and solver subdict. 
+
+
+
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00168}{168}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1PDE_a761c2d04db4af1d188d452bda66ac827}\label{classNeoFOAM_1_1PDE_a761c2d04db4af1d188d452bda66ac827} 
+\index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!setReference@{setReference}}
+\index{setReference@{setReference}!NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}}
+\doxysubsubsection{\texorpdfstring{setReference()}{setReference()}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx$>$ \\
+void \mbox{\hyperlink{classNeoFOAM_1_1PDE}{Neo\+FOAM\+::\+PDE}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$\+::set\+Reference (\begin{DoxyParamCaption}\item[{Neo\+N\+::local\+Idx}]{p\+Ref\+Cell,  }\item[{Neo\+N\+::scalar}]{p\+Ref\+Value }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00145}{145}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1PDE_adc6783a51aa3e6a0b2bf822e8d354c95}\label{classNeoFOAM_1_1PDE_adc6783a51aa3e6a0b2bf822e8d354c95} 
+\index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!solve@{solve}}
+\index{solve@{solve}!NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}}
+\doxysubsubsection{\texorpdfstring{solve()}{solve()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx$>$ \\
+Neo\+N\+::la\+::\+Solver\+Stats \mbox{\hyperlink{classNeoFOAM_1_1PDE}{Neo\+FOAM\+::\+PDE}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$\+::solve (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00238}{238}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1PDE_a1a19c403768745a0a9a3b7637335f2ac}\label{classNeoFOAM_1_1PDE_a1a19c403768745a0a9a3b7637335f2ac} 
+\index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!solve@{solve}}
+\index{solve@{solve}!NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}}
+\doxysubsubsection{\texorpdfstring{solve()}{solve()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx$>$ \\
+Neo\+N\+::la\+::\+Solver\+Stats \mbox{\hyperlink{classNeoFOAM_1_1PDE}{Neo\+FOAM\+::\+PDE}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$\+::solve (\begin{DoxyParamCaption}\item[{dsl\+::\+Spatial\+Operator$<$ Neo\+N\+::\+Vec3 $>$ \&\&}]{rhs }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+solve expression with additional rhs 
+
+This function will create two versions of the linear system corresponding to the expression
+\begin{DoxyEnumerate}
+\item the owned linear system without rhs is assembled and stored
+\item a temporary linear system with rhs assembled and solved 
+\end{DoxyEnumerate}
+
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00250}{250}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1PDE_a665045e1ab13f9c86f3b80f70827288e}\label{classNeoFOAM_1_1PDE_a665045e1ab13f9c86f3b80f70827288e} 
+\index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!solveImpl@{solveImpl}}
+\index{solveImpl@{solveImpl}!NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}}
+\doxysubsubsection{\texorpdfstring{solveImpl()}{solveImpl()}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx$>$ \\
+Neo\+N\+::la\+::\+Solver\+Stats \mbox{\hyperlink{classNeoFOAM_1_1PDE}{Neo\+FOAM\+::\+PDE}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$\+::solve\+Impl (\begin{DoxyParamCaption}\item[{dsl\+::\+Expression$<$ Value\+Type $>$ \&}]{expr,  }\item[{Linear\+System \&}]{ls }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00379}{379}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1PDE_a3c38e63ceabdeecad3f7eea2d76fb4e0}\label{classNeoFOAM_1_1PDE_a3c38e63ceabdeecad3f7eea2d76fb4e0} 
+\index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!solveWith@{solveWith}}
+\index{solveWith@{solveWith}!NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}}
+\doxysubsubsection{\texorpdfstring{solveWith()}{solveWith()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx$>$ \\
+Neo\+N\+::la\+::\+Solver\+Stats \mbox{\hyperlink{classNeoFOAM_1_1PDE}{Neo\+FOAM\+::\+PDE}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$\+::solve\+With (\begin{DoxyParamCaption}\item[{Neo\+N\+::la\+::\+Solver \&}]{solver,  }\item[{Volume\+Field \&}]{psi,  }\item[{\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&}]{rt }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+solve using a pre-\/created, cached Neo\+N\+::la\+::\+Solver 
+
+
+
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00284}{284}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1PDE_ad0e998954abbcf1d08baf590b1e6c3cb}\label{classNeoFOAM_1_1PDE_ad0e998954abbcf1d08baf590b1e6c3cb} 
+\index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!solveWith@{solveWith}}
+\index{solveWith@{solveWith}!NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}}
+\doxysubsubsection{\texorpdfstring{solveWith()}{solveWith()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx$>$ \\
+Neo\+N\+::la\+::\+Solver\+Stats \mbox{\hyperlink{classNeoFOAM_1_1PDE}{Neo\+FOAM\+::\+PDE}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$\+::solve\+With (\begin{DoxyParamCaption}\item[{Neo\+N\+::la\+::\+Solver \&}]{solver,  }\item[{Volume\+Field \&}]{psi,  }\item[{\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&}]{rt,  }\item[{dsl\+::\+Spatial\+Operator$<$ Value\+Type $>$ \&\&}]{rhs }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+solve with additional rhs using a pre-\/created, cached Neo\+N\+::la\+::\+Solver 
+
+
+
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00329}{329}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+
+\Hypertarget{classNeoFOAM_1_1PDE_a4e30324f164b229f31bedac3d023484c}\label{classNeoFOAM_1_1PDE_a4e30324f164b229f31bedac3d023484c} 
+\index{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}!stripNeoFOAMKeys@{stripNeoFOAMKeys}}
+\index{stripNeoFOAMKeys@{stripNeoFOAMKeys}!NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::PDE$<$ ValueType, MatrixValueType, IndexType $>$}}
+\doxysubsubsection{\texorpdfstring{stripNeoFOAMKeys()}{stripNeoFOAMKeys()}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx$>$ \\
+static void \mbox{\hyperlink{classNeoFOAM_1_1PDE}{Neo\+FOAM\+::\+PDE}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$\+::strip\+Neo\+FOAMKeys (\begin{DoxyParamCaption}\item[{Neo\+N\+::\+Dictionary \&}]{dict }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Definition at line \mbox{\hyperlink{pde_8hpp_source_l00450}{450}} of file \mbox{\hyperlink{pde_8hpp_source}{pde.\+hpp}}.
+
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/runner/work/\+Neo\+FOAM/\+Neo\+FOAM/include/\+Neo\+FOAM/datastructures/\mbox{\hyperlink{pde_8hpp}{pde.\+hpp}}\end{DoxyCompactItemize}

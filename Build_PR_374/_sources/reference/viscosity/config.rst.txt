@@ -1,0 +1,6 @@
+neofoam.viscosity.config
+=========================
+
+.. automodule:: neofoam.viscosity.config
+   :members:
+   :show-inheritance:
