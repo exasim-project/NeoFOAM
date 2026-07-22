@@ -19,19 +19,19 @@ from neofoam.solver.incompressibleFluidBlockAMR import run  # noqa: E402
 def test_run_smoke_finishes_without_nans(blockamr_session, box_case):
     ctx = run(["incompressibleFluidBlockAMR"])
 
-    engine = ctx.models["projection_state"]
+    U = ctx.fields["U"]
 
     # Velocity finite everywhere after the full run.
-    for a in engine.U.mf[0].arrays():
+    for a in U.mf[0].arrays():
         assert np.isfinite(np.asarray(a)).all()
 
     # Pressure finite too.
-    for a in engine.p.mf[0].arrays():
+    for a in ctx.fields["p"].mf[0].arrays():
         assert np.isfinite(np.asarray(a)).all()
 
     # Divergence-free flux after the final projection.
-    dx = engine.mesh.geom(0).cell_size()
-    phi = engine.phi
+    dx = U.mesh.geom(0).cell_size()
+    phi = ctx.fields["phi"]
     max_div = 0.0
     face_arrs = [phi[0][d].mf.arrays() for d in range(3)]
     for bi in range(len(face_arrs[0])):

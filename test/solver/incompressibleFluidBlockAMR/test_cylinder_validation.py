@@ -69,16 +69,14 @@ def cylinder_re20_case(tmp_path, monkeypatch):
 def test_cylinder_re20_observables_in_band(blockamr_session, cylinder_re20_case):
     """Config-driven Re=20 cylinder: steady, sane wake, Cd in the achievable band."""
     ctx = run(["incompressibleFluidBlockAMR"])
-    engine = ctx.models["projection_state"]
-
     U_inf, D = 1.0, 0.2
-    Cd, Cl = postpro.force_coefficients(engine, U_inf, D, nu=0.01, tail_fraction=0.3)
-    snap = postpro.gather_field(engine)
+    Cd, Cl = postpro.force_coefficients(ctx, U_inf, D, nu=0.01, tail_fraction=0.3)
+    snap = postpro.gather_field(ctx)
     Lr = postpro.recirculation_length(snap, D)
     theta = postpro.separation_angle(snap)
 
     # field is bounded & finite (stable CFL-0.1 run, no divergence)
-    arr = np.asarray(engine.U.mf[0].arrays()[0])
+    arr = np.asarray(ctx.fields["U"].mf[0].arrays()[0])
     assert np.isfinite(arr).all()
     assert float(np.max(np.abs(arr))) < 3.0
 

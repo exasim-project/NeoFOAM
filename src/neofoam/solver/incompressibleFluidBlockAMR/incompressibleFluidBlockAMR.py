@@ -94,7 +94,7 @@ def execution_graph(
     builder = StepBuilder()
 
     algorithm_model = self.state.core_models[0]
-    algo_ops = Operations(algorithm_model._build_operations_for(algorithm_model))
+    algo_ops = Operations(algorithm_model.operations)
 
     loop_ops = Operations(_core_model(self.state, "solutionLoop").operations)
     writer_ops = Operations(_core_model(self.state, "fieldWriter").operations)

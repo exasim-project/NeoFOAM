@@ -70,9 +70,7 @@ GHIA_U = np.array(
 def test_cavity_re100_centreline_matches_ghia(blockamr_session, cavity_case):
     """Framework lid-cavity at Re=100 reproduces the Ghia centreline profile."""
     ctx = run(["incompressibleFluidBlockAMR"])
-    engine = ctx.models["projection_state"]
-
-    snap = postpro.gather_field(engine)
+    snap = postpro.gather_field(ctx)
     ix = snap.u.shape[0] // 2  # x = 0.5 column
     iz = snap.u.shape[2] // 2  # z mid-plane
     u_profile = snap.u[ix, :, iz]

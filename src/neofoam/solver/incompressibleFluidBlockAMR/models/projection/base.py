@@ -27,9 +27,13 @@ class ProjectionAlgorithm:
 
     @staticmethod
     def detect_and_create(case_dir: Optional[Path] = None) -> Any:
-        """Return the projection algorithm to use (only Chorin is supported)."""
+        """Return the projection algorithm to use (only Chorin is supported).
+
+        Instantiated (not used bare) so the spec's ``@config`` classes are loaded
+        from the case — the runtime's ``config`` is what ``@build`` reads.
+        """
         chorinProjection.algorithm_type = "Chorin"  # type: ignore[attr-defined]
-        return chorinProjection
+        return chorinProjection.instantiate(case_dir or Path("."))
 
     @classmethod
     def create(cls, *, algorithm_type: str) -> Any:
@@ -40,4 +44,4 @@ class ProjectionAlgorithm:
                 f"requested {algorithm_type!r}."
             )
         chorinProjection.algorithm_type = "Chorin"  # type: ignore[attr-defined]
-        return chorinProjection
+        return chorinProjection.instantiate(Path("."))
