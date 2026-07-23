@@ -163,4 +163,4 @@ print(
 #
 # - :doc:`/explanation/parameter-injection` — the resolution algorithm
 #   in detail.
-# - :doc:`/reference/framework/dependency_resolver` — full API.
+# - :mod:`neofoam.framework.dependency_resolver` — full API.
