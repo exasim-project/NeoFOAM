@@ -19,7 +19,7 @@ Optional body: why the change is needed and what it does.
 should be as brief as possible, but no more than 10 lines. Use bullets for multiple points.
 ```
 
-- Types as used in this repo: `feat`, `fix`, `test`, `chore`, `docs`, `refactor`.
+- Types as used in this repo: `feat`, `fix`, `test`, `chore`, `docs`, `refactor`, `ci`.
   Scope is the subsystem (`turbulence`, `solver`, `deps`, `mcp`, …); omit if unclear.
 - Body is optional; when present, keep it to ~10 lines.
 - **Hard requirement:** no `Co-Authored-By: Claude` trailer — never add it, even
