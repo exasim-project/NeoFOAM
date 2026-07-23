@@ -56,6 +56,14 @@ divSchemes
 laplacianSchemes
 {
     default         Gauss linear corrected;
+
+    // NeoN's fused div+laplacian operator (imp::div - imp::laplacian for U/k/omega) looks up these
+    // scheme keys by EXACT name with no `default` fallback, so they must be spelled out explicitly.
+    // Values are identical to `default` (Gauss linear corrected) -> numerically a no-op vs. the
+    // §4.15 baseline; this only lets the current NeoN HEAD's operator find its scheme entry.
+    laplacian(nuEff,U)          Gauss linear corrected;
+    laplacian(DkEff,k)          Gauss linear corrected;
+    laplacian(DomegaEff,omega)  Gauss linear corrected;
 }
 
 interpolationSchemes

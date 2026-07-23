@@ -51,14 +51,24 @@
 # partial scaling repair its DEPTH optimum may differ from either (sc=ON: L4, sc=OFF: L3) -- hence its
 # own grid rather than an inference. Requires the NEON_MGSC_MODE probe build (multigrid.cpp, not for
 # merge); the env var is forwarded to all ranks via MPIRUN_FORWARD_ENV.
+# SC=both -- scale correction with BOTH the pre- and post-smooth passes (NEON_MGSC_MODE=both, the
+# compiled default mode 0 = do_scale_pre AND do_scale_post). This is the full two-pass sc that §4.12
+# argued was wasteful (the pre pass adds comm for ~zero convergence benefit), but the corrected-binding
+# rel-tol grid was only ever run POST-only (§4.15.2); this gives the both-pass grid its own panel so the
+# pre-pass cost is measured, not inferred. Distinct dir from the stale SC=true `mgsc-coarse-reltol` and
+# explicit about the env mode (SC=true merely relied on the unset default). Requires the NEON_MGSC_MODE
+# probe build; forwarded to all ranks via MPIRUN_FORWARD_ENV.
 SC="${SC:-true}"
 case "$SC" in
-    true)  STUDY_TYPE=mgsc-coarse-reltol   ;;   # stock: both passes
+    true)  STUDY_TYPE=mgsc-coarse-reltol   ;;   # stock: both passes (implicit default env)
     false) STUDY_TYPE=mgnosc-coarse-reltol ;;   # sc off entirely
     post)  STUDY_TYPE=mgscpost-coarse-reltol
            export NEON_MGSC_MODE=post
            export MPIRUN_FORWARD_ENV="${MPIRUN_FORWARD_ENV:-} NEON_MGSC_MODE" ;;
-    *) echo "!! SC must be true|false|post (got '$SC')" >&2; exit 1 ;;
+    both)  STUDY_TYPE=mgscboth-coarse-reltol
+           export NEON_MGSC_MODE=both
+           export MPIRUN_FORWARD_ENV="${MPIRUN_FORWARD_ENV:-} NEON_MGSC_MODE" ;;
+    *) echo "!! SC must be true|false|post|both (got '$SC')" >&2; exit 1 ;;
 esac
 STUDY_TYPE="${STUDY_TYPE}${STUDY_SUFFIX:-}"   # e.g. -merge1 for the merge-levels sweep
 STEPS="${STEPS:-50}"
@@ -95,8 +105,8 @@ build_variant_config() {
     # $1 = max_levels, $2 = rel-tol. Clone base; pin max_levels; swap coarse criteria to ResidualNorm+cap.
     local ml="$1" tol="$2"
     if [ ! -f "$BASE_CFG" ]; then echo "!! missing base config $BASE_CFG" >&2; return 1; fi
-    # SC=post keeps scale_correction=true in the config; the pass split is done by NEON_MGSC_MODE.
-    local sc_json="$SC"; [ "$SC" = "post" ] && sc_json=true
+    # SC=post/both keep scale_correction=true in the config; the pass split is done by NEON_MGSC_MODE.
+    local sc_json="$SC"; case "$SC" in post|both) sc_json=true ;; esac
     # MERGE (default 2) selects the pgmMerge{N} coarsener; N=1 = plain Pgm.
     local merge_name="neon::pgmMerge${MERGE:-2}"
     jq --argjson ml "$ml" --argjson tol "$tol" --argjson cap "$COARSE_CAP" --argjson sc "$sc_json" \

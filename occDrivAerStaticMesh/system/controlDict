@@ -14,7 +14,45 @@ FoamFile
     object          controlDict;
 }
 
-#include          "include/caseDefinition"
+lref            2.78618;
+
+Aref            2.17;
+
+inletPatch      inlet;
+
+outletPatch     outlet;
+
+slipGroundPatch ground;
+
+fixedWallPatches "(Body.*|Closed.*|CTRL.*|Engine.*|Exhaust.*|Mirror.*|Notchback.*|OCDA.*|Powertrain|Wheel.*|Rims.*|Brake.*|Tires.*|Plinth.*|ground_noSlip.*)";
+
+symmPatches     freestream;
+
+forcesWallPatches "(Body.*|Closed.*|CTRL.*|Engine.*|Exhaust.*|Mirror.*|Notchback.*|OCDA.*|Powertrain|Wheel.*|Rimsfront|BrakeDiscfront|Tiresfront|Rimsrear|BrakeDiscrear|Tiresrear|Rimsfront_rota|Rimsrear_rota|BrakeDiscfront_rota|BrakeDiscrear_rota)";
+
+Uinf            ( 38.889 0 0 );
+
+UinfMag         38.889;
+
+nu              1.507e-05;
+
+pref            0;
+
+viscRatio       5;
+
+Tu              0.0026;
+
+RASturbModel    kOmegaSST;
+
+nCores          512;
+
+decompositionMethod hierarchical;
+
+nHierarchical   ( 16 8 4 );
+
+interpScheme    cellPatchConstrained;
+
+probeField      cp;
 
 application     neoSimpleFoam;
 
@@ -28,17 +66,17 @@ libs            ( "libturbulenceModels.so" );
 
 startFrom       startTime;
 
-startTime       0;
+startTime       1000;
 
 stopAt          endTime;
 
-endTime         100;
+endTime         1050;
 
 deltaT          1;
 
 writeControl    timeStep;
 
-writeInterval   100;
+writeInterval   50;
 
 purgeWrite      2;
 

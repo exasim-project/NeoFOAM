@@ -32,13 +32,18 @@ TOLS = [0.25, 0.2, 0.15, 0.1, 0.01, 0.001]
 PLOT_LEVELS = [2, 3, 4, 5, 6, 8]
 
 PANELS = [
-    # 2x2: rows = architecture (global / localized), cols = no sc / sc post-pass.
+    # 2x3: rows = architecture (global / localized), cols = no sc / sc post-pass / sc pre+post.
     # sc grids are on the HOISTED + faithful port (D^-1 inner op, fused dots, no per-call cudaMalloc).
     # no-sc grids are port-independent (sc=off never enters the scale blocks).
+    # The pre+post ("both") column measures the pre-pass cost the post-only grid omits (§4.12); the
+    # localized-both cell has no sweep yet and renders as "pending".
     ("mgnosc-coarse-reltol",     "Global MG -- no scale correction"),
     ("mgscpost-coarse-reltol",   "Global MG -- sc post-pass"),
+    ("mgscboth-coarse-reltol",   "Global MG -- sc pre+post"),
     ("localized-coarse-reltol",  "Localized MG -- no scale correction"),
     ("localizedsc-coarse-reltol","Localized MG -- sc post-pass"),
+    # bottom-right slot intentionally blank: no localized sc-pre+post sweep (localized+sc is a dead end,
+    # §5) -- the axis is turned off rather than shown as "pending".
 ]
 
 
@@ -87,9 +92,17 @@ def load(study):
     return {k: v[0] for k, v in out.items()}
 
 
+# Panels whose wall-clock is on a different (profiling) build than the rest and so must NOT enter the
+# s/step ("time") figure -- their steady s/step is ~3x the production panels and would both mislead and
+# distort the shared colour scale. Their p_solve/p_iters ARE build-independent (Ginkgo is always -O3),
+# so they stay in the pms and iters figures.
+TIME_EXCLUDE = {"mgscboth-coarse-reltol"}
+
+
 def draw(metric, idx, label, fname, fmt="{:.2f}"):
+    exclude = TIME_EXCLUDE if metric == "time" else frozenset()
     data = {s: load(s) for s, _ in PANELS}
-    vals = [v[idx] for d in data.values() for v in d.values()]
+    vals = [v[idx] for s, d in data.items() if s not in exclude for v in d.values()]
     if not vals:
         print("no data at all")
         return
@@ -100,10 +113,18 @@ def draw(metric, idx, label, fname, fmt="{:.2f}"):
     vmin, vmax = min(vals), float(np.percentile(vals, 90))
     if vmax <= vmin:
         vmax = max(vals)
-    fig, axes2d = plt.subplots(2, 2, figsize=(13.5, 8.6), constrained_layout=True)
+    fig, axes2d = plt.subplots(2, 3, figsize=(19.5, 8.6), constrained_layout=True)
     axes = axes2d.ravel()
+    for ax in axes[len(PANELS):]:      # blank any grid slot without a panel (no "pending" placeholder)
+        ax.axis("off")
     for ax, (study, title) in zip(axes, PANELS):
         d = data[study]
+        if study in exclude:
+            ax.text(0.5, 0.5, "n/a\n(profiling build,\ns/step not comparable\n-- see pms figure)",
+                    ha="center", va="center", fontsize=11, color="0.5", transform=ax.transAxes)
+            ax.set_title(title, fontsize=14)
+            ax.set_xticks([]); ax.set_yticks([])
+            continue
         if not d:
             ax.text(0.5, 0.5, "pending", ha="center", va="center",
                     fontsize=13, color="0.5", transform=ax.transAxes)
@@ -146,7 +167,9 @@ def draw(metric, idx, label, fname, fmt="{:.2f}"):
     print(f"wrote {RESULTS}/{fname}")
     for study, title in PANELS:
         d = data[study]
-        if d:
+        if study in exclude:
+            print(f"  {study:26s} (excluded from {metric} figure -- different build)")
+        elif d:
             k = min(d, key=lambda k: d[k][idx])
             print(f"  {study:26s} best L{k[0]} tol={k[1]:<7g} "
                   f"{d[k][0]:.3f} s/step  {d[k][1]:.1f} iters  {d[k][2]:.0f} ms")

@@ -53,7 +53,7 @@ fi
 NP=4
 # The semi-converged restart iteration. FIXED at 1000 (not a swept parameter): every measured run
 # starts from processor*/$RESTART/ and marches RESTART -> RESTART+STEPS.
-RESTART=1000
+RESTART=${RESTART:-1000}
 STEPS="${STEPS:-30}"
 CFGDIR="system/paramStudy"
 # Per-study results live under paperParamStudyResults/<type>/ -- a DEDICATED root, never the

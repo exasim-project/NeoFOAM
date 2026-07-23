@@ -21,10 +21,50 @@
 #endif
 
 #include <memory>
+#include <chrono>
+#include <map>
+#include <string>
+#include <cstdlib>
+#include <cstdio>
 
 using Foam::Info;
 using Foam::endl;
 using Foam::nl;
+
+namespace
+{
+// Clean (unprofiled) per-phase wall timer for chasing the per-step host cost. Gated on env
+// NEON_PHASE_TIMERS: when set, fences the device at phase entry/exit so chrono captures true
+// completion wall (host dispatch + GPU) rather than async dispatch time. Accumulates per phase name
+// into a map that the time loop resets each step and prints as one line, so steady per-step
+// breakdown can be read off directly (median of interior steps). A no-op when the env is unset.
+struct PhaseClock
+{
+    static inline bool on = false;
+    static inline std::map<std::string, double> acc;
+    const char* name_;
+    std::chrono::steady_clock::time_point t0_;
+    explicit PhaseClock(const char* name) : name_(name)
+    {
+        if (on)
+        {
+            Kokkos::fence();
+            t0_ = std::chrono::steady_clock::now();
+        }
+    }
+    ~PhaseClock()
+    {
+        if (on)
+        {
+            Kokkos::fence();
+            acc[name_] += std::chrono::duration<double, std::milli>(
+                              std::chrono::steady_clock::now() - t0_
+            )
+                              .count();
+        }
+    }
+};
+} // namespace
 
 // NOTE about namespace usage
 // here the namespaces are used deliberately verbose to
@@ -140,10 +180,18 @@ int main(int argc, char* argv[])
         Kokkos::Profiling::popRegion(); // end neoSimpleFoam.setup
 
         NeoN::Logging::info("Starting time loop");
+        PhaseClock::on = std::getenv("NEON_PHASE_TIMERS") != nullptr;
         while (runTime.loop())
         {
             // Per-timestep region. The phase regions below nest under it in the profiler output.
             Kokkos::Profiling::ScopedRegion timeStepRegion("neoSimpleFoam.timeStep");
+            PhaseClock::acc.clear();
+            std::chrono::steady_clock::time_point stepT0;
+            if (PhaseClock::on)
+            {
+                Kokkos::fence();
+                stepT0 = std::chrono::steady_clock::now();
+            }
 
             rt.t = runTime.time().value();
             NeoN::Logging::info("Time = {}", rt.t);
@@ -159,21 +207,39 @@ int main(int argc, char* argv[])
             // evaluates turb->gradU() (velocity gradient) + nuEff/nut. Brackets it separately from
             // the assemble/solve so the profile attributes the momentumPredictor cost.
             Kokkos::Profiling::pushRegion("momentum.construct");
+            std::chrono::steady_clock::time_point ctorT0;
+            if (PhaseClock::on)
+            {
+                Kokkos::fence();
+                ctorT0 = std::chrono::steady_clock::now();
+            }
             nf::PDESolver<NeoN::Vec3> UEqn(
                 dsl::imp::div(phi, U) - dsl::imp::laplacian(turb->nuEff(), U)
                     + dsl::exp::viscousStress(nu, turb->nut(), turb->gradU()),
                 U,
                 rt
             );
+            if (PhaseClock::on)
+            {
+                Kokkos::fence();
+                PhaseClock::acc["1_momConstruct"] +=
+                    std::chrono::duration<double, std::milli>(
+                        std::chrono::steady_clock::now() - ctorT0
+                    )
+                        .count();
+            }
             Kokkos::Profiling::popRegion(); // momentum.construct
 
-            if (simple.momentumPredictor())
             {
-                UEqn.solve(-1.0 * dsl::exp::grad(p));
-            }
-            else
-            {
-                UEqn.assemble();
+                PhaseClock pc("2_momSolve");
+                if (simple.momentumPredictor())
+                {
+                    UEqn.solve(-1.0 * dsl::exp::grad(p));
+                }
+                else
+                {
+                    UEqn.assemble();
+                }
             }
             Kokkos::Profiling::popRegion(); // end neoSimpleFoam.momentumPredictor
             logGpuMem("after-UEqn");
@@ -181,6 +247,7 @@ int main(int argc, char* argv[])
             // SIMPLE / SIMPLEC pressure-velocity coupling (single pass, no inner PISO loop)
             {
                 Kokkos::Profiling::ScopedRegion pressureRegion("neoSimpleFoam.pressureCorrector");
+                PhaseClock pc("3_pressureCorr");
                 auto [crAU, hByA] = nf::computeRAUandHByA(UEqn);
                 nf::constrainHbyA(U, p, hByA);
 
@@ -241,7 +308,10 @@ int main(int argc, char* argv[])
                         pEqn.setReference(pRefCell, pRefValue);
                     }
 
-                    pEqn.solve();
+                    {
+                        PhaseClock pc("3a_pSolve");
+                        pEqn.solve();
+                    }
                     p.correctBoundaryConditions();
 
                     if (simple.finalNonOrthogonalIter())
@@ -282,6 +352,7 @@ int main(int argc, char* argv[])
 
             {
                 Kokkos::Profiling::ScopedRegion turbRegion("neoSimpleFoam.turbulenceCorrect");
+                PhaseClock pc("4_turbulence");
                 turb->correct(U, phi, rt);
             }
             logGpuMem("after-turb");
@@ -298,6 +369,24 @@ int main(int argc, char* argv[])
                     NeoN::Logging::info("Writing turbulence variables");
                     turb->write(mesh);
                 }
+            }
+
+            if (PhaseClock::on)
+            {
+                Kokkos::fence();
+                const double stepMs = std::chrono::duration<double, std::milli>(
+                                          std::chrono::steady_clock::now() - stepT0
+                )
+                                          .count();
+                double summed = 0.0;
+                std::string line = "[phase] step total=" + std::to_string(stepMs) + " ms |";
+                for (const auto& [k, v] : PhaseClock::acc)
+                {
+                    line += " " + k + "=" + std::to_string(v);
+                    summed += v;
+                }
+                line += " | other=" + std::to_string(stepMs - summed);
+                std::fprintf(stderr, "%s\n", line.c_str());
             }
 
             runTime.printExecutionTime(Info);
