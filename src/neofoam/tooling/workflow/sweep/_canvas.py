@@ -23,10 +23,10 @@ from typing import Any
 
 from neofoam.tooling.workflow.rules import (
     MESH_DIM,
+    SETUP_CONFIG_PATTERN,
     RuleKind,
     RuleRegistry,
     RuleSpec,
-    SETUP_CONFIG_PATTERN,
     default_registry,
 )
 

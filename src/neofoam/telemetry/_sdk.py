@@ -13,7 +13,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, IO, Optional, Sequence
+from typing import IO, Any, Callable, Optional, Sequence
 
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import ReadableSpan, TracerProvider
@@ -24,6 +24,7 @@ from opentelemetry.sdk.trace.export import (
 )
 from opentelemetry.trace import Tracer
 
+from .mpi import current_mpi_info
 from .settings import MpiInfo, TelemetrySettings
 
 _NS_PER_S = 1e9
@@ -147,8 +148,6 @@ class ActiveTelemetry:
 
 
 def _lazy_mpi_source() -> MpiInfo:
-    from .mpi import current_mpi_info
-
     return current_mpi_info()
 
 

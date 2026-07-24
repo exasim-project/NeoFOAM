@@ -110,7 +110,8 @@ def snappy_hex_mesh(
     overwrite: bool = True,
     verbose: bool = False,
 ) -> Step:
-    """Refine the prior ``block_mesh`` output from ``snappyHexMeshDict`` (via ``snappyHexMeshTool``).
+    """Refine the prior ``block_mesh`` output from ``snappyHexMeshDict``
+    (via ``snappyHexMeshTool``).
 
     Runs after a ``block_mesh`` step in the same pipeline; the background mesh it left on
     disk is reconstructed and fed to snappy as ``_prev_mesh``.

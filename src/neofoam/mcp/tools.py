@@ -25,13 +25,22 @@ from neofoam.agent.case_fill import (
     build_case_output_model,
     load_case_from_disk,
     read_case_text,
+)
+from neofoam.agent.case_fill import (
     save_case as _save_case,
 )
 from neofoam.framework.validation import validate
+from neofoam.io import write_configs
 from neofoam.io.schema import (  # re-export: canonical home is neofoam.io.schema
     config_schema as config_schema,
+)
+from neofoam.io.schema import (
     list_configs as list_configs,
+)
+from neofoam.io.schema import (
     model_catalog as model_catalog,
+)
+from neofoam.io.schema import (
     tool_catalog as tool_catalog,
 )
 from neofoam.mcp.dto import (
@@ -48,6 +57,8 @@ from neofoam.mcp.dto import (
 )
 from neofoam.mcp.registry import list_solver_names
 from neofoam.tooling import CaseAccessError, Workspace
+from neofoam.tooling.workflow.geometry import PatchSet
+from neofoam.tooling.workflow.geometry import build_mesh_inputs as _build
 
 INTROSPECTION_TOOL_NAMES: tuple[str, ...] = (
     "list_solvers",
@@ -104,8 +115,6 @@ def manifest_schema() -> ManifestSchemaDTO:
     ``geometry_source``/``bbox``/``location_in_mesh``/``length_scale`` keys and the
     per-patch shape without reading ``workflow/geometry.py``.
     """
-    from neofoam.tooling.workflow.geometry import PatchSet
-
     schema = PatchSet.model_json_schema()
     required = list(schema.get("required", []))
     return ManifestSchemaDTO(json_schema=schema, required=required)
@@ -156,8 +165,6 @@ def import_geometry(
     Paths are confined through ``workspace`` when given; a missing STL raises before
     the manifest is written, so a half-staged case is never left behind.
     """
-    from neofoam.tooling.workflow.geometry import PatchSet
-
     case = _confine(case_dir, workspace)
     case.mkdir(parents=True, exist_ok=True)
     tri_dir = case / "constant" / "triSurface"
@@ -205,8 +212,6 @@ def case_patches(
     the geometry is a given, extracted upstream and written to the manifest.
     ``case_dir`` is confined through ``workspace`` (when given) and must exist.
     """
-    from neofoam.tooling.workflow.geometry import PatchSet
-
     case = _confine_existing(case_dir, workspace)
     manifest = Path(case) / "manifest.json"
     if not manifest.is_file():
@@ -232,10 +237,6 @@ def build_mesh_inputs(
     dicts. ``case_dir`` is confined through ``workspace`` (when given) and must contain
     a manifest.
     """
-    from neofoam.io import write_configs
-    from neofoam.tooling.workflow.geometry import PatchSet
-    from neofoam.tooling.workflow.geometry import build_mesh_inputs as _build
-
     case = _confine_existing(case_dir, workspace)
     manifest = Path(case) / "manifest.json"
     if not manifest.is_file():

@@ -16,7 +16,6 @@ from neofoam.solver.neoIcoFoam import NeoIcoFoam
 from neofoam.solver.neoPimpleFoam import NeoPimpleFoam
 from neofoam.solver.pimplefoam import PimpleFoam
 from neofoam.telemetry.report import write_chrome_trace, write_summary_plot
-from neofoam.tools.run import run_preprocess
 
 app = typer.Typer()
 
@@ -283,6 +282,9 @@ def preprocess(case: Path) -> None:
     <case> may be any path (absolute or relative to the cwd); the pipeline runs
     from inside the case, so it need not be the working directory.
     """
+    # Imported at call time so tests can monkeypatch neofoam.tools.run.run_preprocess.
+    from neofoam.tools.run import run_preprocess  # noqa: PLC0415
+
     run_preprocess([sys.argv[0], "-case", str(case)])
 
 

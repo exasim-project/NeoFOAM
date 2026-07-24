@@ -68,7 +68,8 @@ class OpType(Enum):
 
 @dataclass
 class OperationMetadata:
-    """collection of the metadata for operations - describes both decorated functions and DAG nodes."""
+    """collection of the metadata for operations - describes both decorated
+    functions and DAG nodes."""
 
     op_name: str | None = None
 

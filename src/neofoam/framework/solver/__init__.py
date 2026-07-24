@@ -10,9 +10,9 @@ Public API:
     Solver        — factory alias: Solver("Name") -> SolverSpec
 """
 
-from .spec import SolverSpec, Solver
-from .runtime import SolverRuntime, SolverState
 from .configurations import Configurations, configurations
+from .runtime import SolverRuntime, SolverState
+from .spec import Solver, SolverSpec
 
 __all__ = [
     "SolverSpec",

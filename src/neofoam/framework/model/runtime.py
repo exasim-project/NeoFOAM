@@ -12,12 +12,16 @@ from __future__ import annotations
 import inspect
 from dataclasses import dataclass, field
 from types import SimpleNamespace
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
+
+from neofoam.fields.synthesis import synthesize_init_step
+from neofoam.io import BaseConfig
 
 if TYPE_CHECKING:
-    from .spec import ModelSpec
     from neofoam.framework.initialization import ConfigContext, InitStep
     from neofoam.framework.operations import Operation
+
+    from .spec import ModelSpec
 
 
 @dataclass
@@ -70,11 +74,6 @@ class ModelRuntime:
         if not field_decls:
             return user_steps
 
-        # Lazy import: ``synthesis`` pulls a deferred pybFoam dependency
-        # through its dispatch — importing ``framework.model.runtime``
-        # must stay light.
-        from neofoam.fields.synthesis import synthesize_init_step
-
         auto_steps = [synthesize_init_step(decl) for decl in field_decls]
         return auto_steps + user_steps
 
@@ -99,8 +98,6 @@ class ModelRuntime:
         Used by ``LoadResult.configs`` to collect configs for validation.
         Handles both a single config and a SimpleNamespace of multiple configs.
         """
-        from neofoam.io import BaseConfig
-
         result = []
         if isinstance(self.config, BaseConfig):
             result.append(self.config)

@@ -17,7 +17,12 @@ from typing import Any, Callable, Iterable, Literal, Optional, Sequence, TypeVar
 
 from pydantic import BaseModel
 
+from neofoam.core.plugin_system import PluginSystem
 from neofoam.fields.decl import FieldDecl
+from neofoam.framework.config_injection import (
+    _create_runtime_config_wrapper,
+    _discover_configs_from_signature,
+)
 from neofoam.framework.dependency_resolver import (
     DependencyResolver,
     wrap_with_dependency_resolution,
@@ -27,7 +32,6 @@ from neofoam.framework.types import OperationMetadata, OperationNumber
 
 from .interface import ModelInterface
 from .runtime import ModelRuntime
-
 
 _ConfigT = TypeVar("_ConfigT", bound=type)
 _T = TypeVar("_T")
@@ -374,11 +378,6 @@ class ModelSpec:
         Returns a fresh list per call so multiple runtimes never share
         wrapper state.
         """
-        from neofoam.framework.config_injection import (
-            _discover_configs_from_signature,
-            _create_runtime_config_wrapper,
-        )
-
         if self._operation_collection_func is not None:
             result = self._operation_collection_func(runtime)
             if isinstance(result, Operations):
@@ -449,8 +448,6 @@ class ModelSpec:
 
     def register_with(self, plugin_interface: type) -> "ModelSpec":
         """Register this ModelSpec with a PluginSystem interface (idempotent by name)."""
-        from neofoam.core.plugin_system import PluginSystem
-
         registry = PluginSystem.get_registered(plugin_interface.__name__)
         if registry is not None and self.name in {
             plugin_cls.__name__ for plugin_cls in registry.plugin_registry

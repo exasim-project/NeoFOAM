@@ -3,8 +3,8 @@
 
 """BaseConfig — Pydantic model with automatic IO strategy registration."""
 
-from typing import ClassVar, Optional, Type, TypeVar, Union
 from pathlib import Path
+from typing import ClassVar, Optional, Type, TypeVar, Union
 
 from pydantic import BaseModel, ValidationError
 

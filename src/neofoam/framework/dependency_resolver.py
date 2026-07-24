@@ -8,9 +8,10 @@ Handles dependency injection during solver/model execution.
 """
 
 import inspect
+from functools import wraps
 from typing import Annotated, Any, Callable, Optional, get_args, get_origin
 
-from .context import Context
+from .context import Context, FieldUpdates
 from .initialization.depends import Depends
 
 
@@ -168,7 +169,6 @@ def wrap_with_dependency_resolution(
     This is the canonical implementation shared by ``SolverSpec`` and
     ``ModelSpec`` — avoids duplicating the same wrapper in every factory.
     """
-    from functools import wraps
 
     @wraps(func)
     def wrapper(ctx: Context) -> Any:
@@ -179,8 +179,6 @@ def wrap_with_dependency_resolution(
             kwargs["self"] = instance
 
         result = func(**kwargs)
-
-        from .context import FieldUpdates
 
         if isinstance(result, FieldUpdates):
             ctx.fields.update(result)

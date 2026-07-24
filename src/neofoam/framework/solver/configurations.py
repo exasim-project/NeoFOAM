@@ -120,7 +120,7 @@ class Configurations:
 
     def save(self, configs: Any, *, case_dir: Union[Path, str]) -> list[Path]:
         """Write config instances to ``case_dir`` (delegates to ``save_configs``)."""
-        from neofoam.io import save_configs
+        from neofoam.io import save_configs  # noqa: PLC0415  # cycle: io->configurations
 
         return save_configs(configs, case_dir=case_dir)
 
@@ -132,7 +132,7 @@ def configurations(solver: Any) -> Configurations:
     model family (``solver.model_specs``), deduped by identity. Runs no
     detection and needs no case directory.
     """
-    from neofoam.io import collect_config_classes
+    from neofoam.io import collect_config_classes  # noqa: PLC0415  # cycle: io->configs
 
     classes = collect_config_classes([solver, *solver.model_specs])
     return Configurations(
@@ -167,7 +167,7 @@ def model_catalog(solver: Any) -> list[ModelEntry]:
     source for UIs. (The solver's own configs — e.g. ``controlDict`` — are not
     models; they always apply and are listed by :func:`configurations`.)
     """
-    from neofoam.io import collect_config_classes
+    from neofoam.io import collect_config_classes  # noqa: PLC0415  # cycle: io->configs
 
     out: list[ModelEntry] = []
     for required, families in (

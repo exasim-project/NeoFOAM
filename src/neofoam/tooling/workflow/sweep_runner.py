@@ -43,6 +43,9 @@ from neofoam.framework.solver.registry import resolve_solver
 from neofoam.framework.tools import PreprocessConfig
 from neofoam.io import BaseConfig, write_configs
 from neofoam.tooling.casebuild import CaseDir, Pipeline, Step
+from neofoam.tooling.casebuild.meshing import run_tool
+from neofoam.tooling.workflow.paramspace import write_if_changed
+from neofoam.tools.registry import available_tools
 
 __all__ = [
     "apply_configs",
@@ -342,10 +345,6 @@ def run_tool_command(
     ``chdir``). Any tool other than ``blockMesh`` runs against the
     ``constant/polyMesh`` already on disk, seeded as ``_prev_mesh``.
     """
-    from neofoam.tooling.casebuild.meshing import run_tool
-    from neofoam.tools.registry import available_tools
-    from neofoam.tooling.workflow.paramspace import write_if_changed
-
     base = Path(base).resolve()
     case_dir = Path(case_dir).resolve()
     stamp = Path(stamp).resolve() if stamp is not None else None

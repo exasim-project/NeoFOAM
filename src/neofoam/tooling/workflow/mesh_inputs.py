@@ -27,7 +27,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from neofoam.framework.tools.graph import PreprocessConfig
-from neofoam.tooling.workflow.patch_set import BoxFace, PatchSet, PatchRole
+from neofoam.tooling.workflow.patch_set import BoxFace, PatchRole, PatchSet
 from neofoam.tools._foam_tokens import num
 from neofoam.tools.block_mesh import Block, BlockMeshDictConfig, BlockPatch
 from neofoam.tools.snappy_hex_mesh import SnappyHexMeshDictConfig, SnappySurface

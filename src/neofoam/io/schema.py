@@ -17,7 +17,16 @@ from typing import Any, Literal
 
 from pydantic import BaseModel
 
+import neofoam.tools  # noqa: F401  (import populates the tool registry)
+from neofoam.framework.solver.configurations import (
+    _snake_case,
+    configurations,
+)
+from neofoam.framework.solver.configurations import (
+    model_catalog as _model_catalog,
+)
 from neofoam.io.pydantic_schema import default_values, rjsf_uischema
+from neofoam.tools.registry import available_tools
 
 __all__ = [
     "ConfigInfo",
@@ -113,12 +122,6 @@ def list_configs(solver: Any) -> list[ConfigInfo]:
     ``model_catalog`` model-owned configs are a *subset* of the required inputs; the
     ``"solver"``-origin physics/time dicts complete them.
     """
-    from neofoam.framework.solver.configurations import (
-        _snake_case,
-        configurations,
-        model_catalog as _model_catalog,
-    )
-
     required_owned: set[type] = set()
     optional_owned: set[type] = set()
     for entry in _model_catalog(solver):
@@ -159,8 +162,6 @@ def config_schema(solver: Any, name: str) -> ConfigSchema:
     (``control_dict_config``) that :func:`list_configs` advertises. The response
     ``name`` is always the canonical snake-case, regardless of the spelling passed.
     """
-    from neofoam.framework.solver.configurations import _snake_case, configurations
-
     cfg = configurations(solver)
     by_snake = {_snake_case(cls.__name__): cls for cls in cfg.classes}
     if name in by_snake:
@@ -185,11 +186,6 @@ def tool_catalog(solver: Any) -> list[ToolInfo]:
     ``solver`` supplies the config surface so each tool's ``dict_file`` is linked to
     the config class that writes it (``blockMesh`` → ``BlockMeshDictConfig``).
     """
-    from neofoam.framework.solver.configurations import configurations
-
-    import neofoam.tools  # noqa: F401  (import populates the tool registry)
-    from neofoam.tools.registry import available_tools
-
     file_to_config = {
         cls.io_config.file: cls.__name__
         for cls in configurations(solver).classes
@@ -224,6 +220,4 @@ def model_catalog(solver: Any) -> list[ModelSummary]:
     ``origin == "solver"``. Author the model-owned *and* the ``"solver"``-origin
     configs for a runnable case; this catalog alone is not the full required set.
     """
-    from neofoam.framework.solver.configurations import model_catalog as _model_catalog
-
     return [ModelSummary.from_entry(e) for e in _model_catalog(solver)]

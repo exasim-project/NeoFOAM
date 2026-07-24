@@ -5,8 +5,8 @@
 
 from typing import Any, Callable, Optional, TypeVar
 
+from neofoam.io.strategies import JSONStrategy, OpenFOAMStrategy, YAMLStrategy
 from neofoam.io.validation_types import IOMetadata
-from neofoam.io.strategies import YAMLStrategy, JSONStrategy, OpenFOAMStrategy
 
 
 def YAML(

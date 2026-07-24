@@ -30,7 +30,8 @@ from typing import Any, Optional, Union
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, create_model
 
 from neofoam.framework.solver.configurations import _snake_case, configurations
-from neofoam.io import BaseConfig
+from neofoam.io import BaseConfig, write_configs
+from neofoam.solver.incompressibleFluid.incompressibleFluid import incompressibleFluid
 
 try:
     from pydantic_ai import Agent
@@ -68,11 +69,7 @@ DEFAULT_CASE_SYSTEM_PROMPT = (
 
 
 def _solver() -> Any:
-    """Lazy import so the agent module stays importable without OpenFOAM."""
-    from neofoam.solver.incompressibleFluid.incompressibleFluid import (
-        incompressibleFluid,
-    )
-
+    """Return the incompressibleFluid solver spec."""
     return incompressibleFluid
 
 
@@ -226,8 +223,6 @@ def save_case(
     target the same file (e.g. ``TransportProperties`` + ``Boussinesq``) and
     writes each file once, so co-owners don't clobber each other.
     """
-    from neofoam.io import write_configs
-
     report = write_configs(case_spec_to_configs(case_spec), target_case)
     return [Path(target_case) / file for file in report]
 

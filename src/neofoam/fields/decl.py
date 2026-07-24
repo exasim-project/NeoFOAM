@@ -17,7 +17,8 @@ declaration once and never repeats it inside ``@build``.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field as _dc_field
+from dataclasses import dataclass
+from dataclasses import field as _dc_field
 from typing import Optional, Union
 
 from pydantic import BaseModel
