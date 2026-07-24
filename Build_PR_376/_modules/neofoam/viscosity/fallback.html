@@ -575,11 +575,12 @@
 <span class="sd">the pybFoam ``singlePhaseTransportModel`` (driving ``correct()`` for</span>
 <span class="sd">rate-dependent transport), so the fallback is unified onto the same Context</span>
 <span class="sd">fields the native path uses.</span>
-
-<span class="sd">pybFoam is imported lazily, so importing this module needs no OpenFOAM build.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">pybFoam</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pybFoam.turbulence</span><span class="w"> </span><span class="kn">import</span> <span class="n">singlePhaseTransportModel</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span><span class="p">,</span> <span class="n">FieldUpdates</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.dependency_resolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -596,9 +597,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_default_factory</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="s2">&quot;TransportFactory&quot;</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return pybFoam&#39;s single-phase transport factory (lazy import).&quot;&quot;&quot;</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">pybFoam.turbulence</span><span class="w"> </span><span class="kn">import</span> <span class="n">singlePhaseTransportModel</span>
-
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return pybFoam&#39;s single-phase transport factory.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">singlePhaseTransportModel</span>
 
 
@@ -653,8 +652,6 @@
 <span class="sd">        ``volScalarField`` named ``nu`` so the held Context field outlives the</span>
 <span class="sd">        ``tmp`` (a retained ``tmp`` would be use-after-free).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="kn">import</span><span class="w"> </span><span class="nn">pybFoam</span>
-
         <span class="k">return</span> <span class="n">pybFoam</span><span class="o">.</span><span class="n">volScalarField</span><span class="p">(</span><span class="n">pybFoam</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">&quot;nu&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">nu</span><span class="p">())</span></div>
 
 
