@@ -300,7 +300,10 @@ def ui(
         raise typer.Exit(code=1) from exc
 
     typer.echo(f"NeoFOAM case wizard → http://{host}:{port}/")
-    server.start(host=host, port=port, open_browser=not no_browser)
+    # wslink reaps the process after 300s with no connected client by default —
+    # wrong for a wizard meant to stay open through a long, idle-heavy editing
+    # session (reading forms, running a solve, thinking). Disable it.
+    server.start(host=host, port=port, open_browser=not no_browser, timeout=0)
 
 
 if __name__ == "__main__":

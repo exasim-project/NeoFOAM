@@ -328,6 +328,11 @@ def validate_case(solver: Any, case_dir: str) -> ValidationReportDTO:
     def err(file: str, message: str, fix: Optional[str] = None) -> None:
         findings.append(FindingDTO(level="error", file=file, message=message, fix=fix))
 
+    def warn(file: str, message: str, fix: Optional[str] = None) -> None:
+        findings.append(
+            FindingDTO(level="warning", file=file, message=message, fix=fix)
+        )
+
     # completeness + loadability of the core config-bound files
     cfg = configurations(solver)
     core = {
@@ -335,7 +340,6 @@ def validate_case(solver: Any, case_dir: str) -> ValidationReportDTO:
         for name in (
             "ControlDictConfig",
             "TransportPropertiesConfig",
-            "TurbulencePropertiesConfig",
         )
         if name in cfg.names and cfg[name].io_config is not None
     }
@@ -350,6 +354,25 @@ def validate_case(solver: Any, case_dir: str) -> ValidationReportDTO:
     for rel in ("system/fvSchemes", "system/fvSolution", "0/U", "0/p"):
         if not (case / rel).is_file():
             err(rel, "required file is absent")
+
+    # turbulenceProperties is optional — a laminar case is commonly authored
+    # without one (no turbulence model to configure), so its absence is a
+    # warning, not an error; a present-but-invalid file is still an error.
+    if "TurbulencePropertiesConfig" in cfg.names:
+        turb_cls = cfg["TurbulencePropertiesConfig"]
+        if turb_cls.io_config is not None:
+            turb_rel = turb_cls.io_config.file
+            if not (case / turb_rel).is_file():
+                warn(
+                    turb_rel,
+                    "no turbulence model configured (case will run laminar)",
+                    fix="author a turbulenceProperties if a turbulence model is needed",
+                )
+            else:
+                try:
+                    turb_cls.load(case_dir=case)
+                except Exception as exc:  # present but does not validate
+                    err(turb_rel, f"does not load: {exc}")
 
     # boundary-condition <-> mesh-patch-type consistency (empty/symmetry/cyclic/…)
     patch_types = _mesh_patch_types(case)

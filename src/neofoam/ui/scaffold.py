@@ -13,6 +13,7 @@ here (the repo's ``scripts/Allclean`` is empty).
 
 from __future__ import annotations
 
+import shlex
 import stat
 from pathlib import Path
 
@@ -73,11 +74,70 @@ def _allrun_text() -> str:
     return _ALLRUN_FALLBACK
 
 
+def _neo_ico_foam_binary() -> Path | None:
+    """The compiled ``neoIcoFoam`` app shipped alongside this package, if present."""
+    candidate = Path(__file__).resolve().parents[1] / "bin" / "neoIcoFoam"
+    return candidate if candidate.is_file() else None
+
+
+def _uses_piso(case_dir: Path) -> bool:
+    """True when ``system/fvSolution`` has a ``PISO`` block and no ``PIMPLE`` block.
+
+    Marks a classic OpenFOAM case (e.g. one imported as-is because it didn't fit
+    incompressiblefluid's PIMPLE schema) rather than one authored by the wizard.
+    """
+    path = case_dir / "system" / "fvSolution"
+    if not path.is_file():
+        return False
+    try:
+        import pybFoam as pyf
+
+        root = pyf.dictionary.read(str(path))
+        return bool(root.found("PISO")) and not root.found("PIMPLE")
+    except Exception:  # noqa: BLE001 - unreadable/malformed dict; not a PISO case
+        return False
+
+
+def _neo_ico_foam_allrun_text(binary: Path) -> str:
+    """Allrun for a PISO-format case: mesh with blockMesh, then run neoIcoFoam."""
+    return f"""\
+#!/usr/bin/env bash
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 NeoFOAM authors
+#
+# This case's system/fvSolution uses a classic PISO sub-dict rather than
+# incompressiblefluid's PIMPLE format (e.g. imported from an existing OpenFOAM
+# case as-is), so it runs through the compiled neoIcoFoam solver instead, which
+# needs a pre-generated mesh.
+#
+# Usage (from the case directory):
+#   ./Allrun [extra solver args…]
+#
+cd "${{0%/*}}" || exit 1   # run from this case directory
+
+blockMesh || exit 1
+exec {shlex.quote(str(binary))} "$@"
+"""
+
+
 def scaffold_runnable_case(case_dir: Path | str) -> list[Path]:
-    """Write executable ``Allrun`` + ``Allclean`` into ``case_dir``. Idempotent."""
+    """Write executable ``Allrun`` + ``Allclean`` into ``case_dir``. Idempotent.
+
+    ``Allrun`` launches the compiled ``neoIcoFoam`` solver (after ``blockMesh``)
+    when the case's ``system/fvSolution`` is PISO-format rather than PIMPLE (see
+    :func:`_uses_piso`) and that binary is available; otherwise the usual
+    ``incompressiblefluid`` launcher is used.
+    """
     case = Path(case_dir)
+    binary = _neo_ico_foam_binary()
+    allrun_text = (
+        _neo_ico_foam_allrun_text(binary)
+        if binary is not None and _uses_piso(case)
+        else _allrun_text()
+    )
     written: list[Path] = []
-    for name, text in (("Allrun", _allrun_text()), ("Allclean", ALLCLEAN_TEXT)):
+    for name, text in (("Allrun", allrun_text), ("Allclean", ALLCLEAN_TEXT)):
         path = case / name
         path.write_text(text)
         path.chmod(_EXEC_MODE)

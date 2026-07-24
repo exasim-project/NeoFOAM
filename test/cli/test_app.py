@@ -130,7 +130,12 @@ def test_ui_command_starts_server(monkeypatch: pytest.MonkeyPatch) -> None:
     )
     assert result.exit_code == 0, result.output
     assert captured["solver"] == "incompressibleFluid"
-    assert captured["start"] == {"host": "0.0.0.0", "port": 9001, "open_browser": False}
+    assert captured["start"] == {
+        "host": "0.0.0.0",
+        "port": 9001,
+        "open_browser": False,
+        "timeout": 0,
+    }
 
 
 def test_consume_dag_flags_missing_value_errors() -> None:
