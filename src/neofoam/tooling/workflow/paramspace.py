@@ -28,8 +28,8 @@ them as inputs re-run exactly when their parameters change.
 Variants may be validated against pydantic models (one model per dimension).
 
 This module is imported by the generated Snakefile at workflow *runtime*, so it
-deliberately stays UI-free: stdlib + pydantic only, with PyYAML imported
-lazily. It must never import trame or pybFoam.
+deliberately stays UI-free: stdlib + pydantic + PyYAML only. It must never
+import trame or pybFoam.
 """
 
 from __future__ import annotations
@@ -39,9 +39,9 @@ import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from types import ModuleType
 from typing import Any, Protocol
 
+import yaml
 from pydantic import BaseModel
 
 __all__ = [
@@ -55,16 +55,6 @@ __all__ = [
 ]
 
 DEFAULT_CASE_COL = "case"
-
-
-def _yaml() -> ModuleType:
-    """Import PyYAML lazily so the module stays importable without it."""
-    try:
-        import yaml
-    except ImportError as e:
-        msg = "PyYAML is required for params.yaml support. Install it with: pip install pyyaml"
-        raise ImportError(msg) from e
-    return yaml
 
 
 class _SupportsGet(Protocol):
@@ -143,7 +133,7 @@ def read_params_yaml(path: str | Path) -> dict[str, dict[str, dict[str, Any]]]:
     Raises:
         ValueError: If the file is not a mapping of mappings.
     """
-    data = _yaml().safe_load(Path(path).read_text())
+    data = yaml.safe_load(Path(path).read_text())
     if not isinstance(data, dict):
         msg = f"params file {path}: expected a mapping at the top level"
         raise ValueError(msg)
@@ -160,7 +150,7 @@ def write_params_yaml(
     """Write the named parameter variants (deterministic key order)."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(_yaml().safe_dump(variants, sort_keys=True))
+    path.write_text(yaml.safe_dump(variants, sort_keys=True))
 
 
 def write_if_changed(path: Path, text: str) -> bool:

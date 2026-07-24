@@ -32,6 +32,18 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, create_model
 from neofoam.framework.solver.configurations import _snake_case, configurations
 from neofoam.io import BaseConfig
 
+try:
+    from pydantic_ai import Agent
+    from pydantic_ai.models.anthropic import AnthropicModel
+except ModuleNotFoundError:  # optional [agent] extra
+    Agent = None  # type: ignore[assignment,misc]
+    AnthropicModel = None  # type: ignore[assignment,misc]
+
+#: Actionable message when the optional ``[agent]`` extra is missing.
+_MISSING_PYDANTIC_AI = (
+    "the agent feature needs pydantic-ai; install with: pip install neofoam[agent]"
+)
+
 __all__ = [
     "DEFAULT_CASE_SYSTEM_PROMPT",
     "build_case_agent",
@@ -284,11 +296,12 @@ def build_case_agent(
     per-solver ``CaseSpec``. Extra ``agent_kwargs`` are forwarded to
     :class:`pydantic_ai.Agent`.
     """
-    from pydantic_ai import Agent
+    if Agent is None:
+        raise ImportError(_MISSING_PYDANTIC_AI)
 
     if model is None:
-        from pydantic_ai.models.anthropic import AnthropicModel
-
+        if AnthropicModel is None:
+            raise ImportError(_MISSING_PYDANTIC_AI)
         model = AnthropicModel(model_name)
 
     out_type = output_type or build_case_output_model(

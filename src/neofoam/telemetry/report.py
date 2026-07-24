@@ -31,6 +31,11 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
 
+try:
+    from matplotlib.figure import Figure as _Figure
+except ModuleNotFoundError:  # optional [telemetry] extra
+    _Figure = None  # type: ignore[assignment,misc]
+
 _US_PER_S = 1e6
 
 # What FileSpanExporter writes, per rank.
@@ -176,13 +181,11 @@ def plot_summary(
     or a notebook captures it); otherwise a fresh figure is created and
     returned. Requires matplotlib (imported lazily).
     """
-    try:
-        from matplotlib.figure import Figure
-    except ImportError as exc:  # pragma: no cover - exercised via the error test
+    if _Figure is None:  # pragma: no cover - exercised via the error test
         raise ImportError(
             "plot_summary requires matplotlib: pip install matplotlib "
             "(or install the neofoam[telemetry] extra)"
-        ) from exc
+        )
 
     data = _load_summary(summary)
     spans: dict[str, dict[str, float]] = data.get("spans", {})
@@ -194,7 +197,7 @@ def plot_summary(
     totals = [stats["total_s"] for _, stats in ranked]
 
     if ax is None:
-        figure = Figure(figsize=(8, max(2.0, 0.4 * len(names) + 1)))
+        figure = _Figure(figsize=(8, max(2.0, 0.4 * len(names) + 1)))
         axes = figure.subplots()
     else:
         axes = ax
