@@ -590,6 +590,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">TransportPropertiesConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.fallback</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpenFOAMViscosityModel</span><span class="p">,</span> <span class="n">TransportFactory</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.viscosityModel</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelSpec</span><span class="p">,</span> <span class="n">viscosityModel</span>
 
@@ -647,8 +648,6 @@
 <span class="sd">    This is the pybFoam-bound entry point: it imports and uses the OpenFOAM</span>
 <span class="sd">    reading strategy via :class:`TransportPropertiesConfig`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">TransportPropertiesConfig</span>
-
     <span class="n">config</span> <span class="o">=</span> <span class="n">TransportPropertiesConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">select_viscosity_model</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">U</span><span class="o">=</span><span class="n">U</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="n">phi</span><span class="p">,</span> <span class="n">of_factory</span><span class="o">=</span><span class="n">of_factory</span><span class="p">)</span></div>
 

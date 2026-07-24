@@ -603,6 +603,7 @@
     <span class="n">volVectorField</span><span class="p">,</span>
 <span class="p">)</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="w"> </span><span class="kn">import</span> <span class="n">telemetry</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.fields</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">CalculatedBC</span><span class="p">,</span>
     <span class="n">CyclicBC</span><span class="p">,</span>
@@ -619,7 +620,6 @@
     <span class="n">Vector</span><span class="p">,</span>
     <span class="n">ZeroGradientBC</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="w"> </span><span class="kn">import</span> <span class="n">telemetry</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.foam</span><span class="w"> </span><span class="kn">import</span> <span class="n">fvSchemes</span><span class="p">,</span> <span class="n">fvSolution</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span><span class="p">,</span> <span class="n">FieldUpdates</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.dependency_resolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">wrap_with_dependency_resolution</span>
@@ -634,7 +634,6 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">..incompressibleFluidModel</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.control_factory</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_simple_control</span>
-
 
 <span class="n">simple</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;Simple&quot;</span><span class="p">)</span>
 
@@ -810,9 +809,7 @@
         <span class="n">rAtU</span> <span class="o">=</span> <span class="n">volScalarField</span><span class="p">(</span><span class="n">rAU</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">simple_control</span><span class="o">.</span><span class="n">consistent</span><span class="p">():</span>
             <span class="n">rAtU</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">rAU</span> <span class="o">-</span> <span class="n">UEqn</span><span class="o">.</span><span class="n">H1</span><span class="p">()))</span>
-            <span class="n">phiHbyA</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span>
-                <span class="n">phiHbyA</span> <span class="o">+</span> <span class="n">fvc</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">rAtU</span> <span class="o">-</span> <span class="n">rAU</span><span class="p">)</span> <span class="o">*</span> <span class="n">fvc</span><span class="o">.</span><span class="n">snGrad</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">*</span> <span class="n">U</span><span class="o">.</span><span class="n">mesh</span><span class="p">()</span><span class="o">.</span><span class="n">magSf</span><span class="p">()</span>
-            <span class="p">)</span>
+            <span class="n">phiHbyA</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">phiHbyA</span> <span class="o">+</span> <span class="n">fvc</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">rAtU</span> <span class="o">-</span> <span class="n">rAU</span><span class="p">)</span> <span class="o">*</span> <span class="n">fvc</span><span class="o">.</span><span class="n">snGrad</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">*</span> <span class="n">U</span><span class="o">.</span><span class="n">mesh</span><span class="p">()</span><span class="o">.</span><span class="n">magSf</span><span class="p">())</span>
             <span class="n">HbyA</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">HbyA</span> <span class="o">-</span> <span class="p">(</span><span class="n">rAU</span> <span class="o">-</span> <span class="n">rAtU</span><span class="p">)</span> <span class="o">*</span> <span class="n">fvc</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
 
         <span class="n">pyf</span><span class="o">.</span><span class="n">constrainPressure</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">U</span><span class="p">,</span> <span class="n">phiHbyA</span><span class="p">,</span> <span class="n">rAtU</span><span class="p">)</span>
@@ -873,16 +870,12 @@
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">wrapped_momentum</span> <span class="o">=</span> <span class="n">wrap_with_dependency_resolution</span><span class="p">(</span>
-        <span class="n">momentum</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">simple</span><span class="o">.</span><span class="n">_dependency_resolver</span>
-    <span class="p">)</span>
+    <span class="n">wrapped_momentum</span> <span class="o">=</span> <span class="n">wrap_with_dependency_resolution</span><span class="p">(</span><span class="n">momentum</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">simple</span><span class="o">.</span><span class="n">_dependency_resolver</span><span class="p">)</span>
     <span class="n">wrapped_continuity</span> <span class="o">=</span> <span class="n">wrap_with_dependency_resolution</span><span class="p">(</span>
         <span class="n">continuity</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">simple</span><span class="o">.</span><span class="n">_dependency_resolver</span>
     <span class="p">)</span>
 
-    <span class="n">model_ops</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
-        <span class="n">_alias_operation</span><span class="p">(</span><span class="n">wrapped_momentum</span><span class="p">,</span> <span class="n">operation_name</span><span class="o">=</span><span class="s2">&quot;momentum&quot;</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[])</span>
-    <span class="p">)</span>
+    <span class="n">model_ops</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">_alias_operation</span><span class="p">(</span><span class="n">wrapped_momentum</span><span class="p">,</span> <span class="n">operation_name</span><span class="o">=</span><span class="s2">&quot;momentum&quot;</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[]))</span>
     <span class="n">model_ops</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
         <span class="n">_alias_operation</span><span class="p">(</span>
             <span class="n">wrapped_continuity</span><span class="p">,</span>

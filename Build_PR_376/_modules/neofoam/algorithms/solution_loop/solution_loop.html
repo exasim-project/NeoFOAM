@@ -607,6 +607,17 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">runtime_checkable</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.algorithms.solution_loop.config</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">_ADJUSTABLE</span><span class="p">,</span>
+    <span class="n">_RUN_TIME</span><span class="p">,</span>
+    <span class="n">_TIME_STEP</span><span class="p">,</span>
+    <span class="n">_WRITE_CONTROL_ALIASES</span><span class="p">,</span>
+    <span class="n">LABEL_MAX</span><span class="p">,</span>
+    <span class="n">SMALL</span><span class="p">,</span>
+    <span class="n">TimeControlConfig</span><span class="p">,</span>
+    <span class="n">_round_half_away</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.algorithms.solution_loop.control</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolutionControl</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.algorithms.solution_loop.interfaces</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">VGREAT</span><span class="p">,</span>
     <span class="n">loopCondition</span><span class="p">,</span>
@@ -617,17 +628,6 @@
 <span class="c1"># the explicit alias marks it as a public re-export for the solver-side module</span>
 <span class="c1"># that imports it from here (mypy strict no_implicit_reexport).</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.algorithms.solution_loop.interfaces</span><span class="w"> </span><span class="kn">import</span> <span class="n">solutionLoop</span> <span class="k">as</span> <span class="n">solutionLoop</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.algorithms.solution_loop.config</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">LABEL_MAX</span><span class="p">,</span>
-    <span class="n">SMALL</span><span class="p">,</span>
-    <span class="n">_ADJUSTABLE</span><span class="p">,</span>
-    <span class="n">_RUN_TIME</span><span class="p">,</span>
-    <span class="n">_TIME_STEP</span><span class="p">,</span>
-    <span class="n">_WRITE_CONTROL_ALIASES</span><span class="p">,</span>
-    <span class="n">TimeControlConfig</span><span class="p">,</span>
-    <span class="n">_round_half_away</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.algorithms.solution_loop.control</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolutionControl</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.algorithms.solution_loop.loop_state</span><span class="w"> </span><span class="kn">import</span> <span class="n">LoopState</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.algorithms.solution_loop.time_integration</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">TimeIntegration</span><span class="p">,</span>
@@ -700,21 +700,15 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_integration</span><span class="p">:</span> <span class="n">TimeIntegration</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">integration</span> <span class="k">if</span> <span class="n">integration</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">TransientIntegration</span><span class="p">()</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="p">:</span> <span class="n">LoopControl</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">control</span> <span class="k">if</span> <span class="n">control</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">SolutionControl</span><span class="p">()</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="s2">&quot;SolutionLoop&quot;</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
-            <span class="n">conditions</span> <span class="ow">or</span> <span class="p">[]</span>
-        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_control</span><span class="p">:</span> <span class="n">LoopControl</span> <span class="o">=</span> <span class="n">control</span> <span class="k">if</span> <span class="n">control</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">SolutionControl</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_conditions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="s2">&quot;SolutionLoop&quot;</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">conditions</span> <span class="ow">or</span> <span class="p">[])</span>
         <span class="c1"># latest interface folds, written by the set_time_step operation: next_dt</span>
         <span class="c1"># is the folded timeStepConstraint limit and keep_running the loopCondition</span>
         <span class="c1"># fold, which the outer-loop predicate ANDs with running() to stop the run.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">next_dt</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">VGREAT</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">keep_running</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_growth_cap</span> <span class="o">=</span> <span class="n">growth_cap</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_backend</span><span class="p">:</span> <span class="n">LoopBackend</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">backend</span> <span class="k">if</span> <span class="n">backend</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">NullLoopBackend</span><span class="p">()</span>
-        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_backend</span><span class="p">:</span> <span class="n">LoopBackend</span> <span class="o">=</span> <span class="n">backend</span> <span class="k">if</span> <span class="n">backend</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">NullLoopBackend</span><span class="p">()</span>
 
     <span class="c1"># -- injection --------------------------------------------------------</span>
 <div class="viewcode-block" id="SolutionLoop.set_backend">
@@ -830,9 +824,7 @@
         <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">write_control</span> <span class="o">==</span> <span class="n">_TIME_STEP</span><span class="p">:</span>
             <span class="n">s</span><span class="o">.</span><span class="n">write_time</span> <span class="o">=</span> <span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">index</span> <span class="o">%</span> <span class="nb">int</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">write_interval</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span>
         <span class="k">elif</span> <span class="n">s</span><span class="o">.</span><span class="n">write_control</span> <span class="ow">in</span> <span class="p">(</span><span class="n">_RUN_TIME</span><span class="p">,</span> <span class="n">_ADJUSTABLE</span><span class="p">):</span>
-            <span class="n">write_index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
-                <span class="p">((</span><span class="n">s</span><span class="o">.</span><span class="n">value</span> <span class="o">-</span> <span class="n">s</span><span class="o">.</span><span class="n">start_time</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">s</span><span class="o">.</span><span class="n">delta_t</span><span class="p">)</span> <span class="o">/</span> <span class="n">s</span><span class="o">.</span><span class="n">write_interval</span>
-            <span class="p">)</span>
+            <span class="n">write_index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(((</span><span class="n">s</span><span class="o">.</span><span class="n">value</span> <span class="o">-</span> <span class="n">s</span><span class="o">.</span><span class="n">start_time</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">s</span><span class="o">.</span><span class="n">delta_t</span><span class="p">)</span> <span class="o">/</span> <span class="n">s</span><span class="o">.</span><span class="n">write_interval</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">write_index</span> <span class="o">&gt;</span> <span class="n">s</span><span class="o">.</span><span class="n">write_time_index</span><span class="p">:</span>
                 <span class="n">s</span><span class="o">.</span><span class="n">write_time</span> <span class="o">=</span> <span class="kc">True</span>
                 <span class="n">s</span><span class="o">.</span><span class="n">write_time_index</span> <span class="o">=</span> <span class="n">write_index</span>
@@ -890,9 +882,7 @@
         <span class="n">delta_t</span><span class="o">=</span><span class="n">integration</span><span class="o">.</span><span class="n">initial_delta_t</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">deltaT</span><span class="p">),</span>
         <span class="n">end_time</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">endTime</span><span class="p">,</span>
         <span class="n">start_time</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">startTime</span><span class="p">,</span>
-        <span class="n">write_control</span><span class="o">=</span><span class="n">_WRITE_CONTROL_ALIASES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-            <span class="n">config</span><span class="o">.</span><span class="n">writeControl</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">writeControl</span>
-        <span class="p">),</span>
+        <span class="n">write_control</span><span class="o">=</span><span class="n">_WRITE_CONTROL_ALIASES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">writeControl</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">writeControl</span><span class="p">),</span>
         <span class="n">write_interval</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">writeInterval</span><span class="p">,</span>
     <span class="p">)</span></div>
 

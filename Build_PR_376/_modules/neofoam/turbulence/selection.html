@@ -604,6 +604,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">overload</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">TurbulencePropertiesConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.fallback</span><span class="w"> </span><span class="kn">import</span> <span class="n">FallbackHandle</span><span class="p">,</span> <span class="n">OpenFOAMTurbulenceModel</span><span class="p">,</span> <span class="n">TurbulenceFactory</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.momentumTransport</span><span class="w"> </span><span class="kn">import</span> <span class="n">momentumTransportModel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.native</span><span class="w"> </span><span class="kn">import</span> <span class="n">NeoNHandle</span>
@@ -727,9 +728,7 @@
         <span class="n">of</span> <span class="o">=</span> <span class="n">OpenFOAMTurbulenceModel</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">transport</span><span class="p">,</span> <span class="n">factory</span><span class="o">=</span><span class="n">of_factory</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">FallbackHandle</span><span class="p">(</span><span class="n">of</span><span class="p">,</span> <span class="n">model_runtime</span><span class="o">.</span><span class="n">fallback_operations</span><span class="p">())</span>
 
-    <span class="n">native_capable</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">_build_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">bool</span><span class="p">(</span>
-        <span class="n">model_runtime</span><span class="o">.</span><span class="n">native_operations</span><span class="p">()</span>
-    <span class="p">)</span>
+    <span class="n">native_capable</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">_build_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">bool</span><span class="p">(</span><span class="n">model_runtime</span><span class="o">.</span><span class="n">native_operations</span><span class="p">())</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">native_capable</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> has no native NeoN closure; run it on incompressibleFluid &quot;</span>
@@ -757,8 +756,6 @@
 <span class="sd">    This is the pybFoam-bound entry point: it imports and uses the OpenFOAM</span>
 <span class="sd">    reading strategy via :class:`TurbulencePropertiesConfig`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">TurbulencePropertiesConfig</span>
-
     <span class="n">config</span> <span class="o">=</span> <span class="n">TurbulencePropertiesConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">select_turbulence_model</span><span class="p">(</span>
         <span class="n">config</span><span class="p">,</span>

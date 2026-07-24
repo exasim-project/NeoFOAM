@@ -40,7 +40,6 @@ from pybFoam import (
 )
 
 from neofoam import Depends, FieldUpdates, Solver, field
-
 from neofoam.framework.context import Context
 from neofoam.framework.graph import DAGResolver
 from neofoam.framework.initialization import (
@@ -109,15 +108,11 @@ def create_init(case_dir: Optional[Any] = None) -> StagedInitRunner:
         pass
 
     @spec_builder.build
-    def build_lazy(
-        core_models: list[Any], optional_models: list[Any]
-    ) -> list[InitStep]:
+    def build_lazy(core_models: list[Any], optional_models: list[Any]) -> list[InitStep]:
         argv = runner.argv
         builder = InitializerBuilder()
         builder.add(lazy("time", lambda _ctx: pyf.Time(pyf.argList(argv))))
-        builder.add(
-            lazy("mesh", lambda ctx: pyf.fvMesh(ctx["time"]), depends_on=["time"])
-        )
+        builder.add(lazy("mesh", lambda ctx: pyf.fvMesh(ctx["time"]), depends_on=["time"]))
 
         def create_T(ctx: dict[str, Any]) -> volScalarField:
             return volScalarField.read_field(ctx["mesh"], "T")

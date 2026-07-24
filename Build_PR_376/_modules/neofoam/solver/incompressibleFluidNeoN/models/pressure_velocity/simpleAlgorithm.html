@@ -605,8 +605,8 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">neon._neon</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>  <span class="c1"># NeoN Python bindings</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="w"> </span><span class="kn">import</span> <span class="n">neofoam_bindings</span> <span class="k">as</span> <span class="n">nfb</span>  <span class="c1"># NeoFOAM Python bindings</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="w"> </span><span class="kn">import</span> <span class="n">neofoam_bindings</span> <span class="k">as</span> <span class="n">nfb</span>  <span class="c1"># NeoFOAM Python bindings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.fields</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">CalculatedBC</span><span class="p">,</span>
     <span class="n">CyclicBC</span><span class="p">,</span>
@@ -637,7 +637,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.solver.pisoControl</span><span class="w"> </span><span class="kn">import</span> <span class="n">PisoControl</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">..incompressibleFluidNeoNModel</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
-
 
 <span class="n">simpleNeoN</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;SimpleNeoN&quot;</span><span class="p">)</span>
 
@@ -758,9 +757,7 @@
             <span class="p">)</span>
         <span class="n">piso</span> <span class="o">=</span> <span class="n">PisoControl</span><span class="p">(</span>
             <span class="n">n_correctors</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-            <span class="n">n_non_orthogonal_correctors</span><span class="o">=</span><span class="n">_read_int</span><span class="p">(</span>
-                <span class="n">simple_dict</span><span class="p">,</span> <span class="s2">&quot;nNonOrthogonalCorrectors&quot;</span><span class="p">,</span> <span class="mi">0</span>
-            <span class="p">),</span>
+            <span class="n">n_non_orthogonal_correctors</span><span class="o">=</span><span class="n">_read_int</span><span class="p">(</span><span class="n">simple_dict</span><span class="p">,</span> <span class="s2">&quot;nNonOrthogonalCorrectors&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
             <span class="n">momentum_predictor</span><span class="o">=</span><span class="n">_read_switch</span><span class="p">(</span><span class="n">simple_dict</span><span class="p">,</span> <span class="s2">&quot;momentumPredictor&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">SimpleNeoNState</span><span class="p">(</span><span class="n">piso</span><span class="p">)</span>
@@ -772,9 +769,7 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_surf_interp</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="n">rt</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;_neon_runtime&quot;</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">nn</span><span class="o">.</span><span class="n">SurfaceInterpolationScalar</span><span class="p">(</span>
-            <span class="n">rt</span><span class="o">.</span><span class="n">executor</span><span class="p">,</span> <span class="n">rt</span><span class="o">.</span><span class="n">nf_mesh</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">TokenList</span><span class="p">([</span><span class="s2">&quot;linear&quot;</span><span class="p">])</span>
-        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">nn</span><span class="o">.</span><span class="n">SurfaceInterpolationScalar</span><span class="p">(</span><span class="n">rt</span><span class="o">.</span><span class="n">executor</span><span class="p">,</span> <span class="n">rt</span><span class="o">.</span><span class="n">nf_mesh</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">TokenList</span><span class="p">([</span><span class="s2">&quot;linear&quot;</span><span class="p">]))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_grad_op</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">nfb</span><span class="o">.</span><span class="n">GaussGreenGrad</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">&quot;_neon_runtime&quot;</span><span class="p">])</span>
@@ -1023,13 +1018,9 @@
     <span class="p">)</span>
 
     <span class="n">model_ops</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
-        <span class="n">_alias_operation</span><span class="p">(</span>
-            <span class="n">wrapped_rotate</span><span class="p">,</span> <span class="n">operation_name</span><span class="o">=</span><span class="s2">&quot;rotate_and_report&quot;</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[]</span>
-        <span class="p">)</span>
+        <span class="n">_alias_operation</span><span class="p">(</span><span class="n">wrapped_rotate</span><span class="p">,</span> <span class="n">operation_name</span><span class="o">=</span><span class="s2">&quot;rotate_and_report&quot;</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[])</span>
     <span class="p">)</span>
-    <span class="n">model_ops</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
-        <span class="n">_alias_operation</span><span class="p">(</span><span class="n">wrapped_momentum</span><span class="p">,</span> <span class="n">operation_name</span><span class="o">=</span><span class="s2">&quot;momentum&quot;</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[])</span>
-    <span class="p">)</span>
+    <span class="n">model_ops</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">_alias_operation</span><span class="p">(</span><span class="n">wrapped_momentum</span><span class="p">,</span> <span class="n">operation_name</span><span class="o">=</span><span class="s2">&quot;momentum&quot;</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[]))</span>
     <span class="n">model_ops</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
         <span class="n">_alias_operation</span><span class="p">(</span>
             <span class="n">wrapped_continuity</span><span class="p">,</span>
@@ -1038,9 +1029,7 @@
         <span class="p">)</span>
     <span class="p">)</span>
     <span class="n">model_ops</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
-        <span class="n">_alias_operation</span><span class="p">(</span>
-            <span class="n">wrapped_turbulence</span><span class="p">,</span> <span class="n">operation_name</span><span class="o">=</span><span class="s2">&quot;turbulence_correct&quot;</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[]</span>
-        <span class="p">)</span>
+        <span class="n">_alias_operation</span><span class="p">(</span><span class="n">wrapped_turbulence</span><span class="p">,</span> <span class="n">operation_name</span><span class="o">=</span><span class="s2">&quot;turbulence_correct&quot;</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[])</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">model_ops</span></div>
 

@@ -70,7 +70,7 @@ rather than constructing the dictionaries inline.
 
     from neofoam.foam import fvSchemes, fvSolution
     from neofoam.framework.model import Model
-    from neofoam.io import IOStrategy, YAML
+    from neofoam.io import YAML, IOStrategy
 
 
     def _here() -> None:
@@ -92,7 +92,7 @@ rather than constructing the dictionaries inline.
 
  .. code-block:: none
 
-    case_dir = /tmp/neofoam_fvschemes_kfn0ah2y
+    case_dir = /tmp/neofoam_fvschemes_qegifi_8
 
 
 
@@ -269,14 +269,12 @@ fixture ships alongside the page:
    :language: yaml
    :caption: per_model_fvSchemes_bad.yaml
 
-.. GENERATED FROM PYTHON SOURCE LINES 163-173
+.. GENERATED FROM PYTHON SOURCE LINES 163-171
 
 .. code-block:: Python
 
 
-    shutil.copy(
-        HERE / "per_model_fvSchemes_bad.yaml", CASE_DIR / "per_model_fvSchemes_bad.yaml"
-    )
+    shutil.copy(HERE / "per_model_fvSchemes_bad.yaml", CASE_DIR / "per_model_fvSchemes_bad.yaml")
     try:
         PimpleFvSchemes.load(case_dir=CASE_DIR, file="per_model_fvSchemes_bad.yaml")
     except Exception as exc:
@@ -296,7 +294,7 @@ fixture ships alongside the page:
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 174-179
+.. GENERATED FROM PYTHON SOURCE LINES 172-177
 
 Two specs get independent subclasses
 ------------------------------------
@@ -304,7 +302,7 @@ A second model registering ``fvSchemes`` gets a *separate* subclass.
 Adding entries to one does not affect the other — no shared mutable
 state between models.
 
-.. GENERATED FROM PYTHON SOURCE LINES 179-188
+.. GENERATED FROM PYTHON SOURCE LINES 177-186
 
 .. code-block:: Python
 
@@ -331,7 +329,7 @@ state between models.
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 189-197
+.. GENERATED FROM PYTHON SOURCE LINES 187-195
 
 See also
 --------
@@ -342,7 +340,7 @@ See also
 - ``neofoam.foam.schemes`` — the typed scheme unions used as
   value types when ``.add(...)`` injects fields.
 
-.. GENERATED FROM PYTHON SOURCE LINES 197-199
+.. GENERATED FROM PYTHON SOURCE LINES 195-197
 
 .. code-block:: Python
 

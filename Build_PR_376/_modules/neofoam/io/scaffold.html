@@ -622,7 +622,7 @@
     <span class="c1"># closes a cycle. The lazy resolution costs one ``import`` per</span>
     <span class="c1"># ``collect_config_classes`` call, but only the first hit pays — the</span>
     <span class="c1"># second call sees ``sys.modules`` already populated.</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.fields.schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">schema_for</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.fields.schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">schema_for</span>  <span class="c1"># noqa: PLC0415  # io&lt;-&gt;fields.schema cycle</span>
 
     <span class="k">for</span> <span class="n">source</span> <span class="ow">in</span> <span class="n">sources</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
@@ -648,9 +648,7 @@
 
 <div class="viewcode-block" id="save_configs">
 <a class="viewcode-back" href="../../../reference/api/neofoam.io.scaffold.html#neofoam.io.scaffold.save_configs">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">save_configs</span><span class="p">(</span>
-    <span class="n">configs</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">BaseConfig</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">save_configs</span><span class="p">(</span><span class="n">configs</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">BaseConfig</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Save each config to ``case_dir`` via its registered IO strategy.</span>
 
 <span class="sd">    Configs whose class has no ``@IOStrategy`` binding are skipped with a</span>

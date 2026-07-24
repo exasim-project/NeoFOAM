@@ -31,7 +31,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from neofoam.io import BaseConfig, IOStrategy, YAML
+from neofoam.io import YAML, BaseConfig, IOStrategy
 
 
 def _here() -> None:

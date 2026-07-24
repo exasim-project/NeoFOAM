@@ -603,6 +603,7 @@
     <span class="n">volVectorField</span><span class="p">,</span>
 <span class="p">)</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="w"> </span><span class="kn">import</span> <span class="n">telemetry</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.fields</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">CalculatedBC</span><span class="p">,</span>
     <span class="n">CyclicBC</span><span class="p">,</span>
@@ -619,7 +620,6 @@
     <span class="n">Vector</span><span class="p">,</span>
     <span class="n">ZeroGradientBC</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="w"> </span><span class="kn">import</span> <span class="n">telemetry</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.foam</span><span class="w"> </span><span class="kn">import</span> <span class="n">fvSchemes</span><span class="p">,</span> <span class="n">fvSolution</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span><span class="p">,</span> <span class="n">FieldUpdates</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.dependency_resolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">wrap_with_dependency_resolution</span>
@@ -634,7 +634,6 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">..incompressibleFluidModel</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.control_factory</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_pimple_control</span>
-
 
 <span class="n">pimple</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;Pimple&quot;</span><span class="p">)</span>
 
@@ -747,12 +746,9 @@
         <span class="n">field_name</span> <span class="o">=</span> <span class="s2">&quot;p_rgh&quot;</span> <span class="k">if</span> <span class="n">p_rgh</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;p&quot;</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
-            <span class="n">algo_dict</span><span class="o">.</span><span class="n">found</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">field_name</span><span class="si">}</span><span class="s2">RefCell&quot;</span><span class="p">)</span>
-            <span class="ow">or</span> <span class="n">algo_dict</span><span class="o">.</span><span class="n">found</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">field_name</span><span class="si">}</span><span class="s2">RefPoint&quot;</span><span class="p">)</span>
+            <span class="n">algo_dict</span><span class="o">.</span><span class="n">found</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">field_name</span><span class="si">}</span><span class="s2">RefCell&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">algo_dict</span><span class="o">.</span><span class="n">found</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">field_name</span><span class="si">}</span><span class="s2">RefPoint&quot;</span><span class="p">)</span>
         <span class="p">):</span>
-            <span class="k">if</span> <span class="n">p_rgh</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span>
-                <span class="n">algo_dict</span><span class="o">.</span><span class="n">found</span><span class="p">(</span><span class="s2">&quot;pRefCell&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">algo_dict</span><span class="o">.</span><span class="n">found</span><span class="p">(</span><span class="s2">&quot;pRefPoint&quot;</span><span class="p">)</span>
-            <span class="p">):</span>
+            <span class="k">if</span> <span class="n">p_rgh</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span><span class="n">algo_dict</span><span class="o">.</span><span class="n">found</span><span class="p">(</span><span class="s2">&quot;pRefCell&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">algo_dict</span><span class="o">.</span><span class="n">found</span><span class="p">(</span><span class="s2">&quot;pRefPoint&quot;</span><span class="p">)):</span>
                 <span class="n">pRefCell</span><span class="p">,</span> <span class="n">pRefValue</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">setRefCell</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">algo_dict</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">pRefCell</span><span class="p">,</span> <span class="n">pRefValue</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">setRefCell</span><span class="p">(</span><span class="n">pressure_field</span><span class="p">,</span> <span class="n">algo_dict</span><span class="p">)</span>
@@ -833,9 +829,7 @@
     <span class="c1"># matches OpenFOAM&#39;s once-per-step eddy viscosity.</span>
     <span class="k">with</span> <span class="n">telemetry</span><span class="o">.</span><span class="n">span</span><span class="p">(</span><span class="s2">&quot;momentum.assemble&quot;</span><span class="p">):</span>
         <span class="n">viscousStress</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
-        <span class="n">UEqn</span> <span class="o">=</span> <span class="n">fvVectorMatrix</span><span class="p">(</span>
-            <span class="n">fvm</span><span class="o">.</span><span class="n">ddt</span><span class="p">(</span><span class="n">U</span><span class="p">)</span> <span class="o">+</span> <span class="n">fvm</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">U</span><span class="p">)</span> <span class="o">+</span> <span class="n">viscousStress</span><span class="o">.</span><span class="n">divDevReff</span><span class="p">(</span><span class="n">U</span><span class="p">)</span>
-        <span class="p">)</span>
+        <span class="n">UEqn</span> <span class="o">=</span> <span class="n">fvVectorMatrix</span><span class="p">(</span><span class="n">fvm</span><span class="o">.</span><span class="n">ddt</span><span class="p">(</span><span class="n">U</span><span class="p">)</span> <span class="o">+</span> <span class="n">fvm</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">U</span><span class="p">)</span> <span class="o">+</span> <span class="n">viscousStress</span><span class="o">.</span><span class="n">divDevReff</span><span class="p">(</span><span class="n">U</span><span class="p">))</span>
         <span class="n">UEqn</span><span class="o">.</span><span class="n">relax</span><span class="p">()</span>
 
     <span class="k">if</span> <span class="n">pimple_control</span><span class="o">.</span><span class="n">momentumPredictor</span><span class="p">():</span>
@@ -845,9 +839,7 @@
             <span class="c1"># finalIteration state. ``UEqn`` keeps its coefficients for the</span>
             <span class="c1"># pressure loop; the predictor system ``UEqn + grad(p)`` is a</span>
             <span class="c1"># separate matrix whose solve updates U.</span>
-            <span class="n">fvVectorMatrix</span><span class="p">(</span><span class="n">UEqn</span> <span class="o">+</span> <span class="n">fvc</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">p</span><span class="p">))</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
-                <span class="n">U</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">pimple_control</span><span class="o">.</span><span class="n">finalIter</span><span class="p">())</span>
-            <span class="p">)</span>
+            <span class="n">fvVectorMatrix</span><span class="p">(</span><span class="n">UEqn</span> <span class="o">+</span> <span class="n">fvc</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">p</span><span class="p">))</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">U</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">pimple_control</span><span class="o">.</span><span class="n">finalIter</span><span class="p">()))</span>
 
     <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">&quot;UEqn&quot;</span><span class="p">:</span> <span class="n">UEqn</span><span class="p">,</span> <span class="s2">&quot;U&quot;</span><span class="p">:</span> <span class="n">U</span><span class="p">})</span>
 
@@ -889,9 +881,7 @@
             <span class="k">with</span> <span class="n">telemetry</span><span class="o">.</span><span class="n">span</span><span class="p">(</span><span class="s2">&quot;pressure.assemble&quot;</span><span class="p">):</span>
                 <span class="n">pEqn</span> <span class="o">=</span> <span class="n">fvScalarMatrix</span><span class="p">(</span><span class="n">fvm</span><span class="o">.</span><span class="n">laplacian</span><span class="p">(</span><span class="n">rAU</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span> <span class="o">-</span> <span class="n">fvc</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">phiHbyA</span><span class="p">))</span>
                 <span class="n">pEqn</span><span class="o">.</span><span class="n">setReference</span><span class="p">(</span><span class="n">pRefCell</span><span class="p">,</span> <span class="n">pRefValue</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-            <span class="k">with</span> <span class="n">telemetry</span><span class="o">.</span><span class="n">span</span><span class="p">(</span>
-                <span class="s2">&quot;pressure.solve&quot;</span><span class="p">,</span> <span class="n">final</span><span class="o">=</span><span class="n">pimple_control</span><span class="o">.</span><span class="n">finalInnerIter</span><span class="p">()</span>
-            <span class="p">):</span>
+            <span class="k">with</span> <span class="n">telemetry</span><span class="o">.</span><span class="n">span</span><span class="p">(</span><span class="s2">&quot;pressure.solve&quot;</span><span class="p">,</span> <span class="n">final</span><span class="o">=</span><span class="n">pimple_control</span><span class="o">.</span><span class="n">finalInnerIter</span><span class="p">()):</span>
                 <span class="n">pEqn</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">pimple_control</span><span class="o">.</span><span class="n">finalInnerIter</span><span class="p">()))</span>
 
             <span class="k">if</span> <span class="n">pimple_control</span><span class="o">.</span><span class="n">finalNonOrthogonalIter</span><span class="p">():</span>
@@ -937,9 +927,7 @@
     <span class="c1"># Refresh nuEff where it is consumed (see ``momentum``).</span>
     <span class="k">with</span> <span class="n">telemetry</span><span class="o">.</span><span class="n">span</span><span class="p">(</span><span class="s2">&quot;momentum.assemble&quot;</span><span class="p">):</span>
         <span class="n">viscousStress</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
-        <span class="n">UEqn</span> <span class="o">=</span> <span class="n">fvVectorMatrix</span><span class="p">(</span>
-            <span class="n">fvm</span><span class="o">.</span><span class="n">ddt</span><span class="p">(</span><span class="n">U</span><span class="p">)</span> <span class="o">+</span> <span class="n">fvm</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">U</span><span class="p">)</span> <span class="o">+</span> <span class="n">viscousStress</span><span class="o">.</span><span class="n">divDevReff</span><span class="p">(</span><span class="n">U</span><span class="p">)</span>
-        <span class="p">)</span>
+        <span class="n">UEqn</span> <span class="o">=</span> <span class="n">fvVectorMatrix</span><span class="p">(</span><span class="n">fvm</span><span class="o">.</span><span class="n">ddt</span><span class="p">(</span><span class="n">U</span><span class="p">)</span> <span class="o">+</span> <span class="n">fvm</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">U</span><span class="p">)</span> <span class="o">+</span> <span class="n">viscousStress</span><span class="o">.</span><span class="n">divDevReff</span><span class="p">(</span><span class="n">U</span><span class="p">))</span>
         <span class="n">UEqn</span><span class="o">.</span><span class="n">relax</span><span class="p">()</span>
 
     <span class="k">if</span> <span class="n">pimple_control</span><span class="o">.</span><span class="n">momentumPredictor</span><span class="p">():</span>
@@ -947,10 +935,7 @@
             <span class="c1"># Explicit final-iteration flag (see ``momentum``): pick UFinal via</span>
             <span class="c1"># U.select rather than the mesh finalIteration state.</span>
             <span class="n">fvVectorMatrix</span><span class="p">(</span>
-                <span class="n">UEqn</span>
-                <span class="o">+</span> <span class="n">fvc</span><span class="o">.</span><span class="n">reconstruct</span><span class="p">(</span>
-                    <span class="p">(</span><span class="o">-</span><span class="n">ghf</span> <span class="o">*</span> <span class="n">fvc</span><span class="o">.</span><span class="n">snGrad</span><span class="p">(</span><span class="n">rhok</span><span class="p">)</span> <span class="o">-</span> <span class="n">fvc</span><span class="o">.</span><span class="n">snGrad</span><span class="p">(</span><span class="n">p_rgh</span><span class="p">))</span> <span class="o">*</span> <span class="n">mesh</span><span class="o">.</span><span class="n">magSf</span><span class="p">()</span>
-                <span class="p">)</span>
+                <span class="n">UEqn</span> <span class="o">+</span> <span class="n">fvc</span><span class="o">.</span><span class="n">reconstruct</span><span class="p">((</span><span class="o">-</span><span class="n">ghf</span> <span class="o">*</span> <span class="n">fvc</span><span class="o">.</span><span class="n">snGrad</span><span class="p">(</span><span class="n">rhok</span><span class="p">)</span> <span class="o">-</span> <span class="n">fvc</span><span class="o">.</span><span class="n">snGrad</span><span class="p">(</span><span class="n">p_rgh</span><span class="p">))</span> <span class="o">*</span> <span class="n">mesh</span><span class="o">.</span><span class="n">magSf</span><span class="p">())</span>
             <span class="p">)</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">U</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">pimple_control</span><span class="o">.</span><span class="n">finalIter</span><span class="p">()))</span>
 
     <span class="k">return</span> <span class="n">FieldUpdates</span><span class="p">({</span><span class="s2">&quot;UEqn&quot;</span><span class="p">:</span> <span class="n">UEqn</span><span class="p">,</span> <span class="s2">&quot;U&quot;</span><span class="p">:</span> <span class="n">U</span><span class="p">})</span>
@@ -1001,9 +986,7 @@
             <span class="k">with</span> <span class="n">telemetry</span><span class="o">.</span><span class="n">span</span><span class="p">(</span><span class="s2">&quot;pressure.assemble&quot;</span><span class="p">):</span>
                 <span class="n">pEqn</span> <span class="o">=</span> <span class="n">fvScalarMatrix</span><span class="p">(</span><span class="n">fvm</span><span class="o">.</span><span class="n">laplacian</span><span class="p">(</span><span class="n">rAUf</span><span class="p">,</span> <span class="n">p_rgh</span><span class="p">)</span> <span class="o">-</span> <span class="n">fvc</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">phiHbyA</span><span class="p">))</span>
                 <span class="n">pEqn</span><span class="o">.</span><span class="n">setReference</span><span class="p">(</span><span class="n">pRefCell</span><span class="p">,</span> <span class="n">pRefValue</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-            <span class="k">with</span> <span class="n">telemetry</span><span class="o">.</span><span class="n">span</span><span class="p">(</span>
-                <span class="s2">&quot;pressure.solve&quot;</span><span class="p">,</span> <span class="n">final</span><span class="o">=</span><span class="n">pimple_control</span><span class="o">.</span><span class="n">finalInnerIter</span><span class="p">()</span>
-            <span class="p">):</span>
+            <span class="k">with</span> <span class="n">telemetry</span><span class="o">.</span><span class="n">span</span><span class="p">(</span><span class="s2">&quot;pressure.solve&quot;</span><span class="p">,</span> <span class="n">final</span><span class="o">=</span><span class="n">pimple_control</span><span class="o">.</span><span class="n">finalInnerIter</span><span class="p">()):</span>
                 <span class="n">pEqn</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">p_rgh</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">pimple_control</span><span class="o">.</span><span class="n">finalInnerIter</span><span class="p">()))</span>
 
             <span class="k">if</span> <span class="n">pimple_control</span><span class="o">.</span><span class="n">finalNonOrthogonalIter</span><span class="p">():</span>
@@ -1071,9 +1054,7 @@
         <span class="n">continuity_op</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">pimple</span><span class="o">.</span><span class="n">_dependency_resolver</span>
     <span class="p">)</span>
 
-    <span class="n">model_ops</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
-        <span class="n">_alias_operation</span><span class="p">(</span><span class="n">wrapped_momentum</span><span class="p">,</span> <span class="n">operation_name</span><span class="o">=</span><span class="s2">&quot;momentum&quot;</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[])</span>
-    <span class="p">)</span>
+    <span class="n">model_ops</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">_alias_operation</span><span class="p">(</span><span class="n">wrapped_momentum</span><span class="p">,</span> <span class="n">operation_name</span><span class="o">=</span><span class="s2">&quot;momentum&quot;</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[]))</span>
     <span class="n">model_ops</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
         <span class="n">_alias_operation</span><span class="p">(</span>
             <span class="n">wrapped_continuity</span><span class="p">,</span>

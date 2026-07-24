@@ -589,6 +589,11 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">types</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimpleNamespace</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">cast</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.config_injection</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">_create_runtime_config_wrapper</span><span class="p">,</span>
+    <span class="n">_discover_configs_from_signature</span><span class="p">,</span>
+    <span class="n">_find_config_by_type</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.dependency_resolver</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">DependencyResolver</span><span class="p">,</span>
@@ -598,7 +603,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">OperationMetadata</span><span class="p">,</span> <span class="n">OperationNumber</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.runtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">SolverRuntime</span>
-
 
 <span class="n">_ConfigT</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;_ConfigT&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="nb">type</span><span class="p">)</span>
 
@@ -840,13 +844,9 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_run_initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">:</span> <span class="n">SolverRuntime</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Context</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute the registered initialization step with dependency injection.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_func</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;No initialize function registered for solver </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
-            <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No initialize function registered for solver </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-        <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dependency_resolver</span><span class="o">.</span><span class="n">resolve_arguments</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_func</span><span class="p">,</span> <span class="kc">None</span>
-        <span class="p">)</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dependency_resolver</span><span class="o">.</span><span class="n">resolve_arguments</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_initialize_func</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
         <span class="n">sig</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_initialize_func</span><span class="p">)</span>
         <span class="k">if</span> <span class="s2">&quot;self&quot;</span> <span class="ow">in</span> <span class="n">sig</span><span class="o">.</span><span class="n">parameters</span> <span class="ow">and</span> <span class="s2">&quot;self&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
@@ -891,14 +891,7 @@
 <span class="sd">        without the runtime holding a long-lived reference to the context).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execution_graph_func</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;No execution_graph function registered for solver </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
-            <span class="p">)</span>
-
-        <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.config_injection</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-            <span class="n">_discover_configs_from_signature</span><span class="p">,</span>
-            <span class="n">_find_config_by_type</span><span class="p">,</span>
-        <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No execution_graph function registered for solver </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
         <span class="n">sig</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_execution_graph_func</span><span class="p">)</span>
         <span class="n">kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -925,20 +918,13 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_build_operations_for</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime</span><span class="p">:</span> <span class="n">SolverRuntime</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OperationCollection</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Build OperationCollection with *runtime* as the ``self`` binding.&quot;&quot;&quot;</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.config_injection</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-            <span class="n">_discover_configs_from_signature</span><span class="p">,</span>
-            <span class="n">_create_runtime_config_wrapper</span><span class="p">,</span>
-        <span class="p">)</span>
-
         <span class="n">ops</span> <span class="o">=</span> <span class="n">OperationCollection</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">func</span><span class="p">,</span> <span class="n">metadata</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_operations</span><span class="p">:</span>
             <span class="n">discovered</span> <span class="o">=</span> <span class="n">_discover_configs_from_signature</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">discovered</span><span class="p">:</span>
                 <span class="n">wrapped</span> <span class="o">=</span> <span class="n">_create_runtime_config_wrapper</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">discovered</span><span class="p">,</span> <span class="n">runtime</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">wrapped</span> <span class="o">=</span> <span class="n">wrap_with_dependency_resolution</span><span class="p">(</span>
-                    <span class="n">func</span><span class="p">,</span> <span class="n">runtime</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dependency_resolver</span>
-                <span class="p">)</span>
+                <span class="n">wrapped</span> <span class="o">=</span> <span class="n">wrap_with_dependency_resolution</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">runtime</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dependency_resolver</span><span class="p">)</span>
 
             <span class="n">op</span> <span class="o">=</span> <span class="n">Operation</span><span class="p">(</span>
                 <span class="n">func</span><span class="o">=</span><span class="n">SequentialOp</span><span class="p">(</span><span class="n">wrapped</span><span class="p">),</span>

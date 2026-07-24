@@ -154,7 +154,7 @@ the key within it.
 
  .. code-block:: none
 
-    resolved kwargs: {'algorithm': <__main__._Algorithm object at 0x7ff1d53918d0>}
+    resolved kwargs: {'algorithm': <__main__._Algorithm object at 0x7f6f9e995610>}
     correct(**resolved) = PISO.solve() ran
 
 
@@ -250,7 +250,7 @@ resolver. Watch the counter: even though ``count_calls`` is
 requested three times, the provider only runs once because the
 default ``cache=True`` and the cache for ``"time_step"`` is shared.
 
-.. GENERATED FROM PYTHON SOURCE LINES 135-160
+.. GENERATED FROM PYTHON SOURCE LINES 135-158
 
 .. code-block:: Python
 
@@ -274,9 +274,7 @@ default ``cache=True`` and the cache for ``"time_step"`` is shared.
     # Drop the time_step cache and the provider runs again on the next call.
     resolver.clear_scope("time_step")
     kwargs = resolver.resolve_arguments(needs_counter, ctx)
-    print(
-        f"after clear_scope: counter = {kwargs['counter']}, provider ran {sum(_call_log)}x"
-    )
+    print(f"after clear_scope: counter = {kwargs['counter']}, provider ran {sum(_call_log)}x")
 
 
 
@@ -295,7 +293,7 @@ default ``cache=True`` and the cache for ``"time_step"`` is shared.
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 161-167
+.. GENERATED FROM PYTHON SOURCE LINES 159-165
 
 See also
 --------

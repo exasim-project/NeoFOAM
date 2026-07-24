@@ -574,9 +574,10 @@
           <h1>Source code for neofoam.core.plugin_system</h1><div class="highlight"><pre>
 <span></span><span class="c1"># SPDX-License-Identifier: GPL-3.0-or-later</span>
 <span class="c1"># SPDX-FileCopyrightText: 2025 NeoFOAM authors</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">create_model</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Annotated</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Callable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">create_model</span>
 
 
 <div class="viewcode-block" id="PluginRegistry">
@@ -602,12 +603,14 @@
 <a class="viewcode-back" href="../../../reference/api/neofoam.core.plugin_system.html#neofoam.core.plugin_system.PluginSystem">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PluginSystem</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    PluginSystem provides a runtime-extensible plugin/config system using Pydantic discriminated unions.</span>
+<span class="sd">    PluginSystem provides a runtime-extensible plugin/config system using</span>
+<span class="sd">    Pydantic discriminated unions.</span>
 
 <span class="sd">    Features:</span>
 <span class="sd">    - Central registry (_registry) for all plugin base types and their plugin classes.</span>
 <span class="sd">    - Decorator API for explicit registration of plugin families and plugin config classes.</span>
-<span class="sd">    - Supports multiple independent plugin families, each with its own registry and extensible model.</span>
+<span class="sd">    - Supports multiple independent plugin families, each with its own registry</span>
+<span class="sd">      and extensible model.</span>
 <span class="sd">    - Uses a PluginRegistry dataclass to store metadata for each plugin base type:</span>
 <span class="sd">        - base_cls: The plugin base class (usually a Pydantic model).</span>
 <span class="sd">        - plugin_registry: List of registered plugin config classes for this type.</span>
@@ -633,7 +636,8 @@
 <span class="sd">    4. The registry can be queried for all plugin families and their plugins:</span>
 <span class="sd">    PluginSystem._registry[&quot;PluginBase&quot;].plugin_registry</span>
 
-<span class="sd">    This design allows runtime extensibility, developer-friendly registration, and schema validation for plugin/config systems.</span>
+<span class="sd">    This design allows runtime extensibility, developer-friendly registration,</span>
+<span class="sd">    and schema validation for plugin/config systems.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">_registry</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">PluginRegistry</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -695,9 +699,7 @@
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_registry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">base_cls_name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">remove_plugin_model</span><span class="p">(</span>
-        <span class="bp">cls</span><span class="p">,</span> <span class="n">base_cls_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">registered_class</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">remove_plugin_model</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">base_cls_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">registered_class</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="n">registry</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_registry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">base_cls_name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">registry</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span>

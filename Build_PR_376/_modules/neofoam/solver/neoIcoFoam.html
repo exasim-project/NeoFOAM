@@ -581,8 +581,9 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">pybFoam</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pyf</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">neon._neon</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>  <span class="c1"># NeoN Python bindings</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pybFoam</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pyf</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="w"> </span><span class="kn">import</span> <span class="n">neofoam_bindings</span> <span class="k">as</span> <span class="n">nfb</span>  <span class="c1"># NeoFOAM Python bindings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.solver.pisoControl</span><span class="w"> </span><span class="kn">import</span> <span class="n">PisoControl</span>
 
@@ -633,9 +634,7 @@
             <span class="n">nn</span><span class="o">.</span><span class="n">rotate_old_times</span><span class="p">(</span><span class="n">U</span><span class="p">)</span>
             <span class="n">nn</span><span class="o">.</span><span class="n">rotate_old_times</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span>
 
-            <span class="n">max_co</span><span class="p">,</span> <span class="n">mean_co</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">compute_co_num</span><span class="p">(</span>
-                <span class="n">rt</span><span class="o">.</span><span class="n">nf_mesh</span><span class="p">,</span> <span class="n">phi</span><span class="o">.</span><span class="n">internal_vector</span><span class="p">(),</span> <span class="n">rt</span><span class="o">.</span><span class="n">dt</span>
-            <span class="p">)</span>
+            <span class="n">max_co</span><span class="p">,</span> <span class="n">mean_co</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">compute_co_num</span><span class="p">(</span><span class="n">rt</span><span class="o">.</span><span class="n">nf_mesh</span><span class="p">,</span> <span class="n">phi</span><span class="o">.</span><span class="n">internal_vector</span><span class="p">(),</span> <span class="n">rt</span><span class="o">.</span><span class="n">dt</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Courant Number mean: </span><span class="si">{</span><span class="n">mean_co</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2"> max: </span><span class="si">{</span><span class="n">max_co</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
             <span class="n">nfb</span><span class="o">.</span><span class="n">sync_run_times</span><span class="p">(</span><span class="n">runTime</span><span class="p">,</span> <span class="n">rt</span><span class="p">,</span> <span class="n">max_co</span><span class="p">)</span>
@@ -663,9 +662,7 @@
                 <span class="n">rAUf</span> <span class="o">=</span> <span class="n">interp</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">rAU</span><span class="p">)</span>
                 <span class="n">rAUf</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;rAUf&quot;</span>
 
-                <span class="n">phiHbyA</span> <span class="o">=</span> <span class="n">nfb</span><span class="o">.</span><span class="n">flux</span><span class="p">(</span><span class="n">hByA</span><span class="p">)</span> <span class="o">+</span> <span class="n">rAUf</span> <span class="o">*</span> <span class="n">nfb</span><span class="o">.</span><span class="n">ddt_flux_corr</span><span class="p">(</span>
-                    <span class="n">U</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">rt</span><span class="o">.</span><span class="n">dt</span><span class="p">,</span> <span class="n">ddt_scheme</span>
-                <span class="p">)</span>
+                <span class="n">phiHbyA</span> <span class="o">=</span> <span class="n">nfb</span><span class="o">.</span><span class="n">flux</span><span class="p">(</span><span class="n">hByA</span><span class="p">)</span> <span class="o">+</span> <span class="n">rAUf</span> <span class="o">*</span> <span class="n">nfb</span><span class="o">.</span><span class="n">ddt_flux_corr</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">rt</span><span class="o">.</span><span class="n">dt</span><span class="p">,</span> <span class="n">ddt_scheme</span><span class="p">)</span>
 
                 <span class="k">while</span> <span class="n">piso</span><span class="o">.</span><span class="n">correct_non_orthogonal</span><span class="p">():</span>
                     <span class="n">pEqn</span> <span class="o">=</span> <span class="n">nfb</span><span class="o">.</span><span class="n">PDESolverScalar</span><span class="p">(</span>

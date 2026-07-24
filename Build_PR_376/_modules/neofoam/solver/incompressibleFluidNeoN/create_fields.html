@@ -602,8 +602,8 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">pybFoam</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pyf</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="w"> </span><span class="kn">import</span> <span class="n">neofoam_bindings</span> <span class="k">as</span> <span class="n">nfb</span>  <span class="c1"># NeoFOAM Python bindings</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="w"> </span><span class="kn">import</span> <span class="n">neofoam_bindings</span> <span class="k">as</span> <span class="n">nfb</span>  <span class="c1"># NeoFOAM Python bindings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ConfigContext</span><span class="p">,</span>
@@ -613,6 +613,8 @@
     <span class="n">StagedInitRunner</span><span class="p">,</span>
     <span class="n">StagedInitSpec</span><span class="p">,</span>
     <span class="n">lazy</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">model</span> <span class="k">as</span> <span class="n">init_model</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelRuntime</span><span class="p">,</span> <span class="n">bind_owned_interfaces</span>
@@ -678,9 +680,7 @@
             <span class="n">solution_loop_model</span><span class="p">,</span>
             <span class="n">field_writer_model</span><span class="p">,</span>
         <span class="p">]</span>
-        <span class="n">core_models</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="n">ControlDictConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">resolved_case_dir</span><span class="p">,</span> <span class="n">validate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-        <span class="p">)</span>
+        <span class="n">core_models</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ControlDictConfig</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">case_dir</span><span class="o">=</span><span class="n">resolved_case_dir</span><span class="p">,</span> <span class="n">validate</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
 
         <span class="k">return</span> <span class="n">LoadResult</span><span class="p">(</span>
             <span class="n">core_models</span><span class="o">=</span><span class="n">core_models</span><span class="p">,</span>
@@ -693,16 +693,12 @@
             <span class="n">opt</span><span class="o">.</span><span class="n">run_resolve</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
 
     <span class="nd">@spec_builder</span><span class="o">.</span><span class="n">build</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">build_lazy</span><span class="p">(</span>
-        <span class="n">core_models</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">optional_models</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitStep</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_lazy</span><span class="p">(</span><span class="n">core_models</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">optional_models</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitStep</span><span class="p">]:</span>
         <span class="n">pressure_model</span> <span class="o">=</span> <span class="n">core_models</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">_by_spec</span><span class="p">(</span><span class="n">spec_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">next</span><span class="p">(</span>
-                <span class="n">m</span>
-                <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">core_models</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">ModelRuntime</span><span class="p">)</span> <span class="ow">and</span> <span class="n">m</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">spec_name</span>
+                <span class="n">m</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">core_models</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">ModelRuntime</span><span class="p">)</span> <span class="ow">and</span> <span class="n">m</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">spec_name</span>
             <span class="p">)</span>
 
         <span class="n">solution_loop_model</span> <span class="o">=</span> <span class="n">_by_spec</span><span class="p">(</span><span class="s2">&quot;solutionLoop&quot;</span><span class="p">)</span>
@@ -727,9 +723,7 @@
             <span class="n">solvers</span> <span class="o">=</span> <span class="n">rt</span><span class="o">.</span><span class="n">fv_solution_dict</span><span class="o">.</span><span class="n">subDict</span><span class="p">(</span><span class="s2">&quot;solvers&quot;</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_MAPPED_SOLVER_DICTS</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">solvers</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
-                    <span class="n">solvers</span><span class="o">.</span><span class="n">insert_dict</span><span class="p">(</span>
-                        <span class="n">name</span><span class="p">,</span> <span class="n">nfb</span><span class="o">.</span><span class="n">map_fv_solution</span><span class="p">(</span><span class="n">solvers</span><span class="o">.</span><span class="n">subDict</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
-                    <span class="p">)</span>
+                    <span class="n">solvers</span><span class="o">.</span><span class="n">insert_dict</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">nfb</span><span class="o">.</span><span class="n">map_fv_solution</span><span class="p">(</span><span class="n">solvers</span><span class="o">.</span><span class="n">subDict</span><span class="p">(</span><span class="n">name</span><span class="p">)))</span>
             <span class="k">return</span> <span class="n">rt</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">alias_neon_runtime</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
@@ -739,9 +733,7 @@
             <span class="c1"># Volume nu for the explicit dev2 viscous-stress term (nuEff/nut</span>
             <span class="c1"># come from the turbulence model below).</span>
             <span class="n">rt</span> <span class="o">=</span> <span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;_neon_runtime&quot;</span><span class="p">]</span>
-            <span class="k">return</span> <span class="n">nfb</span><span class="o">.</span><span class="n">create_uniform_volume_field</span><span class="p">(</span>
-                <span class="n">rt</span><span class="p">,</span> <span class="s2">&quot;nu&quot;</span><span class="p">,</span> <span class="n">nfb</span><span class="o">.</span><span class="n">read_transport_viscosity</span><span class="p">(</span><span class="n">rt</span><span class="p">)</span>
-            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">nfb</span><span class="o">.</span><span class="n">create_uniform_volume_field</span><span class="p">(</span><span class="n">rt</span><span class="p">,</span> <span class="s2">&quot;nu&quot;</span><span class="p">,</span> <span class="n">nfb</span><span class="o">.</span><span class="n">read_transport_viscosity</span><span class="p">(</span><span class="n">rt</span><span class="p">))</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">create_turbulence</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
             <span class="c1"># Runtime-selected turbulence model (per constant/turbulenceProperties):</span>
@@ -774,12 +766,8 @@
         <span class="c1"># Foam::Time reference so the adapter&#39;s MeshAdapter never dangles.</span>
         <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">lazy</span><span class="p">(</span><span class="s2">&quot;_arg_list&quot;</span><span class="p">,</span> <span class="n">create_arg_list</span><span class="p">))</span>
         <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">lazy</span><span class="p">(</span><span class="s2">&quot;_foam_time&quot;</span><span class="p">,</span> <span class="n">create_foam_time</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;_arg_list&quot;</span><span class="p">]))</span>
-        <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
-            <span class="n">lazy</span><span class="p">(</span><span class="s2">&quot;_neon_runtime&quot;</span><span class="p">,</span> <span class="n">create_neon_runtime</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;_foam_time&quot;</span><span class="p">])</span>
-        <span class="p">)</span>
-        <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
-            <span class="n">init_model</span><span class="p">(</span><span class="s2">&quot;neon_runtime&quot;</span><span class="p">,</span> <span class="n">alias_neon_runtime</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;_neon_runtime&quot;</span><span class="p">])</span>
-        <span class="p">)</span>
+        <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">lazy</span><span class="p">(</span><span class="s2">&quot;_neon_runtime&quot;</span><span class="p">,</span> <span class="n">create_neon_runtime</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;_foam_time&quot;</span><span class="p">]))</span>
+        <span class="n">builder</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">init_model</span><span class="p">(</span><span class="s2">&quot;neon_runtime&quot;</span><span class="p">,</span> <span class="n">alias_neon_runtime</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;_neon_runtime&quot;</span><span class="p">]))</span>
 
         <span class="c1"># solutionLoop + fieldWriter are the framework *core* Models; the NeoN</span>
         <span class="c1"># touch-points (NeoNTimeSync backend, write hook, logger, reporter) are</span>

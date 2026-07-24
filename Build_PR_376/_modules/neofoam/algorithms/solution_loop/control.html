@@ -845,17 +845,13 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_corrector</span> <span class="o">=</span> <span class="n">IterationCountCondition</span><span class="p">(</span><span class="n">nIterations</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nCorrectors</span><span class="p">)</span>
 
         <span class="c1"># Non-orthogonal loop (nNonOrthogonalCorrectors + 1)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_non_ortho</span> <span class="o">=</span> <span class="n">IterationCountCondition</span><span class="p">(</span>
-            <span class="n">nIterations</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nNonOrthogonalCorrectors</span> <span class="o">+</span> <span class="mi">1</span>
-        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_non_ortho</span> <span class="o">=</span> <span class="n">IterationCountCondition</span><span class="p">(</span><span class="n">nIterations</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nNonOrthogonalCorrectors</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
 
         <span class="c1"># Link non-ortho loop to corrector (reset non-ortho on each corrector iteration)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_corrector</span><span class="o">.</span><span class="n">link_condition</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_non_ortho</span><span class="p">)</span>
 
         <span class="c1"># Flags</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_momentum_predictor</span> <span class="o">=</span> <span class="n">BooleanFlagCondition</span><span class="p">(</span>
-            <span class="n">enabled</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">momentumPredictor_enabled</span>
-        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_momentum_predictor</span> <span class="o">=</span> <span class="n">BooleanFlagCondition</span><span class="p">(</span><span class="n">enabled</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">momentumPredictor_enabled</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_turb_corr</span> <span class="o">=</span> <span class="n">BooleanFlagCondition</span><span class="p">(</span><span class="n">enabled</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">turbCorr_enabled</span><span class="p">)</span></div>
 
 
@@ -1007,15 +1003,9 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.SimpleControl.model_post_init">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">model_post_init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">__context</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize SIMPLE control conditions after model validation.&quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_residual_check</span> <span class="o">=</span> <span class="n">ResidualConvergenceCondition</span><span class="p">(</span>
-            <span class="n">residualControl</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">residualControl</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_non_ortho</span> <span class="o">=</span> <span class="n">IterationCountCondition</span><span class="p">(</span>
-            <span class="n">nIterations</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nNonOrthogonalCorrectors</span> <span class="o">+</span> <span class="mi">1</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_momentum_predictor</span> <span class="o">=</span> <span class="n">BooleanFlagCondition</span><span class="p">(</span>
-            <span class="n">enabled</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">momentumPredictor_enabled</span>
-        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_residual_check</span> <span class="o">=</span> <span class="n">ResidualConvergenceCondition</span><span class="p">(</span><span class="n">residualControl</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">residualControl</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_non_ortho</span> <span class="o">=</span> <span class="n">IterationCountCondition</span><span class="p">(</span><span class="n">nIterations</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nNonOrthogonalCorrectors</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_momentum_predictor</span> <span class="o">=</span> <span class="n">BooleanFlagCondition</span><span class="p">(</span><span class="n">enabled</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">momentumPredictor_enabled</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_consistent</span> <span class="o">=</span> <span class="n">BooleanFlagCondition</span><span class="p">(</span><span class="n">enabled</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">consistent_enabled</span><span class="p">)</span></div>
 
 
@@ -1170,14 +1160,10 @@
 <a class="viewcode-back" href="../../../../reference/api/neofoam.algorithms.solution_loop.control.html#neofoam.algorithms.solution_loop.control.SolutionControl.model_post_init">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">model_post_init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">__context</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_residuals</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_residual_check</span> <span class="o">=</span> <span class="n">ResidualConvergenceCondition</span><span class="p">(</span>
-            <span class="n">residualControl</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">residualControl</span>
-        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_residual_check</span> <span class="o">=</span> <span class="n">ResidualConvergenceCondition</span><span class="p">(</span><span class="n">residualControl</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">residualControl</span><span class="p">)</span>
         <span class="c1"># feed the residual check from the residuals the solver publishes</span>
         <span class="c1"># (replaces the placeholder that always returned 1.0 = never converged)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_residual_check</span><span class="o">.</span><span class="n">_get_residual</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">_ctx</span><span class="p">,</span> <span class="n">field</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_residuals</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-            <span class="n">field</span><span class="p">,</span> <span class="mf">1.0</span>
-        <span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_residual_check</span><span class="o">.</span><span class="n">_get_residual</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">_ctx</span><span class="p">,</span> <span class="n">field</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_residuals</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="SolutionControl.store_residual">

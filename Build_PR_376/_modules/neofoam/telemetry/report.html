@@ -627,13 +627,9 @@
     <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">_SPANS_GLOB</span><span class="p">))</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">_SUMMARY_GLOB</span><span class="p">)):</span>
         <span class="k">return</span> <span class="n">p</span>
     <span class="n">nested</span> <span class="o">=</span> <span class="n">p</span> <span class="o">/</span> <span class="s2">&quot;telemetry&quot;</span>
-    <span class="k">if</span> <span class="n">nested</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="ow">and</span> <span class="p">(</span>
-        <span class="nb">any</span><span class="p">(</span><span class="n">nested</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">_SPANS_GLOB</span><span class="p">))</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="n">nested</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">_SUMMARY_GLOB</span><span class="p">))</span>
-    <span class="p">):</span>
+    <span class="k">if</span> <span class="n">nested</span><span class="o">.</span><span class="n">is_dir</span><span class="p">()</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">any</span><span class="p">(</span><span class="n">nested</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">_SPANS_GLOB</span><span class="p">))</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="n">nested</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">_SUMMARY_GLOB</span><span class="p">))):</span>
         <span class="k">return</span> <span class="n">nested</span>
-    <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;no telemetry files (</span><span class="si">{</span><span class="n">_SPANS_GLOB</span><span class="si">}</span><span class="s2"> / </span><span class="si">{</span><span class="n">_SUMMARY_GLOB</span><span class="si">}</span><span class="s2">) under </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">&quot;</span>
-    <span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;no telemetry files (</span><span class="si">{</span><span class="n">_SPANS_GLOB</span><span class="si">}</span><span class="s2"> / </span><span class="si">{</span><span class="n">_SUMMARY_GLOB</span><span class="si">}</span><span class="s2">) under </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="load_spans">
@@ -731,9 +727,7 @@
 
 <div class="viewcode-block" id="write_chrome_trace">
 <a class="viewcode-back" href="../../../reference/api/neofoam.telemetry.report.html#neofoam.telemetry.report.write_chrome_trace">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">write_chrome_trace</span><span class="p">(</span>
-    <span class="n">path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">output</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_chrome_trace</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">output</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Write a Chrome Trace-Event ``trace.json`` for the trace under *path*.</span>
 
 <span class="sd">    *output* defaults to ``&lt;telemetry-dir&gt;/trace.json``. Returns the path</span>

@@ -601,7 +601,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.tools.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">PreprocessConfig</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.tooling.workflow.patch_set</span><span class="w"> </span><span class="kn">import</span> <span class="n">BoxFace</span><span class="p">,</span> <span class="n">PatchSet</span><span class="p">,</span> <span class="n">PatchRole</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.tooling.workflow.patch_set</span><span class="w"> </span><span class="kn">import</span> <span class="n">BoxFace</span><span class="p">,</span> <span class="n">PatchRole</span><span class="p">,</span> <span class="n">PatchSet</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.tools._foam_tokens</span><span class="w"> </span><span class="kn">import</span> <span class="n">num</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.tools.block_mesh</span><span class="w"> </span><span class="kn">import</span> <span class="n">Block</span><span class="p">,</span> <span class="n">BlockMeshDictConfig</span><span class="p">,</span> <span class="n">BlockPatch</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.tools.snappy_hex_mesh</span><span class="w"> </span><span class="kn">import</span> <span class="n">SnappyHexMeshDictConfig</span><span class="p">,</span> <span class="n">SnappySurface</span>
@@ -756,9 +756,7 @@
     <span class="k">if</span> <span class="n">has_snappy</span><span class="p">:</span>
         <span class="n">tools</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;tool&quot;</span><span class="p">:</span> <span class="s2">&quot;snappyHexMesh&quot;</span><span class="p">,</span> <span class="s2">&quot;depends_on&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;blockMesh&quot;</span><span class="p">]})</span>
         <span class="n">check_deps</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;snappyHexMesh&quot;</span><span class="p">]</span>
-    <span class="n">tools</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-        <span class="p">{</span><span class="s2">&quot;tool&quot;</span><span class="p">:</span> <span class="s2">&quot;checkMesh&quot;</span><span class="p">,</span> <span class="s2">&quot;depends_on&quot;</span><span class="p">:</span> <span class="n">check_deps</span><span class="p">,</span> <span class="s2">&quot;fail_on_error&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">}</span>
-    <span class="p">)</span>
+    <span class="n">tools</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;tool&quot;</span><span class="p">:</span> <span class="s2">&quot;checkMesh&quot;</span><span class="p">,</span> <span class="s2">&quot;depends_on&quot;</span><span class="p">:</span> <span class="n">check_deps</span><span class="p">,</span> <span class="s2">&quot;fail_on_error&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span>
     <span class="k">return</span> <span class="n">PreprocessConfig</span><span class="p">(</span><span class="n">tools</span><span class="o">=</span><span class="n">tools</span><span class="p">)</span></div>
 
 
@@ -779,9 +777,7 @@
 <span class="sd">    blockMesh face), and the ``preprocess`` enable-list is sized to match (it</span>
 <span class="sd">    includes ``snappyHexMesh`` only when a snappy dict is produced).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">block</span> <span class="o">=</span> <span class="n">block_mesh_dict</span><span class="p">(</span>
-        <span class="n">patch_set</span><span class="p">,</span> <span class="n">cell_size</span><span class="o">=</span><span class="n">cell_size</span><span class="p">,</span> <span class="n">cells</span><span class="o">=</span><span class="n">cells</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="n">padding</span>
-    <span class="p">)</span>
+    <span class="n">block</span> <span class="o">=</span> <span class="n">block_mesh_dict</span><span class="p">(</span><span class="n">patch_set</span><span class="p">,</span> <span class="n">cell_size</span><span class="o">=</span><span class="n">cell_size</span><span class="p">,</span> <span class="n">cells</span><span class="o">=</span><span class="n">cells</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="p">)</span>
     <span class="n">has_snappy</span> <span class="o">=</span> <span class="n">_has_snappy_surface</span><span class="p">(</span><span class="n">patch_set</span><span class="p">)</span>
     <span class="n">snappy</span> <span class="o">=</span> <span class="n">snappy_dict</span><span class="p">(</span><span class="n">patch_set</span><span class="p">)</span> <span class="k">if</span> <span class="n">has_snappy</span> <span class="k">else</span> <span class="kc">None</span>
     <span class="n">pre</span> <span class="o">=</span> <span class="n">preprocess_config</span><span class="p">(</span><span class="n">has_snappy</span><span class="o">=</span><span class="n">has_snappy</span><span class="p">)</span>

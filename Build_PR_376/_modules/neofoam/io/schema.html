@@ -591,7 +591,16 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">neofoam.tools</span>  <span class="c1"># noqa: F401  (import populates the tool registry)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.solver.configurations</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">_snake_case</span><span class="p">,</span>
+    <span class="n">configurations</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.solver.configurations</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">model_catalog</span> <span class="k">as</span> <span class="n">_model_catalog</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io.pydantic_schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">default_values</span><span class="p">,</span> <span class="n">rjsf_uischema</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.tools.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">available_tools</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;ConfigInfo&quot;</span><span class="p">,</span>
@@ -701,12 +710,6 @@
 <span class="sd">    ``model_catalog`` model-owned configs are a *subset* of the required inputs; the</span>
 <span class="sd">    ``&quot;solver&quot;``-origin physics/time dicts complete them.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.solver.configurations</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-        <span class="n">_snake_case</span><span class="p">,</span>
-        <span class="n">configurations</span><span class="p">,</span>
-        <span class="n">model_catalog</span> <span class="k">as</span> <span class="n">_model_catalog</span><span class="p">,</span>
-    <span class="p">)</span>
-
     <span class="n">required_owned</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">type</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
     <span class="n">optional_owned</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">type</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
     <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">_model_catalog</span><span class="p">(</span><span class="n">solver</span><span class="p">):</span>
@@ -732,9 +735,7 @@
                 <span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">,</span>
                 <span class="n">origin</span><span class="o">=</span><span class="n">_origin</span><span class="p">(</span><span class="bp">cls</span><span class="p">),</span>
                 <span class="c1"># synthesised field/fv configs carry no docstring; fall back to the file</span>
-                <span class="n">description</span><span class="o">=</span><span class="n">_describe</span><span class="p">(</span>
-                    <span class="bp">cls</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Config for </span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">file</span> <span class="k">else</span> <span class="kc">None</span>
-                <span class="p">),</span>
+                <span class="n">description</span><span class="o">=</span><span class="n">_describe</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Config for </span><span class="si">{</span><span class="n">file</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">file</span> <span class="k">else</span> <span class="kc">None</span><span class="p">),</span>
             <span class="p">)</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">out</span></div>
@@ -750,8 +751,6 @@
 <span class="sd">    (``control_dict_config``) that :func:`list_configs` advertises. The response</span>
 <span class="sd">    ``name`` is always the canonical snake-case, regardless of the spelling passed.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.solver.configurations</span><span class="w"> </span><span class="kn">import</span> <span class="n">_snake_case</span><span class="p">,</span> <span class="n">configurations</span>
-
     <span class="n">cfg</span> <span class="o">=</span> <span class="n">configurations</span><span class="p">(</span><span class="n">solver</span><span class="p">)</span>
     <span class="n">by_snake</span> <span class="o">=</span> <span class="p">{</span><span class="n">_snake_case</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">):</span> <span class="bp">cls</span> <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">cfg</span><span class="o">.</span><span class="n">classes</span><span class="p">}</span>
     <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">by_snake</span><span class="p">:</span>
@@ -779,11 +778,6 @@
 <span class="sd">    ``solver`` supplies the config surface so each tool&#39;s ``dict_file`` is linked to</span>
 <span class="sd">    the config class that writes it (``blockMesh`` → ``BlockMeshDictConfig``).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.solver.configurations</span><span class="w"> </span><span class="kn">import</span> <span class="n">configurations</span>
-
-    <span class="kn">import</span><span class="w"> </span><span class="nn">neofoam.tools</span>  <span class="c1"># noqa: F401  (import populates the tool registry)</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.tools.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">available_tools</span>
-
     <span class="n">file_to_config</span> <span class="o">=</span> <span class="p">{</span>
         <span class="bp">cls</span><span class="o">.</span><span class="n">io_config</span><span class="o">.</span><span class="n">file</span><span class="p">:</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span>
         <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">configurations</span><span class="p">(</span><span class="n">solver</span><span class="p">)</span><span class="o">.</span><span class="n">classes</span>
@@ -821,8 +815,6 @@
 <span class="sd">    ``origin == &quot;solver&quot;``. Author the model-owned *and* the ``&quot;solver&quot;``-origin</span>
 <span class="sd">    configs for a runnable case; this catalog alone is not the full required set.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.solver.configurations</span><span class="w"> </span><span class="kn">import</span> <span class="n">model_catalog</span> <span class="k">as</span> <span class="n">_model_catalog</span>
-
     <span class="k">return</span> <span class="p">[</span><span class="n">ModelSummary</span><span class="o">.</span><span class="n">from_entry</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">_model_catalog</span><span class="p">(</span><span class="n">solver</span><span class="p">)]</span></div>
 
 </pre></div>

@@ -673,15 +673,11 @@
 
 <div class="viewcode-block" id="block_mesh">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.tooling.casebuild.meshing.html#neofoam.tooling.casebuild.meshing.block_mesh">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">block_mesh</span><span class="p">(</span>
-    <span class="o">*</span><span class="p">,</span> <span class="n">dict_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;system/blockMeshDict&quot;</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Step</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">block_mesh</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">dict_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;system/blockMeshDict&quot;</span><span class="p">,</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Step</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate the base mesh from a committed ``blockMeshDict`` (via ``blockMeshTool``).&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span><span class="n">case</span><span class="p">:</span> <span class="n">CaseDir</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">run_tool</span><span class="p">(</span>
-            <span class="n">case</span><span class="p">,</span> <span class="n">blockMeshTool</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;dict_file&quot;</span><span class="p">:</span> <span class="n">dict_file</span><span class="p">,</span> <span class="s2">&quot;verbose&quot;</span><span class="p">:</span> <span class="n">verbose</span><span class="p">}</span>
-        <span class="p">)</span>
+        <span class="n">run_tool</span><span class="p">(</span><span class="n">case</span><span class="p">,</span> <span class="n">blockMeshTool</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;dict_file&quot;</span><span class="p">:</span> <span class="n">dict_file</span><span class="p">,</span> <span class="s2">&quot;verbose&quot;</span><span class="p">:</span> <span class="n">verbose</span><span class="p">})</span>
 
     <span class="k">return</span> <span class="n">step</span></div>
 
@@ -695,7 +691,8 @@
     <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Step</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Refine the prior ``block_mesh`` output from ``snappyHexMeshDict`` (via ``snappyHexMeshTool``).</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Refine the prior ``block_mesh`` output from ``snappyHexMeshDict``</span>
+<span class="sd">    (via ``snappyHexMeshTool``).</span>
 
 <span class="sd">    Runs after a ``block_mesh`` step in the same pipeline; the background mesh it left on</span>
 <span class="sd">    disk is reconstructed and fed to snappy as ``_prev_mesh``.</span>

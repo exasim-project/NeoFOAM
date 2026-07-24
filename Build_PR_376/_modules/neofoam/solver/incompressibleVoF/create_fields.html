@@ -601,11 +601,13 @@
     <span class="n">LoadResult</span><span class="p">,</span>
     <span class="n">StagedInitRunner</span><span class="p">,</span>
     <span class="n">StagedInitSpec</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">model</span> <span class="k">as</span> <span class="n">init_model</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">.models.incompressibleVoFModel</span><span class="w"> </span><span class="kn">import</span> <span class="n">incompressibleVoFModel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.models.alpha_advection</span><span class="w"> </span><span class="kn">import</span> <span class="n">advectionModel</span>  <span class="c1"># noqa: F401  (registers schemes)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.models.incompressibleVoFModel</span><span class="w"> </span><span class="kn">import</span> <span class="n">incompressibleVoFModel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.models.pressure_velocity.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">PressureVelocityAlgorithm</span>
 
 
@@ -635,9 +637,7 @@
             <span class="n">opt</span><span class="o">.</span><span class="n">run_resolve</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
 
     <span class="nd">@spec_builder</span><span class="o">.</span><span class="n">build</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">build_lazy</span><span class="p">(</span>
-        <span class="n">core_models</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">optional_models</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitStep</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_lazy</span><span class="p">(</span><span class="n">core_models</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">optional_models</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">InitStep</span><span class="p">]:</span>
         <span class="c1"># Core models, looked up by spec name (order-independent).</span>
         <span class="n">alpha_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">advectionModel</span><span class="o">.</span><span class="n">registered_names</span><span class="p">())</span>
         <span class="n">pressure_names</span> <span class="o">=</span> <span class="p">{</span><span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">PressureVelocityAlgorithm</span><span class="o">.</span><span class="n">all_specs</span><span class="p">()}</span>

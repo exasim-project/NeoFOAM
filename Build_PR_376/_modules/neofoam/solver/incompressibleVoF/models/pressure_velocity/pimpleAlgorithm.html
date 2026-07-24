@@ -628,9 +628,10 @@
     <span class="n">SequentialOp</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">OperationMetadata</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.control_factory</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_pimple_control</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">..alpha_advection.shared</span><span class="w"> </span><span class="kn">import</span> <span class="n">MixtureProtocol</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..incompressibleVoFModel</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.control_factory</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_pimple_control</span>
 
 <span class="n">pimple</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;Pimple&quot;</span><span class="p">)</span>
 
@@ -718,9 +719,7 @@
 <div class="viewcode-block" id="TwoPhaseTransportProtocol">
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleVoF.models.pressure_velocity.pimpleAlgorithm.html#neofoam.solver.incompressibleVoF.models.pressure_velocity.pimpleAlgorithm.TwoPhaseTransportProtocol">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">TwoPhaseTransportProtocol</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">divDevRhoReff</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">rho</span><span class="p">:</span> <span class="n">volScalarField</span><span class="p">,</span> <span class="n">U</span><span class="p">:</span> <span class="n">volVectorField</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">fvVectorMatrix</span><span class="p">:</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">divDevRhoReff</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rho</span><span class="p">:</span> <span class="n">volScalarField</span><span class="p">,</span> <span class="n">U</span><span class="p">:</span> <span class="n">volVectorField</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">fvVectorMatrix</span><span class="p">:</span> <span class="o">...</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">correct</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span></div>
 
 
@@ -873,20 +872,14 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Density-weighted momentum predictor with surface tension.&quot;&quot;&quot;</span>
     <span class="n">mesh</span> <span class="o">=</span> <span class="n">U</span><span class="o">.</span><span class="n">mesh</span><span class="p">()</span>
 
-    <span class="n">UEqn</span> <span class="o">=</span> <span class="n">fvVectorMatrix</span><span class="p">(</span>
-        <span class="n">fvm</span><span class="o">.</span><span class="n">ddt</span><span class="p">(</span><span class="n">rho</span><span class="p">,</span> <span class="n">U</span><span class="p">)</span> <span class="o">+</span> <span class="n">fvm</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">rhoPhi</span><span class="p">,</span> <span class="n">U</span><span class="p">)</span> <span class="o">+</span> <span class="n">turbulence</span><span class="o">.</span><span class="n">divDevRhoReff</span><span class="p">(</span><span class="n">rho</span><span class="p">,</span> <span class="n">U</span><span class="p">)</span>
-    <span class="p">)</span>
+    <span class="n">UEqn</span> <span class="o">=</span> <span class="n">fvVectorMatrix</span><span class="p">(</span><span class="n">fvm</span><span class="o">.</span><span class="n">ddt</span><span class="p">(</span><span class="n">rho</span><span class="p">,</span> <span class="n">U</span><span class="p">)</span> <span class="o">+</span> <span class="n">fvm</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">rhoPhi</span><span class="p">,</span> <span class="n">U</span><span class="p">)</span> <span class="o">+</span> <span class="n">turbulence</span><span class="o">.</span><span class="n">divDevRhoReff</span><span class="p">(</span><span class="n">rho</span><span class="p">,</span> <span class="n">U</span><span class="p">))</span>
     <span class="n">UEqn</span><span class="o">.</span><span class="n">relax</span><span class="p">()</span>
 
     <span class="k">if</span> <span class="n">pimple_control</span><span class="o">.</span><span class="n">momentumPredictor</span><span class="p">():</span>
         <span class="n">pyf</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
             <span class="n">UEqn</span>
             <span class="o">+</span> <span class="n">fvc</span><span class="o">.</span><span class="n">reconstruct</span><span class="p">(</span>
-                <span class="p">(</span>
-                    <span class="n">mixture</span><span class="o">.</span><span class="n">surfaceTensionForce</span><span class="p">()</span>
-                    <span class="o">-</span> <span class="n">ghf</span> <span class="o">*</span> <span class="n">fvc</span><span class="o">.</span><span class="n">snGrad</span><span class="p">(</span><span class="n">rho</span><span class="p">)</span>
-                    <span class="o">-</span> <span class="n">fvc</span><span class="o">.</span><span class="n">snGrad</span><span class="p">(</span><span class="n">p_rgh</span><span class="p">)</span>
-                <span class="p">)</span>
+                <span class="p">(</span><span class="n">mixture</span><span class="o">.</span><span class="n">surfaceTensionForce</span><span class="p">()</span> <span class="o">-</span> <span class="n">ghf</span> <span class="o">*</span> <span class="n">fvc</span><span class="o">.</span><span class="n">snGrad</span><span class="p">(</span><span class="n">rho</span><span class="p">)</span> <span class="o">-</span> <span class="n">fvc</span><span class="o">.</span><span class="n">snGrad</span><span class="p">(</span><span class="n">p_rgh</span><span class="p">))</span>
                 <span class="o">*</span> <span class="n">mesh</span><span class="o">.</span><span class="n">magSf</span><span class="p">()</span>
             <span class="p">)</span>
         <span class="p">)</span>
@@ -941,9 +934,7 @@
         <span class="c1"># Surface tension + gravity contribution on faces</span>
         <span class="n">phig</span> <span class="o">=</span> <span class="n">surfaceScalarField</span><span class="p">(</span>
             <span class="n">pyf</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">&quot;phig&quot;</span><span class="p">),</span>
-            <span class="p">(</span><span class="n">mixture</span><span class="o">.</span><span class="n">surfaceTensionForce</span><span class="p">()</span> <span class="o">-</span> <span class="n">ghf</span> <span class="o">*</span> <span class="n">fvc</span><span class="o">.</span><span class="n">snGrad</span><span class="p">(</span><span class="n">rho</span><span class="p">))</span>
-            <span class="o">*</span> <span class="n">rAUf</span>
-            <span class="o">*</span> <span class="n">mesh</span><span class="o">.</span><span class="n">magSf</span><span class="p">(),</span>
+            <span class="p">(</span><span class="n">mixture</span><span class="o">.</span><span class="n">surfaceTensionForce</span><span class="p">()</span> <span class="o">-</span> <span class="n">ghf</span> <span class="o">*</span> <span class="n">fvc</span><span class="o">.</span><span class="n">snGrad</span><span class="p">(</span><span class="n">rho</span><span class="p">))</span> <span class="o">*</span> <span class="n">rAUf</span> <span class="o">*</span> <span class="n">mesh</span><span class="o">.</span><span class="n">magSf</span><span class="p">(),</span>
         <span class="p">)</span>
         <span class="n">phiHbyA</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">phiHbyA</span> <span class="o">+</span> <span class="n">phig</span><span class="p">)</span>
 
@@ -1007,13 +998,9 @@
     <span class="n">wrapped_momentum</span> <span class="o">=</span> <span class="n">pimple</span><span class="o">.</span><span class="n">wrap_operation</span><span class="p">(</span><span class="n">momentum</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
     <span class="n">wrapped_continuity</span> <span class="o">=</span> <span class="n">pimple</span><span class="o">.</span><span class="n">wrap_operation</span><span class="p">(</span><span class="n">continuity</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
 
+    <span class="n">model_ops</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">_alias_operation</span><span class="p">(</span><span class="n">wrapped_momentum</span><span class="p">,</span> <span class="n">operation_name</span><span class="o">=</span><span class="s2">&quot;momentum&quot;</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[]))</span>
     <span class="n">model_ops</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
-        <span class="n">_alias_operation</span><span class="p">(</span><span class="n">wrapped_momentum</span><span class="p">,</span> <span class="n">operation_name</span><span class="o">=</span><span class="s2">&quot;momentum&quot;</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[])</span>
-    <span class="p">)</span>
-    <span class="n">model_ops</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
-        <span class="n">_alias_operation</span><span class="p">(</span>
-            <span class="n">wrapped_continuity</span><span class="p">,</span> <span class="n">operation_name</span><span class="o">=</span><span class="s2">&quot;continuity&quot;</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;momentum&quot;</span><span class="p">]</span>
-        <span class="p">)</span>
+        <span class="n">_alias_operation</span><span class="p">(</span><span class="n">wrapped_continuity</span><span class="p">,</span> <span class="n">operation_name</span><span class="o">=</span><span class="s2">&quot;continuity&quot;</span><span class="p">,</span> <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;momentum&quot;</span><span class="p">])</span>
     <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">model_ops</span></div>

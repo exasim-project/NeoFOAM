@@ -685,16 +685,14 @@
 <span class="sd">        the snake-case class name and typed as that config class, so an</span>
 <span class="sd">        agent fills the whole case in one structured response.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">fields</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">_snake_case</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">):</span> <span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span> <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">classes</span>
-        <span class="p">}</span>
+        <span class="n">fields</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">_snake_case</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">):</span> <span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span> <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">classes</span><span class="p">}</span>
         <span class="k">return</span> <span class="n">create_model</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="o">**</span><span class="n">fields</span><span class="p">)</span>
 
     <span class="c1"># -- persist -------------------------------------------------------</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">configs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Write config instances to ``case_dir`` (delegates to ``save_configs``).&quot;&quot;&quot;</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">save_configs</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">save_configs</span>  <span class="c1"># noqa: PLC0415  # cycle: io-&gt;configurations</span>
 
         <span class="k">return</span> <span class="n">save_configs</span><span class="p">(</span><span class="n">configs</span><span class="p">,</span> <span class="n">case_dir</span><span class="o">=</span><span class="n">case_dir</span><span class="p">)</span>
 
@@ -708,12 +706,10 @@
 <span class="sd">    model family (``solver.model_specs``), deduped by identity. Runs no</span>
 <span class="sd">    detection and needs no case directory.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">collect_config_classes</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">collect_config_classes</span>  <span class="c1"># noqa: PLC0415  # cycle: io-&gt;configs</span>
 
     <span class="n">classes</span> <span class="o">=</span> <span class="n">collect_config_classes</span><span class="p">([</span><span class="n">solver</span><span class="p">,</span> <span class="o">*</span><span class="n">solver</span><span class="o">.</span><span class="n">model_specs</span><span class="p">])</span>
-    <span class="k">return</span> <span class="n">Configurations</span><span class="p">(</span>
-        <span class="n">solver</span><span class="o">=</span><span class="n">solver</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="n">cast</span><span class="p">(</span><span class="s2">&quot;list[type[BaseConfig]]&quot;</span><span class="p">,</span> <span class="n">classes</span><span class="p">)</span>
-    <span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">Configurations</span><span class="p">(</span><span class="n">solver</span><span class="o">=</span><span class="n">solver</span><span class="p">,</span> <span class="n">classes</span><span class="o">=</span><span class="n">cast</span><span class="p">(</span><span class="s2">&quot;list[type[BaseConfig]]&quot;</span><span class="p">,</span> <span class="n">classes</span><span class="p">))</span></div>
 
 
 
@@ -744,7 +740,7 @@
 <span class="sd">    source for UIs. (The solver&#39;s own configs — e.g. ``controlDict`` — are not</span>
 <span class="sd">    models; they always apply and are listed by :func:`configurations`.)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">collect_config_classes</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">collect_config_classes</span>  <span class="c1"># noqa: PLC0415  # cycle: io-&gt;configs</span>
 
     <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ModelEntry</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">required</span><span class="p">,</span> <span class="n">families</span> <span class="ow">in</span> <span class="p">(</span>

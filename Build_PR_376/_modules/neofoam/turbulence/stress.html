@@ -636,9 +636,7 @@
     <span class="k">try</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">pybFoam</span><span class="o">.</span><span class="n">volScalarField</span><span class="p">(</span><span class="n">pybFoam</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">&quot;nuEff&quot;</span><span class="p">),</span> <span class="n">nu</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">pybFoam</span><span class="o">.</span><span class="n">dimensionedScalar</span><span class="p">(</span>
-            <span class="n">pybFoam</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">&quot;nuEff&quot;</span><span class="p">),</span> <span class="n">nu</span><span class="o">.</span><span class="n">dimensions</span><span class="p">(),</span> <span class="n">nu</span><span class="o">.</span><span class="n">value</span><span class="p">()</span>
-        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">pybFoam</span><span class="o">.</span><span class="n">dimensionedScalar</span><span class="p">(</span><span class="n">pybFoam</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">&quot;nuEff&quot;</span><span class="p">),</span> <span class="n">nu</span><span class="o">.</span><span class="n">dimensions</span><span class="p">(),</span> <span class="n">nu</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_negate</span><span class="p">(</span><span class="n">nuEff</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
@@ -653,9 +651,7 @@
     <span class="k">try</span><span class="p">:</span>
         <span class="n">negated</span> <span class="o">=</span> <span class="o">-</span><span class="n">nuEff</span>
     <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">pybFoam</span><span class="o">.</span><span class="n">dimensionedScalar</span><span class="p">(</span>
-            <span class="n">pybFoam</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">&quot;nuEff&quot;</span><span class="p">),</span> <span class="n">nuEff</span><span class="o">.</span><span class="n">dimensions</span><span class="p">(),</span> <span class="o">-</span><span class="n">nuEff</span><span class="o">.</span><span class="n">value</span><span class="p">()</span>
-        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">pybFoam</span><span class="o">.</span><span class="n">dimensionedScalar</span><span class="p">(</span><span class="n">pybFoam</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">&quot;nuEff&quot;</span><span class="p">),</span> <span class="n">nuEff</span><span class="o">.</span><span class="n">dimensions</span><span class="p">(),</span> <span class="o">-</span><span class="n">nuEff</span><span class="o">.</span><span class="n">value</span><span class="p">())</span>
     <span class="k">return</span> <span class="n">pybFoam</span><span class="o">.</span><span class="n">volScalarField</span><span class="p">(</span><span class="n">pybFoam</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="s2">&quot;nuEff&quot;</span><span class="p">),</span> <span class="n">negated</span><span class="p">)</span>
 
 

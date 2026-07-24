@@ -596,7 +596,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Mapping</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="w"> </span><span class="kn">import</span> <span class="n">neofoam_bindings</span> <span class="k">as</span> <span class="n">nfb</span>  <span class="c1"># NeoFOAM Python bindings</span>
-
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.algorithms.field_writer.field_writer</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>  <span class="c1"># re-exported for the solver</span>
     <span class="n">build</span><span class="p">,</span>
     <span class="n">fieldWriter</span><span class="p">,</span>
@@ -656,9 +655,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">inject_hook</span><span class="p">(</span><span class="n">ctx</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">FieldHook</span><span class="p">:</span>
-        <span class="n">hook</span> <span class="o">=</span> <span class="n">NeoNWriteHook</span><span class="p">(</span>
-            <span class="n">runtime</span><span class="o">=</span><span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;_neon_runtime&quot;</span><span class="p">],</span> <span class="n">turbulence</span><span class="o">=</span><span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;models.turbulence&quot;</span><span class="p">]</span>
-        <span class="p">)</span>
+        <span class="n">hook</span> <span class="o">=</span> <span class="n">NeoNWriteHook</span><span class="p">(</span><span class="n">runtime</span><span class="o">=</span><span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;_neon_runtime&quot;</span><span class="p">],</span> <span class="n">turbulence</span><span class="o">=</span><span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;models.turbulence&quot;</span><span class="p">])</span>
         <span class="n">ctx</span><span class="p">[</span><span class="s2">&quot;models.writer&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">hook</span> <span class="o">=</span> <span class="n">hook</span>
         <span class="k">return</span> <span class="n">hook</span>
 

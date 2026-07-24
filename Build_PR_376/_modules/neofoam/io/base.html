@@ -577,8 +577,8 @@
 
 <span class="sd">&quot;&quot;&quot;BaseConfig — Pydantic model with automatic IO strategy registration.&quot;&quot;&quot;</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ValidationError</span>
 
@@ -636,9 +636,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_path</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">case_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">file</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Resolve the on-disk path: explicit file, *file* override, or default.&quot;&quot;&quot;</span>
         <span class="n">case_dir_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">case_dir</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">case_dir_path</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> <span class="ow">or</span> <span class="p">(</span>
-            <span class="ow">not</span> <span class="n">case_dir_path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="n">case_dir_path</span><span class="o">.</span><span class="n">suffix</span>
-        <span class="p">):</span>
+        <span class="k">if</span> <span class="n">case_dir_path</span><span class="o">.</span><span class="n">is_file</span><span class="p">()</span> <span class="ow">or</span> <span class="p">(</span><span class="ow">not</span> <span class="n">case_dir_path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="n">case_dir_path</span><span class="o">.</span><span class="n">suffix</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">case_dir_path</span>  <span class="c1"># case_dir is an explicit file path</span>
         <span class="k">if</span> <span class="n">file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">case_dir_path</span> <span class="o">/</span> <span class="n">file</span>  <span class="c1"># override filename, relative to case_dir</span>
@@ -790,9 +788,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            List of ``ValidationErrors`` with file and subdict context.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">file_name</span> <span class="o">=</span> <span class="n">file_override</span> <span class="ow">or</span> <span class="p">(</span>
-            <span class="bp">cls</span><span class="o">.</span><span class="n">io_config</span><span class="o">.</span><span class="n">file</span> <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">io_config</span> <span class="k">else</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span>
-        <span class="p">)</span>
+        <span class="n">file_name</span> <span class="o">=</span> <span class="n">file_override</span> <span class="ow">or</span> <span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">io_config</span><span class="o">.</span><span class="n">file</span> <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">io_config</span> <span class="k">else</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
 
         <span class="c1"># Resolve subdict from io_config</span>
         <span class="n">subdict</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">io_config</span><span class="o">.</span><span class="n">subdict</span> <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">io_config</span> <span class="k">else</span> <span class="kc">None</span>

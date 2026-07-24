@@ -590,21 +590,28 @@
 <dt class="sig sig-object py" id="neofoam.core.plugin_system.PluginSystem">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.core.plugin_system.</span></span><span class="sig-name descname"><span class="pre">PluginSystem</span></span><a class="reference internal" href="../../_modules/neofoam/core/plugin_system.html#PluginSystem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.core.plugin_system.PluginSystem" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>PluginSystem provides a runtime-extensible plugin/config system using Pydantic discriminated unions.</p>
+<p>PluginSystem provides a runtime-extensible plugin/config system using
+Pydantic discriminated unions.</p>
 <p>Features:
 - Central registry (_registry) for all plugin base types and their plugin classes.
 - Decorator API for explicit registration of plugin families and plugin config classes.
-- Supports multiple independent plugin families, each with its own registry and extensible model.
-- Uses a PluginRegistry dataclass to store metadata for each plugin base type:</p>
+- Supports multiple independent plugin families, each with its own registry</p>
 <blockquote>
-<div><ul class="simple">
+<div><p>and extensible model.</p>
+</div></blockquote>
+<ul class="simple">
+<li><dl class="simple">
+<dt>Uses a PluginRegistry dataclass to store metadata for each plugin base type:</dt><dd><ul>
 <li><p>base_cls: The plugin base class (usually a Pydantic model).</p></li>
 <li><p>plugin_registry: List of registered plugin config classes for this type.</p></li>
 <li><p>discriminator_variable: Name of the field holding the union (e.g., ‘plugin’).</p></li>
 <li><p>discriminator: Name of the discriminator field in plugin configs (e.g., ‘plugin_type’).</p></li>
 <li><p>extensible_model: The dynamically generated Pydantic model for this plugin type.</p></li>
 </ul>
-</div></blockquote>
+</dd>
+</dl>
+</li>
+</ul>
 <p>Usage:
 1. Decorate your base class:</p>
 <blockquote>
@@ -633,7 +640,8 @@ amount: int</p>
 </ol>
 <p>4. The registry can be queried for all plugin families and their plugins:
 PluginSystem._registry[“PluginBase”].plugin_registry</p>
-<p>This design allows runtime extensibility, developer-friendly registration, and schema validation for plugin/config systems.</p>
+<p>This design allows runtime extensibility, developer-friendly registration,
+and schema validation for plugin/config systems.</p>
 </dd></dl>
 
 </section>

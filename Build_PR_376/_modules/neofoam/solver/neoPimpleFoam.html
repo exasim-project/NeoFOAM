@@ -597,16 +597,17 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">pybFoam</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pyf</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">neon._neon</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>  <span class="c1"># NeoN Python bindings</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pybFoam</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pyf</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam</span><span class="w"> </span><span class="kn">import</span> <span class="n">neofoam_bindings</span> <span class="k">as</span> <span class="n">nfb</span>  <span class="c1"># NeoFOAM Python bindings</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.solver.pisoControl</span><span class="w"> </span><span class="kn">import</span> <span class="n">PisoControl</span>
 
 <span class="c1"># Compatibility re-export: the process-wide Kokkos init guard lives in</span>
 <span class="c1"># neofoam.solver.neon_runtime under its public name.</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.solver.neon_runtime</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>  <span class="c1"># noqa: F401</span>
     <span class="n">ensure_neon_initialized</span> <span class="k">as</span> <span class="n">_ensure_neon_initialized</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.solver.pisoControl</span><span class="w"> </span><span class="kn">import</span> <span class="n">PisoControl</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_read_int</span><span class="p">(</span><span class="n">d</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
@@ -645,9 +646,7 @@
         <span class="n">pimple_dict</span> <span class="o">=</span> <span class="n">rt</span><span class="o">.</span><span class="n">fv_solution_dict</span><span class="o">.</span><span class="n">subDict</span><span class="p">(</span><span class="s2">&quot;PIMPLE&quot;</span><span class="p">)</span>
         <span class="n">piso</span> <span class="o">=</span> <span class="n">PisoControl</span><span class="p">(</span>
             <span class="n">n_correctors</span><span class="o">=</span><span class="n">_read_int</span><span class="p">(</span><span class="n">pimple_dict</span><span class="p">,</span> <span class="s2">&quot;nCorrectors&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
-            <span class="n">n_non_orthogonal_correctors</span><span class="o">=</span><span class="n">_read_int</span><span class="p">(</span>
-                <span class="n">pimple_dict</span><span class="p">,</span> <span class="s2">&quot;nNonOrthogonalCorrectors&quot;</span><span class="p">,</span> <span class="mi">0</span>
-            <span class="p">),</span>
+            <span class="n">n_non_orthogonal_correctors</span><span class="o">=</span><span class="n">_read_int</span><span class="p">(</span><span class="n">pimple_dict</span><span class="p">,</span> <span class="s2">&quot;nNonOrthogonalCorrectors&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
             <span class="c1"># OpenFOAM&#39;s solutionControl defaults momentumPredictor to true.</span>
             <span class="n">momentum_predictor</span><span class="o">=</span><span class="n">_read_switch</span><span class="p">(</span><span class="n">pimple_dict</span><span class="p">,</span> <span class="s2">&quot;momentumPredictor&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
         <span class="p">)</span>
@@ -758,9 +757,7 @@
                     <span class="n">rAUf</span> <span class="o">=</span> <span class="n">surf_interp</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">rAU</span><span class="p">)</span>
                     <span class="n">rAUf</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;rAUf&quot;</span>
 
-                    <span class="n">phiHbyA</span> <span class="o">=</span> <span class="n">nfb</span><span class="o">.</span><span class="n">flux</span><span class="p">(</span><span class="n">hByA</span><span class="p">)</span> <span class="o">+</span> <span class="n">rAUf</span> <span class="o">*</span> <span class="n">nfb</span><span class="o">.</span><span class="n">ddt_flux_corr</span><span class="p">(</span>
-                        <span class="n">U</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">rt</span><span class="o">.</span><span class="n">dt</span><span class="p">,</span> <span class="n">ddt_scheme</span>
-                    <span class="p">)</span>
+                    <span class="n">phiHbyA</span> <span class="o">=</span> <span class="n">nfb</span><span class="o">.</span><span class="n">flux</span><span class="p">(</span><span class="n">hByA</span><span class="p">)</span> <span class="o">+</span> <span class="n">rAUf</span> <span class="o">*</span> <span class="n">nfb</span><span class="o">.</span><span class="n">ddt_flux_corr</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">rt</span><span class="o">.</span><span class="n">dt</span><span class="p">,</span> <span class="n">ddt_scheme</span><span class="p">)</span>
 
                     <span class="k">while</span> <span class="n">piso</span><span class="o">.</span><span class="n">correct_non_orthogonal</span><span class="p">():</span>
                         <span class="n">pEqn</span> <span class="o">=</span> <span class="n">nfb</span><span class="o">.</span><span class="n">PDESolverScalar</span><span class="p">(</span>
@@ -786,9 +783,7 @@
                     <span class="n">nfb</span><span class="o">.</span><span class="n">apply_field_relaxation</span><span class="p">(</span>
                         <span class="n">p</span><span class="p">,</span>
                         <span class="n">prev_p</span><span class="p">,</span>
-                        <span class="n">nfb</span><span class="o">.</span><span class="n">lookup_field_relaxation</span><span class="p">(</span>
-                            <span class="n">rt</span><span class="o">.</span><span class="n">fv_solution_dict</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">final_iter</span>
-                        <span class="p">),</span>
+                        <span class="n">nfb</span><span class="o">.</span><span class="n">lookup_field_relaxation</span><span class="p">(</span><span class="n">rt</span><span class="o">.</span><span class="n">fv_solution_dict</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">final_iter</span><span class="p">),</span>
                     <span class="p">)</span>
                     <span class="n">p</span><span class="o">.</span><span class="n">correct_boundary_conditions</span><span class="p">()</span>
 
