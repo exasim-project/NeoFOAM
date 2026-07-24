@@ -44,8 +44,7 @@ from neofoam.foam.schemes import (
     SnGradScheme,
     Upwind,
 )
-from neofoam.io import BaseConfig, IOStrategy, OF
-
+from neofoam.io import OF, BaseConfig, IOStrategy
 
 # ---------------------------------------------------------------------------
 # Short-name → (section, value type) lookup tables

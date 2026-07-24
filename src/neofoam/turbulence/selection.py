@@ -30,6 +30,7 @@ pybFoam-bound entry point.
 from pathlib import Path
 from typing import Any, Literal, Optional, Union, overload
 
+from .config import TurbulencePropertiesConfig
 from .fallback import FallbackHandle, OpenFOAMTurbulenceModel, TurbulenceFactory
 from .momentumTransport import momentumTransportModel
 from .native import NeoNHandle
@@ -175,8 +176,6 @@ def select_from_case(
     This is the pybFoam-bound entry point: it imports and uses the OpenFOAM
     reading strategy via :class:`TurbulencePropertiesConfig`.
     """
-    from .config import TurbulencePropertiesConfig
-
     config = TurbulencePropertiesConfig.load(case_dir=case_dir)
     return select_turbulence_model(
         config,

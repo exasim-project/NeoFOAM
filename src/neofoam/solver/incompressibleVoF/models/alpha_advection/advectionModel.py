@@ -63,6 +63,6 @@ class advectionModel(BaseModel):
         ``system/fvSolution`` and returns the matching registered spec (MULES
         fallback on unknown/absent).
         """
-        from .selection import select_from_case
+        from .selection import select_from_case  # noqa: PLC0415  # circular: .selection
 
         return select_from_case()

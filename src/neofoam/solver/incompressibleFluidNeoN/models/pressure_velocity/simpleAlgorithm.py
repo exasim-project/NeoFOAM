@@ -31,8 +31,8 @@ case author is not silently served plain SIMPLE.
 from typing import Annotated, Any, Callable
 
 import neon._neon as nn  # NeoN Python bindings
-from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
 
+from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
 from neofoam.fields import (
     CalculatedBC,
     CyclicBC,
@@ -63,7 +63,6 @@ from neofoam.framework.types import OperationMetadata
 from neofoam.solver.pisoControl import PisoControl
 
 from ..incompressibleFluidNeoNModel import Model
-
 
 simpleNeoN = Model("SimpleNeoN")
 

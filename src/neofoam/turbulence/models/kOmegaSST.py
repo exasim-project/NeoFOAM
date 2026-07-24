@@ -36,6 +36,7 @@ Coefficients are the OpenFOAM ``kOmegaSST`` defaults.
 from typing import Annotated, Any
 
 import neon._neon as nn
+
 from neofoam import neofoam_bindings as nfb
 from neofoam.framework.context import FieldUpdates
 from neofoam.framework.initialization import InitStep

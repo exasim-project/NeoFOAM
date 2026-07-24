@@ -54,9 +54,10 @@ from neofoam.framework.operations import (
     SequentialOp,
 )
 from neofoam.framework.types import OperationMetadata
-from .control_factory import create_pimple_control
+
 from ..alpha_advection.shared import MixtureProtocol
 from ..incompressibleVoFModel import Model
+from .control_factory import create_pimple_control
 
 pimple = Model("Pimple")
 

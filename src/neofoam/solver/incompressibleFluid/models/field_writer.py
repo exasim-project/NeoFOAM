@@ -26,13 +26,13 @@ from typing import Any, Literal, Mapping
 
 import pybFoam as pyf
 
-from neofoam.framework.initialization import InitStep, model
 from neofoam.algorithms.field_writer.field_writer import (  # re-exported for the solver
     build,
     fieldWriter,
     write_output,
 )
 from neofoam.algorithms.field_writer.writer import FieldHook
+from neofoam.framework.initialization import InitStep, model
 
 from ..configs import ControlDictConfig
 

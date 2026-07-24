@@ -28,8 +28,8 @@ from pathlib import Path
 from typing import Any, Optional
 
 import pybFoam as pyf
-from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
 
+from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
 from neofoam.framework.context import Context
 from neofoam.framework.initialization import (
     ConfigContext,
@@ -39,6 +39,8 @@ from neofoam.framework.initialization import (
     StagedInitRunner,
     StagedInitSpec,
     lazy,
+)
+from neofoam.framework.initialization import (
     model as init_model,
 )
 from neofoam.framework.model import ModelRuntime, bind_owned_interfaces

@@ -29,6 +29,7 @@ from pybFoam import (
     volVectorField,
 )
 
+from neofoam import telemetry
 from neofoam.fields import (
     CalculatedBC,
     CyclicBC,
@@ -45,7 +46,6 @@ from neofoam.fields import (
     Vector,
     ZeroGradientBC,
 )
-from neofoam import telemetry
 from neofoam.foam import fvSchemes, fvSolution
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.dependency_resolver import wrap_with_dependency_resolution
@@ -60,7 +60,6 @@ from neofoam.framework.types import OperationMetadata
 
 from ..incompressibleFluidModel import Model
 from .control_factory import create_pimple_control
-
 
 pimple = Model("Pimple")
 

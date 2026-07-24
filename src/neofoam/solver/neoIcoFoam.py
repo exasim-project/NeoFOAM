@@ -7,8 +7,9 @@ neoIcoFoam.py — Incompressible Navier-Stokes solver using NeoN + NeoFOAM bindi
 
 import sys
 
-import pybFoam as pyf
 import neon._neon as nn  # NeoN Python bindings
+import pybFoam as pyf
+
 from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
 from neofoam.solver.pisoControl import PisoControl
 

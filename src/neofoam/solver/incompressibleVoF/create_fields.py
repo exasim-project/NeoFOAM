@@ -27,11 +27,13 @@ from neofoam.framework.initialization import (
     LoadResult,
     StagedInitRunner,
     StagedInitSpec,
+)
+from neofoam.framework.initialization import (
     model as init_model,
 )
 
-from .models.incompressibleVoFModel import incompressibleVoFModel
 from .models.alpha_advection import advectionModel  # noqa: F401  (registers schemes)
+from .models.incompressibleVoFModel import incompressibleVoFModel
 from .models.pressure_velocity.base import PressureVelocityAlgorithm
 
 

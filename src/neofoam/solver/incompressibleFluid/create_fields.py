@@ -14,6 +14,8 @@ from typing import Any, Optional
 import pybFoam as pyf
 from pybFoam.turbulence import singlePhaseTransportModel
 
+from neofoam.fields.synthesis import synthesize_init_step
+from neofoam.framework.context import Context
 from neofoam.framework.initialization import (
     ConfigContext,
     InitializerBuilder,
@@ -23,9 +25,10 @@ from neofoam.framework.initialization import (
     StagedInitSpec,
     field,
     lazy,
+)
+from neofoam.framework.initialization import (
     model as init_model,
 )
-from neofoam.framework.context import Context
 from neofoam.framework.model import ModelRuntime, ModelSpec, bind_owned_interfaces
 from neofoam.framework.tools import tool_graph_steps
 from neofoam.tools.run import detect_tools
@@ -261,8 +264,6 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         # as both spec and "runtime", no instantiate). Mirror ModelRuntime.run_build:
         # synthesise the ``pimple.field(...)`` declarations (``U`` / ``p``) *first*,
         # then the ``@build`` steps (``phi``, pimpleControl, …) which depend on them.
-        from neofoam.fields.synthesis import synthesize_init_step
-
         builder.add_core_models([("pressure_velocity", pressure_model)])
         for decl in pressure_model.field_decls:
             builder.add(synthesize_init_step(decl))

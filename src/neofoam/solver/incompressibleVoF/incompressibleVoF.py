@@ -54,7 +54,6 @@ from .models.alpha_advection import advectionModel  # noqa: F401 (registers memb
 from .models.incompressibleVoFModel import incompressibleVoFModel
 from .models.pressure_velocity.base import PressureVelocityAlgorithm
 
-
 # Interface band for the alpha Courant number: only faces where the
 # interpolated phase fraction straddles the interface (0.01 <= alphaf <= 0.99)
 # contribute. Mirrors interFoam/interIsoFoam alphaCourantNo.H.

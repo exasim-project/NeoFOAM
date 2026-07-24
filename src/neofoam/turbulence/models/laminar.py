@@ -30,6 +30,7 @@ This is the template for a pure-Python closure with a transport equation
 from typing import Annotated, Any
 
 import neon._neon as nn  # NeoN surface interpolation
+
 from neofoam import neofoam_bindings as nfb
 from neofoam.framework.context import FieldUpdates
 from neofoam.framework.initialization import InitStep

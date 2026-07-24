@@ -13,7 +13,7 @@ is declared for them here.
 """
 
 from neofoam.algorithms.solution_loop.config import TimeControlConfig
-from neofoam.io import IOStrategy, OF
+from neofoam.io import OF, IOStrategy
 
 
 @IOStrategy(OF("system/controlDict"))

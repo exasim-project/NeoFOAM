@@ -14,7 +14,6 @@ fields the native path uses.
 from typing import Any, Callable, Optional
 
 import pybFoam
-from pybFoam.turbulence import singlePhaseTransportModel
 
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.dependency_resolver import (
@@ -31,7 +30,11 @@ TransportFactory = Callable[[Any, Any], Any]
 
 
 def _default_factory() -> "TransportFactory":
-    """Return pybFoam's single-phase transport factory."""
+    """Return pybFoam's single-phase transport factory (lazy import)."""
+    # Lazy so constructing the adapter stays side-effect-free and unit-testable
+    # with an injected factory (test_construction_does_not_import_pybfoam).
+    from pybFoam.turbulence import singlePhaseTransportModel  # noqa: PLC0415
+
     return singlePhaseTransportModel
 
 

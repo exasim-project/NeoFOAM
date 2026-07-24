@@ -22,7 +22,6 @@ for SA-DDES), exactly like the legacy port's ``outputTime()`` branch.
 from typing import Any, Literal, Mapping
 
 from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
-
 from neofoam.algorithms.field_writer.field_writer import (  # re-exported for the solver
     build,
     fieldWriter,

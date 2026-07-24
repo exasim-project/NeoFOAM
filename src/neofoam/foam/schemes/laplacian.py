@@ -10,7 +10,6 @@ from pydantic import BaseModel, BeforeValidator, Discriminator, model_serializer
 from .interpolation import InterpolationScheme
 from .sn_grad import SnGradScheme
 
-
 # -- Variants ----------------------------------------------------------------
 
 

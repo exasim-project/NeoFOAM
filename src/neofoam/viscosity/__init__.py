@@ -11,12 +11,11 @@ mirroring :mod:`neofoam.turbulence`. Native models register with
 model is registered.
 """
 
+# Import side-effect: register the bundled native viscosity models.
+from . import models  # noqa: E402
 from .fallback import OpenFOAMViscosityModel
 from .selection import model_name, select_from_case, select_viscosity_model
 from .viscosityModel import viscosityModel
-
-# Import side-effect: register the bundled native viscosity models.
-from . import models  # noqa: E402
 
 __all__ = [
     "viscosityModel",

@@ -4,8 +4,9 @@
 """LoopState — the inspectable solution-loop state (pure data).
 
 The relevant time-stepping information for one run, held as a plain dataclass so
-it is trivially inspectable and serialisable. :class:`~neofoam.algorithms.solution_loop.solution_loop.SolutionLoop`
-*advances* it (the Foam::Time ``operator++`` arithmetic, write-time decision and
+it is trivially inspectable and serialisable.
+:class:`~neofoam.algorithms.solution_loop.solution_loop.SolutionLoop` *advances*
+it (the Foam::Time ``operator++`` arithmetic, write-time decision and
 ``deltaT`` adjustment all live there); a :class:`LoopBackend` (e.g. the pybFoam
 ``FoamTime``) optionally mirrors it onto a C++ ``Foam::Time``.
 

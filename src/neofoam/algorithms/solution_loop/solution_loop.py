@@ -33,6 +33,17 @@ engine, and exposes the loop body as ``@operation``s plus the predicate.
 from pathlib import Path
 from typing import Any, Callable, Optional, Protocol, runtime_checkable
 
+from neofoam.algorithms.solution_loop.config import (
+    _ADJUSTABLE,
+    _RUN_TIME,
+    _TIME_STEP,
+    _WRITE_CONTROL_ALIASES,
+    LABEL_MAX,
+    SMALL,
+    TimeControlConfig,
+    _round_half_away,
+)
+from neofoam.algorithms.solution_loop.control import SolutionControl
 from neofoam.algorithms.solution_loop.interfaces import (
     VGREAT,
     loopCondition,
@@ -43,17 +54,6 @@ from neofoam.algorithms.solution_loop.interfaces import (
 # the explicit alias marks it as a public re-export for the solver-side module
 # that imports it from here (mypy strict no_implicit_reexport).
 from neofoam.algorithms.solution_loop.interfaces import solutionLoop as solutionLoop
-from neofoam.algorithms.solution_loop.config import (
-    LABEL_MAX,
-    SMALL,
-    _ADJUSTABLE,
-    _RUN_TIME,
-    _TIME_STEP,
-    _WRITE_CONTROL_ALIASES,
-    TimeControlConfig,
-    _round_half_away,
-)
-from neofoam.algorithms.solution_loop.control import SolutionControl
 from neofoam.algorithms.solution_loop.loop_state import LoopState
 from neofoam.algorithms.solution_loop.time_integration import (
     TimeIntegration,

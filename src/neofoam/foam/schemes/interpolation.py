@@ -7,7 +7,6 @@ from typing import Annotated, Any, Literal, Union
 
 from pydantic import BaseModel, BeforeValidator, Discriminator, Field, model_serializer
 
-
 # -- Variants ----------------------------------------------------------------
 
 

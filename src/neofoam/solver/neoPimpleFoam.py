@@ -23,16 +23,17 @@ from __future__ import annotations
 import sys
 from typing import Any
 
-import pybFoam as pyf
 import neon._neon as nn  # NeoN Python bindings
+import pybFoam as pyf
+
 from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
-from neofoam.solver.pisoControl import PisoControl
 
 # Compatibility re-export: the process-wide Kokkos init guard lives in
 # neofoam.solver.neon_runtime under its public name.
 from neofoam.solver.neon_runtime import (  # noqa: F401
     ensure_neon_initialized as _ensure_neon_initialized,
 )
+from neofoam.solver.pisoControl import PisoControl
 
 
 def _read_int(d: Any, key: str, default: int) -> int:

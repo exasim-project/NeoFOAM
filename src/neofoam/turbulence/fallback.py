@@ -16,8 +16,6 @@ why the fallback keeps its own stress rather than the shared assembly.
 
 from typing import Any, Callable, Optional
 
-from pybFoam.turbulence import incompressibleTurbulenceModel
-
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.dependency_resolver import (
     DependencyResolver,
@@ -35,7 +33,11 @@ TurbulenceFactory = Callable[[Any, Any, Any], Any]
 
 
 def _default_factory() -> "TurbulenceFactory":
-    """Return pybFoam's incompressible turbulence factory."""
+    """Return pybFoam's incompressible turbulence factory (lazy import)."""
+    # Lazy so constructing the adapter stays side-effect-free and unit-testable
+    # with an injected factory (test_construction_does_not_import_pybfoam).
+    from pybFoam.turbulence import incompressibleTurbulenceModel  # noqa: PLC0415
+
     return incompressibleTurbulenceModel.New
 
 

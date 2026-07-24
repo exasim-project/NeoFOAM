@@ -30,9 +30,11 @@ import pybFoam.fvm as fvm
 from pybFoam import (
     Info,
     fvc,
-    mules as mules_lib,
     surfaceScalarField,
     volScalarField,
+)
+from pybFoam import (
+    mules as mules_lib,
 )
 
 from neofoam.fields import (

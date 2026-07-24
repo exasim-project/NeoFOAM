@@ -30,10 +30,10 @@ from neofoam.framework.operations import (
 )
 from neofoam.framework.solver import Solver
 from neofoam.framework.tools import PreprocessConfig
-from neofoam.tools.block_mesh import BlockMeshDictConfig
-from neofoam.tools.snappy_hex_mesh import SnappyHexMeshDictConfig
 from neofoam.framework.types import OperationMetadata
 from neofoam.telemetry import TelemetrySettings
+from neofoam.tools.block_mesh import BlockMeshDictConfig
+from neofoam.tools.snappy_hex_mesh import SnappyHexMeshDictConfig
 from neofoam.turbulence import momentumTransportModel
 from neofoam.viscosity import viscosityModel
 

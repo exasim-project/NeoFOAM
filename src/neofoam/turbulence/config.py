@@ -17,7 +17,7 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel, model_validator
 
-from neofoam.io import BaseConfig, IOStrategy, OF
+from neofoam.io import OF, BaseConfig, IOStrategy
 
 __all__ = ["RASProperties", "LESProperties", "TurbulencePropertiesConfig"]
 
