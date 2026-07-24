@@ -27,16 +27,20 @@ Anthropic API key + a sourced OpenFOAM), or ``--no-run`` to only author.
 
 from __future__ import annotations
 
+import argparse
+import os
 import shutil
+import subprocess
+import sys
 from pathlib import Path
 from typing import Any, Optional
 
 from neofoam.agent.case_fill import build_case_agent, case_spec_to_configs
-from neofoam.tooling.workflow.patch_set import PatchSet
-from neofoam.tooling.workflow.mesh_inputs import block_mesh_dict, snappy_dict
 from neofoam.framework.tools import PreprocessConfig
 from neofoam.io import BaseConfig, write_configs
 from neofoam.solver.incompressibleFluid.incompressibleFluid import incompressibleFluid
+from neofoam.tooling.workflow.mesh_inputs import block_mesh_dict, snappy_dict
+from neofoam.tooling.workflow.patch_set import PatchSet
 from neofoam.tools.block_mesh import BlockMeshDictConfig
 from neofoam.tools.snappy_hex_mesh import SnappyHexMeshDictConfig
 
@@ -167,11 +171,6 @@ def build_tube_bank(
 
 def main(argv: Optional[list[str]] = None) -> int:
     """Fill the case with a live agent and (unless ``--no-run``) mesh + solve it."""
-    import argparse
-    import os
-    import subprocess
-    import sys
-
     parser = argparse.ArgumentParser(description="Agent-fill + run the tube-bank case.")
     parser.add_argument("case_dir", help="Target case directory to author.")
     parser.add_argument(

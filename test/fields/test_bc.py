@@ -37,7 +37,6 @@ from neofoam.fields.bc import (
     build_bc_union,
 )
 
-
 # -- arms round-trip --------------------------------------------------
 
 

@@ -4,15 +4,15 @@
 """Manifest -> mesh-dict builders (hermetic -- pydantic only, no OpenFOAM)."""
 
 from neofoam.framework.tools.graph import PreprocessConfig
-from neofoam.tools.block_mesh import BlockMeshDictConfig
-from neofoam.tools.snappy_hex_mesh import SnappyHexMeshDictConfig
-from neofoam.tooling.workflow.patch_set import PatchSet
 from neofoam.tooling.workflow.mesh_inputs import (
     block_mesh_dict,
     build_mesh_inputs,
     preprocess_config,
     snappy_dict,
 )
+from neofoam.tooling.workflow.patch_set import PatchSet
+from neofoam.tools.block_mesh import BlockMeshDictConfig
+from neofoam.tools.snappy_hex_mesh import SnappyHexMeshDictConfig
 
 
 def _tool_names(pre: PreprocessConfig) -> list[str]:

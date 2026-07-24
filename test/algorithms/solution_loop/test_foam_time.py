@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from neofoam.algorithms.solution_loop.foam_time import FoamTime
 from neofoam.algorithms.solution_loop.loop_state import LoopState
+from neofoam.algorithms.solution_loop.solution_loop import LoopBackend
 
 
 class FakeTime:
@@ -32,8 +33,6 @@ def _state(*, delta_t: float, index: int) -> LoopState:
 
 
 def test_satisfies_loop_backend_protocol() -> None:
-    from neofoam.algorithms.solution_loop.solution_loop import LoopBackend
-
     assert isinstance(FoamTime(FakeTime()), LoopBackend)
 
 

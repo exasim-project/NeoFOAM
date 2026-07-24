@@ -12,13 +12,13 @@ Demonstrates:
 """
 
 import pytest
+from pydantic import Field, ValidationError
 
-from pydantic import ValidationError, Field
 from neofoam.io import (
-    BaseConfig,
-    YAML,
     JSON,
     OF,
+    YAML,
+    BaseConfig,
     IOStrategy,
 )
 

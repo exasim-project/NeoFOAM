@@ -28,7 +28,28 @@ and writes the case to disk. Requires ``ANTHROPIC_API_KEY`` in the environment;
 without it the chat reports the error and the manual wizard still works.
 """
 
+from pathlib import Path
+
 import marimo
+import marimo as mo
+from json_schema_widget import Widget
+
+from neofoam.agent.case_fill import build_case_agent, case_spec_to_configs
+from neofoam.agent.case_forms import (
+    INPUT_KEYS,
+    field_name,
+    is_scheme_config,
+    merge_field_config,
+    split_field_dump,
+)
+from neofoam.framework.solver.configurations import (
+    configurations,
+    model_catalog,
+)
+from neofoam.io import default_values, rjsf_uischema, slice_schema, write_configs
+from neofoam.solver.incompressibleFluid.incompressibleFluid import (
+    incompressibleFluid,
+)
 
 __generated_with = "0.23.10"
 app = marimo.App(width="full")
@@ -36,28 +57,6 @@ app = marimo.App(width="full")
 
 @app.cell
 def _():
-    from pathlib import Path
-
-    import marimo as mo
-
-    from json_schema_widget import Widget
-
-    from neofoam.agent.case_forms import (
-        INPUT_KEYS,
-        field_name,
-        is_scheme_config,
-        merge_field_config,
-        split_field_dump,
-    )
-    from neofoam.framework.solver.configurations import (
-        configurations,
-        model_catalog,
-    )
-    from neofoam.io import default_values, rjsf_uischema, write_configs, slice_schema
-    from neofoam.solver.incompressibleFluid.incompressibleFluid import (
-        incompressibleFluid,
-    )
-
     try:
         TARGET = Path(__file__).resolve().parent
     except NameError:  # marimo cell without __file__
@@ -208,8 +207,6 @@ def _():
     # ``CaseSpec`` (one Optional field per config) — the same agent ``run_fill.py``
     # uses. Construction is wrapped so a missing ``ANTHROPIC_API_KEY`` doesn't stop
     # the notebook loading; the chat surfaces the error instead.
-    from neofoam.agent.case_fill import build_case_agent, case_spec_to_configs
-
     MODEL_NAME = "claude-haiku-4-5"  # one-line swap to a sonnet/opus model
     try:
         agent = build_case_agent(model_name=MODEL_NAME)

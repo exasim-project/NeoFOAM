@@ -11,7 +11,6 @@ from pathlib import Path
 import pytest
 
 from neofoam.algorithms.solution_loop.interfaces import VGREAT, timeStepConstraint
-from neofoam.tooling.casebuild import from_template, patch
 from neofoam.framework.context import Context
 from neofoam.framework.model import BoundModelInterface, ModelRuntime
 from neofoam.solver.incompressibleFluid.models.courant import (
@@ -22,6 +21,7 @@ from neofoam.solver.incompressibleFluid.models.courant import (
 from neofoam.solver.incompressibleFluid.models.incompressibleFluidModel import (
     incompressibleFluidModel,
 )
+from neofoam.tooling.casebuild import from_template, patch
 
 courant_mod = importlib.import_module(
     "neofoam.solver.incompressibleFluid.models.courant"

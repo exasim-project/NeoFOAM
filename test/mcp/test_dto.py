@@ -51,4 +51,4 @@ def test_config_info_and_schema_round_trip() -> None:
 
 def test_toggle_model_dto_is_removed() -> None:
     with pytest.raises(ImportError):
-        from neofoam.mcp.dto import ToggleModelDTO  # noqa: F401
+        from neofoam.mcp.dto import ToggleModelDTO  # noqa: F401,PLC0415

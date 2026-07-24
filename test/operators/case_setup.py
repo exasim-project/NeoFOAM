@@ -20,10 +20,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+import backends
 import numpy as np
 import pytest
-
-import backends
 
 
 class Field:

@@ -25,8 +25,8 @@ import pytest
 
 pytest.importorskip("pybFoam")
 
-from neofoam.tooling.casebuild import from_template, block_mesh, configs  # noqa: E402
 from neofoam.solver.incompressibleFluid import run  # noqa: E402
+from neofoam.tooling.casebuild import block_mesh, configs, from_template  # noqa: E402
 
 from .._run_case import cwd  # noqa: E402
 from .case_presets import buoyant_cavity  # noqa: E402

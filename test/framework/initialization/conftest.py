@@ -6,9 +6,9 @@
 
 import pytest
 
-from neofoam.framework.initialization.init_step import InitStep
-from neofoam.framework.initialization.helpers import InitializerBuilder
 from neofoam.framework.initialization.config_context import ConfigContext
+from neofoam.framework.initialization.helpers import InitializerBuilder
+from neofoam.framework.initialization.init_step import InitStep
 
 
 @pytest.fixture

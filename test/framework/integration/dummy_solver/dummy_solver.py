@@ -9,7 +9,6 @@ Mimics SimpleSolver structure for testing new API.
 
 from typing import Annotated, Any, Optional
 
-
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.graph import DAGResolver
 from neofoam.framework.initialization import Depends, StagedInitRunner

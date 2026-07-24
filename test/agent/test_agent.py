@@ -18,6 +18,8 @@ import pytest
 # (and therefore the agent extra) is not installed.
 pytest.importorskip("pydantic_ai")
 
+from pydantic_ai import Agent
+
 from neofoam.agent import ExampleResponse, build_model, create_agent  # noqa: E402
 
 
@@ -54,8 +56,6 @@ def test_build_model_targets_ollama_by_default() -> None:
 
 def test_create_agent_uses_given_output_type() -> None:
     """create_agent returns a pydantic-ai Agent with our output schema."""
-    from pydantic_ai import Agent
-
     agent = create_agent()
     assert isinstance(agent, Agent)
     assert agent.output_type is ExampleResponse

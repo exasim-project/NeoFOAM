@@ -10,8 +10,8 @@ Implements the explicit 3-stage pattern:
   BUILD   → produce lazy InitSteps for execute_initialization
 """
 
-from typing import Any, Optional
 from pathlib import Path
+from typing import Any, Optional
 
 from pydantic import Field, PrivateAttr
 
@@ -24,7 +24,7 @@ from neofoam.framework.initialization import (
     StagedInitSpec,
 )
 from neofoam.framework.model import ModelRuntime
-from neofoam.io import BaseConfig, YAML, IOStrategy
+from neofoam.io import YAML, BaseConfig, IOStrategy
 
 from .models.dummy_model import DummyModelInterface
 

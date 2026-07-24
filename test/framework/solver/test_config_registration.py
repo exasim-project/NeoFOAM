@@ -15,7 +15,6 @@ Locks in:
 
 from typing import Annotated, Any, Optional
 
-
 from neofoam.framework.context import Context
 from neofoam.framework.initialization import Depends
 from neofoam.framework.initialization.staged.runner import StagedInitRunner

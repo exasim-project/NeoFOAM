@@ -13,7 +13,6 @@ import pytest
 
 from neofoam.turbulence.config import TurbulencePropertiesConfig
 from neofoam.turbulence.selection import model_name
-
 from turbulence.conftest import CASES, Case
 
 

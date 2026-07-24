@@ -6,7 +6,8 @@ from typing import Any
 
 import pytest
 
-from neofoam.framework.validation import CaseContext, validate
+import neofoam.tools.block_mesh as bm
+from neofoam.framework.validation import CaseContext, CheckRegistry, validate
 from neofoam.framework.validation import checks as checks_mod
 from neofoam.framework.validation.checks import (
     _expand_group,
@@ -16,7 +17,10 @@ from neofoam.framework.validation.checks import (
     check_gamg_smoother,
     check_laminar_wall_functions,
     check_pimple_final,
+    check_required_files,
 )
+from neofoam.mcp.registry import resolve_solver
+from neofoam.tools import snappy_hex_mesh
 
 CASES = Path(__file__).parent / "cases"
 
@@ -155,8 +159,6 @@ def test_constraint_check_errors_when_type_leaf_unreadable(
 
 def test_validate_passes_a_grouped_runnable_fvsolution() -> None:
     pytest.importorskip("pybFoam")
-    from neofoam.mcp.registry import resolve_solver
-
     solver: Any = resolve_solver("incompressibleFluid")
     report = validate(solver, CASES / "grouped_case")
     # No PIMPLE-final finding: the grouped base is satisfied by its per-field Finals.
@@ -170,8 +172,6 @@ def test_mesh_patch_types_escalates_a_corrupt_blockmeshdict(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     # A present blockMeshDict whose config load fails is Unreadable, not an empty set.
-    import neofoam.tools.block_mesh as bm
-
     (tmp_path / "system").mkdir()
     (tmp_path / "system" / "blockMeshDict").write_text("garbage")
 
@@ -188,8 +188,6 @@ def test_mesh_patch_types_escalates_a_corrupt_snappyhexmeshdict(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """A snappyHexMeshDict that will not load surfaces as Unreadable, not a swallow."""
-    from neofoam.tools import snappy_hex_mesh
-
     shm = tmp_path / "system" / "snappyHexMeshDict"
     shm.parent.mkdir(parents=True)
     shm.write_text(
@@ -264,8 +262,6 @@ def test_registry_ok_false_when_mesh_dict_is_corrupt(
 ) -> None:
     # The live path the reviewer flagged: a corrupt blockMeshDict must make ok=False,
     # not pass silently. Run just the constraint check through a CheckRegistry.
-    from neofoam.framework.validation import CheckRegistry
-
     monkeypatch.setattr(
         checks_mod,
         "mesh_patch_types",
@@ -339,9 +335,6 @@ def test_div_check_warns_on_an_unbounded_scheme() -> None:
 
 def test_required_files_errors_when_a_present_config_does_not_load() -> None:
     pytest.importorskip("pybFoam")
-    from neofoam.framework.validation.checks import check_required_files
-    from neofoam.mcp.registry import resolve_solver
-
     solver: Any = resolve_solver("incompressibleFluid")
     findings = check_required_files(
         CaseContext(case=CASES / "bad_controldict", solver=solver)

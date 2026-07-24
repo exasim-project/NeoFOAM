@@ -20,6 +20,8 @@ import pytest
 
 pytest.importorskip("opentelemetry")
 
+import sys
+
 from neofoam.solver.incompressibleFluid import run  # noqa: E402
 
 from .comparison_helpers import setup_case  # noqa: E402
@@ -183,8 +185,6 @@ def test_hotRoom_telemetry_parallel_writes_one_file_per_rank(tmp_path: Path) -> 
         timeout=60,
     )
     assert result.returncode == 0, f"decomposePar failed: {result.stderr}"
-
-    import sys
 
     result = subprocess.run(
         ["mpirun", "-np", "2", sys.executable, str(_PARALLEL_DRIVER)],

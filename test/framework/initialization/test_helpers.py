@@ -10,14 +10,14 @@ import pytest
 
 from neofoam.framework.initialization.execution.executor import execute_step
 from neofoam.framework.initialization.helpers import (
+    BuildsInitSteps,
+    InitializerBuilder,
     field,
-    operator,
     lazy,
     model,
-    InitializerBuilder,
+    operator,
 )
 from neofoam.framework.initialization.init_step import InitStep
-
 
 # --- Helper function tests (parametrized) ---
 
@@ -179,8 +179,6 @@ def test_builder_add_preserves_explicit_category(builder: InitializerBuilder) ->
 
 def test_builds_init_steps_protocol_matches_run_build(builder, mock_core_model):
     """`BuildsInitSteps` Protocol matches objects exposing run_build()."""
-    from neofoam.framework.initialization.helpers import BuildsInitSteps
-
     class NoRunBuild:
         pass
 

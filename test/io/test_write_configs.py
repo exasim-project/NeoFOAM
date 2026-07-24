@@ -15,8 +15,10 @@ from __future__ import annotations
 from pathlib import Path
 
 import pybFoam as pyf
+from pydantic import BaseModel
 
 from neofoam.framework.solver.configurations import configurations
+from neofoam.framework.tools.graph import PreprocessConfig
 from neofoam.io import write_configs
 from neofoam.io.base import BaseConfig
 from neofoam.io.decorator import OF, IOStrategy
@@ -50,8 +52,6 @@ def test_write_configs_writes_field_and_dict_files(tmp_path: Path) -> None:
 
 
 def test_write_configs_skips_instances_without_io_config(tmp_path: Path) -> None:
-    from pydantic import BaseModel
-
     class NoIO(BaseModel):
         x: int = 1
 
@@ -159,8 +159,6 @@ def test_write_configs_writes_yaml_strategy_config(tmp_path: Path) -> None:
     # ``NotImplementedError: no merged-write path for YAMLStrategy`` — so a case
     # authored through the MCP ``save_case`` tool could not emit its preprocess
     # enable-list. It must now write and round-trip like the OpenFOAM configs.
-    from neofoam.framework.tools.graph import PreprocessConfig
-
     cfg = PreprocessConfig.model_validate(
         {
             "tools": [

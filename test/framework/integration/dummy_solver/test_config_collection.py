@@ -17,10 +17,10 @@ Pure-Python: the dummy solver and its YAML-bound configs need no pybFoam.
 from pathlib import Path
 from typing import Any
 
+from neofoam.foam import fvSchemes, fvSolution
 from neofoam.framework.initialization import LoadResult
 from neofoam.framework.model import Model
-from neofoam.foam import fvSchemes, fvSolution
-from neofoam.io import IOStrategy, YAML, collect_config_classes, save_configs
+from neofoam.io import YAML, BaseConfig, IOStrategy, collect_config_classes, save_configs
 
 from .dummy_init import (
     MeshConfig,
@@ -147,8 +147,6 @@ def test_collect_config_classes_mixes_sources_and_dedups() -> None:
 
 def test_save_configs_skips_unbound_config(tmp_path: Path, recwarn: Any) -> None:
     """A config class with no IO strategy is skipped (warned), not raised."""
-    from neofoam.io import BaseConfig
-
     class Unbound(BaseConfig):
         value: float = 1.0
 

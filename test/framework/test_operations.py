@@ -8,6 +8,7 @@ from typing import Any, Iterator
 
 import pytest
 
+from framework.conftest import MaxIterations
 from neofoam import telemetry
 from neofoam.framework.context import Context
 from neofoam.framework.operations import (
@@ -19,8 +20,6 @@ from neofoam.framework.operations import (
 )
 from neofoam.framework.types import OperationMetadata, OperationNumber
 from neofoam.telemetry import MpiInfo, TelemetrySettings
-
-from framework.conftest import MaxIterations
 
 HAS_OTEL = importlib.util.find_spec("opentelemetry") is not None
 

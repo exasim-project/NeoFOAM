@@ -15,7 +15,6 @@ from pathlib import Path
 
 from neofoam.framework.model import ModelRuntime
 from neofoam.viscosity.config import TransportPropertiesConfig
-
 from viscosity.conftest import build_as_solver, case_for
 
 #: Point the Newtonian model at the case the solver would feed it.

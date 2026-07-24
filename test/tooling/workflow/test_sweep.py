@@ -5,12 +5,15 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
 import pytest
 from pydantic import BaseModel
 
+from neofoam.mcp import tools
+from neofoam.mcp.registry import resolve_solver
 from neofoam.tooling.workflow.rules import default_registry
 from neofoam.tooling.workflow.sweep import (
     ALL_RULE,
@@ -31,6 +34,7 @@ from neofoam.tooling.workflow.sweep import (
     validate_mesh_dimension,
     variant_errors,
 )
+from neofoam.tooling.workflow.sweep_runner import config_classes_by_name
 
 
 class _Transport(BaseModel):
@@ -408,10 +412,6 @@ def test_load_sweep_round_trips_export(tmp_path: Path) -> None:
 
 
 def test_export_sweep_with_real_config_classes(tmp_path: Path) -> None:
-    from neofoam.mcp import tools
-    from neofoam.mcp.registry import resolve_solver
-    from neofoam.tooling.workflow.sweep_runner import config_classes_by_name
-
     solver = resolve_solver("incompressibleFluid")
     transport = tools.config_schema(solver, "transport_properties_config")
     classes = config_classes_by_name(solver)
@@ -435,10 +435,6 @@ def test_export_sweep_with_real_config_classes(tmp_path: Path) -> None:
 
 
 def test_export_sweep_with_mesh_dimension(tmp_path: Path) -> None:
-    from neofoam.mcp.registry import resolve_solver
-    from neofoam.tooling.workflow.sweep import validate_mesh_dimension
-    from neofoam.tooling.workflow.sweep_runner import config_classes_by_name
-
     classes = config_classes_by_name(resolve_solver("incompressibleFluid"))
     mesh = {
         "coarse": {"block_mesh_dict_config": {"scale": 1.0}},
@@ -472,8 +468,6 @@ def test_export_sweep_with_mesh_dimension(tmp_path: Path) -> None:
         "mesh/coarse.json",
         "mesh/fine.json",
     ]
-    import json
-
     setup = json.loads(
         (export.out_dir / "configs" / "coarse_nu1" / "setup.json").read_text()
     )

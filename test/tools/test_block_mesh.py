@@ -17,9 +17,9 @@ from typing import Any
 
 import pytest
 
-from neofoam.tooling.casebuild import from_template
 from neofoam.framework.tools import ToolRuntime
 from neofoam.io import write_configs
+from neofoam.tooling.casebuild import from_template
 from neofoam.tools import block_mesh
 from neofoam.tools.block_mesh import (
     Block,

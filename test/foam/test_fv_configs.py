@@ -26,7 +26,6 @@ from neofoam.foam import fvSchemes, fvSolution
 from neofoam.framework.model import Model
 from neofoam.framework.solver import Solver
 
-
 # ---------------------------------------------------------------------------
 # Subclass synthesis
 # ---------------------------------------------------------------------------

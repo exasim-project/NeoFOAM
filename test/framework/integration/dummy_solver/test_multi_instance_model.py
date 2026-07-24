@@ -13,8 +13,8 @@ from pathlib import Path
 import pytest
 
 from neofoam.framework.context import Context
-from .models.model4 import model4, Model4Config
 
+from .models.model4 import Model4Config, model4
 
 CASE_DIR = Path(__file__).parent / "configs"
 

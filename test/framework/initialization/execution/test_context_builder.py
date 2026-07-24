@@ -14,6 +14,7 @@ from neofoam.framework.initialization.execution import (
     InitializationGraphError,
     execute_initialization,
 )
+from neofoam.framework.initialization.execution import validate as original_validate
 from neofoam.framework.initialization.execution.context_builder import (
     ContextBuilder,
     build_context_from_results,
@@ -256,8 +257,6 @@ def test_execute_initialization_validates_only_once(monkeypatch):
     ]
 
     validate_calls = {"count": 0}
-    from neofoam.framework.initialization.execution import validate as original_validate
-
     def counting_validate(lazy_inits):
         validate_calls["count"] += 1
         return original_validate(lazy_inits)

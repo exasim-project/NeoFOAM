@@ -17,13 +17,6 @@ throwaway registration to clean up between tests).
 
 from pathlib import Path
 
-from neofoam.viscosity.config import TransportPropertiesConfig
-from neofoam.viscosity.fallback import OpenFOAMViscosityModel
-from neofoam.viscosity.selection import select_viscosity_model
-
-# Importing the package registers the bundled native models (Newtonian).
-import neofoam.viscosity  # noqa: F401
-
 from _case_discovery import (
     Case,
     discover_cases,
@@ -31,6 +24,12 @@ from _case_discovery import (
     make_build_as_solver,
 )
 from _case_discovery import case_for as _case_for
+
+# Importing the package registers the bundled native models (Newtonian).
+import neofoam.viscosity  # noqa: F401
+from neofoam.viscosity.config import TransportPropertiesConfig
+from neofoam.viscosity.fallback import OpenFOAMViscosityModel
+from neofoam.viscosity.selection import select_viscosity_model
 
 #: Self-contained OpenFOAM cases shipped with the viscosity tests (each holds a
 #: real ``constant/transportProperties`` plus an ``expected.yaml`` manifest).

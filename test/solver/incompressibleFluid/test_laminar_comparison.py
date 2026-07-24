@@ -20,8 +20,8 @@ from pathlib import Path
 
 import pytest
 
-from neofoam.tooling.casebuild import from_template, block_mesh, patch
 from neofoam.solver.incompressibleFluid import run
+from neofoam.tooling.casebuild import block_mesh, from_template, patch
 
 from .._run_case import cwd
 from .comparison_helpers import (

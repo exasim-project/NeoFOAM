@@ -30,7 +30,6 @@ from neofoam.turbulence.selection import (
     select_from_case,
     select_turbulence_model,
 )
-
 from turbulence.conftest import CASES, Case
 
 

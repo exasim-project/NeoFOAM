@@ -11,8 +11,8 @@ from pydantic import ValidationError
 from neofoam.tooling.workflow.patch_set import (
     BoundingBox,
     PatchEntry,
-    PatchSet,
     PatchRole,
+    PatchSet,
 )
 
 FIXTURE = Path(__file__).parent / "cases" / "tube_bank_manifest.json"

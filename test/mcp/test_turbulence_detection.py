@@ -18,6 +18,7 @@ from neofoam.core.plugin_system import PluginSystem
 from neofoam.mcp import tools
 from neofoam.mcp.registry import resolve_solver
 from neofoam.turbulence import momentumTransportModel
+from neofoam.turbulence.config import TurbulencePropertiesConfig
 from neofoam.turbulence.momentumTransport import Model
 
 _BUNDLED = {"laminar", "kEpsilon", "kOmegaSST", "SpalartAllmaras", "realizableKE"}
@@ -37,8 +38,6 @@ def test_bundled_turbulence_models_are_listed(solver_name: str) -> None:
 @pytest.fixture
 def throwaway_model() -> Iterator[str]:
     """Register a probe model, then remove it from the family registry."""
-    from neofoam.turbulence.config import TurbulencePropertiesConfig
-
     registry = PluginSystem.get_registered("momentumTransportModel")
     assert registry is not None
     before = list(registry.plugin_registry)

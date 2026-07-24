@@ -14,9 +14,9 @@ from pathlib import Path
 import pybFoam as pyf
 import pytest
 
-from neofoam.tooling.casebuild import CaseDir, configs, patch
 from neofoam.framework.solver.configurations import configurations
 from neofoam.solver.incompressibleFluid.incompressibleFluid import incompressibleFluid
+from neofoam.tooling.casebuild import CaseDir, configs, patch
 
 CAVITY = Path(__file__).parent / "cases" / "cavity"
 

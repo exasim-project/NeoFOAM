@@ -9,11 +9,9 @@ from pathlib import Path
 from typing import Any, cast
 
 import pytest
-
 from pydantic import ValidationError
 
 from neofoam.algorithms.solution_loop.interfaces import VGREAT, timeStepConstraint
-from neofoam.tooling.casebuild import from_template, patch
 from neofoam.framework.context import Context
 from neofoam.framework.model import BoundModelInterface, ModelRuntime
 from neofoam.solver.incompressibleFluid.models.incompressibleFluidModel import (
@@ -23,6 +21,7 @@ from neofoam.solver.incompressibleFluid.models.max_delta_t import (
     MaxDeltaTConfig,
     maxDeltaT,
 )
+from neofoam.tooling.casebuild import from_template, patch
 
 _CASES = Path(__file__).parent / "cases"
 _BASE = _CASES / "controldict_base"

@@ -15,18 +15,31 @@ import pytest
 # (the sweep-runner source itself has no UI dependency).
 pytest.importorskip("neofoam.ui")
 
+import shutil
+import subprocess
+import sys
+
+from neofoam.framework.tools import PreprocessConfig
+from neofoam.io import BaseConfig, write_configs
 from neofoam.mcp import tools  # noqa: E402
 from neofoam.mcp.registry import resolve_solver  # noqa: E402
 from neofoam.solver.incompressibleFluid.models.boussinesq import BoussinesqConfig  # noqa: E402
-from neofoam.ui.scaffold import scaffold_runnable_case  # noqa: E402
-from neofoam.viscosity.config import TransportPropertiesConfig  # noqa: E402
+from neofoam.tooling.workflow import sweep_runner
+from neofoam.tooling.workflow.mesh_inputs import block_mesh_dict, snappy_dict
+from neofoam.tooling.workflow.patch_set import PatchSet
 from neofoam.tooling.workflow.sweep_runner import (  # noqa: E402
+    _load_payloads,
     apply_configs,
     clone_case,
     config_classes_by_name,
     main,
+    run_tool_command,
     setup_case,
+    setup_mesh_case,
 )
+from neofoam.tools.block_mesh import BlockMeshDictConfig
+from neofoam.ui.scaffold import scaffold_runnable_case  # noqa: E402
+from neofoam.viscosity.config import TransportPropertiesConfig  # noqa: E402
 
 _CONTROL = {
     "application": "pimpleFoam",
@@ -164,9 +177,6 @@ def test_apply_configs_rejects_config_without_file_binding(
 ) -> None:
     # A config class with no @IOStrategy binding (io_config is None) has no file
     # to write, so it cannot be swept.
-    from neofoam.io import BaseConfig
-    from neofoam.tooling.workflow import sweep_runner
-
     class _NoFile(BaseConfig):
         x: int = 1
 
@@ -178,8 +188,6 @@ def test_apply_configs_rejects_config_without_file_binding(
 
 
 def test_load_payloads_rejects_non_mapping_json(tmp_path: Path) -> None:
-    from neofoam.tooling.workflow.sweep_runner import _load_payloads
-
     config_json = tmp_path / "setup.json"
     config_json.write_text("[1, 2, 3]")
     with pytest.raises(ValueError, match="mapping of config payloads"):
@@ -215,13 +223,6 @@ _MESH_SYSTEM = Path(__file__).parent / "cases" / "mesh_base" / "system"
 
 def _make_meshable_base(tmp_path: Path) -> Path:
     """A base case carrying everything the mesh mini-case stages."""
-    import shutil
-
-    from neofoam.framework.tools import PreprocessConfig
-    from neofoam.io import write_configs
-    from neofoam.tooling.workflow.mesh_inputs import block_mesh_dict, snappy_dict
-    from neofoam.tooling.workflow.patch_set import PatchSet
-
     base = _make_base(tmp_path)
     patch_set = PatchSet.load(_MANIFEST)
     write_configs([block_mesh_dict(patch_set), snappy_dict(patch_set)], base)
@@ -239,8 +240,6 @@ def _make_meshable_base(tmp_path: Path) -> Path:
 
 
 def test_setup_mesh_case_stages_and_applies(tmp_path: Path) -> None:
-    from neofoam.tools.block_mesh import BlockMeshDictConfig
-
     base = _make_meshable_base(tmp_path)
     mesh_dir = tmp_path / "meshes" / "coarse"
     # Stale mesh from a previous variant definition must be wiped on re-stage.
@@ -284,8 +283,6 @@ def test_setup_mesh_case_stages_and_applies(tmp_path: Path) -> None:
 
 
 def test_setup_mesh_case_implicit_variant_applies_nothing(tmp_path: Path) -> None:
-    from neofoam.tooling.workflow.sweep_runner import setup_mesh_case
-
     base = _make_meshable_base(tmp_path)
     mesh_dir = tmp_path / "meshes" / "base"
     config = tmp_path / "base.json"
@@ -298,8 +295,6 @@ def test_setup_mesh_case_implicit_variant_applies_nothing(tmp_path: Path) -> Non
 
 
 def test_setup_mesh_case_requires_control_dict(tmp_path: Path) -> None:
-    from neofoam.tooling.workflow.sweep_runner import setup_mesh_case
-
     bare = tmp_path / "bare"
     bare.mkdir()
     config = tmp_path / "c.json"
@@ -309,8 +304,6 @@ def test_setup_mesh_case_requires_control_dict(tmp_path: Path) -> None:
 
 
 def test_run_tool_unknown_tool_errors(tmp_path: Path) -> None:
-    from neofoam.tooling.workflow.sweep_runner import run_tool_command
-
     base = _make_meshable_base(tmp_path)
     with pytest.raises(ValueError, match="'fluxMagic' is not in the base case's"):
         run_tool_command("fluxMagic", base, tmp_path / "meshes" / "x")
@@ -367,11 +360,6 @@ def test_run_tool_blockmesh_persists_polymesh(tmp_path: Path) -> None:
     (see test/tools/_blockmesh_probe.py), and each Snakemake job is its own
     process anyway — this mirrors production.
     """
-    import subprocess
-    import sys
-
-    from neofoam.tooling.workflow.sweep_runner import setup_mesh_case
-
     base = _make_meshable_base(tmp_path)
     mesh_dir = tmp_path / "meshes" / "base"
     setup_mesh_case("incompressibleFluid", base, mesh_dir, _write_json(tmp_path, {}))

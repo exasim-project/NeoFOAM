@@ -24,9 +24,12 @@ from neofoam.fields.schema import schema_for
 from neofoam.fields.value_types import Scalar, Vector
 from neofoam.framework.model import Model
 from neofoam.framework.solver import Configurations, Solver, configurations
-from neofoam.framework.solver.configurations import _is_field_schema
+from neofoam.framework.solver.configurations import ModelEntry, _is_field_schema, model_catalog
 from neofoam.io import BaseConfig
-from neofoam.io.decorator import IOStrategy, OF
+from neofoam.io.decorator import OF, IOStrategy
+from neofoam.solver.incompressibleFluid.incompressibleFluid import (
+    incompressibleFluid,
+)
 
 
 class SolverCfgA(BaseConfig):
@@ -185,8 +188,6 @@ def test_labeled_sets_display_label() -> None:
 
 
 def test_model_catalog_splits_required_and_optional() -> None:
-    from neofoam.framework.solver.configurations import ModelEntry, model_catalog
-
     class CoreCfg(BaseConfig):
         c: int = 1
 
@@ -230,11 +231,6 @@ def test_model_catalog_splits_required_and_optional() -> None:
 
 
 def test_incompressible_fluid_models_required_vs_optional() -> None:
-    from neofoam.framework.solver.configurations import model_catalog
-    from neofoam.solver.incompressibleFluid.incompressibleFluid import (
-        incompressibleFluid,
-    )
-
     cat = {e.name: e for e in model_catalog(incompressibleFluid)}
     # Core families are required; buoyancy + time-step contributions are optional.
     assert cat["Pimple"].required and cat["Newtonian"].required
@@ -245,11 +241,6 @@ def test_incompressible_fluid_models_required_vs_optional() -> None:
 
 
 def test_incompressible_fluid_boussinesq_label_in_catalog() -> None:
-    from neofoam.framework.solver.configurations import model_catalog
-    from neofoam.solver.incompressibleFluid.incompressibleFluid import (
-        incompressibleFluid,
-    )
-
     cat = {e.name: e for e in model_catalog(incompressibleFluid)}
     bouss = cat["boussinesq"]
     assert bouss.required is False

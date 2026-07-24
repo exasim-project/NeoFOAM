@@ -9,6 +9,8 @@ Internal StagedInitSpec / StagedInitRunner behavior is covered under
 full LOAD → RESOLVE → BUILD flow via ``dummy_init.create_init``.
 """
 
+from neofoam.framework.model import ModelRuntime
+
 from .dummy_init import create_init
 
 
@@ -52,8 +54,6 @@ def test_optional_models_integration() -> None:
 
     algorithm = ctx.models.get("algorithm")
     assert algorithm is not None
-
-    from neofoam.framework.model import ModelRuntime
 
     rt_m1 = next(
         (

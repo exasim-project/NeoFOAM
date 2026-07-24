@@ -15,7 +15,17 @@ to write the merged OpenFOAM case into this directory — the same
 agent. No AI agent is involved here; that is a separate step.
 """
 
+from pathlib import Path
+
 import marimo
+import marimo as mo
+from json_schema_widget import Widget
+
+from neofoam.framework.solver.configurations import configurations
+from neofoam.io import write_configs
+from neofoam.solver.incompressibleFluid.incompressibleFluid import (
+    incompressibleFluid,
+)
 
 __generated_with = "0.23.10"
 app = marimo.App(width="full")
@@ -23,18 +33,6 @@ app = marimo.App(width="full")
 
 @app.cell
 def _():
-    from pathlib import Path
-
-    import marimo as mo
-
-    from json_schema_widget import Widget
-
-    from neofoam.framework.solver.configurations import configurations
-    from neofoam.io import write_configs
-    from neofoam.solver.incompressibleFluid.incompressibleFluid import (
-        incompressibleFluid,
-    )
-
     try:
         TARGET = Path(__file__).resolve().parent
     except NameError:  # marimo cell without __file__

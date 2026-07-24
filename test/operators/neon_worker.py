@@ -42,9 +42,9 @@ from typing import Any, Callable
 import neon._neon as nn
 import numpy as np
 import pybFoam as pyf
+from schemes import div_scheme
 
 from neofoam import neofoam_bindings as nfb
-from schemes import div_scheme
 
 Op = Callable[[str, "np.ndarray | None"], "np.ndarray | None"]
 

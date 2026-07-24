@@ -15,12 +15,12 @@ Covers:
 """
 
 import pytest
-
 from pydantic import Field
+
 from neofoam.io import (
-    BaseConfig,
-    YAML,
     JSON,
+    YAML,
+    BaseConfig,
     IOStrategy,
     ValidationErrors,
     validate_models,

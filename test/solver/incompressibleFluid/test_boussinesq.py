@@ -9,6 +9,8 @@ import pytest
 
 pytest.importorskip("pybFoam")  # the OpenFOAM write/read path needs pybFoam
 
+import pybFoam as pyf
+
 from neofoam.framework.solver.configurations import configurations  # noqa: E402
 from neofoam.io import write_configs  # noqa: E402
 from neofoam.solver.incompressibleFluid.incompressibleFluid import (  # noqa: E402
@@ -47,8 +49,6 @@ def test_gravity_config_round_trips_tokens_to_python_lists(tmp_path: Path) -> No
 
 def test_gravity_config_openfoam_parses_written_file(tmp_path: Path) -> None:
     """pybFoam parses the written tokens (dimensionSet + vector), not raw strings."""
-    import pybFoam as pyf
-
     write_configs([GravityConfig()], case_dir=tmp_path)
     root = pyf.dictionary.read(str(tmp_path / "constant" / "g"))
     assert str(root.get[str]("dimensions")) == "[ 0 1 -2 0 0 0 0 ]"

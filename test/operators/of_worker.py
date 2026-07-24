@@ -51,7 +51,6 @@ from pybFoam import (
     volScalarField,
     volVectorField,
 )
-
 from schemes import div_scheme
 
 Op = Callable[[str, "np.ndarray | None"], "np.ndarray | None"]

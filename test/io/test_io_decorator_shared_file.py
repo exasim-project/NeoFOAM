@@ -12,16 +12,15 @@ Demonstrates:
 """
 
 import pytest
+from pydantic import Field, ValidationError
 
-from pydantic import ValidationError, Field
 from neofoam.io import (
-    BaseConfig,
-    YAML,
     JSON,
     OF,
+    YAML,
+    BaseConfig,
     IOStrategy,
 )
-
 
 # -- YAML models -----------------------------------------------------------
 
@@ -155,7 +154,8 @@ def test_write_preserves_other_subdicts(
 def test_validation_error_missing_field_in_subdict(
     io_fixtures, config_class, invalid_file
 ):
-    """Test that validation correctly identifies missing required fields and validator violations in subdicts.
+    """Test that validation correctly identifies missing required fields and
+    validator violations in subdicts.
 
     The invalid configs are missing the 'port' field and have poolSize=-5 (violates gt=0).
     load(validate=False) bypasses validation so all data is available for inspection.

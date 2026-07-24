@@ -1,11 +1,14 @@
 """
-Test for an extensible plugin config system using pydantic discriminated unions and a registry pattern.
+Test for an extensible plugin config system using pydantic discriminated unions
+and a registry pattern.
 Refactored to use a generic registry and factory for multiple extensible models.
 """
 
 from typing import Any, Literal
+
 import pytest
 from pydantic import BaseModel, ValidationError
+
 from neofoam.core.plugin_system import PluginSystem
 
 

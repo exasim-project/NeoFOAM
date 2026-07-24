@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 
 import neofoam
+import neofoam.framework.initialization as init_pkg
 from neofoam.framework.context import Context
 
 
@@ -18,8 +19,6 @@ def test_framework_interface_package_is_removed() -> None:
 
 
 def test_interface_step_is_no_longer_importable() -> None:
-    import neofoam.framework.initialization as init_pkg
-
     assert not hasattr(init_pkg, "interface_step")
 
 

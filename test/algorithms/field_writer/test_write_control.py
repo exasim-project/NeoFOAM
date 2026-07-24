@@ -6,9 +6,9 @@
 from __future__ import annotations
 
 from neofoam.algorithms.field_writer.write_control import (
-    StepperWriteControl,
     IntervalWriteControl,
     RunTimeWriteControl,
+    StepperWriteControl,
     WriteControl,
     WriteControlConfig,
     write_control_from_config,

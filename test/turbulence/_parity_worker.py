@@ -27,7 +27,16 @@ import os
 import sys
 from pathlib import Path
 
+import neon._neon as nn
 import numpy as np
+import pybFoam as pyf
+from pybFoam.turbulence import singlePhaseTransportModel
+
+from neofoam import neofoam_bindings as nfb
+from neofoam.framework.context import Context
+from neofoam.turbulence.config import TurbulencePropertiesConfig
+from neofoam.turbulence.fallback import OpenFOAMTurbulenceModel
+from neofoam.turbulence.selection import select_turbulence_model
 
 os.environ.setdefault("FOAM_SIGFPE", "false")
 
@@ -121,8 +130,6 @@ def role_setup(case: Path) -> None:
     ``div U`` dilatation terms OpenFOAM's kEpsilon adds then vanish identically on
     both backends, rather than being dropped only on the NeoN side).
     """
-    import pybFoam as pyf
-
     time = pyf.Time(str(case.parent), case.name)
     block_dict = pyf.dictionary.read(str(case / "system" / "blockMeshDict"))
     pyf.meshing.generate_blockmesh(time, block_dict, False, "constant")
@@ -163,11 +170,6 @@ COMPARE_FIELDS = ("nut", "k", "epsilon", "nuTilda", "omega")
 
 def role_reference(case: Path) -> None:
     """pybFoam turbulence model, one ``correct`` step → ``reference_<field>.npy``."""
-    import pybFoam as pyf
-    from pybFoam.turbulence import singlePhaseTransportModel
-
-    from neofoam.turbulence.fallback import OpenFOAMTurbulenceModel
-
     of_time = pyf.Time(str(case.parent), case.name)
     of_mesh = pyf.fvMesh(of_time)
     U = pyf.volVectorField.read_field(of_mesh, "U")
@@ -193,14 +195,7 @@ def role_reference(case: Path) -> None:
 
 def role_subject(case: Path) -> None:
     """NeoN ModelSpec model, one ``correct`` step → ``subject_<field>.npy``."""
-    import neon._neon as nn
-    import pybFoam as pyf
-
     nn.initialize(["neon"])
-
-    from neofoam import neofoam_bindings as nfb
-    from neofoam.turbulence.config import TurbulencePropertiesConfig
-    from neofoam.turbulence.selection import select_turbulence_model
 
     cfg = TurbulencePropertiesConfig.load(case_dir=str(case))
 
@@ -260,13 +255,6 @@ def role_subject_fb(case: Path) -> None:
     the point is to prove the handle + op-dispatch wiring actually advances ``nut``,
     not that two engines agree.
     """
-    import pybFoam as pyf
-    from pybFoam.turbulence import singlePhaseTransportModel
-
-    from neofoam.framework.context import Context
-    from neofoam.turbulence.config import TurbulencePropertiesConfig
-    from neofoam.turbulence.selection import select_turbulence_model
-
     of_time = pyf.Time(str(case.parent), case.name)
     of_mesh = pyf.fvMesh(of_time)
     U = pyf.volVectorField.read_field(of_mesh, "U")
