@@ -26,7 +26,7 @@ Interface (``__all__`` — the rule model only):
 * **Rule model** (the deep part — hides all Snakemake wiring): :class:`RuleKind`,
   :class:`RuleSpec`, :class:`RuleRegistry`, :class:`RulePlan`,
   :func:`default_registry`, :func:`rules_dir`.
-* **Reserved dimension names**: :data:`MESH_DIM`, :data:`CAD_DIM`.
+* **Reserved dimension names**: :data:`MESH_DIM`.
 * **Default selection**: :data:`DEFAULT_ENABLED`.
 
 The ``{case}``/``{mesh}`` file-pattern constants (``MESH_CONFIG_PATTERN``,
@@ -46,7 +46,6 @@ from enum import Enum
 from pathlib import Path
 
 __all__ = [
-    "CAD_DIM",
     "DEFAULT_ENABLED",
     "MESH_DIM",
     "RuleKind",
@@ -60,22 +59,9 @@ __all__ = [
 #: The reserved keyed dimension: mesh variants (params.yaml key / sweep column).
 MESH_DIM = "mesh"
 
-#: The reserved keyed dimension: CAD geometry variants — an independent,
-#: STL-producing axis upstream of the mesh chain (composes as ``cad × mesh``).
-CAD_DIM = "cad"
-
 # File patterns of the pipeline ({case} = sweep case, {mesh} = mesh variant).
-# These stay single-``{mesh}`` for the overview canvas (which has no cad node);
-# the runtime Snakefile composes the real mesh mini-case dir as ``MESH_STEM``
-# (``meshes/{cad}__{mesh}`` when a CAD axis is present) in its header, and the
-# composite graph is what ``snakemake --dag`` renders in the DAG tab.
 MESH_CONFIG_PATTERN = "configs/mesh/{mesh}.json"
 MESH_STAGE_STAMP = ".staged.json"  # meshes/{mesh}/.staged.json
-CAD_CONFIG_PATTERN = "configs/cad/{cad}.json"
-#: The cad tool's per-variant stamp, relative to ``meshes/{mesh}/``. It sits in
-#: the STL directory the CAD run populates, so blockMesh chaining off it also
-#: expresses "the surfaces are on disk".
-CAD_STAMP = "constant/triSurface/.cad.done"
 SETUP_CONFIG_PATTERN = "configs/{case}/setup.json"
 SETUP_STAMP_PATTERN = "cases/{case}/.applied.json"
 RUN_DONE_PATTERN = "cases/{case}/done"
@@ -91,15 +77,13 @@ class RuleKind(Enum):
     """The wiring category of a rule — the single field that fixes how it is wired.
 
     One kind per rule replaces the earlier bag of mutually-constraining booleans
-    (``creates_mesh``/``produces_geometry``/``consumes_mesh_dim``/…), so an illegal
-    combination (e.g. "creates a mesh AND stages the variant") is now unrepresentable
-    and both :meth:`RuleRegistry.plan` and the canvas resolver branch on one value.
+    (``creates_mesh``/``consumes_mesh_dim``/…), so an illegal combination (e.g.
+    "creates a mesh AND stages the variant") is now unrepresentable and both
+    :meth:`RuleRegistry.plan` and the canvas resolver branch on one value.
 
     Members:
         AGGREGATE: the ``all`` sink target (emitted inline, no ``.smk``).
         MESH_STAGE: stages a clean mesh mini-case per variant (``setup_mesh``).
-        GEOMETRY: writes the STLs the mesh chain consumes (``cad_geometry``); runs in
-            the keyed mesh chain ahead of the mesh creator without creating a mesh.
         MESH_CREATE: creates the base mesh and starts the chain (``blockMesh``).
         MESH_TOOL: refines/validates an existing mesh (``snappyHexMesh``/``checkMesh``).
         CASE_SETUP: clones the base case + applies the case's configs (``setup``).
@@ -108,7 +92,6 @@ class RuleKind(Enum):
 
     AGGREGATE = "aggregate"
     MESH_STAGE = "mesh_stage"
-    GEOMETRY = "geometry"
     MESH_CREATE = "mesh_create"
     MESH_TOOL = "mesh_tool"
     CASE_SETUP = "case_setup"
@@ -116,11 +99,9 @@ class RuleKind(Enum):
 
 
 #: Kinds that run once per mesh variant (the keyed rows).
-_MESH_KEYED = frozenset(
-    {RuleKind.MESH_STAGE, RuleKind.GEOMETRY, RuleKind.MESH_CREATE, RuleKind.MESH_TOOL}
-)
+_MESH_KEYED = frozenset({RuleKind.MESH_STAGE, RuleKind.MESH_CREATE, RuleKind.MESH_TOOL})
 #: Keyed rules in the mesh *tool* chain — staging (``MESH_STAGE``) excluded.
-_MESH_TOOLS = frozenset({RuleKind.GEOMETRY, RuleKind.MESH_CREATE, RuleKind.MESH_TOOL})
+_MESH_TOOLS = frozenset({RuleKind.MESH_CREATE, RuleKind.MESH_TOOL})
 
 
 @dataclass(frozen=True)
@@ -166,12 +147,6 @@ class RuleSpec:
     def creates_mesh(self) -> bool:
         """A valid start of the mesh tool chain (``blockMesh``)."""
         return self.kind is RuleKind.MESH_CREATE
-
-    @property
-    def produces_geometry(self) -> bool:
-        """Writes the STLs the mesh chain consumes (``cad_geometry``); may precede
-        the mesh creator in the chain even though it does not itself create a mesh."""
-        return self.kind is RuleKind.GEOMETRY
 
     @property
     def is_mesh_tool(self) -> bool:
@@ -258,14 +233,11 @@ class RuleRegistry:
         if not chain:
             msg = "the mesh chain needs at least one mesh tool rule (e.g. blockMesh)"
             raise ValueError(msg)
-        # Leading geometry producers (cad_geometry) write the STLs the chain
-        # meshes; the first tool that is NOT a geometry producer must create the
-        # mesh (setup_mesh stages a clean variant).
-        non_geometry = [spec for spec in chain if spec.kind is not RuleKind.GEOMETRY]
-        if not non_geometry or non_geometry[0].kind is not RuleKind.MESH_CREATE:
-            offender = non_geometry[0] if non_geometry else chain[0]
+        # setup_mesh stages a clean variant, so the first tool in the chain must
+        # create the mesh.
+        if chain[0].kind is not RuleKind.MESH_CREATE:
             msg = (
-                f"the mesh chain starts at '{offender.name}', which does not create "
+                f"the mesh chain starts at '{chain[0].name}', which does not create "
                 f"a mesh — setup_mesh stages a clean variant, so the first tool must "
                 f"be a mesh creator (e.g. blockMesh)"
             )
@@ -322,15 +294,6 @@ def default_registry() -> RuleRegistry:
                 inputs=(MESH_CONFIG_PATTERN,),
                 outputs=(f"meshes/{{mesh}}/{MESH_STAGE_STAMP}",),
                 title="stage mesh variant",
-            ),
-            RuleSpec(
-                name="cad_geometry",
-                smk_file="cad_geometry.smk",
-                kind=RuleKind.GEOMETRY,
-                inputs=(f"meshes/{{mesh}}/{MESH_STAGE_STAMP}",),
-                outputs=(f"meshes/{{mesh}}/{CAD_STAMP}",),
-                stamp_name=CAD_STAMP,
-                title="CAD geometry",
             ),
             RuleSpec(
                 name="blockMesh",

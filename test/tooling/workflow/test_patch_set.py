@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Stage-1 contract: the PatchSet schema (hermetic -- no FreeCAD/OpenFOAM)."""
+"""Stage-1 contract: the PatchSet schema (hermetic -- no OpenFOAM)."""
 
 from pathlib import Path
 

@@ -27,7 +27,6 @@ from neofoam.tooling.workflow.sweep import (
     nodes_to_dimensions,
     rule_nodes,
     sweep_snakefile,
-    validate_cad_dimension,
     validate_dimensions,
     validate_mesh_dimension,
     variant_errors,
@@ -433,130 +432,6 @@ def test_export_sweep_with_real_config_classes(tmp_path: Path) -> None:
             {"transport_properties_config": {"bad": {**base, "nu": "not-a-number"}}},
             classes,
         )
-
-
-_CAD = {
-    "cad": {
-        "model": "geometry/design.FCStd",
-        "variants": {"d6": {"tube_d": 6.0}, "d8": {"tube_d": 8.0}},
-    }
-}
-
-
-def test_validate_cad_dimension_accepts_numbers_rejects_rest() -> None:
-    validate_cad_dimension({"d6": {"tube_d": 6.0, "n_tubes": 8}})  # ints + floats: fine
-    with pytest.raises(
-        ValueError, match=r"'cad\.d6' failed validation.*must map parameter aliases"
-    ):
-        validate_cad_dimension({"d6": ["not", "a", "map"]})
-    with pytest.raises(
-        ValueError, match=r"'cad\.d6' failed validation: tube_d: must be a number"
-    ):
-        validate_cad_dimension({"d6": {"tube_d": "wide"}})
-    # A bool is not accepted as a numeric parameter.
-    with pytest.raises(ValueError, match="must be a number"):
-        validate_cad_dimension({"d6": {"flag": True}})
-
-
-def test_export_sweep_with_cad_axis(tmp_path: Path) -> None:
-    export = export_sweep(
-        tmp_path / "sweep",
-        solver_name="incompressibleFluid",
-        base_case=tmp_path / "base",
-        dimensions={"transport": {"nu1": {"nu": 1e-5}, "nu2": {"nu": 2e-5}}},
-        classes={"transport": _Transport},
-        cad=_CAD,
-    )
-    # A per-variant cad config is materialized next to configs/mesh.
-    assert (export.out_dir / "configs" / "cad" / "d6.json").is_file()
-    assert (export.out_dir / "configs" / "cad" / "d8.json").is_file()
-
-    snake = export.snakefile.read_text()
-    assert 'CAD_MODEL = "geometry/design.FCStd"' in snake
-    assert 'cad_axis = space.keyed("cad", out_dir="configs")' in snake
-    includes = [line for line in snake.splitlines() if line.startswith("include:")]
-    # The cad include comes before blockMesh in the mesh chain.
-    assert any("cad_geometry.smk" in line for line in includes)
-    cad_idx = next(i for i, line in enumerate(includes) if "cad_geometry.smk" in line)
-    block_idx = next(i for i, line in enumerate(includes) if "block_mesh.smk" in line)
-    assert cad_idx < block_idx
-
-    # Case count = cad(2) × config(2) = 4.
-    rows = export.sweep_csv.read_text().splitlines()
-    assert len(rows) - 1 == 4
-
-    # The sweep round-trips: params.yaml keeps the cad variants, the header the
-    # model path.
-    loaded = load_sweep(export.out_dir)
-    assert loaded.cad_model == "geometry/design.FCStd"
-    assert set(loaded.dimensions["cad"]) == {"d6", "d8"}
-    # cad is excluded from the per-case setup payloads (it applies upstream).
-    import json
-
-    setup = json.loads(
-        next((export.out_dir / "configs").glob("*/setup.json")).read_text()
-    )
-    assert set(setup) == {"transport"}
-
-
-def test_sweep_snakefile_cad_composes_mesh_stem() -> None:
-    # With a CAD axis the mesh mini-case dir composes cad × mesh; the header's
-    # MESH_STEM (used verbatim as the mesh rules' output:) and the _mesh_dir_of
-    # helper carry the composite.
-    text = sweep_snakefile(
-        "incompressibleFluid",
-        "/tmp/base",
-        ["cad", "mesh", "transport"],
-        cad_model="design.FCStd",
-    )
-    assert 'MESH_STEM = "meshes/{cad}__{mesh}"' in text
-    assert 'return f"meshes/{cad_axis.of(wc)}__{mesh_axis.of(wc)}"' in text
-    assert 'return f"meshes/{wc.cad}__{wc.mesh}"' in text
-
-
-def test_export_sweep_rejects_composite_mesh_key_collision(tmp_path: Path) -> None:
-    # A variant name may contain '__', so distinct (cad, mesh) pairs can collapse
-    # onto one meshes/{cad}__{mesh} dir: cad 'a' + mesh 'b__c' and cad 'a__b' +
-    # mesh 'c' both give 'a__b__c'. This must abort before any file is written.
-    out = tmp_path / "out"
-    with pytest.raises(ValueError, match="mesh-key collision"):
-        export_sweep(
-            out,
-            solver_name="incompressibleFluid",
-            base_case=tmp_path / "base",
-            dimensions={
-                "mesh": {"c": {}, "b__c": {}},
-                "transport": {"nu1": {"nu": 1e-5}},
-            },
-            classes={"transport": _Transport},
-            cad={
-                "cad": {
-                    "model": "m.FCStd",
-                    "variants": {"a": {"r": 1.0}, "a__b": {"r": 2.0}},
-                }
-            },
-        )
-    assert not (out / "sweep.csv").exists()
-    assert not (out / "Snakefile").exists()
-
-
-def test_export_sweep_cad_times_mesh_case_count(tmp_path: Path) -> None:
-    # The CAD axis composes with the mesh axis: cad × mesh × config.
-    export = export_sweep(
-        tmp_path / "sweep",
-        solver_name="incompressibleFluid",
-        base_case=tmp_path / "base",
-        dimensions={
-            "mesh": {"coarse": {}, "fine": {}},
-            "transport": {"nu1": {"nu": 1e-5}},
-        },
-        classes={"transport": _Transport},
-        cad=_CAD,
-    )
-    rows = export.sweep_csv.read_text().splitlines()
-    # cad(2) × mesh(2) × transport(1) = 4.
-    assert len(rows) - 1 == 4
-    assert export.sweep_csv.read_text().splitlines()[0] == "case,cad,mesh,transport"
 
 
 def test_export_sweep_with_mesh_dimension(tmp_path: Path) -> None:

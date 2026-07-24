@@ -31,7 +31,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import logging
 import shutil
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
@@ -45,14 +44,11 @@ from neofoam.framework.tools import PreprocessConfig
 from neofoam.io import BaseConfig, write_configs
 from neofoam.tooling.casebuild import CaseDir, Pipeline, Step
 
-logger = logging.getLogger(__name__)
-
 __all__ = [
     "apply_configs",
     "clone_case",
     "config_classes_by_name",
     "main",
-    "run_cad",
     "run_tool_command",
     "setup_case",
     "setup_mesh_case",
@@ -382,103 +378,6 @@ def run_tool_command(
     _write_stamp(stamp, {"tool": tool_name, "options": entry})
 
 
-def _load_cad_params(params_json: Path) -> dict[str, float]:
-    """Read a CAD variant's ``{alias: number}`` parameter map.
-
-    Raises:
-        ValueError: If the JSON is not a mapping of aliases to numbers.
-    """
-    data = json.loads(Path(params_json).read_text())
-    if not isinstance(data, dict):
-        msg = f"cad params file {params_json}: expected a mapping of alias -> number"
-        raise ValueError(msg)
-    params: dict[str, float] = {}
-    for alias, value in data.items():
-        if isinstance(value, bool) or not isinstance(value, (int, float)):
-            msg = (
-                f"cad param '{alias}' in {params_json} must be a number, got "
-                f"{type(value).__name__}"
-            )
-            raise ValueError(msg)
-        params[str(alias)] = value
-    return params
-
-
-def _load_parametric_model(model_path: str) -> Any:
-    """Open a parametric CAD model (``foamcadagent`` imported lazily).
-
-    Kept as a seam so tests can stub the FreeCAD-backed model without installing
-    foamcadagent / FreeCAD.
-
-    Raises:
-        ImportError: With an install hint when foamcadagent is absent.
-    """
-    try:
-        from foamcadagent.parametric import (  # type: ignore[import-not-found]
-            FreeCADParametricModel,
-        )
-    except ImportError as exc:
-        msg = (
-            "CAD sweeps need foamcadagent + FreeCAD; install with "
-            "'pip install neofoam[foamcad]'"
-        )
-        raise ImportError(msg) from exc
-    return FreeCADParametricModel(model_path)
-
-
-def run_cad(
-    model: str,
-    params_json: Path,
-    case_dir: Path,
-    stamp: Path | None = None,
-    names: Mapping[str, Any] | None = None,
-    labels: Sequence[str] | None = None,
-) -> dict[str, float]:
-    """Regenerate a mesh variant's STLs from a parametric CAD model.
-
-    Reads the CAD variant's numeric parameters, drives the parametric model
-    (``FreeCADParametricModel.update``) and writes surfaces into
-    ``case_dir/constant/triSurface``. How the surfaces are split depends on the
-    boundary selector given:
-
-    - ``names`` (a ``{patch: selector}`` map) → one STL per patch via
-      ``write_surfaces(case_dir, names=names)``.
-    - else ``labels`` (FreeCAD object labels) → one STL per label via
-      ``export_bc_surfaces(case_dir, labels)``.
-    - else → a single merged STL (``write_surfaces(case_dir, names=None)``) with
-      **no** boundary-condition split, which snappyHexMesh + the field BCs
-      generally need; a warning is logged in this case.
-
-    A stamp (``{"model", "params"}``) is written last so Snakemake re-runs only
-    when the parameters change.
-
-    Returns:
-        The parameters applied (alias -> value).
-    """
-    case_dir = Path(case_dir)
-    params = _load_cad_params(Path(params_json))
-
-    fcpm = _load_parametric_model(str(model))
-    fcpm.update(params)
-    if names is not None:
-        fcpm.write_surfaces(case_dir, names=dict(names))
-    elif labels:
-        fcpm.export_bc_surfaces(case_dir, list(labels))
-    else:
-        fcpm.write_surfaces(case_dir, names=None)
-        logger.warning(
-            "run_cad wrote a single merged STL with no boundary-condition split "
-            "(snappyHexMesh + field BCs need one STL per patch — pass --names or "
-            "--labels to split by patch)."
-        )
-
-    _write_stamp(
-        Path(stamp) if stamp is not None else None,
-        {"model": str(model), "params": params},
-    )
-    return params
-
-
 def main(argv: Sequence[str] | None = None) -> int:
     """CLI entry point used by generated Snakefiles."""
     parser = argparse.ArgumentParser(
@@ -525,35 +424,6 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--stamp", type=Path, default=None, help="stamp file to write on success"
     )
 
-    cad = sub.add_parser(
-        "cad", help="regenerate a mesh variant's STLs from a parametric CAD model"
-    )
-    cad.add_argument(
-        "--model", required=True, help="the parametric model file (e.g. design.FCStd)"
-    )
-    cad.add_argument(
-        "--params", required=True, type=Path, help="configs/cad/<variant>.json"
-    )
-    cad.add_argument(
-        "--case",
-        required=True,
-        type=Path,
-        help="the meshes/<variant> dir to write into",
-    )
-    cad.add_argument(
-        "--stamp", type=Path, default=None, help="stamp file to write on success"
-    )
-    cad.add_argument(
-        "--names",
-        default=None,
-        help="JSON {patch: selector} map for per-patch STL export (one STL per patch)",
-    )
-    cad.add_argument(
-        "--labels",
-        default=None,
-        help="comma-separated FreeCAD labels for per-patch STL export by label",
-    )
-
     tool = sub.add_parser(
         "tool", help="run ONE preprocess tool in a staged mesh variant dir"
     )
@@ -580,14 +450,6 @@ def main(argv: Sequence[str] | None = None) -> int:
         written = setup_mesh_case(
             args.solver, args.base, args.case, args.config, args.stamp
         )
-    elif args.command == "cad":
-        names = json.loads(args.names) if args.names else None
-        if names is not None and not isinstance(names, dict):
-            msg = "--names must be a JSON object mapping patch -> selector"
-            raise ValueError(msg)
-        labels = [s for s in args.labels.split(",") if s] if args.labels else None
-        run_cad(args.model, args.params, args.case, args.stamp, names, labels)
-        written = []
     else:
         run_tool_command(args.tool, args.base, args.case, args.stamp)
         written = []

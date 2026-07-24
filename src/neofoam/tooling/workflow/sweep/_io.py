@@ -6,7 +6,7 @@
 :func:`export_sweep` validates every variant, builds the cross product and writes
 the workflow directory (``sweep.csv``, ``params.yaml``, ``Snakefile``, the
 materialized ``configs/``) plus a ``sweep.meta.json`` sidecar holding the facts a
-reader needs — solver name, base case, enabled rules, CAD model. :func:`load_sweep`
+reader needs — solver name, base case, enabled rules. :func:`load_sweep`
 is the inverse: it reads ``params.yaml`` (the full ``{dim: {variant: payload}}``)
 and the sidecar. The sidecar is the read-back contract, so ``load_sweep`` never
 parses the generated ``Snakefile`` — the executable workflow and its metadata are
@@ -34,60 +34,19 @@ from neofoam.tooling.workflow.paramspace import (
     write_sweep_csv,
 )
 from neofoam.tooling.workflow.rules import (
-    CAD_DIM,
-    DEFAULT_ENABLED,
     MESH_DIM,
     RuleRegistry,
     default_registry,
 )
 from neofoam.tooling.workflow.sweep._canvas import SETUP_RULE
-from neofoam.tooling.workflow.sweep._codegen import (
-    _check_composite_mesh_names,
-    sweep_snakefile,
-)
+from neofoam.tooling.workflow.sweep._codegen import sweep_snakefile
 from neofoam.tooling.workflow.sweep._validate import (
-    validate_cad_dimension,
     validate_dimensions,
     validate_mesh_dimension,
 )
 
-#: Rule that regenerates the STLs when a CAD axis is swept (opt-in, like post).
-CAD_RULE = "cad_geometry"
-
 #: Sidecar holding the read-back metadata (the inverse of the Snakefile header).
 SWEEP_META_FILE = "sweep.meta.json"
-
-
-def merge_cad(
-    dimensions: Mapping[str, Mapping[str, Any]],
-    cad: Mapping[str, Mapping[str, Any]] | None,
-) -> tuple[dict[str, dict[str, Any]], str | None]:
-    """Fold the CAD axis' variants into the dimension map; return (dims, cad_model).
-
-    A CAD axis exists only once it carries variants — an empty/absent ``cad`` dict
-    leaves the dimensions untouched and returns ``cad_model=None`` (a mesh-only
-    sweep). Shared by :func:`export_sweep` and :class:`~…sweep.Sweep` so both derive
-    the same effective dimensions and model path.
-    """
-    dims = {d: dict(v) for d, v in dimensions.items()}
-    info = (cad or {}).get(CAD_DIM) or {}
-    variants = info.get("variants")
-    if variants:
-        dims[CAD_DIM] = {k: dict(v) for k, v in variants.items()}
-    cad_model = str(info["model"]) if CAD_DIM in dims else None
-    return dims, cad_model
-
-
-def plan_enabled_with_cad(
-    enabled: Sequence[str] | None, *, has_cad: bool
-) -> Sequence[str] | None:
-    """Add the opt-in ``cad_geometry`` rule to *enabled* when a CAD axis is present."""
-    if not has_cad:
-        return enabled
-    base = list(DEFAULT_ENABLED if enabled is None else enabled)
-    if CAD_RULE not in base:
-        base.append(CAD_RULE)
-    return base
 
 
 def cross_product(
@@ -136,39 +95,22 @@ def export_sweep(
     base_case: str | Path,
     dimensions: Mapping[str, dict[str, dict[str, Any]]],
     classes: Mapping[str, type[BaseModel]],
-    cad: Mapping[str, Mapping[str, Any]] | None = None,
     registry: RuleRegistry | None = None,
     enabled: Sequence[str] | None = None,
 ) -> SweepExport:
     """Write the runnable workflow directory for the current canvas.
 
     Validates every variant (the ``mesh`` dimension via
-    :func:`validate_mesh_dimension`, the ``cad`` dimension via
-    :func:`validate_cad_dimension`, everything else against its config class),
+    :func:`validate_mesh_dimension`, everything else against its config class),
     builds the cross product and writes ``sweep.csv``, ``params.yaml``, the
     ``Snakefile``, the ``sweep.meta.json`` sidecar and the materialized configs
-    into ``out_dir`` — per-case ``configs/{case}/setup.json`` (mesh + cad
-    excluded: they apply in the mesh mini-case) plus per-variant
+    into ``out_dir`` — per-case ``configs/{case}/setup.json`` (mesh excluded: it
+    applies in the mesh mini-case) plus per-variant
     ``configs/mesh/{variant}.json`` (an implicit empty ``base`` variant when the
-    sweep has no mesh dimension) and, when a CAD axis is present,
-    ``configs/cad/{variant}.json``. The directory is immediately runnable with
+    sweep has no mesh dimension). The directory is immediately runnable with
     ``snakemake``.
-
-    Args:
-        cad: The CAD axis as ``{"cad": {"model": path, "variants": {name:
-            params}}}`` (the :meth:`SweepModel.cad_dimensions` shape). Empty or
-            ``None`` keeps today's mesh-only behaviour. When given, the
-            ``cad_geometry`` rule is enabled and the model path is threaded into
-            the Snakefile.
     """
-    # A CAD axis exists only once it carries variants — an empty cad dict emits
-    # no CAD_MODEL / cad_axis / configs/cad and behaves like a mesh-only sweep.
-    dimensions, cad_model = merge_cad(dimensions, cad)
-    has_cad = CAD_DIM in dimensions
-    if has_cad:
-        validate_cad_dimension(dimensions[CAD_DIM])
-
-    case_dims = {d: v for d, v in dimensions.items() if d not in (MESH_DIM, CAD_DIM)}
+    case_dims = {d: v for d, v in dimensions.items() if d != MESH_DIM}
     validate_dimensions(case_dims, classes)
     if MESH_DIM in dimensions:
         validate_mesh_dimension(dimensions[MESH_DIM], classes)
@@ -178,12 +120,6 @@ def export_sweep(
     # Build the sweep rows before creating the output directory so a case-name
     # collision aborts with nothing written to disk (no partial workflow dir).
     rows = cross_product(dimensions)
-    if has_cad:
-        _check_composite_mesh_names(dimensions)
-
-    # The CAD chain is opt-in (like post): enable it only when a CAD axis is on
-    # the canvas so mesh-only sweeps stay untouched.
-    plan_enabled = plan_enabled_with_cad(enabled, has_cad=has_cad)
 
     reg = registry or default_registry()
     out = Path(out_dir)
@@ -200,21 +136,19 @@ def export_sweep(
             solver_name,
             base_case,
             sorted(dimensions),
-            cad_model=cad_model,
             registry=reg,
-            enabled=plan_enabled,
+            enabled=enabled,
         ),
     )
     _write_sweep_meta(
         out / SWEEP_META_FILE,
         solver_name=solver_name,
         base_case=str(Path(base_case).resolve()),
-        enabled=list(reg.plan(plan_enabled).names),
-        cad_model=cad_model or "",
+        enabled=list(reg.plan(enabled).names),
     )
 
     space = YamlParamSpace(sweep_path, params_path)
-    setup_dims = [d for d in space.dims if d not in (MESH_DIM, CAD_DIM)]
+    setup_dims = [d for d in space.dims if d != MESH_DIM]
     configs = space.materialize({SETUP_RULE: setup_dims}, out_dir=out / "configs")
     if MESH_DIM in dimensions:
         configs += space.materialize_dims([MESH_DIM], out_dir=out / "configs")
@@ -222,8 +156,6 @@ def export_sweep(
         implicit = out / "configs" / MESH_DIM / "base.json"
         if write_if_changed(implicit, "{}\n"):
             configs.append(implicit)
-    if has_cad:
-        configs += space.materialize_dims([CAD_DIM], out_dir=out / "configs")
 
     return SweepExport(
         out_dir=out,
@@ -242,7 +174,6 @@ class LoadedSweep:
     base_case: str
     dimensions: dict[str, dict[str, dict[str, Any]]]
     enabled: list[str]
-    cad_model: str = ""
 
 
 def load_sweep(
@@ -252,10 +183,10 @@ def load_sweep(
 
     The inverse of :func:`export_sweep`: ``params.yaml`` holds the full
     ``{dimension: {variant: payload}}`` (variants keep their complete payloads),
-    and the ``sweep.meta.json`` sidecar names the solver, the base case, the
-    enabled rules and the CAD model. A sweep exported without a mesh dimension
-    has no ``mesh`` key (the implicit ``base`` mesh variant is materialized
-    separately, not a canvas dimension), so it round-trips to the same canvas.
+    and the ``sweep.meta.json`` sidecar names the solver, the base case and the
+    enabled rules. A sweep exported without a mesh dimension has no ``mesh`` key
+    (the implicit ``base`` mesh variant is materialized separately, not a canvas
+    dimension), so it round-trips to the same canvas.
 
     The ``registry`` argument is accepted for backward compatibility and is
     unused — the sidecar records the enabled rules directly, so no rule-name
@@ -278,7 +209,6 @@ def load_sweep(
         base_case=meta["base_case"],
         dimensions=dimensions,
         enabled=meta["enabled"],
-        cad_model=meta["cad_model"],
     )
 
 
@@ -288,14 +218,12 @@ def _write_sweep_meta(
     solver_name: str,
     base_case: str,
     enabled: list[str],
-    cad_model: str,
 ) -> None:
-    """Write the read-back sidecar (solver / base case / enabled rules / CAD model)."""
+    """Write the read-back sidecar (solver / base case / enabled rules)."""
     meta = {
         "solver_name": solver_name,
         "base_case": base_case,
         "enabled": enabled,
-        "cad_model": cad_model,
     }
     write_if_changed(path, json.dumps(meta, sort_keys=True, indent=2) + "\n")
 
@@ -305,9 +233,8 @@ def _read_sweep_meta(path: Path) -> dict[str, Any]:
 
     A missing/partial sidecar (a hand-edited dir, or a sweep exported before the
     sidecar existed) still loads: the solver defaults to ``incompressibleFluid``,
-    the base case to ``""``, the enabled rules to the always-present ``all`` and
-    the CAD model to ``""`` — the same defaults the old Snakefile-header parser
-    fell back to.
+    the base case to ``""`` and the enabled rules to the always-present ``all`` —
+    the same defaults the old Snakefile-header parser fell back to.
     """
     data: dict[str, Any] = {}
     if path.is_file():
@@ -318,5 +245,4 @@ def _read_sweep_meta(path: Path) -> dict[str, Any]:
         "solver_name": str(data.get("solver_name") or "incompressibleFluid"),
         "base_case": str(data.get("base_case", "")),
         "enabled": list(data.get("enabled") or ["all"]),
-        "cad_model": str(data.get("cad_model", "")),
     }
