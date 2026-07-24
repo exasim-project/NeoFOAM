@@ -37,6 +37,8 @@ from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
+import yaml
+
 from neofoam.framework.solver.configurations import _snake_case, configurations
 from neofoam.framework.solver.registry import resolve_solver
 from neofoam.framework.tools import PreprocessConfig
@@ -362,8 +364,6 @@ def run_tool_command(
         )
         raise ValueError(msg)
     entry.pop("depends_on", None)
-
-    import yaml
 
     slice_text = yaml.safe_dump({"tools": [entry]}, sort_keys=True)
     write_if_changed(case_dir / "system" / "preprocess.yaml", slice_text)

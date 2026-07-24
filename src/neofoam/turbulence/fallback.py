@@ -12,11 +12,11 @@ and advances the model via a ``correct()`` operation after the pressure-velocity
 coupling — the proven OpenFOAM lifecycle. Materialising the OF eddy viscosity as
 a Context field is unsafe (it duplicates the model's registered ``nut``), which is
 why the fallback keeps its own stress rather than the shared assembly.
-
-pybFoam is imported lazily, so importing this module needs no OpenFOAM build.
 """
 
 from typing import Any, Callable, Optional
+
+from pybFoam.turbulence import incompressibleTurbulenceModel
 
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.dependency_resolver import (
@@ -35,9 +35,7 @@ TurbulenceFactory = Callable[[Any, Any, Any], Any]
 
 
 def _default_factory() -> "TurbulenceFactory":
-    """Return pybFoam's incompressible turbulence factory (lazy import)."""
-    from pybFoam.turbulence import incompressibleTurbulenceModel
-
+    """Return pybFoam's incompressible turbulence factory."""
     return incompressibleTurbulenceModel.New
 
 

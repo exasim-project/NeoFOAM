@@ -9,7 +9,9 @@ Created by ModelSpec.instantiate(). Never shared between solver runs.
 
 from __future__ import annotations
 
+import inspect
 from dataclasses import dataclass, field
+from types import SimpleNamespace
 from typing import Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -54,8 +56,6 @@ class ModelRuntime:
         synthesize: computed or intermediate fields, control objects,
         and side-effect-only steps that other declarations depend on.
         """
-        import inspect
-
         if self.spec._build_func is None:
             user_steps: list["InitStep"] = []
         else:
@@ -100,7 +100,6 @@ class ModelRuntime:
         Handles both a single config and a SimpleNamespace of multiple configs.
         """
         from neofoam.io import BaseConfig
-        from types import SimpleNamespace
 
         result = []
         if isinstance(self.config, BaseConfig):

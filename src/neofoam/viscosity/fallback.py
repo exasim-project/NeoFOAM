@@ -9,11 +9,12 @@ selector returns an :class:`OpenFOAMViscosityModel`. Like a native model it
 the pybFoam ``singlePhaseTransportModel`` (driving ``correct()`` for
 rate-dependent transport), so the fallback is unified onto the same Context
 fields the native path uses.
-
-pybFoam is imported lazily, so importing this module needs no OpenFOAM build.
 """
 
 from typing import Any, Callable, Optional
+
+import pybFoam
+from pybFoam.turbulence import singlePhaseTransportModel
 
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.dependency_resolver import (
@@ -30,9 +31,7 @@ TransportFactory = Callable[[Any, Any], Any]
 
 
 def _default_factory() -> "TransportFactory":
-    """Return pybFoam's single-phase transport factory (lazy import)."""
-    from pybFoam.turbulence import singlePhaseTransportModel
-
+    """Return pybFoam's single-phase transport factory."""
     return singlePhaseTransportModel
 
 
@@ -80,8 +79,6 @@ class OpenFOAMViscosityModel:
         ``volScalarField`` named ``nu`` so the held Context field outlives the
         ``tmp`` (a retained ``tmp`` would be use-after-free).
         """
-        import pybFoam
-
         return pybFoam.volScalarField(pybFoam.Word("nu"), self.nu())
 
     def correct(self) -> None:

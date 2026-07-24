@@ -11,6 +11,8 @@ are omitted in this minimal version. The main iteration loop is owned by the
 injectable stability constraints, and the write decision.
 """
 
+import os
+import sys
 from pathlib import Path
 from typing import Annotated, Any, Optional, Union
 
@@ -187,9 +189,6 @@ def run(
     for the duration of the solve so C++ ``Info`` output ends up there
     instead of the calling process's stdout.
     """
-    import os
-    import sys
-
     redirect = log_file is not None
     saved_fd: Optional[int] = None
     if redirect:

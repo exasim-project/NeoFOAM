@@ -12,6 +12,9 @@ iteration loop is owned by the framework ``solution_loop`` engine; the legacy
 backend (see ``models.solution_loop``).
 """
 
+import os
+import sys
+from pathlib import Path
 from typing import Annotated, Any, Optional
 
 from neofoam.framework.context import Context
@@ -158,10 +161,6 @@ def run(
     If ``log_file`` is given, fd 1 (stdout) is redirected to that file for the
     duration of the solve.
     """
-    import os
-    import sys
-    from pathlib import Path
-
     ensure_neon_initialized(list(argv) if argv else ["incompressibleFluidNeoN"])
 
     redirect = log_file is not None

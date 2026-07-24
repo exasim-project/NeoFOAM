@@ -14,6 +14,8 @@ they read the Foam::Time that ``create_time_mesh`` routes onto
 ``ctx.models["runtime"]``.
 """
 
+import os
+import sys
 from typing import Annotated, Any, Optional, Protocol
 
 import pybFoam as pyf
@@ -196,9 +198,6 @@ def run(
     If ``log_file`` is given, fd 1 (stdout) is redirected to that file for the
     duration of the solve so C++ ``Info`` output ends up there.
     """
-    import os
-    import sys
-
     redirect = log_file is not None
     saved_fd: Optional[int] = None
     if redirect:

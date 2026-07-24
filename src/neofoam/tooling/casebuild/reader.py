@@ -21,6 +21,8 @@ import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+import numpy as np
+
 from neofoam.tooling.casebuild.pipeline import CaseDir
 
 if TYPE_CHECKING:
@@ -35,8 +37,6 @@ def read_field(
     Runs the read in a fresh subprocess (see the module docstring). Returns the
     internal field as a numpy array (``(N,)`` scalar, ``(N, 3)`` vector).
     """
-    import numpy as np
-
     with tempfile.TemporaryDirectory() as tmp:
         out = Path(tmp) / f"{name}.npy"
         subprocess.run(

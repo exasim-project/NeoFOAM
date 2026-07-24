@@ -27,7 +27,7 @@ import shutil
 from pathlib import Path
 from typing import Any, Optional, Union
 
-from pydantic import BaseModel, ConfigDict, Field, create_model
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, create_model
 
 from neofoam.framework.solver.configurations import _snake_case, configurations
 from neofoam.io import BaseConfig
@@ -195,8 +195,6 @@ def _is_absence(exc: Exception) -> bool:
     ``TelemetryDictConfig`` → ``controlDict{telemetry}`` on a case with no telemetry
     block). Anything else — a value that fails validation — is present-but-invalid.
     """
-    from pydantic import ValidationError
-
     if isinstance(exc, ValidationError):
         errors = exc.errors()
         return bool(errors) and all(e.get("type") == "missing" for e in errors)

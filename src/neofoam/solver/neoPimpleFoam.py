@@ -20,6 +20,7 @@ This mirrors ``examples/neoPimpleFoam/neoPimpleFoam.cpp``.
 
 from __future__ import annotations
 
+import sys
 from typing import Any
 
 import pybFoam as pyf
@@ -245,8 +246,6 @@ class NeoPimpleFoam:
 
 
 def main() -> None:
-    import sys
-
     argv = sys.argv if len(sys.argv) > 1 else ["neoPimpleFoam"]
     solver = NeoPimpleFoam(argv)
     solver.run()

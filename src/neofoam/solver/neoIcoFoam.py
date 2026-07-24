@@ -5,6 +5,8 @@
 neoIcoFoam.py — Incompressible Navier-Stokes solver using NeoN + NeoFOAM bindings.
 """
 
+import sys
+
 import pybFoam as pyf
 import neon._neon as nn  # NeoN Python bindings
 from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
@@ -119,8 +121,6 @@ class NeoIcoFoam:
 
 
 def main() -> None:
-    import sys
-
     argv = sys.argv if len(sys.argv) > 1 else ["neoIcoFoam"]
     solver = NeoIcoFoam(argv)
     solver.run()
