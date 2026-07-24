@@ -97,9 +97,7 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             runtime.run_resolve(config)
 
     @spec_builder.build
-    def build_lazy(
-        core_models: list[Any], optional_models: list[Any]
-    ) -> list[InitStep]:
+    def build_lazy(core_models: list[Any], optional_models: list[Any]) -> list[InitStep]:
         algorithm = next(m for m in core_models if isinstance(m, DummyAlgorithm))
         core_model2 = next(m for m in core_models if isinstance(m, CoreModel2))
         solver_cfg = next(m for m in core_models if isinstance(m, SolverConfig))

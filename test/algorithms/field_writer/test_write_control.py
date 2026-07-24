@@ -69,16 +69,12 @@ def test_stepper_write_control_forwards_write_flag() -> None:
 
 
 def test_factory_timestep() -> None:
-    wc = write_control_from_config(
-        WriteControlConfig(writeControl="timeStep", writeInterval=5)
-    )
+    wc = write_control_from_config(WriteControlConfig(writeControl="timeStep", writeInterval=5))
     assert isinstance(wc, IntervalWriteControl)
 
 
 def test_factory_runtime() -> None:
-    wc = write_control_from_config(
-        WriteControlConfig(writeControl="adjustable", writeInterval=1.0)
-    )
+    wc = write_control_from_config(WriteControlConfig(writeControl="adjustable", writeInterval=1.0))
     assert isinstance(wc, RunTimeWriteControl)
 
 

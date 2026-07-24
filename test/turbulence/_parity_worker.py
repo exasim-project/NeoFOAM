@@ -149,15 +149,9 @@ def role_setup(case: Path) -> None:
 
     (case / "0" / "U").write_text(_foam_vector_field("U", "[0 1 -1 0 0 0 0]", u))
     (case / "0" / "k").write_text(_foam_scalar_field("k", "[0 2 -2 0 0 0 0]", k))
-    (case / "0" / "epsilon").write_text(
-        _foam_scalar_field("epsilon", "[0 2 -3 0 0 0 0]", epsilon)
-    )
-    (case / "0" / "nuTilda").write_text(
-        _foam_scalar_field("nuTilda", "[0 2 -1 0 0 0 0]", nu_tilda)
-    )
-    (case / "0" / "omega").write_text(
-        _foam_scalar_field("omega", "[0 0 -1 0 0 0 0]", omega)
-    )
+    (case / "0" / "epsilon").write_text(_foam_scalar_field("epsilon", "[0 2 -3 0 0 0 0]", epsilon))
+    (case / "0" / "nuTilda").write_text(_foam_scalar_field("nuTilda", "[0 2 -1 0 0 0 0]", nu_tilda))
+    (case / "0" / "omega").write_text(_foam_scalar_field("omega", "[0 0 -1 0 0 0 0]", omega))
 
 
 # The fields compared cell-by-cell between the two backends after one ``correct``
@@ -181,9 +175,7 @@ def role_reference(case: Path) -> None:
     for name in COMPARE_FIELDS:
         registered = pyf.volScalarField.from_registry(of_mesh, name)
         if registered is not None:
-            np.save(
-                case / f"reference_{name}.npy", np.asarray(registered.internalField())
-            )
+            np.save(case / f"reference_{name}.npy", np.asarray(registered.internalField()))
         elif name == "nut":
             # laminar registers no nut; its nut() is a fresh (non-const) zero tmp, so
             # .ref() is valid here — unlike a RAS model's const nut() tmp above.
@@ -219,17 +211,13 @@ def role_subject(case: Path) -> None:
         "omegaFinal",
     ):
         if solvers.contains(solver_name):
-            solvers.insert_dict(
-                solver_name, nfb.map_fv_solution(solvers.subDict(solver_name))
-            )
+            solvers.insert_dict(solver_name, nfb.map_fv_solution(solvers.subDict(solver_name)))
     rt.dt = DELTA_T
 
     U_neon = nfb.read_vector_volume_field(rt, "U")
     phi_neon = nfb.create_phi(rt, "U")
     nu = nfb.create_uniform_volume_field(rt, "nu", nfb.read_transport_viscosity(rt))
-    turbulence = select_turbulence_model(
-        cfg, fallback=False, runtime=rt, nu=nu, case_dir=case
-    )
+    turbulence = select_turbulence_model(cfg, fallback=False, runtime=rt, nu=nu, case_dir=case)
     turbulence.validate(U_neon)
     turbulence.correct(U_neon, phi_neon, rt)
 

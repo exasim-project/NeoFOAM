@@ -67,9 +67,7 @@ class OpenFOAMViscosityModel:
 
     def _require_impl(self) -> Any:
         if self._impl is None:
-            raise RuntimeError(
-                "OpenFOAMViscosityModel.build() must be called before use"
-            )
+            raise RuntimeError("OpenFOAMViscosityModel.build() must be called before use")
         return self._impl
 
     def nu(self) -> Any:

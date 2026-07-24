@@ -50,9 +50,7 @@ _CONTROL = {
 }
 
 
-def _make_base(
-    tmp_path: Path, extra: dict[str, dict[str, object]] | None = None
-) -> Path:
+def _make_base(tmp_path: Path, extra: dict[str, dict[str, object]] | None = None) -> Path:
     base = tmp_path / "base"
     solver = resolve_solver("incompressibleFluid")
     spec: dict[str, object] = {
@@ -94,9 +92,7 @@ def test_setup_case_applies_swept_config(tmp_path: Path) -> None:
     base = _make_base(tmp_path)
     config_json = tmp_path / "setup.json"
     config_json.write_text(
-        json.dumps(
-            {"transport_properties_config": {"transportModel": "Newtonian", "nu": 2e-5}}
-        )
+        json.dumps({"transport_properties_config": {"transportModel": "Newtonian", "nu": 2e-5}})
     )
     case = tmp_path / "cases" / "nu2"
     stamp = case / ".applied.json"
@@ -132,9 +128,7 @@ def test_apply_configs_preserves_co_owned_keys(tmp_path: Path) -> None:
     # not drop the Boussinesq keys the base case carries in the same file.
     base = _make_base(
         tmp_path,
-        extra={
-            "boussinesq_config": {"beta": 3e-3, "TRef": 300.0, "Pr": 0.7, "Prt": 0.85}
-        },
+        extra={"boussinesq_config": {"beta": 3e-3, "TRef": 300.0, "Pr": 0.7, "Prt": 0.85}},
     )
     case = tmp_path / "cases" / "sweep"
     written = setup_case(
@@ -167,9 +161,7 @@ def test_apply_configs_rejects_unknown_or_invalid(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="unknown config 'not_a_config'"):
         apply_configs(solver, case, {"not_a_config": {}})
     with pytest.raises(ValueError, match="failed validation"):
-        apply_configs(
-            solver, case, {"transport_properties_config": {"nu": "not-a-number"}}
-        )
+        apply_configs(solver, case, {"transport_properties_config": {"nu": "not-a-number"}})
 
 
 def test_apply_configs_rejects_config_without_file_binding(
@@ -180,9 +172,7 @@ def test_apply_configs_rejects_config_without_file_binding(
     class _NoFile(BaseConfig):
         x: int = 1
 
-    monkeypatch.setattr(
-        sweep_runner, "config_classes_by_name", lambda solver: {"no_file": _NoFile}
-    )
+    monkeypatch.setattr(sweep_runner, "config_classes_by_name", lambda solver: {"no_file": _NoFile})
     with pytest.raises(ValueError, match="cannot be swept"):
         apply_configs(None, tmp_path, {"no_file": {}})
 
@@ -350,9 +340,7 @@ def test_setup_case_missing_mesh_src_errors(tmp_path: Path) -> None:
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(
-    not os.environ.get("WM_PROJECT_DIR"), reason="needs a sourced OpenFOAM"
-)
+@pytest.mark.skipif(not os.environ.get("WM_PROJECT_DIR"), reason="needs a sourced OpenFOAM")
 def test_run_tool_blockmesh_persists_polymesh(tmp_path: Path) -> None:
     """blockMesh via the single-tool slice leaves constant/polyMesh on disk.
 

@@ -149,9 +149,7 @@ def select_turbulence_model(
         of = OpenFOAMTurbulenceModel(U, phi, transport, factory=of_factory)
         return FallbackHandle(of, model_runtime.fallback_operations())
 
-    native_capable = spec._build_func is not None or bool(
-        model_runtime.native_operations()
-    )
+    native_capable = spec._build_func is not None or bool(model_runtime.native_operations())
     if not native_capable:
         raise ValueError(
             f"{name!r} has no native NeoN closure; run it on incompressibleFluid "

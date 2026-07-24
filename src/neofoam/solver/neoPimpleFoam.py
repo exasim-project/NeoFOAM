@@ -70,9 +70,7 @@ class NeoPimpleFoam:
         pimple_dict = rt.fv_solution_dict.subDict("PIMPLE")
         piso = PisoControl(
             n_correctors=_read_int(pimple_dict, "nCorrectors", 1),
-            n_non_orthogonal_correctors=_read_int(
-                pimple_dict, "nNonOrthogonalCorrectors", 0
-            ),
+            n_non_orthogonal_correctors=_read_int(pimple_dict, "nNonOrthogonalCorrectors", 0),
             # OpenFOAM's solutionControl defaults momentumPredictor to true.
             momentum_predictor=_read_switch(pimple_dict, "momentumPredictor", True),
         )
@@ -183,9 +181,7 @@ class NeoPimpleFoam:
                     rAUf = surf_interp.interpolate(rAU)
                     rAUf.name = "rAUf"
 
-                    phiHbyA = nfb.flux(hByA) + rAUf * nfb.ddt_flux_corr(
-                        U, phi, rt.dt, ddt_scheme
-                    )
+                    phiHbyA = nfb.flux(hByA) + rAUf * nfb.ddt_flux_corr(U, phi, rt.dt, ddt_scheme)
 
                     while piso.correct_non_orthogonal():
                         pEqn = nfb.PDESolverScalar(
@@ -211,9 +207,7 @@ class NeoPimpleFoam:
                     nfb.apply_field_relaxation(
                         p,
                         prev_p,
-                        nfb.lookup_field_relaxation(
-                            rt.fv_solution_dict, p.name, final_iter
-                        ),
+                        nfb.lookup_field_relaxation(rt.fv_solution_dict, p.name, final_iter),
                     )
                     p.correct_boundary_conditions()
 

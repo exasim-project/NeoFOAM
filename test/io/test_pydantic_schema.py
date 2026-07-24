@@ -112,9 +112,7 @@ def test_rjsf_uischema_handles_anyof_additionalproperties() -> None:
     ui = rjsf_uischema(_Field.model_json_schema())
     # The BC union is reached through ``additionalProperties``; its const type
     # is hidden there.
-    assert ui["boundaryField"]["additionalProperties"]["type"] == {
-        "ui:widget": "hidden"
-    }
+    assert ui["boundaryField"]["additionalProperties"]["type"] == {"ui:widget": "hidden"}
 
 
 def test_rjsf_uischema_nested_union() -> None:

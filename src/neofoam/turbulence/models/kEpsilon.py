@@ -79,9 +79,7 @@ def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
 
     def create_surf(ctx: dict[str, Any]) -> Any:
         rt = ctx["models.neon_runtime"]
-        return nn.SurfaceInterpolationScalar(
-            rt.executor, rt.nf_mesh, nn.TokenList(["linear"])
-        )
+        return nn.SurfaceInterpolationScalar(rt.executor, rt.nf_mesh, nn.TokenList(["linear"]))
 
     def create_grad(ctx: dict[str, Any]) -> Any:
         return nfb.GaussGreenGrad(ctx["models.neon_runtime"])
@@ -99,15 +97,11 @@ def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
         epsilon = ctx["fields.epsilon"]
         nut.assign(Cmu * (k * k) / epsilon)
         # nutkWallFunction sets nut's wall faces from (k, nu, nearWallDist).
-        nfb.correct_scalar_bc_ctx(
-            nut, k, ctx["models.nu_vol"], ctx["models.kEpsilon_nearWallDist"]
-        )
+        nfb.correct_scalar_bc_ctx(nut, k, ctx["models.nu_vol"], ctx["models.kEpsilon_nearWallDist"])
         return nut
 
     def create_nu_eff(ctx: dict[str, Any]) -> Any:
-        return ctx["models.kEpsilon_surf"].interpolate(
-            ctx["fields.nut"] + ctx["models.nu_vol"]
-        )
+        return ctx["models.kEpsilon_surf"].interpolate(ctx["fields.nut"] + ctx["models.nu_vol"])
 
     return [
         init_field("k", read_k, depends_on=["models.neon_runtime"]),

@@ -144,9 +144,7 @@ class ConfigContext:
         models = self._regions.get(region, {})
         return [model for model in models.values() if isinstance(model, model_type)]
 
-    def get_by_prefix(
-        self, prefix: str, region: Optional[str] = None
-    ) -> dict[str, Any]:
+    def get_by_prefix(self, prefix: str, region: Optional[str] = None) -> dict[str, Any]:
         """
         Get all models with names starting with a prefix in a region.
 
@@ -167,9 +165,7 @@ class ConfigContext:
         """
         region = region or self.current_region
         models = self._regions.get(region, {})
-        return {
-            name: model for name, model in models.items() if name.startswith(prefix)
-        }
+        return {name: model for name, model in models.items() if name.startswith(prefix)}
 
     def get_configurable_fields(self, path: str) -> dict[str, Any]:
         """
@@ -224,9 +220,7 @@ class ConfigContext:
         """
         # Avoid infinite recursion for internal / dunder attributes
         if name.startswith("_"):
-            raise AttributeError(
-                f"'{type(self).__name__}' object has no attribute '{name}'"
-            )
+            raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
 
         model = self.get(name)
         if model is None:

@@ -56,9 +56,7 @@ def _attach_initializer(spec: Any, runner: StagedInitRunner) -> None:
     """Register the standard ``@spec.initializer`` that just runs *runner*."""
 
     @spec.initializer
-    def _init(
-        self: Any, init: Annotated[StagedInitRunner, Depends(lambda: runner)]
-    ) -> Context:
+    def _init(self: Any, init: Annotated[StagedInitRunner, Depends(lambda: runner)]) -> Context:
         return init.run()
 
 

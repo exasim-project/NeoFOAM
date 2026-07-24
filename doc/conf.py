@@ -19,9 +19,7 @@ locale.setlocale(locale.LC_NUMERIC, "C")
 # the bundled cases via ``NEOFOAM_CASES_DIR``.
 os.environ.setdefault(
     "NEOFOAM_CASES_DIR",
-    os.path.join(
-        os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "tutorials"
-    ),
+    os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "tutorials"),
 )
 
 # OpenFOAM installs a SIGFPE trap that fires on NaN / divide-by-zero /
@@ -64,9 +62,7 @@ def _eager_import(pkg_name: str) -> None:
         return
     if not hasattr(pkg, "__path__"):
         return
-    for info in pkgutil.walk_packages(
-        pkg.__path__, pkg_name + ".", onerror=lambda _name: None
-    ):
+    for info in pkgutil.walk_packages(pkg.__path__, pkg_name + ".", onerror=lambda _name: None):
         try:
             importlib.import_module(info.name)
         except Exception:

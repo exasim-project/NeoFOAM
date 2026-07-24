@@ -244,13 +244,9 @@ class SolverSpec:
     def _run_initialize(self, runtime: SolverRuntime) -> Context:
         """Execute the registered initialization step with dependency injection."""
         if self._initialize_func is None:
-            raise RuntimeError(
-                f"No initialize function registered for solver {self.name}"
-            )
+            raise RuntimeError(f"No initialize function registered for solver {self.name}")
 
-        kwargs = self._dependency_resolver.resolve_arguments(
-            self._initialize_func, None
-        )
+        kwargs = self._dependency_resolver.resolve_arguments(self._initialize_func, None)
 
         sig = inspect.signature(self._initialize_func)
         if "self" in sig.parameters and "self" not in kwargs:
@@ -295,9 +291,7 @@ class SolverSpec:
         without the runtime holding a long-lived reference to the context).
         """
         if self._execution_graph_func is None:
-            raise RuntimeError(
-                f"No execution_graph function registered for solver {self.name}"
-            )
+            raise RuntimeError(f"No execution_graph function registered for solver {self.name}")
 
         sig = inspect.signature(self._execution_graph_func)
         kwargs: dict[str, Any] = {}
@@ -330,9 +324,7 @@ class SolverSpec:
             if discovered:
                 wrapped = _create_runtime_config_wrapper(func, discovered, runtime)
             else:
-                wrapped = wrap_with_dependency_resolution(
-                    func, runtime, self._dependency_resolver
-                )
+                wrapped = wrap_with_dependency_resolution(func, runtime, self._dependency_resolver)
 
             op = Operation(
                 func=SequentialOp(wrapped),

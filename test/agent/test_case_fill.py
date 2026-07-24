@@ -246,9 +246,7 @@ def test_fill_case_no_llm_produces_a_runnable_case(tmp_path: Path) -> None:
     # The solver must have advanced at least one step and produced an output
     # time directory beyond ``0/``.
     assert ctx is not None
-    time_dirs = sorted(
-        d.name for d in filled.iterdir() if d.is_dir() and d.name[0].isdigit()
-    )
+    time_dirs = sorted(d.name for d in filled.iterdir() if d.is_dir() and d.name[0].isdigit())
     assert len(time_dirs) >= 2, f"only saw time dirs {time_dirs}"
 
 

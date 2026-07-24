@@ -23,18 +23,14 @@ from neofoam.solver.incompressibleFluid.models.incompressibleFluidModel import (
 )
 from neofoam.tooling.casebuild import from_template, patch
 
-courant_mod = importlib.import_module(
-    "neofoam.solver.incompressibleFluid.models.courant"
-)
+courant_mod = importlib.import_module("neofoam.solver.incompressibleFluid.models.courant")
 
 _CASES = Path(__file__).parent / "cases"
 _BASE = _CASES / "controldict_base"
 
 
 def _courant_runtime(max_co: float = 1.0) -> ModelRuntime:
-    return ModelRuntime(
-        spec=courant, name="courant", config=CourantConfig(maxCo=max_co)
-    )
+    return ModelRuntime(spec=courant, name="courant", config=CourantConfig(maxCo=max_co))
 
 
 def test_contribution_lives_under_the_solver_not_the_framework() -> None:

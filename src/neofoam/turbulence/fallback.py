@@ -84,9 +84,7 @@ class OpenFOAMTurbulenceModel:
 
     def _require_impl(self) -> Any:
         if self._impl is None:
-            raise RuntimeError(
-                "OpenFOAMTurbulenceModel.build() must be called before use"
-            )
+            raise RuntimeError("OpenFOAMTurbulenceModel.build() must be called before use")
         return self._impl
 
     def has_nut(self) -> bool:
@@ -165,9 +163,7 @@ class FallbackHandle:
     #: Descriptive tag for the stress family this handle uses.
     stress_kind = "openfoam"
 
-    def __init__(
-        self, of_model: OpenFOAMTurbulenceModel, operations: list[Operation]
-    ) -> None:
+    def __init__(self, of_model: OpenFOAMTurbulenceModel, operations: list[Operation]) -> None:
         self._of = of_model
         self._operations = list(operations)
 

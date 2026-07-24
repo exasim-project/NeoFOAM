@@ -151,9 +151,7 @@ def test_write_preserves_other_subdicts(
         (ServiceBOpenFOAMConfig, "invalid_shared.of"),
     ],
 )
-def test_validation_error_missing_field_in_subdict(
-    io_fixtures, config_class, invalid_file
-):
+def test_validation_error_missing_field_in_subdict(io_fixtures, config_class, invalid_file):
     """Test that validation correctly identifies missing required fields and
     validator violations in subdicts.
 
@@ -162,9 +160,7 @@ def test_validation_error_missing_field_in_subdict(
     load(validate=True) raises ValidationError with all errors.
     """
     # Load without validation - all data is available for inspection
-    loaded_data = config_class.load(
-        case_dir=io_fixtures, validate=False, file=invalid_file
-    )
+    loaded_data = config_class.load(case_dir=io_fixtures, validate=False, file=invalid_file)
     assert loaded_data.endpoint == "example.com"
     assert loaded_data.poolSize == -5  # Invalid value loaded
 

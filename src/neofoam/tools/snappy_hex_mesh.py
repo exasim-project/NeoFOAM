@@ -190,9 +190,7 @@ class SnappyHexMeshDictConfig(BaseConfig):
         ``refinementSurfaces`` entry; the snap / layer / quality control blocks are
         the fixed sane defaults.
         """
-        geometry = {
-            s.name: {"type": "triSurfaceMesh", "file": f'"{s.file}"'} for s in surfaces
-        }
+        geometry = {s.name: {"type": "triSurfaceMesh", "file": f'"{s.file}"'} for s in surfaces}
         refinement_surfaces = {
             s.name: {
                 "level": f"({s.level[0]} {s.level[1]})",

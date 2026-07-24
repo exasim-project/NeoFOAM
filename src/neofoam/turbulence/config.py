@@ -58,9 +58,7 @@ class TurbulencePropertiesConfig(BaseConfig):
     def _check_simulation_type_consistency(self) -> "TurbulencePropertiesConfig":
         if self.simulationType == "laminar":
             if self.RAS is not None or self.LES is not None:
-                raise ValueError(
-                    "simulationType=laminar must not set RAS or LES sub-dictionary"
-                )
+                raise ValueError("simulationType=laminar must not set RAS or LES sub-dictionary")
         elif self.simulationType == "RAS":
             if self.RAS is None:
                 raise ValueError("simulationType=RAS requires the RAS sub-dictionary")

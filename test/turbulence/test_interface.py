@@ -19,13 +19,9 @@ from neofoam.framework.model import ModelSpec
 from neofoam.turbulence.momentumTransport import momentumTransportModel
 from turbulence.conftest import CASES
 
-NATIVE_NAMES = {
-    c.selection["model_name"] for c in CASES if c.selection["resolves_to"] == "native"
-}
+NATIVE_NAMES = {c.selection["model_name"] for c in CASES if c.selection["resolves_to"] == "native"}
 UNREGISTERED_NAMES = {
-    c.selection["model_name"]
-    for c in CASES
-    if c.selection["resolves_to"] == "unregistered"
+    c.selection["model_name"] for c in CASES if c.selection["resolves_to"] == "unregistered"
 }
 
 

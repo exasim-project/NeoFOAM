@@ -80,9 +80,7 @@ def maybe_configure_telemetry(case_dir: Union[Path, str] = ".") -> bool:
 # model lookup helper: find an instantiated core model by its spec name
 def _core_model(state: Any, spec_name: str) -> Any:
     return next(
-        m
-        for m in state.core_models
-        if getattr(getattr(m, "spec", None), "name", None) == spec_name
+        m for m in state.core_models if getattr(getattr(m, "spec", None), "name", None) == spec_name
     )
 
 
@@ -111,9 +109,7 @@ incompressibleFluid.models(incompressibleFluidModel)  # optional: zero or more
 
 
 @incompressibleFluid.initializer
-def initialize(
-    self: Any, init: Annotated[StagedInitRunner, Depends(create_init)]
-) -> Context:
+def initialize(self: Any, init: Annotated[StagedInitRunner, Depends(create_init)]) -> Context:
     """Initialize using create_init factory with dependency injection."""
     return init.run()
 

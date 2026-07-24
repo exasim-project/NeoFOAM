@@ -143,12 +143,8 @@ def test_dummy_solver_model_operations_executed() -> None:
     assert len(rt_m2.operations) > 0
 
     # Find and call an operation
-    m1_step1 = next(
-        op for op in rt_m1.operations if op.operation_name == "model1_step1"
-    )
-    m2_step1 = next(
-        op for op in rt_m2.operations if op.operation_name == "model2_step1"
-    )
+    m1_step1 = next(op for op in rt_m1.operations if op.operation_name == "model1_step1")
+    m2_step1 = next(op for op in rt_m2.operations if op.operation_name == "model2_step1")
 
     rt_m1._step1_count = 0
     rt_m2._step1_count = 0
@@ -213,10 +209,7 @@ def test_model_operations_use_dependency_injection() -> None:
     names = [li.name for li in lazy_inits]
     assert "model_field1" in names
     assert "model_field2" in names
-    assert (
-        "domain"
-        in next(li for li in lazy_inits if li.name == "model_field1").depends_on
-    )
+    assert "domain" in next(li for li in lazy_inits if li.name == "model_field1").depends_on
 
     ops = rt.operations
     m1_s1 = next(op for op in ops if op.operation_name == "model1_step1")

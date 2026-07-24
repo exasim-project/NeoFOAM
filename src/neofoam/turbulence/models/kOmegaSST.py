@@ -119,9 +119,7 @@ def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
 
     def create_surf(ctx: dict[str, Any]) -> Any:
         rt = ctx["models.neon_runtime"]
-        return nn.SurfaceInterpolationScalar(
-            rt.executor, rt.nf_mesh, nn.TokenList(["linear"])
-        )
+        return nn.SurfaceInterpolationScalar(rt.executor, rt.nf_mesh, nn.TokenList(["linear"]))
 
     def create_grad(ctx: dict[str, Any]) -> Any:
         return nfb.GaussGreenGrad(ctx["models.neon_runtime"])
@@ -145,25 +143,19 @@ def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
         s2 = nfb.strain_magnitude_sqr(grad_u)
         nut.assign(_correct_nut(k, omega, _f2(k, omega, y, nu), s2))
         # nutkWallFunction sets nut's wall faces from (k, nu, nearWallDist).
-        nfb.correct_scalar_bc_ctx(
-            nut, k, ctx["models.nu_vol"], ctx["models.komega_nearWallDist"]
-        )
+        nfb.correct_scalar_bc_ctx(nut, k, ctx["models.nu_vol"], ctx["models.komega_nearWallDist"])
         return nut
 
     def create_nu_eff(ctx: dict[str, Any]) -> Any:
         # Effective (surface) viscosity for the momentum laplacian: nuEff = nut + nu.
-        return ctx["models.komega_surf"].interpolate(
-            ctx["fields.nut"] + ctx["models.nu_vol"]
-        )
+        return ctx["models.komega_surf"].interpolate(ctx["fields.nut"] + ctx["models.nu_vol"])
 
     return [
         init_field("k", read_k, depends_on=["models.neon_runtime"]),
         init_field("omega", read_omega, depends_on=["models.neon_runtime"]),
         init_model("komega_surf", create_surf, depends_on=["models.neon_runtime"]),
         init_model("komega_grad", create_grad, depends_on=["models.neon_runtime"]),
-        init_model(
-            "komega_wall_dist", read_wall_dist, depends_on=["models.neon_runtime"]
-        ),
+        init_model("komega_wall_dist", read_wall_dist, depends_on=["models.neon_runtime"]),
         init_model(
             "komega_nearWallDist",
             create_near_wall_dist,
@@ -231,10 +223,7 @@ def blend(
     # omega. (kEpsilon has no such cap, so its wall production is never limited.)
     gbynu0_lim = nn.field_min(
         gbynu0,
-        (c1 / a1)
-        * betaStar
-        * omega
-        * nn.field_max(a1 * omega, (b1 * f23) * nn.sqrt(s2)),
+        (c1 / a1) * betaStar * omega * nn.field_max(a1 * omega, (b1 * f23) * nn.sqrt(s2)),
     )
     g = nut * gbynu0
     # omegaWallFunction overrides the near-wall G with the log-law form — identical
@@ -286,9 +275,7 @@ def correct_omega(
     """omega transport: ddt + div - laplacian == gamma*GbyNu0 - Sp(beta*omega) - SuSp(cross)."""
     nn.rotate_old_times(omega)
     nu = nfb.read_transport_viscosity(neon_runtime)
-    d_omega = komega_surf.interpolate(
-        _blend(komega_F1, alphaOmega1, alphaOmega2) * nut + nu
-    )
+    d_omega = komega_surf.interpolate(_blend(komega_F1, alphaOmega1, alphaOmega2) * nut + nu)
     eqn = nfb.PDESolverScalar(
         nn.imp.ddt(omega)
         + nn.imp.div(phi, omega)

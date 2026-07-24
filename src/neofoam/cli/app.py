@@ -37,9 +37,7 @@ app.add_typer(mcp_app, name="mcp", help="Run the NeoFOAM MCP server.")
 # Telemetry visualization command group
 telemetry_app = typer.Typer()
 
-app.add_typer(
-    telemetry_app, name="telemetry", help="Visualize solver telemetry traces."
-)
+app.add_typer(telemetry_app, name="telemetry", help="Visualize solver telemetry traces.")
 
 
 @telemetry_app.command("trace")
@@ -69,9 +67,7 @@ def telemetry_plot(
     output: Optional[Path] = typer.Option(
         None, "--output", "-o", help="Output image (default: <telemetry>/summary.png)."
     ),
-    top: Optional[int] = typer.Option(
-        None, "--top", help="Keep only the N slowest operations."
-    ),
+    top: Optional[int] = typer.Option(None, "--top", help="Keep only the N slowest operations."),
     rank: Optional[int] = typer.Option(
         None, "--rank", help="Which rank's summary to plot (default: lowest)."
     ),
@@ -172,12 +168,8 @@ def agent_wizard(
     target: str = typer.Argument(
         ".", help="Directory to scaffold the wizard notebook into (default: cwd)."
     ),
-    name: str = typer.Option(
-        "case_wizard.py", "--name", help="Notebook file name to write."
-    ),
-    force: bool = typer.Option(
-        False, "--force", help="Overwrite an existing notebook file."
-    ),
+    name: str = typer.Option("case_wizard.py", "--name", help="Notebook file name to write."),
+    force: bool = typer.Option(False, "--force", help="Overwrite an existing notebook file."),
 ) -> None:
     """Scaffold a marimo *case wizard* notebook into TARGET.
 
@@ -198,9 +190,7 @@ def agent_wizard(
     typer.echo(f"Run it with:  marimo edit {path}")
 
 
-@solver_app.command(
-    context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
-)
+@solver_app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 def icofoam(ctx: typer.Context) -> None:
     """Transient solver for incompressible, laminar flow of Newtonian fluids."""
     # Only pass the extra args (not the Typer command path)
@@ -210,9 +200,7 @@ def icofoam(ctx: typer.Context) -> None:
     icoFoam.run()
 
 
-@solver_app.command(
-    context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
-)
+@solver_app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 def pimplefoam(ctx: typer.Context) -> None:
     """Transient solver for incompressible, turbulent flow of Newtonian fluids"""
 
@@ -223,9 +211,7 @@ def pimplefoam(ctx: typer.Context) -> None:
     pimpleFoam.run()
 
 
-@solver_app.command(
-    context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
-)
+@solver_app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 def neoicofoam(ctx: typer.Context) -> None:
     """Transient solver for incompressible, laminar flow using NeoN bindings."""
     argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
@@ -234,9 +220,7 @@ def neoicofoam(ctx: typer.Context) -> None:
     solver.run()
 
 
-@solver_app.command(
-    context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
-)
+@solver_app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 def neopimplefoam(ctx: typer.Context) -> None:
     """Transient incompressible PIMPLE solver using NeoN bindings."""
     argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]

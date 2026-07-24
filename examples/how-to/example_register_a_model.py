@@ -28,7 +28,7 @@ from neofoam.framework.initialization import (
 from neofoam.framework.initialization.staged import LoadResult, StagedInitSpec
 from neofoam.framework.model import Model
 from neofoam.framework.solver import Solver
-from neofoam.io import IOStrategy, YAML, BaseConfig
+from neofoam.io import YAML, BaseConfig, IOStrategy
 
 
 @IOStrategy(YAML("turbulence_config.yaml"))

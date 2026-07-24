@@ -3,18 +3,18 @@
 #
 # SPDX-License-Identifier: Unlicense
 
-import sys
-import subprocess
-import shutil
-import logging
 import argparse
-import numpy as np
-import matplotlib.pyplot as plt
+import logging
+import shutil
+import subprocess
+import sys
 import time
-
 from pathlib import Path
-from foamlib import FoamCase
 from typing import Tuple
+
+import matplotlib.pyplot as plt
+import numpy as np
+from foamlib import FoamCase
 
 # =========================================================
 #  Logging Setup

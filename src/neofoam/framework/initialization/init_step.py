@@ -30,8 +30,7 @@ class InitStepExecutionError(RuntimeError):
         self.depends_on = list(depends_on)
         deps = ", ".join(depends_on) if depends_on else "(none)"
         super().__init__(
-            f"InitStep '{step_name}' failed during execution "
-            f"(depends_on: [{deps}]): {cause}"
+            f"InitStep '{step_name}' failed during execution (depends_on: [{deps}]): {cause}"
         )
 
 
@@ -63,19 +62,13 @@ class InitStep:
     initializer: Callable[[dict[str, Any]], Any] = None  # type: ignore[assignment]
     category: InitCategory = "resource"
     write: bool = False  # flag a field for persistence (auto-write)
-    replaces: list[str] = field(
-        default_factory=list
-    )  # default step names this supersedes
+    replaces: list[str] = field(default_factory=list)  # default step names this supersedes
 
     def __post_init__(self) -> None:
         """Validate InitStep after creation."""
         if not self.name:
             raise ValueError("InitStep must have a non-empty name")
         if self.initializer is None:
-            raise ValueError(
-                f"InitStep '{self.name}' must have an initializer function"
-            )
+            raise ValueError(f"InitStep '{self.name}' must have an initializer function")
         if not isinstance(self.category, str) or not self.category:
-            raise ValueError(
-                f"InitStep '{self.name}' must have a non-empty category string"
-            )
+            raise ValueError(f"InitStep '{self.name}' must have a non-empty category string")

@@ -225,9 +225,7 @@ def test_fixed_flux_pressure_with_rho() -> None:
 
 
 def test_fixed_flux_pressure_without_rho() -> None:
-    bc = FixedFluxPressureBC.model_validate(
-        {"type": "fixedFluxPressure", "value": "uniform 0"}
-    )
+    bc = FixedFluxPressureBC.model_validate({"type": "fixedFluxPressure", "value": "uniform 0"})
     assert bc.rho is None
 
 
@@ -286,9 +284,7 @@ def test_wall_function_rejects_unknown_type() -> None:
     ["compressible::alphatWallFunction", "alphatJayatillekeWallFunction"],
 )
 def test_alphat_wall_function_round_trip(type_name: str) -> None:
-    bc = AlphatWallFunctionBC.model_validate(
-        {"type": type_name, "value": "uniform 0", "Prt": 0.85}
-    )
+    bc = AlphatWallFunctionBC.model_validate({"type": type_name, "value": "uniform 0", "Prt": 0.85})
     assert bc.type == type_name
     assert bc.Prt == 0.85
 

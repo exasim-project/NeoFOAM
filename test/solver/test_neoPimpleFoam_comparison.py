@@ -50,9 +50,7 @@ N_STEPS = 100  # END_TIME / deltaT
 def _cpp_neopimplefoam() -> Path:
     """Locate the installed C++ neoPimpleFoam example (the port's reference solver)."""
     spec = importlib.util.find_spec("neofoam")
-    assert spec is not None and spec.origin is not None, (
-        "neofoam package not importable"
-    )
+    assert spec is not None and spec.origin is not None, "neofoam package not importable"
     binary = Path(spec.origin).parent / "bin" / "neoPimpleFoam"
     assert binary.is_file(), f"C++ neoPimpleFoam binary not found at {binary}"
     return binary
@@ -202,9 +200,7 @@ def test_python_port_matches_cpp_neoPimpleFoam(tmp_path: Path) -> None:
         )
         max_abs = float(np.max(np.abs(cpp_field - py_field)))
         peak = float(np.max(np.abs(cpp_field)))
-        print(
-            f"{field_name}: max abs diff = {max_abs:.3e} (peak |{field_name}| = {peak:.3e})"
-        )
+        print(f"{field_name}: max abs diff = {max_abs:.3e} (peak |{field_name}| = {peak:.3e})")
         if max_abs > tol:
             failures.append(f"{field_name}(max abs={max_abs:.3e})")
 

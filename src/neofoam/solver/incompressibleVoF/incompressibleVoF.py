@@ -131,9 +131,7 @@ incompressibleVoF.models(incompressibleVoFModel)  # optional: zero or more
 
 
 @incompressibleVoF.initializer
-def initialize(
-    self: Any, init: Annotated[StagedInitRunner, Depends(create_init)]
-) -> Context:
+def initialize(self: Any, init: Annotated[StagedInitRunner, Depends(create_init)]) -> Context:
     """Initialize fields and models via the staged-init runner."""
     return init.run()
 

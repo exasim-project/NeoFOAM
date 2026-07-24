@@ -53,13 +53,9 @@ def _resolve_dir(path: Union[str, Path]) -> Path:
     if any(p.glob(_SPANS_GLOB)) or any(p.glob(_SUMMARY_GLOB)):
         return p
     nested = p / "telemetry"
-    if nested.is_dir() and (
-        any(nested.glob(_SPANS_GLOB)) or any(nested.glob(_SUMMARY_GLOB))
-    ):
+    if nested.is_dir() and (any(nested.glob(_SPANS_GLOB)) or any(nested.glob(_SUMMARY_GLOB))):
         return nested
-    raise FileNotFoundError(
-        f"no telemetry files ({_SPANS_GLOB} / {_SUMMARY_GLOB}) under {p}"
-    )
+    raise FileNotFoundError(f"no telemetry files ({_SPANS_GLOB} / {_SUMMARY_GLOB}) under {p}")
 
 
 def load_spans(path: Union[str, Path]) -> list[dict[str, Any]]:
@@ -146,9 +142,7 @@ def to_chrome_trace(spans: list[dict[str, Any]]) -> dict[str, Any]:
     return {"traceEvents": events, "displayTimeUnit": "ms"}
 
 
-def write_chrome_trace(
-    path: Union[str, Path], output: Optional[Union[str, Path]] = None
-) -> Path:
+def write_chrome_trace(path: Union[str, Path], output: Optional[Union[str, Path]] = None) -> Path:
     """Write a Chrome Trace-Event ``trace.json`` for the trace under *path*.
 
     *output* defaults to ``<telemetry-dir>/trace.json``. Returns the path

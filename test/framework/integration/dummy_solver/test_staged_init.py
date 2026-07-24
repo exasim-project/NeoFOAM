@@ -56,11 +56,7 @@ def test_optional_models_integration() -> None:
     assert algorithm is not None
 
     rt_m1 = next(
-        (
-            m
-            for m in optional_models
-            if isinstance(m, ModelRuntime) and "Model1" in m.spec.name
-        ),
+        (m for m in optional_models if isinstance(m, ModelRuntime) and "Model1" in m.spec.name),
         None,
     )
     assert rt_m1 is not None

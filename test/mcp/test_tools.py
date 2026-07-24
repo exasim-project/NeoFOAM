@@ -69,17 +69,13 @@ def test_tool_catalog_lists_tools_with_step_schema_and_config(solver: Any) -> No
     assert {"blockMesh", "snappyHexMesh", "checkMesh"} <= set(by_name)
     # the preprocess.yaml entry schema (its ``tool`` key + options)
     block = by_name["blockMesh"]
-    assert (
-        "properties" in block.step_schema and "tool" in block.step_schema["properties"]
-    )
+    assert "properties" in block.step_schema and "tool" in block.step_schema["properties"]
     # blockMesh reads system/blockMeshDict, written by BlockMeshDictConfig
     assert block.dict_file == "system/blockMeshDict"
     assert block.config == "BlockMeshDictConfig"
     assert by_name["snappyHexMesh"].config == "SnappyHexMeshDictConfig"
     # checkMesh reads no dict
-    assert (
-        by_name["checkMesh"].dict_file is None and by_name["checkMesh"].config is None
-    )
+    assert by_name["checkMesh"].dict_file is None and by_name["checkMesh"].config is None
 
 
 def test_model_catalog_is_case_free_with_expected_names(solver: Any) -> None:
@@ -208,18 +204,14 @@ def _stage_mesh_dicts_with_u(tmp_path: Path, frontback_bc: str) -> Any:
         shutil.copy(TUBE_BANK / "system" / name, system / name)
     u = configurations(incompressibleFluid)["UFieldConfig"](
         boundaryField={
-            p.name: {
-                "type": frontback_bc if p.role.value == "empty" else "zeroGradient"
-            }
+            p.name: {"type": frontback_bc if p.role.value == "empty" else "zeroGradient"}
             for p in ps.patches
         }
     )
     write_configs([u], case_dir=tmp_path)
 
 
-def test_validate_case_flags_constraint_patch_mismatch(
-    solver: Any, tmp_path: Path
-) -> None:
+def test_validate_case_flags_constraint_patch_mismatch(solver: Any, tmp_path: Path) -> None:
     """A BC type that doesn't match a constraint mesh patch is an error with a fix."""
     _stage_mesh_dicts_with_u(tmp_path, frontback_bc="empty")  # mesh patch is symmetry
     report = tools.validate_case(solver, str(tmp_path))
@@ -232,9 +224,7 @@ def test_validate_case_flags_constraint_patch_mismatch(
     assert hit.fix and "symmetry" in hit.fix
 
 
-def test_validate_case_accepts_matching_constraint_patch(
-    solver: Any, tmp_path: Path
-) -> None:
+def test_validate_case_accepts_matching_constraint_patch(solver: Any, tmp_path: Path) -> None:
     """With the correct symmetry BC, there is no patch-mismatch finding for frontBack."""
     _stage_mesh_dicts_with_u(tmp_path, frontback_bc="symmetry")
     report = tools.validate_case(solver, str(tmp_path))
@@ -243,14 +233,10 @@ def test_validate_case_accepts_matching_constraint_patch(
 
 def _write(path: Path, body: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        "FoamFile{ version 2.0; format ascii; class dictionary; object x; }\n" + body
-    )
+    path.write_text("FoamFile{ version 2.0; format ascii; class dictionary; object x; }\n" + body)
 
 
-def test_validate_case_requires_constant_g_when_boussinesq(
-    solver: Any, tmp_path: Path
-) -> None:
+def test_validate_case_requires_constant_g_when_boussinesq(solver: Any, tmp_path: Path) -> None:
     """Boussinesq (beta+TRef in transportProperties) without constant/g is an error."""
     _write(tmp_path / "constant" / "transportProperties", "beta 3e-3;\nTRef 300;\n")
     report = tools.validate_case(solver, str(tmp_path))
@@ -259,8 +245,7 @@ def test_validate_case_requires_constant_g_when_boussinesq(
     # authoring the config clears the finding
     write_configs([GravityConfig()], case_dir=tmp_path)
     assert not any(
-        f.file == "constant/g"
-        for f in tools.validate_case(solver, str(tmp_path)).findings
+        f.file == "constant/g" for f in tools.validate_case(solver, str(tmp_path)).findings
     )
 
 
@@ -285,9 +270,7 @@ def test_validate_case_buoyant_p_needs_no_pfinal(solver: Any, tmp_path: Path) ->
     assert any("UFinal" in m for m in msgs)  # a real missing Final is still flagged
 
 
-def test_validate_case_flags_wall_function_in_laminar_case(
-    solver: Any, tmp_path: Path
-) -> None:
+def test_validate_case_flags_wall_function_in_laminar_case(solver: Any, tmp_path: Path) -> None:
     """A ``*WallFunction`` BC is invalid when turbulence is laminar; fix → calculated."""
     _write(tmp_path / "constant" / "turbulenceProperties", "simulationType laminar;\n")
     _write(
@@ -311,22 +294,17 @@ def test_validate_case_errors_when_a_boundary_type_cannot_be_read(
     Reproduces the false-success shape without depending on the backend raising:
     the reader reports the leaf as Unreadable, and validate_case must surface it.
     """
+
     def fake_read_section(path: Path, section: str) -> Any:
         if section == "boundaryField" and path.name == "U":
-            return {
-                "frontBack": {
-                    "type": checks_mod.Unreadable(reason="not a single string")
-                }
-            }
+            return {"frontBack": {"type": checks_mod.Unreadable(reason="not a single string")}}
         return {}
 
     monkeypatch.setattr(checks_mod, "read_section", fake_read_section)
     report = tools.validate_case(solver, str(tmp_path))
 
     assert not report.ok
-    hit = next(
-        f for f in report.findings if f.file == "0/U" and "frontBack" in f.message
-    )
+    hit = next(f for f in report.findings if f.file == "0/U" and "frontBack" in f.message)
     assert hit.level == "error" and "could not be read" in hit.message
 
 
@@ -388,9 +366,7 @@ def test_save_case_validates_then_writes(solver: Any, tmp_path: Path) -> None:
     assert result.case_spec["control_dict_config"] is not None
 
 
-def test_save_case_rejects_malformed_without_writing(
-    solver: Any, tmp_path: Path
-) -> None:
+def test_save_case_rejects_malformed_without_writing(solver: Any, tmp_path: Path) -> None:
     target = tmp_path / "out"
     target.mkdir()
     sentinel = target / "keepme.txt"
@@ -484,9 +460,7 @@ def test_import_geometry_missing_stl_raises_before_writing_manifest(
     assert not (tmp_path / "manifest.json").exists()
 
 
-def test_load_case_surfaces_dropped_configs_as_warnings(
-    solver: Any, tmp_path: Path
-) -> None:
+def test_load_case_surfaces_dropped_configs_as_warnings(solver: Any, tmp_path: Path) -> None:
     """A present-but-invalid config is reported in warnings, not silently nulled (F5)."""
     # A transportProperties that parses as OpenFOAM but does NOT validate into
     # TransportPropertiesConfig (``nu`` is a scalar; a vector fails the schema). This
@@ -536,12 +510,8 @@ def test_validate_case_reads_constraint_patches_from_manifest_pre_mesh(
     )
 
 
-@pytest.mark.parametrize(
-    "verb", ["read_case", "load_case", "validate_case", "case_patches"]
-)
-def test_read_verbs_reject_an_escaping_case_dir(
-    solver: Any, tmp_path: Path, verb: str
-) -> None:
+@pytest.mark.parametrize("verb", ["read_case", "load_case", "validate_case", "case_patches"])
+def test_read_verbs_reject_an_escaping_case_dir(solver: Any, tmp_path: Path, verb: str) -> None:
     ws = Workspace.at(tmp_path)
     fn = getattr(tools, verb)  # test-only reflection over the tool surface
     args = (solver, "../escape") if verb != "case_patches" else ("../escape",)

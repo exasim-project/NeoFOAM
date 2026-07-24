@@ -176,9 +176,7 @@ class LoadedSweep:
     enabled: list[str]
 
 
-def load_sweep(
-    out_dir: str | Path, *, registry: RuleRegistry | None = None
-) -> LoadedSweep:
+def load_sweep(out_dir: str | Path, *, registry: RuleRegistry | None = None) -> LoadedSweep:
     """Read an exported sweep directory back into its canvas definition.
 
     The inverse of :func:`export_sweep`: ``params.yaml`` holds the full

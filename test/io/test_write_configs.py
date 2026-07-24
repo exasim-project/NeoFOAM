@@ -88,11 +88,7 @@ def test_write_configs_merges_multi_owner_file(tmp_path: Path) -> None:
         {"transportModel": "Newtonian", "nu": 1e-5}
     )
     boussinesq = cfgs["BoussinesqConfig"].model_construct()
-    assert (
-        transport.io_config.file
-        == boussinesq.io_config.file
-        == "constant/transportProperties"
-    )
+    assert transport.io_config.file == boussinesq.io_config.file == "constant/transportProperties"
 
     write_configs([transport, boussinesq], case_dir=tmp_path)
 
@@ -115,9 +111,7 @@ def test_dict_config_emits_foamfile_header(tmp_path: Path) -> None:
 
 def test_field_config_keeps_native_header(tmp_path: Path) -> None:
     cfgs = _cfgs()
-    u = cfgs["UFieldConfig"].model_validate(
-        {"boundaryField": {"walls": {"type": "noSlip"}}}
-    )
+    u = cfgs["UFieldConfig"].model_validate({"boundaryField": {"walls": {"type": "noSlip"}}})
     u.save(case_dir=tmp_path)
 
     root = pyf.dictionary.read(str(tmp_path / "0" / "U"))

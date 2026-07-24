@@ -20,9 +20,7 @@ from neofoam.framework.initialization.init_step import InitStep
         (
             [
                 InitStep("A", depends_on=["missing"], initializer=lambda _ctx: "a"),
-                InitStep(
-                    "B", depends_on=["also_missing"], initializer=lambda _ctx: "b"
-                ),
+                InitStep("B", depends_on=["also_missing"], initializer=lambda _ctx: "b"),
             ],
             False,
             "missing_dependency",

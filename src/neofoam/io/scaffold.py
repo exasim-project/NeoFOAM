@@ -69,9 +69,7 @@ def collect_config_classes(sources: Iterable[Any]) -> list[type]:
     return seen
 
 
-def save_configs(
-    configs: Iterable[BaseConfig], *, case_dir: Union[Path, str]
-) -> list[Path]:
+def save_configs(configs: Iterable[BaseConfig], *, case_dir: Union[Path, str]) -> list[Path]:
     """Save each config to ``case_dir`` via its registered IO strategy.
 
     Configs whose class has no ``@IOStrategy`` binding are skipped with a

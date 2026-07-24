@@ -49,12 +49,8 @@ class MockCoreModel:
 
     def run_build(self) -> list[InitStep]:
         return [
-            InitStep(
-                "test_field", initializer=lambda _ctx: "field_value", category="fields"
-            ),
-            InitStep(
-                "test_op", initializer=lambda _ctx: "op_value", category="operators"
-            ),
+            InitStep("test_field", initializer=lambda _ctx: "field_value", category="fields"),
+            InitStep("test_op", initializer=lambda _ctx: "op_value", category="operators"),
         ]
 
 

@@ -184,9 +184,7 @@ def _clone_start(base: Path) -> Callable[[Path], None]:
     return start
 
 
-def _apply_step(
-    solver: Any, payloads: Mapping[str, Mapping[str, Any]], written: list[str]
-) -> Step:
+def _apply_step(solver: Any, payloads: Mapping[str, Mapping[str, Any]], written: list[str]) -> Step:
     """A casebuild step that applies the swept payloads, collecting the written paths."""
 
     def step(case: CaseDir) -> None:
@@ -319,9 +317,7 @@ def setup_mesh_case(
     written: list[str] = []
     pipeline = Pipeline(_mesh_stage_start(base))
     if payloads:
-        pipeline = pipeline | _apply_step(
-            resolve_solver(solver_name), payloads, written
-        )
+        pipeline = pipeline | _apply_step(resolve_solver(solver_name), payloads, written)
     pipeline.build_at(mesh_dir)
 
     _write_stamp(stamp, payloads)
@@ -385,20 +381,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
-    setup = sub.add_parser(
-        "setup", help="clone the base case and apply the case's configs"
-    )
+    setup = sub.add_parser("setup", help="clone the base case and apply the case's configs")
     setup.add_argument("--solver", required=True, help="registered solver name")
     setup.add_argument("--base", required=True, type=Path, help="the saved base case")
-    setup.add_argument(
-        "--case", required=True, type=Path, help="the per-case clone to create"
-    )
-    setup.add_argument(
-        "--config", required=True, type=Path, help="configs/<case>/setup.json"
-    )
-    setup.add_argument(
-        "--stamp", type=Path, default=None, help="stamp file to write on success"
-    )
+    setup.add_argument("--case", required=True, type=Path, help="the per-case clone to create")
+    setup.add_argument("--config", required=True, type=Path, help="configs/<case>/setup.json")
+    setup.add_argument("--stamp", type=Path, default=None, help="stamp file to write on success")
     setup.add_argument(
         "--mesh-src",
         type=Path,
@@ -410,9 +398,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "mesh-setup", help="stage one mesh variant's mini-case under meshes/<variant>"
     )
     mesh_setup.add_argument("--solver", required=True, help="registered solver name")
-    mesh_setup.add_argument(
-        "--base", required=True, type=Path, help="the saved base case"
-    )
+    mesh_setup.add_argument("--base", required=True, type=Path, help="the saved base case")
     mesh_setup.add_argument(
         "--case", required=True, type=Path, help="the meshes/<variant> dir to stage"
     )
@@ -423,9 +409,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--stamp", type=Path, default=None, help="stamp file to write on success"
     )
 
-    tool = sub.add_parser(
-        "tool", help="run ONE preprocess tool in a staged mesh variant dir"
-    )
+    tool = sub.add_parser("tool", help="run ONE preprocess tool in a staged mesh variant dir")
     tool.add_argument("--tool", required=True, help="tool name (e.g. blockMesh)")
     tool.add_argument(
         "--base",
@@ -433,12 +417,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         type=Path,
         help="the base case whose preprocess.yaml holds the tool's options",
     )
-    tool.add_argument(
-        "--case", required=True, type=Path, help="the meshes/<variant> dir to run in"
-    )
-    tool.add_argument(
-        "--stamp", type=Path, default=None, help="stamp file to write on success"
-    )
+    tool.add_argument("--case", required=True, type=Path, help="the meshes/<variant> dir to run in")
+    tool.add_argument("--stamp", type=Path, default=None, help="stamp file to write on success")
 
     args = parser.parse_args(argv)
     if args.command == "setup":
@@ -446,9 +426,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.solver, args.base, args.case, args.config, args.stamp, args.mesh_src
         )
     elif args.command == "mesh-setup":
-        written = setup_mesh_case(
-            args.solver, args.base, args.case, args.config, args.stamp
-        )
+        written = setup_mesh_case(args.solver, args.base, args.case, args.config, args.stamp)
     else:
         run_tool_command(args.tool, args.base, args.case, args.stamp)
         written = []

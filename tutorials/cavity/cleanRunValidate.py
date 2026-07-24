@@ -3,17 +3,17 @@
 #
 # SPDX-License-Identifier: Unlicense
 
-import sys
-import subprocess
-import shutil
-import logging
 import argparse
-import numpy as np
+import logging
+import shutil
+import subprocess
+import sys
 import time
-
 from pathlib import Path
-from foamlib import FoamCase
 from typing import Tuple
+
+import numpy as np
+from foamlib import FoamCase
 
 # =========================================================
 #  Logging Setup
@@ -144,9 +144,7 @@ def run_case(case_path: Path, preset: str = "develop", mode: str = "serial") -> 
         else:
             run_args = [str(solver)]
 
-        subprocess.check_call(
-            run_args, cwd=case_path, stdout=neo_log, stderr=subprocess.STDOUT
-        )
+        subprocess.check_call(run_args, cwd=case_path, stdout=neo_log, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         logger.error("neoIcoFoam failed.")
         print(e)
@@ -253,9 +251,7 @@ def extract_centreline(x, y, U_int, line_value, is_vertical=True):
 def main() -> None:
     start_time = time.perf_counter()
     try:
-        parser = argparse.ArgumentParser(
-            description="Run cavity test + validate results."
-        )
+        parser = argparse.ArgumentParser(description="Run cavity test + validate results.")
         parser.add_argument("--clean", action="store_true", help="Clean case only")
         parser.add_argument("--run", action="store_true", help="Run solver only")
         parser.add_argument("--case", type=str, default=".", help="Case directory")

@@ -69,9 +69,7 @@ def test_runtime_config_populated_from_core_models() -> None:
     runner = _build_runner(cfg)
 
     @spec.initializer
-    def _init(
-        self: Any, init: Annotated[StagedInitRunner, Depends(lambda: runner)]
-    ) -> Context:
+    def _init(self: Any, init: Annotated[StagedInitRunner, Depends(lambda: runner)]) -> Context:
         return init.run()
 
     runtime = spec.instantiate()
@@ -90,9 +88,7 @@ def test_execution_graph_step_receives_config_by_type() -> None:
     runner = _build_runner(cfg)
 
     @spec.initializer
-    def _init(
-        self: Any, init: Annotated[StagedInitRunner, Depends(lambda: runner)]
-    ) -> Context:
+    def _init(self: Any, init: Annotated[StagedInitRunner, Depends(lambda: runner)]) -> Context:
         return init.run()
 
     captured: dict[str, Any] = {}
@@ -121,9 +117,7 @@ def test_runtime_config_stays_none_when_no_class_registered() -> None:
     runner = _build_runner(cfg)
 
     @spec.initializer
-    def _init(
-        self: Any, init: Annotated[StagedInitRunner, Depends(lambda: runner)]
-    ) -> Context:
+    def _init(self: Any, init: Annotated[StagedInitRunner, Depends(lambda: runner)]) -> Context:
         return init.run()
 
     runtime = spec.instantiate()

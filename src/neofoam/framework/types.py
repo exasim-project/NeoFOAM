@@ -51,9 +51,7 @@ class OperationNumber:
         a, b = self._as_tuple(other)
         return a == b
 
-    def __lt__(
-        self, other: "OperationNumber" | str | int | list[int] | tuple[int, ...]
-    ) -> bool:
+    def __lt__(self, other: "OperationNumber" | str | int | list[int] | tuple[int, ...]) -> bool:
         a, b = self._as_tuple(other)
         return a < b
 

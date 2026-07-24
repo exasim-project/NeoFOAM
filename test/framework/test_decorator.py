@@ -46,9 +46,7 @@ def test_decorator_free_function_non_bool_return_annotation() -> None:
 
 
 def test_decorator_free_function_missing_return_annotation() -> None:
-    msg = (
-        "Function free_condition_function must have a return type annotation of 'bool'"
-    )
+    msg = "Function free_condition_function must have a return type annotation of 'bool'"
     with pytest.raises(TypeError) as excinfo:
 
         @condition

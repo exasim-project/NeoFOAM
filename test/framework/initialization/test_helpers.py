@@ -31,9 +31,7 @@ from neofoam.framework.initialization.init_step import InitStep
         (lazy, "", "resource"),
     ],
 )
-def test_helper_naming(
-    helper: Callable[..., InitStep], prefix: str, category: str
-) -> None:
+def test_helper_naming(helper: Callable[..., InitStep], prefix: str, category: str) -> None:
     """All helpers create InitStep with correct name prefix and category."""
     result = helper("X", create=lambda _ctx: 1)
     assert isinstance(result, InitStep)
@@ -121,9 +119,7 @@ def test_builder_chaining(builder: InitializerBuilder) -> None:
     assert len(builder.build()) == 4
 
 
-def test_builder_add_core_models(
-    builder: InitializerBuilder, mock_core_model: Any
-) -> None:
+def test_builder_add_core_models(builder: InitializerBuilder, mock_core_model: Any) -> None:
     """add_core_models adds model + InitSteps from run_build() unchanged."""
     builder.add_core_models([("algorithm", mock_core_model)])
     inits = builder.build()
@@ -147,9 +143,7 @@ def test_builder_add_core_models_without_name(builder: InitializerBuilder) -> No
     assert inits[0].name == "models.algorithmmodel"
 
 
-def test_builder_add_optional_models(
-    builder: InitializerBuilder, mock_optional_model: Any
-) -> None:
+def test_builder_add_optional_models(builder: InitializerBuilder, mock_optional_model: Any) -> None:
     """add_optional_models adds run_build() InitSteps unchanged."""
     builder.add_optional_models([mock_optional_model])
     inits = builder.build()
@@ -179,6 +173,7 @@ def test_builder_add_preserves_explicit_category(builder: InitializerBuilder) ->
 
 def test_builds_init_steps_protocol_matches_run_build(builder, mock_core_model):
     """`BuildsInitSteps` Protocol matches objects exposing run_build()."""
+
     class NoRunBuild:
         pass
 

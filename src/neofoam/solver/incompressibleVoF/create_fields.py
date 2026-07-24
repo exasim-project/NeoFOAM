@@ -61,9 +61,7 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             opt.run_resolve(config)
 
     @spec_builder.build
-    def build_lazy(
-        core_models: list[Any], optional_models: list[Any]
-    ) -> list[InitStep]:
+    def build_lazy(core_models: list[Any], optional_models: list[Any]) -> list[InitStep]:
         # Core models, looked up by spec name (order-independent).
         alpha_names = set(advectionModel.registered_names())
         pressure_names = {s.name for s in PressureVelocityAlgorithm.all_specs()}

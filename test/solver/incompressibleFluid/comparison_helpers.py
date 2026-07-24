@@ -72,9 +72,7 @@ def compare_fields_numerically(
 
     match = bool(np.allclose(values1, values2, rtol=rtol, atol=atol))
     marker = "OK" if match else "FAIL"
-    print(
-        f"  {field_name}: {marker} max abs={max_abs_diff:.2e}, max rel={rel_diff:.2e}"
-    )
+    print(f"  {field_name}: {marker} max abs={max_abs_diff:.2e}, max rel={rel_diff:.2e}")
     return match, max_abs_diff, rel_diff
 
 

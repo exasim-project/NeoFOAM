@@ -104,9 +104,7 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             solution_loop_model,
             field_writer_model,
         ]
-        core_models.append(
-            ControlDictConfig.load(case_dir=resolved_case_dir, validate=False)
-        )
+        core_models.append(ControlDictConfig.load(case_dir=resolved_case_dir, validate=False))
 
         return LoadResult(
             core_models=core_models,
@@ -119,16 +117,12 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             opt.run_resolve(config)
 
     @spec_builder.build
-    def build_lazy(
-        core_models: list[Any], optional_models: list[Any]
-    ) -> list[InitStep]:
+    def build_lazy(core_models: list[Any], optional_models: list[Any]) -> list[InitStep]:
         pressure_model = core_models[0]
 
         def _by_spec(spec_name: str) -> Any:
             return next(
-                m
-                for m in core_models
-                if isinstance(m, ModelRuntime) and m.spec.name == spec_name
+                m for m in core_models if isinstance(m, ModelRuntime) and m.spec.name == spec_name
             )
 
         solution_loop_model = _by_spec("solutionLoop")
@@ -153,9 +147,7 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             solvers = rt.fv_solution_dict.subDict("solvers")
             for name in _MAPPED_SOLVER_DICTS:
                 if solvers.contains(name):
-                    solvers.insert_dict(
-                        name, nfb.map_fv_solution(solvers.subDict(name))
-                    )
+                    solvers.insert_dict(name, nfb.map_fv_solution(solvers.subDict(name)))
             return rt
 
         def alias_neon_runtime(ctx: dict[str, Any]) -> Any:
@@ -165,9 +157,7 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             # Volume nu for the explicit dev2 viscous-stress term (nuEff/nut
             # come from the turbulence model below).
             rt = ctx["_neon_runtime"]
-            return nfb.create_uniform_volume_field(
-                rt, "nu", nfb.read_transport_viscosity(rt)
-            )
+            return nfb.create_uniform_volume_field(rt, "nu", nfb.read_transport_viscosity(rt))
 
         def create_turbulence(ctx: dict[str, Any]) -> Any:
             # Runtime-selected turbulence model (per constant/turbulenceProperties):
@@ -200,12 +190,8 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         # Foam::Time reference so the adapter's MeshAdapter never dangles.
         builder.add(lazy("_arg_list", create_arg_list))
         builder.add(lazy("_foam_time", create_foam_time, depends_on=["_arg_list"]))
-        builder.add(
-            lazy("_neon_runtime", create_neon_runtime, depends_on=["_foam_time"])
-        )
-        builder.add(
-            init_model("neon_runtime", alias_neon_runtime, depends_on=["_neon_runtime"])
-        )
+        builder.add(lazy("_neon_runtime", create_neon_runtime, depends_on=["_foam_time"]))
+        builder.add(init_model("neon_runtime", alias_neon_runtime, depends_on=["_neon_runtime"]))
 
         # solutionLoop + fieldWriter are the framework *core* Models; the NeoN
         # touch-points (NeoNTimeSync backend, write hook, logger, reporter) are

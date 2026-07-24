@@ -19,9 +19,7 @@ from neofoam.framework.model import ModelSpec
 from neofoam.viscosity.viscosityModel import viscosityModel
 from viscosity.conftest import CASES
 
-NATIVE_NAMES = {
-    c.selection["model_name"] for c in CASES if c.selection["resolves_to"] == "native"
-}
+NATIVE_NAMES = {c.selection["model_name"] for c in CASES if c.selection["resolves_to"] == "native"}
 FALLBACK_NAMES = {
     c.selection["model_name"] for c in CASES if c.selection["resolves_to"] == "fallback"
 }

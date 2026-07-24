@@ -58,9 +58,7 @@ class NeoIcoFoam:
             nn.rotate_old_times(U)
             nn.rotate_old_times(phi)
 
-            max_co, mean_co = nn.compute_co_num(
-                rt.nf_mesh, phi.internal_vector(), rt.dt
-            )
+            max_co, mean_co = nn.compute_co_num(rt.nf_mesh, phi.internal_vector(), rt.dt)
             print(f"Courant Number mean: {mean_co:.6f} max: {max_co:.6f}")
 
             nfb.sync_run_times(runTime, rt, max_co)
@@ -88,9 +86,7 @@ class NeoIcoFoam:
                 rAUf = interp.interpolate(rAU)
                 rAUf.name = "rAUf"
 
-                phiHbyA = nfb.flux(hByA) + rAUf * nfb.ddt_flux_corr(
-                    U, phi, rt.dt, ddt_scheme
-                )
+                phiHbyA = nfb.flux(hByA) + rAUf * nfb.ddt_flux_corr(U, phi, rt.dt, ddt_scheme)
 
                 while piso.correct_non_orthogonal():
                     pEqn = nfb.PDESolverScalar(

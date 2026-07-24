@@ -52,18 +52,14 @@ class Workspace:
         """
         candidate = Path(case_id)
         if candidate.is_absolute():
-            raise CaseAccessError(
-                f"{kind} must be a relative path, got absolute: {case_id!r}"
-            )
+            raise CaseAccessError(f"{kind} must be a relative path, got absolute: {case_id!r}")
         if not candidate.parts:  # "" and "." both normalize to the root — never a case
             raise CaseAccessError(
                 f"{kind} must name a case under the root, got empty/'.': {case_id!r}"
             )
         resolved = (self.root / candidate).resolve()
         if not self._within(resolved):
-            raise CaseAccessError(
-                f"{kind} escapes the workspace root {self.root}: {case_id!r}"
-            )
+            raise CaseAccessError(f"{kind} escapes the workspace root {self.root}: {case_id!r}")
         return resolved
 
     def resolve_existing(

@@ -27,6 +27,4 @@ def test_interpolate_T(mesh: str, executor: str) -> None:
     # neon appends boundary-face values after the internal faces
     nb_res = nb_res[: pyb_res.shape[0]]
     rtol = 1e-12 if executor == "Serial" else 1e-8
-    np.testing.assert_allclose(
-        nb_res, pyb_res, rtol=rtol, atol=1e-14 * np.abs(pyb_res).max()
-    )
+    np.testing.assert_allclose(nb_res, pyb_res, rtol=rtol, atol=1e-14 * np.abs(pyb_res).max())

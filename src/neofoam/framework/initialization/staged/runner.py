@@ -22,9 +22,7 @@ class StagedInitRunner:
     lives here, not on the spec — keeping the spec hashable and reusable.
     """
 
-    def __init__(
-        self, spec: StagedInitSpec, *, argv: Optional[list[str]] = None
-    ) -> None:
+    def __init__(self, spec: StagedInitSpec, *, argv: Optional[list[str]] = None) -> None:
         self._spec = spec
         self.argv: list[str] = argv or []
         self.core_models: list[Any] = []
@@ -62,10 +60,7 @@ class StagedInitRunner:
 
         config = ConfigContext()
         for loaded_model in load_result.all_models:
-            key = (
-                getattr(loaded_model, "name", None)
-                or type(loaded_model).__name__.lower()
-            )
+            key = getattr(loaded_model, "name", None) or type(loaded_model).__name__.lower()
             if config.contains(key):
                 raise ValueError(f"Duplicate model registration key: '{key}'")
             config.register(key, loaded_model)

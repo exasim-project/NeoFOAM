@@ -54,9 +54,7 @@ def test_fallback_branch(case: Case) -> None:
         assert isinstance(selected, FallbackHandle)
     else:  # unregistered → no spec → raises
         with pytest.raises(ValueError):
-            select_turbulence_model(
-                cfg, fallback=True, case_dir=case.path, of_factory=MagicMock()
-            )
+            select_turbulence_model(cfg, fallback=True, case_dir=case.path, of_factory=MagicMock())
 
 
 @pytest.mark.parametrize("case", CASES, ids=lambda c: c.name)

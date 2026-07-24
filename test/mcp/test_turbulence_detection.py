@@ -28,9 +28,7 @@ def _catalog_names(solver_name: str) -> set[str]:
     return {m.name for m in tools.model_catalog(resolve_solver(solver_name))}
 
 
-@pytest.mark.parametrize(
-    "solver_name", ["incompressibleFluid", "incompressibleFluidNeoN"]
-)
+@pytest.mark.parametrize("solver_name", ["incompressibleFluid", "incompressibleFluidNeoN"])
 def test_bundled_turbulence_models_are_listed(solver_name: str) -> None:
     assert _BUNDLED <= _catalog_names(solver_name)
 
@@ -48,14 +46,10 @@ def throwaway_model() -> Iterator[str]:
         yield "mcpProbe"
     finally:
         # Drop only what our registration added (register_with appends one wrapper).
-        registry.plugin_registry[:] = [
-            p for p in registry.plugin_registry if p in before
-        ]
+        registry.plugin_registry[:] = [p for p in registry.plugin_registry if p in before]
 
 
-@pytest.mark.parametrize(
-    "solver_name", ["incompressibleFluid", "incompressibleFluidNeoN"]
-)
+@pytest.mark.parametrize("solver_name", ["incompressibleFluid", "incompressibleFluidNeoN"])
 def test_newly_registered_model_surfaces_out_of_the_box(
     solver_name: str, throwaway_model: str
 ) -> None:

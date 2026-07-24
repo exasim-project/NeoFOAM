@@ -41,9 +41,7 @@ def test_snappy_reads_prev_mesh_and_returns_it(
         types.SimpleNamespace(dictionary=types.SimpleNamespace(read=lambda f: f)),
     )
 
-    def fake_snappy(
-        m: Any, d: Any, overwrite: bool = True, verbose: bool = True
-    ) -> None:
+    def fake_snappy(m: Any, d: Any, overwrite: bool = True, verbose: bool = True) -> None:
         seen["call"] = (m, d, overwrite, verbose)
 
     monkeypatch.setattr(snappy_hex_mesh, "generate_snappy_hex_mesh", fake_snappy)
@@ -70,9 +68,7 @@ def test_snappy_refines_prior_mesh(tmp_path: Path) -> None:
     os.chdir(case_dir.path)
     try:
         time = pyf.Time(pyf.argList(["preprocess"]))
-        block_mesh = generate_blockmesh(
-            time, pyf.dictionary.read("system/blockMeshDict")
-        )
+        block_mesh = generate_blockmesh(time, pyf.dictionary.read("system/blockMeshDict"))
         block_cells = block_mesh.nCells()
 
         generate_snappy_hex_mesh(

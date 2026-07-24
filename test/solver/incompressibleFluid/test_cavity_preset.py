@@ -29,9 +29,7 @@ from .case_presets import CAVITY_PATCHES, lid_driven_cavity
 
 def test_cavity_preset_runs_one_iteration(tmp_path: Path) -> None:
     repo_root = Path(__file__).parent.parent.parent.parent
-    cavity_template = (
-        repo_root / "test" / "solver" / "incompressibleFluid" / "cases" / "cavity3x3"
-    )
+    cavity_template = repo_root / "test" / "solver" / "incompressibleFluid" / "cases" / "cavity3x3"
 
     # Build case: copy template (has blockMeshDict), write configs, then mesh.
     # Configs must be written before block_mesh() so fvSchemes/fvSolution are on disk.
@@ -52,9 +50,7 @@ def test_cavity_preset_runs_one_iteration(tmp_path: Path) -> None:
         "0/U",
         "0/p",
     }
-    assert expected <= {
-        str(p.relative_to(case.path)) for p in case.path.rglob("*") if p.is_file()
-    }
+    assert expected <= {str(p.relative_to(case.path)) for p in case.path.rglob("*") if p.is_file()}
 
     # The contract: the solver advances one step without a missing/mis-wired
     # config raising during init or the PIMPLE loop.
@@ -71,10 +67,7 @@ def test_cavity_preset_runs_one_iteration(tmp_path: Path) -> None:
 
 
 def test_preset_parameters_flow_into_configs() -> None:
-    cfgs = {
-        type(c).__name__: c
-        for c in lid_driven_cavity(nu=0.25, lid_velocity=(2.0, 0.0, 0.0))
-    }
+    cfgs = {type(c).__name__: c for c in lid_driven_cavity(nu=0.25, lid_velocity=(2.0, 0.0, 0.0))}
 
     assert cfgs["TransportPropertiesConfig"].nu == 0.25
     u_dump = cfgs["UFieldConfig"].model_dump(by_alias=True)

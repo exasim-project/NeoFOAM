@@ -196,16 +196,11 @@ def import_geometry(
     written = patch_set.save(case / "manifest.json")
     return GeometryImportDTO(
         manifest=str(written),
-        patches=[
-            PatchDTO(name=p.name, role=p.role.value, stl=p.stl)
-            for p in patch_set.patches
-        ],
+        patches=[PatchDTO(name=p.name, role=p.role.value, stl=p.stl) for p in patch_set.patches],
     )
 
 
-def case_patches(
-    case_dir: str, *, workspace: Workspace | None = None
-) -> list[PatchDTO]:
+def case_patches(case_dir: str, *, workspace: Workspace | None = None) -> list[PatchDTO]:
     """Boundary patches (name + role) of a staged case, from ``<case>/manifest.json``.
 
     Lets an agent author boundary conditions without inventing patch names or roles:
@@ -215,18 +210,12 @@ def case_patches(
     case = _confine_existing(case_dir, workspace)
     manifest = Path(case) / "manifest.json"
     if not manifest.is_file():
-        raise ValueError(
-            f"no geometry manifest at {manifest} (stage the geometry first)"
-        )
+        raise ValueError(f"no geometry manifest at {manifest} (stage the geometry first)")
     patch_set = PatchSet.load(manifest)
-    return [
-        PatchDTO(name=p.name, role=p.role.value, stl=p.stl) for p in patch_set.patches
-    ]
+    return [PatchDTO(name=p.name, role=p.role.value, stl=p.stl) for p in patch_set.patches]
 
 
-def build_mesh_inputs(
-    case_dir: str, *, workspace: Workspace | None = None
-) -> MeshInputsDTO:
+def build_mesh_inputs(case_dir: str, *, workspace: Workspace | None = None) -> MeshInputsDTO:
     """Render the mesh dicts for a staged case from its ``<case>/manifest.json``.
 
     Closes the manifest → mesh gap: reads the :class:`~neofoam.tooling.workflow.patch_set.PatchSet`
@@ -240,9 +229,7 @@ def build_mesh_inputs(
     case = _confine_existing(case_dir, workspace)
     manifest = Path(case) / "manifest.json"
     if not manifest.is_file():
-        raise ValueError(
-            f"no geometry manifest at {manifest} (stage the geometry first)"
-        )
+        raise ValueError(f"no geometry manifest at {manifest} (stage the geometry first)")
     patch_set = PatchSet.load(manifest)
     block, snappy, pre = _build(patch_set)
 
@@ -284,9 +271,7 @@ def _confine(path: str, workspace: Workspace | None) -> Path:
     return Path(path)
 
 
-def _confine_existing(
-    path: str, workspace: Workspace | None, *, kind: str = "case_dir"
-) -> Path:
+def _confine_existing(path: str, workspace: Workspace | None, *, kind: str = "case_dir") -> Path:
     """Confine ``path`` and require it to be an existing, readable directory.
 
     ``kind`` labels the path in the rejection message so an escaping/absent
@@ -300,9 +285,7 @@ def _confine_existing(
     return resolved
 
 
-def read_case(
-    solver: Any, case_dir: str, *, workspace: Workspace | None = None
-) -> CaseTextDTO:
+def read_case(solver: Any, case_dir: str, *, workspace: Workspace | None = None) -> CaseTextDTO:
     """Read every config-bound file of a case as raw text.
 
     ``case_dir`` is confined through ``workspace`` (when given) and must be an
@@ -312,9 +295,7 @@ def read_case(
     return CaseTextDTO(files=read_case_text(str(case), solver=solver))
 
 
-def load_case(
-    solver: Any, case_dir: str, *, workspace: Workspace | None = None
-) -> CaseSpecDTO:
+def load_case(solver: Any, case_dir: str, *, workspace: Workspace | None = None) -> CaseSpecDTO:
     """Load each present config from disk into an aggregate CaseSpec dump.
 
     ``case_dir`` is confined through ``workspace`` (when given) and must be an

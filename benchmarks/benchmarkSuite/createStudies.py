@@ -1,15 +1,16 @@
 # %%
 # create 2DSquare and 3DCube benchmark cases
 
-import sys
 import os
 import shutil
 import subprocess
-import pandas as pd
+import sys
 from pathlib import Path
-from foamlib.preprocessing.parameter_study import record_generator
+
+import pandas as pd
 from foamlib.postprocessing.load_tables import datafile, load_tables
 from foamlib.postprocessing.table_reader import read_catch2_benchmark
+from foamlib.preprocessing.parameter_study import record_generator
 
 
 def build_records(name, resolution):
@@ -100,9 +101,7 @@ def execute_case(executable, target, name):
     r, dirs, fs = next(os.walk(target / name / "Cases"))
     root = Path(r)
     for study in dirs:
-        log = open(
-            root / study / "execute.log", "a"
-        )  # so that data written to it will be appended
+        log = open(root / study / "execute.log", "a")  # so that data written to it will be appended
         proc = subprocess.Popen(
             [executable, "--reporter", "xml", "-o", "stats.xml"],
             cwd=root / study,
@@ -121,9 +120,7 @@ def gather_results(target, name):
         print(f"could not find {cases}")
 
     file = datafile(file_name="stats.xml", folder=".")
-    benchmark_results = load_tables(
-        source=file, dir_name=cases, reader_fn=read_catch2_benchmark
-    )
+    benchmark_results = load_tables(source=file, dir_name=cases, reader_fn=read_catch2_benchmark)
     if benchmark_results is not None:
         print(benchmark_results.columns)
         for test_case in benchmark_results["test_case"].unique():
@@ -148,9 +145,7 @@ def display(target):
             continue
         df = pd.read_csv(Path(r) / f)
         print(f"\n{f}")
-        df["benchmark_name"] = df["benchmark_name"].apply(
-            lambda x: x.replace("Executor", "")
-        )
+        df["benchmark_name"] = df["benchmark_name"].apply(lambda x: x.replace("Executor", ""))
         df["Resolution"] = df["Resolution"].apply(lambda x: int(x[1:]))
         df["Cells"] = 0
         df.loc[df["MeshType"] == "2DSquare", "Cells"] = df["Resolution"] ** 2

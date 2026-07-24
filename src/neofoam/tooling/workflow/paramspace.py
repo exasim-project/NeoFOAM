@@ -68,9 +68,7 @@ class _SupportsGet(Protocol):
 # ---------------------------------------------------------------------------
 
 
-def read_sweep_csv(
-    path: str | Path, case_col: str = DEFAULT_CASE_COL
-) -> list[dict[str, str]]:
+def read_sweep_csv(path: str | Path, case_col: str = DEFAULT_CASE_COL) -> list[dict[str, str]]:
     """Read the sweep combination table.
 
     Args:
@@ -144,9 +142,7 @@ def read_params_yaml(path: str | Path) -> dict[str, dict[str, dict[str, Any]]]:
     return data
 
 
-def write_params_yaml(
-    path: str | Path, variants: dict[str, dict[str, dict[str, Any]]]
-) -> None:
+def write_params_yaml(path: str | Path, variants: dict[str, dict[str, dict[str, Any]]]) -> None:
     """Write the named parameter variants (deterministic key order)."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -322,9 +318,7 @@ class YamlParamSpace:
         """The case names, in sweep-table order."""
         return [row[self.case_col] for row in self.rows]
 
-    def config_for(
-        self, case: str, dims: Sequence[str] | None = None
-    ) -> dict[str, dict[str, Any]]:
+    def config_for(self, case: str, dims: Sequence[str] | None = None) -> dict[str, dict[str, Any]]:
         """The resolved parameter variants of one case, restricted to ``dims``."""
         row = self._by_case.get(case)
         if row is None:

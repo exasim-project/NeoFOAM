@@ -44,9 +44,7 @@ from neofoam.framework.types import OperationMetadata, OperationNumber
 
 def sort_global(graph, op_map, tagged, sorter=None):
     """Test-local wrapper that defaults the sorter for brevity in assertions."""
-    return _sort_global_impl(
-        graph, op_map, tagged, sorter=sorter or NetworkxTopologicalSorter()
-    )
+    return _sort_global_impl(graph, op_map, tagged, sorter=sorter or NetworkxTopologicalSorter())
 
 
 # ---------------------------------------------------------------------------
@@ -807,17 +805,13 @@ def test_runnable_flat_execution_order() -> None:
     builder.step(
         Operation(
             func=SequentialOp(make_logger("B")),
-            metadata=OperationMetadata(
-                op_name="B", operation_number=OperationNumber("2")
-            ),
+            metadata=OperationMetadata(op_name="B", operation_number=OperationNumber("2")),
         )
     )
     builder.step(
         Operation(
             func=SequentialOp(make_logger("A")),
-            metadata=OperationMetadata(
-                op_name="A", operation_number=OperationNumber("1")
-            ),
+            metadata=OperationMetadata(op_name="A", operation_number=OperationNumber("1")),
         )
     )
 
@@ -846,9 +840,7 @@ def test_runnable_loop_execution_order_with_model_ops() -> None:
         lb.step(
             Operation(
                 func=SequentialOp(make_logger("S1")),
-                metadata=OperationMetadata(
-                    op_name="S1", operation_number=OperationNumber("1")
-                ),
+                metadata=OperationMetadata(op_name="S1", operation_number=OperationNumber("1")),
             )
         )
         lb.step(

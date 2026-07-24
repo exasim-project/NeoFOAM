@@ -35,9 +35,7 @@ def test_validate_dependency_graph_cycle() -> None:
 
 
 def test_validate_dependency_graph_valid_returns_empty_report():
-    report = validate_dependency_graph(
-        ["A", "B", "C"], {"A": [], "B": ["A"], "C": ["B"]}
-    )
+    report = validate_dependency_graph(["A", "B", "C"], {"A": [], "B": ["A"], "C": ["B"]})
 
     assert report.is_valid
     assert report.diagnostics == ()

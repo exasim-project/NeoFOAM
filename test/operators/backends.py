@@ -121,15 +121,11 @@ class Worker:
             f"(exit code {self._proc.poll()}, log: {self._log_path})"
         )
 
-    def evaluate(
-        self, func: str, args: tuple[str, ...], scheme: str | None = None
-    ) -> np.ndarray:
+    def evaluate(self, func: str, args: tuple[str, ...], scheme: str | None = None) -> np.ndarray:
         """Run an op that produces an array result."""
         return np.load(self._request(func, args, scheme, None))
 
-    def command(
-        self, func: str, args: tuple[str, ...], data: np.ndarray | None = None
-    ) -> None:
+    def command(self, func: str, args: tuple[str, ...], data: np.ndarray | None = None) -> None:
         """Run an op for its side effect, optionally shipping ``data`` along."""
         self._request(func, args, None, data)
 

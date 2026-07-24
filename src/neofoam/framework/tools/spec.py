@@ -37,9 +37,7 @@ class ToolSpec:
         self.consumes_mesh = consumes_mesh
         self._build_func: Optional[Callable[[Any], list[InitStep]]] = None
 
-    def build(
-        self, func: Callable[[Any], list[InitStep]]
-    ) -> Callable[[Any], list[InitStep]]:
+    def build(self, func: Callable[[Any], list[InitStep]]) -> Callable[[Any], list[InitStep]]:
         """Register the BUILD function: ``def build(cfg) -> list[InitStep]``."""
         self._build_func = func
         return func
@@ -74,9 +72,7 @@ class ToolSpec:
         unused (one runtime per entry).
         """
         config_type = self.step_config_type
-        config: Any = (
-            config_type.model_validate(entry) if config_type is not None else entry
-        )
+        config: Any = config_type.model_validate(entry) if config_type is not None else entry
         depends_on = entry.get("depends_on", [])
         return ToolRuntime(
             spec=self,

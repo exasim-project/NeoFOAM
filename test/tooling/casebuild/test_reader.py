@@ -22,9 +22,7 @@ def test_read_field_returns_finite_internal_field(tmp_path: Path) -> None:
     case = (from_template(CAVITY) | block_mesh()).build_at(tmp_path / "c")
     p = case.read_field("p")  # initial p (from 0.orig) at the latest (only) time
     assert p.ndim == 1 and p.size > 0  # scalar field -> (N,)
-    assert np.all(
-        np.isfinite(p)
-    )  # subprocess isolation -> no Foam::Time nan corruption
+    assert np.all(np.isfinite(p))  # subprocess isolation -> no Foam::Time nan corruption
 
 
 def test_read_field_twice_in_one_process_stays_consistent(tmp_path: Path) -> None:

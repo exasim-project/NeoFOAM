@@ -69,8 +69,7 @@ def detect_model() -> bool:
 def resolve(config: Model3Config, ctx: ConfigContext) -> Model3Config:
     """Check if DummyModel1 is active and store as coupled flag in config."""
     coupled = any(
-        isinstance(v, ModelRuntime) and v.spec.name == "DummyModel1"
-        for v in ctx.all().values()
+        isinstance(v, ModelRuntime) and v.spec.name == "DummyModel1" for v in ctx.all().values()
     )
     return config.model_copy(update={"coupled": coupled})
 

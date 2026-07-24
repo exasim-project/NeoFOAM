@@ -33,9 +33,7 @@ def test_imp_laplacian_Gamma_T(mesh: str, executor: str) -> None:
     nb_res = nb.imp.laplacian(Gamma, T)
 
     rtol = 1e-9 if executor == "Serial" else 1e-8
-    np.testing.assert_allclose(
-        nb_res, pyb_res, rtol=rtol, atol=1e-10 * np.abs(pyb_res).max()
-    )
+    np.testing.assert_allclose(nb_res, pyb_res, rtol=rtol, atol=1e-10 * np.abs(pyb_res).max())
 
 
 @pytest.mark.parametrize("executor", EXECUTORS)
@@ -56,6 +54,4 @@ def test_imp_laplacian_Gamma_U(mesh: str, executor: str) -> None:
     nb_res = nb.imp.laplacian(Gamma, U)
 
     rtol = 1e-9 if executor == "Serial" else 1e-8
-    np.testing.assert_allclose(
-        nb_res, pyb_res, rtol=rtol, atol=1e-10 * np.abs(pyb_res).max()
-    )
+    np.testing.assert_allclose(nb_res, pyb_res, rtol=rtol, atol=1e-10 * np.abs(pyb_res).max())

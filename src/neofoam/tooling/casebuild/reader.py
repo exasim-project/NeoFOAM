@@ -29,9 +29,7 @@ if TYPE_CHECKING:
     import numpy as np
 
 
-def read_field(
-    case: CaseDir, name: str, *, time: str = "latest"
-) -> "np.ndarray[Any, Any]":
+def read_field(case: CaseDir, name: str, *, time: str = "latest") -> "np.ndarray[Any, Any]":
     """Read field *name*'s internal field from *case* (``time`` = ``"latest"`` or a dir).
 
     Runs the read in a fresh subprocess (see the module docstring). Returns the

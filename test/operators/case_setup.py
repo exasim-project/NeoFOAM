@@ -41,12 +41,8 @@ class Field:
         """Write values into the field on both backends (device copy on GPU)."""
         updated = np.asarray(self)
         updated[key] = values
-        backends.POOL.of_worker(self.case).command(
-            "field.set", (self.name,), data=updated
-        )
-        backends.POOL.neon_worker(self.case, self.executor).command(
-            "field.reload", (self.name,)
-        )
+        backends.POOL.of_worker(self.case).command("field.set", (self.name,), data=updated)
+        backends.POOL.neon_worker(self.case, self.executor).command("field.reload", (self.name,))
 
 
 @dataclass(frozen=True)

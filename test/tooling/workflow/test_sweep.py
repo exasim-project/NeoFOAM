@@ -97,9 +97,7 @@ def test_rule_nodes_default_pipeline() -> None:
     ]
     # The mesh chain is stamp-chained; setup waits on the chain's sink.
     assert by_rule["blockMesh"]["data"]["inputs"] == ["meshes/{mesh}/.staged.json"]
-    assert by_rule["snappyHexMesh"]["data"]["inputs"] == [
-        "meshes/{mesh}/.blockMesh.done"
-    ]
+    assert by_rule["snappyHexMesh"]["data"]["inputs"] == ["meshes/{mesh}/.blockMesh.done"]
     assert by_rule["setup"]["data"]["inputs"] == [
         "configs/{case}/setup.json",
         "meshes/{mesh}/.checkMesh.done",
@@ -185,9 +183,7 @@ def test_cross_product_names_and_order() -> None:
 
 def test_validate_dimensions_names_offender() -> None:
     classes = {"transport": _Transport, "control": _Control}
-    validate_dimensions(
-        {"transport": {"ok": {"nu": "2e-5"}}}, classes
-    )  # coercible: fine
+    validate_dimensions({"transport": {"ok": {"nu": "2e-5"}}}, classes)  # coercible: fine
     with pytest.raises(ValueError, match="'transport.bad' failed validation"):
         validate_dimensions({"transport": {"bad": {"nu": "not-a-number"}}}, classes)
     with pytest.raises(ValueError, match="unknown dimension 'other'"):
@@ -206,9 +202,7 @@ def test_variant_errors_reports_per_variant_without_raising() -> None:
     # A wholly valid sweep yields no errors.
     assert variant_errors({"transport": {"ok": {"nu": 1e-5}}}, classes) == {}
     # An unknown dimension marks its variant rather than raising.
-    assert (
-        "unknown dimension" in variant_errors({"nope": {"v": {}}}, classes)["nope"]["v"]
-    )
+    assert "unknown dimension" in variant_errors({"nope": {"v": {}}}, classes)["nope"]["v"]
 
 
 def test_variant_errors_reports_mesh_dimension_failures() -> None:
@@ -297,9 +291,7 @@ def test_load_sweep_reads_the_sidecar_not_the_snakefile(tmp_path: Path) -> None:
 
 
 def test_sweep_snakefile_header_and_includes() -> None:
-    text = sweep_snakefile(
-        "incompressibleFluid", "/tmp/my base", ["control", "transport", "mesh"]
-    )
+    text = sweep_snakefile("incompressibleFluid", "/tmp/my base", ["control", "transport", "mesh"])
     assert "from neofoam.tooling.workflow.paramspace import YamlParamSpace" in text
     assert "from neofoam.tooling.workflow.rules import rules_dir" in text
     # Header globals the static .smk files consume.
@@ -357,9 +349,7 @@ def test_export_sweep_writes_workflow_dir(tmp_path: Path) -> None:
     assert export.params_yaml.is_file()
     assert "include:" in export.snakefile.read_text()
     # Per-case setup configs + the implicit shared mesh variant.
-    assert sorted(
-        p.relative_to(export.out_dir / "configs").as_posix() for p in export.configs
-    ) == [
+    assert sorted(p.relative_to(export.out_dir / "configs").as_posix() for p in export.configs) == [
         "base_nu1/setup.json",
         "base_nu2/setup.json",
         "mesh/base.json",
@@ -455,22 +445,15 @@ def test_export_sweep_with_mesh_dimension(tmp_path: Path) -> None:
     )
     # The mesh dim is a sweep column (case names include the variant) but is
     # excluded from the per-case setup payloads — it applies in the mini-case.
-    assert (
-        export.sweep_csv.read_text().splitlines()[0]
-        == "case,mesh,transport_properties_config"
-    )
-    rel = sorted(
-        p.relative_to(export.out_dir / "configs").as_posix() for p in export.configs
-    )
+    assert export.sweep_csv.read_text().splitlines()[0] == "case,mesh,transport_properties_config"
+    rel = sorted(p.relative_to(export.out_dir / "configs").as_posix() for p in export.configs)
     assert rel == [
         "coarse_nu1/setup.json",
         "fine_nu1/setup.json",
         "mesh/coarse.json",
         "mesh/fine.json",
     ]
-    setup = json.loads(
-        (export.out_dir / "configs" / "coarse_nu1" / "setup.json").read_text()
-    )
+    setup = json.loads((export.out_dir / "configs" / "coarse_nu1" / "setup.json").read_text())
     assert set(setup) == {"transport_properties_config"}
 
     # Mesh validation names the offending variant.config.
@@ -479,9 +462,7 @@ def test_export_sweep_with_mesh_dimension(tmp_path: Path) -> None:
         match=r"'mesh\.bad' failed validation: unknown config 'not_a_config'",
     ):
         validate_mesh_dimension({"bad": {"not_a_config": {}}}, classes)
-    with pytest.raises(
-        ValueError, match=r"'mesh\.bad' failed validation: block_mesh_dict_config"
-    ):
+    with pytest.raises(ValueError, match=r"'mesh\.bad' failed validation: block_mesh_dict_config"):
         validate_mesh_dimension(
             {"bad": {"block_mesh_dict_config": {"scale": "not-a-number"}}}, classes
         )

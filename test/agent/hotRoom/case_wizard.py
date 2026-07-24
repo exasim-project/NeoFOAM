@@ -289,9 +289,7 @@ def _(
             # Auto-save: write the validated agent instances straight to disk.
             report = write_configs(configs, case_dir=TARGET) if configs else {}
 
-            lines = [
-                "**Filled:** " + (", ".join(sorted(filled)) if filled else "_nothing_")
-            ]
+            lines = ["**Filled:** " + (", ".join(sorted(filled)) if filled else "_nothing_")]
             if _active_opt:
                 _labels = [e.label for e in optional_models if e.name in _active_opt]
                 lines.append("**Selected models:** " + ", ".join(sorted(_labels)))
@@ -406,16 +404,10 @@ def _(
     # tabs (and skipped on save). Required models are never hidden.
     _selected_types = set(get_sel())
     _hidden_dicts = {
-        _c.__name__
-        for _e in optional_models
-        if _e.name not in _selected_types
-        for _c in _e.dicts
+        _c.__name__ for _e in optional_models if _e.name not in _selected_types for _c in _e.dicts
     }
     _hidden_fields = {
-        _c.__name__
-        for _e in optional_models
-        if _e.name not in _selected_types
-        for _c in _e.fields
+        _c.__name__ for _e in optional_models if _e.name not in _selected_types for _c in _e.fields
     }
 
     setup_panel = mo.vstack(
@@ -439,14 +431,10 @@ def _(
     )
 
     models_items = {
-        _name: dict_widgets[_name]
-        for _name in setup_models
-        if _name not in _hidden_dicts
+        _name: dict_widgets[_name] for _name in setup_models if _name not in _hidden_dicts
     }
     schemes_items = {
-        _name: dict_widgets[_name]
-        for _name in setup_schemes
-        if _name not in _hidden_dicts
+        _name: dict_widgets[_name] for _name in setup_schemes if _name not in _hidden_dicts
     }
     bcs_items = {
         f"{field_label[_name]} — boundary conditions": bc_widgets[_name]

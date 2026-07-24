@@ -73,9 +73,7 @@ def test_pimple_final_flags_a_grouped_field_missing_its_final(
     monkeypatch.setattr(checks_mod, "read_section", lambda path, section: solvers)
     monkeypatch.setattr(checks_mod, "is_boussinesq", lambda case: False)
     findings = check_pimple_final(_ctx(tmp_path))
-    assert [f.message for f in findings] == [
-        "PIMPLE needs a 'kFinal' solver entry (missing)"
-    ]
+    assert [f.message for f in findings] == ["PIMPLE needs a 'kFinal' solver entry (missing)"]
 
 
 # -- couldn't-check ⇒ error at the three ported read sites ---------------------
@@ -87,9 +85,7 @@ def test_gamg_check_errors_when_solver_leaf_unreadable(
     monkeypatch.setattr(
         checks_mod,
         "read_section",
-        lambda path, section: {
-            "p": {"solver": checks_mod.Unreadable(reason="not a name")}
-        },
+        lambda path, section: {"p": {"solver": checks_mod.Unreadable(reason="not a name")}},
     )
     findings = check_gamg_smoother(_ctx(tmp_path))
     assert findings and findings[0].level == "error"
@@ -103,14 +99,10 @@ def test_laminar_check_errors_when_type_leaf_unreadable(
     monkeypatch.setattr(
         checks_mod,
         "read_section",
-        lambda path, section: {
-            "walls": {"type": checks_mod.Unreadable(reason="not a name")}
-        },
+        lambda path, section: {"walls": {"type": checks_mod.Unreadable(reason="not a name")}},
     )
     findings = check_laminar_wall_functions(_ctx(tmp_path))
-    assert any(
-        f.level == "error" and "could not be read" in f.message for f in findings
-    )
+    assert any(f.level == "error" and "could not be read" in f.message for f in findings)
 
 
 def test_div_check_errors_when_scheme_leaf_unreadable(
@@ -125,9 +117,7 @@ def test_div_check_errors_when_scheme_leaf_unreadable(
     assert findings and findings[0].level == "error"
 
 
-def test_div_check_absent_scheme_is_silent(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+def test_div_check_absent_scheme_is_silent(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     # Absence (None) is a genuine no-op — only a present-but-unreadable leaf escalates.
     monkeypatch.setattr(checks_mod, "read_entry", lambda path, section, key: None)
     assert check_div_scheme(_ctx(tmp_path)) == []
@@ -140,16 +130,12 @@ def test_constraint_check_errors_when_type_leaf_unreadable(
         checks_mod,
         "read_section",
         lambda path, section: (
-            {"frontBack": {"type": checks_mod.Unreadable(reason="bad")}}
-            if path.name == "U"
-            else {}
+            {"frontBack": {"type": checks_mod.Unreadable(reason="bad")}} if path.name == "U" else {}
         ),
     )
     findings = check_constraint_patches(_ctx(tmp_path))
     assert any(
-        f.level == "error"
-        and "frontBack" in f.message
-        and "could not be read" in f.message
+        f.level == "error" and "frontBack" in f.message and "could not be read" in f.message
         for f in findings
     )
 
@@ -191,16 +177,13 @@ def test_mesh_patch_types_escalates_a_corrupt_snappyhexmeshdict(
     shm = tmp_path / "system" / "snappyHexMeshDict"
     shm.parent.mkdir(parents=True)
     shm.write_text(
-        "FoamFile{ version 2.0; format ascii; class dictionary; "
-        "object snappyHexMeshDict; }\n"
+        "FoamFile{ version 2.0; format ascii; class dictionary; object snappyHexMeshDict; }\n"
     )
 
     def _boom(cls: Any, **kw: Any) -> Any:
         raise RuntimeError("bad snappyHexMeshDict")
 
-    monkeypatch.setattr(
-        snappy_hex_mesh.SnappyHexMeshDictConfig, "load", classmethod(_boom)
-    )
+    monkeypatch.setattr(snappy_hex_mesh.SnappyHexMeshDictConfig, "load", classmethod(_boom))
     result = checks_mod.mesh_patch_types(tmp_path)
     assert isinstance(result, checks_mod.Unreadable)
     assert "snappyHexMeshDict" in result.reason
@@ -336,9 +319,7 @@ def test_div_check_warns_on_an_unbounded_scheme() -> None:
 def test_required_files_errors_when_a_present_config_does_not_load() -> None:
     pytest.importorskip("pybFoam")
     solver: Any = resolve_solver("incompressibleFluid")
-    findings = check_required_files(
-        CaseContext(case=CASES / "bad_controldict", solver=solver)
-    )
+    findings = check_required_files(CaseContext(case=CASES / "bad_controldict", solver=solver))
     assert any(
         "controlDict" in f.file and "does not load" in f.message and f.level == "error"
         for f in findings
@@ -358,7 +339,5 @@ def test_leaf_or_error_escalates_unreadable_and_passes_value() -> None:
         checks_mod.Unreadable(reason="bad"), "0/U", "type could not be read", fix="f"
     )
     assert text is None and err is not None and err.level == "error"
-    text2, err2 = checks_mod._leaf_or_error(
-        checks_mod.Value(text="symmetry"), "0/U", "m", fix="f"
-    )
+    text2, err2 = checks_mod._leaf_or_error(checks_mod.Value(text="symmetry"), "0/U", "m", fix="f")
     assert text2 == "symmetry" and err2 is None

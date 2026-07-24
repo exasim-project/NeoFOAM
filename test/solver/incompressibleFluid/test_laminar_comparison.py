@@ -46,9 +46,7 @@ _LAMINAR_TURBULENCE_PROPERTIES = (
 
 
 def _make_laminar(case_dir: Path) -> None:
-    shutil.copyfile(
-        _LAMINAR_TURBULENCE_PROPERTIES, case_dir / "constant" / "turbulenceProperties"
-    )
+    shutil.copyfile(_LAMINAR_TURBULENCE_PROPERTIES, case_dir / "constant" / "turbulenceProperties")
 
 
 def test_laminar_solver_comparison(tmp_path: Path) -> None:

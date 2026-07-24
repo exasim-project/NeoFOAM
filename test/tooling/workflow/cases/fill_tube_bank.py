@@ -94,16 +94,12 @@ def case_prompt(patch_set: PatchSet) -> str:
     )
 
 
-def author_configs(
-    patch_set: PatchSet, *, agent: Optional[Any] = None
-) -> list[BaseConfig]:
+def author_configs(patch_set: PatchSet, *, agent: Optional[Any] = None) -> list[BaseConfig]:
     """Have the agent fill the physics configs (drops any geometry it filled)."""
     agent = agent or build_case_agent(solver=incompressibleFluid)
     result = agent.run_sync(case_prompt(patch_set))
     return [
-        cfg
-        for cfg in case_spec_to_configs(result.output)
-        if not isinstance(cfg, _GEOMETRY_CONFIGS)
+        cfg for cfg in case_spec_to_configs(result.output) if not isinstance(cfg, _GEOMETRY_CONFIGS)
     ]
 
 

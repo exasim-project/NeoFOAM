@@ -76,9 +76,7 @@ def neon_writer_backend_steps() -> list[InitStep]:
     """
 
     def inject_hook(ctx: dict[str, Any]) -> FieldHook:
-        hook = NeoNWriteHook(
-            runtime=ctx["_neon_runtime"], turbulence=ctx["models.turbulence"]
-        )
+        hook = NeoNWriteHook(runtime=ctx["_neon_runtime"], turbulence=ctx["models.turbulence"])
         ctx["models.writer"].hook = hook
         return hook
 

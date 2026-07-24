@@ -54,9 +54,7 @@ class StepView(Protocol):
     write_time: bool  # the loop's own (Python-computed) write flag
 
 
-@PluginSystem.register(
-    discriminator_variable="policy", discriminator="write_control_type"
-)
+@PluginSystem.register(discriminator_variable="policy", discriminator="write_control_type")
 class WriteControl(BaseConfig):
     """Plugin interface: decide whether the current step is a write step.
 

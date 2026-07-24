@@ -57,9 +57,7 @@ def test_valid_configs_n_models() -> None:
     assert m1.shape.radius == 2.5
     m2 = Shape(shape={"shape_type": "square", "side": 4.0}, color="blue")
     assert m2.shape.side == 4.0
-    m3 = Shape(
-        shape={"shape_type": "rectangle", "width": 3.0, "height": 6.0}, color="green"
-    )
+    m3 = Shape(shape={"shape_type": "rectangle", "width": 3.0, "height": 6.0}, color="green")
     assert m3.shape.width == 3.0
     assert m3.shape.height == 6.0
 

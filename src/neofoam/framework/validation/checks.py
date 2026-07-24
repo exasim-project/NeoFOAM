@@ -169,10 +169,7 @@ def mesh_patch_types(case: Path) -> Union[dict[str, str], Unreadable]:
             snappy = SnappyHexMeshDictConfig.load(case_dir=shm)
         except Exception as exc:
             return Unreadable(
-                reason=(
-                    "system/snappyHexMeshDict: "
-                    f"{str(exc).strip() or type(exc).__name__}"
-                )
+                reason=(f"system/snappyHexMeshDict: {str(exc).strip() or type(exc).__name__}")
             )
         cmc = snappy.castellatedMeshControls
         surfaces = cmc.get("refinementSurfaces", {}) if isinstance(cmc, dict) else {}
@@ -368,8 +365,7 @@ def check_pimple_final(ctx: CaseContext) -> list[Finding]:
                 _error(
                     "system/fvSolution",
                     f"PIMPLE needs a '{field_name}Final' solver entry (missing)",
-                    fix=f"add '{field_name}Final' (same settings as '{field_name}', "
-                    "relTol 0)",
+                    fix=f"add '{field_name}Final' (same settings as '{field_name}', relTol 0)",
                 )
             )
     return findings
@@ -425,8 +421,7 @@ def check_laminar_wall_functions(ctx: CaseContext) -> list[Finding]:
                         f"0/{field_name}",
                         f"patch '{patch}' uses '{bc_type}' but the case is laminar "
                         "(wall functions require a turbulence model)",
-                        fix=f"use 'calculated' (value uniform 0) for '{patch}' when "
-                        "laminar",
+                        fix=f"use 'calculated' (value uniform 0) for '{patch}' when laminar",
                     )
                 )
     return findings

@@ -91,9 +91,7 @@ class DependencyResolver:
                             kwargs[param_name] = ctx.fields.get(param_name)
                             continue
                         if ctx:
-                            kwargs[param_name] = getattr(ctx, marker, {}).get(
-                                param_name
-                            )
+                            kwargs[param_name] = getattr(ctx, marker, {}).get(param_name)
                             continue
 
             if ctx and param_name in ctx.fields:
@@ -139,9 +137,7 @@ class DependencyResolver:
             return ctx.models.get(parts[1]) if len(parts) > 1 else None
         return getattr(ctx, path, None)
 
-    def _resolve_callable(
-        self, provider: Callable[..., Any], ctx: Optional[Context]
-    ) -> Any:
+    def _resolve_callable(self, provider: Callable[..., Any], ctx: Optional[Context]) -> Any:
         kwargs = self.resolve_arguments(provider, ctx)
         return provider(**kwargs)
 

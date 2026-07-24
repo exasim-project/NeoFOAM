@@ -36,9 +36,7 @@ from neofoam.viscosity.selection import select_viscosity_model
 CASES = discover_cases(Path(__file__).resolve().parent / "cases")
 
 #: A native viscosity model is a plain ``ModelRuntime`` used as-is (no native-wrap).
-build_as_solver = make_build_as_solver(
-    TransportPropertiesConfig, select_viscosity_model
-)
+build_as_solver = make_build_as_solver(TransportPropertiesConfig, select_viscosity_model)
 assert_selection = make_assert_selection(OpenFOAMViscosityModel)
 
 

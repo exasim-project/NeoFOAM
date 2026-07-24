@@ -299,9 +299,7 @@ def build_case_agent(
             raise ImportError(_MISSING_PYDANTIC_AI)
         model = AnthropicModel(model_name)
 
-    out_type = output_type or build_case_output_model(
-        solver=solver, model_name=output_model_name
-    )
+    out_type = output_type or build_case_output_model(solver=solver, model_name=output_model_name)
     return Agent(
         model,
         output_type=out_type,
@@ -355,9 +353,7 @@ def fill_case(
     target_case = Path(target_case)
 
     if not source_case.is_dir():
-        raise ValueError(
-            f"source_case does not exist or is not a directory: {str(source_case)!r}"
-        )
+        raise ValueError(f"source_case does not exist or is not a directory: {str(source_case)!r}")
 
     if copy_static:
         _copy_static_assets(source_case, target_case)

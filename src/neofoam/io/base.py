@@ -54,9 +54,7 @@ class BaseConfig(BaseModel):
     def _resolve_path(cls, case_dir: Union[Path, str], file: Optional[str]) -> Path:
         """Resolve the on-disk path: explicit file, *file* override, or default."""
         case_dir_path = Path(case_dir)
-        if case_dir_path.is_file() or (
-            not case_dir_path.exists() and case_dir_path.suffix
-        ):
+        if case_dir_path.is_file() or (not case_dir_path.exists() and case_dir_path.suffix):
             return case_dir_path  # case_dir is an explicit file path
         if file is not None:
             return case_dir_path / file  # override filename, relative to case_dir
@@ -202,9 +200,7 @@ class BaseConfig(BaseModel):
         Returns:
             List of ``ValidationErrors`` with file and subdict context.
         """
-        file_name = file_override or (
-            cls.io_config.file if cls.io_config else cls.__name__
-        )
+        file_name = file_override or (cls.io_config.file if cls.io_config else cls.__name__)
 
         # Resolve subdict from io_config
         subdict = cls.io_config.subdict if cls.io_config else None

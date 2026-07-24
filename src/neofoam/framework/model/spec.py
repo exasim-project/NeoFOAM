@@ -159,9 +159,7 @@ class ModelSpec:
                 on this spec.
         """
         if any(d.name == name for d in self._field_decls):
-            raise ValueError(
-                f"ModelSpec '{self.name}': field '{name}' already declared"
-            )
+            raise ValueError(f"ModelSpec '{self.name}': field '{name}' already declared")
         decl = FieldDecl(
             name=name,
             dimensions=list(dimensions),
@@ -273,9 +271,7 @@ class ModelSpec:
 
         return decorator
 
-    def operation_collection(
-        self, func: Callable[..., Operations]
-    ) -> Callable[..., Operations]:
+    def operation_collection(self, func: Callable[..., Operations]) -> Callable[..., Operations]:
         """Decorator for conditional operation dispatch."""
         self._operation_collection_func = func
         return func
@@ -291,9 +287,7 @@ class ModelSpec:
         is the single fold (defining the empty case). Returns a ``ModelInterface``
         handle, also registered on this model so it is reachable from its owner.
         """
-        handle: ModelInterface[_T] = ModelInterface(
-            name=fold.__name__, owner=self, fold=fold
-        )
+        handle: ModelInterface[_T] = ModelInterface(name=fold.__name__, owner=self, fold=fold)
         if handle.name in self._interfaces:
             raise RuntimeError(
                 f"Model '{self.name}': interface '{handle.name}' is already declared."
@@ -390,9 +384,7 @@ class ModelSpec:
             if discovered:
                 wrapped = _create_runtime_config_wrapper(func, discovered, runtime)
             else:
-                wrapped = wrap_with_dependency_resolution(
-                    func, runtime, self._dependency_resolver
-                )
+                wrapped = wrap_with_dependency_resolution(func, runtime, self._dependency_resolver)
 
             op = Operation(
                 func=SequentialOp(wrapped),
@@ -432,9 +424,7 @@ class ModelSpec:
         """
         return self._build_operations_for(runtime)
 
-    def wrap_operation(
-        self, func: Callable[..., Any], runtime: Any
-    ) -> Callable[..., Any]:
+    def wrap_operation(self, func: Callable[..., Any], runtime: Any) -> Callable[..., Any]:
         """Wrap ``func`` with this spec's dependency resolution.
 
         For ``@operation_collection`` bodies, which bypass the spec's default

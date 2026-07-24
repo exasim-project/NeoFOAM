@@ -111,9 +111,7 @@ class Configurations:
         the snake-case class name and typed as that config class, so an
         agent fills the whole case in one structured response.
         """
-        fields: dict[str, Any] = {
-            _snake_case(cls.__name__): (cls, ...) for cls in self.classes
-        }
+        fields: dict[str, Any] = {_snake_case(cls.__name__): (cls, ...) for cls in self.classes}
         return create_model(model_name, **fields)
 
     # -- persist -------------------------------------------------------
@@ -135,9 +133,7 @@ def configurations(solver: Any) -> Configurations:
     from neofoam.io import collect_config_classes  # noqa: PLC0415  # cycle: io->configs
 
     classes = collect_config_classes([solver, *solver.model_specs])
-    return Configurations(
-        solver=solver, classes=cast("list[type[BaseConfig]]", classes)
-    )
+    return Configurations(solver=solver, classes=cast("list[type[BaseConfig]]", classes))
 
 
 @dataclass(frozen=True)

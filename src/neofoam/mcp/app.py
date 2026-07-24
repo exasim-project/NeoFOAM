@@ -61,9 +61,7 @@ def serve(
     already reads) rather than as an argument.
     """
     if uvicorn is None:
-        raise ImportError(
-            "the MCP server needs uvicorn; install with: pip install neofoam[mcp]"
-        )
+        raise ImportError("the MCP server needs uvicorn; install with: pip install neofoam[mcp]")
 
     if reload:
         if root is not None:

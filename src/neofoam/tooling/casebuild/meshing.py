@@ -91,15 +91,11 @@ def run_tool(
         step.initializer(ctx)
 
 
-def block_mesh(
-    *, dict_file: str = "system/blockMeshDict", verbose: bool = False
-) -> Step:
+def block_mesh(*, dict_file: str = "system/blockMeshDict", verbose: bool = False) -> Step:
     """Generate the base mesh from a committed ``blockMeshDict`` (via ``blockMeshTool``)."""
 
     def step(case: CaseDir) -> None:
-        run_tool(
-            case, blockMeshTool, options={"dict_file": dict_file, "verbose": verbose}
-        )
+        run_tool(case, blockMeshTool, options={"dict_file": dict_file, "verbose": verbose})
 
     return step
 

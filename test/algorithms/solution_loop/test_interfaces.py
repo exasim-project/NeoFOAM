@@ -33,9 +33,7 @@ def test_loop_interfaces_are_owned_by_the_loop_model() -> None:
     "limits, expected",
     [([], VGREAT), ([2.0, 1.0, 3.0], 1.0), ([5.0], 5.0)],
 )
-def test_time_step_constraint_folds_with_min(
-    limits: list[float], expected: float
-) -> None:
+def test_time_step_constraint_folds_with_min(limits: list[float], expected: float) -> None:
     assert timeStepConstraint.fold(limits) == expected
 
 

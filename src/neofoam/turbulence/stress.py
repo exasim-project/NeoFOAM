@@ -62,9 +62,7 @@ def _materialize(nu: Any) -> Any:
     try:
         return pybFoam.volScalarField(pybFoam.Word("nuEff"), nu)
     except TypeError:
-        return pybFoam.dimensionedScalar(
-            pybFoam.Word("nuEff"), nu.dimensions(), nu.value()
-        )
+        return pybFoam.dimensionedScalar(pybFoam.Word("nuEff"), nu.dimensions(), nu.value())
 
 
 def _negate(nuEff: Any) -> Any:
@@ -79,9 +77,7 @@ def _negate(nuEff: Any) -> Any:
     try:
         negated = -nuEff
     except TypeError:
-        return pybFoam.dimensionedScalar(
-            pybFoam.Word("nuEff"), nuEff.dimensions(), -nuEff.value()
-        )
+        return pybFoam.dimensionedScalar(pybFoam.Word("nuEff"), nuEff.dimensions(), -nuEff.value())
     return pybFoam.volScalarField(pybFoam.Word("nuEff"), negated)
 
 

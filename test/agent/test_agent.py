@@ -65,8 +65,6 @@ def test_create_agent_uses_given_output_type() -> None:
 def test_agent_returns_structured_output_against_live_ollama() -> None:
     """End-to-end: the agent calls a real Ollama and returns ExampleResponse."""
     agent = create_agent()
-    result = agent.run_sync(
-        "Summarise in one short sentence: NeoFOAM is a CFD library."
-    )
+    result = agent.run_sync("Summarise in one short sentence: NeoFOAM is a CFD library.")
     assert isinstance(result.output, ExampleResponse)
     assert result.output.summary.strip()

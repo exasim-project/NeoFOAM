@@ -147,9 +147,7 @@ def list_configs(solver: Any) -> list[ConfigInfo]:
                 file=file,
                 origin=_origin(cls),
                 # synthesised field/fv configs carry no docstring; fall back to the file
-                description=_describe(
-                    cls, fallback=f"Config for {file}" if file else None
-                ),
+                description=_describe(cls, fallback=f"Config for {file}" if file else None),
             )
         )
     return out

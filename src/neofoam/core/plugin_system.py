@@ -120,9 +120,7 @@ class PluginSystem:
         return cls._registry.get(base_cls_name, None)
 
     @classmethod
-    def remove_plugin_model(
-        cls, base_cls_name: str, registered_class: Type[BaseModel]
-    ) -> bool:
+    def remove_plugin_model(cls, base_cls_name: str, registered_class: Type[BaseModel]) -> bool:
         registry = cls._registry.get(base_cls_name, None)
         if registry is None:
             return False

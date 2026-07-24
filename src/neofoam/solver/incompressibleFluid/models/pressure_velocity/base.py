@@ -59,8 +59,7 @@ class PressureVelocityAlgorithm:
             return simple
         if algorithm_type not in {"Pimple", "PIMPLE"}:
             raise ValueError(
-                f"Only the PIMPLE and SIMPLE algorithms are wired up; "
-                f"requested {algorithm_type!r}."
+                f"Only the PIMPLE and SIMPLE algorithms are wired up; requested {algorithm_type!r}."
             )
         pimple.algorithm_type = "PIMPLE"  # type: ignore[attr-defined]
         return pimple

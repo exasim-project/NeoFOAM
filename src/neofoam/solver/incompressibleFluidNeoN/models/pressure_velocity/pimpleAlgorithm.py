@@ -187,9 +187,7 @@ def build(self: Any) -> list[Any]:
         pimple_dict = rt.fv_solution_dict.subDict("PIMPLE")
         piso = PisoControl(
             n_correctors=_read_int(pimple_dict, "nCorrectors", 1),
-            n_non_orthogonal_correctors=_read_int(
-                pimple_dict, "nNonOrthogonalCorrectors", 0
-            ),
+            n_non_orthogonal_correctors=_read_int(pimple_dict, "nNonOrthogonalCorrectors", 0),
             momentum_predictor=_read_switch(pimple_dict, "momentumPredictor", True),
         )
         return PimpleNeoNState(nfb.PimpleControl(rt.fv_solution_dict), piso)
@@ -201,9 +199,7 @@ def build(self: Any) -> list[Any]:
 
     def create_surf_interp(context: dict[str, Any]) -> Any:
         rt = context["_neon_runtime"]
-        return nn.SurfaceInterpolationScalar(
-            rt.executor, rt.nf_mesh, nn.TokenList(["linear"])
-        )
+        return nn.SurfaceInterpolationScalar(rt.executor, rt.nf_mesh, nn.TokenList(["linear"]))
 
     def create_grad_op(context: dict[str, Any]) -> Any:
         return nfb.GaussGreenGrad(context["_neon_runtime"])
@@ -304,9 +300,7 @@ def momentum(
     )
 
     if UEqn.ddt_scheme() not in (nfb.DdtScheme.BDF1, nfb.DdtScheme.BDF2):
-        raise RuntimeError(
-            "incompressibleFluidNeoN: steadyState ddt unsupported (BDF1/BDF2 only)"
-        )
+        raise RuntimeError("incompressibleFluidNeoN: steadyState ddt unsupported (BDF1/BDF2 only)")
 
     UEqn.set_final_iter(final_iter)
 
@@ -471,13 +465,9 @@ def collected_operations(self: Any) -> Operations:
     )
 
     model_ops.add(
-        _alias_operation(
-            wrapped_rotate, operation_name="rotate_and_report", depends_on=[]
-        )
+        _alias_operation(wrapped_rotate, operation_name="rotate_and_report", depends_on=[])
     )
-    model_ops.add(
-        _alias_operation(wrapped_momentum, operation_name="momentum", depends_on=[])
-    )
+    model_ops.add(_alias_operation(wrapped_momentum, operation_name="momentum", depends_on=[]))
     model_ops.add(
         _alias_operation(
             wrapped_continuity,
@@ -486,8 +476,6 @@ def collected_operations(self: Any) -> Operations:
         )
     )
     model_ops.add(
-        _alias_operation(
-            wrapped_turbulence, operation_name="turbulence_correct", depends_on=[]
-        )
+        _alias_operation(wrapped_turbulence, operation_name="turbulence_correct", depends_on=[])
     )
     return model_ops

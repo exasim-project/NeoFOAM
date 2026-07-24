@@ -126,8 +126,7 @@ def test_unknown_category_falls_back_to_models_with_warning(caplog):
 
     assert ctx.models["solver_state"] == "state_obj"
     assert any(
-        "solver_state" in record.message and "models" in record.message
-        for record in caplog.records
+        "solver_state" in record.message and "models" in record.message for record in caplog.records
     )
 
 
@@ -257,6 +256,7 @@ def test_execute_initialization_validates_only_once(monkeypatch):
     ]
 
     validate_calls = {"count": 0}
+
     def counting_validate(lazy_inits):
         validate_calls["count"] += 1
         return original_validate(lazy_inits)

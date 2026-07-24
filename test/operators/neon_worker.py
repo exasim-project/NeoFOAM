@@ -103,9 +103,7 @@ def serve(case_dir: Path, executor: str) -> None:
         return _to_numpy(result) / volumes[:, None]
 
     def interpolate_t(_s: Any, _d: Any) -> np.ndarray:
-        interp = nn.SurfaceInterpolationScalar(
-            rt.executor, rt.nf_mesh, nn.TokenList(["linear"])
-        )
+        interp = nn.SurfaceInterpolationScalar(rt.executor, rt.nf_mesh, nn.TokenList(["linear"]))
         return _to_numpy(interp.interpolate(fields["T"]).internal_vector())
 
     ops: dict[tuple[str, tuple[str, ...]], Op] = {
@@ -115,19 +113,11 @@ def serve(case_dir: Path, executor: str) -> None:
         ("field.reload", ("U",)): lambda s, d: reload_field(
             "U", lambda: nfb.read_vector_volume_field(rt, "U")
         ),
-        ("flux.update", ("U",)): lambda s, d: reload_field(
-            "phi", lambda: nfb.create_phi(rt, "U")
-        ),
+        ("flux.update", ("U",)): lambda s, d: reload_field("phi", lambda: nfb.create_phi(rt, "U")),
         ("interpolate", ("T",)): interpolate_t,
-        ("flux", ("U",)): lambda s, d: _to_numpy(
-            nfb.flux(fields["U"]).internal_vector()
-        ),
-        ("exp.grad", ("T",)): lambda s, d: explicit_vector(
-            nn.exp.grad(fields["T"]), fv_schemes
-        ),
-        ("exp.div", ("phi",)): lambda s, d: explicit_scalar(
-            nn.exp.div(fields["phi"]), fv_schemes
-        ),
+        ("flux", ("U",)): lambda s, d: _to_numpy(nfb.flux(fields["U"]).internal_vector()),
+        ("exp.grad", ("T",)): lambda s, d: explicit_vector(nn.exp.grad(fields["T"]), fv_schemes),
+        ("exp.div", ("phi",)): lambda s, d: explicit_scalar(nn.exp.div(fields["phi"]), fv_schemes),
         ("exp.div", ("phi", "T")): lambda s, d: explicit_scalar(
             nn.exp.div(fields["phi"], fields["T"]), div_tokens(s, "T")
         ),
@@ -166,9 +156,7 @@ def _serve(ops: dict[tuple[str, tuple[str, ...]], Op]) -> None:
             return
         try:
             data = np.load(request["data"]) if request.get("data") else None
-            result = ops[(request["func"], tuple(request["args"]))](
-                request.get("scheme"), data
-            )
+            result = ops[(request["func"], tuple(request["args"]))](request.get("scheme"), data)
             if result is not None:
                 np.save(request["out"], result)
             reply: dict[str, str] = {"status": "ok"}

@@ -67,9 +67,7 @@ dummy_solver_spec.models(DummyModelInterface)
 
 
 @dummy_solver_spec.initializer
-def initialize(
-    self: Any, init: Annotated[StagedInitRunner, Depends(create_init)]
-) -> Context:
+def initialize(self: Any, init: Annotated[StagedInitRunner, Depends(create_init)]) -> Context:
     """Initialize using create_init factory with dependency injection."""
     ctx = init.run()
     return ctx

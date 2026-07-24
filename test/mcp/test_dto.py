@@ -36,17 +36,13 @@ def test_model_entry_dto_maps_classes_to_names() -> None:
 
 def test_config_info_and_schema_round_trip() -> None:
     info = ConfigInfoDTO(name="foo", cls_name="FooConfig", file="system/foo")
-    assert (
-        ConfigInfoDTO.model_validate_json(info.model_dump_json()).file == "system/foo"
-    )
+    assert ConfigInfoDTO.model_validate_json(info.model_dump_json()).file == "system/foo"
     schema = ConfigSchemaDTO(
         name="FooConfig", json_schema={"a": 1}, ui_schema={}, defaults={"x": 2}
     )
     assert schema.model_dump_json()
     save = SaveResultDTO(target_dir="/t", written=["system/foo"], case_spec={})
-    assert SaveResultDTO.model_validate_json(save.model_dump_json()).written == [
-        "system/foo"
-    ]
+    assert SaveResultDTO.model_validate_json(save.model_dump_json()).written == ["system/foo"]
 
 
 def test_toggle_model_dto_is_removed() -> None:

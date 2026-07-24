@@ -39,9 +39,7 @@ os.environ["FOAM_SIGFPE"] = ""
 
 def test_laminar_boussinesq_advances_one_step(tmp_path: Path) -> None:
     repo_root = Path(__file__).parent.parent.parent.parent
-    cavity_template = (
-        repo_root / "test" / "solver" / "incompressibleFluid" / "cases" / "cavity3x3"
-    )
+    cavity_template = repo_root / "test" / "solver" / "incompressibleFluid" / "cases" / "cavity3x3"
 
     case = (
         from_template(cavity_template)
@@ -56,9 +54,7 @@ def test_laminar_boussinesq_advances_one_step(tmp_path: Path) -> None:
         "0/p_rgh",
         "0/alphat",
     }
-    on_disk = {
-        str(p.relative_to(case.path)) for p in case.path.rglob("*") if p.is_file()
-    }
+    on_disk = {str(p.relative_to(case.path)) for p in case.path.rglob("*") if p.is_file()}
     assert expected <= on_disk, f"missing: {expected - on_disk}"
 
     # The contract: native laminar + boussinesq advances one step. Before the fix
@@ -77,7 +73,5 @@ def test_laminar_boussinesq_advances_one_step(tmp_path: Path) -> None:
         for p in case.path.iterdir()
         if p.is_dir() and p.name not in {"0", "constant", "system"}
     }
-    assert written, (
-        f"solver wrote no time directory — it did not advance.\nLog:\n{output}"
-    )
+    assert written, f"solver wrote no time directory — it did not advance.\nLog:\n{output}"
     assert float(max(written, key=float)) == pytest.approx(0.001)

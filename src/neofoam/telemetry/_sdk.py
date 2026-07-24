@@ -158,9 +158,7 @@ def _fixed_mpi_source(mpi: MpiInfo) -> Callable[[], MpiInfo]:
     return source
 
 
-def start(
-    settings: TelemetrySettings, case_dir: Path, mpi: Optional[MpiInfo]
-) -> ActiveTelemetry:
+def start(settings: TelemetrySettings, case_dir: Path, mpi: Optional[MpiInfo]) -> ActiveTelemetry:
     """Build a per-run tracer (kept out of the global otel provider).
 
     ``mpi=None`` defers rank resolution to the exporter's first export —

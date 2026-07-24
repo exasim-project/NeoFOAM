@@ -27,17 +27,13 @@ def _manifest() -> PatchSet:
         location_in_mesh=(0.08, 0.08, 0.01),
         length_scale=0.016,
         patches=[
-            PatchEntry(
-                name="inlet", stl="constant/triSurface/inlet.stl", role=PatchRole.inlet
-            ),
+            PatchEntry(name="inlet", stl="constant/triSurface/inlet.stl", role=PatchRole.inlet),
             PatchEntry(
                 name="outlet",
                 stl="constant/triSurface/outlet.stl",
                 role=PatchRole.outlet,
             ),
-            PatchEntry(
-                name="walls", stl="constant/triSurface/walls.stl", role=PatchRole.wall
-            ),
+            PatchEntry(name="walls", stl="constant/triSurface/walls.stl", role=PatchRole.wall),
             PatchEntry(
                 name="tubes",
                 stl="constant/triSurface/tubes.stl",
