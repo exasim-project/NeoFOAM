@@ -14,11 +14,11 @@ from pathlib import Path
 
 import pytest
 
-from neofoam.tooling.verification.study import Case, case_id, load_study
+from neofoam.tooling.workflow.study.cases import Case, case_id, load_study
 
 _DISCOVER_PY = """
 from pathlib import Path
-from neofoam.tooling.verification.study import Case, case_id
+from neofoam.tooling.workflow.study.cases import Case, case_id
 
 TIER_TITLES = {"A": "runnable"}
 

@@ -17,5 +17,5 @@ rule verify_compare:
     output:
         RESULTS + "/{id}.json",
     shell:
-        "python -m neofoam.tooling.verification.runner --config '{CONFIG}'"
+        "python -m neofoam.tooling.workflow.study.runner --config '{CONFIG}'"
         " compare --case {wildcards.id} --work '{WORK}' --out '{output}'"

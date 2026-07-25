@@ -8,8 +8,8 @@ one-line ``shell:`` bodies and the real work is a subcommand here, so the rule
 graph is parallel and resumable and the logic is testable without Snakemake. The
 study's three-rule split maps to::
 
-    python -m neofoam.tooling.verification.runner build   --solver <label> ...
-    python -m neofoam.tooling.verification.runner swap    --solver <label> ...
+    python -m neofoam.tooling.workflow.study.runner build   --solver <label> ...
+    python -m neofoam.tooling.workflow.study.runner swap    --solver <label> ...
     ./Allrun                                     # the run rule is plain shell
 
 ``build`` stages a native-ready case; ``swap`` swaps the candidate's solver token
@@ -30,8 +30,9 @@ from pathlib import Path
 from typing import Any
 
 from neofoam.tooling.casebuild import CaseDir, Step, patch
-from neofoam.tooling.verification.compare import FieldDiff, compare_runs
-from neofoam.tooling.verification.execute import (
+from neofoam.tooling.workflow.study.cases import Case, Study, load_study
+from neofoam.tooling.workflow.study.compare import FieldDiff, compare_runs
+from neofoam.tooling.workflow.study.execute import (
     CASE_SETUP_FAILED,
     NATIVE_FAILED,
     POSTPROCESS_NOT_IMPLEMENTED,
@@ -42,9 +43,8 @@ from neofoam.tooling.verification.execute import (
     log_tail,
     run_allrun,
 )
-from neofoam.tooling.verification.report import render_report
-from neofoam.tooling.verification.stage import NoSwapPoint, stage, swap_solver
-from neofoam.tooling.verification.study import Case, Study, load_study
+from neofoam.tooling.workflow.study.report import render_report
+from neofoam.tooling.workflow.study.stage import NoSwapPoint, stage, swap_solver
 
 __all__ = ["main"]
 

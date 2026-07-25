@@ -17,16 +17,16 @@ from typing import Any
 
 import pytest
 
-import neofoam.tooling.verification.runner as runner_mod
-from neofoam.tooling.verification.execute import (
+import neofoam.tooling.workflow.study.runner as runner_mod
+from neofoam.tooling.workflow.study.cases import Case, Study
+from neofoam.tooling.workflow.study.execute import (
     CASE_SETUP_FAILED,
     NATIVE_FAILED,
     POSTPROCESS_NOT_IMPLEMENTED,
     SOLVER_FAILED,
     UNSUPPORTED_CASE,
 )
-from neofoam.tooling.verification.runner import _case_dir, _compare, _decide, _run
-from neofoam.tooling.verification.study import Case, Study
+from neofoam.tooling.workflow.study.runner import _case_dir, _compare, _decide, _run
 
 _FINISHED = {"finished": True}
 

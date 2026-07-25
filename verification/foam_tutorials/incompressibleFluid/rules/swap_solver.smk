@@ -15,6 +15,6 @@ rule swap_solver:
     output:
         CASE_ROOT + "/{id}/{solver}/.swapped.json",
     shell:
-        "python -m neofoam.tooling.verification.runner --config '{CONFIG}'"
+        "python -m neofoam.tooling.workflow.study.runner --config '{CONFIG}'"
         " swap --case {wildcards.id} --solver {wildcards.solver}"
         " --cases '{CASE_ROOT}' --built '{input}' --stamp '{output}'"

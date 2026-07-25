@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from neofoam.tooling.verification.foamdict import (
+from neofoam.tooling.workflow.study.foamdict import (
     entries,
     entry,
     read,
@@ -28,7 +28,7 @@ from neofoam.tooling.verification.foamdict import (
     tutorials_root,
     uses_ami,
 )
-from neofoam.tooling.verification.study import Case, case_id, subdomains
+from neofoam.tooling.workflow.study.cases import Case, case_id, subdomains
 
 #: Solver families incompressibleVoF claims to replace.
 NATIVE_SOLVERS = ("interFoam", "interIsoFoam")

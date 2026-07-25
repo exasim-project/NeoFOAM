@@ -21,15 +21,15 @@ from typing import Any
 
 from neofoam.io import DictFile
 from neofoam.tooling.casebuild import CaseDir
-from neofoam.tooling.verification import runner
-from neofoam.tooling.verification.runner import _neo_patch
-from neofoam.tooling.verification.study import Case, load_study
+from neofoam.tooling.workflow.study import runner
+from neofoam.tooling.workflow.study.cases import Case, load_study
+from neofoam.tooling.workflow.study.runner import _neo_patch
 
 _CASE = Path(__file__).parent / "cases" / "vof_fvsolution"
 
 _DISCOVER_PY = """
 from pathlib import Path
-from neofoam.tooling.verification.study import Case, case_id
+from neofoam.tooling.workflow.study.cases import Case, case_id
 
 def discover():
     name = "interIsoFoam/weirOverflow"

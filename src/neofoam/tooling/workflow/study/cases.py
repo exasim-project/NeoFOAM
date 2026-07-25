@@ -26,7 +26,7 @@ from typing import Any
 
 import yaml
 
-from neofoam.tooling.verification.foamdict import entry, read
+from neofoam.tooling.workflow.study.foamdict import entry, read
 
 __all__ = ["Case", "Study", "load_study", "subdomains"]
 

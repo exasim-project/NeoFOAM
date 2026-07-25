@@ -28,15 +28,15 @@ from typing import Any
 
 import numpy as np
 
-from neofoam.tooling.verification import compare
-from neofoam.tooling.verification.compare import (
+from neofoam.tooling.workflow.study import compare
+from neofoam.tooling.workflow.study.compare import (
     FieldDiff,
     _classify,
     _compare_decomposed,
     _is_decomposed,
     compare_field,
 )
-from neofoam.tooling.verification.execute import (
+from neofoam.tooling.workflow.study.execute import (
     COMPARE_FAILED,
     FIELDS_DIFFER,
     MATCHED,

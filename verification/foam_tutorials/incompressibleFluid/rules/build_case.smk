@@ -21,8 +21,8 @@ rule build_case:
         CASE_ROOT + "/{id}/{solver}/.built.json",
     threads: lambda wc: THREADS[wc.id]
     shell:
-        "python -m neofoam.tooling.verification.runner --config '{CONFIG}'"
+        "python -m neofoam.tooling.workflow.study.runner --config '{CONFIG}'"
         " build --case {wildcards.id} --solver {wildcards.solver}"
         " --cases '{CASE_ROOT}' --stamp '{output}'"
-        " || python -m neofoam.tooling.verification.runner --config '{CONFIG}'"
+        " || python -m neofoam.tooling.workflow.study.runner --config '{CONFIG}'"
         " mark-failed --solver {wildcards.solver} --status '{output}'"

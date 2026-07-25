@@ -5,7 +5,7 @@
 
 Same authoring convention as :mod:`neofoam.tooling.workflow.rules`: each ``.smk``
 file holds one rule whose ``shell:`` body is a single ``python -m
-neofoam.tooling.verification.runner`` call, and the study ``Snakefile``
+neofoam.tooling.workflow.study.runner`` call, and the study ``Snakefile``
 ``include:``\\s them by path via :func:`rules_dir`. They are *not* the mesh
 pipeline's rules — a drop-in tutorial runs its own ``Allrun``, so there is no
 mesh chain here — hence a separate directory rather than an entry in that

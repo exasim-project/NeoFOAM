@@ -18,8 +18,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from neofoam.tooling.verification.foamdict import entry, read, tutorials_root
-from neofoam.tooling.verification.study import Case, case_id, subdomains
+from neofoam.tooling.workflow.study.foamdict import entry, read, tutorials_root
+from neofoam.tooling.workflow.study.cases import Case, case_id, subdomains
 
 #: Solver families incompressibleFluid claims to replace — the enumeration filter
 #: for the fall-back tree walk (not a per-case verdict).

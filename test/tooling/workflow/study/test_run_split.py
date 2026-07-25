@@ -21,10 +21,10 @@ import json
 from pathlib import Path
 from typing import Any
 
-from neofoam.tooling.verification import runner
-from neofoam.tooling.verification.runner import _build, _status_from_rundir, _swap
-from neofoam.tooling.verification.stage import NoSwapPoint
-from neofoam.tooling.verification.study import Case, Study
+from neofoam.tooling.workflow.study import runner
+from neofoam.tooling.workflow.study.cases import Case, Study
+from neofoam.tooling.workflow.study.runner import _build, _status_from_rundir, _swap
+from neofoam.tooling.workflow.study.stage import NoSwapPoint
 
 _APP = "neofoam solver incompressiblefluid"
 

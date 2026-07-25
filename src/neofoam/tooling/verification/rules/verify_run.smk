@@ -24,8 +24,8 @@ rule verify_run:
         WORK + "/{id}/{solver}.status.json",
     threads: lambda wc: THREADS[wc.id]
     shell:
-        "python -m neofoam.tooling.verification.runner --config '{CONFIG}'"
+        "python -m neofoam.tooling.workflow.study.runner --config '{CONFIG}'"
         " run --case {wildcards.id} --solver {wildcards.solver}"
         " --work '{WORK}' --status '{output}'"
-        " || python -m neofoam.tooling.verification.runner --config '{CONFIG}'"
+        " || python -m neofoam.tooling.workflow.study.runner --config '{CONFIG}'"
         " mark-failed --solver {wildcards.solver} --status '{output}'"

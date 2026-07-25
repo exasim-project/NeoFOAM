@@ -20,7 +20,7 @@ from pathlib import Path
 import numpy as np
 
 from neofoam.tooling.casebuild import CaseDir
-from neofoam.tooling.verification.execute import (
+from neofoam.tooling.workflow.study.execute import (
     COMPARE_FAILED,
     FIELDS_DIFFER,
     MATCHED,

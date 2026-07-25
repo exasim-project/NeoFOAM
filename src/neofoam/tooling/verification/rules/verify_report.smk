@@ -12,5 +12,5 @@ rule verify_report:
     output:
         REPORT,
     shell:
-        "python -m neofoam.tooling.verification.runner --config '{CONFIG}'"
+        "python -m neofoam.tooling.workflow.study.runner --config '{CONFIG}'"
         " report --results '{RESULTS}' --out '{output}'"

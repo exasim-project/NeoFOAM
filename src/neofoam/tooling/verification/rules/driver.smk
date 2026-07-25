@@ -22,7 +22,7 @@ import os
 import re
 from pathlib import Path
 
-from neofoam.tooling.verification.study import load_study
+from neofoam.tooling.workflow.study.cases import load_study
 from neofoam.tooling.verification.rules import rules_dir
 
 # `configfile:` populates `config`; workflow.configfiles gives us its path, which
