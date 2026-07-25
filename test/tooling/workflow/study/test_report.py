@@ -21,7 +21,6 @@ def _study(cases: list[Case]) -> Study:
         title="demo study",
         config_path=Path("config.yaml"),
         cases=cases,
-        tier_titles={"A": "Tier A — runnable", "D": "Tier D — blocked"},
         config={},
     )
 

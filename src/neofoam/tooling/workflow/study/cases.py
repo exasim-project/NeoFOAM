@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""A study is the solver-specific half of the suite: which tutorials, tiered how.
+"""A study is the solver-specific half of the suite: which tutorials, and how run.
 
 The engine (staging, execution, comparison, report) is solver-agnostic. What
 changes between ``incompressibleFluid`` and ``incompressibleVoF`` is the tutorial
-group, the native solvers being replaced, the fields diffed, and the tiering
-rules — all of which live in a study's ``config.yaml`` + ``discover.py``, loaded
-here so both the Snakefile and the per-case workers agree on the same case list.
+group, the native solvers being replaced, and the fields diffed — all of which
+live in a study's ``config.yaml`` + ``discover.py``, loaded here so both the
+Snakefile and the per-case workers agree on the same case list.
 
 ``discover()`` is intentionally cheap (it only reads dictionaries), so re-running
 it per worker instead of threading a manifest file through the DAG is the simpler
@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import importlib.util
 import inspect
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -56,11 +56,6 @@ class Case:
     parallel: bool = False
     #: ``numberOfSubdomains`` when parallel, else 1 — the DAG's per-case thread count.
     subdomains: int = 1
-    features: list[str] = field(default_factory=list)
-
-    @property
-    def supported(self) -> bool:
-        return self.tier == "A"
 
     @property
     def native_label(self) -> str:
@@ -99,7 +94,6 @@ class Study:
     title: str
     config_path: Path
     cases: list[Case]
-    tier_titles: dict[str, str]
     #: Raw config mapping, for study-specific flags (e.g. the VoF fallback pass).
     config: dict[str, Any]
     #: The neofoam commands compared against the native reference — one or more
@@ -141,9 +135,7 @@ def load_study(config_path: Path) -> Study:
     """Load a study from its ``config.yaml``.
 
     The ``discover`` path in the config resolves relative to the config file's own
-    directory, so a study is self-contained and can be run from anywhere. Tier
-    titles come from the config if given, else from the discover module's
-    ``TIER_TITLES``.
+    directory, so a study is self-contained and can be run from anywhere.
 
     Two distinct case selectors, deliberately not merged: ``cases:`` is a selection
     handed *to* ``discover()`` (it resolves each named tutorial and never walks the
@@ -156,7 +148,6 @@ def load_study(config_path: Path) -> Study:
     config = yaml.safe_load(config_path.read_text()) or {}
     discover_path = (config_path.parent / config["discover"]).resolve()
     module = _load_discover(discover_path)
-    tier_titles = config.get("tier_titles") or getattr(module, "TIER_TITLES", {})
     # A discover() that takes an argument reads its case selection from the config's
     # `cases:` list; a legacy no-arg discover() walks the tutorial tree itself. Both
     # signatures are supported so a study need only opt in to config-driven selection.
@@ -174,7 +165,6 @@ def load_study(config_path: Path) -> Study:
         title=config.get("title", config_path.parent.name),
         config_path=config_path,
         cases=cases,
-        tier_titles=tier_titles,
         config=config,
         apps=tuple(apps),
     )

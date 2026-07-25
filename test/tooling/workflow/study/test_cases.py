@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Loading a study wires config.yaml to its discover.py and tier titles.
+"""Loading a study wires config.yaml to its discover.py and case selection.
 
 This is the seam the Snakefile and every per-case worker share: both call
 ``load_study`` and must see the same case list. The discover module is loaded by
@@ -19,8 +19,6 @@ from neofoam.tooling.workflow.study.cases import Case, case_id, load_study
 _DISCOVER_PY = """
 from pathlib import Path
 from neofoam.tooling.workflow.study.cases import Case, case_id
-
-TIER_TITLES = {"A": "runnable"}
 
 def discover():
     name = "simpleFoam/pitzDaily"
@@ -77,8 +75,6 @@ def test_load_study_resolves_discover_relative_to_config(tmp_path: Path) -> None
 
     assert study.title == "demo"
     assert [c.id for c in study.cases] == ["simpleFoam__pitzDaily"]
-    # tier titles fall back to the discover module's TIER_TITLES.
-    assert study.tier_titles == {"A": "runnable"}
     assert study.by_id("simpleFoam__pitzDaily").native_solver == "simpleFoam"
 
 

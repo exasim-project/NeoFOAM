@@ -68,7 +68,6 @@ def _study_with_patch() -> Study:
         title="vof",
         config_path=Path("/studies/config-isoadvector.yaml"),
         cases=[],
-        tier_titles={},
         config={"neo_patch": _PATCH},
         apps=("neofoam solver incompressiblevof",),
     )

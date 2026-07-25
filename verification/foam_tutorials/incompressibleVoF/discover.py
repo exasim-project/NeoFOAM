@@ -41,6 +41,10 @@ NEOFOAM_APP = "neofoam solver incompressiblevof"
 #: Fields diffed after the run, in addition to the case's own alpha field.
 BASE_FIELDS = ("U", "p_rgh", "p")
 
+#: Tier -> heading. Nothing consumes this today: the report shows the observed
+#: outcome, never the prediction beside it. Kept because it is the label set a
+#: predicted-vs-observed column would need, and that is an open question — see
+#: plans/study-decomposition-spec.md. Delete it with `tier` if the answer is no.
 TIER_TITLES = {
     "A": "Tier A — predicted runnable",
     "B": "Tier B — alpha-advection controls unsupported",
@@ -125,7 +129,6 @@ def classify(case: Path, root: Path) -> Case | None:
         turbulence=model,
         parallel=parallel,
         subdomains=subdomains(case),
-        features=features,
     )
 
     # Order matters: report the most fundamental blocker first.

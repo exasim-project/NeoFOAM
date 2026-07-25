@@ -45,7 +45,6 @@ def _study() -> Study:
         title="demo",
         config_path=Path("config.yaml"),
         cases=[_case()],
-        tier_titles={},
         config={},
         apps=(_APP,),
     )
