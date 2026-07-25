@@ -57,9 +57,7 @@ def test_exporter_rank_names_files(tmp_path: Path) -> None:
 
 
 def test_exporter_stamps_mpi_attributes_into_records(tmp_path: Path) -> None:
-    provider = _provider_with(
-        _exporter(tmp_path, MpiInfo(rank=1, size=4, par_run=True))
-    )
+    provider = _provider_with(_exporter(tmp_path, MpiInfo(rank=1, size=4, par_run=True)))
     with provider.get_tracer("test").start_as_current_span("a"):
         pass
     provider.shutdown()

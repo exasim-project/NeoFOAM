@@ -8,9 +8,10 @@ Handles dependency injection during solver/model execution.
 """
 
 import inspect
+from functools import wraps
 from typing import Annotated, Any, Callable, Optional, get_args, get_origin
 
-from .context import Context
+from .context import Context, FieldUpdates
 from .initialization.depends import Depends
 
 
@@ -90,9 +91,7 @@ class DependencyResolver:
                             kwargs[param_name] = ctx.fields.get(param_name)
                             continue
                         if ctx:
-                            kwargs[param_name] = getattr(ctx, marker, {}).get(
-                                param_name
-                            )
+                            kwargs[param_name] = getattr(ctx, marker, {}).get(param_name)
                             continue
 
             if ctx and param_name in ctx.fields:
@@ -138,9 +137,7 @@ class DependencyResolver:
             return ctx.models.get(parts[1]) if len(parts) > 1 else None
         return getattr(ctx, path, None)
 
-    def _resolve_callable(
-        self, provider: Callable[..., Any], ctx: Optional[Context]
-    ) -> Any:
+    def _resolve_callable(self, provider: Callable[..., Any], ctx: Optional[Context]) -> Any:
         kwargs = self.resolve_arguments(provider, ctx)
         return provider(**kwargs)
 
@@ -168,7 +165,6 @@ def wrap_with_dependency_resolution(
     This is the canonical implementation shared by ``SolverSpec`` and
     ``ModelSpec`` — avoids duplicating the same wrapper in every factory.
     """
-    from functools import wraps
 
     @wraps(func)
     def wrapper(ctx: Context) -> Any:
@@ -179,8 +175,6 @@ def wrap_with_dependency_resolution(
             kwargs["self"] = instance
 
         result = func(**kwargs)
-
-        from .context import FieldUpdates
 
         if isinstance(result, FieldUpdates):
             ctx.fields.update(result)

@@ -27,8 +27,8 @@ Interface (``__all__`` — grouped by role):
 * **Back-compat** (transitional — the free functions :class:`Sweep` composes, kept
   importable while callers migrate to the object): ``export_sweep`` / ``load_sweep`` /
   ``cross_product`` / ``sweep_snakefile`` / ``validate_dimensions`` /
-  ``validate_mesh_dimension`` / ``validate_cad_dimension`` / ``variant_errors`` /
-  ``CAD_RULE`` / :class:`LoadedSweep` / :class:`SweepExport`.
+  ``validate_mesh_dimension`` / ``variant_errors`` / :class:`LoadedSweep` /
+  :class:`SweepExport`.
 
 The implementation lives in the package-internal ``_canvas`` / ``_codegen`` / ``_io``
 / ``_validate`` modules; a new caller only needs :class:`Sweep` and the canvas model.
@@ -56,7 +56,6 @@ from neofoam.tooling.workflow.sweep._canvas import (
 from neofoam.tooling.workflow.sweep._codegen import sweep_snakefile
 from neofoam.tooling.workflow.sweep._facade import Sweep
 from neofoam.tooling.workflow.sweep._io import (
-    CAD_RULE,
     LoadedSweep,
     SweepExport,
     cross_product,
@@ -64,7 +63,6 @@ from neofoam.tooling.workflow.sweep._io import (
     load_sweep,
 )
 from neofoam.tooling.workflow.sweep._validate import (
-    validate_cad_dimension,
     validate_dimensions,
     validate_mesh_dimension,
     variant_errors,
@@ -90,14 +88,12 @@ __all__ = [
     "IN_HANDLE_PREFIX",
     "OUT_HANDLE_PREFIX",
     # back-compat: the free functions Sweep composes
-    "CAD_RULE",
     "LoadedSweep",
     "SweepExport",
     "cross_product",
     "export_sweep",
     "load_sweep",
     "sweep_snakefile",
-    "validate_cad_dimension",
     "validate_dimensions",
     "validate_mesh_dimension",
     "variant_errors",

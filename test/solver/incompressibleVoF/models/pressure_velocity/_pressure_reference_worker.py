@@ -88,9 +88,7 @@ def run(case_dir: Path) -> dict[str, Any]:
 def main() -> None:
     case_dir = Path(sys.argv[1]).resolve()
     os.chdir(case_dir)
-    (case_dir / "pressure_reference.json").write_text(
-        json.dumps(run(case_dir), indent=1)
-    )
+    (case_dir / "pressure_reference.json").write_text(json.dumps(run(case_dir), indent=1))
 
 
 if __name__ == "__main__":

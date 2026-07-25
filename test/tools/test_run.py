@@ -24,12 +24,7 @@ from neofoam.tools.run import _case_dir_from_argv, detect_tools, run_preprocess
 from neofoam.tools.snappy_hex_mesh import SnappyHexMeshStep
 
 CASE = Path(__file__).parents[1] / "solver" / "incompressibleFluid" / "preprocess_case"
-UNLISTED = (
-    Path(__file__).parents[1]
-    / "solver"
-    / "incompressibleFluid"
-    / "preprocess_case_unlisted"
-)
+UNLISTED = Path(__file__).parents[1] / "solver" / "incompressibleFluid" / "preprocess_case_unlisted"
 
 
 def test_case_dir_from_argv_reads_case_flag() -> None:
@@ -52,9 +47,7 @@ def test_detect_tools_resolves_listed() -> None:
         "preprocess.checkMesh",
     ]
     block, snappy, check = (rt.config for rt in rts)
-    assert (
-        isinstance(block, BlockMeshStep) and block.dict_file == "system/blockMeshDict"
-    )
+    assert isinstance(block, BlockMeshStep) and block.dict_file == "system/blockMeshDict"
     assert isinstance(snappy, SnappyHexMeshStep) and snappy.overwrite is True
     assert isinstance(check, CheckMeshStep) and check.fail_on_error is True
 
@@ -88,9 +81,7 @@ def test_run_preprocess_runs_dag_without_solver(
             types.SimpleNamespace(dictionary=types.SimpleNamespace(read=lambda f: f)),
         )
     monkeypatch.setattr(block_mesh, "generate_blockmesh", lambda *a, **k: block)
-    monkeypatch.setattr(
-        snappy_hex_mesh, "generate_snappy_hex_mesh", lambda *a, **k: None
-    )
+    monkeypatch.setattr(snappy_hex_mesh, "generate_snappy_hex_mesh", lambda *a, **k: None)
     monkeypatch.setattr(
         check_mesh, "checkMesh", lambda *a, **k: {"passed": True, "total_errors": 0}
     )

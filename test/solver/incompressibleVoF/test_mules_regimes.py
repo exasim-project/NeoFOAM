@@ -124,9 +124,7 @@ def test_mules_regime_keeps_alpha_water_bounded(regime_run: RegimeRun) -> None:
     limiter stops doing its job.
     """
     final_time = get_time_directories(regime_run.python_case)[-1]
-    alpha = read_internal_fields(regime_run.python_case, final_time, ["alpha.water"])[
-        "alpha.water"
-    ]
+    alpha = read_internal_fields(regime_run.python_case, final_time, ["alpha.water"])["alpha.water"]
     out_of_range = (
         f"regime {dict(regime_run.controls)}: alpha.water out of [0, 1] "
         f"(min={np.min(alpha):.6e}, max={np.max(alpha):.6e})"

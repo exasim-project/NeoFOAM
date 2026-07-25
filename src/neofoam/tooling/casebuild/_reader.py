@@ -38,9 +38,7 @@ def _resolve_time_dir(case: Path, time: str) -> Path:
     """Return the time directory to read: the latest numeric dir, or a named one."""
     if time != "latest":
         return case / time
-    numeric = [
-        d for d in case.iterdir() if d.is_dir() and d.name.replace(".", "", 1).isdigit()
-    ]
+    numeric = [d for d in case.iterdir() if d.is_dir() and d.name.replace(".", "", 1).isdigit()]
     if not numeric:
         raise FileNotFoundError(f"No numeric time directory in {case}")
     return max(numeric, key=lambda d: float(d.name))

@@ -56,9 +56,7 @@ def _rundir(cases_root: Path, solver: str) -> Path:
     return cases_root / "c" / solver
 
 
-def test_build_records_stage_failure_instead_of_raising(
-    tmp_path: Path, monkeypatch: Any
-) -> None:
+def test_build_records_stage_failure_instead_of_raising(tmp_path: Path, monkeypatch: Any) -> None:
     def boom(*args: Any, **kwargs: Any) -> None:
         raise RuntimeError("cannot parse controlDict")
 
@@ -74,19 +72,14 @@ def test_build_records_stage_failure_instead_of_raising(
 
 def test_swap_neutralises_and_passes_a_failed_build_through(tmp_path: Path) -> None:
     built = tmp_path / "built.json"
-    built.write_text(
-        json.dumps({"solver": "incompressiblefluid", "stage_failed": True})
-    )
+    built.write_text(json.dumps({"solver": "incompressiblefluid", "stage_failed": True}))
     stamp = tmp_path / "swapped.json"
 
     _swap(_study(), _case(), "incompressiblefluid", tmp_path / "cases", built, stamp)
 
     assert json.loads(stamp.read_text())["stage_failed"] is True
     # Neutralised: the shell run rule can invoke ./Allrun safely, and it no-ops.
-    assert (
-        "exit 0"
-        in (_rundir(tmp_path / "cases", "incompressiblefluid") / "Allrun").read_text()
-    )
+    assert "exit 0" in (_rundir(tmp_path / "cases", "incompressiblefluid") / "Allrun").read_text()
 
 
 def test_swap_records_and_neutralises_no_swap(tmp_path: Path, monkeypatch: Any) -> None:
@@ -107,10 +100,7 @@ def test_swap_records_and_neutralises_no_swap(tmp_path: Path, monkeypatch: Any) 
     assert record["no_swap"] is True
     assert "no unique solver token" in record["reason"]
     # An un-swappable candidate must NOT run the native solver — Allrun is a no-op.
-    assert (
-        "exit 0"
-        in (_rundir(tmp_path / "cases", "incompressiblefluid") / "Allrun").read_text()
-    )
+    assert "exit 0" in (_rundir(tmp_path / "cases", "incompressiblefluid") / "Allrun").read_text()
 
 
 def test_swap_is_a_no_op_for_the_native_solver(tmp_path: Path) -> None:
@@ -133,9 +123,7 @@ def test_status_from_rundir_reports_stage_failure(tmp_path: Path) -> None:
     rundir = _rundir(tmp_path / "cases", "incompressiblefluid")
     _write_swapped(rundir, {"stage_failed": True, "reason": "boom"})
 
-    status = _status_from_rundir(
-        _study(), _case(), "incompressiblefluid", tmp_path / "cases"
-    )
+    status = _status_from_rundir(_study(), _case(), "incompressiblefluid", tmp_path / "cases")
 
     assert status["stage_failed"] is True
     assert status["finished"] is False
@@ -145,9 +133,7 @@ def test_status_from_rundir_reports_no_swap(tmp_path: Path) -> None:
     rundir = _rundir(tmp_path / "cases", "incompressiblefluid")
     _write_swapped(rundir, {"no_swap": True, "reason": "no token"})
 
-    status = _status_from_rundir(
-        _study(), _case(), "incompressiblefluid", tmp_path / "cases"
-    )
+    status = _status_from_rundir(_study(), _case(), "incompressiblefluid", tmp_path / "cases")
 
     assert status["no_swap"] is True
     assert status["finished"] is False
@@ -159,9 +145,7 @@ def test_status_from_rundir_finished_when_log_reached_end(tmp_path: Path) -> Non
     (rundir / f"log.{_APP}").write_text("Time = 20\nExecutionTime = 1 s\nEnd\n")
     (rundir / ".seconds").write_text("12")
 
-    status = _status_from_rundir(
-        _study(), _case(), "incompressiblefluid", tmp_path / "cases"
-    )
+    status = _status_from_rundir(_study(), _case(), "incompressiblefluid", tmp_path / "cases")
 
     assert status["finished"] is True
     assert status["seconds"] == 12.0
@@ -188,9 +172,7 @@ def test_status_from_rundir_extracts_reason_when_no_end(tmp_path: Path) -> None:
         "Starting time loop\n--> FOAM FATAL ERROR: \nmatrix is singular\n"
     )
 
-    status = _status_from_rundir(
-        _study(), _case(), "incompressiblefluid", tmp_path / "cases"
-    )
+    status = _status_from_rundir(_study(), _case(), "incompressiblefluid", tmp_path / "cases")
 
     assert status["finished"] is False
     assert "FOAM FATAL ERROR" in str(status["reason"])
@@ -208,9 +190,7 @@ def test_status_from_rundir_falls_back_to_first_token_log(tmp_path: Path) -> Non
         "Starting time loop\n--> FOAM FATAL ERROR: \nnCorrectors -1\n"
     )
 
-    status = _status_from_rundir(
-        _study(), _case(), "incompressiblefluid", tmp_path / "cases"
-    )
+    status = _status_from_rundir(_study(), _case(), "incompressiblefluid", tmp_path / "cases")
 
     assert status["finished"] is False
     assert "FOAM FATAL ERROR" in str(status["reason"])

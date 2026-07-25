@@ -154,8 +154,7 @@ def _build_global_graph(
         for dep in op.depends_on or []:
             if dep not in all_op_names:
                 raise MissingDependencyError(
-                    f"Operation '{name}' in scope '{scope}' "
-                    f"depends on '{dep}' which does not exist"
+                    f"Operation '{name}' in scope '{scope}' depends on '{dep}' which does not exist"
                 )
             graph.add_edge(dep, name)
 

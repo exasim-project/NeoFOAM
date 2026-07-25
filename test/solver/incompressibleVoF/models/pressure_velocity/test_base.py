@@ -48,9 +48,7 @@ def test_detect_and_create_warns_and_still_returns_pimple_without_a_PIMPLE_dict(
 ) -> None:
     """The real damBreakPorousBaffle fvSolution, with its PIMPLE dict removed
     via pybFoam's own reader/writer, has no PIMPLE dict at all."""
-    shutil.copytree(
-        _CASES / "interFoam_damBreakPorousBaffle", tmp_path, dirs_exist_ok=True
-    )
+    shutil.copytree(_CASES / "interFoam_damBreakPorousBaffle", tmp_path, dirs_exist_ok=True)
     fv_solution_path = tmp_path / "system" / "fvSolution"
     fv_solution = dictionary.read(str(fv_solution_path))
     fv_solution.remove("PIMPLE")

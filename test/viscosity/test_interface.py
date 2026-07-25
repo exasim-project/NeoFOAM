@@ -12,18 +12,14 @@ from typing import Any, Union, get_args, get_origin
 
 from pydantic import BaseModel
 
+# Importing the package registers the bundled natives (Newtonian).
+import neofoam.viscosity  # noqa: F401
 from neofoam.core.plugin_system import PluginSystem
 from neofoam.framework.model import ModelSpec
 from neofoam.viscosity.viscosityModel import viscosityModel
-
-# Importing the package registers the bundled natives (Newtonian).
-import neofoam.viscosity  # noqa: F401
-
 from viscosity.conftest import CASES
 
-NATIVE_NAMES = {
-    c.selection["model_name"] for c in CASES if c.selection["resolves_to"] == "native"
-}
+NATIVE_NAMES = {c.selection["model_name"] for c in CASES if c.selection["resolves_to"] == "native"}
 FALLBACK_NAMES = {
     c.selection["model_name"] for c in CASES if c.selection["resolves_to"] == "fallback"
 }

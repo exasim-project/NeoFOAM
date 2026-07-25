@@ -63,9 +63,7 @@ for cls in configurations(incompressibleFluid):
 # ``constant/transportProperties`` (e.g. TransportPropertiesConfig + Boussinesq)
 # would clobber each other — the second save() does ``root_dict.clear()``.
 # -----------------------------------------------------------------------------
-with_io = [
-    inst for inst in instances.values() if getattr(type(inst), "io_config", None)
-]
+with_io = [inst for inst in instances.values() if getattr(type(inst), "io_config", None)]
 try:
     report = write_configs(with_io, case_dir=OUT)
 except Exception as e:  # noqa: BLE001

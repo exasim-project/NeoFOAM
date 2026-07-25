@@ -111,16 +111,14 @@ class Configurations:
         the snake-case class name and typed as that config class, so an
         agent fills the whole case in one structured response.
         """
-        fields: dict[str, Any] = {
-            _snake_case(cls.__name__): (cls, ...) for cls in self.classes
-        }
+        fields: dict[str, Any] = {_snake_case(cls.__name__): (cls, ...) for cls in self.classes}
         return create_model(model_name, **fields)
 
     # -- persist -------------------------------------------------------
 
     def save(self, configs: Any, *, case_dir: Union[Path, str]) -> list[Path]:
         """Write config instances to ``case_dir`` (delegates to ``save_configs``)."""
-        from neofoam.io import save_configs
+        from neofoam.io import save_configs  # noqa: PLC0415  # cycle: io->configurations
 
         return save_configs(configs, case_dir=case_dir)
 
@@ -132,12 +130,10 @@ def configurations(solver: Any) -> Configurations:
     model family (``solver.model_specs``), deduped by identity. Runs no
     detection and needs no case directory.
     """
-    from neofoam.io import collect_config_classes
+    from neofoam.io import collect_config_classes  # noqa: PLC0415  # cycle: io->configs
 
     classes = collect_config_classes([solver, *solver.model_specs])
-    return Configurations(
-        solver=solver, classes=cast("list[type[BaseConfig]]", classes)
-    )
+    return Configurations(solver=solver, classes=cast("list[type[BaseConfig]]", classes))
 
 
 @dataclass(frozen=True)
@@ -167,7 +163,7 @@ def model_catalog(solver: Any) -> list[ModelEntry]:
     source for UIs. (The solver's own configs — e.g. ``controlDict`` — are not
     models; they always apply and are listed by :func:`configurations`.)
     """
-    from neofoam.io import collect_config_classes
+    from neofoam.io import collect_config_classes  # noqa: PLC0415  # cycle: io->configs
 
     out: list[ModelEntry] = []
     for required, families in (

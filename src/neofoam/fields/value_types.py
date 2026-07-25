@@ -91,9 +91,7 @@ def default_uniform(value_type: type, value: Any) -> str:
         return f"uniform {float(value)}"
     if value_type is Vector:
         if not isinstance(value, (list, tuple)) or len(value) != 3:
-            raise TypeError(
-                f"default_uniform(Vector, ...) expects a 3-sequence; got {value!r}"
-            )
+            raise TypeError(f"default_uniform(Vector, ...) expects a 3-sequence; got {value!r}")
         x, y, z = (float(v) for v in value)
         return f"uniform ({x} {y} {z})"
     raise TypeError(f"default_uniform: unsupported value_type {value_type!r}")

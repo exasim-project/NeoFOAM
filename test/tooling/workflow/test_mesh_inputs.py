@@ -4,15 +4,15 @@
 """Manifest -> mesh-dict builders (hermetic -- pydantic only, no OpenFOAM)."""
 
 from neofoam.framework.tools.graph import PreprocessConfig
-from neofoam.tools.block_mesh import BlockMeshDictConfig
-from neofoam.tools.snappy_hex_mesh import SnappyHexMeshDictConfig
-from neofoam.tooling.workflow.patch_set import PatchSet
 from neofoam.tooling.workflow.mesh_inputs import (
     block_mesh_dict,
     build_mesh_inputs,
     preprocess_config,
     snappy_dict,
 )
+from neofoam.tooling.workflow.patch_set import PatchSet
+from neofoam.tools.block_mesh import BlockMeshDictConfig
+from neofoam.tools.snappy_hex_mesh import SnappyHexMeshDictConfig
 
 
 def _tool_names(pre: PreprocessConfig) -> list[str]:
@@ -25,10 +25,7 @@ def test_block_mesh_dict_box_spans_bbox(patch_set: PatchSet) -> None:
     lo, hi = patch_set.bbox.min, patch_set.bbox.max
     assert isinstance(cfg.vertices, list)
     assert set(cfg.vertices) == {
-        (x, y, z)
-        for x in (lo[0], hi[0])
-        for y in (lo[1], hi[1])
-        for z in (lo[2], hi[2])
+        (x, y, z) for x in (lo[0], hi[0]) for y in (lo[1], hi[1]) for z in (lo[2], hi[2])
     }
     assert len(cfg.blocks) == 1
 
@@ -82,9 +79,7 @@ def test_snappy_dict_uses_patch_surface_refinement(patch_set: PatchSet) -> None:
     for patch in patch_set.patches:
         if patch.is_snappy_surface and patch.surface_refinement:
             lo, hi = patch.surface_refinement
-            level = cfg.castellatedMeshControls["refinementSurfaces"][patch.name][
-                "level"
-            ]
+            level = cfg.castellatedMeshControls["refinementSurfaces"][patch.name]["level"]
             assert level == f"({lo} {hi})"
 
 

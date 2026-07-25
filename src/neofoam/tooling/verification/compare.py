@@ -92,9 +92,7 @@ def _classify(diffs: list[FieldDiff]) -> tuple[str, str]:
     """
     shape_mismatch = [d.name for d in diffs if math.isinf(d.rel_diff)]
     if shape_mismatch:
-        detail = "internal field length differs (mesh changed): " + ", ".join(
-            shape_mismatch
-        )
+        detail = "internal field length differs (mesh changed): " + ", ".join(shape_mismatch)
         return MESH_DIFFERS, detail
     bad = [d for d in diffs if not d.matched]
     if not bad:
@@ -135,9 +133,7 @@ def _proc_index(proc: Path) -> int:
     return int(proc.name[len("processor") :])
 
 
-def _read_decomposed_field(
-    proc_dir: Path, system_src: Path, name: str, time: str
-) -> np.ndarray:
+def _read_decomposed_field(proc_dir: Path, system_src: Path, name: str, time: str) -> np.ndarray:
     """Read one rank's field by assembling a single-domain case from the processor.
 
     A ``processor*`` dir carries its own decomposed ``constant/polyMesh`` and time
@@ -165,10 +161,7 @@ def _compare_decomposed(
     native_procs = sorted(native_dir.glob("processor*"), key=_proc_index)
     neo_procs = sorted(neo_dir.glob("processor*"), key=_proc_index)
     if len(native_procs) != len(neo_procs):
-        detail = (
-            f"processor count differs: native {len(native_procs)} "
-            f"vs neofoam {len(neo_procs)}"
-        )
+        detail = f"processor count differs: native {len(native_procs)} vs neofoam {len(neo_procs)}"
         return COMPARE_FAILED, detail, []
 
     worst: dict[str, FieldDiff] = {}
@@ -191,9 +184,7 @@ def _compare_decomposed(
                 if not (neo_time / name).is_file():
                     continue
                 diff = compare_field(
-                    _read_decomposed_field(
-                        native_proc, native_dir, name, native_time.name
-                    ),
+                    _read_decomposed_field(native_proc, native_dir, name, native_time.name),
                     _read_decomposed_field(neo_proc, neo_dir, name, neo_time.name),
                     name,
                 )
@@ -238,15 +229,11 @@ def compare_runs(
         return COMPARE_FAILED, "a run wrote no time directory", []
     native_time, neo_time = native_times[-1], neo_times[-1]
     if native_time.name != neo_time.name:
-        detail = (
-            f"latest time differs: native {native_time.name} vs neofoam {neo_time.name}"
-        )
+        detail = f"latest time differs: native {native_time.name} vs neofoam {neo_time.name}"
         return COMPARE_FAILED, detail, []
 
     present = [
-        name
-        for name in fields
-        if (native_time / name).is_file() and (neo_time / name).is_file()
+        name for name in fields if (native_time / name).is_file() and (neo_time / name).is_file()
     ]
     if not present:
         return COMPARE_FAILED, "no comparable fields written", []

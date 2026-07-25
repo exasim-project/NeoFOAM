@@ -14,8 +14,8 @@ from typing import Optional, Union
 
 from pydantic import BaseModel
 
-from neofoam.tooling.casebuild.pipeline import CaseDir, Step
 from neofoam.io import DictFile, write_configs
+from neofoam.tooling.casebuild.pipeline import CaseDir, Step
 
 
 def _addr(key: str) -> Union[str, tuple[str, ...]]:

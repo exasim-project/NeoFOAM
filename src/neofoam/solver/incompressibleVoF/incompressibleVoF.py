@@ -14,6 +14,8 @@ they read the Foam::Time that ``create_time_mesh`` routes onto
 ``ctx.models["runtime"]``.
 """
 
+import os
+import sys
 from typing import Annotated, Any, Optional, Protocol
 
 import pybFoam as pyf
@@ -51,7 +53,6 @@ from .create_fields import create_init
 from .models.alpha_advection import advectionModel  # noqa: F401 (registers members)
 from .models.incompressibleVoFModel import incompressibleVoFModel
 from .models.pressure_velocity.base import PressureVelocityAlgorithm
-
 
 # Interface band for the alpha Courant number: only cells whose phase fraction
 # straddles the interface (0.01 <= alpha1 <= 0.99) contribute. Mirrors
@@ -134,9 +135,7 @@ incompressibleVoF.models(incompressibleVoFModel)  # optional: zero or more
 
 
 @incompressibleVoF.initializer
-def initialize(
-    self: Any, init: Annotated[StagedInitRunner, Depends(create_init)]
-) -> Context:
+def initialize(self: Any, init: Annotated[StagedInitRunner, Depends(create_init)]) -> Context:
     """Initialize fields and models via the staged-init runner."""
     return init.run()
 
@@ -200,9 +199,6 @@ def run(
     If ``log_file`` is given, fd 1 (stdout) is redirected to that file for the
     duration of the solve so C++ ``Info`` output ends up there.
     """
-    import os
-    import sys
-
     redirect = log_file is not None
     saved_fd: Optional[int] = None
     if redirect:

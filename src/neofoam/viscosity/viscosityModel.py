@@ -63,6 +63,6 @@ class viscosityModel(BaseModel):
         The core-model-family hook: reads ``constant/transportProperties`` and
         returns the matching native spec or the OpenFOAM fallback adapter.
         """
-        from .selection import select_from_case
+        from .selection import select_from_case  # noqa: PLC0415  # circular: .selection
 
         return select_from_case()

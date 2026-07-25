@@ -15,13 +15,13 @@ keys not declared on the schema (notably the ``default`` entry on every
 """
 
 import pytest
-
 from pydantic import ConfigDict
+
 from neofoam.io import (
-    BaseConfig,
-    YAML,
     JSON,
     OF,
+    YAML,
+    BaseConfig,
     IOStrategy,
 )
 

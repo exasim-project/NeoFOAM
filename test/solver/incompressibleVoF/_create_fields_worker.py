@@ -60,9 +60,7 @@ def run(case_dir: Path) -> dict[str, Any]:
         # ``uniformDimensionedScalarField.name()`` (hRef) returns a ``Word``,
         # not a plain ``str`` like ``GeometricField.name()`` does — ``str()``
         # normalises both for JSON.
-        "registered_names": {
-            key: str(ctx.fields[key].name()) for key in sorted(ctx.fields)
-        },
+        "registered_names": {key: str(ctx.fields[key].name()) for key in sorted(ctx.fields)},
         "internal": {key: _internal(ctx.fields[key]) for key in sorted(ctx.fields)},
         "mixture": {
             "rho1": mixture.rho1().value(),

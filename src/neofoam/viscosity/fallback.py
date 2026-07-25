@@ -9,11 +9,11 @@ selector returns an :class:`OpenFOAMViscosityModel`. Like a native model it
 the pybFoam ``singlePhaseTransportModel`` (driving ``correct()`` for
 rate-dependent transport), so the fallback is unified onto the same Context
 fields the native path uses.
-
-pybFoam is imported lazily, so importing this module needs no OpenFOAM build.
 """
 
 from typing import Any, Callable, Optional
+
+import pybFoam
 
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.dependency_resolver import (
@@ -31,7 +31,9 @@ TransportFactory = Callable[[Any, Any], Any]
 
 def _default_factory() -> "TransportFactory":
     """Return pybFoam's single-phase transport factory (lazy import)."""
-    from pybFoam.turbulence import singlePhaseTransportModel
+    # Lazy so constructing the adapter stays side-effect-free and unit-testable
+    # with an injected factory (test_construction_does_not_import_pybfoam).
+    from pybFoam.turbulence import singlePhaseTransportModel  # noqa: PLC0415
 
     return singlePhaseTransportModel
 
@@ -65,9 +67,7 @@ class OpenFOAMViscosityModel:
 
     def _require_impl(self) -> Any:
         if self._impl is None:
-            raise RuntimeError(
-                "OpenFOAMViscosityModel.build() must be called before use"
-            )
+            raise RuntimeError("OpenFOAMViscosityModel.build() must be called before use")
         return self._impl
 
     def nu(self) -> Any:
@@ -80,8 +80,6 @@ class OpenFOAMViscosityModel:
         ``volScalarField`` named ``nu`` so the held Context field outlives the
         ``tmp`` (a retained ``tmp`` would be use-after-free).
         """
-        import pybFoam
-
         return pybFoam.volScalarField(pybFoam.Word("nu"), self.nu())
 
     def correct(self) -> None:

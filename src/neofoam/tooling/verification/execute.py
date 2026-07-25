@@ -90,9 +90,7 @@ def time_dirs(case: Path) -> list[Path]:
 def mesh_fingerprint(case: Path) -> str:
     """Hash the mesh topology, so a nondeterministic mesher cannot look like a bug."""
     digest = hashlib.sha256()
-    meshes = sorted(case.glob("processor*/constant/polyMesh")) or [
-        case / "constant" / "polyMesh"
-    ]
+    meshes = sorted(case.glob("processor*/constant/polyMesh")) or [case / "constant" / "polyMesh"]
     for mesh in meshes:
         for name in ("owner", "neighbour", "points"):
             path = mesh / name

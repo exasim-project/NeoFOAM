@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
+from framework.conftest import MaxIterations
 
 from neofoam.framework.context import Context
 from neofoam.framework.graph import (
@@ -20,8 +21,14 @@ from neofoam.framework.graph import (
 )
 from neofoam.framework.graph.resolver import (
     _build_global_graph as build_global_graph,
+)
+from neofoam.framework.graph.resolver import (
     _collect_tagged_ops as collect_tagged_ops,
+)
+from neofoam.framework.graph.resolver import (
     _infer_target_scope as infer_target_scope,
+)
+from neofoam.framework.graph.resolver import (
     _rebuild_builder as rebuild_builder,
 )
 from neofoam.framework.graph.resolver import _sort_global as _sort_global_impl
@@ -34,14 +41,10 @@ from neofoam.framework.operations import (
 )
 from neofoam.framework.types import OperationMetadata, OperationNumber
 
-from framework.conftest import MaxIterations
-
 
 def sort_global(graph, op_map, tagged, sorter=None):
     """Test-local wrapper that defaults the sorter for brevity in assertions."""
-    return _sort_global_impl(
-        graph, op_map, tagged, sorter=sorter or NetworkxTopologicalSorter()
-    )
+    return _sort_global_impl(graph, op_map, tagged, sorter=sorter or NetworkxTopologicalSorter())
 
 
 # ---------------------------------------------------------------------------
@@ -802,17 +805,13 @@ def test_runnable_flat_execution_order() -> None:
     builder.step(
         Operation(
             func=SequentialOp(make_logger("B")),
-            metadata=OperationMetadata(
-                op_name="B", operation_number=OperationNumber("2")
-            ),
+            metadata=OperationMetadata(op_name="B", operation_number=OperationNumber("2")),
         )
     )
     builder.step(
         Operation(
             func=SequentialOp(make_logger("A")),
-            metadata=OperationMetadata(
-                op_name="A", operation_number=OperationNumber("1")
-            ),
+            metadata=OperationMetadata(op_name="A", operation_number=OperationNumber("1")),
         )
     )
 
@@ -841,9 +840,7 @@ def test_runnable_loop_execution_order_with_model_ops() -> None:
         lb.step(
             Operation(
                 func=SequentialOp(make_logger("S1")),
-                metadata=OperationMetadata(
-                    op_name="S1", operation_number=OperationNumber("1")
-                ),
+                metadata=OperationMetadata(op_name="S1", operation_number=OperationNumber("1")),
             )
         )
         lb.step(

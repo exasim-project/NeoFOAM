@@ -12,8 +12,9 @@ from __future__ import annotations
 
 import inspect
 from functools import wraps
-from typing import Any, Callable, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable
 
+from neofoam.framework.context import FieldUpdates
 from neofoam.io import BaseConfig
 
 if TYPE_CHECKING:
@@ -106,8 +107,6 @@ def _create_runtime_config_wrapper(
                     call_kwargs[pname] = ctx.fields[pname]
 
         result = func(**call_kwargs)
-
-        from neofoam.framework.context import FieldUpdates
 
         if isinstance(result, FieldUpdates):
             ctx.fields.update(result)

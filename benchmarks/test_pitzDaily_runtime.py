@@ -72,9 +72,7 @@ print(f"BENCH_SECONDS={time.perf_counter() - t0:.4f}", flush=True)
 def _prepare_case(dest: Path, name: str) -> Path:
     """Clone pitzDaily, mesh it, and pin fixed-step timings."""
     case = clone_case("pitzDaily", dest=dest / name)
-    subprocess.run(
-        ["blockMesh", "-case", str(case)], check=True, capture_output=True, timeout=60
-    )
+    subprocess.run(["blockMesh", "-case", str(case)], check=True, capture_output=True, timeout=60)
     control_dict = case / "system" / "controlDict"
     lines = []
     for line in control_dict.read_text().splitlines():
@@ -147,9 +145,7 @@ def test_pitzDaily_total_runtime(tmp_path: Path) -> None:
     _assert_completed(case)
 
     case = _prepare_case(tmp_path, "incompressibleFluid")
-    results["incompressibleFluid (framework)"] = _run_python(
-        case, _INCOMPRESSIBLE_FLUID_DRIVER
-    )
+    results["incompressibleFluid (framework)"] = _run_python(case, _INCOMPRESSIBLE_FLUID_DRIVER)
     _assert_completed(case)
 
     native = results["pimpleFoam (C++)"]

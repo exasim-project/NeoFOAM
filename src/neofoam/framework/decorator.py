@@ -10,8 +10,7 @@ import functools
 import inspect
 from typing import Any, Callable, TypeVar
 
-from .types import OperationMetadata, OpType, OperationNumber
-
+from .types import OperationMetadata, OperationNumber, OpType
 
 F = TypeVar("F", bound=Callable[..., Any])
 

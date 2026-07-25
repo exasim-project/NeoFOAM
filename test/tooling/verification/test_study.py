@@ -74,9 +74,7 @@ def test_candidates_default_to_the_single_discovered_app(tmp_path: Path) -> None
     study = load_study(tmp_path / "config.yaml")
 
     assert study.candidate_labels == ["incompressiblefluid"]
-    assert study.candidates == {
-        "incompressiblefluid": "neofoam solver incompressiblefluid"
-    }
+    assert study.candidates == {"incompressiblefluid": "neofoam solver incompressiblefluid"}
 
 
 def test_apps_config_declares_multiple_candidate_backends(tmp_path: Path) -> None:
@@ -92,10 +90,7 @@ def test_apps_config_declares_multiple_candidate_backends(tmp_path: Path) -> Non
     study = load_study(tmp_path / "config.yaml")
 
     assert study.candidate_labels == ["incompressiblefluid", "incompressiblefluidneon"]
-    assert (
-        study.candidates["incompressiblefluidneon"]
-        == "neofoam solver incompressiblefluidneon"
-    )
+    assert study.candidates["incompressiblefluidneon"] == "neofoam solver incompressiblefluidneon"
 
 
 def test_by_id_raises_on_unknown_case(tmp_path: Path) -> None:

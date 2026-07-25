@@ -93,9 +93,7 @@ SINGLE_CELL_SCENARIOS: dict[str, dict[str, Any]] = {
 NATIVE_DELTA_T = 0.001
 NATIVE_TIMES = ["0.001", "0.002", "0.003", "0.004"]
 
-_INTERFACE_COURANT = re.compile(
-    r"^Interface Courant Number mean: (\S+)\s+max: (\S+)\s*$"
-)
+_INTERFACE_COURANT = re.compile(r"^Interface Courant Number mean: (\S+)\s+max: (\S+)\s*$")
 
 
 def _stage(mesh: str, dest: Path) -> Path:
@@ -179,9 +177,7 @@ def row4(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Any]:
 
 @pytest.fixture(scope="module")
 def single_cell(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Any]:
-    return _evaluate(
-        "single_cell", SINGLE_CELL_SCENARIOS, tmp_path_factory.mktemp("single_cell")
-    )
+    return _evaluate("single_cell", SINGLE_CELL_SCENARIOS, tmp_path_factory.mktemp("single_cell"))
 
 
 @pytest.fixture(scope="module")

@@ -88,9 +88,7 @@ def test_report_lists_matched_and_diverged_with_both_tolerances() -> None:
                     detail="U",
                     worst_abs=1.2e-11,
                     worst_rel=1.8e-13,
-                    fields=[
-                        {"name": "U", "matched": False, "abs": 1.2e-11, "rel": 1.8e-13}
-                    ],
+                    fields=[{"name": "U", "matched": False, "abs": 1.2e-11, "rel": 1.8e-13}],
                 )
             ],
         },
@@ -156,9 +154,7 @@ def test_report_attaches_the_log_for_a_crashed_case() -> None:
                         "work/simpleFoam__broken/incompressiblefluid/"
                         "log.neofoam solver incompressiblefluid"
                     ),
-                    log_tail=(
-                        "Traceback (most recent call last):\nNotImplementedError: nope"
-                    ),
+                    log_tail=("Traceback (most recent call last):\nNotImplementedError: nope"),
                 )
             ],
         }

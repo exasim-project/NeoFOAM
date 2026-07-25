@@ -27,10 +27,23 @@ import shutil
 from pathlib import Path
 from typing import Any, Optional, Union
 
-from pydantic import BaseModel, ConfigDict, Field, create_model
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, create_model
 
 from neofoam.framework.solver.configurations import _snake_case, configurations
-from neofoam.io import BaseConfig
+from neofoam.io import BaseConfig, write_configs
+from neofoam.solver.incompressibleFluid.incompressibleFluid import incompressibleFluid
+
+try:
+    from pydantic_ai import Agent
+    from pydantic_ai.models.anthropic import AnthropicModel
+except ModuleNotFoundError:  # optional [agent] extra
+    Agent = None  # type: ignore[assignment,misc]
+    AnthropicModel = None  # type: ignore[assignment,misc]
+
+#: Actionable message when the optional ``[agent]`` extra is missing.
+_MISSING_PYDANTIC_AI = (
+    "the agent feature needs pydantic-ai; install with: pip install neofoam[agent]"
+)
 
 __all__ = [
     "DEFAULT_CASE_SYSTEM_PROMPT",
@@ -56,11 +69,7 @@ DEFAULT_CASE_SYSTEM_PROMPT = (
 
 
 def _solver() -> Any:
-    """Lazy import so the agent module stays importable without OpenFOAM."""
-    from neofoam.solver.incompressibleFluid.incompressibleFluid import (
-        incompressibleFluid,
-    )
-
+    """Return the incompressibleFluid solver spec."""
     return incompressibleFluid
 
 
@@ -195,8 +204,6 @@ def _is_absence(exc: Exception) -> bool:
     ``TelemetryDictConfig`` → ``controlDict{telemetry}`` on a case with no telemetry
     block). Anything else — a value that fails validation — is present-but-invalid.
     """
-    from pydantic import ValidationError
-
     if isinstance(exc, ValidationError):
         errors = exc.errors()
         return bool(errors) and all(e.get("type") == "missing" for e in errors)
@@ -216,8 +223,6 @@ def save_case(
     target the same file (e.g. ``TransportProperties`` + ``Boussinesq``) and
     writes each file once, so co-owners don't clobber each other.
     """
-    from neofoam.io import write_configs
-
     report = write_configs(case_spec_to_configs(case_spec), target_case)
     return [Path(target_case) / file for file in report]
 
@@ -286,16 +291,15 @@ def build_case_agent(
     per-solver ``CaseSpec``. Extra ``agent_kwargs`` are forwarded to
     :class:`pydantic_ai.Agent`.
     """
-    from pydantic_ai import Agent
+    if Agent is None:
+        raise ImportError(_MISSING_PYDANTIC_AI)
 
     if model is None:
-        from pydantic_ai.models.anthropic import AnthropicModel
-
+        if AnthropicModel is None:
+            raise ImportError(_MISSING_PYDANTIC_AI)
         model = AnthropicModel(model_name)
 
-    out_type = output_type or build_case_output_model(
-        solver=solver, model_name=output_model_name
-    )
+    out_type = output_type or build_case_output_model(solver=solver, model_name=output_model_name)
     return Agent(
         model,
         output_type=out_type,
@@ -349,9 +353,7 @@ def fill_case(
     target_case = Path(target_case)
 
     if not source_case.is_dir():
-        raise ValueError(
-            f"source_case does not exist or is not a directory: {str(source_case)!r}"
-        )
+        raise ValueError(f"source_case does not exist or is not a directory: {str(source_case)!r}")
 
     if copy_static:
         _copy_static_assets(source_case, target_case)

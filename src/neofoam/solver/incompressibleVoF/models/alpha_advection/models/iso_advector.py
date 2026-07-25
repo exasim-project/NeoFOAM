@@ -103,9 +103,7 @@ def alpha_advection(
     alpha2.assign(-alpha1 + 1.0)
     mixture.correct()
     rho.assign(alpha1 * mixture.rho1() + alpha2 * mixture.rho2())
-    return FieldUpdates(
-        {"alpha1": alpha1, "alpha2": alpha2, "rho": rho, "rhoPhi": rhoPhi}
-    )
+    return FieldUpdates({"alpha1": alpha1, "alpha2": alpha2, "rho": rho, "rhoPhi": rhoPhi})
 
 
 # ---------------------------------------------------------------------------

@@ -30,6 +30,7 @@ This is the template for a pure-Python closure with a transport equation
 from typing import Annotated, Any
 
 import neon._neon as nn  # NeoN surface interpolation
+
 from neofoam import neofoam_bindings as nfb
 from neofoam.framework.context import FieldUpdates
 from neofoam.framework.initialization import InitStep
@@ -58,9 +59,7 @@ def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
 
     def create_nu_eff(ctx: dict[str, Any]) -> Any:
         rt = ctx["models.neon_runtime"]
-        surf = nn.SurfaceInterpolationScalar(
-            rt.executor, rt.nf_mesh, nn.TokenList(["linear"])
-        )
+        surf = nn.SurfaceInterpolationScalar(rt.executor, rt.nf_mesh, nn.TokenList(["linear"]))
         return surf.interpolate(ctx["models.nu_vol"])  # nuEff = surf(nu), nut = 0
 
     return [

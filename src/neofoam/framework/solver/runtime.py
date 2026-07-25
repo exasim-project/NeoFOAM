@@ -11,12 +11,13 @@ runtime so multiple solver runs never share mutable state.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Optional
 
 if TYPE_CHECKING:
-    from .spec import SolverSpec
     from neofoam.framework.context import Context
     from neofoam.framework.operations import OperationCollection, StepBuilder
+
+    from .spec import SolverSpec
 
 
 @dataclass

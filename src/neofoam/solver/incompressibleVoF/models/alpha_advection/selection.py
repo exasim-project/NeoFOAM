@@ -59,8 +59,7 @@ def select_advection_scheme(name: str) -> ModelSpec:
     spec = advectionModel.find_spec(name)
     if spec is None:
         raise ValueError(
-            f"Unknown advectionScheme '{name}'; registered: "
-            f"{advectionModel.registered_names()}"
+            f"Unknown advectionScheme '{name}'; registered: {advectionModel.registered_names()}"
         )
     return spec
 
@@ -101,9 +100,7 @@ def select_from_case(case_dir: str = ".") -> ModelSpec:
         )
     else:
         if fv_solution.found("advectionScheme"):
-            name = str(
-                fv_solution.getOrDefault[str]("advectionScheme", _DEFAULT_SCHEME)
-            )
+            name = str(fv_solution.getOrDefault[str]("advectionScheme", _DEFAULT_SCHEME))
         elif _isoadvector_controls_present(fv_solution):
             name = _ISO_ADVECTOR_SCHEME
     return select_advection_scheme(name)

@@ -17,9 +17,9 @@ from typing import Any
 
 import pytest
 
-from neofoam.tooling.casebuild import from_template
 from neofoam.framework.tools import ToolRuntime
 from neofoam.io import write_configs
+from neofoam.tooling.casebuild import from_template
 from neofoam.tools import block_mesh
 from neofoam.tools.block_mesh import (
     Block,
@@ -109,10 +109,7 @@ def test_config_serialises_to_openfoam_literals() -> None:
     """Under the ``openfoam`` format the compound sections become OF strings."""
     data = _unit_box().model_dump(context={"format": "openfoam"})
     assert data["vertices"].startswith("( (") and data["vertices"].endswith(") )")
-    assert (
-        data["blocks"]
-        == "( hex ( 0 1 2 3 4 5 6 7 ) ( 4 5 6 ) simpleGrading ( 1 1 1 ) )"
-    )
+    assert data["blocks"] == "( hex ( 0 1 2 3 4 5 6 7 ) ( 4 5 6 ) simpleGrading ( 1 1 1 ) )"
     assert "inlet { type patch ; faces ( ( 0 4 7 3 ) ) ; }" in data["boundary"]
     # A plain dump keeps the structured (form/JSON) shape.
     plain = _unit_box().model_dump()

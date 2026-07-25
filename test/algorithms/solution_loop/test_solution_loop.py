@@ -256,9 +256,7 @@ def test_increment_time_uses_injected_logger_and_advances() -> None:
 
 def test_predicate_delegates_to_engine_running() -> None:
     on = make_solution_loop(_config(endTime=1.0), make_loop_state(_config(endTime=1.0)))
-    off = make_solution_loop(
-        _config(endTime=1.0), make_loop_state(_config(endTime=1.0))
-    )
+    off = make_solution_loop(_config(endTime=1.0), make_loop_state(_config(endTime=1.0)))
     off.stop()
     assert SolutionLoopPredicate()(_ctx({"solution_loop": on})) is True
     assert SolutionLoopPredicate()(_ctx({"solution_loop": off})) is False
@@ -272,9 +270,7 @@ def test_predicate_delegates_to_engine_running() -> None:
         ([lambda lp: True, lambda lp: lp.current_delta_t() > 0.0], True),
     ],
 )
-def test_constructor_folds_conditions_with_all(
-    conds: list[Any], expected: bool
-) -> None:
+def test_constructor_folds_conditions_with_all(conds: list[Any], expected: bool) -> None:
     loop = SolutionLoop(state=_state(), conditions=conds)
     assert loop.all_conditions_hold() is expected
     assert loop.conditions == loop._conditions
@@ -297,9 +293,7 @@ def test_loop_module_keeps_live_interface_annotations() -> None:
 # --- the interface-consuming loop-body operation --------------------------
 
 
-def _drive_set_time_step(
-    loop: SolutionLoop, contributors: list[ModelRuntime]
-) -> Context:
+def _drive_set_time_step(loop: SolutionLoop, contributors: list[ModelRuntime]) -> Context:
     loop_rt = ModelRuntime(spec=solutionLoop, name="solutionLoop", config=None)
     models: dict[str, Any] = {"solution_loop": loop, "solutionLoop": loop_rt}
     for rt in contributors:

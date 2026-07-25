@@ -3,7 +3,7 @@
 #
 # Refine/snap the variant's mesh around the STL surfaces (single-tool slice;
 # resumes from the constant/polyMesh its predecessor left on disk). Keyed by
-# MESH_STEM (`{cad}__{mesh}` with a CAD axis, else `{mesh}`).
+# MESH_STEM (`meshes/{mesh}`).
 # Consumes header globals: BASE_CASE, MESH_STEM, _mesh_case, MESH_TOOL_INPUT.
 rule snappyHexMesh:
     input:

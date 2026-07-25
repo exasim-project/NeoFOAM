@@ -43,9 +43,7 @@ def _open_at(case_dir: Path, time_name: str) -> pyf.Time:
     control_dict.write(str(control_dict_path))
 
     runtime = pyf.Time(pyf.argList(["nativeAlphaCourantWorker"]))
-    assert runtime.timeName() == time_name, (
-        f"opened {runtime.timeName()!r}, expected {time_name!r}"
-    )
+    assert runtime.timeName() == time_name, f"opened {runtime.timeName()!r}, expected {time_name!r}"
     return runtime
 
 

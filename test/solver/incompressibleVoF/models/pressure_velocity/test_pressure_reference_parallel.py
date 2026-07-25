@@ -106,11 +106,7 @@ def ranks(tmp_path_factory: pytest.TempPathFactory) -> list[dict[str, Any]]:
 
 def _in_global_order(ranks: list[dict[str, Any]], key: str) -> list[float]:
     """Concatenate a per-cell quantity from every rank, ordered by cell-centre x."""
-    cells = [
-        (x, value)
-        for rank in ranks
-        for x, value in zip(rank["cell_centres_x"], rank[key])
-    ]
+    cells = [(x, value) for rank in ranks for x, value in zip(rank["cell_centres_x"], rank[key])]
     return [value for _x, value in sorted(cells)]
 
 
@@ -133,9 +129,7 @@ def test_the_reference_cell_is_owned_by_the_non_master_rank(
 ) -> None:
     """setRefCell finds ``pRefPoint`` on rank 1 only; rank 0 gets the same -1 it
     would get on an open domain. Everything below is about that asymmetry."""
-    assert [rank["pressure_reference"]["pRefCell"] for rank in ranks] == (
-        _EXPECTED_REF_CELLS
-    )
+    assert [rank["pressure_reference"]["pRefCell"] for rank in ranks] == (_EXPECTED_REF_CELLS)
 
 
 # --------------------------------------------------------------------------- #
@@ -181,9 +175,7 @@ def test_get_ref_cell_value_is_zero_when_no_rank_owns_a_reference_cell(
 ) -> None:
     """Every rank passing -1 is OpenFOAM's ``returnReduce(0, sumOp)`` case; the
     max-over-empty-fields composition must answer 0 and not ``-VGREAT``."""
-    assert [rank["ref_cell_value_without_reference_cell"] for rank in ranks] == (
-        [0.0] * NPROCS
-    )
+    assert [rank["ref_cell_value_without_reference_cell"] for rank in ranks] == ([0.0] * NPROCS)
 
 
 # --------------------------------------------------------------------------- #

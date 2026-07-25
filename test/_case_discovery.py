@@ -62,10 +62,7 @@ def case_for(cases: list[Case], model_name: str) -> Case:
     Points a registered native model at the case the solver would feed it.
     """
     for case in cases:
-        if (
-            case.selection["resolves_to"] == "native"
-            and case.selection["model_name"] == model_name
-        ):
+        if case.selection["resolves_to"] == "native" and case.selection["model_name"] == model_name:
             return case
     raise LookupError(f"no native case for model {model_name!r}")
 

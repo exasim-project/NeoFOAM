@@ -12,6 +12,9 @@ iteration loop is owned by the framework ``solution_loop`` engine; the legacy
 backend (see ``models.solution_loop``).
 """
 
+import os
+import sys
+from pathlib import Path
 from typing import Annotated, Any, Optional
 
 from neofoam.framework.context import Context
@@ -44,9 +47,7 @@ from .models.solution_loop import SolutionLoopPredicate
 def _core_model(state: Any, spec_name: str) -> Any:
     """Find an instantiated core model by its spec name."""
     return next(
-        m
-        for m in state.core_models
-        if isinstance(m, ModelRuntime) and m.spec.name == spec_name
+        m for m in state.core_models if isinstance(m, ModelRuntime) and m.spec.name == spec_name
     )
 
 
@@ -58,9 +59,7 @@ incompressibleFluidNeoN = Solver("incompressibleFluidNeoN")
 # turbulence is runtime-selected in create_fields from
 # constant/turbulenceProperties (pure-Python NeoN family, C++ fallback).
 incompressibleFluidNeoN.config(ControlDictConfig)
-incompressibleFluidNeoN.config(
-    PreprocessConfig
-)  # mesh pipeline enable file (configs())
+incompressibleFluidNeoN.config(PreprocessConfig)  # mesh pipeline enable file (configs())
 # The two mesh-input dicts: writer configs so the wizard/MCP fill and persist them
 # like any other case file (blockMesh/snappyHexMesh read them at launch) — without
 # them the sweep's mesh dimension is unavailable.
@@ -82,9 +81,7 @@ incompressibleFluidNeoN.models(incompressibleFluidNeoNModel)  # optional: zero o
 
 
 @incompressibleFluidNeoN.initializer
-def initialize(
-    self: Any, init: Annotated[StagedInitRunner, Depends(create_init)]
-) -> Context:
+def initialize(self: Any, init: Annotated[StagedInitRunner, Depends(create_init)]) -> Context:
     """Initialize using the create_init factory with dependency injection."""
     return init.run()
 
@@ -158,10 +155,6 @@ def run(
     If ``log_file`` is given, fd 1 (stdout) is redirected to that file for the
     duration of the solve.
     """
-    import os
-    import sys
-    from pathlib import Path
-
     ensure_neon_initialized(list(argv) if argv else ["incompressibleFluidNeoN"])
 
     redirect = log_file is not None

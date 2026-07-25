@@ -54,9 +54,7 @@ def test_registered_in_the_family() -> None:
 
 def test_fallback_true_returns_a_fallback_handle_with_one_op(case_dir: Path) -> None:
     cfg = TurbulencePropertiesConfig.load(case_dir=case_dir)
-    handle = select_turbulence_model(
-        cfg, fallback=True, case_dir=case_dir, of_factory=MagicMock()
-    )
+    handle = select_turbulence_model(cfg, fallback=True, case_dir=case_dir, of_factory=MagicMock())
     assert isinstance(handle, FallbackHandle)
     op_names = [op.metadata.op_name for op in handle.operations]
     assert op_names == ["realizableKECorrect"]

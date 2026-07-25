@@ -41,9 +41,7 @@ class CFLNumber:
 
         # limit to 1.2 to avoid too large time steps
         ratios = [
-            min(ratio, maxRatio)
-            for ratio in ratios
-            if ratio > self.SMALL and ratio < self.GREAT
+            min(ratio, maxRatio) for ratio in ratios if ratio > self.SMALL and ratio < self.GREAT
         ]
 
         # Set most restrictive time step
@@ -92,9 +90,7 @@ class PimpleFoam:
 
         return UEqn
 
-    def pressure_correction(
-        self, pimple: Any, U: Any, p: Any, phi: Any, UEqn: Any
-    ) -> None:
+    def pressure_correction(self, pimple: Any, U: Any, p: Any, phi: Any, UEqn: Any) -> None:
         """
         Correct the solution based on the PIMPLE algorithm.
         """

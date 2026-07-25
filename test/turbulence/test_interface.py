@@ -12,22 +12,16 @@ from typing import Any, Union, get_args, get_origin
 
 from pydantic import BaseModel
 
+# Importing the package registers the bundled natives (laminar).
+import neofoam.turbulence  # noqa: F401
 from neofoam.core.plugin_system import PluginSystem
 from neofoam.framework.model import ModelSpec
 from neofoam.turbulence.momentumTransport import momentumTransportModel
-
-# Importing the package registers the bundled natives (laminar).
-import neofoam.turbulence  # noqa: F401
-
 from turbulence.conftest import CASES
 
-NATIVE_NAMES = {
-    c.selection["model_name"] for c in CASES if c.selection["resolves_to"] == "native"
-}
+NATIVE_NAMES = {c.selection["model_name"] for c in CASES if c.selection["resolves_to"] == "native"}
 UNREGISTERED_NAMES = {
-    c.selection["model_name"]
-    for c in CASES
-    if c.selection["resolves_to"] == "unregistered"
+    c.selection["model_name"] for c in CASES if c.selection["resolves_to"] == "unregistered"
 }
 
 

@@ -54,11 +54,10 @@ what you're trying to do:
    :maxdepth: 2
    :caption: Reference
 
-   reference/framework/index
-   reference/graph/index
-   reference/initialization/index
-   reference/model/index
-   reference/solver/index
+   reference/project-layout
+   reference/build-and-test
+   reference/cli
+   reference/index
 
 .. toctree::
    :maxdepth: 1

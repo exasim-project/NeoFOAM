@@ -123,12 +123,9 @@ def run_dambreak_comparison(
                 max_abs_diff, max_rel_diff = failed_details.get(
                     field_name, (float("nan"), float("nan"))
                 )
-                detail_parts.append(
-                    f"{field_name}(abs={max_abs_diff:.3e}, rel={max_rel_diff:.3e})"
-                )
-            assert False, (
-                "Field values differ beyond tolerance. Failed fields: "
-                + ", ".join(detail_parts)
+                detail_parts.append(f"{field_name}(abs={max_abs_diff:.3e}, rel={max_rel_diff:.3e})")
+            assert False, "Field values differ beyond tolerance. Failed fields: " + ", ".join(
+                detail_parts
             )
 
         print("\n=== Test PASSED: Results match within tolerance ===")

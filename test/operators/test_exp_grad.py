@@ -25,6 +25,4 @@ def test_grad_T(mesh: str, executor: str) -> None:
     nb_res = nb.exp.grad(T)
 
     rtol = 1e-12 if executor == "Serial" else 1e-8
-    np.testing.assert_allclose(
-        nb_res, pyb_res, rtol=rtol, atol=1e-12 * np.abs(pyb_res).max()
-    )
+    np.testing.assert_allclose(nb_res, pyb_res, rtol=rtol, atol=1e-12 * np.abs(pyb_res).max())

@@ -51,13 +51,17 @@ _OUTCOME_HELP = {
         "~1e-13 is round-off, ~1e0 is a real defect."
     ),
     "SOLVER_FAILED": "The neofoam solver crashed or errored; the detail + log say why.",
-    "NATIVE_FAILED": "The native reference itself did not run — a harness fault, not a solver verdict.",
+    "NATIVE_FAILED": (
+        "The native reference itself did not run — a harness fault, not a solver verdict."
+    ),
     "UNSUPPORTED_CASE": (
         "No unique solver token in Allrun to swap — the case can't be run as a "
         "drop-in, so it is outside this study's scope."
     ),
     "CASE_SETUP_FAILED": "casebuild staging aborted before the run — a harness fault.",
-    "COMPARE_FAILED": "The run finished but the post-run field read/compare failed — a harness fault.",
+    "COMPARE_FAILED": (
+        "The run finished but the post-run field read/compare failed — a harness fault."
+    ),
     "MESH_DIFFERS": "Native and candidate meshes differ, so the fields aren't comparable.",
     "TIMEOUT": "The run exceeded its wall-clock limit and was killed.",
 }
@@ -194,10 +198,7 @@ def _rows(rows: list[dict[str, Any]]) -> str:
 
 def _table(rows: list[dict[str, Any]]) -> str:
     header = (
-        "<tr>"
-        "<th>Case</th><th>Backend</th><th>Outcome</th>"
-        "<th>max abs</th><th>max rel</th>"
-        "</tr>"
+        "<tr><th>Case</th><th>Backend</th><th>Outcome</th><th>max abs</th><th>max rel</th></tr>"
     )
     return (
         '<table class="sortable">\n<thead>'
@@ -222,9 +223,7 @@ def _summary(rows: list[dict[str, Any]]) -> str:
     # (not folded in) so machine-precision cases read as passes without loosening what
     # "Matched" means.
     roundoff_note = (
-        f" &nbsp; Matched to round-off (rel &lt; 1e-10): <b>{roundoff}</b>"
-        if roundoff
-        else ""
+        f" &nbsp; Matched to round-off (rel &lt; 1e-10): <b>{roundoff}</b>" if roundoff else ""
     )
     return (
         f"<p>Case/backend runs: <b>{len(rows)}</b> &nbsp; "

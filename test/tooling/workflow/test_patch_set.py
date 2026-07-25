@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Stage-1 contract: the PatchSet schema (hermetic -- no FreeCAD/OpenFOAM)."""
+"""Stage-1 contract: the PatchSet schema (hermetic -- no OpenFOAM)."""
 
 from pathlib import Path
 
@@ -11,8 +11,8 @@ from pydantic import ValidationError
 from neofoam.tooling.workflow.patch_set import (
     BoundingBox,
     PatchEntry,
-    PatchSet,
     PatchRole,
+    PatchSet,
 )
 
 FIXTURE = Path(__file__).parent / "cases" / "tube_bank_manifest.json"
@@ -27,17 +27,13 @@ def _manifest() -> PatchSet:
         location_in_mesh=(0.08, 0.08, 0.01),
         length_scale=0.016,
         patches=[
-            PatchEntry(
-                name="inlet", stl="constant/triSurface/inlet.stl", role=PatchRole.inlet
-            ),
+            PatchEntry(name="inlet", stl="constant/triSurface/inlet.stl", role=PatchRole.inlet),
             PatchEntry(
                 name="outlet",
                 stl="constant/triSurface/outlet.stl",
                 role=PatchRole.outlet,
             ),
-            PatchEntry(
-                name="walls", stl="constant/triSurface/walls.stl", role=PatchRole.wall
-            ),
+            PatchEntry(name="walls", stl="constant/triSurface/walls.stl", role=PatchRole.wall),
             PatchEntry(
                 name="tubes",
                 stl="constant/triSurface/tubes.stl",

@@ -114,9 +114,7 @@ def test_write_control_run_time() -> None:
 
 
 def test_adjustable_run_time_snaps_delta_t() -> None:
-    loop = _loop(
-        end_time=1.0, delta_t=0.3, write_control="adjustableRunTime", write_interval=1.0
-    )
+    loop = _loop(end_time=1.0, delta_t=0.3, write_control="adjustableRunTime", write_interval=1.0)
     loop.set_delta_t(0.3, adjust=True)
     # timeToNextWrite=1.0; nSteps=3.33->round 3; newDeltaT=1/3; >=0.3 so kept (<=2x)
     assert loop.state.delta_t == pytest.approx(1.0 / 3.0)
@@ -157,9 +155,7 @@ def test_set_delta_t_then_advance() -> None:
 
 
 def test_iteration_mode_counts_and_names_as_integers() -> None:
-    loop = _loop(
-        end_time=3.0, delta_t=1.0, integration=SteadyIntegration(), write_interval=1
-    )
+    loop = _loop(end_time=3.0, delta_t=1.0, integration=SteadyIntegration(), write_interval=1)
     rows = _drive(loop)
     assert [r[3] for r in rows] == [1, 2, 3]
     assert loop.timeName() == "3"

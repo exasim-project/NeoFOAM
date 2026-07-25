@@ -106,9 +106,7 @@ def test_framework_matches_native_simpleFoam() -> None:
         if not all_match:
             parts = []
             for fname in failed_fields:
-                max_abs, max_rel = failed_details.get(
-                    fname, (float("nan"), float("nan"))
-                )
+                max_abs, max_rel = failed_details.get(fname, (float("nan"), float("nan")))
                 parts.append(f"{fname}(abs={max_abs:.3e}, rel={max_rel:.3e})")
             pytest.fail("Field values differ between solvers: " + ", ".join(parts))
     finally:

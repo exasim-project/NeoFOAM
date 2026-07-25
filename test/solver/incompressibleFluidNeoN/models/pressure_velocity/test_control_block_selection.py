@@ -111,6 +111,4 @@ def test_simplec_case_raises_not_implemented(tmp_path: Path) -> None:
     )
     assert "NEON_INIT_OK" not in result.stdout
     assert "NotImplementedError" in result.stderr, result.stderr[-3000:]
-    assert "SIMPLEC (consistent yes) is not ported" in result.stderr, result.stderr[
-        -3000:
-    ]
+    assert "SIMPLEC (consistent yes) is not ported" in result.stderr, result.stderr[-3000:]

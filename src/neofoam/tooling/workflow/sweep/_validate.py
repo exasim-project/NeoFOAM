@@ -7,13 +7,12 @@ Each sweep dimension validates its variants differently:
 
 * a *regular* dimension → each variant payload against the dimension's config class;
 * the reserved ``mesh`` dimension → config-name-keyed inner payloads, each against its
-  own class;
-* the reserved ``cad`` dimension → a plain ``{alias: number}`` map, numeric shape only.
+  own class.
 
 That "what a valid variant looks like" rule lives in **one** place, :func:`_variant_error`.
 Everything else is a thin wrapper over it: the non-throwing :func:`variant_errors` (used
 to badge the canvas live) collects its messages, and the throwing :func:`validate_dimensions`
-/ :func:`validate_mesh_dimension` / :func:`validate_cad_dimension` raise the first one.
+/ :func:`validate_mesh_dimension` raise the first one.
 """
 
 from __future__ import annotations
@@ -23,7 +22,7 @@ from typing import Any
 
 from pydantic import BaseModel, ValidationError
 
-from neofoam.tooling.workflow.rules import CAD_DIM, MESH_DIM
+from neofoam.tooling.workflow.rules import MESH_DIM
 
 
 def _short_validation_error(exc: Exception) -> str:
@@ -48,7 +47,7 @@ def _variant_error(
 ) -> str | None:
     """Validate one variant payload; return a short message or ``None`` if valid.
 
-    The single shape-checker for every dimension kind — the mesh/cad/regular rules
+    The single shape-checker for every dimension kind — the mesh/regular rules
     live here and nowhere else. The throwing validators and :func:`variant_errors`
     both delegate to it.
     """
@@ -63,13 +62,6 @@ def _variant_error(
                 cls.model_validate(dict(inner))
             except Exception as exc:
                 return f"{config_name}: {_short_validation_error(exc)}"
-        return None
-    if dim == CAD_DIM:
-        if not isinstance(payload, Mapping):
-            return "must map parameter aliases to numbers"
-        for alias, value in payload.items():
-            if isinstance(value, bool) or not isinstance(value, (int, float)):
-                return f"{alias}: must be a number, got {type(value).__name__}"
         return None
     cls = classes.get(dim)
     if cls is None:
@@ -130,28 +122,15 @@ def validate_mesh_dimension(
     _raise_variant_errors({MESH_DIM: variants}, classes)
 
 
-def validate_cad_dimension(variants: Mapping[str, Any]) -> None:
-    """Validate the ``cad`` dimension's numeric parameter-map variants.
-
-    A CAD variant is a plain ``{alias: number}`` map (the parametric model's driven
-    dimensions); there is no config class to validate against, only the numeric shape.
-
-    Raises:
-        ValueError: Naming the offending ``cad.variant`` when it is not a mapping or
-            carries a non-numeric value.
-    """
-    _raise_variant_errors({CAD_DIM: variants}, {})
-
-
 def variant_errors(
     dimensions: Mapping[str, Mapping[str, Mapping[str, Any]]],
     classes: Mapping[str, type[BaseModel]],
 ) -> dict[str, dict[str, str]]:
     """Per-variant validation errors, ``{dim: {variant: message}}`` — never raises.
 
-    The non-throwing counterpart of the ``validate_*`` functions (all four share
+    The non-throwing counterpart of the ``validate_*`` functions (all share
     :func:`_variant_error`): only failing variants appear, so it is safe to badge the
-    canvas live. Covers mesh and cad dimensions the same way the throwing validators do.
+    canvas live. Covers the mesh dimension the same way the throwing validators do.
     """
     errors: dict[str, dict[str, str]] = {}
     for dim, variants in dimensions.items():

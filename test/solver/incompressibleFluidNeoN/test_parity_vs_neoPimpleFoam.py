@@ -155,8 +155,7 @@ def test_framework_solver_matches_legacy_neoPimpleFoam(tmp_path: Path) -> None:
         "legacy neoPimpleFoam",
     )
     _run_solver(
-        "from neofoam.solver.incompressibleFluidNeoN import run;"
-        " run(['incompressibleFluidNeoN'])",
+        "from neofoam.solver.incompressibleFluidNeoN import run; run(['incompressibleFluidNeoN'])",
         framework_case,
         "framework incompressibleFluidNeoN",
     )
@@ -164,14 +163,11 @@ def test_framework_solver_matches_legacy_neoPimpleFoam(tmp_path: Path) -> None:
     legacy_final = _final_time_dir(legacy_case)
     framework_final = _final_time_dir(framework_case)
     assert legacy_final.name == framework_final.name, (
-        f"solvers wrote different final times: "
-        f"{legacy_final.name} vs {framework_final.name}"
+        f"solvers wrote different final times: {legacy_final.name} vs {framework_final.name}"
     )
 
     fields = ("p", "U")
-    legacy_vals = _load_internal_fields(
-        legacy_case, legacy_final, fields, tmp_path / "legacy_read"
-    )
+    legacy_vals = _load_internal_fields(legacy_case, legacy_final, fields, tmp_path / "legacy_read")
     framework_vals = _load_internal_fields(
         framework_case, framework_final, fields, tmp_path / "framework_read"
     )
@@ -188,10 +184,7 @@ def test_framework_solver_matches_legacy_neoPimpleFoam(tmp_path: Path) -> None:
         )
         max_abs = float(np.max(np.abs(legacy_field - framework_field)))
         peak = float(np.max(np.abs(legacy_field)))
-        print(
-            f"{field_name}: max abs diff = {max_abs:.3e} "
-            f"(peak |{field_name}| = {peak:.3e})"
-        )
+        print(f"{field_name}: max abs diff = {max_abs:.3e} (peak |{field_name}| = {peak:.3e})")
         if max_abs > tol:
             failures.append(f"{field_name}(max abs={max_abs:.3e})")
 

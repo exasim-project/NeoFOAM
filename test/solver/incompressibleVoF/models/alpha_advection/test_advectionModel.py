@@ -17,12 +17,11 @@ from pathlib import Path
 
 import pytest
 
-from neofoam.framework.model import ModelSpec
-
 # Importing the solver entrypoint registers both bundled advection schemes
 # with the advectionModel family (import side effect - the whole point of
 # this test module).
 import neofoam.solver.incompressibleVoF.incompressibleVoF  # noqa: F401
+from neofoam.framework.model import ModelSpec
 from neofoam.solver.incompressibleVoF.models.alpha_advection.advectionModel import (
     advectionModel,
 )

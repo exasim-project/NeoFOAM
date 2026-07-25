@@ -29,6 +29,7 @@ from pybFoam import (
     volVectorField,
 )
 
+from neofoam import telemetry
 from neofoam.fields import (
     CalculatedBC,
     CyclicBC,
@@ -45,7 +46,6 @@ from neofoam.fields import (
     Vector,
     ZeroGradientBC,
 )
-from neofoam import telemetry
 from neofoam.foam import fvSchemes, fvSolution
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.dependency_resolver import wrap_with_dependency_resolution
@@ -60,7 +60,6 @@ from neofoam.framework.types import OperationMetadata
 
 from ..incompressibleFluidModel import Model
 from .control_factory import create_simple_control
-
 
 simple = Model("Simple")
 
@@ -227,9 +226,7 @@ def continuity(
         rAtU = volScalarField(rAU)
         if simple_control.consistent():
             rAtU.assign(1.0 / (1.0 / rAU - UEqn.H1()))
-            phiHbyA.assign(
-                phiHbyA + fvc.interpolate(rAtU - rAU) * fvc.snGrad(p) * U.mesh().magSf()
-            )
+            phiHbyA.assign(phiHbyA + fvc.interpolate(rAtU - rAU) * fvc.snGrad(p) * U.mesh().magSf())
             HbyA.assign(HbyA - (rAU - rAtU) * fvc.grad(p))
 
         pyf.constrainPressure(p, U, phiHbyA, rAtU)
@@ -288,16 +285,12 @@ def collected_operations(self: Any) -> Operations:
         )
     )
 
-    wrapped_momentum = wrap_with_dependency_resolution(
-        momentum, self, simple._dependency_resolver
-    )
+    wrapped_momentum = wrap_with_dependency_resolution(momentum, self, simple._dependency_resolver)
     wrapped_continuity = wrap_with_dependency_resolution(
         continuity, self, simple._dependency_resolver
     )
 
-    model_ops.add(
-        _alias_operation(wrapped_momentum, operation_name="momentum", depends_on=[])
-    )
+    model_ops.add(_alias_operation(wrapped_momentum, operation_name="momentum", depends_on=[]))
     model_ops.add(
         _alias_operation(
             wrapped_continuity,

@@ -89,16 +89,12 @@ def _prepare_case(model: str, dest: Path, end_time: int) -> None:
     """Copy the committed case, overlay the model, set the iteration count, mesh it."""
     shutil.copytree(_CASE, dest, ignore=shutil.ignore_patterns("models"))
     overlay = _CASE / "models" / model
-    shutil.copyfile(
-        overlay / "turbulenceProperties", dest / "constant" / "turbulenceProperties"
-    )
+    shutil.copyfile(overlay / "turbulenceProperties", dest / "constant" / "turbulenceProperties")
     for field in (overlay / "0").iterdir():
         shutil.copyfile(field, dest / "0" / field.name)
     control_dict = dest / "system" / "controlDict"
     text = control_dict.read_text()
-    text = re.sub(
-        r"^endTime\s+\S+;", f"endTime         {end_time};", text, count=1, flags=re.M
-    )
+    text = re.sub(r"^endTime\s+\S+;", f"endTime         {end_time};", text, count=1, flags=re.M)
     text = re.sub(
         r"^writeInterval\s+\S+;",
         f"writeInterval   {end_time};",
@@ -132,8 +128,7 @@ def _run_solver(code: str, case: Path, label: str) -> None:
 
 def _run_neon(case: Path) -> None:
     _run_solver(
-        "from neofoam.solver.incompressibleFluidNeoN import run;"
-        " run(['incompressibleFluidNeoN'])",
+        "from neofoam.solver.incompressibleFluidNeoN import run; run(['incompressibleFluidNeoN'])",
         case,
         "incompressibleFluidNeoN (steady)",
     )
@@ -141,8 +136,7 @@ def _run_neon(case: Path) -> None:
 
 def _run_reference(case: Path) -> None:
     _run_solver(
-        "from neofoam.solver.incompressibleFluid import run;"
-        " run(['incompressibleFluid'])",
+        "from neofoam.solver.incompressibleFluid import run; run(['incompressibleFluid'])",
         case,
         "incompressibleFluid (steady)",
     )
@@ -200,33 +194,24 @@ def _assert_fields_match(
     result_final = _final_time_dir(result_case)
     reference_final = _final_time_dir(reference_case)
     assert result_final.name == reference_final.name, (
-        f"solvers wrote different final times: "
-        f"{result_final.name} vs {reference_final.name}"
+        f"solvers wrote different final times: {result_final.name} vs {reference_final.name}"
     )
 
-    result_vals = _load_internal_fields(
-        result_case, fields, tmp_path / f"{label}_result"
-    )
-    reference_vals = _load_internal_fields(
-        reference_case, fields, tmp_path / f"{label}_reference"
-    )
+    result_vals = _load_internal_fields(result_case, fields, tmp_path / f"{label}_result")
+    reference_vals = _load_internal_fields(reference_case, fields, tmp_path / f"{label}_reference")
 
     failures = []
     for name in fields:
         reference = reference_vals[name]
         result = result_vals[name]
-        assert reference.shape == result.shape, (
-            f"{name}: shape {reference.shape} vs {result.shape}"
-        )
+        assert reference.shape == result.shape, f"{name}: shape {reference.shape} vs {result.shape}"
         peak = float(np.max(np.abs(reference))) or 1.0
         max_abs = float(np.max(np.abs(result - reference)))
         print(f"[{label}] {name}: max abs diff = {max_abs:.3e} (peak = {peak:.3e})")
         if not np.allclose(result, reference, rtol=rtol, atol=atol_scale * peak):
             failures.append(f"{name}(max abs={max_abs:.3e}, peak={peak:.3e})")
 
-    assert not failures, (
-        f"{label}: fields diverged beyond rtol={rtol:.0e}: " + ", ".join(failures)
-    )
+    assert not failures, f"{label}: fields diverged beyond rtol={rtol:.0e}: " + ", ".join(failures)
 
 
 @pytest.mark.parametrize("model", list(MODELS), ids=list(MODELS))
@@ -253,9 +238,7 @@ def test_neon_steady_two_iterations_roundoff(model: str, tmp_path: Path) -> None
 
 
 @pytest.mark.parametrize("model", list(MODELS), ids=list(MODELS))
-def test_neon_steady_converged_matches_incompressibleFluid(
-    model: str, tmp_path: Path
-) -> None:
+def test_neon_steady_converged_matches_incompressibleFluid(model: str, tmp_path: Path) -> None:
     """The converged SIMPLE fixed points agree (slow: ~2 min per solver)."""
     fields, _, (rtol, atol_scale) = MODELS[model]
     neon_case = tmp_path / "neon"
@@ -277,9 +260,7 @@ def test_neon_steady_converged_matches_incompressibleFluid(
     )
 
 
-@pytest.mark.skipif(
-    shutil.which("simpleFoam") is None, reason="native simpleFoam not on PATH"
-)
+@pytest.mark.skipif(shutil.which("simpleFoam") is None, reason="native simpleFoam not on PATH")
 @pytest.mark.parametrize("model", list(MODELS), ids=list(MODELS))
 def test_reference_steady_matches_native_simpleFoam(model: str, tmp_path: Path) -> None:
     """The reference itself: incompressibleFluid (SIMPLE) is bitwise-parity

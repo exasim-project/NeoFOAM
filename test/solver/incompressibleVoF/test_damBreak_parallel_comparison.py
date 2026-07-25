@@ -278,12 +278,9 @@ def test_parallel_damBreak_matches_native_interFoam(
         atol=_SOLVER_RTOL,
     )
 
-    assert all_match, (
-        f"regime {_describe(dam_break_runs.regime)} on 2 ranks: "
-        + ", ".join(
-            f"{name}(abs={failed_details[name][0]:.3e}, rel={failed_details[name][1]:.3e})"
-            for name in failed_fields
-        )
+    assert all_match, f"regime {_describe(dam_break_runs.regime)} on 2 ranks: " + ", ".join(
+        f"{name}(abs={failed_details[name][0]:.3e}, rel={failed_details[name][1]:.3e})"
+        for name in failed_fields
     )
 
 
@@ -367,9 +364,7 @@ def _max_relative_drift(first: Sequence[Any], second: Sequence[Any]) -> float:
     )
     scale = np.maximum(np.abs(a), np.abs(b))
     difference = np.abs(a - b)
-    return float(
-        np.max(np.where(scale > 0, difference / np.where(scale > 0, scale, 1), 0.0))
-    )
+    return float(np.max(np.where(scale > 0, difference / np.where(scale > 0, scale, 1), 0.0)))
 
 
 def test_decomposing_the_case_moves_the_interface_courant_numbers_no_more_than_interFoam(
@@ -455,8 +450,6 @@ def test_the_decomposition_puts_interface_cells_on_both_ranks(
     a rank-local ``gMax`` on the other one would satisfy them all."""
     for rank in range(NPROCS):
         case = rank_case(dam_break_runs.parallel_python, rank, tmp_path / f"r{rank}")
-        alpha = read_internal_fields(case, case / "0.05", ["alpha.water"])[
-            "alpha.water"
-        ]
+        alpha = read_internal_fields(case, case / "0.05", ["alpha.water"])["alpha.water"]
         band = int(np.count_nonzero((alpha >= 0.01) & (alpha <= 0.99)))
         assert band > 0, f"rank {rank} holds no near-interface cell at t = 0.05"

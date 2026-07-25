@@ -28,11 +28,13 @@ from neofoam.framework.initialization import (
     LoadResult,
     StagedInitRunner,
     StagedInitSpec,
+)
+from neofoam.framework.initialization import (
     model as init_model,
 )
 
-from .models.incompressibleVoFModel import incompressibleVoFModel
 from .models.alpha_advection import advectionModel  # noqa: F401  (registers schemes)
+from .models.incompressibleVoFModel import incompressibleVoFModel
 from .models.pressure_velocity.base import PressureVelocityAlgorithm
 
 # OpenFOAM libraries native interFoam links but pybFoam does not: their
@@ -69,9 +71,7 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             opt.run_resolve(config)
 
     @spec_builder.build
-    def build_lazy(
-        core_models: list[Any], optional_models: list[Any]
-    ) -> list[InitStep]:
+    def build_lazy(core_models: list[Any], optional_models: list[Any]) -> list[InitStep]:
         # Core models, looked up by spec name (order-independent).
         alpha_names = set(advectionModel.registered_names())
         pressure_names = {s.name for s in PressureVelocityAlgorithm.all_specs()}

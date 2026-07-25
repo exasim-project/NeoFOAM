@@ -33,9 +33,7 @@ def test_all_specs_is_empty_when_no_optional_model_is_registered() -> None:
 
 
 def test_detect_models_returns_empty_list_for_the_real_damBreak_case() -> None:
-    runtimes: list[ModelRuntime] = incompressibleVoFModel.detect_models(
-        _CASES / "damBreak"
-    )
+    runtimes: list[ModelRuntime] = incompressibleVoFModel.detect_models(_CASES / "damBreak")
     assert runtimes == []
 
 

@@ -2,10 +2,20 @@
 # SPDX-FileCopyrightText: 2025 NeoFOAM authors
 
 import sys
-from typing import Optional
 from pathlib import Path
+from typing import Optional
 
 import typer
+
+from neofoam.agent import build_case_agent, fill_case, write_wizard_notebook
+from neofoam.solver.icofoam import IcoFoam
+from neofoam.solver.incompressibleFluid import run as run_incompressible_fluid
+from neofoam.solver.incompressibleFluidNeoN import run as run_neon
+from neofoam.solver.incompressibleVoF import run as run_incompressible_vof
+from neofoam.solver.neoIcoFoam import NeoIcoFoam
+from neofoam.solver.neoPimpleFoam import NeoPimpleFoam
+from neofoam.solver.pimplefoam import PimpleFoam
+from neofoam.telemetry.report import write_chrome_trace, write_summary_plot
 
 app = typer.Typer()
 
@@ -47,9 +57,7 @@ app.add_typer(mcp_app, name="mcp", help="Run the NeoFOAM MCP server.")
 # Telemetry visualization command group
 telemetry_app = typer.Typer()
 
-app.add_typer(
-    telemetry_app, name="telemetry", help="Visualize solver telemetry traces."
-)
+app.add_typer(telemetry_app, name="telemetry", help="Visualize solver telemetry traces.")
 
 
 @telemetry_app.command("trace")
@@ -66,8 +74,6 @@ def telemetry_trace(
     Open the file in https://ui.perfetto.dev or ``chrome://tracing`` for a
     zoomable Gantt/flame timeline (one process row per MPI rank).
     """
-    from neofoam.telemetry.report import write_chrome_trace
-
     written = write_chrome_trace(case, output)
     typer.echo(f"Wrote {written}")
     typer.echo("Open it in https://ui.perfetto.dev or chrome://tracing")
@@ -81,16 +87,12 @@ def telemetry_plot(
     output: Optional[Path] = typer.Option(
         None, "--output", "-o", help="Output image (default: <telemetry>/summary.png)."
     ),
-    top: Optional[int] = typer.Option(
-        None, "--top", help="Keep only the N slowest operations."
-    ),
+    top: Optional[int] = typer.Option(None, "--top", help="Keep only the N slowest operations."),
     rank: Optional[int] = typer.Option(
         None, "--rank", help="Which rank's summary to plot (default: lowest)."
     ),
 ) -> None:
     """Render the per-operation total wall-clock as a bar-chart image (PNG)."""
-    from neofoam.telemetry.report import write_summary_plot
-
     written = write_summary_plot(case, output, top=top, rank=rank)
     typer.echo(f"Wrote {written}")
 
@@ -123,7 +125,9 @@ def mcp_serve(
     The server is solver-agnostic: each tool takes a ``solver`` argument
     (default ``incompressibleFluid``) resolved per call.
     """
-    from neofoam.mcp.app import serve
+    # noqa below: mcp.app imports fastapi unguarded, so keep this optional [mcp]
+    # dep out of module-import time (CLI must import without the mcp extra).
+    from neofoam.mcp.app import serve  # noqa: PLC0415
 
     serve(host=host, port=port, root=root, reload=reload)
 
@@ -161,8 +165,6 @@ def agent_fill(
     disk (``--no-llm``). Either way TARGET ends up runnable by
     ``neofoam solver incompressiblefluid``.
     """
-    from neofoam.agent import build_case_agent, fill_case
-
     agent_obj = None
     if not no_llm:
         agent_obj = build_case_agent(model_name=model_name)
@@ -186,12 +188,8 @@ def agent_wizard(
     target: str = typer.Argument(
         ".", help="Directory to scaffold the wizard notebook into (default: cwd)."
     ),
-    name: str = typer.Option(
-        "case_wizard.py", "--name", help="Notebook file name to write."
-    ),
-    force: bool = typer.Option(
-        False, "--force", help="Overwrite an existing notebook file."
-    ),
+    name: str = typer.Option("case_wizard.py", "--name", help="Notebook file name to write."),
+    force: bool = typer.Option(False, "--force", help="Overwrite an existing notebook file."),
 ) -> None:
     """Scaffold a marimo *case wizard* notebook into TARGET.
 
@@ -203,8 +201,6 @@ def agent_wizard(
         neofoam agent wizard my_case
         marimo edit my_case/case_wizard.py
     """
-    from neofoam.agent import write_wizard_notebook
-
     try:
         path = write_wizard_notebook(target, filename=name, force=force)
     except FileExistsError as exc:
@@ -214,14 +210,10 @@ def agent_wizard(
     typer.echo(f"Run it with:  marimo edit {path}")
 
 
-@solver_app.command(
-    context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
-)
+@solver_app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 def icofoam(ctx: typer.Context) -> None:
     """Transient solver for incompressible, laminar flow of Newtonian fluids."""
     _reject_postprocess(ctx.args)
-    from neofoam.solver.icofoam import IcoFoam
-
     # Only pass the extra args (not the Typer command path)
     argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
 
@@ -229,14 +221,10 @@ def icofoam(ctx: typer.Context) -> None:
     icoFoam.run()
 
 
-@solver_app.command(
-    context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
-)
+@solver_app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 def pimplefoam(ctx: typer.Context) -> None:
     """Transient solver for incompressible, turbulent flow of Newtonian fluids"""
     _reject_postprocess(ctx.args)
-
-    from neofoam.solver.pimplefoam import PimpleFoam
 
     # Only pass the extra args (not the Typer command path)
     argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
@@ -245,28 +233,20 @@ def pimplefoam(ctx: typer.Context) -> None:
     pimpleFoam.run()
 
 
-@solver_app.command(
-    context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
-)
+@solver_app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 def neoicofoam(ctx: typer.Context) -> None:
     """Transient solver for incompressible, laminar flow using NeoN bindings."""
     _reject_postprocess(ctx.args)
-    from neofoam.solver.neoIcoFoam import NeoIcoFoam
-
     argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
 
     solver = NeoIcoFoam(argv)
     solver.run()
 
 
-@solver_app.command(
-    context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
-)
+@solver_app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 def neopimplefoam(ctx: typer.Context) -> None:
     """Transient incompressible PIMPLE solver using NeoN bindings."""
     _reject_postprocess(ctx.args)
-    from neofoam.solver.neoPimpleFoam import NeoPimpleFoam
-
     argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
 
     solver = NeoPimpleFoam(argv)
@@ -280,8 +260,6 @@ def neopimplefoam(ctx: typer.Context) -> None:
 def incompressiblefluid(ctx: typer.Context) -> None:
     """Transient PIMPLE solver for incompressible Newtonian flow."""
     _reject_postprocess(ctx.args)
-    from neofoam.solver.incompressibleFluid import run as run_incompressible_fluid
-
     argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
     run_incompressible_fluid(argv)
 
@@ -293,8 +271,6 @@ def incompressiblefluid(ctx: typer.Context) -> None:
 def incompressiblevof(ctx: typer.Context) -> None:
     """incompressibleVoF - interFoam-style VoF solver with surface tension and gravity."""
     _reject_postprocess(ctx.args)
-    from neofoam.solver.incompressibleVoF import run as run_incompressible_vof
-
     argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
     run_incompressible_vof(argv)
 
@@ -306,8 +282,6 @@ def incompressiblevof(ctx: typer.Context) -> None:
 def incompressiblefluidneon(ctx: typer.Context) -> None:
     """Transient PIMPLE solver for incompressible flow (NeoN backend)."""
     _reject_postprocess(ctx.args)
-    from neofoam.solver.incompressibleFluidNeoN import run as run_neon
-
     argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
     run_neon(argv)
 
@@ -319,7 +293,8 @@ def preprocess(case: Path) -> None:
     <case> may be any path (absolute or relative to the cwd); the pipeline runs
     from inside the case, so it need not be the working directory.
     """
-    from neofoam.tools.run import run_preprocess
+    # Imported at call time so tests can monkeypatch neofoam.tools.run.run_preprocess.
+    from neofoam.tools.run import run_preprocess  # noqa: PLC0415
 
     run_preprocess([sys.argv[0], "-case", str(case)])
 

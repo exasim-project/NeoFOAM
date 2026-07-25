@@ -30,6 +30,7 @@ pybFoam-bound entry point.
 from pathlib import Path
 from typing import Any, Literal, Optional, Union, overload
 
+from .config import TurbulencePropertiesConfig
 from .fallback import FallbackHandle, OpenFOAMTurbulenceModel, TurbulenceFactory
 from .momentumTransport import momentumTransportModel
 from .native import NeoNHandle
@@ -148,9 +149,7 @@ def select_turbulence_model(
         of = OpenFOAMTurbulenceModel(U, phi, transport, factory=of_factory)
         return FallbackHandle(of, model_runtime.fallback_operations())
 
-    native_capable = spec._build_func is not None or bool(
-        model_runtime.native_operations()
-    )
+    native_capable = spec._build_func is not None or bool(model_runtime.native_operations())
     if not native_capable:
         raise ValueError(
             f"{name!r} has no native NeoN closure; run it on incompressibleFluid "
@@ -175,8 +174,6 @@ def select_from_case(
     This is the pybFoam-bound entry point: it imports and uses the OpenFOAM
     reading strategy via :class:`TurbulencePropertiesConfig`.
     """
-    from .config import TurbulencePropertiesConfig
-
     config = TurbulencePropertiesConfig.load(case_dir=case_dir)
     return select_turbulence_model(
         config,

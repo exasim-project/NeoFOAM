@@ -18,16 +18,18 @@ from neofoam.io.schema import (
     model_catalog,
     tool_catalog,
 )
+from neofoam.solver.incompressibleFluid.incompressibleFluid import (
+    incompressibleFluid,
+)
+from neofoam.solver.incompressibleFluidNeoN.incompressibleFluidNeoN import (
+    incompressibleFluidNeoN,
+)
 
 pytest.importorskip("pybFoam")  # resolving the solver spec imports pybFoam
 
 
 @pytest.fixture
 def solver() -> Any:
-    from neofoam.solver.incompressibleFluid.incompressibleFluid import (
-        incompressibleFluid,
-    )
-
     return incompressibleFluid
 
 
@@ -78,10 +80,6 @@ def test_list_configs_neon_transport_is_solver_turbulence_is_model_owned() -> No
     # pybFoam incompressibleFluid solver. Viscosity is still NOT a Python family on
     # NeoN (the C++ factory reads transportProperties directly), so
     # TransportPropertiesConfig stays solver-declared always-apply.
-    from neofoam.solver.incompressibleFluidNeoN.incompressibleFluidNeoN import (
-        incompressibleFluidNeoN,
-    )
-
     by_cls = {c.cls_name: c for c in list_configs(incompressibleFluidNeoN)}
     assert by_cls["TransportPropertiesConfig"].origin == "solver"
     assert by_cls["TurbulencePropertiesConfig"].origin == "required_model"

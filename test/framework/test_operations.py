@@ -8,6 +8,7 @@ from typing import Any, Iterator
 
 import pytest
 
+from framework.conftest import MaxIterations
 from neofoam import telemetry
 from neofoam.framework.context import Context
 from neofoam.framework.operations import (
@@ -20,8 +21,6 @@ from neofoam.framework.operations import (
 from neofoam.framework.types import OperationMetadata, OperationNumber
 from neofoam.telemetry import MpiInfo, TelemetrySettings
 
-from framework.conftest import MaxIterations
-
 HAS_OTEL = importlib.util.find_spec("opentelemetry") is not None
 
 
@@ -33,9 +32,7 @@ def _op(name: str, number: int, **kw: Any) -> Operation:
     """Shorthand for Operation with metadata."""
     return Operation(
         func=SequentialOp(function1),
-        metadata=OperationMetadata(
-            op_name=name, operation_number=OperationNumber(number), **kw
-        ),
+        metadata=OperationMetadata(op_name=name, operation_number=OperationNumber(number), **kw),
     )
 
 
@@ -50,9 +47,7 @@ def test_step_builder() -> None:
     builder.loop(
         Operation(
             func=SequentialOp(function1),
-            metadata=OperationMetadata(
-                op_name="loop1", operation_number=OperationNumber(3)
-            ),
+            metadata=OperationMetadata(op_name="loop1", operation_number=OperationNumber(3)),
             sub_operations=[
                 _op("loop1_step1", 4),
                 _op("loop1_step2", 5),
@@ -98,9 +93,7 @@ def test_builder_nested_context() -> None:
     assert len(builder.operations) == 3
     assert len(builder.operations[-1].sub_operations) == 2
 
-    builder.loop(_op("loop2", 6)).step(_op("loop2_step1", 7)).step(
-        _op("loop2_step2", 8)
-    )
+    builder.loop(_op("loop2", 6)).step(_op("loop2_step1", 7)).step(_op("loop2_step2", 8))
 
     assert len(builder.operations) == 4
     assert len(builder.operations[-1].sub_operations) == 2
@@ -253,9 +246,7 @@ def test_user_span_inside_operation_nests_under_operation_span(traced: Path) -> 
         with telemetry.span("user.assemble"):
             pass
 
-    op = Operation(
-        func=SequentialOp(solve), metadata=OperationMetadata(op_name="momentum")
-    )
+    op = Operation(func=SequentialOp(solve), metadata=OperationMetadata(op_name="momentum"))
     op.run(Context(fields={}, models={}, mesh={}))
 
     records = {r["name"]: r for r in _span_records(traced)}

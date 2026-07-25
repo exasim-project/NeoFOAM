@@ -97,19 +97,13 @@ def test_snakemake_dot_reports_missing_binary(tmp_path, monkeypatch):
 
 
 def test_dag_graph_falls_back_to_layered_layout_without_dot(tmp_path, monkeypatch):
-    monkeypatch.setattr(
-        "neofoam.tooling.workflow.dag.snakemake_dot", lambda *a, **k: _DOT
-    )
+    monkeypatch.setattr("neofoam.tooling.workflow.dag.snakemake_dot", lambda *a, **k: _DOT)
     # No `dot` binary → _graphviz_layout returns None and dag_graph uses the
     # pure-Python layered fallback, which still orders dependents below deps.
     monkeypatch.setattr("neofoam.tooling.workflow.dag.shutil.which", lambda name: None)
     nodes, _ = dag_graph(tmp_path, "dag")
     by_id = {n["id"]: n for n in nodes}
-    assert (
-        by_id["0"]["position"]["y"]
-        > by_id["1"]["position"]["y"]
-        > by_id["2"]["position"]["y"]
-    )
+    assert by_id["0"]["position"]["y"] > by_id["1"]["position"]["y"] > by_id["2"]["position"]["y"]
 
 
 def test_parse_dot_falls_back_on_malformed_color():

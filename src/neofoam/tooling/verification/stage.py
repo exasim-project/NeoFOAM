@@ -181,9 +181,7 @@ def swap_solver(native: str, app: str) -> Step:
                 allrun.write_text(pattern.sub(f'"{app}"', text))
                 return
 
-        msg = (
-            f"no unique solver token in Allrun (looked for $(getApplication), {native})"
-        )
+        msg = f"no unique solver token in Allrun (looked for $(getApplication), {native})"
         raise NoSwapPoint(msg)
 
     return step

@@ -51,7 +51,6 @@ from pybFoam import (
     volScalarField,
     volVectorField,
 )
-
 from schemes import div_scheme
 
 Op = Callable[[str, "np.ndarray | None"], "np.ndarray | None"]
@@ -124,12 +123,8 @@ def run(case_dir: Path) -> None:
         ("fvc.div", ("phi", "U")): lambda s, d: _internal(
             fvc.div(phi, u, scheme=div_scheme(s, "U"))
         ),
-        ("fvc.laplacian", ("Gamma", "T")): lambda s, d: _internal(
-            fvc.laplacian(gamma, t)
-        ),
-        ("fvc.laplacian", ("Gamma", "U")): lambda s, d: _internal(
-            fvc.laplacian(gamma, u)
-        ),
+        ("fvc.laplacian", ("Gamma", "T")): lambda s, d: _internal(fvc.laplacian(gamma, t)),
+        ("fvc.laplacian", ("Gamma", "U")): lambda s, d: _internal(fvc.laplacian(gamma, u)),
         ("fvm.div", ("phi", "T")): lambda s, d: _matrix_apply(
             fvScalarMatrix(fvm.div(phi, t, scheme=div_scheme(s, "T"))), t
         ),
@@ -157,9 +152,7 @@ def _serve(ops: dict[tuple[str, tuple[str, ...]], Op]) -> None:
             return
         try:
             data = np.load(request["data"]) if request.get("data") else None
-            result = ops[(request["func"], tuple(request["args"]))](
-                request.get("scheme"), data
-            )
+            result = ops[(request["func"], tuple(request["args"]))](request.get("scheme"), data)
             if result is not None:
                 np.save(request["out"], result)
             reply: dict[str, str] = {"status": "ok"}

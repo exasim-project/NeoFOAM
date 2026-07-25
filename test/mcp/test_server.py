@@ -70,10 +70,7 @@ def test_tool_unknown_solver_raises() -> None:
 
 
 def test_catalog_resource_mirrors_model_catalog() -> None:
-    expected = [
-        d.model_dump()
-        for d in tools.model_catalog(resolve_solver("incompressibleFluid"))
-    ]
+    expected = [d.model_dump() for d in tools.model_catalog(resolve_solver("incompressibleFluid"))]
     assert _resource_json("neofoam://incompressibleFluid/catalog") == expected
 
 
@@ -82,9 +79,7 @@ def test_solvers_resource_lists_known_solvers() -> None:
 
 
 def test_config_schema_resource_returns_schema() -> None:
-    payload = _resource_json(
-        "neofoam://incompressibleFluid/config/ControlDictConfig/schema"
-    )
+    payload = _resource_json("neofoam://incompressibleFluid/config/ControlDictConfig/schema")
     assert payload["name"] == "control_dict_config"
     assert "properties" in payload["json_schema"]
 

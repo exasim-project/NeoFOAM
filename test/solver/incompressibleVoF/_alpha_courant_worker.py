@@ -17,7 +17,9 @@ every expected number stays hand-derivable.
 
 from __future__ import annotations
 
+import gc
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -33,8 +35,6 @@ from neofoam.solver.incompressibleVoF.incompressibleVoF import (
 
 def _generate_mesh(case_dir: Path, runtime: Any) -> None:
     """Generate constant/polyMesh from system/blockMeshDict, in process."""
-    import gc
-
     block_dict = pyf.dictionary.read(str(case_dir / "system" / "blockMeshDict"))
     generated = pyf.meshing.generate_blockmesh(runtime, block_dict)
     del generated  # drop the registered region0 mesh before reading it back
@@ -71,8 +71,6 @@ def run(case_dir: Path, request: dict[str, Any]) -> dict[str, list[float]]:
 def main() -> None:
     case_dir = Path(sys.argv[1]).resolve()
     request = json.loads(Path(sys.argv[2]).read_text())
-    import os
-
     os.chdir(case_dir)
     (case_dir / "result.json").write_text(json.dumps(run(case_dir, request)))
 

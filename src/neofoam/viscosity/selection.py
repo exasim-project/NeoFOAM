@@ -16,6 +16,7 @@ loads the real OpenFOAM dictionary, is the only pybFoam-bound entry point.
 from pathlib import Path
 from typing import Any, Optional, Union
 
+from .config import TransportPropertiesConfig
 from .fallback import OpenFOAMViscosityModel, TransportFactory
 from .viscosityModel import ModelSpec, viscosityModel
 
@@ -65,7 +66,5 @@ def select_from_case(
     This is the pybFoam-bound entry point: it imports and uses the OpenFOAM
     reading strategy via :class:`TransportPropertiesConfig`.
     """
-    from .config import TransportPropertiesConfig
-
     config = TransportPropertiesConfig.load(case_dir=case_dir)
     return select_viscosity_model(config, U=U, phi=phi, of_factory=of_factory)

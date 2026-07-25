@@ -42,9 +42,7 @@ def test_instrument_passes_through_when_inactive() -> None:
 
 
 def test_configure_disabled_settings_stays_inactive(tmp_path: Path) -> None:
-    telemetry.configure(
-        TelemetrySettings(enabled=False), case_dir=tmp_path, mpi=MpiInfo()
-    )
+    telemetry.configure(TelemetrySettings(enabled=False), case_dir=tmp_path, mpi=MpiInfo())
     assert telemetry.is_active() is False
     assert not (tmp_path / "telemetry").exists()
 
@@ -156,9 +154,7 @@ def test_shutdown_writes_summary(tmp_path: Path) -> None:
 
 
 def test_summary_can_be_disabled(tmp_path: Path) -> None:
-    telemetry.configure(
-        TelemetrySettings(summary=False), case_dir=tmp_path, mpi=MpiInfo()
-    )
+    telemetry.configure(TelemetrySettings(summary=False), case_dir=tmp_path, mpi=MpiInfo())
     with telemetry.span("op"):
         pass
     telemetry.shutdown()

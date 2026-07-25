@@ -100,8 +100,7 @@ class NeoNHandle:
             raise RuntimeError("validate() must be called before field()")
         if name not in self._ctx.fields:
             raise KeyError(
-                f"NeoN turbulence exposes no field {name!r} "
-                f"(known: {sorted(self._ctx.fields)})"
+                f"NeoN turbulence exposes no field {name!r} (known: {sorted(self._ctx.fields)})"
             )
         return self._ctx.fields[name]
 

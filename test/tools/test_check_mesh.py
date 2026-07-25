@@ -11,11 +11,14 @@ import os
 from pathlib import Path
 from typing import Any
 
+import pybFoam as pyf
 import pytest
+from pybFoam.meshing import checkMesh as real_check
+from pybFoam.meshing import generate_blockmesh
 
-from neofoam.tooling.casebuild import from_template
 from neofoam.framework.initialization import InitStepExecutionError
 from neofoam.framework.tools import ToolRuntime
+from neofoam.tooling.casebuild import from_template
 from neofoam.tools import check_mesh
 from neofoam.tools.check_mesh import CheckMeshStep, checkMeshTool
 
@@ -107,10 +110,6 @@ def test_checkmesh_propagates_check_flags(monkeypatch: pytest.MonkeyPatch) -> No
 
 
 def test_checkmesh_passes_on_valid_mesh(tmp_path: Path) -> None:
-    import pybFoam as pyf
-    from pybFoam.meshing import checkMesh as real_check
-    from pybFoam.meshing import generate_blockmesh
-
     assert not (CASE / "constant" / "polyMesh").exists()
     case_dir = from_template(CASE).build_at(tmp_path / "case")
     cwd = Path.cwd()

@@ -57,8 +57,7 @@ class ModelInterface(Generic[T]):
         """
         if contribution not in self._contributions:
             raise KeyError(
-                f"interface '{self.name}': {contribution!r} is not a registered "
-                "contribution."
+                f"interface '{self.name}': {contribution!r} is not a registered contribution."
             )
         return self._contributions[contribution]
 
@@ -66,9 +65,7 @@ class ModelInterface(Generic[T]):
         """Combine *values* via the declared fold (empty -> the fold's default)."""
         return self._fold(values)
 
-    def _register_contribution(
-        self, func: Callable[..., T], owner: ModelSpec
-    ) -> Callable[..., T]:
+    def _register_contribution(self, func: Callable[..., T], owner: ModelSpec) -> Callable[..., T]:
         """Record *func* as a contribution owned by the *owner* model."""
         self._contributions[func] = owner
         return func
@@ -102,9 +99,7 @@ def _resolve_contribution_kwargs(
     for meta in _discover_configs_from_signature(func):
         pname = meta["param_name"]
         try:
-            preresolved[pname] = _find_config_by_type(
-                runtime.config, meta["config_type"]
-            )
+            preresolved[pname] = _find_config_by_type(runtime.config, meta["config_type"])
         except ValueError as exc:
             raise ValueError(
                 f"interface '{interface_name}': contribution '{func.__name__}' "
@@ -167,9 +162,7 @@ class BoundModelInterface(Generic[T]):
             runtime = self._runtime_by_spec.get(owner_spec)
             if runtime is None:
                 continue  # contributing model not active for this case
-            kwargs = _resolve_contribution_kwargs(
-                self._interface.name, func, runtime, live_ctx
-            )
+            kwargs = _resolve_contribution_kwargs(self._interface.name, func, runtime, live_ctx)
             values.append(func(**kwargs))
         return self._interface.fold(values)
 
@@ -221,7 +214,5 @@ def bind_owned_interfaces(
     """
     candidates = list(candidate_runtimes)
     for iface in owner_runtime.spec.declared_interfaces.values():
-        bind_model_interface(
-            owner_runtime, iface, active_contributors(iface, candidates), ctx
-        )
+        bind_model_interface(owner_runtime, iface, active_contributors(iface, candidates), ctx)
     return owner_runtime

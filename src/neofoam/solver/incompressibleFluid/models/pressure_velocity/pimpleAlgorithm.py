@@ -29,6 +29,7 @@ from pybFoam import (
     volVectorField,
 )
 
+from neofoam import telemetry
 from neofoam.fields import (
     CalculatedBC,
     CyclicBC,
@@ -45,7 +46,6 @@ from neofoam.fields import (
     Vector,
     ZeroGradientBC,
 )
-from neofoam import telemetry
 from neofoam.foam import fvSchemes, fvSolution
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.dependency_resolver import wrap_with_dependency_resolution
@@ -60,7 +60,6 @@ from neofoam.framework.types import OperationMetadata
 
 from ..incompressibleFluidModel import Model
 from .control_factory import create_pimple_control
-
 
 pimple = Model("Pimple")
 
@@ -168,12 +167,9 @@ def build(self: Any) -> list[Any]:
         field_name = "p_rgh" if p_rgh is not None else "p"
 
         if not (
-            algo_dict.found(f"{field_name}RefCell")
-            or algo_dict.found(f"{field_name}RefPoint")
+            algo_dict.found(f"{field_name}RefCell") or algo_dict.found(f"{field_name}RefPoint")
         ):
-            if p_rgh is not None and (
-                algo_dict.found("pRefCell") or algo_dict.found("pRefPoint")
-            ):
+            if p_rgh is not None and (algo_dict.found("pRefCell") or algo_dict.found("pRefPoint")):
                 pRefCell, pRefValue = pyf.setRefCell(p, algo_dict, True)
             else:
                 pRefCell, pRefValue = pyf.setRefCell(pressure_field, algo_dict)
@@ -253,9 +249,7 @@ def momentum(
     # matches OpenFOAM's once-per-step eddy viscosity.
     with telemetry.span("momentum.assemble"):
         viscousStress.update(ctx)
-        UEqn = fvVectorMatrix(
-            fvm.ddt(U) + fvm.div(phi, U) + viscousStress.divDevReff(U)
-        )
+        UEqn = fvVectorMatrix(fvm.ddt(U) + fvm.div(phi, U) + viscousStress.divDevReff(U))
         UEqn.relax()
 
     if pimple_control.momentumPredictor():
@@ -265,9 +259,7 @@ def momentum(
             # finalIteration state. ``UEqn`` keeps its coefficients for the
             # pressure loop; the predictor system ``UEqn + grad(p)`` is a
             # separate matrix whose solve updates U.
-            fvVectorMatrix(UEqn + fvc.grad(p)).solve(
-                U.select(pimple_control.finalIter())
-            )
+            fvVectorMatrix(UEqn + fvc.grad(p)).solve(U.select(pimple_control.finalIter()))
 
     return FieldUpdates({"UEqn": UEqn, "U": U})
 
@@ -309,9 +301,7 @@ def continuity(
             with telemetry.span("pressure.assemble"):
                 pEqn = fvScalarMatrix(fvm.laplacian(rAU, p) - fvc.div(phiHbyA))
                 pEqn.setReference(pRefCell, pRefValue, False)
-            with telemetry.span(
-                "pressure.solve", final=pimple_control.finalInnerIter()
-            ):
+            with telemetry.span("pressure.solve", final=pimple_control.finalInnerIter()):
                 pEqn.solve(p.select(pimple_control.finalInnerIter()))
 
             if pimple_control.finalNonOrthogonalIter():
@@ -357,9 +347,7 @@ def momentum_boussinesq(
     # Refresh nuEff where it is consumed (see ``momentum``).
     with telemetry.span("momentum.assemble"):
         viscousStress.update(ctx)
-        UEqn = fvVectorMatrix(
-            fvm.ddt(U) + fvm.div(phi, U) + viscousStress.divDevReff(U)
-        )
+        UEqn = fvVectorMatrix(fvm.ddt(U) + fvm.div(phi, U) + viscousStress.divDevReff(U))
         UEqn.relax()
 
     if pimple_control.momentumPredictor():
@@ -367,10 +355,7 @@ def momentum_boussinesq(
             # Explicit final-iteration flag (see ``momentum``): pick UFinal via
             # U.select rather than the mesh finalIteration state.
             fvVectorMatrix(
-                UEqn
-                + fvc.reconstruct(
-                    (-ghf * fvc.snGrad(rhok) - fvc.snGrad(p_rgh)) * mesh.magSf()
-                )
+                UEqn + fvc.reconstruct((-ghf * fvc.snGrad(rhok) - fvc.snGrad(p_rgh)) * mesh.magSf())
             ).solve(U.select(pimple_control.finalIter()))
 
     return FieldUpdates({"UEqn": UEqn, "U": U})
@@ -421,9 +406,7 @@ def continuity_boussinesq(
             with telemetry.span("pressure.assemble"):
                 pEqn = fvScalarMatrix(fvm.laplacian(rAUf, p_rgh) - fvc.div(phiHbyA))
                 pEqn.setReference(pRefCell, pRefValue, False)
-            with telemetry.span(
-                "pressure.solve", final=pimple_control.finalInnerIter()
-            ):
+            with telemetry.span("pressure.solve", final=pimple_control.finalInnerIter()):
                 pEqn.solve(p_rgh.select(pimple_control.finalInnerIter()))
 
             if pimple_control.finalNonOrthogonalIter():
@@ -489,9 +472,7 @@ def collected_operations(self: Any) -> Operations:
         continuity_op, self, pimple._dependency_resolver
     )
 
-    model_ops.add(
-        _alias_operation(wrapped_momentum, operation_name="momentum", depends_on=[])
-    )
+    model_ops.add(_alias_operation(wrapped_momentum, operation_name="momentum", depends_on=[]))
     model_ops.add(
         _alias_operation(
             wrapped_continuity,

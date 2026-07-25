@@ -7,8 +7,7 @@ Reads one dict section (or one entry) via ``pybFoam.dictionary`` and classifies
 **each leaf** as :class:`Value` or :class:`Unreadable`. A leaf that cannot be
 rendered as text becomes an explicit :class:`Unreadable` rather than a swallowed
 skip that truncates the whole section — the mechanism behind the silent
-false-success in ``validate_case``. Frontend-agnostic: ``import pybFoam`` is lazy
-inside the functions, so ``import neofoam.io`` pulls no ``pybFoam``.
+false-success in ``validate_case``.
 """
 
 from __future__ import annotations
@@ -16,6 +15,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Optional, Union
+
+import pybFoam as pyf
 
 __all__ = [
     "Value",
@@ -72,7 +73,6 @@ def read_section(path: Path, section: str) -> dict[str, dict[str, Leaf]]:
     out: dict[str, dict[str, Leaf]] = {}
     if not path.is_file():
         return out
-    import pybFoam as pyf
 
     # Intentionally NO try/except around the parse here (unlike read_keys/
     # read_toplevel): on this backend a genuinely corrupt FOAM dict aborts the
@@ -109,7 +109,6 @@ def read_entry(path: Path, section: str, key: str) -> Optional[Leaf]:
     """
     if not path.is_file():
         return None
-    import pybFoam as pyf
 
     root: Any = pyf.dictionary.read(str(path))  # pybFoam dictionary: dynamic access
     if not root.found(section):
@@ -132,7 +131,6 @@ def read_keys(path: Path) -> Union[frozenset[str], Unreadable, None]:
     """
     if not path.is_file():
         return None
-    import pybFoam as pyf
 
     try:
         root: Any = pyf.dictionary.read(str(path))  # pybFoam dictionary: dynamic access
@@ -150,7 +148,6 @@ def read_toplevel(path: Path, key: str) -> Optional[Leaf]:
     """
     if not path.is_file():
         return None
-    import pybFoam as pyf
 
     try:
         root: Any = pyf.dictionary.read(str(path))  # pybFoam dictionary: dynamic access

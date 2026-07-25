@@ -17,6 +17,7 @@ from typing import Any
 
 import pytest
 
+import neofoam.tooling.verification.runner as runner_mod
 from neofoam.tooling.verification.execute import (
     CASE_SETUP_FAILED,
     NATIVE_FAILED,
@@ -120,9 +121,7 @@ def test_compare_records_the_study_identity_in_the_result(tmp_path: Path) -> Non
     assert record["neo_patch"] == _PATCH
 
 
-def test_run_falls_back_to_first_token_log(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_run_falls_back_to_first_token_log(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """The combined ``run`` (packaged driver / VoF study) writes its own
     ``.status.json`` straight from ``run_allrun``'s primary-log check
     (``_status_from_rundir`` then trusts that file verbatim, see
@@ -131,17 +130,13 @@ def test_run_falls_back_to_first_token_log(
     ``log.<first token>`` when ``application="…"; runApplication ${application}``
     (unquoted) re-splits the multi-word neofoam command.
     """
-    import neofoam.tooling.verification.runner as runner_mod
-
     study, case = _study_with_patch(), _vof_case()
     work = tmp_path / "work"
 
     def fake_stage(*args: Any, **kwargs: Any) -> None:
         _case_dir(work, case, "incompressiblevof").mkdir(parents=True, exist_ok=True)
 
-    def fake_run_allrun(
-        case_dir: Path, solver_log: str, timeout: int = 1800
-    ) -> dict[str, object]:
+    def fake_run_allrun(case_dir: Path, solver_log: str, timeout: int = 1800) -> dict[str, object]:
         # Only the first-token fallback log was written, as the real
         # `runApplication ${application}` (unquoted) idiom does — the primary
         # `log.<full command>` this call was asked to check never exists.

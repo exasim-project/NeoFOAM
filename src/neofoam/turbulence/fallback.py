@@ -12,8 +12,6 @@ and advances the model via a ``correct()`` operation after the pressure-velocity
 coupling — the proven OpenFOAM lifecycle. Materialising the OF eddy viscosity as
 a Context field is unsafe (it duplicates the model's registered ``nut``), which is
 why the fallback keeps its own stress rather than the shared assembly.
-
-pybFoam is imported lazily, so importing this module needs no OpenFOAM build.
 """
 
 from typing import Any, Callable, Optional
@@ -36,7 +34,9 @@ TurbulenceFactory = Callable[[Any, Any, Any], Any]
 
 def _default_factory() -> "TurbulenceFactory":
     """Return pybFoam's incompressible turbulence factory (lazy import)."""
-    from pybFoam.turbulence import incompressibleTurbulenceModel
+    # Lazy so constructing the adapter stays side-effect-free and unit-testable
+    # with an injected factory (test_construction_does_not_import_pybfoam).
+    from pybFoam.turbulence import incompressibleTurbulenceModel  # noqa: PLC0415
 
     return incompressibleTurbulenceModel.New
 
@@ -84,9 +84,7 @@ class OpenFOAMTurbulenceModel:
 
     def _require_impl(self) -> Any:
         if self._impl is None:
-            raise RuntimeError(
-                "OpenFOAMTurbulenceModel.build() must be called before use"
-            )
+            raise RuntimeError("OpenFOAMTurbulenceModel.build() must be called before use")
         return self._impl
 
     def has_nut(self) -> bool:
@@ -165,9 +163,7 @@ class FallbackHandle:
     #: Descriptive tag for the stress family this handle uses.
     stress_kind = "openfoam"
 
-    def __init__(
-        self, of_model: OpenFOAMTurbulenceModel, operations: list[Operation]
-    ) -> None:
+    def __init__(self, of_model: OpenFOAMTurbulenceModel, operations: list[Operation]) -> None:
         self._of = of_model
         self._operations = list(operations)
 

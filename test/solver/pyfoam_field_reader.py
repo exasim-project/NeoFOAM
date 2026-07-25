@@ -22,9 +22,7 @@ import pybFoam as pyf
 from pybFoam import volScalarField, volVectorField
 
 
-def read_fields(
-    case: Path, time_dir: Path, out_dir: Path, field_names: list[str]
-) -> None:
+def read_fields(case: Path, time_dir: Path, out_dir: Path, field_names: list[str]) -> None:
     """Stage ``time_dir`` as ``0/`` and dump each field's internal field to ``.npy``."""
     staged = out_dir / "case"
     shutil.copytree(case / "system", staged / "system")

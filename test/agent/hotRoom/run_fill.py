@@ -57,7 +57,10 @@ if __name__ == "__main__":
 
     # 1) Tell the agent to fill the configs.
     agent = build_case_agent(model_name="claude-haiku-4-5")
-    prompt = "fill out the config files that match the schema and select the Boussinesq model the boundary names are top bottom left right front back and kEpsilon"
+    prompt = (
+        "fill out the config files that match the schema and select the Boussinesq "
+        "model the boundary names are top bottom left right front back and kEpsilon"
+    )
     # prompt = _agent_prompt_from_source(SOURCE, incompressibleFluid)
     print("=== prompt ===")
     print(prompt)

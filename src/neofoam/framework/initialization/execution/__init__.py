@@ -35,8 +35,8 @@ without modifying framework code.
 
 from __future__ import annotations
 
-from ..init_step import InitStep
 from ...context import Context
+from ..init_step import InitStep
 from .context_builder import (
     CategoryRouter,
     ContextBuilder,

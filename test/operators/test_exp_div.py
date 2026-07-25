@@ -33,9 +33,7 @@ def test_div_phi(mesh: str, executor: str) -> None:
     nb_res = nb.exp.div(phi)
 
     rtol = 1e-9 if executor == "Serial" else 1e-8
-    np.testing.assert_allclose(
-        nb_res, pyb_res, rtol=rtol, atol=1e-12 * np.abs(pyb_res).max()
-    )
+    np.testing.assert_allclose(nb_res, pyb_res, rtol=rtol, atol=1e-12 * np.abs(pyb_res).max())
 
 
 @pytest.mark.parametrize("executor", EXECUTORS)
@@ -60,9 +58,7 @@ def test_div_phi_T(mesh: str, scheme: str, executor: str) -> None:
     nb_res = nb.exp.div(phi, T, scheme=scheme)
 
     rtol = 1e-9 if executor == "Serial" else 1e-8
-    np.testing.assert_allclose(
-        nb_res, pyb_res, rtol=rtol, atol=1e-12 * np.abs(pyb_res).max()
-    )
+    np.testing.assert_allclose(nb_res, pyb_res, rtol=rtol, atol=1e-12 * np.abs(pyb_res).max())
 
 
 @pytest.mark.parametrize("executor", EXECUTORS)
@@ -84,6 +80,4 @@ def test_div_phi_U(mesh: str, scheme: str, executor: str) -> None:
     nb_res = nb.exp.div(phi, U, scheme=scheme)
 
     rtol = 1e-9 if executor == "Serial" else 1e-8
-    np.testing.assert_allclose(
-        nb_res, pyb_res, rtol=rtol, atol=1e-12 * np.abs(pyb_res).max()
-    )
+    np.testing.assert_allclose(nb_res, pyb_res, rtol=rtol, atol=1e-12 * np.abs(pyb_res).max())

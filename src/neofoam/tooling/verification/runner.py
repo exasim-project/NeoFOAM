@@ -27,9 +27,9 @@ import argparse
 import json
 import shutil
 from pathlib import Path
-
 from typing import Any
 
+from neofoam.tooling.casebuild import CaseDir, Step, patch
 from neofoam.tooling.verification.compare import FieldDiff, compare_runs
 from neofoam.tooling.verification.execute import (
     CASE_SETUP_FAILED,
@@ -42,7 +42,6 @@ from neofoam.tooling.verification.execute import (
     log_tail,
     run_allrun,
 )
-from neofoam.tooling.casebuild import CaseDir, Step, patch
 from neofoam.tooling.verification.report import render_report
 from neofoam.tooling.verification.stage import NoSwapPoint, stage, swap_solver
 from neofoam.tooling.verification.study import Case, Study, load_study
@@ -192,15 +191,11 @@ def _neutralize(case_dir: Path) -> None:
     """
     case_dir.mkdir(parents=True, exist_ok=True)
     allrun = case_dir / "Allrun"
-    allrun.write_text(
-        "#!/bin/sh\n# not runnable — see .swapped.json for the reason\nexit 0\n"
-    )
+    allrun.write_text("#!/bin/sh\n# not runnable — see .swapped.json for the reason\nexit 0\n")
     allrun.chmod(0o755)
 
 
-def _build(
-    study: Study, case: Case, solver: str, cases_root: Path, stamp: Path
-) -> None:
+def _build(study: Study, case: Case, solver: str, cases_root: Path, stamp: Path) -> None:
     """Stage a native-ready case dir (identical recipe for every solver).
 
     No solver swap and no ``neo_patch`` here — those are the candidate deviation,
@@ -287,11 +282,7 @@ def _status_from_rundir(
     app = "" if native else study.candidates[solver]
     solver_log = _resolve_solver_log(case_dir, case, app, native)
     seconds = _read_seconds(case_dir)
-    log_text = (
-        solver_log.read_bytes().decode("utf-8", "replace")
-        if solver_log.is_file()
-        else ""
-    )
+    log_text = solver_log.read_bytes().decode("utf-8", "replace") if solver_log.is_file() else ""
     if "End\n" in log_text:
         status.update(finished=True, timed_out=False, no_swap=False, reason="")
     elif log_text:
@@ -372,9 +363,7 @@ def _failing_log(
         log_file = _resolve_solver_log(run_dir, case, "", native=True)
     else:
         run_dir = _case_dir(work, case, candidate)
-        log_file = _resolve_solver_log(
-            run_dir, case, study.candidates[candidate], native=False
-        )
+        log_file = _resolve_solver_log(run_dir, case, study.candidates[candidate], native=False)
     if not log_file.is_file():
         return "", ""
     tail = log_tail(log_file.read_bytes().decode("utf-8", "replace"))
@@ -394,9 +383,7 @@ def _compare(study: Study, case: Case, work: Path, out: Path) -> None:
     for label in study.candidate_labels:
         status = _status_from_rundir(study, case, label, work)
         cand_dir = _case_dir(work, case, label)
-        outcome, detail, diffs = _decide(
-            native, status, native_dir, cand_dir, list(case.fields)
-        )
+        outcome, detail, diffs = _decide(native, status, native_dir, cand_dir, list(case.fields))
         log_path, log = _failing_log(study, case, work, outcome, label)
         candidates.append(
             {
@@ -434,9 +421,7 @@ def _compare(study: Study, case: Case, work: Path, out: Path) -> None:
 
 
 def _report(study: Study, results_dir: Path, out: Path) -> None:
-    records = [
-        json.loads(path.read_text()) for path in sorted(results_dir.glob("*.json"))
-    ]
+    records = [json.loads(path.read_text()) for path in sorted(results_dir.glob("*.json"))]
     out.write_text(render_report(study, records))
 
 
@@ -460,9 +445,7 @@ def main(argv: list[str] | None = None) -> int:
     swap.add_argument("--solver", required=True, help="solver label")
     swap.add_argument("--cases", required=True, type=Path, help="cases root dir")
     swap.add_argument("--built", required=True, type=Path, help=".built.json to read")
-    swap.add_argument(
-        "--stamp", required=True, type=Path, help=".swapped.json to write"
-    )
+    swap.add_argument("--stamp", required=True, type=Path, help=".swapped.json to write")
 
     run = sub.add_parser("run", help="stage and run one solver of a case")
     run.add_argument("--case", required=True, help="case id")
@@ -481,9 +464,7 @@ def main(argv: list[str] | None = None) -> int:
     # and the DAG completes instead of one bad case stranding the whole report.
     marked = sub.add_parser("mark-failed", help="write a CASE_SETUP_FAILED status")
     marked.add_argument("--solver", required=True, help="solver label")
-    marked.add_argument(
-        "--status", required=True, type=Path, help="status JSON to write"
-    )
+    marked.add_argument("--status", required=True, type=Path, help="status JSON to write")
 
     compare = sub.add_parser("compare", help="diff a case's two runs")
     compare.add_argument("--case", required=True, help="case id")
@@ -496,9 +477,7 @@ def main(argv: list[str] | None = None) -> int:
         type=Path,
         help="cases root dir",
     )
-    compare.add_argument(
-        "--out", required=True, type=Path, help="results JSON to write"
-    )
+    compare.add_argument("--out", required=True, type=Path, help="results JSON to write")
 
     report = sub.add_parser("report", help="render report.html from results/")
     report.add_argument("--results", required=True, type=Path, help="results dir")

@@ -41,9 +41,7 @@ def discover():
 """
 
 _CONFIG = "title: vof\ndiscover: discover.py\n"
-_CONFIG_PATCH = (
-    _CONFIG + "neo_patch:\n  system/fvSolution:\n    advectionScheme: isoAdvector\n"
-)
+_CONFIG_PATCH = _CONFIG + "neo_patch:\n  system/fvSolution:\n    advectionScheme: isoAdvector\n"
 
 
 def _study(tmp_path: Path, config: str) -> Any:
@@ -66,15 +64,10 @@ def test_neo_patch_step_injects_the_key_into_fvsolution(tmp_path: Path) -> None:
     assert len(steps) == 1
     steps[0](CaseDir(case))
 
-    assert (
-        DictFile(case / "system" / "fvSolution").get[str]("advectionScheme")
-        == "isoAdvector"
-    )
+    assert DictFile(case / "system" / "fvSolution").get[str]("advectionScheme") == "isoAdvector"
 
 
-def test_run_applies_neo_patch_to_neo_side_only(
-    tmp_path: Path, monkeypatch: Any
-) -> None:
+def test_run_applies_neo_patch_to_neo_side_only(tmp_path: Path, monkeypatch: Any) -> None:
     """``_run`` passes the extra steps for the neo side and an empty tuple for native."""
     captured: dict[str, tuple[Any, ...]] = {}
 
@@ -87,9 +80,7 @@ def test_run_applies_neo_patch_to_neo_side_only(
     study = _study(tmp_path, _CONFIG_PATCH)
     case: Case = study.cases[0]
     runner._run(study, case, case.neo_label, tmp_path / "work", tmp_path / "neo.json")
-    runner._run(
-        study, case, case.native_label, tmp_path / "work", tmp_path / "native.json"
-    )
+    runner._run(study, case, case.native_label, tmp_path / "work", tmp_path / "native.json")
 
     assert len(captured["neo"]) == 1
     assert captured["native"] == ()

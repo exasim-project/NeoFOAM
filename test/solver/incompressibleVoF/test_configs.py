@@ -141,9 +141,7 @@ def test_value_parses_both_openfoam_string_and_list_forms(
         (-1.0, "-1"),
     ],
 )
-def test_fmt_component_drops_gratuitous_trailing_zero(
-    component: float, expected: str
-) -> None:
+def test_fmt_component_drops_gratuitous_trailing_zero(component: float, expected: str) -> None:
     assert _fmt_component(component) == expected
 
 

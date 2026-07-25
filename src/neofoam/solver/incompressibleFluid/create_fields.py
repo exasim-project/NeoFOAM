@@ -14,6 +14,8 @@ from typing import Any, Optional
 import pybFoam as pyf
 from pybFoam.turbulence import singlePhaseTransportModel
 
+from neofoam.fields.synthesis import synthesize_init_step
+from neofoam.framework.context import Context
 from neofoam.framework.initialization import (
     ConfigContext,
     InitializerBuilder,
@@ -23,9 +25,10 @@ from neofoam.framework.initialization import (
     StagedInitSpec,
     field,
     lazy,
+)
+from neofoam.framework.initialization import (
     model as init_model,
 )
-from neofoam.framework.context import Context
 from neofoam.framework.model import ModelRuntime, ModelSpec, bind_owned_interfaces
 from neofoam.framework.tools import tool_graph_steps
 from neofoam.tools.run import detect_tools
@@ -41,9 +44,7 @@ from .models.pressure_velocity.base import PressureVelocityAlgorithm
 from .models.solution_loop import loop_backend_steps, solutionLoop
 
 
-def _add_viscosity_model(
-    builder: InitializerBuilder, selected: Any, case_dir: Path
-) -> None:
+def _add_viscosity_model(builder: InitializerBuilder, selected: Any, case_dir: Path) -> None:
     """Add the viscosity model + the ``fields.nu`` it owns.
 
     A native model (``ModelSpec``) is built here and its ``@build`` step emits
@@ -62,9 +63,7 @@ def _add_viscosity_model(
     def create_nu(ctx: dict[str, Any]) -> Any:
         return ctx["models.viscosity"].nu_field()
 
-    builder.add(
-        init_model("viscosity", build_viscosity, depends_on=["models.laminarTransport"])
-    )
+    builder.add(init_model("viscosity", build_viscosity, depends_on=["models.laminarTransport"]))
     builder.add(field("nu", create_nu, depends_on=["models.viscosity"]))
 
 
@@ -108,9 +107,7 @@ def _add_turbulence_model(builder: InitializerBuilder, case_dir: Path) -> None:
         )
     )
     builder.add(
-        init_model(
-            "viscousStress", create_viscous_stress, depends_on=["models.turbulence"]
-        )
+        init_model("viscousStress", create_viscous_stress, depends_on=["models.turbulence"])
     )
 
 
@@ -184,9 +181,7 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             opt.run_resolve(config)
 
     @spec_builder.build
-    def build_lazy(
-        core_models: list[Any], optional_models: list[Any]
-    ) -> list[InitStep]:
+    def build_lazy(core_models: list[Any], optional_models: list[Any]) -> list[InitStep]:
         pressure_model = core_models[0]
         transport_config = next(
             (m for m in core_models if isinstance(m, TransportPropertiesConfig)), None
@@ -194,9 +189,7 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
 
         def _by_spec(spec_name: str) -> Any:
             return next(
-                m
-                for m in core_models
-                if isinstance(m, ModelRuntime) and m.spec.name == spec_name
+                m for m in core_models if isinstance(m, ModelRuntime) and m.spec.name == spec_name
             )
 
         solution_loop_model = _by_spec("solutionLoop")
@@ -252,17 +245,13 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             ]
         )
         builder.extend(loop_backend_steps())
-        builder.extend(
-            writer_backend_steps(ControlDictConfig.load(case_dir=resolved_case_dir))
-        )
+        builder.extend(writer_backend_steps(ControlDictConfig.load(case_dir=resolved_case_dir)))
 
         # PIMPLE is passed to add_core_models so it lands in models.pressure_velocity.
         # Its lazy field/model InitSteps come straight from the ModelSpec (used here
         # as both spec and "runtime", no instantiate). Mirror ModelRuntime.run_build:
         # synthesise the ``pimple.field(...)`` declarations (``U`` / ``p``) *first*,
         # then the ``@build`` steps (``phi``, pimpleControl, …) which depend on them.
-        from neofoam.fields.synthesis import synthesize_init_step
-
         builder.add_core_models([("pressure_velocity", pressure_model)])
         for decl in pressure_model.field_decls:
             builder.add(synthesize_init_step(decl))
@@ -283,9 +272,7 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         # turbulence model on this solver is always the pybFoam fallback: it owns
         # its own ``nut`` and momentum stress, built lazily from the live transport,
         # and registers ``models.viscousStress`` from the model's viscous_stress().
-        _add_viscosity_model(
-            builder, select_viscosity_model(transport_config), resolved_case_dir
-        )
+        _add_viscosity_model(builder, select_viscosity_model(transport_config), resolved_case_dir)
         _add_turbulence_model(builder, resolved_case_dir)
 
         builder.add_optional_models(optional_models)

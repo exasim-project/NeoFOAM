@@ -228,9 +228,7 @@ def save_case(
     case_spec: dict[str, Any], target_dir: str, solver: str = DEFAULT_SOLVER
 ) -> SaveResultDTO:
     """Validate ``case_spec`` against ``solver``'s model, then write the case."""
-    return tools.save_case(
-        resolve_solver(solver), case_spec, target_dir, workspace=_workspace()
-    )
+    return tools.save_case(resolve_solver(solver), case_spec, target_dir, workspace=_workspace())
 
 
 # -- read-only resources mirroring the introspection tools --------------------

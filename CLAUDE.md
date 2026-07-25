@@ -69,90 +69,28 @@ Guidance for the **Python** side of this repo: `src/neofoam/` and its tests
 (`test/`). The C++/NeoN core and the `pybFoam` bindings are out of scope for these
 notes (mypy and these conventions skip them).
 
-## Build & test (the commands)
+## Build & test
 
-`uv` is used **only** to create the venv + bootstrap pip. After that use the plain
-Python workflow — never `uv run` / `uv sync`.
-
-```bash
-uv venv                       # once
-uv pip install pip            # bootstrap pip into the venv
-pip install -e .[all]         # editable install — src edits take effect immediately
-pytest test/<area> -q         # scoped tests while working
-pytest                        # whole suite (testpaths=test)
-pre-commit run --files <changed>        # format + lint + mypy on your diff
-```
-
-### Gotchas that cost real time — read before editing
-
-- **Editable install.** `pip install -e .[all]` (scikit-build `editable.mode = "redirect"`)
-  means edits to `src/neofoam/*.py` take effect immediately — no reinstall between a
-  source change and a test run. Only C++/CMake changes need a rebuild.
-- **Never `rm -rf _skbuild`** — CMake reconfigures incrementally; wiping forces a
-  slow full recompile.
-- **Whole-repo checks have pre-existing failures.** Pre-commit `mypy` (whole-tree)
-  and `reuse` fail regardless of your diff. Judge your work by `pre-commit run
-  --files <changed>` and scoped pytest — fail only on NEW errors in files you touched.
-- Tooling: `ruff` (line-length 100, E/F/I), `mypy` `strict=True` on `files=["src"]`
-  (excludes `src/NeoN`; `pybFoam`/`NeoN` are `ignore_missing_imports`).
-- CLI entry point: `neofoam` (Typer) — see `src/neofoam/cli/app.py`.
-
-## Verification norms (definition of done)
-
-A change is done when you have **run** its proof, not when it looks right:
-
-1. the **scoped tests** for the touched area pass (`pytest test/<area> -q`) — after a
-   no reinstall needed for pure-Python source changes (editable install);
-2. `pre-commit run --files <changed>` is clean (or only pre-existing failures);
-3. you report the actual commands + output, not an assertion that it works.
+See **[Building & testing NeoFOAM](doc/reference/build-and-test.rst)** — environment
+setup (pip workflow), scoped vs. full `pytest`, `pre-commit`, and the build gotchas
+(non-editable install, never `rm -rf _skbuild`, pre-existing whole-repo failures,
+tooling, CLI entry point).
 
 Never delete or weaken an existing test to get green — surface the conflict instead.
-Optional/native deps gate with `pytest.importorskip(...)`, they don't fail.
+
+## CLI
+
+The `neofoam` command (`solver`, `preprocess`, `agent`, `mcp`, `telemetry`):
+see **[doc/reference/cli.rst](doc/reference/cli.rst)**.
 
 ## Conventions
 
-Detailed guides — read the relevant one before writing code, update it when a
-convention changes:
+Detailed guides — read the relevant one before writing code or test
 
-- **[`.claude/CODE_STYLE.md`](.claude/CODE_STYLE.md)** — typing/mypy, no
-  `getattr`/`setattr`, `Context.runtime`, Pydantic v2, imports-at-top, ruff.
-- **[`.claude/TEST_STYLE.md`](.claude/TEST_STYLE.md)** — `test/` mirrors
-  `src/neofoam/` 1:1, free functions not classes, real OpenFOAM case files (never
-  dicts-as-strings), pybFoam/OpenFOAM gating, `__init__.py` rules (`test/io/` has
-  none — it would shadow stdlib `io`).
+- **[`.claude/CODE_STYLE.md`](.claude/CODE_STYLE.md)**
+- **[`.claude/TEST_STYLE.md`](.claude/TEST_STYLE.md)**
 
-The essentials: **mypy is strict** — fix type errors in code, never by relaxing
-`[tool.mypy]`; keep *your* changed files clean.
+## Project layout (where things live)
 
-### Commits
-
-- Do **not** add a `Co-Authored-By: Claude` trailer.
-- Commit with `git commit --no-verify` (the whole-tree hooks fail pre-existing — see
-  gotchas) — but only after `pre-commit run --files <changed>` is clean.
-- Branch before committing on `main`. Commit only when asked.
-
-## Architecture (where things live)
-
-The module map lives in **[`.claude/ARCHITECTURE.md`](.claude/ARCHITECTURE.md)** —
-read it to locate a config, model, solver, or init step; update it when the layout
-changes.
-
-In short: everything is **config-driven** — a case is a set of validated pydantic
-configs serialized to OpenFOAM/JSON/YAML. `io/` binds configs to files,
-`fields/`/`foam/` build field + scheme configs, `framework/` holds
-`ModelSpec`/`SolverSpec` + staged init, `algorithms/solution_loop/` is the
-pure-Python time loop, `solver/incompressibleFluid/` is the reference solver,
-`agent/` is the LLM case-scaffolding layer.
-
-## Spec workflow (larger features)
-
-For features too large for one session, this repo carries a spec pipeline — use it
-in this order:
-
-1. **`/grill-spec`** — interrogate requirements out of the user → `plans/<name>-requirements.md`
-2. **`/write-spec`** — turn the brief into a testable spec → `plans/<name>-spec.md`
-3. **`/spec-loop plans/<name>-spec.md`** — implement it slice-by-slice with
-   evidence-gated iterations under `loop/<feature>/` (never commits; you commit).
-
-`/understand-tests` maps an unfamiliar test suite (coverage + call-graph) before
-refactors.
+The module map lives in the docs reference:
+**[`doc/reference/project-layout.rst`](doc/reference/project-layout.rst)**

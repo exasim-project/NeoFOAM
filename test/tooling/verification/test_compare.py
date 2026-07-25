@@ -131,9 +131,7 @@ def test_is_decomposed_false_when_reconstructed(tmp_path: Path) -> None:
     assert _is_decomposed(run) is False
 
 
-def _decomposed_pair(
-    tmp_path: Path, ranks: int, fields: tuple[str, ...]
-) -> tuple[Path, Path]:
+def _decomposed_pair(tmp_path: Path, ranks: int, fields: tuple[str, ...]) -> tuple[Path, Path]:
     native = tmp_path / "native"
     neo = tmp_path / "neo"
     for run in (native, neo):
@@ -169,9 +167,7 @@ def test_compare_decomposed_takes_the_worst_rank_per_field(
     )
 
 
-def test_compare_decomposed_matches_when_all_ranks_match(
-    tmp_path: Path, monkeypatch: Any
-) -> None:
+def test_compare_decomposed_matches_when_all_ranks_match(tmp_path: Path, monkeypatch: Any) -> None:
     native, neo = _decomposed_pair(tmp_path, ranks=2, fields=("U",))
 
     def fake_read(proc_dir: Path, system_src: Path, name: str, time: str) -> np.ndarray:
