@@ -15,6 +15,11 @@ import re
 from types import SimpleNamespace
 from typing import Any, Callable, Optional, TypeVar, cast
 
+from neofoam.framework.config_injection import (
+    _create_runtime_config_wrapper,
+    _discover_configs_from_signature,
+    _find_config_by_type,
+)
 from neofoam.framework.context import Context
 from neofoam.framework.dependency_resolver import (
     DependencyResolver,
@@ -24,7 +29,6 @@ from neofoam.framework.operations import Operation, OperationCollection, Sequent
 from neofoam.framework.types import OperationMetadata, OperationNumber
 
 from .runtime import SolverRuntime
-
 
 _ConfigT = TypeVar("_ConfigT", bound=type)
 
@@ -240,13 +244,9 @@ class SolverSpec:
     def _run_initialize(self, runtime: SolverRuntime) -> Context:
         """Execute the registered initialization step with dependency injection."""
         if self._initialize_func is None:
-            raise RuntimeError(
-                f"No initialize function registered for solver {self.name}"
-            )
+            raise RuntimeError(f"No initialize function registered for solver {self.name}")
 
-        kwargs = self._dependency_resolver.resolve_arguments(
-            self._initialize_func, None
-        )
+        kwargs = self._dependency_resolver.resolve_arguments(self._initialize_func, None)
 
         sig = inspect.signature(self._initialize_func)
         if "self" in sig.parameters and "self" not in kwargs:
@@ -291,14 +291,7 @@ class SolverSpec:
         without the runtime holding a long-lived reference to the context).
         """
         if self._execution_graph_func is None:
-            raise RuntimeError(
-                f"No execution_graph function registered for solver {self.name}"
-            )
-
-        from neofoam.framework.config_injection import (
-            _discover_configs_from_signature,
-            _find_config_by_type,
-        )
+            raise RuntimeError(f"No execution_graph function registered for solver {self.name}")
 
         sig = inspect.signature(self._execution_graph_func)
         kwargs: dict[str, Any] = {}
@@ -325,20 +318,13 @@ class SolverSpec:
 
     def _build_operations_for(self, runtime: SolverRuntime) -> OperationCollection:
         """Build OperationCollection with *runtime* as the ``self`` binding."""
-        from neofoam.framework.config_injection import (
-            _discover_configs_from_signature,
-            _create_runtime_config_wrapper,
-        )
-
         ops = OperationCollection()
         for func, metadata in self._operations:
             discovered = _discover_configs_from_signature(func)
             if discovered:
                 wrapped = _create_runtime_config_wrapper(func, discovered, runtime)
             else:
-                wrapped = wrap_with_dependency_resolution(
-                    func, runtime, self._dependency_resolver
-                )
+                wrapped = wrap_with_dependency_resolution(func, runtime, self._dependency_resolver)
 
             op = Operation(
                 func=SequentialOp(wrapped),

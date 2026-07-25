@@ -3,7 +3,7 @@
 #
 # Build the background mesh in the staged variant dir (single-tool
 # preprocess.yaml slice; options come from the base case's entry). Keyed by
-# MESH_STEM (`{cad}__{mesh}` with a CAD axis, else `{mesh}`).
+# MESH_STEM (`meshes/{mesh}`).
 # Consumes header globals: BASE_CASE, MESH_STEM, _mesh_case, MESH_TOOL_INPUT.
 rule blockMesh:
     input:

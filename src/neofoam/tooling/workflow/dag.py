@@ -140,9 +140,7 @@ def _graphviz_layout(dot: str) -> Layout | None:
     return layout
 
 
-def layered_layout(
-    nodes: dict[str, dict[str, str]], edges: list[tuple[str, str]]
-) -> Layout:
+def layered_layout(nodes: dict[str, dict[str, str]], edges: list[tuple[str, str]]) -> Layout:
     """Fallback layout: each node sits one layer below its deepest input.
 
     Edges point from dependency to dependent (``u -> v``), so targets like

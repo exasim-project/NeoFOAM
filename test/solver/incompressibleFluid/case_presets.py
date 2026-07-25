@@ -141,9 +141,7 @@ def lid_driven_cavity(
     transport = cfgs["TransportPropertiesConfig"].model_validate(
         {"transportModel": "Newtonian", "nu": nu}
     )
-    turbulence = cfgs["TurbulencePropertiesConfig"].model_validate(
-        {"simulationType": "laminar"}
-    )
+    turbulence = cfgs["TurbulencePropertiesConfig"].model_validate({"simulationType": "laminar"})
     u_field = cfgs["UFieldConfig"].model_validate(
         {
             "internalField": "uniform (0 0 0)",
@@ -193,8 +191,7 @@ def buoyant_cavity(
     ``end_time == delta_t`` for a single solver step.
     """
     base = {
-        type(c).__name__: c
-        for c in lid_driven_cavity(nu=nu, end_time=end_time, delta_t=delta_t)
+        type(c).__name__: c for c in lid_driven_cavity(nu=nu, end_time=end_time, delta_t=delta_t)
     }
     cfgs = configurations(incompressibleFluid)
 

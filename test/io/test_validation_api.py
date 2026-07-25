@@ -15,12 +15,12 @@ Covers:
 """
 
 import pytest
-
 from pydantic import Field
+
 from neofoam.io import (
-    BaseConfig,
-    YAML,
     JSON,
+    YAML,
+    BaseConfig,
     IOStrategy,
     ValidationErrors,
     validate_models,
@@ -176,9 +176,7 @@ def test_missing_subdict_returns_error(io_fixtures, config_class, wrong_file):
 
 def test_file_name_context_uses_override(io_fixtures):
     """When file= is passed, errors report that filename, not the default."""
-    errors = SimpleYAMLValidation.collect_errors(
-        case_dir=io_fixtures, file="invalid_simple.yaml"
-    )
+    errors = SimpleYAMLValidation.collect_errors(case_dir=io_fixtures, file="invalid_simple.yaml")
     assert all(e.file_name == "invalid_simple.yaml" for e in errors)
 
 
@@ -193,9 +191,7 @@ def test_file_name_context_uses_default(io_fixtures):
 
 def test_subdict_context_included(io_fixtures):
     """Errors from a subdict config include the subdict path."""
-    errors = MetadataYAMLValidation.collect_errors(
-        case_dir=io_fixtures, file="invalid_nested.yaml"
-    )
+    errors = MetadataYAMLValidation.collect_errors(case_dir=io_fixtures, file="invalid_nested.yaml")
     assert all(e.subdict == "metadata" for e in errors)
 
 
@@ -221,9 +217,7 @@ def test_valid_instance_returns_empty(io_fixtures, config_class):
 )
 def test_invalid_instance_returns_errors(io_fixtures, config_class, invalid_file):
     """check_validation() returns errors for an instance loaded with validate=False."""
-    instance = config_class.load(
-        case_dir=io_fixtures, validate=False, file=invalid_file
-    )
+    instance = config_class.load(case_dir=io_fixtures, validate=False, file=invalid_file)
     errors = instance.check_validation()
 
     assert len(errors) == 2
@@ -241,13 +235,9 @@ def test_invalid_instance_returns_errors(io_fixtures, config_class, invalid_file
         (MetadataJSONValidation, "invalid_nested.json"),
     ],
 )
-def test_invalid_subdict_instance_returns_errors(
-    io_fixtures, config_class, invalid_file
-):
+def test_invalid_subdict_instance_returns_errors(io_fixtures, config_class, invalid_file):
     """check_validation() returns errors for a subdict instance with bad data."""
-    instance = config_class.load(
-        case_dir=io_fixtures, validate=False, file=invalid_file
-    )
+    instance = config_class.load(case_dir=io_fixtures, validate=False, file=invalid_file)
     errors = instance.check_validation()
 
     assert len(errors) == 2

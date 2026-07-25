@@ -15,6 +15,7 @@ from typing import Literal, Optional, Union
 
 from pydantic import BaseModel, Field
 
+from neofoam.io.base import BaseConfig
 from neofoam.io.pydantic_schema import default_values, rjsf_uischema, slice_schema
 
 
@@ -50,8 +51,6 @@ def test_default_values_never_raises() -> None:
 def test_default_values_prefers_form_defaults_scaffold() -> None:
     # A config whose fields are required-but-defaultless (model_construct → {}) can
     # supply a ready-to-edit scaffold via form_defaults; default_values returns it.
-    from neofoam.io.base import BaseConfig
-
     class _Scaffolded(BaseConfig):
         needed: int  # required, no default
 
@@ -64,8 +63,6 @@ def test_default_values_prefers_form_defaults_scaffold() -> None:
 
 def test_default_values_falls_back_when_no_scaffold() -> None:
     # BaseConfig.form_defaults returns None by default → the model_construct path.
-    from neofoam.io.base import BaseConfig
-
     class _Plain(BaseConfig):
         a: int = 3
 
@@ -115,9 +112,7 @@ def test_rjsf_uischema_handles_anyof_additionalproperties() -> None:
     ui = rjsf_uischema(_Field.model_json_schema())
     # The BC union is reached through ``additionalProperties``; its const type
     # is hidden there.
-    assert ui["boundaryField"]["additionalProperties"]["type"] == {
-        "ui:widget": "hidden"
-    }
+    assert ui["boundaryField"]["additionalProperties"]["type"] == {"ui:widget": "hidden"}
 
 
 def test_rjsf_uischema_nested_union() -> None:

@@ -3,8 +3,7 @@
 #
 # Stage one mesh variant's mini-case (dicts + STLs from the base case, the
 # variant's mesh-config payloads applied). Runs once per mesh mini-case, keyed
-# by MESH_STEM (a composite `{cad}__{mesh}` when a CAD axis is present, else
-# `{mesh}`); the concrete dir comes from _mesh_case.
+# by MESH_STEM (`meshes/{mesh}`); the concrete dir comes from _mesh_case.
 # Consumes header globals: SOLVER, BASE_CASE, MESH_STEM, _mesh_case.
 rule setup_mesh:
     input:

@@ -12,13 +12,13 @@ Demonstrates:
 """
 
 import pytest
+from pydantic import Field, ValidationError
 
-from pydantic import ValidationError, Field
 from neofoam.io import (
-    BaseConfig,
-    YAML,
     JSON,
     OF,
+    YAML,
+    BaseConfig,
     IOStrategy,
 )
 
@@ -128,9 +128,7 @@ def test_validation_error_wrong_type(io_fixtures, config_class, invalid_file):
     load(validate=True) raises ValidationError with all errors.
     """
     # Load without validation - all data is available for inspection
-    loaded_data = config_class.load(
-        case_dir=io_fixtures, validate=False, file=invalid_file
-    )
+    loaded_data = config_class.load(case_dir=io_fixtures, validate=False, file=invalid_file)
     assert loaded_data.identifier == "test_config"
     assert loaded_data.count == "not_an_integer"  # Wrong type loaded
     assert loaded_data.active is True
@@ -165,14 +163,10 @@ def test_openfoam_validation_error_wrong_type(io_fixtures):
     value cannot be converted (e.g. 'not_an_integer' as int).
     """
     with pytest.raises(ValueError, match="not_an_integer"):
-        SimpleOpenFOAMConfig.load(
-            case_dir=io_fixtures, validate=False, file="invalid_simple.of"
-        )
+        SimpleOpenFOAMConfig.load(case_dir=io_fixtures, validate=False, file="invalid_simple.of")
 
     with pytest.raises(ValueError, match="not_an_integer"):
-        SimpleOpenFOAMConfig.load(
-            case_dir=io_fixtures, validate=True, file="invalid_simple.of"
-        )
+        SimpleOpenFOAMConfig.load(case_dir=io_fixtures, validate=True, file="invalid_simple.of")
 
 
 @pytest.mark.parametrize(

@@ -31,8 +31,8 @@ case author is not silently served plain SIMPLE.
 from typing import Annotated, Any, Callable
 
 import neon._neon as nn  # NeoN Python bindings
-from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
 
+from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
 from neofoam.fields import (
     CalculatedBC,
     CyclicBC,
@@ -63,7 +63,6 @@ from neofoam.framework.types import OperationMetadata
 from neofoam.solver.pisoControl import PisoControl
 
 from ..incompressibleFluidNeoNModel import Model
-
 
 simpleNeoN = Model("SimpleNeoN")
 
@@ -179,9 +178,7 @@ def build(self: Any) -> list[Any]:
             )
         piso = PisoControl(
             n_correctors=1,
-            n_non_orthogonal_correctors=_read_int(
-                simple_dict, "nNonOrthogonalCorrectors", 0
-            ),
+            n_non_orthogonal_correctors=_read_int(simple_dict, "nNonOrthogonalCorrectors", 0),
             momentum_predictor=_read_switch(simple_dict, "momentumPredictor", True),
         )
         return SimpleNeoNState(piso)
@@ -193,9 +190,7 @@ def build(self: Any) -> list[Any]:
 
     def create_surf_interp(context: dict[str, Any]) -> Any:
         rt = context["_neon_runtime"]
-        return nn.SurfaceInterpolationScalar(
-            rt.executor, rt.nf_mesh, nn.TokenList(["linear"])
-        )
+        return nn.SurfaceInterpolationScalar(rt.executor, rt.nf_mesh, nn.TokenList(["linear"]))
 
     def create_grad_op(context: dict[str, Any]) -> Any:
         return nfb.GaussGreenGrad(context["_neon_runtime"])
@@ -426,13 +421,9 @@ def collected_operations(self: Any) -> Operations:
     )
 
     model_ops.add(
-        _alias_operation(
-            wrapped_rotate, operation_name="rotate_and_report", depends_on=[]
-        )
+        _alias_operation(wrapped_rotate, operation_name="rotate_and_report", depends_on=[])
     )
-    model_ops.add(
-        _alias_operation(wrapped_momentum, operation_name="momentum", depends_on=[])
-    )
+    model_ops.add(_alias_operation(wrapped_momentum, operation_name="momentum", depends_on=[]))
     model_ops.add(
         _alias_operation(
             wrapped_continuity,
@@ -441,8 +432,6 @@ def collected_operations(self: Any) -> Operations:
         )
     )
     model_ops.add(
-        _alias_operation(
-            wrapped_turbulence, operation_name="turbulence_correct", depends_on=[]
-        )
+        _alias_operation(wrapped_turbulence, operation_name="turbulence_correct", depends_on=[])
     )
     return model_ops

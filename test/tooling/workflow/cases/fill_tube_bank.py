@@ -27,16 +27,20 @@ Anthropic API key + a sourced OpenFOAM), or ``--no-run`` to only author.
 
 from __future__ import annotations
 
+import argparse
+import os
 import shutil
+import subprocess
+import sys
 from pathlib import Path
 from typing import Any, Optional
 
 from neofoam.agent.case_fill import build_case_agent, case_spec_to_configs
-from neofoam.tooling.workflow.patch_set import PatchSet
-from neofoam.tooling.workflow.mesh_inputs import block_mesh_dict, snappy_dict
 from neofoam.framework.tools import PreprocessConfig
 from neofoam.io import BaseConfig, write_configs
 from neofoam.solver.incompressibleFluid.incompressibleFluid import incompressibleFluid
+from neofoam.tooling.workflow.mesh_inputs import block_mesh_dict, snappy_dict
+from neofoam.tooling.workflow.patch_set import PatchSet
 from neofoam.tools.block_mesh import BlockMeshDictConfig
 from neofoam.tools.snappy_hex_mesh import SnappyHexMeshDictConfig
 
@@ -90,16 +94,12 @@ def case_prompt(patch_set: PatchSet) -> str:
     )
 
 
-def author_configs(
-    patch_set: PatchSet, *, agent: Optional[Any] = None
-) -> list[BaseConfig]:
+def author_configs(patch_set: PatchSet, *, agent: Optional[Any] = None) -> list[BaseConfig]:
     """Have the agent fill the physics configs (drops any geometry it filled)."""
     agent = agent or build_case_agent(solver=incompressibleFluid)
     result = agent.run_sync(case_prompt(patch_set))
     return [
-        cfg
-        for cfg in case_spec_to_configs(result.output)
-        if not isinstance(cfg, _GEOMETRY_CONFIGS)
+        cfg for cfg in case_spec_to_configs(result.output) if not isinstance(cfg, _GEOMETRY_CONFIGS)
     ]
 
 
@@ -167,11 +167,6 @@ def build_tube_bank(
 
 def main(argv: Optional[list[str]] = None) -> int:
     """Fill the case with a live agent and (unless ``--no-run``) mesh + solve it."""
-    import argparse
-    import os
-    import subprocess
-    import sys
-
     parser = argparse.ArgumentParser(description="Agent-fill + run the tube-bank case.")
     parser.add_argument("case_dir", help="Target case directory to author.")
     parser.add_argument(

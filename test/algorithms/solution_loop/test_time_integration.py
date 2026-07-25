@@ -7,13 +7,13 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from neofoam.core.plugin_system import PluginSystem
 from neofoam.algorithms.solution_loop.time_integration import (
     SteadyIntegration,
     TimeIntegration,
     TransientIntegration,
     integration_from_ddt,
 )
+from neofoam.core.plugin_system import PluginSystem
 
 
 def test_integration_from_ddt_selects_regime() -> None:

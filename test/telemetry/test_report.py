@@ -15,7 +15,10 @@ import pytest
 
 from neofoam.telemetry import report
 
-HAS_MPL = importlib.util.find_spec("matplotlib") is not None
+try:
+    HAS_MPL = importlib.util.find_spec("matplotlib") is not None
+except ImportError:  # a meta_path finder simulating absence may raise here
+    HAS_MPL = False
 
 
 def _span(

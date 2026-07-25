@@ -22,7 +22,6 @@ from neofoam.fields.value_types import (
     zero_uniform,
 )
 
-
 # -- scalar -----------------------------------------------------------
 
 

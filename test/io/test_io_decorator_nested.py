@@ -13,16 +13,15 @@ Demonstrates:
 """
 
 import pytest
+from pydantic import Field, ValidationError
 
-from pydantic import ValidationError, Field
 from neofoam.io import (
-    BaseConfig,
-    YAML,
     JSON,
     OF,
+    YAML,
+    BaseConfig,
     IOStrategy,
 )
-
 
 # -- YAML models -----------------------------------------------------------
 
@@ -193,9 +192,7 @@ def test_validation_error_missing_field(io_fixtures, config_class, invalid_file)
     load(validate=True) raises ValidationError with all errors.
     """
     # Load without validation - all data is available for inspection
-    loaded_data = config_class.load(
-        case_dir=io_fixtures, validate=False, file=invalid_file
-    )
+    loaded_data = config_class.load(case_dir=io_fixtures, validate=False, file=invalid_file)
     assert loaded_data.name == "TestApp"
     assert loaded_data.priority == 0  # Invalid value loaded without validation
 

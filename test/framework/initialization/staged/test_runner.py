@@ -15,7 +15,6 @@ from neofoam.framework.initialization.staged.spec import (
     StagedInitSpec,
 )
 
-
 # --- Construction & defaults ---
 
 

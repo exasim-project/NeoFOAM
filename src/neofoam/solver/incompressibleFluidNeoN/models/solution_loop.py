@@ -83,9 +83,7 @@ def neon_loop_backend_steps() -> list[InitStep]:
     """
 
     def inject_backend(ctx: dict[str, Any]) -> NeoNTimeSync:
-        backend = NeoNTimeSync(
-            ctx["_foam_time"], ctx["_neon_runtime"], ctx["_arg_list"]
-        )
+        backend = NeoNTimeSync(ctx["_foam_time"], ctx["_neon_runtime"], ctx["_arg_list"])
         ctx["models.solution_loop"].set_backend(backend)
         return backend
 

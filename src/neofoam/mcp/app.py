@@ -15,6 +15,11 @@ import os
 
 from fastapi import FastAPI
 
+try:
+    import uvicorn
+except ModuleNotFoundError:  # optional [mcp] extra
+    uvicorn = None  # type: ignore[assignment]
+
 from neofoam.mcp.server import ROOT_ENV_VAR, configure_root, mcp
 
 
@@ -55,7 +60,8 @@ def serve(
     subprocess, so the root is handed over via ``NEOFOAM_MCP_ROOT`` (which the server
     already reads) rather than as an argument.
     """
-    import uvicorn
+    if uvicorn is None:
+        raise ImportError("the MCP server needs uvicorn; install with: pip install neofoam[mcp]")
 
     if reload:
         if root is not None:

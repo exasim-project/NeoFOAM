@@ -19,6 +19,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Callable, Optional
 
+from neofoam.io import collect_config_classes, validate_models
+
 from ..config_context import ConfigContext
 from ..init_step import InitStep
 
@@ -64,14 +66,10 @@ class LoadResult:
         This is the with-a-case view (after LOAD); for the case-free schema
         of a whole solver see ``collect_config_classes``.
         """
-        from neofoam.io import collect_config_classes
-
         return collect_config_classes(self.all_models)
 
     def validate(self) -> list[Any]:
         """Validate all model configs and return a list of errors."""
-        from neofoam.io import validate_models
-
         return validate_models(self.configs)
 
 

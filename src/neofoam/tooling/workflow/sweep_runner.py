@@ -31,26 +31,27 @@ from __future__ import annotations
 
 import argparse
 import json
-import logging
 import shutil
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
+
+import yaml
 
 from neofoam.framework.solver.configurations import _snake_case, configurations
 from neofoam.framework.solver.registry import resolve_solver
 from neofoam.framework.tools import PreprocessConfig
 from neofoam.io import BaseConfig, write_configs
 from neofoam.tooling.casebuild import CaseDir, Pipeline, Step
-
-logger = logging.getLogger(__name__)
+from neofoam.tooling.casebuild.meshing import run_tool
+from neofoam.tooling.workflow.paramspace import write_if_changed
+from neofoam.tools.registry import available_tools
 
 __all__ = [
     "apply_configs",
     "clone_case",
     "config_classes_by_name",
     "main",
-    "run_cad",
     "run_tool_command",
     "setup_case",
     "setup_mesh_case",
@@ -183,9 +184,7 @@ def _clone_start(base: Path) -> Callable[[Path], None]:
     return start
 
 
-def _apply_step(
-    solver: Any, payloads: Mapping[str, Mapping[str, Any]], written: list[str]
-) -> Step:
+def _apply_step(solver: Any, payloads: Mapping[str, Mapping[str, Any]], written: list[str]) -> Step:
     """A casebuild step that applies the swept payloads, collecting the written paths."""
 
     def step(case: CaseDir) -> None:
@@ -318,9 +317,7 @@ def setup_mesh_case(
     written: list[str] = []
     pipeline = Pipeline(_mesh_stage_start(base))
     if payloads:
-        pipeline = pipeline | _apply_step(
-            resolve_solver(solver_name), payloads, written
-        )
+        pipeline = pipeline | _apply_step(resolve_solver(solver_name), payloads, written)
     pipeline.build_at(mesh_dir)
 
     _write_stamp(stamp, payloads)
@@ -344,10 +341,6 @@ def run_tool_command(
     ``chdir``). Any tool other than ``blockMesh`` runs against the
     ``constant/polyMesh`` already on disk, seeded as ``_prev_mesh``.
     """
-    from neofoam.tooling.casebuild.meshing import run_tool
-    from neofoam.tools.registry import available_tools
-    from neofoam.tooling.workflow.paramspace import write_if_changed
-
     base = Path(base).resolve()
     case_dir = Path(case_dir).resolve()
     stamp = Path(stamp).resolve() if stamp is not None else None
@@ -362,8 +355,6 @@ def run_tool_command(
         )
         raise ValueError(msg)
     entry.pop("depends_on", None)
-
-    import yaml
 
     slice_text = yaml.safe_dump({"tools": [entry]}, sort_keys=True)
     write_if_changed(case_dir / "system" / "preprocess.yaml", slice_text)
@@ -382,103 +373,6 @@ def run_tool_command(
     _write_stamp(stamp, {"tool": tool_name, "options": entry})
 
 
-def _load_cad_params(params_json: Path) -> dict[str, float]:
-    """Read a CAD variant's ``{alias: number}`` parameter map.
-
-    Raises:
-        ValueError: If the JSON is not a mapping of aliases to numbers.
-    """
-    data = json.loads(Path(params_json).read_text())
-    if not isinstance(data, dict):
-        msg = f"cad params file {params_json}: expected a mapping of alias -> number"
-        raise ValueError(msg)
-    params: dict[str, float] = {}
-    for alias, value in data.items():
-        if isinstance(value, bool) or not isinstance(value, (int, float)):
-            msg = (
-                f"cad param '{alias}' in {params_json} must be a number, got "
-                f"{type(value).__name__}"
-            )
-            raise ValueError(msg)
-        params[str(alias)] = value
-    return params
-
-
-def _load_parametric_model(model_path: str) -> Any:
-    """Open a parametric CAD model (``foamcadagent`` imported lazily).
-
-    Kept as a seam so tests can stub the FreeCAD-backed model without installing
-    foamcadagent / FreeCAD.
-
-    Raises:
-        ImportError: With an install hint when foamcadagent is absent.
-    """
-    try:
-        from foamcadagent.parametric import (  # type: ignore[import-not-found]
-            FreeCADParametricModel,
-        )
-    except ImportError as exc:
-        msg = (
-            "CAD sweeps need foamcadagent + FreeCAD; install with "
-            "'pip install neofoam[foamcad]'"
-        )
-        raise ImportError(msg) from exc
-    return FreeCADParametricModel(model_path)
-
-
-def run_cad(
-    model: str,
-    params_json: Path,
-    case_dir: Path,
-    stamp: Path | None = None,
-    names: Mapping[str, Any] | None = None,
-    labels: Sequence[str] | None = None,
-) -> dict[str, float]:
-    """Regenerate a mesh variant's STLs from a parametric CAD model.
-
-    Reads the CAD variant's numeric parameters, drives the parametric model
-    (``FreeCADParametricModel.update``) and writes surfaces into
-    ``case_dir/constant/triSurface``. How the surfaces are split depends on the
-    boundary selector given:
-
-    - ``names`` (a ``{patch: selector}`` map) → one STL per patch via
-      ``write_surfaces(case_dir, names=names)``.
-    - else ``labels`` (FreeCAD object labels) → one STL per label via
-      ``export_bc_surfaces(case_dir, labels)``.
-    - else → a single merged STL (``write_surfaces(case_dir, names=None)``) with
-      **no** boundary-condition split, which snappyHexMesh + the field BCs
-      generally need; a warning is logged in this case.
-
-    A stamp (``{"model", "params"}``) is written last so Snakemake re-runs only
-    when the parameters change.
-
-    Returns:
-        The parameters applied (alias -> value).
-    """
-    case_dir = Path(case_dir)
-    params = _load_cad_params(Path(params_json))
-
-    fcpm = _load_parametric_model(str(model))
-    fcpm.update(params)
-    if names is not None:
-        fcpm.write_surfaces(case_dir, names=dict(names))
-    elif labels:
-        fcpm.export_bc_surfaces(case_dir, list(labels))
-    else:
-        fcpm.write_surfaces(case_dir, names=None)
-        logger.warning(
-            "run_cad wrote a single merged STL with no boundary-condition split "
-            "(snappyHexMesh + field BCs need one STL per patch — pass --names or "
-            "--labels to split by patch)."
-        )
-
-    _write_stamp(
-        Path(stamp) if stamp is not None else None,
-        {"model": str(model), "params": params},
-    )
-    return params
-
-
 def main(argv: Sequence[str] | None = None) -> int:
     """CLI entry point used by generated Snakefiles."""
     parser = argparse.ArgumentParser(
@@ -487,20 +381,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
-    setup = sub.add_parser(
-        "setup", help="clone the base case and apply the case's configs"
-    )
+    setup = sub.add_parser("setup", help="clone the base case and apply the case's configs")
     setup.add_argument("--solver", required=True, help="registered solver name")
     setup.add_argument("--base", required=True, type=Path, help="the saved base case")
-    setup.add_argument(
-        "--case", required=True, type=Path, help="the per-case clone to create"
-    )
-    setup.add_argument(
-        "--config", required=True, type=Path, help="configs/<case>/setup.json"
-    )
-    setup.add_argument(
-        "--stamp", type=Path, default=None, help="stamp file to write on success"
-    )
+    setup.add_argument("--case", required=True, type=Path, help="the per-case clone to create")
+    setup.add_argument("--config", required=True, type=Path, help="configs/<case>/setup.json")
+    setup.add_argument("--stamp", type=Path, default=None, help="stamp file to write on success")
     setup.add_argument(
         "--mesh-src",
         type=Path,
@@ -512,9 +398,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "mesh-setup", help="stage one mesh variant's mini-case under meshes/<variant>"
     )
     mesh_setup.add_argument("--solver", required=True, help="registered solver name")
-    mesh_setup.add_argument(
-        "--base", required=True, type=Path, help="the saved base case"
-    )
+    mesh_setup.add_argument("--base", required=True, type=Path, help="the saved base case")
     mesh_setup.add_argument(
         "--case", required=True, type=Path, help="the meshes/<variant> dir to stage"
     )
@@ -525,38 +409,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--stamp", type=Path, default=None, help="stamp file to write on success"
     )
 
-    cad = sub.add_parser(
-        "cad", help="regenerate a mesh variant's STLs from a parametric CAD model"
-    )
-    cad.add_argument(
-        "--model", required=True, help="the parametric model file (e.g. design.FCStd)"
-    )
-    cad.add_argument(
-        "--params", required=True, type=Path, help="configs/cad/<variant>.json"
-    )
-    cad.add_argument(
-        "--case",
-        required=True,
-        type=Path,
-        help="the meshes/<variant> dir to write into",
-    )
-    cad.add_argument(
-        "--stamp", type=Path, default=None, help="stamp file to write on success"
-    )
-    cad.add_argument(
-        "--names",
-        default=None,
-        help="JSON {patch: selector} map for per-patch STL export (one STL per patch)",
-    )
-    cad.add_argument(
-        "--labels",
-        default=None,
-        help="comma-separated FreeCAD labels for per-patch STL export by label",
-    )
-
-    tool = sub.add_parser(
-        "tool", help="run ONE preprocess tool in a staged mesh variant dir"
-    )
+    tool = sub.add_parser("tool", help="run ONE preprocess tool in a staged mesh variant dir")
     tool.add_argument("--tool", required=True, help="tool name (e.g. blockMesh)")
     tool.add_argument(
         "--base",
@@ -564,12 +417,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         type=Path,
         help="the base case whose preprocess.yaml holds the tool's options",
     )
-    tool.add_argument(
-        "--case", required=True, type=Path, help="the meshes/<variant> dir to run in"
-    )
-    tool.add_argument(
-        "--stamp", type=Path, default=None, help="stamp file to write on success"
-    )
+    tool.add_argument("--case", required=True, type=Path, help="the meshes/<variant> dir to run in")
+    tool.add_argument("--stamp", type=Path, default=None, help="stamp file to write on success")
 
     args = parser.parse_args(argv)
     if args.command == "setup":
@@ -577,17 +426,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.solver, args.base, args.case, args.config, args.stamp, args.mesh_src
         )
     elif args.command == "mesh-setup":
-        written = setup_mesh_case(
-            args.solver, args.base, args.case, args.config, args.stamp
-        )
-    elif args.command == "cad":
-        names = json.loads(args.names) if args.names else None
-        if names is not None and not isinstance(names, dict):
-            msg = "--names must be a JSON object mapping patch -> selector"
-            raise ValueError(msg)
-        labels = [s for s in args.labels.split(",") if s] if args.labels else None
-        run_cad(args.model, args.params, args.case, args.stamp, names, labels)
-        written = []
+        written = setup_mesh_case(args.solver, args.base, args.case, args.config, args.stamp)
     else:
         run_tool_command(args.tool, args.base, args.case, args.stamp)
         written = []

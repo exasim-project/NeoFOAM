@@ -24,6 +24,7 @@ dependencies = [
     "networkx>=3.0",
     "matplotlib>=3.0.0",
     "pyvis>=0.3.2",
+    "PyYAML>=6",
 ]
 
 [project.optional-dependencies]
@@ -132,7 +133,8 @@ pybFoam = { path = "/home/henning/libsAndApps/pybFoam", editable = true }
 [tool.ruff]
 line-length = 100
 target-version = "py310"
-extend-exclude = ["build/", "dist/"]
+include = ["pyproject.toml", "src/**/*.py", "test/**/*.py"]
+extend-exclude = ["build/", "dist/", "src/NeoN"]
 
 [tool.ruff.lint]
 select = ["E","F","I"]  # enable isort (I) + basic lint

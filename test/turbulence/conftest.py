@@ -17,11 +17,11 @@ OpenFOAM missing" gating.
 
 from pathlib import Path
 
-# Importing the package registers the bundled models (laminar / kEpsilon / … ).
-import neofoam.turbulence  # noqa: F401
-
 from _case_discovery import Case, discover_cases
 from _case_discovery import case_for as _case_for
+
+# Importing the package registers the bundled models (laminar / kEpsilon / … ).
+import neofoam.turbulence  # noqa: F401
 
 #: Self-contained OpenFOAM cases shipped with the turbulence tests (each holds a
 #: real ``constant/turbulenceProperties`` plus an ``expected.yaml`` manifest).

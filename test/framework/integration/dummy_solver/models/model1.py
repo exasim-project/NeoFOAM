@@ -7,13 +7,15 @@ DummyModel1 for DummySolver.
 Demonstrates ModelSpec API with 3-stage initialization and auto config injection.
 """
 
-from typing import Any, Callable
 from pathlib import Path
+from types import SimpleNamespace
+from typing import Any, Callable
+
 from pydantic import Field
 
 from neofoam.framework.context import FieldUpdates
 from neofoam.framework.initialization import ConfigContext, InitStep
-from neofoam.io import BaseConfig, IOStrategy, YAML
+from neofoam.io import YAML, BaseConfig, IOStrategy
 
 from .dummy_model import DummyModelInterface, Model
 
@@ -45,8 +47,6 @@ model1.config(Model1StepConfig)
 
 @model1.load
 def load(case_dir: Path, instance_id: str) -> Any:
-    from types import SimpleNamespace
-
     return SimpleNamespace(
         main=Model1Config.load(case_dir=case_dir, validate=False),
         step_config=Model1StepConfig.load(case_dir=case_dir, validate=False),

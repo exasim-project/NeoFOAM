@@ -133,14 +133,12 @@ def test_neon_turbulence_solver_matches_incompressibleFluid(
     _prepare_case(model, reference_case)
 
     _run_solver(
-        "from neofoam.solver.incompressibleFluidNeoN import run;"
-        " run(['incompressibleFluidNeoN'])",
+        "from neofoam.solver.incompressibleFluidNeoN import run; run(['incompressibleFluidNeoN'])",
         neon_case,
         f"incompressibleFluidNeoN ({model})",
     )
     _run_solver(
-        "from neofoam.solver.incompressibleFluid import run;"
-        " run(['incompressibleFluid'])",
+        "from neofoam.solver.incompressibleFluid import run; run(['incompressibleFluid'])",
         reference_case,
         f"incompressibleFluid ({model})",
     )
@@ -148,22 +146,17 @@ def test_neon_turbulence_solver_matches_incompressibleFluid(
     neon_final = _final_time_dir(neon_case)
     reference_final = _final_time_dir(reference_case)
     assert neon_final.name == reference_final.name, (
-        f"solvers wrote different final times: "
-        f"{neon_final.name} vs {reference_final.name}"
+        f"solvers wrote different final times: {neon_final.name} vs {reference_final.name}"
     )
 
     neon_vals = _load_internal_fields(neon_case, fields, tmp_path / "neon_read")
-    reference_vals = _load_internal_fields(
-        reference_case, fields, tmp_path / "reference_read"
-    )
+    reference_vals = _load_internal_fields(reference_case, fields, tmp_path / "reference_read")
 
     failures = []
     for name in fields:
         reference = reference_vals[name]
         result = neon_vals[name]
-        assert reference.shape == result.shape, (
-            f"{name}: shape {reference.shape} vs {result.shape}"
-        )
+        assert reference.shape == result.shape, f"{name}: shape {reference.shape} vs {result.shape}"
         peak = float(np.max(np.abs(reference))) or 1.0
         max_abs = float(np.max(np.abs(result - reference)))
         print(f"[{model}] {name}: max abs diff = {max_abs:.3e} (peak = {peak:.3e})")

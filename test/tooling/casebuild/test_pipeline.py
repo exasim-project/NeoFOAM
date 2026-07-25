@@ -47,9 +47,7 @@ def test_pipe_operator_applies_steps_in_order(tmp_path: Path) -> None:
 
 
 def test_pipe_function_equals_operator(tmp_path: Path) -> None:
-    op = (from_template(CAVITY) | patch("system/controlDict", endTime=3.0)).build_at(
-        tmp_path / "a"
-    )
+    op = (from_template(CAVITY) | patch("system/controlDict", endTime=3.0)).build_at(tmp_path / "a")
     fn = pipe(from_template(CAVITY), patch("system/controlDict", endTime=3.0)).build_at(
         tmp_path / "b"
     )

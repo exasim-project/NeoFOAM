@@ -31,8 +31,6 @@ def test_identical_cases_compare_equal(tmp_path: Path) -> None:
     fields_b = read_internal_fields(case_b, case_b / "0", ["p", "U"])
 
     for name in ("p", "U"):
-        match, max_abs, _ = compare_fields_numerically(
-            fields_a[name], fields_b[name], name
-        )
+        match, max_abs, _ = compare_fields_numerically(fields_a[name], fields_b[name], name)
         assert match is True
         assert max_abs == 0.0

@@ -6,7 +6,7 @@
 Only the PIMPLE algorithm is wired up; SIMPLE / PISO fall back to PIMPLE.
 """
 
-from .base import PressureVelocityAlgorithmNeoN
 from . import pimpleAlgorithm as _pimple  # noqa: F401
+from .base import PressureVelocityAlgorithmNeoN
 
 __all__ = ["PressureVelocityAlgorithmNeoN"]

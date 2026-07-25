@@ -27,7 +27,16 @@ import os
 import sys
 from pathlib import Path
 
+import neon._neon as nn
 import numpy as np
+import pybFoam as pyf
+from pybFoam.turbulence import singlePhaseTransportModel
+
+from neofoam import neofoam_bindings as nfb
+from neofoam.framework.context import Context
+from neofoam.turbulence.config import TurbulencePropertiesConfig
+from neofoam.turbulence.fallback import OpenFOAMTurbulenceModel
+from neofoam.turbulence.selection import select_turbulence_model
 
 os.environ.setdefault("FOAM_SIGFPE", "false")
 
@@ -121,8 +130,6 @@ def role_setup(case: Path) -> None:
     ``div U`` dilatation terms OpenFOAM's kEpsilon adds then vanish identically on
     both backends, rather than being dropped only on the NeoN side).
     """
-    import pybFoam as pyf
-
     time = pyf.Time(str(case.parent), case.name)
     block_dict = pyf.dictionary.read(str(case / "system" / "blockMeshDict"))
     pyf.meshing.generate_blockmesh(time, block_dict, False, "constant")
@@ -142,15 +149,9 @@ def role_setup(case: Path) -> None:
 
     (case / "0" / "U").write_text(_foam_vector_field("U", "[0 1 -1 0 0 0 0]", u))
     (case / "0" / "k").write_text(_foam_scalar_field("k", "[0 2 -2 0 0 0 0]", k))
-    (case / "0" / "epsilon").write_text(
-        _foam_scalar_field("epsilon", "[0 2 -3 0 0 0 0]", epsilon)
-    )
-    (case / "0" / "nuTilda").write_text(
-        _foam_scalar_field("nuTilda", "[0 2 -1 0 0 0 0]", nu_tilda)
-    )
-    (case / "0" / "omega").write_text(
-        _foam_scalar_field("omega", "[0 0 -1 0 0 0 0]", omega)
-    )
+    (case / "0" / "epsilon").write_text(_foam_scalar_field("epsilon", "[0 2 -3 0 0 0 0]", epsilon))
+    (case / "0" / "nuTilda").write_text(_foam_scalar_field("nuTilda", "[0 2 -1 0 0 0 0]", nu_tilda))
+    (case / "0" / "omega").write_text(_foam_scalar_field("omega", "[0 0 -1 0 0 0 0]", omega))
 
 
 # The fields compared cell-by-cell between the two backends after one ``correct``
@@ -163,11 +164,6 @@ COMPARE_FIELDS = ("nut", "k", "epsilon", "nuTilda", "omega")
 
 def role_reference(case: Path) -> None:
     """pybFoam turbulence model, one ``correct`` step → ``reference_<field>.npy``."""
-    import pybFoam as pyf
-    from pybFoam.turbulence import singlePhaseTransportModel
-
-    from neofoam.turbulence.fallback import OpenFOAMTurbulenceModel
-
     of_time = pyf.Time(str(case.parent), case.name)
     of_mesh = pyf.fvMesh(of_time)
     U = pyf.volVectorField.read_field(of_mesh, "U")
@@ -179,9 +175,7 @@ def role_reference(case: Path) -> None:
     for name in COMPARE_FIELDS:
         registered = pyf.volScalarField.from_registry(of_mesh, name)
         if registered is not None:
-            np.save(
-                case / f"reference_{name}.npy", np.asarray(registered.internalField())
-            )
+            np.save(case / f"reference_{name}.npy", np.asarray(registered.internalField()))
         elif name == "nut":
             # laminar registers no nut; its nut() is a fresh (non-const) zero tmp, so
             # .ref() is valid here — unlike a RAS model's const nut() tmp above.
@@ -193,14 +187,7 @@ def role_reference(case: Path) -> None:
 
 def role_subject(case: Path) -> None:
     """NeoN ModelSpec model, one ``correct`` step → ``subject_<field>.npy``."""
-    import neon._neon as nn
-    import pybFoam as pyf
-
     nn.initialize(["neon"])
-
-    from neofoam import neofoam_bindings as nfb
-    from neofoam.turbulence.config import TurbulencePropertiesConfig
-    from neofoam.turbulence.selection import select_turbulence_model
 
     cfg = TurbulencePropertiesConfig.load(case_dir=str(case))
 
@@ -224,17 +211,13 @@ def role_subject(case: Path) -> None:
         "omegaFinal",
     ):
         if solvers.contains(solver_name):
-            solvers.insert_dict(
-                solver_name, nfb.map_fv_solution(solvers.subDict(solver_name))
-            )
+            solvers.insert_dict(solver_name, nfb.map_fv_solution(solvers.subDict(solver_name)))
     rt.dt = DELTA_T
 
     U_neon = nfb.read_vector_volume_field(rt, "U")
     phi_neon = nfb.create_phi(rt, "U")
     nu = nfb.create_uniform_volume_field(rt, "nu", nfb.read_transport_viscosity(rt))
-    turbulence = select_turbulence_model(
-        cfg, fallback=False, runtime=rt, nu=nu, case_dir=case
-    )
+    turbulence = select_turbulence_model(cfg, fallback=False, runtime=rt, nu=nu, case_dir=case)
     turbulence.validate(U_neon)
     turbulence.correct(U_neon, phi_neon, rt)
 
@@ -260,13 +243,6 @@ def role_subject_fb(case: Path) -> None:
     the point is to prove the handle + op-dispatch wiring actually advances ``nut``,
     not that two engines agree.
     """
-    import pybFoam as pyf
-    from pybFoam.turbulence import singlePhaseTransportModel
-
-    from neofoam.framework.context import Context
-    from neofoam.turbulence.config import TurbulencePropertiesConfig
-    from neofoam.turbulence.selection import select_turbulence_model
-
     of_time = pyf.Time(str(case.parent), case.name)
     of_mesh = pyf.fvMesh(of_time)
     U = pyf.volVectorField.read_field(of_mesh, "U")

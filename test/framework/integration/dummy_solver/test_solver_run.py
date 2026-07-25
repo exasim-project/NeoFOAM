@@ -13,14 +13,18 @@ from pathlib import Path
 
 import pytest
 
+from neofoam.framework.context import Context
 from neofoam.framework.graph import DAGResolver
 from neofoam.framework.model import ModelRuntime
+
+from .dummy_init import create_init
+from .dummy_solver import dummy_solver as solver
+from .dummy_solver import run
+from .models.model1 import model1 as spec
 
 
 def test_dummy_solver_full_initialization() -> None:
     """DummySolver initialization with both core and optional models."""
-    from .dummy_solver import dummy_solver as solver
-
     ctx = solver.initialize()
 
     # Core fields
@@ -61,8 +65,6 @@ def test_dummy_solver_full_initialization() -> None:
 
 def test_execution_graph_and_dag() -> None:
     """Execution graph structure and DAG resolution."""
-    from .dummy_solver import dummy_solver as solver
-
     solver.initialize()
     builder, model_ops = solver.execution_graph()
 
@@ -113,8 +115,6 @@ def test_dummy_solver_complete_run() -> None:
     "something moved" checks. Initial values are covered by
     ``test_dummy_solver_full_initialization``.
     """
-    from .dummy_solver import run
-
     ctx_final = run()
 
     assert ctx_final.fields["field1"] == pytest.approx(0.982096104825)
@@ -128,8 +128,6 @@ def test_dummy_solver_complete_run() -> None:
 
 def test_dummy_solver_model_operations_executed() -> None:
     """Model operations are discovered and executable via ModelRuntime."""
-    from .dummy_solver import dummy_solver as solver
-
     ctx = solver.initialize()
     models = ctx.models.get("optional_models", [])
 
@@ -145,12 +143,8 @@ def test_dummy_solver_model_operations_executed() -> None:
     assert len(rt_m2.operations) > 0
 
     # Find and call an operation
-    m1_step1 = next(
-        op for op in rt_m1.operations if op.operation_name == "model1_step1"
-    )
-    m2_step1 = next(
-        op for op in rt_m2.operations if op.operation_name == "model2_step1"
-    )
+    m1_step1 = next(op for op in rt_m1.operations if op.operation_name == "model1_step1")
+    m2_step1 = next(op for op in rt_m2.operations if op.operation_name == "model2_step1")
 
     rt_m1._step1_count = 0
     rt_m2._step1_count = 0
@@ -164,8 +158,6 @@ def test_dummy_solver_model_operations_executed() -> None:
 
 def test_model1_operations_discovery() -> None:
     """Operations are auto-discovered from model1 via ModelRuntime."""
-    from .models.model1 import model1 as spec
-
     case_dir = Path(__file__).parent / "configs"
     rt = spec.instantiate(case_dir=case_dir, instance_id="DummyModel1")
 
@@ -182,8 +174,6 @@ def test_model1_operations_discovery() -> None:
 
 def test_init_dependency_injection() -> None:
     """@init stages use Depends() for dependency injection."""
-    from .dummy_init import create_init
-
     init = create_init()
     init.argv = []
     ctx = init.run()
@@ -198,8 +188,6 @@ def test_init_dependency_injection() -> None:
 
 def test_automatic_dependency_injection_from_context() -> None:
     """Solver operations automatically get dependencies from Context."""
-    from .dummy_solver import dummy_solver as solver
-
     ctx = solver.initialize()
     ops = solver.operations
 
@@ -213,9 +201,6 @@ def test_automatic_dependency_injection_from_context() -> None:
 
 def test_model_operations_use_dependency_injection() -> None:
     """Model operations resolve dependencies and build works."""
-    from .models.model1 import model1 as spec
-    from neofoam.framework.context import Context
-
     case_dir = Path(__file__).parent / "configs"
     rt = spec.instantiate(case_dir=case_dir, instance_id="DummyModel1")
 
@@ -224,10 +209,7 @@ def test_model_operations_use_dependency_injection() -> None:
     names = [li.name for li in lazy_inits]
     assert "model_field1" in names
     assert "model_field2" in names
-    assert (
-        "domain"
-        in next(li for li in lazy_inits if li.name == "model_field1").depends_on
-    )
+    assert "domain" in next(li for li in lazy_inits if li.name == "model_field1").depends_on
 
     ops = rt.operations
     m1_s1 = next(op for op in ops if op.operation_name == "model1_step1")

@@ -22,12 +22,11 @@ from dataclasses import dataclass
 from typing import Any
 
 from neofoam.tooling.workflow.rules import (
-    CAD_DIM,
     MESH_DIM,
+    SETUP_CONFIG_PATTERN,
     RuleKind,
     RuleRegistry,
     RuleSpec,
-    SETUP_CONFIG_PATTERN,
     default_registry,
 )
 
@@ -138,7 +137,7 @@ def rule_nodes(
         enabled: The selected rule names (default: the full default pipeline).
     """
     plan = (registry or default_registry()).plan(enabled)
-    setup_dims = sorted(d for d in dims if d not in (MESH_DIM, CAD_DIM))
+    setup_dims = sorted(d for d in dims if d != MESH_DIM)
 
     def resolve(spec: RuleSpec) -> tuple[list[str], list[str], list[str]]:
         """(cfg_dims, inputs, outputs) with plan-dependent patterns rendered."""

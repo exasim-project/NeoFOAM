@@ -16,7 +16,6 @@ from neofoam.framework.initialization import (
     LoadResult,
 )
 
-
 init = StagedInit("scalar_transport")
 
 

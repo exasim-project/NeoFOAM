@@ -87,11 +87,10 @@ see **[doc/reference/cli.rst](doc/reference/cli.rst)**.
 
 Detailed guides — read the relevant one before writing code or test
 
-- **[`.claude/CODE_STYLE.md`](.claude/CODE_STYLE.md)** 
-- **[`.claude/TEST_STYLE.md`](.claude/TEST_STYLE.md)** 
+- **[`.claude/CODE_STYLE.md`](.claude/CODE_STYLE.md)**
+- **[`.claude/TEST_STYLE.md`](.claude/TEST_STYLE.md)**
 
 ## Project layout (where things live)
 
 The module map lives in the docs reference:
 **[`doc/reference/project-layout.rst`](doc/reference/project-layout.rst)**
-

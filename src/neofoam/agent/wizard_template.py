@@ -590,8 +590,6 @@ def write_wizard_notebook(
     target.mkdir(parents=True, exist_ok=True)
     path = target / filename
     if path.exists() and not force:
-        raise FileExistsError(
-            f"{path} already exists; pass force=True (CLI: --force) to overwrite"
-        )
+        raise FileExistsError(f"{path} already exists; pass force=True (CLI: --force) to overwrite")
     path.write_text(NOTEBOOK_TEMPLATE)
     return path

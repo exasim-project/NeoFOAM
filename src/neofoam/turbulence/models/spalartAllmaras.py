@@ -30,6 +30,7 @@ Coefficients are the OpenFOAM ``SpalartAllmaras`` defaults.
 from typing import Annotated, Any
 
 import neon._neon as nn
+
 from neofoam import neofoam_bindings as nfb
 from neofoam.framework.context import FieldUpdates
 from neofoam.framework.initialization import InitStep
@@ -80,9 +81,7 @@ def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
 
     def create_surf(ctx: dict[str, Any]) -> Any:
         rt = ctx["models.neon_runtime"]
-        return nn.SurfaceInterpolationScalar(
-            rt.executor, rt.nf_mesh, nn.TokenList(["linear"])
-        )
+        return nn.SurfaceInterpolationScalar(rt.executor, rt.nf_mesh, nn.TokenList(["linear"]))
 
     def create_grad(ctx: dict[str, Any]) -> Any:
         return nfb.GaussGreenGrad(ctx["models.neon_runtime"])
@@ -110,9 +109,7 @@ def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
 
     def create_nu_eff(ctx: dict[str, Any]) -> Any:
         # Effective (surface) viscosity for the momentum laplacian: nuEff = nut + nu.
-        return ctx["models.sa_surf"].interpolate(
-            ctx["fields.nut"] + ctx["models.nu_vol"]
-        )
+        return ctx["models.sa_surf"].interpolate(ctx["fields.nut"] + ctx["models.nu_vol"])
 
     return [
         init_field("nuTilda", read_nutilda, depends_on=["models.neon_runtime"]),

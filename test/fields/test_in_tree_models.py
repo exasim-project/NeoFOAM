@@ -20,9 +20,7 @@ from neofoam.solver.incompressibleFluid.incompressibleFluid import incompressibl
 
 
 def test_pimple_fields_surface_through_configurations() -> None:
-    field_names = {
-        cls.io_config.file for cls in configurations(incompressibleFluid).fields
-    }
+    field_names = {cls.io_config.file for cls in configurations(incompressibleFluid).fields}
     # ``U`` / ``p`` are pimple's; ``p_rgh`` / ``T`` / ``alphat`` are
     # boussinesq's. The presence of all five confirms ``model_specs``
     # walks both core and optional families.

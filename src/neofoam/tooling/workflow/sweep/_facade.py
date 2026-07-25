@@ -22,7 +22,6 @@ from typing import Any
 from pydantic import BaseModel
 
 from neofoam.tooling.workflow.rules import (
-    CAD_DIM,
     RulePlan,
     RuleRegistry,
     default_registry,
@@ -34,8 +33,6 @@ from neofoam.tooling.workflow.sweep._io import (
     cross_product,
     export_sweep,
     load_sweep,
-    merge_cad,
-    plan_enabled_with_cad,
 )
 
 
@@ -46,8 +43,7 @@ class Sweep:
     ``dimensions`` maps each swept axis to its named variants
     (``{axis: {variant: payload}}``); the reserved ``mesh`` axis is keyed. ``classes``
     supplies the pydantic config class per axis, used to validate variants on
-    :meth:`export`. A CAD axis is passed as ``cad={"cad": {"model": path, "variants":
-    {...}}}`` (opt-in; enables the ``cad_geometry`` rule).
+    :meth:`export`.
 
     :meth:`export` writes the runnable workflow directory; :meth:`load` reads one back.
     :attr:`rows`, :attr:`plan` and :attr:`snakefile` are derived read-only views — the
@@ -58,7 +54,6 @@ class Sweep:
     solver_name: str
     base_case: str | Path
     classes: Mapping[str, type[BaseModel]] = field(default_factory=dict)
-    cad: Mapping[str, Mapping[str, Any]] | None = None
     registry: RuleRegistry | None = None
     enabled: Sequence[str] | None = None
 
@@ -70,7 +65,6 @@ class Sweep:
             base_case=self.base_case,
             dimensions=self.dimensions,
             classes=self.classes,
-            cad=self.cad,
             registry=self.registry,
             enabled=self.enabled,
         )
@@ -84,51 +78,31 @@ class Sweep:
         :attr:`snakefile`) rather than re-:meth:`export`.
         """
         loaded: LoadedSweep = load_sweep(out_dir)
-        dims = {d: v for d, v in loaded.dimensions.items() if d != CAD_DIM}
-        cad: dict[str, Mapping[str, Any]] | None = None
-        if loaded.cad_model:
-            cad = {
-                CAD_DIM: {
-                    "model": loaded.cad_model,
-                    "variants": loaded.dimensions.get(CAD_DIM, {}),
-                }
-            }
         return cls(
-            dimensions=dims,
+            dimensions=loaded.dimensions,
             solver_name=loaded.solver_name,
             base_case=loaded.base_case,
-            cad=cad,
             enabled=loaded.enabled,
         )
 
     # -- derived read-only views -------------------------------------------
-    def _resolved(self) -> tuple[dict[str, dict[str, Any]], str | None]:
-        """Effective dimensions (CAD axis folded in) and the CAD model path."""
-        return merge_cad(self.dimensions, self.cad)
-
     @property
     def rows(self) -> list[dict[str, str]]:
-        """The cross-product rows (``sweep.csv``), with the CAD axis folded in."""
-        dims, _ = self._resolved()
-        return cross_product(dims)
+        """The cross-product rows (``sweep.csv``)."""
+        return cross_product(self.dimensions)
 
     @property
     def plan(self) -> RulePlan:
-        """The resolved rule plan (the ``cad_geometry`` rule on when a CAD axis is present)."""
-        _, cad_model = self._resolved()
-        enabled = plan_enabled_with_cad(self.enabled, has_cad=cad_model is not None)
-        return (self.registry or default_registry()).plan(enabled)
+        """The resolved rule plan."""
+        return (self.registry or default_registry()).plan(self.enabled)
 
     @property
     def snakefile(self) -> str:
         """The generated Snakefile text (same content :meth:`export` writes)."""
-        dims, cad_model = self._resolved()
-        enabled = plan_enabled_with_cad(self.enabled, has_cad=cad_model is not None)
         return sweep_snakefile(
             self.solver_name,
             self.base_case,
-            sorted(dims),
-            cad_model=cad_model,
+            sorted(self.dimensions),
             registry=self.registry,
-            enabled=enabled,
+            enabled=self.enabled,
         )

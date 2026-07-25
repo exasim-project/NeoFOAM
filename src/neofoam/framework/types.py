@@ -51,9 +51,7 @@ class OperationNumber:
         a, b = self._as_tuple(other)
         return a == b
 
-    def __lt__(
-        self, other: "OperationNumber" | str | int | list[int] | tuple[int, ...]
-    ) -> bool:
+    def __lt__(self, other: "OperationNumber" | str | int | list[int] | tuple[int, ...]) -> bool:
         a, b = self._as_tuple(other)
         return a < b
 
@@ -68,7 +66,8 @@ class OpType(Enum):
 
 @dataclass
 class OperationMetadata:
-    """collection of the metadata for operations - describes both decorated functions and DAG nodes."""
+    """collection of the metadata for operations - describes both decorated
+    functions and DAG nodes."""
 
     op_name: str | None = None
 

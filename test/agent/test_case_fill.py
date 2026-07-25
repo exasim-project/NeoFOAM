@@ -29,6 +29,8 @@ import pytest
 # case_fill uses the aggregate schema even when no LLM is invoked.
 pytest.importorskip("pydantic_ai")
 
+import typer.testing
+
 from neofoam.agent.case_fill import (  # noqa: E402
     build_case_output_model,
     case_spec_to_configs,
@@ -36,6 +38,9 @@ from neofoam.agent.case_fill import (  # noqa: E402
     load_case_from_disk,
     save_case,
 )
+from neofoam.cli.app import app
+from neofoam.solver.incompressibleFluid import run as run_incompressible_fluid
+from neofoam.solver.incompressibleFluid.configs import ControlDictConfig
 
 
 def _setup_case(
@@ -113,8 +118,6 @@ def test_case_output_model_has_one_optional_field_per_config() -> None:
 
 def test_case_spec_to_configs_filters_none_and_preserves_order() -> None:
     """Only populated BaseConfig fields are returned, in declaration order."""
-    from neofoam.solver.incompressibleFluid.configs import ControlDictConfig
-
     model = build_case_output_model()
     cd = ControlDictConfig(endTime=0.1, deltaT=0.01)
     spec = model(control_dict_config=cd)
@@ -233,8 +236,6 @@ def test_fill_case_no_llm_produces_a_runnable_case(tmp_path: Path) -> None:
     # Run the solver inside the filled case — this is the "verify the solver
     # runs" assertion from the user request. We change into the case dir
     # because ``incompressibleFluid.run`` expects cwd-relative OpenFOAM paths.
-    from neofoam.solver.incompressibleFluid import run as run_incompressible_fluid
-
     original_dir = Path.cwd()
     os.chdir(filled)
     try:
@@ -245,9 +246,7 @@ def test_fill_case_no_llm_produces_a_runnable_case(tmp_path: Path) -> None:
     # The solver must have advanced at least one step and produced an output
     # time directory beyond ``0/``.
     assert ctx is not None
-    time_dirs = sorted(
-        d.name for d in filled.iterdir() if d.is_dir() and d.name[0].isdigit()
-    )
+    time_dirs = sorted(d.name for d in filled.iterdir() if d.is_dir() and d.name[0].isdigit())
     assert len(time_dirs) >= 2, f"only saw time dirs {time_dirs}"
 
 
@@ -278,10 +277,6 @@ def test_fill_case_rejects_a_missing_source_before_calling_the_agent(
 
 def test_cli_agent_fill_no_llm(tmp_path: Path) -> None:
     """``neofoam agent fill --no-llm`` writes the configs end-to-end."""
-    import typer.testing
-
-    from neofoam.cli.app import app
-
     # Stage the source with a built mesh so the fill+run combo is reproducible
     # (the CLI doesn't run blockMesh itself).
     staging = tmp_path / "pitzDaily_src"

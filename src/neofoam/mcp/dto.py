@@ -15,12 +15,20 @@ from pydantic import BaseModel
 
 from neofoam.framework.validation import (
     Finding as FindingDTO,
+)
+from neofoam.framework.validation import (
     ValidationReport as ValidationReportDTO,
 )
 from neofoam.io.schema import (
     ConfigInfo as ConfigInfoDTO,
+)
+from neofoam.io.schema import (
     ConfigSchema as ConfigSchemaDTO,
+)
+from neofoam.io.schema import (
     ModelSummary as ModelEntryDTO,
+)
+from neofoam.io.schema import (
     ToolInfo as ToolInfoDTO,
 )
 

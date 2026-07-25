@@ -44,8 +44,7 @@ from neofoam.foam.schemes import (
     SnGradScheme,
     Upwind,
 )
-from neofoam.io import BaseConfig, IOStrategy, OF
-
+from neofoam.io import OF, BaseConfig, IOStrategy
 
 # ---------------------------------------------------------------------------
 # Short-name → (section, value type) lookup tables
@@ -190,9 +189,7 @@ def _canonical_scheme(section_name: str, alias: str) -> Optional[dict[str, Any]]
         interp = Upwind() if "phi" in alias else Linear()
         return GaussDiv(interpolation=interp).model_dump(by_alias=True)
     if section_name == "laplacianSchemes":
-        return GaussLaplacian(interpolation=Linear(), sn_grad=Corrected()).model_dump(
-            by_alias=True
-        )
+        return GaussLaplacian(interpolation=Linear(), sn_grad=Corrected()).model_dump(by_alias=True)
     if section_name == "snGradSchemes":
         return Corrected().model_dump(by_alias=True)
     if section_name == "interpolationSchemes":
@@ -208,9 +205,7 @@ _CONTROL_CORRECTORS: dict[str, dict[str, Any]] = {
 }
 
 
-def _canonical_controls(
-    section_name: str, declared_aliases: list[str]
-) -> dict[str, Any]:
+def _canonical_controls(section_name: str, declared_aliases: list[str]) -> dict[str, Any]:
     """A runnable algorithm-control block (e.g. ``PIMPLE { … }``) for the scaffold.
 
     The corrector counts come from the section name; the algorithm reads the block at
@@ -297,9 +292,7 @@ class fvSchemes(BaseConfig):
         return out or None
 
     @classmethod
-    def add(
-        cls, **section_to_keys: Any
-    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    def add(cls, **section_to_keys: Any) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         """Extend this subclass with typed entries.
 
         Each kwarg maps a short section name to either a single entry
@@ -308,9 +301,7 @@ class fvSchemes(BaseConfig):
         top of ``@spec.operation(...)``.
         """
         for short_name, keys in section_to_keys.items():
-            section_name, value_type = _SCHEMES_SECTIONS.get(
-                short_name, (short_name, str)
-            )
+            section_name, value_type = _SCHEMES_SECTIONS.get(short_name, (short_name, str))
             if not isinstance(keys, list):
                 keys = [keys]
             for key in keys:

@@ -20,9 +20,7 @@ SNAPPY = CASES / "snappy"
 
 def _n_points(case_path: Path) -> int:
     """Read the point count from ``constant/polyMesh/points`` (first bare-integer line)."""
-    for line in (
-        (case_path / "constant" / "polyMesh" / "points").read_text().splitlines()
-    ):
+    for line in (case_path / "constant" / "polyMesh" / "points").read_text().splitlines():
         stripped = line.strip()
         if stripped.isdigit():
             return int(stripped)
@@ -38,14 +36,10 @@ def test_block_mesh_generates_polymesh_from_committed_dict(tmp_path: Path) -> No
 def test_box_synthesizes_dict_at_requested_resolution(tmp_path: Path) -> None:
     # box overwrites the committed 3x3x1 blockMeshDict with a 5x5x1 one.
     case = (from_template(CAVITY) | box(n=(5, 5, 1))).build_at(tmp_path / "c")
-    assert _n_points(case.path) == (5 + 1) * (5 + 1) * (
-        1 + 1
-    )  # 72, not the committed 32
+    assert _n_points(case.path) == (5 + 1) * (5 + 1) * (1 + 1)  # 72, not the committed 32
 
 
 def test_snappy_refines_the_background_mesh(tmp_path: Path) -> None:
     background = (from_template(SNAPPY) | block_mesh()).build_at(tmp_path / "bg")
-    refined = (from_template(SNAPPY) | block_mesh() | snappy_hex_mesh()).build_at(
-        tmp_path / "snap"
-    )
+    refined = (from_template(SNAPPY) | block_mesh() | snappy_hex_mesh()).build_at(tmp_path / "snap")
     assert _n_points(refined.path) > _n_points(background.path)

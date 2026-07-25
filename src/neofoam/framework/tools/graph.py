@@ -86,9 +86,7 @@ def tool_graph_steps(
     for rt in runtimes:
         depended.update(rt.depends_on)
 
-    needs_disk_mesh = [
-        rt for rt in runtimes if not rt.depends_on and rt.spec.consumes_mesh
-    ]
+    needs_disk_mesh = [rt for rt in runtimes if not rt.depends_on and rt.spec.consumes_mesh]
     if needs_disk_mesh and mesh_source is None:
         names = ", ".join(rt.spec.name for rt in needs_disk_mesh)
         raise ValueError(
@@ -155,14 +153,11 @@ def tool_graph_steps(
         def publish_mesh(ctx: dict[str, Any], _k: str = published) -> Any:
             return ctx[_k]
 
-        steps.append(
-            lazy("mesh", publish_mesh, depends_on=[published], replaces=["mesh"])
-        )
+        steps.append(lazy("mesh", publish_mesh, depends_on=[published], replaces=["mesh"]))
     elif len(sinks) > 1:
         names = ", ".join(rt.spec.name for rt in sinks)
         raise ValueError(
-            f"preprocess pipeline must have exactly one sink tool; found "
-            f"{len(sinks)}: [{names}]"
+            f"preprocess pipeline must have exactly one sink tool; found {len(sinks)}: [{names}]"
         )
     # len(sinks) == 0 → every tool is depended on → a cycle. Emit no alias and let the
     # existing DAG validation raise InitializationGraphError when the graph is sorted.

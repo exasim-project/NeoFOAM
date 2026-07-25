@@ -5,11 +5,11 @@
 
 Helpers to build the kinematic-viscosity ``dimensionedScalar`` fields the
 viscosity and momentum-transport models register in the Context (``nu``, ``nut``).
-pybFoam is imported lazily, so importing this module needs no built OpenFOAM
-environment.
 """
 
 from typing import Any
+
+import pybFoam
 
 __all__ = ["VISCOSITY_DIMENSIONS", "dimensioned_viscosity"]
 
@@ -23,8 +23,6 @@ def dimensioned_viscosity(name: str, value: float) -> Any:
     The pybFoam transport binding exposes no ``nu()``; native models build the
     field from the value OpenFOAM reads from ``constant/transportProperties``.
     """
-    import pybFoam
-
     return pybFoam.dimensionedScalar(
         pybFoam.Word(name), pybFoam.dimensionSet(*VISCOSITY_DIMENSIONS), value
     )

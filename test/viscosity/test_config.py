@@ -13,7 +13,6 @@ import pytest
 
 from neofoam.viscosity.config import TransportPropertiesConfig
 from neofoam.viscosity.selection import model_name
-
 from viscosity.conftest import CASES, Case
 
 

@@ -136,9 +136,7 @@ class FakeContext:
 
 def test_predicate_delegates_to_engine_running() -> None:
     on = make_solution_loop(_config(endTime=1.0), make_loop_state(_config(endTime=1.0)))
-    off = make_solution_loop(
-        _config(endTime=1.0), make_loop_state(_config(endTime=1.0))
-    )
+    off = make_solution_loop(_config(endTime=1.0), make_loop_state(_config(endTime=1.0)))
     off.stop()
     assert SolutionLoopPredicate()(cast(Context, FakeContext(on))) is True
     assert SolutionLoopPredicate()(cast(Context, FakeContext(off))) is False
@@ -158,9 +156,7 @@ def test_active_maxdeltat_contributor_caps_the_step() -> None:
     # step.
     loop = make_solution_loop(_config(deltaT=2.0), make_loop_state(_config(deltaT=2.0)))
     loop_rt = ModelRuntime(spec=solutionLoop, name="solutionLoop", config=None)
-    max_rt = ModelRuntime(
-        spec=maxDeltaT, name="maxDeltaT", config=MaxDeltaTConfig(maxDeltaT=0.5)
-    )
+    max_rt = ModelRuntime(spec=maxDeltaT, name="maxDeltaT", config=MaxDeltaTConfig(maxDeltaT=0.5))
     ctx = Context(
         fields={},
         models={"solution_loop": loop, "solutionLoop": loop_rt, "maxDeltaT": max_rt},

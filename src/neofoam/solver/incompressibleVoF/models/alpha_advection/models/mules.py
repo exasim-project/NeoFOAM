@@ -30,9 +30,11 @@ import pybFoam.fvm as fvm
 from pybFoam import (
     Info,
     fvc,
-    mules as mules_lib,
     surfaceScalarField,
     volScalarField,
+)
+from pybFoam import (
+    mules as mules_lib,
 )
 
 from neofoam.fields import (
@@ -125,9 +127,7 @@ def read_alpha_controls(alpha_name: str) -> tuple[int, int, bool]:
     try:
         fv_solution = pyf.dictionary.read("system/fvSolution")
     except RuntimeError as err:
-        Info(
-            f"read_alpha_controls: cannot read system/fvSolution ({err}); using defaults."
-        )
+        Info(f"read_alpha_controls: cannot read system/fvSolution ({err}); using defaults.")
         return defaults
     if not fv_solution.found("solvers"):
         Info("read_alpha_controls: no 'solvers' dict in fvSolution; using defaults.")
@@ -153,9 +153,7 @@ def interface_compression_velocity(
     zeroing is done in Python via ``fvPatch.coupled()``.
     """
     mesh = phi.mesh()
-    phic = surfaceScalarField(
-        pyf.Word("phic"), mixture.cAlpha() * pyf.mag(phi / mesh.magSf())
-    )
+    phic = surfaceScalarField(pyf.Word("phic"), mixture.cAlpha() * pyf.mag(phi / mesh.magSf()))
     # Zero compression on non-coupled (inlet/outlet/wall) boundary faces.
     # Index access (fvPatch by reference) — the fvBoundaryMesh iterator returns
     # fvPatch by value, which is invalid for the abstract fvPatch base.
@@ -200,9 +198,7 @@ def alpha_phase_flux(
     )
 
 
-def mules_implicit_predictor(
-    alpha1: volScalarField, phi: surfaceScalarField
-) -> surfaceScalarField:
+def mules_implicit_predictor(alpha1: volScalarField, phi: surfaceScalarField) -> surfaceScalarField:
     """Implicit upwind predictor for the MULESCorr branch.
 
     Builds and solves ``fvm.ddt(alpha1) + fvm.div(phi, alpha1, scheme="Gauss upwind") = 0``
@@ -210,9 +206,7 @@ def mules_implicit_predictor(
     matching alphaEqn.H's hardcoded upwind), modifies ``alpha1`` in-place, and
     returns the resulting upwind face flux.
     """
-    alpha1_eqn = pyf.fvScalarMatrix(
-        fvm.ddt(alpha1) + fvm.div(phi, alpha1, scheme="Gauss upwind")
-    )
+    alpha1_eqn = pyf.fvScalarMatrix(fvm.ddt(alpha1) + fvm.div(phi, alpha1, scheme="Gauss upwind"))
     alpha1_eqn.solve()
     return surfaceScalarField(pyf.Word("alphaPhi10"), alpha1_eqn.flux())
 
@@ -268,9 +262,7 @@ def _solve_alpha_python(
     phic = interface_compression_velocity(mixture, phi)
 
     # (b) Initialise face alpha-flux accumulator.
-    alpha_phi10 = surfaceScalarField(
-        pyf.Word("alphaPhi10"), phi * fvc.interpolate(alpha1)
-    )
+    alpha_phi10 = surfaceScalarField(pyf.Word("alphaPhi10"), phi * fvc.interpolate(alpha1))
 
     # (c) MULESCorr implicit-upwind predictor.
     if mules_corr:
@@ -333,9 +325,7 @@ def alpha_advection(
 ) -> FieldUpdates:
     """Solve alpha equation (MULES) and update rho / rhoPhi."""
     _solve_alpha_python(alpha1, alpha2, phi, rhoPhi, rho, mixture)
-    return FieldUpdates(
-        {"alpha1": alpha1, "alpha2": alpha2, "rho": rho, "rhoPhi": rhoPhi}
-    )
+    return FieldUpdates({"alpha1": alpha1, "alpha2": alpha2, "rho": rho, "rhoPhi": rhoPhi})
 
 
 # ---------------------------------------------------------------------------

@@ -21,7 +21,6 @@ from typing import Any
 
 from neofoam.turbulence.config import TurbulencePropertiesConfig
 from neofoam.turbulence.models.laminar import laminar
-
 from turbulence.conftest import case_for
 
 #: Point the laminar model at the case the solver would feed it.

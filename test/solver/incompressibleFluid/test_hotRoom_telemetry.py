@@ -20,6 +20,8 @@ import pytest
 
 pytest.importorskip("opentelemetry")
 
+import sys
+
 from neofoam.solver.incompressibleFluid import run  # noqa: E402
 
 from .comparison_helpers import setup_case  # noqa: E402
@@ -61,9 +63,7 @@ def _span_records(case: Path, rank: int = 0) -> list[dict[str, Any]]:
     return [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
 
 
-def _parent_chain(
-    record: dict[str, Any], by_id: dict[str, dict[str, Any]]
-) -> list[str]:
+def _parent_chain(record: dict[str, Any], by_id: dict[str, dict[str, Any]]) -> list[str]:
     names = []
     parent = record["parent_id"]
     while parent is not None:
@@ -166,9 +166,7 @@ _PARALLEL_DRIVER = Path(__file__).parent / "_parallel_driver.py"
 
 
 def _mpi_available() -> bool:
-    return (
-        shutil.which("mpirun") is not None and shutil.which("decomposePar") is not None
-    )
+    return shutil.which("mpirun") is not None and shutil.which("decomposePar") is not None
 
 
 @pytest.mark.skipif(not _mpi_available(), reason="mpirun/decomposePar not available")
@@ -183,8 +181,6 @@ def test_hotRoom_telemetry_parallel_writes_one_file_per_rank(tmp_path: Path) -> 
         timeout=60,
     )
     assert result.returncode == 0, f"decomposePar failed: {result.stderr}"
-
-    import sys
 
     result = subprocess.run(
         ["mpirun", "-np", "2", sys.executable, str(_PARALLEL_DRIVER)],

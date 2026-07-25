@@ -91,15 +91,11 @@ def run_tool(
         step.initializer(ctx)
 
 
-def block_mesh(
-    *, dict_file: str = "system/blockMeshDict", verbose: bool = False
-) -> Step:
+def block_mesh(*, dict_file: str = "system/blockMeshDict", verbose: bool = False) -> Step:
     """Generate the base mesh from a committed ``blockMeshDict`` (via ``blockMeshTool``)."""
 
     def step(case: CaseDir) -> None:
-        run_tool(
-            case, blockMeshTool, options={"dict_file": dict_file, "verbose": verbose}
-        )
+        run_tool(case, blockMeshTool, options={"dict_file": dict_file, "verbose": verbose})
 
     return step
 
@@ -110,7 +106,8 @@ def snappy_hex_mesh(
     overwrite: bool = True,
     verbose: bool = False,
 ) -> Step:
-    """Refine the prior ``block_mesh`` output from ``snappyHexMeshDict`` (via ``snappyHexMeshTool``).
+    """Refine the prior ``block_mesh`` output from ``snappyHexMeshDict``
+    (via ``snappyHexMeshTool``).
 
     Runs after a ``block_mesh`` step in the same pipeline; the background mesh it left on
     disk is reconstructed and fed to snappy as ``_prev_mesh``.

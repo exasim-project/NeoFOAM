@@ -17,6 +17,8 @@ field maths — so it requires the NeoN bindings (the same monorepo build that
 provides pybFoam).
 """
 
+# Import side-effect: register the bundled turbulence models.
+from . import models  # noqa: E402
 from .base import ViscousStress
 from .fallback import FallbackHandle, OpenFOAMTurbulenceModel
 from .momentumTransport import momentumTransportModel
@@ -24,9 +26,6 @@ from .native import NeoNHandle
 from .protocol import MomentumTransport
 from .selection import model_name, select_from_case, select_turbulence_model
 from .stress import LinearViscousStress, OpenFOAMStress
-
-# Import side-effect: register the bundled turbulence models.
-from . import models  # noqa: E402
 
 __all__ = [
     "momentumTransportModel",

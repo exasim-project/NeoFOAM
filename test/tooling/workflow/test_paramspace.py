@@ -132,9 +132,7 @@ def test_paramspace_validation_errors(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="sweep column 'control'"):
         YamlParamSpace(sweep, params)
 
-    write_params_yaml(
-        params, {**_VARIANTS, "transport": {"nu1": _VARIANTS["transport"]["nu1"]}}
-    )
+    write_params_yaml(params, {**_VARIANTS, "transport": {"nu1": _VARIANTS["transport"]["nu1"]}})
     with pytest.raises(ValueError, match="unknown variant 'nu2'"):
         YamlParamSpace(sweep, params)
 
@@ -205,9 +203,7 @@ def test_materialize_dims_writes_per_variant_configs(tmp_path: Path) -> None:
     # Unchanged content is not rewritten; one edited variant rewrites one file.
     assert space.materialize_dims(["transport"], out_dir=out) == []
     space.variants["transport"]["nu2"]["nu"] = 3e-5
-    assert [p.name for p in space.materialize_dims(["transport"], out_dir=out)] == [
-        "nu2.json"
-    ]
+    assert [p.name for p in space.materialize_dims(["transport"], out_dir=out)] == ["nu2.json"]
 
     with pytest.raises(ValueError, match="unknown dimension 'mesh'"):
         space.materialize_dims(["mesh"], out_dir=out)
