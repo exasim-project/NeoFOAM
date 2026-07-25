@@ -31,6 +31,22 @@ def discover():
     )]
 """
 
+#: A discover() that walks a tutorial group and returns more than one case — the
+#: shape `only:` exists to narrow (the study picks cases *after* discovery rather
+#: than naming them in `cases:` up front).
+_DISCOVER_TWO_PY = """
+from pathlib import Path
+from neofoam.tooling.workflow.study.cases import Case, case_id
+
+def discover():
+    names = ["interFoam/laminar/damBreak", "interIsoFoam/laminar/damBreak"]
+    return [Case(
+        id=case_id(name), name=name, path=Path("/tut") / name,
+        native_solver=name.split("/")[0], app="neofoam solver incompressiblevof",
+        fields=("alpha.water",), tier="A",
+    ) for name in names]
+"""
+
 
 def test_case_id_is_wildcard_safe() -> None:
     """Slashes become the flat id Snakemake uses as a wildcard."""
@@ -113,3 +129,32 @@ def test_config_only_key_is_available_for_subsetting(tmp_path: Path) -> None:
     study = load_study(tmp_path / "config.yaml")
 
     assert study.config["only"] == ["simpleFoam/pitzDaily"]
+
+
+def test_only_filters_a_tree_walking_discover_down_to_the_named_cases(
+    tmp_path: Path,
+) -> None:
+    """`only:` post-filters discovery, so the whole sweep narrows to one case.
+
+    Applied in ``load_study`` — not in the Snakefile — so the DAG, every worker,
+    and the report's case table are all derived from this one list. Without it a
+    study that means to run one case would sweep its whole tutorial group.
+    """
+    (tmp_path / "discover.py").write_text(_DISCOVER_TWO_PY)
+    (tmp_path / "config.yaml").write_text(
+        "title: demo\ndiscover: discover.py\nonly:\n  - interFoam/laminar/damBreak\n"
+    )
+
+    study = load_study(tmp_path / "config.yaml")
+
+    assert [c.name for c in study.cases] == ["interFoam/laminar/damBreak"]
+
+
+def test_without_only_every_discovered_case_is_swept(tmp_path: Path) -> None:
+    """No `only:` ⇒ no filtering, so a study opts in rather than out."""
+    (tmp_path / "discover.py").write_text(_DISCOVER_TWO_PY)
+    (tmp_path / "config.yaml").write_text("title: demo\ndiscover: discover.py\n")
+
+    study = load_study(tmp_path / "config.yaml")
+
+    assert len(study.cases) == 2

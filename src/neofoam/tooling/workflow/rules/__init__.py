@@ -1,7 +1,26 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""The predefined Snakemake rule library for NeoFOAM parameter sweeps.
+"""The predefined Snakemake rule library for NeoFOAM workflows.
+
+Two named rule sets ship here, reached the same way — ``include:`` a path under
+:func:`rules_dir` — but composed differently:
+
+* **The mesh sweep** (``setup_mesh``/``blockMesh``/``snappyHexMesh``/``checkMesh``/
+  ``setup``/``solve``/``post``) is *selected*: :class:`RuleRegistry` holds the
+  specs and :meth:`RuleRegistry.plan` resolves an enabled subset into a
+  :class:`RulePlan` the codegen turns into a Snakefile. Documented below.
+* **The drop-in study** (``study.smk`` → ``build_case``/``swap_solver``/``run``/
+  ``compare``/``report``) is *whole*: ``study.smk`` is itself the named set — it
+  defines the header globals and includes the five rule files, so a study
+  Snakefile is one ``include:`` plus its own ``rule all``.
+
+The study set is deliberately **not** in :func:`default_registry`. Registering it
+would make it selectable but not plannable: :meth:`RuleRegistry.plan` hard-requires
+``setup``/``solve``/``setup_mesh`` and a :attr:`RuleKind.MESH_CREATE`-rooted chain,
+which a study pipeline has none of — a tutorial brings its own mesh and runs its own
+``Allrun``. Generalizing ``plan()`` to wire arbitrary pipelines is a larger change
+than this file; until then a fixed pipeline is honestly expressed as a fixed file.
 
 Each :class:`RuleSpec` describes one packaged ``.smk`` file (shipped in this
 directory) — its Snakemake rule name, the file patterns it consumes/produces
@@ -12,14 +31,20 @@ materialize the configs, define the plan's globals) followed by ``include:``
 lines referencing these files, so the rule bodies stay versioned together with
 the ``python -m neofoam.tooling.workflow.sweep_runner`` CLI they shell out to.
 
-The default pipeline::
+The default mesh-sweep pipeline::
 
     setup_mesh ─ blockMesh ─ snappyHexMesh ─ checkMesh      (once per mesh variant)
                                         └─ setup ─ solve    (once per case)
                                                      └─ all
 
-Each ``.smk`` file documents the header globals it consumes. This module is
-stdlib-only — generated Snakefiles import it at parse time.
+and the study pipeline, once per (case, solver)::
+
+    build_case ─ swap_solver ─ run ┐
+                                   └─ compare ─ results/{id}.json ─ report
+
+Each ``.smk`` file documents the header globals it consumes — for the study set
+those are defined by ``study.smk`` itself, for the sweep set by the codegen's
+header. This module is stdlib-only — generated Snakefiles import it at parse time.
 
 Interface (``__all__`` — the rule model only):
 

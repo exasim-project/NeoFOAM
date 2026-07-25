@@ -144,6 +144,13 @@ def load_study(config_path: Path) -> Study:
     directory, so a study is self-contained and can be run from anywhere. Tier
     titles come from the config if given, else from the discover module's
     ``TIER_TITLES``.
+
+    Two distinct case selectors, deliberately not merged: ``cases:`` is a selection
+    handed *to* ``discover()`` (it resolves each named tutorial and never walks the
+    tree), while ``only:`` post-filters a discover that *does* walk — the shape a
+    study needs when it tiers its tutorial group. Both are applied here rather than
+    in the Snakefile so the DAG, every worker, and the report's case table are
+    derived from one list.
     """
     config_path = Path(config_path).resolve()
     config = yaml.safe_load(config_path.read_text()) or {}
@@ -157,6 +164,9 @@ def load_study(config_path: Path) -> Study:
         cases = module.discover(config.get("cases"))
     else:
         cases = module.discover()
+    only = config.get("only")
+    if only:
+        cases = [case for case in cases if case.name in set(only)]
     # The candidate backends: explicit `apps:` in the config, else the single app
     # each case was discovered with (back-compat — one backend, as before).
     apps = config.get("apps") or list(dict.fromkeys(case.app for case in cases))
