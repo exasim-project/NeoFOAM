@@ -24,7 +24,7 @@
 
 - pybFoam/OpenFOAM are hard deps: no skip-if-missing, no `try/except` imports. Only optional extras (telemetry, agent, MCP) use `pytest.importorskip`.
 - One `Foam::Time` per process — multiple runs (reference vs subject) go through subprocess workers that write `.npy` artifacts.
-- Non-editable install: source changes need `pip install .[all] -v` before pytest sees them.
+- Editable install (`pip install -e .[all]`): source changes are picked up by pytest immediately.
 - Never delete or weaken an existing test to get green.
 
 ## Done

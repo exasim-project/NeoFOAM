@@ -208,7 +208,7 @@ class PimpleControl(BaseModel):
 
     model_config = {"arbitrary_types_allowed": True}
 
-    nCorrectors: int = Field(ge=2, description="Number of PIMPLE corrector iterations")
+    nCorrectors: int = Field(ge=1, description="Number of PIMPLE corrector iterations")
     nOuterCorrectors: int = Field(
         default=1, ge=1, description="Number of PIMPLE outer corrector iterations"
     )

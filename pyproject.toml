@@ -97,8 +97,15 @@ telemetry = [
     # export is dependency-free, the summary bar chart needs matplotlib.
     "matplotlib>=3.5",
 ]
+verification = [
+    # verification/foam_tutorials: the OpenFOAM tutorial drop-in suite is a
+    # Snakemake workflow. snakemake is an execution-time dependency of the
+    # suite, not of the neofoam package — nothing under src/ imports it.
+    "snakemake>=8",
+    "pyyaml",
+]
 all = [
-    "neofoam[dev,docs,agent,mcp,telemetry]",
+    "neofoam[dev,docs,agent,mcp,telemetry,verification]",
 ]
 
 [project.scripts]

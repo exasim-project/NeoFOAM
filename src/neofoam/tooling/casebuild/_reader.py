@@ -25,6 +25,14 @@ import numpy as np
 import pybFoam as pyf
 from pybFoam import volScalarField, volVectorField
 
+from neofoam.foam.libraries import load_libraries
+
+# Fields written by a solver that links extra OpenFOAM libraries (e.g. waveVelocity
+# BCs from libwaveModels) are unreadable in a process that lacks those runtime
+# tables. genericPatchFields is OpenFOAM's standard reader fallback for unknown
+# patchField types — the internal field (all this reader dumps) is unaffected.
+load_libraries(["libgenericPatchFields.so"])
+
 
 def _resolve_time_dir(case: Path, time: str) -> Path:
     """Return the time directory to read: the latest numeric dir, or a named one."""
@@ -55,7 +63,9 @@ def read_field(case: Path, time: str, name: str, out: Path) -> None:
 
         runtime = pyf.Time(str(staged.parent), staged.name)
         mesh = pyf.fvMesh(runtime)
-        header = (staged / "0" / name).read_text()
+        # Decode leniently: a binary-format field's FoamFile header is still
+        # ASCII, but its internalField payload is not, so read_text() would choke.
+        header = (staged / "0" / name).read_bytes().decode("utf-8", "replace")
         field: Union[volScalarField, volVectorField]
         if "volScalarField" in header:
             field = volScalarField.read_field(mesh, name)

@@ -1,118 +1,75 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Classify every incompressible tutorial for the incompressibleFluid drop-in.
+"""Enumerate the incompressible tutorials the drop-in study runs.
 
-Purely static — read the case's dictionaries, run nothing — so the full inventory
-is known in milliseconds. This predicts which cases stand a chance; whether one
-*actually* runs is decided by the engine, which records the observed outcome
-beside this prediction.
+Selection, not classification: which cases run is stated in ``config.yaml``
+(``cases:``), and this module only resolves each name to its tutorial directory
+and reads the minimal metadata the sweep needs — the native solver to swap and the
+subdomain count for thread budgeting. Whether a case *should* run, and why one
+fails, is decided by the run itself and analysed afterwards, not predicted here.
+
+With no ``cases:`` list the study falls back to walking the tutorial tree and
+taking every ``simpleFoam``/``pimpleFoam`` case — a plain enumeration, still no
+tiering.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from neofoam.tooling.verification.foamdict import (
-    entry,
-    read,
-    turbulence,
-    tutorials_root,
-    uses_ami,
-)
+from neofoam.tooling.verification.foamdict import entry, read, tutorials_root
 from neofoam.tooling.verification.study import Case, case_id, subdomains
 
-#: Solver families incompressibleFluid claims to replace.
+#: Solver families incompressibleFluid claims to replace — the enumeration filter
+#: for the fall-back tree walk (not a per-case verdict).
 NATIVE_SOLVERS = ("simpleFoam", "pimpleFoam")
 
-#: Turbulence models with a pure-Python implementation under neofoam/turbulence.
-SUPPORTED_RAS = ("kEpsilon", "kOmegaSST", "SpalartAllmaras", "realizableKE")
-
-#: Case files whose presence implies a capability incompressibleFluid lacks.
-UNSUPPORTED_FEATURES = {
-    "dynamicMeshDict": "dynamic mesh / mesh motion",
-    "MRFProperties": "MRF zones",
-    "fvOptions": "fvOptions sources",
-}
-
+#: Fields diffed against the native reference after a run.
 CANDIDATE_FIELDS = ("U", "p", "k", "epsilon", "omega", "nut", "nuTilda")
 
-NEOFOAM_APP = "neofoam solver incompressiblefluid"
 
-TIER_TITLES = {
-    "A": "Tier A — expected to run (supported turbulence, no unsupported features)",
-    "B": "Tier B — turbulence model not implemented",
-    "C": "Tier C — LES (no LES models in neofoam)",
-    "D": "Tier D — solver feature not implemented",
-}
-
-
-def classify(case: Path, root: Path) -> Case | None:
-    """Classify one case directory; None when it is not a solver case we cover."""
-    control = read(case / "system" / "controlDict")
-    if not control:
-        return None
-    application = entry(control, "application")
-    if application not in NATIVE_SOLVERS:
-        return None
-
-    simulation, model = turbulence(case)
-    parallel = any(case.glob("system/decomposeParDict*"))
-    name = str(case.relative_to(root))
-
-    features = [
-        label
-        for name_, label in UNSUPPORTED_FEATURES.items()
-        if any(case.glob(f"constant/{name_}")) or any(case.glob(f"system/{name_}"))
-    ]
-    if uses_ami(case):
-        features.append("cyclicAMI interfaces")
-
-    common = dict(
+def _case(name: str, root: Path) -> Case:
+    """Resolve one tutorial name to a runnable :class:`Case` (no classification)."""
+    case = root / name
+    application = entry(read(case / "system" / "controlDict"), "application")
+    return Case(
         id=case_id(name),
         name=name,
         path=case,
         native_solver=application,
-        app=NEOFOAM_APP,
+        app="",  # candidate backends come from config.yaml `apps:`
         fields=CANDIDATE_FIELDS,
-        turbulence=model,
-        parallel=parallel,
         subdomains=subdomains(case),
-        features=features,
     )
 
-    # Order matters: report the most fundamental blocker first.
-    if simulation == "LES":
-        return Case(
-            **common, tier="C", reason=f"LES ({model}) — no LES models in neofoam"
-        )
-    if features:
-        return Case(**common, tier="D", reason="; ".join(features))
-    if model not in SUPPORTED_RAS and model != "laminar":
-        return Case(**common, tier="B", reason=f"RAS model {model} not implemented")
-    return Case(**common, tier="A", reason="")
+
+def _walk(root: Path) -> list[str]:
+    """Every ``simpleFoam``/``pimpleFoam`` tutorial name under *root*, sorted.
+
+    The fall-back when ``config.yaml`` names no cases. Skips the multi-setup
+    harnesses and the pisoFoam tree, which are not clean drop-in single cases.
+    """
+    names: list[str] = []
+    for control in sorted(root.glob("*/**/system/controlDict")):
+        case = control.parent.parent
+        if any(part.startswith("setups") for part in case.parts):
+            continue
+        if "pisoFoam" in case.relative_to(root).parts:
+            continue
+        if entry(read(control), "application") not in NATIVE_SOLVERS:
+            continue
+        names.append(str(case.relative_to(root)))
+    return names
 
 
-def discover() -> list[Case]:
-    """All classified cases, sorted by name. Empty when no OpenFOAM is sourced."""
+def discover(selection: list[str] | None = None) -> list[Case]:
+    """The cases to run: the config's ``cases:`` list, or the whole tree if empty.
+
+    Empty when no OpenFOAM is sourced (``$FOAM_TUTORIALS`` unset).
+    """
     root = tutorials_root("incompressible")
     if root is None:
         return []
-
-    cases: list[Case] = []
-    for control in sorted(root.glob("*/**/system/controlDict")):
-        case = control.parent.parent
-        # Multi-setup harnesses (LES/planeChannel, laminar/planarPoiseuille) drive
-        # their own per-setup Allrun scripts; out of scope for the sweep.
-        if any(part.startswith("setups") for part in case.parts):
-            continue
-        # pisoFoam is not a solver family incompressibleFluid replaces. Most pisoFoam
-        # cases declare `application pisoFoam` and are already dropped by classify(),
-        # but LES/motorBike declares `application simpleFoam` for its steady init step
-        # and would otherwise leak in — exclude the whole pisoFoam tree by path.
-        if "pisoFoam" in case.relative_to(root).parts:
-            continue
-        classified = classify(case, root)
-        if classified is not None:
-            cases.append(classified)
-    return cases
+    names = list(selection) if selection else _walk(root)
+    return [_case(name, root) for name in names]

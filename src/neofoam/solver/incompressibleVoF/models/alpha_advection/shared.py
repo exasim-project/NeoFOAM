@@ -79,6 +79,17 @@ def shared_field_build_steps() -> list[Any]:
         phi = context["fields.phi"]
         return surfaceScalarField(pyf.Word("rhoPhi"), fvc.interpolate(rho) * phi)
 
+    def create_alpha_phi_un(context: dict[str, Any]) -> surfaceScalarField:
+        """Zero-init the MULES compressed flux (``createAlphaFluxes.H``).
+
+        Registered under its final name up front — not just computed later —
+        so it stays in the objectRegistry (and lookup-able by e.g. the
+        ``scalarTransport`` functionObject's ``phase`` option) for the whole
+        run; ``alpha_eqn`` (MULES) assigns into it in place every alpha solve.
+        """
+        phi = context["fields.phi"]
+        return surfaceScalarField(pyf.Word("alphaPhiUn"), 0.0 * phi)
+
     return [
         field("phi", create_phi, depends_on=["fields.U"]),
         model("mixture", create_mixture, depends_on=["fields.U", "fields.phi", "mesh"]),
@@ -90,4 +101,5 @@ def shared_field_build_steps() -> list[Any]:
             depends_on=["models.mixture", "fields.alpha1", "fields.alpha2"],
         ),
         field("rhoPhi", create_rho_phi, depends_on=["fields.rho", "fields.phi"]),
+        field("alphaPhiUn", create_alpha_phi_un, depends_on=["fields.phi"]),
     ]

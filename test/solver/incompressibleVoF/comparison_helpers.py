@@ -8,12 +8,21 @@ interIsoFoam) run the identical sequence — set up two copies of a damBreak
 tutorial, run the Python solver in one and the native OpenFOAM solver in the
 other, then compare the written fields — so the whole body lives here and each
 test is a one-line parameterization.
+
+``run_dambreak_regime`` is the same set-up/run pair for ``test_mules_regimes``,
+which needs (a) the alpha solver controls varied per run and (b) the two case
+directories left on disk for several assertions instead of a single pass/fail,
+so it stops after the two runs and lets the caller compare.
 """
 
 import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
+from typing import Mapping, Union
+
+from pybFoam import dictionary
 
 from neofoam.solver.incompressibleVoF import run
 
@@ -33,6 +42,9 @@ FIELDS_TO_COMPARE = [
     ("U", "volVectorField"),
     ("p_rgh", "volScalarField"),
 ]
+
+_REPO_ROOT = Path(__file__).parent.parent.parent.parent
+_SOLVER_WORKER = Path(__file__).parent / "_mules_regime_worker.py"
 
 
 def run_dambreak_comparison(
@@ -126,3 +138,67 @@ def run_dambreak_comparison(
             if test_case.exists():
                 shutil.rmtree(test_case)
                 print(f"Cleaned up: {test_case}")
+
+
+def write_alpha_controls(
+    fv_solution_path: Path, alpha_controls: Mapping[str, Union[bool, float]]
+) -> None:
+    """Overwrite entries of the ``"alpha.water.*"`` solver dict in place.
+
+    Goes through pybFoam's own ``dictionary.read``/``set``/``write`` — the
+    OpenFOAM format's reader/writer — so the test never patches dictionary
+    text (TEST_STYLE rule 3). ``subDict("alpha.water")`` resolves the real
+    tutorial's regex key ``"alpha.water.*"`` and hands back a reference, so the
+    mutations land in the parsed file that is written back out.
+    """
+    fv_solution = dictionary.read(str(fv_solution_path))
+    alpha_dict = fv_solution.subDict("solvers").subDict("alpha.water")
+    for key, value in alpha_controls.items():
+        alpha_dict.set(key, value)
+    fv_solution.write(str(fv_solution_path))
+
+
+def run_dambreak_regime(
+    alpha_controls: Mapping[str, Union[bool, float]],
+    python_case: Path,
+    native_case: Path,
+    end_time: float = 0.05,
+    write_interval: float = 0.05,
+) -> None:
+    """Set up ``tutorials/damBreak`` twice with ``alpha_controls`` applied, run both.
+
+    ``python_case`` is run with incompressibleVoF **in a subprocess** (one
+    ``Foam::Time`` per process — several regimes run in one pytest session),
+    ``native_case`` with the native ``interFoam`` binary. Both directories are
+    left on disk for the caller to compare.
+    """
+    for case in (python_case, native_case):
+        setup_case(
+            _REPO_ROOT / "tutorials" / "damBreak",
+            case,
+            end_time,
+            write_interval,
+            run_setfields=True,
+        )
+        write_alpha_controls(case / "system" / "fvSolution", alpha_controls)
+
+    custom = subprocess.run(
+        [sys.executable, str(_SOLVER_WORKER), str(python_case)],
+        capture_output=True,
+        text=True,
+        timeout=600,
+    )
+    assert custom.returncode == 0, (
+        f"incompressibleVoF failed for {dict(alpha_controls)}:\n"
+        f"{custom.stdout[-4000:]}\n{custom.stderr[-4000:]}"
+    )
+
+    native = subprocess.run(
+        ["interFoam", "-case", str(native_case)],
+        capture_output=True,
+        text=True,
+        timeout=600,
+    )
+    assert native.returncode == 0, (
+        f"interFoam failed for {dict(alpha_controls)}:\n{native.stderr[-4000:]}"
+    )

@@ -226,6 +226,42 @@ def test_report_summary_explains_outcomes() -> None:
     assert "field-for-field within tolerance" in html  # the MATCHED meaning
 
 
+def test_report_renders_matched_to_roundoff_as_a_pass() -> None:
+    """A round-off match is shown beside the strict MATCHED count, not as a failure,
+    and its legend explains it reproduces native to machine precision."""
+    cases = [_case("interFoam/damBreak", "A")]
+    records = [
+        {
+            "id": "interFoam__damBreak",
+            "name": "interFoam/damBreak",
+            "native_solver": "interFoam",
+            "tier": "A",
+            "predicted_blocker": "",
+            "turbulence": "laminar",
+            "parallel": False,
+            "candidates": [
+                _candidate(
+                    "incompressiblevof",
+                    "MATCHED_TO_ROUNDOFF",
+                    detail="p_rgh",
+                    worst_abs=1.8e-13,
+                    worst_rel=4.7e-14,
+                )
+            ],
+        }
+    ]
+
+    html = render_report(_study(cases), records)
+
+    assert "MATCHED_TO_ROUNDOFF" in html
+    # Strict MATCHED count stays 0; the round-off match is surfaced separately.
+    assert "Matched the native reference: <b>0</b>" in html
+    assert "Matched to round-off (rel &lt; 1e-10): <b>1</b>" in html
+    assert "machine precision" in html
+    # Coloured green (a pass), not the amber FIELDS_DIFFER warning.
+    assert 'pill ok">MATCHED_TO_ROUNDOFF' in html
+
+
 def test_report_aliases_legacy_outcome_strings() -> None:
     """A cached result with an old outcome name renders under the current label."""
     cases = [_case("simpleFoam/mixer", "D")]

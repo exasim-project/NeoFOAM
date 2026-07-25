@@ -77,7 +77,7 @@ Python workflow — never `uv run` / `uv sync`.
 ```bash
 uv venv                       # once
 uv pip install pip            # bootstrap pip into the venv
-pip install .[all] -v         # install (NOT `pip install -e .`)
+pip install -e .[all]         # editable install — src edits take effect immediately
 pytest test/<area> -q         # scoped tests while working
 pytest                        # whole suite (testpaths=test)
 pre-commit run --files <changed>        # format + lint + mypy on your diff
@@ -85,9 +85,9 @@ pre-commit run --files <changed>        # format + lint + mypy on your diff
 
 ### Gotchas that cost real time — read before editing
 
-- **Non-editable install.** scikit-build copies sources into site-packages, so edits
-  to `src/neofoam/*.py` do **not** take effect until `pip install .[all] -v` re-runs.
-  Plan for this before testing source changes.
+- **Editable install.** `pip install -e .[all]` (scikit-build `editable.mode = "redirect"`)
+  means edits to `src/neofoam/*.py` take effect immediately — no reinstall between a
+  source change and a test run. Only C++/CMake changes need a rebuild.
 - **Never `rm -rf _skbuild`** — CMake reconfigures incrementally; wiping forces a
   slow full recompile.
 - **Whole-repo checks have pre-existing failures.** Pre-commit `mypy` (whole-tree)
@@ -102,7 +102,7 @@ pre-commit run --files <changed>        # format + lint + mypy on your diff
 A change is done when you have **run** its proof, not when it looks right:
 
 1. the **scoped tests** for the touched area pass (`pytest test/<area> -q`) — after a
-   fresh `pip install .[all] -v` if source changed;
+   no reinstall needed for pure-Python source changes (editable install);
 2. `pre-commit run --files <changed>` is clean (or only pre-existing failures);
 3. you report the actual commands + output, not an assertion that it works.
 

@@ -22,10 +22,27 @@ def _read_algorithm_dict(algorithm_name: str) -> Any:
 
 
 def create_pimple_control(_context: dict[str, Any]) -> PimpleControl:
-    """Create a :class:`PimpleControl` from the PIMPLE subdict."""
-    d = _read_algorithm_dict("PIMPLE")
+    """Create a :class:`PimpleControl` from the PIMPLE (or PISO) subdict.
+
+    pisoFoam tutorials ship a ``PISO`` block instead of ``PIMPLE``. When
+    ``PIMPLE`` is absent we fall back to ``PISO``, which is a single-outer-loop
+    PIMPLE: ``nOuterCorrectors`` is fixed to 1 and the remaining correction
+    counts / momentum predictor are read from the PISO dict.
+    """
+    fv_solution = pyf.dictionary.read("system/fvSolution")
+    if fv_solution.isDict("PIMPLE"):
+        d = fv_solution.subDict("PIMPLE")
+        n_outer_correctors = d.getOrDefault[int]("nOuterCorrectors", 1)
+    elif fv_solution.isDict("PISO"):
+        d = fv_solution.subDict("PISO")
+        n_outer_correctors = 1
+    else:
+        raise ValueError(
+            "incompressibleFluid: system/fvSolution has neither a PIMPLE nor a "
+            "PISO block to build the pressure-velocity control from."
+        )
     return PimpleControl(
-        nOuterCorrectors=d.getOrDefault[int]("nOuterCorrectors", 1),
+        nOuterCorrectors=n_outer_correctors,
         nCorrectors=d.getOrDefault[int]("nCorrectors", 2),
         nNonOrthogonalCorrectors=d.getOrDefault[int]("nNonOrthogonalCorrectors", 0),
         momentumPredictor=d.getOrDefault[bool]("momentumPredictor", True),

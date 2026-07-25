@@ -10,7 +10,7 @@
 
 title: "incompressibleFluid — OpenFOAM incompressible tutorial drop-in"
 
-# Path (relative to this file) to the module exposing discover() and TIER_TITLES.
+# Path (relative to this file) to the module exposing discover(selection).
 discover: discover.py
 
 # Candidate neofoam backends, each diffed against the native reference (which runs
@@ -19,5 +19,53 @@ apps:
   - "neofoam solver incompressiblefluid"
   - "neofoam solver incompressiblefluidneon"
 
-# `only:` restricts the sweep to a hand-picked subset (the slice-1 gate). With it
-# removed, every discovered case is swept.
+# The cases considered from the tutorials, path-relative to
+# $FOAM_TUTORIALS/incompressible. This list IS the sweep — add or remove a line to
+# change what runs. Comment the whole block out to fall back to walking the tree
+# (every simpleFoam/pimpleFoam case).
+cases:
+  - lumpedPointMotion/bridge/steady
+  - lumpedPointMotion/building/steady
+  - pimpleFoam/LES/decayIsoTurb
+  - pimpleFoam/LES/periodicHill/steadyState
+  - pimpleFoam/LES/periodicHill/transient
+  - pimpleFoam/LES/periodicPlaneChannel
+  - pimpleFoam/LES/surfaceMountedCube/fullCase
+  - pimpleFoam/LES/vortexShed
+  - pimpleFoam/RAS/TJunction
+  - pimpleFoam/RAS/TJunctionArrheniusBirdCarreauTransport
+  - pimpleFoam/RAS/TJunctionFan
+  - pimpleFoam/RAS/TJunctionSwitching
+  - pimpleFoam/RAS/axialTurbine_rotating_oneBlade
+  - pimpleFoam/RAS/ellipsekkLOmega
+  - pimpleFoam/RAS/oscillatingInletACMI2D
+  - pimpleFoam/RAS/oscillatingInletPeriodicAMI2D
+  - pimpleFoam/RAS/pitzDaily
+  - pimpleFoam/RAS/propeller
+  - pimpleFoam/RAS/rotatingFanInRoom
+  - pimpleFoam/RAS/wingMotion/wingMotion2D_pimpleFoam
+  - pimpleFoam/RAS/wingMotion/wingMotion2D_simpleFoam
+  - pimpleFoam/laminar/contactAngleCavity
+  - pimpleFoam/laminar/contaminatedDroplet2D
+  - pimpleFoam/laminar/cylinder2D
+  - pimpleFoam/laminar/filmPanel0
+  - pimpleFoam/laminar/inclinedPlaneFilm
+  - pimpleFoam/laminar/mixerVesselAMI2D/mixerVesselAMI2D
+  - pimpleFoam/laminar/mixerVesselAMI2D/mixerVesselAMI2D-topologyChange
+  - pimpleFoam/laminar/movingCone
+  - pimpleFoam/laminar/planarContraction
+  - pimpleFoam/laminar/sloshing2D
+  - simpleFoam/T3A
+  - simpleFoam/airFoil2D
+  - simpleFoam/backwardFacingStep2D
+  - simpleFoam/mixerVessel2D
+  - simpleFoam/motorBike
+  - simpleFoam/pipeCyclic
+  - simpleFoam/pitzDaily
+  - simpleFoam/pitzDailyExptInlet
+  - simpleFoam/rotatingCylinders
+  - simpleFoam/rotorDisk
+  - simpleFoam/simpleCar
+  - simpleFoam/squareBend
+  - simpleFoam/turbineSiting
+  - simpleFoam/windAroundBuildings

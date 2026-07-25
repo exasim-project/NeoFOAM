@@ -53,9 +53,10 @@ from .models.incompressibleVoFModel import incompressibleVoFModel
 from .models.pressure_velocity.base import PressureVelocityAlgorithm
 
 
-# Interface band for the alpha Courant number: only faces where the
-# interpolated phase fraction straddles the interface (0.01 <= alphaf <= 0.99)
-# contribute. Mirrors interFoam/interIsoFoam alphaCourantNo.H.
+# Interface band for the alpha Courant number: only cells whose phase fraction
+# straddles the interface (0.01 <= alpha1 <= 0.99) contribute. Mirrors
+# interfaceProperties::nearInterface(), used by interFoam/interIsoFoam
+# alphaCourantNo.H.
 _ALPHA_CO_LO = dimensionedScalar(pyf.Word("alphaCoLo"), dimless, 0.01)
 _ALPHA_CO_HI = dimensionedScalar(pyf.Word("alphaCoHi"), dimless, 0.99)
 
@@ -66,11 +67,12 @@ def compute_alpha_courant_number(
     """Interface (alpha) Courant number, composed from generic pybFoam primitives.
 
     A pure-Python transcription of OpenFOAM's ``alphaCourantNo.H``: like the flow
-    CFL number but the face flux is weighted to interface faces
-    (``0.01 <= interpolate(alpha1) <= 0.99``) via a ``pos0`` band mask, summed
-    into cells with ``fvc.surfaceSum`` and reduced with ``gMax``/``gSum``. The
-    ``pos0`` mask is exactly 0/1 so the weighting is bitwise-identical to the
-    native routine (which drives the alpha-CFL branch of the adaptive dt).
+    CFL number but the per-cell face-flux sum is masked to *near-interface cells*
+    — ``interfaceProperties::nearInterface()``, i.e. the ``pos0`` band
+    ``0.01 <= alpha1 <= 0.99`` on the **cell** values — before the ``gMax``/
+    ``gSum`` reduction. The ``pos0`` mask is exactly 0/1, so the result is
+    bitwise-identical to the native routine (which drives the alpha-CFL branch
+    of the adaptive dt).
 
     Returns ``(alphaCoNum, meanAlphaCo)``.
     """
@@ -79,11 +81,13 @@ def compute_alpha_courant_number(
         return 0.0, 0.0
 
     dt = mesh.time().deltaTValue()
-    alphaf = surfaceScalarField(pyf.Word("alphaf"), fvc.interpolate(alpha1))
-    # Interface band mask: pos0(alphaf - 0.01) * pos0(0.99 - alphaf), 0/1 valued.
-    band = pyf.pos0(alphaf - _ALPHA_CO_LO) * pyf.pos0(-(alphaf - _ALPHA_CO_HI))
+    # nearInterface(): pos0(alpha1 - 0.01) * pos0(0.99 - alpha1), 0/1 valued.
+    near_interface = volScalarField(
+        pyf.Word("nearInterface"),
+        pyf.pos0(alpha1 - _ALPHA_CO_LO) * pyf.pos0(-(alpha1 - _ALPHA_CO_HI)),
+    )
     sum_phi_alpha = volScalarField(
-        pyf.Word("sumPhiAlpha"), fvc.surfaceSum(pyf.mag(phi) * band)
+        pyf.Word("sumPhiAlpha"), near_interface * fvc.surfaceSum(pyf.mag(phi))
     ).internalField()
 
     volumes = mesh.V()

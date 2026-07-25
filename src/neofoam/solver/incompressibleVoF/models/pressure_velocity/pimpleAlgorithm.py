@@ -12,7 +12,9 @@ Note: alpha_advection has been extracted into the AlphaAdvection core model
   phi, mixture, alpha1, alpha2, rho, rhoPhi.
 """
 
-from typing import Annotated, Any, Callable, Protocol
+import os
+from pathlib import Path
+from typing import Annotated, Any, Callable, Optional, Protocol
 
 import pybFoam as pyf
 from pybFoam import (
@@ -54,7 +56,8 @@ from neofoam.framework.operations import (
     SequentialOp,
 )
 from neofoam.framework.types import OperationMetadata
-from .control_factory import create_pimple_control
+from .control_factory import FrozenFlowControl, create_pimple_control
+from .pressure_reference import need_reference, update_absolute_pressure
 from ..alpha_advection.shared import MixtureProtocol
 from ..incompressibleVoFModel import Model
 
@@ -161,19 +164,79 @@ def build(self: object) -> list[object]:  # noqa: C901
     # Factory functions (closures) for each field / model                 #
     # ------------------------------------------------------------------ #
 
-    def _gravity_ref(mesh: Any) -> tuple[Any, Any]:
-        """Return ``(g, ghRef)`` — gravity field and its reference head."""
+    def create_hRef(context: dict[str, Any]) -> Any:
+        """Read ``hRef`` from ``constant/`` (transcription of ``readhRef.H``).
+
+        Native: ``uniformDimensionedScalarField hRef(IOobject("hRef", ...,
+        READ_IF_PRESENT, NO_WRITE), dimensionedScalar(dimLength, Zero))`` — a
+        case with no ``constant/hRef`` silently gets ``hRef = 0``, and either
+        way the object is registered so
+        ``prghPermeableAlphaTotalPressure``-style BCs can
+        ``lookupObject<uniformDimensionedScalarField>("hRef")`` on every
+        evaluation, for the whole run.
+
+        pybFoam's ``uniformDimensionedScalarField`` binding is hard-coded
+        ``MUST_READ`` (no ``READ_IF_PRESENT``/default-value overload), and a
+        missing file raises an OpenFOAM ``FatalError`` that calls
+        ``std::exit`` directly rather than a Python-catchable exception, so a
+        plain ``try/except`` around it cannot reproduce the fallback. When
+        ``constant/hRef`` is absent, this writes the same default OpenFOAM
+        would use in memory (``dimensions [0 1 0 0 0 0 0]; value 0;``) so the
+        ``MUST_READ`` read then succeeds and returns a properly registered
+        field — the only way pybFoam can construct one with a value.
+        """
+        mesh = context["mesh"]
+        href_path = Path("constant/hRef")
+        if not href_path.exists():
+            # constant/ is shared by every MPI rank; write via a rank-unique temp
+            # file + atomic rename so no rank can read a partially written hRef.
+            tmp_path = href_path.with_name(f".hRef.{os.getpid()}.tmp")
+            tmp_path.write_text(
+                "FoamFile\n"
+                "{\n"
+                "    version     2.0;\n"
+                "    format      ascii;\n"
+                "    class       uniformDimensionedScalarField;\n"
+                "    object      hRef;\n"
+                "}\n"
+                "\n"
+                "dimensions      [0 1 0 0 0 0 0];\n"
+                "value           0;\n"
+            )
+            tmp_path.replace(href_path)
+        return pyf.uniformDimensionedScalarField(mesh, "hRef")
+
+    def _gravity_ref(mesh: Any, hRef: Any) -> tuple[Any, Any]:
+        """Return ``(g, ghRef)`` — gravity field and its reference head.
+
+        Transcription of ``gh.H``: ``ghRef = g & (cmptMag(g)/mag(g))*hRef``
+        when ``|g| > SMALL``, else 0 — the reference head along the gravity
+        direction, zero only when ``hRef`` is itself zero (the default).
+        ``pyf.vector`` has no ``cmptMag``/``__truediv__`` binding, so the unit
+        vector is built component-wise and by a ``1/mag(g)`` multiply instead.
+        SMALL is OpenFOAM's ``doubleScalar`` constant (not exposed by
+        pybFoam): 1e-15.
+        """
         g = pyf.uniformDimensionedVectorField(mesh, "g")
-        return g, pyf.dimensionedScalar("ghRef", g.dimensions() * pyf.dimLength, 0.0)
+        gh_ref_dims = g.dimensions() * pyf.dimLength
+        g_val = g.value()
+        mag_g = pyf.mag(g_val)
+        if mag_g > 1e-15:
+            cmpt_mag_g = pyf.vector(abs(g_val[0]), abs(g_val[1]), abs(g_val[2]))
+            unit_g = cmpt_mag_g * (1.0 / mag_g)
+            gh_ref_value = (g_val & unit_g) * hRef.value()
+        else:
+            gh_ref_value = 0.0
+        return g, pyf.dimensionedScalar("ghRef", gh_ref_dims, gh_ref_value)
 
     def create_gh(context: dict[str, Any]) -> volScalarField:
         mesh = context["mesh"]
-        g, gh_ref_dim = _gravity_ref(mesh)
+        g, gh_ref_dim = _gravity_ref(mesh, context["fields.hRef"])
         return volScalarField(pyf.Word("gh"), (g & mesh.C()) - gh_ref_dim)
 
     def create_ghf(context: dict[str, Any]) -> surfaceScalarField:
         mesh = context["mesh"]
-        g, gh_ref_dim = _gravity_ref(mesh)
+        g, gh_ref_dim = _gravity_ref(mesh, context["fields.hRef"])
         return surfaceScalarField(pyf.Word("ghf"), (g & mesh.Cf()) - gh_ref_dim)
 
     def create_p(context: dict[str, Any]) -> volScalarField:
@@ -194,9 +257,17 @@ def build(self: object) -> list[object]:  # noqa: C901
         p_rgh = context["fields.p_rgh"]
         fv_solution = pyf.dictionary.read("system/fvSolution")
         algo_dict = fv_solution.subDict("PIMPLE")
-        # Two-field setRefCell(p, p_rgh, dict) overload.
+        # Two-field setRefCell(p, p_rgh, dict) overload. OpenFOAM's setRefCell
+        # returns whether a reference is needed at all, but the pybFoam binding
+        # drops that bool — ``need_reference`` recovers it from the cell index,
+        # which setRefCell sets negative on the no-reference path. Must stay
+        # ``forceReference=False`` for that sentinel to hold; see its docstring.
         pRefCell, pRefValue = pyf.setRefCell(p, p_rgh, algo_dict, False)
-        return {"pRefCell": pRefCell, "pRefValue": pRefValue}
+        return {
+            "pRefCell": pRefCell,
+            "pRefValue": pRefValue,
+            "needsRef": need_reference(pRefCell),
+        }
 
     # ------------------------------------------------------------------ #
     # Init step list (dependency-ordered)                                 #
@@ -205,8 +276,9 @@ def build(self: object) -> list[object]:  # noqa: C901
     return [
         read_vol_field(volVectorField, "U"),
         field("p_rgh", create_p_rgh, depends_on=["mesh"]),
-        field("gh", create_gh, depends_on=["mesh"]),
-        field("ghf", create_ghf, depends_on=["mesh"]),
+        field("hRef", create_hRef, depends_on=["mesh"]),
+        field("gh", create_gh, depends_on=["mesh", "fields.hRef"]),
+        field("ghf", create_ghf, depends_on=["mesh", "fields.hRef"]),
         field(
             "p",
             create_p,
@@ -230,11 +302,16 @@ def build(self: object) -> list[object]:  # noqa: C901
 def inner_loop(ctx: Context) -> bool:
     pimple_control = ctx.models["pimple_control"]
     looping = bool(pimple_control.loop(ctx))
-    if looping:
-        # Mirror pimpleControl::loop(): on the final outer iteration flag the
-        # mesh so fvMatrix::solve picks the <field>Final settings for the
-        # library solves buried in turbulence.correct() (k/epsilon/nuTilda).
-        ctx.mesh.setFinalIteration(pimple_control.finalIter())
+    # Mirror pimpleControl::loop() (pimpleControl.C): on the final outer iteration
+    # flag the mesh so fvMatrix::solve picks the <field>Final settings for the
+    # library solves buried in turbulence.correct() (k/epsilon/nuTilda), and lower
+    # the flag again when the loop ends (native calls setFinalIteration(false)
+    # before returning false). ``pimple_control.loop`` resets its counters on exit,
+    # so ``finalIter()`` is then False. Here turbulence_correction runs *inside*
+    # the inner loop, so lowering on exit means write_output's equation-solving
+    # function objects (e.g. electricPotential) see the base solver dict, not the
+    # non-existent <field>Final variant.
+    ctx.mesh.setFinalIteration(pimple_control.finalIter())
     return looping
 
 
@@ -289,6 +366,13 @@ def momentum(
     turbulence: Annotated[TwoPhaseTransportProtocol, "models"],
 ) -> FieldUpdates:
     """Density-weighted momentum predictor with surface tension."""
+    if isinstance(pimple_control, FrozenFlowControl):
+        # frozenFlow yes ⇒ interIsoFoam runs `continue` before UEqn.H: the
+        # momentum equation is never assembled. Skip it entirely so the frozen
+        # tutorials' deliberate omission of the momentum divSchemes
+        # (e.g. div(rhoPhi,U)) is honoured rather than a fatal lookup.
+        return FieldUpdates({})
+
     mesh = U.mesh()
 
     UEqn = fvVectorMatrix(
@@ -331,15 +415,24 @@ def continuity(
     phi: surfaceScalarField,
     gh: volScalarField,
     ghf: surfaceScalarField,
-    UEqn: fvVectorMatrix,
     pimple_control: Annotated[PimpleControl, "models"],
     cumulativeContErr: Annotated[list[float], "models"],
     pressure_reference: Annotated[dict[str, Any], "models"],
     mixture: Annotated[MixtureProtocol, "models"],
+    # Default None so a frozen-flow step (where ``momentum`` produced no UEqn)
+    # still binds; the non-frozen path always supplies it.
+    UEqn: Optional[fvVectorMatrix] = None,
 ) -> FieldUpdates:
     """Pressure-velocity coupling for VoF with surface tension and gravity."""
+    if isinstance(pimple_control, FrozenFlowControl):
+        # frozenFlow yes ⇒ the pressure-corrector loop never runs (mirrors
+        # interIsoFoam's `continue`): U/p/p_rgh/phi keep their prescribed values
+        # and only alpha advects. Emit no field updates.
+        return FieldUpdates({})
+    assert UEqn is not None  # non-frozen path always carries the momentum matrix
     pRefCell = pressure_reference["pRefCell"]
     pRefValue = pressure_reference["pRefValue"]
+    needsRef = pressure_reference["needsRef"]
     mesh = U.mesh()
 
     while pimple_control.correct():
@@ -380,8 +473,17 @@ def continuity(
         U.assign(HbyA + rAU * fvc.reconstruct((phig - pEqn.flux()) / rAUf))
         U.correctBoundaryConditions()
 
-        # Update absolute pressure from dynamic pressure
-        p.assign(p_rgh + rho * gh)
+        # Update absolute pressure from dynamic pressure; on a closed domain
+        # also pin its level to pRefValue and re-level p_rgh (interFoam pEqn.H).
+        update_absolute_pressure(
+            p,
+            p_rgh,
+            rho,
+            gh,
+            ref_cell=pRefCell,
+            ref_value=pRefValue,
+            needs_reference=needsRef,
+        )
 
         sum_local, global_err = pyf.computeContinuityErrors(phi)
         cumulativeContErr[0] += global_err

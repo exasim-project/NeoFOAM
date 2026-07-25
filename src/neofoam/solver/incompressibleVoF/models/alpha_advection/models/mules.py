@@ -16,8 +16,8 @@ to C++):
 
 The only C++ that remains is the mixture *model*
 (``multiphase.immiscibleIncompressibleTwoPhaseMixture``). Sub-cycling
-(``nAlphaSubCycles > 1``) would need OpenFOAM's ``subCycle`` machinery and is
-not supported by this pure-Python path (it raises ``NotImplementedError``).
+(``nAlphaSubCycles > 1``) is Python too — ``sub_cycled_alpha_eqn`` reproduces
+``subCycle<volScalarField>`` by scaling the flux instead of ``Foam::Time``.
 
 Provides the shared VoF fields (via ``shared_field_build_steps``) and the
 ``alpha_advection`` operation (a Python-orchestrated MULES corrector loop).
@@ -174,6 +174,7 @@ def alpha_phase_flux(
     alpha2: volScalarField,
     phic: surfaceScalarField,
     mixture: MixtureProtocol,
+    alphaPhiUn: surfaceScalarField,
 ) -> surfaceScalarField:
     """Scheme-based phase flux with interface compression (``alphaPhiUn``).
 
@@ -186,6 +187,13 @@ def alpha_phase_flux(
     The negated intermediate fluxes are materialised into ``surfaceScalarField``
     (bitwise-identical) so they satisfy the ``fvc.flux`` surface-field
     first-argument overload.
+
+    Writes the result into the *persistent*, already-registered ``alphaPhiUn``
+    field via ``.assign`` rather than constructing a fresh same-named
+    ``surfaceScalarField`` (createAlphaFluxes.H registers it once for the whole
+    run; a same-named local here would self-deregister the moment this
+    function returns, which is exactly the ``failed lookup of alphaPhiUn`` bug
+    this transcription fixes).
     """
     phir = surfaceScalarField(pyf.Word("phir"), phic * mixture.nHatf())
     neg_phir = surfaceScalarField(pyf.Word("negPhir"), -phir)
@@ -193,11 +201,11 @@ def alpha_phase_flux(
         pyf.Word("phirFlux"), fvc.flux(neg_phir, alpha2, key=_ALPHAR_SCHEME)
     )
     neg_phir_flux = surfaceScalarField(pyf.Word("negPhirFlux"), -phir_flux)
-    return surfaceScalarField(
-        pyf.Word("alphaPhiUn"),
+    alphaPhiUn.assign(
         fvc.flux(phi, alpha1, key=_ALPHA_SCHEME)
-        + fvc.flux(neg_phir_flux, alpha1, key=_ALPHAR_SCHEME),
+        + fvc.flux(neg_phir_flux, alpha1, key=_ALPHAR_SCHEME)
     )
+    return alphaPhiUn
 
 
 def mules_implicit_predictor(
@@ -237,33 +245,24 @@ def update_rho_rhophi(
     rho.assign(alpha1 * rho1 + alpha2 * rho2)
 
 
-def _solve_alpha_python(
+def alpha_eqn(
     alpha1: volScalarField,
     alpha2: volScalarField,
     phi: surfaceScalarField,
-    rhoPhi: surfaceScalarField,
-    rho: volScalarField,
     mixture: MixtureProtocol,
-) -> None:
-    """Pure-Python MULES phase-fraction advection (transcription of alphaEqn.H).
+    n_alpha_corr: int,
+    mules_corr: bool,
+    alphaPhiUn: surfaceScalarField,
+) -> surfaceScalarField:
+    """One pass of ``alphaEqn.H``: advance ``alpha1``/``alpha2``, return alphaPhi10.
 
-    1. Read solver settings (nAlphaCorr, nAlphaSubCycles, MULESCorr).
-    2. ``nAlphaSubCycles == 1``: compose the Python steps below.
-
-    ``nAlphaSubCycles > 1`` is not supported by this pure-Python path (it needs
-    OpenFOAM's ``subCycle<volScalarField>`` machinery) and raises
-    ``NotImplementedError``.
+    ``phi`` is the volumetric flux the pass advects with — the mesh flux for a
+    plain time step, the *scaled* flux for a sub-cycle (see
+    ``sub_cycled_alpha_eqn``). ``alphaPhiUn`` is the persistent, registered
+    compressed-flux field; every corrector iteration overwrites it in place
+    (matching native, which likewise just re-assigns the single registered
+    ``alphaPhiUn`` each ``aCorr``/sub-cycle — no accumulation).
     """
-    n_alpha_corr, n_alpha_sub_cycles, mules_corr = read_alpha_controls(alpha1.name())
-
-    # Sub-cycling needs OpenFOAM's subCycle machinery, which this Python path
-    # does not implement.
-    if n_alpha_sub_cycles > 1:
-        raise NotImplementedError(
-            "MULES alpha sub-cycling (nAlphaSubCycles > 1) is not supported by "
-            "the pure-Python advection path; set nAlphaSubCycles 1 in fvSolution."
-        )
-
     # (a) Interface compression velocity.
     phic = interface_compression_velocity(mixture, phi)
 
@@ -280,7 +279,7 @@ def _solve_alpha_python(
 
     # (d) Corrector loop.
     for a_corr in range(n_alpha_corr):
-        alpha_phi_un = alpha_phase_flux(phi, alpha1, alpha2, phic, mixture)
+        alpha_phi_un = alpha_phase_flux(phi, alpha1, alpha2, phic, mixture, alphaPhiUn)
 
         if mules_corr:
             # Capture alpha1 before this iteration's correction so aCorr > 0 can
@@ -305,8 +304,101 @@ def _solve_alpha_python(
         alpha2.assign(-alpha1 + 1.0)
         mixture.correct()
 
-    # (e) Update rhoPhi and rho.
-    update_rho_rhophi(rho, rhoPhi, alpha1, alpha2, phi, alpha_phi10, mixture)
+    return alpha_phi10
+
+
+def sub_cycled_alpha_eqn(
+    alpha1: volScalarField,
+    alpha2: volScalarField,
+    phi: surfaceScalarField,
+    rhoPhi: surfaceScalarField,
+    rho: volScalarField,
+    mixture: MixtureProtocol,
+    n_alpha_corr: int,
+    mules_corr: bool,
+    n_alpha_sub_cycles: int,
+    alphaPhiUn: surfaceScalarField,
+) -> None:
+    """Transcription of ``alphaEqnSubCycle.H``: n alpha passes per time step.
+
+    OpenFOAM advances ``alpha1`` ``n`` times at ``deltaT/n`` with the full flux
+    ``phi``, driving the sub-steps through ``subCycle<volScalarField>`` (which
+    rescales ``Foam::Time``). Python cannot: ``Time::subCycle`` has no binding,
+    and ``Time.setDeltaT`` always runs ``adjustDeltaT``, which re-rounds the
+    step to the next write time and so cannot express ``deltaT/n``.
+
+    It does not need to. Every ``deltaT``-dependent term of ``alphaEqn.H`` — the
+    Euler ``fvm::ddt``, ``MULES::explicitSolve``/``limiter`` — depends on the
+    time step and the flux only through the product ``deltaT * phi``, and the
+    convection weights depend on ``phi`` only through its *sign*. So one pass at
+    ``(deltaT/n, phi)`` is identical to one pass at ``(deltaT, phi/n)``, which
+    needs no ``Time`` surgery at all; every returned face flux is then ``1/n``
+    of OpenFOAM's, i.e. already carries the ``deltaT/n / deltaT`` weight that
+    ``rhoPhiSum`` accumulates.
+
+    The remaining state ``subCycle`` manages is ``alpha1``'s old-time field:
+    sub-step k advances from sub-step k-1, and the real old-time value is put
+    back afterwards (``subCycleField``'s destructor).
+
+    ``alphaPhiUn`` is *not* accumulated across sub-steps (unlike ``rhoPhi``):
+    native ``alphaEqn.H`` just re-assigns the one registered ``alphaPhiUn``
+    every ``#include``, so after the loop it holds only the last sub-step's
+    flux — reproduced here by passing the same persistent field into every
+    ``alpha_eqn`` call.
+    """
+    # First access rolls alpha1 into its old-time slot for this time step; take
+    # the copy subCycleField keeps so the sub-steps can chain off it.
+    alpha1_0 = volScalarField(pyf.Word("alpha1_0_"), 1.0 * alpha1.oldTime())
+    sub_phi = surfaceScalarField(pyf.Word("phiSub"), phi / n_alpha_sub_cycles)
+    rho_phi_sum = surfaceScalarField(pyf.Word("rhoPhiSum"), 0.0 * rhoPhi)
+
+    for _ in range(n_alpha_sub_cycles):
+        alpha_phi10 = alpha_eqn(
+            alpha1, alpha2, sub_phi, mixture, n_alpha_corr, mules_corr, alphaPhiUn
+        )
+        update_rho_rhophi(rho, rhoPhi, alpha1, alpha2, sub_phi, alpha_phi10, mixture)
+        rho_phi_sum.assign(rho_phi_sum + rhoPhi)
+        alpha1.oldTime().assign(alpha1)
+
+    alpha1.oldTime().assign(alpha1_0)
+    rhoPhi.assign(rho_phi_sum)
+
+
+def _solve_alpha_python(
+    alpha1: volScalarField,
+    alpha2: volScalarField,
+    phi: surfaceScalarField,
+    rhoPhi: surfaceScalarField,
+    rho: volScalarField,
+    mixture: MixtureProtocol,
+    alphaPhiUn: surfaceScalarField,
+) -> None:
+    """Pure-Python MULES phase-fraction advection (transcription of alphaEqn.H).
+
+    1. Read solver settings (nAlphaCorr, nAlphaSubCycles, MULESCorr).
+    2. ``nAlphaSubCycles == 1``: one ``alpha_eqn`` pass, then rho/rhoPhi.
+    3. ``nAlphaSubCycles > 1``: hand over to ``sub_cycled_alpha_eqn``.
+    """
+    n_alpha_corr, n_alpha_sub_cycles, mules_corr = read_alpha_controls(alpha1.name())
+
+    if n_alpha_sub_cycles > 1:
+        sub_cycled_alpha_eqn(
+            alpha1,
+            alpha2,
+            phi,
+            rhoPhi,
+            rho,
+            mixture,
+            n_alpha_corr,
+            mules_corr,
+            n_alpha_sub_cycles,
+            alphaPhiUn,
+        )
+    else:
+        alpha_phi10 = alpha_eqn(
+            alpha1, alpha2, phi, mixture, n_alpha_corr, mules_corr, alphaPhiUn
+        )
+        update_rho_rhophi(rho, rhoPhi, alpha1, alpha2, phi, alpha_phi10, mixture)
 
     Info(f"Phase-1 volume fraction: nAlphaCorr={n_alpha_corr}  MULESCorr={mules_corr}")
 
@@ -329,12 +421,19 @@ def alpha_advection(
     phi: surfaceScalarField,
     rhoPhi: surfaceScalarField,
     rho: volScalarField,
+    alphaPhiUn: surfaceScalarField,
     mixture: Annotated[MixtureProtocol, "models"],
 ) -> FieldUpdates:
-    """Solve alpha equation (MULES) and update rho / rhoPhi."""
-    _solve_alpha_python(alpha1, alpha2, phi, rhoPhi, rho, mixture)
+    """Solve alpha equation (MULES) and update rho / rhoPhi / alphaPhiUn."""
+    _solve_alpha_python(alpha1, alpha2, phi, rhoPhi, rho, mixture, alphaPhiUn)
     return FieldUpdates(
-        {"alpha1": alpha1, "alpha2": alpha2, "rho": rho, "rhoPhi": rhoPhi}
+        {
+            "alpha1": alpha1,
+            "alpha2": alpha2,
+            "rho": rho,
+            "rhoPhi": rhoPhi,
+            "alphaPhiUn": alphaPhiUn,
+        }
     )
 
 

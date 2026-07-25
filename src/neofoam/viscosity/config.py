@@ -22,7 +22,13 @@ __all__ = ["TransportPropertiesConfig"]
 
 @IOStrategy(OF("constant/transportProperties"))
 class TransportPropertiesConfig(BaseConfig):
-    """Top-level ``constant/transportProperties`` dictionary."""
+    """Top-level ``constant/transportProperties`` dictionary.
+
+    ``nu`` is coerced from its OpenFOAM entry — plain (``nu 1e-05``) or
+    dimensioned (``nu [ 0 2 -1 0 0 0 0 ] 1e-05``) — by the scalar reader on the
+    IO read path (:func:`neofoam.io.strategies.openfoam_strategy._read_scalar`),
+    so pydantic receives a ``float`` here.
+    """
 
     transportModel: str = "Newtonian"
     nu: Optional[float] = None
