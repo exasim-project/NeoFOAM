@@ -13,11 +13,7 @@ native/solver verdicts so it is never mistaken for either.
 
 import json
 from pathlib import Path
-from typing import Any
 
-import pytest
-
-import neofoam.tooling.workflow.study.runner as runner_mod
 from neofoam.tooling.workflow.study.cases import Case, Study
 from neofoam.tooling.workflow.study.execute import (
     CASE_SETUP_FAILED,
@@ -26,7 +22,7 @@ from neofoam.tooling.workflow.study.execute import (
     SOLVER_FAILED,
     UNSUPPORTED_CASE,
 )
-from neofoam.tooling.workflow.study.runner import _case_dir, _compare, _decide, _run
+from neofoam.tooling.workflow.study.runner import _case_dir, _compare, _decide
 
 _FINISHED = {"finished": True}
 
@@ -93,67 +89,34 @@ def _vof_case() -> Case:
     )
 
 
-def _write_status(work: Path, case_id: str, solver: str, status: dict) -> None:
-    (work / case_id).mkdir(parents=True, exist_ok=True)
-    (work / case_id / f"{solver}.status.json").write_text(json.dumps(status))
+def _write_run_dir(cases_root: Path, case: Case, solver: str, log: str) -> None:
+    """A finished run dir as the shell ``run`` rule leaves it: swap stamp + solver log.
+
+    ``_status_from_rundir`` reads exactly these two, so a ``log`` ending in ``End``
+    reads finished and anything else reads failed — no OpenFOAM needed.
+    """
+    run_dir = _case_dir(cases_root, case, solver)
+    run_dir.mkdir(parents=True, exist_ok=True)
+    (run_dir / ".swapped.json").write_text(json.dumps({"solver": solver}))
+    (run_dir / ".seconds").write_text("1.0")
+    log_name = f"log.{case.native_solver}" if solver == case.native_label else f"log.{case.app}"
+    (run_dir / log_name).write_text(log)
 
 
 def test_compare_records_the_study_identity_in_the_result(tmp_path: Path) -> None:
     """Each result names the config + neo_patch it came from, so a results dir mixing
     two sweeps (strict vs an isoAdvector neo_patch) cannot masquerade as one."""
     study, case = _study_with_patch(), _vof_case()
-    work = tmp_path / "work"
-    # Legacy combined statuses (authoritative) so no OpenFOAM read is needed: native
-    # finished, candidate failed → SOLVER_FAILED, no field compare.
-    _write_status(work, case.id, "interIsoFoam", {"finished": True, "seconds": 1.0})
-    _write_status(
-        work,
-        case.id,
-        "incompressiblevof",
-        {"finished": False, "timed_out": False, "reason": "boom", "seconds": 2.0},
-    )
+    cases_root = tmp_path / "cases"
+    # Native finished, candidate did not → SOLVER_FAILED, so no field compare runs
+    # and the assertions below need no staged case.
+    _write_run_dir(cases_root, case, "interIsoFoam", "Time = 1\nEnd\n")
+    _write_run_dir(cases_root, case, "incompressiblevof", "Time = 1\n--> FOAM FATAL ERROR: boom\n")
     out = tmp_path / "result.json"
 
-    _compare(study, case, work, out)
+    _compare(study, case, cases_root, out)
 
     record = json.loads(out.read_text())
     assert record["study_config"] == "config-isoadvector.yaml"
     assert record["neo_patch"] == _PATCH
-
-
-def test_run_falls_back_to_first_token_log(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    """The combined ``run`` (packaged driver / VoF study) writes its own
-    ``.status.json`` straight from ``run_allrun``'s primary-log check
-    (``_status_from_rundir`` then trusts that file verbatim, see
-    ``test_run_split.py::test_status_from_rundir_prefers_a_combined_status_json``)
-    — so unlike the split pipeline, ``_run`` itself must resolve the real
-    ``log.<first token>`` when ``application="…"; runApplication ${application}``
-    (unquoted) re-splits the multi-word neofoam command.
-    """
-    study, case = _study_with_patch(), _vof_case()
-    work = tmp_path / "work"
-
-    def fake_stage(*args: Any, **kwargs: Any) -> None:
-        _case_dir(work, case, "incompressiblevof").mkdir(parents=True, exist_ok=True)
-
-    def fake_run_allrun(case_dir: Path, solver_log: str, timeout: int = 1800) -> dict[str, object]:
-        # Only the first-token fallback log was written, as the real
-        # `runApplication ${application}` (unquoted) idiom does — the primary
-        # `log.<full command>` this call was asked to check never exists.
-        (case_dir / "log.neofoam").write_text("Starting time loop\nTime = 1\nEnd\n")
-        return {
-            "finished": False,
-            "timed_out": False,
-            "reason": "no solver log written",
-            "seconds": 1.0,
-        }
-
-    monkeypatch.setattr(runner_mod, "stage", fake_stage)
-    monkeypatch.setattr(runner_mod, "run_allrun", fake_run_allrun)
-
-    status_out = tmp_path / "status.json"
-    _run(study, case, "incompressiblevof", work, status_out)
-
-    status = json.loads(status_out.read_text())
-    assert status["finished"] is True
-    assert status["reason"] == ""
+    assert [c["outcome"] for c in record["candidates"]] == [SOLVER_FAILED]

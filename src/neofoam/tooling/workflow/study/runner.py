@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""The per-case workers the packaged ``verify_*.smk`` rules shell out to.
+"""The per-case workers the packaged ``study_*.smk`` rules shell out to.
 
 Mirrors :mod:`neofoam.tooling.workflow.sweep_runner`: the Snakemake rules stay
 one-line ``shell:`` bodies and the real work is a subcommand here, so the rule
 graph is parallel and resumable and the logic is testable without Snakemake. The
-study's three-rule split maps to::
+pipeline's three per-run rules map to::
 
     python -m neofoam.tooling.workflow.study.runner build   --solver <label> ...
     python -m neofoam.tooling.workflow.study.runner swap    --solver <label> ...
@@ -17,8 +17,7 @@ study's three-rule split maps to::
 ``./Allrun``. Nothing here interprets the run — ``compare`` reads each run dir
 (:func:`_status_from_rundir`) to decide finished/why-not, diffs every candidate
 against the native reference into one ``results/<id>.json``, and ``report`` folds
-those into HTML. (The legacy combined ``run`` subcommand — stage and run in one
-step — is kept for the packaged ``driver.smk`` / VoF study.)
+those into HTML.
 """
 
 from __future__ import annotations
@@ -41,7 +40,6 @@ from neofoam.tooling.workflow.study.execute import (
     UNSUPPORTED_CASE,
     failure_reason,
     log_tail,
-    run_allrun,
 )
 from neofoam.tooling.workflow.study.report import render_report
 from neofoam.tooling.workflow.study.stage import NoSwapPoint, stage, swap_solver
@@ -83,60 +81,6 @@ def _mark_failed(solver: str, status_out: Path) -> None:
         "reason": "staging crashed the runner (uncatchable FOAM error — see snakemake log)",
     }
     status_out.parent.mkdir(parents=True, exist_ok=True)
-    status_out.write_text(json.dumps(status, indent=2))
-
-
-def _run(study: Study, case: Case, solver: str, work: Path, status_out: Path) -> None:
-    """Stage and run one solver of a case (native reference or a candidate).
-
-    *solver* is a label: the case's native solver runs the pristine tutorial as
-    the shared reference; any other label is a candidate backend whose command
-    comes from the study, with the solver token swapped in and ``neo_patch``
-    applied. Writes its status, never raises.
-    """
-    case_dir = _case_dir(work, case, solver)
-    shutil.rmtree(case_dir, ignore_errors=True)  # a rerun must start clean
-    case_dir.parent.mkdir(parents=True, exist_ok=True)
-
-    native = solver == case.native_label
-    app = "" if native else study.candidates[solver]
-    solver_log = f"log.{case.native_solver}" if native else f"log.{app}"
-    extra = () if native else _neo_patch(study)
-
-    status: dict[str, object] = {"solver": solver, "case_dir": str(case_dir)}
-    try:
-        stage(case.path, case_dir, native=case.native_solver, app=app, extra=extra)
-    except NoSwapPoint as exc:
-        status.update(finished=False, timed_out=False, no_swap=True, reason=str(exc))
-        status_out.write_text(json.dumps(status, indent=2))
-        return
-    except Exception as exc:
-        # Staging never reached a run — most often casebuild cannot parse the
-        # controlDict (an unresolvable ``#includeFunc``). A crash here must not
-        # abort the DAG, so record it as data like any other outcome. The last
-        # line carries the FOAM error; the rest is a C++ stack trace.
-        reason = str(exc).strip().splitlines()[-1] if str(exc).strip() else repr(exc)
-        status.update(finished=False, timed_out=False, no_swap=False, stage_failed=True)
-        status["reason"] = f"staging failed: {reason}"[:300]
-        status_out.write_text(json.dumps(status, indent=2))
-        return
-
-    result = run_allrun(case_dir, solver_log)
-    if not result.get("finished") and not native:
-        # ``runApplication``/``runParallel`` name the log after the first *word* of
-        # the command; the ``application="…"; runApplication ${application}`` idiom
-        # (unquoted) re-splits, so the real log can be ``log.<first token>`` instead
-        # of ``log.<app>``. Re-check against that fallback now that Allrun has
-        # actually run and the log exists to look for (mirrors
-        # ``_status_from_rundir``'s ``_resolve_solver_log`` for the split pipeline).
-        resolved = _resolve_solver_log(case_dir, case, app, native=False)
-        if resolved.name != solver_log and resolved.is_file():
-            log_text = resolved.read_bytes().decode("utf-8", "replace")
-            if "End\n" in log_text:
-                result = {**result, "finished": True, "reason": ""}
-            else:
-                result = {**result, "reason": failure_reason(log_text)}
-    status.update(no_swap=False, **result)
     status_out.write_text(json.dumps(status, indent=2))
 
 
@@ -256,16 +200,8 @@ def _status_from_rundir(
     solver log's trailing ``End`` (``Allrun`` exits 0 even when a stage failed), and
     the reason comes from that log, or the ``Allrun`` output when no solver log was
     written. Returns the same dict shape :func:`_decide` consumes.
-
-    The legacy combined ``run`` (packaged driver / VoF) already wrote a sibling
-    ``<solver>.status.json`` — if present, it is authoritative and returned as-is,
-    so this one function serves both the split and the combined pipelines.
     """
     case_dir = _case_dir(cases_root, case, solver)
-    combined = case_dir.parent / f"{solver}.status.json"
-    if combined.is_file():
-        result: dict[str, object] = json.loads(combined.read_text())
-        return result
     swapped = json.loads((case_dir / ".swapped.json").read_text())
     status: dict[str, object] = {"solver": solver, "case_dir": str(case_dir)}
 
@@ -431,9 +367,7 @@ def main(argv: list[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="command", required=True)
 
     # `build` -> `swap` are the Python half of the three-rule split; the third rule,
-    # `run`, is a plain shell `./Allrun` (no subcommand). The combined `run`
-    # subcommand below is the legacy single-rule path, kept for the packaged
-    # driver.smk / VoF study.
+    # `run`, is a plain shell `./Allrun` and so has no subcommand here.
     build = sub.add_parser("build", help="stage a native-ready case dir")
     build.add_argument("--case", required=True, help="case id")
     build.add_argument("--solver", required=True, help="solver label")
@@ -447,36 +381,18 @@ def main(argv: list[str] | None = None) -> int:
     swap.add_argument("--built", required=True, type=Path, help=".built.json to read")
     swap.add_argument("--stamp", required=True, type=Path, help=".swapped.json to write")
 
-    run = sub.add_parser("run", help="stage and run one solver of a case")
-    run.add_argument("--case", required=True, help="case id")
-    run.add_argument(
-        "--solver",
-        required=True,
-        help="solver label: the native solver, or a candidate app's last token",
-    )
-    run.add_argument("--work", required=True, type=Path, help="cases root dir")
-    run.add_argument("--status", required=True, type=Path, help="status JSON to write")
-
-    # The `run` above stages in-process, and casebuild can hard-exit the whole
-    # interpreter on a FOAM fatal error (e.g. an unresolvable controlDict
-    # `#includeFunc`) — uncatchable in Python. The rule invokes this as `run ...
-    # || mark-failed ...`, so a crashed run still leaves a CASE_SETUP_FAILED status
-    # and the DAG completes instead of one bad case stranding the whole report.
+    # `build` stages in-process, and casebuild can hard-exit the whole interpreter
+    # on a FOAM fatal error (e.g. an unresolvable controlDict `#includeFunc`) —
+    # uncatchable in Python. The rule invokes it as `build ... || mark-failed ...`,
+    # so a crashed build still leaves a CASE_SETUP_FAILED stamp and the DAG
+    # completes instead of one bad case stranding the whole report.
     marked = sub.add_parser("mark-failed", help="write a CASE_SETUP_FAILED status")
     marked.add_argument("--solver", required=True, help="solver label")
     marked.add_argument("--status", required=True, type=Path, help="status JSON to write")
 
     compare = sub.add_parser("compare", help="diff a case's two runs")
     compare.add_argument("--case", required=True, help="case id")
-    # `--cases` (the split rules) and `--work` (packaged driver / VoF) name one root.
-    compare.add_argument(
-        "--work",
-        "--cases",
-        dest="work",
-        required=True,
-        type=Path,
-        help="cases root dir",
-    )
+    compare.add_argument("--cases", required=True, type=Path, help="cases root dir")
     compare.add_argument("--out", required=True, type=Path, help="results JSON to write")
 
     report = sub.add_parser("report", help="render report.html from results/")
@@ -504,10 +420,8 @@ def main(argv: list[str] | None = None) -> int:
             args.built,
             args.stamp,
         )
-    elif args.command == "run":
-        _run(study, study.by_id(args.case), args.solver, args.work, args.status)
     elif args.command == "compare":
-        _compare(study, study.by_id(args.case), args.work, args.out)
+        _compare(study, study.by_id(args.case), args.cases, args.out)
     else:
         _report(study, args.results, args.out)
     return 0

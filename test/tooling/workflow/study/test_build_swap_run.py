@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""build → swap → run split: swap neutralises, compare interprets from the run dir.
+"""build → swap → run: swap neutralises, compare interprets from the run dir.
 
 The run rule is plain shell (``./Allrun``) — no timeout, no interpretation. Two
 invariants make that safe and correct, and are pinned here without OpenFOAM:
@@ -149,20 +149,6 @@ def test_status_from_rundir_finished_when_log_reached_end(tmp_path: Path) -> Non
 
     assert status["finished"] is True
     assert status["seconds"] == 12.0
-
-
-def test_status_from_rundir_prefers_a_combined_status_json(tmp_path: Path) -> None:
-    """The legacy combined run (packaged driver / VoF) writes a sibling status.json;
-    it is authoritative, so one compare function serves both pipelines."""
-    cases_root = tmp_path / "cases"
-    rundir = _rundir(cases_root, "incompressiblefluid")
-    rundir.mkdir(parents=True)
-    combined = {"solver": "incompressiblefluid", "finished": True, "seconds": 3.0}
-    (rundir.parent / "incompressiblefluid.status.json").write_text(json.dumps(combined))
-
-    status = _status_from_rundir(_study(), _case(), "incompressiblefluid", cases_root)
-
-    assert status == combined  # returned verbatim, no rundir reconstruction
 
 
 def test_status_from_rundir_extracts_reason_when_no_end(tmp_path: Path) -> None:

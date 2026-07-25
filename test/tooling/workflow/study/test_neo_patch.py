@@ -9,12 +9,18 @@ fallback injects ``advectionScheme isoAdvector`` into ``system/fvSolution``. Two
 properties matter and are proven here without a sourced OpenFOAM: the key reaches
 the neo side (via a real ``patch`` step applied to a real fvSolution fixture), and
 the native side never sees it — protecting the pure drop-in for any study that
-omits the key. ``stage``/``run_allrun`` are stubbed so the side asymmetry is
-tested without running a solver.
+omits the key.
+
+The side asymmetry is a property of ``_swap``, which is where the candidate
+deviation is applied: ``_build`` stages every solver from the same recipe, and
+``_swap`` then patches and swaps the candidate only. Asserting on the real
+``fvSolution`` each side ends up with is stronger than asserting on the arguments
+a stubbed ``stage`` was handed.
 """
 
 from __future__ import annotations
 
+import json
 import shutil
 from pathlib import Path
 from typing import Any
@@ -26,6 +32,17 @@ from neofoam.tooling.workflow.study.cases import Case, load_study
 from neofoam.tooling.workflow.study.runner import _neo_patch
 
 _CASE = Path(__file__).parent / "cases" / "vof_fvsolution"
+
+#: A minimal Allrun naming the case's native solver, so ``_swap`` finds a real swap
+#: point (an Allrun it cannot swap raises ``NoSwapPoint``, which would neutralise the
+#: dir and make the assertions below pass for the wrong reason).
+_ALLRUN = """#!/bin/sh
+cd "${0%/*}" || exit
+. ${WM_PROJECT_DIR:?}/bin/tools/RunFunctions
+
+runApplication blockMesh
+runApplication interIsoFoam
+"""
 
 _DISCOVER_PY = """
 from pathlib import Path
@@ -50,6 +67,33 @@ def _study(tmp_path: Path, config: str) -> Any:
     return load_study(tmp_path / "config.yaml")
 
 
+def _build_and_swap(
+    study: Any, case: Case, label: str, cases_root: Path, tmp_path: Path
+) -> dict[str, Any]:
+    """Stand in for ``_build`` (identical for every solver), then run the real ``_swap``.
+
+    ``_build`` only stages the tutorial with casebuild, which needs OpenFOAM; the
+    fixture case + a ``.built.json`` stamp is the same starting state without it.
+    Returns the swap stamp.
+    """
+    run_dir = cases_root / case.id / label
+    shutil.copytree(_CASE, run_dir)
+    (run_dir / "Allrun").write_text(_ALLRUN)
+    built = tmp_path / f"{label}.built.json"
+    built.write_text(json.dumps({"solver": label}))
+    stamp = tmp_path / f"{label}.swapped.json"
+    runner._swap(study, case, label, cases_root, built, stamp)
+    result: dict[str, Any] = json.loads(stamp.read_text())
+    return result
+
+
+def _advection_scheme(cases_root: Path, case: Case, label: str) -> str | None:
+    fv_solution = DictFile(cases_root / case.id / label / "system" / "fvSolution")
+    if not fv_solution.found("advectionScheme"):
+        return None
+    return fv_solution.get[str]("advectionScheme")
+
+
 def test_neo_patch_absent_yields_no_extra_steps(tmp_path: Path) -> None:
     """A study without ``neo_patch`` stages a pure drop-in — no extra steps."""
     assert _neo_patch(_study(tmp_path, _CONFIG)) == ()
@@ -67,20 +111,36 @@ def test_neo_patch_step_injects_the_key_into_fvsolution(tmp_path: Path) -> None:
     assert DictFile(case / "system" / "fvSolution").get[str]("advectionScheme") == "isoAdvector"
 
 
-def test_run_applies_neo_patch_to_neo_side_only(tmp_path: Path, monkeypatch: Any) -> None:
-    """``_run`` passes the extra steps for the neo side and an empty tuple for native."""
-    captured: dict[str, tuple[Any, ...]] = {}
-
-    def fake_stage(*args: Any, extra: tuple[Any, ...] = (), **kwargs: Any) -> None:
-        captured["neo" if kwargs.get("app") else "native"] = extra
-
-    monkeypatch.setattr(runner, "stage", fake_stage)
-    monkeypatch.setattr(runner, "run_allrun", lambda *a, **k: {"finished": True})
-
+def test_swap_applies_neo_patch_to_the_candidate_side_only(tmp_path: Path) -> None:
+    """The patched key lands in the candidate's fvSolution and in no other."""
     study = _study(tmp_path, _CONFIG_PATCH)
     case: Case = study.cases[0]
-    runner._run(study, case, case.neo_label, tmp_path / "work", tmp_path / "neo.json")
-    runner._run(study, case, case.native_label, tmp_path / "work", tmp_path / "native.json")
+    cases_root = tmp_path / "cases"
 
-    assert len(captured["neo"]) == 1
-    assert captured["native"] == ()
+    for label in (case.neo_label, case.native_label):
+        stamp = _build_and_swap(study, case, label, cases_root, tmp_path)
+        # The swap must have succeeded: a refused Allrun is neutralised instead,
+        # which would leave the patch applied but prove nothing about the split.
+        assert not stamp.get("no_swap"), stamp
+
+    assert _advection_scheme(cases_root, case, case.neo_label) == "isoAdvector"
+    assert _advection_scheme(cases_root, case, case.native_label) is None
+
+
+def test_swap_leaves_the_native_allrun_pristine_and_swaps_the_candidate(
+    tmp_path: Path,
+) -> None:
+    """Native is the reference, so only the candidate's Allrun names a neofoam solver."""
+    study = _study(tmp_path, _CONFIG_PATCH)
+    case: Case = study.cases[0]
+    cases_root = tmp_path / "cases"
+
+    for label in (case.neo_label, case.native_label):
+        _build_and_swap(study, case, label, cases_root, tmp_path)
+
+    def allrun(label: str) -> str:
+        return (cases_root / case.id / label / "Allrun").read_text()
+
+    assert allrun(case.native_label) == _ALLRUN
+    assert "neofoam solver incompressiblevof" in allrun(case.neo_label)
+    assert "runApplication interIsoFoam" not in allrun(case.neo_label)
