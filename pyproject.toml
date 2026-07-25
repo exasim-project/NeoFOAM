@@ -99,11 +99,13 @@ telemetry = [
     "matplotlib>=3.5",
 ]
 verification = [
-    # verification/foam_tutorials: the OpenFOAM tutorial drop-in suite is a
-    # Snakemake workflow. snakemake is an execution-time dependency of the
-    # suite, not of the neofoam package — nothing under src/ imports it.
+    # verification/foam_tutorials: the OpenFOAM tutorial drop-in studies. Each is
+    # a Snakefile that includes the packaged pipeline
+    # (neofoam/tooling/workflow/rules/study.smk) and runs it with snakemake, which
+    # is therefore an execution-time dependency of the studies, not of the neofoam
+    # package — nothing under src/ imports it. PyYAML is a base dependency (the
+    # study loader and the paramspace both read YAML), so it is not repeated here.
     "snakemake>=8",
-    "pyyaml",
 ]
 all = [
     "neofoam[dev,docs,agent,mcp,telemetry,verification]",

@@ -1,19 +1,21 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 #
-# The incompressibleFluid drop-in study. Everything solver-specific lives beside
-# this file in config.yaml (title, tutorial group, `only:` subset) and discover.py
-# (tier classification); the pipeline itself is the shared, packaged driver.
+# The incompressibleVoF drop-in study. Everything solver-specific is beside this
+# file — config.yaml (title, the `only:` subset, the neo_patch deviation) and
+# discover.py (tier classification) — and the pipeline itself is the shared,
+# packaged rule set.
 #
 # Run from this directory:
-#     snakemake --configfile config.yaml -j6
+#   snakemake --configfile config.yaml -j6
 
-from neofoam.tooling.verification.rules import rules_dir
+from neofoam.tooling.workflow.rules import rules_dir
 
-include: str(rules_dir() / "driver.smk")
+include: str(rules_dir() / "study.smk")
 
-# The default target must be defined here, in the main Snakefile — Snakemake never
-# promotes a rule from an included file to the default. REPORT comes from driver.smk.
+# The default target must be defined here, in the main Snakefile — Snakemake saves
+# and restores `default_target` around every include, so a rule from an included
+# file is never promoted. REPORT comes from study.smk.
 rule all:
     input:
         REPORT,
