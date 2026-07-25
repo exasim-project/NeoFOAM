@@ -20,6 +20,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from neofoam.tooling.workflow.study.cases import Case, case_id, subdomains
 from neofoam.tooling.workflow.study.foamdict import (
     entries,
     entry,
@@ -28,7 +29,6 @@ from neofoam.tooling.workflow.study.foamdict import (
     tutorials_root,
     uses_ami,
 )
-from neofoam.tooling.workflow.study.cases import Case, case_id, subdomains
 
 #: Solver families incompressibleVoF claims to replace.
 NATIVE_SOLVERS = ("interFoam", "interIsoFoam")
@@ -82,9 +82,7 @@ def _feature_blockers(case: Path) -> list[str]:
 
     if (case / "constant" / "MRFProperties").is_file():
         blockers.append("MRF zones")
-    if (case / "system" / "fvOptions").is_file() or (
-        case / "constant" / "fvOptions"
-    ).is_file():
+    if (case / "system" / "fvOptions").is_file() or (case / "constant" / "fvOptions").is_file():
         blockers.append("fvOptions sources")
     if (case / "constant" / "porosityProperties").is_file():
         blockers.append("porosity zones")
@@ -134,9 +132,7 @@ def classify(case: Path, root: Path) -> Case | None:
     if features:
         return Case(**common, tier="D", reason="; ".join(features))
     if frozen:
-        return Case(
-            **common, tier="C", reason="frozenFlow (no frozen-flow path in neofoam)"
-        )
+        return Case(**common, tier="C", reason="frozenFlow (no frozen-flow path in neofoam)")
     if correctors and min(correctors) < 2:
         return Case(
             **common,
