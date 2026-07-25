@@ -63,6 +63,9 @@ _OUTCOME_HELP = {
         "The run finished but the post-run field read/compare failed — a harness fault."
     ),
     "MESH_DIFFERS": "Native and candidate meshes differ, so the fields aren't comparable.",
+    # No longer producible: the run rule is plain shell with no timeout (a batch
+    # scheduler caps wall time instead). Kept so a report regenerated from archived
+    # results that predate that change still renders its legend.
     "TIMEOUT": "The run exceeded its wall-clock limit and was killed.",
 }
 

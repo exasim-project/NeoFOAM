@@ -1,13 +1,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Run a staged case's ``Allrun`` and say what happened if it did not finish.
+"""Outcome vocabulary, and the readers that say what happened to a run.
 
 Running the tutorial's own ``Allrun`` end to end — rather than pre-splitting it
 into mesh and solve stages — is what lets the suite cover an arbitrary tutorial
-shape. The cost is that meshing happens twice per case; because that assumes
-meshing is deterministic, :func:`mesh_fingerprint` exists so a nondeterministic
-mesher is reported as such instead of being blamed on the solver.
+shape. The ``run`` rule invokes it as plain shell; this module supplies the
+outcome codes, the log readers that classify a run afterwards
+(:func:`failure_reason`, :func:`log_tail`, :func:`time_dirs`), and
+:func:`mesh_fingerprint` — meshing happens twice per case, so a nondeterministic
+mesher must be reported as such instead of blamed on the solver.
 
 A solver that crashes is the *finding*, so nothing here raises on a failed run:
 the outcome is data, written to disk for the comparison stage to read.
@@ -16,10 +18,7 @@ the outcome is data, written to disk for the comparison stage to read.
 from __future__ import annotations
 
 import hashlib
-import os
 import re
-import subprocess
-import time
 from pathlib import Path
 
 __all__ = [
@@ -32,12 +31,10 @@ __all__ = [
     "CASE_SETUP_FAILED",
     "COMPARE_FAILED",
     "MESH_DIFFERS",
-    "TIMEOUT",
     "POSTPROCESS_NOT_IMPLEMENTED",
     "failure_reason",
     "log_tail",
     "mesh_fingerprint",
-    "run_allrun",
     "time_dirs",
 ]
 
@@ -70,7 +67,6 @@ UNSUPPORTED_CASE = "UNSUPPORTED_CASE"
 CASE_SETUP_FAILED = "CASE_SETUP_FAILED"
 COMPARE_FAILED = "COMPARE_FAILED"
 MESH_DIFFERS = "MESH_DIFFERS"
-TIMEOUT = "TIMEOUT"
 
 
 def time_dirs(case: Path) -> list[Path]:
@@ -152,49 +148,3 @@ def failure_reason(log_text: str) -> str:
 
 def _reached_end(log: Path) -> bool:
     return log.is_file() and "End\n" in log.read_bytes().decode("utf-8", "replace")
-
-
-def run_allrun(case: Path, solver_log: str, timeout: int = 1800) -> dict[str, object]:
-    """Run ``./Allrun`` in *case*; return a status record, never raise.
-
-    *solver_log* is the basename of the log the solver stage writes
-    (``log.simpleFoam``, or ``log.<the neofoam command>``). Its trailing ``End``
-    is the only reliable signal that the solver actually completed: ``Allrun``
-    itself exits 0 even when a stage inside it failed.
-    """
-    started = time.monotonic()
-    try:
-        completed = subprocess.run(
-            ["./Allrun"],
-            cwd=case,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-            env={**os.environ, "FOAM_SIGFPE": ""},
-            check=False,
-        )
-    except subprocess.TimeoutExpired:
-        return {
-            "finished": False,
-            "timed_out": True,
-            "reason": f"exceeded {timeout}s",
-            "seconds": time.monotonic() - started,
-        }
-
-    seconds = time.monotonic() - started
-    log = case / solver_log
-    if _reached_end(log):
-        return {"finished": True, "timed_out": False, "reason": "", "seconds": seconds}
-
-    if log.is_file():
-        reason = failure_reason(log.read_bytes().decode("utf-8", "replace"))
-    else:
-        # No solver log at all: the failure is upstream of the solver, in a
-        # meshing or setup stage, so Allrun's own output is what explains it.
-        reason = " ".join(completed.stdout[-600:].split()) or "no solver log written"
-    return {
-        "finished": False,
-        "timed_out": False,
-        "reason": reason,
-        "seconds": seconds,
-    }

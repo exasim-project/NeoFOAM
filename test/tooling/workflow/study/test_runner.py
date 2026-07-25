@@ -47,11 +47,7 @@ def test_decide_still_reports_native_failure_when_nothing_staged_wrong() -> None
 def test_decide_reports_unsupported_case_when_postprocess_not_implemented() -> None:
     """A candidate whose Allrun invoked ``-postProcess`` is a harness coverage
     gap, not a solver crash — UNSUPPORTED_CASE, not SOLVER_FAILED."""
-    neo = {
-        "finished": False,
-        "timed_out": False,
-        "reason": POSTPROCESS_NOT_IMPLEMENTED,
-    }
+    neo = {"finished": False, "reason": POSTPROCESS_NOT_IMPLEMENTED}
     outcome, detail, diffs = _decide(_FINISHED, neo, Path("n"), Path("m"), ["U"])
     assert outcome == UNSUPPORTED_CASE
     assert detail == POSTPROCESS_NOT_IMPLEMENTED
@@ -59,7 +55,7 @@ def test_decide_reports_unsupported_case_when_postprocess_not_implemented() -> N
 
 
 def test_decide_still_reports_solver_failed_for_other_reasons() -> None:
-    neo = {"finished": False, "timed_out": False, "reason": "matrix is singular"}
+    neo = {"finished": False, "reason": "matrix is singular"}
     outcome, _, _ = _decide(_FINISHED, neo, Path("n"), Path("m"), ["U"])
     assert outcome == SOLVER_FAILED
 

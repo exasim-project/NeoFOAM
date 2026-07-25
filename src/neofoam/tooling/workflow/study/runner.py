@@ -36,7 +36,6 @@ from neofoam.tooling.workflow.study.execute import (
     NATIVE_FAILED,
     POSTPROCESS_NOT_IMPLEMENTED,
     SOLVER_FAILED,
-    TIMEOUT,
     UNSUPPORTED_CASE,
     failure_reason,
     log_tail,
@@ -75,7 +74,6 @@ def _mark_failed(solver: str, status_out: Path) -> None:
     status = {
         "solver": solver,
         "finished": False,
-        "timed_out": False,
         "no_swap": False,
         "stage_failed": True,
         "reason": "staging crashed the runner (uncatchable FOAM error — see snakemake log)",
@@ -206,11 +204,11 @@ def _status_from_rundir(
     status: dict[str, object] = {"solver": solver, "case_dir": str(case_dir)}
 
     if swapped.get("stage_failed"):
-        status.update(finished=False, timed_out=False, no_swap=False, stage_failed=True)
+        status.update(finished=False, no_swap=False, stage_failed=True)
         status.update(reason=swapped.get("reason", ""), seconds=0.0)
         return status
     if swapped.get("no_swap"):
-        status.update(finished=False, timed_out=False, no_swap=True, seconds=0.0)
+        status.update(finished=False, no_swap=True, seconds=0.0)
         status["reason"] = swapped.get("reason", "")
         return status
 
@@ -220,16 +218,16 @@ def _status_from_rundir(
     seconds = _read_seconds(case_dir)
     log_text = solver_log.read_bytes().decode("utf-8", "replace") if solver_log.is_file() else ""
     if "End\n" in log_text:
-        status.update(finished=True, timed_out=False, no_swap=False, reason="")
+        status.update(finished=True, no_swap=False, reason="")
     elif log_text:
-        status.update(finished=False, timed_out=False, no_swap=False)
+        status.update(finished=False, no_swap=False)
         status["reason"] = failure_reason(log_text)
     else:
         # No solver log: the failure is upstream in Allrun (meshing/setup), so its
         # captured output is what explains it.
         allrun = case_dir / "log.allrun"
         out = allrun.read_bytes().decode("utf-8", "replace") if allrun.is_file() else ""
-        status.update(finished=False, timed_out=False, no_swap=False)
+        status.update(finished=False, no_swap=False)
         status["reason"] = " ".join(out[-600:].split()) or "no solver log written"
     status["seconds"] = seconds
     return status
@@ -272,14 +270,13 @@ def _decide(
             # crash, so it reads UNSUPPORTED_CASE rather than SOLVER_FAILED with a
             # raw Allrun trace.
             return UNSUPPORTED_CASE, reason, []
-        outcome = TIMEOUT if neo.get("timed_out") else SOLVER_FAILED
-        return outcome, reason, []
+        return SOLVER_FAILED, reason, []
     return compare_runs(native_dir, neo_dir, fields)
 
 
 # Which run's Allrun log explains a given failure. NATIVE_FAILED is a harness
 # fault (the reference never finished); the rest are the candidate solver's.
-_FAIL_SIDE = {NATIVE_FAILED: "native", SOLVER_FAILED: "candidate", TIMEOUT: "candidate"}
+_FAIL_SIDE = {NATIVE_FAILED: "native", SOLVER_FAILED: "candidate"}
 
 
 def _failing_log(
