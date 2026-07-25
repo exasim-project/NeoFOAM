@@ -70,12 +70,26 @@ def compare_field(reference: np.ndarray, candidate: np.ndarray, name: str) -> Fi
     tell round-off in near-zero entries (``rel`` ~ 1e-13, numerically equivalent)
     from genuine divergence (``rel`` ~ 1e-1) even though both fail the strict
     ``atol``.
+
+    That normalization is only meaningful while the reference field *has* a scale.
+    A field that is numerically zero everywhere (``peak <= ATOL`` — e.g. ``p_rgh``
+    on a case that never develops pressure) has no relative error to speak of, and
+    dividing one round-off by another yields an arbitrary ratio: it reported
+    ``rel = 1.0`` for a ``p_rgh`` matching to 1e-17, which says the opposite of the
+    truth. With no reference scale the *absolute* difference is the only honest
+    measure, so it is used directly — zero when the two agree to ``ATOL`` (both
+    numerically zero), and the raw difference when they do not, which keeps a
+    candidate that diverged from a zero reference reading as a real disagreement
+    rather than a match.
     """
     if reference.shape != candidate.shape:
         return FieldDiff(name, False, float("inf"), float("inf"))
     abs_diff = float(np.max(np.abs(candidate - reference)))
     peak = float(np.max(np.abs(reference)))
-    rel_diff = abs_diff / peak if peak > 0.0 else abs_diff
+    if peak > ATOL:
+        rel_diff = abs_diff / peak
+    else:
+        rel_diff = 0.0 if abs_diff <= ATOL else abs_diff
     matched = bool(np.allclose(candidate, reference, rtol=RTOL, atol=ATOL))
     return FieldDiff(name, matched, abs_diff, rel_diff)
 

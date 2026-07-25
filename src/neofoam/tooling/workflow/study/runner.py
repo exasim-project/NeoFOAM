@@ -318,14 +318,19 @@ def _compare(study: Study, case: Case, work: Path, out: Path) -> None:
         cand_dir = _case_dir(work, case, label)
         outcome, detail, diffs = _decide(native, status, native_dir, cand_dir, list(case.fields))
         log_path, log = _failing_log(study, case, work, outcome, label)
+        # Report the worst *disagreement*, i.e. over the fields that did not match —
+        # the same set `_classify` decides the outcome from. Taken over every field,
+        # a matched field's round-off could exceed the real disagreement and the
+        # headline number would then contradict the verdict beside it.
+        disagreeing = [d for d in diffs if not d.matched]
         candidates.append(
             {
                 "label": label,
                 "app": study.candidates[label],
                 "outcome": outcome,
                 "detail": detail,
-                "worst_abs": max((d.abs_diff for d in diffs), default=0.0),
-                "worst_rel": max((d.rel_diff for d in diffs), default=0.0),
+                "worst_abs": max((d.abs_diff for d in disagreeing), default=0.0),
+                "worst_rel": max((d.rel_diff for d in disagreeing), default=0.0),
                 "fields": [d.as_dict() for d in diffs],
                 "log_path": log_path,
                 "log_tail": log,

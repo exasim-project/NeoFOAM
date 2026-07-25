@@ -30,6 +30,7 @@ import numpy as np
 
 from neofoam.tooling.workflow.study import compare
 from neofoam.tooling.workflow.study.compare import (
+    ATOL,
     FieldDiff,
     _classify,
     _compare_decomposed,
@@ -205,3 +206,39 @@ def test_field_diff_carries_the_diff_shape() -> None:
         "abs": 1.2e-11,
         "rel": 1.8e-13,
     }
+
+
+def test_a_numerically_zero_reference_field_reports_no_relative_error() -> None:
+    """A field that is zero everywhere has no scale to normalise by.
+
+    Regression: ``rel = abs / peak`` divided one round-off by another and reported
+    ``rel = 1.0`` for a ``p_rgh`` matching to 1e-17 — indistinguishable in the
+    report from total divergence, and the reason two archived MATCHED cases carried
+    ``worst_rel = 1.0``. The absolute number is the honest measure there.
+    """
+    ref = np.array([0.0, 1.1e-17, -4.0e-18])
+    candidate = ref + 1.1e-17
+
+    diff = compare_field(ref, candidate, "p_rgh")
+
+    assert diff.matched is True
+    assert diff.rel_diff == 0.0
+    assert diff.abs_diff < ATOL
+
+
+def test_a_zero_reference_still_reports_a_candidate_that_diverged() -> None:
+    """The near-zero guard must not swallow a real blow-up.
+
+    A reference that is exactly zero with a candidate at 1e5 has no relative scale
+    either — but it is emphatically not a match, so ``rel`` falls back to the
+    absolute difference and keeps ``_classify`` reporting FIELDS_DIFFER rather than
+    MATCHED_TO_ROUNDOFF.
+    """
+    ref = np.zeros(3)
+    candidate = np.array([0.0, 1.0e5, 0.0])
+
+    diff = compare_field(ref, candidate, "p_rgh")
+
+    assert diff.matched is False
+    assert diff.rel_diff == 1.0e5
+    assert _classify([diff])[0] == FIELDS_DIFFER
