@@ -25,7 +25,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 _DISCOVER = (
-    Path(__file__).parents[4]
+    Path(__file__).parents[2]
     / "verification"
     / "foam_tutorials"
     / "incompressibleVoF"

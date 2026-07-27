@@ -22,7 +22,7 @@ from pathlib import Path
 
 import pytest
 
-_STUDIES_ROOT = Path(__file__).parents[4] / "verification" / "foam_tutorials"
+_STUDIES_ROOT = Path(__file__).parents[2] / "verification" / "foam_tutorials"
 _STUDIES = ("incompressibleFluid", "incompressibleVoF")
 _RULE_FILES = ("build_case.smk", "swap_solver.smk", "run.smk", "compare.smk", "report.smk")
 
