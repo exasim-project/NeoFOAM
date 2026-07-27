@@ -20,7 +20,7 @@ from neofoam.telemetry.report import write_chrome_trace, write_summary_plot
 app = typer.Typer()
 
 #: Message printed when a solver command is invoked with ``-postProcess``. Kept in
-#: sync by hand with ``neofoam.tooling.workflow.study.execute.POSTPROCESS_NOT_IMPLEMENTED``
+#: sync by hand with ``verification.dropin.execute.POSTPROCESS_NOT_IMPLEMENTED``
 #: (not imported — ``cli`` and ``tooling.workflow`` are deliberately not coupled),
 #: which the drop-in study harness matches to classify a run that hit this as
 #: UNSUPPORTED_CASE rather than a solver crash.

@@ -23,14 +23,25 @@
 
 import os
 import re
+import sys
 from pathlib import Path
 
 from neofoam.tooling.workflow.rules import rules_dir
-from neofoam.tooling.workflow.study.cases import load_study
 
 # `configfile:` populates `config`; workflow.configfiles gives its path, which the
 # runner needs to re-load the study (discover resolves relative to it).
 CONFIG = os.path.abspath(workflow.configfiles[-1])
+
+# verification/dropin/ has moved out of the neofoam package (see
+# plans/workflow-composable-and-benchmarkable.md §1). config.yaml sits three
+# directories below the repo root (verification/foam_tutorials/<study>/), so this
+# is the one place in-process code needs the repo root on sys.path — every
+# subprocess this pipeline shells out to gets it via PYTHONPATH instead.
+REPO_ROOT = Path(CONFIG).resolve().parents[3]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+from verification.dropin.cases import load_study
+
 STUDY = load_study(Path(CONFIG))
 CASES = STUDY.cases
 IDS = [c.id for c in CASES]

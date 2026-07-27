@@ -14,15 +14,15 @@
 # the fallback writes a stage_failed stamp so the case is recorded and the DAG
 # continues instead of one bad case stranding the whole report.
 #
-# Consumes header globals: CONFIG, CASE_ROOT, THREADS.
+# Consumes header globals: CONFIG, CASE_ROOT, THREADS, REPO_ROOT.
 
 rule build_case:
     output:
         CASE_ROOT + "/{id}/{solver}/.built.json",
     threads: lambda wc: THREADS[wc.id]
     shell:
-        "python -m neofoam.tooling.workflow.study.runner --config '{CONFIG}'"
+        "PYTHONPATH=\"{REPO_ROOT}:$PYTHONPATH\" python -m verification.dropin.runner --config '{CONFIG}'"
         " build --case {wildcards.id} --solver {wildcards.solver}"
         " --cases '{CASE_ROOT}' --stamp '{output}'"
-        " || python -m neofoam.tooling.workflow.study.runner --config '{CONFIG}'"
+        " || PYTHONPATH=\"{REPO_ROOT}:$PYTHONPATH\" python -m verification.dropin.runner --config '{CONFIG}'"
         " mark-failed --solver {wildcards.solver} --status '{output}'"

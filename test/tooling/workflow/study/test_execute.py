@@ -9,7 +9,7 @@ Pins the ``-postProcess`` branch: it must win over the generic tail fallback
 UNSUPPORTED_CASE rather than a solver crash.
 """
 
-from neofoam.tooling.workflow.study.execute import (
+from verification.dropin.execute import (
     POSTPROCESS_NOT_IMPLEMENTED,
     failure_reason,
 )

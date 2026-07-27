@@ -20,8 +20,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from neofoam.tooling.workflow.study.cases import Case, case_id, subdomains
-from neofoam.tooling.workflow.study.foamdict import (
+from verification.dropin.cases import Case, case_id, subdomains
+from verification.dropin.foamdict import (
     entries,
     entry,
     read,

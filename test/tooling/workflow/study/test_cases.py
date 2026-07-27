@@ -14,11 +14,11 @@ from pathlib import Path
 
 import pytest
 
-from neofoam.tooling.workflow.study.cases import Case, case_id, load_study
+from verification.dropin.cases import Case, case_id, load_study
 
 _DISCOVER_PY = """
 from pathlib import Path
-from neofoam.tooling.workflow.study.cases import Case, case_id
+from verification.dropin.cases import Case, case_id
 
 def discover():
     name = "simpleFoam/pitzDaily"
@@ -34,7 +34,7 @@ def discover():
 #: than naming them in `cases:` up front).
 _DISCOVER_TWO_PY = """
 from pathlib import Path
-from neofoam.tooling.workflow.study.cases import Case, case_id
+from verification.dropin.cases import Case, case_id
 
 def discover():
     names = ["interFoam/laminar/damBreak", "interIsoFoam/laminar/damBreak"]

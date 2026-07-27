@@ -15,18 +15,18 @@ tiered, is study configuration and lives with the study under
 The machinery is split so each stage is a separate Snakemake rule with its result
 on disk (so a run is parallel across cases and resumable):
 
-* :mod:`~neofoam.tooling.workflow.study.cases` — load a study's ``config.yaml`` +
-  ``discover.py`` into the :class:`~neofoam.tooling.workflow.study.cases.Study`
+* :mod:`~verification.dropin.cases` — load a study's ``config.yaml`` +
+  ``discover.py`` into the :class:`~verification.dropin.cases.Study`
   the Snakefile and every worker re-derive identically.
-* :mod:`~neofoam.tooling.workflow.study.foamdict` — static dictionary readers, for
+* :mod:`~verification.dropin.foamdict` — static dictionary readers, for
   classifying a tutorial without running it.
-* :mod:`~neofoam.tooling.workflow.study.stage` — build one side of a comparison
+* :mod:`~verification.dropin.stage` — build one side of a comparison
   with :mod:`neofoam.tooling.casebuild`, then swap the solver token.
-* :mod:`~neofoam.tooling.workflow.study.execute` — run ``Allrun``, classify how it
+* :mod:`~verification.dropin.execute` — run ``Allrun``, classify how it
   failed if it did.
-* :mod:`~neofoam.tooling.workflow.study.compare` — diff the two runs field by field.
-* :mod:`~neofoam.tooling.workflow.study.report` — render the HTML report.
-* :mod:`~neofoam.tooling.workflow.study.runner` — the CLI the packaged
+* :mod:`~verification.dropin.compare` — diff the two runs field by field.
+* :mod:`~verification.dropin.report` — render the HTML report.
+* :mod:`~verification.dropin.runner` — the CLI the packaged
   ``study_*.smk`` rules shell out to.
 """
 

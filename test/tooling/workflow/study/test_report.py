@@ -12,8 +12,8 @@ difference and only the relative figure tells equivalence from a real defect.
 
 from pathlib import Path
 
-from neofoam.tooling.workflow.study.cases import Case, Study
-from neofoam.tooling.workflow.study.report import render_report
+from verification.dropin.cases import Case, Study
+from verification.dropin.report import render_report
 
 
 def _study(cases: list[Case]) -> Study:

@@ -14,15 +14,15 @@ native/solver verdicts so it is never mistaken for either.
 import json
 from pathlib import Path
 
-from neofoam.tooling.workflow.study.cases import Case, Study
-from neofoam.tooling.workflow.study.execute import (
+from verification.dropin.cases import Case, Study
+from verification.dropin.execute import (
     CASE_SETUP_FAILED,
     NATIVE_FAILED,
     POSTPROCESS_NOT_IMPLEMENTED,
     SOLVER_FAILED,
     UNSUPPORTED_CASE,
 )
-from neofoam.tooling.workflow.study.runner import _case_dir, _compare, _decide
+from verification.dropin.runner import _case_dir, _compare, _decide
 
 _FINISHED = {"finished": True}
 

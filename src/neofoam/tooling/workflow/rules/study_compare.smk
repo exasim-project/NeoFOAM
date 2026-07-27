@@ -8,7 +8,7 @@
 # each run dir (solver log + swap stamp), the shell run rule having only executed
 # ./Allrun.
 #
-# Consumes header globals: CONFIG, CASE_ROOT, RESULTS, STUDY, CANDIDATE_LABELS.
+# Consumes header globals: CONFIG, CASE_ROOT, RESULTS, STUDY, CANDIDATE_LABELS, REPO_ROOT.
 
 rule compare:
     input:
@@ -19,5 +19,5 @@ rule compare:
     output:
         RESULTS + "/{id}.json",
     shell:
-        "python -m neofoam.tooling.workflow.study.runner --config '{CONFIG}'"
+        "PYTHONPATH=\"{REPO_ROOT}:$PYTHONPATH\" python -m verification.dropin.runner --config '{CONFIG}'"
         " compare --case {wildcards.id} --cases '{CASE_ROOT}' --out '{output}'"

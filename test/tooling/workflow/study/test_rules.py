@@ -97,7 +97,7 @@ def test_rule_bodies_shell_out_to_the_study_runner(name: str) -> None:
     """
     body = (rules_dir() / name).read_text()
     modules = re.findall(r"python -m ([\w.]+)", body)
-    assert all(m == "neofoam.tooling.workflow.study.runner" for m in modules), modules
+    assert all(m == "verification.dropin.runner" for m in modules), modules
 
 
 def test_study_smk_defines_the_report_the_study_all_rule_targets() -> None:

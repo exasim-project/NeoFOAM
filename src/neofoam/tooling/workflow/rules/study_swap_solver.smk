@@ -7,7 +7,7 @@
 # pristine. A build that failed staging, or an Allrun with no unique solver token,
 # is recorded in the stamp and carried forward to the run rule, never raised.
 #
-# Consumes header globals: CONFIG, CASE_ROOT.
+# Consumes header globals: CONFIG, CASE_ROOT, REPO_ROOT.
 
 rule swap_solver:
     input:
@@ -15,6 +15,6 @@ rule swap_solver:
     output:
         CASE_ROOT + "/{id}/{solver}/.swapped.json",
     shell:
-        "python -m neofoam.tooling.workflow.study.runner --config '{CONFIG}'"
+        "PYTHONPATH=\"{REPO_ROOT}:$PYTHONPATH\" python -m verification.dropin.runner --config '{CONFIG}'"
         " swap --case {wildcards.id} --solver {wildcards.solver}"
         " --cases '{CASE_ROOT}' --built '{input}' --stamp '{output}'"

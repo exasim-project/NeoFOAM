@@ -4,7 +4,7 @@
 # The sink: gather every case's results/{id}.json into one self-contained
 # report.html. This is what the `all` rule depends on.
 #
-# Consumes header globals: CONFIG, RESULTS, REPORT, IDS.
+# Consumes header globals: CONFIG, RESULTS, REPORT, IDS, REPO_ROOT.
 
 rule report:
     input:
@@ -12,5 +12,5 @@ rule report:
     output:
         REPORT,
     shell:
-        "python -m neofoam.tooling.workflow.study.runner --config '{CONFIG}'"
+        "PYTHONPATH=\"{REPO_ROOT}:$PYTHONPATH\" python -m verification.dropin.runner --config '{CONFIG}'"
         " report --results '{RESULTS}' --out '{output}'"

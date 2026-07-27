@@ -27,9 +27,9 @@ from typing import Any
 
 from neofoam.io import DictFile
 from neofoam.tooling.casebuild import CaseDir
-from neofoam.tooling.workflow.study import runner
-from neofoam.tooling.workflow.study.cases import Case, load_study
-from neofoam.tooling.workflow.study.runner import _neo_patch
+from verification.dropin import runner
+from verification.dropin.cases import Case, load_study
+from verification.dropin.runner import _neo_patch
 
 _CASE = Path(__file__).parent / "cases" / "vof_fvsolution"
 
@@ -46,7 +46,7 @@ runApplication interIsoFoam
 
 _DISCOVER_PY = """
 from pathlib import Path
-from neofoam.tooling.workflow.study.cases import Case, case_id
+from verification.dropin.cases import Case, case_id
 
 def discover():
     name = "interIsoFoam/weirOverflow"

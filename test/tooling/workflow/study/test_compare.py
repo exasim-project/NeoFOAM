@@ -28,8 +28,8 @@ from typing import Any
 
 import numpy as np
 
-from neofoam.tooling.workflow.study import compare
-from neofoam.tooling.workflow.study.compare import (
+from verification.dropin import compare
+from verification.dropin.compare import (
     ATOL,
     FieldDiff,
     _classify,
@@ -37,7 +37,7 @@ from neofoam.tooling.workflow.study.compare import (
     _is_decomposed,
     compare_field,
 )
-from neofoam.tooling.workflow.study.execute import (
+from verification.dropin.execute import (
     COMPARE_FAILED,
     FIELDS_DIFFER,
     MATCHED,

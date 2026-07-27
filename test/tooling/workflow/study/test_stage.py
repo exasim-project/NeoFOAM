@@ -25,7 +25,7 @@ from pathlib import Path
 import pytest
 
 from neofoam.tooling.casebuild import CaseDir
-from neofoam.tooling.workflow.study.stage import NoSwapPoint, swap_solver
+from verification.dropin.stage import NoSwapPoint, swap_solver
 
 _APP = "neofoam solver incompressiblevof"
 _CASES = Path(__file__).parent / "cases"

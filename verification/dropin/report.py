@@ -20,7 +20,7 @@ from collections import Counter
 from typing import Any
 from urllib.parse import quote
 
-from neofoam.tooling.workflow.study.cases import Study
+from verification.dropin.cases import Study
 
 __all__ = ["render_report"]
 
