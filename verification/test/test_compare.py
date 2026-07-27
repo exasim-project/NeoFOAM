@@ -36,6 +36,7 @@ from verification.dropin.compare import (
     _compare_decomposed,
     _is_decomposed,
     compare_field,
+    compare_runs,
 )
 from verification.dropin.execute import (
     COMPARE_FAILED,
@@ -43,6 +44,7 @@ from verification.dropin.execute import (
     MATCHED,
     MATCHED_TO_ROUNDOFF,
     MESH_DIFFERS,
+    MESH_NOT_REPRODUCIBLE,
 )
 
 
@@ -94,6 +96,26 @@ def test_classify_mesh_differs_on_a_length_mismatch() -> None:
 
     assert outcome == MESH_DIFFERS
     assert "alpha.water" in detail
+
+
+def test_compare_runs_reports_a_pre_solve_mesh_mismatch_as_a_fault(tmp_path: Path) -> None:
+    """Fingerprints disagreeing *before* the solve → MESH_NOT_REPRODUCIBLE, not MESH_DIFFERS.
+
+    The pre-solve guard means the mesher is nondeterministic — a harness fault the
+    run must fail on — while MESH_DIFFERS keeps its post-solve meaning (the solve
+    itself changed the cell count, a real difference). One code carrying both
+    verdicts is what this split removes.
+    """
+    for side, points in (("native", b"points-a"), ("neo", b"points-b")):
+        poly = tmp_path / side / "constant" / "polyMesh"
+        poly.mkdir(parents=True)
+        (poly / "points").write_bytes(points)
+
+    outcome, detail, diffs = compare_runs(tmp_path / "native", tmp_path / "neo", ["U"])
+
+    assert outcome == MESH_NOT_REPRODUCIBLE
+    assert "not reproducible" in detail
+    assert diffs == []
 
 
 def _touch_time(run: Path, sub: str, time: str, fields: tuple[str, ...]) -> None:

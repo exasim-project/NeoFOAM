@@ -26,6 +26,7 @@ from verification.dropin.execute import (
     MATCHED,
     MATCHED_TO_ROUNDOFF,
     MESH_DIFFERS,
+    MESH_NOT_REPRODUCIBLE,
     mesh_fingerprint,
     time_dirs,
 )
@@ -224,15 +225,17 @@ def compare_runs(
 
     Returns ``(outcome, detail, diffs)``. Guards that must pass before any field
     is trusted: the two meshes must be identical (else a nondeterministic mesher,
-    not the solver, explains a difference), and the two runs must have reached the
-    *same* final time (else they simulated different spans and are not comparable).
+    not the solver, explains a difference — :data:`MESH_NOT_REPRODUCIBLE`, a
+    harness fault distinct from the post-solve :data:`MESH_DIFFERS`), and the two
+    runs must have reached the *same* final time (else they simulated different
+    spans and are not comparable).
 
     A run left decomposed (``processor*/`` only, no ``reconstructPar`` — the wave
     tutorials) is diffed rank-by-rank; a serial or reconstructed run is diffed at the
     case root as before.
     """
     if mesh_fingerprint(native_dir) != mesh_fingerprint(neo_dir):
-        return MESH_DIFFERS, "meshing is not reproducible; solver not comparable", []
+        return MESH_NOT_REPRODUCIBLE, "meshing is not reproducible; solver not comparable", []
 
     if _is_decomposed(native_dir) and _is_decomposed(neo_dir):
         return _compare_decomposed(native_dir, neo_dir, fields)

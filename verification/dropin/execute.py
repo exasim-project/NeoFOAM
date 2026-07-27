@@ -31,6 +31,7 @@ __all__ = [
     "CASE_SETUP_FAILED",
     "COMPARE_FAILED",
     "MESH_DIFFERS",
+    "MESH_NOT_REPRODUCIBLE",
     "POSTPROCESS_NOT_IMPLEMENTED",
     "failure_reason",
     "log_tail",
@@ -66,7 +67,14 @@ UNSUPPORTED_CASE = "UNSUPPORTED_CASE"
 #: solver verdict.
 CASE_SETUP_FAILED = "CASE_SETUP_FAILED"
 COMPARE_FAILED = "COMPARE_FAILED"
+#: The two runs finished on identical meshes but ended with different cell counts
+#: (internal field lengths disagree — e.g. AMR refined differently), so the final
+#: fields are not directly comparable. A real difference between the solvers.
 MESH_DIFFERS = "MESH_DIFFERS"
+#: The two meshes already disagreed *before* the solve (fingerprint mismatch): the
+#: mesher is nondeterministic, so the solvers were never comparable — a harness
+#: fault, not a solver verdict.
+MESH_NOT_REPRODUCIBLE = "MESH_NOT_REPRODUCIBLE"
 
 
 def time_dirs(case: Path) -> list[Path]:

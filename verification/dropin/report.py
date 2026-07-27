@@ -35,6 +35,7 @@ _OUTCOME_CLASS = {
     "CASE_SETUP_FAILED": "muted",
     "COMPARE_FAILED": "muted",
     "MESH_DIFFERS": "muted",
+    "MESH_NOT_REPRODUCIBLE": "muted",
     "TIMEOUT": "bad",
 }
 
@@ -62,7 +63,14 @@ _OUTCOME_HELP = {
     "COMPARE_FAILED": (
         "The run finished but the post-run field read/compare failed — a harness fault."
     ),
-    "MESH_DIFFERS": "Native and candidate meshes differ, so the fields aren't comparable.",
+    "MESH_DIFFERS": (
+        "The solve ended with different cell counts on the two sides (e.g. AMR), "
+        "so the final fields aren't directly comparable — a real solver difference."
+    ),
+    "MESH_NOT_REPRODUCIBLE": (
+        "The meshes already differed before the solve — a nondeterministic mesher, "
+        "a harness fault, not a solver verdict."
+    ),
     # No longer producible: the run rule is plain shell with no timeout (a batch
     # scheduler caps wall time instead). Kept so a report regenerated from archived
     # results that predate that change still renders its legend.
