@@ -19,12 +19,10 @@ in place from this checkout.
   both sides with `neofoam.tooling.casebuild`, run, diff, report. The *only*
   neofoam surface this code touches is `neofoam.tooling.casebuild`,
   `neofoam.io.DictFile`, and the `neofoam solver <backend>` CLI (invoked as a
-  subprocess from a generated `Allrun`, never imported) — pinned by
-  `verification/test/test_dropin_api_contract.py`.
+  subprocess from a generated `Allrun`, never imported).
 - `foam_tutorials/<study>/` — one study each: `Snakefile` + `config.yaml` +
   `discover.py` + its own `rules/` (a copy of the five-rule pipeline shape;
   each study's copy can diverge independently, though today they don't).
-- `test/` — tests for `dropin/`, run the normal way: `pytest verification/test`.
 
 ## Running a study
 
