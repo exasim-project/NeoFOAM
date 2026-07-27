@@ -1,13 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 #
-# The drop-in study pipeline — the whole thing, in one `include:`. A study's own
-# Snakefile includes this file and then defines its own `rule all` (Snakemake's
+# The drop-in study pipeline — the whole thing, in one `include:`. This study's
+# own Snakefile includes this file and then defines its own `rule all` (Snakemake's
 # default target must live in the *main* Snakefile: it saves and restores
 # `default_target` around every include, so a rule from an included file is never
 # promoted). Everything else — the case list, the wildcard constraints, and the
-# five pipeline rules — is here, so a study directory is exactly three files:
-# Snakefile, config.yaml, discover.py.
+# five pipeline rules — is here, so a study directory is exactly Snakefile,
+# config.yaml, discover.py, plus this rules/ set (no longer shared with any other
+# study — each study owns its own copy).
 #
 # Nothing here is solver-specific: which tutorials are swept, which native solvers
 # are replaced, and which fields are diffed all come from --configfile.
@@ -26,17 +27,15 @@ import re
 import sys
 from pathlib import Path
 
-from neofoam.tooling.workflow.rules import rules_dir
-
 # `configfile:` populates `config`; workflow.configfiles gives its path, which the
 # runner needs to re-load the study (discover resolves relative to it).
 CONFIG = os.path.abspath(workflow.configfiles[-1])
 
-# verification/dropin/ has moved out of the neofoam package (see
-# plans/workflow-composable-and-benchmarkable.md §1). config.yaml sits three
-# directories below the repo root (verification/foam_tutorials/<study>/), so this
-# is the one place in-process code needs the repo root on sys.path — every
-# subprocess this pipeline shells out to gets it via PYTHONPATH instead.
+# verification/dropin/ lives outside the neofoam package (see verification/README.md);
+# config.yaml sits three directories below the repo root
+# (verification/foam_tutorials/<study>/config.yaml), so this is the one place
+# in-process code needs the repo root on sys.path — every subprocess this pipeline
+# shells out to gets it via PYTHONPATH instead (see build_case.smk and friends).
 REPO_ROOT = Path(CONFIG).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
@@ -70,8 +69,8 @@ wildcard_constraints:
     id="|".join(re.escape(i) for i in IDS),
     solver="|".join(re.escape(s) for s in SOLVER_LABELS),
 
-include: str(rules_dir() / "study_build_case.smk")
-include: str(rules_dir() / "study_swap_solver.smk")
-include: str(rules_dir() / "study_run.smk")
-include: str(rules_dir() / "study_compare.smk")
-include: str(rules_dir() / "study_report.smk")
+include: "build_case.smk"
+include: "swap_solver.smk"
+include: "run.smk"
+include: "compare.smk"
+include: "report.smk"

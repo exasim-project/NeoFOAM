@@ -3,19 +3,18 @@
 #
 # The incompressibleFluid drop-in study. Everything solver-specific is beside this
 # file — config.yaml (title, apps, the `cases:` selection) and discover.py (resolve
-# each case) — and the pipeline itself is the shared, packaged rule set.
+# each case) — and the pipeline itself is this study's own copy of the shared rule
+# shape (rules/).
 #
 # Run from this directory (`-j1`: some cases run mpirun internally, so let each case
 # have the box to itself rather than oversubscribing):
 #   snakemake --configfile config.yaml -j1
 
-from neofoam.tooling.workflow.rules import rules_dir
-
-include: str(rules_dir() / "study.smk")
+include: "rules/header.smk"
 
 # The default target must be defined here, in the main Snakefile — Snakemake saves
 # and restores `default_target` around every include, so a rule from an included
-# file is never promoted. REPORT comes from study.smk.
+# file is never promoted. REPORT comes from rules/header.smk.
 rule all:
     input:
         REPORT,
