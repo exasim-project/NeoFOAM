@@ -40,7 +40,7 @@ from verification.dropin.execute import (
     UNSUPPORTED_CASE,
 )
 
-__all__ = ["HARNESS_FAULTS", "render_report"]
+__all__ = ["HARNESS_FAULTS", "harness_faults", "render_report"]
 
 #: Outcome → the three-state fold. ``MESH_DIFFERS`` is a post-solve cell-count
 #: divergence — a real difference, not a fault (the pre-solve mismatch is
@@ -334,6 +334,18 @@ def _unsupported_section(rows: list[dict[str, Any]]) -> str:
         "to the config's <code>exclude:</code> list with their reason.</p>\n"
         f"<ul>\n{items}\n</ul>"
     )
+
+
+def harness_faults(study: Study, records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """The fault rows in *records* — broken runs the report refuses to score.
+
+    Same row set the report renders (stale records for undiscovered cases are
+    dropped, legacy outcome strings aliased), so the report step can fail on
+    exactly the faults its own fault section shows.
+    """
+    known = {case.id for case in study.cases}
+    rows = [row for record in records if record["id"] in known for row in _rows_of(record)]
+    return [row for row in rows if row["outcome"] in HARNESS_FAULTS]
 
 
 def render_report(study: Study, records: list[dict[str, Any]], diagnostic: bool = False) -> str:

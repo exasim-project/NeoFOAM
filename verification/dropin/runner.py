@@ -25,6 +25,7 @@ from __future__ import annotations
 import argparse
 import json
 import shutil
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -40,7 +41,7 @@ from verification.dropin.execute import (
     failure_reason,
     log_tail,
 )
-from verification.dropin.report import render_report
+from verification.dropin.report import harness_faults, render_report
 from verification.dropin.stage import NoSwapPoint, stage, swap_solver
 
 __all__ = ["main"]
@@ -358,9 +359,23 @@ def _compare(study: Study, case: Case, work: Path, out: Path) -> None:
     out.write_text(json.dumps(record, indent=2))
 
 
-def _report(study: Study, results_dir: Path, out: Path, diagnostic: bool = False) -> None:
+def _report(study: Study, results_dir: Path, out: Path, diagnostic: bool = False) -> int:
+    """Render the report; a harness fault in the record set fails the step.
+
+    A fault (``NATIVE_FAILED``, ``CASE_SETUP_FAILED``, ``COMPARE_FAILED``,
+    ``MESH_NOT_REPRODUCIBLE``) means the harness — not the solver under test —
+    broke, so the sweep is not a clean three-state result and must not pass
+    silently. The report is still written first, so the fault section is there
+    to read; the faulted cases are named on stderr.
+    """
     records = [json.loads(path.read_text()) for path in sorted(results_dir.glob("*.json"))]
     out.write_text(render_report(study, records, diagnostic=diagnostic))
+    faults = harness_faults(study, records)
+    for row in faults:
+        detail = row.get("detail", "")
+        line = f"harness fault: {row['name']} [{row.get('label', '')}] {row['outcome']}"
+        print(f"{line}: {detail}" if detail else line, file=sys.stderr)
+    return 1 if faults else 0
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -430,7 +445,7 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == "compare":
         _compare(study, study.by_id(args.case), args.cases, args.out)
     else:
-        _report(study, args.results, args.out, args.diagnostic)
+        return _report(study, args.results, args.out, args.diagnostic)
     return 0
 
 
