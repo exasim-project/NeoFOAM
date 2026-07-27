@@ -7,10 +7,16 @@ No template engine and no plotting library — neither is a repo dependency — 
 string assembly with everything (CSS + a tiny sort script) inlined, so the file
 opens anywhere with no assets alongside it.
 
-The ``max rel`` column carries real weight, not decoration. The pass criterion is
-strict (``atol=1e-15``), so round-off in near-zero field entries reads as
-``FIELDS_DIFFER``. A reader must be able to tell a 1e-13 disagreement (numerically
-equivalent) from a 1e-1 one (a genuine defect) — both columns are always shown.
+The headline is three counts over three row groups — **matched** (reproduces
+native within tolerance, strictly or to round-off), **differs** (ran, but a field
+or the post-solve cell count disagrees), **failed** (the neofoam solver did not
+finish). Everything else is not a result: a harness fault (:data:`HARNESS_FAULTS`)
+or a case that should never have been selected (``UNSUPPORTED_CASE`` — the
+config's ``exclude:`` channel exists for it). Both render outside the row groups.
+
+The per-row ``max abs``/``max rel`` columns and the outcome legend are diagnostic
+scaffolding, rendered only with ``diagnostic=True`` (the report subcommand's
+``--diagnostic`` flag).
 """
 
 from __future__ import annotations
@@ -21,8 +27,45 @@ from typing import Any
 from urllib.parse import quote
 
 from verification.dropin.cases import Study
+from verification.dropin.execute import (
+    CASE_SETUP_FAILED,
+    COMPARE_FAILED,
+    FIELDS_DIFFER,
+    MATCHED,
+    MATCHED_TO_ROUNDOFF,
+    MESH_DIFFERS,
+    MESH_NOT_REPRODUCIBLE,
+    NATIVE_FAILED,
+    SOLVER_FAILED,
+    UNSUPPORTED_CASE,
+)
 
-__all__ = ["render_report"]
+__all__ = ["HARNESS_FAULTS", "render_report"]
+
+#: Outcome → the three-state fold. ``MESH_DIFFERS`` is a post-solve cell-count
+#: divergence — a real difference, not a fault (the pre-solve mismatch is
+#: ``MESH_NOT_REPRODUCIBLE``). ``TIMEOUT`` survives only in archived records; a
+#: killed run did not finish, so it folds with failed.
+_STATE_OF = {
+    MATCHED: "matched",
+    MATCHED_TO_ROUNDOFF: "matched",
+    FIELDS_DIFFER: "differs",
+    MESH_DIFFERS: "differs",
+    SOLVER_FAILED: "failed",
+    "TIMEOUT": "failed",
+}
+
+#: Broken runs, not results: the harness (not the solver under test) is at fault,
+#: so these never appear as table rows and must fail the report step.
+HARNESS_FAULTS = frozenset(
+    {NATIVE_FAILED, CASE_SETUP_FAILED, COMPARE_FAILED, MESH_NOT_REPRODUCIBLE}
+)
+
+_STATE_TITLES = (
+    ("matched", "Matched"),
+    ("differs", "Differs"),
+    ("failed", "Failed"),
+)
 
 #: Outcome → CSS class, so the table colour-codes at a glance.
 _OUTCOME_CLASS = {
@@ -34,7 +77,7 @@ _OUTCOME_CLASS = {
     "UNSUPPORTED_CASE": "muted",
     "CASE_SETUP_FAILED": "muted",
     "COMPARE_FAILED": "muted",
-    "MESH_DIFFERS": "muted",
+    "MESH_DIFFERS": "warn",
     "MESH_NOT_REPRODUCIBLE": "muted",
     "TIMEOUT": "bad",
 }
@@ -185,78 +228,139 @@ def _num_cell(value: float) -> str:
     return f'<td class="num" data-sort="{value:.6e}">{value:.2e}</td>'
 
 
-def _rows(rows: list[dict[str, Any]]) -> str:
-    # Passing rows first, then by name — the eye should land on what reproduced
-    # native (strictly, or to round-off).
-    passed = {"MATCHED", "MATCHED_TO_ROUNDOFF"}
-    ordered = sorted(
-        rows,
-        key=lambda r: (r["outcome"] not in passed, r["name"], r.get("label", "")),
-    )
+def _fold(
+    rows: list[dict[str, Any]],
+) -> tuple[dict[str, list[dict[str, Any]]], list[dict[str, Any]], list[dict[str, Any]]]:
+    """Split rows into the three states, the harness faults, and the unsupported.
+
+    Every row lands in exactly one bucket; an outcome this vocabulary does not
+    know raises rather than silently dropping a case from the arithmetic.
+    """
+    states: dict[str, list[dict[str, Any]]] = {"matched": [], "differs": [], "failed": []}
+    faults: list[dict[str, Any]] = []
+    unsupported: list[dict[str, Any]] = []
+    for row in rows:
+        outcome = row["outcome"]
+        if outcome in HARNESS_FAULTS:
+            faults.append(row)
+        elif outcome == UNSUPPORTED_CASE:
+            unsupported.append(row)
+        elif outcome in _STATE_OF:
+            states[_STATE_OF[outcome]].append(row)
+        else:
+            raise ValueError(f"unknown outcome {outcome!r} for case {row['name']!r}")
+    return states, faults, unsupported
+
+
+def _rows(rows: list[dict[str, Any]], diagnostic: bool) -> str:
+    ordered = sorted(rows, key=lambda r: (r["name"], r.get("label", "")))
     out = []
     for row in ordered:
-        out.append(
+        cells = (
             "<tr>"
             f"<td><code>{_esc(row['name'])}</code></td>"
-            f"<td><code>{_esc(row.get('label', ''))}</code></td>"
-            + _outcome_cell(row)
-            + _num_cell(float(row.get("worst_abs", 0.0)))
-            + _num_cell(float(row.get("worst_rel", 0.0)))
-            + "</tr>"
+            f"<td><code>{_esc(row.get('label', ''))}</code></td>" + _outcome_cell(row)
         )
+        if diagnostic:
+            cells += _num_cell(float(row.get("worst_abs", 0.0)))
+            cells += _num_cell(float(row.get("worst_rel", 0.0)))
+        out.append(cells + "</tr>")
     return "\n".join(out)
 
 
-def _table(rows: list[dict[str, Any]]) -> str:
-    header = (
-        "<tr><th>Case</th><th>Backend</th><th>Outcome</th><th>max abs</th><th>max rel</th></tr>"
-    )
+def _table(rows: list[dict[str, Any]], diagnostic: bool) -> str:
+    header = "<tr><th>Case</th><th>Backend</th><th>Outcome</th>"
+    if diagnostic:
+        header += "<th>max abs</th><th>max rel</th>"
+    header += "</tr>"
     return (
         '<table class="sortable">\n<thead>'
         + header
         + "</thead>\n<tbody>\n"
-        + _rows(rows)
+        + _rows(rows, diagnostic)
         + "\n</tbody>\n</table>"
     )
 
 
-def _summary(rows: list[dict[str, Any]]) -> str:
+def _headline(states: dict[str, list[dict[str, Any]]], total: int) -> str:
+    counts = " &nbsp; ".join(
+        f"{title}: <b>{len(states[state])}</b>" for state, title in _STATE_TITLES
+    )
+    return f"<p>Case/backend runs: <b>{total}</b> &nbsp; {counts}</p>"
+
+
+def _legend(rows: list[dict[str, Any]]) -> str:
+    """The per-outcome count table with one-line meanings — diagnostic only."""
     counts = Counter(row["outcome"] for row in rows)
-    matched = counts.get("MATCHED", 0)
-    roundoff = counts.get("MATCHED_TO_ROUNDOFF", 0)
     rows_html = "\n".join(
         f'<tr><td><span class="pill {_OUTCOME_CLASS.get(outcome, "muted")}">'
         f'{_esc(outcome)}</span></td><td class="num">{count}</td>'
         f'<td class="muted">{_esc(_OUTCOME_HELP.get(outcome, ""))}</td></tr>'
         for outcome, count in counts.most_common()
     )
-    # Strict MATCHED stays its own figure; the round-off matches are shown beside it
-    # (not folded in) so machine-precision cases read as passes without loosening what
-    # "Matched" means.
-    roundoff_note = (
-        f" &nbsp; Matched to round-off (rel &lt; 1e-10): <b>{roundoff}</b>" if roundoff else ""
-    )
     return (
-        f"<p>Case/backend runs: <b>{len(rows)}</b> &nbsp; "
-        f"Matched the native reference: <b>{matched}</b>{roundoff_note}</p>"
         '<table class="summary"><thead><tr>'
         "<th>Outcome</th><th>Count</th><th>Meaning</th>"
         "</tr></thead><tbody>\n" + rows_html + "\n</tbody></table>"
     )
 
 
-def render_report(study: Study, records: list[dict[str, Any]]) -> str:
-    """Assemble the full HTML document for *study* from its per-case *records*."""
+def _not_result_item(row: dict[str, Any]) -> str:
+    pill = f'<span class="pill {_OUTCOME_CLASS.get(row["outcome"], "muted")}">'
+    pill += f"{_esc(row['outcome'])}</span>"
+    detail = f' <span class="muted">{_esc(row["detail"])}</span>' if row.get("detail") else ""
+    return (
+        f"<li><code>{_esc(row['name'])}</code> <code>{_esc(row.get('label', ''))}</code> "
+        f"{pill}{detail}{_log_details(row)}</li>"
+    )
+
+
+def _fault_section(faults: list[dict[str, Any]]) -> str:
+    """Harness faults are broken runs, not results — a list apart, never table rows."""
+    items = "\n".join(_not_result_item(row) for row in faults)
+    return (
+        f"<h2>Harness faults ({len(faults)})</h2>\n"
+        '<p class="muted">Broken runs, not results: the harness — not the solver '
+        "under test — is at fault. These must be fixed, not scored.</p>\n"
+        f"<ul>\n{items}\n</ul>"
+    )
+
+
+def _unsupported_section(rows: list[dict[str, Any]]) -> str:
+    items = "\n".join(_not_result_item(row) for row in rows)
+    return (
+        f"<h2>Unsupported cases ({len(rows)})</h2>\n"
+        '<p class="muted">These cases cannot run as drop-ins and should be moved '
+        "to the config's <code>exclude:</code> list with their reason.</p>\n"
+        f"<ul>\n{items}\n</ul>"
+    )
+
+
+def render_report(study: Study, records: list[dict[str, Any]], diagnostic: bool = False) -> str:
+    """Assemble the full HTML document for *study* from its per-case *records*.
+
+    ``diagnostic=True`` adds the per-row ``max abs``/``max rel`` columns and the
+    per-outcome legend; the default report is the bare three-state fold.
+    """
     by_id = {case.id: case for case in study.cases}
     # Drop results for cases no longer discovered (e.g. a retired native solver), so
     # the report always reflects the current study rather than stale on-disk runs.
     records = [record for record in records if record["id"] in by_id]
     all_rows = [row for record in records for row in _rows_of(record)]
+    states, faults, unsupported = _fold(all_rows)
 
-    sections = [
-        f"<h2>Summary</h2>\n{_summary(all_rows)}",
-        f"<h2>All cases</h2>\n{_table(all_rows)}",
-    ]
+    sections = [f"<h2>Summary</h2>\n{_headline(states, len(all_rows))}"]
+    if diagnostic:
+        sections.append(_legend(all_rows))
+    sections.extend(
+        f"<h2>{title} ({len(states[state])})</h2>\n{_table(states[state], diagnostic)}"
+        for state, title in _STATE_TITLES
+        if states[state]
+    )
+    if faults:
+        sections.append(_fault_section(faults))
+    if unsupported:
+        sections.append(_unsupported_section(unsupported))
 
     # Note any case that was discovered but produced no result file.
     missing = sorted(set(by_id) - {record["id"] for record in records})

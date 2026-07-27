@@ -358,9 +358,9 @@ def _compare(study: Study, case: Case, work: Path, out: Path) -> None:
     out.write_text(json.dumps(record, indent=2))
 
 
-def _report(study: Study, results_dir: Path, out: Path) -> None:
+def _report(study: Study, results_dir: Path, out: Path, diagnostic: bool = False) -> None:
     records = [json.loads(path.read_text()) for path in sorted(results_dir.glob("*.json"))]
-    out.write_text(render_report(study, records))
+    out.write_text(render_report(study, records, diagnostic=diagnostic))
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -400,6 +400,11 @@ def main(argv: list[str] | None = None) -> int:
     report = sub.add_parser("report", help="render report.html from results/")
     report.add_argument("--results", required=True, type=Path, help="results dir")
     report.add_argument("--out", required=True, type=Path, help="report.html to write")
+    report.add_argument(
+        "--diagnostic",
+        action="store_true",
+        help="add the per-row max abs/max rel columns and the outcome legend",
+    )
 
     args = parser.parse_args(argv)
 
@@ -425,7 +430,7 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == "compare":
         _compare(study, study.by_id(args.case), args.cases, args.out)
     else:
-        _report(study, args.results, args.out)
+        _report(study, args.results, args.out, args.diagnostic)
     return 0
 
 

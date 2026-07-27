@@ -1,19 +1,23 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""The HTML report renders every discovered case, matched or not.
+"""The HTML report is three states — matched, differs, failed — over every record.
 
 Pure string assembly — no OpenFOAM, no solver run — so it guards the report shape
 on every ``pytest`` run. The heavy sweep is Snakemake-only and lives outside
-``testpaths``. The one invariant worth pinning: a ``FIELDS_DIFFER`` row must show
-both ``max abs`` and ``max rel``, because at ``atol=1e-15`` round-off reads as a
-difference and only the relative figure tells equivalence from a real defect.
+``testpaths``. The invariant worth pinning is the fold arithmetic: every record
+lands in exactly one of the three states, or outside them as a harness fault /
+unsupported case — nothing dropped, nothing double-counted. The ``max abs``/``max
+rel`` columns and the outcome legend are diagnostic scaffolding behind
+``diagnostic=True``, off by default.
 """
 
 from pathlib import Path
 
+import pytest
+
 from verification.dropin.cases import Case, Study
-from verification.dropin.report import render_report
+from verification.dropin.report import _fold, render_report
 
 
 def _study(cases: list[Case]) -> Study:
@@ -53,9 +57,9 @@ def _candidate(label: str, outcome: str, **over: object) -> dict[str, object]:
     }
 
 
-def test_report_lists_matched_and_diverged_with_both_tolerances() -> None:
+def _matched_and_differing_records() -> tuple[list[Case], list[dict[str, object]]]:
     cases = [_case("simpleFoam/pitzDaily", "A"), _case("simpleFoam/mixer", "D")]
-    records = [
+    records: list[dict[str, object]] = [
         {
             "id": "simpleFoam__pitzDaily",
             "name": "simpleFoam/pitzDaily",
@@ -92,16 +96,40 @@ def test_report_lists_matched_and_diverged_with_both_tolerances() -> None:
             ],
         },
     ]
+    return cases, records
+
+
+def test_report_headline_is_the_three_state_fold() -> None:
+    """The default report: three counts, three row groups, no tolerance columns.
+
+    The abs/rel figures moved behind ``diagnostic=True`` — a continuous run's
+    report answers "does it still reproduce", not "by how much".
+    """
+    cases, records = _matched_and_differing_records()
 
     html = render_report(_study(cases), records)
 
     assert "<title>demo study</title>" in html
-    assert "Matched the native reference: <b>1</b>" in html
-    # One flat list — both cases render in a single table, not per-tier sections.
+    assert "Matched: <b>1</b>" in html
+    assert "Differs: <b>1</b>" in html
+    assert "Failed: <b>0</b>" in html
     assert "simpleFoam/pitzDaily" in html and "simpleFoam/mixer" in html
-    assert html.count('<table class="sortable">') == 1
+    # One table per non-empty row group: matched and differs here, no failed.
+    assert html.count('<table class="sortable">') == 2
+    assert "<h2>Matched (1)</h2>" in html and "<h2>Differs (1)</h2>" in html
     assert "Tier A — runnable" not in html and "Tier D — blocked" not in html
-    # The FIELDS_DIFFER row shows abs AND rel, so round-off is distinguishable.
+    # The tolerance columns are diagnostic-only now.
+    assert "max abs" not in html and "1.20e-11" not in html
+
+
+def test_diagnostic_report_shows_both_tolerances() -> None:
+    """With --diagnostic the FIELDS_DIFFER row shows abs AND rel, so at
+    ``atol=1e-15`` round-off is distinguishable from a real defect."""
+    cases, records = _matched_and_differing_records()
+
+    html = render_report(_study(cases), records, diagnostic=True)
+
+    assert "max abs" in html and "max rel" in html
     assert "1.20e-11" in html and "1.80e-13" in html
 
 
@@ -188,8 +216,8 @@ def test_report_flags_cases_without_a_result() -> None:
     assert "simpleFoam/missing" in html
 
 
-def test_report_summary_explains_outcomes() -> None:
-    """The Summary is a legend: each outcome's one-line meaning appears beside it."""
+def test_diagnostic_report_explains_outcomes() -> None:
+    """The outcome legend (one-line meaning per outcome) is diagnostic-only."""
     cases = [_case("simpleFoam/pitzDaily", "A"), _case("simpleFoam/mixer", "D")]
     records = [
         {
@@ -214,16 +242,18 @@ def test_report_summary_explains_outcomes() -> None:
         },
     ]
 
-    html = render_report(_study(cases), records)
+    html = render_report(_study(cases), records, diagnostic=True)
 
     assert "Meaning" in html
     assert "differs beyond tolerance" in html  # the FIELDS_DIFFER meaning
     assert "field-for-field within tolerance" in html  # the MATCHED meaning
+    # Off by default: the continuous report is the three counts alone.
+    assert "Meaning" not in render_report(_study(cases), records)
 
 
 def test_report_renders_matched_to_roundoff_as_a_pass() -> None:
-    """A round-off match is shown beside the strict MATCHED count, not as a failure,
-    and its legend explains it reproduces native to machine precision."""
+    """A round-off match folds into the matched count — reproducing native to
+    machine precision is a pass, and the diagnostic legend explains it."""
     cases = [_case("interFoam/damBreak", "A")]
     records = [
         {
@@ -249,12 +279,12 @@ def test_report_renders_matched_to_roundoff_as_a_pass() -> None:
     html = render_report(_study(cases), records)
 
     assert "MATCHED_TO_ROUNDOFF" in html
-    # Strict MATCHED count stays 0; the round-off match is surfaced separately.
-    assert "Matched the native reference: <b>0</b>" in html
-    assert "Matched to round-off (rel &lt; 1e-10): <b>1</b>" in html
-    assert "machine precision" in html
+    # Folded into matched: MATCHED + MATCHED_TO_ROUNDOFF are one state.
+    assert "Matched: <b>1</b>" in html
     # Coloured green (a pass), not the amber FIELDS_DIFFER warning.
     assert 'pill ok">MATCHED_TO_ROUNDOFF' in html
+    # The machine-precision explanation lives in the diagnostic legend.
+    assert "machine precision" in render_report(_study(cases), records, diagnostic=True)
 
 
 def test_report_aliases_legacy_outcome_strings() -> None:
@@ -277,3 +307,85 @@ def test_report_aliases_legacy_outcome_strings() -> None:
 
     assert "FIELDS_DIFFER" in html
     assert "DIVERGED" not in html
+
+
+#: One row per outcome the vocabulary knows, name → outcome. The fold must place
+#: each in exactly one bucket; together they are the whole partition.
+_ALL_OUTCOMES = {
+    "simpleFoam/a": "MATCHED",
+    "simpleFoam/b": "MATCHED_TO_ROUNDOFF",
+    "simpleFoam/c": "FIELDS_DIFFER",
+    "simpleFoam/d": "MESH_DIFFERS",
+    "simpleFoam/e": "SOLVER_FAILED",
+    "simpleFoam/f": "NATIVE_FAILED",
+    "simpleFoam/g": "CASE_SETUP_FAILED",
+    "simpleFoam/h": "COMPARE_FAILED",
+    "simpleFoam/i": "MESH_NOT_REPRODUCIBLE",
+    "simpleFoam/j": "UNSUPPORTED_CASE",
+}
+
+
+def _one_record_per_outcome() -> tuple[list[Case], list[dict[str, object]]]:
+    cases = [_case(name, "A") for name in _ALL_OUTCOMES]
+    records: list[dict[str, object]] = [
+        {
+            "id": name.replace("/", "__"),
+            "name": name,
+            "native_solver": "simpleFoam",
+            "tier": "A",
+            "predicted_blocker": "",
+            "turbulence": "kEpsilon",
+            "parallel": False,
+            "candidates": [_candidate("incompressiblefluid", outcome)],
+        }
+        for name, outcome in _ALL_OUTCOMES.items()
+    ]
+    return cases, records
+
+
+def test_fold_places_every_record_in_exactly_one_bucket() -> None:
+    """The fold arithmetic: states + faults + unsupported partition the rows."""
+    rows = [{"name": name, "outcome": outcome} for name, outcome in _ALL_OUTCOMES.items()]
+
+    states, faults, unsupported = _fold(rows)
+
+    assert [r["outcome"] for r in states["matched"]] == ["MATCHED", "MATCHED_TO_ROUNDOFF"]
+    assert [r["outcome"] for r in states["differs"]] == ["FIELDS_DIFFER", "MESH_DIFFERS"]
+    assert [r["outcome"] for r in states["failed"]] == ["SOLVER_FAILED"]
+    assert sorted(r["outcome"] for r in faults) == [
+        "CASE_SETUP_FAILED",
+        "COMPARE_FAILED",
+        "MESH_NOT_REPRODUCIBLE",
+        "NATIVE_FAILED",
+    ]
+    assert [r["outcome"] for r in unsupported] == ["UNSUPPORTED_CASE"]
+    total = sum(len(rows) for rows in states.values()) + len(faults) + len(unsupported)
+    assert total == len(rows)  # nothing dropped, nothing double-counted
+
+
+def test_fold_raises_on_an_unknown_outcome() -> None:
+    """An outcome outside the vocabulary must not be silently dropped."""
+    with pytest.raises(ValueError, match="SURPRISE"):
+        _fold([{"name": "simpleFoam/x", "outcome": "SURPRISE"}])
+
+
+def test_report_renders_faults_and_unsupported_outside_the_row_groups() -> None:
+    """Harness faults and unsupported cases are not table rows.
+
+    They render in their own sections — a broken run is not a result, and an
+    unsupported case belongs in the config's ``exclude:`` list, not in a state.
+    """
+    cases, records = _one_record_per_outcome()
+
+    html = render_report(_study(cases), records)
+
+    assert "Case/backend runs: <b>10</b>" in html
+    assert "Matched: <b>2</b>" in html
+    assert "Differs: <b>2</b>" in html
+    assert "Failed: <b>1</b>" in html
+    assert "<h2>Harness faults (4)</h2>" in html
+    assert "<h2>Unsupported cases (1)</h2>" in html
+    tables = [part.split("</table>")[0] for part in html.split('<table class="sortable">')[1:]]
+    for fault in ("NATIVE_FAILED", "CASE_SETUP_FAILED", "COMPARE_FAILED", "MESH_NOT_REPRODUCIBLE"):
+        assert all(fault not in table for table in tables)
+    assert all("UNSUPPORTED_CASE" not in table for table in tables)
