@@ -168,9 +168,10 @@ markers = [
 
 [tool.mypy]
 plugins = ["pydantic.mypy"]
-files = ["src"]          # your two roots
+files = ["src", "verification/dropin"]
 mypy_path = ["src"]              # so imports from src resolve
 strict = true                    # optional but recommended
+explicit_package_bases = true    # verification/ is a namespace package (no __init__.py)
 
 # Exclude src/Neon and everything beneath it
 # (mypy applies this regex to the normalized file path)
