@@ -1,0 +1,2318 @@
+[
+  {
+    "id": "interFoam__LES__nozzleFlow2D",
+    "name": "interFoam/LES/nozzleFlow2D",
+    "native_solver": "interFoam",
+    "tier": "B",
+    "predicted_blocker": "nAlphaSubCycles 4 > 1 (mules.py raises NotImplementedError)",
+    "turbulence": "kEqn",
+    "parallel": false,
+    "native_seconds": 13.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "SOLVER_FAILED",
+        "detail": "/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python #41 ? in /lib/x86_64-linux-gnu/libc.so.6 #42 __libc_start_main in /lib/x86_64-linux-gnu/libc.so.6 #43 ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python ============= Floating point exception (core dumped)",
+        "worst_abs": 0.0,
+        "worst_rel": 0.0,
+        "fields": [],
+        "log_path": "cases/interFoam__LES__nozzleFlow2D/incompressiblevof/log.neofoam solver incompressiblevof",
+        "log_tail": "/*---------------------------------------------------------------------------*\\\n| =========                 |                                                 |\n| \\\\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |\n|  \\\\    /   O peration     | Version:  2406                                  |\n|   \\\\  /    A nd           | Website:  www.openfoam.com                      |\n|    \\\\/     M anipulation  |                                                 |\n\\*---------------------------------------------------------------------------*/\nBuild  : _630d60de3b-20240620 OPENFOAM=2406 version=v2406\nArch   : \"LSB;label=32;scalar=64\"\nExec   : /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/neofoam\nDate   : Jul 27 2026\nTime   : 15:00:03\nHost   : henning-MS-7E26\nPID    : 3229025\nI/O    : uncollated\nCase   : /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/verification/foam_tutorials/incompressibleVoF/cases/interFoam__LES__nozzleFlow2D/incompressiblevof\nnProcs : 1\ntrapFpe: Floating point exception trapping enabled (FOAM_SIGFPE).\nfileModificationChecking : Monitoring run-time modified files using timeStampMaster (fileModificationSkew 5, maxFileModificationPolls 20)\nallowSystemOperations : Allowing user-supplied system call operations\n\n// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //\nSelecting incompressible transport model Newtonian\nSelecting incompressible transport model Newtonian\nSelecting turbulence model type LES\nSelecting LES turbulence model kEqn\nSelecting LES delta type smooth\nSelecting LES delta type cubeRootVol\n--> FOAM Warning : \n    From void Foam::LESModels::cubeRootVolDelta::calcDelta()\n    in file LES/LESdeltas/cubeRootVolDelta/cubeRootVolDelta.C at line 58\n    Case is 2D, LES is not strictly applicable\n\nLES\n{\n    LESModel        kEqn;\n    turbulence      on;\n    printCoeffs     on;\n    delta           smooth;\n    cubeRootVolCoeffs\n    {\n        deltaCoeff      1;\n    }\n    PrandtlCoeffs\n    {\n        delta           cubeRootVol;\n        cubeRootVolCoeffs\n        {\n            deltaCoeff      1;\n        }\n        smoothCoeffs\n        {\n            delta           cubeRootVol;\n            cubeRootVolCoeffs\n            {\n                deltaCoeff      1;\n            }\n            maxDeltaRatio   1.1;\n        }\n        Cdelta          0.158;\n    }\n    vanDriestCoeffs\n    {\n        delta           cubeRootVol;\n        cubeRootVolCoeffs\n        {\n            deltaCoeff      1;\n        }\n        smoothCoeffs\n        {\n            delta           cubeRootVol;\n            cubeRootVolCoeffs\n            {\n                deltaCoeff      1;\n            }\n            maxDeltaRatio   1.1;\n        }\n        Aplus           26;\n        Cdelta          0.158;\n    }\n    smoothCoeffs\n    {\n        delta           cubeRootVol;\n        cubeRootVolCoeffs\n        {\n            deltaCoeff      1;\n        }\n        maxDeltaRatio   1.1;\n    }\n    Ck              0.094;\n}\n\nInitStep 'runtime' has no special context slot \u2014 routing to models\nStarting time loop\nCourant Number mean: 2.995e-06  max: 0.2283\nInterface Courant Number mean: 0  max: 0\ndeltaT = 1e-08\nTime = 0\nMULES: Solving for alpha.fuel\nMULES: Solving for alpha.fuel\nMULES: Solving for alpha.fuel\nMULES: Solving for alpha.fuel\nPhase-1 volume fraction: nAlphaCorr=1  MULESCorr=False\nGAMG:  Solving for p_rgh, Initial residual = 1, Final residual = 0.0087639489, No Iterations 7\nGAMG:  Solving for p_rgh, Initial residual = 0.0029278179, Final residual = 1.2905551e-05, No Iterations 5\ntime step continuity errors : sum local = 3.628394490515894e-08, global = -9.53439987286444e-09, cumulative = -9.53439987286444e-09\nGAMGPCG:  Solving for p_rgh, Initial residual = 0.00030881458, Final residual = 2.5553307e-08, No Iterations 6\nGAMGPCG:  Solving for p_rgh, Initial residual = 2.4845797e-05, Final residual = 7.794329e-08, No Iterations 4\ntime step continuity errors : sum local = 2.3552842026588186e-10, global = -1.1451417731224206e-11, cumulative = -9.545851290595665e-09\n[stack trace]\n=============\n#1  Foam::sigFpe::sigHandler(int) in ~/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libOpenFOAM.so\n#2  ? in /lib/x86_64-linux-gnu/libc.so.6\n#3  Foam::smoothSolver::solve(Foam::Field<double>&, Foam::Field<double> const&, unsigned char) const in ~/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libOpenFOAM.so\n#4  Foam::fvMatrix<double>::solveSegregated(Foam::dictionary const&) in ~/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libfiniteVolume.so\n#5  Foam::fvMatrix<double>::solveSegregatedOrCoupled(Foam::dictionary const&) in ~/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libfiniteVolume.so\n#6  Foam::fvMesh::solve(Foam::fvMatrix<double>&, Foam::dictionary const&) const in ~/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libfiniteVolume.so\n#7  Foam::SolverPerformance<double> Foam::solve<double>(Foam::tmp<Foam::fvMatrix<double> > const&) in ~/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libfiniteVolume.so\n#8  Foam::LESModels::kEqn<Foam::IncompressibleTurbulenceModel<Foam::transportModel> >::correct() in ~/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libincompressibleTurbulenceModels.so\n#9  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/lib/python3.12/site-packages/pybFoam/multiphase.cpython-312-x86_64-linux-gnu.so\n#10  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/lib/python3.12/site-packages/neofoam/../pybFoam/libnanobind.so\n#11  PyObject_Vectorcall in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n#12  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n#13  _PyObject_FastCallDictTstate in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n#14  _PyObject_Call_Prepend in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n#15  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n#16  _PyObject_MakeTpCall in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n#17  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n#18  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n#19  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n#20  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n#21  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n#22  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n#23  _PyObject_FastCallDictTstate in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n#24  _PyObject_Call_Prepend in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n#25  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n#26  _PyObject_Call in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n#27  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n#28  _PyObject_FastCallDictTstate in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n#29  _PyObject_Call_Prepend in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n#30  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n#31  _PyObject_MakeTpCall in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n#32  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n#33  PyEval_EvalCode in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n#34  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n#35  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n#36  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n#37  _PyRun_SimpleFileObject in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n#38  _PyRun_AnyFileObject in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n#39  Py_RunMain in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n#40  Py_BytesMain in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n#41  ? in /lib/x86_64-linux-gnu/libc.so.6\n#42  __libc_start_main in /lib/x86_64-linux-gnu/libc.so.6\n#43  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n=============\nFloating point exception (core dumped)",
+        "seconds": 5.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__RAS__DTCHull",
+    "name": "interFoam/RAS/DTCHull",
+    "native_solver": "interFoam",
+    "tier": "D",
+    "predicted_blocker": "LTS (localEuler ddt)",
+    "turbulence": "kOmegaSST",
+    "parallel": true,
+    "native_seconds": 185.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "SOLVER_FAILED",
+        "detail": "--> FOAM FATAL ERROR: (openfoam-2406) [6] failed lookup of rDeltaT (objectRegistry region0) available objects of type volScalarField: 14 ( interfaceProperties:K nut alpha.water rho k p_rgh nu gh nu1 p rho_0 nu2 alpha.air omega ) [6] [6] [6] From const Type& Foam::objectRegistry::loo",
+        "worst_abs": 0.0,
+        "worst_rel": 0.0,
+        "fields": [],
+        "log_path": "cases/interFoam__RAS__DTCHull/incompressiblevof/log.neofoam solver incompressiblevof",
+        "log_tail": "[5] --> FOAM FATAL ERROR: (openfoam-2406)\n[5] \n    failed lookup of rDeltaT (objectRegistry region0)\n    available objects of type volScalarField:\n\n14\n(\ninterfaceProperties:K\nnut\nalpha.water\nrho\nk\np_rgh\nnu\ngh\nnu1\np\nrho_0\nnu2\nalpha.air\nomega\n)\n\n[5] \n[5] \n[5]     From const Type& Foam::objectRegistry::lookupObject(const Foam::word&, bool) const [with Type = Foam::GeometricField<double, Foam::fvPatchField, Foam::volMesh>]\n[5]     in file /home/henning/OpenFOAM/OpenFOAM-v2406/src/OpenFOAM/lnInclude/objectRegistryTemplates.C at line 628.\n[5] \nFOAM parallel run exiting\n[5] \n[1] \n[1] \n[1] --> FOAM FATAL ERROR: (openfoam-2406)\n[1] \n    failed lookup of rDeltaT (objectRegistry region0)\n    available objects of type volScalarField:\n\n14\n(\ninterfaceProperties:K\nnut\nalpha.water\nrho\nk\np_rgh\nnu\ngh\nnu1\np\nrho_0\nnu2\nalpha.air\nomega\n)\n\n[1] \n[1] \n[1]     From const Type& Foam::objectRegistry::lookupObject(const Foam::word&, bool) const [with Type = Foam::GeometricField<double, Foam::fvPatchField, Foam::volMesh>]\n[1]     in file /home/henning/OpenFOAM/OpenFOAM-v2406/src/OpenFOAM/lnInclude/objectRegistryTemplates.C at line 628.\n[1] \nFOAM parallel run exiting\n[1] \n--------------------------------------------------------------------------\nMPI_ABORT was invoked on rank 6 in communicator MPI_COMM_WORLD\nwith errorcode 1.\n\nNOTE: invoking MPI_ABORT causes Open MPI to kill all MPI processes.\nYou may or may not see output from other processes, depending on\nexactly when Open MPI kills them.\n--------------------------------------------------------------------------\n[7] \n[7] \n[7] --> FOAM FATAL ERROR: (openfoam-2406)\n[7] \n    failed lookup of rDeltaT (objectRegistry region0)\n    available objects of type volScalarField:\n\n14\n(\ninterfaceProperties:K\nnut\nalpha.water\nrho\nk\np_rgh\nnu\ngh\nnu1\np\nrho_0\nnu2\nalpha.air\nomega\n)\n\n[7] \n[7] \n[7]     From const Type& Foam::objectRegistry::lookupObject(const Foam::word&, bool) const [with Type = Foam::GeometricField<double, Foam::fvPatchField, Foam::volMesh>]\n[7]     in file /home/henning/OpenFOAM/OpenFOAM-v2406/src/OpenFOAM/lnInclude/objectRegistryTemplates.C at line 628.\n[7] \nFOAM parallel run exiting\n[7] \n[4] \n[4] \n[4] --> FOAM FATAL ERROR: (openfoam-2406)\n[4] \n    failed lookup of rDeltaT (objectRegistry region0)\n    available objects of type volScalarField:\n\n14\n(\ninterfaceProperties:K\nnut\nalpha.water\nrho\nk\np_rgh\nnu\ngh\nnu1\np\nrho_0\nnu2\nalpha.air\nomega\n)\n\n[4] \n[4] \n[4]     From const Type& Foam::objectRegistry::lookupObject(const Foam::word&, bool) const [with Type = Foam::GeometricField<double, Foam::fvPatchField, Foam::volMesh>]\n[4]     in file /home/henning/OpenFOAM/OpenFOAM-v2406/src/OpenFOAM/lnInclude/objectRegistryTemplates.C at line 628.\n[4] \nFOAM parallel run exiting\n[4] \n[0] \n[0] \n[0] --> FOAM FATAL ERROR: (openfoam-2406)\n[0] \n    failed lookup of rDeltaT (objectRegistry region0)\n    available objects of type volScalarField:\n\n14\n(\ninterfaceProperties:K\nnut\nalpha.water\nrho\nk\np_rgh\nnu\ngh\nnu1\np\nrho_0\nnu2\nalpha.air\nomega\n)\n\n[0] \n[0] \n[0]     From const Type& Foam::objectRegistry::lookupObject(const Foam::word&, bool) const [with Type = Foam::GeometricField<double, Foam::fvPatchField, Foam::volMesh>]\n[0]     in file /home/henning/OpenFOAM/OpenFOAM-v2406/src/OpenFOAM/lnInclude/objectRegistryTemplates.C at line 628.\n[0] \nFOAM parallel run exiting\n[0] \n[2] \n[2] \n[2] --> FOAM FATAL ERROR: (openfoam-2406)\n[2] \n    failed lookup of rDeltaT (objectRegistry region0)\n    available objects of type volScalarField:\n\n14\n(\ninterfaceProperties:K\nnut\nalpha.water\nrho\nk\np_rgh\nnu\ngh\nnu1\np\nrho_0\nnu2\nalpha.air\nomega\n)\n\n[2] \n[2] \n[2]     From const Type& Foam::objectRegistry::lookupObject(const Foam::word&, bool) const [with Type = Foam::GeometricField<double, Foam::fvPatchField, Foam::volMesh>]\n[2]     in file /home/henning/OpenFOAM/OpenFOAM-v2406/src/OpenFOAM/lnInclude/objectRegistryTemplates.C at line 628.\n[2] \nFOAM parallel run exiting\n[2] \n[henning-MS-7E26:3353176] 7 more processes have sent help message help-mpi-api.txt / mpi-abort\n[henning-MS-7E26:3353176] Set MCA parameter \"orte_base_help_aggregate\" to 0 to see all help / error messages",
+        "seconds": 158.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__RAS__DTCHullMoving",
+    "name": "interFoam/RAS/DTCHullMoving",
+    "native_solver": "interFoam",
+    "tier": "D",
+    "predicted_blocker": "dynamic mesh (dynamicMotionSolverFvMesh)",
+    "turbulence": "kOmegaSST",
+    "parallel": true,
+    "native_seconds": 169.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "alpha.water, U, p_rgh",
+        "worst_abs": 13736.49840185269,
+        "worst_rel": 1.0939977366570612,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": 0.3280975663445337,
+            "rel": 0.3280969361844575
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 5.16295801776084,
+            "rel": 1.0939977366570612
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 13736.49840185269,
+            "rel": 0.9987936495133602
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 180.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__RAS__angledDuct",
+    "name": "interFoam/RAS/angledDuct",
+    "native_solver": "interFoam",
+    "tier": "D",
+    "predicted_blocker": "fvOptions sources",
+    "turbulence": "kEpsilon",
+    "parallel": false,
+    "native_seconds": 1.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "alpha.water, U, p_rgh",
+        "worst_abs": 36.11119948978001,
+        "worst_rel": 0.6090054122679838,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": 9.272142094313152e-06,
+            "rel": 3.8242772618554235e-05
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 0.047536517270996045,
+            "rel": 0.15131642338085444
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 36.11119948978001,
+            "rel": 0.6090054122679838
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 4.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__RAS__damBreakPorousBaffle",
+    "name": "interFoam/RAS/damBreakPorousBaffle",
+    "native_solver": "interFoam",
+    "tier": "C",
+    "predicted_blocker": "nCorrectors 1 < 2 (control_factory.py rejects it)",
+    "turbulence": "kEpsilon",
+    "parallel": false,
+    "native_seconds": 0.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "alpha.water, U, p_rgh",
+        "worst_abs": 133.84596088163607,
+        "worst_rel": 0.3377344537023567,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": 0.0960342287373741,
+            "rel": 0.09603420717229233
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 0.25617289462007553,
+            "rel": 0.3377344537023567
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 133.84596088163607,
+            "rel": 0.04978278613302045
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 3.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__RAS__damBreak__damBreak",
+    "name": "interFoam/RAS/damBreak/damBreak",
+    "native_solver": "interFoam",
+    "tier": "A",
+    "predicted_blocker": "",
+    "turbulence": "kEpsilon",
+    "parallel": true,
+    "native_seconds": 0.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "MATCHED_TO_ROUNDOFF",
+        "detail": "p_rgh",
+        "worst_abs": 1.2050804798491299e-11,
+        "worst_rel": 4.479306920919622e-15,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": true,
+            "abs": 2.3314683517128287e-15,
+            "rel": 2.3314681633987172e-15
+          },
+          {
+            "name": "U",
+            "matched": true,
+            "abs": 3.480549182199866e-14,
+            "rel": 4.721119471282101e-14
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 1.2050804798491299e-11,
+            "rel": 4.479306920919622e-15
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 3.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__RAS__electrostaticDeposition",
+    "name": "interFoam/RAS/electrostaticDeposition",
+    "native_solver": "interFoam",
+    "tier": "D",
+    "predicted_blocker": "dynamic mesh (dynamicMotionSolverFvMesh)",
+    "turbulence": "kOmegaSST",
+    "parallel": true,
+    "native_seconds": 7.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "alpha.water, U, p_rgh",
+        "worst_abs": 15.974624945871017,
+        "worst_rel": 1.0001508466852977,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": 0.06081978642870247,
+            "rel": 0.06081978642812721
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 0.21441620924155613,
+            "rel": 0.9976340045117118
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 15.974624945871017,
+            "rel": 1.0001508466852977
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 9.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__RAS__floatingObject",
+    "name": "interFoam/RAS/floatingObject",
+    "native_solver": "interFoam",
+    "tier": "D",
+    "predicted_blocker": "dynamic mesh (dynamicMotionSolverFvMesh)",
+    "turbulence": "kEpsilon",
+    "parallel": true,
+    "native_seconds": 2.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "alpha.water, U, p_rgh",
+        "worst_abs": 2860.662924848899,
+        "worst_rel": 29.459136137970855,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": 0.48409990686208093,
+            "rel": 0.48219804555417484
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 29.792870890134083,
+            "rel": 29.459136137970855
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 2860.662924848899,
+            "rel": 0.5104247116165515
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 4.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__RAS__mixerVesselAMI",
+    "name": "interFoam/RAS/mixerVesselAMI",
+    "native_solver": "interFoam",
+    "tier": "D",
+    "predicted_blocker": "dynamic mesh (dynamicMotionSolverFvMesh); cyclicAMI interfaces",
+    "turbulence": "kEpsilon",
+    "parallel": true,
+    "native_seconds": 190.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "SOLVER_FAILED",
+        "detail": "-------------------------------- -------------------------------------------------------------------------- mpirun noticed that process rank 3 with PID 0 on node henning-MS-7E26 exited on signal 8 (Floating point exception). --------------------------------------------------------------------------",
+        "worst_abs": 0.0,
+        "worst_rel": 0.0,
+        "fields": [],
+        "log_path": "cases/interFoam__RAS__mixerVesselAMI/incompressiblevof/log.neofoam solver incompressiblevof",
+        "log_tail": "smoothSolver:  Solving for epsilon, Initial residual = 4.50304e-05, Final residual = 2.33681e-06, No Iterations 1000\nbounding epsilon, min: -3.06288e+28 max: 3.95429e+31 average: 1.29497e+28\nsmoothSolver:  Solving for k, Initial residual = 0.985589, Final residual = 0.506788, No Iterations 1000\nMULES: Solving for alpha.water\nMULES: Solving for alpha.water\nPhase-1 volume fraction: nAlphaCorr=1  MULESCorr=False\nsmoothSolver:  Solving for Ux, Initial residual = 0.0800212, Final residual = 0.0232621, No Iterations 1000\nsmoothSolver:  Solving for Uy, Initial residual = 0.412954, Final residual = 0.0747252, No Iterations 1000\nsmoothSolver:  Solving for Uz, Initial residual = 0.485989, Final residual = 0.243577, No Iterations 1000\nsmoothSolver:  Solving for epsilon, Initial residual = 0.0892708, Final residual = 9.21827e-28, No Iterations 1\nbounding epsilon, min: -8.62406e+27 max: 3.02567e+61 average: 6.04867e+56\nsmoothSolver:  Solving for k, Initial residual = 0.935151, Final residual = 9.20689e-17, No Iterations 1\nbounding k, min: -7466.61 max: 4.38035e+46 average: 5.94459e+42\nExecutionTime = 151.96 s  ClockTime = 152 s\n\nCourant Number mean: 5670  max: 1.131e+08\nInterface Courant Number mean: 6.075  max: 2.578e+06\ndeltaT = 3.04394e-18\nTime = 0.0004811392463\nMULES: Solving for alpha.water\nMULES: Solving for alpha.water\nPhase-1 volume fraction: nAlphaCorr=1  MULESCorr=False\nsmoothSolver:  Solving for Ux, Initial residual = 0.639898, Final residual = 1.07215e-06, No Iterations 1000\nsmoothSolver:  Solving for Uy, Initial residual = 0.139813, Final residual = 6.99381e-07, No Iterations 9\nsmoothSolver:  Solving for Uz, Initial residual = 0.793802, Final residual = 1.14176e-06, No Iterations 1000\nGAMG:  Solving for p_rgh, Initial residual = 0.996338, Final residual = 1.24987e+06, No Iterations 1000\ntime step continuity errors : sum local = 1.2458931302289792e+18, global = -1734481108.6163678, cumulative = -1734481109.6704392\n[2] [stack trace]\n[2] =============\n[2] #1  Foam::sigFpe::sigHandler(int)[3] [stack trace]\n[3] =============\n[3] #1  Foam::sigFpe::sigHandler(int) in ~/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libOpenFOAM.so\n[3] #2  ? in ~/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libOpenFOAM.so\n[2] #2  ? in /lib/x86_64-linux-gnu/libc.so.6\n[3] #3  Foam::symGaussSeidelSmoother::smooth(Foam::word const&, Foam::Field<double>&, Foam::lduMatrix const&, Foam::Field<double> const&, Foam::FieldField<Foam::Field, double> const&, Foam::UPtrList<Foam::lduInterfaceField const> const&, unsigned char, int) in /lib/x86_64-linux-gnu/libc.so.6\n[2] #3  Foam::symGaussSeidelSmoother::smooth(Foam::word const&, Foam::Field<double>&, Foam::lduMatrix const&, Foam::Field<double> const&, Foam::FieldField<Foam::Field, double> const&, Foam::UPtrList<Foam::lduInterfaceField const> const&, unsigned char, int) in ~/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libOpenFOAM.so\n[3] #4  Foam::symGaussSeidelSmoother::smooth(Foam::Field<double>&, Foam::Field<double> const&, unsigned char, int) const in ~/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libOpenFOAM.so\n[2] #4  Foam::symGaussSeidelSmoother::smooth(Foam::Field<double>&, Foam::Field<double> const&, unsigned char, int) const in ~/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libOpenFOAM.so\n[3] #5  Foam::smoothSolver::solve(Foam::Field<double>&, Foam::Field<double> const&, unsigned char) const in ~/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libOpenFOAM.so\n[2] #5  Foam::smoothSolver::solve(Foam::Field<double>&, Foam::Field<double> const&, unsigned char) const in ~/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libOpenFOAM.so\n[3] #6  Foam::fvMatrix<double>::solveSegregated(Foam::dictionary const&) in ~/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libOpenFOAM.so\n[2] #6  Foam::fvMatrix<double>::solveSegregated(Foam::dictionary const&) in ~/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libfiniteVolume.so\n[3] #7  Foam::fvMatrix<double>::solveSegregatedOrCoupled(Foam::dictionary const&) in ~/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libfiniteVolume.so\n[2] #7  Foam::fvMatrix<double>::solveSegregatedOrCoupled(Foam::dictionary const&) in ~/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libfiniteVolume.so\n[3] #8  Foam::fvMesh::solve(Foam::fvMatrix<double>&, Foam::dictionary const&) const in ~/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libfiniteVolume.so\n[2] #8  Foam::fvMesh::solve(Foam::fvMatrix<double>&, Foam::dictionary const&) const in ~/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libfiniteVolume.so\n[3] #9  Foam::SolverPerformance<double> Foam::solve<double>(Foam::tmp<Foam::fvMatrix<double> > const&) in ~/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libfiniteVolume.so\n[2] #9  Foam::SolverPerformance<double> Foam::solve<double>(Foam::tmp<Foam::fvMatrix<double> > const&) in ~/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libfiniteVolume.so\n[3] #10  Foam::RASModels::kEpsilon<Foam::IncompressibleTurbulenceModel<Foam::transportModel> >::correct() in ~/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libincompressibleTurbulenceModels.so\n[3] #11  ? in ~/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libfiniteVolume.so\n[2] #10  Foam::RASModels::kEpsilon<Foam::IncompressibleTurbulenceModel<Foam::transportModel> >::correct() in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/lib/python3.12/site-packages/pybFoam/multiphase.cpython-312-x86_64-linux-gnu.so\n[3] #12  ? in ~/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libincompressibleTurbulenceModels.so\n[2] #11  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/lib/python3.12/site-packages/neofoam/../pybFoam/libnanobind.so\n[3] #13  PyObject_Vectorcall in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/lib/python3.12/site-packages/pybFoam/multiphase.cpython-312-x86_64-linux-gnu.so\n[2] #12  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/lib/python3.12/site-packages/neofoam/../pybFoam/libnanobind.so\n[2] #13  PyObject_Vectorcall in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[3] #14  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[2] #14  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[3] #15  _PyObject_FastCallDictTstate in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[2] #15  _PyObject_FastCallDictTstate in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[3] #16  _PyObject_Call_Prepend in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[2] #16  _PyObject_Call_Prepend in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[3] #17  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[2] #17  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[3] #18  _PyObject_MakeTpCall in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[2] #18  _PyObject_MakeTpCall in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[3] #19  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[2] #19  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[3] #20  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[2] #20  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[3] #21  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[2] #21  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[3] #22  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[2] #22  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[3] #23  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[2] #23  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[3] #24  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[2] #24  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[3] #25  _PyObject_FastCallDictTstate in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[2] #25  _PyObject_FastCallDictTstate in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[3] #26  _PyObject_Call_Prepend in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[2] #26  _PyObject_Call_Prepend in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[3] #27  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[2] #27  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[3] #28  _PyObject_Call in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[2] #28  _PyObject_Call in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[3] #29  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[2] #29  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[3] #30  _PyObject_FastCallDictTstate in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[2] #30  _PyObject_FastCallDictTstate in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[3] #31  _PyObject_Call_Prepend in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[2] #31  _PyObject_Call_Prepend in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[3] #32  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[2] #32  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[3] #33  _PyObject_MakeTpCall in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[2] #33  _PyObject_MakeTpCall in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[3] #34  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[2] #34  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[3] #35  PyEval_EvalCode in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[2] #35  PyEval_EvalCode in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[3] #36  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[2] #36  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[3] #37  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[2] #37  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[3] #38  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[2] #38  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[3] #39  _PyRun_SimpleFileObject in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[2] #39  _PyRun_SimpleFileObject in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[3] #40  _PyRun_AnyFileObject in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[2] #40  _PyRun_AnyFileObject in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[3] #41  Py_RunMain in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[2] #41  Py_RunMain in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[3] #42  Py_BytesMain in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[2] #42  Py_BytesMain in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[3] #43  ? in /lib/x86_64-linux-gnu/libc.so.6\n[3] #44  __libc_start_main in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[2] #43  ? in /lib/x86_64-linux-gnu/libc.so.6\n[3] #45  ? in /lib/x86_64-linux-gnu/libc.so.6\n[2] #44  __libc_start_main in /lib/x86_64-linux-gnu/libc.so.6\n[2] #45  ? in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[3] =============\n[henning-MS-7E26:2790174] *** Process received signal ***\n[henning-MS-7E26:2790174] Signal: Floating point exception (8)\n[henning-MS-7E26:2790174] Signal code:  (-6)\n[henning-MS-7E26:2790174] Failing at address: 0x3e8002a931e\n in ~/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python\n[2] =============\n[henning-MS-7E26:2790173] *** Process received signal ***\n[henning-MS-7E26:2790173] Signal: Floating point exception (8)\n[henning-MS-7E26:2790173] Signal code:  (-6)\n[henning-MS-7E26:2790173] Failing at address: 0x3e8002a931d\n[henning-MS-7E26:2790174] [ 0] [henning-MS-7E26:2790173] [ 0] /lib/x86_64-linux-gnu/libc.so.6(+0x45330)[0x75d554e45330]\n[henning-MS-7E26:2790174] [ 1] /lib/x86_64-linux-gnu/libc.so.6(+0x45330)[0x7e0cf2445330]\n[henning-MS-7E26:2790173] [ 1] /lib/x86_64-linux-gnu/libc.so.6(pthread_kill+0x11c)[0x75d554e9eb2c]\n[henning-MS-7E26:2790174] [ 2] /lib/x86_64-linux-gnu/libc.so.6(pthread_kill+0x11c)[0x7e0cf249eb2c]\n[henning-MS-7E26:2790173] [ 2] /lib/x86_64-linux-gnu/libc.so.6(gsignal+0x1e)[0x75d554e4527e]\n[henning-MS-7E26:2790174] [ 3] /lib/x86_64-linux-gnu/libc.so.6(+0x45330)[0x75d554e45330]\n[henning-MS-7E26:2790174] [ 4] /lib/x86_64-linux-gnu/libc.so.6(gsignal+0x1e)[0x7e0cf244527e]\n[henning-MS-7E26:2790173] [ 3] /lib/x86_64-linux-gnu/libc.so.6(+0x45330)[0x7e0cf2445330]\n[henning-MS-7E26:2790173] [ 4] /home/henning/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libOpenFOAM.so(_ZN4Foam22symGaussSeidelSmoother6smoothERKNS_4wordERNS_5FieldIdEERKNS_9lduMatrixERKS5_RKNS_10FieldFieldIS4_dEERKNS_8UPtrListIKNS_17lduInterfaceFieldEEEhi+0x21c)[0x75d5519bce4c]\n[henning-MS-7E26:2790174] [ 5] /home/henning/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libOpenFOAM.so(_ZN4Foam22symGaussSeidelSmoother6smoothERKNS_4wordERNS_5FieldIdEERKNS_9lduMatrixERKS5_RKNS_10FieldFieldIS4_dEERKNS_8UPtrListIKNS_17lduInterfaceFieldEEEhi+0x21c)[0x7e0cef1bce4c]\n[henning-MS-7E26:2790173] [ 5] /home/henning/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libOpenFOAM.so(_ZNK4Foam22symGaussSeidelSmoother6smoothERNS_5FieldIdEERKS2_hi+0x3f)[0x75d5519bd14f]\n[henning-MS-7E26:2790174] [ 6] /home/henning/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libOpenFOAM.so(_ZNK4Foam22symGaussSeidelSmoother6smoothERNS_5FieldIdEERKS2_hi+0x3f)[0x7e0cef1bd14f]\n[henning-MS-7E26:2790173] [ 6] /home/henning/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libOpenFOAM.so(_ZNK4Foam12smoothSolver5solveERNS_5FieldIdEERKS2_h+0x4a4)[0x75d5519aff84]\n[henning-MS-7E26:2790174] [ 7] /home/henning/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libOpenFOAM.so(_ZNK4Foam12smoothSolver5solveERNS_5FieldIdEERKS2_h+0x4a4)[0x7e0cef1aff84]\n[henning-MS-7E26:2790173] [ 7] /home/henning/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libfiniteVolume.so(_ZN4Foam8fvMatrixIdE15solveSegregatedERKNS_10dictionaryE+0x521)[0x75d5500a82c1]\n[henning-MS-7E26:2790174] [ 8] /home/henning/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libfiniteVolume.so(_ZN4Foam8fvMatrixIdE15solveSegregatedERKNS_10dictionaryE+0x521)[0x7e0ced8a82c1]\n[henning-MS-7E26:2790173] [ 8] /home/henning/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libfiniteVolume.so(_ZN4Foam8fvMatrixIdE24solveSegregatedOrCoupledERKNS_10dictionaryE+0x4b3)[0x75d54f453693]\n[henning-MS-7E26:2790174] [ 9] /home/henning/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libfiniteVolume.so(_ZN4Foam8fvMatrixIdE24solveSegregatedOrCoupledERKNS_10dictionaryE+0x4b3)[0x7e0cecc53693]\n[henning-MS-7E26:2790173] [ 9] /home/henning/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libfiniteVolume.so(_ZNK4Foam6fvMesh5solveERNS_8fvMatrixIdEERKNS_10dictionaryE+0x27)[0x75d54f3e0b67]\n[henning-MS-7E26:2790174] [10] /home/henning/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libfiniteVolume.so(_ZNK4Foam6fvMesh5solveERNS_8fvMatrixIdEERKNS_10dictionaryE+0x27)[0x7e0cecbe0b67]\n[henning-MS-7E26:2790173] [10] /home/henning/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libfiniteVolume.so(_ZN4Foam5solveIdEENS_17SolverPerformanceIT_EERKNS_3tmpINS_8fvMatrixIS2_EEEE+0x1aa)[0x75d54f57f7ea]\n[henning-MS-7E26:2790174] [11] /home/henning/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libincompressibleTurbulenceModels.so(_ZN4Foam9RASModels8kEpsilonINS_29IncompressibleTurbulenceModelINS_14transportModelEEEE7correctEv+0x7c8)[0x75d4b5410cb8]\n[henning-MS-7E26:2790174] [12] /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/lib/python3.12/site-packages/pybFoam/multiphase.cpython-312-x86_64-linux-gnu.so(+0xf074)[0x75d4b7e59074]\n[henning-MS-7E26:2790174] [13] /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/lib/python3.12/site-packages/neofoam/../pybFoam/libnanobind.so(+0x112fd)[0x75d5548802fd]\n[henning-MS-7E26:2790174] [14] /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python(PyObject_Vectorcall+0x2e)[0x5760aefd655e]\n[henning-MS-7E26:2790174] [15] /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python(+0x1127e4)[0x5760aeecf7e4]\n[henning-MS-7E26:2790174] [16] /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python(_PyObject_FastCallDictTstate+0x1ee)[0x5760aefc47ae]\n[henning-MS-7E26:2790174] [17] /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python(_PyObject_Call_Prepend+0x69)[0x5760aefefa99]\n[henning-MS-7E26:2790174] [18] /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python(+0x3041cb)[0x5760af0c11cb]\n[henning-MS-7E26:2790174] [19] /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python(_PyObject_MakeTpCall+0x2c3)[0x5760aefc1c23]\n[henning-MS-7E26:2790174] [20] /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python(+0x1127e4)[0x5760aeecf7e4]\n[henning-MS-7E26:2790174] [21] /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python(+0x251992)[0x5760af00e992]\n[henning-MS-7E26:2790174] [22] /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python(+0x113479)[0x5760aeed0479]\n[henning-MS-7E26:2790174] [23] /home/henning/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libfiniteVolume.so(_ZN4Foam5solveIdEENS_17SolverPerformanceIT_EERKNS_3tmpINS_8fvMatrixIS2_EEEE+0x1aa)[0x7e0cecd7f7ea]\n[henning-MS-7E26:2790173] [11] /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python(+0x251f2c)[0x5760af00ef2c]\n[henning-MS-7E26:2790174] [24] /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python(+0x251a40)[0x5760af00ea40]\n[henning-MS-7E26:2790174] [25] /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python(+0x113479)[0x5760aeed0479]\n[henning-MS-7E26:2790174] [26] /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python(_PyObject_FastCallDictTstate+0x1ee)[0x5760aefc47ae]\n[henning-MS-7E26:2790174] [27] /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python(_PyObject_Call_Prepend+0x69)[0x5760aefefa99]\n[henning-MS-7E26:2790174] [28] /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python(+0x3041cb)[0x5760af0c11cb]\n[henning-MS-7E26:2790174] [29] /home/henning/OpenFOAM/OpenFOAM-v2406/platforms/linux64GccDPInt32Opt/lib/libincompressibleTurbulenceModels.so(_ZN4Foam9RASModels8kEpsilonINS_29IncompressibleTurbulenceModelINS_14transportModelEEEE7correctEv+0x7c8)[0x7e0c52c10cb8]\n[henning-MS-7E26:2790173] [12] /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/lib/python3.12/site-packages/pybFoam/multiphase.cpython-312-x86_64-linux-gnu.so(+0xf074)[0x7e0c5517e074]\n/home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python(_PyObject_Call+0xb5)[0x5760aeff2515]\n[henning-MS-7E26:2790174] *** End of error message ***\n[henning-MS-7E26:2790173] [13] /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/lib/python3.12/site-packages/neofoam/../pybFoam/libnanobind.so(+0x112fd)[0x7e0cf23a12fd]\n[henning-MS-7E26:2790173] [14] /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python(PyObject_Vectorcall+0x2e)[0x60a57035b55e]\n[henning-MS-7E26:2790173] [15] /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python(+0x1127e4)[0x60a5702547e4]\n[henning-MS-7E26:2790173] [16] /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python(_PyObject_FastCallDictTstate+0x1ee)[0x60a5703497ae]\n[henning-MS-7E26:2790173] [17] /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python(_PyObject_Call_Prepend+0x69)[0x60a570374a99]\n[henning-MS-7E26:2790173] [18] /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python(+0x3041cb)[0x60a5704461cb]\n[henning-MS-7E26:2790173] [19] /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python(_PyObject_MakeTpCall+0x2c3)[0x60a570346c23]\n[henning-MS-7E26:2790173] [20] /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python(+0x1127e4)[0x60a5702547e4]\n[henning-MS-7E26:2790173] [21] /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python(+0x251992)[0x60a570393992]\n[henning-MS-7E26:2790173] [22] /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python(+0x113479)[0x60a570255479]\n[henning-MS-7E26:2790173] [23] /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python(+0x251f2c)[0x60a570393f2c]\n[henning-MS-7E26:2790173] [24] /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python(+0x251a40)[0x60a570393a40]\n[henning-MS-7E26:2790173] [25] /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python(+0x113479)[0x60a570255479]\n[henning-MS-7E26:2790173] [26] /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python(_PyObject_FastCallDictTstate+0x1ee)[0x60a5703497ae]\n[henning-MS-7E26:2790173] [27] /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python(_PyObject_Call_Prepend+0x69)[0x60a570374a99]\n[henning-MS-7E26:2790173] [28] /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python(+0x3041cb)[0x60a5704461cb]\n[henning-MS-7E26:2790173] [29] /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/python(_PyObject_Call+0xb5)[0x60a570377515]\n[henning-MS-7E26:2790173] *** End of error message ***\n--------------------------------------------------------------------------\nPrimary job  terminated normally, but 1 process returned\na non-zero exit code. Per user-direction, the job has been aborted.\n--------------------------------------------------------------------------\n--------------------------------------------------------------------------\nmpirun noticed that process rank 3 with PID 0 on node henning-MS-7E26 exited on signal 8 (Floating point exception).\n--------------------------------------------------------------------------",
+        "seconds": 325.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__RAS__motorBike",
+    "name": "interFoam/RAS/motorBike",
+    "native_solver": "interFoam",
+    "tier": "D",
+    "predicted_blocker": "dynamic mesh (dynamicRefineFvMesh)",
+    "turbulence": "kOmegaSST",
+    "parallel": true,
+    "native_seconds": 8.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "MESH_DIFFERS",
+        "detail": "meshing is not reproducible; solver not comparable",
+        "worst_abs": 0.0,
+        "worst_rel": 0.0,
+        "fields": [],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 13.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__RAS__waterChannel",
+    "name": "interFoam/RAS/waterChannel",
+    "native_solver": "interFoam",
+    "tier": "A",
+    "predicted_blocker": "",
+    "turbulence": "kOmegaSST",
+    "parallel": false,
+    "native_seconds": 2.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "alpha.water, U, p_rgh",
+        "worst_abs": 20124.000958003144,
+        "worst_rel": 0.7902313058441219,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": 0.6977494833258336,
+            "rel": 0.6977494420719127
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 14.660209576682929,
+            "rel": 0.7902313058441219
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 20124.000958003144,
+            "rel": 0.696934733041246
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 5.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__RAS__weirOverflow",
+    "name": "interFoam/RAS/weirOverflow",
+    "native_solver": "interFoam",
+    "tier": "B",
+    "predicted_blocker": "nAlphaSubCycles 2 > 1 (mules.py raises NotImplementedError)",
+    "turbulence": "kEpsilon",
+    "parallel": false,
+    "native_seconds": 0.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "MATCHED_TO_ROUNDOFF",
+        "detail": "U, p_rgh",
+        "worst_abs": 1.3146200217306614e-07,
+        "worst_rel": 8.6375789876411e-13,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": true,
+            "abs": 5.92081939032596e-13,
+            "rel": 5.920819375550329e-13
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 1.0904936675881771e-11,
+            "rel": 8.6375789876411e-13
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 1.3146200217306614e-07,
+            "rel": 4.402323767895332e-13
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 3.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__laminar__capillaryRise",
+    "name": "interFoam/laminar/capillaryRise",
+    "native_solver": "interFoam",
+    "tier": "B",
+    "predicted_blocker": "nAlphaSubCycles 2 > 1 (mules.py raises NotImplementedError)",
+    "turbulence": "laminar",
+    "parallel": false,
+    "native_seconds": 1.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "alpha.water, U, p_rgh",
+        "worst_abs": 1.9396543256926861,
+        "worst_rel": 0.05006622866584751,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": 0.005277891387909517,
+            "rel": 0.005277891377403267
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 0.040031762339414995,
+            "rel": 0.05006622866584751
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 1.9396543256926861,
+            "rel": 0.016018650485120522
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 3.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__laminar__damBreakPermeable",
+    "name": "interFoam/laminar/damBreakPermeable",
+    "native_solver": "interFoam",
+    "tier": "A",
+    "predicted_blocker": "",
+    "turbulence": "kEpsilon",
+    "parallel": true,
+    "native_seconds": 1.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "MATCHED",
+        "detail": "",
+        "worst_abs": 0.0,
+        "worst_rel": 0.0,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": true,
+            "abs": 2.220446049250313e-15,
+            "rel": 2.2204451372368894e-15
+          },
+          {
+            "name": "U",
+            "matched": true,
+            "abs": 3.469446951953614e-15,
+            "rel": 1.9700135797782693e-15
+          },
+          {
+            "name": "p_rgh",
+            "matched": true,
+            "abs": 6.821210263296962e-12,
+            "rel": 2.4931775133221276e-15
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 4.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__laminar__damBreakWithObstacle",
+    "name": "interFoam/laminar/damBreakWithObstacle",
+    "native_solver": "interFoam",
+    "tier": "D",
+    "predicted_blocker": "dynamic mesh (dynamicRefineFvMesh)",
+    "turbulence": "laminar",
+    "parallel": true,
+    "native_seconds": 4.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "MESH_DIFFERS",
+        "detail": "internal field length differs (mesh changed): alpha.water, U, p_rgh",
+        "worst_abs": Infinity,
+        "worst_rel": Infinity,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": Infinity,
+            "rel": Infinity
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": Infinity,
+            "rel": Infinity
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": Infinity,
+            "rel": Infinity
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 3.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__laminar__damBreak__damBreak",
+    "name": "interFoam/laminar/damBreak/damBreak",
+    "native_solver": "interFoam",
+    "tier": "A",
+    "predicted_blocker": "",
+    "turbulence": "laminar",
+    "parallel": true,
+    "native_seconds": 0.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "MATCHED_TO_ROUNDOFF",
+        "detail": "U, p_rgh",
+        "worst_abs": 1.5916157281026244e-11,
+        "worst_rel": 1.827170558028887e-13,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": true,
+            "abs": 5.551115123125783e-15,
+            "rel": 5.551113978671389e-15
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 1.6714407635731732e-13,
+            "rel": 1.827170558028887e-13
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 1.5916157281026244e-11,
+            "rel": 5.910217741812433e-15
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 2.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__laminar__mixerVessel2D",
+    "name": "interFoam/laminar/mixerVessel2D",
+    "native_solver": "interFoam",
+    "tier": "D",
+    "predicted_blocker": "MRF zones",
+    "turbulence": "laminar",
+    "parallel": false,
+    "native_seconds": 1.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "alpha.water, U, p_rgh",
+        "worst_abs": 83.84714471511023,
+        "worst_rel": 1.0,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": 1.0000000003666984,
+            "rel": 0.99999999649543
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 0.4354309437623056,
+            "rel": 1.0
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 83.84714471511023,
+            "rel": 1.0
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 4.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__laminar__oscillatingBox",
+    "name": "interFoam/laminar/oscillatingBox",
+    "native_solver": "interFoam",
+    "tier": "D",
+    "predicted_blocker": "dynamic mesh (dynamicRefineFvMesh)",
+    "turbulence": "laminar",
+    "parallel": true,
+    "native_seconds": 1.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "MESH_DIFFERS",
+        "detail": "internal field length differs (mesh changed): alpha.water, U, p_rgh",
+        "worst_abs": Infinity,
+        "worst_rel": Infinity,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": Infinity,
+            "rel": Infinity
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": Infinity,
+            "rel": Infinity
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": Infinity,
+            "rel": Infinity
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 4.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__laminar__sloshingCylinder",
+    "name": "interFoam/laminar/sloshingCylinder",
+    "native_solver": "interFoam",
+    "tier": "D",
+    "predicted_blocker": "dynamic mesh (dynamicMotionSolverFvMesh)",
+    "turbulence": "laminar",
+    "parallel": true,
+    "native_seconds": 25.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "alpha.water, U, p_rgh",
+        "worst_abs": 32243.965264447193,
+        "worst_rel": 0.9999999978484011,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": 1.0000000990101032,
+            "rel": 0.9999990892079709
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 21.332454483139546,
+            "rel": 0.9999999978484011
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 32243.965264447193,
+            "rel": 0.24382182733864202
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 6.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__laminar__sloshingTank2D",
+    "name": "interFoam/laminar/sloshingTank2D",
+    "native_solver": "interFoam",
+    "tier": "D",
+    "predicted_blocker": "dynamic mesh (dynamicMotionSolverFvMesh)",
+    "turbulence": "laminar",
+    "parallel": true,
+    "native_seconds": 0.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "alpha.water, U, p_rgh",
+        "worst_abs": 102653.6057444721,
+        "worst_rel": 0.9997325601380701,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": 0.9922308223158247,
+            "rel": 0.9922308221313232
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 8.310495356751181,
+            "rel": 0.9997325601380701
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 102653.6057444721,
+            "rel": 0.5143018528846661
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 3.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__laminar__sloshingTank2D3DoF",
+    "name": "interFoam/laminar/sloshingTank2D3DoF",
+    "native_solver": "interFoam",
+    "tier": "D",
+    "predicted_blocker": "dynamic mesh (dynamicMotionSolverFvMesh)",
+    "turbulence": "laminar",
+    "parallel": true,
+    "native_seconds": 0.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "alpha.water, U, p_rgh",
+        "worst_abs": 84722.02165050761,
+        "worst_rel": 0.9996911942731617,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": 0.9760260870601606,
+            "rel": 0.9760260868486107
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 7.196970700366276,
+            "rel": 0.9996911942731617
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 84722.02165050761,
+            "rel": 0.4663604732436159
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 2.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__laminar__sloshingTank3D",
+    "name": "interFoam/laminar/sloshingTank3D",
+    "native_solver": "interFoam",
+    "tier": "D",
+    "predicted_blocker": "dynamic mesh (dynamicMotionSolverFvMesh)",
+    "turbulence": "laminar",
+    "parallel": true,
+    "native_seconds": 5.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "alpha.water, U, p_rgh",
+        "worst_abs": 53808.4277086208,
+        "worst_rel": 1.0003541241936948,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": 0.5283514171000376,
+            "rel": 0.5283514161209055
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 11.435414347487914,
+            "rel": 1.0003541241936948
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 53808.4277086208,
+            "rel": 0.36140446073689214
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 4.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__laminar__sloshingTank3D3DoF",
+    "name": "interFoam/laminar/sloshingTank3D3DoF",
+    "native_solver": "interFoam",
+    "tier": "D",
+    "predicted_blocker": "dynamic mesh (dynamicMotionSolverFvMesh)",
+    "turbulence": "laminar",
+    "parallel": true,
+    "native_seconds": 2.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "alpha.water, U, p_rgh",
+        "worst_abs": 84637.4649148881,
+        "worst_rel": 0.9996939185521855,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": 0.9757449362775144,
+            "rel": 0.975744935747107
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 7.20204245215231,
+            "rel": 0.9996939185521855
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 84637.4649148881,
+            "rel": 0.46611213635734305
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 4.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__laminar__sloshingTank3D6DoF",
+    "name": "interFoam/laminar/sloshingTank3D6DoF",
+    "native_solver": "interFoam",
+    "tier": "D",
+    "predicted_blocker": "dynamic mesh (dynamicMotionSolverFvMesh)",
+    "turbulence": "laminar",
+    "parallel": true,
+    "native_seconds": 2.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "alpha.water, U, p_rgh",
+        "worst_abs": 20878.817479796184,
+        "worst_rel": 1.0000231480610327,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": 0.9981270014235112,
+            "rel": 0.9981270007337489
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 10.586802537143848,
+            "rel": 1.0000231480610327
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 20878.817479796184,
+            "rel": 0.17712621585634075
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 4.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__laminar__testTubeMixer",
+    "name": "interFoam/laminar/testTubeMixer",
+    "native_solver": "interFoam",
+    "tier": "D",
+    "predicted_blocker": "dynamic mesh (dynamicMotionSolverFvMesh)",
+    "turbulence": "laminar",
+    "parallel": true,
+    "native_seconds": 0.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "alpha.water, U, p_rgh",
+        "worst_abs": 634.5490869207133,
+        "worst_rel": 0.9999999462417721,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": 0.7939494771640866,
+            "rel": 0.7939494771699721
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 4.402606436026086,
+            "rel": 0.9999999462417721
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 634.5490869207133,
+            "rel": 0.006316400767004452
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 2.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__laminar__vofToLagrangian__eulerianInjection",
+    "name": "interFoam/laminar/vofToLagrangian/eulerianInjection",
+    "native_solver": "interFoam",
+    "tier": "B",
+    "predicted_blocker": "nAlphaSubCycles 5 > 1 (mules.py raises NotImplementedError)",
+    "turbulence": "laminar",
+    "parallel": true,
+    "native_seconds": 50.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "alpha.water, U, p_rgh",
+        "worst_abs": 19159.973451067854,
+        "worst_rel": 0.5194968666089462,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": 0.4839452382215793,
+            "rel": 0.48394523819834173
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 12.97210692656411,
+            "rel": 0.5194968666089462
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 19159.973451067854,
+            "rel": 0.15737638936108944
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 57.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__laminar__waves__cnoidal",
+    "name": "interFoam/laminar/waves/cnoidal",
+    "native_solver": "interFoam",
+    "tier": "B",
+    "predicted_blocker": "nAlphaSubCycles 3 > 1 (mules.py raises NotImplementedError)",
+    "turbulence": "laminar",
+    "parallel": true,
+    "native_seconds": 3.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "alpha.water, U, p_rgh",
+        "worst_abs": 86.99167012460862,
+        "worst_rel": 0.060319585083721726,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": 0.02165144888627718,
+            "rel": 0.0216475631290541
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 0.00250892398915371,
+            "rel": 0.060319585083721726
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 86.99167012460862,
+            "rel": 0.022087354579321188
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 5.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__laminar__waves__irregularMultiDirection",
+    "name": "interFoam/laminar/waves/irregularMultiDirection",
+    "native_solver": "interFoam",
+    "tier": "B",
+    "predicted_blocker": "nAlphaSubCycles 3 > 1 (mules.py raises NotImplementedError)",
+    "turbulence": "laminar",
+    "parallel": true,
+    "native_seconds": 4.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "alpha.water, U, p_rgh",
+        "worst_abs": 61.47058375410427,
+        "worst_rel": 2.1329915242234256,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": 0.0008025564588797218,
+            "rel": 0.0008019471587504997
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 0.004145321375567714,
+            "rel": 2.1329915242234256
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 61.47058375410427,
+            "rel": 0.0006960777633723084
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 6.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__laminar__waves__mangroveInteraction",
+    "name": "interFoam/laminar/waves/mangroveInteraction",
+    "native_solver": "interFoam",
+    "tier": "D",
+    "predicted_blocker": "fvOptions sources",
+    "turbulence": "kEpsilon",
+    "parallel": true,
+    "native_seconds": 115.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "alpha.water, U, p_rgh",
+        "worst_abs": 180.16861558434357,
+        "worst_rel": 1.312055337717557,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": 0.09116859457507376,
+            "rel": 0.09113603466900036
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 0.006957634515254623,
+            "rel": 1.312055337717557
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 180.16861558434357,
+            "rel": 0.08951825265085188
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 125.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__laminar__waves__solitary",
+    "name": "interFoam/laminar/waves/solitary",
+    "native_solver": "interFoam",
+    "tier": "B",
+    "predicted_blocker": "nAlphaSubCycles 3 > 1 (mules.py raises NotImplementedError)",
+    "turbulence": "laminar",
+    "parallel": true,
+    "native_seconds": 2.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "alpha.water, U, p_rgh",
+        "worst_abs": 279.21088942540246,
+        "worst_rel": 0.3326210695252968,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": 0.039679428052075916,
+            "rel": 0.03964512552903013
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 0.08781312655601126,
+            "rel": 0.3326210695252968
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 279.21088942540246,
+            "rel": 0.03971431050706394
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 6.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__laminar__waves__solitaryGrimshaw",
+    "name": "interFoam/laminar/waves/solitaryGrimshaw",
+    "native_solver": "interFoam",
+    "tier": "B",
+    "predicted_blocker": "nAlphaSubCycles 3 > 1 (mules.py raises NotImplementedError)",
+    "turbulence": "laminar",
+    "parallel": true,
+    "native_seconds": 89.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "alpha.water, U, p_rgh",
+        "worst_abs": 6.683220157794608,
+        "worst_rel": 0.03132290064142877,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": 0.0037976197418456703,
+            "rel": 0.00379502868424082
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 0.01696123951430442,
+            "rel": 0.03132290064142877
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 6.683220157794608,
+            "rel": 0.0034062124287099122
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 98.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__laminar__waves__solitaryMcCowan",
+    "name": "interFoam/laminar/waves/solitaryMcCowan",
+    "native_solver": "interFoam",
+    "tier": "B",
+    "predicted_blocker": "nAlphaSubCycles 3 > 1 (mules.py raises NotImplementedError)",
+    "turbulence": "laminar",
+    "parallel": true,
+    "native_seconds": 99.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "alpha.water, U, p_rgh",
+        "worst_abs": 106.80455564451017,
+        "worst_rel": 0.30187794169301996,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": 0.05984791053063898,
+            "rel": 0.05980095740909622
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 0.12995588144583836,
+            "rel": 0.30187794169301996
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 106.80455564451017,
+            "rel": 0.05604054447998354
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 109.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__laminar__waves__stokesI",
+    "name": "interFoam/laminar/waves/stokesI",
+    "native_solver": "interFoam",
+    "tier": "B",
+    "predicted_blocker": "nAlphaSubCycles 3 > 1 (mules.py raises NotImplementedError)",
+    "turbulence": "laminar",
+    "parallel": true,
+    "native_seconds": 2.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "alpha.water, U, p_rgh",
+        "worst_abs": 39.21676639704219,
+        "worst_rel": 0.03751737784271897,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": 0.006668358009743969,
+            "rel": 0.006664720330512799
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 0.001298213035450333,
+            "rel": 0.03751737784271897
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 39.21676639704219,
+            "rel": 0.0066697767843557606
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 5.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__laminar__waves__stokesII",
+    "name": "interFoam/laminar/waves/stokesII",
+    "native_solver": "interFoam",
+    "tier": "B",
+    "predicted_blocker": "nAlphaSubCycles 3 > 1 (mules.py raises NotImplementedError)",
+    "turbulence": "laminar",
+    "parallel": true,
+    "native_seconds": 1.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "alpha.water, U, p_rgh",
+        "worst_abs": 42.1588114506967,
+        "worst_rel": 0.01979738464494265,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": 0.010752957919612616,
+            "rel": 0.010749063108286784
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 0.0023750683126049846,
+            "rel": 0.01979738464494265
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 42.1588114506967,
+            "rel": 0.010751279191560223
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 5.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__laminar__waves__stokesV",
+    "name": "interFoam/laminar/waves/stokesV",
+    "native_solver": "interFoam",
+    "tier": "B",
+    "predicted_blocker": "nAlphaSubCycles 3 > 1 (mules.py raises NotImplementedError)",
+    "turbulence": "laminar",
+    "parallel": true,
+    "native_seconds": 2.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "alpha.water, U, p_rgh",
+        "worst_abs": 66.09833371452714,
+        "worst_rel": 0.10560084452968507,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": 0.01685934344415596,
+            "rel": 0.016854749339771713
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 0.001417001129777066,
+            "rel": 0.10560084452968507
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 66.09833371452714,
+            "rel": 0.016861469826010646
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 5.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__laminar__waves__streamFunction",
+    "name": "interFoam/laminar/waves/streamFunction",
+    "native_solver": "interFoam",
+    "tier": "B",
+    "predicted_blocker": "nAlphaSubCycles 3 > 1 (mules.py raises NotImplementedError)",
+    "turbulence": "laminar",
+    "parallel": true,
+    "native_seconds": 4.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "alpha.water, U, p_rgh",
+        "worst_abs": 33.82401122766396,
+        "worst_rel": 0.03983876591907974,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": 0.008627520852562909,
+            "rel": 0.008626738385306764
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 0.00202124388602387,
+            "rel": 0.03983876591907974
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 33.82401122766396,
+            "rel": 0.008627879254103299
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 8.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__laminar__waves__waveMakerFlap",
+    "name": "interFoam/laminar/waves/waveMakerFlap",
+    "native_solver": "interFoam",
+    "tier": "D",
+    "predicted_blocker": "dynamic mesh (dynamicMotionSolverFvMesh)",
+    "turbulence": "laminar",
+    "parallel": true,
+    "native_seconds": 3.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "alpha.water, U, p_rgh",
+        "worst_abs": 1277.6401983312596,
+        "worst_rel": 16.000946302109295,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": 0.5213576342729384,
+            "rel": 0.5213576342728978
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 0.006341439615950612,
+            "rel": 16.000946302109295
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 1277.6401983312596,
+            "rel": 0.5214328900792766
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 4.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__laminar__waves__waveMakerMultiPaddleFlap",
+    "name": "interFoam/laminar/waves/waveMakerMultiPaddleFlap",
+    "native_solver": "interFoam",
+    "tier": "D",
+    "predicted_blocker": "dynamic mesh (dynamicMotionSolverFvMesh)",
+    "turbulence": "laminar",
+    "parallel": true,
+    "native_seconds": 23.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "alpha.water, U, p_rgh",
+        "worst_abs": 905.2087748756528,
+        "worst_rel": 1.0001285842479235,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": 0.36936632896701826,
+            "rel": 0.36936632808821107
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 0.1655516058561944,
+            "rel": 1.0001285842479235
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 905.2087748756528,
+            "rel": 0.36945896171623677
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 13.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__laminar__waves__waveMakerMultiPaddlePiston",
+    "name": "interFoam/laminar/waves/waveMakerMultiPaddlePiston",
+    "native_solver": "interFoam",
+    "tier": "D",
+    "predicted_blocker": "dynamic mesh (dynamicMotionSolverFvMesh)",
+    "turbulence": "laminar",
+    "parallel": true,
+    "native_seconds": 25.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "alpha.water, U, p_rgh",
+        "worst_abs": 638.9384247419189,
+        "worst_rel": 0.9941399251569614,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": 0.26079812262478597,
+            "rel": 0.2607981223779937
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 0.055351491566913526,
+            "rel": 0.9941399251569614
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 638.9384247419189,
+            "rel": 0.26078173876867117
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 17.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__laminar__waves__waveMakerPiston",
+    "name": "interFoam/laminar/waves/waveMakerPiston",
+    "native_solver": "interFoam",
+    "tier": "D",
+    "predicted_blocker": "dynamic mesh (dynamicMotionSolverFvMesh)",
+    "turbulence": "laminar",
+    "parallel": true,
+    "native_seconds": 3.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "alpha.water, U, p_rgh",
+        "worst_abs": 891.4203321508392,
+        "worst_rel": 4.685905945547693,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": 0.3637766474194577,
+            "rel": 0.3637766474194468
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 0.008132749439270177,
+            "rel": 4.685905945547693
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 891.4203321508392,
+            "rel": 0.3638094039812189
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 5.0
+      }
+    ]
+  },
+  {
+    "id": "interFoam__laminar__waves__waveMakerSolitary",
+    "name": "interFoam/laminar/waves/waveMakerSolitary",
+    "native_solver": "interFoam",
+    "tier": "D",
+    "predicted_blocker": "dynamic mesh (dynamicMotionSolverFvMesh)",
+    "turbulence": "laminar",
+    "parallel": true,
+    "native_seconds": 2.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "alpha.water, U, p_rgh",
+        "worst_abs": 217.99610835866739,
+        "worst_rel": 18.301189023982307,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": 0.10059622710591849,
+            "rel": 0.10059622687017998
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 0.12547279708992198,
+            "rel": 18.301189023982307
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 217.99610835866739,
+            "rel": 0.10738468444651375
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 5.0
+      }
+    ]
+  },
+  {
+    "id": "interIsoFoam__damBreak",
+    "name": "interIsoFoam/damBreak",
+    "native_solver": "interIsoFoam",
+    "tier": "A",
+    "predicted_blocker": "",
+    "turbulence": "laminar",
+    "parallel": true,
+    "native_seconds": 1.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "MATCHED",
+        "detail": "",
+        "worst_abs": 0.0,
+        "worst_rel": 0.0,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": true,
+            "abs": 0.0,
+            "rel": 0.0
+          },
+          {
+            "name": "U",
+            "matched": true,
+            "abs": 0.0,
+            "rel": 0.0
+          },
+          {
+            "name": "p_rgh",
+            "matched": true,
+            "abs": 0.0,
+            "rel": 0.0
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 3.0
+      }
+    ]
+  },
+  {
+    "id": "interIsoFoam__damBreakWithObstacle",
+    "name": "interIsoFoam/damBreakWithObstacle",
+    "native_solver": "interIsoFoam",
+    "tier": "D",
+    "predicted_blocker": "dynamic mesh (dynamicRefineFvMesh)",
+    "turbulence": "laminar",
+    "parallel": true,
+    "native_seconds": 61.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "NATIVE_FAILED",
+        "detail": "Restore 0/ from 0.orig/ Running blockMesh on /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/verification/foam_tutorials/incompressibleVoF/cases/interIsoFoam__damBreakWithObstacle/interIsoFoam Running topoSet on /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/verification/foam_tutorials/incompressibleVoF/cases/interIsoFoam__damBreakWithObstacle/interIsoFoam Running subsetMesh on /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/verification/foam_tutorials/incompressibleVoF/cases/interIsoFoam__damBreakWithObstacle/interIsoFoam",
+        "worst_abs": 0.0,
+        "worst_rel": 0.0,
+        "fields": [],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 62.0
+      }
+    ]
+  },
+  {
+    "id": "interIsoFoam__discInConstantFlow",
+    "name": "interIsoFoam/discInConstantFlow",
+    "native_solver": "interIsoFoam",
+    "tier": "C",
+    "predicted_blocker": "frozenFlow (no frozen-flow path in neofoam)",
+    "turbulence": "laminar",
+    "parallel": false,
+    "native_seconds": 0.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "MATCHED",
+        "detail": "",
+        "worst_abs": 0.0,
+        "worst_rel": 0.0,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": true,
+            "abs": 0.0,
+            "rel": 0.0
+          },
+          {
+            "name": "U",
+            "matched": true,
+            "abs": 0.0,
+            "rel": 0.0
+          },
+          {
+            "name": "p_rgh",
+            "matched": true,
+            "abs": 1.1079190950086248e-17,
+            "rel": 0.0
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 3.0
+      }
+    ]
+  },
+  {
+    "id": "interIsoFoam__discInConstantFlowCyclicBCs",
+    "name": "interIsoFoam/discInConstantFlowCyclicBCs",
+    "native_solver": "interIsoFoam",
+    "tier": "C",
+    "predicted_blocker": "frozenFlow (no frozen-flow path in neofoam)",
+    "turbulence": "laminar",
+    "parallel": true,
+    "native_seconds": 0.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "p_rgh",
+        "worst_abs": 0.09810000000015862,
+        "worst_rel": 1.0,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": true,
+            "abs": 0.0,
+            "rel": 0.0
+          },
+          {
+            "name": "U",
+            "matched": true,
+            "abs": 0.0,
+            "rel": 0.0
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 0.09810000000015862,
+            "rel": 1.0
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 3.0
+      }
+    ]
+  },
+  {
+    "id": "interIsoFoam__discInConstantPorousFlow",
+    "name": "interIsoFoam/discInConstantPorousFlow",
+    "native_solver": "interIsoFoam",
+    "tier": "D",
+    "predicted_blocker": "porosity zones",
+    "turbulence": "laminar",
+    "parallel": true,
+    "native_seconds": 2.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "SOLVER_FAILED",
+        "detail": "--> FOAM FATAL ERROR: (openfoam-2406) [2] Porosity enabled in constant/porosityProperties but no porosity field is found in object registry. [2] [2] From Foam::isoAdvection::isoAdvection(Foam::volScalarField&, const Foam::surfaceScalarField&, const Foam::volVectorField&) [3] [3] [3] --> FOAM",
+        "worst_abs": 0.0,
+        "worst_rel": 0.0,
+        "fields": [],
+        "log_path": "cases/interIsoFoam__discInConstantPorousFlow/incompressiblevof/log.neofoam solver incompressiblevof",
+        "log_tail": "/*---------------------------------------------------------------------------*\\\n| =========                 |                                                 |\n| \\\\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |\n|  \\\\    /   O peration     | Version:  2406                                  |\n|   \\\\  /    A nd           | Website:  www.openfoam.com                      |\n|    \\\\/     M anipulation  |                                                 |\n\\*---------------------------------------------------------------------------*/\nBuild  : _630d60de3b-20240620 OPENFOAM=2406 version=v2406\nArch   : \"LSB;label=32;scalar=64\"\nExec   : /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/.venv/bin/neofoam -parallel\nDate   : Jul 27 2026\nTime   : 14:49:37\nHost   : henning-MS-7E26\nPID    : 3009762\nI/O    : uncollated\nCase   : /home/henning/libsAndApps/NeoFOAM/.claude/worktrees/nf-baseline/verification/foam_tutorials/incompressibleVoF/cases/interIsoFoam__discInConstantPorousFlow/incompressiblevof\nnProcs : 4\nHosts  :\n(\n    (henning-MS-7E26 4)\n)\nPstream initialized with:\n    floatTransfer      : false\n    maxCommsSize       : 0\n    nProcsSimpleSum    : 0\n    nonBlockingExchange: 0 (tuning: 0)\n    exchange algorithm : 0\n    commsType          : nonBlocking\n    polling iterations : 0\ntrapFpe: Floating point exception trapping enabled (FOAM_SIGFPE).\nfileModificationChecking : Monitoring run-time modified files using timeStampMaster (fileModificationSkew 5, maxFileModificationPolls 20)\nallowSystemOperations : Allowing user-supplied system call operations\n\n// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //\nSelecting incompressible transport model Newtonian\nSelecting incompressible transport model Newtonian\nSelecting reconstructionScheme: plicRDF\n[2] \n[2] \n[2] --> FOAM FATAL ERROR: (openfoam-2406)\n[2] Porosity enabled in constant/porosityProperties but no porosity field is found in object registry.\n[2] \n[2]     From Foam::isoAdvection::isoAdvection(Foam::volScalarField&, const Foam::surfaceScalarField&, const Foam::volVectorField&)\n[3] \n[3] \n[3] --> FOAM FATAL ERROR: (openfoam-2406)\n[3] Porosity enabled in constant/porosityProperties but no porosity field is found in object registry.\n[3] \n[3]     From Foam::isoAdvection::isoAdvection(Foam::volScalarField&, const Foam::surfaceScalarField&, const Foam::volVectorField&)\n[3]     in file advectionSchemes/isoAdvection/isoAdvection.C at line 176[0] \n[0] \n[0] --> FOAM FATAL ERROR: (openfoam-2406)\n[0] Porosity enabled in constant/porosityProperties but no porosity field is found in object registry.\n[0] \n[0]     From Foam::isoAdvection::isoAdvection(Foam::volScalarField&, const Foam::surfaceScalarField&, const Foam::volVectorField&)\n[0]     in file advectionSchemes/isoAdvection/isoAdvection.C at line 176.\n[0] \nFOAM parallel run exiting\n[1] \n[1] \n[1] --> FOAM FATAL ERROR: (openfoam-2406)\n[1] Porosity enabled in constant/porosityProperties but no porosity field is found in object registry.\n[1] \n[1]     From Foam::isoAdvection::isoAdvection(Foam::volScalarField&, const Foam::surfaceScalarField&, const Foam::volVectorField&)\n[1] [2]     in file advectionSchemes/isoAdvection/isoAdvection.C at line 176.\n[2] \nFOAM parallel run exiting\n[2] \n.\n[3] \nFOAM parallel run exiting\n[3] \n[0] \n    in file advectionSchemes/isoAdvection/isoAdvection.C at line 176.\n[1] \nFOAM parallel run exiting\n[1] \n--------------------------------------------------------------------------\nMPI_ABORT was invoked on rank 3 in communicator MPI_COMM_WORLD\nwith errorcode 1.\n\nNOTE: invoking MPI_ABORT causes Open MPI to kill all MPI processes.\nYou may or may not see output from other processes, depending on\nexactly when Open MPI kills them.\n--------------------------------------------------------------------------\n[henning-MS-7E26:3009715] 3 more processes have sent help message help-mpi-api.txt / mpi-abort\n[henning-MS-7E26:3009715] Set MCA parameter \"orte_base_help_aggregate\" to 0 to see all help / error messages",
+        "seconds": 7.0
+      }
+    ]
+  },
+  {
+    "id": "interIsoFoam__discInReversedVortexFlow",
+    "name": "interIsoFoam/discInReversedVortexFlow",
+    "native_solver": "interIsoFoam",
+    "tier": "C",
+    "predicted_blocker": "frozenFlow (no frozen-flow path in neofoam)",
+    "turbulence": "laminar",
+    "parallel": true,
+    "native_seconds": 1.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "MATCHED",
+        "detail": "",
+        "worst_abs": 0.0,
+        "worst_rel": 0.0,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": true,
+            "abs": 0.0,
+            "rel": 0.0
+          },
+          {
+            "name": "U",
+            "matched": true,
+            "abs": 0.0,
+            "rel": 0.0
+          },
+          {
+            "name": "p_rgh",
+            "matched": true,
+            "abs": 2.7048806030484067e-18,
+            "rel": 0.0
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 3.0
+      }
+    ]
+  },
+  {
+    "id": "interIsoFoam__iobasin",
+    "name": "interIsoFoam/iobasin",
+    "native_solver": "interIsoFoam",
+    "tier": "A",
+    "predicted_blocker": "",
+    "turbulence": "laminar",
+    "parallel": true,
+    "native_seconds": 3.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "alpha.water, U, p_rgh",
+        "worst_abs": 3118.4039239035974,
+        "worst_rel": 0.4172923087116827,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": 0.41729274628865726,
+            "rel": 0.4172923087116827
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 2.0327421388377043,
+            "rel": 0.39702172636631394
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 3118.4039239035974,
+            "rel": 0.35996235657992554
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 6.0
+      }
+    ]
+  },
+  {
+    "id": "interIsoFoam__notchedDiscInSolidBodyRotation",
+    "name": "interIsoFoam/notchedDiscInSolidBodyRotation",
+    "native_solver": "interIsoFoam",
+    "tier": "C",
+    "predicted_blocker": "frozenFlow (no frozen-flow path in neofoam)",
+    "turbulence": "laminar",
+    "parallel": false,
+    "native_seconds": 0.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "alpha.water",
+        "worst_abs": 0.19742197920311644,
+        "worst_rel": 0.19742197920311627,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": 0.19742197920311644,
+            "rel": 0.19742197920311627
+          },
+          {
+            "name": "U",
+            "matched": true,
+            "abs": 0.0,
+            "rel": 0.0
+          },
+          {
+            "name": "p_rgh",
+            "matched": true,
+            "abs": 2.7048806030484067e-18,
+            "rel": 0.0
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 6.0
+      }
+    ]
+  },
+  {
+    "id": "interIsoFoam__sloshingTank2D",
+    "name": "interIsoFoam/sloshingTank2D",
+    "native_solver": "interIsoFoam",
+    "tier": "D",
+    "predicted_blocker": "dynamic mesh (dynamicMotionSolverFvMesh)",
+    "turbulence": "laminar",
+    "parallel": true,
+    "native_seconds": 1.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "alpha.water, U, p_rgh",
+        "worst_abs": 102574.38503593806,
+        "worst_rel": 0.9999999999778999,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": 0.9999999999778999,
+            "rel": 0.9999999999778999
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 8.304341267694976,
+            "rel": 0.9997323619997334
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 102574.38503593806,
+            "rel": 0.5141090020826988
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 2.0
+      }
+    ]
+  },
+  {
+    "id": "interIsoFoam__sphereInReversedVortexFlow",
+    "name": "interIsoFoam/sphereInReversedVortexFlow",
+    "native_solver": "interIsoFoam",
+    "tier": "C",
+    "predicted_blocker": "frozenFlow (no frozen-flow path in neofoam)",
+    "turbulence": "laminar",
+    "parallel": true,
+    "native_seconds": 3.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "MATCHED",
+        "detail": "",
+        "worst_abs": 0.0,
+        "worst_rel": 0.0,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": true,
+            "abs": 0.0,
+            "rel": 0.0
+          },
+          {
+            "name": "U",
+            "matched": true,
+            "abs": 0.0,
+            "rel": 0.0
+          },
+          {
+            "name": "p_rgh",
+            "matched": true,
+            "abs": 0.0,
+            "rel": 0.0
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 7.0
+      }
+    ]
+  },
+  {
+    "id": "interIsoFoam__standingWave",
+    "name": "interIsoFoam/standingWave",
+    "native_solver": "interIsoFoam",
+    "tier": "A",
+    "predicted_blocker": "",
+    "turbulence": "laminar",
+    "parallel": true,
+    "native_seconds": 1.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "FIELDS_DIFFER",
+        "detail": "alpha.water, U, p_rgh",
+        "worst_abs": 0.4038208952074456,
+        "worst_rel": 0.0031879934046924615,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": false,
+            "abs": 5.931720202634327e-06,
+            "rel": 5.931720202634327e-06
+          },
+          {
+            "name": "U",
+            "matched": false,
+            "abs": 0.002079745096889459,
+            "rel": 0.0031879934046924615
+          },
+          {
+            "name": "p_rgh",
+            "matched": false,
+            "abs": 0.4038208952074456,
+            "rel": 8.835387139344755e-05
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 3.0
+      }
+    ]
+  },
+  {
+    "id": "interIsoFoam__waveExampleStreamFunction",
+    "name": "interIsoFoam/waveExampleStreamFunction",
+    "native_solver": "interIsoFoam",
+    "tier": "A",
+    "predicted_blocker": "",
+    "turbulence": "laminar",
+    "parallel": true,
+    "native_seconds": 4.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "MATCHED",
+        "detail": "",
+        "worst_abs": 0.0,
+        "worst_rel": 0.0,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": true,
+            "abs": 0.0,
+            "rel": 0.0
+          },
+          {
+            "name": "U",
+            "matched": true,
+            "abs": 0.0,
+            "rel": 0.0
+          },
+          {
+            "name": "p_rgh",
+            "matched": true,
+            "abs": 0.0,
+            "rel": 0.0
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 6.0
+      }
+    ]
+  },
+  {
+    "id": "interIsoFoam__weirOverflow",
+    "name": "interIsoFoam/weirOverflow",
+    "native_solver": "interIsoFoam",
+    "tier": "A",
+    "predicted_blocker": "",
+    "turbulence": "kEpsilon",
+    "parallel": false,
+    "native_seconds": 1.0,
+    "study_config": "config.yaml",
+    "neo_patch": {},
+    "candidates": [
+      {
+        "label": "incompressiblevof",
+        "app": "neofoam solver incompressiblevof",
+        "outcome": "MATCHED",
+        "detail": "",
+        "worst_abs": 0.0,
+        "worst_rel": 0.0,
+        "fields": [
+          {
+            "name": "alpha.water",
+            "matched": true,
+            "abs": 0.0,
+            "rel": 0.0
+          },
+          {
+            "name": "U",
+            "matched": true,
+            "abs": 0.0,
+            "rel": 0.0
+          },
+          {
+            "name": "p_rgh",
+            "matched": true,
+            "abs": 0.0,
+            "rel": 0.0
+          }
+        ],
+        "log_path": "",
+        "log_tail": "",
+        "seconds": 3.0
+      }
+    ]
+  }
+]
