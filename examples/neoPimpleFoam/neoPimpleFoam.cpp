@@ -92,6 +92,9 @@ int main(int argc, char* argv[])
         );
         NeoN::fill(localGradU.internalVector(), NeoN::zero<NeoN::Tensor>());
         gradOp->gradTensor(U, localGradU, dsl::Coeff {});
+        // Exchange the neighbour-cell gradient into the processor tail so the explicit
+        // viscous-stress term sees correct proc-boundary gradients in parallel runs.
+        localGradU.correctBoundaryConditions();
 
         // Hoist the surface interpolation once to avoid re-constructing it per inner corrector.
         auto surfInterpol = fvcc::SurfaceInterpolation<NeoN::scalar>(
@@ -155,6 +158,8 @@ int main(int argc, char* argv[])
                 else
                 {
                     gradOp->gradTensor(U, localGradU, dsl::Coeff {});
+                    // Refill the processor tail with neighbour-cell gradients (see above).
+                    localGradU.correctBoundaryConditions();
                     gradUPtr = &localGradU;
                 }
                 const auto& gradU = *gradUPtr;
