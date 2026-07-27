@@ -15,6 +15,6 @@ rule swap_solver:
     output:
         CASE_ROOT + "/{id}/{solver}/.swapped.json",
     shell:
-        "PYTHONPATH=\"{REPO_ROOT}:$PYTHONPATH\" python -m verification.dropin.runner --config '{CONFIG}'"
+        "PYTHONPATH=\"{REPO_ROOT}:${{PYTHONPATH:-}}\" python -m verification.dropin.runner --config '{CONFIG}'"
         " swap --case {wildcards.id} --solver {wildcards.solver}"
         " --cases '{CASE_ROOT}' --built '{input}' --stamp '{output}'"

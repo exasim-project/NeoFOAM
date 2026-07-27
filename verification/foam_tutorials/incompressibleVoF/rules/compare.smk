@@ -19,5 +19,5 @@ rule compare:
     output:
         RESULTS + "/{id}.json",
     shell:
-        "PYTHONPATH=\"{REPO_ROOT}:$PYTHONPATH\" python -m verification.dropin.runner --config '{CONFIG}'"
+        "PYTHONPATH=\"{REPO_ROOT}:${{PYTHONPATH:-}}\" python -m verification.dropin.runner --config '{CONFIG}'"
         " compare --case {wildcards.id} --cases '{CASE_ROOT}' --out '{output}'"

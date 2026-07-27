@@ -21,8 +21,8 @@ rule build_case:
         CASE_ROOT + "/{id}/{solver}/.built.json",
     threads: lambda wc: THREADS[wc.id]
     shell:
-        "PYTHONPATH=\"{REPO_ROOT}:$PYTHONPATH\" python -m verification.dropin.runner --config '{CONFIG}'"
+        "PYTHONPATH=\"{REPO_ROOT}:${{PYTHONPATH:-}}\" python -m verification.dropin.runner --config '{CONFIG}'"
         " build --case {wildcards.id} --solver {wildcards.solver}"
         " --cases '{CASE_ROOT}' --stamp '{output}'"
-        " || PYTHONPATH=\"{REPO_ROOT}:$PYTHONPATH\" python -m verification.dropin.runner --config '{CONFIG}'"
+        " || PYTHONPATH=\"{REPO_ROOT}:${{PYTHONPATH:-}}\" python -m verification.dropin.runner --config '{CONFIG}'"
         " mark-failed --solver {wildcards.solver} --status '{output}'"

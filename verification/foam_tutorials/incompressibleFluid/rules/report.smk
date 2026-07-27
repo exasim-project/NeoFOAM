@@ -12,5 +12,5 @@ rule report:
     output:
         REPORT,
     shell:
-        "PYTHONPATH=\"{REPO_ROOT}:$PYTHONPATH\" python -m verification.dropin.runner --config '{CONFIG}'"
+        "PYTHONPATH=\"{REPO_ROOT}:${{PYTHONPATH:-}}\" python -m verification.dropin.runner --config '{CONFIG}'"
         " report --results '{RESULTS}' --out '{output}'"
