@@ -206,6 +206,9 @@ TEST_CASE("neoPimpleFoam converges to OpenFOAM pimpleFoam on the cavity", "[pimp
     NeoN::fill(nutVol.internalVector(), 0.0);
     NeoN::fill(nutVol.boundaryData().value(), 0.0);
     fvcc::GaussGreenGrad gradOp(rt.exec, rt.nfMesh);
+    // grad(p) operator for the velocity corrector, honouring the configured
+    // gradSchemes; built once outside the time loop (mirrors neoPimpleFoam.cpp).
+    auto gradPOp = nf::makeGradOperator(rt.exec, rt.nfMesh, rt.fvSchemesDict, "grad(p)");
 
     auto& phi = nf::constructAndRegister(vectorCollection, rt, ofPhi, false);
 
@@ -324,7 +327,7 @@ TEST_CASE("neoPimpleFoam converges to OpenFOAM pimpleFoam on the cavity", "[pimp
 
                 nf::reportContinuityError(phi, rt, cumulativeContErr);
 
-                nf::updateVelocity(hByA, crAU, p, U, gradOp);
+                nf::updateVelocity(hByA, crAU, p, U, *gradPOp);
                 U.correctBoundaryConditions();
             }
 
