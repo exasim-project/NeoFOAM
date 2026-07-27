@@ -131,6 +131,25 @@ def _load_discover(path: Path) -> ModuleType:
     return module
 
 
+def _drop_excluded(cases: list[Case], exclude: list[dict[str, str]] | None) -> list[Case]:
+    """Drop config-excluded cases; every entry needs a case name and a reason."""
+    if not exclude:
+        return cases
+    names: set[str] = set()
+    for item in exclude:
+        name = item.get("case") if isinstance(item, dict) else None
+        if not name or not item.get("reason"):
+            raise ValueError(f"exclude: each entry needs a `case` name and a `reason`: {item!r}")
+        names.add(name)
+    stale = names - {case.name for case in cases}
+    if stale:
+        raise ValueError(
+            "exclude: names no selected case (a typo, or the case already left "
+            f"the selection): {', '.join(sorted(stale))}"
+        )
+    return [case for case in cases if case.name not in names]
+
+
 def load_study(config_path: Path) -> Study:
     """Load a study from its ``config.yaml``.
 
@@ -143,6 +162,19 @@ def load_study(config_path: Path) -> Study:
     study needs when it tiers its tutorial group. Both are applied here rather than
     in the Snakefile so the DAG, every worker, and the report's case table are
     derived from one list.
+
+    ``exclude:`` is the third channel: it drops a selected case that can never run
+    as a drop-in, each entry naming the case (same naming as ``cases:``/``only:``)
+    with the reason it is out of scope::
+
+        exclude:
+          - case: interFoam/RAS/motorBike
+            reason: "snappyHexMesh is not reproducible, so runs are not comparable"
+
+    Applied last, so an excluded case is never staged and never reported. An entry
+    naming no selected case is an error — a stale exclusion is either a typo (the
+    case still runs) or dead documentation (the case is gone), and both should
+    surface rather than sit silently in the config.
     """
     config_path = Path(config_path).resolve()
     config = yaml.safe_load(config_path.read_text()) or {}
@@ -158,6 +190,7 @@ def load_study(config_path: Path) -> Study:
     only = config.get("only")
     if only:
         cases = [case for case in cases if case.name in set(only)]
+    cases = _drop_excluded(cases, config.get("exclude"))
     # The candidate backends: explicit `apps:` in the config, else the single app
     # each case was discovered with (back-compat — one backend, as before).
     apps = config.get("apps") or list(dict.fromkeys(case.app for case in cases))

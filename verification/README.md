@@ -48,6 +48,8 @@ Output (gitignored, not tracked): `cases/` (staged runs + logs),
 
 Three files plus a `rules/` copy: `Snakefile` (`include: "rules/header.smk"` +
 `rule all: input: REPORT`), `config.yaml` (title, `discover:` path, `apps:`,
-`cases:`/`only:`), `discover.py` (a `discover()` — see the two existing ones for
+`cases:`/`only:`, and `exclude:` — each entry a `case:` name plus a `reason:`
+for cases that can never be drop-ins), `discover.py` (a `discover()` — see the
+two existing ones for
 the two accepted signatures), and `rules/` copied from an existing study
 verbatim (nothing in it is study-specific).

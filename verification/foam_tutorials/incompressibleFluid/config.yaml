@@ -19,6 +19,14 @@ apps:
   - "neofoam solver incompressiblefluid"
   - "neofoam solver incompressiblefluidneon"
 
+# `exclude:` drops a selected case that can never run as a drop-in — each entry
+# names the case (same naming as `cases:`) with the reason it is out of scope.
+# Excluded cases are never staged and never reported; an entry naming no selected
+# case is an error. Example:
+#   exclude:
+#     - case: simpleFoam/motorBike
+#       reason: "snappyHexMesh is not reproducible, so runs are not comparable"
+
 # The cases considered from the tutorials, path-relative to
 # $FOAM_TUTORIALS/incompressible. This list IS the sweep — add or remove a line to
 # change what runs. Comment the whole block out to fall back to walking the tree

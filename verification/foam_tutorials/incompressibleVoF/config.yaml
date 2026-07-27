@@ -17,3 +17,11 @@ discover: discover.py
 # removed, every discovered case is swept. Example:
 #   only:
 #     - interFoam/laminar/damBreak/damBreak
+
+# `exclude:` drops a selected case that can never run as a drop-in — each entry
+# names the case (same naming as `only:`) with the reason it is out of scope.
+# Excluded cases are never staged and never reported; an entry naming no selected
+# case is an error. Example:
+#   exclude:
+#     - case: interFoam/RAS/motorBike
+#       reason: "snappyHexMesh is not reproducible, so runs are not comparable"

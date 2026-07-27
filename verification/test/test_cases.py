@@ -154,3 +154,48 @@ def test_without_only_every_discovered_case_is_swept(tmp_path: Path) -> None:
     study = load_study(tmp_path / "config.yaml")
 
     assert len(study.cases) == 2
+
+
+def test_exclude_drops_the_case_at_selection_time(tmp_path: Path) -> None:
+    """An `exclude:` entry removes its case from the study — never staged or reported.
+
+    The channel for cases that can never run as drop-ins (the ones that would
+    otherwise score UNSUPPORTED_CASE): out of scope by declaration, with the
+    reason recorded in the config instead of a muted report row.
+    """
+    (tmp_path / "discover.py").write_text(_DISCOVER_TWO_PY)
+    (tmp_path / "config.yaml").write_text(
+        "title: demo\ndiscover: discover.py\n"
+        "exclude:\n"
+        "  - case: interIsoFoam/laminar/damBreak\n"
+        '    reason: "no unique solver token in Allrun to swap"\n'
+    )
+
+    study = load_study(tmp_path / "config.yaml")
+
+    assert [c.name for c in study.cases] == ["interFoam/laminar/damBreak"]
+
+
+def test_exclude_requires_a_reason(tmp_path: Path) -> None:
+    """An exclusion without a reason is rejected — the why is part of the channel."""
+    (tmp_path / "discover.py").write_text(_DISCOVER_TWO_PY)
+    (tmp_path / "config.yaml").write_text(
+        "title: demo\ndiscover: discover.py\nexclude:\n  - case: interIsoFoam/laminar/damBreak\n"
+    )
+
+    with pytest.raises(ValueError, match="reason"):
+        load_study(tmp_path / "config.yaml")
+
+
+def test_excluding_a_non_selected_case_is_an_error(tmp_path: Path) -> None:
+    """A stale exclusion (typo, or the case left the selection) surfaces, not ignored."""
+    (tmp_path / "discover.py").write_text(_DISCOVER_TWO_PY)
+    (tmp_path / "config.yaml").write_text(
+        "title: demo\ndiscover: discover.py\n"
+        "exclude:\n"
+        "  - case: interFoam/laminar/noSuchCase\n"
+        '    reason: "stale entry"\n'
+    )
+
+    with pytest.raises(ValueError, match="noSuchCase"):
+        load_study(tmp_path / "config.yaml")
