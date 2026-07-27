@@ -14,16 +14,10 @@ from the sub-module that owns your concern, each of which states its own interfa
   the :class:`~neofoam.tooling.workflow.sweep.Sweep` object owns the round-trip
   (export a runnable Snakemake workflow dir, read it back), plus the wizard's canvas
   node/edge model.
-* :mod:`neofoam.tooling.workflow.study` — OpenFOAM tutorial drop-in studies: take
-  a tutorial verbatim, swap only the solver token in its ``Allrun``, run both sides
-  and diff the final-time fields. A study is a directory of three files
-  (``Snakefile`` + ``config.yaml`` + ``discover.py``) over the packaged pipeline.
-* :mod:`neofoam.tooling.workflow.rules` — the packaged Snakemake rule library, in
-  two named sets: the *mesh sweep* (per mesh variant ``setup_mesh`` → blockMesh →
-  snappyHexMesh → checkMesh, then per case ``setup`` → ``solve``), composed by
-  :meth:`~neofoam.tooling.workflow.rules.RuleRegistry.plan`; and the *drop-in study*
-  (``study.smk`` → build_case → swap_solver → run → compare → report), included
-  whole.
+* :mod:`neofoam.tooling.workflow.rules` — the packaged Snakemake rule library: the
+  mesh sweep (per mesh variant ``setup_mesh`` → blockMesh → snappyHexMesh →
+  checkMesh, then per case ``setup`` → ``solve``), composed by
+  :meth:`~neofoam.tooling.workflow.rules.RuleRegistry.plan`.
 * :mod:`neofoam.tooling.workflow.dag` — render an exported sweep's
   ``snakemake --dag`` / ``--rulegraph`` as canvas nodes and edges.
 * :mod:`neofoam.tooling.workflow.paramspace` — the swept-dimension csv/yaml layer
