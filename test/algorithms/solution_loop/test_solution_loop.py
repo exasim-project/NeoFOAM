@@ -26,7 +26,9 @@ from neofoam.algorithms.solution_loop.config import TimeControlConfig
 from neofoam.algorithms.solution_loop.control import SolutionControl
 from neofoam.algorithms.solution_loop.interfaces import (
     VGREAT,
+    initialTimeStepConstraint,
     loopCondition,
+    maxTimeStep,
     timeStepConstraint,
 )
 from neofoam.algorithms.solution_loop.loop_state import LoopState
@@ -151,6 +153,46 @@ def test_constrain_delta_t_clamps_growth_to_the_cap() -> None:
     loop = SolutionLoop(state=_state(dt=0.1), growth_cap=1.2)
     loop.constrain_delta_t(10.0)
     assert loop.state.delta_t == pytest.approx(0.12)  # 1.2 * 0.1, not 10.0
+
+
+def test_constrain_delta_t_clips_the_ceiling_after_the_damping() -> None:
+    # setDeltaT.H: min(deltaTFact*deltaT, maxDeltaT). Damping the ceiling instead
+    # of clipping with it would give min(1.15, 1.115, 1.2)*0.1 = 0.1115.
+    loop = SolutionLoop(state=_state(dt=0.1), growth_cap=1.2)
+    loop.constrain_delta_t(0.12, ceiling=0.115)
+    assert loop.state.delta_t == pytest.approx(0.112)  # min(1.12, 1.2) * 0.1
+
+
+def test_constrain_delta_t_with_no_opinion_does_not_snap() -> None:
+    # adjustTimeStep off: OpenFOAM never reaches Time::setDeltaT, so the
+    # adjustableRunTime snapping must not run either (0.35/round(3.5) = 0.0875).
+    loop = SolutionLoop(
+        state=_state(dt=0.1, write_control="adjustableRunTime", write_interval=0.35)
+    )
+    loop.constrain_delta_t(VGREAT)
+    assert loop.state.delta_t == 0.1
+
+
+def test_initial_delta_t_reduces_undamped() -> None:
+    # setInitialDeltaT.H applies the CFL limit in full, ignoring the growth damping.
+    loop = SolutionLoop(state=_state(dt=0.1), growth_cap=1.2)
+    loop.set_initial_delta_t(0.02)
+    assert loop.state.delta_t == pytest.approx(0.02)
+
+
+def test_initial_delta_t_never_raises_the_step() -> None:
+    loop = SolutionLoop(state=_state(dt=0.1))
+    loop.set_initial_delta_t(10.0)
+    assert loop.state.delta_t == 0.1
+
+
+def test_initial_delta_t_skipped_on_a_quiescent_flow() -> None:
+    # No opinion (Co <= SMALL) -> the whole pass, snapping included, is skipped.
+    loop = SolutionLoop(
+        state=_state(dt=0.1, write_control="adjustableRunTime", write_interval=0.35)
+    )
+    loop.set_initial_delta_t(VGREAT)
+    assert loop.state.delta_t == 0.1
 
 
 # --- (t, dt, dt0) on the LoopState ----------------------------------------
@@ -279,14 +321,20 @@ def test_constructor_folds_conditions_with_all(conds: list[Any], expected: bool)
 # --- the loop model owns both interfaces ----------------------------------
 
 
-def test_loop_model_owns_both_interfaces() -> None:
+def test_loop_model_owns_its_interfaces() -> None:
     assert solutionLoop.declared_interfaces["timeStepConstraint"] is timeStepConstraint
+    assert solutionLoop.declared_interfaces["maxTimeStep"] is maxTimeStep
+    assert (
+        solutionLoop.declared_interfaces["initialTimeStepConstraint"] is initialTimeStepConstraint
+    )
     assert solutionLoop.declared_interfaces["loopCondition"] is loopCondition
 
 
 def test_loop_module_keeps_live_interface_annotations() -> None:
     ann = set_time_step.__annotations__
     assert ann["constraints"] is timeStepConstraint
+    assert ann["ceilings"] is maxTimeStep
+    assert ann["initial_constraints"] is initialTimeStepConstraint
     assert ann["conditions"] is loopCondition
 
 

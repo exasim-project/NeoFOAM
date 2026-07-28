@@ -20,9 +20,11 @@ class FakeTime:
     def __init__(self) -> None:
         self.delta_t: float = 0.0
         self.steps = 0
+        self.adjust_flags: list[bool] = []
 
-    def setDeltaT(self, dt: float) -> None:
+    def setDeltaT(self, dt: float, adjust: bool = True) -> None:
         self.delta_t = dt
+        self.adjust_flags.append(adjust)
 
     def increment(self) -> None:
         self.steps += 1
@@ -58,3 +60,12 @@ def test_catches_up_multiple_steps_in_one_update() -> None:
     backend = FoamTime(rt)
     backend.update(_state(delta_t=0.1, index=3))  # jumped 3 indices at once
     assert rt.steps == 3
+
+
+def test_never_lets_the_backend_snap_the_step_again() -> None:
+    # Foam::Time::setDeltaT snaps onto its own next write time by default; the
+    # SolutionLoop already owns that decision, so the mirror must opt out.
+    rt = FakeTime()
+    backend = FoamTime(rt)
+    backend.update(_state(delta_t=0.2, index=0))
+    assert rt.adjust_flags == [False]

@@ -13,6 +13,8 @@ orchestrates subprocesses and compares arrays; it never touches OpenFOAM.
 
 Roles (``python _parity_worker.py <role> <case_dir>``):
 
+* ``mesh``      — generate the block mesh only, for a case that already ships its
+  own ``0`` fields (``setup`` would overwrite them).
 * ``setup``     — generate the block mesh and seed **identical** random ``U`` /
   ``k`` / ``epsilon`` fields on disk (both backends then read the same bytes).
 * ``reference`` — build the trusted pybFoam turbulence model, advance one
@@ -118,6 +120,13 @@ boundaryField
     }}
 }}
 """
+
+
+def role_mesh(case: Path) -> None:
+    """Generate the block mesh, leaving the case's own ``0`` fields untouched."""
+    time = pyf.Time(str(case.parent), case.name)
+    block_dict = pyf.dictionary.read(str(case / "system" / "blockMeshDict"))
+    pyf.meshing.generate_blockmesh(time, block_dict, False, "constant")
 
 
 def role_setup(case: Path) -> None:
@@ -271,6 +280,7 @@ def role_subject_fb(case: Path) -> None:
 
 
 _ROLES = {
+    "mesh": role_mesh,
     "setup": role_setup,
     "reference": role_reference,
     "subject": role_subject,

@@ -37,18 +37,26 @@ def read_field(case: CaseDir, name: str, *, time: str = "latest") -> "np.ndarray
     """
     with tempfile.TemporaryDirectory() as tmp:
         out = Path(tmp) / f"{name}.npy"
-        subprocess.run(
-            [
-                sys.executable,
-                "-m",
-                "neofoam.tooling.casebuild._reader",
-                str(case.path),
-                time,
-                name,
-                str(out),
-            ],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
+        try:
+            subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "neofoam.tooling.casebuild._reader",
+                    str(case.path),
+                    time,
+                    name,
+                    str(out),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+        except subprocess.CalledProcessError as failure:
+            # An OpenFOAM fatal error only ever reaches the caller as an exit code; its
+            # explanation is on the subprocess's stderr, so re-raise carrying that text.
+            raise RuntimeError(
+                f"reading field {name!r} at time {time!r} from {case.path} failed "
+                f"(exit {failure.returncode}): {failure.stderr}"
+            ) from failure
         return np.asarray(np.load(out))

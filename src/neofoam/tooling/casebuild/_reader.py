@@ -11,10 +11,16 @@ spawns; run it as ``python -m neofoam.tooling.casebuild._reader <case> <time> <f
 The requested time directory is staged as ``0/`` in a temporary case so the field is
 read where a freshly-constructed ``Time`` (which starts at ``startTime``) can see it —
 the same trick the standalone comparison readers use.
+
+Only the field file's ``internalField`` entry is read. Constructing the whole
+``vol*Field`` would construct every boundary condition with it, and a condition that
+needs more than the file it is written in (``fanPressure`` opens a fan-curve table,
+coupled types need their partner patch) aborts a read that only wants cell values.
 """
 
 from __future__ import annotations
 
+import os
 import shutil
 import sys
 import tempfile
@@ -23,7 +29,7 @@ from typing import Union
 
 import numpy as np
 import pybFoam as pyf
-from pybFoam import volScalarField, volVectorField
+from pybFoam import scalarField, vectorField, volScalarField, volVectorField
 
 
 def _resolve_time_dir(case: Path, time: str) -> Path:
@@ -36,13 +42,25 @@ def _resolve_time_dir(case: Path, time: str) -> Path:
     return max(numeric, key=lambda d: float(d.name))
 
 
+def _set_case_environment(case: Path) -> None:
+    """Export what ``argList`` exports about the case, so dictionary reads resolve.
+
+    A directly-constructed ``Time`` skips ``argList``, which is what sets these. Without
+    them ``<case>`` / ``<system>`` / ``<constant>`` expand against an empty path, so a
+    case-local ``#includeFunc`` or ``#include "<system>/..."`` in a staged dictionary is
+    never found and the read dies — on the include itself, or on what the skipped
+    include left unbalanced.
+    """
+    os.environ["FOAM_CASE"] = str(case)
+    os.environ["FOAM_CASENAME"] = case.name
+
+
 def read_field(case: Path, time: str, name: str, out: Path) -> None:
     """Read *name*'s internal field at *time* and save it to *out* as ``.npy``.
 
-    The ``np.save`` runs while the ``Time``/``fvMesh``/field are still alive:
-    ``internalField()`` is a view into the field's buffer, and serializing it here
-    (rather than returning it up the stack) copies the values before that buffer is
-    freed with the mesh.
+    The ``np.save`` runs while the ``Time``/``fvMesh`` are still alive: the returned
+    field is sized from the mesh, and serializing it here (rather than returning it up
+    the stack) copies the values before the temporary case is removed.
     """
     time_dir = _resolve_time_dir(case, time)
     with tempfile.TemporaryDirectory() as tmp:
@@ -51,17 +69,20 @@ def read_field(case: Path, time: str, name: str, out: Path) -> None:
         shutil.copytree(case / "constant", staged / "constant")
         shutil.copytree(time_dir, staged / "0")
 
+        _set_case_environment(staged)
         runtime = pyf.Time(str(staged.parent), staged.name)
         mesh = pyf.fvMesh(runtime)
-        header = (staged / "0" / name).read_text()
-        field: Union[volScalarField, volVectorField]
+        # Decode leniently: a binary-format field's FoamFile header is still
+        # ASCII, but its internalField payload is not, so read_text() would choke.
+        header = (staged / "0" / name).read_bytes().decode("utf-8", "replace")
+        internal: Union[scalarField, vectorField]
         if "volScalarField" in header:
-            field = volScalarField.read_field(mesh, name)
+            internal = volScalarField.read_internal_field(mesh, name)
         elif "volVectorField" in header:
-            field = volVectorField.read_field(mesh, name)
+            internal = volVectorField.read_internal_field(mesh, name)
         else:
             raise ValueError(f"Unsupported field type for {name}")
-        np.save(out, np.asarray(field.internalField()))
+        np.save(out, np.asarray(internal))
 
 
 def main() -> None:

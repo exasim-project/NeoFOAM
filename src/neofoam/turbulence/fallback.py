@@ -125,10 +125,10 @@ class OpenFOAMTurbulenceModel:
         refcount when the run ends.
 
         .. note::
-            After the family merge the *scheduled* correct comes from the
-            model file's ``fallback=True`` op (via :class:`FallbackHandle`),
-            not this property. It is retained for the direct-use tests that
-            predate the merge.
+            For a *registered* model the scheduled correct comes from the model
+            file's ``fallback=True`` op (via :class:`FallbackHandle`). This
+            property is the correct op for a model with no registered spec,
+            which the selector builds straight from OpenFOAM's own table.
         """
 
         def correct(ctx: Context) -> FieldUpdates:

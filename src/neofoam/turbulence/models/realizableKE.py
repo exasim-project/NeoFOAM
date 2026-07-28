@@ -22,11 +22,11 @@ from typing import Annotated, Any
 from neofoam.framework.context import FieldUpdates
 
 from ..config import TurbulencePropertiesConfig
-from ..momentumTransport import Model, momentumTransportModel
+from ..momentumTransport import Model, register_momentum_transport
 
 __all__ = ["realizableKE"]
 
-realizableKE = Model("realizableKE").register_with(momentumTransportModel)
+realizableKE = register_momentum_transport(Model("realizableKE"), family="RAS")
 realizableKE.config(TurbulencePropertiesConfig)
 # no @build, no native @operation — fallback-only
 

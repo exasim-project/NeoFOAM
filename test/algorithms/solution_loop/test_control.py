@@ -15,6 +15,9 @@ flags, per-time-step reset).
 
 from __future__ import annotations
 
+import pytest
+from pydantic import ValidationError
+
 from neofoam.algorithms.solution_loop.control import (
     PimpleControl,
     SimpleControl,
@@ -133,6 +136,65 @@ def test_pimple_final_iter_resets_with_the_loop() -> None:
     assert pimple.finalIter() is False
 
 
+# --- firstIter: what gates the once-per-time-step mesh move ----------------
+
+
+def test_pimple_first_iter_true_only_on_first_outer_corrector() -> None:
+    # interFoam moves the mesh on `pimple.firstIter() || moveMeshOuterCorrectors`,
+    # so the flag has to be true exactly once per time step.
+    pimple = PimpleControl(nCorrectors=2, nOuterCorrectors=3, momentumPredictor=True)
+    firsts = []
+    while pimple.loop():
+        firsts.append(pimple.firstIter())
+    assert firsts == [True, False, False]
+
+
+def test_pimple_first_iter_resets_with_the_loop() -> None:
+    pimple = PimpleControl(nCorrectors=2, nOuterCorrectors=2, momentumPredictor=True)
+    while pimple.loop():
+        pass
+    # next time step opens on a first iteration again
+    assert pimple.loop() is True
+    assert pimple.firstIter() is True
+
+
+def test_pimple_first_iter_piso_mode_is_always_first() -> None:
+    # nOuterCorrectors defaults to 1 (PISO mode): the single pass is both the
+    # first and the final one.
+    pimple = PimpleControl(nCorrectors=2, momentumPredictor=True)
+    assert pimple.loop() is True
+    assert pimple.firstIter() is True
+
+
+# --- PIMPLE schema accepts real tutorial dicts -----------------------------
+
+
+def test_pimple_accepts_ncorrectors_one() -> None:
+    # Real tutorials (movingCone, propeller, mixerVesselAMI2D, pipeCyclic PIMPLE)
+    # all carry `nCorrectors 1`; the schema must accept it (was ge=2, rejected 1).
+    control = PimpleControl(
+        nOuterCorrectors=2,
+        nCorrectors=1,
+        nNonOrthogonalCorrectors=0,
+        momentumPredictor=True,
+        turbCorr=True,
+    )
+    assert control.nCorrectors == 1
+
+    # a single corrector pass still runs exactly once per outer iteration
+    assert control.loop() is True
+    corrector_count = 0
+    while control.correct():
+        corrector_count += 1
+    assert corrector_count == 1
+
+
+def test_pimple_rejects_ncorrectors_zero() -> None:
+    # validation is not gutted: nCorrectors must still be >= 1
+    with pytest.raises(ValidationError):
+        PimpleControl(nCorrectors=0, momentumPredictor=True)
+
+
 # --- PIMPLE corrector / non-orthogonal loop mechanics ----------------------
 
 
@@ -164,6 +226,10 @@ def test_pimple_corrector_and_non_ortho_counts() -> None:
 
 
 def test_pimple_final_flags_on_last_iterations() -> None:
+    # pEqn.H queries finalInnerIter() *inside* the non-orthogonal loop, and
+    # pimpleControl answers `corrPISO_ == nCorrPISO_ && corrNonOrtho_ ==
+    # nNonOrthCorr_ + 1` — so only the last non-orthogonal pass of the last
+    # corrector picks the `Final` solver settings.
     control = PimpleControl(
         nOuterCorrectors=1,
         nCorrectors=2,
@@ -179,12 +245,192 @@ def test_pimple_final_flags_on_last_iterations() -> None:
 
     assert control.correctNonOrthogonal() is True
     assert control.finalNonOrthogonalIter() is False
+    assert control.finalInnerIter() is False
     assert control.correctNonOrthogonal() is True
     assert control.finalNonOrthogonalIter() is True
+    assert control.finalInnerIter() is False  # last non-ortho pass, first corrector
     assert control.correctNonOrthogonal() is False
 
     assert control.correct() is True
+    assert control.correctNonOrthogonal() is True
+    assert control.finalInnerIter() is False  # last corrector, first non-ortho pass
+    assert control.correctNonOrthogonal() is True
     assert control.finalInnerIter() is True
+
+
+@pytest.mark.parametrize(
+    ("nOuterCorrectors", "nCorrectors", "expected"),
+    [
+        (3, 1, [1, 1, 1]),  # interFoam damBreakPorousBaffle
+        (2, 2, [2, 2]),  # interFoam DTCHullMoving
+        (1, 2, [2]),  # PISO mode: single outer pass, unchanged
+    ],
+)
+def test_pimple_corrector_restarts_on_every_outer_iteration(
+    nOuterCorrectors: int, nCorrectors: int, expected: list[int]
+) -> None:
+    # pimpleControl::loop() zeroes corrPISO_ at the start of every outer
+    # iteration, so each outer corrector runs its own pressure solves
+    # (regression: only the first outer iteration ever solved p_rgh).
+    control = PimpleControl(
+        nOuterCorrectors=nOuterCorrectors,
+        nCorrectors=nCorrectors,
+        momentumPredictor=True,
+    )
+
+    corrector_counts: list[int] = []
+    while control.loop():
+        corrector_count = 0
+        while control.correct():
+            corrector_count += 1
+        corrector_counts.append(corrector_count)
+
+    assert corrector_counts == expected
+
+
+def test_pimple_non_ortho_restarts_on_every_outer_iteration() -> None:
+    # the reset chain is nested: outer loop re-arms the corrector, which in
+    # turn re-arms the non-orthogonal loop on its first iteration.
+    control = PimpleControl(
+        nOuterCorrectors=2,
+        nCorrectors=1,
+        nNonOrthogonalCorrectors=1,
+        momentumPredictor=True,
+    )
+
+    non_ortho_counts: list[int] = []
+    while control.loop():
+        while control.correct():
+            non_ortho_count = 0
+            while control.correctNonOrthogonal():
+                non_ortho_count += 1
+            non_ortho_counts.append(non_ortho_count)
+
+    assert non_ortho_counts == [2, 2]
+
+
+def test_pimple_final_inner_iter_restarts_on_every_outer_iteration() -> None:
+    # finalInnerIter() picks the `Final` linear-solver settings; it must be
+    # False again on the first corrector of the second outer iteration.
+    control = PimpleControl(
+        nOuterCorrectors=2,
+        nCorrectors=2,
+        momentumPredictor=True,
+    )
+
+    final_flags: list[bool] = []
+    while control.loop():
+        while control.correct():
+            # queried where pEqn.H queries it: inside the non-orthogonal loop
+            # (nNonOrthogonalCorrectors 0, so exactly one pass per corrector)
+            while control.correctNonOrthogonal():
+                final_flags.append(control.finalInnerIter())
+
+    assert final_flags == [False, True, False, True]
+
+
+@pytest.mark.parametrize(
+    ("nOuterCorrectors", "nCorrectors", "nNonOrthogonalCorrectors", "expected"),
+    [
+        # one flag per pressure solve, in solve order (outer x corrector x non-ortho)
+        (1, 1, 0, [True]),  # pisoFoam cavity
+        (1, 2, 0, [False, True]),  # pimpleFoam RAS/pitzDaily
+        (1, 2, 1, [False, False, False, True]),  # pimpleFoam RAS/ellipsekkLOmega
+        (1, 1, 2, [False, False, True]),
+        (5, 2, 0, [False, True] * 5),  # pimpleFoam LES/vortexShed
+        (2, 2, 1, [False, False, False, True] * 2),
+        (15, 1, 0, [True] * 15),  # pimpleFoam laminar/planarContraction
+    ],
+)
+def test_pimple_final_inner_iter_is_last_corrector_and_last_non_ortho(
+    nOuterCorrectors: int,
+    nCorrectors: int,
+    nNonOrthogonalCorrectors: int,
+    expected: list[bool],
+) -> None:
+    # pimpleControl::finalInnerIter() = `corrPISO_ == nCorrPISO_ &&
+    # corrNonOrtho_ == nNonOrthCorr_ + 1`: the outer iteration is NOT part of the
+    # criterion (that needs finalOnLastPimpleIterOnly), but the non-orthogonal
+    # position is — a non-final non-orthogonal pass solves on the loose `p`
+    # settings even in the last corrector.
+    control = PimpleControl(
+        nOuterCorrectors=nOuterCorrectors,
+        nCorrectors=nCorrectors,
+        nNonOrthogonalCorrectors=nNonOrthogonalCorrectors,
+        momentumPredictor=True,
+    )
+
+    final_flags: list[bool] = []
+    while control.loop():
+        while control.correct():
+            while control.correctNonOrthogonal():
+                final_flags.append(control.finalInnerIter())
+
+    assert final_flags == expected
+
+
+def test_pimple_final_on_last_pimple_iter_only_restricts_to_the_final_outer_iteration() -> None:
+    # `finalOnLastPimpleIterOnly yes` is the one switch that adds finalIter() to
+    # the criterion, so only the very last pressure solve of the time step gets
+    # the `Final` settings.
+    control = PimpleControl(
+        nOuterCorrectors=2,
+        nCorrectors=2,
+        momentumPredictor=True,
+        finalOnLastPimpleIterOnly=True,
+    )
+
+    final_flags: list[bool] = []
+    while control.loop():
+        while control.correct():
+            while control.correctNonOrthogonal():
+                final_flags.append(control.finalInnerIter())
+
+    assert final_flags == [False, False, False, True]
+
+
+@pytest.mark.parametrize(
+    ("turbOnFinalIterOnly", "expected"),
+    [
+        (True, [False, False, True]),  # native default: once per time step
+        (False, [True, True, True]),  # pimpleFoam laminar/planarContraction
+    ],
+)
+def test_pimple_turb_corr_follows_turb_on_final_iter_only(
+    turbOnFinalIterOnly: bool, expected: list[bool]
+) -> None:
+    # pimpleControl::turbCorr() = `!turbOnFinalIterOnly_ || finalIter()`, asked
+    # once per outer iteration (pimpleFoam.C's `if (pimple.turbCorr())`).
+    control = PimpleControl(
+        nOuterCorrectors=3,
+        nCorrectors=1,
+        momentumPredictor=True,
+        turbCorr=True,
+        turbOnFinalIterOnly=turbOnFinalIterOnly,
+    )
+
+    corrections: list[bool] = []
+    while control.loop():
+        corrections.append(control.turbCorr())
+
+    assert corrections == expected
+
+
+def test_pimple_turb_corr_disabled_stays_closed_on_every_iteration() -> None:
+    # The `turbCorr no` switch wins over the iteration gate: no correction at all.
+    control = PimpleControl(
+        nOuterCorrectors=3,
+        nCorrectors=1,
+        momentumPredictor=True,
+        turbCorr=False,
+        turbOnFinalIterOnly=False,
+    )
+
+    corrections: list[bool] = []
+    while control.loop():
+        corrections.append(control.turbCorr())
+
+    assert corrections == [False, False, False]
 
 
 # --- SIMPLE loop mechanics --------------------------------------------------

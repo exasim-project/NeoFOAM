@@ -1,0 +1,25 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      transportProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+transportModel  Newtonian;
+
+// Chosen so that the wall-face y+ = Cmu^0.25 y sqrt(k) / nu = 34.2 sqrt(k)
+// straddles yPlusLam = 11.53 over the seeded k range: k below 0.113 lands in the
+// viscous branch of the STEPWISE nutkWallFunction, k above it in the log branch.
+nu              2e-03;
+
+
+// ************************************************************************* //
