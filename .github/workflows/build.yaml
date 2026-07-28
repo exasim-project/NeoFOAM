@@ -196,7 +196,7 @@ jobs:
           OMPI_MCA_rmaps_base_oversubscribe: 1
           OMPI_MCA_rmaps_default_mapping_policy: ":oversubscribe"
         run: |
-          mpirun -n 2 python -m pytest src/NeoN/test/blockamr -m mpi -v -rs | tee log
+          mpirun -n 2 python -m pytest src/NeoN/test/blockAmr -m mpi -v -rs | tee log
           grep -qE '[0-9]+ passed' log || { echo "lane ran vacuously"; exit 1; }
 
   python-coverage:

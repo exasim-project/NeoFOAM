@@ -1,7 +1,7 @@
 # blockAMR reduced-precision measurements
 
 The rationale and measurements that used to live as long comment blocks in three
-headers under `src/NeoN/src/blockAmrSolvers/`. Each header now carries a short
+headers under `src/NeoN/include/NeoN/blockAmr/`. Each header now carries a short
 conclusion and points here for the numbers.
 
 Sources:
@@ -14,7 +14,7 @@ Sources:
 
 ## bfloat16 as a STORAGE type for the GMG level hierarchy
 
-*(from `src/NeoN/src/blockAmrSolvers/gmg/bf16.hpp`)*
+*(from `src/NeoN/include/NeoN/blockAmr/linearAlgebra/gmg/bf16.hpp`)*
 
 bfloat16 as a STORAGE type for the GMG level hierarchy: 1 sign + 8 exponent +
 7 mantissa bits, i.e. FP32's exponent range in half of FP32's bytes. The
@@ -115,7 +115,7 @@ converts to.
 
 ## An FP32 solver wearing an FP64 LinOp's clothes
 
-*(from `src/NeoN/src/blockAmrSolvers/krylov/mixed_precision.hpp`)*
+*(from `src/NeoN/include/NeoN/blockAmr/linearAlgebra/krylov/mixedPrecision.hpp`)*
 
 An FP32 solver wearing an FP64 LinOp's clothes, so that `gko::solver::Ir<double>`
 can drive it.
@@ -220,7 +220,7 @@ to drive this path with.
 
 ## `GmgArgs::coeffPrecision` -- the fields/coefficients split
 
-*(from `src/NeoN/src/blockAmrSolvers/bench/kokkos_bench.hpp`)*
+*(from `src/NeoN/include/NeoN/blockAmr/bench/kokkosBench.hpp`)*
 
 Measured, 256^3 single box, level-0 agglomerated, one cycle from z0 = 0:
 
