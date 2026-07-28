@@ -24,7 +24,11 @@ For a normal (non-development) installation, install non-editable:
 Quote the extras (``".[all]"``) — on macOS the default ``zsh`` treats the
 square brackets as a glob pattern. Instead of ``all`` you can pick just the
 optional features you need: ``dev``, ``docs``, ``agent``, ``mcp``,
-``telemetry`` — e.g. ``pip install -e ".[dev,mcp]" -v``.
+``telemetry``, ``blockamr`` — e.g. ``pip install -e ".[dev,mcp]" -v``.
+``blockamr`` adds the JAX/Triton/Equinox stack the
+``incompressibleFluidBlockAMR`` solver's DSL kernels need; the AMReX engine and
+``_blockamr.so`` itself are built by CMake regardless (see
+``[tool.scikit-build.cmake.define]`` in ``pyproject.toml``).
 
 The editable install uses scikit-build's ``redirect`` mode: edits to
 ``src/neofoam/*.py`` take effect on the next Python start without

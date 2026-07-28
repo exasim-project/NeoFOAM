@@ -54,6 +54,9 @@ what you're trying to do:
    :maxdepth: 2
    :caption: Reference
 
+   reference/project-layout
+   reference/build-and-test
+   reference/cli
    reference/framework/index
    reference/graph/index
    reference/initialization/index

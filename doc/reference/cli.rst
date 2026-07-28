@@ -29,6 +29,17 @@ Run only the mesh preprocessing pipeline for a case and stop (no time loop):
 
     neofoam preprocess my_case
 
+Case scaffolding — ``neofoam agent``
+------------------------------------
+
+LLM-driven case scaffolding (needs the ``agent`` extra):
+
+.. code-block:: bash
+
+    neofoam agent fill src_case new_case    # fill a new case from a source case
+    neofoam agent fill src_case new_case --no-llm   # forms only, no LLM call
+    neofoam agent wizard .                  # write the marimo wizard notebook
+
 MCP server — ``neofoam mcp``
 ----------------------------
 

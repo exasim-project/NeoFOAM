@@ -31,18 +31,51 @@ the linked reference pages for the full API.
       visualization. See :mod:`neofoam.framework.graph`.
     - ``validation/`` — case-correctness checks: a registry of isolated checks
       with a structurally honest ``ok``.
+    - ``tools/`` — the shared preprocessing ``Tool`` abstraction (spec + graph).
 
-``algorithms/solution_loop/``
-    The pure-Python time loop, with an injectable constraint list and a named
-    measurement registry; time-step rules are opt-in models.
+``algorithms/``
+    Algorithm control primitives (pydantic-validated): ``solution_loop/`` is the
+    pure-Python time loop, with an injectable constraint list and a named
+    measurement registry (time-step rules are opt-in models), alongside
+    ``constraints/`` and ``field_writer/``.
 
-``solver/incompressibleFluid/``
-    The reference solver: its ``SolverSpec``, field wiring, and the
-    PIMPLE/viscosity/turbulence/boussinesq/adaptiveTimeStep models.
+``solver/``
+    One subpackage per solver, each composing the same
+    ``SolverSpec``/``ModelSpec``/``StagedInitSpec`` triple:
+
+    - ``incompressibleFluid/`` — the reference solver: field wiring plus the
+      PIMPLE/viscosity/turbulence/boussinesq/adaptiveTimeStep models.
+    - ``incompressibleFluidNeoN/`` — the NeoN-backed port of ``neoPimpleFoam``;
+      the NeoN bindings replace pybFoam and only PIMPLE is wired up.
+    - ``incompressibleFluidBlockAMR/`` — laminar incompressible Navier-Stokes on a
+      block-structured AMReX grid via ``blockamr``'s DSL (MAC + nodal
+      projection), reusing the outer time loop and field writer.
+    - ``incompressibleVoF/`` — an ``interFoam``-style VoF solver.
+
+``turbulence/`` and ``viscosity/``
+    Two mirrored, extensible subsystems on the plugin system. Native models
+    register with ``momentumTransportModel`` / ``viscosityModel`` and are resolved
+    by configured name, each falling back to its OpenFOAM counterpart when no
+    native model is registered.
+
+``tools/``
+    Shared, solver-agnostic preprocessing tools (``blockMesh``,
+    ``snappyHexMesh``, ``checkMesh``); importing the package self-registers every
+    built-in tool.
 
 ``agent/``
     LLM case scaffolding: the pydantic-ai case-fill agent, forms, and the
     packaged marimo wizard template.
+
+``cli/``
+    The ``neofoam`` Typer entry point (``cli/app.py``) — see :doc:`cli`.
+
+``mcp/``
+    The MCP server (FastAPI + FastMCP + pydantic DTOs) exposing the tool surface.
+
+``telemetry/``
+    Opt-in OpenTelemetry performance tracing (the ``telemetry`` extra). Safe to
+    import without OpenTelemetry installed — only ``configure`` touches the SDK.
 
 ``core/``
     ``PluginSystem`` — discriminated registries for constraints, time-integration
