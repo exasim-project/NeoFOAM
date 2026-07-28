@@ -12,6 +12,12 @@ The discriminator is read straight from ``system/fvSolution`` via
 alpha-controls reader — rather than routed through an ``@IOStrategy`` config,
 because the key lives nested alongside ``PIMPLE``/``solvers`` and only a single
 string is needed to pick the scheme.
+
+No upstream interIsoFoam tutorial declares ``advectionScheme`` (it is a
+NeoFOAM-only key), so when it is absent ``select_from_case`` falls back to
+inspecting the ``solvers`` "alpha.*" sub-dict for isoAdvector-only controls
+(``reconstructionScheme``/``isoFaceTol``/``surfCellTol``/``nAlphaBounds``) —
+an exact MULES/isoAdvector discriminator over the upstream tutorial corpus.
 """
 
 from typing import Any
@@ -24,6 +30,16 @@ from .advectionModel import ModelSpec, advectionModel
 __all__ = ["model_name", "select_advection_scheme", "select_from_case"]
 
 _DEFAULT_SCHEME = "MULES"
+_ISO_ADVECTOR_SCHEME = "isoAdvector"
+# Keys that only ever appear in an isoAdvector "alpha.*" solver sub-dict
+# (Foam::isoAdvection's construction-time controls); MULES cases never carry
+# any of these.
+_ISO_ADVECTOR_DISCRIMINATOR_KEYS = (
+    "reconstructionScheme",
+    "isoFaceTol",
+    "surfCellTol",
+    "nAlphaBounds",
+)
 
 
 def model_name(config: Any) -> str:
@@ -35,32 +51,42 @@ def model_name(config: Any) -> str:
 
 
 def select_advection_scheme(name: str) -> ModelSpec:
-    """Return the registered spec for ``name``, or the MULES fallback.
+    """Return the registered spec for ``name``.
 
-    Warns (and falls back to MULES) when ``name`` is not a registered scheme.
+    Raises ``ValueError`` when ``name`` is not a registered scheme — a silent
+    fallback to MULES would disguise a routing failure as a scheme error.
     """
     spec = advectionModel.find_spec(name)
-    if spec is not None:
-        return spec
-
-    Info(
-        f"Unknown advectionScheme '{name}'; falling back to '{_DEFAULT_SCHEME}'. "
-        f"Registered: {advectionModel.registered_names()}"
-    )
-    fallback = advectionModel.find_spec(_DEFAULT_SCHEME)
-    if fallback is None:
+    if spec is None:
         raise ValueError(
-            f"No advection scheme registered under '{_DEFAULT_SCHEME}'; "
-            f"registered: {advectionModel.registered_names()}"
+            f"Unknown advectionScheme '{name}'; registered: {advectionModel.registered_names()}"
         )
-    return fallback
+    return spec
+
+
+def _isoadvector_controls_present(fv_solution: Any) -> bool:
+    """True when ``solvers`` has an "alpha.*" sub-dict with isoAdvector controls."""
+    if not fv_solution.found("solvers"):
+        return False
+    solvers = fv_solution.subDict("solvers")
+    for key in solvers.toc():
+        name = str(key)
+        if not name.startswith("alpha.") or not solvers.isDict(name):
+            continue
+        alpha_dict = solvers.subDict(name)
+        if any(alpha_dict.found(k) for k in _ISO_ADVECTOR_DISCRIMINATOR_KEYS):
+            return True
+    return False
 
 
 def select_from_case(case_dir: str = ".") -> ModelSpec:
     """Read ``advectionScheme`` from ``system/fvSolution`` and select the scheme.
 
-    Defaults to ``MULES`` when the key (or the file) is absent; the fallback is
-    logged so a missing/unreadable fvSolution never silently changes the scheme.
+    An explicit ``advectionScheme`` key always wins. Otherwise isoAdvector is
+    selected when the ``solvers`` "alpha.*" sub-dict carries isoAdvector
+    controls (see :data:`_ISO_ADVECTOR_DISCRIMINATOR_KEYS`); MULES otherwise.
+    A missing/unreadable fvSolution also falls back to MULES, logged so it
+    never silently changes the scheme.
     """
     name = _DEFAULT_SCHEME
     try:
@@ -73,5 +99,8 @@ def select_from_case(case_dir: str = ".") -> ModelSpec:
             f"using advectionScheme '{_DEFAULT_SCHEME}'."
         )
     else:
-        name = str(fv_solution.getOrDefault[str]("advectionScheme", _DEFAULT_SCHEME))
+        if fv_solution.found("advectionScheme"):
+            name = str(fv_solution.getOrDefault[str]("advectionScheme", _DEFAULT_SCHEME))
+        elif _isoadvector_controls_present(fv_solution):
+            name = _ISO_ADVECTOR_SCHEME
     return select_advection_scheme(name)

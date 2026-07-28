@@ -1,0 +1,17 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSolution;
+}
+
+// Three outer correctors, turbOnFinalIterOnly left at its native default
+// (true) — interFoam/RAS/damBreakPorousBaffle's shape.
+PIMPLE
+{
+    momentumPredictor   no;
+    nOuterCorrectors    3;
+    nCorrectors         1;
+    nNonOrthogonalCorrectors 0;
+}

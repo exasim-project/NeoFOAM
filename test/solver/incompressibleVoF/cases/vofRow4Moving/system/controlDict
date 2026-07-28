@@ -1,0 +1,58 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     interFoam;
+
+startFrom       startTime;
+
+startTime       0;
+
+stopAt          endTime;
+
+endTime         1;
+
+deltaT          0.25;
+
+writeControl    timeStep;
+
+writeInterval   1;
+
+purgeWrite      0;
+
+writeFormat     ascii;
+
+writePrecision  17;
+
+writeCompression off;
+
+timeFormat      general;
+
+timePrecision   16;
+
+runTimeModifiable no;
+
+adjustTimeStep  no;
+
+// interFoam's readTimeControls.H/alphaCourantNo.H look these up
+// unconditionally; with adjustTimeStep off they never change deltaT.
+maxCo           1;
+
+maxAlphaCo      1;
+
+maxDeltaT       1;
+
+
+// ************************************************************************* //
