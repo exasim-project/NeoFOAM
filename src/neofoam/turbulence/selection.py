@@ -21,6 +21,13 @@ A model's shape falls out of which operations it declares: a native-only model
 raises on ``fallback=True``; a fallback-only model (no ``@build``, only a
 ``fallback=True`` op — e.g. ``realizableKE``) raises on ``fallback=False``.
 
+A name with **no** registered spec is not an error on the fallback path: OpenFOAM's
+own run-time selection table can build any of its incompressible models, so the
+selector hands the name to :class:`OpenFOAMTurbulenceModel` and says so on stdout
+(the run is then honestly attributed to pybFoam, not to a NeoFOAM closure). A
+*registered* name is still checked against the case's family — a RAS closure is
+never built for an ``LES { LESModel … }`` entry.
+
 :func:`select_turbulence_model` operates on a *duck-typed* config (any object
 exposing ``simulationType`` and optional ``RAS`` / ``LES`` sub-objects).
 :func:`select_from_case`, which loads the real OpenFOAM dictionary, is the
@@ -28,11 +35,13 @@ pybFoam-bound entry point.
 """
 
 from pathlib import Path
-from typing import Any, Literal, Optional, Union, overload
+from typing import Any, Literal, Optional, Union, cast, overload
+
+from pybFoam import Pstream
 
 from .config import TurbulencePropertiesConfig
 from .fallback import FallbackHandle, OpenFOAMTurbulenceModel, TurbulenceFactory
-from .momentumTransport import momentumTransportModel
+from .momentumTransport import TurbulenceFamily, momentumTransportModel
 from .native import NeoNHandle
 
 __all__ = ["model_name", "select_turbulence_model", "select_from_case"]
@@ -56,6 +65,14 @@ def model_name(config: Any) -> Optional[str]:
     if sim_type == "LES":
         les = getattr(config, "LES", None)
         return getattr(les, "LESModel", None) if les is not None else None
+    return None
+
+
+def _config_family(config: Any) -> Optional[TurbulenceFamily]:
+    """The family (``laminar``/``RAS``/``LES``) the config's simulationType selects."""
+    sim_type = getattr(config, "simulationType", None)
+    if sim_type in ("laminar", "RAS", "LES"):
+        return cast(TurbulenceFamily, sim_type)
     return None
 
 
@@ -130,13 +147,44 @@ def select_turbulence_model(
         of_factory: Override for the pybFoam turbulence factory (tests).
 
     Raises:
-        ValueError: if no model is registered for the configured name, or the
-            model does not support the requested backend.
+        ValueError: if the config names no model, if the registered model's
+            family (RAS/LES) differs from the case's ``simulationType``, or if
+            the model does not support the requested backend.
     """
     name = model_name(config)
-    spec = momentumTransportModel.find_spec(name) if name is not None else None
+    if name is None:
+        raise ValueError(
+            "cannot resolve the turbulence model: simulationType must be "
+            "laminar / RAS / LES with its matching sub-dictionary"
+        )
+
+    spec = momentumTransportModel.find_spec(name)
     if spec is None:
-        raise ValueError(f"no turbulence model registered for {name!r}")
+        if not fallback:
+            raise ValueError(
+                f"no turbulence model registered for {name!r}; the native NeoN path "
+                "needs a registered closure — run it on incompressibleFluid (the "
+                "pybFoam fallback) or port it"
+            )
+        # OpenFOAM's own run-time selection table builds it; say so, so a matching
+        # run is attributed to pybFoam rather than to a NeoFOAM closure. Master-only,
+        # like the OpenFOAM ``Info`` lines it sits between in the solver log.
+        if Pstream.master():
+            print(
+                f"Turbulence model {name!r} has no NeoFOAM closure — "
+                "running it on the pybFoam OpenFOAM fallback"
+            )
+        of = OpenFOAMTurbulenceModel(U, phi, transport, factory=of_factory)
+        return FallbackHandle(of, of.operations)
+
+    registered_family = momentumTransportModel.family_of(name)
+    case_family = _config_family(config)
+    if registered_family != case_family:
+        raise ValueError(
+            f"turbulence model {name!r} is registered as a {registered_family} closure "
+            f"but the case selects it as {case_family} — OpenFOAM keeps a separate "
+            f"selection table per family, so this is not the same model"
+        )
 
     model_runtime = spec.instantiate(Path(case_dir))
 

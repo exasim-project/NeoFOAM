@@ -13,28 +13,37 @@ import pytest
 import neofoam.algorithms.solution_loop as loop_pkg
 from neofoam.algorithms.solution_loop.interfaces import (
     VGREAT,
+    initialTimeStepConstraint,
     loopCondition,
+    maxTimeStep,
     solutionLoop,
     timeStepConstraint,
 )
 from neofoam.framework.model import ModelInterface
 
-
-def test_loop_interfaces_are_owned_by_the_loop_model() -> None:
-    assert isinstance(timeStepConstraint, ModelInterface)
-    assert isinstance(loopCondition, ModelInterface)
-    assert timeStepConstraint.owner is solutionLoop
-    assert loopCondition.owner is solutionLoop
-    assert solutionLoop.declared_interfaces["timeStepConstraint"] is timeStepConstraint
-    assert solutionLoop.declared_interfaces["loopCondition"] is loopCondition
+_LIMIT_INTERFACES = [timeStepConstraint, maxTimeStep, initialTimeStepConstraint]
 
 
+@pytest.mark.parametrize(
+    "interface",
+    _LIMIT_INTERFACES + [loopCondition],
+    ids=lambda iface: iface.name,
+)
+def test_loop_interfaces_are_owned_by_the_loop_model(interface: ModelInterface) -> None:
+    assert isinstance(interface, ModelInterface)
+    assert interface.owner is solutionLoop
+    assert solutionLoop.declared_interfaces[interface.name] is interface
+
+
+@pytest.mark.parametrize("interface", _LIMIT_INTERFACES, ids=lambda iface: iface.name)
 @pytest.mark.parametrize(
     "limits, expected",
     [([], VGREAT), ([2.0, 1.0, 3.0], 1.0), ([5.0], 5.0)],
 )
-def test_time_step_constraint_folds_with_min(limits: list[float], expected: float) -> None:
-    assert timeStepConstraint.fold(limits) == expected
+def test_delta_t_limit_interfaces_fold_with_min(
+    interface: ModelInterface, limits: list[float], expected: float
+) -> None:
+    assert interface.fold(limits) == expected
 
 
 @pytest.mark.parametrize(

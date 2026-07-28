@@ -19,6 +19,26 @@ from neofoam.telemetry.report import write_chrome_trace, write_summary_plot
 
 app = typer.Typer()
 
+#: Message printed when a solver command is invoked with ``-postProcess``. Kept in
+#: sync by hand with ``verification.dropin.execute.POSTPROCESS_NOT_IMPLEMENTED``
+#: (not imported — ``cli`` and ``tooling.workflow`` are deliberately not coupled),
+#: which the drop-in study harness matches to classify a run that hit this as
+#: UNSUPPORTED_CASE rather than a solver crash.
+_POSTPROCESS_NOT_IMPLEMENTED = "solver -postProcess mode not implemented"
+
+
+def _reject_postprocess(argv: list[str]) -> None:
+    """Fail fast and clearly on ``-postProcess`` instead of falling through to
+    pybFoam's ``argList``, which does not know the flag and prints a confusing
+    raw usage dump. No neofoam solver implements OpenFOAM's post-processing mode
+    (running the case's registered function objects without solving) — pybFoam
+    exposes no functionObject-execution binding to build it on.
+    """
+    if "-postProcess" in argv:
+        typer.echo(f"neofoam: {_POSTPROCESS_NOT_IMPLEMENTED}", err=True)
+        raise typer.Exit(code=1)
+
+
 # Solver command group
 solver_app = typer.Typer()
 
@@ -193,6 +213,7 @@ def agent_wizard(
 @solver_app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 def icofoam(ctx: typer.Context) -> None:
     """Transient solver for incompressible, laminar flow of Newtonian fluids."""
+    _reject_postprocess(ctx.args)
     # Only pass the extra args (not the Typer command path)
     argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
 
@@ -203,6 +224,7 @@ def icofoam(ctx: typer.Context) -> None:
 @solver_app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 def pimplefoam(ctx: typer.Context) -> None:
     """Transient solver for incompressible, turbulent flow of Newtonian fluids"""
+    _reject_postprocess(ctx.args)
 
     # Only pass the extra args (not the Typer command path)
     argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
@@ -214,6 +236,7 @@ def pimplefoam(ctx: typer.Context) -> None:
 @solver_app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 def neoicofoam(ctx: typer.Context) -> None:
     """Transient solver for incompressible, laminar flow using NeoN bindings."""
+    _reject_postprocess(ctx.args)
     argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
 
     solver = NeoIcoFoam(argv)
@@ -223,6 +246,7 @@ def neoicofoam(ctx: typer.Context) -> None:
 @solver_app.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 def neopimplefoam(ctx: typer.Context) -> None:
     """Transient incompressible PIMPLE solver using NeoN bindings."""
+    _reject_postprocess(ctx.args)
     argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
 
     solver = NeoPimpleFoam(argv)
@@ -235,6 +259,7 @@ def neopimplefoam(ctx: typer.Context) -> None:
 )
 def incompressiblefluid(ctx: typer.Context) -> None:
     """Transient PIMPLE solver for incompressible Newtonian flow."""
+    _reject_postprocess(ctx.args)
     argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
     run_incompressible_fluid(argv)
 
@@ -245,6 +270,7 @@ def incompressiblefluid(ctx: typer.Context) -> None:
 )
 def incompressiblevof(ctx: typer.Context) -> None:
     """incompressibleVoF - interFoam-style VoF solver with surface tension and gravity."""
+    _reject_postprocess(ctx.args)
     argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
     run_incompressible_vof(argv)
 
@@ -255,6 +281,7 @@ def incompressiblevof(ctx: typer.Context) -> None:
 )
 def incompressiblefluidneon(ctx: typer.Context) -> None:
     """Transient PIMPLE solver for incompressible flow (NeoN backend)."""
+    _reject_postprocess(ctx.args)
     argv = [sys.argv[0]] + [str(arg) for arg in ctx.args]
     run_neon(argv)
 

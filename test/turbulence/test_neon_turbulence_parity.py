@@ -41,8 +41,19 @@ _BASE_CASE = _HERE / "parity_base"  # shared no-wall box case (mesh + fields + s
 _MODELS = _HERE / "parity_models"  # per-model constant/turbulenceProperties overlay
 
 #: Add a NeoN model by dropping its ``turbulenceProperties`` under
-#: ``parity_models/<name>/`` and listing it here.
-CASES = ["laminar", "kEpsilon", "SpalartAllmaras", "kOmegaSST"]
+#: ``parity_models/<name>/`` and listing it here. The ``*Coeffs`` entries select the
+#: same closures through a dictionary that sets every ``<model>Coeffs`` coefficient
+#: off its default (plus an unknown key OpenFOAM ignores): both backends read that
+#: one dictionary, so agreement can only mean the NeoN closure honours the overrides.
+CASES = [
+    "laminar",
+    "kEpsilon",
+    "SpalartAllmaras",
+    "kOmegaSST",
+    "kEpsilonCoeffs",
+    "SpalartAllmarasCoeffs",
+    "kOmegaSSTCoeffs",
+]
 
 #: Models exercised on the pybFoam **fallback** path (``select(fallback=True)``).
 #: Every dual model plus the fallback-only ``realizableKE`` (which has no native

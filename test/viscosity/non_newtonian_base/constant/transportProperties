@@ -1,0 +1,34 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      transportProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// CrossPowerLaw: nu = (nu0 - nuInf)/(1 + (m*strainRate)^n) + nuInf.
+// No native NeoFOAM viscosity model is registered for it, so the solver's
+// selection resolves to the OpenFOAM fallback adapter. The coefficients are
+// chosen to keep the expected nu short exact decimals — see
+// test_non_newtonian_fallback_nu.py.
+
+transportModel  CrossPowerLaw;
+
+CrossPowerLawCoeffs
+{
+    nu0         1e-03;
+    nuInf       1e-05;
+    m           1;
+    n           2;
+}
+
+
+// ************************************************************************* //

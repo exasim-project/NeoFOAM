@@ -61,6 +61,19 @@ def test_preprocess_command_wires_case_argv(monkeypatch: pytest.MonkeyPatch) -> 
     assert captured["argv"][1:] == ["-case", "/some/case"]
 
 
+def test_solver_command_rejects_postprocess_with_a_clear_error() -> None:
+    """No neofoam solver implements OpenFOAM's ``-postProcess`` mode (running
+    the case's registered function objects without solving) — pybFoam exposes
+    no functionObject-execution binding to build it on. The CLI must fail fast
+    with a one-line message instead of falling through to pybFoam's
+    ``argList``, which prints a confusing raw usage dump for an unknown flag.
+    """
+    result = CliRunner().invoke(app, ["solver", "incompressiblevof", "-postProcess", "-time", "0"])
+
+    assert result.exit_code == 1
+    assert "solver -postProcess mode not implemented" in result.output
+
+
 def test_preprocess_command_runs_pipeline_only(tmp_path: Path) -> None:
     case = tmp_path / "case"
     shutil.copytree(CASE, case)

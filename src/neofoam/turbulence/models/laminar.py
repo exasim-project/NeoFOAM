@@ -37,11 +37,11 @@ from neofoam.framework.initialization import InitStep
 from neofoam.framework.initialization import field as init_field
 
 from ..config import TurbulencePropertiesConfig
-from ..momentumTransport import Model, momentumTransportModel
+from ..momentumTransport import Model, register_momentum_transport
 
 __all__ = ["laminar"]
 
-laminar = Model("laminar").register_with(momentumTransportModel)
+laminar = register_momentum_transport(Model("laminar"), family="laminar")
 laminar.config(TurbulencePropertiesConfig)
 
 
