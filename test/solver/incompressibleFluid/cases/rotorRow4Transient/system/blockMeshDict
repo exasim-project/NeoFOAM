@@ -1,0 +1,68 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+
+// Four unit cells in a row along x (transient twin of ``rotorRow4``). The first block is named `rotor`, which is
+// how blockMesh puts its two cells (x < 2) into a cellZone of that name — the
+// zone constant/MRFProperties rotates. Unit cells make the cell volume exactly
+// 1, so an fvMatrix source contribution equals the field value it came from.
+
+convertToMeters 1;
+
+vertices
+(
+    (0 0 0)   (2 0 0)   (4 0 0)
+    (0 1 0)   (2 1 0)   (4 1 0)
+    (0 0 1)   (2 0 1)   (4 0 1)
+    (0 1 1)   (2 1 1)   (4 1 1)
+);
+
+blocks
+(
+    hex (0 1 4 3 6 7 10 9) rotor (2 1 1) simpleGrading (1 1 1)
+    hex (1 2 5 4 7 8 11 10)       (2 1 1) simpleGrading (1 1 1)
+);
+
+edges ();
+
+boundary
+(
+    inlet
+    {
+        type patch;
+        faces ((0 6 9 3));
+    }
+    outlet
+    {
+        type patch;
+        faces ((2 5 11 8));
+    }
+    walls
+    {
+        type wall;
+        faces
+        (
+            (0 1 7 6)
+            (1 2 8 7)
+            (3 9 10 4)
+            (4 10 11 5)
+        );
+    }
+    frontAndBack
+    {
+        type empty;
+        faces
+        (
+            (0 3 4 1)
+            (1 4 5 2)
+            (6 7 10 9)
+            (7 8 11 10)
+        );
+    }
+);
+
+mergePatchPairs ();

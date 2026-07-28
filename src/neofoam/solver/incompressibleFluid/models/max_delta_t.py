@@ -1,19 +1,19 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""maxDeltaT — a constant deltaT cap as a timeStepConstraint contribution.
+"""maxDeltaT — a constant deltaT ceiling as a maxTimeStep contribution.
 
 A pure-Python optional model: it owns one ``@IOStrategy`` config
 (``system/controlDict`` ``maxDeltaT``) and contributes a single float limit to the
-``timeStepConstraint`` gather point. The contribution injects only its config (no
+``maxTimeStep`` gather point. The contribution injects only its config (no
 pybFoam field) — the field-free half of the CFL/maxDeltaT migration; only the
 activation detect reads the case dictionary.
 
 The model registers with the family (so it is discoverable case-free) and the
-contribution is **bound to the model** via ``@maxDeltaT.contributes(timeStepConstraint)``.
+contribution is **bound to the model** via ``@maxDeltaT.contributes(maxTimeStep)``.
 Folding is automatic: the contribution participates iff the ``maxDeltaT`` model is active
 for the case — gating is intrinsic to the bound contributor runtimes, matched to the
-owning ``timeStepConstraint`` interface by ``ModelSpec`` identity, not a name lookup in
+owning ``maxTimeStep`` interface by ``ModelSpec`` identity, not a name lookup in
 ``ctx.models``. No import-time activation toggle.
 """
 
@@ -22,7 +22,7 @@ import os
 from pybFoam import dictionary
 from pydantic import Field
 
-from neofoam.algorithms.solution_loop.interfaces import timeStepConstraint
+from neofoam.algorithms.solution_loop.interfaces import maxTimeStep
 from neofoam.io import OF, BaseConfig, IOStrategy
 
 from .incompressibleFluidModel import Model, incompressibleFluidModel
@@ -54,7 +54,13 @@ def detect_model() -> bool:
     return bool(adaptive and cd.found("maxDeltaT"))
 
 
-@maxDeltaT.contributes(timeStepConstraint)
+@maxDeltaT.contributes(maxTimeStep)
 def max_delta_t_limit(cfg: MaxDeltaTConfig) -> float:
-    """The largest deltaT this model permits — the constant cap (config only)."""
+    """The constant deltaT ceiling this model imposes (config only).
+
+    ``setDeltaT.H`` clips it onto the already-damped step
+    (``min(deltaTFact*deltaT, maxDeltaT)``), so it is a ``maxTimeStep`` ceiling
+    rather than a ``timeStepConstraint`` limit: pushing it through the growth
+    damping would give a different (smaller) step whenever it binds.
+    """
     return cfg.maxDeltaT

@@ -16,7 +16,7 @@ per-spec slices are obtained from ``pimple.config(fvSchemes)`` /
 model rather than mutating the shared base classes.
 """
 
-from typing import Annotated, Any, Callable, Protocol
+from typing import Annotated, Any, Callable, Optional, Protocol
 
 import pybFoam as pyf
 from pybFoam import (
@@ -25,6 +25,7 @@ from pybFoam import (
     fvScalarMatrix,
     fvVectorMatrix,
     surfaceScalarField,
+    surfaceVectorField,
     volScalarField,
     volVectorField,
 )
@@ -59,7 +60,7 @@ from neofoam.framework.operations import (
 from neofoam.framework.types import OperationMetadata
 
 from ..incompressibleFluidModel import Model
-from .control_factory import create_pimple_control
+from .control_factory import create_dynamic_mesh_controls, create_pimple_control
 
 pimple = Model("Pimple")
 
@@ -132,6 +133,16 @@ class ViscousStress(Protocol):
     def divDevReff(self, U: volVectorField) -> Any: ...
 
 
+def _report_continuity_errors(phi: surfaceScalarField, cumulativeContErr: list[float]) -> None:
+    """Print the ``continuityErrs.H`` line and accumulate the global error."""
+    sum_local, global_err = pyf.computeContinuityErrors(phi)
+    cumulativeContErr[0] += global_err
+    pyf.Info(
+        f"time step continuity errors : sum local = {sum_local}, "
+        f"global = {global_err}, cumulative = {cumulativeContErr[0]}"
+    )
+
+
 @pimple.build
 def build(self: Any) -> list[Any]:
     """Lazy initializers for PIMPLE state (non-field bits only).
@@ -154,6 +165,21 @@ def build(self: Any) -> list[Any]:
 
     def create_cumulative_cont_err(_context: dict[str, Any]) -> list[float]:
         return [0.0]
+
+    def create_Uf(context: dict[str, Any]) -> Optional[surfaceVectorField]:
+        """Face velocity ``Uf`` — transcription of ``createUfIfPresent.H``.
+
+        Only a dynamic mesh has one: it is what the moving-mesh
+        ``fvc::ddtCorr(U, phi, Uf)`` and ``fvc::correctUf`` work on, and its
+        absence is what tells the pressure corrector to keep the two-argument
+        ``ddtCorr``. Native reads ``<time>/Uf`` when present (a restart); pybFoam
+        has no READ_IF_PRESENT overload, so this always starts from
+        ``fvc::interpolate(U)`` — identical for a run started from time 0.
+        """
+        if not context["mesh"].dynamic():
+            return None
+        pyf.Info("Constructing face velocity Uf")
+        return surfaceVectorField(pyf.Word("Uf"), fvc.interpolate(context["fields.U"]))
 
     def create_pressure_reference(context: dict[str, Any]) -> dict[str, Any]:
         p = context["fields.p"]
@@ -189,6 +215,8 @@ def build(self: Any) -> list[Any]:
         # ``field()`` helper until a surface-field schema lands.
         field("phi", create_phi, depends_on=["fields.U"], write=True),
         model("pimple_control", create_pimple_control, depends_on=["mesh"]),
+        model("dynamic_mesh_controls", create_dynamic_mesh_controls, depends_on=["mesh"]),
+        model("Uf", create_Uf, depends_on=["mesh", "fields.U"]),
         model("cumulativeContErr", create_cumulative_cont_err),
     ]
 
@@ -216,12 +244,74 @@ def inner_loop(ctx: Context) -> bool:
         # and pressure equations pass this flag explicitly (U.select / p.select
         # below), so the mesh flag is only needed for solves buried inside
         # OpenFOAM library code — the turbulence model's k/epsilon/nuTilda
-        # solves in ``turbulence.correct()``, which take no argument. The flag
-        # deliberately stays raised on exit — that correction runs after this
-        # loop in the framework graph but inside the final outer iteration
-        # natively; the next step's first call lowers it.
+        # solves in ``turbulence.correct()``, which take no argument, and
+        # ``p.relax()``'s pFinal lookup. The flag deliberately stays raised on
+        # exit (native lowers it there): with the correction now inside the
+        # loop, only the write phase's function objects still see it, and they
+        # match native today. The next step's first call lowers it.
         ctx.mesh.setFinalIteration(pimple.finalIter())
     return looping
+
+
+@pimple.operation()
+def mesh_update(
+    ctx: Context,
+    U: volVectorField,
+    phi: surfaceScalarField,
+    p: volScalarField,
+    pimple_control: Annotated[Any, "models"],
+    dynamic_mesh_controls: Annotated[dict[str, bool], "models"],
+    cumulativeContErr: Annotated[list[float], "models"],
+    Uf: Annotated[Optional[surfaceVectorField], "models"] = None,
+    mrf_zones: Annotated[Optional[pyf.IOMRFZoneList], "models"] = None,
+) -> FieldUpdates:
+    """Move the mesh at the head of the outer corrector (pimpleFoam's ``mesh.update()``).
+
+    Runs on the first outer iteration only, unless the case sets
+    ``moveMeshOuterCorrectors`` — the guard native uses. A mesh that actually
+    changed invalidates the MRF zone faces (re-found on the new topology) and the
+    face flux, which — when the case asks for ``correctPhi`` — is rebuilt from the
+    mapped face velocity, projected divergence-free and handed on relative to the
+    mesh motion.
+
+    A static mesh returns immediately, so this operation cannot perturb a static
+    case.
+    """
+    mesh = ctx.mesh
+    if not mesh.dynamic():
+        return FieldUpdates({})
+
+    if not (pimple_control.firstIter() or dynamic_mesh_controls["moveMeshOuterCorrectors"]):
+        return FieldUpdates({})
+
+    # controlledUpdate(), not update(): the dynamicMeshDict may carry
+    # updateControl/updateInterval, which move the mesh only every so many steps.
+    mesh.controlledUpdateMesh()
+    if not mesh.changing():
+        return FieldUpdates({})
+
+    if mrf_zones is not None:
+        mrf_zones.update()
+    if not dynamic_mesh_controls["correctPhi"]:
+        return FieldUpdates({})
+
+    assert Uf is not None  # createUfIfPresent.H gives every dynamic mesh a Uf
+    # The mesh moved under the old flux, so phi no longer belongs to this geometry:
+    # rebuild it as the absolute flux of the mapped face velocity, project that
+    # divergence-free, and hand it on relative to the mesh motion. Unlike interFoam,
+    # pimpleFoam's correctPhi.H always projects with a uniform rAUf of 1 rather than
+    # the last corrector's 1/UEqn.A(), so no rAU has to survive the time step.
+    phi.assign(mesh.Sf() & Uf)
+    pyf.CorrectPhi(
+        U,
+        phi,
+        p,
+        pyf.dimensionedScalar(pyf.Word("rAUf"), pyf.dimTime, 1.0),
+        pimple_control.nNonOrthogonalCorrectors,
+    )
+    _report_continuity_errors(phi, cumulativeContErr)
+    fvc.makeRelative(phi, U)
+    return FieldUpdates({"phi": phi})
 
 
 @pimple.operation(operation_number="2.1")
@@ -241,7 +331,15 @@ def momentum(
     viscousStress: Annotated[ViscousStress, "models"],
     pimple_control: Annotated[Any, "models"],
     ctx: Context,
+    mrf_zones: Annotated[Optional[pyf.IOMRFZoneList], "models"] = None,
+    fv_options: Annotated[Optional[pyf.fvOptions], "models"] = None,
 ) -> FieldUpdates:
+    # Start-of-outer-iteration prevIter snapshot: ``pimpleControl::loop()`` calls
+    # ``storePrevIterFields()`` so the pressure corrector's ``p.relax()`` has a
+    # previous state to blend against; p is untouched until the pressure solve,
+    # so storing here is equivalent (same placement as simpleAlgorithm).
+    p.storePrevIter()
+
     # Refresh the effective viscosity right where it is consumed: the momentum
     # transport model owns nuEff (nu + nut); ``update`` reads the current nu/nut
     # from the Context (a laminar model has no nut, the OpenFOAM fallback owns its
@@ -249,8 +347,26 @@ def momentum(
     # matches OpenFOAM's once-per-step eddy viscosity.
     with telemetry.span("momentum.assemble"):
         viscousStress.update(ctx)
-        UEqn = fvVectorMatrix(fvm.ddt(U) + fvm.div(phi, U) + viscousStress.divDevReff(U))
+        if mrf_zones is None:
+            UEqn = fvVectorMatrix(fvm.ddt(U) + fvm.div(phi, U) + viscousStress.divDevReff(U))
+        else:
+            # UEqn.H under a rotating frame: the wall velocities on the MRF
+            # patches are set first (they feed the boundary coefficients of
+            # ``div(phi,U)``), then the frame acceleration joins the sum.
+            mrf_zones.correctBoundaryVelocity(U)
+            UEqn = fvVectorMatrix(
+                fvm.ddt(U) + fvm.div(phi, U) + mrf_zones.DDt(U) + viscousStress.divDevReff(U)
+            )
+        if fv_options is not None:
+            # ``== fvOptions(U)`` moves the source to the right-hand side, i.e.
+            # subtracts it from the assembled matrix. UEqn.H's three fvOptions
+            # calls sit at three exact points, and the order is the physics: the
+            # source joins the sum BEFORE relaxation, the constraints are applied
+            # AFTER it, and the correction runs after the solve.
+            UEqn = fvVectorMatrix(UEqn - fv_options(U))
         UEqn.relax()
+        if fv_options is not None:
+            fv_options.constrain(UEqn)
 
     if pimple_control.momentumPredictor():
         with telemetry.span("momentum.solve"):
@@ -260,6 +376,8 @@ def momentum(
             # pressure loop; the predictor system ``UEqn + grad(p)`` is a
             # separate matrix whose solve updates U.
             fvVectorMatrix(UEqn + fvc.grad(p)).solve(U.select(pimple_control.finalIter()))
+        if fv_options is not None:
+            fv_options.correct(U)
 
     return FieldUpdates({"UEqn": UEqn, "U": U})
 
@@ -280,7 +398,15 @@ def continuity(
     pimple_control: Annotated[Any, "models"],
     cumulativeContErr: Annotated[list[float], "models"],
     pressure_reference: Annotated[dict[str, Any], "models"],
+    Uf: Annotated[Optional[surfaceVectorField], "models"] = None,
+    mrf_zones: Annotated[Optional[pyf.IOMRFZoneList], "models"] = None,
+    fv_options: Annotated[Optional[pyf.fvOptions], "models"] = None,
 ) -> FieldUpdates:
+    """Pressure-velocity coupling.
+
+    ``Uf`` is the moving-mesh face velocity — ``None`` on a static mesh, where
+    every mesh-motion term below reduces to the static form it always had.
+    """
     pRefCell = pressure_reference["pRefCell"]
     pRefValue = pressure_reference["pRefValue"]
 
@@ -289,13 +415,41 @@ def continuity(
             rAU = volScalarField(pyf.Word("rAU"), 1.0 / UEqn.A())
             HbyA = volVectorField(pyf.constrainHbyA(rAU * UEqn.H(), U, p))
 
-            phiHbyA = surfaceScalarField(
-                pyf.Word("phiHbyA"),
-                fvc.flux(HbyA) + fvc.interpolate(rAU) * fvc.ddtCorr(U, phi),
-            )
+            # ddtCorr: on a moving mesh the correction is built from the face
+            # velocity instead of the flux — what native's fvc::ddtCorr(U, phi, Uf)
+            # dispatches to when mesh.dynamic().
+            ddt_corr = fvc.ddtCorr(U, phi) if Uf is None else fvc.ddtCorr(U, Uf)
+            if mrf_zones is None:
+                phiHbyA = surfaceScalarField(
+                    pyf.Word("phiHbyA"),
+                    fvc.flux(HbyA) + fvc.interpolate(rAU) * ddt_corr,
+                )
+            else:
+                # pEqn.H under a rotating frame: the ddt correction is zeroed
+                # inside the MRF cells (it belongs to the absolute frame), then
+                # the whole flux is taken relative to the rotation.
+                phiHbyA = surfaceScalarField(
+                    pyf.Word("phiHbyA"),
+                    fvc.flux(HbyA) + mrf_zones.zeroFilter(fvc.interpolate(rAU) * ddt_corr),
+                )
+                mrf_zones.makeRelative(phiHbyA)
 
+            # adjustPhi balances the global flux, which only means anything
+            # relative to the moving mesh — hence native's
+            # makeRelative/makeAbsolute bracket. Both are no-ops on a static mesh,
+            # but the pair is not bit-exact in floating point, so it stays behind
+            # the same needReference() guard native uses (the guard adjustPhi
+            # itself applies internally).
+            needs_reference = p.needReference()
+            if needs_reference:
+                fvc.makeRelative(phiHbyA, U)
             pyf.adjustPhi(phiHbyA, U, p)
-            pyf.constrainPressure(p, U, phiHbyA, rAU)
+            if needs_reference:
+                fvc.makeAbsolute(phiHbyA, U)
+            if mrf_zones is None:
+                pyf.constrainPressure(p, U, phiHbyA, rAU)
+            else:
+                pyf.constrainPressure(p, U, phiHbyA, rAU, mrf_zones)
 
         while pimple_control.correctNonOrthogonal():
             with telemetry.span("pressure.assemble"):
@@ -307,15 +461,28 @@ def continuity(
             if pimple_control.finalNonOrthogonalIter():
                 phi.assign(phiHbyA - pEqn.flux())
 
+        # Explicit pressure under-relaxation before the momentum corrector
+        # (pEqn.H). A no-op unless the case declares a ``p`` field relaxation
+        # factor; on the final outer iteration the name becomes ``pFinal``.
+        p.relax()
         U.assign(HbyA - rAU * fvc.grad(p))
         U.correctBoundaryConditions()
+        if fv_options is not None:
+            # pEqn.H closes on a second ``fvOptions.correct(U)``: the corrector
+            # has just overwritten U, so any correction the predictor applied is
+            # gone.
+            fv_options.correct(U)
 
-        sum_local, global_err = pyf.computeContinuityErrors(phi)
-        cumulativeContErr[0] += global_err
-        pyf.Info(
-            f"time step continuity errors : sum local = {sum_local}, "
-            f"global = {global_err}, cumulative = {cumulativeContErr[0]}"
-        )
+        _report_continuity_errors(phi, cumulativeContErr)
+
+        if Uf is not None:
+            # Moving mesh: refresh the face velocity from the corrected U/phi and
+            # hand phi on relative to the mesh motion (pEqn.H's last two lines).
+            # They must stay after the continuity report: native reports on the
+            # *absolute* flux the pressure solve produced, and this pair is what
+            # turns it relative.
+            fvc.correctUf(Uf, U, phi)
+            fvc.makeRelative(phi, U)
 
     return FieldUpdates({"U": U, "p": p, "phi": phi})
 
@@ -464,6 +631,17 @@ def collected_operations(self: Any) -> Operations:
     else:
         momentum_op = momentum
         continuity_op = continuity
+        # Mesh motion is wired into the plain PIMPLE arm only. The boussinesq arm
+        # carries a buoyancy head gh/ghf tied to the cell centres, which a mesh
+        # move would invalidate; no buoyant tutorial has a dynamicMeshDict, so it
+        # keeps the static path rather than gaining a silently stale one.
+        model_ops.add(
+            _alias_operation(
+                wrap_with_dependency_resolution(mesh_update, self, pimple._dependency_resolver),
+                operation_name="mesh_update",
+                depends_on=[],
+            )
+        )
 
     wrapped_momentum = wrap_with_dependency_resolution(
         momentum_op, self, pimple._dependency_resolver

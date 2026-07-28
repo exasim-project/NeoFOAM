@@ -1,7 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Spec for the maxDeltaT optional model and its timeStepConstraint contribution."""
+"""Spec for the maxDeltaT optional model and its maxTimeStep contribution.
+
+The cap contributes to ``maxTimeStep``, not ``timeStepConstraint``: ``setDeltaT.H``
+clips ``maxDeltaT`` onto the already-damped step, and the growth damping does not
+distribute over that outer ``min``.
+"""
 
 # NOTE: no `from __future__ import annotations` — keep annotations live.
 
@@ -11,7 +16,7 @@ from typing import Any, cast
 import pytest
 from pydantic import ValidationError
 
-from neofoam.algorithms.solution_loop.interfaces import VGREAT, timeStepConstraint
+from neofoam.algorithms.solution_loop.interfaces import VGREAT, maxTimeStep, timeStepConstraint
 from neofoam.framework.context import Context
 from neofoam.framework.model import BoundModelInterface, ModelRuntime
 from neofoam.solver.incompressibleFluid.models.incompressibleFluidModel import (
@@ -55,14 +60,21 @@ def test_config_rejects_non_positive_cap(bad: float) -> None:
 
 def test_contribution_caps_delta_t_when_model_active() -> None:
     ctx = Context(fields={}, models={})
-    bound = BoundModelInterface(timeStepConstraint, [_max_runtime(0.5)], ctx)
+    bound = BoundModelInterface(maxTimeStep, [_max_runtime(0.5)], ctx)
     assert bound() == pytest.approx(0.5)
 
 
 def test_contribution_excluded_when_model_inactive() -> None:
     ctx = Context(fields={}, models={})
-    bound = BoundModelInterface(timeStepConstraint, [], ctx)
+    bound = BoundModelInterface(maxTimeStep, [], ctx)
     assert bound() == VGREAT
+
+
+def test_cap_never_reaches_the_damped_courant_fold() -> None:
+    # setDeltaT.H computes deltaTFact from the Courant factor ALONE; folding the cap
+    # into that limit would damp it (min(f, 1+0.1f, 1.2)) instead of clipping with it.
+    ctx = Context(fields={}, models={})
+    assert BoundModelInterface(timeStepConstraint, [_max_runtime(0.5)], ctx)() == VGREAT
 
 
 def test_fold_raises_when_config_is_absent() -> None:
@@ -70,11 +82,11 @@ def test_fold_raises_when_config_is_absent() -> None:
     # interface, the contribution, and the unresolved parameter.
     rt = ModelRuntime(spec=maxDeltaT, name="maxDeltaT", config=None)
     ctx = Context(fields={}, models={})
-    bound = BoundModelInterface(timeStepConstraint, [rt], ctx)
+    bound = BoundModelInterface(maxTimeStep, [rt], ctx)
     with pytest.raises(ValueError) as exc:
         bound()
     message = str(exc.value)
-    assert "timeStepConstraint" in message
+    assert "maxTimeStep" in message
     assert "max_delta_t_limit" in message
     assert "cfg" in message
 
@@ -91,7 +103,7 @@ def test_config_presence_activates_contribution_through_detection(
     detected = {rt.name: rt for rt in incompressibleFluidModel.detect_models(Path("."))}
     assert "maxDeltaT" in detected
     ctx = Context(fields={}, models={})
-    bound = BoundModelInterface(timeStepConstraint, [detected["maxDeltaT"]], ctx)
+    bound = BoundModelInterface(maxTimeStep, [detected["maxDeltaT"]], ctx)
     assert bound() == pytest.approx(0.5)
 
 
@@ -106,7 +118,7 @@ def test_absent_config_leaves_contribution_unfolded_through_detection(
     detected = {rt.name: rt for rt in incompressibleFluidModel.detect_models(Path("."))}
     assert "maxDeltaT" not in detected
     ctx = Context(fields={}, models={})
-    bound = BoundModelInterface(timeStepConstraint, list(detected.values()), ctx)
+    bound = BoundModelInterface(maxTimeStep, list(detected.values()), ctx)
     assert bound() == VGREAT
 
 
@@ -120,7 +132,7 @@ def test_two_runs_in_one_process_flip_participation(
     monkeypatch.chdir(case1.path)
 
     m1 = {rt.name: rt for rt in incompressibleFluidModel.detect_models(Path("."))}
-    b1 = BoundModelInterface(timeStepConstraint, [m1["maxDeltaT"]], Context(fields={}, models={}))
+    b1 = BoundModelInterface(maxTimeStep, [m1["maxDeltaT"]], Context(fields={}, models={}))
     assert b1() == pytest.approx(0.5)
 
     case2 = (from_template(_BASE) | patch("system/controlDict", {"adjustTimeStep": True})).build_at(
@@ -129,7 +141,7 @@ def test_two_runs_in_one_process_flip_participation(
     monkeypatch.chdir(case2.path)
 
     m2 = {rt.name: rt for rt in incompressibleFluidModel.detect_models(Path("."))}
-    b2 = BoundModelInterface(timeStepConstraint, list(m2.values()), Context(fields={}, models={}))
+    b2 = BoundModelInterface(maxTimeStep, list(m2.values()), Context(fields={}, models={}))
     assert b2() == VGREAT
 
 

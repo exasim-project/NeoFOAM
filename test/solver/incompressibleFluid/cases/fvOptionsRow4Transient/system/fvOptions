@@ -1,0 +1,27 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvOptions;
+}
+
+// Transient twin of ``fvOptionsRow4``: the same explicit momentum source on the
+// `source` cellZone (the two cells at x < 2). `volumeMode specific` means the
+// value below is the source per unit volume, so SemiImplicitSource adds it to
+// the equation as `eqn += Su`, i.e. shifts the matrix source by +V*Su there.
+
+momentumSource
+{
+    type            vectorSemiImplicitSource;
+
+    selectionMode   cellZone;
+    cellZone        source;
+
+    volumeMode      specific;
+
+    sources
+    {
+        U           ((0 5 0) 0);
+    }
+}

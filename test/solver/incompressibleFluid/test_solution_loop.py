@@ -13,6 +13,7 @@ from typing import cast
 
 import pytest
 
+from neofoam.algorithms.solution_loop.interfaces import VGREAT
 from neofoam.algorithms.solution_loop.loop_state import LoopState
 from neofoam.algorithms.solution_loop.solution_loop import SolutionLoop
 from neofoam.framework.context import Context
@@ -52,7 +53,7 @@ class FakeRuntime:
         self.delta_t: float = 0.0
         self.steps = 0
 
-    def setDeltaT(self, dt: float) -> None:
+    def setDeltaT(self, dt: float, adjust: bool = True) -> None:
         self.delta_t = dt
 
     def increment(self) -> None:
@@ -166,4 +167,6 @@ def test_active_maxdeltat_contributor_caps_the_step() -> None:
         set_time_step, instance=None, dependency_resolver=DependencyResolver()
     )(ctx)
     assert loop.state.delta_t == pytest.approx(0.5)
-    assert loop.next_dt == pytest.approx(0.5)  # the folded limit the driver recorded
+    # maxDeltaT is a hard ceiling (setDeltaT.H clips it onto the damped step), not a
+    # timeStepConstraint limit, so next_dt — the Courant-style fold — stays unopinionated.
+    assert loop.next_dt == VGREAT
