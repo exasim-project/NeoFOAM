@@ -74,7 +74,7 @@ precond 'gmg'" is not actionable without it.
 *(from `include/NeoN/blockAmr/linearAlgebra/faceCoeffMatrix.hpp`)*
 
 The matrix formats' half of the boundary-condition contract; the operator's half is
-`operators/laplacian.hpp` and `plans/blockamr-linear-algebra-notes.md#laplacian-bcs`.
+`operators/laplacian.hpp` and `report/blockamr-linear-algebra-notes.md#laplacian-bcs`.
 
 Both formats carry a `BcArray`, and so does `ops::Laplacian`. It looks like a double fold
 and is not.
