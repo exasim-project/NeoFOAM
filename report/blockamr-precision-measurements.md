@@ -235,3 +235,165 @@ Measured, 256^3 single box, level-0 agglomerated, one cycle from z0 = 0:
 So: narrow the coefficients only once the FIELDS are narrow. Under fp32
 fields it is 1.18x off the cycle at a residual reduction indistinguishable
 from fp32's; under fp64 fields the same change costs 11%.
+
+---
+
+## The norm at the fp64/T boundary
+
+*(from `src/NeoN/include/NeoN/blockAmr/linearAlgebra/gmg/gmgKernels.hpp`,
+`faceCoeffResidScatterNorm`)*
+
+`faceCoeffResidScatterNorm` forms the residual in DOUBLE and stores it cast to the
+hierarchy's `T` straight into the L0 rhs; the light second kernel then reduces the
+STORED values, so the norm the solver stops on is the norm of what the V-cycle will
+actually see. That is bit-exact FP64 for `T=double`. For `T=float` it carries ~6e-8
+relative rounding — far below the ~10x per-cycle residual drop, so the stopping cycle
+is unchanged (verified: identical iteration count and identical answer). The host twin
+reduces the stored value in the same MFIter/k/j/i order, so reference and cuda return
+an identical norm.
+
+Kernel-level precision rule throughout the hierarchy: locals are `GmgComputeT<T>`
+(= `T` except `float` for `Bf16`), so a kernel mixing a stored value with a literal
+weight spells the weight `GmgComputeT<T>` and a bf16 level never rounds it to 3
+digits. `acc`, `off` and `diag` are where this matters — see the residual-cancellation
+argument above.
+
+---
+
+## Why fp32 is the default
+
+*(from `src/NeoN/src/blockAmr/python/blockamr/solver_config.py`, `GmgConfig.precision`)*
+
+The V-cycle is bandwidth-bound and only STEERS CG: the outer operator, the residual
+and the stopping test stay fp64 whatever the hierarchy is stored in, so a narrower
+hierarchy can cost iterations but never correctness. Measured at 128^3: 1.49x faster
+for an identical iteration count, with the converged answer moving 2.7e-18 -- below
+the fp64 path's own run-to-run noise floor. That is why `GmgConfig.precision`
+defaults to `"fp32"` and not to the byte-for-byte historical `"fp64"`.
+
+`"bf16"` is reachable but is a measured negative result rather than a recommended
+setting: there is no mesh size at which it wins. It is 1.36x off the V-cycle, but
+psi's storage error reaches the coarse grid multiplied by ||A|| ~ 6/dx^2, so the
+cycle weakens as n^2 and the CG iteration count more than doubles already at 64^3
+(11 -> 25) and reaches 273 vs 12 at 256^3. It also needs `precond="gmg_kokkos"`:
+the shipped GMG hierarchy carries fp64/fp32 only, and the solver raises for the
+other `precond` values. Full argument and tables under
+[bfloat16 as a STORAGE type](#bfloat16-as-a-storage-type-for-the-gmg-level-hierarchy).
+
+`coeff_precision` is the half of that experiment that survives -- see
+[`GmgArgs::coeffPrecision`](#gmgargscoeffprecision----the-fieldscoefficients-split).
+Rounding a coefficient only perturbs the preconditioner's operator, where rounding
+psi is amplified by ||A||. It may not be wider than `precision` and likewise needs
+`precond="gmg_kokkos"`.
+
+---
+
+## The default V-cycle shape
+
+`gmg_min_bottom=2`, `gmg_coarsest_sweeps=16`, `gmg_omega=1.1`.
+
+*(from `src/NeoN/src/blockAmr/bindings/ginkgoSolve.cpp`, the `nb::arg` defaults)*
+
+`gmg_min_bottom=2` and `gmg_coarsest_sweeps=16` (with `gmg_omega=1.1`) are a MEASURED
+shape, not the historical one -- the previous 4/8/1.0 predated agglomeration, fp32,
+shared coefficients and level-0 re-decomposition, four features that each changed what
+a level costs. The three compose super-additively, because a deeper ladder is what
+makes extra bottom sweeps cheap (a 2^3 bottom is 8 cells) and a better-solved bottom is
+what makes the deeper ladder pay. Preconditioned CG on the periodic Helmholtz problem,
+fp32 hierarchy, level-0 agglomerated:
+
+| grid  | 4/8/1.0  | 2/16/1.1 | speedup |
+| ----- | -------- | -------- | ------- |
+| 64^3  | 11 iters | 8 iters  | 1.23x   |
+| 128^3 | 11 iters | 8 iters  | 1.28x   |
+| 256^3 | 12 iters | 8 iters  | 1.40x   |
+
+The iteration count is now FLAT in N, which is the mesh-independence multigrid is
+supposed to have and 4/8/1.0 did not. Confirmed off the constant-coefficient problem at
+128^3 (smooth b 12->8, a 1e4 b jump 28->23, 4:1 anisotropic cells 81->59), and every
+knob is load-bearing in the drop-one controls on every one of those.
+
+### Why over-relaxing helps a SMOOTHER
+
+A smoother is not trying to solve anything: its whole job is to annihilate the modes the
+coarse grid cannot represent, theta in [pi/2, pi]. At omega=1 RB-GS damps that band very
+unevenly -- modes near pi are crushed while modes near pi/2, exactly where the coarse
+grid is also weakest, are barely touched -- and the cycle's contraction is set by the
+WORST mode in the band. Over-relaxing trades surplus damping near pi for scarce damping
+near pi/2, which lowers that maximum. MLMG's own `abec_gsrb` over-relaxes for the same
+reason, at 1.15.
+
+It is bounded on the other side by symmetry: `omega != 1.0` makes the colour sweep
+non-self-adjoint, so the V-cycle is no longer exactly SPD even with the reversed
+post-smooth, and CG's theory stops applying. Harmless for `solver="gmg"`/`"ir"`
+(stationary iterations); for `precond="gmg"` it is a real cost, and the measured
+turnover is where it starts to outweigh the better damping. 256^3, preconditioned CG,
+everything else at the defaults above:
+
+| omega                                          | 0.9 | 1.0 | 1.1 | 1.15 | 1.2 | 1.3 |
+| ---------------------------------------------- | --- | --- | --- | ---- | --- | --- |
+| iters                                          | 15  | 12  | 11  | 11   | 12  | 13  |
+| iters (with min_bottom=2, coarsest_sweeps=16)  | -   | 10  | 8   | 9    | 9   | -   |
+
+Hence 1.1 rather than MLMG's 1.15, which costs an iteration at both 128^3 and 256^3. The
+gain is largest where the coarse grid is worst: 4:1 anisotropic cells (we coarsen all
+three axes, no semicoarsening) go 70 -> 59 iterations, against 12 -> 11 on the isotropic
+problem.
+
+### The two symmetry breakers do not compose
+
+`gmg_omega != 1.0` is the V-cycle's SECOND symmetry breaker; `gmg_pre_sweeps !=
+gmg_post_sweeps` is the first, and it already warns. Either alone is survivable; both at
+once are not (N=32, `precond="gmg"`, 300-iteration budget):
+
+| sweeps | omega=1.0 | omega=1.05 | omega=1.1 | omega=1.15 |
+| ------ | --------- | ---------- | --------- | ---------- |
+| 2 / 1  | 16 iters  | 21 iters   | diverges  | diverges   |
+| 2 / 2  | 8 iters   | 8 iters    | 8 iters   | 8 iters    |
+
+Raising the omega default is safe precisely because the default sweeps are symmetric.
+Set `gmg_omega=1.0` whenever they are not. Pinned by
+`test_asymmetric_sweeps_and_over_relaxation_stack`.
+
+---
+
+## The V-cycle contraction diagnostic
+
+The `solver="gmg"` `contraction` field and its 0.464 threshold.
+
+*(from `src/NeoN/src/blockAmr/linearAlgebra/solve/persistent.cpp`,
+`GmgStationarySolver::solve`)*
+
+A stationary V-cycle contracts the residual by a roughly CONSTANT factor per cycle, so
+`SolveResult::contraction` (the geometric mean of that factor) is the one number that
+says whether the cycle is working -- and it says it even on a run that converged, which
+a pass/fail flag cannot. Without it a caller sees only "did not converge in max_iter"
+and cannot tell a V-cycle grinding at 0.97/cycle from one that diverged on cycle two.
+Only the native stationary path attaches a `diagnostic`, because only there is the
+number a stable property of the method. It is REPORTED, not printed: that path already
+returns a dict the caller reads, and a `std::cerr` warning inside a solve is both
+unmissable in a sweep and unactionable in a script.
+
+The threshold is a "look here" signal, not a tolerance, but it has to sit BELOW the
+cases worth looking at. Measured at N=16 on the constant-coefficient periodic problem,
+smoothing bottom: 0.070 at 1 box, 0.155 at 8 boxes, 0.594 at 64 boxes -- and only the
+last fails to converge in 30 cycles. With a Krylov bottom all three sit at 0.058-0.070,
+which is what "healthy" looks like here. So the degraded case is 4x the healthy rate,
+and a threshold anywhere in between separates them; one decade per 3 cycles
+(rho = 10^(-1/3) = 0.464) is the round number in that gap, and still allows 3x the
+cycles a healthy V-cycle needs before it says anything. Crossing it means something
+structural: most often a bottom grid the smoother cannot solve (see
+`gmg_bottom_solver`), otherwise anisotropy or a coefficient jump the hierarchy does not
+represent.
+
+---
+
+## The constant-coefficient benchmark trap
+
+*(from `src/NeoN/src/blockAmr/bindings/ginkgoSolve.cpp`, `gmg_coeff_precision`)*
+
+On a constant-coefficient Laplacian over a power-of-two grid every coefficient
+(1/dx^2, alpha=1, and the 1/4 and 1/8 restriction weights) is exactly representable, so
+a bf16 hierarchy is BIT-IDENTICAL to an fp32 one and reports the full bandwidth saving
+for free. Every `coeff_precision` row in this document uses a VARYING b for exactly that
+reason.
