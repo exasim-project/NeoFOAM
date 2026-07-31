@@ -58,9 +58,11 @@ MATCHED_TO_ROUNDOFF = "MATCHED_TO_ROUNDOFF"
 FIELDS_DIFFER = "FIELDS_DIFFER"
 SOLVER_FAILED = "SOLVER_FAILED"
 NATIVE_FAILED = "NATIVE_FAILED"
-#: The tutorial's ``Allrun`` has no unique solver token to swap the neofoam app in,
-#: so the drop-in variant cannot be staged — the case is outside what this study
-#: covers, not a solver verdict.
+#: The case cannot be staged as a drop-in — its ``Allrun`` has no unique solver
+#: token to swap the neofoam app in, it drives the solver in a mode neofoam does not
+#: implement (a ``-postProcess`` pre-run that seeds ``0/``), or it needs a solver
+#: capability neofoam refuses outright (a refining ``dynamicFvMesh``). The case is
+#: outside what this study covers, not a solver verdict.
 UNSUPPORTED_CASE = "UNSUPPORTED_CASE"
 #: Staging the case never got as far as a run — e.g. casebuild could not parse the
 #: controlDict (a ``#includeFunc`` it cannot resolve). A harness limitation, not a

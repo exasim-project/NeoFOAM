@@ -47,7 +47,6 @@ BASE_FIELDS = ("U", "p_rgh", "p")
 #: plans/study-decomposition-spec.md. Delete it with `tier` if the answer is no.
 TIER_TITLES = {
     "A": "Tier A — predicted runnable",
-    "B": "Tier B — alpha-advection controls unsupported",
     "C": "Tier C — PIMPLE controls unsupported",
     "D": "Tier D — solver feature not implemented",
 }
@@ -79,15 +78,18 @@ def _feature_blockers(case: Path) -> list[str]:
 
     mesh_dict = read(case / "constant" / "dynamicMeshDict")
     if mesh_dict:
-        # A dict that declares staticFvMesh asks for nothing the solver lacks.
+        # Mesh *motion* is supported (dynamicFvMesh::New + mesh.update()); only
+        # refinement is not, and the solver refuses it up front. Mirror its test:
+        # every OpenFOAM refining mesh type carries "Refine" in its name (see
+        # neofoam.foam.initialization._REFINEMENT_MESH_MARKER).
         kind = entry(mesh_dict, "dynamicFvMesh")
-        if kind and kind != "staticFvMesh":
-            blockers.append(f"dynamic mesh ({kind})")
+        if kind and "Refine" in kind:
+            blockers.append(f"adaptive mesh refinement ({kind})")
 
-    if (case / "constant" / "MRFProperties").is_file():
-        blockers.append("MRF zones")
-    if (case / "system" / "fvOptions").is_file() or (case / "constant" / "fvOptions").is_file():
-        blockers.append("fvOptions sources")
+    # `constant/MRFProperties` is no longer a blocker: the `mrf` optional model
+    # binds IOMRFZoneList and hooks it into UEqn.H/pEqn.H. Nor is an `fvOptions`
+    # dictionary: the `fvOptions` optional model binds fv::options and hooks its
+    # source/constrain/correct into the same two files.
     if (case / "constant" / "porosityProperties").is_file():
         blockers.append("porosity zones")
     if "localEuler" in entry(read(case / "system" / "fvSchemes"), "default"):
@@ -113,9 +115,7 @@ def classify(case: Path, root: Path) -> Case | None:
 
     features = _feature_blockers(case)
 
-    # A key may appear once per sub-dict (waveMakerFlap declares nAlphaSubCycles
-    # twice); take the extremum that would trip the guard.
-    subcycles = _int_entries(solution, "nAlphaSubCycles")
+    # A key may appear once per sub-dict; take the extremum that would trip the guard.
     correctors = _int_entries(solution, "nCorrectors")
     frozen = entry(solution, "frozenFlow") in ("yes", "true", "on", "1")
 
@@ -141,12 +141,6 @@ def classify(case: Path, root: Path) -> Case | None:
             **common,
             tier="C",
             reason=f"nCorrectors {min(correctors)} < 2 (control_factory.py rejects it)",
-        )
-    if subcycles and max(subcycles) > 1:
-        return Case(
-            **common,
-            tier="B",
-            reason=f"nAlphaSubCycles {max(subcycles)} > 1 (mules.py raises NotImplementedError)",
         )
     return Case(**common, tier="A", reason="")
 

@@ -99,8 +99,9 @@ _OUTCOME_HELP = {
         "The native reference itself did not run — a harness fault, not a solver verdict."
     ),
     "UNSUPPORTED_CASE": (
-        "No unique solver token in Allrun to swap — the case can't be run as a "
-        "drop-in, so it is outside this study's scope."
+        "The case can't be run as a drop-in — no unique solver token in Allrun to "
+        "swap, Allrun needs a solver mode neofoam does not implement, or the case "
+        "needs a capability neofoam refuses (AMR) — so it is outside this study's scope."
     ),
     "CASE_SETUP_FAILED": "casebuild staging aborted before the run — a harness fault.",
     "COMPARE_FAILED": (
@@ -194,6 +195,28 @@ def _log_details(record: dict[str, Any]) -> str:
     )
 
 
+def _simplify_details(row: dict[str, Any]) -> str:
+    """The "simplified" badge plus a collapsible reason + patched entries, or ``""``.
+
+    A simplified case ran with settings the study substituted on *both* sides, so its
+    verdict is about the simplified case — the badge says so on the row itself and the
+    expander says exactly what was changed.
+    """
+    simplify = row.get("simplify") or {}
+    if not simplify:
+        return ""
+    patched = "\n".join(
+        "\n".join([rel] + [f"    {key}: {value}" for key, value in overrides.items()])
+        for rel, overrides in simplify.get("patch", {}).items()
+    )
+    return (
+        ' <span class="pill muted">simplified</span>'
+        '<details class="log"><summary>simplified on both sides</summary>'
+        f'<p class="muted">{_esc(simplify.get("reason", ""))}</p>'
+        f'<pre class="log">{_esc(patched)}</pre></details>'
+    )
+
+
 def _rows_of(record: dict[str, Any]) -> list[dict[str, Any]]:
     """One display row per candidate backend, carrying the case-level context.
 
@@ -207,6 +230,7 @@ def _rows_of(record: dict[str, Any]) -> list[dict[str, Any]]:
         "turbulence": record["turbulence"],
         "parallel": record.get("parallel", False),
         "predicted_blocker": record.get("predicted_blocker", ""),
+        "simplify": record.get("simplify") or {},
     }
     rows = [{**shared, **candidate} for candidate in record.get("candidates", [])]
     for row in rows:
@@ -258,7 +282,8 @@ def _rows(rows: list[dict[str, Any]], diagnostic: bool) -> str:
     for row in ordered:
         cells = (
             "<tr>"
-            f"<td><code>{_esc(row['name'])}</code></td>"
+            f'<td data-sort="{_esc(row["name"])}"><code>{_esc(row["name"])}</code>'
+            f"{_simplify_details(row)}</td>"
             f"<td><code>{_esc(row.get('label', ''))}</code></td>" + _outcome_cell(row)
         )
         if diagnostic:
@@ -311,7 +336,7 @@ def _not_result_item(row: dict[str, Any]) -> str:
     detail = f' <span class="muted">{_esc(row["detail"])}</span>' if row.get("detail") else ""
     return (
         f"<li><code>{_esc(row['name'])}</code> <code>{_esc(row.get('label', ''))}</code> "
-        f"{pill}{detail}{_log_details(row)}</li>"
+        f"{pill}{detail}{_simplify_details(row)}{_log_details(row)}</li>"
     )
 
 

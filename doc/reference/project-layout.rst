@@ -40,6 +40,17 @@ the linked reference pages for the full API.
     The reference solver: its ``SolverSpec``, field wiring, and the
     PIMPLE/viscosity/turbulence/boussinesq/adaptiveTimeStep models.
 
+``mrf.py``
+    The MRF (rotating reference frame) optional model — one ``ModelSpec``
+    registered with both the incompressibleFluid and incompressibleVoF plugin
+    families, active only when the case has ``constant/MRFProperties``.
+
+``fv_options.py``
+    The ``fvOptions`` (finite-volume options) optional model — one ``ModelSpec``
+    registered with both the incompressibleFluid and incompressibleVoF plugin
+    families, active only when the case has ``constant/fvOptions`` or
+    ``system/fvOptions``.
+
 ``agent/``
     LLM case scaffolding: the pydantic-ai case-fill agent, forms, and the
     packaged marimo wizard template.

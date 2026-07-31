@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import importlib.util
 import inspect
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -101,6 +101,14 @@ class Study:
     #: run once per case as the shared reference; each of these is a candidate
     #: diffed against it.
     apps: tuple[str, ...] = ()
+    #: Case name → ``{"reason": ..., "patch": {rel/dict/path: {dotted.key: value}}}``
+    #: from the config's ``simplify:`` channel. Applied to *every* side at staging
+    #: time, so both the native reference and the candidates solve the same case.
+    simplifications: dict[str, dict[str, Any]] = field(default_factory=dict)
+
+    def simplify(self, case_name: str) -> dict[str, Any]:
+        """The simplification staged into both sides of *case_name*, or ``{}``."""
+        return self.simplifications.get(case_name, {})
 
     @property
     def candidates(self) -> dict[str, str]:
@@ -150,6 +158,30 @@ def _drop_excluded(cases: list[Case], exclude: list[dict[str, str]] | None) -> l
     return [case for case in cases if case.name not in names]
 
 
+def _simplifications(
+    cases: list[Case], simplify: list[dict[str, Any]] | None
+) -> dict[str, dict[str, Any]]:
+    """Index the config's ``simplify:`` by case name; each entry needs case/reason/patch."""
+    if not simplify:
+        return {}
+    entries: dict[str, dict[str, Any]] = {}
+    for item in simplify:
+        name = item.get("case") if isinstance(item, dict) else None
+        if not name or not item.get("reason") or not item.get("patch"):
+            raise ValueError(
+                "simplify: each entry needs a `case` name, a `reason`, and a "
+                f"non-empty `patch`: {item!r}"
+            )
+        entries[name] = {"reason": item["reason"], "patch": item["patch"]}
+    stale = set(entries) - {case.name for case in cases}
+    if stale:
+        raise ValueError(
+            "simplify: names no selected case (a typo, or the case already left "
+            f"the selection): {', '.join(sorted(stale))}"
+        )
+    return entries
+
+
 def load_study(config_path: Path) -> Study:
     """Load a study from its ``config.yaml``.
 
@@ -175,6 +207,21 @@ def load_study(config_path: Path) -> Study:
     naming no selected case is an error — a stale exclusion is either a typo (the
     case still runs) or dead documentation (the case is gone), and both should
     surface rather than sit silently in the config.
+
+    ``simplify:`` is the fourth channel: it keeps a case in the sweep but substitutes
+    the settings the neofoam solver does not support, each entry naming the case, why
+    it is simplified, and the dictionary patch (dotted keys address sub-dicts)::
+
+        simplify:
+          - case: simpleFoam/pitzDaily
+            reason: "SIMPLEC is not ported: run plain SIMPLE on both sides"
+            patch:
+              system/fvSolution:
+                SIMPLE.consistent: "no"
+
+    Unlike ``neo_patch`` (candidate-only), the patch is staged into *every* side, so
+    the two runs still solve the same problem and a match stays meaningful. Same
+    stale-entry rule as ``exclude:``: naming no selected case is an error.
     """
     config_path = Path(config_path).resolve()
     config = yaml.safe_load(config_path.read_text()) or {}
@@ -200,4 +247,5 @@ def load_study(config_path: Path) -> Study:
         cases=cases,
         config=config,
         apps=tuple(apps),
+        simplifications=_simplifications(cases, config.get("simplify")),
     )

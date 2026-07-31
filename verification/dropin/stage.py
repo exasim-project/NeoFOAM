@@ -11,14 +11,18 @@ resets the fields while the guarded ``potentialFoam`` is skipped, so the second
 solver silently starts from different initial conditions — which once showed up
 as a ``FIELDS_DIFFER`` on a case independently proven bit-identical.
 
-Staging is a :mod:`neofoam.tooling.casebuild` pipeline, so dictionary edits go
-through :class:`neofoam.io.DictFile` and address entries *structurally*. That
-matters more than it sounds: a regex anchored on ``writeControl`` also rewrites
-the ``writeControl`` inside ``functions { ... }``, which turns a sampling
+A tutorial's dictionaries are never rewritten in place. Two ways of editing them
+are ruled out, each by a bug it caused. A regex anchored on ``writeControl`` also
+rewrites the ``writeControl`` inside ``functions { ... }``, which turns a sampling
 functionObject's ``writeTime`` into ``adjustable`` — it then demands a
 ``writeInterval`` it does not have and aborts the run in
 ``system/controlDict/functions``. That single bug produced 26 false native
-failures in an earlier sweep.
+failures in an earlier sweep. And reading the file through
+:class:`neofoam.io.DictFile` to edit it *structurally* expands every ``#include``
+/ ``#sinclude`` / ``${...}`` directive at read time and writes back the expansion,
+which either aborts the interpreter with an unresolvable-include FOAM fatal or
+silently bakes in an empty ``#sinclude``. So the controlDict is only ever
+*appended to* — see :func:`truncate`.
 """
 
 from __future__ import annotations
@@ -27,16 +31,20 @@ import re
 import shutil
 from pathlib import Path
 
-from neofoam.io import DictFile
-from neofoam.tooling.casebuild import CaseDir, Pipeline, Step, from_template, patch
+from neofoam.tooling.casebuild import CaseDir, Pipeline, Step, from_template
+from verification.dropin.foamdict import entry, read
 
 __all__ = [
+    "MESH_REFINEMENT",
+    "POSTPROCESS_PRE_STEP",
     "STEP_BUDGET",
     "clean",
     "ensure_allrun",
+    "needs_postprocess",
     "stage",
     "swap_solver",
     "truncate",
+    "uses_mesh_refinement",
 ]
 
 #: Every case is truncated to this many steps of its own ``deltaT``.
@@ -76,27 +84,58 @@ def clean() -> Step:
     return step
 
 
+#: The truncation, re-stated below the tutorial's own entries. OpenFOAM merges a
+#: repeated keyword by replacing the earlier one, so appending is enough to
+#: override — and it leaves every byte above it, directives included, untouched.
+_TRUNCATION = """
+
+// --- appended by the drop-in verification harness ---------------------------
+// Overrides, not edits: everything above is the tutorial's own text (parsing and
+// re-writing a controlDict resolves away its preprocessor directives), and
+// OpenFOAM's last-definition-wins merge makes these entries the effective ones.
+stopAt          endTime;
+endTime         {end!r};
+writeControl    adjustable;
+writeInterval   {span!r};
+purgeWrite      0;
+writeFormat     binary;
+"""
+
+
+def _scalar(text: str, key: str) -> float:
+    """A numeric controlDict entry, read without parsing the dictionary."""
+    value = entry(text, key)
+    try:
+        return float(value)
+    except ValueError:
+        raise ValueError(f"controlDict has no numeric {key} (read {value!r})") from None
+
+
 def truncate(budget: int = STEP_BUDGET) -> Step:
     """Cut the case to *budget* steps and force full-precision output.
 
     ``writeFormat binary`` is not cosmetic: ASCII at the usual
     ``writePrecision 6`` floors any observable difference at ~1e-6, three orders
     coarser than the round-off this suite is trying to resolve.
+
+    Written as an appended override block rather than an edit, and read with the
+    static :mod:`~verification.dropin.foamdict` reader rather than a real
+    dictionary parse, because a tutorial's controlDict may hold directives that
+    only resolve inside a running case (``#includeFunc graphs``,
+    ``#sinclude "<constant>/dynamicMeshDict"``, ``${FOAM_EXECUTABLE}``). Parsing
+    it here resolves them against the wrong context — fatally, or silently to
+    nothing — and re-serialising then makes that loss permanent.
     """
 
     def step(case: CaseDir) -> None:
-        control = DictFile(case.path / "system" / "controlDict")
-        start = control.get[float]("startTime")
-        span = budget * control.get[float]("deltaT")
-        patch(
-            "system/controlDict",
-            stopAt="endTime",
-            endTime=start + span,
-            writeControl="adjustable",
-            writeInterval=span,
-            purgeWrite=0,
-            writeFormat="binary",
-        )(case)
+        control = case.path / "system" / "controlDict"
+        text = read(control)
+        start = _scalar(text, "startTime")
+        span = budget * _scalar(text, "deltaT")
+        # Appended as bytes: some tutorials ship dictionaries that are not valid
+        # UTF-8, and a decode/encode round-trip would rewrite those bytes.
+        with control.open("ab") as out:
+            out.write(_TRUNCATION.format(end=start + span, span=span).encode())
 
     return step
 
@@ -131,6 +170,83 @@ def ensure_allrun() -> Step:
         allrun.chmod(0o755)
 
     return step
+
+
+#: Why a case whose ``Allrun`` runs the solver in post-processing mode cannot be
+#: compared as a drop-in. ``interIsoFoam/notchedDiscInSolidBodyRotation`` runs
+#: ``${application} -postProcess -time 0`` before the solve; that pass executes the
+#: case's ``setFlow`` function object, which *writes* the prescribed velocity into
+#: ``0/U`` and ``0/phi``. No neofoam solver implements that mode (see
+#: ``neofoam.cli.app``), and the tutorial ``Allrun``s have no ``set -e``, so the
+#: pre-step's non-zero exit is swallowed and the solve starts from an unseeded
+#: ``0/``. The resulting field difference is this gap, not a discretisation
+#: difference — so the case is reported as out of scope rather than compared.
+POSTPROCESS_PRE_STEP = (
+    "Allrun seeds 0/ via a `-postProcess` pre-run that neofoam does not implement"
+)
+
+
+#: A shell variable assignment (``application=$(getApplication)``), which names the
+#: solver without running it — so it is not the script's first solver invocation.
+_ASSIGNMENT = re.compile(r"\s*[A-Za-z_]\w*=")
+
+
+def needs_postprocess(case: Path, native: str) -> bool:
+    """Whether the staged ``Allrun``'s *first* solver run is a ``-postProcess`` one.
+
+    The rule is positional, and deliberately narrow: only a ``-postProcess``
+    invocation that runs **before** the real solve seeds fields the solve then
+    needs, and only that makes the case un-comparable as a drop-in.
+    ``interIsoFoam/notchedDiscInSolidBodyRotation`` is the motivating case — its
+    ``-postProcess`` pass writes ``0/U`` and ``0/phi`` before the solver runs.
+
+    A tutorial may just as well run the solver in ``-postProcess`` mode *after*
+    the solve, as analysis over the finished result
+    (``pimpleFoam/laminar/cylinder2D`` samples ``(U p)`` that way). That pass seeds
+    nothing and cannot change the compared fields, so the case stays in scope: a
+    bare substring test refused it, and lost a bit-for-bit ``MATCHED``.
+
+    Checked on the *staged* script rather than declared per case, so any tutorial
+    that adopts the idiom is caught by the same rule. Read before the solver token
+    is swapped, so the solver is still spelled the tutorial's own way: literally,
+    as ``$(getApplication)``, or through the ``${application}`` variable that
+    carries either. Backslash continuations are joined first — a tutorial wraps a
+    single invocation over two lines.
+    """
+    allrun = case / "Allrun"
+    if not allrun.is_file():
+        return False
+    invocation = re.compile(
+        rf"\$\(getApplication\)|\$\{{application\}}|\$application(?![\w])"
+        rf"|(?<![\w./-]){re.escape(native)}(?![\w-])"
+    )
+    for line in allrun.read_text().replace("\\\n", " ").splitlines():
+        if _ASSIGNMENT.match(line) or not invocation.search(line):
+            continue
+        return "-postProcess" in line  # the first solver run decides
+    return False
+
+
+#: Why a case whose mesh refines itself cannot be compared as a drop-in. The
+#: native solver refines and unrefines around the interface, so its mesh at the
+#: write time has a different cell count than the one it started from; neofoam
+#: implements mesh *motion* but not topology change and refuses such a case (see
+#: ``neofoam.foam.initialization.create_mesh``). Comparing anyway would only
+#: report the two runs' cell counts disagreeing — the gap, not a numeric verdict.
+MESH_REFINEMENT = (
+    "constant/dynamicMeshDict selects a refining dynamicFvMesh (AMR), which neofoam "
+    "does not implement"
+)
+
+
+def uses_mesh_refinement(case: Path) -> bool:
+    """Whether the staged case selects a topology-changing (AMR) ``dynamicFvMesh``.
+
+    Read from the *staged* dictionary rather than declared per case, so any tutorial
+    that selects a refinement mesh is caught by the same rule. Mesh motion is not
+    caught: only a type that refines cells (``dynamicRefineFvMesh`` and friends).
+    """
+    return "Refine" in entry(read(case / "constant" / "dynamicMeshDict"), "dynamicFvMesh")
 
 
 class NoSwapPoint(Exception):

@@ -12,12 +12,13 @@ pipeline's three per-run rules map to::
     python -m verification.dropin.runner swap    --solver <label> ...
     ./Allrun                                     # the run rule is plain shell
 
-``build`` stages a native-ready case; ``swap`` swaps the candidate's solver token
-(and neutralises a case that cannot run); the shell ``run`` rule just executes
-``./Allrun``. Nothing here interprets the run — ``compare`` reads each run dir
-(:func:`_status_from_rundir`) to decide finished/why-not, diffs every candidate
-against the native reference into one ``results/<id>.json``, and ``report`` folds
-those into HTML.
+``build`` stages a native-ready case (applying the config's per-case ``simplify:``
+patch, which every side gets); ``swap`` swaps the candidate's solver token, applies
+the candidate-only ``neo_patch``, and neutralises a case that cannot run; the shell
+``run`` rule just executes ``./Allrun``. Nothing here interprets the run —
+``compare`` reads each run dir (:func:`_status_from_rundir`) to decide
+finished/why-not, diffs every candidate against the native reference into one
+``results/<id>.json``, and ``report`` folds those into HTML.
 """
 
 from __future__ import annotations
@@ -42,7 +43,15 @@ from verification.dropin.execute import (
     log_tail,
 )
 from verification.dropin.report import harness_faults, render_report
-from verification.dropin.stage import NoSwapPoint, stage, swap_solver
+from verification.dropin.stage import (
+    MESH_REFINEMENT,
+    POSTPROCESS_PRE_STEP,
+    NoSwapPoint,
+    needs_postprocess,
+    stage,
+    swap_solver,
+    uses_mesh_refinement,
+)
 
 __all__ = ["main"]
 
@@ -62,6 +71,20 @@ def _neo_patch(study: Study) -> tuple[Step, ...]:
     """
     neo_patch = study.config.get("neo_patch") or {}
     return tuple(patch(rel, **overrides) for rel, overrides in neo_patch.items())
+
+
+def _simplify(study: Study, case: Case) -> tuple[Step, ...]:
+    """Staging steps that simplify this case, from the config's ``simplify:`` channel.
+
+    A study may declare a per-case ``simplify:`` entry to substitute settings the
+    neofoam solver does not support (e.g. plain SIMPLE for SIMPLEC). Unlike
+    ``neo_patch`` these run in :func:`_build`, which every side goes through, so the
+    native reference and every candidate solve the *same* simplified case and a match
+    still means something. No entry ⇒ no extra steps, i.e. the untouched drop-in.
+    """
+    simplification = study.simplify(case.name)
+    patches: dict[str, dict[str, object]] = simplification.get("patch", {})
+    return tuple(patch(rel, overrides) for rel, overrides in patches.items())
 
 
 def _mark_failed(solver: str, status_out: Path) -> None:
@@ -142,8 +165,11 @@ def _build(study: Study, case: Case, solver: str, cases_root: Path, stamp: Path)
     """Stage a native-ready case dir (identical recipe for every solver).
 
     No solver swap and no ``neo_patch`` here — those are the candidate deviation,
-    applied by :func:`_swap`. Records a terminal ``stage_failed`` stamp instead of
-    raising, so one unparsable case never aborts the DAG.
+    applied by :func:`_swap`. The config's ``simplify:`` patch is the opposite kind
+    of deviation and so belongs here: every side is built by this function, so both
+    the reference and the candidates get the same simplified case. Records a terminal
+    ``stage_failed`` stamp instead of raising, so one unparsable case never aborts
+    the DAG.
     """
     case_dir = _case_dir(cases_root, case, solver)
     shutil.rmtree(case_dir, ignore_errors=True)  # a rerun must start clean
@@ -151,12 +177,32 @@ def _build(study: Study, case: Case, solver: str, cases_root: Path, stamp: Path)
     record: dict[str, object] = {"solver": solver, "case_dir": str(case_dir)}
     try:
         stage(case.path, case_dir, native=case.native_solver, app="")
+        staged = CaseDir(case_dir)
+        for step in _simplify(study, case):
+            step(staged)
     except Exception as exc:
         reason = str(exc).strip().splitlines()[-1] if str(exc).strip() else repr(exc)
         record = {"solver": solver, "stage_failed": True}
         record["reason"] = f"staging failed: {reason}"[:300]
     stamp.parent.mkdir(parents=True, exist_ok=True)
     stamp.write_text(json.dumps(record, indent=2))
+
+
+def _out_of_scope(case_dir: Path, native: str) -> str:
+    """Why this staged case cannot be compared as a drop-in at all, or ``""``.
+
+    Both reasons are properties of the case, not of a run: the candidate would
+    otherwise "finish" and the comparison would score the missing capability as a
+    field or mesh difference, which reads as a numeric verdict it is not. Asked
+    before the solver token is swapped, because :func:`needs_postprocess` reads the
+    ``Allrun`` and needs the tutorial's own spelling of the solver to find its
+    first run.
+    """
+    if needs_postprocess(case_dir, native):
+        return POSTPROCESS_PRE_STEP
+    if uses_mesh_refinement(case_dir):
+        return MESH_REFINEMENT
+    return ""
 
 
 def _swap(
@@ -167,6 +213,10 @@ def _swap(
     Native is a no-op (its ``Allrun`` stays pristine). A terminal build stamp is
     passed straight through; ``NoSwapPoint`` becomes a ``no_swap`` stamp. Never
     raises — the outcome is carried to the run stage as data.
+
+    A case :func:`_out_of_scope` names — an ``Allrun`` that seeds ``0/`` with a
+    ``-postProcess`` pre-run, or a mesh that refines itself — is refused the same
+    way, so it reports as ``UNSUPPORTED_CASE`` instead of being run and scored.
     """
     case_dir = _case_dir(cases_root, case, solver)
     prior = json.loads(built.read_text())
@@ -178,12 +228,16 @@ def _swap(
     record: dict[str, object] = {"solver": solver, "case_dir": str(case_dir)}
     if solver != case.native_label:
         cd = CaseDir(case_dir)
-        try:
-            for step in _neo_patch(study):
-                step(cd)
-            swap_solver(case.native_solver, study.candidates[solver])(cd)
-        except NoSwapPoint as exc:
-            record = {"solver": solver, "no_swap": True, "reason": str(exc)}
+        for step in _neo_patch(study):
+            step(cd)
+        reason = _out_of_scope(case_dir, case.native_solver)
+        if not reason:
+            try:
+                swap_solver(case.native_solver, study.candidates[solver])(cd)
+            except NoSwapPoint as exc:
+                reason = str(exc)
+        if reason:
+            record = {"solver": solver, "no_swap": True, "reason": reason}
             _neutralize(case_dir)  # never run the un-swapped native in a candidate dir
     stamp.write_text(json.dumps(record, indent=2))
 
@@ -353,6 +407,9 @@ def _compare(study: Study, case: Case, work: Path, out: Path) -> None:
         # one: each record names the config it came from and the exact neo-side patch.
         "study_config": study.config_path.name,
         "neo_patch": study.config.get("neo_patch") or {},
+        # The both-sides substitution this case was run with, empty when pristine —
+        # so a MATCHED verdict is read against the case that actually ran.
+        "simplify": study.simplify(case.name),
         "candidates": candidates,
     }
     out.parent.mkdir(parents=True, exist_ok=True)

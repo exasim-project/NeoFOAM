@@ -46,8 +46,11 @@ Output (gitignored, not tracked): `cases/` (staged runs + logs),
 
 Three files plus a `rules/` copy: `Snakefile` (`include: "rules/header.smk"` +
 `rule all: input: REPORT`), `config.yaml` (title, `discover:` path, `apps:`,
-`cases:`/`only:`, and `exclude:` — each entry a `case:` name plus a `reason:`
-for cases that can never be drop-ins), `discover.py` (a `discover()` — see the
+`cases:`/`only:`, `exclude:` — each entry a `case:` name plus a `reason:`
+for cases that can never be drop-ins — and `simplify:` — a `case:`, a `reason:`
+and a `patch:` of `rel/dict/path: {dotted.key: value}` substituting settings the
+backend does not support, staged into *both* sides so a match stays meaningful),
+`discover.py` (a `discover()` — see the
 two existing ones for
 the two accepted signatures), and `rules/` copied from an existing study
 verbatim (nothing in it is study-specific).

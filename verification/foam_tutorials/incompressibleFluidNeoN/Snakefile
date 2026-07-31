@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 NeoFOAM authors
+#
+# The incompressibleFluidNeoN drop-in study. Everything solver-specific is beside
+# this file — config.yaml (title, apps, the `cases:` selection, and the per-case
+# `simplify:` patches this study needs) and discover.py (resolve each case) — and
+# the pipeline itself is this study's own copy of the shared rule shape (rules/).
+#
+# Run from this directory (`-j4`: the NeoN runs share one device, so keep the
+# parallelism moderate rather than oversubscribing it):
+#   snakemake --configfile config.yaml -j4
+
+include: "rules/header.smk"
+
+# The default target must be defined here, in the main Snakefile — Snakemake saves
+# and restores `default_target` around every include, so a rule from an included
+# file is never promoted. REPORT comes from rules/header.smk.
+rule all:
+    input:
+        REPORT,

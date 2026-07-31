@@ -15,17 +15,44 @@ discover: discover.py
 
 # Candidate neofoam backends, each diffed against the native reference (which runs
 # once per case). Omit to fall back to the single app discover() assigns.
+# The NeoN backend has its own study (../incompressibleFluidNeoN), which may
+# simplify a tutorial on both sides; this study stays the pure drop-in.
 apps:
   - "neofoam solver incompressiblefluid"
-  - "neofoam solver incompressiblefluidneon"
 
 # `exclude:` drops a selected case that can never run as a drop-in — each entry
 # names the case (same naming as `cases:`) with the reason it is out of scope.
 # Excluded cases are never staged and never reported; an entry naming no selected
-# case is an error. Example:
-#   exclude:
-#     - case: simpleFoam/motorBike
-#       reason: "snappyHexMesh is not reproducible, so runs are not comparable"
+# case is an error.
+exclude:
+  - case: lumpedPointMotion/bridge/steady
+    reason: "controlDict self-configures on ${FOAM_EXECUTABLE} (`${_${FOAM_EXECUTABLE}}`
+      selects the steady-state block `_simpleFoam`), which no drop-in can satisfy:
+      after the swap it expands to `_neofoam`, an entry the tutorial does not define"
+  - case: lumpedPointMotion/building/steady
+    reason: "controlDict self-configures on ${FOAM_EXECUTABLE} (`${_${FOAM_EXECUTABLE}}`
+      selects the steady-state block `_simpleFoam`), which no drop-in can satisfy:
+      after the swap it expands to `_neofoam`, an entry the tutorial does not define"
+  - case: pimpleFoam/LES/periodicHill/transient
+    reason: "multi-case tutorial: the leaf needs the steadyState sibling's decomposed
+      result, staged only by the parent Allrun; the native reference itself fails as
+      a single case, so no comparison is ever attempted (decided out of scope)"
+  - case: pimpleFoam/LES/surfaceMountedCube/fullCase
+    reason: "multi-case tutorial: the leaf needs a precursor channel case built by
+      the parent Allrun; the native reference itself exits ('Unable to locate
+      precursor channel case'), so no comparison is ever attempted (decided out of scope)"
+  - case: pimpleFoam/RAS/wingMotion/wingMotion2D_pimpleFoam
+    reason: "multi-case tutorial: the leaf needs the mesh and steady result the
+      parent Allrun stages from wingMotion2D_simpleFoam; the native reference itself
+      fails (no polyMesh points), so no comparison is ever attempted (decided out of scope)"
+  - case: pimpleFoam/RAS/wingMotion/wingMotion2D_simpleFoam
+    reason: "multi-case tutorial: the mesh comes from the parent Allrun (snappyHexMesh
+      in the parent dir); the native reference itself fails (no polyMesh points), so
+      no comparison is ever attempted (decided out of scope)"
+  - case: pimpleFoam/laminar/filmPanel0
+    reason: "multi-case tutorial with a finite-area region: the faMesh is built by the
+      parent Allrun and finite-area is out of scope; the native reference itself fails
+      (no finite-area/faMesh/faceLabels), so no comparison is ever attempted"
 
 # The cases considered from the tutorials, path-relative to
 # $FOAM_TUTORIALS/incompressible. This list IS the sweep — add or remove a line to

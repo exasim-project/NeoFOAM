@@ -118,6 +118,22 @@ def _classify(diffs: list[FieldDiff]) -> tuple[str, str]:
     return FIELDS_DIFFER, detail
 
 
+#: How much of a failed read's message to keep in ``detail``. Enough for an OpenFOAM
+#: fatal (message + file + line + the function it came from), which is what a reader
+#: failure looks like; the message is the only record, `COMPARE_FAILED` has no log.
+_DETAIL_CHARS = 700
+
+
+def _read_failure(failure: Exception) -> str:
+    """The *tail* of a failed read's message — the reader's stderr, not its argv.
+
+    The head is the command that was run, which says nothing; keeping the last line
+    only is just as useless (an OpenFOAM fatal ends on ``FOAM exiting``).
+    """
+    lines = [line.strip() for line in str(failure).splitlines() if line.strip()]
+    return "field read failed: " + " / ".join(lines)[-_DETAIL_CHARS:]
+
+
 def _worse(existing: FieldDiff | None, candidate: FieldDiff) -> FieldDiff:
     """The larger-disagreement of two diffs for the same field (across ranks)."""
     if existing is None or candidate.rel_diff > existing.rel_diff:
@@ -205,11 +221,7 @@ def _compare_decomposed(
                 )
                 worst[name] = _worse(worst.get(name), diff)
     except Exception as exc:  # a field that cannot be read is a compare fault
-        return (
-            COMPARE_FAILED,
-            f"field read failed: {str(exc).splitlines()[-1][:200]}",
-            [],
-        )
+        return COMPARE_FAILED, _read_failure(exc), []
 
     if not worst:
         return COMPARE_FAILED, "no comparable fields written", []
@@ -267,10 +279,6 @@ def compare_runs(
             for name in present
         ]
     except Exception as exc:  # a field that cannot be read is a compare fault
-        return (
-            COMPARE_FAILED,
-            f"field read failed: {str(exc).splitlines()[-1][:200]}",
-            [],
-        )
+        return COMPARE_FAILED, _read_failure(exc), []
     outcome, detail = _classify(diffs)
     return outcome, detail, diffs

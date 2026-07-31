@@ -25,3 +25,9 @@ discover: discover.py
 #   exclude:
 #     - case: interFoam/RAS/motorBike
 #       reason: "snappyHexMesh is not reproducible, so runs are not comparable"
+exclude:
+  - case: interIsoFoam/damBreakWithObstacle
+    reason: "the native interIsoFoam reference itself never completes (cause 15:
+      the staged single-case run fails in its own mesh setup and the full-size
+      reference never finished), so no comparison is ever attempted — nothing
+      here exercises the solver under test"

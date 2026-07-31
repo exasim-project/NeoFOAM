@@ -1,0 +1,629 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-FileCopyrightText: 2026 NeoFOAM authors
+#
+# The incompressibleFluidNeoN study: `neofoam solver incompressiblefluidneon`
+# (the NeoN backend) vs simpleFoam / pimpleFoam across the incompressible
+# tutorials. Unlike ../incompressibleFluid — the pure drop-in — this study may
+# SIMPLIFY a tutorial via the `simplify:` channel below, which patches BOTH the
+# native reference and the candidate, so a match still means something.
+#
+# Run from this directory (`-j4`: the NeoN runs share one device, so keep the
+# parallelism moderate rather than oversubscribing it):
+#   snakemake --configfile config.yaml -j4
+
+title: "incompressibleFluidNeoN — NeoN backend vs native, with per-case simplifications"
+
+# Path (relative to this file) to the module exposing discover(selection).
+discover: discover.py
+
+# Candidate neofoam backends, each diffed against the native reference (which runs
+# once per case). The pybFoam backend has its own study (../incompressibleFluid),
+# which stays the pure drop-in; this one is the NeoN backend only.
+apps:
+  - "neofoam solver incompressiblefluidneon"
+
+# `exclude:` drops a selected case that can never run as a drop-in — each entry
+# names the case (same naming as `cases:`) with the reason it is out of scope.
+# Excluded cases are never staged and never reported; an entry naming no selected
+# case is an error.
+exclude:
+  # --- harness / native-side: the native reference itself never completes ------
+  - case: lumpedPointMotion/bridge/steady
+    reason: "controlDict self-configures on ${FOAM_EXECUTABLE} (`${_${FOAM_EXECUTABLE}}`
+      selects the steady-state block `_simpleFoam`), which no drop-in can satisfy:
+      after the swap it expands to `_neofoam`, an entry the tutorial does not define"
+  - case: lumpedPointMotion/building/steady
+    reason: "controlDict self-configures on ${FOAM_EXECUTABLE} (`${_${FOAM_EXECUTABLE}}`
+      selects the steady-state block `_simpleFoam`), which no drop-in can satisfy:
+      after the swap it expands to `_neofoam`, an entry the tutorial does not define"
+  - case: pimpleFoam/LES/periodicHill/transient
+    reason: "multi-case tutorial: the leaf needs the steadyState sibling's decomposed
+      result, staged only by the parent Allrun; the native reference itself fails as
+      a single case, so no comparison is ever attempted (decided out of scope)"
+  - case: pimpleFoam/LES/surfaceMountedCube/fullCase
+    reason: "multi-case tutorial: the leaf needs a precursor channel case built by
+      the parent Allrun; the native reference itself exits ('Unable to locate
+      precursor channel case'), so no comparison is ever attempted (decided out of scope)"
+  - case: pimpleFoam/RAS/wingMotion/wingMotion2D_pimpleFoam
+    reason: "multi-case tutorial: the leaf needs the mesh and steady result the
+      parent Allrun stages from wingMotion2D_simpleFoam; the native reference itself
+      fails (no polyMesh points), so no comparison is ever attempted (decided out of scope)"
+  - case: pimpleFoam/RAS/wingMotion/wingMotion2D_simpleFoam
+    reason: "multi-case tutorial: the mesh comes from the parent Allrun (snappyHexMesh
+      in the parent dir); the native reference itself fails (no polyMesh points), so
+      no comparison is ever attempted (decided out of scope)"
+  - case: pimpleFoam/laminar/filmPanel0
+    reason: "multi-case tutorial with a finite-area region: the faMesh is built by the
+      parent Allrun and finite-area is out of scope; the native reference itself fails
+      (no finite-area/faMesh/faceLabels), so no comparison is ever attempted"
+
+  # --- coupled mesh topology: not substitutable by a dictionary patch ----------
+  # A cyclic / cyclicAMI / cyclicACMI patch is part of the mesh (constant/polyMesh),
+  # not a boundary-condition choice, so `simplify:` cannot substitute it away and the
+  # case cannot be reduced to something NeoN runs. Decided out of scope.
+  - case: pimpleFoam/LES/decayIsoTurb
+    reason: "the box is cyclic on all six sides: the cyclic patches are mesh topology,
+      not a boundary condition a `simplify:` patch could substitute (decided out of scope)"
+  - case: pimpleFoam/LES/periodicHill/steadyState
+    reason: "streamwise cyclic patches plus a mapped inlet: cyclic coupling is mesh
+      topology, not a boundary condition a `simplify:` patch could substitute
+      (decided out of scope)"
+  - case: pimpleFoam/LES/periodicPlaneChannel
+    reason: "cyclic patches in both homogeneous directions: cyclic coupling is mesh
+      topology, not a boundary condition a `simplify:` patch could substitute
+      (decided out of scope)"
+  - case: pimpleFoam/RAS/TJunctionFan
+    reason: "the fan is a cyclic patch pair carrying a fanPressure jump: cyclic
+      coupling is mesh topology, not a boundary condition a `simplify:` patch could
+      substitute (decided out of scope)"
+  - case: pimpleFoam/RAS/TJunctionSwitching
+    reason: "the switching outlet is a cyclic patch pair: cyclic coupling is mesh
+      topology, not a boundary condition a `simplify:` patch could substitute
+      (decided out of scope)"
+  - case: simpleFoam/pipeCyclic
+    reason: "the wedge sector closes on a cyclic patch pair: cyclic coupling is mesh
+      topology, not a boundary condition a `simplify:` patch could substitute
+      (decided out of scope)"
+
+  # --- dynamic mesh (motion, AMI/ACMI sliding, topology change) ----------------
+  # NeoN solves on a static mesh; mesh motion and sliding-interface coupling are a
+  # solver capability, not a dictionary setting. Decided out of scope for NeoN.
+  - case: pimpleFoam/RAS/axialTurbine_rotating_oneBlade
+    reason: "rotating dynamic mesh with cyclicAMI sliding interfaces, which the NeoN
+      backend does not implement (decided out of scope)"
+  - case: pimpleFoam/RAS/oscillatingInletACMI2D
+    reason: "solidBodyMotion dynamic mesh with cyclicACMI patches, which the NeoN
+      backend does not implement (decided out of scope)"
+  - case: pimpleFoam/RAS/oscillatingInletPeriodicAMI2D
+    reason: "solidBodyMotion dynamic mesh with cyclicAMI patches, which the NeoN
+      backend does not implement (decided out of scope)"
+  - case: pimpleFoam/RAS/propeller
+    reason: "rotating dynamic mesh with cyclicAMI sliding interfaces, which the NeoN
+      backend does not implement (decided out of scope)"
+  - case: pimpleFoam/RAS/rotatingFanInRoom
+    reason: "rotating dynamic mesh with cyclicAMI sliding interfaces, which the NeoN
+      backend does not implement (decided out of scope)"
+  - case: pimpleFoam/laminar/mixerVesselAMI2D/mixerVesselAMI2D
+    reason: "rotating dynamic mesh with cyclicAMI sliding interfaces, which the NeoN
+      backend does not implement (decided out of scope)"
+  - case: pimpleFoam/laminar/mixerVesselAMI2D/mixerVesselAMI2D-topologyChange
+    reason: "rotating dynamic mesh with cyclicAMI sliding interfaces and a topology
+      change, which the NeoN backend does not implement (decided out of scope)"
+  - case: pimpleFoam/laminar/movingCone
+    reason: "a wedge mesh deformed by a dynamic mesh motion solver, which the NeoN
+      backend does not implement (decided out of scope)"
+  - case: pimpleFoam/laminar/contactAngleCavity
+    reason: "interfaceTrackingFvMesh: the free surface is tracked by moving the mesh,
+      with a finite-area surfactant region on it — neither is implemented by the NeoN
+      backend (decided out of scope)"
+  - case: pimpleFoam/laminar/contaminatedDroplet2D
+    reason: "interfaceTrackingFvMesh: the free surface is tracked by moving the mesh,
+      with a finite-area surfactant region on it — neither is implemented by the NeoN
+      backend (decided out of scope)"
+  - case: pimpleFoam/laminar/sloshing2D
+    reason: "interfaceTrackingFvMesh: the free surface is tracked by moving the mesh,
+      which the NeoN backend does not implement (decided out of scope)"
+
+  # --- finite area -------------------------------------------------------------
+  - case: pimpleFoam/laminar/inclinedPlaneFilm
+    reason: "the wall carries a velocityFilmShell patch field, which needs the
+      regionFaModels finite-area film region; finite-area is out of scope, and the
+      patch type is not substitutable without deleting the physics being solved"
+
+# `simplify:` keeps a case in the sweep but substitutes the settings the NeoN
+# backend does not support. Each entry names the case, why it is simplified, and
+# the dictionary patch (dotted keys address sub-dicts). The patch is staged into
+# BOTH the native reference and the candidate, so the two runs still solve the
+# same case and a match stays meaningful.
+#
+# Scope: NUMERICS and BOUNDARY CONDITIONS only. Physics models are never
+# substituted — a case whose remaining blocker is a model gap (kkLOmega,
+# non-Newtonian transport, fvOptions, MRF) keeps its model and reports the
+# blocker, which is the honest outcome.
+#
+# The recurring NeoN gaps behind almost every entry below:
+#   * snGrad has only `uncorrected` (no `corrected`, the OpenFOAM default), so
+#     every case needs snGradSchemes/laplacianSchemes rewritten.
+#   * gradSchemes is looked up by exact key: `grad(p)` must be spelled out, a
+#     `default` entry alone is not consulted.
+#   * the registered interpolation schemes are `linear`, `upwind` and
+#     `linearUpwind` only — limitedLinear(V), LUST, vanAlbada, linearUpwindV are
+#     not (a leading `bounded` IS accepted; NeoN strips it).
+#   * GAMG maps to Ginkgo's Multigrid, which rejects the preconditioner the
+#     mapping derives from the tutorial's smoother, so `p` runs PCG + diagonal
+#     (the recipe NeoN's own test cases use).
+#   * SIMPLEC (`consistent yes`) is not ported; switching it off needs the
+#     pressure/velocity relaxation SIMPLEC tutorials leave out.
+#   * Ginkgo rejects any key it does not know, so a solver entry carrying GAMG
+#     tuning (`agglomerator`, `nCellsInCoarsestLevel`, ...) or `nSweeps` has to be
+#     restated without it — the patch replaces the whole sub-dict, since the
+#     channel can set keys but not remove them.
+#
+# NOT simplified, deliberately: the five tutorials whose `Allrun` runs the solver
+# under `runParallel` (vortexShed, cylinder2D, airFoil2D, motorBike, turbineSiting).
+# NeoN has no `processor` boundary constructor, and a one-way decomposition is not
+# a way out — `runParallel` still passes `-parallel`, and OpenFOAM aborts with
+# "attempt to run parallel on 1 processor", which would make the *native* reference
+# fail. They are left pristine and report the blocker they actually hit.
+simplify:
+  - case: pimpleFoam/RAS/TJunction
+    reason: "NeoN has no `corrected` snGrad and looks gradSchemes up by exact key;
+      limitedLinear/limitedLinearV are not registered interpolation schemes; GAMG
+      maps to Ginkgo Multigrid, which rejects the mapped preconditioner; and the
+      inlet's turbulentIntensityKineticEnergyInlet / turbulentMixingLengthDissipation
+      RateInlet conditions have no NeoN constructor, so the inlet is held at the
+      value the tutorial itself seeds them with (`value $internalField`)"
+    patch:
+      system/fvSchemes:
+        snGradSchemes.default: uncorrected
+        laplacianSchemes.default: "Gauss linear uncorrected"
+        gradSchemes.grad(p): "Gauss linear"
+        divSchemes.div(phi,U): "Gauss upwind"
+        divSchemes.div(phi,k): "Gauss upwind"
+        divSchemes.div(phi,epsilon): "Gauss upwind"
+      system/fvSolution:
+        solvers.p.solver: PCG
+        solvers.p.preconditioner: diagonal
+        solvers.pFinal.solver: PCG
+        solvers.pFinal.preconditioner: diagonal
+      0/k:
+        boundaryField.inlet.type: fixedValue
+      0/epsilon:
+        boundaryField.inlet.type: fixedValue
+
+  - case: pimpleFoam/RAS/TJunctionArrheniusBirdCarreauTransport
+    reason: "the same numerics and inlet substitution as its TJunction sibling (no
+      `corrected` snGrad, exact-key gradSchemes, no limitedLinear(V), GAMG rejected by
+      Ginkgo Multigrid, no turbulent*Inlet constructors). The BirdCarreau
+      non-Newtonian transport model is left in place — it is physics, not numerics, so
+      the case reports that blocker if it hits it"
+    patch:
+      system/fvSchemes:
+        snGradSchemes.default: uncorrected
+        laplacianSchemes.default: "Gauss linear uncorrected"
+        gradSchemes.grad(p): "Gauss linear"
+        divSchemes.div(phi,U): "Gauss upwind"
+        divSchemes.div(phi,k): "Gauss upwind"
+        divSchemes.div(phi,epsilon): "Gauss upwind"
+      system/fvSolution:
+        solvers.p.solver: PCG
+        solvers.p.preconditioner: diagonal
+        solvers.pFinal.solver: PCG
+        solvers.pFinal.preconditioner: diagonal
+      0/k:
+        boundaryField.inlet.type: fixedValue
+      0/epsilon:
+        boundaryField.inlet.type: fixedValue
+
+  - case: pimpleFoam/RAS/ellipsekkLOmega
+    reason: "NeoN has no `corrected` snGrad and looks gradSchemes up by exact key;
+      linearUpwindV and limitedLinear are not registered (linearUpwind is); GAMG maps
+      to Ginkgo Multigrid, which rejects the mapped preconditioner. The kkLOmega
+      transition model is left in place — it is physics, not numerics"
+    patch:
+      system/fvSchemes:
+        snGradSchemes.default: uncorrected
+        laplacianSchemes.default: "Gauss linear uncorrected"
+        gradSchemes.grad(p): "Gauss linear"
+        divSchemes.div(phi,U): "Gauss linearUpwind grad(U)"
+        divSchemes.div(phi,kl): "Gauss upwind"
+        divSchemes.div(phi,kt): "Gauss upwind"
+        divSchemes.div(phi,omega): "Gauss upwind"
+      system/fvSolution:
+        solvers.p.solver: PCG
+        solvers.p.preconditioner: diagonal
+        solvers.pFinal.solver: PCG
+        solvers.pFinal.preconditioner: diagonal
+
+  - case: pimpleFoam/RAS/pitzDaily
+    reason: "NeoN has no `corrected` snGrad and looks gradSchemes up by exact key;
+      GAMG maps to Ginkgo Multigrid, which rejects the mapped preconditioner. The
+      tutorial's div schemes (linearUpwind, upwind) are registered as they stand"
+    patch:
+      system/fvSchemes:
+        snGradSchemes.default: uncorrected
+        laplacianSchemes.default: "Gauss linear uncorrected"
+        gradSchemes.grad(p): "Gauss linear"
+      system/fvSolution:
+        solvers.p.solver: PCG
+        solvers.p.preconditioner: diagonal
+        solvers.pFinal.solver: PCG
+        solvers.pFinal.preconditioner: diagonal
+
+  - case: pimpleFoam/laminar/planarContraction
+    reason: "NeoN has no `corrected` snGrad and looks both gradSchemes and divSchemes
+      up by exact key — the viscous term it forms is `div((nuEff*dev2(T(grad(U)))))`,
+      which this tutorial spells with `nu`, so the key has to be added; vanAlbada is
+      not a registered interpolation scheme; GAMG maps to Ginkgo Multigrid, which
+      rejects the mapped preconditioner. The Maxwell viscoelastic stress model is
+      left in place — it is physics, not numerics"
+    patch:
+      system/fvSchemes:
+        snGradSchemes.default: uncorrected
+        laplacianSchemes.default: "Gauss linear uncorrected"
+        gradSchemes.grad(p): "Gauss linear"
+        divSchemes.div(phi,sigma): "Gauss upwind"
+        divSchemes.div((nuEff*dev2(T(grad(U))))): "Gauss linear"
+      system/fvSolution:
+        solvers.p.solver: PCG
+        solvers.p.preconditioner: diagonal
+        solvers.pFinal.solver: PCG
+        solvers.pFinal.preconditioner: diagonal
+
+  - case: simpleFoam/T3A
+    reason: "SIMPLEC (`consistent yes`) is not ported, so plain SIMPLE runs on both
+      sides — which needs the pressure/velocity relaxation the SIMPLEC tutorial does
+      not ship. Plus: no `corrected` snGrad, exact-key gradSchemes, and GAMG rejected
+      by Ginkgo Multigrid. The langtryMenter transition model is left in place"
+    patch:
+      system/fvSchemes:
+        snGradSchemes.default: uncorrected
+        laplacianSchemes.default: "Gauss linear uncorrected"
+        gradSchemes.grad(p): "Gauss linear"
+        divSchemes.div(phi,U): "bounded Gauss upwind"
+        divSchemes.div(phi,k): "bounded Gauss upwind"
+        divSchemes.div(phi,omega): "bounded Gauss upwind"
+        divSchemes.div(phi,gammaInt): "bounded Gauss upwind"
+        divSchemes.div(phi,ReThetat): "bounded Gauss upwind"
+      system/fvSolution:
+        SIMPLE.consistent: "no"
+        relaxationFactors.fields.p: 0.3
+        relaxationFactors.equations.U: 0.7
+        solvers.p.solver: PCG
+        solvers.p.preconditioner: diagonal
+
+  - case: simpleFoam/backwardFacingStep2D
+    reason: "SIMPLEC (`consistent yes`) is not ported, so plain SIMPLE runs on both
+      sides — which needs the pressure/velocity relaxation the SIMPLEC tutorial does
+      not ship. Plus: no `corrected` snGrad, exact-key gradSchemes, LUST and
+      limitedLinear are not registered, GAMG is rejected by Ginkgo Multigrid, and the
+      wall nutUBlendedWallFunction has no NeoN constructor (nutkWallFunction has).
+      The linear solves are tightened to convergence on both sides (tolerance
+      ~1e-14, relTol 0): at a loose relTol the native smoothSolver and the mapped
+      Ginkgo solvers stop at different approximate solutions, and that gap
+      compounds over the 20-step budget into trajectory divergence — the pitzDaily
+      frozen-state attribution showed the assembled equations match to round-off
+      (the `solvers.U.*` addresses resolve to the tutorial's `(U|k|epsilon|omega)`
+      regex group, so k / epsilon / omega are tightened by the same entries).
+      KNOWN RESIDUAL GAP (attributed, not yet fixed): the startup duct's two
+      symmetryPlane patches — NeoN's symmetry BC is a tangential projection with a
+      normal-damping penalty, not OpenFOAM's implicit mirror transform, and an A/B
+      with those patches substituted by walls on both sides drops worst_rel from
+      0.26 to ~4e-3; the remaining ~2e-3 floor is kOmegaSST's F1/F2 blending-chain
+      association-order round-off (1e-5 per correct step on a frozen state)
+      amplified over the 20-step budget"
+    patch:
+      system/fvSchemes:
+        snGradSchemes.default: uncorrected
+        laplacianSchemes.default: "Gauss linear uncorrected"
+        gradSchemes.grad(p): "Gauss linear"
+        divSchemes.div(phi,U): "bounded Gauss linearUpwind grad(U)"
+        divSchemes.div(phi,k): "bounded Gauss upwind"
+        divSchemes.div(phi,epsilon): "bounded Gauss upwind"
+        divSchemes.div(phi,omega): "bounded Gauss upwind"
+      system/fvSolution:
+        SIMPLE.consistent: "no"
+        relaxationFactors.fields.p: 0.3
+        relaxationFactors.equations.U: 0.7
+        solvers.p.solver: PCG
+        solvers.p.preconditioner: diagonal
+        solvers.p.tolerance: 1e-12
+        solvers.p.relTol: 0
+        solvers.p.maxIter: 10000
+        solvers.U.tolerance: 1e-14
+        solvers.U.relTol: 0
+        solvers.U.maxIter: 5000
+      0.orig/nut:
+        boundaryField.(upperWall|lowerWall).type: nutkWallFunction
+
+  - case: simpleFoam/mixerVessel2D
+    reason: "NeoN has no `corrected` snGrad and looks gradSchemes up by exact key;
+      limitedLinear(V) is not a registered interpolation scheme; GAMG maps to Ginkgo
+      Multigrid, which rejects the mapped preconditioner; and Ginkgo rejects the
+      `nCellsInCoarsestLevel` / `nSweeps` keys the tutorial's solver entries carry, so
+      those entries are restated without them. The MRF zone is left in place — it is
+      physics, not numerics"
+    patch:
+      system/fvSchemes:
+        snGradSchemes.default: uncorrected
+        laplacianSchemes.default: "Gauss linear uncorrected"
+        gradSchemes.grad(p): "Gauss linear"
+        divSchemes.div(phi,U): "bounded Gauss upwind"
+        divSchemes.div(phi,k): "bounded Gauss upwind"
+        divSchemes.div(phi,epsilon): "bounded Gauss upwind"
+      system/fvSolution:
+        solvers.p:
+          solver: PCG
+          preconditioner: diagonal
+          tolerance: 1e-08
+          relTol: 0.05
+        solvers.U:
+          solver: smoothSolver
+          smoother: GaussSeidel
+          tolerance: 1e-07
+          relTol: 0.1
+        solvers.k:
+          solver: smoothSolver
+          smoother: GaussSeidel
+          tolerance: 1e-07
+          relTol: 0.1
+        solvers.epsilon:
+          solver: smoothSolver
+          smoother: GaussSeidel
+          tolerance: 1e-07
+          relTol: 0.1
+
+  - case: simpleFoam/pitzDaily
+    reason: "SIMPLEC (`consistent yes`) is not ported, so plain SIMPLE runs on both
+      sides — which needs the pressure/velocity relaxation the SIMPLEC tutorial does
+      not ship. Plus: no `corrected` snGrad, exact-key gradSchemes, limitedLinear is
+      not registered, and GAMG is rejected by Ginkgo Multigrid. The linear solves are
+      tightened to convergence on both sides (tolerance ~1e-14, relTol 0): at the
+      tutorial's relTol 0.1 the native smoothSolver and the mapped Ginkgo solvers
+      stop at different approximate solutions, and that ~10%-of-step gap compounds
+      over the 20-step budget into O(1) trajectory divergence — the frozen-state
+      attribution showed the assembled equations themselves match to round-off
+      (the `solvers.U.*` addresses resolve to the tutorial's `(U|k|epsilon|...)`
+      regex group, so k and epsilon are tightened by the same entries)"
+    patch:
+      system/fvSchemes:
+        snGradSchemes.default: uncorrected
+        laplacianSchemes.default: "Gauss linear uncorrected"
+        gradSchemes.grad(p): "Gauss linear"
+        divSchemes.div(phi,k): "bounded Gauss upwind"
+        divSchemes.div(phi,epsilon): "bounded Gauss upwind"
+        divSchemes.div(phi,omega): "bounded Gauss upwind"
+      system/fvSolution:
+        SIMPLE.consistent: "no"
+        relaxationFactors.fields.p: 0.3
+        relaxationFactors.equations.U: 0.7
+        solvers.p.solver: PCG
+        solvers.p.preconditioner: diagonal
+        solvers.p.tolerance: 1e-12
+        solvers.p.relTol: 0
+        solvers.p.maxIter: 10000
+        solvers.U.tolerance: 1e-14
+        solvers.U.relTol: 0
+        solvers.U.maxIter: 5000
+
+  - case: simpleFoam/pitzDailyExptInlet
+    reason: "NeoN has no `corrected` snGrad and looks gradSchemes up by exact key;
+      GAMG maps to Ginkgo Multigrid, which rejects the mapped preconditioner; and
+      timeVaryingMappedFixedValue has no NeoN constructor, so the measured inlet
+      profile is replaced by a uniform fixedValue at its own area-unweighted mean over
+      constant/boundaryData/inlet/0 (U 12.219 m/s, k 0.651, epsilon 1505.86). The
+      linear solves are tightened to convergence on both sides (tolerance ~1e-14,
+      relTol 0) — see simpleFoam/pitzDaily for the attribution; the `solvers.U.*`
+      addresses resolve to the tutorial's `(U|k|epsilon|R|nuTilda)` regex group"
+    patch:
+      system/fvSchemes:
+        snGradSchemes.default: uncorrected
+        laplacianSchemes.default: "Gauss linear uncorrected"
+        gradSchemes.grad(p): "Gauss linear"
+      system/fvSolution:
+        solvers.p.solver: PCG
+        solvers.p.preconditioner: diagonal
+        solvers.p.tolerance: 1e-12
+        solvers.p.relTol: 0
+        solvers.p.maxIter: 10000
+        solvers.U.tolerance: 1e-14
+        solvers.U.relTol: 0
+        solvers.U.maxIter: 5000
+      0/U:
+        boundaryField.inlet.type: fixedValue
+        boundaryField.inlet.value: "uniform (12.218968 0 0)"
+      0/k:
+        boundaryField.inlet.type: fixedValue
+        boundaryField.inlet.value: "uniform 0.65095773"
+      0/epsilon:
+        boundaryField.inlet.type: fixedValue
+        boundaryField.inlet.value: "uniform 1505.8585"
+
+  - case: simpleFoam/rotatingCylinders
+    reason: "NeoN has no `corrected` snGrad and looks gradSchemes up by exact key;
+      GAMG maps to Ginkgo Multigrid, which rejects the mapped preconditioner"
+    patch:
+      system/fvSchemes:
+        snGradSchemes.default: uncorrected
+        laplacianSchemes.default: "Gauss linear uncorrected"
+        gradSchemes.grad(p): "Gauss linear"
+      system/fvSolution:
+        solvers.p.solver: PCG
+        solvers.p.preconditioner: diagonal
+
+  - case: simpleFoam/rotorDisk
+    reason: "SIMPLEC (`consistent yes`) is not ported, so plain SIMPLE runs on both
+      sides — which needs the pressure/velocity relaxation the SIMPLEC tutorial does
+      not ship. Plus: no `corrected` snGrad, exact-key gradSchemes, the tutorial's
+      `linearUpwind unlimited`/`linearUpwind limited` gradient qualifiers are not
+      resolvable, and GAMG is rejected by Ginkgo Multigrid. The rotorDisk fvOption is
+      left in place — it is physics, not numerics"
+    patch:
+      system/fvSchemes:
+        snGradSchemes.default: uncorrected
+        laplacianSchemes.default: "Gauss linear uncorrected"
+        gradSchemes.grad(p): "Gauss linear"
+        divSchemes.div(phi,U): "bounded Gauss upwind"
+        divSchemes.div(phi,k): "bounded Gauss upwind"
+        divSchemes.div(phi,omega): "bounded Gauss upwind"
+        divSchemes.div(phi,epsilon): "bounded Gauss upwind"
+      system/fvSolution:
+        SIMPLE.consistent: "no"
+        relaxationFactors.fields.p: 0.3
+        relaxationFactors.equations.U: 0.7
+        solvers.p.solver: PCG
+        solvers.p.preconditioner: diagonal
+
+  - case: simpleFoam/simpleCar
+    reason: "NeoN has no `corrected` snGrad and looks gradSchemes up by exact key; GAMG
+      maps to Ginkgo Multigrid, which rejects the mapped preconditioner, and Ginkgo
+      also rejects the agglomeration keys the tutorial's GAMG entry carries, so `p` is
+      restated as PCG + diagonal without them. The linear solves are tightened to
+      convergence on both sides (tolerance ~1e-14, relTol 0) — see
+      simpleFoam/pitzDaily for the attribution; the `solvers.U.*` addresses resolve
+      to the tutorial's `(U|k|epsilon|R|nuTilda)` regex group"
+    patch:
+      system/fvSchemes:
+        snGradSchemes.default: uncorrected
+        laplacianSchemes.default: "Gauss linear uncorrected"
+        gradSchemes.grad(p): "Gauss linear"
+      system/fvSolution:
+        solvers.p:
+          solver: PCG
+          preconditioner: diagonal
+          tolerance: 1e-12
+          relTol: 0
+          maxIter: 10000
+        solvers.U.tolerance: 1e-14
+        solvers.U.relTol: 0
+        solvers.U.maxIter: 5000
+
+  - case: simpleFoam/squareBend
+    reason: "SIMPLEC (`consistent yes`) is not ported, so plain SIMPLE runs on both
+      sides — which needs the pressure/velocity relaxation the SIMPLEC tutorial does
+      not ship. Plus: no `corrected` snGrad, exact-key gradSchemes, limitedLinear(V)
+      is not registered, GAMG is rejected by Ginkgo Multigrid, Ginkgo also rejects the
+      `nSweeps` key the momentum/turbulence entries carry, and the inlet's
+      turbulentIntensityKineticEnergyInlet / turbulentMixingLengthDissipationRateInlet
+      have no NeoN constructor (the inlet is held at the value the tutorial seeds them
+      with, `value $internalField`). The linear solves are tightened to convergence
+      on both sides (tolerance ~1e-14, relTol 0): at a loose relTol the native
+      smoothSolver and the mapped Ginkgo solvers stop at different approximate
+      solutions, and that gap compounds over the 20-step budget into trajectory
+      divergence — the pitzDaily frozen-state attribution showed the assembled
+      equations match to round-off"
+    patch:
+      system/fvSchemes:
+        snGradSchemes.default: uncorrected
+        laplacianSchemes.default: "Gauss linear uncorrected"
+        gradSchemes.grad(p): "Gauss linear"
+        divSchemes.div(phi,U): "Gauss upwind"
+        divSchemes.div(phi,k): "Gauss upwind"
+        divSchemes.div(phi,epsilon): "Gauss upwind"
+        divSchemes.div(phi,omega): "Gauss upwind"
+      system/fvSolution:
+        SIMPLE.consistent: "no"
+        relaxationFactors.fields.p: 0.3
+        relaxationFactors.equations.U: 0.7
+        solvers.p.solver: PCG
+        solvers.p.preconditioner: diagonal
+        solvers.p.tolerance: 1e-12
+        solvers.p.relTol: 0
+        solvers.p.maxIter: 10000
+        solvers.U:
+          solver: smoothSolver
+          smoother: GaussSeidel
+          tolerance: 1e-14
+          relTol: 0
+          maxIter: 5000
+        solvers.k:
+          solver: smoothSolver
+          smoother: GaussSeidel
+          tolerance: 1e-14
+          relTol: 0
+          maxIter: 5000
+        solvers.(epsilon|omega):
+          solver: smoothSolver
+          smoother: GaussSeidel
+          tolerance: 1e-14
+          relTol: 0
+          maxIter: 5000
+      0.orig/k:
+        boundaryField.inlet.type: fixedValue
+      0.orig/epsilon:
+        boundaryField.inlet.type: fixedValue
+
+  - case: simpleFoam/windAroundBuildings
+    reason: "NeoN has no `corrected` snGrad and looks gradSchemes up by exact key;
+      `linearUpwind limited` and limitedLinear are not resolvable interpolation
+      schemes; GAMG maps to Ginkgo Multigrid, which rejects the mapped preconditioner.
+      The linear solves are tightened to convergence on both sides (tolerance ~1e-14,
+      relTol 0) — see simpleFoam/pitzDaily for the attribution; the `solvers.U.*`
+      addresses resolve to the tutorial's `(U|k|omega|epsilon)` regex group"
+    patch:
+      system/fvSchemes:
+        snGradSchemes.default: uncorrected
+        laplacianSchemes.default: "Gauss linear uncorrected"
+        gradSchemes.grad(p): "Gauss linear"
+        divSchemes.div(phi,U): "bounded Gauss upwind"
+        divSchemes.div(phi,k): "bounded Gauss upwind"
+        divSchemes.div(phi,epsilon): "bounded Gauss upwind"
+      system/fvSolution:
+        solvers.p.solver: PCG
+        solvers.p.preconditioner: diagonal
+        solvers.p.tolerance: 1e-12
+        solvers.p.relTol: 0
+        solvers.p.maxIter: 10000
+        solvers.U.tolerance: 1e-14
+        solvers.U.relTol: 0
+        solvers.U.maxIter: 5000
+
+# The cases considered from the tutorials, path-relative to
+# $FOAM_TUTORIALS/incompressible. This list IS the sweep — the same 45 tutorials
+# ../incompressibleFluid considers, so the two studies are read side by side.
+cases:
+  - lumpedPointMotion/bridge/steady
+  - lumpedPointMotion/building/steady
+  - pimpleFoam/LES/decayIsoTurb
+  - pimpleFoam/LES/periodicHill/steadyState
+  - pimpleFoam/LES/periodicHill/transient
+  - pimpleFoam/LES/periodicPlaneChannel
+  - pimpleFoam/LES/surfaceMountedCube/fullCase
+  - pimpleFoam/LES/vortexShed
+  - pimpleFoam/RAS/TJunction
+  - pimpleFoam/RAS/TJunctionArrheniusBirdCarreauTransport
+  - pimpleFoam/RAS/TJunctionFan
+  - pimpleFoam/RAS/TJunctionSwitching
+  - pimpleFoam/RAS/axialTurbine_rotating_oneBlade
+  - pimpleFoam/RAS/ellipsekkLOmega
+  - pimpleFoam/RAS/oscillatingInletACMI2D
+  - pimpleFoam/RAS/oscillatingInletPeriodicAMI2D
+  - pimpleFoam/RAS/pitzDaily
+  - pimpleFoam/RAS/propeller
+  - pimpleFoam/RAS/rotatingFanInRoom
+  - pimpleFoam/RAS/wingMotion/wingMotion2D_pimpleFoam
+  - pimpleFoam/RAS/wingMotion/wingMotion2D_simpleFoam
+  - pimpleFoam/laminar/contactAngleCavity
+  - pimpleFoam/laminar/contaminatedDroplet2D
+  - pimpleFoam/laminar/cylinder2D
+  - pimpleFoam/laminar/filmPanel0
+  - pimpleFoam/laminar/inclinedPlaneFilm
+  - pimpleFoam/laminar/mixerVesselAMI2D/mixerVesselAMI2D
+  - pimpleFoam/laminar/mixerVesselAMI2D/mixerVesselAMI2D-topologyChange
+  - pimpleFoam/laminar/movingCone
+  - pimpleFoam/laminar/planarContraction
+  - pimpleFoam/laminar/sloshing2D
+  - simpleFoam/T3A
+  - simpleFoam/airFoil2D
+  - simpleFoam/backwardFacingStep2D
+  - simpleFoam/mixerVessel2D
+  - simpleFoam/motorBike
+  - simpleFoam/pipeCyclic
+  - simpleFoam/pitzDaily
+  - simpleFoam/pitzDailyExptInlet
+  - simpleFoam/rotatingCylinders
+  - simpleFoam/rotorDisk
+  - simpleFoam/simpleCar
+  - simpleFoam/squareBend
+  - simpleFoam/turbineSiting
+  - simpleFoam/windAroundBuildings
