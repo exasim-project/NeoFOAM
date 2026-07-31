@@ -52,6 +52,18 @@ def test_find_spec_unknown_returns_none() -> None:
         assert momentumTransportModel.find_spec(name) is None
 
 
+def test_every_registered_model_declares_its_family() -> None:
+    # The family is what lets selection refuse a RAS closure for an LESModel entry,
+    # so a model registered without one would silently reopen that hole.
+    for name in momentumTransportModel.registered_names():
+        assert momentumTransportModel.family_of(name) in ("laminar", "RAS", "LES")
+
+
+def test_family_of_unknown_returns_none() -> None:
+    for name in UNREGISTERED_NAMES:
+        assert momentumTransportModel.family_of(name) is None
+
+
 def test_registered_specs_detect_true() -> None:
     for name in momentumTransportModel.registered_names():
         spec = momentumTransportModel.find_spec(name)

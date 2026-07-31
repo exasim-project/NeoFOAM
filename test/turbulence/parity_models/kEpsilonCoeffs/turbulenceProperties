@@ -1,0 +1,41 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      turbulenceProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+simulationType  RAS;
+
+RAS
+{
+    RASModel        kEpsilon;
+
+    turbulence      on;
+
+    printCoeffs     off;
+
+    // Every coefficient off its default, plus one entry no closure declares:
+    // OpenFOAM ignores the unknown key rather than rejecting the dictionary.
+    kEpsilonCoeffs
+    {
+        Cmu             0.085;
+        C1              1.42;
+        C2              1.68;
+        sigmak          1.2;
+        sigmaEps        1.11;
+        notACoefficient 42;
+    }
+}
+
+
+// ************************************************************************* //

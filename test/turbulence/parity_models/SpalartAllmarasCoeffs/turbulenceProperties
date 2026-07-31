@@ -1,0 +1,44 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      turbulenceProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+simulationType  RAS;
+
+RAS
+{
+    RASModel        SpalartAllmaras;
+
+    turbulence      on;
+
+    printCoeffs     off;
+
+    // Cw1 is absent on purpose: OpenFOAM derives it from Cb1 / kappa / Cb2 /
+    // sigmaNut, and one unknown entry proves an unrecognised key is ignored.
+    SpalartAllmarasCoeffs
+    {
+        sigmaNut        0.7;
+        kappa           0.42;
+        Cb1             0.14;
+        Cb2             0.6;
+        Cw2             0.32;
+        Cw3             2.1;
+        Cv1             7.0;
+        Cs              0.35;
+        notACoefficient 42;
+    }
+}
+
+
+// ************************************************************************* //
