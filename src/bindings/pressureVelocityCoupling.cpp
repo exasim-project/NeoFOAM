@@ -52,6 +52,43 @@ void registerPressureVelocityCoupling(nb::module_& m)
     );
 
     m.def(
+        "compute_ratu",
+        [](const nf::PDE<NeoN::Vec3>& UEqn, const fvcc::VolumeField<NeoN::scalar>& rAU)
+        { return nf::computeRAtU(UEqn, rAU); },
+        "UEqn"_a,
+        "rAU"_a,
+        "SIMPLEC consistent reciprocal diagonal rAtU = 1/(1/rAU - UEqn.H1())"
+    );
+
+    m.def(
+        "add_consistent_flux_correction",
+        [](fvcc::SurfaceField<NeoN::scalar>& phiHbyA,
+           const fvcc::VolumeField<NeoN::scalar>& rAU,
+           const fvcc::VolumeField<NeoN::scalar>& rAtU,
+           const fvcc::VolumeField<NeoN::scalar>& p)
+        { nf::addConsistentFluxCorrection(phiHbyA, rAU, rAtU, p); },
+        "phi_hbya"_a,
+        "rAU"_a,
+        "rAtU"_a,
+        "p"_a,
+        "SIMPLEC flux correction: phiHbyA += interpolate(rAtU - rAU)*snGrad(p)*magSf"
+    );
+
+    m.def(
+        "subtract_consistent_hbya",
+        [](fvcc::VolumeField<NeoN::Vec3>& hByA,
+           const fvcc::VolumeField<NeoN::scalar>& rAU,
+           const fvcc::VolumeField<NeoN::scalar>& rAtU,
+           const fvcc::VolumeField<NeoN::scalar>& p)
+        { nf::subtractConsistentHbyA(hByA, rAU, rAtU, p); },
+        "hByA"_a,
+        "rAU"_a,
+        "rAtU"_a,
+        "p"_a,
+        "SIMPLEC HbyA correction: hByA -= (rAU - rAtU)*grad(p)"
+    );
+
+    m.def(
         "flux",
         [](const fvcc::VolumeField<NeoN::Vec3>& volField) { return nf::flux(volField); },
         "vol_field"_a,

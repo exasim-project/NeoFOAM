@@ -302,13 +302,9 @@ SpalartAllmarasDDES::SpalartAllmarasDDES(RunTime& rt, const nnfvcc::VolumeField<
     : SpalartAllmarasDDES(rt.exec, rt.mesh, nu)
 {
     auto& solverDict = rt.fvSolutionDict.subDict("solvers");
-    if (solverDict.isDict("nuTilda"))
+    for (const auto* f : {"nuTilda", "nuTildaFinal"})
     {
-        solverDict.subDict("nuTilda") = mapFvSolution(solverDict.subDict("nuTilda"));
-    }
-    if (solverDict.isDict("nuTildaFinal"))
-    {
-        solverDict.subDict("nuTildaFinal") = mapFvSolution(solverDict.subDict("nuTildaFinal"));
+        mapSolverSettings(solverDict, f);
     }
 }
 
@@ -525,6 +521,7 @@ void SpalartAllmarasDDES::correct(
         nuTilda,
         rt
     );
+    nuTildaEqn.relax(); // OpenFOAM SpalartAllmarasBase.C: nuTildaEqn.ref().relax()
     nuTildaEqn.solve();
 
     // Bound nuTilda >= 0

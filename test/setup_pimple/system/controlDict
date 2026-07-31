@@ -1,8 +1,11 @@
+// SPDX-License-Identifier: Unlicense
+// SPDX-FileCopyrightText: 2023 NeoFOAM authors
+// Generated file — edit neofoam_generate_controlDict in CMakeLists.txt.
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2006                                 |
-|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|  \\    /   O peration     |                                                 |
+|   \\  /    A nd           |                                                 |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
 FoamFile
@@ -10,42 +13,40 @@ FoamFile
     version     2.0;
     format      ascii;
     class       dictionary;
-    location    "system";
     object      controlDict;
 }
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-application neoPimpleFoam;
+application     neoPimpleFoam;
+executor        Serial;
+allocator       default;
+startFrom       startTime;
 
-startFrom        startTime;
+startTime       0;
 
-executor Serial;
+stopAt          endTime;
 
-allocator default;
+endTime         2;
 
-startTime 0;
+deltaT          0.005;
 
-stopAt endTime;
+writeControl    timeStep;
 
-endTime 2;
+writeInterval   400;
 
-deltaT 0.005;
+purgeWrite      0;
 
-writeControl timeStep;
+writeFormat     ascii;
 
-writeInterval 400;
-
-purgeWrite 0;
-
-writeFormat ascii;
-
-writePrecision 15;
+writePrecision  15;
 
 writeCompression off;
 
-timeFormat general;
+timeFormat      general;
 
-timePrecision 6;
+timePrecision   6;
 
 runTimeModifiable true;
 
-//*************************************************************************//
+
+// ************************************************************************* //

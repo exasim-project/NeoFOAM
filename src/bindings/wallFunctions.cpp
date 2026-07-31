@@ -22,7 +22,8 @@
 #include "NeoN/NeoN.hpp"
 
 // OpenFOAM headers
-#include "wallDist.H" // Foam::wallDist for read_wall_distance / build_near_wall_dist
+#include "wallDist.H"     // Foam::wallDist for read_wall_distance
+#include "nearWallDist.H" // Foam::nearWallDist — built by pybFoam, read by build_near_wall_dist
 
 // NeoFOAM headers
 #include "NeoFOAM/datastructures/runTime.hpp"
@@ -62,6 +63,8 @@ void registerWallFunctions(nb::module_& m)
     // the *model-side* half of the epsilon/k/nut wall functions it cannot write in
     // the field DSL (boundary-face views, atomic per-cell scatter):
     //   * build_near_wall_dist  — nearWallDist field (boundary faces = owner-cell y),
+    //                             converted from the pybFoam Foam::nearWallDist the
+    //                             closure hands in,
     //   * correct_scalar_bc_ctx — correctBoundaryConditions with a (U,k,nu,y) context
     //                             so the WF BCs actually set their face values,
     //   * epsilon_wall_production — the near-wall production (G) override the
@@ -70,30 +73,40 @@ void registerWallFunctions(nb::module_& m)
     // -------------------------------------------------------------------
     m.def(
         "build_near_wall_dist",
-        [](nf::RunTime& rt) -> fvcc::VolumeField<scalar>
+        [](nf::RunTime& rt, const Foam::nearWallDist& y) -> fvcc::VolumeField<scalar>
         {
-            Foam::wallDist y(rt.mesh);
-            const auto wallDist = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, y.y());
+            // ``y`` is pybFoam's Foam::nearWallDist — itself a volScalarField::Boundary
+            // whose wall-patch faces already hold the owner-cell distance to that patch
+            // (0 on non-wall patches). It is purely geometric, so — unlike Foam::wallDist —
+            // it needs no `wallDist { method … }` entry in system/fvSchemes, which the
+            // kEpsilon tutorials do not ship. Here we only flatten it onto the NeoN field.
             fvcc::VolumeField<scalar> nearWallDist(
                 rt.exec,
                 "nearWallDist",
                 rt.nfMesh,
                 fvcc::createCalculatedBCs<fvcc::VolumeBoundary<scalar>>(rt.nfMesh)
             );
-            const auto wd = wallDist.internalVector().view();
-            const auto owners = rt.nfMesh.boundaryMesh().faceOwners().view();
-            auto nwdB = nearWallDist.boundaryData().value().view();
-            const auto nBF = static_cast<localIdx>(nwdB.size());
-            NeoN::parallelFor(
-                rt.exec,
-                {0, nBF},
-                NEON_LAMBDA(const localIdx i) { nwdB[i] = wd[owners[i]]; },
-                "build_near_wall_dist"
-            );
+            const auto nBF = static_cast<Foam::label>(nearWallDist.boundaryData().value().size());
+            // Patch order, face order — the boundary ordering constructFrom uses for
+            // volume fields, which is what the NeoN boundary ranges expect.
+            Foam::scalarField bval(nBF, Foam::scalar(0));
+            Foam::label bi = 0;
+            forAll(y, patchi)
+            {
+                const auto& yp = y[patchi];
+                forAll(yp, i)
+                {
+                    bval[bi++] = yp[i];
+                }
+            }
+            NF_ASSERT_EQUAL(bi, nBF);
+            nearWallDist.boundaryData().value() = NeoFOAM::fromFoamField(rt.exec, bval);
             return nearWallDist;
         },
         "runtime"_a,
-        "nearWallDist field: boundary faces hold the owner-cell wall distance (WF input)"
+        "near_wall_dist"_a,
+        "nearWallDist field: boundary faces hold the owner-cell distance to that patch,"
+        " read off a pybFoam Foam::nearWallDist (WF input)"
     );
 
     m.def(

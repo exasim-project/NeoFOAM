@@ -8,7 +8,9 @@
 #pragma once
 
 #include <optional>
+#include <stdexcept>
 #include <string>
+#include <vector>
 
 #include "NeoN/core/dictionary.hpp"
 #include "NeoN/core/primitives/scalar.hpp"
@@ -18,6 +20,73 @@
 
 namespace NeoFOAM
 {
+
+/* @brief No fvSolution entry matches a field name.
+ *
+ * Carries the field, the dictionary that was searched (e.g. "system/fvSolution/solvers")
+ * and the keys that dictionary offers, so the message alone explains the failure —
+ * replacing the bare `unordered_map::at` the NeoN dictionary raises otherwise.
+ */
+class FvSolutionKeyNotFound : public std::runtime_error
+{
+public:
+
+    FvSolutionKeyNotFound(
+        const std::string& field,
+        const std::string& dictName,
+        const std::vector<std::string>& availableKeys
+    );
+
+    [[nodiscard]] const std::string& field() const noexcept { return field_; }
+
+    [[nodiscard]] const std::string& dictName() const noexcept { return dictName_; }
+
+    [[nodiscard]] const std::vector<std::string>& availableKeys() const noexcept
+    {
+        return availableKeys_;
+    }
+
+private:
+
+    std::string field_;
+    std::string dictName_;
+    std::vector<std::string> availableKeys_;
+};
+
+/* @brief Does the dictionary key `key` select `name` under OpenFOAM's lookup rules?
+ *
+ * True for an identical keyword, or for a quoted regex keyword (see dictKey) whose
+ * pattern matches `name` entirely — the `keyType::REGEX` behaviour of Foam::dictionary.
+ */
+bool keyMatches(const std::string& key, const std::string& name);
+
+/* @brief The key of `dict` that OpenFOAM's dictionary lookup would select for `name`.
+ *
+ * An identical keyword wins over any pattern, mirroring Foam::dictionary. Returns
+ * std::nullopt when nothing matches. Throws when several regex keys match: the NeoN
+ * dictionary is unordered, so OpenFOAM's "last pattern in the file wins" precedence
+ * cannot be reproduced and guessing would silently pick the wrong settings.
+ */
+std::optional<std::string> matchKey(const NeoN::Dictionary& dict, const std::string& name);
+
+/* @brief Does the fvSolution `solvers` dictionary hold settings for `field`? */
+bool hasSolverSettings(const NeoN::Dictionary& solvers, const std::string& field);
+
+/* @brief The `solvers` sub-dictionary OpenFOAM would use for `field` (regex keys honoured).
+ *
+ * @throws FvSolutionKeyNotFound when no key matches.
+ */
+NeoN::Dictionary& solverSettings(NeoN::Dictionary& solvers, const std::string& field);
+
+const NeoN::Dictionary& solverSettings(const NeoN::Dictionary& solvers, const std::string& field);
+
+/* @brief Map the `solvers` entry selected by `field` to NeoN/Ginkgo settings, in place.
+ *
+ * A no-op when the case defines no settings for `field`. One regex key can be selected
+ * by several field names, so this must not map an entry twice (mapFvSolution is not
+ * idempotent) — it relies on mapFvSolution's already-mapped short circuit.
+ */
+void mapSolverSettings(NeoN::Dictionary& solvers, const std::string& field);
 
 void updateSolver(NeoN::Dictionary& solverDict);
 

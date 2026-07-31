@@ -9,6 +9,7 @@
 
 #include "NeoFOAM/compatibility/fvSolution.hpp"
 
+#include <algorithm>
 #include <map>
 
 #include <NeoN/core/logging.hpp>
@@ -16,9 +17,116 @@
 #include <NeoN/core/primitives/scalar.hpp>
 #include <NeoN/core/primitives/label.hpp>
 
+#include "regExp.H"
+
 
 namespace NeoFOAM
 {
+
+namespace
+{
+
+// The dictionary keys, sorted — the NeoN dictionary is a hash map, so the raw order
+// would make the error messages differ from run to run.
+std::vector<std::string> sortedKeys(const NeoN::Dictionary& dict)
+{
+    std::vector<std::string> keys = dict.keys();
+    std::sort(keys.begin(), keys.end());
+    return keys;
+}
+
+std::string join(const std::vector<std::string>& items)
+{
+    std::string joined;
+    for (const auto& item : items)
+    {
+        if (!joined.empty()) joined += ", ";
+        joined += item;
+    }
+    return joined;
+}
+
+} // namespace
+
+FvSolutionKeyNotFound::FvSolutionKeyNotFound(
+    const std::string& field,
+    const std::string& dictName,
+    const std::vector<std::string>& availableKeys
+)
+    : std::runtime_error(
+        "No entry for field '" + field + "' in " + dictName
+        + "; available keys: " + join(availableKeys)
+    )
+    , field_(field)
+    , dictName_(dictName)
+    , availableKeys_(availableKeys)
+{}
+
+bool keyMatches(const std::string& key, const std::string& name)
+{
+    if (key == name) return true;
+
+    // Only a quoted keyword is a regular expression (see NeoFOAM::dictKey); the pattern
+    // must match the whole name, as Foam::dictionary's pattern lookup does.
+    if (key.size() < 2 || key.front() != '"' || key.back() != '"') return false;
+    return Foam::regExp(key.substr(1, key.size() - 2)).match(name);
+}
+
+std::optional<std::string> matchKey(const NeoN::Dictionary& dict, const std::string& name)
+{
+    if (dict.contains(name)) return name;
+
+    std::vector<std::string> matches;
+    for (const auto& key : sortedKeys(dict))
+    {
+        if (keyMatches(key, name)) matches.push_back(key);
+    }
+
+    if (matches.empty()) return std::nullopt;
+    if (matches.size() > 1)
+    {
+        throw std::runtime_error(
+            "Several fvSolution keys match the field '" + name + "': " + join(matches)
+            + "\nOpenFOAM resolves this by file order, which the NeoN dictionary does not "
+              "keep - spell out the entry for '"
+            + name + "' instead."
+        );
+    }
+    return matches.front();
+}
+
+bool hasSolverSettings(const NeoN::Dictionary& solvers, const std::string& field)
+{
+    const auto key = matchKey(solvers, field);
+    return key && solvers.isDict(*key);
+}
+
+NeoN::Dictionary& solverSettings(NeoN::Dictionary& solvers, const std::string& field)
+{
+    const auto key = matchKey(solvers, field);
+    if (!key)
+    {
+        throw FvSolutionKeyNotFound(field, "system/fvSolution/solvers", sortedKeys(solvers));
+    }
+    return solvers.subDict(*key);
+}
+
+const NeoN::Dictionary& solverSettings(const NeoN::Dictionary& solvers, const std::string& field)
+{
+    const auto key = matchKey(solvers, field);
+    if (!key)
+    {
+        throw FvSolutionKeyNotFound(field, "system/fvSolution/solvers", sortedKeys(solvers));
+    }
+    return solvers.subDict(*key);
+}
+
+void mapSolverSettings(NeoN::Dictionary& solvers, const std::string& field)
+{
+    if (!hasSolverSettings(solvers, field)) return;
+    NeoN::Dictionary& settings = solverSettings(solvers, field);
+    settings = mapFvSolution(settings);
+}
 
 void updateSolver(NeoN::Dictionary& solverDict)
 {
@@ -175,6 +283,17 @@ void updateCriteria(NeoN::Dictionary& solverDict)
         return ret;
     };
 
+    // OpenFOAM tests tolerance/relTol against the residual normalised by
+    // lduMatrix::solver::normFactor. NeoN reproduces that normalisation only under its
+    // L1-scaled residual criterion; without it Ginkgo compares the raw (un-normalised) L2
+    // residual, so the very same dictionary values stop the solve orders of magnitude too
+    // early. Default the criterion on for dictionary-mapped solvers so tolerance/relTol mean
+    // the same thing on both sides; an explicit fvSolution entry still wins.
+    if (!solverDict.contains("l1ScaledResidual"))
+    {
+        solverDict.insert("l1ScaledResidual", true);
+    }
+
     // Ensure the criteria dictionary exists
     if (!solverDict.contains("criteria"))
     {
@@ -265,6 +384,15 @@ NeoN::Dictionary mapFvSolution(const NeoN::Dictionary& solverDict)
 {
     NeoN::Dictionary modSolverDict = solverDict;
 
+    // One regex key (e.g. "(U|k|epsilon)") is selected by several field names, so the
+    // per-field mapping loops reach the same entry more than once. Mapping is not
+    // idempotent - a second pass would reset the iteration criterion consumed from
+    // maxIter - so the reportName stamp marks an entry as already mapped.
+    if (solverDict.contains("reportName"))
+    {
+        return modSolverDict;
+    }
+
     if (solverDict.contains("configFile"))
     {
         modSolverDict.insert("reportName", std::string("configFile"));
@@ -328,14 +456,15 @@ static std::optional<NeoN::scalar> lookupRelaxation(
 
     // Final-suffix selection: prefer <field>Final on the final iteration, then fall
     // back to the base <field> key (matches OpenFOAM's *Final relaxation convention).
-    const std::string key = finalIter ? field + "Final" : field;
-    if (sub.contains(key))
+    // matchKey honours OpenFOAM regex keys, e.g. "(k|omega|epsilon).*" covering both
+    // `epsilon` and `epsilonFinal`.
+    if (const auto finalKey = matchKey(sub, finalIter ? field + "Final" : field))
     {
-        return asScalar(sub, key);
+        return asScalar(sub, *finalKey);
     }
-    if (sub.contains(field))
+    if (const auto key = matchKey(sub, field))
     {
-        return asScalar(sub, field);
+        return asScalar(sub, *key);
     }
     return std::nullopt;
 }
@@ -355,14 +484,11 @@ lookupFieldRelaxation(const NeoN::Dictionary& fvSolution, const std::string& fie
 void createMappedFvSolutionDicts(RunTime& rt)
 {
     auto& solverDict = rt.fvSolutionDict.subDict("solvers");
-    solverDict.subDict("p") = mapFvSolution(solverDict.subDict("p"));
-    solverDict.subDict("U") = mapFvSolution(solverDict.subDict("U"));
-    for (const std::string key : {"pFinal", "UFinal"})
+    solverSettings(solverDict, "p") = mapFvSolution(solverSettings(solverDict, "p"));
+    solverSettings(solverDict, "U") = mapFvSolution(solverSettings(solverDict, "U"));
+    for (const std::string field : {"pFinal", "UFinal"})
     {
-        if (solverDict.isDict(key))
-        {
-            solverDict.subDict(key) = mapFvSolution(solverDict.subDict(key));
-        }
+        mapSolverSettings(solverDict, field);
     }
 }
 

@@ -56,6 +56,19 @@ void registerUtility(nb::module_& m)
     );
 
     m.def(
+        "map_solver_settings",
+        &nf::mapSolverSettings,
+        "solvers"_a,
+        "field"_a,
+        "Map the fvSolution solvers entry selected by field (OpenFOAM regex keys "
+        "honoured) to its Ginkgo equivalent, in place"
+    );
+
+    // Surfaces as neofoam_bindings.FvSolutionKeyNotFound instead of the NeoN
+    // dictionary's bare IndexError("unordered_map::at").
+    nb::exception<nf::FvSolutionKeyNotFound>(m, "FvSolutionKeyNotFound", PyExc_RuntimeError);
+
+    m.def(
         "map_fv_schemes",
         [](const NeoN::Dictionary& dict) { return nf::mapFvSchemes(dict); },
         "dict"_a,

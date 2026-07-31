@@ -10,6 +10,7 @@
 #include "NeoFOAM/auxiliary/convert.hpp"
 #include "NeoFOAM/auxiliary/typeConversion.hpp"
 #include "NeoFOAM/auxiliary/fieldTraits.hpp"
+#include "messageStream.H"
 #include "processorFvPatch.H"
 
 namespace fvcc = NeoN::finiteVolume::cellCentred;
@@ -42,6 +43,73 @@ inline NeoN::scalar tokenAsScalar(NeoN::TokenList& tokenList, std::size_t idx)
     return NeoN::scalar(tokenList.get<Foam::label>(idx));
 }
 
+/**
+ * @brief Mean unit normal of an OpenFOAM patch and how far its faces deviate from it.
+ *
+ * NeoN's fixedValue carries a single value for the whole patch, so a boundary condition
+ * defined per face along the surface normal has to collapse to one normal. `deviation` is
+ * the largest |n_f - meanNormal| over the patch faces: 0 on a planar patch (where the
+ * collapse is exact), O(1) on a strongly curved one.
+ */
+struct PatchNormal
+{
+    NeoN::Vec3 meanNormal;
+    NeoN::scalar deviation;
+};
+
+inline PatchNormal meanUnitNormal(const Foam::fvPatch& patch)
+{
+    const Foam::vectorField faceNormals(patch.nf());
+    if (faceNormals.empty())
+    {
+        return {NeoN::Vec3(0.0, 0.0, 0.0), 0.0};
+    }
+
+    Foam::vector mean(Foam::Zero);
+    for (const Foam::vector& faceNormal : faceNormals)
+    {
+        mean += faceNormal;
+    }
+    // Re-normalise: averaging unit normals shortens the sum on a curved patch, and on a
+    // closed one it cancels to (almost) zero — VSMALL keeps that finite, and the deviation
+    // it produces then trips the caller's non-planar warning.
+    mean /= Foam::mag(mean) + Foam::VSMALL;
+
+    NeoN::scalar deviation = 0.0;
+    for (const Foam::vector& faceNormal : faceNormals)
+    {
+        deviation = std::max(deviation, NeoN::scalar(Foam::mag(faceNormal - mean)));
+    }
+    return {convert(mean), deviation};
+}
+
+/**
+ * @brief Pin a total-pressure patch at the value OpenFOAM evaluated when the field was read.
+ *
+ * Shared by `totalPressure` and `uniformTotalPressure`: NeoN models neither the dynamic-head
+ * correction nor a time-dependent p0, so the patch becomes a fixedValue at the start-time
+ * total pressure. Non-scalar (or valueless) falls back to zeroGradient.
+ */
+template<typename ValueType>
+void insertFrozenTotalPressure(NeoN::Dictionary& dict)
+{
+    if constexpr (std::is_same<ValueType, NeoN::scalar>::value)
+    {
+        if (dict.contains("value"))
+        {
+            NeoN::TokenList tokenList = dict.get<NeoN::TokenList>("value");
+            if (tokenList.size() > 1)
+            {
+                dict.insert("type", std::string("fixedValue"));
+                dict.insert("fixedValue", tokenAsScalar(tokenList, 1));
+                return;
+            }
+        }
+    }
+    dict.insert("type", std::string("fixedGradient"));
+    dict.insert("fixedGradient", NeoN::zero<ValueType>());
+}
+
 } // namespace detail
 
 template<typename FoamType>
@@ -68,6 +136,14 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
     ofVolField.boundaryField().writeEntries(os);
     Foam::IStringStream is(os.str());
     Foam::dictionary bDict(is);
+
+    // The inserters receive only the patch dictionary, but the translations below need the
+    // patch itself — its geometry (surfaceNormalFixedValue) and its name (the approximation
+    // notices). applyVolInserter points these at the patch it is about to translate. The
+    // notices stream the name as a `const char*`: OpenFOAM's Ostream writes a std::string
+    // as a quoted string token.
+    std::string activePatchName;
+    const Foam::fvPatch* activeFoamPatch = nullptr;
 
     std::map<std::string, std::function<void(NeoN::Dictionary&)>> patchInserter {
         {"fixedGradient",
@@ -220,21 +296,90 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
              // patch value so the p_rgh solve is well-posed. The dynamic-head correction
              // is negligible for the gravity-driven damBreak first version and is deferred
              // with surface tension. Non-scalar (or valueless) falls back to zeroGradient.
-             if constexpr (std::is_same<type_primitive_t, NeoN::scalar>::value)
+             detail::insertFrozenTotalPressure<type_primitive_t>(dict);
+         }},
+        {"uniformTotalPressure",
+         [&](auto& dict)
+         {
+             WarningInFunction
+                 << "uniformTotalPressure on patch '" << activePatchName.c_str()
+                 << "' is approximated as a fixedValue at the total pressure OpenFOAM"
+                    " evaluated for the start time.\n    NeoN applies neither the p0(t)"
+                    " Function1 nor the dynamic-head correction p0 - 0.5|U|^2, so the patch"
+                    " pressure stays constant for the whole run."
+                 << Foam::endl;
+             detail::insertFrozenTotalPressure<type_primitive_t>(dict);
+         }},
+        {"slip", [](auto& dict) { dict.insert("type", std::string("slip")); }},
+        {"movingWallVelocity",
+         [&](auto& dict)
+         {
+             WarningInFunction
+                 << "movingWallVelocity on patch '" << activePatchName.c_str()
+                 << "' is approximated as a stationary no-slip wall, fixedValue (0 0 0).\n"
+                    "    NeoN has no mesh motion, so the wall velocity U_wall = U_mesh = 0;"
+                    " the result differs from OpenFOAM wherever the mesh actually moves."
+                 << Foam::endl;
+             dict.insert("type", std::string("fixedValue"));
+             dict.insert("fixedValue", NeoN::zero<type_primitive_t>());
+         }},
+        {"surfaceNormalFixedValue",
+         [&](auto& dict)
+         {
+             // OpenFOAM evaluates refValue*n_f per face; NeoN's fixedValue holds one value
+             // for the whole patch, so refValue is projected onto the patch's mean unit
+             // normal here — exact on a planar patch (every intake in the sweep), an
+             // approximation on a curved one, which is why the deviation is checked.
+             if constexpr (std::is_same<type_primitive_t, NeoN::Vec3>::value)
              {
-                 if (dict.contains("value"))
+                 if (activeFoamPatch == nullptr)
                  {
-                     NeoN::TokenList tl = dict.template get<NeoN::TokenList>("value");
-                     if (tl.size() > 1)
-                     {
-                         dict.insert("type", std::string("fixedValue"));
-                         dict.insert("fixedValue", detail::tokenAsScalar(tl, 1));
-                         return;
-                     }
+                     throw std::runtime_error(
+                         "surfaceNormalFixedValue on patch '" + activePatchName
+                         + "': patch geometry not found in the mesh."
+                     );
                  }
+                 NeoN::TokenList tokenList = dict.template get<NeoN::TokenList>("refValue");
+                 const std::string* form = tokenList.size() > 1
+                                             ? std::any_cast<std::string>(&tokenList.tokens()[0])
+                                             : nullptr;
+                 if (form == nullptr || *form != "uniform")
+                 {
+                     throw std::runtime_error(
+                         "surfaceNormalFixedValue on patch '" + activePatchName
+                         + "': only a uniform refValue is supported."
+                     );
+                 }
+                 const NeoN::scalar refValue = detail::tokenAsScalar(tokenList, 1);
+                 const auto [meanNormal, deviation] = detail::meanUnitNormal(*activeFoamPatch);
+
+                 if (dict.contains("ramp"))
+                 {
+                     WarningInFunction
+                         << "surfaceNormalFixedValue on patch '" << activePatchName.c_str()
+                         << "' carries a `ramp` Function1, which NeoN does not model: the full"
+                            " refValue is applied from the first time step."
+                         << Foam::endl;
+                 }
+                 if (deviation > 1e-6)
+                 {
+                     WarningInFunction
+                         << "surfaceNormalFixedValue on patch '" << activePatchName.c_str()
+                         << "' is not planar (face normals deviate by up to " << deviation
+                         << " from the patch mean): the single fixedValue refValue*n uses the"
+                            " mean normal for every face."
+                         << Foam::endl;
+                 }
+                 dict.insert("type", std::string("fixedValue"));
+                 dict.insert("fixedValue", refValue * meanNormal);
              }
-             dict.insert("type", std::string("fixedGradient"));
-             dict.insert("fixedGradient", NeoN::zero<type_primitive_t>());
+             else
+             {
+                 throw std::runtime_error(
+                     "surfaceNormalFixedValue on patch '" + activePatchName
+                     + "' is only defined for vector fields."
+                 );
+             }
          }}
     };
 
@@ -252,6 +397,9 @@ auto readVolBoundaryConditions(const NeoN::UnstructuredMesh& nfMesh, const FoamT
                 + "'.\nSupported types:" + supported
             );
         }
+        activePatchName = patchName;
+        const Foam::label foamPatchID = ofVolField.mesh().boundaryMesh().findPatchID(patchName);
+        activeFoamPatch = foamPatchID >= 0 ? &ofVolField.mesh().boundary()[foamPatchID] : nullptr;
         it->second(dict);
     };
 
