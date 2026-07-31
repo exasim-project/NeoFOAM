@@ -24,9 +24,11 @@ cavity whose solve necessarily runs both init steps), so it is not duplicated
 here.
 
 A sibling behavior is pinned here too: ``simpleAlgorithm.create_simple_state``
-deliberately raises ``NotImplementedError`` on a SIMPLEC case
-(``consistent yes``) — SIMPLEC is intentionally unsupported, not a bug. The
-test fails if someone silently "fixes" it into plain SIMPLE.
+accepts a SIMPLEC case (``consistent yes``) — it used to refuse it with a
+``NotImplementedError``, so the test asserts that refusal is gone. That the
+consistent branch is numerically right (not merely accepted) is a separate,
+heavier check: ``test_steady_vs_incompressibleFluid`` compares a SIMPLEC run
+against the pybFoam backend field-by-field.
 
 Each case is a laminar lid-driven cavity (no turbulence/wallDist confound), so
 the init failure/success is attributable to the control-block selection alone.
@@ -97,18 +99,17 @@ def test_piso_case_initializes(tmp_path: Path) -> None:
     assert "Entry 'PIMPLE' not found" not in combined
 
 
-def test_simplec_case_raises_not_implemented(tmp_path: Path) -> None:
-    """A SIMPLEC case (``consistent yes``) is pinned as intentionally unsupported.
+def test_simplec_case_initializes(tmp_path: Path) -> None:
+    """A SIMPLEC case (``consistent yes``) initializes instead of being refused.
 
-    ``create_simple_state`` must raise ``NotImplementedError`` mentioning
-    SIMPLEC rather than silently running plain SIMPLE.
+    ``create_simple_state`` used to raise ``NotImplementedError``; it now reads
+    ``consistent`` as a control flag, so the case must reach initialization.
     """
     result = _run_init(_CASES / "simplec_cavity", tmp_path)
 
-    assert result.returncode != 0, (
-        "SIMPLEC case initialized instead of raising:\n"
-        f"{result.stdout[-2000:]}\n{result.stderr[-3000:]}"
+    assert result.returncode == 0, (
+        "incompressibleFluidNeoN init failed on a SIMPLEC case "
+        f"(rc={result.returncode}):\n{result.stdout[-2000:]}\n{result.stderr[-3000:]}"
     )
-    assert "NEON_INIT_OK" not in result.stdout
-    assert "NotImplementedError" in result.stderr, result.stderr[-3000:]
-    assert "SIMPLEC (consistent yes) is not ported" in result.stderr, result.stderr[-3000:]
+    assert "NEON_INIT_OK" in result.stdout, "init did not run to completion"
+    assert "NotImplementedError" not in result.stderr, result.stderr[-3000:]

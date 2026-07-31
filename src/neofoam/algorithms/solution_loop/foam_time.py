@@ -36,7 +36,12 @@ class FoamTime:
         self._foam_arglist: Any = None
 
     def update(self, state: LoopState) -> None:
-        self._t.setDeltaT(state.delta_t)
+        # adjust=False: the SolutionLoop already snapped the step onto the write
+        # time with its own writeTimeIndex. Letting Foam::Time::setDeltaT snap a
+        # second time makes the C++ deltaT_ the real owner of the step, and it
+        # diverges from LoopState.delta_t whenever the loop deliberately does not
+        # snap (a fixed-step case under an adjustableRunTime writeControl).
+        self._t.setDeltaT(state.delta_t, adjust=False)
         while self._index < state.index:
             self._t.increment()
             self._index += 1

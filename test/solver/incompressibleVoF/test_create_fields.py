@@ -26,7 +26,11 @@ case. The expected values are hand-derived from that case:
   ``models/alpha_advection/test_shared.py``, which owns those two steps);
 * ``g = (0 -9.81 0)`` and ``ghRef = 0``, so ``gh = -9.81*0.5 = -4.905`` in every
   cell, and with ``0/p_rgh`` uniform 100,
-  ``p = p_rgh + rho*gh = (95.095, -1129.92875, -3579.97625, -4805)``;
+  ``p = p_rgh + rho*gh = (95.095, -1129.92875, -3579.97625, -4805)``. The case is
+  closed (``pRefCell 0``, ``pRefValue 0``), so init then applies
+  ``createFields.H``'s level shift of ``-95.095`` to both fields:
+  ``p = (0, -1225.02375, -3675.07125, -4900.095)`` and ``p_rgh`` uniform
+  ``4.905``;
 * ``0/U`` is uniform ``(2 0 0)``, so ``phi = 2`` on every internal x-face and
   ``-2`` on the inlet (``Sf`` points out of the domain there).
 
@@ -72,6 +76,8 @@ MULES_STEPS = [
     "fields.rho",
     "fields.rhoPhi",
     "fields.alphaPhiUn",
+    "fields.alphaPhi10",
+    "models.alphaPhi1Corr0",
     "fields.U",
     "fields.p_rgh",
     "fields.hRef",
@@ -79,8 +85,12 @@ MULES_STEPS = [
     "fields.ghf",
     "fields.p",
     "models.pimple_control",
+    "models.dynamic_mesh_controls",
+    "models.Uf",
     "models.cumulativeContErr",
+    "models.last_rAU",
     "models.pressure_reference",
+    "models.initial_flux_correction",
     "models.turbulence",
 ]
 
@@ -206,13 +216,15 @@ def test_build_emits_the_whole_init_graph_for_a_mules_case(
 def test_build_of_an_isoadvector_case_adds_the_advector_model(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    # isoAdvector owns the same shared fields plus one persistent model.
+    # isoAdvector owns the same shared fields plus one persistent model, and
+    # none of MULES' own ``alphaPhi1Corr0`` compression-flux cache.
     case = _ADVECTION_CASES / "damBreak_isoAdvector"
     monkeypatch.chdir(case)
     runner = create_init(case_dir=case)
     runner.run_load()
     names = [step.name for step in runner.run_build()]
-    assert names == MULES_STEPS[:12] + ["models.advector"] + MULES_STEPS[12:]
+    assert MULES_STEPS[13] == "models.alphaPhi1Corr0"
+    assert names == MULES_STEPS[:13] + ["models.advector"] + MULES_STEPS[14:]
 
 
 def test_build_constructs_nothing_it_only_describes_the_graph(
@@ -258,6 +270,7 @@ def test_pipeline_builds_every_field_of_the_vof_solver(vof_row4: BuiltCase) -> N
         "U",
         "alpha1",
         "alpha2",
+        "alphaPhi10",
         "alphaPhiUn",
         "gh",
         "ghf",
@@ -274,14 +287,20 @@ def test_pipeline_registers_every_model_of_the_vof_solver(
     vof_row4: BuiltCase,
 ) -> None:
     # Both core models under their solver-facing names, the mixture and
-    # turbulence models, the PIMPLE controls, the Foam::Time (which has no
-    # Context slot of its own and lands in models["runtime"]) and the argList it
-    # was built from (held so the MPI session outlives the run — see
-    # ``foam.initialization.create_arglist``).
+    # turbulence models, the PIMPLE controls (including the mesh-motion switches
+    # and the face velocity ``Uf``, which is None on this static case), the
+    # Foam::Time (which has no Context slot of its own and lands in
+    # models["runtime"]) and the argList it was built from (held so the MPI
+    # session outlives the run — see ``foam.initialization.create_arglist``).
     assert vof_row4.result["model_keys"] == [
+        "Uf",
+        "alphaPhi1Corr0",
         "alpha_advection",
         "cumulativeContErr",
+        "dynamic_mesh_controls",
         "foam_arglist",
+        "initial_flux_correction",
+        "last_rAU",
         "mixture",
         "pimple_control",
         "pressure_reference",
@@ -300,6 +319,7 @@ def test_context_field_keys_map_onto_the_openfoam_field_names(
         "U": "U",
         "alpha1": "alpha.water",
         "alpha2": "alpha.air",
+        "alphaPhi10": "alphaPhi10",
         "alphaPhiUn": "alphaPhiUn",
         "gh": "gh",
         "ghf": "ghf",
@@ -345,8 +365,16 @@ def test_velocity_is_read_from_the_cases_zero_directory(
 
 
 def test_p_rgh_is_read_from_the_cases_zero_directory(vof_row4: BuiltCase) -> None:
-    # 0/p_rgh is uniform 100 with dimensions [1 -1 -2 0 0 0 0].
-    assert vof_row4.internal("p_rgh") == [100.0] * 4
+    # 0/p_rgh is uniform 100 with dimensions [1 -1 -2 0 0 0 0]. The case is
+    # closed, so createFields.H's start-up levelling then shifts it uniformly by
+    # pRefValue - p[0] = -95.095, to 100 - 95.095 = 4.905 — a value only a field
+    # that was actually read can reach (an unread p_rgh would level to 0).
+    assert_allclose(
+        vof_row4.internal("p_rgh"),
+        [4.905] * 4,
+        rtol=1e-12,
+        err_msg="vofRow4: p_rgh must be 0/p_rgh, levelled against the reference cell",
+    )
     assert vof_row4.written_dimensions("p_rgh") == [1, -1, -2, 0, 0, 0, 0]
 
 
@@ -415,10 +443,12 @@ def test_ghf_is_the_gravitational_head_at_the_internal_faces(
 def test_absolute_pressure_is_p_rgh_plus_the_hydrostatic_head(
     vof_row4: BuiltCase,
 ) -> None:
-    # p = p_rgh + rho*gh = 100 - 4.905*(1, 250.75, 750.25, 1000).
+    # p = p_rgh + rho*gh = 100 - 4.905*(1, 250.75, 750.25, 1000), then levelled
+    # against the reference cell (createFields.H): pRefCell 0 / pRefValue 0, so
+    # the whole field shifts by -95.095.
     assert_allclose(
         vof_row4.internal("p"),
-        [95.095, -1129.92875, -3579.97625, -4805.0],
+        [0.0, -1225.02375, -3675.07125, -4900.095],
         rtol=1e-12,
         err_msg="vofRow4: p must be p_rgh + rho*gh, not p_rgh or rho*gh alone",
     )

@@ -19,6 +19,10 @@ covers the rest of ``models/mules.py``'s configuration space, one
 * ``cAlpha 0`` / ``cAlpha 4`` — no interface compression at all, and four
   times the tutorial's; ``cAlpha 0`` is the sharpest of the two because the
   expected behaviour is exactly "the ``phir`` term contributes nothing".
+* ``alphaApplyPrevCorr yes`` — the ``talphaPhi1Corr0`` cache: the compression
+  correction one MULESCorr pass applied is re-applied (through ``MULES::correct``)
+  as the *next* pass's seed. State that survives between passes, so it is the
+  one regime the first time step cannot show.
 
 **Oracle.** Each regime is written into a copy of ``tutorials/damBreak`` with
 pybFoam's own dictionary writer and run twice: once with incompressibleVoF and
@@ -32,15 +36,17 @@ collapse — long enough that the regimes have stopped being interchangeable, so
 "matches interFoam" is a statement about the regime and not about a knob nobody
 read. Measured against the tutorial default at 0.05 s (native interFoam, same
 dictionaries), ``max |Δalpha.water|`` is 0.232 for ``MULESCorr no``, 0.053 for
-``nAlphaSubCycles 2``, 0.158 for ``nAlphaCorr 1``, 0.233 for ``cAlpha 0`` and
-0.256 for ``cAlpha 4`` — i.e. every regime moves the interface by O(0.1), nine
-orders above the 1e-10 comparison tolerance. A single step would not do: the
-compression flux and the sub-cycle weighting act through the accumulated
-``alphaPhi10``/``rhoPhi``, which only separate once the interface has moved.
+``nAlphaSubCycles 2``, 0.158 for ``nAlphaCorr 1``, 0.233 for ``cAlpha 0``,
+0.256 for ``cAlpha 4`` and 0.044 for ``alphaApplyPrevCorr yes`` — i.e. every
+regime moves the interface by O(0.1), eight to nine orders above the 1e-10
+comparison tolerance. A single step would not do: the compression flux and the
+sub-cycle weighting act through the accumulated ``alphaPhi10``/``rhoPhi``, which
+only separate once the interface has moved — and ``alphaApplyPrevCorr`` has no
+cached correction to apply at all until the second pass.
 
 Both solver runs go through subprocesses (``_mules_regime_worker.py`` and the
 ``interFoam`` binary): a process may construct exactly one ``Foam::Time`` and
-this module runs five regimes.
+this module runs six regimes.
 """
 
 from __future__ import annotations
@@ -69,6 +75,7 @@ REGIMES = [
     pytest.param({"nAlphaCorr": 1}, id="nAlphaCorr_1"),
     pytest.param({"cAlpha": 0.0}, id="cAlpha_0"),
     pytest.param({"cAlpha": 4.0}, id="cAlpha_4"),
+    pytest.param({"alphaApplyPrevCorr": True}, id="alphaApplyPrevCorr_on"),
 ]
 
 

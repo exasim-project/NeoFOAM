@@ -14,6 +14,10 @@ The pipeline is driven exactly as production does it
 operation makes at the tail of every pressure corrector — and the fields are
 dumped before and after it, so the test can pin both the reconstruction
 ``p = p_rgh + rho*gh`` and the closed-domain level shift.
+
+``*_before`` is therefore the state the *init* leaves behind, which on a closed
+domain is already levelled: the ``pressure_reference`` step runs createFields.H's
+own ``if (p_rgh.needReference())`` block.
 """
 
 from __future__ import annotations

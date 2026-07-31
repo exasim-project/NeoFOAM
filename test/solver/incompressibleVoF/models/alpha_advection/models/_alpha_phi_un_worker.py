@@ -56,7 +56,9 @@ def run(case_dir: Path) -> dict[str, Any]:
         ctx.fields["rhoPhi"],
         ctx.fields["rho"],
         alpha_phi_un,
+        ctx.fields["alphaPhi10"],
         ctx.models["mixture"],
+        ctx.models["alphaPhi1Corr0"],
     )
 
     result["after"] = _internal(alpha_phi_un)

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""maxDeltaT — a constant deltaT cap as a timeStepConstraint contribution.
+"""maxDeltaT — a constant deltaT ceiling as a maxTimeStep contribution.
 
 NeoN-family twin of the pybFoam solver's ``maxDeltaT`` model: config-only (no
 backend field is injected), so the body is identical — only the family it
@@ -13,7 +13,7 @@ import os
 from pybFoam import dictionary
 from pydantic import Field
 
-from neofoam.algorithms.solution_loop.interfaces import timeStepConstraint
+from neofoam.algorithms.solution_loop.interfaces import maxTimeStep
 from neofoam.io import OF, BaseConfig, IOStrategy
 
 from .incompressibleFluidNeoNModel import Model, incompressibleFluidNeoNModel
@@ -40,7 +40,13 @@ def detect_model() -> bool:
     return bool(adaptive and cd.found("maxDeltaT"))
 
 
-@maxDeltaT.contributes(timeStepConstraint)
+@maxDeltaT.contributes(maxTimeStep)
 def max_delta_t_limit(cfg: MaxDeltaTConfig) -> float:
-    """The largest deltaT this model permits — the constant cap (config only)."""
+    """The constant deltaT ceiling this model imposes (config only).
+
+    ``setDeltaT.H`` clips it onto the already-damped step
+    (``min(deltaTFact*deltaT, maxDeltaT)``), so it is a ``maxTimeStep`` ceiling
+    rather than a ``timeStepConstraint`` limit: pushing it through the growth
+    damping would give a different (smaller) step whenever it binds.
+    """
     return cfg.maxDeltaT

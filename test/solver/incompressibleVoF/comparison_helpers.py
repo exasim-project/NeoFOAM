@@ -9,10 +9,11 @@ tutorial, run the Python solver in one and the native OpenFOAM solver in the
 other, then compare the written fields — so the whole body lives here and each
 test is a one-line parameterization.
 
-``run_dambreak_regime`` is the same set-up/run pair for ``test_mules_regimes``,
-which needs (a) the alpha solver controls varied per run and (b) the two case
-directories left on disk for several assertions instead of a single pass/fail,
-so it stops after the two runs and lets the caller compare.
+``run_dambreak_regime`` is the same set-up/run pair for ``test_mules_regimes``
+and ``test_cranknicolson_alpha_ddt``, which need (a) the case dictionaries
+varied per run and (b) the two case directories left on disk for several
+assertions instead of a single pass/fail, so it stops after the two runs and
+lets the caller compare.
 """
 
 import os
@@ -20,7 +21,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Mapping, Union
+from typing import Mapping, Optional, Union
 
 from pybFoam import dictionary
 
@@ -137,6 +138,21 @@ def run_dambreak_comparison(
                 print(f"Cleaned up: {test_case}")
 
 
+def write_dict_entries(
+    dict_path: Path, sub_dict: str, entries: Mapping[str, Union[bool, float]]
+) -> None:
+    """Overwrite entries of one sub-dict of an OpenFOAM dictionary in place.
+
+    Goes through pybFoam's own ``dictionary.read``/``set``/``write``, so the
+    test never patches dictionary text (TEST_STYLE rule 3).
+    """
+    parsed = dictionary.read(str(dict_path))
+    sub = parsed.subDict(sub_dict)
+    for key, value in entries.items():
+        sub.set(key, value)
+    parsed.write(str(dict_path))
+
+
 def write_alpha_controls(
     fv_solution_path: Path, alpha_controls: Mapping[str, Union[bool, float]]
 ) -> None:
@@ -161,6 +177,8 @@ def run_dambreak_regime(
     native_case: Path,
     end_time: float = 0.05,
     write_interval: float = 0.05,
+    fv_schemes: Optional[Path] = None,
+    pimple_controls: Optional[Mapping[str, Union[bool, float]]] = None,
 ) -> None:
     """Set up ``tutorials/damBreak`` twice with ``alpha_controls`` applied, run both.
 
@@ -168,6 +186,11 @@ def run_dambreak_regime(
     ``Foam::Time`` per process — several regimes run in one pytest session),
     ``native_case`` with the native ``interFoam`` binary. Both directories are
     left on disk for the caller to compare.
+
+    ``fv_schemes`` replaces the tutorial's ``system/fvSchemes`` wholesale with a
+    checked-in variant — a scheme spec such as ``CrankNicolson 0.5`` is two
+    tokens, which the dictionary writer has no way to set as one entry —
+    and ``pimple_controls`` overwrites entries of the ``PIMPLE`` dict.
     """
     for case in (python_case, native_case):
         setup_case(
@@ -177,7 +200,11 @@ def run_dambreak_regime(
             write_interval,
             run_setfields=True,
         )
+        if fv_schemes is not None:
+            shutil.copyfile(fv_schemes, case / "system" / "fvSchemes")
         write_alpha_controls(case / "system" / "fvSolution", alpha_controls)
+        if pimple_controls:
+            write_dict_entries(case / "system" / "fvSolution", "PIMPLE", pimple_controls)
 
     custom = subprocess.run(
         [sys.executable, str(_SOLVER_WORKER), str(python_case)],

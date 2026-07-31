@@ -10,7 +10,11 @@ from pathlib import Path
 
 import pytest
 
-from neofoam.algorithms.solution_loop.interfaces import VGREAT, timeStepConstraint
+from neofoam.algorithms.solution_loop.interfaces import (
+    VGREAT,
+    initialTimeStepConstraint,
+    timeStepConstraint,
+)
 from neofoam.framework.context import Context
 from neofoam.framework.model import BoundModelInterface, ModelRuntime
 from neofoam.solver.incompressibleFluid.models.courant import (
@@ -46,10 +50,29 @@ def test_courant_contribution_limits_delta_t_like_the_cfl_rule(
     assert bound() == pytest.approx(0.05)  # 0.1 * 1.0 / 2.0
 
 
-def test_quiescent_flow_yields_no_opinion(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_quiescent_flow_still_reports_a_per_step_limit(monkeypatch: pytest.MonkeyPatch) -> None:
+    # setDeltaT.H's SMALL is a denominator epsilon, not a cut-off: Co = 0 yields a
+    # huge factor (which the loop's 1.2 growth cap then binds), NOT "no opinion" —
+    # reporting VGREAT here would freeze the first step of every quiescent start.
     monkeypatch.setattr(courant_mod, "computeCFLNumber", lambda phi: [0.0])
     ctx = Context(fields={"phi": object(), "deltaT": 0.1}, models={})
     bound = BoundModelInterface(timeStepConstraint, [_courant_runtime()], ctx)
+    assert bound() == pytest.approx(0.1 * 1.0 / 1e-15)
+
+
+def test_initial_contribution_is_the_undamped_cfl_limit(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(courant_mod, "computeCFLNumber", lambda phi: [2.0])
+    ctx = Context(fields={"phi": object(), "deltaT": 0.1}, models={})
+    bound = BoundModelInterface(initialTimeStepConstraint, [_courant_runtime()], ctx)
+    assert bound() == pytest.approx(0.05)  # 1.0 * 0.1 / 2.0
+
+
+def test_quiescent_flow_yields_no_initial_opinion(monkeypatch: pytest.MonkeyPatch) -> None:
+    # setInitialDeltaT.H IS gated on CoNum > SMALL: a quiescent start skips the whole
+    # pass, including the write-time snapping its setDeltaT call would trigger.
+    monkeypatch.setattr(courant_mod, "computeCFLNumber", lambda phi: [0.0])
+    ctx = Context(fields={"phi": object(), "deltaT": 0.1}, models={})
+    bound = BoundModelInterface(initialTimeStepConstraint, [_courant_runtime()], ctx)
     assert bound() == VGREAT
 
 

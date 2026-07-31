@@ -57,6 +57,12 @@ def run(case_dir: Path) -> dict[str, Any]:
         "write_fields": sorted(ctx.write_fields),
         "n_cells": ctx.mesh.nCells(),
         "n_internal_faces": ctx.mesh.nInternalFaces(),
+        "mesh_dynamic": ctx.mesh.dynamic(),
+        "mesh_type": type(ctx.mesh).__name__,
+        # None on a static mesh (createUfIfPresent.H builds Uf only when the
+        # mesh can move); its name otherwise.
+        "Uf": None if ctx.models["Uf"] is None else str(ctx.models["Uf"].name()),
+        "dynamic_mesh_controls": ctx.models["dynamic_mesh_controls"],
         # ``uniformDimensionedScalarField.name()`` (hRef) returns a ``Word``,
         # not a plain ``str`` like ``GeometricField.name()`` does — ``str()``
         # normalises both for JSON.

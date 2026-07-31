@@ -13,6 +13,7 @@ from pathlib import Path
 import pytest
 
 from neofoam.solver.incompressibleVoF.models.pressure_velocity.control_factory import (
+    FrozenFlowControl,
     create_pimple_control,
 )
 
@@ -43,3 +44,32 @@ def test_all_pimple_keys_are_read(monkeypatch: pytest.MonkeyPatch) -> None:
     assert control.nNonOrthogonalCorrectors == 1
     assert control.momentumPredictor() is False
     assert control.turbCorr() is False
+
+
+def test_turb_on_final_iter_only_defaults_to_correcting_on_the_last_outer_iteration(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """pimpleControl::read()'s default is ``turbOnFinalIterOnly true``.
+
+    ``cases/pimple_outer3`` leaves the key out, as every interFoam tutorial
+    does, so the correction has to land on the third outer corrector alone.
+    """
+    monkeypatch.chdir(_CASES / "pimple_outer3")
+    control = create_pimple_control({})
+    assert control.turbOnFinalIterOnly is True
+    assert [control.loop() and control.turbCorr() for _ in range(3)] == [False, False, True]
+
+
+def test_turb_on_final_iter_only_no_puts_the_correction_in_every_outer_iteration(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(_CASES / "pimple_turb_every_outer")
+    control = create_pimple_control({})
+    assert control.turbOnFinalIterOnly is False
+    assert [control.loop() and control.turbCorr() for _ in range(3)] == [True, True, True]
+
+
+def test_a_frozen_flow_case_never_corrects_the_turbulence() -> None:
+    # interIsoFoam ``continue``s out of the outer corrector before the
+    # turbulence correction, so the frozen-flow control answers no.
+    assert FrozenFlowControl().turbCorr() is False

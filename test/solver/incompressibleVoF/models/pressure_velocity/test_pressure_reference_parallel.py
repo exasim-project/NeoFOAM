@@ -35,6 +35,9 @@ over verbatim (see its docstring for the derivation):
     p     = (3525.07125, 2400.0475, 50, -1075.02375)
     p_rgh = (3529.97625, 3629.97625, 3729.97625, 3829.97625)
 
+Init applies that shift itself (createFields.H), so the worker's ``*_before``
+dumps already carry it and the further corrector-tail call it makes is idempotent.
+
 Both ranks run one ``mpirun`` invocation of
 ``_parallel_pressure_reference_worker.py`` (one ``Foam::Time`` per process) and
 each dumps its own JSON; the per-rank slices are put back in global order by
@@ -70,10 +73,11 @@ _WORKER = _HERE / "_parallel_pressure_reference_worker.py"
 # spelling of the same reference cell.
 _RHO = [1.0, 250.75, 750.25, 1000.0]
 _GH = [-4.905] * 4
-_P_RECONSTRUCTED = [95.095, -1029.92875, -3379.97625, -4505.0]
 _P_LEVELLED = [3525.07125, 2400.0475, 50.0, -1075.02375]
 _P_RGH_RELEVELLED = [3529.97625, 3629.97625, 3729.97625, 3829.97625]
-_P_RGH_AT_REFERENCE_CELL = 300.0
+# p_rgh in the reference cell as the worker samples it — after init's own
+# start-up levelling, so the re-levelled value and not the ``0/p_rgh`` 300.
+_P_RGH_AT_REFERENCE_CELL = 3729.97625
 
 _RTOL = 1e-13
 
@@ -202,12 +206,17 @@ def test_the_decomposed_case_builds_the_hand_derived_density_and_gravity_head(
         atol=0,
         err_msg="vofRow4ClosedRefPoint on 2 ranks",
     )
+
+
+def test_startup_levels_the_pressure_across_ranks(ranks: list[dict[str, Any]]) -> None:
+    """``p_before`` is what *init* leaves behind: createFields.H's shift, already
+    applied on both ranks — including the one that owns no reference cell."""
     assert_allclose(
         _in_global_order(ranks, "p_before"),
-        _P_RECONSTRUCTED,
+        _P_LEVELLED,
         rtol=_RTOL,
         atol=0,
-        err_msg="vofRow4ClosedRefPoint on 2 ranks: p = p_rgh + rho*gh",
+        err_msg="vofRow4ClosedRefPoint on 2 ranks: init must level p by pRefValue - p[2]",
     )
 
 

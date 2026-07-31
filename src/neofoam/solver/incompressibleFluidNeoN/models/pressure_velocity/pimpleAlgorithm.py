@@ -221,7 +221,9 @@ def build(self: Any) -> list[Any]:
         return nn.SurfaceInterpolationScalar(rt.executor, rt.nf_mesh, nn.TokenList(["linear"]))
 
     def create_grad_op(context: dict[str, Any]) -> Any:
-        return nfb.GaussGreenGrad(context["_neon_runtime"])
+        # gradSchemes/grad(U) as written by the case (plain Gauss-Green when the
+        # case does not name it), so a limited grad(U) is limited here too.
+        return nfb.GradScheme(context["_neon_runtime"], "U")
 
     return [
         field("p", create_p, depends_on=["_neon_runtime"], write=True),
@@ -322,6 +324,9 @@ def momentum(
         raise RuntimeError("incompressibleFluidNeoN: steadyState ddt unsupported (BDF1/BDF2 only)")
 
     UEqn.set_final_iter(final_iter)
+    # pimpleFoam/UEqn.H: UEqn.relax() — the momentum matrix is the one PIMPLE
+    # under-relaxes; the pressure equation in ``continuity`` is left unrelaxed.
+    UEqn.relax()
 
     if pimple_state.piso.momentum_predictor():
         stats_u = UEqn.solve_with_source(-1.0 * nn.exp.grad(p))

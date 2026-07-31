@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Spec for ``set_time_step`` — interFoam's ``setDeltaT.H`` dual Courant/alpha-
-Courant adaptive time step, transcribed in ``incompressibleVoF.py``.
+"""Spec for ``set_time_step`` — interFoam's ``setInitialDeltaT.H`` +``setDeltaT.H``
+dual Courant/alpha-Courant adaptive time step, transcribed in ``incompressibleVoF.py``.
 
 Every scenario runs in ``_set_time_step_worker.py``: one ``Foam::Time`` (and one
 mesh) per process is a hard OpenFOAM constraint, so all scenarios share the one
@@ -165,6 +165,22 @@ SCENARIOS: dict[str, dict[str, Any]] = {
         "dt0": 1.0,
         "control_dict": {"adjustTimeStep": True},
     },
+    # 6. Mid-run step ("advance": the worker increments the Foam::Time first, so
+    # timeIndex() != 0). Same controlDict as 2a, so the deltaT is the same 0.025 —
+    # what differs is that setInitialDeltaT.H is gated off and setDeltaT is called
+    # once instead of twice. MUST stay last: the increment is not undone.
+    "flow_limits_mid_run": {
+        "u_x": 1.0,
+        "alpha": 0.5,
+        "dt0": 0.25,
+        "advance": True,
+        "control_dict": {
+            "adjustTimeStep": True,
+            "maxCo": 0.1,
+            "maxAlphaCo": 10.0,
+            "maxDeltaT": 1.0,
+        },
+    },
 }
 
 
@@ -299,4 +315,38 @@ def test_default_max_delta_t_is_one_when_absent(results: dict[str, Any]) -> None
         1.0,
         rtol=1e-9,
         err_msg="maxDeltaT must default to 1.0 when absent from controlDict",
+    )
+
+
+# --- 6. setInitialDeltaT.H runs once, on the first step only ------------------
+
+
+def test_first_step_runs_the_initial_pass_before_the_damped_one(
+    results: dict[str, Any],
+) -> None:
+    # interFoam runs setInitialDeltaT.H (with its own CourantNo.H) before the loop,
+    # so the first pass calls setDeltaT twice. The two values coincide on this case
+    # because setDeltaT.H's reduction is immediate too; what the extra call buys is
+    # the Time::adjustDeltaT it triggers, which an adjustableRunTime case then grows
+    # from (this mesh's controlDict is writeControl runTime, so nothing snaps here).
+    calls = results["flow_limits"]["set_delta_t_calls"]
+    assert len(calls) == 2, "setInitialDeltaT.H must precede setDeltaT.H on step 1"
+    assert_allclose(
+        calls[0],
+        0.025,  # min(maxCo*dt0/CoNum, min(dt0, maxDeltaT)) = min(0.025, 0.25)
+        rtol=1e-9,
+        err_msg="the initial pass must apply the CFL limit undamped",
+    )
+
+
+def test_mid_run_step_skips_the_initial_pass(results: dict[str, Any]) -> None:
+    scenario = results["flow_limits_mid_run"]
+    assert scenario["set_delta_t_calls"] == pytest.approx([0.025]), (
+        "setInitialDeltaT.H is gated on timeIndex() == 0 and must not run again"
+    )
+    assert_allclose(
+        scenario["final_dt"],
+        0.025,
+        rtol=1e-9,
+        err_msg="the mid-run step must reach the same deltaT as the first one",
     )

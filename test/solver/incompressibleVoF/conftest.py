@@ -20,6 +20,21 @@ the derivations.
 from disk rather than defaulted; see
 ``test_gh_uses_a_non_default_hRef_as_the_reference_head`` in
 ``test_create_fields.py``.
+
+``cases/vofRow4Moving`` is the same mesh/properties plus a
+``constant/dynamicMeshDict`` (solid-body oscillation along gravity), for the
+tests that need the mesh *selection* to go through ``dynamicFvMesh::New`` —
+see ``test_dynamic_mesh.py``.
+
+``cases/vofRow4Divergent`` is the same mesh/properties with an inlet that feeds
+half of what the interior carries, so ``createPhi(U)`` is *not* divergence-free —
+the start-up flux projection of ``initCorrectPhi.H`` has something to do; see
+``test_flux_correction.py``.
+
+``cases/vofRow4Porous`` is the same mesh/properties switched to isoAdvector and
+given ``constant/porosityProperties`` + ``0/porosity``, for the tests that need
+``Foam::isoAdvection`` to find a porosity field in the registry — see
+``models/alpha_advection/models/test_iso_advector.py``.
 """
 
 from __future__ import annotations
@@ -39,6 +54,9 @@ import pytest
 _HERE = Path(__file__).parent
 _CASE = _HERE / "cases" / "vofRow4"
 _HREF_CASE = _HERE / "cases" / "vofRow4Href"
+_MOVING_CASE = _HERE / "cases" / "vofRow4Moving"
+_POROUS_CASE = _HERE / "cases" / "vofRow4Porous"
+_DIVERGENT_CASE = _HERE / "cases" / "vofRow4Divergent"
 _WORKER = _HERE / "_create_fields_worker.py"
 
 
@@ -108,3 +126,21 @@ def vof_row4(tmp_path_factory: pytest.TempPathFactory) -> BuiltCase:
 def vof_row4_href(tmp_path_factory: pytest.TempPathFactory) -> BuiltCase:
     """Mesh ``cases/vofRow4Href`` (``constant/hRef`` = 0.3) and run the pipeline."""
     return _run_pipeline(tmp_path_factory, _HREF_CASE, "vofRow4Href")
+
+
+@pytest.fixture(scope="session")
+def vof_row4_moving(tmp_path_factory: pytest.TempPathFactory) -> BuiltCase:
+    """Mesh ``cases/vofRow4Moving`` (has a ``constant/dynamicMeshDict``) and run it."""
+    return _run_pipeline(tmp_path_factory, _MOVING_CASE, "vofRow4Moving")
+
+
+@pytest.fixture(scope="session")
+def vof_row4_porous(tmp_path_factory: pytest.TempPathFactory) -> BuiltCase:
+    """Mesh ``cases/vofRow4Porous`` (isoAdvector + porosity) and run the pipeline."""
+    return _run_pipeline(tmp_path_factory, _POROUS_CASE, "vofRow4Porous")
+
+
+@pytest.fixture(scope="session")
+def vof_row4_divergent(tmp_path_factory: pytest.TempPathFactory) -> BuiltCase:
+    """Mesh ``cases/vofRow4Divergent`` (non-solenoidal ``0/U``) and run the pipeline."""
+    return _run_pipeline(tmp_path_factory, _DIVERGENT_CASE, "vofRow4Divergent")

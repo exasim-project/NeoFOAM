@@ -26,7 +26,11 @@ import neon._neon as nn  # NeoN Python bindings
 from pybFoam import dictionary
 from pydantic import Field
 
-from neofoam.algorithms.solution_loop.interfaces import VGREAT, timeStepConstraint
+from neofoam.algorithms.solution_loop.interfaces import (
+    VGREAT,
+    initialTimeStepConstraint,
+    timeStepConstraint,
+)
 from neofoam.io import OF, BaseConfig, IOStrategy
 
 from .incompressibleFluidNeoNModel import Model, incompressibleFluidNeoNModel
@@ -63,11 +67,24 @@ def detect_model() -> bool:
 def courant_limit(phi: Any, deltaT: float, cfg: CourantConfig) -> float:
     """Largest deltaT the CFL condition permits on the live NeoN ``phi``.
 
-    ``Co`` is the maximum Courant number on ``phi``; below ``SMALL`` the flow is
-    quiescent and the rule offers no opinion (``VGREAT``).
+    ``Co`` is the maximum Courant number on ``phi``; ``SMALL`` is ``setDeltaT.H``'s
+    denominator epsilon, not a cut-off, so a quiescent start grows by the loop's
+    1.2 cap instead of freezing.
+    """
+    max_co, _mean_co = nn.compute_co_num(phi, float(deltaT))
+    co = float(max_co)
+    return cfg.maxCo / (co + SMALL) * float(deltaT)
+
+
+@courant.contributes(initialTimeStepConstraint)
+def courant_initial_limit(phi: Any, deltaT: float, cfg: CourantConfig) -> float:
+    """The undamped first-step CFL limit of ``setInitialDeltaT.H`` (NeoN ``phi``).
+
+    Gated on ``Co > SMALL`` like that file: a quiescent flow yields no opinion, so
+    the initial pass is skipped entirely.
     """
     max_co, _mean_co = nn.compute_co_num(phi, float(deltaT))
     co = float(max_co)
     if co <= SMALL:
         return VGREAT
-    return float(deltaT) * cfg.maxCo / co
+    return cfg.maxCo * float(deltaT) / co

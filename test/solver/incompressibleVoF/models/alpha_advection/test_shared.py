@@ -40,7 +40,7 @@ from neofoam.solver.incompressibleVoF.models.alpha_advection.shared import (
 from ...conftest import BuiltCase
 
 
-def test_shared_steps_are_phi_mixture_alphas_rho_rhophi_alphaphiun() -> None:
+def test_shared_steps_are_phi_mixture_alphas_rho_and_the_alpha_fluxes() -> None:
     steps = shared_field_build_steps()
     assert [(step.name, step.category) for step in steps] == [
         ("fields.phi", "fields"),
@@ -50,13 +50,15 @@ def test_shared_steps_are_phi_mixture_alphas_rho_rhophi_alphaphiun() -> None:
         ("fields.rho", "fields"),
         ("fields.rhoPhi", "fields"),
         ("fields.alphaPhiUn", "fields"),
+        ("fields.alphaPhi10", "fields"),
     ]
 
 
 def test_shared_steps_declare_the_edges_that_order_them() -> None:
     # phi from U, the mixture from U/phi/mesh, both phase fractions from the
     # mixture, rho from the mixture + both fractions, rhoPhi from rho + phi,
-    # alphaPhiUn (zero-init, createAlphaFluxes.H) from phi alone.
+    # and the two createAlphaFluxes.H fluxes: alphaPhiUn (zero-init) from phi
+    # alone, alphaPhi10 (phi*interpolate(alpha1)) from phi and alpha1.
     steps = shared_field_build_steps()
     assert [step.depends_on for step in steps] == [
         ["fields.U"],
@@ -66,13 +68,14 @@ def test_shared_steps_declare_the_edges_that_order_them() -> None:
         ["models.mixture", "fields.alpha1", "fields.alpha2"],
         ["fields.rho", "fields.phi"],
         ["fields.phi"],
+        ["fields.phi", "fields.alpha1"],
     ]
 
 
 def test_no_shared_field_is_flagged_for_the_python_field_writer() -> None:
     # VoF writes through OpenFOAM's AUTO_WRITE, so none of these steps opts into
     # ``Context.write_fields``.
-    assert [step.write for step in shared_field_build_steps()] == [False] * 7
+    assert [step.write for step in shared_field_build_steps()] == [False] * 8
 
 
 def test_phase_fractions_are_the_mixtures_own_fields(vof_row4: BuiltCase) -> None:

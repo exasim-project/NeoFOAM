@@ -22,6 +22,13 @@ OpenFOAM primitives pybFoam does not bind: ``getRefCellValue``, and the
 return the binding drops — it survives as the sign of the cell index. This
 module pins all three.
 
+``createFields.H`` runs the *same* block once at start-up, immediately after
+``setRefCell``, so a case whose pressure corrector never runs (``frozenFlow
+yes``) still writes a correctly levelled ``p_rgh``. The ``pressure_reference``
+init step is where NeoFOAM does it, so the levelling is pinned here twice: on
+the fields as init leaves them (``*_before``) and after a further corrector-tail
+call (``*_after``).
+
 Two real 4-cell cases, identical apart from their ``0/p_rgh`` boundary
 conditions, make the open/closed distinction observable:
 
@@ -164,9 +171,11 @@ def test_pressure_reference_has_no_cell_on_an_open_domain(open_domain: Any) -> N
 # --------------------------------------------------------------------------- #
 
 
-def test_get_ref_cell_value_returns_the_cells_value(closed: Any) -> None:
-    """``0/p_rgh`` is the non-uniform list (100 200 300 400)."""
-    assert closed["ref_cell_values_of_p_rgh"] == _P_RGH_FILE
+def test_get_ref_cell_value_returns_the_cells_value(open_domain: Any) -> None:
+    """``0/p_rgh`` is the non-uniform list (100 200 300 400). Sampled on the open
+    case because the closed one's start-up levelling moves p_rgh off the file
+    values before anything can read them."""
+    assert open_domain["ref_cell_values_of_p_rgh"] == _P_RGH_FILE
 
 
 def test_get_ref_cell_value_is_zero_when_no_rank_owns_a_reference_cell(
@@ -175,6 +184,41 @@ def test_get_ref_cell_value_is_zero_when_no_rank_owns_a_reference_cell(
     """OpenFOAM's ``returnReduce(refCelli >= 0 ? field[refCelli] : 0, sumOp)``
     is 0 when the cell is owned nowhere."""
     assert closed["ref_cell_value_without_reference_cell"] == 0.0
+
+
+# --------------------------------------------------------------------------- #
+# createFields.H: the same levelling, applied once at start-up                  #
+# --------------------------------------------------------------------------- #
+
+
+def test_startup_levels_the_absolute_pressure_on_a_closed_domain(closed: Any) -> None:
+    """Init already leaves p shifted — createFields.H does not wait for the
+    pressure corrector, and a frozen-flow case never gets one."""
+    assert_allclose(
+        closed["p_before"],
+        _P_LEVELLED,
+        rtol=_RTOL,
+        atol=0,
+        err_msg="vofRow4Closed: init must apply createFields.H's level shift to p",
+    )
+
+
+def test_startup_relevels_p_rgh_on_a_closed_domain(closed: Any) -> None:
+    """The field the solver writes out: without the start-up re-levelling it
+    keeps whatever level ``0/p_rgh`` happened to carry."""
+    assert_allclose(
+        closed["p_rgh_before"],
+        _P_RGH_RELEVELLED,
+        rtol=_RTOL,
+        atol=0,
+        err_msg="vofRow4Closed: init must relevel p_rgh from the shifted p",
+    )
+
+
+def test_startup_leaves_an_open_domain_unlevelled(open_domain: Any) -> None:
+    """The shift is guarded by needReference(), so an open domain keeps the file
+    values — its level is already fixed by the totalPressure patch."""
+    assert open_domain["p_rgh_before"] == _P_RGH_FILE
 
 
 # --------------------------------------------------------------------------- #
@@ -250,9 +294,10 @@ def test_p_rgh_is_relevelled_from_the_shifted_pressure_on_a_closed_domain(
 
 def test_pimple_declares_a_solver_for_p_rgh_and_none_for_p() -> None:
     """``fvMatrix::solve`` looks the field name up in ``solvers``; declaring
-    p_rgh (and no p) is what makes p_rgh the solved variable."""
+    p_rgh (and no p) is what makes p_rgh the solved variable. ``pcorr`` is the
+    start-up flux projection's own field, not a pressure alias."""
     solvers = PimpleFvSolution.model_fields["solvers"].annotation.model_fields
-    assert sorted(solvers) == ["U", "UFinal", "p_rgh", "p_rghFinal"]
+    assert sorted(solvers) == ["U", "UFinal", "p_rgh", "p_rghFinal", "pcorr", "pcorrFinal"]
 
 
 def test_pimple_declares_the_pressure_laplacian_on_p_rgh() -> None:

@@ -174,6 +174,9 @@ def execution_graph(
         time_builder.step(ops["increment_time"])
 
         with time_builder.loop(pimple_ops["inner_loop"]) as inner_builder:
+            # interFoam opens every outer corrector with mesh.update(); a static
+            # case sees a no-op here.
+            inner_builder.step(pimple_ops["mesh_update"])
             inner_builder.step(alpha_ops["alpha_advection"])
             inner_builder.step(pimple_ops["momentum"])
             inner_builder.step(pimple_ops["continuity"])
@@ -242,7 +245,8 @@ def set_time_step(
     alpha1: volScalarField,
     runtime: Annotated[Any, "models"],
 ) -> None:
-    """Adjust the time step from both flow-CFL and alpha-CFL (interFoam setDeltaT)."""
+    """Adjust the time step from both flow-CFL and alpha-CFL (interFoam
+    setInitialDeltaT.H + setDeltaT.H)."""
     # Re-read system/controlDict every step — faithful to OpenFOAM's
     # runTimeModifiable handling of adjustTimeStep/maxCo/maxAlphaCo/maxDeltaT
     # (Time.controlDict() is not bound, so the file is read directly). Missing
@@ -256,6 +260,16 @@ def set_time_step(
     max_co = float(ctrl_dict.getOrDefault[float]("maxCo", 1.0))
     max_alpha_co = float(ctrl_dict.getOrDefault[float]("maxAlphaCo", 1.0))
     max_delta_t = float(ctrl_dict.getOrDefault[float]("maxDeltaT", 1.0))
+
+    # setInitialDeltaT.H: interFoam runs it once (with CourantNo.H) before the
+    # loop, so on the first pass it precedes the setDeltaT.H below. The reduction
+    # is undamped and can only lower the step, but the setDeltaT call it makes
+    # snaps onto the write time, which is what the damped pass then grows from.
+    if runtime.timeIndex() == 0:
+        initial_co_num = pyf.computeCFLNumber(phi)[0]
+        if initial_co_num > 1e-15:
+            dt0 = runtime.deltaTValue()
+            runtime.setDeltaT(min(max_co * dt0 / initial_co_num, min(dt0, max_delta_t)))
 
     # Flow + interface (alpha) Courant numbers.
     maxCoNum, meanCoNum = pyf.computeCFLNumber(phi)
@@ -287,9 +301,18 @@ def increment_time(runtime: Annotated[Any, "models"]) -> None:
 @incompressibleVoF.operation(depends_on=["continuity"])
 def turbulence_correction(
     turbulence: Annotated[Optional[CorrectableModel], "models"],
+    pimple_control: Annotated[Any, "models"],
 ) -> FieldUpdates:
-    """Correct the two-phase turbulence model after pressure-velocity coupling."""
-    if turbulence:
+    """Correct the two-phase turbulence model after pressure-velocity coupling.
+
+    interFoam/interIsoFoam guard the call with ``if (pimple.turbCorr())``, which
+    is ``!turbOnFinalIterOnly || finalIter()``: with the native default the
+    turbulence is corrected **once per time step**, on the last outer corrector,
+    not once per outer corrector. Under ``nOuterCorrectors > 1`` an ungated call
+    feeds a ``nut`` native has not yet updated into the next outer iteration's
+    momentum assembly, which moves ``p_rgh`` and from there ``phi`` and alpha.
+    """
+    if turbulence and pimple_control.turbCorr():
         turbulence.correct()
     return FieldUpdates({})
 

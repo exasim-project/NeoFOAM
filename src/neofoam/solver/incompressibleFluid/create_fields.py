@@ -15,6 +15,7 @@ import pybFoam as pyf
 from pybFoam.turbulence import singlePhaseTransportModel
 
 from neofoam.fields.synthesis import synthesize_init_step
+from neofoam.foam.initialization import new_mesh, refuse_mesh_refinement
 from neofoam.framework.context import Context
 from neofoam.framework.initialization import (
     ConfigContext,
@@ -77,8 +78,9 @@ def _add_turbulence_model(builder: InitializerBuilder, case_dir: Path) -> None:
     model file's co-located ``fallback=True`` ``correct`` op after the loop. The
     handle is built lazily from the live ``U``/``phi``/transport, and its stress is
     exposed via ``viscous_stress()`` at ``models.viscousStress`` for the momentum
-    equation. A configured model with no registered spec (or no fallback op) raises
-    at selection time.
+    equation. A configured model with no registered spec is built straight from
+    OpenFOAM's own selection table (the selector says so on stdout); a registered
+    model with no fallback op, or one of the wrong family, raises at selection time.
     """
 
     def build_turbulence(ctx: dict[str, Any]) -> Any:
@@ -209,7 +211,13 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             return pyf.Time(ctx["_foam_arglist"])
 
         def create_mesh(ctx: dict[str, Any]) -> Any:
-            return pyf.fvMesh(ctx["_foam_time"])
+            # First, so an AMR case is refused before the argList and the Foam::Time
+            # it would be built on are resolved from the context.
+            refuse_mesh_refinement()
+            # pimpleFoam is a moving-mesh solver (``createDynamicFvMesh.H``): a case
+            # with ``constant/dynamicMeshDict`` gets that dictionary's motion solver,
+            # every other case the plain static fvMesh it always had.
+            return new_mesh(ctx["_foam_arglist"], ctx["_foam_time"])
 
         def create_laminar_transport(ctx: dict[str, Any]) -> Any:
             # Raw pybFoam transport: drives correct() and feeds the OpenFOAM
@@ -224,7 +232,7 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         # under ``-parallel``, the MPI session it owns) alive for the whole run.
         builder.add(lazy("_foam_arglist", create_foam_arglist))
         builder.add(lazy("_foam_time", create_foam_time, depends_on=["_foam_arglist"]))
-        builder.add(lazy("mesh", create_mesh, depends_on=["_foam_time"]))
+        builder.add(lazy("mesh", create_mesh, depends_on=["_foam_time", "_foam_arglist"]))
 
         # When a mesh-preprocessing pipeline is active, its steps build the mesh
         # in-process; the terminal alias carries ``replaces=["mesh"]`` so

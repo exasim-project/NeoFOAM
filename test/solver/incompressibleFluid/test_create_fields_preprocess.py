@@ -50,9 +50,9 @@ def test_absent_enable_file_keeps_default_disk_mesh_step(
 
     Drives the *real* create_fields wiring (not a hand-built stand-in): detection
     yields no preprocess runtimes and the built init-step list still carries the
-    original ``lazy("mesh", create_mesh, depends_on=["_foam_time"])`` — not a
-    pipeline alias — so an on-disk mesh case is read unchanged. No lazy step is
-    executed, so no mesh/pybFoam object is created.
+    original ``lazy("mesh", create_mesh, depends_on=["_foam_time",
+    "_foam_arglist"])`` — not a pipeline alias — so an on-disk mesh case is read
+    unchanged. No lazy step is executed, so no mesh/pybFoam object is created.
     """
     # detect_and_create reads dictionaries by relative path, so run from the case.
     monkeypatch.chdir(DISK_MESH_CASE)
@@ -67,7 +67,8 @@ def test_absent_enable_file_keeps_default_disk_mesh_step(
     assert len(mesh_steps) == 1
     # the surviving mesh step is the disk-read default, not a pipeline alias
     assert mesh_steps[0].replaces == []
-    assert mesh_steps[0].depends_on == ["_foam_time"]
+    # ``_foam_arglist`` is the argList ``dynamicFvMesh::New`` selects through.
+    assert mesh_steps[0].depends_on == ["_foam_time", "_foam_arglist"]
     assert not any(s.name.startswith("preprocess.") for s in steps)
 
 

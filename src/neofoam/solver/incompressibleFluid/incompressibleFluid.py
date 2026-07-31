@@ -26,6 +26,7 @@ from neofoam.framework.operations import (
     IterativeOp,
     Operation,
     Operations,
+    SequentialOp,
     StepBuilder,
 )
 from neofoam.framework.solver import Solver
@@ -82,6 +83,24 @@ def _core_model(state: Any, spec_name: str) -> Any:
     return next(
         m for m in state.core_models if getattr(getattr(m, "spec", None), "name", None) == spec_name
     )
+
+
+def _under_turb_corr(op: Operation) -> Operation:
+    """Gate a transport/turbulence correction with pimpleFoam's ``turbCorr()``.
+
+    ``pimpleFoam.C`` runs ``laminarTransport.correct(); turbulence->correct();``
+    inside the outer corrector under ``if (pimple.turbCorr())`` — on the final
+    outer iteration only, unless the case sets ``turbOnFinalIterOnly no``.
+    ``simpleFoam`` has no such gate (its loop body runs once per iteration), so
+    a case that built a :class:`SimpleControl` runs the op unconditionally.
+    """
+
+    def gated(ctx: Context) -> None:
+        control = ctx.models.get("pimple_control")
+        if control is None or control.turbCorr():
+            op.run(ctx)
+
+    return Operation(func=SequentialOp(gated), metadata=op.metadata)
 
 
 incompressibleFluid = Solver("incompressibleFluid")
@@ -142,12 +161,13 @@ def execution_graph(
         metadata=OperationMetadata(op_name="time_loop"),
     )
 
-    # The fluid-property models own their operations; the solver steps them after
-    # the pressure-velocity loop (the end-of-step *correct* phase, matching
-    # pimpleFoam) — viscosity before turbulence (turbulence reads nu), each iterated
-    # since a model may contribute several ops. ``nuEff`` is primed at init and the
-    # momentum predictor uses the value the turbulence model refreshed at the end of
-    # the previous step; the OpenFOAM fallbacks advance their pybFoam model here.
+    # The fluid-property models own their operations; the solver steps them inside
+    # the pressure-velocity loop, after the pressure correction and gated by
+    # ``turbCorr()`` — pimpleFoam's position — viscosity before turbulence
+    # (turbulence reads nu), each iterated since a model may contribute several
+    # ops. ``nuEff`` is primed at init and the momentum predictor uses the value
+    # the turbulence model refreshed at the end of the previous outer iteration;
+    # the OpenFOAM fallbacks advance their pybFoam model here.
     viscosity_ops = ctx.models["viscosity"].operations
     turbulence_ops = ctx.models["turbulence"].operations
 
@@ -156,13 +176,20 @@ def execution_graph(
         time_builder.step(loop_ops["increment_time"])
 
         with time_builder.loop(algo_ops["inner_loop"]) as inner_builder:
+            # pimpleFoam moves the mesh at the head of the outer corrector, before
+            # UEqn.H. simpleFoam is steady and has no mesh-motion step, and neither
+            # has the boussinesq arm, so the algorithm only carries the operation
+            # when it applies.
+            mesh_update = next((op for op in algo_ops if op.operation_name == "mesh_update"), None)
+            if mesh_update is not None:
+                inner_builder.step(mesh_update)
             inner_builder.step(algo_ops["momentum"])
             inner_builder.step(algo_ops["continuity"])
 
-        for op in viscosity_ops:
-            time_builder.step(op)
-        for op in turbulence_ops:
-            time_builder.step(op)
+            for op in viscosity_ops:
+                inner_builder.step(_under_turb_corr(op))
+            for op in turbulence_ops:
+                inner_builder.step(_under_turb_corr(op))
 
         time_builder.step(writer_ops["write_output"])
 

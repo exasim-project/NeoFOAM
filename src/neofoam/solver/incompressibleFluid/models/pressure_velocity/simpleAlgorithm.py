@@ -16,7 +16,7 @@ pass per step and the turbulence model is corrected once per step by the
 solver graph, mirroring ``simpleFoam``'s ``while (simple.loop())`` body.
 """
 
-from typing import Annotated, Any, Callable, Protocol
+from typing import Annotated, Any, Callable, Optional, Protocol
 
 import pybFoam as pyf
 from pybFoam import (
@@ -174,6 +174,8 @@ def momentum(
     viscousStress: Annotated[ViscousStress, "models"],
     simple_control: Annotated[Any, "models"],
     ctx: Context,
+    mrf_zones: Annotated[Optional[pyf.IOMRFZoneList], "models"] = None,
+    fv_options: Annotated[Optional[pyf.fvOptions], "models"] = None,
 ) -> FieldUpdates:
     # Start-of-iteration prevIter snapshot: ``simpleControl.loop()`` calls
     # ``storePrevIterFields()`` natively so that ``p.relax()`` (explicit field
@@ -184,12 +186,30 @@ def momentum(
     # Refresh nuEff where it is consumed (see pimpleAlgorithm.momentum).
     with telemetry.span("momentum.assemble"):
         viscousStress.update(ctx)
-        UEqn = fvVectorMatrix(fvm.div(phi, U) + viscousStress.divDevReff(U))
+        if mrf_zones is None:
+            UEqn = fvVectorMatrix(fvm.div(phi, U) + viscousStress.divDevReff(U))
+        else:
+            # UEqn.H under a rotating frame: the wall velocities on the MRF
+            # patches are set first (they feed the boundary coefficients of
+            # ``div(phi,U)``), then the frame acceleration joins the sum.
+            mrf_zones.correctBoundaryVelocity(U)
+            UEqn = fvVectorMatrix(fvm.div(phi, U) + mrf_zones.DDt(U) + viscousStress.divDevReff(U))
+        if fv_options is not None:
+            # ``== fvOptions(U)`` moves the source to the right-hand side, i.e.
+            # subtracts it from the assembled matrix. UEqn.H's three fvOptions
+            # calls sit at three exact points, and the order is the physics: the
+            # source joins the sum BEFORE relaxation, the constraints are applied
+            # AFTER it, and the correction runs after the solve.
+            UEqn = fvVectorMatrix(UEqn - fv_options(U))
         UEqn.relax()
+        if fv_options is not None:
+            fv_options.constrain(UEqn)
 
     if simple_control.momentumPredictor():
         with telemetry.span("momentum.solve"):
             fvVectorMatrix(UEqn + fvc.grad(p)).solve()
+        if fv_options is not None:
+            fv_options.correct(U)
 
     return FieldUpdates({"UEqn": UEqn, "U": U})
 
@@ -210,6 +230,8 @@ def continuity(
     simple_control: Annotated[Any, "models"],
     cumulativeContErr: Annotated[list[float], "models"],
     pressure_reference: Annotated[dict[str, Any], "models"],
+    mrf_zones: Annotated[Optional[pyf.IOMRFZoneList], "models"] = None,
+    fv_options: Annotated[Optional[pyf.fvOptions], "models"] = None,
 ) -> FieldUpdates:
     pRefCell = pressure_reference["pRefCell"]
     pRefValue = pressure_reference["pRefValue"]
@@ -218,6 +240,11 @@ def continuity(
         rAU = volScalarField(pyf.Word("rAU"), 1.0 / UEqn.A())
         HbyA = volVectorField(pyf.constrainHbyA(rAU * UEqn.H(), U, p))
         phiHbyA = surfaceScalarField(pyf.Word("phiHbyA"), fvc.flux(HbyA))
+
+        if mrf_zones is not None:
+            # pEqn.H hands the pressure equation the flux seen from the rotating
+            # frame; ``adjustPhi`` then balances that relative flux.
+            mrf_zones.makeRelative(phiHbyA)
 
         pyf.adjustPhi(phiHbyA, U, p)
 
@@ -229,7 +256,10 @@ def continuity(
             phiHbyA.assign(phiHbyA + fvc.interpolate(rAtU - rAU) * fvc.snGrad(p) * U.mesh().magSf())
             HbyA.assign(HbyA - (rAU - rAtU) * fvc.grad(p))
 
-        pyf.constrainPressure(p, U, phiHbyA, rAtU)
+        if mrf_zones is None:
+            pyf.constrainPressure(p, U, phiHbyA, rAtU)
+        else:
+            pyf.constrainPressure(p, U, phiHbyA, rAtU, mrf_zones)
 
     while simple_control.correctNonOrthogonal():
         with telemetry.span("pressure.assemble"):
@@ -253,6 +283,10 @@ def continuity(
     p.relax()
     U.assign(HbyA - rAtU * fvc.grad(p))
     U.correctBoundaryConditions()
+    if fv_options is not None:
+        # pEqn.H closes on a second ``fvOptions.correct(U)``: the corrector has
+        # just overwritten U, so any correction the predictor applied is gone.
+        fv_options.correct(U)
 
     return FieldUpdates({"U": U, "p": p, "phi": phi})
 

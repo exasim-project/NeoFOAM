@@ -17,7 +17,9 @@ argument so ``setDeltaT`` calls can be counted (proves the early-return path
 never mutates dt) without touching production code.
 
 The request is ``{"scenarios": {name: {"u_x": float, "alpha": float,
-"dt0": float, "control_dict": {key: value, ...}}}}`` — ``control_dict`` only
+"dt0": float, "advance": bool, "control_dict": {key: value, ...}}}}`` —
+``advance`` increments the ``Foam::Time`` once first (so ``timeIndex() != 0``
+and ``setInitialDeltaT.H`` is gated off), and ``control_dict`` only
 carries the keys that should be *present* in ``system/controlDict``; a key
 that must be *absent* (to exercise a default) is simply left out.
 """
@@ -58,6 +60,9 @@ class _SpyRuntime:
     def deltaTValue(self) -> float:
         return float(self._real.deltaTValue())
 
+    def timeIndex(self) -> int:
+        return int(self._real.timeIndex())
+
     def setDeltaT(self, value: float) -> None:
         self.set_delta_t_calls.append(float(value))
         self._real.setDeltaT(value)
@@ -96,6 +101,12 @@ def run(case_dir: Path, request: dict[str, Any]) -> dict[str, dict[str, Any]]:
         for key, value in spec["control_dict"].items():
             control_dict.set(key, value)
         control_dict.write(str(control_dict_path))
+
+        # "advance": one increment first, so timeIndex() != 0 and the scenario
+        # exercises a mid-run step (setInitialDeltaT.H gated off) rather than the
+        # first one. Such scenarios must come last in the request.
+        if spec.get("advance"):
+            runtime.increment()
 
         runtime.setDeltaT(spec["dt0"])
         spy = _SpyRuntime(runtime)

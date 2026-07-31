@@ -11,7 +11,7 @@ the pybFoam ``incompressibleFluid`` SIMPLE spec: one solver "time step"
 is one SIMPLE outer iteration. The momentum equation carries no ddt
 operator (the case's ``ddtSchemes`` is ``steadyState``; the C++
 turbulence transports read the same scheme and no-op their ddt via
-``DdtScheme::Steady``), equations are under-relaxed through the PDE
+``DdtScheme::SteadyState``), equations are under-relaxed through the PDE
 solver's ``relaxationFactors.equations`` lookup, and the pressure field
 is explicitly relaxed after the corrector (``relaxationFactors.fields``),
 exactly as in simpleFoam.
@@ -24,8 +24,12 @@ case class (an open domain whose outlet fixes the pressure level):
 * no ``constrainPressure`` — relevant only for ``fixedFluxPressure``-type
   BCs, which the NeoN pressure field does not carry here.
 
-SIMPLEC (``consistent yes``) is not ported; detection raises so the
-case author is not silently served plain SIMPLE.
+SIMPLEC (``consistent yes``) is supported: the pressure equation is built
+on the consistent reciprocal diagonal ``rAtU = 1/(1/rAU - UEqn.H1())`` with
+the matching ``phiHbyA``/``HbyA`` corrections, mirroring the ``consistent``
+branch of ``pEqn.H``. A SIMPLEC case normally omits ``relaxationFactors.fields.p``,
+which leaves the explicit pressure relaxation below a no-op (factor 1) —
+the same way ``p.relax()`` no-ops in OpenFOAM without that entry.
 """
 
 from typing import Annotated, Any, Callable
@@ -145,12 +149,14 @@ class SimpleNeoNState:
 
     ``piso`` supplies the self-resetting non-orthogonal corrector loop and
     the momentumPredictor flag (SIMPLE has exactly one pressure correction,
-    so its PISO-corrector count is never used). ``residuals`` is reported
-    per step; ``outer_open`` gates the one-pass inner loop.
+    so its PISO-corrector count is never used). ``consistent`` selects the
+    SIMPLEC pressure correction. ``residuals`` is reported per step;
+    ``outer_open`` gates the one-pass inner loop.
     """
 
-    def __init__(self, piso: PisoControl) -> None:
+    def __init__(self, piso: PisoControl, consistent: bool) -> None:
         self.piso = piso
+        self.consistent = consistent
         self.residuals: dict[str, tuple[float, float]] = {}
         self.cumulative_cont_err: float = 0.0
         self.outer_open: bool = True
@@ -172,16 +178,12 @@ def build(self: Any) -> list[Any]:
     def create_simple_state(context: dict[str, Any]) -> SimpleNeoNState:
         rt = context["_neon_runtime"]
         simple_dict = rt.fv_solution_dict.subDict("SIMPLE")
-        if _read_switch(simple_dict, "consistent", False):
-            raise NotImplementedError(
-                "incompressibleFluidNeoN: SIMPLEC (consistent yes) is not ported"
-            )
         piso = PisoControl(
             n_correctors=1,
             n_non_orthogonal_correctors=_read_int(simple_dict, "nNonOrthogonalCorrectors", 0),
             momentum_predictor=_read_switch(simple_dict, "momentumPredictor", True),
         )
-        return SimpleNeoNState(piso)
+        return SimpleNeoNState(piso, _read_switch(simple_dict, "consistent", False))
 
     def create_pressure_reference(context: dict[str, Any]) -> dict[str, Any]:
         rt = context["_neon_runtime"]
@@ -193,7 +195,9 @@ def build(self: Any) -> list[Any]:
         return nn.SurfaceInterpolationScalar(rt.executor, rt.nf_mesh, nn.TokenList(["linear"]))
 
     def create_grad_op(context: dict[str, Any]) -> Any:
-        return nfb.GaussGreenGrad(context["_neon_runtime"])
+        # gradSchemes/grad(U) as written by the case (plain Gauss-Green when the
+        # case does not name it), so a limited grad(U) is limited here too.
+        return nfb.GradScheme(context["_neon_runtime"], "U")
 
     return [
         field("p", create_p, depends_on=["_neon_runtime"], write=True),
@@ -251,8 +255,8 @@ def momentum(
 ) -> FieldUpdates:
     """Assemble (and optionally solve) the steady momentum equation.
 
-    No ddt operator; the PDE solver applies the ``relaxationFactors.equations``
-    under-relaxation for ``U`` during assembly, matching ``UEqn.relax()``.
+    No ddt operator; ``UEqn.relax()`` opts this matrix into the
+    ``relaxationFactors.equations`` under-relaxation applied during assembly.
     """
     state = simple_state
 
@@ -270,6 +274,9 @@ def momentum(
         U,
         neon_runtime,
     )
+    # simpleFoam/UEqn.H: UEqn.relax() — the momentum matrix is the one SIMPLE
+    # under-relaxes; the pressure equation below is deliberately left unrelaxed.
+    UEqn.relax()
 
     if state.piso.momentum_predictor():
         stats_u = UEqn.solve_with_source(-1.0 * nn.exp.grad(p))
@@ -305,7 +312,8 @@ def continuity(
     Verbatim port of ``simpleFoam``'s ``pEqn.H`` (minus adjustPhi /
     constrainPressure — see the module docstring): plain ``flux(HbyA)``
     with no ddt flux correction, one pressure correction, explicit p
-    field relaxation before the velocity update.
+    field relaxation before the velocity update, and the ``consistent``
+    (SIMPLEC) branch on ``rAtU``.
     """
     state = simple_state
     rt = neon_runtime
@@ -316,10 +324,17 @@ def continuity(
     rAU, hByA = nfb.compute_rau_and_hbya(UEqn)
     nfb.constrain_hbya(U, p, hByA)
 
-    rAUf = surf_interp.interpolate(rAU)
+    # SIMPLEC (``consistent yes``): rAtU absorbs the off-diagonal neighbour
+    # coupling into the diagonal. For plain SIMPLE rAtU *is* rAU.
+    rAtU = nfb.compute_ratu(UEqn, rAU) if state.consistent else rAU
+
+    rAUf = surf_interp.interpolate(rAtU)
     rAUf.name = "rAUf"
 
     phiHbyA = nfb.flux(hByA)
+    if state.consistent:
+        nfb.add_consistent_flux_correction(phiHbyA, rAU, rAtU, p)
+        nfb.subtract_consistent_hbya(hByA, rAU, rAtU, p)
 
     have_p_res = False
     while state.piso.correct_non_orthogonal():
@@ -357,7 +372,7 @@ def continuity(
     )
     p.correct_boundary_conditions()
 
-    nfb.update_velocity(hByA, rAU, p, U)
+    nfb.update_velocity(hByA, rAtU, p, U)
     U.correct_boundary_conditions()
 
     return FieldUpdates({"U": U, "p": p, "phi": phi})
