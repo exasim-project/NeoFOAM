@@ -20,6 +20,7 @@ from neofoam.framework.model import (
     ExtensionPoint,
     Extensions,
     Model,
+    negated,
 )
 from neofoam.framework.model.runtime import ModelRuntime
 from neofoam.io import BaseConfig
@@ -246,6 +247,110 @@ def test_extensions_can_be_iterated_more_than_once(point: Any) -> None:
     extensions = point.resolve(active_ctx(rt))
     assert [e.label() for e in extensions] == ["mrf"]
     assert [e.label() for e in extensions] == ["mrf"]
+
+
+# ---------------------------------------------------------------------------
+# Composite call sites: one call per site, terms fold into an expression
+# ---------------------------------------------------------------------------
+
+
+class _Sum:
+    """Stands in for pybFoam's matrix types: raises ``TypeError`` for a foreign
+    right operand instead of returning ``NotImplemented`` — the behavior the
+    fold's subclass-of-the-sum-type dispatch exists for."""
+
+    def __init__(self, trace: str) -> None:
+        self.trace = trace
+
+    def _traced(self, other: Any) -> str:
+        if not isinstance(other, _Sum):
+            raise TypeError("incompatible function arguments")
+        return other.trace
+
+    def __add__(self, other: Any) -> "_Sum":
+        return _Sum(f"({self.trace}+{self._traced(other)})")
+
+    def __sub__(self, other: Any) -> "_Sum":
+        return _Sum(f"({self.trace}-{self._traced(other)})")
+
+
+class _Momentum:
+    """An interface with one void site and one term site."""
+
+    def record(self, log: list[str]) -> None: ...
+
+    def terms(self) -> list[Any]:
+        return []
+
+
+class _Contributor(_Momentum):
+    def __init__(self, label: str) -> None:
+        self._label = label
+
+    def record(self, log: list[str]) -> None:
+        log.append(self._label)
+
+    def terms(self) -> list[Any]:
+        return [_Sum(self._label)]
+
+
+class _RhsContributor(_Momentum):
+    """Contributes its term as a source: native's ``==``, folded with ``-``."""
+
+    def terms(self) -> list[Any]:
+        return [negated(_Sum("src"))]
+
+
+@pytest.fixture
+def fold_point() -> Any:
+    """A point whose term sites fold into ``_Sum`` expressions."""
+    return ExtensionPoint("momentum_site", _Momentum, folds_into=_Sum)
+
+
+def test_a_site_call_fans_out_in_registration_order(fold_point: Any) -> None:
+    mrf_rt = implementor(fold_point, lambda: _Contributor("mrf"), "mrf")
+    fv_rt = implementor(fold_point, lambda: _Contributor("fvOptions"), "fvOptions")
+    log: list[str] = []
+    fold_point.resolve(active_ctx(fv_rt, mrf_rt)).record(log)
+    assert log == ["mrf", "fvOptions"]
+
+
+def test_a_term_site_folds_into_the_sum_in_registration_order(fold_point: Any) -> None:
+    mrf_rt = implementor(fold_point, lambda: _Contributor("mrf"), "mrf")
+    fv_rt = implementor(fold_point, lambda: _Contributor("fvOptions"), "fvOptions")
+    ext = fold_point.resolve(active_ctx(mrf_rt, fv_rt))
+    assert (_Sum("seed") + ext.terms()).trace == "((seed+mrf)+fvOptions)"
+
+
+def test_a_negated_term_folds_by_subtraction(fold_point: Any) -> None:
+    rt = implementor(fold_point, lambda: _RhsContributor(), "fvOptions")
+    ext = fold_point.resolve(active_ctx(rt))
+    assert (_Sum("seed") + ext.terms()).trace == "(seed-src)"
+
+
+def test_an_empty_fold_leaves_the_sum_untouched(fold_point: Any) -> None:
+    # Identity, not a neutral element: no arithmetic happens at all, so an
+    # inactive point can never perturb the sum.
+    ext = fold_point.resolve(Context(fields={}, models={}))
+    seed = _Sum("seed")
+    assert (seed + ext.terms()) is seed
+
+
+def test_a_site_call_without_folds_into_returns_none(point: Any) -> None:
+    rt = implementor(point, lambda: _NamedCorrection("mrf"), "mrf")
+    assert point.resolve(active_ctx(rt)).terms() is None
+
+
+def test_an_unknown_site_raises_naming_the_interface(fold_point: Any) -> None:
+    ext = fold_point.resolve(Context(fields={}, models={}))
+    with pytest.raises(AttributeError, match="'_Momentum' declares no extension site 'typo'"):
+        ext.typo()
+
+
+def test_underscore_attributes_never_dispatch(fold_point: Any) -> None:
+    ext = fold_point.resolve(Context(fields={}, models={}))
+    with pytest.raises(AttributeError):
+        ext._not_a_site
 
 
 # ---------------------------------------------------------------------------

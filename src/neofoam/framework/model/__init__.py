@@ -10,7 +10,7 @@ Public API:
     Model        — factory alias: Model("Name") -> ModelSpec
 """
 
-from .extension import ExtensionPoint, Extensions
+from .extension import ExtensionPoint, Extensions, negated
 from .interface import (
     BoundModelInterface,
     ModelInterface,
@@ -32,4 +32,5 @@ __all__ = [
     "active_contributors",
     "bind_model_interface",
     "bind_owned_interfaces",
+    "negated",
 ]
