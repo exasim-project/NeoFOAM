@@ -24,6 +24,7 @@ dependencies = [
     "networkx>=3.0",
     "matplotlib>=3.0.0",
     "pyvis>=0.3.2",
+    "PyYAML>=6",
 ]
 
 [project.optional-dependencies]
@@ -171,10 +172,12 @@ pybFoam = { path = "/home/henning/libsAndApps/pybFoam", editable = true }
 [tool.ruff]
 line-length = 100
 target-version = "py310"
-extend-exclude = ["build/", "dist/"]
+include = ["pyproject.toml", "src/**/*.py", "test/**/*.py"]
+extend-exclude = ["build/", "dist/", "src/NeoN"]
 
 [tool.ruff.lint]
 select = ["E","F","I"]  # enable isort (I) + basic lint
+extend-select = ["PLC0415"]
 
 # optional per-rule ignores
 ignore = []
@@ -216,19 +219,14 @@ follow_imports = "skip"
 module = ["opentelemetry", "opentelemetry.*"]
 ignore_missing_imports = true
 
+[tool.poe.executor]
+type = "simple"
+
 [tool.poe.tasks]
 test = "pytest"
 lint = "ruff check"
 format = "ruff format src test"
 type_check = "mypy"
-# sphinx-gallery (configured in doc/conf.py) executes each
-# examples/tutorials/example_*.py at build time and emits the rendered
-# tutorial pages under doc/auto_tutorials/. Caching via .py.md5 makes
-# re-builds of unchanged scripts near-instant. Needs OpenFOAM sourced
-# (WM_PROJECT_DIR set) and pyvista headless (xvfb on Linux).
 build_docs = "sphinx-build -b html doc doc/_build"
-# Serve the built docs over a local HTTP server. Required for the
-# interactive pyvista viewers — they fetch `.vtksz` files via JS,
-# which browsers block under the ``file://`` protocol.
 serve_docs = { shell = "cd doc/_build && python -m http.server 8000" }
 view_docs = { shell = "python -m webbrowser -t http://localhost:8000/index.html" }

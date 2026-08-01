@@ -19,9 +19,7 @@ locale.setlocale(locale.LC_NUMERIC, "C")
 # the bundled cases via ``NEOFOAM_CASES_DIR``.
 os.environ.setdefault(
     "NEOFOAM_CASES_DIR",
-    os.path.join(
-        os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "tutorials"
-    ),
+    os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "tutorials"),
 )
 
 # OpenFOAM installs a SIGFPE trap that fires on NaN / divide-by-zero /
@@ -47,6 +45,39 @@ try:
 except ImportError:
     pass
 
+import importlib  # noqa: E402
+import pkgutil  # noqa: E402
+
+
+# Autodoc imports deep submodules in isolation during the build. A few
+# pydantic configs (notably reached via ``neofoam.tools.block_mesh``) trip an
+# import-ordering error that only surfaces in that context — the same modules
+# import cleanly in a fresh interpreter. Import the affected packages once here,
+# in a clean state, so their submodules land in ``sys.modules`` fully
+# initialized and autodoc reuses the cache instead of re-importing out of order.
+def _eager_import(pkg_name: str) -> None:
+    try:
+        pkg = importlib.import_module(pkg_name)
+    except Exception:
+        return
+    if not hasattr(pkg, "__path__"):
+        return
+    for info in pkgutil.walk_packages(pkg.__path__, pkg_name + ".", onerror=lambda _name: None):
+        try:
+            importlib.import_module(info.name)
+        except Exception:
+            pass
+
+
+for _pkg in (
+    "neofoam.tools",
+    "neofoam.foam",
+    "neofoam.tooling",
+    "neofoam.solver",
+    "neofoam.mcp",
+):
+    _eager_import(_pkg)
+
 import subprocess  # noqa: E402
 
 # Doxygen
@@ -61,6 +92,7 @@ author = "NeoFOAM authors"
 
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
     "sphinxcontrib.mermaid",
     "sphinx.ext.intersphinx",
     "sphinx.ext.autosectionlabel",
@@ -116,6 +148,12 @@ sphinx_gallery_conf = {
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
+# The API reference under reference/api/ is generated at build time from the
+# ``.. autosummary:: :recursive:`` directive in reference/index.rst, using the
+# module template in _templates/autosummary/. One page per module, no
+# hand-written stubs.
+autosummary_generate = True
+
 highlight_language = "default"
 
 # Strict cross-reference checking. The tutorials are the first set of
@@ -130,6 +168,26 @@ nitpick_ignore_regex = [
     (r"std:doc", r"/development/.*"),
     # Internal TypeVars surfaced in generic signatures (spec.config).
     (r"py:class", r".*\._ConfigT$"),
+    # External types surfaced in autodoc signatures across the reference
+    # section — stdlib, third-party, and builtins we don't control and can't
+    # cross-reference. Internal ``neofoam.*`` refs are intentionally left
+    # visible as follow-ups.
+    (r"py:.*", r"pathlib\..*"),
+    (r"py:.*", r"collections\.abc\..*"),
+    (r"py:.*", r"(typing|typing_extensions)\..*"),
+    (r"py:.*", r"enum\..*"),
+    (r"py:.*", r"(pydantic|pydantic_ai)\..*"),
+    (r"py:.*", r"PydanticUndefined"),
+    (r"py:.*", r"annotated_types\..*"),
+    (r"py:.*", r"typer\..*"),
+    (r"py:.*", r"networkx\..*"),
+    (r"py:.*", r"numpy\..*"),
+    # Builtins, including subscripted generics like ``dict[str, Any]``.
+    (
+        r"py:.*",
+        r"(dict|list|tuple|set|frozenset|str|int|float|bool|bytes|object|type|None|Any)"
+        r"(\[.*)?$",
+    ),
 ]
 
 # -- Options for HTML output -------------------------------------------------

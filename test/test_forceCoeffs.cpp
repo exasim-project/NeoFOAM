@@ -110,252 +110,280 @@ TEST_CASE("Forces - pressure force and moment match OpenFOAM reference")
 
     SECTION("uniform pressure, fixedWalls" + execName)
     {
-        fs::remove_all("postProcessing/neoForces");
-        fs::remove_all("postProcessing/ofForces");
+        REQUIRE_NOTHROW(fs::remove_all("postProcessing/neoForces"));
+        REQUIRE_NOTHROW(fs::remove_all("postProcessing/ofForces"));
 
-        auto rt = nf::createAdapterRunTime(runTime, exec);
-        auto& mesh = rt.mesh;
+        {
+            auto rt = nf::createAdapterRunTime(runTime, exec);
+            auto& mesh = rt.mesh;
 
-        Foam::volScalarField ofP(
-            Foam::IOobject(
-                "p",
-                runTime.timeName(),
-                mesh,
-                Foam::IOobject::MUST_READ,
-                Foam::IOobject::NO_WRITE
-            ),
-            mesh
-        );
-        ofP.primitiveFieldRef() = Foam::scalar {1.0};
-        ofP.correctBoundaryConditions();
+            Foam::volScalarField ofP(
+                Foam::IOobject(
+                    "p",
+                    runTime.timeName(),
+                    mesh,
+                    Foam::IOobject::MUST_READ,
+                    Foam::IOobject::NO_WRITE
+                ),
+                mesh
+            );
+            ofP.primitiveFieldRef() = Foam::scalar {1.0};
+            ofP.correctBoundaryConditions();
 
-        fvcc::VectorCollection& vc = fvcc::VectorCollection::instance(rt.db, "VectorCollection");
-        nf::constructAndRegister(vc, rt, ofP, false);
+            fvcc::VectorCollection& vc =
+                fvcc::VectorCollection::instance(rt.db, "VectorCollection");
+            nf::constructAndRegister(vc, rt, ofP, false);
 
-        // ── NeoFOAM Forces ───────────────────────────────────────────────────
-        Foam::dictionary dict;
-        dict.add("patches", Foam::wordList {"fixedWalls"});
-        dict.add("pName", Foam::word {"p"});
-        dict.add("rhoInf", Foam::scalar {1.0});
-        dict.add("pRef", Foam::scalar {0.0});
-        dict.add("CofR", Foam::vector(0, 0, 0));
+            // ── NeoFOAM Forces ───────────────────────────────────────────────────
+            Foam::dictionary dict;
+            dict.add("patches", Foam::wordList {"fixedWalls"});
+            dict.add("pName", Foam::word {"p"});
+            dict.add("rhoInf", Foam::scalar {1.0});
+            dict.add("pRef", Foam::scalar {0.0});
+            dict.add("CofR", Foam::vector(0, 0, 0));
 
-        nf::Forces forces("neoForces", runTime, dict);
-        REQUIRE(forces.execute());
-        REQUIRE(forces.write());
+            nf::Forces forces("neoForces", runTime, dict);
+            REQUIRE(forces.execute());
+            REQUIRE(forces.write());
 
-        // ── OF forces reference ──────────────────────────────────────────────
-        OfForcesSetup ofSetup(mesh, runTime);
+            // ── OF forces reference ──────────────────────────────────────────────
+            OfForcesSetup ofSetup(mesh, runTime);
 
-        Foam::dictionary ofDict;
-        ofDict.add("patches", Foam::wordList {"fixedWalls"});
-        ofDict.add("rho", Foam::word("rhoInf"));
-        ofDict.add("rhoInf", Foam::scalar {1.0});
-        ofDict.add("pRef", Foam::scalar {0.0});
-        ofDict.add("CofR", Foam::vector(0, 0, 0));
+            Foam::dictionary ofDict;
+            ofDict.add("patches", Foam::wordList {"fixedWalls"});
+            ofDict.add("rho", Foam::word("rhoInf"));
+            ofDict.add("rhoInf", Foam::scalar {1.0});
+            ofDict.add("pRef", Foam::scalar {0.0});
+            ofDict.add("CofR", Foam::vector(0, 0, 0));
 
-        Foam::functionObjects::forces ofForces("ofForces", runTime, ofDict);
-        REQUIRE(ofForces.execute());
-        REQUIRE(ofForces.write());
+            Foam::functionObjects::forces ofForces("ofForces", runTime, ofDict);
+            REQUIRE(ofForces.execute());
+            REQUIRE(ofForces.write());
+        }
 
         // ── File comparison ──────────────────────────────────────────────────
+        INFO("Comparing NeoFOAM and OpenFOAM force output files");
         const double tol = 1e-10;
         compareDataFiles(
             "postProcessing/neoForces/0/force.dat",
             "postProcessing/ofForces/0/force.dat",
             tol
         );
+
+        INFO("Comparing NeoFOAM and OpenFOAM moment output files");
         compareDataFiles(
             "postProcessing/neoForces/0/moment.dat",
             "postProcessing/ofForces/0/moment.dat",
             tol
         );
 
-        fs::remove_all("postProcessing/neoForces");
-        fs::remove_all("postProcessing/ofForces");
+        INFO("Cleaning up output directories");
+        CHECK_NOTHROW(fs::remove_all("postProcessing/neoForces"));
+        CHECK_NOTHROW(fs::remove_all("postProcessing/ofForces"));
     }
 
     SECTION("random pressure field, fixedWalls" + execName)
     {
-        fs::remove_all("postProcessing/neoForces");
-        fs::remove_all("postProcessing/ofForces");
+        REQUIRE_NOTHROW(fs::remove_all("postProcessing/neoForces"));
+        REQUIRE_NOTHROW(fs::remove_all("postProcessing/ofForces"));
 
-        auto rt = nf::createAdapterRunTime(runTime, exec);
-        auto& mesh = rt.mesh;
+        {
+            auto rt = nf::createAdapterRunTime(runTime, exec);
+            auto& mesh = rt.mesh;
 
-        auto ofP = randomScalarField(runTime, mesh, "p");
-        ofP.correctBoundaryConditions();
+            auto ofP = randomScalarField(runTime, mesh, "p");
+            ofP.correctBoundaryConditions();
 
-        fvcc::VectorCollection& vc = fvcc::VectorCollection::instance(rt.db, "VectorCollection");
-        nf::constructAndRegister(vc, rt, ofP, false);
+            fvcc::VectorCollection& vc =
+                fvcc::VectorCollection::instance(rt.db, "VectorCollection");
+            nf::constructAndRegister(vc, rt, ofP, false);
 
-        Foam::dictionary dict;
-        dict.add("patches", Foam::wordList {"fixedWalls"});
-        dict.add("pName", Foam::word {"p"});
-        dict.add("rhoInf", Foam::scalar {1.225});
-        dict.add("pRef", Foam::scalar {0.5});
-        dict.add("CofR", Foam::vector(0.1, 0.2, 0.3));
+            Foam::dictionary dict;
+            dict.add("patches", Foam::wordList {"fixedWalls"});
+            dict.add("pName", Foam::word {"p"});
+            dict.add("rhoInf", Foam::scalar {1.225});
+            dict.add("pRef", Foam::scalar {0.5});
+            dict.add("CofR", Foam::vector(0.1, 0.2, 0.3));
 
-        nf::Forces forces("neoForces", runTime, dict);
-        REQUIRE(forces.execute());
-        REQUIRE(forces.write());
+            nf::Forces forces("neoForces", runTime, dict);
+            REQUIRE(forces.execute());
+            REQUIRE(forces.write());
 
-        OfForcesSetup ofSetup(mesh, runTime);
+            OfForcesSetup ofSetup(mesh, runTime);
 
-        Foam::dictionary ofDict;
-        ofDict.add("patches", Foam::wordList {"fixedWalls"});
-        ofDict.add("rho", Foam::word("rhoInf"));
-        ofDict.add("rhoInf", Foam::scalar {1.225});
-        ofDict.add("pRef", Foam::scalar {0.5});
-        ofDict.add("CofR", Foam::vector(0.1, 0.2, 0.3));
+            Foam::dictionary ofDict;
+            ofDict.add("patches", Foam::wordList {"fixedWalls"});
+            ofDict.add("rho", Foam::word("rhoInf"));
+            ofDict.add("rhoInf", Foam::scalar {1.225});
+            ofDict.add("pRef", Foam::scalar {0.5});
+            ofDict.add("CofR", Foam::vector(0.1, 0.2, 0.3));
 
-        Foam::functionObjects::forces ofForces("ofForces", runTime, ofDict);
-        REQUIRE(ofForces.execute());
-        REQUIRE(ofForces.write());
+            Foam::functionObjects::forces ofForces("ofForces", runTime, ofDict);
+            REQUIRE(ofForces.execute());
+            REQUIRE(ofForces.write());
+        }
 
+        INFO("Comparing NeoFOAM and OpenFOAM force output files");
         const double tol = 1e-10;
         compareDataFiles(
             "postProcessing/neoForces/0/force.dat",
             "postProcessing/ofForces/0/force.dat",
             tol
         );
+
+        INFO("Comparing NeoFOAM and OpenFOAM moment output files");
         compareDataFiles(
             "postProcessing/neoForces/0/moment.dat",
             "postProcessing/ofForces/0/moment.dat",
             tol
         );
 
-        fs::remove_all("postProcessing/neoForces");
-        fs::remove_all("postProcessing/ofForces");
+        INFO("Cleaning up output directories");
+        CHECK_NOTHROW(fs::remove_all("postProcessing/neoForces"));
+        CHECK_NOTHROW(fs::remove_all("postProcessing/ofForces"));
     }
 
     SECTION("multiple patches: fixedWalls + inlet + outlet" + execName)
     {
-        fs::remove_all("postProcessing/neoForces");
-        fs::remove_all("postProcessing/ofForces");
+        REQUIRE_NOTHROW(fs::remove_all("postProcessing/neoForces"));
+        REQUIRE_NOTHROW(fs::remove_all("postProcessing/ofForces"));
 
-        auto rt = nf::createAdapterRunTime(runTime, exec);
-        auto& mesh = rt.mesh;
+        {
+            auto rt = nf::createAdapterRunTime(runTime, exec);
+            auto& mesh = rt.mesh;
 
-        auto ofP = randomScalarField(runTime, mesh, "p");
-        ofP.correctBoundaryConditions();
+            auto ofP = randomScalarField(runTime, mesh, "p");
+            ofP.correctBoundaryConditions();
 
-        fvcc::VectorCollection& vc = fvcc::VectorCollection::instance(rt.db, "VectorCollection");
-        nf::constructAndRegister(vc, rt, ofP, false);
+            fvcc::VectorCollection& vc =
+                fvcc::VectorCollection::instance(rt.db, "VectorCollection");
+            nf::constructAndRegister(vc, rt, ofP, false);
 
-        Foam::dictionary dict;
-        dict.add("patches", Foam::wordList {"fixedWalls", "inlet", "outlet"});
-        dict.add("pName", Foam::word {"p"});
-        dict.add("rhoInf", Foam::scalar {1.0});
-        dict.add("pRef", Foam::scalar {0.0});
-        dict.add("CofR", Foam::vector(0, 0, 0));
+            Foam::dictionary dict;
+            dict.add("patches", Foam::wordList {"fixedWalls", "inlet", "outlet"});
+            dict.add("pName", Foam::word {"p"});
+            dict.add("rhoInf", Foam::scalar {1.0});
+            dict.add("pRef", Foam::scalar {0.0});
+            dict.add("CofR", Foam::vector(0, 0, 0));
 
-        nf::Forces forces("neoForces", runTime, dict);
-        REQUIRE(forces.execute());
-        REQUIRE(forces.write());
+            nf::Forces forces("neoForces", runTime, dict);
+            REQUIRE(forces.execute());
+            REQUIRE(forces.write());
 
-        OfForcesSetup ofSetup(mesh, runTime);
+            OfForcesSetup ofSetup(mesh, runTime);
 
-        Foam::dictionary ofDict;
-        ofDict.add("patches", Foam::wordList {"fixedWalls", "inlet", "outlet"});
-        ofDict.add("rho", Foam::word("rhoInf"));
-        ofDict.add("rhoInf", Foam::scalar {1.0});
-        ofDict.add("pRef", Foam::scalar {0.0});
-        ofDict.add("CofR", Foam::vector(0, 0, 0));
+            Foam::dictionary ofDict;
+            ofDict.add("patches", Foam::wordList {"fixedWalls", "inlet", "outlet"});
+            ofDict.add("rho", Foam::word("rhoInf"));
+            ofDict.add("rhoInf", Foam::scalar {1.0});
+            ofDict.add("pRef", Foam::scalar {0.0});
+            ofDict.add("CofR", Foam::vector(0, 0, 0));
 
-        Foam::functionObjects::forces ofForces("ofForces", runTime, ofDict);
-        REQUIRE(ofForces.execute());
-        REQUIRE(ofForces.write());
+            Foam::functionObjects::forces ofForces("ofForces", runTime, ofDict);
+            REQUIRE(ofForces.execute());
+            REQUIRE(ofForces.write());
+        }
 
+        INFO("Comparing NeoFOAM and OpenFOAM force output files");
         const double tol = 1e-10;
         compareDataFiles(
             "postProcessing/neoForces/0/force.dat",
             "postProcessing/ofForces/0/force.dat",
             tol
         );
+
+        INFO("Comparing NeoFOAM and OpenFOAM moment output files");
         compareDataFiles(
             "postProcessing/neoForces/0/moment.dat",
             "postProcessing/ofForces/0/moment.dat",
             tol
         );
 
-        fs::remove_all("postProcessing/neoForces");
-        fs::remove_all("postProcessing/ofForces");
+        INFO("Cleaning up output directories");
+        CHECK_NOTHROW(fs::remove_all("postProcessing/neoForces"));
+        CHECK_NOTHROW(fs::remove_all("postProcessing/ofForces"));
     }
 
     SECTION("random U + non-zero viscous forces, fixedWalls" + execName)
     {
-        fs::remove_all("postProcessing/neoForces");
-        fs::remove_all("postProcessing/ofForces");
+        REQUIRE_NOTHROW(fs::remove_all("postProcessing/neoForces"));
+        REQUIRE_NOTHROW(fs::remove_all("postProcessing/ofForces"));
 
-        auto rt = nf::createAdapterRunTime(runTime, exec);
-        auto& mesh = rt.mesh;
+        {
+            auto rt = nf::createAdapterRunTime(runTime, exec);
+            auto& mesh = rt.mesh;
 
-        auto ofP = randomScalarField(runTime, mesh, "p");
-        ofP.correctBoundaryConditions();
-        auto ofU = randomVectorField(runTime, mesh, "U");
-        ofU.correctBoundaryConditions();
+            auto ofP = randomScalarField(runTime, mesh, "p");
+            ofP.correctBoundaryConditions();
+            auto ofU = randomVectorField(runTime, mesh, "U");
+            ofU.correctBoundaryConditions();
 
-        fvcc::VectorCollection& vc = fvcc::VectorCollection::instance(rt.db, "VectorCollection");
-        nf::constructAndRegister(vc, rt, ofP, false);
-        nf::constructAndRegister(vc, rt, ofU, false);
+            fvcc::VectorCollection& vc =
+                fvcc::VectorCollection::instance(rt.db, "VectorCollection");
+            nf::constructAndRegister(vc, rt, ofP, false);
+            nf::constructAndRegister(vc, rt, ofU, false);
 
-        // transportProperties with non-zero nu registered in Foam::Time registry
-        Foam::IOdictionary transportProps(Foam::IOobject(
-            "transportProperties",
-            runTime.constant(),
-            mesh,
-            Foam::IOobject::NO_READ,
-            Foam::IOobject::NO_WRITE
-        ));
-        const Foam::scalar nu = 1e-5;
-        transportProps.add("nu", nu);
+            // transportProperties with non-zero nu registered in Foam::Time registry
+            Foam::IOdictionary transportProps(Foam::IOobject(
+                "transportProperties",
+                runTime.constant(),
+                mesh,
+                Foam::IOobject::NO_READ,
+                Foam::IOobject::NO_WRITE
+            ));
+            const Foam::scalar nu = 1e-5;
+            transportProps.add("nu", nu);
 
-        Foam::dictionary dict;
-        dict.add("patches", Foam::wordList {"fixedWalls"});
-        dict.add("pName", Foam::word {"p"});
-        dict.add("rhoInf", Foam::scalar {1.225});
-        dict.add("pRef", Foam::scalar {0.0});
-        dict.add("CofR", Foam::vector(0, 0, 0));
+            Foam::dictionary dict;
+            dict.add("patches", Foam::wordList {"fixedWalls"});
+            dict.add("pName", Foam::word {"p"});
+            dict.add("rhoInf", Foam::scalar {1.225});
+            dict.add("pRef", Foam::scalar {0.0});
+            dict.add("CofR", Foam::vector(0, 0, 0));
 
-        nf::Forces forces("neoForces", runTime, dict);
-        REQUIRE(forces.execute());
-        REQUIRE(forces.write());
+            nf::Forces forces("neoForces", runTime, dict);
+            REQUIRE(forces.execute());
+            REQUIRE(forces.write());
 
-        // OF reference — U is already registered (ofU), pass nu to transportProperties
-        Foam::dictionary ofDict;
-        ofDict.add("patches", Foam::wordList {"fixedWalls"});
-        ofDict.add("rho", Foam::word("rhoInf"));
-        ofDict.add("rhoInf", Foam::scalar {1.225});
-        ofDict.add("pRef", Foam::scalar {0.0});
-        ofDict.add("CofR", Foam::vector(0, 0, 0));
+            // OF reference — U is already registered (ofU), pass nu to transportProperties
+            Foam::dictionary ofDict;
+            ofDict.add("patches", Foam::wordList {"fixedWalls"});
+            ofDict.add("rho", Foam::word("rhoInf"));
+            ofDict.add("rhoInf", Foam::scalar {1.225});
+            ofDict.add("pRef", Foam::scalar {0.0});
+            ofDict.add("CofR", Foam::vector(0, 0, 0));
 
-        Foam::functionObjects::forces ofForces("ofForces", runTime, ofDict);
-        REQUIRE(ofForces.execute());
-        REQUIRE(ofForces.write());
+            Foam::functionObjects::forces ofForces("ofForces", runTime, ofDict);
+            REQUIRE(ofForces.execute());
+            REQUIRE(ofForces.write());
+        }
 
+        INFO("Comparing NeoFOAM and OpenFOAM force output files");
         const double tol = 1e-8;
         compareDataFiles(
             "postProcessing/neoForces/0/force.dat",
             "postProcessing/ofForces/0/force.dat",
             tol
         );
+
+        INFO("Comparing NeoFOAM and OpenFOAM moment output files");
         compareDataFiles(
             "postProcessing/neoForces/0/moment.dat",
             "postProcessing/ofForces/0/moment.dat",
             tol
         );
 
-        fs::remove_all("postProcessing/neoForces");
-        fs::remove_all("postProcessing/ofForces");
+        INFO("Cleaning up output directories");
+        CHECK_NOTHROW(fs::remove_all("postProcessing/neoForces"));
+        CHECK_NOTHROW(fs::remove_all("postProcessing/ofForces"));
     }
 
     SECTION("random U + turbulent nuEff (nu + nut), fixedWalls" + execName)
     {
         // TODO: This test assumes nuEff in OpenFOAM is calculated as nu + nut on each patch face,
         // we never test if the NeoFOAM nuEff is actually equalt to OpenFOAMs nuEff
-        fs::remove_all("postProcessing/neoForces");
-        fs::remove_all("postProcessing/ofForces");
+        REQUIRE_NOTHROW(fs::remove_all("postProcessing/neoForces"));
+        REQUIRE_NOTHROW(fs::remove_all("postProcessing/ofForces"));
 
         const Foam::scalar nu = 1e-5;
         const Foam::scalar nutConst = 5e-4;
@@ -447,8 +475,8 @@ TEST_CASE("Forces - pressure force and moment match OpenFOAM reference")
             tol
         );
 
-        fs::remove_all("postProcessing/neoForces");
-        fs::remove_all("postProcessing/ofForces");
+        CHECK_NOTHROW(fs::remove_all("postProcessing/neoForces"));
+        CHECK_NOTHROW(fs::remove_all("postProcessing/ofForces"));
     }
 }
 
@@ -462,67 +490,71 @@ TEST_CASE("ForceCoeffs - normalised coefficients match OpenFOAM reference")
 
     SECTION("random pressure, all coefficients" + execName)
     {
-        fs::remove_all("postProcessing/neoForceCoeffs");
-        fs::remove_all("postProcessing/ofForceCoeffs");
+        REQUIRE_NOTHROW(fs::remove_all("postProcessing/neoForceCoeffs"));
+        REQUIRE_NOTHROW(fs::remove_all("postProcessing/ofForceCoeffs"));
 
-        auto rt = nf::createAdapterRunTime(runTime, exec);
-        auto& mesh = rt.mesh;
+        {
+            auto rt = nf::createAdapterRunTime(runTime, exec);
+            auto& mesh = rt.mesh;
 
-        auto ofP = randomScalarField(runTime, mesh, "p");
-        ofP.correctBoundaryConditions();
+            auto ofP = randomScalarField(runTime, mesh, "p");
+            ofP.correctBoundaryConditions();
 
-        fvcc::VectorCollection& vc = fvcc::VectorCollection::instance(rt.db, "VectorCollection");
-        nf::constructAndRegister(vc, rt, ofP, false);
+            fvcc::VectorCollection& vc =
+                fvcc::VectorCollection::instance(rt.db, "VectorCollection");
+            nf::constructAndRegister(vc, rt, ofP, false);
 
-        const Foam::scalar rhoRef = 1.225;
-        const Foam::scalar magUInf = 10.0;
-        const Foam::scalar lRef = 0.5;
-        const Foam::scalar Aref = 0.25;
-        const Foam::scalar pRef = 0.0;
-        const Foam::vector cofR = Foam::vector::zero;
+            const Foam::scalar rhoRef = 1.225;
+            const Foam::scalar magUInf = 10.0;
+            const Foam::scalar lRef = 0.5;
+            const Foam::scalar Aref = 0.25;
+            const Foam::scalar pRef = 0.0;
+            const Foam::vector cofR = Foam::vector::zero;
 
-        // ── NeoFOAM ForceCoeffs ──────────────────────────────────────────────
-        Foam::dictionary dict;
-        dict.add("patches", Foam::wordList {"fixedWalls"});
-        dict.add("pName", Foam::word {"p"});
-        dict.add("rhoInf", rhoRef);
-        dict.add("pRef", pRef);
-        dict.add("magUInf", magUInf);
-        dict.add("lRef", lRef);
-        dict.add("Aref", Aref);
-        dict.add("CofR", cofR);
+            // ── NeoFOAM ForceCoeffs ──────────────────────────────────────────────
+            Foam::dictionary dict;
+            dict.add("patches", Foam::wordList {"fixedWalls"});
+            dict.add("pName", Foam::word {"p"});
+            dict.add("rhoInf", rhoRef);
+            dict.add("pRef", pRef);
+            dict.add("magUInf", magUInf);
+            dict.add("lRef", lRef);
+            dict.add("Aref", Aref);
+            dict.add("CofR", cofR);
 
-        dict.add("dragDir", Foam::vector(1, 0, 0));
-        dict.add("liftDir", Foam::vector(0, 0, 1));
-        dict.add("pitchAxis", Foam::vector(0, 1, 0));
+            dict.add("dragDir", Foam::vector(1, 0, 0));
+            dict.add("liftDir", Foam::vector(0, 0, 1));
+            dict.add("pitchAxis", Foam::vector(0, 1, 0));
 
-        nf::ForceCoeffs fc("neoForceCoeffs", runTime, dict);
-        REQUIRE(fc.execute());
-        REQUIRE(fc.write());
+            nf::ForceCoeffs fc("neoForceCoeffs", runTime, dict);
+            REQUIRE(fc.execute());
+            REQUIRE(fc.write());
 
-        // ── OF forceCoeffs reference ─────────────────────────────────────────
-        OfForcesSetup ofSetup(mesh, runTime);
+            // ── OF forceCoeffs reference ─────────────────────────────────────────
+            OfForcesSetup ofSetup(mesh, runTime);
 
-        Foam::dictionary ofDict;
-        ofDict.add("patches", Foam::wordList {"fixedWalls"});
-        ofDict.add("rho", Foam::word("rhoInf"));
-        ofDict.add("rhoInf", rhoRef);
-        ofDict.add("pRef", pRef);
-        ofDict.add("magUInf", magUInf);
-        ofDict.add("lRef", lRef);
-        ofDict.add("Aref", Aref);
-        ofDict.add("CofR", cofR);
-        ofDict.add("dragDir", Foam::vector(1, 0, 0));
-        ofDict.add("liftDir", Foam::vector(0, 0, 1));
-        ofDict.add("pitchAxis", Foam::vector(0, 1, 0));
+            Foam::dictionary ofDict;
+            ofDict.add("patches", Foam::wordList {"fixedWalls"});
+            ofDict.add("rho", Foam::word("rhoInf"));
+            ofDict.add("rhoInf", rhoRef);
+            ofDict.add("pRef", pRef);
+            ofDict.add("magUInf", magUInf);
+            ofDict.add("lRef", lRef);
+            ofDict.add("Aref", Aref);
+            ofDict.add("CofR", cofR);
+            ofDict.add("dragDir", Foam::vector(1, 0, 0));
+            ofDict.add("liftDir", Foam::vector(0, 0, 1));
+            ofDict.add("pitchAxis", Foam::vector(0, 1, 0));
 
-        Foam::functionObjects::forceCoeffs ofFc("ofForceCoeffs", runTime, ofDict);
-        REQUIRE(ofFc.execute());
-        REQUIRE(ofFc.write());
+            Foam::functionObjects::forceCoeffs ofFc("ofForceCoeffs", runTime, ofDict);
+            REQUIRE(ofFc.execute());
+            REQUIRE(ofFc.write());
+        }
 
         // ── Compare coefficient.dat ──────────────────────────────────────────
         // Both NeoFOAM and OF write 12 coefficient columns in alphabetical order:
         // Cd Cd(f) Cd(r) Cl Cl(f) Cl(r) CmPitch CmRoll CmYaw Cs Cs(f) Cs(r)
+        INFO("Comparing NeoFOAM and OpenFOAM coefficient output files");
         const double tol = 1e-10;
         compareDataFiles(
             "postProcessing/neoForceCoeffs/0/coefficient.dat",
@@ -530,78 +562,83 @@ TEST_CASE("ForceCoeffs - normalised coefficients match OpenFOAM reference")
             tol
         );
 
-        fs::remove_all("postProcessing/neoForceCoeffs");
-        fs::remove_all("postProcessing/ofForceCoeffs");
+        INFO("Cleaning up output directories");
+        CHECK_NOTHROW(fs::remove_all("postProcessing/neoForceCoeffs"));
+        CHECK_NOTHROW(fs::remove_all("postProcessing/ofForceCoeffs"));
     }
 
     SECTION("random U + non-zero viscous forces, all coefficients" + execName)
     {
-        fs::remove_all("postProcessing/neoForceCoeffs");
-        fs::remove_all("postProcessing/ofForceCoeffs");
+        REQUIRE_NOTHROW(fs::remove_all("postProcessing/neoForceCoeffs"));
+        REQUIRE_NOTHROW(fs::remove_all("postProcessing/ofForceCoeffs"));
 
-        auto rt = nf::createAdapterRunTime(runTime, exec);
-        auto& mesh = rt.mesh;
+        {
+            auto rt = nf::createAdapterRunTime(runTime, exec);
+            auto& mesh = rt.mesh;
 
-        auto ofP = randomScalarField(runTime, mesh, "p");
-        ofP.correctBoundaryConditions();
-        auto ofU = randomVectorField(runTime, mesh, "U");
-        ofU.correctBoundaryConditions();
+            auto ofP = randomScalarField(runTime, mesh, "p");
+            ofP.correctBoundaryConditions();
+            auto ofU = randomVectorField(runTime, mesh, "U");
+            ofU.correctBoundaryConditions();
 
-        fvcc::VectorCollection& vc = fvcc::VectorCollection::instance(rt.db, "VectorCollection");
-        nf::constructAndRegister(vc, rt, ofP, false);
-        nf::constructAndRegister(vc, rt, ofU, false);
+            fvcc::VectorCollection& vc =
+                fvcc::VectorCollection::instance(rt.db, "VectorCollection");
+            nf::constructAndRegister(vc, rt, ofP, false);
+            nf::constructAndRegister(vc, rt, ofU, false);
 
-        Foam::IOdictionary transportProps(Foam::IOobject(
-            "transportProperties",
-            runTime.constant(),
-            mesh,
-            Foam::IOobject::NO_READ,
-            Foam::IOobject::NO_WRITE
-        ));
-        const Foam::scalar nu = 1e-5;
-        transportProps.add("nu", nu);
+            Foam::IOdictionary transportProps(Foam::IOobject(
+                "transportProperties",
+                runTime.constant(),
+                mesh,
+                Foam::IOobject::NO_READ,
+                Foam::IOobject::NO_WRITE
+            ));
+            const Foam::scalar nu = 1e-5;
+            transportProps.add("nu", nu);
 
-        const Foam::scalar rhoRef = 1.225;
-        const Foam::scalar magUInf = 10.0;
-        const Foam::scalar lRef = 0.5;
-        const Foam::scalar Aref = 0.25;
-        const Foam::scalar pRef = 0.0;
-        const Foam::vector cofR = Foam::vector::zero;
+            const Foam::scalar rhoRef = 1.225;
+            const Foam::scalar magUInf = 10.0;
+            const Foam::scalar lRef = 0.5;
+            const Foam::scalar Aref = 0.25;
+            const Foam::scalar pRef = 0.0;
+            const Foam::vector cofR = Foam::vector::zero;
 
-        Foam::dictionary dict;
-        dict.add("patches", Foam::wordList {"fixedWalls"});
-        dict.add("pName", Foam::word {"p"});
-        dict.add("rhoInf", rhoRef);
-        dict.add("pRef", pRef);
-        dict.add("magUInf", magUInf);
-        dict.add("lRef", lRef);
-        dict.add("Aref", Aref);
-        dict.add("CofR", cofR);
-        dict.add("dragDir", Foam::vector(1, 0, 0));
-        dict.add("liftDir", Foam::vector(0, 0, 1));
-        dict.add("pitchAxis", Foam::vector(0, 1, 0));
+            Foam::dictionary dict;
+            dict.add("patches", Foam::wordList {"fixedWalls"});
+            dict.add("pName", Foam::word {"p"});
+            dict.add("rhoInf", rhoRef);
+            dict.add("pRef", pRef);
+            dict.add("magUInf", magUInf);
+            dict.add("lRef", lRef);
+            dict.add("Aref", Aref);
+            dict.add("CofR", cofR);
+            dict.add("dragDir", Foam::vector(1, 0, 0));
+            dict.add("liftDir", Foam::vector(0, 0, 1));
+            dict.add("pitchAxis", Foam::vector(0, 1, 0));
 
-        nf::ForceCoeffs fc("neoForceCoeffs", runTime, dict);
-        REQUIRE(fc.execute());
-        REQUIRE(fc.write());
+            nf::ForceCoeffs fc("neoForceCoeffs", runTime, dict);
+            REQUIRE(fc.execute());
+            REQUIRE(fc.write());
 
-        Foam::dictionary ofDict;
-        ofDict.add("patches", Foam::wordList {"fixedWalls"});
-        ofDict.add("rho", Foam::word("rhoInf"));
-        ofDict.add("rhoInf", rhoRef);
-        ofDict.add("pRef", pRef);
-        ofDict.add("magUInf", magUInf);
-        ofDict.add("lRef", lRef);
-        ofDict.add("Aref", Aref);
-        ofDict.add("CofR", cofR);
-        ofDict.add("dragDir", Foam::vector(1, 0, 0));
-        ofDict.add("liftDir", Foam::vector(0, 0, 1));
-        ofDict.add("pitchAxis", Foam::vector(0, 1, 0));
+            Foam::dictionary ofDict;
+            ofDict.add("patches", Foam::wordList {"fixedWalls"});
+            ofDict.add("rho", Foam::word("rhoInf"));
+            ofDict.add("rhoInf", rhoRef);
+            ofDict.add("pRef", pRef);
+            ofDict.add("magUInf", magUInf);
+            ofDict.add("lRef", lRef);
+            ofDict.add("Aref", Aref);
+            ofDict.add("CofR", cofR);
+            ofDict.add("dragDir", Foam::vector(1, 0, 0));
+            ofDict.add("liftDir", Foam::vector(0, 0, 1));
+            ofDict.add("pitchAxis", Foam::vector(0, 1, 0));
 
-        Foam::functionObjects::forceCoeffs ofFc("ofForceCoeffs", runTime, ofDict);
-        REQUIRE(ofFc.execute());
-        REQUIRE(ofFc.write());
+            Foam::functionObjects::forceCoeffs ofFc("ofForceCoeffs", runTime, ofDict);
+            REQUIRE(ofFc.execute());
+            REQUIRE(ofFc.write());
+        }
 
+        INFO("Comparing NeoFOAM and OpenFOAM coefficient output files");
         const double tol = 1e-8;
         compareDataFiles(
             "postProcessing/neoForceCoeffs/0/coefficient.dat",
@@ -609,8 +646,9 @@ TEST_CASE("ForceCoeffs - normalised coefficients match OpenFOAM reference")
             tol
         );
 
-        fs::remove_all("postProcessing/neoForceCoeffs");
-        fs::remove_all("postProcessing/ofForceCoeffs");
+        INFO("Cleaning up output directories");
+        CHECK_NOTHROW(fs::remove_all("postProcessing/neoForceCoeffs"));
+        CHECK_NOTHROW(fs::remove_all("postProcessing/ofForceCoeffs"));
     }
 }
 
@@ -691,9 +729,21 @@ TEST_CASE("nutUSpaldingWallFunction - uTau and nut match independent Spalding re
     {
         const double magGradU = c.magUp / c.y; // = magUp * deltaCoeff, deltaCoeff = 1/y at the wall
 
+        // Drive the Newton solve to convergence (tolerance well below the 1e-6
+        // check): this validates the Spalding f/df math itself. Production stops
+        // at OpenFOAM's default tolerance (wf::TOLERANCE = 0.01), which leaves an
+        // O(1e-5) residual by design — that path is covered by the wiring test.
         NeoN::scalar err = 0.0;
-        const NeoN::scalar utNeo =
-            wf::computeUTau(magGradU, c.magUp, c.y, c.nu, /*nutw0*/ 0.0, err, 50);
+        const NeoN::scalar utNeo = wf::computeUTau(
+            magGradU,
+            c.magUp,
+            c.y,
+            c.nu,
+            /*nutw0*/ 0.0,
+            err,
+            50,
+            /*tolerance*/ 1e-10
+        );
         const double utRef = spaldingUTauReference(c.magUp, c.y, c.nu);
 
         INFO(
@@ -826,9 +876,26 @@ TEST_CASE("nutUSpaldingWallFunction - wall nut via correctBoundaryConditions mat
 
             NeoN::scalar err = 0.0;
             NeoN::scalar errOneIter = 0.0;
-            const NeoN::scalar uTau =
-                wf::computeUTau(magGradU, magUp, y, nuVal, /*currentNut*/ 0.0, err, wf::MAX_ITER);
-            wf::computeUTau(magGradU, magUp, y, nuVal, /*currentNut*/ 0.0, errOneIter, 1);
+            const NeoN::scalar uTau = wf::computeUTau(
+                magGradU,
+                magUp,
+                y,
+                nuVal,
+                /*currentNut*/ 0.0,
+                err,
+                wf::MAX_ITER,
+                wf::TOLERANCE
+            );
+            wf::computeUTau(
+                magGradU,
+                magUp,
+                y,
+                nuVal,
+                /*currentNut*/ 0.0,
+                errOneIter,
+                1,
+                wf::TOLERANCE
+            );
             const NeoN::scalar cand = (uTau * uTau) / (magGradU + NeoN::ROOTVSMALL) - nuVal;
             const NeoN::scalar candClamped = cand > 0.0 ? cand : 0.0;
             const NeoN::scalar nutRef =

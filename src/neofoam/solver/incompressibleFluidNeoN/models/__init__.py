@@ -9,10 +9,10 @@ registers the optional models with the family (``register_with`` side effect)
 — ``detect_models`` finds nothing otherwise.
 """
 
-from .incompressibleFluidNeoNModel import incompressibleFluidNeoNModel
-from .pressure_velocity import PressureVelocityAlgorithmNeoN
 from .courant import courant
+from .incompressibleFluidNeoNModel import incompressibleFluidNeoNModel
 from .max_delta_t import maxDeltaT
+from .pressure_velocity import PressureVelocityAlgorithmNeoN
 
 __all__ = [
     "incompressibleFluidNeoNModel",

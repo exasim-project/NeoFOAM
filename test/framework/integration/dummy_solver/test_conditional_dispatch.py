@@ -18,6 +18,7 @@ import pytest
 from neofoam.framework.context import Context
 from neofoam.framework.model import ModelRuntime
 
+from .models.model3 import Accumulator, Model3Config, model3
 
 CASE_DIR = Path(__file__).parent / "configs"
 
@@ -29,8 +30,6 @@ def _make_runtime(coupled: bool) -> ModelRuntime:
     disk) and applies the same ``model_copy(update={"coupled": ...})`` that
     ``model3.resolve`` performs, rather than hand-constructing config values.
     """
-    from .models.model3 import model3
-
     rt = model3.instantiate(CASE_DIR, "CoupledModel")
     rt.config = rt.config.model_copy(update={"coupled": coupled})
     return rt
@@ -60,8 +59,6 @@ def test_model3_build_creates_field_and_accumulator() -> None:
     assert field_init.category == "fields"
     assert acc_init.category == "models"
 
-    from .models.model3 import Accumulator
-
     acc = acc_init.initializer({})
     assert isinstance(acc, Accumulator)
     assert acc.value == 0.0
@@ -69,8 +66,6 @@ def test_model3_build_creates_field_and_accumulator() -> None:
 
 def test_model3_config_loaded_via_instantiate() -> None:
     """instantiate() loads Model3Config from disk."""
-    from .models.model3 import model3, Model3Config
-
     rt = model3.instantiate(CASE_DIR, "CoupledModel")
     assert isinstance(rt.config, Model3Config)
     assert rt.config.mode == "coupled"
@@ -84,8 +79,6 @@ def test_model3_coupled_step_uses_model_field1() -> None:
     model3_field = 0 + 150 * 0.01 = 1.5. A second run from the same runtime
     with a fresh context reproduces 1.5 exactly, proving no instance state.
     """
-    from .models.model3 import Accumulator
-
     rt = _make_runtime(coupled=True)
 
     def run_once() -> float:
@@ -108,8 +101,6 @@ def test_model3_standalone_step_uses_field1() -> None:
     model3_field = 0 + 0.05 * 0.01 = 0.0005. Repeating from the same runtime
     reproduces the value, proving no instance state accumulates.
     """
-    from .models.model3 import Accumulator
-
     rt = _make_runtime(coupled=False)
 
     def run_once() -> float:
@@ -132,8 +123,6 @@ def test_model3_accumulator_tracks_state() -> None:
     gives 0 + 0.5 * 0.01 = 0.005; the second accumulates to value 1.0, so
     0.005 + 1.0 * 0.01 = 0.015.
     """
-    from .models.model3 import Accumulator
-
     rt = _make_runtime(coupled=False)
     ctx = Context(
         fields={"model3_field": 0.0, "field1": 10.0},

@@ -258,9 +258,7 @@ def test_inactive_contributing_model_is_excluded_from_the_fold(constraint: Any) 
     # Registered, but its runtime is NOT among the active contributors for this
     # case; its 0.001 would win the min if it wrongly folded.
     contributor(constraint, lambda deltaT: deltaT * 0.001, "courant")
-    bound = BoundModelInterface(
-        constraint, [], Context(fields={"deltaT": 0.2}, models={})
-    )
+    bound = BoundModelInterface(constraint, [], Context(fields={"deltaT": 0.2}, models={}))
     assert bound() == VGREAT
 
 
@@ -268,9 +266,7 @@ def test_second_contributing_model_changes_the_fold_without_owner_edit(
     constraint: Any,
 ) -> None:
     courant_rt = contributor(constraint, lambda deltaT: deltaT, "courant")  # 0.2
-    max_rt = contributor(
-        constraint, lambda: 0.01, "maxDeltaT"
-    )  # smaller -> wins once active
+    max_rt = contributor(constraint, lambda: 0.01, "maxDeltaT")  # smaller -> wins once active
     ctx = Context(fields={"deltaT": 0.2}, models={})
 
     only_courant = BoundModelInterface(constraint, [courant_rt], ctx)
@@ -283,9 +279,7 @@ def test_second_contributing_model_changes_the_fold_without_owner_edit(
 def test_contribution_resolves_config_param_from_its_own_runtime(
     constraint: Any,
 ) -> None:
-    capped_rt = contributor(
-        constraint, _cap_from_config, "capped", config=_CapConfig(value=0.05)
-    )
+    capped_rt = contributor(constraint, _cap_from_config, "capped", config=_CapConfig(value=0.05))
     bound = BoundModelInterface(constraint, [capped_rt], Context(fields={}, models={}))
     assert bound() == pytest.approx(0.05)
 
@@ -328,13 +322,9 @@ def test_two_cases_fold_independently_without_leak(
     max_rt = contributor(constraint, lambda: 0.01, "maxDeltaT")
 
     # Case A: only courant active (0.2); maxDeltaT would give 0.01 < 0.2 if it leaked.
-    bound_a = make_bound(
-        constraint, [courant_rt], Context(fields={"deltaT": 0.2}, models={})
-    )
+    bound_a = make_bound(constraint, [courant_rt], Context(fields={"deltaT": 0.2}, models={}))
     # Case B: only maxDeltaT active (0.01); courant would give 0.005 < 0.01 if it leaked.
-    bound_b = make_bound(
-        constraint, [max_rt], Context(fields={"deltaT": 0.005}, models={})
-    )
+    bound_b = make_bound(constraint, [max_rt], Context(fields={"deltaT": 0.005}, models={}))
 
     assert bound_a() == pytest.approx(0.2)
     assert bound_b() == pytest.approx(0.01)
@@ -361,9 +351,7 @@ def test_interface_fold_is_agnostic_to_the_combine_function() -> None:
 
     a_rt = ModelRuntime(spec=rate_a, name="rateA", config=None)
     b_rt = ModelRuntime(spec=rate_b, name="rateB", config=None)
-    bound = BoundModelInterface(
-        sourceTerms, [a_rt, b_rt], Context(fields={}, models={})
-    )
+    bound = BoundModelInterface(sourceTerms, [a_rt, b_rt], Context(fields={}, models={}))
     assert bound() == pytest.approx(5.0)
 
 
@@ -388,9 +376,7 @@ def test_two_same_named_contributions_both_fold() -> None:
     assert len(sourceTerms.contributions) == 2
     a_rt = ModelRuntime(spec=model_a, name="modelA", config=None)
     b_rt = ModelRuntime(spec=model_b, name="modelB", config=None)
-    bound = BoundModelInterface(
-        sourceTerms, [a_rt, b_rt], Context(fields={}, models={})
-    )
+    bound = BoundModelInterface(sourceTerms, [a_rt, b_rt], Context(fields={}, models={}))
     assert bound() == pytest.approx(5.0)
 
 
@@ -438,9 +424,7 @@ def test_contribution_from_a_foreign_model_family_still_folds(constraint: Any) -
 
     assert constraint.owner_of(rule) is solver_side
     solver_rt = ModelRuntime(spec=solver_side, name="solverSideRule", config=None)
-    bound = BoundModelInterface(
-        constraint, [solver_rt], Context(fields={"deltaT": 4.0}, models={})
-    )
+    bound = BoundModelInterface(constraint, [solver_rt], Context(fields={"deltaT": 4.0}, models={}))
     assert bound() == pytest.approx(2.0)
 
 
@@ -502,9 +486,7 @@ def test_resolver_injects_bound_interface_for_interface_typed_param(
             lambda c: Context(
                 fields={},
                 models={
-                    "solutionLoop": ModelRuntime(
-                        spec=c.owner, name="solutionLoop", config=None
-                    )
+                    "solutionLoop": ModelRuntime(spec=c.owner, name="solutionLoop", config=None)
                 },
             ),
             "is not bound for this case",

@@ -43,7 +43,12 @@ public:
     static std::unique_ptr<TurbulenceModel>
     create(RunTime& rt, const nnfvcc::VolumeField<NeoN::scalar>& nu);
 
-    // Optional: seed internal transport scalars from disk-read NeoN fields.
+    /**
+     * @brief Seed internal transport scalars from disk-read NeoN fields.
+     *
+     * Optional hook; the default is a no-op.  Override to initialise model-owned
+     * fields (e.g. nuTilda) from values already loaded from disk by the caller.
+     */
     virtual void initialize(
         const nnfvcc::VolumeField<NeoN::scalar>& nuTildaInit,
         const nnfvcc::VolumeField<NeoN::scalar>& nutInit
@@ -53,29 +58,40 @@ public:
         (void)nutInit;
     }
 
-    // Seed gradU and nut before the time loop.
+    /** @brief Seed gradU and nut before the time loop. */
     virtual void validate(const nnfvcc::VolumeField<NeoN::Vec3>& U) = 0;
 
-    // Update the turbulence model after the PIMPLE loop each time step.
+    /** @brief Update the turbulence model after the momentum solve each time step. */
     virtual void correct(
         const nnfvcc::VolumeField<NeoN::Vec3>& U,
         nnfvcc::SurfaceField<NeoN::scalar>& phi,
         RunTime& rt
     ) = 0;
 
-    // Surface effective viscosity (nu + nut) for the momentum laplacian.
+    /** @brief Surface effective viscosity (ν + ν_t) for the momentum laplacian. */
     virtual nnfvcc::SurfaceField<NeoN::scalar>& nuEff() = 0;
 
-    // Volume turbulent viscosity for the explicit viscousStress term.
+    /** @brief Cell-centred turbulent viscosity for the explicit viscousStress term. */
     virtual const nnfvcc::VolumeField<NeoN::scalar>& nut() const = 0;
 
-    // Velocity gradient tensor updated each correct() call.
+    /** @brief Velocity gradient tensor updated each correct() call. */
     virtual const nnfvcc::VolumeField<NeoN::Tensor>& gradU() const = 0;
 
-    // Rotate time-dependent fields for BDF2 time advancement.
+    /**
+     * @brief Recompute the model-owned gradU in place at the given velocity.
+     *
+     * Includes internal, boundary, and proc-halo exchange.  Lets the PIMPLE
+     * outer loop refresh gradU for its 2nd+ correctors by reusing this one
+     * buffer instead of allocating a separate VolumeField<Tensor> per solver.
+     * Safe because correct() recomputes gradU afterwards; the first corrector
+     * reads the U^n gradU() left by the previous step's correct().
+     */
+    virtual void updateGradU(const nnfvcc::VolumeField<NeoN::Vec3>& U) = 0;
+
+    /** @brief Rotate time-dependent fields for BDF2 time advancement. */
     virtual void rotateOldTimes() = 0;
 
-    // Write model-owned fields (nuTilda, nut, …) to disk.
+    /** @brief Write model-owned fields (nuTilda, nut, …) to disk. */
     virtual void write(MeshAdapter& mesh) const = 0;
 };
 

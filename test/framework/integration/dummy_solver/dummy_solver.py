@@ -9,7 +9,6 @@ Mimics SimpleSolver structure for testing new API.
 
 from typing import Annotated, Any, Optional
 
-
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.graph import DAGResolver
 from neofoam.framework.initialization import Depends, StagedInitRunner
@@ -68,9 +67,7 @@ dummy_solver_spec.models(DummyModelInterface)
 
 
 @dummy_solver_spec.initializer
-def initialize(
-    self: Any, init: Annotated[StagedInitRunner, Depends(create_init)]
-) -> Context:
+def initialize(self: Any, init: Annotated[StagedInitRunner, Depends(create_init)]) -> Context:
     """Initialize using create_init factory with dependency injection."""
     ctx = init.run()
     return ctx

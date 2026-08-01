@@ -24,7 +24,6 @@ from neofoam.viscosity.selection import (
     select_from_case,
     select_viscosity_model,
 )
-
 from viscosity.conftest import CASES, Case, assert_selection
 
 

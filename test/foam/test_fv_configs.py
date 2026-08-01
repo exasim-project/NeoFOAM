@@ -26,7 +26,6 @@ from neofoam.foam import fvSchemes, fvSolution
 from neofoam.framework.model import Model
 from neofoam.framework.solver import Solver
 
-
 # ---------------------------------------------------------------------------
 # Subclass synthesis
 # ---------------------------------------------------------------------------
@@ -264,9 +263,7 @@ def test_fvschemes_form_defaults_is_a_valid_runnable_scaffold() -> None:
     assert scaffold["divSchemes"]["div(phi,U)"] == "Gauss upwind"
     assert scaffold["divSchemes"]["div((nuEff*dev2(T(grad(U)))))"] == "Gauss linear"
     assert scaffold["ddtSchemes"]["ddt(U)"] == "Euler"
-    assert (
-        scaffold["laplacianSchemes"]["laplacian(nuEff,U)"] == "Gauss linear corrected"
-    )
+    assert scaffold["laplacianSchemes"]["laplacian(nuEff,U)"] == "Gauss linear corrected"
     # and it actually validates as an instance of the config
     Sub.model_validate(scaffold)
 
@@ -363,9 +360,7 @@ def test_default_none_sentinel_is_not_expanded() -> None:
 
     with pytest.raises(ValidationError):
         # only div(phi,U) is spelled out; ``default none`` must NOT fill div(phi,T)
-        Sub.model_validate(
-            {"divSchemes": {"default": "none", "div(phi,U)": "Gauss upwind"}}
-        )
+        Sub.model_validate({"divSchemes": {"default": "none", "div(phi,U)": "Gauss upwind"}})
 
 
 def test_without_default_missing_required_entry_still_raises() -> None:

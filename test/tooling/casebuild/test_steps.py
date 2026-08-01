@@ -14,9 +14,9 @@ from pathlib import Path
 import pybFoam as pyf
 import pytest
 
-from neofoam.tooling.casebuild import CaseDir, configs, patch
 from neofoam.framework.solver.configurations import configurations
 from neofoam.solver.incompressibleFluid.incompressibleFluid import incompressibleFluid
+from neofoam.tooling.casebuild import CaseDir, configs, patch
 
 CAVITY = Path(__file__).parent / "cases" / "cavity"
 
@@ -43,9 +43,7 @@ def test_patch_missing_file_raises(tmp_path: Path) -> None:
 
 def test_patch_remove_drops_the_key(tmp_path: Path) -> None:
     case = _staged(tmp_path)
-    assert pyf.dictionary.read(str(case.path / "system" / "controlDict")).found(
-        "deltaT"
-    )
+    assert pyf.dictionary.read(str(case.path / "system" / "controlDict")).found("deltaT")
     patch("system/controlDict", remove=["deltaT"])(case)
     d = pyf.dictionary.read(str(case.path / "system" / "controlDict"))
     assert not d.found("deltaT")

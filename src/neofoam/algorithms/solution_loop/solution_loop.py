@@ -33,6 +33,17 @@ engine, and exposes the loop body as ``@operation``s plus the predicate.
 from pathlib import Path
 from typing import Any, Callable, Optional, Protocol, runtime_checkable
 
+from neofoam.algorithms.solution_loop.config import (
+    _ADJUSTABLE,
+    _RUN_TIME,
+    _TIME_STEP,
+    _WRITE_CONTROL_ALIASES,
+    LABEL_MAX,
+    SMALL,
+    TimeControlConfig,
+    _round_half_away,
+)
+from neofoam.algorithms.solution_loop.control import SolutionControl
 from neofoam.algorithms.solution_loop.interfaces import (
     VGREAT,
     loopCondition,
@@ -43,17 +54,6 @@ from neofoam.algorithms.solution_loop.interfaces import (
 # the explicit alias marks it as a public re-export for the solver-side module
 # that imports it from here (mypy strict no_implicit_reexport).
 from neofoam.algorithms.solution_loop.interfaces import solutionLoop as solutionLoop
-from neofoam.algorithms.solution_loop.config import (
-    LABEL_MAX,
-    SMALL,
-    _ADJUSTABLE,
-    _RUN_TIME,
-    _TIME_STEP,
-    _WRITE_CONTROL_ALIASES,
-    TimeControlConfig,
-    _round_half_away,
-)
-from neofoam.algorithms.solution_loop.control import SolutionControl
 from neofoam.algorithms.solution_loop.loop_state import LoopState
 from neofoam.algorithms.solution_loop.time_integration import (
     TimeIntegration,
@@ -115,21 +115,15 @@ class SolutionLoop:
         self._integration: TimeIntegration = (
             integration if integration is not None else TransientIntegration()
         )
-        self._control: LoopControl = (
-            control if control is not None else SolutionControl()
-        )
-        self._conditions: list[Callable[["SolutionLoop"], bool]] = list(
-            conditions or []
-        )
+        self._control: LoopControl = control if control is not None else SolutionControl()
+        self._conditions: list[Callable[["SolutionLoop"], bool]] = list(conditions or [])
         # latest interface folds, written by the set_time_step operation: next_dt
         # is the folded timeStepConstraint limit and keep_running the loopCondition
         # fold, which the outer-loop predicate ANDs with running() to stop the run.
         self.next_dt: float = VGREAT
         self.keep_running: bool = True
         self._growth_cap = growth_cap
-        self._backend: LoopBackend = (
-            backend if backend is not None else NullLoopBackend()
-        )
+        self._backend: LoopBackend = backend if backend is not None else NullLoopBackend()
 
     # -- injection --------------------------------------------------------
     def set_backend(self, backend: LoopBackend) -> None:
@@ -228,9 +222,7 @@ class SolutionLoop:
         if s.write_control == _TIME_STEP:
             s.write_time = (s.index % int(s.write_interval)) == 0
         elif s.write_control in (_RUN_TIME, _ADJUSTABLE):
-            write_index = int(
-                ((s.value - s.start_time) + 0.5 * s.delta_t) / s.write_interval
-            )
+            write_index = int(((s.value - s.start_time) + 0.5 * s.delta_t) / s.write_interval)
             if write_index > s.write_time_index:
                 s.write_time = True
                 s.write_time_index = write_index
@@ -281,9 +273,7 @@ def make_loop_state(
         delta_t=integration.initial_delta_t(config.deltaT),
         end_time=config.endTime,
         start_time=config.startTime,
-        write_control=_WRITE_CONTROL_ALIASES.get(
-            config.writeControl, config.writeControl
-        ),
+        write_control=_WRITE_CONTROL_ALIASES.get(config.writeControl, config.writeControl),
         write_interval=config.writeInterval,
     )
 

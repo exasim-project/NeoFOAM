@@ -11,6 +11,10 @@ case directory**.
 
 from __future__ import annotations
 
+from neofoam.framework.solver import configurations
+
+from .incompressibleFluidNeoN import incompressibleFluidNeoN
+
 
 def config_classes() -> list[type]:
     """All config classes the incompressibleFluidNeoN solver may consume.
@@ -18,8 +22,4 @@ def config_classes() -> list[type]:
     Static — needs no case directory. Thin wrapper over the framework's
     solver-agnostic :func:`neofoam.framework.solver.configurations`.
     """
-    from neofoam.framework.solver import configurations
-
-    from .incompressibleFluidNeoN import incompressibleFluidNeoN
-
     return list(configurations(incompressibleFluidNeoN))

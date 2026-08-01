@@ -14,6 +14,10 @@ agent). The loaded *instances* for a concrete case come from
 
 from __future__ import annotations
 
+from neofoam.framework.solver import configurations
+
+from .incompressibleFluid import incompressibleFluid
+
 
 def config_classes() -> list[type]:
     """All config classes the incompressibleFluid solver may consume.
@@ -24,8 +28,4 @@ def config_classes() -> list[type]:
     spec at import. Optional-model classes are listed for every registered
     model (detection, which needs a case, is not run).
     """
-    from neofoam.framework.solver import configurations
-
-    from .incompressibleFluid import incompressibleFluid
-
     return list(configurations(incompressibleFluid))

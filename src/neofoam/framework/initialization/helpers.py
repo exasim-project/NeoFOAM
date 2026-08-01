@@ -8,8 +8,9 @@ Helper Functions for Lazy Initialization
 Provides convenience functions for creating InitStep objects with common patterns.
 """
 
-from typing import Callable, Any, List, Optional, Protocol, Union, runtime_checkable
-from .init_step import InitStep, InitCategory
+from typing import Any, Callable, List, Optional, Protocol, Union, runtime_checkable
+
+from .init_step import InitCategory, InitStep
 
 
 @runtime_checkable
@@ -74,9 +75,7 @@ def field(
         field("U", create=lambda ctx: create_vector_field(ctx["mesh"], U0),
               depends_on=["mesh"], write=True)
     """
-    return _make_lazy(
-        "fields", "fields", name, create, depends_on, write=write, replaces=replaces
-    )
+    return _make_lazy("fields", "fields", name, create, depends_on, write=write, replaces=replaces)
 
 
 def operator(

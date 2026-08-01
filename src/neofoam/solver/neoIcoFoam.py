@@ -5,8 +5,11 @@
 neoIcoFoam.py — Incompressible Navier-Stokes solver using NeoN + NeoFOAM bindings.
 """
 
-import pybFoam as pyf
+import sys
+
 import neon._neon as nn  # NeoN Python bindings
+import pybFoam as pyf
+
 from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
 from neofoam.solver.pisoControl import PisoControl
 
@@ -55,9 +58,7 @@ class NeoIcoFoam:
             nn.rotate_old_times(U)
             nn.rotate_old_times(phi)
 
-            max_co, mean_co = nn.compute_co_num(
-                rt.nf_mesh, phi.internal_vector(), rt.dt
-            )
+            max_co, mean_co = nn.compute_co_num(rt.nf_mesh, phi.internal_vector(), rt.dt)
             print(f"Courant Number mean: {mean_co:.6f} max: {max_co:.6f}")
 
             nfb.sync_run_times(runTime, rt, max_co)
@@ -85,9 +86,7 @@ class NeoIcoFoam:
                 rAUf = interp.interpolate(rAU)
                 rAUf.name = "rAUf"
 
-                phiHbyA = nfb.flux(hByA) + rAUf * nfb.ddt_flux_corr(
-                    U, phi, rt.dt, ddt_scheme
-                )
+                phiHbyA = nfb.flux(hByA) + rAUf * nfb.ddt_flux_corr(U, phi, rt.dt, ddt_scheme)
 
                 while piso.correct_non_orthogonal():
                     pEqn = nfb.PDESolverScalar(
@@ -119,8 +118,6 @@ class NeoIcoFoam:
 
 
 def main() -> None:
-    import sys
-
     argv = sys.argv if len(sys.argv) > 1 else ["neoIcoFoam"]
     solver = NeoIcoFoam(argv)
     solver.run()

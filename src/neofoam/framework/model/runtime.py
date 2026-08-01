@@ -9,13 +9,19 @@ Created by ModelSpec.instantiate(). Never shared between solver runs.
 
 from __future__ import annotations
 
+import inspect
 from dataclasses import dataclass, field
-from typing import Any, TYPE_CHECKING
+from types import SimpleNamespace
+from typing import TYPE_CHECKING, Any
+
+from neofoam.fields.synthesis import synthesize_init_step
+from neofoam.io import BaseConfig
 
 if TYPE_CHECKING:
-    from .spec import ModelSpec
     from neofoam.framework.initialization import ConfigContext, InitStep
     from neofoam.framework.operations import Operation
+
+    from .spec import ModelSpec
 
 
 @dataclass
@@ -54,8 +60,6 @@ class ModelRuntime:
         synthesize: computed or intermediate fields, control objects,
         and side-effect-only steps that other declarations depend on.
         """
-        import inspect
-
         if self.spec._build_func is None:
             user_steps: list["InitStep"] = []
         else:
@@ -70,11 +74,6 @@ class ModelRuntime:
         if not field_decls:
             return user_steps
 
-        # Lazy import: ``synthesis`` pulls a deferred pybFoam dependency
-        # through its dispatch — importing ``framework.model.runtime``
-        # must stay light.
-        from neofoam.fields.synthesis import synthesize_init_step
-
         auto_steps = [synthesize_init_step(decl) for decl in field_decls]
         return auto_steps + user_steps
 
@@ -82,6 +81,14 @@ class ModelRuntime:
     def operations(self) -> list["Operation"]:
         """Build operations with this runtime as the self binding."""
         return self.spec._build_operations_for(self)
+
+    def native_operations(self) -> list["Operation"]:
+        """Operations NOT tagged ``fallback=True`` (the model's native backend)."""
+        return [op for op in self.operations if not op.metadata.fallback]
+
+    def fallback_operations(self) -> list["Operation"]:
+        """Operations tagged ``fallback=True`` (the model's fallback backend)."""
+        return [op for op in self.operations if op.metadata.fallback]
 
     @property
     def configs(self) -> list[Any]:
@@ -91,9 +98,6 @@ class ModelRuntime:
         Used by ``LoadResult.configs`` to collect configs for validation.
         Handles both a single config and a SimpleNamespace of multiple configs.
         """
-        from neofoam.io import BaseConfig
-        from types import SimpleNamespace
-
         result = []
         if isinstance(self.config, BaseConfig):
             result.append(self.config)

@@ -17,10 +17,10 @@ Pure-Python: the dummy solver and its YAML-bound configs need no pybFoam.
 from pathlib import Path
 from typing import Any
 
+from neofoam.foam import fvSchemes, fvSolution
 from neofoam.framework.initialization import LoadResult
 from neofoam.framework.model import Model
-from neofoam.foam import fvSchemes, fvSolution
-from neofoam.io import IOStrategy, YAML, collect_config_classes, save_configs
+from neofoam.io import YAML, BaseConfig, IOStrategy, collect_config_classes, save_configs
 
 from .dummy_init import (
     MeshConfig,
@@ -91,9 +91,7 @@ def test_save_configs_validates_clean(tmp_path: Path) -> None:
 
 def test_scaffold_from_classes_only(tmp_path: Path) -> None:
     """Build configs from field values alone (no source case), save, reload."""
-    solver_cfg = SolverConfig(
-        param1=1e-5, param2=2.0, dt=0.01, endTime=10.0, parameters={}
-    )
+    solver_cfg = SolverConfig(param1=1e-5, param2=2.0, dt=0.01, endTime=10.0, parameters={})
     mesh_cfg = MeshConfig(nPoints=100)
 
     save_configs([solver_cfg, mesh_cfg], case_dir=tmp_path)
@@ -147,7 +145,6 @@ def test_collect_config_classes_mixes_sources_and_dedups() -> None:
 
 def test_save_configs_skips_unbound_config(tmp_path: Path, recwarn: Any) -> None:
     """A config class with no IO strategy is skipped (warned), not raised."""
-    from neofoam.io import BaseConfig
 
     class Unbound(BaseConfig):
         value: float = 1.0

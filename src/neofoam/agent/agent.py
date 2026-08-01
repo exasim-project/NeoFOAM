@@ -15,9 +15,20 @@ from __future__ import annotations
 from typing import Any
 
 from pydantic import BaseModel, Field
-from pydantic_ai import Agent
-from pydantic_ai.models.openai import OpenAIChatModel
-from pydantic_ai.providers.ollama import OllamaProvider
+
+try:
+    from pydantic_ai import Agent
+    from pydantic_ai.models.openai import OpenAIChatModel
+    from pydantic_ai.providers.ollama import OllamaProvider
+except ModuleNotFoundError:  # optional [agent] extra
+    Agent = None  # type: ignore[assignment,misc]
+    OpenAIChatModel = None  # type: ignore[assignment,misc]
+    OllamaProvider = None  # type: ignore[assignment,misc]
+
+#: Actionable message when the optional ``[agent]`` extra is missing.
+_MISSING_PYDANTIC_AI = (
+    "the agent feature needs pydantic-ai; install with: pip install neofoam[agent]"
+)
 
 #: Default model served by a local Ollama instance.
 DEFAULT_MODEL = "llama3.2"
@@ -45,6 +56,8 @@ def build_model(
     is required** — Ollama serves models locally. Constructing the model
     performs no network I/O. Point ``base_url`` at any Ollama endpoint.
     """
+    if OllamaProvider is None or OpenAIChatModel is None:
+        raise ImportError(_MISSING_PYDANTIC_AI)
     provider = OllamaProvider(base_url=base_url)
     return OpenAIChatModel(model_name, provider=provider)
 

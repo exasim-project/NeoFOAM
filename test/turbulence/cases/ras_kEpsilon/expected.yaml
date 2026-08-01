@@ -1,5 +1,6 @@
-# Expected values for the RAS / kEpsilon case. No native NeoFOAM model is
-# registered for kEpsilon, so selection resolves to the OpenFOAM fallback adapter.
+# Expected values for the RAS / kEpsilon case. kEpsilon is a registered dual
+# model: the native NeoN closure (fallback=False) and the pybFoam fallback
+# (fallback=True) both build from this case.
 config:                       # cross-checked against the real turbulenceProperties read
   simulationType: RAS
   RAS:                        # full sub-dictionary, compared wholesale
@@ -9,4 +10,4 @@ config:                       # cross-checked against the real turbulencePropert
   LES: null
 selection:
   model_name: kEpsilon
-  resolves_to: fallback       # native | fallback
+  resolves_to: native         # native (registered) | unregistered

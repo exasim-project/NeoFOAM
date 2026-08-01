@@ -93,9 +93,7 @@ def test_new_tool_self_registers_and_resolves(monkeypatch: pytest.MonkeyPatch) -
     stub = Tool("stubTool")
     stub.build(lambda cfg: [lazy("preprocess.stubTool", lambda _c: object())])
     register_tool(stub)
-    rts = resolve_tools(
-        available_tools(), PreprocessConfig(tools=[{"tool": "stubTool"}])
-    )
+    rts = resolve_tools(available_tools(), PreprocessConfig(tools=[{"tool": "stubTool"}]))
     assert [rt.name for rt in rts] == ["preprocess.stubTool"]
 
 
@@ -176,9 +174,7 @@ def test_no_solverspec_tools() -> None:
 
 
 def test_run_preprocess_not_in_incompressiblefluid() -> None:
-    inc = (
-        SRC / "solver" / "incompressibleFluid" / "incompressibleFluid.py"
-    ).read_text()
+    inc = (SRC / "solver" / "incompressibleFluid" / "incompressibleFluid.py").read_text()
     assert "run" + "_preprocess" not in inc
     assert ".tools(" not in inc
 
@@ -197,10 +193,6 @@ def test_no_dead_preprocess_refs() -> None:
         "Preprocess" + "Model",
         "preprocess_init" + "_steps",
     ]
-    offenders = [
-        f"{py}: {s}" for py in SRC.rglob("*.py") for s in dead if s in py.read_text()
-    ]
+    offenders = [f"{py}: {s}" for py in SRC.rglob("*.py") for s in dead if s in py.read_text()]
     assert offenders == []
-    assert not (
-        SRC / "solver" / "incompressibleFluid" / "models" / "preprocess"
-    ).exists()
+    assert not (SRC / "solver" / "incompressibleFluid" / "models" / "preprocess").exists()

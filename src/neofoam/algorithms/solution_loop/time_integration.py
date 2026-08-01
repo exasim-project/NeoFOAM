@@ -29,9 +29,7 @@ from neofoam.core.plugin_system import PluginSystem
 from neofoam.io import BaseConfig
 
 
-@PluginSystem.register(
-    discriminator_variable="integration", discriminator="time_integration_type"
-)
+@PluginSystem.register(discriminator_variable="integration", discriminator="time_integration_type")
 class TimeIntegration(BaseConfig):
     """Plugin interface: the regime-specific decisions of one advancement step.
 

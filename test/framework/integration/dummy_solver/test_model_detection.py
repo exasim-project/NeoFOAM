@@ -9,9 +9,10 @@ the PluginSystem registry exposes them by name — which is the discovery step
 ``SolverSpec.models(...)`` relies on before any case is loaded.
 """
 
-from .models.dummy_model import DummyModelInterface
 from neofoam.core.plugin_system import PluginSystem
 from neofoam.framework.model import ModelSpec
+
+from .models.dummy_model import DummyModelInterface
 
 
 def test_detect_specs_returns_model_spec_objects() -> None:

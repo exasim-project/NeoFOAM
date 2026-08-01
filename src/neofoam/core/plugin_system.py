@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2025 NeoFOAM authors
-from pydantic import BaseModel, Field, create_model
-from typing import Any, Annotated, Optional, Type, Union, Callable
 from dataclasses import dataclass, field
+from typing import Annotated, Any, Callable, Optional, Type, Union
+
+from pydantic import BaseModel, Field, create_model
 
 
 @dataclass
@@ -23,12 +24,14 @@ class PluginRegistry:
 
 class PluginSystem:
     """
-    PluginSystem provides a runtime-extensible plugin/config system using Pydantic discriminated unions.
+    PluginSystem provides a runtime-extensible plugin/config system using
+    Pydantic discriminated unions.
 
     Features:
     - Central registry (_registry) for all plugin base types and their plugin classes.
     - Decorator API for explicit registration of plugin families and plugin config classes.
-    - Supports multiple independent plugin families, each with its own registry and extensible model.
+    - Supports multiple independent plugin families, each with its own registry
+      and extensible model.
     - Uses a PluginRegistry dataclass to store metadata for each plugin base type:
         - base_cls: The plugin base class (usually a Pydantic model).
         - plugin_registry: List of registered plugin config classes for this type.
@@ -54,7 +57,8 @@ class PluginSystem:
     4. The registry can be queried for all plugin families and their plugins:
     PluginSystem._registry["PluginBase"].plugin_registry
 
-    This design allows runtime extensibility, developer-friendly registration, and schema validation for plugin/config systems.
+    This design allows runtime extensibility, developer-friendly registration,
+    and schema validation for plugin/config systems.
     """
 
     _registry: dict[str, PluginRegistry] = {}
@@ -116,9 +120,7 @@ class PluginSystem:
         return cls._registry.get(base_cls_name, None)
 
     @classmethod
-    def remove_plugin_model(
-        cls, base_cls_name: str, registered_class: Type[BaseModel]
-    ) -> bool:
+    def remove_plugin_model(cls, base_cls_name: str, registered_class: Type[BaseModel]) -> bool:
         registry = cls._registry.get(base_cls_name, None)
         if registry is None:
             return False

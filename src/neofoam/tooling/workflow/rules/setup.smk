@@ -4,7 +4,7 @@
 # Per case: clone the base case, apply the case's config payloads and copy the
 # built mesh in from the case's mesh mini-case. Removes the clone's
 # preprocess.yaml so nothing ever re-meshes it. The mesh dir (_mesh_dir_of)
-# composes the case's cad + mesh variants, matching the mesh chain's MESH_STEM.
+# matches the mesh chain's MESH_STEM (meshes/{mesh}).
 # Consumes header globals: SOLVER, BASE_CASE, _mesh_dir_of, MESH_DONE.
 rule setup:
     input:

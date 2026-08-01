@@ -11,7 +11,6 @@ from pathlib import Path
 import pytest
 
 from neofoam.algorithms.solution_loop.interfaces import VGREAT, timeStepConstraint
-from neofoam.tooling.casebuild import from_template, patch
 from neofoam.framework.context import Context
 from neofoam.framework.model import BoundModelInterface, ModelRuntime
 from neofoam.solver.incompressibleFluid.models.courant import (
@@ -22,19 +21,16 @@ from neofoam.solver.incompressibleFluid.models.courant import (
 from neofoam.solver.incompressibleFluid.models.incompressibleFluidModel import (
     incompressibleFluidModel,
 )
+from neofoam.tooling.casebuild import from_template, patch
 
-courant_mod = importlib.import_module(
-    "neofoam.solver.incompressibleFluid.models.courant"
-)
+courant_mod = importlib.import_module("neofoam.solver.incompressibleFluid.models.courant")
 
 _CASES = Path(__file__).parent / "cases"
 _BASE = _CASES / "controldict_base"
 
 
 def _courant_runtime(max_co: float = 1.0) -> ModelRuntime:
-    return ModelRuntime(
-        spec=courant, name="courant", config=CourantConfig(maxCo=max_co)
-    )
+    return ModelRuntime(spec=courant, name="courant", config=CourantConfig(maxCo=max_co))
 
 
 def test_contribution_lives_under_the_solver_not_the_framework() -> None:

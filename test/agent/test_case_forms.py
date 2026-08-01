@@ -66,9 +66,7 @@ def test_merge_field_config_merges_halves() -> None:
     # only under the writer's serialization context.
     dump = inst.model_dump(by_alias=True, exclude_none=True)
     assert dump["boundaryField"]["movingWall"]["value"] == [1.0, 0.0, 0.0]
-    of = inst.model_dump(
-        by_alias=True, exclude_none=True, context={"format": "openfoam"}
-    )
+    of = inst.model_dump(by_alias=True, exclude_none=True, context={"format": "openfoam"})
     assert of["boundaryField"]["movingWall"]["value"] == "uniform (1.0 0.0 0.0)"
 
 

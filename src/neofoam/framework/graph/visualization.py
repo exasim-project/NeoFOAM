@@ -87,9 +87,7 @@ def digraph_to_pyvis_html(graph: nx.DiGraph, html_path: str = "dag.html") -> Non
     net = Network(directed=True, notebook=False)
     for node, attrs in graph.nodes(data=True):
         shape = attrs.get("shape", "ellipse")
-        net.add_node(
-            node, label=str(node), shape=shape, color=attrs.get("color", "lightblue")
-        )
+        net.add_node(node, label=str(node), shape=shape, color=attrs.get("color", "lightblue"))
     for source, target in graph.edges:
         net.add_edge(source, target)
 

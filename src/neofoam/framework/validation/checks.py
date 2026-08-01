@@ -6,9 +6,7 @@
 Each ``check_*`` reads one aspect of a case via :mod:`neofoam.io.dictread` (or a
 config load) and yields :class:`Finding` objects. A leaf that cannot be read
 (:class:`~neofoam.io.dictread.Unreadable`) becomes an *error* finding —
-"couldn't-check ⇒ error" — never a downgraded-to-absent silent pass. ``configurations``
-and ``pybFoam``/``neofoam.tools`` are imported lazily so ``import
-neofoam.framework.validation`` stays ``pybFoam``-free.
+"couldn't-check ⇒ error" — never a downgraded-to-absent silent pass.
 """
 
 from __future__ import annotations
@@ -17,6 +15,7 @@ import re
 from pathlib import Path
 from typing import Any, Optional, Union
 
+from neofoam.framework.solver.configurations import configurations, model_catalog
 from neofoam.framework.validation.registry import (
     CaseContext,
     CheckRegistry,
@@ -32,6 +31,9 @@ from neofoam.io.dictread import (
     read_section,
     read_toplevel,
 )
+from neofoam.tooling.workflow.geometry import PatchSet
+from neofoam.tools.block_mesh import BlockMeshDictConfig
+from neofoam.tools.snappy_hex_mesh import SnappyHexMeshDictConfig
 
 __all__ = [
     "mesh_patch_types",
@@ -125,8 +127,6 @@ def _manifest_constraint_types(case: Path) -> dict[str, str]:
     if not manifest.is_file():
         return {}
     try:
-        from neofoam.tooling.workflow.geometry import PatchSet
-
         patch_set = PatchSet.load(manifest)
     except Exception:
         return {}
@@ -151,9 +151,6 @@ def mesh_patch_types(case: Path) -> Union[dict[str, str], Unreadable]:
     The geometry ``manifest.json`` (when present) supplies constraint patch types too,
     so the check runs *pre-mesh* on a staged case (F4); the mesh dicts win on conflict.
     """
-    from neofoam.tools.block_mesh import BlockMeshDictConfig
-    from neofoam.tools.snappy_hex_mesh import SnappyHexMeshDictConfig
-
     types: dict[str, str] = _manifest_constraint_types(case)
     bmd = case / "system" / "blockMeshDict"
     if bmd.is_file():
@@ -172,10 +169,7 @@ def mesh_patch_types(case: Path) -> Union[dict[str, str], Unreadable]:
             snappy = SnappyHexMeshDictConfig.load(case_dir=shm)
         except Exception as exc:
             return Unreadable(
-                reason=(
-                    "system/snappyHexMeshDict: "
-                    f"{str(exc).strip() or type(exc).__name__}"
-                )
+                reason=(f"system/snappyHexMeshDict: {str(exc).strip() or type(exc).__name__}")
             )
         cmc = snappy.castellatedMeshControls
         surfaces = cmc.get("refinementSurfaces", {}) if isinstance(cmc, dict) else {}
@@ -227,8 +221,6 @@ def check_required_files(ctx: CaseContext) -> list[Finding]:
     checked for ``0/U`` / ``0/p_rgh`` / ``0/alpha.water`` (not the fluid solver's
     ``0/p``), and each solver is judged against the fields it actually owns.
     """
-    from neofoam.framework.solver.configurations import configurations, model_catalog
-
     case = ctx.case
     findings: list[Finding] = []
     cfg = configurations(ctx.solver)
@@ -373,8 +365,7 @@ def check_pimple_final(ctx: CaseContext) -> list[Finding]:
                 _error(
                     "system/fvSolution",
                     f"PIMPLE needs a '{field_name}Final' solver entry (missing)",
-                    fix=f"add '{field_name}Final' (same settings as '{field_name}', "
-                    "relTol 0)",
+                    fix=f"add '{field_name}Final' (same settings as '{field_name}', relTol 0)",
                 )
             )
     return findings
@@ -430,8 +421,7 @@ def check_laminar_wall_functions(ctx: CaseContext) -> list[Finding]:
                         f"0/{field_name}",
                         f"patch '{patch}' uses '{bc_type}' but the case is laminar "
                         "(wall functions require a turbulence model)",
-                        fix=f"use 'calculated' (value uniform 0) for '{patch}' when "
-                        "laminar",
+                        fix=f"use 'calculated' (value uniform 0) for '{patch}' when laminar",
                     )
                 )
     return findings

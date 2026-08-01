@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 # SPDX-FileCopyrightText: 2023 NeoFOAM authors
-import pytest
-
 from typing import Any
+
+import pytest
 
 from neofoam.framework.decorator import (
     condition,
@@ -46,9 +46,7 @@ def test_decorator_free_function_non_bool_return_annotation() -> None:
 
 
 def test_decorator_free_function_missing_return_annotation() -> None:
-    msg = (
-        "Function free_condition_function must have a return type annotation of 'bool'"
-    )
+    msg = "Function free_condition_function must have a return type annotation of 'bool'"
     with pytest.raises(TypeError) as excinfo:
 
         @condition

@@ -17,7 +17,6 @@ from pathlib import Path
 
 import pytest
 
-
 HOT_ROOM_FIXTURE = Path(__file__).parent / "cases" / "hotRoom" / "0.orig"
 
 

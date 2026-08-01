@@ -130,9 +130,7 @@ def test_remove_absent_key_is_noop(path: Path) -> None:
     assert DictFile(path).found("endTime")
 
 
-def test_write_to_explicit_path_leaves_source_untouched(
-    path: Path, tmp_path: Path
-) -> None:
+def test_write_to_explicit_path_leaves_source_untouched(path: Path, tmp_path: Path) -> None:
     # keep the suffix so the destination resolves to the same format
     out = tmp_path / f"out_{path.name}"
     d = DictFile(path)

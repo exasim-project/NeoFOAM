@@ -57,11 +57,7 @@ what you're trying to do:
    reference/project-layout
    reference/build-and-test
    reference/cli
-   reference/framework/index
-   reference/graph/index
-   reference/initialization/index
-   reference/model/index
-   reference/solver/index
+   reference/index
 
 .. toctree::
    :maxdepth: 1

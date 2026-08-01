@@ -181,9 +181,7 @@ def needs_phi_force(phi: float) -> float:  # 'phi' is not in ctx.fields
 
 
 needs_phi_rt = ModelRuntime(spec=needs_phi, name="needsPhi", config=None)
-bind_owned_interfaces(
-    equation_rt, [gravity_rt, drag_rt, buoyancy_rt, needs_phi_rt], ctx
-)
+bind_owned_interfaces(equation_rt, [gravity_rt, drag_rt, buoyancy_rt, needs_phi_rt], ctx)
 try:
     equation_rt.bound_interfaces["source"]()
 except ValueError as err:

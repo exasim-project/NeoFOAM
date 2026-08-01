@@ -25,7 +25,7 @@ import pytest
 import yaml
 
 from neofoam.framework.model import Model
-from neofoam.io import BaseConfig, IOStrategy, YAML
+from neofoam.io import YAML, BaseConfig, IOStrategy
 
 
 @IOStrategy(YAML("a.yaml"))

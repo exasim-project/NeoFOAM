@@ -3,7 +3,7 @@
 
 """Dependency marker used with ``typing.Annotated`` for injection."""
 
-from typing import Callable, Any, Union
+from typing import Any, Callable, Union
 
 
 class Depends:

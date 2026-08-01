@@ -17,7 +17,12 @@ from typing import Any, Callable, Iterable, Literal, Optional, Sequence, TypeVar
 
 from pydantic import BaseModel
 
+from neofoam.core.plugin_system import PluginSystem
 from neofoam.fields.decl import FieldDecl
+from neofoam.framework.config_injection import (
+    _create_runtime_config_wrapper,
+    _discover_configs_from_signature,
+)
 from neofoam.framework.dependency_resolver import (
     DependencyResolver,
     wrap_with_dependency_resolution,
@@ -27,7 +32,6 @@ from neofoam.framework.types import OperationMetadata, OperationNumber
 
 from .interface import ModelInterface
 from .runtime import ModelRuntime
-
 
 _ConfigT = TypeVar("_ConfigT", bound=type)
 _T = TypeVar("_T")
@@ -155,9 +159,7 @@ class ModelSpec:
                 on this spec.
         """
         if any(d.name == name for d in self._field_decls):
-            raise ValueError(
-                f"ModelSpec '{self.name}': field '{name}' already declared"
-            )
+            raise ValueError(f"ModelSpec '{self.name}': field '{name}' already declared")
         decl = FieldDecl(
             name=name,
             dimensions=list(dimensions),
@@ -243,8 +245,14 @@ class ModelSpec:
         depends_on: Optional[list[str]] = None,
         before: Optional[list[str]] = None,
         name: Optional[str] = None,
+        fallback: bool = False,
     ) -> Callable[..., Any]:
-        """Decorator to register a model operation."""
+        """Decorator to register a model operation.
+
+        ``fallback=True`` marks the op as belonging to the model's *fallback*
+        backend (partitioned by :meth:`ModelRuntime.fallback_operations`); by
+        default an op is native.
+        """
 
         def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             self._operations.append(
@@ -255,6 +263,7 @@ class ModelSpec:
                         "depends_on": depends_on,
                         "before": before,
                         "name": name or func.__name__,
+                        "fallback": fallback,
                     },
                 )
             )
@@ -262,9 +271,7 @@ class ModelSpec:
 
         return decorator
 
-    def operation_collection(
-        self, func: Callable[..., Operations]
-    ) -> Callable[..., Operations]:
+    def operation_collection(self, func: Callable[..., Operations]) -> Callable[..., Operations]:
         """Decorator for conditional operation dispatch."""
         self._operation_collection_func = func
         return func
@@ -280,9 +287,7 @@ class ModelSpec:
         is the single fold (defining the empty case). Returns a ``ModelInterface``
         handle, also registered on this model so it is reachable from its owner.
         """
-        handle: ModelInterface[_T] = ModelInterface(
-            name=fold.__name__, owner=self, fold=fold
-        )
+        handle: ModelInterface[_T] = ModelInterface(name=fold.__name__, owner=self, fold=fold)
         if handle.name in self._interfaces:
             raise RuntimeError(
                 f"Model '{self.name}': interface '{handle.name}' is already declared."
@@ -367,11 +372,6 @@ class ModelSpec:
         Returns a fresh list per call so multiple runtimes never share
         wrapper state.
         """
-        from neofoam.framework.config_injection import (
-            _discover_configs_from_signature,
-            _create_runtime_config_wrapper,
-        )
-
         if self._operation_collection_func is not None:
             result = self._operation_collection_func(runtime)
             if isinstance(result, Operations):
@@ -384,9 +384,7 @@ class ModelSpec:
             if discovered:
                 wrapped = _create_runtime_config_wrapper(func, discovered, runtime)
             else:
-                wrapped = wrap_with_dependency_resolution(
-                    func, runtime, self._dependency_resolver
-                )
+                wrapped = wrap_with_dependency_resolution(func, runtime, self._dependency_resolver)
 
             op = Operation(
                 func=SequentialOp(wrapped),
@@ -399,6 +397,7 @@ class ModelSpec:
                     ),
                     depends_on=metadata["depends_on"] or [],
                     before=metadata["before"] or [],
+                    fallback=metadata.get("fallback", False),
                 ),
             )
             ops.append(op)
@@ -425,9 +424,7 @@ class ModelSpec:
         """
         return self._build_operations_for(runtime)
 
-    def wrap_operation(
-        self, func: Callable[..., Any], runtime: Any
-    ) -> Callable[..., Any]:
+    def wrap_operation(self, func: Callable[..., Any], runtime: Any) -> Callable[..., Any]:
         """Wrap ``func`` with this spec's dependency resolution.
 
         For ``@operation_collection`` bodies, which bypass the spec's default
@@ -441,8 +438,6 @@ class ModelSpec:
 
     def register_with(self, plugin_interface: type) -> "ModelSpec":
         """Register this ModelSpec with a PluginSystem interface (idempotent by name)."""
-        from neofoam.core.plugin_system import PluginSystem
-
         registry = PluginSystem.get_registered(plugin_interface.__name__)
         if registry is not None and self.name in {
             plugin_cls.__name__ for plugin_cls in registry.plugin_registry

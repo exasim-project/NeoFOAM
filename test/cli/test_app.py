@@ -8,8 +8,12 @@ import shutil
 from pathlib import Path
 
 import pytest
+from typer.testing import CliRunner
 
+import neofoam.tools.run as run_mod
+from neofoam.cli.app import app
 from neofoam.solver.incompressibleFluid.create_fields import create_init
+from neofoam.tools.run import run_preprocess
 
 CASE = Path(__file__).parents[1] / "solver" / "incompressibleFluid" / "preprocess_case"
 
@@ -43,11 +47,6 @@ def test_no_preprocess_flag_skips_detection() -> None:
 
 
 def test_preprocess_command_wires_case_argv(monkeypatch: pytest.MonkeyPatch) -> None:
-    import neofoam.tools.run as run_mod
-    from typer.testing import CliRunner
-
-    from neofoam.cli.app import app
-
     captured: dict[str, list[str]] = {}
 
     def fake_run_preprocess(argv: "list[str] | None" = None) -> object:
@@ -63,8 +62,6 @@ def test_preprocess_command_wires_case_argv(monkeypatch: pytest.MonkeyPatch) -> 
 
 
 def test_preprocess_command_runs_pipeline_only(tmp_path: Path) -> None:
-    from neofoam.tools.run import run_preprocess
-
     case = tmp_path / "case"
     shutil.copytree(CASE, case)
     cwd = Path.cwd()

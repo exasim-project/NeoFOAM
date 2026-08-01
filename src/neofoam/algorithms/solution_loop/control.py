@@ -237,17 +237,13 @@ class PimpleControl(BaseModel):
         self._corrector = IterationCountCondition(nIterations=self.nCorrectors)
 
         # Non-orthogonal loop (nNonOrthogonalCorrectors + 1)
-        self._non_ortho = IterationCountCondition(
-            nIterations=self.nNonOrthogonalCorrectors + 1
-        )
+        self._non_ortho = IterationCountCondition(nIterations=self.nNonOrthogonalCorrectors + 1)
 
         # Link non-ortho loop to corrector (reset non-ortho on each corrector iteration)
         self._corrector.link_condition(self._non_ortho)
 
         # Flags
-        self._momentum_predictor = BooleanFlagCondition(
-            enabled=self.momentumPredictor_enabled
-        )
+        self._momentum_predictor = BooleanFlagCondition(enabled=self.momentumPredictor_enabled)
         self._turb_corr = BooleanFlagCondition(enabled=self.turbCorr_enabled)
 
     def loop(self, ctx: Any = None) -> bool:
@@ -366,15 +362,9 @@ class SimpleControl(BaseModel):
 
     def model_post_init(self, __context: Any) -> None:
         """Initialize SIMPLE control conditions after model validation."""
-        self._residual_check = ResidualConvergenceCondition(
-            residualControl=self.residualControl
-        )
-        self._non_ortho = IterationCountCondition(
-            nIterations=self.nNonOrthogonalCorrectors + 1
-        )
-        self._momentum_predictor = BooleanFlagCondition(
-            enabled=self.momentumPredictor_enabled
-        )
+        self._residual_check = ResidualConvergenceCondition(residualControl=self.residualControl)
+        self._non_ortho = IterationCountCondition(nIterations=self.nNonOrthogonalCorrectors + 1)
+        self._momentum_predictor = BooleanFlagCondition(enabled=self.momentumPredictor_enabled)
         self._consistent = BooleanFlagCondition(enabled=self.consistent_enabled)
 
     def loop(self, ctx: Any = None) -> bool:
@@ -397,6 +387,11 @@ class SimpleControl(BaseModel):
                 self._inner_loop_open = False
                 return True
             self._inner_loop_open = True
+            # Closing the pass re-arms the non-orthogonal corrector for the
+            # next outer iteration (mirrors PimpleControl's auto-reset —
+            # without it only the first pass ever runs a pressure solve).
+            assert self._non_ortho is not None
+            self._non_ortho.reset()
             return False
 
         self._iteration_count += 1
@@ -494,14 +489,10 @@ class SolutionControl(BaseModel):
 
     def model_post_init(self, __context: Any) -> None:
         self._residuals = {}
-        self._residual_check = ResidualConvergenceCondition(
-            residualControl=self.residualControl
-        )
+        self._residual_check = ResidualConvergenceCondition(residualControl=self.residualControl)
         # feed the residual check from the residuals the solver publishes
         # (replaces the placeholder that always returned 1.0 = never converged)
-        self._residual_check._get_residual = lambda _ctx, field: self._residuals.get(
-            field, 1.0
-        )
+        self._residual_check._get_residual = lambda _ctx, field: self._residuals.get(field, 1.0)
 
     def store_residual(self, field: str, initial_residual: float) -> None:
         """Publish the initial residual of ``field`` for convergence checking."""

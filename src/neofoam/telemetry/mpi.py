@@ -14,6 +14,4 @@ from .settings import MpiInfo
 
 def current_mpi_info() -> MpiInfo:
     """Rank/size of this process as OpenFOAM sees it (serial: 0 of 1)."""
-    return MpiInfo(
-        rank=Pstream.myProcNo(), size=Pstream.nProcs(), par_run=Pstream.parRun()
-    )
+    return MpiInfo(rank=Pstream.myProcNo(), size=Pstream.nProcs(), par_run=Pstream.parRun())

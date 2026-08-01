@@ -20,8 +20,8 @@ from pathlib import Path
 
 import pytest
 
-from neofoam.tooling.casebuild import from_template, block_mesh, patch
 from neofoam.solver.incompressibleFluid import run
+from neofoam.tooling.casebuild import block_mesh, from_template, patch
 
 from .._run_case import cwd
 from .comparison_helpers import (
@@ -46,9 +46,7 @@ _LAMINAR_TURBULENCE_PROPERTIES = (
 
 
 def _make_laminar(case_dir: Path) -> None:
-    shutil.copyfile(
-        _LAMINAR_TURBULENCE_PROPERTIES, case_dir / "constant" / "turbulenceProperties"
-    )
+    shutil.copyfile(_LAMINAR_TURBULENCE_PROPERTIES, case_dir / "constant" / "turbulenceProperties")
 
 
 def test_laminar_solver_comparison(tmp_path: Path) -> None:

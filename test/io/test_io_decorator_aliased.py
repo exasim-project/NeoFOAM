@@ -15,13 +15,13 @@ see ``src/neofoam/foam/fv_configs.py``.
 """
 
 import pytest
-
 from pydantic import ConfigDict, Field
+
 from neofoam.io import (
-    BaseConfig,
-    YAML,
     JSON,
     OF,
+    YAML,
+    BaseConfig,
     IOStrategy,
 )
 

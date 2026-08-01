@@ -11,11 +11,11 @@ entrypoint (``incompressibleFluid.maybe_configure_telemetry`` and the
 ``TelemetryDictConfig`` solver config).
 """
 
-from .incompressibleFluidModel import incompressibleFluidModel
-from .pressure_velocity import PressureVelocityAlgorithm
 from .boussinesq import boussinesq
 from .courant import courant
+from .incompressibleFluidModel import incompressibleFluidModel
 from .max_delta_t import maxDeltaT
+from .pressure_velocity import PressureVelocityAlgorithm
 
 __all__ = [
     "incompressibleFluidModel",

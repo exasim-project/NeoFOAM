@@ -12,6 +12,8 @@ import pytest
 pytest.importorskip("fastmcp")
 pytest.importorskip("fastapi")
 
+import os
+
 from fastapi.testclient import TestClient  # noqa: E402
 
 from neofoam.mcp.app import build_fastapi_app  # noqa: E402
@@ -99,7 +101,7 @@ def test_import_without_dependencies_raises_import_error() -> None:
             if m.split(".")[0] in BLOCKED:
                 del sys.modules[m]
         try:
-            import neofoam.mcp.app  # noqa: F401
+            import neofoam.mcp.app  # noqa: F401,PLC0415
         except ImportError as exc:
             assert any(d in str(exc) for d in ("fastapi", "fastmcp", "mcp")), str(exc)
             print("OK:", exc)
@@ -108,8 +110,6 @@ def test_import_without_dependencies_raises_import_error() -> None:
         """
     )
     src = str(REPO_ROOT / "src")
-    import os
-
     # Inherit the real environment (LD_LIBRARY_PATH so pybFoam's native libs load —
     # it is a hard dep that the eager neofoam package import pulls); only the mcp-extra
     # packages are blocked, via the in-process meta_path finder above.

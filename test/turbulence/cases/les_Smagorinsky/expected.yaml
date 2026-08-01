@@ -1,5 +1,6 @@
-# Expected values for the LES / Smagorinsky case. No native NeoFOAM model is
-# registered for Smagorinsky, so selection resolves to the OpenFOAM fallback.
+# Expected values for the LES / Smagorinsky case. Smagorinsky is NOT registered
+# in the turbulence family, so selection raises (the post-merge world requires a
+# registered model — the generic "any OpenFOAM model" wrapper is gone).
 config:                       # cross-checked against the real turbulenceProperties read
   simulationType: LES
   RAS: null
@@ -9,4 +10,4 @@ config:                       # cross-checked against the real turbulencePropert
     delta: cubeRootVol
 selection:
   model_name: Smagorinsky
-  resolves_to: fallback       # native | fallback
+  resolves_to: unregistered    # native (registered) | unregistered

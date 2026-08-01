@@ -40,9 +40,7 @@ _CASES = Path(__file__).parent / "cases"
         ("adjustable", _ADJUSTABLE),  # the neofoam-only alias folds onto the same kind
     ],
 )
-def test_write_control_alias_maps_to_canonical_kind(
-    keyword: str, canonical: str
-) -> None:
+def test_write_control_alias_maps_to_canonical_kind(keyword: str, canonical: str) -> None:
     assert _WRITE_CONTROL_ALIASES[keyword] == canonical
 
 
@@ -69,9 +67,7 @@ def test_defaults_come_from_write_control_config() -> None:
     assert config.startTime == 0.0
 
 
-@pytest.mark.parametrize(
-    "bad", [{"endTime": 0.0, "deltaT": 0.1}, {"endTime": 1.0, "deltaT": 0.0}]
-)
+@pytest.mark.parametrize("bad", [{"endTime": 0.0, "deltaT": 0.1}, {"endTime": 1.0, "deltaT": 0.0}])
 def test_end_time_and_delta_t_must_be_positive(bad: dict[str, float]) -> None:
     with pytest.raises(ValidationError):
         TimeControlConfig(**bad)

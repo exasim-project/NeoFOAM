@@ -20,18 +20,20 @@ This mirrors ``examples/neoPimpleFoam/neoPimpleFoam.cpp``.
 
 from __future__ import annotations
 
+import sys
 from typing import Any
 
-import pybFoam as pyf
 import neon._neon as nn  # NeoN Python bindings
+import pybFoam as pyf
+
 from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
-from neofoam.solver.pisoControl import PisoControl
 
 # Compatibility re-export: the process-wide Kokkos init guard lives in
 # neofoam.solver.neon_runtime under its public name.
 from neofoam.solver.neon_runtime import (  # noqa: F401
     ensure_neon_initialized as _ensure_neon_initialized,
 )
+from neofoam.solver.pisoControl import PisoControl
 
 
 def _read_int(d: Any, key: str, default: int) -> int:
@@ -68,9 +70,7 @@ class NeoPimpleFoam:
         pimple_dict = rt.fv_solution_dict.subDict("PIMPLE")
         piso = PisoControl(
             n_correctors=_read_int(pimple_dict, "nCorrectors", 1),
-            n_non_orthogonal_correctors=_read_int(
-                pimple_dict, "nNonOrthogonalCorrectors", 0
-            ),
+            n_non_orthogonal_correctors=_read_int(pimple_dict, "nNonOrthogonalCorrectors", 0),
             # OpenFOAM's solutionControl defaults momentumPredictor to true.
             momentum_predictor=_read_switch(pimple_dict, "momentumPredictor", True),
         )
@@ -181,9 +181,7 @@ class NeoPimpleFoam:
                     rAUf = surf_interp.interpolate(rAU)
                     rAUf.name = "rAUf"
 
-                    phiHbyA = nfb.flux(hByA) + rAUf * nfb.ddt_flux_corr(
-                        U, phi, rt.dt, ddt_scheme
-                    )
+                    phiHbyA = nfb.flux(hByA) + rAUf * nfb.ddt_flux_corr(U, phi, rt.dt, ddt_scheme)
 
                     while piso.correct_non_orthogonal():
                         pEqn = nfb.PDESolverScalar(
@@ -209,9 +207,7 @@ class NeoPimpleFoam:
                     nfb.apply_field_relaxation(
                         p,
                         prev_p,
-                        nfb.lookup_field_relaxation(
-                            rt.fv_solution_dict, p.name, final_iter
-                        ),
+                        nfb.lookup_field_relaxation(rt.fv_solution_dict, p.name, final_iter),
                     )
                     p.correct_boundary_conditions()
 
@@ -245,8 +241,6 @@ class NeoPimpleFoam:
 
 
 def main() -> None:
-    import sys
-
     argv = sys.argv if len(sys.argv) > 1 else ["neoPimpleFoam"]
     solver = NeoPimpleFoam(argv)
     solver.run()

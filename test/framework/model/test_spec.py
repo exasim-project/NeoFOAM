@@ -11,8 +11,8 @@ Registration is asserted through its observable effect (a subsequent
 callable storage.
 """
 
-from types import SimpleNamespace
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -21,7 +21,7 @@ from neofoam.fields.bc import FixedValueBC, NoSlipBC
 from neofoam.fields.decl import FieldDecl
 from neofoam.fields.value_types import Scalar, Vector
 from neofoam.framework.initialization import lazy
-from neofoam.framework.model import ModelRuntime, ModelSpec, Model
+from neofoam.framework.model import Model, ModelRuntime, ModelSpec
 
 
 def test_model_spec_stores_name() -> None:

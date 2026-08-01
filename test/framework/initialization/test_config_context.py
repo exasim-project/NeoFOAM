@@ -12,7 +12,6 @@ from neofoam.framework.initialization.config_context import (
     is_configurable_field,
 )
 
-
 # --- ConfigContext: register / get ---
 
 

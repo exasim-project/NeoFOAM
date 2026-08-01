@@ -160,9 +160,7 @@ def _read_boussinesq_config() -> BoussinesqConfig:
 
 
 boussinesq = (
-    Model("boussinesq")
-    .register_with(incompressibleFluidModel)
-    .labeled("Buoyancy (Boussinesq)")
+    Model("boussinesq").register_with(incompressibleFluidModel).labeled("Buoyancy (Boussinesq)")
 )
 
 # Declare the configs this model owns. ``BoussinesqConfig`` is loaded via
@@ -302,9 +300,7 @@ def build(configs: BoussinesqConfig) -> list[object]:
         # (rhok = 1 - beta*(T - TRef), NO_READ) so a case never needs a 0/rhok
         # file — it is constructed from T here and refreshed by ``update_rhok``.
         temperature = context["fields.T"]
-        beta = pyf.dimensionedScalar(
-            "beta", pyf.dimless / pyf.dimTemperature, configs.beta
-        )
+        beta = pyf.dimensionedScalar("beta", pyf.dimless / pyf.dimTemperature, configs.beta)
         t_ref = pyf.dimensionedScalar("TRef", pyf.dimTemperature, configs.TRef)
         one = pyf.dimensionedScalar("one", pyf.dimless, 1.0)
         return volScalarField(pyf.Word("rhok"), one - beta * (temperature - t_ref))
@@ -315,9 +311,7 @@ def build(configs: BoussinesqConfig) -> list[object]:
         g_value = g.value()
         g_mag = (g_value[0] ** 2 + g_value[1] ** 2 + g_value[2] ** 2) ** 0.5
         gh_ref = g_mag * configs.hRef if g_mag > 1e-15 else 0.0
-        gh_ref_dim = pyf.dimensionedScalar(
-            "ghRef", g.dimensions() * pyf.dimLength, gh_ref
-        )
+        gh_ref_dim = pyf.dimensionedScalar("ghRef", g.dimensions() * pyf.dimLength, gh_ref)
         return g, gh_ref_dim
 
     def create_gh(context: dict[str, Any]) -> volScalarField:
@@ -355,9 +349,7 @@ def build(configs: BoussinesqConfig) -> list[object]:
 
 
 @boussinesq.operation(operation_number="2.5", depends_on=["momentum"])
-@BoussinesqFvSchemes.add(
-    ddt="default", div="div(phi,T)", grad="grad(T)", laplacian="default"
-)
+@BoussinesqFvSchemes.add(ddt="default", div="div(phi,T)", grad="grad(T)", laplacian="default")
 @BoussinesqFvSolution.add("T")
 def solve_energy(
     self: Any,
@@ -380,9 +372,7 @@ def solve_energy(
     alphat.correctBoundaryConditions()
 
     alpha_eff = _divide(turbulence.nu(), pr) + alphat
-    t_eqn = pyf.fvScalarMatrix(
-        fvm.ddt(T) + fvm.div(phi, T) - fvm.laplacian(alpha_eff, T)
-    )
+    t_eqn = pyf.fvScalarMatrix(fvm.ddt(T) + fvm.div(phi, T) - fvm.laplacian(alpha_eff, T))
     t_eqn.relax()
     t_eqn.solve()
 

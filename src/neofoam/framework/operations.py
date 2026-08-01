@@ -138,9 +138,7 @@ class Operations:
         else:
             self.ops = operations if operations is not None else []
 
-    def add(
-        self, operation: Union[Operation, "Operations", list[Operation]]
-    ) -> "Operations":
+    def add(self, operation: Union[Operation, "Operations", list[Operation]]) -> "Operations":
         if isinstance(operation, Operations):
             self.ops.extend(operation.ops)
         elif isinstance(operation, list):
@@ -149,9 +147,7 @@ class Operations:
             self.ops.append(operation)
         return self
 
-    def add_suboperation(
-        self, operation: Operation, index: int | str = -1
-    ) -> "Operations":
+    def add_suboperation(self, operation: Operation, index: int | str = -1) -> "Operations":
         if isinstance(index, str):
             for i, op in enumerate(self.ops):
                 if op.operation_name == index:
@@ -197,9 +193,7 @@ OperationCollection = Operations
 
 class StepBuilder:
     def __init__(self, operations: list[Operation] | None = None) -> None:
-        self.operations = (
-            Operations(operations) if operations is not None else Operations()
-        )
+        self.operations = Operations(operations) if operations is not None else Operations()
 
     def __enter__(self) -> StepBuilder:
         return self
