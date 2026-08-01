@@ -193,29 +193,20 @@ def momentum(
     with telemetry.span("momentum.assemble"):
         viscousStress.update(ctx)
         # as in UEqn.H: correctBoundaryVelocity before assembly — it feeds
-        # the boundary coefficients of ``div(phi,U)``.
-        for extension in ext:
-            extension.correct_boundary_velocity(U)
-        momentum_sum = fvm.div(phi, U)
-        for extension in ext:
-            for term in extension.terms(U):
-                momentum_sum = momentum_sum + term
-        UEqn = fvVectorMatrix(momentum_sum + viscousStress.divDevReff(U))
-        for extension in ext:
-            # as in UEqn.H, the call order is the physics: source before relax(),
-            # constrain() after, correct() after the solve. ``== fvOptions(U)``
-            # subtracts the source from the assembled matrix.
-            for source in extension.sources(U):
-                UEqn = fvVectorMatrix(UEqn - source)
+        # the boundary coefficients of ``div(phi,U)``. Every active model's terms
+        # then fold into the sum in registration order — MRF's frame acceleration
+        # with ``+``, the fvOptions source with ``-`` (native's ``== fvOptions(U)``).
+        ext.correct_boundary_velocity(U)
+        UEqn = fvVectorMatrix(fvm.div(phi, U) + viscousStress.divDevReff(U) + ext.terms(U))
+        # as in UEqn.H, the call order is the physics: source before relax(),
+        # constrain() after, correct() after the solve.
         UEqn.relax()
-        for extension in ext:
-            extension.constrain(UEqn)
+        ext.constrain(UEqn)
 
     if simple_control.momentumPredictor():
         with telemetry.span("momentum.solve"):
             fvVectorMatrix(UEqn + fvc.grad(p)).solve()
-        for extension in ext:
-            extension.correct(U)
+        ext.correct(U)
 
     return FieldUpdates({"UEqn": UEqn, "U": U})
 

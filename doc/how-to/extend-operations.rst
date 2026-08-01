@@ -20,7 +20,7 @@ Two seams exist, and picking the wrong one is the usual mistake:
     apply there, a boundary to correct after the solve. Declared by the
     *operation module*, one point per operation with one method per site,
     no combining rule. The operation receives every active implementation
-    and calls them in explicit loops.
+    behind one aggregated container and calls each site once.
 
 :class:`~neofoam.framework.model.interface.ModelInterface`
     One **single value** combined by one rule (``sum``, ``min``, ``any``).
@@ -63,7 +63,7 @@ operations they serve — in
             """Set the boundary velocities the coefficients are built from."""
 
         def terms(self, U: volVectorField) -> list[Any]:
-            """Terms added into the momentum sum, before the viscous stress."""
+            """Terms folded into the momentum sum at ``+ ext.terms(U)``."""
             return []
 
 
@@ -78,8 +78,14 @@ operations they serve — in
             return False
 
 
-    momentum_extension = ExtensionPoint("momentum_extension", MomentumExtension)
+    momentum_extension = ExtensionPoint(
+        "momentum_extension", MomentumExtension, folds_into=pyf.tmp_fvVectorMatrix
+    )
     pressure_extension = ExtensionPoint("pressure_extension", PressureExtension)
+
+``folds_into`` names the type term sums have at the operation's fold site
+— declare it iff the interface has a term site, so ``+ ext.terms(U)`` can
+join an equation expression (see below).
 
 Three conventions matter here:
 
@@ -94,7 +100,7 @@ Three conventions matter here:
 * **Every method has a working default** (``None``, ``[]``, the
   identity, ``False``). An implementation then overrides only the sites
   its model acts at — ``_FvOptionsMomentumExtension`` overrides three of
-  the five momentum sites, and inherits the rest.
+  the four momentum sites, and inherits the rest.
 * **A method that reports back returns a value the operation can act
   on.** ``constrain_pressure`` returns ``True`` when it handled the
   constraint, which lets the operation fall back to the plain call when
@@ -170,8 +176,9 @@ Consume it in an operation
 
 The consuming operation adds one parameter annotated
 ``Annotated[Extensions[Iface], point]`` — its **own** operation's point —
-and calls the methods in explicit loops at the exact sites. From
-``pimpleAlgorithm.momentum``:
+and calls each site **once** on the container, which acts as one
+aggregated implementation (as ``fvModels()`` / ``fvConstraints()`` do in
+OpenFOAM). From ``pimpleAlgorithm.momentum``:
 
 .. code-block:: python
 
@@ -186,27 +193,27 @@ and calls the methods in explicit loops at the exact sites. From
         ...,
         ext: Annotated[Extensions[MomentumExtension], momentum_extension],
     ) -> FieldUpdates:
-        for extension in ext:
-            extension.correct_boundary_velocity(U)
-        momentum_sum = fvm.ddt(U) + fvm.div(phi, U)
-        for extension in ext:
-            for term in extension.terms(U):
-                momentum_sum = momentum_sum + term
-        UEqn = fvVectorMatrix(momentum_sum + viscousStress.divDevReff(U))
-        ...
+        ext.correct_boundary_velocity(U)
+        UEqn = fvVectorMatrix(
+            fvm.ddt(U) + fvm.div(phi, U) + viscousStress.divDevReff(U) + ext.terms(U)
+        )
         UEqn.relax()
-        for extension in ext:
-            extension.constrain(UEqn)
+        ext.constrain(UEqn)
 
-:class:`~neofoam.framework.model.extension.Extensions` deliberately
-offers only iteration, ``len`` and truthiness — there is no
-``ext.call_all("constrain")`` sugar. The loops stay at the call sites so
-the *order* remains visible and reviewable: in ``UEqn.H`` the source
-joins the sum before relaxation, the constraints are applied after it,
-and the correction runs after the solve. Hiding that behind a dispatcher
-would hide the physics.
+Each ``ext.<site>(...)`` call runs the site on every active
+implementation in registration order. ``+ ext.terms(U)`` is the **fold
+site**: every returned term joins the running sum in that order — ``+``
+by default, ``-`` for terms wrapped in
+:func:`~neofoam.framework.model.extension.negated` (how the ``fvOptions``
+source keeps native's ``== fvOptions(U)`` arithmetic) — and with no
+active model the sum passes through untouched. The *order* stays visible
+at the call sites: in ``UEqn.H`` the source joins the sum before
+relaxation, the constraints are applied after it, and the correction
+runs after the solve.
 
-The "did anyone handle it?" pattern uses the return value:
+A site whose per-implementation return value the operation must inspect
+is iterated explicitly instead — the "did anyone handle it?" pattern
+from the continuity operation:
 
 .. code-block:: python
 
@@ -227,7 +234,7 @@ else to switch on:
   ``make_mrf_momentum_extension`` runs and its instance shows up in the
   ``ext`` of ``momentum``.
 * No ``MRFProperties`` → no MRF runtime → the factory is skipped, the
-  loops iterate over one fewer implementation, and the operation code is
+  sites dispatch to one fewer implementation, and the operation code is
   identical either way.
 
 Matching is by ``ModelSpec`` **identity**, not by name, so a model

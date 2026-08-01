@@ -6,9 +6,11 @@
 Use these to hook a model into ``UEqn.H`` / ``pEqn.H`` at the points native calls
 it: subclass the interface of the operation you extend, override only the sites
 the model acts at, and register a factory with ``@<model>.extends(<point>)``. The
-algorithms then call every active implementation in explicit loops, so no
-operation has to know which models a case activated. A model that owns a *single*
-value folded by one rule wants ``@<model>.interface`` / ``contributes`` instead.
+algorithms call each site once on the injected container — ``ext.constrain(UEqn)``
+fans out to every active implementation, ``+ ext.terms(U)`` folds every model's
+terms into the momentum sum — so no operation has to know which models a case
+activated. A model that owns a *single* value folded by one rule wants
+``@<model>.interface`` / ``contributes`` instead.
 
 One interface per operation, not one per module: ``momentum``, ``continuity`` and
 ``mesh_update`` each declare their own, so an implementation only ever sees the
@@ -37,7 +39,7 @@ from pybFoam import (
     volVectorField,
 )
 
-from neofoam.framework.model import ExtensionPoint
+from neofoam.framework.model import ExtensionPoint, negated
 from neofoam.fv_options import fvOptions
 from neofoam.mrf import mrf
 
@@ -69,11 +71,12 @@ class MomentumExtension:
         """Set the boundary velocities the momentum coefficients are built from."""
 
     def terms(self, U: volVectorField) -> list[Any]:
-        """Terms added into the momentum sum, before the viscous stress."""
-        return []
+        """Terms folded into the momentum sum at ``+ ext.terms(U)``.
 
-    def sources(self, U: volVectorField) -> list[Any]:
-        """Source matrices subtracted from the assembled equation (native's ``==``)."""
+        A plain term joins with ``+``; a source belongs on native's right-hand
+        side (``== source``), so return it as ``negated(source)`` and it joins
+        with ``-`` — the same arithmetic as native's ``==``.
+        """
         return []
 
     def constrain(self, UEqn: fvVectorMatrix) -> None:
@@ -136,7 +139,9 @@ class MeshUpdateExtension:
         """React to a mesh move that changed the topology."""
 
 
-momentum_extension = ExtensionPoint("momentum_extension", MomentumExtension)
+momentum_extension = ExtensionPoint(
+    "momentum_extension", MomentumExtension, folds_into=pyf.tmp_fvVectorMatrix
+)
 pressure_extension = ExtensionPoint("pressure_extension", PressureExtension)
 mesh_update_extension = ExtensionPoint("mesh_update_extension", MeshUpdateExtension)
 
@@ -195,8 +200,9 @@ class _FvOptionsMomentumExtension(MomentumExtension):
     def __init__(self, fv_options: pyf.fvOptions) -> None:
         self._fv_options = fv_options
 
-    def sources(self, U: volVectorField) -> list[Any]:
-        return [self._fv_options(U)]
+    def terms(self, U: volVectorField) -> list[Any]:
+        # Native's ``== fvOptions(U)``: the source joins the sum subtracted.
+        return [negated(self._fv_options(U))]
 
     def constrain(self, UEqn: fvVectorMatrix) -> None:
         self._fv_options.constrain(UEqn)

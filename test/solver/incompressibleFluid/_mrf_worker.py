@@ -78,7 +78,9 @@ if __name__ == "__main__":
     mrf_zones = ctx.models["mrf_zones"]
 
     mrf_ext = momentum_extension.resolve(ctx)
-    no_ext: Extensions[Any] = Extensions([])
+    # Resolve against no Context: the empty container of a case without the
+    # model, still carrying the point's fold machinery for ``+ ext.terms(U)``.
+    no_ext: Extensions[Any] = momentum_extension.resolve(None)
 
     walls_before = np.asarray(U["walls"]).tolist()
     source_plain = _assemble(ctx, no_ext)
