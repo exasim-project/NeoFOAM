@@ -5,8 +5,9 @@
 
 One ``Foam::Time`` per process, so the staged init runs here and the test reads
 the JSON. Every matrix comes out of the *production* ``momentum`` operation, the
-only difference being the injected ``mrf_zones`` — which is exactly what the
-solver's dependency resolver varies between an MRF case and any other case.
+only difference being the injected momentum extensions — the ones the
+case's own models resolve to, against the empty container a case without
+``MRFProperties`` would get.
 
 Three assemblies, in this order, so both hooks can be read off independently:
 
@@ -32,7 +33,11 @@ from typing import Any
 
 import numpy as np
 
+from neofoam.framework.model import Extensions
 from neofoam.solver.incompressibleFluid.incompressibleFluid import incompressibleFluid
+from neofoam.solver.incompressibleFluid.models.pressure_velocity.extension import (
+    momentum_extension,
+)
 from neofoam.solver.incompressibleFluid.models.pressure_velocity.pimpleAlgorithm import (
     momentum as pimple_momentum,
 )
@@ -41,7 +46,7 @@ from neofoam.solver.incompressibleFluid.models.pressure_velocity.simpleAlgorithm
 )
 
 
-def _assemble(ctx: Any, mrf_zones: Any) -> list[list[float]]:
+def _assemble(ctx: Any, ext: Any) -> list[list[float]]:
     """Run the production momentum operation; return its matrix source.
 
     Which one is production for this case is the case's own choice — the
@@ -54,7 +59,7 @@ def _assemble(ctx: Any, mrf_zones: Any) -> list[list[float]]:
         p=ctx.fields["p"],
         viscousStress=ctx.models["viscousStress"],
         ctx=ctx,
-        mrf_zones=mrf_zones,
+        ext=ext,
     )
     if "simple_control" in ctx.models:
         updates = simple_momentum(simple_control=ctx.models["simple_control"], **common)
@@ -72,11 +77,14 @@ if __name__ == "__main__":
     U = ctx.fields["U"]
     mrf_zones = ctx.models["mrf_zones"]
 
+    mrf_ext = momentum_extension.resolve(ctx)
+    no_ext: Extensions[Any] = Extensions([])
+
     walls_before = np.asarray(U["walls"]).tolist()
-    source_plain = _assemble(ctx, None)
-    source_mrf = _assemble(ctx, mrf_zones)
+    source_plain = _assemble(ctx, no_ext)
+    source_mrf = _assemble(ctx, mrf_ext)
     walls_after = np.asarray(U["walls"]).tolist()
-    source_plain_corrected_walls = _assemble(ctx, None)
+    source_plain_corrected_walls = _assemble(ctx, no_ext)
 
     (case_dir / "mrf.json").write_text(
         json.dumps(

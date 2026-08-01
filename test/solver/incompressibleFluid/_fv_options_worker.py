@@ -5,9 +5,9 @@
 
 One ``Foam::Time`` per process, so the staged init runs here and the test reads
 the JSON. Both operations are the *production* ones, the only difference being
-the injected ``fv_options`` — which is exactly what the solver's dependency
-resolver varies between a case that carries an ``fvOptions`` dictionary and any
-other case.
+the injected momentum / pressure extensions — the ones the case's own models
+resolve to, against the empty containers a case without an ``fvOptions``
+dictionary would get.
 
 The two variants run in two processes rather than twice in one, so each starts
 from the pristine ``0/`` state: the momentum matrices are then assembled from the
@@ -28,10 +28,15 @@ from typing import Any
 
 import numpy as np
 
+from neofoam.framework.model import Extensions
 from neofoam.solver.incompressibleFluid.incompressibleFluid import incompressibleFluid
 from neofoam.solver.incompressibleFluid.models.pressure_velocity import (
     pimpleAlgorithm,
     simpleAlgorithm,
+)
+from neofoam.solver.incompressibleFluid.models.pressure_velocity.extension import (
+    momentum_extension,
+    pressure_extension,
 )
 
 
@@ -58,7 +63,12 @@ if __name__ == "__main__":
 
     ctx = incompressibleFluid.instantiate(argv=["incompressibleFluid"]).initialize()
     U = ctx.fields["U"]
-    fv_options = ctx.models["fv_options"] if variant == "with" else None
+    momentum_ext: Extensions[Any] = (
+        momentum_extension.resolve(ctx) if variant == "with" else Extensions([])
+    )
+    pressure_ext: Extensions[Any] = (
+        pressure_extension.resolve(ctx) if variant == "with" else Extensions([])
+    )
 
     algorithm = _algorithm(ctx)
     updates = algorithm.momentum(
@@ -67,7 +77,7 @@ if __name__ == "__main__":
         p=ctx.fields["p"],
         viscousStress=ctx.models["viscousStress"],
         ctx=ctx,
-        fv_options=fv_options,
+        ext=momentum_ext,
         **_control(ctx),
     )
     source = np.asarray(updates["UEqn"].source()).tolist()
@@ -80,7 +90,7 @@ if __name__ == "__main__":
         UEqn=updates["UEqn"],
         cumulativeContErr=ctx.models["cumulativeContErr"],
         pressure_reference=ctx.models["pressure_reference"],
-        fv_options=fv_options,
+        ext=pressure_ext,
         **_control(ctx),
     )
     U_after_continuity = np.asarray(U.internalField()).copy().tolist()
