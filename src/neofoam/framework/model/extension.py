@@ -21,10 +21,17 @@ explicitly instead.
 Use this where the sites are several and heterogeneous (a term to add here, a
 constraint to apply there). Where the extension is a single value combined by one
 rule, use ``ModelInterface`` (``.interface`` / ``.contributes``) instead — it folds.
+
+:class:`Extension` is the function-declared sibling of ``ExtensionPoint``: sites
+are declared as ``@<extension>.defines`` functions (signature + default) instead
+of methods on an interface class, and models contribute per site with
+``@<model>.contributes(<site>)`` — the ``ModelInterface`` ergonomics with the
+multi-site grouping of a point.
 """
 
 from __future__ import annotations
 
+import inspect
 from typing import TYPE_CHECKING, Any, Callable, Generic, Iterable, Iterator, TypeVar
 
 from .interface import _resolve_contribution_kwargs
@@ -223,3 +230,146 @@ class ExtensionPoint(Generic[T]):
         """Record *func* as an implementation factory owned by the *owner* model."""
         self._factories[func] = owner
         return func
+
+
+class ExtensionSite:
+    """One site of an :class:`Extension`, as declared by ``@<extension>.defines``.
+
+    Holds the declaration function (its ``__name__`` is the site name, its
+    parameters are the call-time arguments, its body produces the site default)
+    and the registered contributions. The handle doubles as the
+    ``@<model>.contributes(<site>)`` target, exactly like a ``ModelInterface``.
+    """
+
+    def __init__(self, extension: Extension, declaration: Callable[..., Any]) -> None:
+        self.extension = extension
+        self.name = declaration.__name__
+        self.declaration = declaration
+        # One insertion-ordered relation: contribution function -> owning model.
+        self._contributions: dict[Callable[..., Any], ModelSpec] = {}
+
+    def _register_contribution(
+        self, func: Callable[..., Any], owner: ModelSpec
+    ) -> Callable[..., Any]:
+        """Record *func* as a contribution owned by the *owner* model."""
+        self._contributions[func] = owner
+        return func
+
+
+class Extension:
+    """A named bundle of extension sites an operation module defines.
+
+    Declared once at module import next to the operations it serves; each
+    ``@defines`` function declares one site — its name, its call-time arguments,
+    and (via its body) its default::
+
+        momExt = Extension("momentum")
+
+        @momExt.defines
+        def terms(U: volVectorField) -> Any:
+            return zero_source(U)  # seed: contribution results fold onto it
+
+        @momExt.defines
+        def constrain(UEqn: fvVectorMatrix) -> None: ...  # broadcast site
+
+    Models contribute per site with ``@<model>.contributes(<site>)``, exactly as
+    for a ``ModelInterface``: a contribution's parameters matching the site's
+    call-time arguments are taken from the call, and the rest resolve from the
+    contributing model's own config plus the Context. An operation consumes the
+    whole bundle as one injected handle by annotating a parameter
+    ``Annotated[BoundExtension, <extension>]``.
+    """
+
+    def __init__(self, name: str) -> None:
+        self.name = name
+        self._sites: dict[str, ExtensionSite] = {}
+
+    def defines(self, declaration: Callable[..., Any]) -> ExtensionSite:
+        """Declare one site of this extension (see the class docstring).
+
+        Returns the :class:`ExtensionSite` handle under the declaration's name,
+        the target models pass to ``@<model>.contributes(<site>)``.
+        """
+        site = ExtensionSite(self, declaration)
+        if site.name in self._sites:
+            raise RuntimeError(f"Extension '{self.name}': site '{site.name}' is already defined.")
+        self._sites[site.name] = site
+        return site
+
+    @property
+    def sites(self) -> dict[str, ExtensionSite]:
+        """The declared sites by name, in declaration order."""
+        return dict(self._sites)
+
+    def resolve(self, ctx: Any) -> BoundExtension:
+        """Bind this extension to *ctx* for one injection (see BoundExtension)."""
+        return BoundExtension(self, ctx)
+
+
+class BoundExtension:
+    """One :class:`Extension` resolved against one Context: ``ext.<site>(...)``.
+
+    Built fresh by :meth:`Extension.resolve` on every injection, so it never
+    outlives the Context it was resolved against. A site call runs the site's
+    declaration body with the call arguments, then every contribution whose
+    model is active for the Context, in registration order (activation by
+    ``ModelSpec`` identity, as everywhere else):
+
+    * declaration body returns a **seed** — every non-None contribution result
+      folds onto it, ``+`` by default and ``-`` for :func:`negated` results,
+      and the folded value is returned (no active contribution -> the seed);
+    * declaration body returns **None** (a broadcast site) — the raw
+      per-contribution results are returned as a list, so the operation can
+      inspect them (``handled = any(ext.constrain_pressure(...))``) or ignore
+      them (``ext.correct(U)``).
+    """
+
+    def __init__(self, extension: Extension, ctx: Any) -> None:
+        # Lazy import breaks the cycle model.extension -> model.runtime -> ... .
+        from .runtime import ModelRuntime  # noqa: PLC0415
+
+        self._extension = extension
+        self._ctx = ctx
+        self._runtime_by_spec = (
+            {rt.spec: rt for rt in ctx.models.values() if isinstance(rt, ModelRuntime)}
+            if ctx is not None
+            else {}
+        )
+
+    def __getattr__(self, name: str) -> Callable[..., Any]:
+        # Underscore names never dispatch: internal state must miss naturally
+        # (also keeps this re-entrant while __init__ has not run yet).
+        if name.startswith("_"):
+            raise AttributeError(name)
+        site = self._extension._sites.get(name)
+        if site is None:
+            raise AttributeError(f"extension '{self._extension.name}' defines no site '{name}'")
+
+        def call(*args: Any, **kwargs: Any) -> Any:
+            return self._call_site(site, args, kwargs)
+
+        return call
+
+    def _call_site(self, site: ExtensionSite, args: tuple[Any, ...], kwargs: dict[str, Any]) -> Any:
+        seed = site.declaration(*args, **kwargs)
+        call_kwargs = dict(inspect.signature(site.declaration).bind(*args, **kwargs).arguments)
+        results: list[Any] = []
+        for func, owner_spec in site._contributions.items():
+            runtime = self._runtime_by_spec.get(owner_spec)
+            if runtime is None:
+                continue  # contributing model not active for this case
+            resolved = _resolve_contribution_kwargs(
+                f"{site.extension.name}.{site.name}", func, runtime, self._ctx, call_kwargs
+            )
+            results.append(func(**resolved))
+        if seed is None:
+            return results
+        out = seed
+        for result in results:
+            if result is None:
+                continue
+            if isinstance(result, _Negated):
+                out = out - result.term
+            else:
+                out = out + result
+        return out
