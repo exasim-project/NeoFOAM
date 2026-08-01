@@ -63,11 +63,13 @@ if __name__ == "__main__":
 
     ctx = incompressibleFluid.instantiate(argv=["incompressibleFluid"]).initialize()
     U = ctx.fields["U"]
+    # ``resolve(None)``: the empty container of a case without the models, still
+    # carrying the point's fold machinery for ``+ ext.terms(U)``.
     momentum_ext: Extensions[Any] = (
-        momentum_extension.resolve(ctx) if variant == "with" else Extensions([])
+        momentum_extension.resolve(ctx) if variant == "with" else momentum_extension.resolve(None)
     )
     pressure_ext: Extensions[Any] = (
-        pressure_extension.resolve(ctx) if variant == "with" else Extensions([])
+        pressure_extension.resolve(ctx) if variant == "with" else pressure_extension.resolve(None)
     )
 
     algorithm = _algorithm(ctx)

@@ -192,34 +192,23 @@ def momentum(
     # Refresh nuEff where it is consumed (see pimpleAlgorithm.momentum).
     with telemetry.span("momentum.assemble"):
         viscousStress.update(ctx)
-        # UEqn.H under a rotating frame: the wall velocities on the MRF patches
-        # are set first (they feed the boundary coefficients of ``div(phi,U)``),
-        # then the frame acceleration joins the sum — before the viscous stress,
-        # as native writes it.
-        for extension in ext:
-            extension.correct_boundary_velocity(U)
-        momentum_sum = fvm.div(phi, U)
-        for extension in ext:
-            for term in extension.terms(U):
-                momentum_sum = momentum_sum + term
-        UEqn = fvVectorMatrix(momentum_sum + viscousStress.divDevReff(U))
-        for extension in ext:
-            # ``== fvOptions(U)`` moves the source to the right-hand side, i.e.
-            # subtracts it from the assembled matrix. UEqn.H's three fvOptions
-            # calls sit at three exact points, and the order is the physics: the
-            # source joins the sum BEFORE relaxation, the constraints are applied
-            # AFTER it, and the correction runs after the solve.
-            for source in extension.sources(U):
-                UEqn = fvVectorMatrix(UEqn - source)
+        # UEqn.H: the wall velocities on the MRF patches are set first (they
+        # feed the boundary coefficients of ``div(phi,U)``); then every active
+        # model's terms fold into the sum in registration order — MRF's frame
+        # acceleration with ``+``, the fvOptions source with ``-`` (native's
+        # ``== fvOptions(U)``). One term site, so both join after the viscous
+        # stress, where native adds DDt(U) before it.
+        ext.correct_boundary_velocity(U)
+        UEqn = fvVectorMatrix(fvm.div(phi, U) + viscousStress.divDevReff(U) + ext.terms(U))
+        # The source joined the sum BEFORE relaxation; the constraints apply
+        # AFTER it, and the correction runs after the solve.
         UEqn.relax()
-        for extension in ext:
-            extension.constrain(UEqn)
+        ext.constrain(UEqn)
 
     if simple_control.momentumPredictor():
         with telemetry.span("momentum.solve"):
             fvVectorMatrix(UEqn + fvc.grad(p)).solve()
-        for extension in ext:
-            extension.correct(U)
+        ext.correct(U)
 
     return FieldUpdates({"UEqn": UEqn, "U": U})
 
