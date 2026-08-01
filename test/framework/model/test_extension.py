@@ -465,6 +465,14 @@ def test_defines_returns_the_site_handle_under_the_declared_name() -> None:
     assert ext.sites == {"terms": terms}
 
 
+def test_sites_are_reachable_as_extension_attributes(momentum_ext: Any) -> None:
+    # Handle access for @contributes targets: two extensions can share a site
+    # name without colliding at module level.
+    assert momentum_ext.terms is momentum_ext.sites["terms"]
+    with pytest.raises(AttributeError, match="extension 'momentum' defines no site 'typo'"):
+        momentum_ext.typo
+
+
 def test_defining_the_same_site_twice_raises() -> None:
     ext = Extension("momentum")
 

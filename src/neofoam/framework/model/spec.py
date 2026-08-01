@@ -13,7 +13,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, Callable, Iterable, Literal, Optional, Sequence, TypeVar, cast
+from typing import Any, Callable, Iterable, Literal, Optional, Sequence, TypeVar, cast, overload
 
 from pydantic import BaseModel
 
@@ -296,9 +296,19 @@ class ModelSpec:
         self._interfaces[handle.name] = handle
         return handle
 
+    @overload
+    def contributes(
+        self, target: ModelInterface[_T]
+    ) -> Callable[[Callable[..., _T]], Callable[..., _T]]: ...
+
+    @overload
+    def contributes(
+        self, target: ExtensionSite
+    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]: ...
+
     def contributes(
         self, target: ModelInterface[_T] | ExtensionSite
-    ) -> Callable[[Callable[..., _T]], Callable[..., _T]]:
+    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         """Register an operation-style contribution to *target*, owned by self.
 
         *target* is a ``ModelInterface`` or an ``Extension`` site declared via

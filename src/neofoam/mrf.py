@@ -11,8 +11,8 @@ equations they did before this model existed.
 
 It owns one runtime object, ``ctx.models["mrf_zones"]`` — OpenFOAM's own
 :class:`Foam::IOMRFZoneList` — whose frame terms the algorithms apply where native
-applies them. The incompressibleFluid algorithms reach them through the extension
-points their operations declare — this spec registers the implementations there;
+applies them. The incompressibleFluid algorithms reach them through the extensions
+their operations define — this spec contributes to their sites;
 incompressibleVoF still injects the model optionally and branches on ``None``.
 Shared by ``incompressibleFluid`` and ``incompressibleVoF``, which
 each register this one spec with their own plugin family.

@@ -50,7 +50,7 @@ from neofoam.foam import fvSchemes, fvSolution
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.dependency_resolver import wrap_with_dependency_resolution
 from neofoam.framework.initialization import field, model
-from neofoam.framework.model import Extensions
+from neofoam.framework.model import BoundExtension
 from neofoam.framework.operations import (
     IterativeOp,
     Operation,
@@ -61,12 +61,7 @@ from neofoam.framework.types import OperationMetadata
 
 from ..incompressibleFluidModel import Model
 from .control_factory import create_simple_control
-from .extension import (
-    MomentumExtension,
-    PressureExtension,
-    momentum_extension,
-    pressure_extension,
-)
+from .extension import momentum_extension, pressure_extension
 
 simple = Model("Simple")
 
@@ -181,7 +176,7 @@ def momentum(
     viscousStress: Annotated[ViscousStress, "models"],
     simple_control: Annotated[Any, "models"],
     ctx: Context,
-    ext: Annotated[Extensions[MomentumExtension], momentum_extension],
+    ext: Annotated[BoundExtension, momentum_extension],
 ) -> FieldUpdates:
     # Start-of-iteration prevIter snapshot: ``simpleControl.loop()`` calls
     # ``storePrevIterFields()`` natively so that ``p.relax()`` (explicit field
@@ -227,7 +222,7 @@ def continuity(
     simple_control: Annotated[Any, "models"],
     cumulativeContErr: Annotated[list[float], "models"],
     pressure_reference: Annotated[dict[str, Any], "models"],
-    ext: Annotated[Extensions[PressureExtension], pressure_extension],
+    ext: Annotated[BoundExtension, pressure_extension],
 ) -> FieldUpdates:
     pRefCell = pressure_reference["pRefCell"]
     pRefValue = pressure_reference["pRefValue"]
@@ -239,8 +234,7 @@ def continuity(
 
         # pEqn.H hands the pressure equation the flux seen from the rotating
         # frame; ``adjustPhi`` then balances that relative flux.
-        for extension in ext:
-            extension.make_relative(phiHbyA)
+        ext.make_relative(phiHbyA)
 
         pyf.adjustPhi(phiHbyA, U, p)
 
@@ -252,10 +246,7 @@ def continuity(
             phiHbyA.assign(phiHbyA + fvc.interpolate(rAtU - rAU) * fvc.snGrad(p) * U.mesh().magSf())
             HbyA.assign(HbyA - (rAU - rAtU) * fvc.grad(p))
 
-        handled = False
-        for extension in ext:
-            handled = extension.constrain_pressure(p, U, phiHbyA, rAtU) or handled
-        if not handled:
+        if not any(ext.constrain_pressure(p, U, phiHbyA, rAtU)):
             pyf.constrainPressure(p, U, phiHbyA, rAtU)
 
     while simple_control.correctNonOrthogonal():
@@ -280,10 +271,9 @@ def continuity(
     p.relax()
     U.assign(HbyA - rAtU * fvc.grad(p))
     U.correctBoundaryConditions()
-    for extension in ext:
-        # as in pEqn.H: a second fvOptions.correct(U) closes the corrector, which
-        # has just overwritten the predictor's correction.
-        extension.correct(U)
+    # as in pEqn.H: a second fvOptions.correct(U) closes the corrector, which
+    # has just overwritten the predictor's correction.
+    ext.correct(U)
 
     return FieldUpdates({"U": U, "p": p, "phi": phi})
 
