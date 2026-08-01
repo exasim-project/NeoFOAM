@@ -226,7 +226,16 @@ class USolutionConfig(FieldSolutionConfig):
 
 @IOStrategy(OF("system/fvSolution", subdict="solvers.p"))
 class PSolutionConfig(FieldSolutionConfig):
-    """``system/fvSolution`` (subdict ``solvers.p``) — pressure solve block."""
+    """``system/fvSolution`` (subdict ``solvers.p``) — pressure solve block.
+
+    ``projection`` picks the pressure discretisation: ``nodal`` (27-point
+    ``MLNodeLaplacian``, nodal unknowns) or ``cell`` (compact 7-point
+    face-coefficient operator, cell unknowns). Empty leaves the DSL's default,
+    which is ``nodal`` — the route the cavity/cylinder validation numbers were
+    measured against.
+    """
+
+    projection: str = ""
 
 
 @IOStrategy(OF("system/fvSolution", subdict="blockAMR"))
