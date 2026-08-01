@@ -26,22 +26,23 @@ import pytest
 
 pytest.importorskip("neon")
 
-import jax.numpy as jnp  # noqa: E402
 import blockamr  # noqa: E402
-from blockamr.incompressible import build_incompressible, step  # noqa: E402
+import jax.numpy as jnp  # noqa: E402
 from blockamr.fillpatch import FillPatchCellConservative  # noqa: E402
+from blockamr.incompressible import build_incompressible, step  # noqa: E402
 from blockamr.schemes.div_schemes import Linear  # noqa: E402
 
-from incompressibleFluidBlockAMR.verification_helpers import (  # noqa: E402
-    l2_error,
-    run_at_resolution,
-    taylor_green,
-)
 from neofoam.solver.incompressibleFluidBlockAMR.configs import (  # noqa: E402
     MeshDictConfig,
 )
 from neofoam.solver.incompressibleFluidBlockAMR.models.mesh_factory import (  # noqa: E402
     build_mesh,
+)
+
+from .verification_helpers import (  # noqa: E402
+    l2_error,
+    run_at_resolution,
+    taylor_green,
 )
 
 TWO_PI = 2.0 * math.pi
@@ -113,7 +114,7 @@ def _incompressible_fluid_tg_l2(n=64):
     instead of failing the table.
     """
     try:
-        import pybFoam  # noqa: F401
+        import pybFoam  # noqa: F401,PLC0415
     except ImportError:
         return None
     # No periodic Taylor-Green case exists for incompressibleFluid yet (see D4/D5);
@@ -139,9 +140,7 @@ def test_cross_solver_taylor_green_l2_table(blockamr_session, capsys):
 
     lines = ["", "Taylor-Green cross-solver L2 error table:"]
     for name, err in table.items():
-        lines.append(
-            f"  {name:32s} {'skipped (absent)' if err is None else f'{err:.4e}'}"
-        )
+        lines.append(f"  {name:32s} {'skipped (absent)' if err is None else f'{err:.4e}'}")
     with capsys.disabled():
         print("\n".join(lines))
 

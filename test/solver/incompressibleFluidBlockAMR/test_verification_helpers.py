@@ -9,7 +9,7 @@ GPU convergence slices build on.
 
 import numpy as np
 
-from incompressibleFluidBlockAMR.verification_helpers import (
+from .verification_helpers import (
     kovasznay,
     l2_error,
     observed_order,
@@ -85,14 +85,12 @@ def test_kovasznay_matches_closed_form():
     y = np.array([0.25])
     u, v, p = kovasznay(x, y, Re=Re)
     assert u[0] == pytest_approx(1 - np.exp(lam * 0.5) * np.cos(2 * np.pi * 0.25))
-    assert v[0] == pytest_approx(
-        (lam / (2 * np.pi)) * np.exp(lam * 0.5) * np.sin(2 * np.pi * 0.25)
-    )
+    assert v[0] == pytest_approx((lam / (2 * np.pi)) * np.exp(lam * 0.5) * np.sin(2 * np.pi * 0.25))
     assert p[0] == pytest_approx(0.5 * (1 - np.exp(2 * lam * 0.5)))
 
 
 # local approx helper avoids a pytest import just for tolerance comparisons
 def pytest_approx(expected, rel=1e-6, abs_=1e-9):
-    import pytest
+    import pytest  # noqa: PLC0415
 
     return pytest.approx(expected, rel=rel, abs=abs_)

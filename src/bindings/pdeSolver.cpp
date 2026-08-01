@@ -28,7 +28,10 @@ void registerPDESolver(nb::module_& m)
     // -------------------------------------------------------------------
     nb::enum_<fvcc::DdtScheme>(m, "DdtScheme")
         .value("None", fvcc::DdtScheme::None)
-        .value("Steady", fvcc::DdtScheme::Steady)
+        // NeoN spells this enumerator SteadyState on develop; feat/turbNeoN (the
+        // pin this binding was written against) calls it Steady. Keep the Python
+        // name "Steady" so the Python API is unchanged.
+        .value("Steady", fvcc::DdtScheme::SteadyState)
         .value("BDF1", fvcc::DdtScheme::BDF1)
         .value("BDF2", fvcc::DdtScheme::BDF2);
 

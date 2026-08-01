@@ -22,12 +22,12 @@ import pytest
 
 pytest.importorskip("neon")
 
-import jax.numpy as jnp  # noqa: E402
 import blockamr  # noqa: E402
+import jax.numpy as jnp  # noqa: E402
 from blockamr.dsl import exp  # noqa: E402
-from blockamr.incompressible import build_incompressible, step  # noqa: E402
 from blockamr.field import CellField  # noqa: E402
 from blockamr.fillpatch import FillPatchCellConservative  # noqa: E402
+from blockamr.incompressible import build_incompressible, step  # noqa: E402
 
 from neofoam.solver.incompressibleFluidBlockAMR.configs import (  # noqa: E402
     MeshDictConfig,
@@ -92,9 +92,7 @@ def test_grad_div_adjoint_identity_machine_epsilon(blockamr_session):
     div_u = sum(_grad(u_fields[d])[..., d] for d in range(3))
 
     inner_div = float(np.sum(div_u * phi_vals) * cell_vol)
-    inner_grad = float(
-        np.sum(sum(u_vals[d] * grad_phi[..., d] for d in range(3))) * cell_vol
-    )
+    inner_grad = float(np.sum(sum(u_vals[d] * grad_phi[..., d] for d in range(3))) * cell_vol)
 
     scale = abs(inner_div) + abs(inner_grad) + 1.0
     residual = abs(inner_div + inner_grad) / scale
@@ -120,9 +118,7 @@ def test_grad_div_adjoint_is_resolution_independent(blockamr_session):
         grad_phi = _grad(phi)
         div_u = sum(_grad(u_fields[d])[..., d] for d in range(3))
         inner_div = float(np.sum(div_u * phi_vals) * cell_vol)
-        inner_grad = float(
-            np.sum(sum(u_vals[d] * grad_phi[..., d] for d in range(3))) * cell_vol
-        )
+        inner_grad = float(np.sum(sum(u_vals[d] * grad_phi[..., d] for d in range(3))) * cell_vol)
 
         scale = abs(inner_div) + abs(inner_grad) + 1.0
         assert abs(inner_div + inner_grad) / scale < 1e-10, f"N={n}"
