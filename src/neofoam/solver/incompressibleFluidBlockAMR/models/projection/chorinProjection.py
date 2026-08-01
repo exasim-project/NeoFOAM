@@ -48,7 +48,8 @@ from blockamr.schemes.registry import lookup_scheme
 
 from neofoam.framework.context import Context
 from neofoam.framework.dependency_resolver import wrap_with_dependency_resolution
-from neofoam.framework.initialization import field, lazy, model as init_model
+from neofoam.framework.initialization import field, lazy
+from neofoam.framework.initialization import model as init_model
 from neofoam.framework.operations import Operation, Operations, SequentialOp
 from neofoam.framework.types import OperationMetadata
 
@@ -58,8 +59,8 @@ from ...configs import (
     PSolutionConfig,
     USolutionConfig,
 )
-from ..incompressibleFluidBlockAMRModel import Model
 from ..bc_mapping import build_vector_bc
+from ..incompressibleFluidBlockAMRModel import Model
 
 chorinProjection = Model("ChorinProjection")
 
@@ -118,9 +119,7 @@ def build(config: Any) -> list[Any]:
     def make_u(context: dict[str, Any]) -> Any:
         u_bc = context["_u_bc"]
         # Fully periodic: no domain BCs — use the conservative fill-patch.
-        fill_patch = (
-            FillPatchCellConservative() if u_bc is None else FillPatchWithBC(u_bc)
-        )
+        fill_patch = FillPatchCellConservative() if u_bc is None else FillPatchWithBC(u_bc)
         return CellField(
             context["_blockamr_mesh"],
             ncomp=3,
@@ -135,9 +134,7 @@ def build(config: Any) -> list[Any]:
         return p
 
     def make_phi(context: dict[str, Any]) -> Any:
-        phi = FaceField(
-            context["_blockamr_mesh"], ncomp=1, ngrow=_ngrow(schemes), name="phi"
-        )
+        phi = FaceField(context["_blockamr_mesh"], ncomp=1, ngrow=_ngrow(schemes), name="phi")
         phi.pressure_bc = context["_p_bc"]
         return phi
 
@@ -288,12 +285,8 @@ def collected_operations(self: Any) -> Operations:
     wrapped_continuity = wrap_with_dependency_resolution(
         continuity, self, chorinProjection._dependency_resolver
     )
+    model_ops.add(_alias_operation(wrapped_momentum, operation_name="momentum", depends_on=[]))
     model_ops.add(
-        _alias_operation(wrapped_momentum, operation_name="momentum", depends_on=[])
-    )
-    model_ops.add(
-        _alias_operation(
-            wrapped_continuity, operation_name="continuity", depends_on=["momentum"]
-        )
+        _alias_operation(wrapped_continuity, operation_name="continuity", depends_on=["momentum"])
     )
     return model_ops

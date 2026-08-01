@@ -23,9 +23,7 @@ from neofoam.solver.incompressibleFluidBlockAMR import run  # noqa: E402
 
 def _flat_velocity(ctx):
     """Concatenate the projected level-0 velocity into one flat array."""
-    return np.concatenate(
-        [np.asarray(a).ravel() for a in ctx.fields["U"].mf[0].arrays()]
-    )
+    return np.concatenate([np.asarray(a).ravel() for a in ctx.fields["U"].mf[0].arrays()])
 
 
 def _max_divergence(ctx):
@@ -50,9 +48,7 @@ def _max_divergence(ctx):
     return max_div
 
 
-def test_backend_cpp_threads_from_case_file_to_engine(
-    blockamr_session, box_cpp_case, monkeypatch
-):
+def test_backend_cpp_threads_from_case_file_to_engine(blockamr_session, box_cpp_case, monkeypatch):
     dispatched = []
     real_get = backends.get
 

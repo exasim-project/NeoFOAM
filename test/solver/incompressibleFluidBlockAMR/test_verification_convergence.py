@@ -30,23 +30,24 @@ import pytest
 
 pytest.importorskip("neon")
 
-import jax.numpy as jnp  # noqa: E402
 import blockamr  # noqa: E402
-from blockamr.incompressible import build_incompressible, step  # noqa: E402
+import jax.numpy as jnp  # noqa: E402
 from blockamr.fillpatch import FillPatchCellConservative  # noqa: E402
+from blockamr.incompressible import build_incompressible, step  # noqa: E402
 from blockamr.schemes.div_schemes import Linear  # noqa: E402
 
-from incompressibleFluidBlockAMR.verification_helpers import (  # noqa: E402
-    l2_error,
-    observed_order,
-    run_at_resolution,
-    taylor_green,
-)
 from neofoam.solver.incompressibleFluidBlockAMR.configs import (  # noqa: E402
     MeshDictConfig,
 )
 from neofoam.solver.incompressibleFluidBlockAMR.models.mesh_factory import (  # noqa: E402
     build_mesh,
+)
+
+from .verification_helpers import (  # noqa: E402
+    l2_error,
+    observed_order,
+    run_at_resolution,
+    taylor_green,
 )
 
 TWO_PI = 2.0 * math.pi
@@ -123,8 +124,7 @@ def test_taylor_green_velocity_is_second_order_in_space(blockamr_session):
     resolutions = (32, 64, 128)
     t_end = NSTEPS * DT
     errors = [
-        _velocity_l2_error(run_at_resolution(_tg_case_builder, n), t_end)
-        for n in resolutions
+        _velocity_l2_error(run_at_resolution(_tg_case_builder, n), t_end) for n in resolutions
     ]
     order = observed_order(errors)
     assert order > 1.8, f"Taylor-Green spatial order {order:.3f}, L2 errors={errors}"

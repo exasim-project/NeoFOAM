@@ -24,6 +24,7 @@ import sys
 from pathlib import Path
 from typing import Annotated, Any, Optional
 
+from neofoam.algorithms.solution_loop.solution_loop import SolutionLoopPredicate
 from neofoam.framework.context import Context
 from neofoam.framework.graph import DAGResolver
 from neofoam.framework.initialization import Depends, StagedInitRunner
@@ -36,7 +37,6 @@ from neofoam.framework.operations import (
 )
 from neofoam.framework.solver import Solver
 from neofoam.framework.types import OperationMetadata
-from neofoam.algorithms.solution_loop.solution_loop import SolutionLoopPredicate
 
 from .configs import (
     BlockAMRSolutionConfig,
@@ -54,9 +54,7 @@ from .models.projection.base import ProjectionAlgorithm
 def _core_model(state: Any, spec_name: str) -> Any:
     """Find an instantiated core model by its spec name."""
     return next(
-        m
-        for m in state.core_models
-        if isinstance(m, ModelRuntime) and m.spec.name == spec_name
+        m for m in state.core_models if isinstance(m, ModelRuntime) and m.spec.name == spec_name
     )
 
 
@@ -75,9 +73,7 @@ incompressibleFluidBlockAMR.models(incompressibleFluidBlockAMRModel)  # optional
 
 
 @incompressibleFluidBlockAMR.initializer
-def initialize(
-    self: Any, init: Annotated[StagedInitRunner, Depends(create_init)]
-) -> Context:
+def initialize(self: Any, init: Annotated[StagedInitRunner, Depends(create_init)]) -> Context:
     """Initialize using the create_init factory with dependency injection."""
     return init.run()
 

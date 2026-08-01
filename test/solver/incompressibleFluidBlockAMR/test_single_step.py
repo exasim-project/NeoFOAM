@@ -16,8 +16,8 @@ import pytest
 pytest.importorskip("neon")
 
 import blockamr  # noqa: E402
-from blockamr.incompressible import build_incompressible, step  # noqa: E402
 from blockamr.fillpatch import FillPatchCellConservative  # noqa: E402
+from blockamr.incompressible import build_incompressible, step  # noqa: E402
 from blockamr.mesh import Mesh  # noqa: E402
 
 TWO_PI = 2.0 * np.pi

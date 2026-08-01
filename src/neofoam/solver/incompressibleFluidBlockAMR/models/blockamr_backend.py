@@ -57,7 +57,9 @@ class PlotfileWriteHook(FieldHook):
     count: int = 0
 
     def write_fields(self, fields: Mapping[str, Any]) -> None:
-        from blockamr.incompressible import write_plotfile
+        from blockamr.incompressible import (  # noqa: PLC0415 — lazy: keep import GPU-free
+            write_plotfile,
+        )
 
         to_write = [fields[n] for n in ("U", "p") if n in fields]
         name = f"{self.directory.rstrip('/')}/plt{self.count:05d}"

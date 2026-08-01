@@ -40,9 +40,7 @@ def observed_order(errors: list[float], refine_ratio: int = 2) -> float:
     return float(slope)
 
 
-def run_at_resolution(
-    case_builder: Callable[[int], Any], N: int
-) -> dict[str, np.ndarray]:
+def run_at_resolution(case_builder: Callable[[int], Any], N: int) -> dict[str, np.ndarray]:
     """Build + run a blockAMR case at resolution ``N``, return final fields as numpy.
 
     ``case_builder(N)`` builds a single-level blockAMR case at ``N`` cells per axis,
@@ -102,9 +100,7 @@ def taylor_green(
     return u, v, p
 
 
-def kovasznay(
-    x: np.ndarray, y: np.ndarray, Re: float
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def kovasznay(x: np.ndarray, y: np.ndarray, Re: float) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Steady Kovasznay flow at Reynolds number ``Re``.
 
     ``lam = Re/2 - sqrt(Re**2/4 + 4 pi**2)``;

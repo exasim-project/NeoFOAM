@@ -25,7 +25,12 @@ _FACES = ("xlo", "xhi", "ylo", "yhi", "zlo", "zhi")
 
 def map_patch(spec: Mapping[str, Any]) -> Any:
     """Map one OpenFOAM-style patch spec to a ``blockamr`` face BC object."""
-    from blockamr.bc import NeumannBC, fixedValue, noSlip, slip
+    from blockamr.bc import (  # noqa: PLC0415 — lazy: keep import GPU-free
+        NeumannBC,
+        fixedValue,
+        noSlip,
+        slip,
+    )
 
     bc_type = spec.get("type")
     if bc_type == "fixedValue":
@@ -52,13 +57,11 @@ def build_vector_bc(patches: Mapping[str, Mapping[str, Any]]) -> Any:
     Faces are keyed ``xlo/xhi/ylo/yhi/zlo/zhi``; any omitted face defaults to
     ``noSlip`` inside ``VectorBC`` (and periodic faces are skipped by the engine).
     """
-    from blockamr.bc import VectorBC
+    from blockamr.bc import VectorBC  # noqa: PLC0415 — lazy: keep import GPU-free
 
     unknown = set(patches) - set(_FACES)
     if unknown:
-        raise ValueError(
-            f"unknown boundary face(s) {sorted(unknown)}; expected {list(_FACES)}"
-        )
+        raise ValueError(f"unknown boundary face(s) {sorted(unknown)}; expected {list(_FACES)}")
 
     faces = {face: map_patch(spec) for face, spec in patches.items()}
     return VectorBC(**faces)

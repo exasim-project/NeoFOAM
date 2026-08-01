@@ -12,13 +12,13 @@ import pytest
 pytest.importorskip("neon")
 
 import blockamr  # noqa: E402
-from blockamr.incompressible import build_incompressible  # noqa: E402
 from blockamr.fillpatch import FillPatchCellConservative  # noqa: E402
+from blockamr.incompressible import build_incompressible  # noqa: E402
 from blockamr.mesh import Mesh  # noqa: E402
 
 
 def test_jax_imports():
-    import jax
+    import jax  # noqa: PLC0415 — the import under test
 
     assert jax.__version__
 

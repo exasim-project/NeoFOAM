@@ -13,6 +13,7 @@ run. Defaults live in the test module — this only wires up per-run overrides.
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -57,9 +58,8 @@ def pytest_addoption(parser: pytest.Parser) -> None:
 
 def pytest_configure(config: pytest.Config) -> None:
     """Apply given options onto the test module's constants before collection."""
-    from pathlib import Path
-
-    import test_cylinder_runtime as mod
+    # lazy: the test module must be imported at configure time, not conftest import
+    import test_cylinder_runtime as mod  # noqa: PLC0415
 
     for flag, attr, conv in _OPTIONS:
         raw = config.getoption(flag)

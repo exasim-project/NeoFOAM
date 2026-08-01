@@ -19,7 +19,7 @@ from neofoam.solver.incompressibleFluidBlockAMR import run  # noqa: E402
 
 
 def test_cylinder_case_runs_and_enforces_body(blockamr_session, cylinder_case):
-    from blockamr.ibm import DirectForcing
+    from blockamr.ibm import DirectForcing  # noqa: PLC0415 — lazy: keep import GPU-free
 
     ctx = run(["incompressibleFluidBlockAMR"])
     U = ctx.fields["U"]

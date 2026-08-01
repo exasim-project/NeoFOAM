@@ -25,7 +25,6 @@ import pytest
 
 from neofoam.solver.incompressibleFluidBlockAMR import postpro
 
-
 # ---------------------------------------------------------------------------
 # helpers — build canned snapshots on a regular grid
 # ---------------------------------------------------------------------------
@@ -80,9 +79,7 @@ def test_momentum_deficit_uniform_stream_has_no_force():
     u = np.ones((nx, ny))
     v = np.zeros((nx, ny))
     p = np.zeros((nx, ny))
-    Fx, Fy = postpro.momentum_deficit_forces(
-        u, v, p, x, y, dx, dy, (5, nx - 5, 5, ny - 5)
-    )
+    Fx, Fy = postpro.momentum_deficit_forces(u, v, p, x, y, dx, dy, (5, nx - 5, 5, ny - 5))
     assert abs(Fx) < 1e-9
     assert abs(Fy) < 1e-9
 

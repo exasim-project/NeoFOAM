@@ -130,9 +130,7 @@ class MeshDictConfig(BaseConfig):
     blockingFactor: Optional[int] = None
     refinement: RefinementConfig = Field(default_factory=RefinementConfig)
 
-    _parse_lists = field_validator("domain", "nCell", "periodicity", mode="before")(
-        _parse_of_list
-    )
+    _parse_lists = field_validator("domain", "nCell", "periodicity", mode="before")(_parse_of_list)
     body: EmbeddedBoundaryConfig = Field(default_factory=EmbeddedBoundaryConfig)
     # Per-face velocity BC for non-periodic domains, keyed xlo/xhi/ylo/yhi/zlo/zhi;
     # each entry is an OpenFOAM-style patch spec ({"type": ..., "value": [...]})

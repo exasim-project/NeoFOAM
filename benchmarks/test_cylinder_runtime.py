@@ -67,6 +67,8 @@ pytest CLI options in ``benchmarks/conftest.py`` — e.g. ``pytest ... --bench-r
 """
 
 import csv
+import importlib.util
+import math
 import os
 import re
 import shutil
@@ -250,15 +252,13 @@ def _of_fk_for_dx(dx: float) -> tuple[float, int]:
 
 def _neon_available() -> bool:
     """Whether the blockAMR engine (``neon``) can be imported."""
-    import importlib.util
-
     return importlib.util.find_spec("neon") is not None
 
 
 def _neon_gpu_available() -> bool:
     """Whether a CUDA device is present for the NeoN GPU leg."""
     try:
-        import neon._neon as nn  # type: ignore[import-not-found]
+        import neon._neon as nn  # type: ignore[import-not-found]  # noqa: PLC0415
 
         return bool(nn.gpu_available())
     except Exception:
@@ -306,9 +306,7 @@ class RunResult:
     stdout: str
 
 
-def _invoke(
-    case: Path, driver: str, extra_env: dict[str, str]
-) -> subprocess.CompletedProcess[str]:
+def _invoke(case: Path, driver: str, extra_env: dict[str, str]) -> subprocess.CompletedProcess[str]:
     """Run a Python solver driver in a fresh interpreter; return the process."""
     proc = subprocess.run(
         [sys.executable, "-c", driver],
@@ -334,9 +332,7 @@ def _run_solver(case: Path, driver: str, extra_env: dict[str, str]) -> RunResult
         f"solver in {case.name} failed:\n{proc.stdout[-1500:]}\n{proc.stderr[-2000:]}"
     )
     match = re.search(r"BENCH_SECONDS=([0-9.]+)", proc.stdout)
-    assert match, (
-        f"no BENCH_SECONDS marker in {case.name} output:\n{proc.stdout[-1500:]}"
-    )
+    assert match, f"no BENCH_SECONDS marker in {case.name} output:\n{proc.stdout[-1500:]}"
     return RunResult(float(match.group(1)), proc.stdout)
 
 
@@ -382,9 +378,7 @@ def _prepare_blockamr(
     if max_size is not None:
         # Drop any existing maxSize line, then set the requested one.
         text = re.sub(r"^\s*maxSize\s+[0-9]+\s*;\s*$\n?", "", text, flags=re.MULTILINE)
-        text = text.replace(
-            "periodicity", f"maxSize         {int(max_size)};\nperiodicity", 1
-        )
+        text = text.replace("periodicity", f"maxSize         {int(max_size)};\nperiodicity", 1)
     mesh_dict.write_text(text)
     if rtol is not None:
         fv = case / "system" / "fvSolution"
@@ -500,15 +494,11 @@ def _assert_neon_completed(stdout: str, n_steps: int) -> None:
 def _two_point_blockamr(tmp: Path, nx: int, tag: str) -> tuple[float, float, int]:
     env = _BLOCKAMR_ENV
 
-    case0, _ = _prepare_blockamr(
-        tmp / f"bamr_{tag}_warm", N_WARMUP, nx, rtol=BENCH_RTOL
-    )
+    case0, _ = _prepare_blockamr(tmp / f"bamr_{tag}_warm", N_WARMUP, nx, rtol=BENCH_RTOL)
     r0 = _run_solver(case0, _BLOCKAMR_DRIVER, env)
     assert float(re.search(r"BENCH_MAXU=([0-9.]+)", r0.stdout).group(1)) < 5.0
 
-    case1, cells = _prepare_blockamr(
-        tmp / f"bamr_{tag}_timed", N_TIMED, nx, rtol=BENCH_RTOL
-    )
+    case1, cells = _prepare_blockamr(tmp / f"bamr_{tag}_timed", N_TIMED, nx, rtol=BENCH_RTOL)
     r1 = _run_solver(case1, _BLOCKAMR_DRIVER, env)
     maxu = float(re.search(r"BENCH_MAXU=([0-9.]+)", r1.stdout).group(1))
     assert maxu < 5.0, f"blockAMR {tag} diverged (max|U|={maxu})"
@@ -517,18 +507,12 @@ def _two_point_blockamr(tmp: Path, nx: int, tag: str) -> tuple[float, float, int
     return r1.seconds, per_step_ms, cells
 
 
-def _two_point_bodyfitted(
-    tmp: Path, f: float, k: int, tag: str
-) -> tuple[float, float, int]:
-    case0, _, et0 = _prepare_bodyfitted(
-        tmp / f"of_{tag}_warm", N_WARMUP, f, k, rtol=BENCH_RTOL
-    )
+def _two_point_bodyfitted(tmp: Path, f: float, k: int, tag: str) -> tuple[float, float, int]:
+    case0, _, et0 = _prepare_bodyfitted(tmp / f"of_{tag}_warm", N_WARMUP, f, k, rtol=BENCH_RTOL)
     r0 = _run_solver(case0, _INCOMPRESSIBLE_FLUID_DRIVER, {})
     _assert_of_completed(case0, et0)
 
-    case1, cells, et1 = _prepare_bodyfitted(
-        tmp / f"of_{tag}_timed", N_TIMED, f, k, rtol=BENCH_RTOL
-    )
+    case1, cells, et1 = _prepare_bodyfitted(tmp / f"of_{tag}_timed", N_TIMED, f, k, rtol=BENCH_RTOL)
     r1 = _run_solver(case1, _INCOMPRESSIBLE_FLUID_DRIVER, {})
     _assert_of_completed(case1, et1)
 
@@ -571,9 +555,7 @@ def _neon_point(tmp: Path, f: float, k: int, tag: str) -> Optional[tuple[float, 
         _, ms, c = _two_point_neon(tmp, f, k, tag)
         return ms, c
     except (AssertionError, subprocess.TimeoutExpired) as exc:
-        print(
-            f"  [skip] incompressibleFluidNeoN {tag} did not complete: {str(exc)[:90]}"
-        )
+        print(f"  [skip] incompressibleFluidNeoN {tag} did not complete: {str(exc)[:90]}")
         return None
 
 
@@ -636,10 +618,7 @@ def test_cell_count_scaling(tmp_path: Path) -> None:
         print("  [skip] neon not importable — blockAMR leg skipped")
     if not have_neon:
         print("  [skip] no CUDA device — incompressibleFluidNeoN (gpu) leg skipped")
-    print(
-        f"  {'target':>7} {'solver':<30}{'exec':>5}"
-        f"{'cells':>10}{'ms/step':>10}{'ms/Mcell':>10}"
-    )
+    print(f"  {'target':>7} {'solver':<30}{'exec':>5}{'cells':>10}{'ms/step':>10}{'ms/Mcell':>10}")
     for t, solver, execu, cells, ms in rows:
         print(
             f"  {_fmt_m(t):>7} {solver:<30}{execu:>5}"
@@ -652,9 +631,7 @@ def test_cell_count_scaling(tmp_path: Path) -> None:
     # (only meaningful with >1 level).
     for solver in {r[1] for r in rows}:
         pts = [r[4] for r in rows if r[1] == solver]
-        assert len(pts) < 2 or pts[-1] > pts[0], (
-            f"{solver} per-step did not grow with cells"
-        )
+        assert len(pts) < 2 or pts[-1] > pts[0], f"{solver} per-step did not grow with cells"
 
 
 # ---------------------------------------------------------------------------
@@ -676,9 +653,7 @@ def test_matched_cell_size(tmp_path: Path) -> None:
 
     def _record(dx: float, solver: str, execu: str, cells: int, ms: float) -> None:
         rows.append((dx, solver, execu, cells, ms))
-        _csv_row(
-            path, [dx, solver, execu, cells, round(ms, 2), round(1e6 * ms / cells, 2)]
-        )
+        _csv_row(path, [dx, solver, execu, cells, round(ms, 2), round(1e6 * ms / cells, 2)])
 
     for dx in DX_LEVELS:
         if have_bamr:
@@ -711,9 +686,7 @@ def test_matched_cell_size(tmp_path: Path) -> None:
     # with >1 level).
     for solver in {r[1] for r in rows}:
         pts = [r[4] for r in rows if r[1] == solver]
-        assert len(pts) < 2 or pts[-1] > pts[0], (
-            f"{solver} per-step did not grow as dx fell"
-        )
+        assert len(pts) < 2 or pts[-1] > pts[0], f"{solver} per-step did not grow as dx fell"
 
 
 # ---------------------------------------------------------------------------
@@ -723,11 +696,7 @@ def test_matched_cell_size(tmp_path: Path) -> None:
 
 def _boxes(nx: int, ny: int, nz: int, max_size: int) -> int:
     """Number of AMReX boxes the domain is chopped into at ``max_size``."""
-    import math
-
-    return (
-        math.ceil(nx / max_size) * math.ceil(ny / max_size) * math.ceil(nz / max_size)
-    )
+    return math.ceil(nx / max_size) * math.ceil(ny / max_size) * math.ceil(nz / max_size)
 
 
 def test_max_size_sweep(tmp_path: Path) -> None:
@@ -821,9 +790,7 @@ def test_max_size_sweep(tmp_path: Path) -> None:
         f"(fixed {nx}x{ny}x{nz} = {_fmt_m(cells)} cubic cells, {N_TIMED} steps, "
         f"rtol={MAXSIZE_RTOL}):"
     )
-    print(
-        f"  {'maxSize':>8}{'boxes':>8}  {'status':<12}{'ms/step':>10}{'ms/Mcell':>10}"
-    )
+    print(f"  {'maxSize':>8}{'boxes':>8}  {'status':<12}{'ms/step':>10}{'ms/Mcell':>10}")
     for ms_val, nb, status, ms in rows:
         ms_txt = f"{ms:>10.1f}" if ms is not None else f"{'-':>10}"
         mc_txt = f"{1e6 * ms / cells:>10.2f}" if ms is not None else f"{'-':>10}"

@@ -30,28 +30,18 @@ def _validate(cfg: MeshDictConfig) -> None:
     if len(cfg.nCell) != 3:
         raise ValueError(f"meshDict.nCell must have 3 entries; got {cfg.nCell!r}")
     if len(cfg.periodicity) != 3:
-        raise ValueError(
-            f"meshDict.periodicity must have 3 entries; got {cfg.periodicity!r}"
-        )
+        raise ValueError(f"meshDict.periodicity must have 3 entries; got {cfg.periodicity!r}")
     if any(n < 1 for n in cfg.nCell):
         raise ValueError(f"meshDict.nCell entries must be >= 1; got {cfg.nCell!r}")
     if cfg.body.type not in ("none", "cylinder"):
-        raise ValueError(
-            f"meshDict.body.type must be 'none' or 'cylinder'; got {cfg.body.type!r}"
-        )
+        raise ValueError(f"meshDict.body.type must be 'none' or 'cylinder'; got {cfg.body.type!r}")
     if cfg.body.type == "cylinder":
         if cfg.body.center is None or len(cfg.body.center) != 3:
-            raise ValueError(
-                f"cylinder body needs a 3-vector 'center'; got {cfg.body.center!r}"
-            )
+            raise ValueError(f"cylinder body needs a 3-vector 'center'; got {cfg.body.center!r}")
         if cfg.body.radius is None or cfg.body.radius <= 0.0:
-            raise ValueError(
-                f"cylinder body needs a positive 'radius'; got {cfg.body.radius!r}"
-            )
+            raise ValueError(f"cylinder body needs a positive 'radius'; got {cfg.body.radius!r}")
         if cfg.body.axis not in (0, 1, 2):
-            raise ValueError(
-                f"cylinder body 'axis' must be 0, 1 or 2; got {cfg.body.axis!r}"
-            )
+            raise ValueError(f"cylinder body 'axis' must be 0, 1 or 2; got {cfg.body.axis!r}")
 
 
 def build_mesh(cfg: MeshDictConfig) -> Any:
@@ -60,9 +50,9 @@ def build_mesh(cfg: MeshDictConfig) -> Any:
     Returns a :class:`blockamr.Mesh` (single level) or
     :class:`blockamr.AmrMesh` (``refinement.maxLevel > 0``).
     """
-    import blockamr
-    from blockamr.ibm.body import Cylinder
-    from blockamr.mesh import AmrMesh, Mesh
+    import blockamr  # noqa: PLC0415 — lazy: keep import GPU-free
+    from blockamr.ibm.body import Cylinder  # noqa: PLC0415 — lazy: keep import GPU-free
+    from blockamr.mesh import AmrMesh, Mesh  # noqa: PLC0415 — lazy: keep import GPU-free
 
     _validate(cfg)
 
@@ -93,9 +83,7 @@ def build_mesh(cfg: MeshDictConfig) -> Any:
         mesh = AmrMesh(geom, info)
         mesh.init_from_scratch(0.0)
         if cfg.body.type == "cylinder":
-            mesh.body = Cylinder(
-                centre=cfg.body.center, radius=cfg.body.radius, axis=cfg.body.axis
-            )
+            mesh.body = Cylinder(centre=cfg.body.center, radius=cfg.body.radius, axis=cfg.body.axis)
         return mesh
 
     box_array = blockamr.BoxArray(box)
@@ -113,7 +101,5 @@ def build_mesh(cfg: MeshDictConfig) -> Any:
     dist_map = blockamr.DistributionMapping(box_array)
     mesh = Mesh(box_array, dist_map, geom)
     if cfg.body.type == "cylinder":
-        mesh.body = Cylinder(
-            centre=cfg.body.center, radius=cfg.body.radius, axis=cfg.body.axis
-        )
+        mesh.body = Cylinder(centre=cfg.body.center, radius=cfg.body.radius, axis=cfg.body.axis)
     return mesh

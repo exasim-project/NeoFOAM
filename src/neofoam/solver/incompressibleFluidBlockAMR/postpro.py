@@ -109,9 +109,7 @@ def gather_field(ctx: Any, level: int = 0) -> FieldSnapshot:
         plane = [a for a in range(3) if a != axis]
         coords = [x, y, z]
         grid = np.meshgrid(coords[0], coords[1], coords[2], indexing="ij")
-        d2 = (grid[plane[0]] - center[plane[0]]) ** 2 + (
-            grid[plane[1]] - center[plane[1]]
-        ) ** 2
+        d2 = (grid[plane[0]] - center[plane[0]]) ** 2 + (grid[plane[1]] - center[plane[1]]) ** 2
         solid = d2 < radius * radius
 
     return FieldSnapshot(u, v, w, p, x, y, z, dx[0], dx[1], dx[2], solid)
@@ -245,16 +243,8 @@ def force_coefficients(
     p2 = snap.p.mean(axis=2)
     if cv is None:
         # a box spanning ~[-2D, +6D] x [-3D, +3D] around the body centre
-        cx = (
-            float(snap.x[snap.u.shape[0] // 2])
-            if snap.solid is None
-            else _body_center(snap)[0]
-        )
-        cy = (
-            float(snap.y[snap.u.shape[1] // 2])
-            if snap.solid is None
-            else _body_center(snap)[1]
-        )
+        cx = float(snap.x[snap.u.shape[0] // 2]) if snap.solid is None else _body_center(snap)[0]
+        cy = float(snap.y[snap.u.shape[1] // 2]) if snap.solid is None else _body_center(snap)[1]
         cv = (cx - 2.0 * D, cx + 6.0 * D, cy - 3.0 * D, cy + 3.0 * D)
     iw = int(np.searchsorted(snap.x, cv[0]))
     ie = int(np.searchsorted(snap.x, cv[1]))
@@ -335,9 +325,7 @@ def recirculation_length(
     if snap.solid is not None:
         solid_line = snap.solid[:, j, :].any(axis=1)
         rear_idx = np.where(solid_line)[0]
-        i_rear = (
-            int(rear_idx[-1]) if rear_idx.size else int(np.argmin(np.abs(snap.x - cx)))
-        )
+        i_rear = int(rear_idx[-1]) if rear_idx.size else int(np.argmin(np.abs(snap.x - cx)))
     else:
         i_rear = int(np.argmin(np.abs(snap.x - cx)))
     x_rear = snap.x[i_rear]

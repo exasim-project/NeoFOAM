@@ -18,8 +18,8 @@ import pytest
 
 pytest.importorskip("neon")
 
-import jax.numpy as jnp  # noqa: E402
 import blockamr  # noqa: E402
+import jax.numpy as jnp  # noqa: E402
 from blockamr.dsl import exp  # noqa: E402
 from blockamr.dsl.solve import evaluate  # noqa: E402
 from blockamr.field import CellField, FaceField  # noqa: E402
@@ -27,14 +27,15 @@ from blockamr.operators.div import Div, update_face_fluxes  # noqa: E402
 from blockamr.operators.grad import Grad  # noqa: E402
 from blockamr.schemes.div_schemes import Linear  # noqa: E402
 
-from incompressibleFluidBlockAMR.verification_helpers import (  # noqa: E402
-    observed_order,
-)
 from neofoam.solver.incompressibleFluidBlockAMR.configs import (  # noqa: E402
     MeshDictConfig,
 )
 from neofoam.solver.incompressibleFluidBlockAMR.models.mesh_factory import (  # noqa: E402
     build_mesh,
+)
+
+from .verification_helpers import (  # noqa: E402
+    observed_order,
 )
 
 TWO_PI = 2.0 * math.pi
@@ -98,9 +99,7 @@ def test_grad_of_linear_field_is_exact(blockamr_session):
         # Periodic ghost-wrap corrupts the outermost cell layer (linear field is not
         # periodic); central diff is exact only on interior cells.
         interior = (slice(1, -1), slice(1, -1), slice(1, -1))
-        max_err = max(
-            max_err, float(np.max(np.abs(result[interior] - exact[interior])))
-        )
+        max_err = max(max_err, float(np.max(np.abs(result[interior] - exact[interior]))))
     assert max_err < 1e-10, f"grad(linear) interior error {max_err:.3e}"
 
 

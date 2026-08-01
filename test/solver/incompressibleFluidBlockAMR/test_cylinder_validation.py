@@ -86,8 +86,7 @@ def test_cylinder_re20_observables_in_band(blockamr_session, cylinder_re20_case)
 
     # drag in the achievable band (literature 2.05 + stated staircase/blockage margin)
     assert CD_LO <= Cd <= CD_HI, (
-        f"Cd={Cd:.3f} outside achievable band [{CD_LO}, {CD_HI}] "
-        f"(unconfined literature {CD_LIT})"
+        f"Cd={Cd:.3f} outside achievable band [{CD_LO}, {CD_HI}] (unconfined literature {CD_LIT})"
     )
 
     # a real recirculation bubble forms behind the body (physical structure)

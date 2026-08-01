@@ -17,8 +17,10 @@ def config_classes() -> list[type]:
     Static — needs no case directory. Thin wrapper over the framework's
     solver-agnostic :func:`neofoam.framework.solver.configurations`.
     """
-    from neofoam.framework.solver import configurations
+    from neofoam.framework.solver import configurations  # noqa: PLC0415  # cycle: framework
 
-    from .incompressibleFluidBlockAMR import incompressibleFluidBlockAMR
+    from .incompressibleFluidBlockAMR import (  # noqa: PLC0415  # circular: solver module
+        incompressibleFluidBlockAMR,
+    )
 
     return list(configurations(incompressibleFluidBlockAMR))

@@ -7,7 +7,7 @@ Only the Chorin fractional-step projection is wired up (MAC + nodal projection
 via the ``blockamr`` DSL).
 """
 
-from .base import ProjectionAlgorithm
 from . import chorinProjection as _chorin  # noqa: F401
+from .base import ProjectionAlgorithm
 
 __all__ = ["ProjectionAlgorithm"]

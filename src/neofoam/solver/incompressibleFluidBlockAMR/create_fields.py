@@ -32,6 +32,8 @@ from neofoam.framework.initialization import (
     StagedInitRunner,
     StagedInitSpec,
     lazy,
+)
+from neofoam.framework.initialization import (
     model as init_model,
 )
 from neofoam.framework.model import ModelRuntime, bind_owned_interfaces
@@ -56,9 +58,7 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
     @spec_builder.load
     def load_config() -> LoadResult:
         projection_model = ProjectionAlgorithm.detect_and_create(resolved_case_dir)
-        optional_models = incompressibleFluidBlockAMRModel.detect_models(
-            resolved_case_dir
-        )
+        optional_models = incompressibleFluidBlockAMRModel.detect_models(resolved_case_dir)
 
         # solutionLoop (advances time) + fieldWriter (persists fields) are the
         # reused framework core Models; loaded here so their controlDict is
@@ -81,16 +81,12 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             opt.run_resolve(config)
 
     @spec_builder.build
-    def build_lazy(
-        core_models: list[Any], optional_models: list[Any]
-    ) -> list[InitStep]:
+    def build_lazy(core_models: list[Any], optional_models: list[Any]) -> list[InitStep]:
         projection_model = core_models[0]
 
         def _by_spec(spec_name: str) -> Any:
             return next(
-                m
-                for m in core_models
-                if isinstance(m, ModelRuntime) and m.spec.name == spec_name
+                m for m in core_models if isinstance(m, ModelRuntime) and m.spec.name == spec_name
             )
 
         solution_loop_model = _by_spec("solutionLoop")
@@ -119,9 +115,7 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             ]
         )
         builder.extend(loop_backend_steps())
-        builder.extend(
-            writer_backend_steps(ControlDictConfig.load(case_dir=resolved_case_dir))
-        )
+        builder.extend(writer_backend_steps(ControlDictConfig.load(case_dir=resolved_case_dir)))
 
         # The projection runtime's @build creates U/p/phi from its own configs
         # and registers them + the equation inputs; add_core_models runs it.
