@@ -11,6 +11,8 @@ are omitted in this minimal version. The main iteration loop is owned by the
 injectable stability constraints, and the write decision.
 """
 
+import os
+import sys
 from pathlib import Path
 from typing import Annotated, Any, Optional, Union
 
@@ -28,10 +30,10 @@ from neofoam.framework.operations import (
 )
 from neofoam.framework.solver import Solver
 from neofoam.framework.tools import PreprocessConfig
-from neofoam.tools.block_mesh import BlockMeshDictConfig
-from neofoam.tools.snappy_hex_mesh import SnappyHexMeshDictConfig
 from neofoam.framework.types import OperationMetadata
 from neofoam.telemetry import TelemetrySettings
+from neofoam.tools.block_mesh import BlockMeshDictConfig
+from neofoam.tools.snappy_hex_mesh import SnappyHexMeshDictConfig
 from neofoam.turbulence import momentumTransportModel
 from neofoam.viscosity import viscosityModel
 
@@ -78,9 +80,7 @@ def maybe_configure_telemetry(case_dir: Union[Path, str] = ".") -> bool:
 # model lookup helper: find an instantiated core model by its spec name
 def _core_model(state: Any, spec_name: str) -> Any:
     return next(
-        m
-        for m in state.core_models
-        if getattr(getattr(m, "spec", None), "name", None) == spec_name
+        m for m in state.core_models if getattr(getattr(m, "spec", None), "name", None) == spec_name
     )
 
 
@@ -109,9 +109,7 @@ incompressibleFluid.models(incompressibleFluidModel)  # optional: zero or more
 
 
 @incompressibleFluid.initializer
-def initialize(
-    self: Any, init: Annotated[StagedInitRunner, Depends(create_init)]
-) -> Context:
+def initialize(self: Any, init: Annotated[StagedInitRunner, Depends(create_init)]) -> Context:
     """Initialize using create_init factory with dependency injection."""
     return init.run()
 
@@ -187,9 +185,6 @@ def run(
     for the duration of the solve so C++ ``Info`` output ends up there
     instead of the calling process's stdout.
     """
-    import os
-    import sys
-
     redirect = log_file is not None
     saved_fd: Optional[int] = None
     if redirect:

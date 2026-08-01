@@ -23,16 +23,26 @@ Run ``python test/workflow/cases/fill_tube_bank_mcp.py <case_dir> --prompt heat_
 
 from __future__ import annotations
 
+import argparse
 import asyncio
 import json
+import os
 import shutil
+import subprocess
+import sys
 from pathlib import Path
 from typing import Any, Optional
 
-from neofoam.tooling.workflow.mesh_inputs import block_mesh_dict, snappy_dict
-from neofoam.tooling.workflow.patch_set import PatchSet
+from pydantic_ai import Agent
+from pydantic_ai.mcp import MCPToolset
+
 from neofoam.framework.tools import PreprocessConfig
 from neofoam.io import write_configs
+from neofoam.mcp.registry import resolve_solver
+from neofoam.mcp.server import mcp
+from neofoam.mcp.tools import validate_case
+from neofoam.tooling.workflow.mesh_inputs import block_mesh_dict, snappy_dict
+from neofoam.tooling.workflow.patch_set import PatchSet
 
 HERE = Path(__file__).resolve().parent
 MANIFEST = HERE / "tube_bank_manifest.json"
@@ -57,11 +67,6 @@ def load_prompt(name: str) -> str:
 
 def build_mcp_agent(model_name: str = DEFAULT_MODEL) -> Any:
     """A pydantic-ai agent wired to the neofoam MCP server (in-memory toolset)."""
-    from pydantic_ai import Agent
-    from pydantic_ai.mcp import MCPToolset
-
-    from neofoam.mcp.server import mcp
-
     return Agent(f"anthropic:{model_name}", toolsets=[MCPToolset(mcp)])
 
 
@@ -121,9 +126,6 @@ def build_tube_bank(
     context). Returns the case directory; a single ``scripts/Allrun`` then meshes
     and solves.
     """
-    from neofoam.mcp.registry import resolve_solver
-    from neofoam.mcp.tools import validate_case
-
     case = Path(case_dir)
     patch_set = patch_set or PatchSet.load(MANIFEST)
     problem = load_prompt(prompt)
@@ -152,11 +154,6 @@ def build_tube_bank(
 
 def main(argv: Optional[list[str]] = None) -> int:
     """Author the case via the MCP agent and (unless ``--no-run``) mesh + solve it."""
-    import argparse
-    import os
-    import subprocess
-    import sys
-
     parser = argparse.ArgumentParser(description="MCP-agent-fill + run a CFD case.")
     parser.add_argument("case_dir", help="Target case directory to author.")
     parser.add_argument(

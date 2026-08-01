@@ -46,7 +46,7 @@ def collect_config_classes(sources: Iterable[Any]) -> list[type]:
     # closes a cycle. The lazy resolution costs one ``import`` per
     # ``collect_config_classes`` call, but only the first hit pays — the
     # second call sees ``sys.modules`` already populated.
-    from neofoam.fields.schema import schema_for
+    from neofoam.fields.schema import schema_for  # noqa: PLC0415  # io<->fields.schema cycle
 
     for source in sources:
         if isinstance(source, type):
@@ -69,9 +69,7 @@ def collect_config_classes(sources: Iterable[Any]) -> list[type]:
     return seen
 
 
-def save_configs(
-    configs: Iterable[BaseConfig], *, case_dir: Union[Path, str]
-) -> list[Path]:
+def save_configs(configs: Iterable[BaseConfig], *, case_dir: Union[Path, str]) -> list[Path]:
     """Save each config to ``case_dir`` via its registered IO strategy.
 
     Configs whose class has no ``@IOStrategy`` binding are skipped with a

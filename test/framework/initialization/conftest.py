@@ -6,9 +6,9 @@
 
 import pytest
 
-from neofoam.framework.initialization.init_step import InitStep
-from neofoam.framework.initialization.helpers import InitializerBuilder
 from neofoam.framework.initialization.config_context import ConfigContext
+from neofoam.framework.initialization.helpers import InitializerBuilder
+from neofoam.framework.initialization.init_step import InitStep
 
 
 @pytest.fixture
@@ -49,12 +49,8 @@ class MockCoreModel:
 
     def run_build(self) -> list[InitStep]:
         return [
-            InitStep(
-                "test_field", initializer=lambda _ctx: "field_value", category="fields"
-            ),
-            InitStep(
-                "test_op", initializer=lambda _ctx: "op_value", category="operators"
-            ),
+            InitStep("test_field", initializer=lambda _ctx: "field_value", category="fields"),
+            InitStep("test_op", initializer=lambda _ctx: "op_value", category="operators"),
         ]
 
 

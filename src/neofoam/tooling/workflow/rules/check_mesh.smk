@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 #
 # Validate the variant's mesh (fails the chain on mesh errors). Keyed by
-# MESH_STEM (`{cad}__{mesh}` with a CAD axis, else `{mesh}`).
+# MESH_STEM (`meshes/{mesh}`).
 # Consumes header globals: BASE_CASE, MESH_STEM, _mesh_case, MESH_TOOL_INPUT.
 rule checkMesh:
     input:

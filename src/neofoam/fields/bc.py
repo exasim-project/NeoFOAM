@@ -255,9 +255,7 @@ class TurbulentIntensityKineticEnergyInletBC(BaseModel):
     used until the first update from the inlet ``U``.
     """
 
-    type: Literal["turbulentIntensityKineticEnergyInlet"] = (
-        "turbulentIntensityKineticEnergyInlet"
-    )
+    type: Literal["turbulentIntensityKineticEnergyInlet"] = "turbulentIntensityKineticEnergyInlet"
     intensity: float
     value: FieldValue[Scalar]
 
@@ -286,9 +284,7 @@ class TurbulentMixingLengthFrequencyInletBC(BaseModel):
     and a prescribed ``mixingLength``.
     """
 
-    type: Literal["turbulentMixingLengthFrequencyInlet"] = (
-        "turbulentMixingLengthFrequencyInlet"
-    )
+    type: Literal["turbulentMixingLengthFrequencyInlet"] = "turbulentMixingLengthFrequencyInlet"
     mixingLength: float
     value: FieldValue[Scalar]
 

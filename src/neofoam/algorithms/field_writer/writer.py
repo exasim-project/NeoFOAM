@@ -30,8 +30,8 @@ from typing import Any, Literal, Mapping
 
 from pydantic import ConfigDict, Field
 
-from neofoam.core.plugin_system import PluginSystem
 from neofoam.algorithms.field_writer.write_control import StepView, WriteControl
+from neofoam.core.plugin_system import PluginSystem
 from neofoam.io import BaseConfig
 
 

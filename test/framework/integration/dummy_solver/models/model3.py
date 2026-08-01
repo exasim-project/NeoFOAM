@@ -9,16 +9,21 @@ Demonstrates:
 - Nested sub-model (Accumulator) built into ctx.models and accessed via ctx.
 """
 
-from typing import Any
 from pathlib import Path
+from typing import Any
 
 from pydantic import Field
 
+from neofoam.framework.config_injection import (
+    _create_runtime_config_wrapper,
+    _discover_configs_from_signature,
+)
 from neofoam.framework.context import FieldUpdates
 from neofoam.framework.initialization import ConfigContext, InitStep
+from neofoam.framework.model import ModelRuntime
 from neofoam.framework.operations import Operation, Operations, SequentialOp
 from neofoam.framework.types import OperationMetadata, OperationNumber
-from neofoam.io import BaseConfig, IOStrategy, YAML
+from neofoam.io import YAML, BaseConfig, IOStrategy
 
 from .dummy_model import DummyModelInterface, Model
 
@@ -63,11 +68,8 @@ def detect_model() -> bool:
 @model3.resolve
 def resolve(config: Model3Config, ctx: ConfigContext) -> Model3Config:
     """Check if DummyModel1 is active and store as coupled flag in config."""
-    from neofoam.framework.model import ModelRuntime
-
     coupled = any(
-        isinstance(v, ModelRuntime) and v.spec.name == "DummyModel1"
-        for v in ctx.all().values()
+        isinstance(v, ModelRuntime) and v.spec.name == "DummyModel1" for v in ctx.all().values()
     )
     return config.model_copy(update={"coupled": coupled})
 
@@ -139,11 +141,6 @@ def collected_operations(self: Any) -> Operations:
 
     ``self`` is the ModelRuntime; ``self.config.coupled`` was set during RESOLVE.
     """
-    from neofoam.framework.config_injection import (
-        _discover_configs_from_signature,
-        _create_runtime_config_wrapper,
-    )
-
     raw_func, metadata = (
         self.spec._operations[0] if self.config.coupled else self.spec._operations[1]
     )

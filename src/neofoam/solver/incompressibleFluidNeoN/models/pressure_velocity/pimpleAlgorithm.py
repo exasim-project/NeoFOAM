@@ -15,7 +15,7 @@ bindings (``neon._neon`` / ``neofoam.neofoam_bindings``).
 The momentum stress follows ``pimpleFoam``'s ``divDevReff(U)`` decomposition,
 ``-laplacian(nuEff,U) - div(nuEff*dev2(T(grad(U))))``: the implicit laplacian
 plus the explicit dev2 viscous-stress term. ``nuEff``/``nut`` come from the
-runtime-selected C++ turbulence model (created in ``create_fields``), fixed
+runtime-selected turbulence model (created in ``create_fields``), fixed
 across the PIMPLE loop and corrected once per time step (the solver's
 ``turbulence_correct`` op), as in OpenFOAM.
 
@@ -29,8 +29,8 @@ lives on :class:`PimpleNeoNState` (``ctx.models["pimple_state"]``);
 from typing import Annotated, Any, Callable
 
 import neon._neon as nn  # NeoN Python bindings
-from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
 
+from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
 from neofoam.fields import (
     CalculatedBC,
     CyclicBC,
@@ -61,7 +61,6 @@ from neofoam.framework.types import OperationMetadata
 from neofoam.solver.pisoControl import PisoControl
 
 from ..incompressibleFluidNeoNModel import Model
-
 
 pimpleNeoN = Model("PimpleNeoN")
 
@@ -123,13 +122,15 @@ def _read_int(d: Any, key: str, default: int) -> int:
 
 
 def _read_switch(d: Any, key: str, default: bool) -> bool:
-    """Read an OpenFOAM on/off switch, tolerating word or bool storage."""
+    """Read an OpenFOAM on/off switch from a converted NeoN dictionary.
+
+    The OpenFOAM→NeoN dict conversion stores switch words (``yes``/``no``)
+    as strings; a wrong-typed ``get_*`` is fatal in NeoN (no catchable
+    exception), so this must read the string directly.
+    """
     if not d.contains(key):
         return default
-    try:
-        return bool(d.get_bool(key))
-    except Exception:
-        return d.get_string(key).strip().lower() in ("yes", "true", "on", "1")
+    return d.get_string(key).strip().lower() in ("yes", "true", "on", "1")
 
 
 def _reduce_u(stats: Any) -> tuple[float, float]:
@@ -186,9 +187,7 @@ def build(self: Any) -> list[Any]:
         pimple_dict = rt.fv_solution_dict.subDict("PIMPLE")
         piso = PisoControl(
             n_correctors=_read_int(pimple_dict, "nCorrectors", 1),
-            n_non_orthogonal_correctors=_read_int(
-                pimple_dict, "nNonOrthogonalCorrectors", 0
-            ),
+            n_non_orthogonal_correctors=_read_int(pimple_dict, "nNonOrthogonalCorrectors", 0),
             momentum_predictor=_read_switch(pimple_dict, "momentumPredictor", True),
         )
         return PimpleNeoNState(nfb.PimpleControl(rt.fv_solution_dict), piso)
@@ -200,9 +199,7 @@ def build(self: Any) -> list[Any]:
 
     def create_surf_interp(context: dict[str, Any]) -> Any:
         rt = context["_neon_runtime"]
-        return nn.SurfaceInterpolationScalar(
-            rt.executor, rt.nf_mesh, nn.TokenList(["linear"])
-        )
+        return nn.SurfaceInterpolationScalar(rt.executor, rt.nf_mesh, nn.TokenList(["linear"]))
 
     def create_grad_op(context: dict[str, Any]) -> Any:
         return nfb.GaussGreenGrad(context["_neon_runtime"])
@@ -303,9 +300,7 @@ def momentum(
     )
 
     if UEqn.ddt_scheme() not in (nfb.DdtScheme.BDF1, nfb.DdtScheme.BDF2):
-        raise RuntimeError(
-            "incompressibleFluidNeoN: steadyState ddt unsupported (BDF1/BDF2 only)"
-        )
+        raise RuntimeError("incompressibleFluidNeoN: steadyState ddt unsupported (BDF1/BDF2 only)")
 
     UEqn.set_final_iter(final_iter)
 
@@ -470,13 +465,9 @@ def collected_operations(self: Any) -> Operations:
     )
 
     model_ops.add(
-        _alias_operation(
-            wrapped_rotate, operation_name="rotate_and_report", depends_on=[]
-        )
+        _alias_operation(wrapped_rotate, operation_name="rotate_and_report", depends_on=[])
     )
-    model_ops.add(
-        _alias_operation(wrapped_momentum, operation_name="momentum", depends_on=[])
-    )
+    model_ops.add(_alias_operation(wrapped_momentum, operation_name="momentum", depends_on=[]))
     model_ops.add(
         _alias_operation(
             wrapped_continuity,
@@ -485,8 +476,6 @@ def collected_operations(self: Any) -> Operations:
         )
     )
     model_ops.add(
-        _alias_operation(
-            wrapped_turbulence, operation_name="turbulence_correct", depends_on=[]
-        )
+        _alias_operation(wrapped_turbulence, operation_name="turbulence_correct", depends_on=[])
     )
     return model_ops

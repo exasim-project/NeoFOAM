@@ -77,9 +77,7 @@ def write_output(self: Any, ctx: Context) -> None:
     ignores them and writes everything anyway).
     """
     writer: FieldWriter = ctx.models["writer"]
-    to_write = {
-        name: ctx.fields[name] for name in ctx.write_fields if name in ctx.fields
-    }
+    to_write = {name: ctx.fields[name] for name in ctx.write_fields if name in ctx.fields}
     writer.write(ctx.time, to_write)
     reporter = ctx.models.get("step_reporter")
     if reporter is not None:

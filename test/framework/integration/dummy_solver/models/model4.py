@@ -9,13 +9,14 @@ Demonstrates multiple instances of the same spec with no instance state:
 - single operation using Model4Config
 """
 
-from typing import Any
 from pathlib import Path
+from typing import Any
+
 from pydantic import Field
 
 from neofoam.framework.context import FieldUpdates
 from neofoam.framework.initialization import InitStep
-from neofoam.io import BaseConfig, IOStrategy, YAML
+from neofoam.io import YAML, BaseConfig, IOStrategy
 
 from .dummy_model import DummyModelInterface, Model
 

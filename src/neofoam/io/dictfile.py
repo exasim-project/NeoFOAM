@@ -64,11 +64,7 @@ def _fmt(path: Path) -> str:
 
 
 def _load_map(path: Path, fmt: str) -> dict[str, Any]:
-    raw = (
-        json.loads(path.read_text())
-        if fmt == "json"
-        else yaml.safe_load(path.read_text())
-    )
+    raw = json.loads(path.read_text()) if fmt == "json" else yaml.safe_load(path.read_text())
     data: dict[str, Any] = raw or {}
     return data
 
@@ -77,9 +73,7 @@ def _dump_map(path: Path, data: Mapping[str, Any], fmt: str) -> None:
     if fmt == "json":
         path.write_text(json.dumps(data, indent=2) + "\n")
     else:
-        path.write_text(
-            yaml.safe_dump(dict(data), default_flow_style=False, sort_keys=False)
-        )
+        path.write_text(yaml.safe_dump(dict(data), default_flow_style=False, sort_keys=False))
 
 
 def _dump_model(instance: BaseConfig, fmt: str) -> dict[str, Any]:
@@ -240,9 +234,7 @@ def _open(path: Path) -> _Backend:
     return _MapBackend(data, data, path, fmt)
 
 
-def _write_payload(
-    path: Path, data: dict[str, Any], key: tuple[str, ...], fmt: str
-) -> None:
+def _write_payload(path: Path, data: dict[str, Any], key: tuple[str, ...], fmt: str) -> None:
     """Persist a pre-dumped model payload to *path* under *key*, creating as needed.
 
     The shared engine behind :meth:`DictFile.save`, ``BaseConfig.save`` and
@@ -268,9 +260,7 @@ def _write_payload(
             node.clear()
             _OF_STRATEGY._write(node, data)
         else:
-            root = (
-                pyf.dictionary.read(str(path)) if path.is_file() else pyf.dictionary()
-            )
+            root = pyf.dictionary.read(str(path)) if path.is_file() else pyf.dictionary()
             root.clear()
             if "FoamFile" not in data:
                 _OF_STRATEGY._write(root, {"FoamFile": foam_header(path)})

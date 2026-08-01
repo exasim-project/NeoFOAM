@@ -95,9 +95,7 @@ def write_configs(
         }
         if len(writers) > 1:
             names = ", ".join(sorted(s.__name__ for s in writers))
-            raise TypeError(
-                f"Cannot write {file!r}: contributors use mixed strategies ({names})"
-            )
+            raise TypeError(f"Cannot write {file!r}: contributors use mixed strategies ({names})")
 
         strategy = type(contribs[0]).io_config.writer  # type: ignore[attr-defined]
         _write_merged_payload(strategy, case_dir_path / file, merged)
@@ -127,6 +125,4 @@ def _write_merged_payload(strategy: Any, path: Path, data: dict[str, Any]) -> No
         # write like the OpenFOAM branch.
         _write_payload(path, data, (), "yaml")
         return
-    raise NotImplementedError(
-        f"write_configs: no merged-write path for {type(strategy).__name__}"
-    )
+    raise NotImplementedError(f"write_configs: no merged-write path for {type(strategy).__name__}")

@@ -56,7 +56,7 @@ class CaseDir:
         stays free of numpy/subprocess at module top — reading is a separate concern
         from building.
         """
-        from neofoam.tooling.casebuild.reader import read_field
+        from neofoam.tooling.casebuild.reader import read_field  # noqa: PLC0415  # reader cycle
 
         return read_field(self, name, time=time)
 

@@ -43,10 +43,6 @@ def test_mesh_dicts_bind_to_the_right_files() -> None:
 
 def test_every_required_file_has_a_config() -> None:
     """No gap: each required case file is owned by at least one config class."""
-    covered = {
-        cls.io_config.file
-        for cls in configurations(incompressibleFluid)
-        if cls.io_config
-    }
+    covered = {cls.io_config.file for cls in configurations(incompressibleFluid) if cls.io_config}
     missing = _REQUIRED_FILES - covered
     assert not missing, f"no config owns: {sorted(missing)}"

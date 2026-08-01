@@ -1,0 +1,94 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSolution;
+}
+
+solvers
+{
+    p
+    {
+        solver          PCG;
+        preconditioner  diagonal;
+        tolerance       1e-13;
+        relTol          0;
+        maxIter         5000;
+        l1ScaledResidual true;
+    }
+
+    U
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-13;
+        relTol          0;
+        maxIter         1000;
+        l1ScaledResidual true;
+    }
+
+    k
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-13;
+        relTol          0;
+        maxIter         2000;
+        l1ScaledResidual true;
+    }
+
+    epsilon
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-13;
+        relTol          0;
+        maxIter         2000;
+        l1ScaledResidual true;
+    }
+
+    omega
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-13;
+        relTol          0;
+        maxIter         2000;
+        l1ScaledResidual true;
+    }
+
+    nuTilda
+    {
+        solver          PBiCGStab;
+        preconditioner  DILU;
+        tolerance       1e-13;
+        relTol          0;
+        maxIter         2000;
+        l1ScaledResidual true;
+    }
+}
+
+SIMPLE
+{
+    nNonOrthogonalCorrectors 0;
+    consistent      no;
+}
+
+relaxationFactors
+{
+    fields
+    {
+        p               0.3;
+    }
+    equations
+    {
+        U               0.7;
+        k               0.3;
+        epsilon         0.3;
+        omega           0.3;
+        nuTilda         0.3;
+    }
+}
+
+// ************************************************************************* //

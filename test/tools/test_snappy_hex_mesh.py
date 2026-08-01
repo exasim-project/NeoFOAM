@@ -14,10 +14,12 @@ import types
 from pathlib import Path
 from typing import Any
 
+import pybFoam as pyf
 import pytest
+from pybFoam.meshing import generate_blockmesh, generate_snappy_hex_mesh
 
-from neofoam.tooling.casebuild import from_template
 from neofoam.framework.tools import ToolRuntime
+from neofoam.tooling.casebuild import from_template
 from neofoam.tools import snappy_hex_mesh
 from neofoam.tools.snappy_hex_mesh import (
     SnappyHexMeshDictConfig,
@@ -39,9 +41,7 @@ def test_snappy_reads_prev_mesh_and_returns_it(
         types.SimpleNamespace(dictionary=types.SimpleNamespace(read=lambda f: f)),
     )
 
-    def fake_snappy(
-        m: Any, d: Any, overwrite: bool = True, verbose: bool = True
-    ) -> None:
+    def fake_snappy(m: Any, d: Any, overwrite: bool = True, verbose: bool = True) -> None:
         seen["call"] = (m, d, overwrite, verbose)
 
     monkeypatch.setattr(snappy_hex_mesh, "generate_snappy_hex_mesh", fake_snappy)
@@ -62,18 +62,13 @@ def test_snappy_reads_prev_mesh_and_returns_it(
 
 @pytest.mark.slow
 def test_snappy_refines_prior_mesh(tmp_path: Path) -> None:
-    import pybFoam as pyf
-    from pybFoam.meshing import generate_blockmesh, generate_snappy_hex_mesh
-
     assert not (CASE / "constant" / "polyMesh").exists()
     case_dir = from_template(CASE).build_at(tmp_path / "case")
     cwd = Path.cwd()
     os.chdir(case_dir.path)
     try:
         time = pyf.Time(pyf.argList(["preprocess"]))
-        block_mesh = generate_blockmesh(
-            time, pyf.dictionary.read("system/blockMeshDict")
-        )
+        block_mesh = generate_blockmesh(time, pyf.dictionary.read("system/blockMeshDict"))
         block_cells = block_mesh.nCells()
 
         generate_snappy_hex_mesh(

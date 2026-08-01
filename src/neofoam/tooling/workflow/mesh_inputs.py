@@ -27,7 +27,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from neofoam.framework.tools.graph import PreprocessConfig
-from neofoam.tooling.workflow.patch_set import BoxFace, PatchSet, PatchRole
+from neofoam.tooling.workflow.patch_set import BoxFace, PatchRole, PatchSet
 from neofoam.tools._foam_tokens import num
 from neofoam.tools.block_mesh import Block, BlockMeshDictConfig, BlockPatch
 from neofoam.tools.snappy_hex_mesh import SnappyHexMeshDictConfig, SnappySurface
@@ -174,9 +174,7 @@ def preprocess_config(*, has_snappy: bool) -> PreprocessConfig:
     if has_snappy:
         tools.append({"tool": "snappyHexMesh", "depends_on": ["blockMesh"]})
         check_deps = ["snappyHexMesh"]
-    tools.append(
-        {"tool": "checkMesh", "depends_on": check_deps, "fail_on_error": False}
-    )
+    tools.append({"tool": "checkMesh", "depends_on": check_deps, "fail_on_error": False})
     return PreprocessConfig(tools=tools)
 
 
@@ -194,9 +192,7 @@ def build_mesh_inputs(
     blockMesh face), and the ``preprocess`` enable-list is sized to match (it
     includes ``snappyHexMesh`` only when a snappy dict is produced).
     """
-    block = block_mesh_dict(
-        patch_set, cell_size=cell_size, cells=cells, padding=padding
-    )
+    block = block_mesh_dict(patch_set, cell_size=cell_size, cells=cells, padding=padding)
     has_snappy = _has_snappy_surface(patch_set)
     snappy = snappy_dict(patch_set) if has_snappy else None
     pre = preprocess_config(has_snappy=has_snappy)

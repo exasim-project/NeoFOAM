@@ -53,9 +53,7 @@ def _stub_tool(
             seen[name] = ctx.get("_prev_mesh")
             return out
 
-        return [
-            InitStep(name=f"preprocess.{name}", initializer=init, category=category)
-        ]
+        return [InitStep(name=f"preprocess.{name}", initializer=init, category=category)]
 
     return t
 
@@ -194,9 +192,7 @@ def test_absent_dependency_raises_graph_error() -> None:
     produced: dict[str, Any] = {}
     c = _stub_tool("c", seen, produced)
     steps = [lazy("_foam_time", lambda _ctx: "T0")]
-    steps.extend(
-        tool_graph_steps([c.instantiate({"tool": "c", "depends_on": ["nope"]})])
-    )
+    steps.extend(tool_graph_steps([c.instantiate({"tool": "c", "depends_on": ["nope"]})]))
     with pytest.raises(InitializationGraphError):
         execute_initialization(steps)
 
@@ -355,9 +351,7 @@ def test_mesh_source_not_used_for_creators_or_chained_consumers() -> None:
     consumer = _consuming_tool("chainedConsumer", seen)
     runtimes = [
         creator.instantiate({"tool": "creatorTool"}),
-        consumer.instantiate(
-            {"tool": "chainedConsumer", "depends_on": ["creatorTool"]}
-        ),
+        consumer.instantiate({"tool": "chainedConsumer", "depends_on": ["creatorTool"]}),
     ]
     disk_reads: list[bool] = []
 

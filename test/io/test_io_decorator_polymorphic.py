@@ -17,14 +17,13 @@ discriminated-union form and the terse OpenFOAM dictionary entry form.
 from typing import Annotated, Any, Literal
 
 import pytest
-
 from pydantic import BaseModel, BeforeValidator, model_serializer
 
 from neofoam.io import (
-    BaseConfig,
-    YAML,
     JSON,
     OF,
+    YAML,
+    BaseConfig,
     IOStrategy,
 )
 

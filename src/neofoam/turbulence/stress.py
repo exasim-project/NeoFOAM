@@ -18,11 +18,13 @@ assembled from the molecular ``nu`` and eddy ``nut`` viscosities. Its lifecycle:
 registers its stress via its ``@build``; these classes are the reusable assembly.
 A linear eddy-viscosity closure (laminar, kEpsilon, …) uses
 :class:`LinearViscousStress`; the OpenFOAM fallback uses :class:`OpenFOAMStress`,
-which delegates to the pybFoam model. pybFoam is imported lazily, so this module
-stays importable without a built OpenFOAM environment.
+which delegates to the pybFoam model.
 """
 
 from typing import Any
+
+import pybFoam
+from pybFoam import fvc, fvm
 
 __all__ = [
     "LinearViscousStress",
@@ -40,8 +42,6 @@ def _add_viscosity(nu: Any, nut: Any) -> Any:
     (laminar, ``nut = 0``) pybFoam binds no scalar+scalar add, so the sum is
     rebuilt as a (reusable) ``dimensionedScalar``.
     """
-    import pybFoam
-
     try:
         total = nu + nut
     except TypeError:
@@ -59,14 +59,10 @@ def _materialize(nu: Any) -> Any:
     ``dimensionedScalar`` (laminar) is rebuilt (it cannot seed a ``volScalarField``
     without a mesh).
     """
-    import pybFoam
-
     try:
         return pybFoam.volScalarField(pybFoam.Word("nuEff"), nu)
     except TypeError:
-        return pybFoam.dimensionedScalar(
-            pybFoam.Word("nuEff"), nu.dimensions(), nu.value()
-        )
+        return pybFoam.dimensionedScalar(pybFoam.Word("nuEff"), nu.dimensions(), nu.value())
 
 
 def _negate(nuEff: Any) -> Any:
@@ -78,14 +74,10 @@ def _negate(nuEff: Any) -> Any:
     linear in the coefficient, so this is identical). A ``dimensionedScalar`` is
     rebuilt; a field is negated then materialised under the ``nuEff`` name.
     """
-    import pybFoam
-
     try:
         negated = -nuEff
     except TypeError:
-        return pybFoam.dimensionedScalar(
-            pybFoam.Word("nuEff"), nuEff.dimensions(), -nuEff.value()
-        )
+        return pybFoam.dimensionedScalar(pybFoam.Word("nuEff"), nuEff.dimensions(), -nuEff.value())
     return pybFoam.volScalarField(pybFoam.Word("nuEff"), negated)
 
 
@@ -120,9 +112,6 @@ class LinearViscousStress:
         The tensor handed to ``div`` is stamped with OpenFOAM's canonical key
         ``(nuEff*dev2(T(grad(U))))`` so the case's ``divScheme`` resolves it.
         """
-        import pybFoam
-        from pybFoam import fvc, fvm
-
         nuEff = self._nuEff
         scheme_name = f"(nuEff*dev2(T(grad({U.name()}))))"
         stress = pybFoam.volTensorField(

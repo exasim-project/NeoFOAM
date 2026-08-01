@@ -30,8 +30,6 @@ def _topological_sort(
         check_replacements(lazy_inits)
 
     name_to_init = {li.name: li for li in lazy_inits}
-    sorted_names = topological_order(
-        {li.name: li.depends_on for li in lazy_inits}, sorter=sorter
-    )
+    sorted_names = topological_order({li.name: li.depends_on for li in lazy_inits}, sorter=sorter)
 
     return [name_to_init[name] for name in sorted_names]

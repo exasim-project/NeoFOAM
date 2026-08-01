@@ -19,7 +19,6 @@ import pytest
 
 from .dummy_init import create_init
 
-
 # ============================================================================
 # Fixtures: Setup configuration directory
 # ============================================================================

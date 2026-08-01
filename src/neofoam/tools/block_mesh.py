@@ -279,9 +279,7 @@ def _parse_patch(name: str, body: list[str]) -> BlockPatch:
 
 def _parse_faces(tokens: list[str]) -> list[tuple[int, int, int, int]]:
     nums = [int(t) for t in tokens if t not in "()"]
-    return [
-        (nums[i], nums[i + 1], nums[i + 2], nums[i + 3]) for i in range(0, len(nums), 4)
-    ]
+    return [(nums[i], nums[i + 1], nums[i + 2], nums[i + 3]) for i in range(0, len(nums), 4)]
 
 
 # -- formatters (structured → OpenFOAM token string) ------------------------ #

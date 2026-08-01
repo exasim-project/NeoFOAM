@@ -14,7 +14,9 @@ from pathlib import Path
 import pytest
 
 from neofoam.framework.initialization import InitializerBuilder, lazy
+from neofoam.framework.solver import configurations
 from neofoam.framework.tools import tool_graph_steps
+from neofoam.solver.incompressibleFluid import incompressibleFluid
 from neofoam.solver.incompressibleFluid.create_fields import create_init
 from neofoam.tools.run import detect_tools
 
@@ -86,7 +88,4 @@ def test_pipeline_replaces_default_mesh_through_create_init(
 
 
 def test_configurations_includes_preprocess_config() -> None:
-    from neofoam.framework.solver import configurations
-    from neofoam.solver.incompressibleFluid import incompressibleFluid
-
     assert "PreprocessConfig" in configurations(incompressibleFluid).names

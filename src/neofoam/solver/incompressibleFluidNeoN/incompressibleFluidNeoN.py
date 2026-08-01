@@ -12,6 +12,9 @@ iteration loop is owned by the framework ``solution_loop`` engine; the legacy
 backend (see ``models.solution_loop``).
 """
 
+import os
+import sys
+from pathlib import Path
 from typing import Annotated, Any, Optional
 
 from neofoam.framework.context import Context
@@ -30,6 +33,7 @@ from neofoam.framework.types import OperationMetadata
 from neofoam.solver.neon_runtime import ensure_neon_initialized
 from neofoam.tools.block_mesh import BlockMeshDictConfig
 from neofoam.tools.snappy_hex_mesh import SnappyHexMeshDictConfig
+from neofoam.turbulence import momentumTransportModel
 from neofoam.turbulence.config import TurbulencePropertiesConfig
 from neofoam.viscosity.config import TransportPropertiesConfig
 
@@ -43,20 +47,19 @@ from .models.solution_loop import SolutionLoopPredicate
 def _core_model(state: Any, spec_name: str) -> Any:
     """Find an instantiated core model by its spec name."""
     return next(
-        m
-        for m in state.core_models
-        if isinstance(m, ModelRuntime) and m.spec.name == spec_name
+        m for m in state.core_models if isinstance(m, ModelRuntime) and m.spec.name == spec_name
     )
 
 
 incompressibleFluidNeoN = Solver("incompressibleFluidNeoN")
 
 # Declare the full config schema on the spec, case-free: the solver's own
-# configs plus the model families it owns.
+# configs plus the model families it owns. Viscosity carries no Python config
+# class (the NeoN C++ factory reads constant/transportProperties directly);
+# turbulence is runtime-selected in create_fields from
+# constant/turbulenceProperties (pure-Python NeoN family, C++ fallback).
 incompressibleFluidNeoN.config(ControlDictConfig)
-incompressibleFluidNeoN.config(
-    PreprocessConfig
-)  # mesh pipeline enable file (configs())
+incompressibleFluidNeoN.config(PreprocessConfig)  # mesh pipeline enable file (configs())
 # The two mesh-input dicts: writer configs so the wizard/MCP fill and persist them
 # like any other case file (blockMesh/snappyHexMesh read them at launch) — without
 # them the sweep's mesh dimension is unavailable.
@@ -70,13 +73,15 @@ incompressibleFluidNeoN.config(TransportPropertiesConfig)  # molecular nu
 incompressibleFluidNeoN.config(TurbulencePropertiesConfig)  # simulationType
 
 incompressibleFluidNeoN.models(PressureVelocityAlgorithmNeoN, required=True)  # pick ONE
+# The single turbulence family, shared with incompressibleFluid: binding it makes
+# every registered turbulence model discoverable via the MCP model_catalog for the
+# NeoN solver too (create_fields selects the native member with fallback=False).
+incompressibleFluidNeoN.models(momentumTransportModel, required=True)  # nut + stress
 incompressibleFluidNeoN.models(incompressibleFluidNeoNModel)  # optional: zero or more
 
 
 @incompressibleFluidNeoN.initializer
-def initialize(
-    self: Any, init: Annotated[StagedInitRunner, Depends(create_init)]
-) -> Context:
+def initialize(self: Any, init: Annotated[StagedInitRunner, Depends(create_init)]) -> Context:
     """Initialize using the create_init factory with dependency injection."""
     return init.run()
 
@@ -150,10 +155,6 @@ def run(
     If ``log_file`` is given, fd 1 (stdout) is redirected to that file for the
     duration of the solve.
     """
-    import os
-    import sys
-    from pathlib import Path
-
     ensure_neon_initialized(list(argv) if argv else ["incompressibleFluidNeoN"])
 
     redirect = log_file is not None

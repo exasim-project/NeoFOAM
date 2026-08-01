@@ -1,30 +1,43 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Native momentum-transport model: ``laminar`` (no turbulence).
+"""``laminar`` momentum-transport model — native NeoN **and** pybFoam fallback.
 
-``laminar`` is a :class:`ModelSpec` + config — no class. Laminar flow has no eddy
-viscosity, so the model registers **no ``nut`` field** and solves **no transport
-equation** (it contributes no per-step operation). What it owns is **which stress
-the momentum equation uses**: its ``@build`` registers the ``viscousStress`` object
-— the shared linear eddy-viscosity assembly :class:`LinearViscousStress`
-(``nuEff = nu + nut``; an absent ``nut`` means ``nuEff = nu``). The momentum
-predictor refreshes that stress (``viscousStress.update``) right where it consumes
-it, so there is no separate update operation here.
+``laminar`` is a :class:`~neofoam.framework.model.ModelSpec` + config, **no
+class**, registered with the single :class:`momentumTransportModel` family under
+the ``turbulenceProperties`` name ``laminar``. It is the minimal dual-shape model:
+it declares both backends in one file, and the consuming solver's ``fallback``
+flag picks which runs.
 
-The assembly is a reusable free class so a RAS/LES closure (kEpsilon, kOmegaSST,
-…) reuses it — those models additionally register ``nut`` and a turbulence-transport
-``correct`` operation, and a non-linear closure registers a different stress. The
-choice always stays with the model.
+* **native NeoN** (``incompressibleFluidNeoN``, ``fallback=False``): the
+  ``@build`` emits ``nut = 0`` and the effective surface viscosity
+  ``nuEff = surfaceInterpolate(nu)`` from NeoN primitives — no C++ turbulence
+  factory. Laminar flow has no eddy viscosity, so there is no transport equation
+  and **no native ``@operation``**; the NeoN ``correct`` is a no-op.
+* **pybFoam fallback** (``incompressibleFluid``, ``fallback=True``): the single
+  ``fallback=True`` ``correct`` op advances the wrapped pybFoam
+  ``incompressibleTurbulenceModel`` (a laminar model: ``nut = 0``, ``nuEff = nu``),
+  which owns its own momentum stress.
+
+It owns no ``grad(U)``: that is a kinematic field of the velocity, computed by the
+momentum predictor where the viscous stress consumes it.
+
+This is the template for a pure-Python closure with a transport equation
+(:mod:`neofoam.turbulence.models.kEpsilon`): add its transport fields in
+``@build`` and solve their PDEs in native ``@operation``s.
 """
 
-from typing import Any
+from typing import Annotated, Any
 
-from neofoam.framework.initialization import model
+import neon._neon as nn  # NeoN surface interpolation
+
+from neofoam import neofoam_bindings as nfb
+from neofoam.framework.context import FieldUpdates
+from neofoam.framework.initialization import InitStep
+from neofoam.framework.initialization import field as init_field
 
 from ..config import TurbulencePropertiesConfig
 from ..momentumTransport import Model, momentumTransportModel
-from ..stress import LinearViscousStress
 
 __all__ = ["laminar"]
 
@@ -33,16 +46,42 @@ laminar.config(TurbulencePropertiesConfig)
 
 
 @laminar.build
-def build(config: TurbulencePropertiesConfig) -> list[Any]:
-    """Inject the ``viscousStress`` the momentum equation uses.
+def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
+    """Emit the NeoN ``nut`` (zero) and ``nuEff`` (surface) fields laminar owns.
 
-    laminar dispatches the linear eddy-viscosity assembly; the solver runs this
-    through ``ModelRuntime.run_build()`` and registers it at ``models.viscousStress``,
-    so ``divDevReff`` (and the ``nuEff`` refresh the predictor triggers) is the
-    model's decision, not the solver's.
+    The NeoN ``runtime`` and molecular ``nu`` are injected by name from the
+    Context the native handle seeds (``models.neon_runtime`` / ``models.nu_vol``).
+    Run only on the native path — the fallback path skips ``@build`` entirely.
     """
 
-    def create_viscous_stress(_ctx: dict[str, Any]) -> Any:
-        return LinearViscousStress()
+    def create_nut(ctx: dict[str, Any]) -> Any:
+        return nfb.create_uniform_volume_field(ctx["models.neon_runtime"], "nut", 0.0)
 
-    return [model("viscousStress", create_viscous_stress)]
+    def create_nu_eff(ctx: dict[str, Any]) -> Any:
+        rt = ctx["models.neon_runtime"]
+        surf = nn.SurfaceInterpolationScalar(rt.executor, rt.nf_mesh, nn.TokenList(["linear"]))
+        return surf.interpolate(ctx["models.nu_vol"])  # nuEff = surf(nu), nut = 0
+
+    return [
+        init_field("nut", create_nut, depends_on=["models.neon_runtime"]),
+        init_field(
+            "nuEff",
+            create_nu_eff,
+            depends_on=["models.neon_runtime", "models.nu_vol"],
+        ),
+    ]
+
+
+@laminar.operation(name="laminarCorrect", fallback=True)
+def correct(
+    self: Any,
+    turbulence: Annotated[Any, "models"],  # the wrapped pybFoam handle
+) -> FieldUpdates:
+    """Advance the pybFoam laminar model (``nut = 0``, ``nuEff = nu``).
+
+    Scheduled only on the fallback path (``incompressibleFluid``). The handle is
+    resolved from the Context — never captured in the closure — so it stays out
+    of the execution-graph reference cycle (see [[project_pybfoam_op_closure_cycle]]).
+    """
+    turbulence.correct()
+    return FieldUpdates({})

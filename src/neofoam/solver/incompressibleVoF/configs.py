@@ -96,12 +96,8 @@ class TransportPropertiesConfig(BaseConfig):
     """
 
     phases: list[str] = Field(default_factory=lambda: ["water", "air"])
-    water: PhaseTransport = Field(
-        default_factory=lambda: PhaseTransport(nu=1e-6, rho=1000.0)
-    )
-    air: PhaseTransport = Field(
-        default_factory=lambda: PhaseTransport(nu=1.48e-5, rho=1.0)
-    )
+    water: PhaseTransport = Field(default_factory=lambda: PhaseTransport(nu=1e-6, rho=1000.0))
+    air: PhaseTransport = Field(default_factory=lambda: PhaseTransport(nu=1.48e-5, rho=1.0))
     sigma: float = 0.07
 
     @field_serializer("phases", when_used="always")

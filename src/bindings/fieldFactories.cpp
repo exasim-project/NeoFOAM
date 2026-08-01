@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include <nanobind/nanobind.h>
+#include <nanobind/ndarray.h> // copy_from_host (host array -> field)
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/tuple.h>
 
@@ -11,6 +12,11 @@
 // NeoFOAM headers
 #include "NeoFOAM/datastructures/runTime.hpp"
 #include "NeoFOAM/auxiliary/readers.hpp"
+#include "NeoFOAM/fvcc/boundary/volume/epsilonWallFunction.hpp"
+#include "NeoFOAM/fvcc/boundary/volume/kqRWallFunction.hpp"
+#include "NeoFOAM/fvcc/boundary/volume/nutkWallFunction.hpp"
+#include "NeoFOAM/fvcc/boundary/volume/omegaWallFunction.hpp"
+#include "NeoFOAM/fvcc/boundary/volume/nutWallFunction.hpp"
 
 // OpenFOAM headers
 #include "fvCFD.H"
@@ -22,6 +28,27 @@ using namespace nb::literals;
 
 namespace fvcc = NeoN::finiteVolume::cellCentred;
 namespace nf = NeoFOAM;
+
+// Force CRTP self-registration of the turbulence wall-function volume BCs into
+// libNeoN's VolumeBoundaryFactory<scalar> runtime-selection table, without
+// modifying the NeoN submodule. Each header defines a self-registering
+// Register<>::REGISTERED static (its initialiser calls addSubType()); taking its
+// address ODR-uses it in this TU, which is compiled into neofoam_bindings and
+// links libNeoN, so the initialiser runs at module load and inserts the creator
+// keyed by name() (e.g. "epsilonWallFunction") into the shared singleton table.
+namespace
+{
+namespace vb = NeoN::finiteVolume::cellCentred::volumeBoundary;
+using ScalarVolBCFactory = NeoN::finiteVolume::cellCentred::VolumeBoundaryFactory<NeoN::scalar>;
+
+[[maybe_unused]] const bool* const registerWallFunctionBCs[] = {
+    &ScalarVolBCFactory::Register<vb::EpsilonWallFunction>::REGISTERED,
+    &ScalarVolBCFactory::Register<vb::KqRWallFunction>::REGISTERED,
+    &ScalarVolBCFactory::Register<vb::NutkWallFunction>::REGISTERED,
+    &ScalarVolBCFactory::Register<vb::OmegaWallFunction>::REGISTERED,
+    &ScalarVolBCFactory::Register<vb::NutUSpaldingWallFunction>::REGISTERED,
+};
+} // namespace
 
 namespace NeoFOAM::bindings
 {
@@ -181,6 +208,47 @@ void registerFieldFactories(nb::module_& m)
         "field_name"_a = std::string("p"),
         "piso_dict"_a = std::string("PISO"),
         "Get (refCell, refValue, needsReference) from fvSolution"
+    );
+
+    // -------------------------------------------------------------------
+    // Uniform volume scalar field (nu, nut=0) for the explicit viscous stress.
+    // Mirrors create_uniform_surface_field but on a VolumeField.
+    // -------------------------------------------------------------------
+    m.def(
+        "create_uniform_volume_field",
+        [](nf::RunTime& rt, const std::string& name, double value)
+        {
+            auto bcs = fvcc::createCalculatedBCs<fvcc::VolumeBoundary<NeoN::scalar>>(rt.nfMesh);
+            fvcc::VolumeField<NeoN::scalar> field(rt.exec, name, rt.nfMesh, bcs);
+            NeoN::fill(field.internalVector(), value);
+            NeoN::fill(field.boundaryData().value(), value);
+            return field;
+        },
+        "runtime"_a,
+        "name"_a,
+        "value"_a,
+        "Create a uniform scalar volume field (e.g. nu or nut=0)"
+    );
+
+    // Overwrite a scalar field's internal values from a host array (the closure's
+    // nonlinear scalar maths — chi, fv1, fw, ... — is authored in plain NumPy).
+    m.def(
+        "copy_from_host",
+        [](fvcc::VolumeField<NeoN::scalar>& field,
+           nb::ndarray<const NeoN::scalar, nb::ndim<1>, nb::c_contig, nb::device::cpu> values)
+        {
+            const auto n = field.internalVector().size();
+            if (static_cast<std::size_t>(values.shape(0)) != static_cast<std::size_t>(n))
+            {
+                throw std::runtime_error("copy_from_host: array size != field size");
+            }
+            field.internalVector() =
+                NeoN::Vector<NeoN::scalar>(field.exec(), values.data(), n, NeoN::SerialExecutor());
+            field.correctBoundaryConditions();
+        },
+        "field"_a,
+        "values"_a,
+        "Overwrite a scalar field's internal values from a host array; corrects BCs"
     );
 }
 

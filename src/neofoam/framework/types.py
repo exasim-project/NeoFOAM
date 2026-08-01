@@ -51,9 +51,7 @@ class OperationNumber:
         a, b = self._as_tuple(other)
         return a == b
 
-    def __lt__(
-        self, other: "OperationNumber" | str | int | list[int] | tuple[int, ...]
-    ) -> bool:
+    def __lt__(self, other: "OperationNumber" | str | int | list[int] | tuple[int, ...]) -> bool:
         a, b = self._as_tuple(other)
         return a < b
 
@@ -68,9 +66,17 @@ class OpType(Enum):
 
 @dataclass
 class OperationMetadata:
-    """collection of the metadata for operations - describes both decorated functions and DAG nodes."""
+    """collection of the metadata for operations - describes both decorated
+    functions and DAG nodes."""
 
     op_name: str | None = None
+
+    # When True the operation is a *fallback* op — scheduled only when a
+    # consumer selects the model's fallback backend (e.g. the pybFoam-OpenFOAM
+    # turbulence path in incompressibleFluid). Native (non-fallback) ops and
+    # fallback ops are partitioned by ``ModelRuntime.native_operations()`` /
+    # ``fallback_operations()``; ``.operations`` still returns both.
+    fallback: bool = False
 
     # Optional metadata
     op_type: OpType | None = None

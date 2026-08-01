@@ -14,7 +14,7 @@ solver-core config (not a model): activation is solver lifecycle, handled in
 """
 
 from neofoam.algorithms.solution_loop.config import TimeControlConfig
-from neofoam.io import IOStrategy, OF, BaseConfig
+from neofoam.io import OF, BaseConfig, IOStrategy
 
 
 @IOStrategy(OF("system/controlDict"))

@@ -42,11 +42,11 @@ from neofoam.fields.value_types import (
     Scalar,
     Tensor,
     Vector,
+    default_uniform,
     zero_uniform,
 )
 from neofoam.io.base import BaseConfig
-from neofoam.io.decorator import IOStrategy, OF
-
+from neofoam.io.decorator import OF, IOStrategy
 
 # OpenFOAM class names per value-type marker.
 _FOAM_CLASS: dict[type, str] = {
@@ -142,8 +142,6 @@ def schema_for(decl: FieldDecl) -> type[BaseConfig]:
     )
     if decl.initial_value is not None and not isinstance(decl.initial_value, str):
         # Bake the Python literal into a uniform string at registration time.
-        from neofoam.fields.value_types import default_uniform
-
         default_internal = default_uniform(decl.value_type, decl.initial_value)
 
     # Build the schema by subclassing BaseConfig and stamping the fields via

@@ -10,8 +10,8 @@ Implements the explicit 3-stage pattern:
   BUILD   → produce lazy InitSteps for execute_initialization
 """
 
-from typing import Any, Optional
 from pathlib import Path
+from typing import Any, Optional
 
 from pydantic import Field, PrivateAttr
 
@@ -24,7 +24,7 @@ from neofoam.framework.initialization import (
     StagedInitSpec,
 )
 from neofoam.framework.model import ModelRuntime
-from neofoam.io import BaseConfig, YAML, IOStrategy
+from neofoam.io import YAML, BaseConfig, IOStrategy
 
 from .models.dummy_model import DummyModelInterface
 
@@ -97,9 +97,7 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             runtime.run_resolve(config)
 
     @spec_builder.build
-    def build_lazy(
-        core_models: list[Any], optional_models: list[Any]
-    ) -> list[InitStep]:
+    def build_lazy(core_models: list[Any], optional_models: list[Any]) -> list[InitStep]:
         algorithm = next(m for m in core_models if isinstance(m, DummyAlgorithm))
         core_model2 = next(m for m in core_models if isinstance(m, CoreModel2))
         solver_cfg = next(m for m in core_models if isinstance(m, SolverConfig))

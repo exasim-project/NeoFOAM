@@ -54,9 +54,10 @@ from neofoam.framework.operations import (
     SequentialOp,
 )
 from neofoam.framework.types import OperationMetadata
-from .control_factory import create_pimple_control
+
 from ..alpha_advection.shared import MixtureProtocol
 from ..incompressibleVoFModel import Model
+from .control_factory import create_pimple_control
 
 pimple = Model("Pimple")
 
@@ -142,9 +143,7 @@ pimple.field(
 
 
 class TwoPhaseTransportProtocol(Protocol):
-    def divDevRhoReff(
-        self, rho: volScalarField, U: volVectorField
-    ) -> fvVectorMatrix: ...
+    def divDevRhoReff(self, rho: volScalarField, U: volVectorField) -> fvVectorMatrix: ...
     def correct(self) -> None: ...
 
 
@@ -291,20 +290,14 @@ def momentum(
     """Density-weighted momentum predictor with surface tension."""
     mesh = U.mesh()
 
-    UEqn = fvVectorMatrix(
-        fvm.ddt(rho, U) + fvm.div(rhoPhi, U) + turbulence.divDevRhoReff(rho, U)
-    )
+    UEqn = fvVectorMatrix(fvm.ddt(rho, U) + fvm.div(rhoPhi, U) + turbulence.divDevRhoReff(rho, U))
     UEqn.relax()
 
     if pimple_control.momentumPredictor():
         pyf.solve(
             UEqn
             + fvc.reconstruct(
-                (
-                    mixture.surfaceTensionForce()
-                    - ghf * fvc.snGrad(rho)
-                    - fvc.snGrad(p_rgh)
-                )
+                (mixture.surfaceTensionForce() - ghf * fvc.snGrad(rho) - fvc.snGrad(p_rgh))
                 * mesh.magSf()
             )
         )
@@ -356,9 +349,7 @@ def continuity(
         # Surface tension + gravity contribution on faces
         phig = surfaceScalarField(
             pyf.Word("phig"),
-            (mixture.surfaceTensionForce() - ghf * fvc.snGrad(rho))
-            * rAUf
-            * mesh.magSf(),
+            (mixture.surfaceTensionForce() - ghf * fvc.snGrad(rho)) * rAUf * mesh.magSf(),
         )
         phiHbyA.assign(phiHbyA + phig)
 
@@ -419,13 +410,9 @@ def collected_operations(self: object) -> Operations:
     wrapped_momentum = pimple.wrap_operation(momentum, self)
     wrapped_continuity = pimple.wrap_operation(continuity, self)
 
+    model_ops.add(_alias_operation(wrapped_momentum, operation_name="momentum", depends_on=[]))
     model_ops.add(
-        _alias_operation(wrapped_momentum, operation_name="momentum", depends_on=[])
-    )
-    model_ops.add(
-        _alias_operation(
-            wrapped_continuity, operation_name="continuity", depends_on=["momentum"]
-        )
+        _alias_operation(wrapped_continuity, operation_name="continuity", depends_on=["momentum"])
     )
 
     return model_ops

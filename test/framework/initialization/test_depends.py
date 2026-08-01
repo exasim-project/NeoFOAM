@@ -10,7 +10,6 @@ import pytest
 
 from neofoam.framework.initialization.depends import Depends
 
-
 # --- Creation ---
 
 

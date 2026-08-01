@@ -7,13 +7,14 @@ DummyModel2 for DummySolver.
 Demonstrates a minimal model: single field, single operation using a config.
 """
 
-from typing import Any
 from pathlib import Path
+from typing import Any
+
 from pydantic import Field
 
 from neofoam.framework.context import FieldUpdates
 from neofoam.framework.initialization import InitStep
-from neofoam.io import BaseConfig, IOStrategy, YAML
+from neofoam.io import YAML, BaseConfig, IOStrategy
 
 from .dummy_model import DummyModelInterface, Model
 

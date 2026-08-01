@@ -18,7 +18,6 @@ from typing import Any, Callable
 from ...context import Context
 from .init_result import InitResult
 
-
 logger = logging.getLogger(__name__)
 
 

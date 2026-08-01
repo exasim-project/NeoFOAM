@@ -62,10 +62,7 @@ def case_for(cases: list[Case], model_name: str) -> Case:
     Points a registered native model at the case the solver would feed it.
     """
     for case in cases:
-        if (
-            case.selection["resolves_to"] == "native"
-            and case.selection["model_name"] == model_name
-        ):
+        if case.selection["resolves_to"] == "native" and case.selection["model_name"] == model_name:
             return case
     raise LookupError(f"no native case for model {model_name!r}")
 
@@ -79,9 +76,9 @@ def make_build_as_solver(
 
     Loads *config_cls* from the case dir, runs *select_fn*, and for a native
     :class:`ModelSpec` instantiates it at the case dir and passes the runtime
-    through *wrap_native* (``SpecMomentumTransport`` for turbulence; omit it for
-    viscosity, where the runtime is used as-is). Non-native selections are
-    returned unbuilt.
+    through *wrap_native* when given (the viscosity suite uses the runtime as-is).
+    Non-native selections are returned unbuilt. (The turbulence suite no longer
+    uses this helper — it builds handles via the merged-family selector directly.)
     """
 
     def build_as_solver(case: Case) -> Any:

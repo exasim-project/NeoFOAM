@@ -8,7 +8,10 @@ ordered steps — a meshing strategy (:func:`block_mesh`, :func:`box`,
 :func:`snappy_hex_mesh`), :func:`patch`, :func:`configs` — via ``|``, then materialize
 it with ``.build_at(dest)``::
 
-    case = (from_template(src) | block_mesh() | patch("system/controlDict", endTime=0.1)).build_at(tmp)
+    case = (
+        from_template(src) | block_mesh()
+        | patch("system/controlDict", endTime=0.1)
+    ).build_at(tmp)
 
 A :class:`Pipeline` is a value — nothing touches disk until ``.build_at()`` — so it can be
 materialized repeatedly, and ``base | step`` forks a materialized :class:`CaseDir`.

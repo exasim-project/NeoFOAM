@@ -14,7 +14,6 @@ from neofoam.framework.initialization.staged.spec import (
     StagedInitSpecBuilder,
 )
 
-
 # --- LoadResult ---
 
 

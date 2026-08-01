@@ -36,16 +36,16 @@ and stage semantics.
 """
 
 from .config_context import ConfigContext
-from .init_step import InitCategory, InitStep, InitStepExecutionError
-from .helpers import field, operator, lazy, model, InitializerBuilder
+from .depends import Depends
 from .execution import (
     CategoryRouter,
-    InitResult,
     InitializationGraphError,
+    InitResult,
     execute_initialization,
     execute_step,
 )
-from .depends import Depends
+from .helpers import InitializerBuilder, field, lazy, model, operator
+from .init_step import InitCategory, InitStep, InitStepExecutionError
 from .staged import (
     LoadResult,
     StagedInitRunner,

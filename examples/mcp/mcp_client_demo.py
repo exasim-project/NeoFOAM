@@ -78,9 +78,7 @@ async def main() -> None:
             print("\nresource neofoam://solvers ->", _payload(res))
 
             # scaffolding round-trip: load a real case, write it elsewhere
-            loaded = _payload(
-                await session.call_tool("load_case", {"case_dir": SOURCE_CASE})
-            )
+            loaded = _payload(await session.call_tool("load_case", {"case_dir": SOURCE_CASE}))
             keys = list(loaded["values"].keys())
             print(f"\nload_case({SOURCE_CASE}) -> config keys: {keys}")
 
@@ -98,11 +96,7 @@ async def main() -> None:
                 # prove it actually hit disk
                 print(
                     "    on-disk:",
-                    [
-                        str(p.relative_to(tmp))
-                        for p in Path(tmp).rglob("*")
-                        if p.is_file()
-                    ],
+                    [str(p.relative_to(tmp)) for p in Path(tmp).rglob("*") if p.is_file()],
                 )
 
 

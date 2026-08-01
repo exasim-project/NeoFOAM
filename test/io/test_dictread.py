@@ -115,9 +115,7 @@ def test_read_keys_does_not_render_dimensioned_values() -> None:
 
 def test_read_toplevel_reads_a_word_entry() -> None:
     pytest.importorskip("pybFoam")
-    assert read_toplevel(CASES / "turbulenceProperties", "simulationType") == Value(
-        text="laminar"
-    )
+    assert read_toplevel(CASES / "turbulenceProperties", "simulationType") == Value(text="laminar")
 
 
 def test_read_toplevel_absent_key_and_file_are_none() -> None:

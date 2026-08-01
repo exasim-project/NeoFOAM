@@ -15,7 +15,7 @@ tests that load it run the OpenFOAM IO path directly.
 
 from typing import Optional
 
-from neofoam.io import BaseConfig, IOStrategy, OF
+from neofoam.io import OF, BaseConfig, IOStrategy
 
 __all__ = ["TransportPropertiesConfig"]
 

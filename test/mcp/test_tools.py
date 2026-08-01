@@ -7,6 +7,10 @@ from typing import Any
 
 import pytest
 
+from neofoam.agent.case_fill import load_case_from_disk
+from neofoam.framework.solver.configurations import configurations
+from neofoam.framework.validation import checks as checks_mod
+from neofoam.io import write_configs
 from neofoam.mcp import tools
 from neofoam.mcp.dto import (
     CaseSpecDTO,
@@ -15,7 +19,14 @@ from neofoam.mcp.dto import (
     ConfigSchemaDTO,
     ModelEntryDTO,
 )
+from neofoam.mcp.registry import resolve_solver
 from neofoam.mcp.tools import ALL_TOOL_NAMES
+from neofoam.solver.incompressibleFluid.incompressibleFluid import (
+    incompressibleFluid,
+)
+from neofoam.solver.incompressibleFluid.models.boussinesq import GravityConfig
+from neofoam.tooling import CaseAccessError, Workspace
+from neofoam.tooling.workflow.patch_set import PatchSet
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SOURCE_CASE = REPO_ROOT / "test" / "solver" / "incompressibleFluid" / "val_pitzDaily"
@@ -24,8 +35,6 @@ TUBE_BANK = Path(__file__).parent / "cases" / "tube_bank"
 
 @pytest.fixture
 def solver() -> Any:
-    from neofoam.mcp.registry import resolve_solver
-
     return resolve_solver("incompressibleFluid")
 
 
@@ -60,17 +69,13 @@ def test_tool_catalog_lists_tools_with_step_schema_and_config(solver: Any) -> No
     assert {"blockMesh", "snappyHexMesh", "checkMesh"} <= set(by_name)
     # the preprocess.yaml entry schema (its ``tool`` key + options)
     block = by_name["blockMesh"]
-    assert (
-        "properties" in block.step_schema and "tool" in block.step_schema["properties"]
-    )
+    assert "properties" in block.step_schema and "tool" in block.step_schema["properties"]
     # blockMesh reads system/blockMeshDict, written by BlockMeshDictConfig
     assert block.dict_file == "system/blockMeshDict"
     assert block.config == "BlockMeshDictConfig"
     assert by_name["snappyHexMesh"].config == "SnappyHexMeshDictConfig"
     # checkMesh reads no dict
-    assert (
-        by_name["checkMesh"].dict_file is None and by_name["checkMesh"].config is None
-    )
+    assert by_name["checkMesh"].dict_file is None and by_name["checkMesh"].config is None
 
 
 def test_model_catalog_is_case_free_with_expected_names(solver: Any) -> None:
@@ -143,8 +148,6 @@ def test_manifest_schema_lists_geometry_source_as_required() -> None:
 
 def test_case_patches_reads_staged_manifest(tmp_path: Path) -> None:
     """case_patches returns the boundary patches (name + role) from the manifest."""
-    from neofoam.tooling.workflow.patch_set import PatchSet
-
     manifest = TUBE_BANK / "manifest.json"
     PatchSet.load(manifest).save(tmp_path / "manifest.json")
     patches = tools.case_patches(str(tmp_path))
@@ -165,8 +168,6 @@ def test_case_patches_missing_manifest_raises(tmp_path: Path) -> None:
 def test_build_mesh_inputs_writes_mesh_dicts_from_manifest(tmp_path: Path) -> None:
     """build_mesh_inputs renders the mesh dicts + preprocess enable-list from the
     staged manifest (no hand-authored blockMeshDict/preprocess.yaml)."""
-    from neofoam.tooling.workflow.patch_set import PatchSet
-
     ps = PatchSet.load(TUBE_BANK / "manifest.json")
     ps.save(tmp_path / "manifest.json")
 
@@ -196,13 +197,6 @@ def _stage_mesh_dicts_with_u(tmp_path: Path, frontback_bc: str) -> Any:
     ``frontBack`` patch is what validate_case cross-checks against 0/U); only the U
     field varies per test, so the validator sees a real staged case.
     """
-    from neofoam.tooling.workflow.patch_set import PatchSet
-    from neofoam.framework.solver.configurations import configurations
-    from neofoam.io import write_configs
-    from neofoam.solver.incompressibleFluid.incompressibleFluid import (
-        incompressibleFluid,
-    )
-
     ps = PatchSet.load(TUBE_BANK / "manifest.json")
     system = tmp_path / "system"
     system.mkdir(parents=True, exist_ok=True)
@@ -210,18 +204,14 @@ def _stage_mesh_dicts_with_u(tmp_path: Path, frontback_bc: str) -> Any:
         shutil.copy(TUBE_BANK / "system" / name, system / name)
     u = configurations(incompressibleFluid)["UFieldConfig"](
         boundaryField={
-            p.name: {
-                "type": frontback_bc if p.role.value == "empty" else "zeroGradient"
-            }
+            p.name: {"type": frontback_bc if p.role.value == "empty" else "zeroGradient"}
             for p in ps.patches
         }
     )
     write_configs([u], case_dir=tmp_path)
 
 
-def test_validate_case_flags_constraint_patch_mismatch(
-    solver: Any, tmp_path: Path
-) -> None:
+def test_validate_case_flags_constraint_patch_mismatch(solver: Any, tmp_path: Path) -> None:
     """A BC type that doesn't match a constraint mesh patch is an error with a fix."""
     _stage_mesh_dicts_with_u(tmp_path, frontback_bc="empty")  # mesh patch is symmetry
     report = tools.validate_case(solver, str(tmp_path))
@@ -234,9 +224,7 @@ def test_validate_case_flags_constraint_patch_mismatch(
     assert hit.fix and "symmetry" in hit.fix
 
 
-def test_validate_case_accepts_matching_constraint_patch(
-    solver: Any, tmp_path: Path
-) -> None:
+def test_validate_case_accepts_matching_constraint_patch(solver: Any, tmp_path: Path) -> None:
     """With the correct symmetry BC, there is no patch-mismatch finding for frontBack."""
     _stage_mesh_dicts_with_u(tmp_path, frontback_bc="symmetry")
     report = tools.validate_case(solver, str(tmp_path))
@@ -245,28 +233,19 @@ def test_validate_case_accepts_matching_constraint_patch(
 
 def _write(path: Path, body: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        "FoamFile{ version 2.0; format ascii; class dictionary; object x; }\n" + body
-    )
+    path.write_text("FoamFile{ version 2.0; format ascii; class dictionary; object x; }\n" + body)
 
 
-def test_validate_case_requires_constant_g_when_boussinesq(
-    solver: Any, tmp_path: Path
-) -> None:
+def test_validate_case_requires_constant_g_when_boussinesq(solver: Any, tmp_path: Path) -> None:
     """Boussinesq (beta+TRef in transportProperties) without constant/g is an error."""
     _write(tmp_path / "constant" / "transportProperties", "beta 3e-3;\nTRef 300;\n")
     report = tools.validate_case(solver, str(tmp_path))
     hit = next(f for f in report.findings if f.file == "constant/g")
     assert hit.level == "error" and hit.fix and "value (0 -9.81 0)" in hit.fix
     # authoring the config clears the finding
-    from neofoam.solver.incompressibleFluid.models.boussinesq import GravityConfig
-
-    from neofoam.io import write_configs
-
     write_configs([GravityConfig()], case_dir=tmp_path)
     assert not any(
-        f.file == "constant/g"
-        for f in tools.validate_case(solver, str(tmp_path)).findings
+        f.file == "constant/g" for f in tools.validate_case(solver, str(tmp_path)).findings
     )
 
 
@@ -291,9 +270,7 @@ def test_validate_case_buoyant_p_needs_no_pfinal(solver: Any, tmp_path: Path) ->
     assert any("UFinal" in m for m in msgs)  # a real missing Final is still flagged
 
 
-def test_validate_case_flags_wall_function_in_laminar_case(
-    solver: Any, tmp_path: Path
-) -> None:
+def test_validate_case_flags_wall_function_in_laminar_case(solver: Any, tmp_path: Path) -> None:
     """A ``*WallFunction`` BC is invalid when turbulence is laminar; fix → calculated."""
     _write(tmp_path / "constant" / "turbulenceProperties", "simulationType laminar;\n")
     _write(
@@ -317,24 +294,17 @@ def test_validate_case_errors_when_a_boundary_type_cannot_be_read(
     Reproduces the false-success shape without depending on the backend raising:
     the reader reports the leaf as Unreadable, and validate_case must surface it.
     """
-    from neofoam.framework.validation import checks as checks_mod
 
     def fake_read_section(path: Path, section: str) -> Any:
         if section == "boundaryField" and path.name == "U":
-            return {
-                "frontBack": {
-                    "type": checks_mod.Unreadable(reason="not a single string")
-                }
-            }
+            return {"frontBack": {"type": checks_mod.Unreadable(reason="not a single string")}}
         return {}
 
     monkeypatch.setattr(checks_mod, "read_section", fake_read_section)
     report = tools.validate_case(solver, str(tmp_path))
 
     assert not report.ok
-    hit = next(
-        f for f in report.findings if f.file == "0/U" and "frontBack" in f.message
-    )
+    hit = next(f for f in report.findings if f.file == "0/U" and "frontBack" in f.message)
     assert hit.level == "error" and "could not be read" in hit.message
 
 
@@ -386,8 +356,6 @@ def test_load_case_missing_dir_raises_naming_path(solver: Any, tmp_path: Path) -
 
 
 def test_save_case_validates_then_writes(solver: Any, tmp_path: Path) -> None:
-    from neofoam.agent.case_fill import load_case_from_disk
-
     spec_dump = load_case_from_disk(SOURCE_CASE, solver=solver).model_dump()
 
     result = tools.save_case(solver, spec_dump, str(tmp_path))
@@ -398,9 +366,7 @@ def test_save_case_validates_then_writes(solver: Any, tmp_path: Path) -> None:
     assert result.case_spec["control_dict_config"] is not None
 
 
-def test_save_case_rejects_malformed_without_writing(
-    solver: Any, tmp_path: Path
-) -> None:
+def test_save_case_rejects_malformed_without_writing(solver: Any, tmp_path: Path) -> None:
     target = tmp_path / "out"
     target.mkdir()
     sentinel = target / "keepme.txt"
@@ -415,8 +381,6 @@ def test_save_case_rejects_malformed_without_writing(
 
 
 def test_save_case_rejects_an_escaping_target(solver: Any, tmp_path: Path) -> None:
-    from neofoam.tooling import CaseAccessError, Workspace
-
     ws = Workspace.at(tmp_path)
     with pytest.raises(CaseAccessError):
         tools.save_case(solver, {}, "../escape", workspace=ws)
@@ -428,8 +392,6 @@ def test_workspace_info_reports_unconfined_by_default() -> None:
 
 
 def test_workspace_info_reports_the_active_root_when_confined(tmp_path: Path) -> None:
-    from neofoam.tooling import Workspace
-
     info = tools.workspace_info(workspace=Workspace.at(tmp_path))
     assert info.confined is True
     assert info.root == str(tmp_path.resolve())
@@ -498,9 +460,7 @@ def test_import_geometry_missing_stl_raises_before_writing_manifest(
     assert not (tmp_path / "manifest.json").exists()
 
 
-def test_load_case_surfaces_dropped_configs_as_warnings(
-    solver: Any, tmp_path: Path
-) -> None:
+def test_load_case_surfaces_dropped_configs_as_warnings(solver: Any, tmp_path: Path) -> None:
     """A present-but-invalid config is reported in warnings, not silently nulled (F5)."""
     # A transportProperties that parses as OpenFOAM but does NOT validate into
     # TransportPropertiesConfig (``nu`` is a scalar; a vector fails the schema). This
@@ -550,14 +510,8 @@ def test_validate_case_reads_constraint_patches_from_manifest_pre_mesh(
     )
 
 
-@pytest.mark.parametrize(
-    "verb", ["read_case", "load_case", "validate_case", "case_patches"]
-)
-def test_read_verbs_reject_an_escaping_case_dir(
-    solver: Any, tmp_path: Path, verb: str
-) -> None:
-    from neofoam.tooling import CaseAccessError, Workspace
-
+@pytest.mark.parametrize("verb", ["read_case", "load_case", "validate_case", "case_patches"])
+def test_read_verbs_reject_an_escaping_case_dir(solver: Any, tmp_path: Path, verb: str) -> None:
     ws = Workspace.at(tmp_path)
     fn = getattr(tools, verb)  # test-only reflection over the tool surface
     args = (solver, "../escape") if verb != "case_patches" else ("../escape",)

@@ -22,7 +22,6 @@ for SA-DDES), exactly like the legacy port's ``outputTime()`` branch.
 from typing import Any, Literal, Mapping
 
 from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
-
 from neofoam.algorithms.field_writer.field_writer import (  # re-exported for the solver
     build,
     fieldWriter,
@@ -52,7 +51,7 @@ class NeoNWriteHook(FieldHook):
 
     field_hook_type: Literal["neon"] = "neon"
     runtime: Any = None  # the NeoN RunTime adapter
-    turbulence: Any = None  # the C++ TurbulenceModel handle
+    turbulence: Any = None  # the turbulence handle (NeoNHandle)
     scalar_names: tuple[str, ...] = ("p",)
     vector_names: tuple[str, ...] = ("U",)
 
@@ -77,9 +76,7 @@ def neon_writer_backend_steps() -> list[InitStep]:
     """
 
     def inject_hook(ctx: dict[str, Any]) -> FieldHook:
-        hook = NeoNWriteHook(
-            runtime=ctx["_neon_runtime"], turbulence=ctx["models.turbulence"]
-        )
+        hook = NeoNWriteHook(runtime=ctx["_neon_runtime"], turbulence=ctx["models.turbulence"])
         ctx["models.writer"].hook = hook
         return hook
 

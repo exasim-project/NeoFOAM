@@ -49,9 +49,7 @@ def test_execute_lazy_inits_context_passing():
     inits = [
         InitStep("a", depends_on=[], initializer=lambda _ctx: 1),
         InitStep("b", depends_on=["a"], initializer=lambda ctx: ctx["a"] + 1),
-        InitStep(
-            "c", depends_on=["a", "b"], initializer=lambda ctx: ctx["a"] + ctx["b"]
-        ),
+        InitStep("c", depends_on=["a", "b"], initializer=lambda ctx: ctx["a"] + ctx["b"]),
     ]
     results = execute_lazy_inits(inits)
     values = {r.name: r.value for r in results}
@@ -60,9 +58,7 @@ def test_execute_lazy_inits_context_passing():
 
 def test_execute_lazy_inits_returns_init_results():
     inits = [
-        InitStep(
-            "fields.U", depends_on=[], initializer=lambda _ctx: "vel", category="fields"
-        ),
+        InitStep("fields.U", depends_on=[], initializer=lambda _ctx: "vel", category="fields"),
         InitStep(
             "models.algo",
             depends_on=[],

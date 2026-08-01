@@ -75,9 +75,7 @@ make_box(
 )
 
 # left and right of the cylinder
-make_box(
-    [-upstream_length, -outer_point], [-outer_point, outer_point], [], {"left": "inlet"}
-)
+make_box([-upstream_length, -outer_point], [-outer_point, outer_point], [], {"left": "inlet"})
 make_box(
     [outer_point, -outer_point],
     [downstream_length, outer_point],

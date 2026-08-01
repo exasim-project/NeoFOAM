@@ -131,11 +131,7 @@ def _read_fields(model_cls: type[BaseModel], data: dict[str, Any]) -> dict[str, 
             continue
         value = data[key]
         typ = _unwrap_type(field_info.annotation)
-        if (
-            isinstance(value, dict)
-            and isinstance(typ, type)
-            and issubclass(typ, BaseModel)
-        ):
+        if isinstance(value, dict) and isinstance(typ, type) and issubclass(typ, BaseModel):
             out[key] = _read_fields(typ, value)
             continue
         reader = READ_DISPATCH.get(typ) if isinstance(value, str) else None

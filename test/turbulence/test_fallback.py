@@ -59,9 +59,7 @@ def test_fallback_defines_openfoam_stress() -> None:
 def test_fallback_corrects_after_the_loop() -> None:
     # The pybFoam model owns its eddy viscosity; it contributes one after-loop
     # ``correct`` operation that advances the model.
-    model = OpenFOAMTurbulenceModel(
-        "U", "phi", "transport", factory=lambda *a: object()
-    )
+    model = OpenFOAMTurbulenceModel("U", "phi", "transport", factory=lambda *a: object())
 
     ops = model.operations
     assert len(ops) == 1
@@ -69,9 +67,7 @@ def test_fallback_corrects_after_the_loop() -> None:
 
 
 def test_use_before_build_raises() -> None:
-    model = OpenFOAMTurbulenceModel(
-        "U", "phi", "transport", factory=lambda *a: object()
-    )
+    model = OpenFOAMTurbulenceModel("U", "phi", "transport", factory=lambda *a: object())
     with pytest.raises(RuntimeError):
         model.nut()
 

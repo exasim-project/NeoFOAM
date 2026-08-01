@@ -13,14 +13,13 @@ A model author writes a single ``Model.field(name, value_type=..., ...)``
 declaration; the framework picks up that declaration in
 ``ModelRuntime.run_build`` and emits the equivalent ``InitStep`` — no
 cross-link from ``@build`` required.
-
-The pybFoam import is deferred to factory invocation time so importing
-:mod:`neofoam.fields` does not pull in the OpenFOAM bindings.
 """
 
 from __future__ import annotations
 
 from typing import Any, Callable
+
+import pybFoam as pyf
 
 from neofoam.fields.decl import FieldDecl
 from neofoam.fields.value_types import Scalar, Vector
@@ -29,14 +28,7 @@ from neofoam.framework.initialization.init_step import InitStep
 
 
 def _resolve_read_field(value_type: type) -> Callable[[Any, str], Any]:
-    """Return the pybFoam ``<Type>.read_field`` callable for ``value_type``.
-
-    The lookup is deferred to call time so ``import neofoam.fields`` does
-    not transitively import ``pybFoam`` — only models that actually
-    materialise a runtime pay that import cost.
-    """
-    import pybFoam as pyf  # local import, see module docstring
-
+    """Return the pybFoam ``<Type>.read_field`` callable for ``value_type``."""
     dispatch: dict[type, Callable[[Any, str], Any]] = {
         Scalar: pyf.volScalarField.read_field,
         Vector: pyf.volVectorField.read_field,
