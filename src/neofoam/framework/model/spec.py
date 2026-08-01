@@ -30,6 +30,7 @@ from neofoam.framework.dependency_resolver import (
 from neofoam.framework.operations import Operation, Operations, SequentialOp
 from neofoam.framework.types import OperationMetadata, OperationNumber
 
+from .extension import ExtensionPoint
 from .interface import ModelInterface
 from .runtime import ModelRuntime
 
@@ -313,6 +314,27 @@ class ModelSpec:
 
         def decorator(func: Callable[..., _T]) -> Callable[..., _T]:
             return target._register_contribution(func, owner=self)
+
+        return decorator
+
+    def extends(
+        self, target: ExtensionPoint[_T]
+    ) -> Callable[[Callable[..., _T]], Callable[..., _T]]:
+        """Register a factory implementing *target*, owned by self.
+
+        The function is recorded against *target* and tagged with this model, then
+        returned unchanged. It is called — and its implementation handed to the
+        operations — iff this model is active for the case.
+        """
+        if not isinstance(target, ExtensionPoint):
+            raise TypeError(
+                f"Model '{self.name}': extends(...) target must be an "
+                "ExtensionPoint declared by an operation module, got "
+                f"{type(target).__name__}."
+            )
+
+        def decorator(func: Callable[..., _T]) -> Callable[..., _T]:
+            return target._register_factory(func, owner=self)
 
         return decorator
 
