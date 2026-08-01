@@ -51,7 +51,7 @@ from neofoam.foam import fvSchemes, fvSolution
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.dependency_resolver import wrap_with_dependency_resolution
 from neofoam.framework.initialization import field, model
-from neofoam.framework.model import Extensions
+from neofoam.framework.model import BoundExtension
 from neofoam.framework.operations import (
     IterativeOp,
     Operation,
@@ -63,9 +63,6 @@ from neofoam.framework.types import OperationMetadata
 from ..incompressibleFluidModel import Model
 from .control_factory import create_dynamic_mesh_controls, create_pimple_control
 from .extension import (
-    MeshUpdateExtension,
-    MomentumExtension,
-    PressureExtension,
     mesh_update_extension,
     momentum_extension,
     pressure_extension,
@@ -271,7 +268,7 @@ def mesh_update(
     pimple_control: Annotated[Any, "models"],
     dynamic_mesh_controls: Annotated[dict[str, bool], "models"],
     cumulativeContErr: Annotated[list[float], "models"],
-    ext: Annotated[Extensions[MeshUpdateExtension], mesh_update_extension],
+    ext: Annotated[BoundExtension, mesh_update_extension],
     Uf: Annotated[Optional[surfaceVectorField], "models"] = None,
 ) -> FieldUpdates:
     """Move the mesh at the head of the outer corrector (pimpleFoam's ``mesh.update()``).
@@ -299,8 +296,7 @@ def mesh_update(
     if not mesh.changing():
         return FieldUpdates({})
 
-    for extension in ext:
-        extension.on_mesh_change()
+    ext.on_mesh_change()
     if not dynamic_mesh_controls["correctPhi"]:
         return FieldUpdates({})
 
@@ -340,7 +336,7 @@ def momentum(
     viscousStress: Annotated[ViscousStress, "models"],
     pimple_control: Annotated[Any, "models"],
     ctx: Context,
-    ext: Annotated[Extensions[MomentumExtension], momentum_extension],
+    ext: Annotated[BoundExtension, momentum_extension],
 ) -> FieldUpdates:
     # Start-of-outer-iteration prevIter snapshot: ``pimpleControl::loop()`` calls
     # ``storePrevIterFields()`` so the pressure corrector's ``p.relax()`` has a
@@ -399,7 +395,7 @@ def continuity(
     pimple_control: Annotated[Any, "models"],
     cumulativeContErr: Annotated[list[float], "models"],
     pressure_reference: Annotated[dict[str, Any], "models"],
-    ext: Annotated[Extensions[PressureExtension], pressure_extension],
+    ext: Annotated[BoundExtension, pressure_extension],
     Uf: Annotated[Optional[surfaceVectorField], "models"] = None,
 ) -> FieldUpdates:
     """Pressure-velocity coupling.
@@ -423,14 +419,13 @@ def continuity(
             # the MRF cells (it belongs to the absolute frame), then the whole
             # flux is taken relative to the rotation.
             corr = fvc.interpolate(rAU) * ddt_corr
-            for extension in ext:
-                corr = extension.filter_ddt_corr(corr)
+            for filtered in ext.filter_ddt_corr(corr):
+                corr = filtered
             phiHbyA = surfaceScalarField(
                 pyf.Word("phiHbyA"),
                 fvc.flux(HbyA) + corr,
             )
-            for extension in ext:
-                extension.make_relative(phiHbyA)
+            ext.make_relative(phiHbyA)
 
             # adjustPhi balances the global flux, which only means anything
             # relative to the moving mesh — hence native's
@@ -444,10 +439,7 @@ def continuity(
             pyf.adjustPhi(phiHbyA, U, p)
             if needs_reference:
                 fvc.makeAbsolute(phiHbyA, U)
-            handled = False
-            for extension in ext:
-                handled = extension.constrain_pressure(p, U, phiHbyA, rAU) or handled
-            if not handled:
+            if not any(ext.constrain_pressure(p, U, phiHbyA, rAU)):
                 pyf.constrainPressure(p, U, phiHbyA, rAU)
 
         while pimple_control.correctNonOrthogonal():
@@ -466,11 +458,10 @@ def continuity(
         p.relax()
         U.assign(HbyA - rAU * fvc.grad(p))
         U.correctBoundaryConditions()
-        for extension in ext:
-            # pEqn.H closes on a second ``fvOptions.correct(U)``: the corrector
-            # has just overwritten U, so any correction the predictor applied is
-            # gone.
-            extension.correct(U)
+        # pEqn.H closes on a second ``fvOptions.correct(U)``: the corrector
+        # has just overwritten U, so any correction the predictor applied is
+        # gone.
+        ext.correct(U)
 
         _report_continuity_errors(phi, cumulativeContErr)
 

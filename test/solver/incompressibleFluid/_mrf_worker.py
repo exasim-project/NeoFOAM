@@ -6,7 +6,7 @@
 One ``Foam::Time`` per process, so the staged init runs here and the test reads
 the JSON. Every matrix comes out of the *production* ``momentum`` operation, the
 only difference being the injected momentum extensions — the ones the
-case's own models resolve to, against the empty container a case without
+case's own models resolve to, against the empty seam a case without
 ``MRFProperties`` would get.
 
 Three assemblies, in this order, so both hooks can be read off independently:
@@ -33,7 +33,7 @@ from typing import Any
 
 import numpy as np
 
-from neofoam.framework.model import Extensions
+from neofoam.framework.model import BoundExtension
 from neofoam.solver.incompressibleFluid.incompressibleFluid import incompressibleFluid
 from neofoam.solver.incompressibleFluid.models.pressure_velocity.extension import (
     momentum_extension,
@@ -78,9 +78,10 @@ if __name__ == "__main__":
     mrf_zones = ctx.models["mrf_zones"]
 
     mrf_ext = momentum_extension.resolve(ctx)
-    # Resolve against no Context: the empty container of a case without the
-    # model, still carrying the point's fold machinery for ``+ ext.terms(U)``.
-    no_ext: Extensions[Any] = momentum_extension.resolve(None)
+    # Resolve against no Context: the seam of a case without the model — every
+    # site falls back to its declared default (``+ ext.terms(U)`` adds the zero
+    # seed only).
+    no_ext: BoundExtension = momentum_extension.resolve(None)
 
     walls_before = np.asarray(U["walls"]).tolist()
     source_plain = _assemble(ctx, no_ext)

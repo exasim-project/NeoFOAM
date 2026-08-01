@@ -15,8 +15,8 @@ and implements the three hooks native's ``UEqn.H``/``pEqn.H`` use: the source
 matrix ``fvOptions(U)`` (``fvOptions(rho, U)`` for VoF), ``constrain(UEqn)``
 *after* the equation is relaxed, and ``correct(U)`` *after* each solve of U. The
 incompressibleFluid algorithms consume it through the ``momentum_extension`` /
-``pressure_extension`` points their operations declare (this spec registers the
-implementations there); incompressibleVoF still takes it as an
+``pressure_extension`` extensions their operations define (this spec contributes
+to their sites there); incompressibleVoF still takes it as an
 *optional* injected model and branches on ``None``.
 
 Shared by ``incompressibleFluid`` and ``incompressibleVoF``: each solver's model

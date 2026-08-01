@@ -14,7 +14,7 @@ The model owns one runtime object, ``ctx.models["mrf_zones"]`` — OpenFOAM's ow
 :class:`Foam::IOMRFZoneList`, which reads the dictionary, holds the zones and
 implements the frame terms. The incompressibleFluid algorithms consume it through
 the ``momentum_extension`` / ``pressure_extension`` / ``mesh_update_extension``
-points their operations declare (this spec registers the implementations
+extensions their operations define (this spec contributes to their sites
 there); incompressibleVoF still takes it as an
 *optional* injected model and branches on ``None``.
 

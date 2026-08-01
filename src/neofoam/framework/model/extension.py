@@ -301,6 +301,16 @@ class Extension:
         """The declared sites by name, in declaration order."""
         return dict(self._sites)
 
+    def __getattr__(self, name: str) -> ExtensionSite:
+        # Site handles are reachable as attributes (``momExt.terms``) so two
+        # extensions can share a site name without colliding at module level.
+        if name.startswith("_"):
+            raise AttributeError(name)
+        site = self._sites.get(name)
+        if site is None:
+            raise AttributeError(f"extension '{self.name}' defines no site '{name}'")
+        return site
+
     def resolve(self, ctx: Any) -> BoundExtension:
         """Bind this extension to *ctx* for one injection (see BoundExtension)."""
         return BoundExtension(self, ctx)

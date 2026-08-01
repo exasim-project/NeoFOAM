@@ -6,7 +6,7 @@
 One ``Foam::Time`` per process, so the staged init runs here and the test reads
 the JSON. Both operations are the *production* ones, the only difference being
 the injected momentum / pressure extensions — the ones the case's own models
-resolve to, against the empty containers a case without an ``fvOptions``
+resolve to, against the empty seams a case without an ``fvOptions``
 dictionary would get.
 
 The two variants run in two processes rather than twice in one, so each starts
@@ -28,7 +28,7 @@ from typing import Any
 
 import numpy as np
 
-from neofoam.framework.model import Extensions
+from neofoam.framework.model import BoundExtension
 from neofoam.solver.incompressibleFluid.incompressibleFluid import incompressibleFluid
 from neofoam.solver.incompressibleFluid.models.pressure_velocity import (
     pimpleAlgorithm,
@@ -63,12 +63,12 @@ if __name__ == "__main__":
 
     ctx = incompressibleFluid.instantiate(argv=["incompressibleFluid"]).initialize()
     U = ctx.fields["U"]
-    # ``resolve(None)``: the empty container of a case without the models, still
-    # carrying the point's fold machinery for ``+ ext.terms(U)``.
-    momentum_ext: Extensions[Any] = (
+    # ``resolve(None)``: the seam of a case without the models — every site
+    # falls back to its declared default (``+ ext.terms(U)`` adds the zero seed).
+    momentum_ext: BoundExtension = (
         momentum_extension.resolve(ctx) if variant == "with" else momentum_extension.resolve(None)
     )
-    pressure_ext: Extensions[Any] = (
+    pressure_ext: BoundExtension = (
         pressure_extension.resolve(ctx) if variant == "with" else pressure_extension.resolve(None)
     )
 
