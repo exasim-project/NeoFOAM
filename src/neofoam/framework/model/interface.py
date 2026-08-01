@@ -76,13 +76,16 @@ def _resolve_contribution_kwargs(
     func: Callable[..., T],
     runtime: ModelRuntime,
     ctx: Any,
+    call_kwargs: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Resolve *func*'s parameters the same way ``@model.operation`` does.
 
-    Config-typed params (``BaseConfig`` subclasses) are pulled from the
-    *contributing* runtime's own ``config`` by type via ``config_injection``; the
-    remainder is resolved by the shared ``DependencyResolver`` (``ctx.fields`` by
-    name, ``Depends`` markers). A parameter that resolves to neither raises a
+    *call_kwargs* (an ``Extension`` site's call-time arguments, named against the
+    site declaration) pre-resolve any parameter of the same name. Config-typed
+    params (``BaseConfig`` subclasses) are pulled from the *contributing*
+    runtime's own ``config`` by type via ``config_injection``; the remainder is
+    resolved by the shared ``DependencyResolver`` (``ctx.fields`` by name,
+    ``Depends`` markers). A parameter that resolves to neither raises a
     ``ValueError`` naming the interface, the contribution, and the parameter.
     """
     # Lazy imports break the cycle interface -> config_injection/dependency_resolver
@@ -96,6 +99,9 @@ def _resolve_contribution_kwargs(
     )
 
     preresolved: dict[str, Any] = {}
+    if call_kwargs:
+        func_params = inspect.signature(func).parameters
+        preresolved.update({k: v for k, v in call_kwargs.items() if k in func_params})
     for meta in _discover_configs_from_signature(func):
         pname = meta["param_name"]
         try:

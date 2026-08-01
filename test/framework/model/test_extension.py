@@ -17,6 +17,8 @@ import pytest
 from neofoam.framework.context import Context
 from neofoam.framework.dependency_resolver import DependencyResolver
 from neofoam.framework.model import (
+    BoundExtension,
+    Extension,
     ExtensionPoint,
     Extensions,
     Model,
@@ -418,6 +420,206 @@ def test_resolver_injects_an_empty_container_when_no_model_is_active(point: Any)
 def test_resolver_raises_for_an_extension_point_param_without_a_context(point: Any) -> None:
     def momentum(self: Any, ext: Annotated[Extensions[_Correction], point]) -> list[str]:
         return [e.label() for e in ext]
+
+    with pytest.raises(ValueError, match="no Context"):
+        DependencyResolver().resolve_arguments(momentum, ctx=None)
+
+
+# ---------------------------------------------------------------------------
+# Extension: function-declared sites (@<extension>.defines / @<model>.contributes)
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def momentum_ext() -> Any:
+    """An extension with one term site (body = seed) and one broadcast site,
+    as an operation module would define it."""
+    ext = Extension("momentum")
+
+    @ext.defines
+    def terms(U: str) -> Any:
+        return _Sum(f"zero({U})")
+
+    @ext.defines
+    def constrain(UEqn: Any) -> None: ...
+
+    return ext
+
+
+def contributor(site: Any, func: Callable[..., Any], name: str, config: Any = None) -> ModelRuntime:
+    """A fresh ``Model`` named *name* contributing *func* to *site*, returned as
+    the live ``ModelRuntime`` that makes the contribution active for a case."""
+    model = Model(name)
+    model.contributes(site)(func)
+    return ModelRuntime(spec=model, name=name, config=config)
+
+
+def test_defines_returns_the_site_handle_under_the_declared_name() -> None:
+    ext = Extension("momentum")
+
+    @ext.defines
+    def terms(U: str) -> Any: ...
+
+    assert terms.name == "terms"
+    assert terms.extension is ext
+    assert ext.sites == {"terms": terms}
+
+
+def test_defining_the_same_site_twice_raises() -> None:
+    ext = Extension("momentum")
+
+    def declare_terms() -> None:
+        @ext.defines
+        def terms(U: str) -> Any: ...
+
+    declare_terms()
+    with pytest.raises(RuntimeError, match="site 'terms' is already defined"):
+        declare_terms()
+
+
+def test_contributes_returns_the_function_unchanged(momentum_ext: Any) -> None:
+    site = momentum_ext.sites["terms"]
+    mrf = Model("mrf")
+
+    def mrf_terms(U: str) -> Any:
+        return _Sum("mrf")
+
+    assert mrf.contributes(site)(mrf_terms) is mrf_terms
+
+
+def test_a_term_site_folds_the_seed_and_contributions_in_registration_order(
+    momentum_ext: Any,
+) -> None:
+    site = momentum_ext.sites["terms"]
+    mrf_rt = contributor(site, lambda U: _Sum("mrf"), "mrf")
+    fv_rt = contributor(site, lambda U: _Sum("fvOptions"), "fvOptions")
+    # Context insertion order deliberately reversed: registration order wins.
+    ext = momentum_ext.resolve(active_ctx(fv_rt, mrf_rt))
+    assert ext.terms("U").trace == "((zero(U)+mrf)+fvOptions)"
+
+
+def test_a_negated_contribution_folds_by_subtraction(momentum_ext: Any) -> None:
+    site = momentum_ext.sites["terms"]
+    rt = contributor(site, lambda U: negated(_Sum("src")), "fvOptions")
+    ext = momentum_ext.resolve(active_ctx(rt))
+    assert ext.terms("U").trace == "(zero(U)-src)"
+
+
+def test_a_none_contribution_result_is_skipped_in_the_fold(momentum_ext: Any) -> None:
+    site = momentum_ext.sites["terms"]
+    quiet_rt = contributor(site, lambda U: None, "quiet")
+    mrf_rt = contributor(site, lambda U: _Sum("mrf"), "mrf")
+    ext = momentum_ext.resolve(active_ctx(quiet_rt, mrf_rt))
+    assert ext.terms("U").trace == "(zero(U)+mrf)"
+
+
+def test_a_term_site_without_active_contributions_returns_the_seed(momentum_ext: Any) -> None:
+    ext = momentum_ext.resolve(Context(fields={}, models={}))
+    assert ext.terms("U").trace == "zero(U)"
+
+
+def test_an_inactive_model_does_not_contribute(momentum_ext: Any) -> None:
+    site = momentum_ext.sites["terms"]
+    contributor(site, lambda U: _Sum("mrf"), "mrf")  # never put into the Context
+    ext = momentum_ext.resolve(Context(fields={}, models={}))
+    assert ext.terms("U").trace == "zero(U)"
+
+
+def test_a_broadcast_site_returns_the_raw_results_in_registration_order(
+    momentum_ext: Any,
+) -> None:
+    site = momentum_ext.sites["constrain"]
+    no_rt = contributor(site, lambda UEqn: False, "passive")
+    yes_rt = contributor(site, lambda UEqn: True, "active")
+    ext = momentum_ext.resolve(active_ctx(no_rt, yes_rt))
+    assert ext.constrain("UEqn") == [False, True]
+    assert any(ext.constrain("UEqn"))
+
+
+def test_a_contribution_receives_the_call_argument_by_name(momentum_ext: Any) -> None:
+    site = momentum_ext.sites["terms"]
+    rt = contributor(site, lambda U: _Sum(f"ddt({U})"), "mrf")
+    ext = momentum_ext.resolve(active_ctx(rt))
+    assert ext.terms("field-U").trace == "(zero(field-U)+ddt(field-U))"
+
+
+def _site_from_zones(U: str, mrf_zones: Annotated[Any, "models"]) -> Any:
+    return _Sum(mrf_zones.name)
+
+
+def _site_from_config(U: str, cfg: _ZoneConfig) -> Any:
+    return _Sum(cfg.label)
+
+
+def test_a_contribution_resolves_a_models_annotated_parameter(momentum_ext: Any) -> None:
+    site = momentum_ext.sites["terms"]
+    rt = contributor(site, _site_from_zones, "mrf")
+    zones = SimpleNamespace(name="zones-from-context")
+    ctx = Context(fields={}, models={"mrf": rt, "mrf_zones": zones})
+    assert momentum_ext.resolve(ctx).terms("U").trace == "(zero(U)+zones-from-context)"
+
+
+def test_a_contribution_resolves_a_config_parameter_from_its_own_runtime(
+    momentum_ext: Any,
+) -> None:
+    site = momentum_ext.sites["terms"]
+    rt = contributor(site, _site_from_config, "mrf", config=_ZoneConfig(label="rotor"))
+    assert momentum_ext.resolve(active_ctx(rt)).terms("U").trace == "(zero(U)+rotor)"
+
+
+def _site_needs_field(U: str, deltaT: float) -> Any:
+    return _Sum(str(deltaT))
+
+
+def test_a_missing_contribution_parameter_error_names_site_and_contribution(
+    momentum_ext: Any,
+) -> None:
+    site = momentum_ext.sites["terms"]
+    rt = contributor(site, _site_needs_field, "mrf")
+    with pytest.raises(ValueError) as excinfo:
+        momentum_ext.resolve(active_ctx(rt)).terms("U")
+    message = str(excinfo.value)
+    assert "momentum.terms" in message
+    assert "_site_needs_field" in message
+    assert "deltaT" in message
+
+
+def test_an_unknown_site_raises_naming_the_extension(momentum_ext: Any) -> None:
+    ext = momentum_ext.resolve(Context(fields={}, models={}))
+    with pytest.raises(AttributeError, match="extension 'momentum' defines no site 'typo'"):
+        ext.typo()
+
+
+def test_underscore_attributes_never_dispatch_on_a_bound_extension(momentum_ext: Any) -> None:
+    ext = momentum_ext.resolve(Context(fields={}, models={}))
+    with pytest.raises(AttributeError):
+        ext._not_a_site
+
+
+def test_contributes_rejects_a_bare_extension() -> None:
+    mrf = Model("mrf")
+    with pytest.raises(TypeError, match="must be a ModelInterface"):
+
+        @mrf.contributes(Extension("momentum"))  # type: ignore[arg-type]
+        def mrf_terms(U: str) -> Any:
+            return _Sum("mrf")
+
+
+def test_resolver_injects_the_bound_extension_for_an_annotated_param(momentum_ext: Any) -> None:
+    site = momentum_ext.sites["terms"]
+    rt = contributor(site, lambda U: _Sum("mrf"), "mrf")
+
+    def momentum(self: Any, ext: Annotated[BoundExtension, momentum_ext]) -> str:
+        return str(ext.terms("U").trace)
+
+    kwargs = DependencyResolver().resolve_arguments(momentum, ctx=active_ctx(rt))
+    assert isinstance(kwargs["ext"], BoundExtension)
+    assert momentum(None, kwargs["ext"]) == "(zero(U)+mrf)"
+
+
+def test_resolver_raises_for_an_extension_param_without_a_context(momentum_ext: Any) -> None:
+    def momentum(self: Any, ext: Annotated[BoundExtension, momentum_ext]) -> Any:
+        return ext
 
     with pytest.raises(ValueError, match="no Context"):
         DependencyResolver().resolve_arguments(momentum, ctx=None)

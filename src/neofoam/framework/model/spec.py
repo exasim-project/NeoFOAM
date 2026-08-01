@@ -30,7 +30,7 @@ from neofoam.framework.dependency_resolver import (
 from neofoam.framework.operations import Operation, Operations, SequentialOp
 from neofoam.framework.types import OperationMetadata, OperationNumber
 
-from .extension import ExtensionPoint
+from .extension import ExtensionPoint, ExtensionSite
 from .interface import ModelInterface
 from .runtime import ModelRuntime
 
@@ -297,19 +297,21 @@ class ModelSpec:
         return handle
 
     def contributes(
-        self, target: ModelInterface[_T]
+        self, target: ModelInterface[_T] | ExtensionSite
     ) -> Callable[[Callable[..., _T]], Callable[..., _T]]:
         """Register an operation-style contribution to *target*, owned by self.
 
-        The function is recorded against *target* and tagged with this contributing
-        model, then returned unchanged. It participates in *target*'s live fold
-        (``BoundModelInterface.__call__``) iff this model is active for the case.
+        *target* is a ``ModelInterface`` or an ``Extension`` site declared via
+        ``@<extension>.defines``. The function is recorded against *target* and
+        tagged with this contributing model, then returned unchanged. It
+        participates in *target*'s live fold / site dispatch iff this model is
+        active for the case.
         """
-        if not isinstance(target, ModelInterface):
+        if not isinstance(target, (ModelInterface, ExtensionSite)):
             raise TypeError(
                 f"Model '{self.name}': contributes(...) target must be a "
-                "ModelInterface declared via @<model>.interface, got "
-                f"{type(target).__name__}."
+                "ModelInterface declared via @<model>.interface or an extension "
+                f"site declared via @<extension>.defines, got {type(target).__name__}."
             )
 
         def decorator(func: Callable[..., _T]) -> Callable[..., _T]:
