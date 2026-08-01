@@ -14,9 +14,10 @@ The model owns one runtime object, ``ctx.models["fv_options"]`` — OpenFOAM's o
 and implements the three hooks native's ``UEqn.H``/``pEqn.H`` use: the source
 matrix ``fvOptions(U)`` (``fvOptions(rho, U)`` for VoF), ``constrain(UEqn)``
 *after* the equation is relaxed, and ``correct(U)`` *after* each solve of U. The
-algorithms that consume it (SIMPLE and both PIMPLEs) take it as an *optional*
-injected model and branch on ``None``, so this module never has to supply a no-op
-stand-in.
+incompressibleFluid algorithms consume it through the ``momentum_extension`` /
+``pressure_extension`` points their operations declare (this spec registers the
+implementations there); incompressibleVoF still takes it as an
+*optional* injected model and branches on ``None``.
 
 Shared by ``incompressibleFluid`` and ``incompressibleVoF``: each solver's model
 package registers this one spec with its own plugin family (the source call

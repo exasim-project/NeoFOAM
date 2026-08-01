@@ -12,9 +12,11 @@ this model existed.
 
 The model owns one runtime object, ``ctx.models["mrf_zones"]`` — OpenFOAM's own
 :class:`Foam::IOMRFZoneList`, which reads the dictionary, holds the zones and
-implements the frame terms. The algorithms that consume it (SIMPLE and both
-PIMPLEs) take it as an *optional* injected model and branch on ``None``, so this
-module never has to supply a no-op stand-in.
+implements the frame terms. The incompressibleFluid algorithms consume it through
+the ``momentum_extension`` / ``pressure_extension`` / ``mesh_update_extension``
+points their operations declare (this spec registers the implementations
+there); incompressibleVoF still takes it as an
+*optional* injected model and branches on ``None``.
 
 Shared by ``incompressibleFluid`` and ``incompressibleVoF``: each solver's model
 package registers this one spec with its own plugin family (the momentum term
