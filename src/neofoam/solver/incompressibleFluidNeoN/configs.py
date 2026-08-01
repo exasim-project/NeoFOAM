@@ -31,3 +31,9 @@ class ControlDictConfig(TimeControlConfig):
     """
 
     application: str = "neoPimpleFoam"
+
+    # NeoN executor backend: ``Serial`` (default, single-thread CPU), ``CPU``
+    # (Kokkos host-parallel) or ``GPU`` (Kokkos-CUDA). Selects the executor
+    # passed to ``create_adapter_run_time`` so a case opts into the device
+    # backend the same way the legacy NeoN tutorials do (``executor GPU;``).
+    executor: str = "Serial"

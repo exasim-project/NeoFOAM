@@ -139,8 +139,15 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             # e.g. the fvSchemes conversion inside create_adapter_run_time).
             return pyf.Time(ctx["_arg_list"])
 
+        # Executor backend from system/controlDict (``executor`` key): Serial
+        # by default, or CPU/GPU to run the solve on the Kokkos host-parallel /
+        # CUDA backend. create_adapter_run_time itself defaults to Serial and
+        # does not read the key, so it is threaded through explicitly here.
+        control_cfg = next((m for m in core_models if isinstance(m, ControlDictConfig)), None)
+        executor_name = control_cfg.executor if control_cfg is not None else "Serial"
+
         def create_neon_runtime(ctx: dict[str, Any]) -> Any:
-            rt = nfb.create_adapter_run_time(ctx["_foam_time"])
+            rt = nfb.create_adapter_run_time(ctx["_foam_time"], executor_name)
             # Map OpenFOAM dictionaries to NeoN/Ginkgo equivalents once, up
             # front (mirrors the legacy port's setup block).
             rt.fv_schemes_dict = nfb.map_fv_schemes(rt.fv_schemes_dict)
