@@ -17,10 +17,8 @@ One extension per operation, not one per module: ``momentum``, ``continuity`` an
 ``mesh_update`` each declare their own, so a contribution only ever sees the
 sites of the operation it extends.
 
-The MRF and fvOptions contributions live here rather than in ``neofoam.mrf`` /
-``neofoam.fv_options``: those specs are shared with ``incompressibleVoF``, whose
-frame and source terms differ (``DDt(rho, U)``, ``fvOptions(rho, U)``), so the
-call sites belong to this solver's algorithms.
+This module only *defines* the sites; each model's contributions live next to
+its spec (``neofoam.mrf``, ``neofoam.fv_options``).
 
 Example::
 
@@ -29,7 +27,7 @@ Example::
         return my_runtime.term(U)
 """
 
-from typing import Annotated, Any
+from typing import Any
 
 import pybFoam as pyf
 from pybFoam import (
@@ -40,9 +38,7 @@ from pybFoam import (
     volVectorField,
 )
 
-from neofoam.framework.model import Extension, negated
-from neofoam.fv_options import fvOptions
-from neofoam.mrf import mrf
+from neofoam.framework.model import Extension
 
 __all__ = [
     "mesh_update_extension",
@@ -122,73 +118,3 @@ def correct(U: volVectorField) -> None:  # noqa: F811 — same site name, anothe
 @mesh_update_extension.defines
 def on_mesh_change() -> None:
     """React to a mesh move that changed the topology."""
-
-
-# ---------------------------------------------------------------------------
-# MRF contributions — the rotating-frame hooks of UEqn.H / pEqn.H
-# ---------------------------------------------------------------------------
-
-
-@mrf.contributes(momentum_extension.correct_boundary_velocity)
-def mrf_correct_boundary_velocity(U: volVectorField, mrf_zones: Annotated[Any, "models"]) -> None:
-    mrf_zones.correctBoundaryVelocity(U)
-
-
-@mrf.contributes(momentum_extension.terms)
-def mrf_frame_acceleration(U: volVectorField, mrf_zones: Annotated[Any, "models"]) -> Any:
-    return mrf_zones.DDt(U)
-
-
-@mrf.contributes(pressure_extension.filter_ddt_corr)
-def mrf_filter_ddt_corr(corr: Any, mrf_zones: Annotated[Any, "models"]) -> Any:
-    # The ddt correction belongs to the absolute frame, so it is zeroed
-    # inside the MRF cells before the flux is taken relative to the rotation.
-    return mrf_zones.zeroFilter(corr)
-
-
-@mrf.contributes(pressure_extension.make_relative)
-def mrf_make_relative(phiHbyA: surfaceScalarField, mrf_zones: Annotated[Any, "models"]) -> None:
-    mrf_zones.makeRelative(phiHbyA)
-
-
-@mrf.contributes(pressure_extension.constrain_pressure)
-def mrf_constrain_pressure(
-    p: volScalarField,
-    U: volVectorField,
-    phiHbyA: surfaceScalarField,
-    rAU: volScalarField,
-    mrf_zones: Annotated[Any, "models"],
-) -> bool:
-    pyf.constrainPressure(p, U, phiHbyA, rAU, mrf_zones)
-    return True
-
-
-@mrf.contributes(mesh_update_extension.on_mesh_change)
-def mrf_on_mesh_change(mrf_zones: Annotated[Any, "models"]) -> None:
-    mrf_zones.update()
-
-
-# ---------------------------------------------------------------------------
-# fvOptions contributions — the fv::options hooks of UEqn.H / pEqn.H
-# ---------------------------------------------------------------------------
-
-
-@fvOptions.contributes(momentum_extension.terms)
-def fv_options_momentum_source(U: volVectorField, fv_options: Annotated[Any, "models"]) -> Any:
-    # Native's ``== fvOptions(U)``: the source joins the sum subtracted.
-    return negated(fv_options(U))
-
-
-@fvOptions.contributes(momentum_extension.constrain)
-def fv_options_constrain(UEqn: fvVectorMatrix, fv_options: Annotated[Any, "models"]) -> None:
-    fv_options.constrain(UEqn)
-
-
-@fvOptions.contributes(momentum_extension.correct)
-def fv_options_momentum_correct(U: volVectorField, fv_options: Annotated[Any, "models"]) -> None:
-    fv_options.correct(U)
-
-
-@fvOptions.contributes(pressure_extension.correct)
-def fv_options_pressure_correct(U: volVectorField, fv_options: Annotated[Any, "models"]) -> None:
-    fv_options.correct(U)

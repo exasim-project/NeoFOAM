@@ -114,12 +114,15 @@ A model contributes one plain function per site it acts at, with
 <neofoam.framework.model.spec.ModelSpec.contributes>`) — the same
 decorator used for interfaces. Sites are reached as attributes of the
 extension (``momentum_extension.terms``), so two extensions can share a
-site name:
+site name. The contributions live next to the model spec they belong to —
+in ``neofoam/mrf.py`` / ``neofoam/fv_options.py``:
 
 .. code-block:: python
 
-    from neofoam.fv_options import fvOptions
-    from neofoam.mrf import mrf
+    from neofoam.solver.incompressibleFluid.models.pressure_velocity.extension import (
+        momentum_extension,
+        pressure_extension,
+    )
 
 
     @mrf.contributes(momentum_extension.terms)
@@ -249,14 +252,21 @@ annotations at runtime.)
 Where to put the contributions
 ------------------------------
 
-The MRF and ``fvOptions`` contributions live in the solver's
-``pressure_velocity/extension.py``, not in ``neofoam/mrf.py`` /
-``neofoam/fv_options.py``. Those two specs are shared with
-``incompressibleVoF``, whose frame and source terms differ
-(``DDt(rho, U)``, ``fvOptions(rho, U)``) — so the *call sites* belong to
-the algorithm that makes them, and each solver ships its own
-contributions to its own extensions. The model spec stays
-solver-agnostic; only the contribution is per-solver.
+The extension *definitions* live with the operations they extend
+(``pressure_velocity/extension.py``); the *contributions* live with the
+model spec they belong to (``neofoam/mrf.py``, ``neofoam/fv_options.py``)
+— everything the MRF model does to a case reads in one module. Two
+consequences of that placement:
+
+* The extension import in ``mrf.py`` sits **below** the spec definition.
+  The solver package imports ``neofoam.mrf`` back to register the spec,
+  so a top-of-file import of the solver's extension module would re-enter
+  ``mrf.py`` before ``mrf`` exists — a circular import.
+* The MRF and ``fvOptions`` specs are shared with ``incompressibleVoF``,
+  whose frame and source terms differ (``DDt(rho, U)``,
+  ``fvOptions(rho, U)``). When VoF's operations define their own
+  extensions, those contributions join the same modules — one set per
+  solver's extension, side by side under the one spec.
 
 See also
 --------
