@@ -16,7 +16,7 @@ matrix ``fvOptions(U)`` (``fvOptions(rho, U)`` for VoF), ``constrain(UEqn)``
 *after* the equation is relaxed, and ``correct(U)`` *after* each solve of U. The
 incompressibleFluid algorithms consume it through the ``momentum_extension`` /
 ``pressure_extension`` extensions their operations define — this spec's
-contributions to those sites live at the bottom of this module;
+contributions to those hooks live at the bottom of this module;
 incompressibleVoF still takes it as an *optional* injected model and branches
 on ``None``.
 

@@ -418,9 +418,7 @@ def continuity(
             # pEqn.H under a rotating frame: the ddt correction is zeroed inside
             # the MRF cells (it belongs to the absolute frame), then the whole
             # flux is taken relative to the rotation.
-            corr = fvc.interpolate(rAU) * ddt_corr
-            for filtered in ext.filter_ddt_corr(corr):
-                corr = filtered
+            corr = ext.filter_ddt_corr(fvc.interpolate(rAU) * ddt_corr)
             phiHbyA = surfaceScalarField(
                 pyf.Word("phiHbyA"),
                 fvc.flux(HbyA) + corr,
@@ -439,7 +437,7 @@ def continuity(
             pyf.adjustPhi(phiHbyA, U, p)
             if needs_reference:
                 fvc.makeAbsolute(phiHbyA, U)
-            if not any(ext.constrain_pressure(p, U, phiHbyA, rAU)):
+            if not ext.constrain_pressure(p, U, phiHbyA, rAU):
                 pyf.constrainPressure(p, U, phiHbyA, rAU)
 
         while pimple_control.correctNonOrthogonal():

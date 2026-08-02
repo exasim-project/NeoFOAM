@@ -30,7 +30,7 @@ from neofoam.framework.dependency_resolver import (
 from neofoam.framework.operations import Operation, Operations, SequentialOp
 from neofoam.framework.types import OperationMetadata, OperationNumber
 
-from .extension import ExtensionPoint, ExtensionSite
+from .extension import Hook
 from .interface import ModelInterface
 from .runtime import ModelRuntime
 
@@ -302,51 +302,28 @@ class ModelSpec:
     ) -> Callable[[Callable[..., _T]], Callable[..., _T]]: ...
 
     @overload
-    def contributes(
-        self, target: ExtensionSite
-    ) -> Callable[[Callable[..., Any]], Callable[..., Any]]: ...
+    def contributes(self, target: Hook) -> Callable[[Callable[..., Any]], Callable[..., Any]]: ...
 
     def contributes(
-        self, target: ModelInterface[_T] | ExtensionSite
+        self, target: ModelInterface[_T] | Hook
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         """Register an operation-style contribution to *target*, owned by self.
 
-        *target* is a ``ModelInterface`` or an ``Extension`` site declared via
-        ``@<extension>.defines``. The function is recorded against *target* and
-        tagged with this contributing model, then returned unchanged. It
-        participates in *target*'s live fold / site dispatch iff this model is
-        active for the case.
+        *target* is a ``ModelInterface`` or an extension :class:`Hook` declared
+        via ``@<extension>.defines``. The function is recorded against *target*
+        and tagged with this contributing model, then returned unchanged. It
+        participates in *target*'s dispatch iff this model is active for the
+        case.
         """
-        if not isinstance(target, (ModelInterface, ExtensionSite)):
+        if not isinstance(target, (ModelInterface, Hook)):
             raise TypeError(
                 f"Model '{self.name}': contributes(...) target must be a "
                 "ModelInterface declared via @<model>.interface or an extension "
-                f"site declared via @<extension>.defines, got {type(target).__name__}."
+                f"hook declared via @<extension>.defines, got {type(target).__name__}."
             )
 
         def decorator(func: Callable[..., _T]) -> Callable[..., _T]:
             return target._register_contribution(func, owner=self)
-
-        return decorator
-
-    def extends(
-        self, target: ExtensionPoint[_T]
-    ) -> Callable[[Callable[..., _T]], Callable[..., _T]]:
-        """Register a factory implementing *target*, owned by self.
-
-        The function is recorded against *target* and tagged with this model, then
-        returned unchanged. It is called — and its implementation handed to the
-        operations — iff this model is active for the case.
-        """
-        if not isinstance(target, ExtensionPoint):
-            raise TypeError(
-                f"Model '{self.name}': extends(...) target must be an "
-                "ExtensionPoint declared by an operation module, got "
-                f"{type(target).__name__}."
-            )
-
-        def decorator(func: Callable[..., _T]) -> Callable[..., _T]:
-            return target._register_factory(func, owner=self)
 
         return decorator
 
