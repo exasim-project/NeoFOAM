@@ -17,13 +17,6 @@ from .extension import (
     fold,
     negated,
 )
-from .interface import (
-    BoundModelInterface,
-    ModelInterface,
-    active_contributors,
-    bind_model_interface,
-    bind_owned_interfaces,
-)
 from .runtime import ModelRuntime
 from .spec import Model, ModelSpec
 
@@ -31,14 +24,9 @@ __all__ = [
     "ModelSpec",
     "ModelRuntime",
     "Model",
-    "ModelInterface",
-    "BoundModelInterface",
     "BoundExtension",
     "Extension",
     "Hook",
-    "active_contributors",
-    "bind_model_interface",
-    "bind_owned_interfaces",
     "fold",
     "negated",
 ]

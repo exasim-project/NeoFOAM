@@ -16,7 +16,6 @@ from pybFoam.turbulence import singlePhaseTransportModel
 
 from neofoam.fields.synthesis import synthesize_init_step
 from neofoam.foam.initialization import new_mesh, refuse_mesh_refinement
-from neofoam.framework.context import Context
 from neofoam.framework.initialization import (
     ConfigContext,
     InitializerBuilder,
@@ -30,7 +29,7 @@ from neofoam.framework.initialization import (
 from neofoam.framework.initialization import (
     model as init_model,
 )
-from neofoam.framework.model import ModelRuntime, ModelSpec, bind_owned_interfaces
+from neofoam.framework.model import ModelRuntime, ModelSpec
 from neofoam.framework.tools import tool_graph_steps
 from neofoam.tools.run import detect_tools
 from neofoam.turbulence.config import TurbulencePropertiesConfig
@@ -289,24 +288,18 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         for name, opt in _optional_models_by_name(optional_models).items():
             builder.add_model(name, opt)
 
-        # MI7 auto-wiring: bind the solutionLoop runtime's owned interfaces
-        # (timeStepConstraint / loopCondition) to the case's active contributing
-        # optional-model runtimes, and register the owner runtime under its spec
-        # name so the resolver finds ctx.models["solutionLoop"]. The bound
-        # interfaces are stored, not folded this iteration — the live deltaT drive
-        # stays deferred, so they are bound against an EMPTY Context. Capturing the
-        # live pybFoam fields/models here would create a reference cycle holding
-        # mesh-bound pybFoam objects that segfaults at GC across in-process solver
-        # runs; the future live drive re-binds against the live Context at call time.
-        def wire_loop_interfaces(_work: dict[str, Any]) -> Any:
-            return bind_owned_interfaces(
-                solution_loop_model, optional_models, Context(fields={}, models={})
-            )
+        # Register the solutionLoop owner runtime under its spec name so it
+        # stays discoverable as ctx.models["solutionLoop"]. Its gather hooks
+        # (timeStepConstraint / loopCondition) need no wiring step: the hooks
+        # a consumer injects are bound to the live Context on every operation
+        # call, so nothing case-bound is ever captured across runs.
+        def register_loop_runtime(_work: dict[str, Any]) -> Any:
+            return solution_loop_model
 
         builder.add(
             init_model(
                 "solutionLoop",
-                wire_loop_interfaces,
+                register_loop_runtime,
                 depends_on=["models.solution_loop"],
             )
         )

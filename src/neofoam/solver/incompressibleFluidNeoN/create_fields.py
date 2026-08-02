@@ -30,7 +30,6 @@ from typing import Any, Optional
 import pybFoam as pyf
 
 from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
-from neofoam.framework.context import Context
 from neofoam.framework.initialization import (
     ConfigContext,
     InitializerBuilder,
@@ -43,7 +42,7 @@ from neofoam.framework.initialization import (
 from neofoam.framework.initialization import (
     model as init_model,
 )
-from neofoam.framework.model import ModelRuntime, bind_owned_interfaces
+from neofoam.framework.model import ModelRuntime
 from neofoam.solver.neon_runtime import requested_executor
 from neofoam.turbulence.config import TurbulencePropertiesConfig
 from neofoam.turbulence.selection import select_turbulence_model
@@ -231,21 +230,18 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         for name, opt in _optional_models_by_name(optional_models).items():
             builder.add_model(name, opt)
 
-        # MI7 auto-wiring: bind the solutionLoop runtime's owned interfaces
-        # (timeStepConstraint / loopCondition) to the case's active contributing
-        # optional-model runtimes. Bound against an EMPTY Context — capturing
-        # live backend objects here would create a reference cycle that
-        # segfaults at GC across in-process solver runs; the live fold re-binds
-        # against the live Context at call time.
-        def wire_loop_interfaces(_work: dict[str, Any]) -> Any:
-            return bind_owned_interfaces(
-                solution_loop_model, optional_models, Context(fields={}, models={})
-            )
+        # Register the solutionLoop owner runtime under its spec name so it
+        # stays discoverable as ctx.models["solutionLoop"]. Its gather hooks
+        # (timeStepConstraint / loopCondition) need no wiring step: the hooks
+        # a consumer injects are bound to the live Context on every operation
+        # call, so nothing case-bound is ever captured across runs.
+        def register_loop_runtime(_work: dict[str, Any]) -> Any:
+            return solution_loop_model
 
         builder.add(
             init_model(
                 "solutionLoop",
-                wire_loop_interfaces,
+                register_loop_runtime,
                 depends_on=["models.solution_loop"],
             )
         )

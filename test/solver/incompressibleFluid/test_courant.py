@@ -16,7 +16,7 @@ from neofoam.algorithms.solution_loop.interfaces import (
     timeStepConstraint,
 )
 from neofoam.framework.context import Context
-from neofoam.framework.model import BoundModelInterface, ModelRuntime
+from neofoam.framework.model import ModelRuntime
 from neofoam.solver.incompressibleFluid.models.courant import (
     CourantConfig,
     courant,
@@ -37,6 +37,13 @@ def _courant_runtime(max_co: float = 1.0) -> ModelRuntime:
     return ModelRuntime(spec=courant, name="courant", config=CourantConfig(maxCo=max_co))
 
 
+def _bound(interface, runtimes, ctx):  # type: ignore[no-untyped-def]
+    """*interface* resolved against *ctx* with exactly *runtimes* active — the
+    injected form ``set_time_step`` receives and calls."""
+    live = Context(fields=ctx.fields, models={**ctx.models, **{rt.name: rt for rt in runtimes}})
+    return interface.resolve(live)
+
+
 def test_contribution_lives_under_the_solver_not_the_framework() -> None:
     assert courant_limit.__module__.startswith("neofoam.solver.incompressibleFluid")
 
@@ -46,7 +53,7 @@ def test_courant_contribution_limits_delta_t_like_the_cfl_rule(
 ) -> None:
     monkeypatch.setattr(courant_mod, "computeCFLNumber", lambda phi: [2.0])
     ctx = Context(fields={"phi": object(), "deltaT": 0.1}, models={})
-    bound = BoundModelInterface(timeStepConstraint, [_courant_runtime()], ctx)
+    bound = _bound(timeStepConstraint, [_courant_runtime()], ctx)
     assert bound() == pytest.approx(0.05)  # 0.1 * 1.0 / 2.0
 
 
@@ -56,14 +63,14 @@ def test_quiescent_flow_still_reports_a_per_step_limit(monkeypatch: pytest.Monke
     # reporting VGREAT here would freeze the first step of every quiescent start.
     monkeypatch.setattr(courant_mod, "computeCFLNumber", lambda phi: [0.0])
     ctx = Context(fields={"phi": object(), "deltaT": 0.1}, models={})
-    bound = BoundModelInterface(timeStepConstraint, [_courant_runtime()], ctx)
+    bound = _bound(timeStepConstraint, [_courant_runtime()], ctx)
     assert bound() == pytest.approx(0.1 * 1.0 / 1e-15)
 
 
 def test_initial_contribution_is_the_undamped_cfl_limit(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(courant_mod, "computeCFLNumber", lambda phi: [2.0])
     ctx = Context(fields={"phi": object(), "deltaT": 0.1}, models={})
-    bound = BoundModelInterface(initialTimeStepConstraint, [_courant_runtime()], ctx)
+    bound = _bound(initialTimeStepConstraint, [_courant_runtime()], ctx)
     assert bound() == pytest.approx(0.05)  # 1.0 * 0.1 / 2.0
 
 
@@ -72,13 +79,13 @@ def test_quiescent_flow_yields_no_initial_opinion(monkeypatch: pytest.MonkeyPatc
     # pass, including the write-time snapping its setDeltaT call would trigger.
     monkeypatch.setattr(courant_mod, "computeCFLNumber", lambda phi: [0.0])
     ctx = Context(fields={"phi": object(), "deltaT": 0.1}, models={})
-    bound = BoundModelInterface(initialTimeStepConstraint, [_courant_runtime()], ctx)
+    bound = _bound(initialTimeStepConstraint, [_courant_runtime()], ctx)
     assert bound() == VGREAT
 
 
 def test_contribution_excluded_when_model_inactive() -> None:
     ctx = Context(fields={"phi": object(), "deltaT": 0.1}, models={})
-    bound = BoundModelInterface(timeStepConstraint, [], ctx)  # courant not active
+    bound = _bound(timeStepConstraint, [], ctx)  # courant not active
     assert bound() == VGREAT
 
 
@@ -141,18 +148,15 @@ def test_config_presence_drives_detection(
 def test_contribution_resolves_live_phi_and_config_at_call_time(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    # Bound against an EMPTY ctx (no live capture); the live ctx is passed at call
-    # time and is where phi + deltaT resolve, while cfg comes from the runtime.
+    # The hook resolves against the live ctx of the injection: phi + deltaT come
+    # from its fields at call time, while cfg comes from the contributing runtime.
     monkeypatch.setattr(courant_mod, "computeCFLNumber", lambda phi: [2.0])
-    bound = BoundModelInterface(
-        timeStepConstraint,
-        [_courant_runtime(max_co=1.0)],
-        Context(fields={}, models={}),
-    )
-    live = Context(fields={"phi": object(), "deltaT": 0.1}, models={})
-    assert bound(live) == pytest.approx(0.05)  # 0.1 * 1.0 / 2.0
+    rt = _courant_runtime(max_co=1.0)
+    live = Context(fields={"phi": object(), "deltaT": 0.1}, models={"courant": rt})
+    assert timeStepConstraint.resolve(live)() == pytest.approx(0.05)  # 0.1 * 1.0 / 2.0
     with pytest.raises(ValueError, match="no provider supplies it"):
-        bound()  # empty bound ctx -> phi/deltaT absent
+        # a ctx without the fields cannot resolve the contribution
+        timeStepConstraint.resolve(Context(fields={}, models={"courant": rt}))()
 
 
 def test_model_inactive_when_no_control_dict_is_present(

@@ -19,7 +19,7 @@ from neofoam.algorithms.solution_loop.interfaces import (
     solutionLoop,
     timeStepConstraint,
 )
-from neofoam.framework.model import ModelInterface
+from neofoam.framework.model import Hook
 
 _LIMIT_INTERFACES = [timeStepConstraint, maxTimeStep, initialTimeStepConstraint]
 
@@ -29,9 +29,8 @@ _LIMIT_INTERFACES = [timeStepConstraint, maxTimeStep, initialTimeStepConstraint]
     _LIMIT_INTERFACES + [loopCondition],
     ids=lambda iface: iface.name,
 )
-def test_loop_interfaces_are_owned_by_the_loop_model(interface: ModelInterface) -> None:
-    assert isinstance(interface, ModelInterface)
-    assert interface.owner is solutionLoop
+def test_loop_interfaces_are_owned_by_the_loop_model(interface: Hook) -> None:
+    assert isinstance(interface, Hook)
     assert solutionLoop.declared_interfaces[interface.name] is interface
 
 
@@ -41,9 +40,9 @@ def test_loop_interfaces_are_owned_by_the_loop_model(interface: ModelInterface) 
     [([], VGREAT), ([2.0, 1.0, 3.0], 1.0), ([5.0], 5.0)],
 )
 def test_delta_t_limit_interfaces_fold_with_min(
-    interface: ModelInterface, limits: list[float], expected: float
+    interface: Hook, limits: list[float], expected: float
 ) -> None:
-    assert interface.fold(limits) == expected
+    assert interface.declaration(limits) == expected
 
 
 @pytest.mark.parametrize(
@@ -51,7 +50,7 @@ def test_delta_t_limit_interfaces_fold_with_min(
     [([], True), ([True, True], True), ([True, False], False)],
 )
 def test_loop_condition_folds_with_all(flags: list[bool], expected: bool) -> None:
-    assert loopCondition.fold(flags) is expected
+    assert loopCondition.declaration(flags) is expected
 
 
 def _imported_names(source: str) -> set[str]:

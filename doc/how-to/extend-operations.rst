@@ -13,28 +13,27 @@ activated — without naming a single model.
 Extension or model interface?
 -----------------------------
 
-Two seams exist, and picking the wrong one is the usual mistake:
+One mechanism, two spellings — a declaration whose body combines the
+contributions' results is a :class:`~neofoam.framework.model.extension.Hook`
+either way; what differs is who owns it:
 
 :class:`~neofoam.framework.model.extension.Extension`
-    Several **heterogeneous hooks** — a term to add here, a constraint to
-    apply there, a boundary to correct after the solve. Defined by the
-    *operation module*, one extension per operation with one
-    ``@defines`` function per hook. The operation receives one bound
-    handle and calls each hook once.
+    An *operation* opens seams: several **heterogeneous hooks** — a term
+    to add here, a constraint to apply there, a boundary to correct after
+    the solve. Defined by the operation module, one extension per
+    operation with one ``@defines`` function per hook. The operation
+    receives one bound handle and calls each hook once.
 
-:class:`~neofoam.framework.model.interface.ModelInterface`
-    One **single value** combined by one rule (``sum``, ``min``, ``any``).
-    Declared with ``@<model>.interface``
+``@<model>.interface``
+    A *model* gathers values: one hook on a model-private extension
     (:meth:`ModelSpec.interface
-    <neofoam.framework.model.spec.ModelSpec.interface>`) on the fold
-    function, contributed to with ``@<model>.contributes``
-    (:meth:`ModelSpec.contributes
-    <neofoam.framework.model.spec.ModelSpec.contributes>`), and *called*
-    by the consumer to get the folded result — see
+    <neofoam.framework.model.spec.ModelSpec.interface>`). The consumer
+    annotates a parameter with the handle itself and *calls* the injected
+    hook to get the single combined result — see
     :doc:`/auto_how-to/example_use_an_interface`.
 
-Rule of thumb: one gather point folded by one rule wants an interface; a
-family of hook points that activate together wants an extension. The
+Rule of thumb: one gather point combined by one rule wants an interface;
+a family of hooks that activate together wants an extension. The
 contribution side is the same decorator either way —
 ``@<model>.contributes(<target>)``.
 
