@@ -361,21 +361,21 @@ def set_time_step(
 
     Publishes the loop's current step as ``ctx.fields["deltaT"]`` so a contribution
     can inject ``deltaT`` without reading the Context, then **calls** each injected
-    interface with the **live** Context so the active contributing models resolve
-    their fields/config at this step. No active constraint -> ``min`` default
-    ``VGREAT`` -> the step is unchanged (fixed step).
+    interface hook — bound to the **live** Context by the injection, so the active
+    contributing models resolve their fields/config at this step. No active
+    constraint -> ``min`` default ``VGREAT`` -> the step is unchanged (fixed step).
 
     ``deltaT`` is re-published between the first step's two passes, mirroring the
     ``CourantNo.H`` pimpleFoam/interFoam re-run at the head of the loop.
     """
     loop = _engine(ctx)
     ctx.fields["deltaT"] = loop.current_delta_t()
-    loop.keep_running = conditions(ctx)  # type: ignore[misc]
-    ceiling = ceilings(ctx)  # type: ignore[misc]
+    loop.keep_running = conditions()  # type: ignore[misc]
+    ceiling = ceilings()  # type: ignore[misc]
     if loop.state.index == 0:
-        loop.set_initial_delta_t(initial_constraints(ctx), ceiling)  # type: ignore[misc]
+        loop.set_initial_delta_t(initial_constraints(), ceiling)  # type: ignore[misc]
         ctx.fields["deltaT"] = loop.current_delta_t()
-    limit = constraints(ctx)  # type: ignore[misc]
+    limit = constraints()  # type: ignore[misc]
     loop.next_dt = limit
     loop.constrain_delta_t(limit, ceiling)
 

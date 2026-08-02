@@ -129,7 +129,7 @@ def test_contributes_returns_the_function_unchanged(momentum_ext: Any) -> None:
 
 def test_contributes_rejects_a_bare_extension() -> None:
     mrf = Model("mrf")
-    with pytest.raises(TypeError, match="must be a ModelInterface"):
+    with pytest.raises(TypeError, match="must be a hook"):
 
         @mrf.contributes(Extension("momentum"))  # type: ignore[arg-type]
         def mrf_terms(U: str) -> Any:

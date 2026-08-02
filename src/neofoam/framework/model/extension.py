@@ -81,12 +81,46 @@ class Hook:
         # One insertion-ordered relation: contribution function -> owning model.
         self._contributions: dict[Callable[..., Any], ModelSpec] = {}
 
+    @property
+    def contributions(self) -> tuple[Callable[..., Any], ...]:
+        """The registered contribution functions, in registration order."""
+        return tuple(self._contributions)
+
+    def owner_of(self, contribution: Callable[..., Any]) -> ModelSpec:
+        """Return the contributing model that registered *contribution*.
+
+        Raises:
+            KeyError: if *contribution* was never registered on this hook.
+        """
+        if contribution not in self._contributions:
+            raise KeyError(
+                f"hook '{self.extension.name}.{self.name}': {contribution!r} "
+                "is not a registered contribution."
+            )
+        return self._contributions[contribution]
+
     def _register_contribution(
         self, func: Callable[..., Any], owner: ModelSpec
     ) -> Callable[..., Any]:
         """Record *func* as a contribution owned by the *owner* model."""
         self._contributions[func] = owner
         return func
+
+    def resolve(self, ctx: Any) -> Callable[..., Any]:
+        """Bind this hook to *ctx* for one injection.
+
+        The returned callable dispatches exactly like ``ext.<hook>(...)`` on a
+        :class:`BoundExtension` — it runs the active contributions and returns
+        the declaration body's combined value. This is how a model-owned
+        interface (``@<model>.interface``) is injected: the resolver binds the
+        annotating hook to the live Context, and the consumer just calls it.
+        """
+        runtime_by_spec = _runtime_by_spec(ctx)
+
+        def call(*args: Any, **kwargs: Any) -> Any:
+            return call_hook(self, runtime_by_spec, ctx, args, kwargs)
+
+        return call
 
 
 class Extension:
@@ -172,16 +206,9 @@ class BoundExtension:
     """
 
     def __init__(self, extension: Extension, ctx: Any) -> None:
-        # Lazy import breaks the cycle model.extension -> model.runtime -> ... .
-        from .runtime import ModelRuntime  # noqa: PLC0415
-
         self._extension = extension
         self._ctx = ctx
-        self._runtime_by_spec = (
-            {rt.spec: rt for rt in ctx.models.values() if isinstance(rt, ModelRuntime)}
-            if ctx is not None
-            else {}
-        )
+        self._runtime_by_spec = _runtime_by_spec(ctx)
 
     def __getattr__(self, name: str) -> Callable[..., Any]:
         # Underscore names never dispatch: internal state must miss naturally
@@ -196,6 +223,16 @@ class BoundExtension:
             return call_hook(hook, self._runtime_by_spec, self._ctx, args, kwargs)
 
         return call
+
+
+def _runtime_by_spec(ctx: Any) -> dict[Any, Any]:
+    """The live ``ModelRuntime``s of *ctx*, keyed by their spec (identity)."""
+    # Lazy import breaks the cycle model.extension -> model.runtime -> ... .
+    from .runtime import ModelRuntime  # noqa: PLC0415
+
+    if ctx is None:
+        return {}
+    return {rt.spec: rt for rt in ctx.models.values() if isinstance(rt, ModelRuntime)}
 
 
 def call_hook(

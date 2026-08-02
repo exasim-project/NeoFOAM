@@ -46,7 +46,7 @@ from neofoam.framework.dependency_resolver import (
     DependencyResolver,
     wrap_with_dependency_resolution,
 )
-from neofoam.framework.model import ModelRuntime, bind_owned_interfaces
+from neofoam.framework.model import ModelRuntime
 from neofoam.solver.incompressibleFluid.models.courant import CourantConfig, courant
 from neofoam.solver.incompressibleFluid.models.max_delta_t import (
     MaxDeltaTConfig,
@@ -104,9 +104,12 @@ def _step(loop: SolutionLoop, contributors: list[ModelRuntime]) -> None:
     loop_rt = ModelRuntime(spec=solutionLoop, name="solutionLoop", config=None)
     ctx = Context(
         fields={"phi": object()},
-        models={"solution_loop": loop, "solutionLoop": loop_rt},
+        models={
+            "solution_loop": loop,
+            "solutionLoop": loop_rt,
+            **{rt.name: rt for rt in contributors},
+        },
     )
-    bind_owned_interfaces(loop_rt, contributors, ctx)
     wrap_with_dependency_resolution(
         set_time_step, instance=None, dependency_resolver=DependencyResolver()
     )(ctx)

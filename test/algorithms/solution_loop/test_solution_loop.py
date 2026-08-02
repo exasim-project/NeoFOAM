@@ -47,7 +47,7 @@ from neofoam.framework.dependency_resolver import (
     DependencyResolver,
     wrap_with_dependency_resolution,
 )
-from neofoam.framework.model import Model, ModelRuntime, bind_owned_interfaces
+from neofoam.framework.model import Model, ModelRuntime
 
 # Advancement is exact float arithmetic (t += dt), so the only error is dt summed
 # over a handful of steps — a few ULP. 1e-12 sits comfortably above that and well
@@ -347,7 +347,6 @@ def _drive_set_time_step(loop: SolutionLoop, contributors: list[ModelRuntime]) -
     for rt in contributors:
         models[rt.name] = rt
     ctx = Context(fields={}, models=models)
-    bind_owned_interfaces(loop_rt, contributors, ctx)
     wrap_with_dependency_resolution(
         set_time_step, instance=None, dependency_resolver=DependencyResolver()
     )(ctx)
