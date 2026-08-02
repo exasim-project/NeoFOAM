@@ -1,0 +1,52 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| PIMPLE pressure-velocity coupling for the laminar cylinder, NeoN backend.     |
+| Pressure: CG + Jacobi (in OpenFOAM the Jacobi preconditioner is 'diagonal').  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+solvers
+{
+    p
+    {
+        solver          PCG;
+        preconditioner  diagonal;   // CG + Jacobi
+        tolerance       1e-06;
+        relTol          0.01;
+        maxIter         1000;
+    }
+
+    pFinal
+    {
+        $p;
+        relTol          0;
+    }
+
+    U
+    {
+        solver          smoothSolver;
+        smoother        GaussSeidel;
+        tolerance       1e-05;
+        relTol          0.1;
+    }
+
+    UFinal
+    {
+        $U;
+        relTol          0;
+    }
+}
+
+PIMPLE
+{
+    nNonOrthogonalCorrectors 0;
+    nCorrectors         2;
+}
+
+// ************************************************************************* //

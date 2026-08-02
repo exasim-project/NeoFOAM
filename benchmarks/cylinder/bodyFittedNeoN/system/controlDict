@@ -1,0 +1,43 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| Fixed-step benchmark control for the NeoN (GPU) body-fitted leg. endTime /    |
+| deltaT are rewritten by the harness (benchmarks/test_cylinder_runtime.py) so  |
+| every solver does the same number of steps; adjustTimeStep is off so the work |
+| is deterministic. Same mesh as ../bodyFitted -> a true same-mesh CPU-vs-GPU   |
+| comparison, differing only in the backend (NeoN/Kokkos-CUDA vs OpenFOAM CPU). |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     neoPimpleFoam;
+
+// NeoN executor: run the solve on the GPU (Kokkos-CUDA backend).
+executor        GPU;
+allocator       UmpirePool;
+memPoolSize     1.0; // requested pool size in GB
+
+startFrom       startTime;
+startTime       0;
+stopAt          endTime;
+
+endTime         0.002;
+deltaT          0.0001;
+
+writeControl    timeStep;
+writeInterval   10000;
+purgeWrite      0;
+
+writeFormat     ascii;
+writePrecision  6;
+timeFormat      general;
+timePrecision   6;
+
+runTimeModifiable no;
+adjustTimeStep  no;
+
+// ************************************************************************* //

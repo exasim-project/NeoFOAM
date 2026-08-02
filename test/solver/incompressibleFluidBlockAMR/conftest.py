@@ -23,12 +23,19 @@ import blockamr  # noqa: E402
 
 os.environ.setdefault("AMREX_THE_ARENA_INIT_SIZE", "0")
 # Preallocate the JAX/XLA pool up front (a fixed fraction) — much faster than
-# on-demand growth, which pays an allocation cost every step. The AMReX arena
-# for these small test meshes is tiny (~0.1 GB, it grows on demand from init
-# size 0), so the ~20 % left by MEM_FRACTION is ample; both allocators coexist
-# on the one device.
+# on-demand growth, which pays an allocation cost every step.
+#
+# Three consumers share the one device and must TOGETHER stay under 100 %:
+#   * JAX/XLA preallocates MEM_FRACTION and — since ``blockamr_session`` below
+#     deliberately never finalizes — holds it for the whole pytest run;
+#   * AMReX grows its arena on demand (~0.1 GB for these small test meshes);
+#   * other test modules in the same run (the NeoN solver parity/turbulence
+#     suites) spawn Kokkos-CUDA solver subprocesses that need the remainder.
+# A quarter keeps the preallocation win while leaving ~70 % for those
+# subprocesses. At 0.8 they died with cudaErrorMemoryAllocation, which surfaced
+# as SIGSEGV in the parent — every one of those tests passes at this fraction.
 os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "true")
-os.environ.setdefault("XLA_PYTHON_CLIENT_MEM_FRACTION", "0.8")
+os.environ.setdefault("XLA_PYTHON_CLIENT_MEM_FRACTION", "0.25")
 
 CASE_SRC = Path(__file__).parent / "cases" / "box"
 BOX_CPP_CASE_SRC = Path(__file__).parent / "cases" / "box_cpp"
