@@ -1,0 +1,37 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | NeoFOAM: dict-driven Cartesian mesh             |
+|  \\    /   O peration     |                                                 |
+|   \\  /    A nd           |                                                 |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      meshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Physical domain: a [0, 2*pi]^3 cube (RealBox lo/hi).
+domain          ( ( 0 0 0 ) ( 6.283185307 6.283185307 6.283185307 ) );
+
+// Coarse-level cell counts.
+nCell           ( 16 16 16 );
+
+// Fully periodic box.
+periodicity     ( true true true );
+
+refinement
+{
+    maxLevel    0;
+    refRatio    ( 2 2 2 );
+}
+
+eb
+{
+    type        none;
+}
+
+// ************************************************************************* //

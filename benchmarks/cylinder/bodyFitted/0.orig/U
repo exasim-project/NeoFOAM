@@ -1,0 +1,51 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| Cylinder inflow U. Re = U*D/nu = 1*0.02/1e-3 = 20. The z (front/back) faces  |
+| are free-slip so the mesh is genuine 3D but the wake stays z-homogeneous,     |
+| matching the blockAMR periodic-z slab.                                        |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volVectorField;
+    object      U;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 1 -1 0 0 0 0];
+
+internalField   uniform (1.0 0 0);
+
+boundaryField
+{
+    cylinder
+    {
+        type            noSlip;
+    }
+    upper_wall
+    {
+        type            fixedValue;
+        value           uniform (1.0 0.0 0.0);
+    }
+    inlet
+    {
+        type            fixedValue;
+        value           uniform (1.0 0.0 0.0);
+    }
+    outlet
+    {
+        type            zeroGradient;
+    }
+    lower_wall
+    {
+        type            fixedValue;
+        value           uniform (1.0 0.0 0.0);
+    }
+    frontAndBack
+    {
+        type            slip;
+    }
+}
+
+
+// ************************************************************************* //

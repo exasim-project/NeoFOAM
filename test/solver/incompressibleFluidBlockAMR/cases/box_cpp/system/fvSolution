@@ -1,0 +1,37 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | NeoFOAM: block-structured solve controls        |
+|  \\    /   O peration     |                                                 |
+|   \\  /    A nd           |                                                 |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+solvers
+{
+    U
+    {
+        backend     cpp;
+    }
+    p
+    {
+        solver      MLMG;
+        rtol        1e-10;
+        atol        1e-8;
+        maxIter     200;
+    }
+}
+
+blockAMR
+{
+    nu          0.01;
+}
+
+// ************************************************************************* //

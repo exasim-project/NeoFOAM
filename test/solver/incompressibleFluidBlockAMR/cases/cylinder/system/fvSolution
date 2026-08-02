@@ -1,0 +1,31 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSolution;
+}
+
+solvers
+{
+    U
+    {
+        ibm         directForcing;
+        backend     jax;
+    }
+    p
+    {
+        solver      MLMG;
+        rtol        1e-10;
+        atol        1e-8;
+        maxIter     200;
+        // Krylov bottom solver for the slip-wall outflow nodal projection (~5
+        // V-cycles vs ~600 for "smoother"); empty leaves AMReX's default.
+        bottomSolver bicgstab;
+    }
+}
+
+blockAMR
+{
+    nu          0.01;
+}

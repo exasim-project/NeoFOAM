@@ -23,6 +23,9 @@
 
 - Prefer small, single-purpose functions; prefer early returns
   over deep nesting.
+- minimize cognitive complexity and keep it below 10 per function;
+- try to reduce the parameters and donot exceed 5 parameters
+- No circular imports between modules.
 
 ## Naming
 
