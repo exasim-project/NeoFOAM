@@ -14,8 +14,8 @@ The model owns one runtime object, ``ctx.models["mrf_zones"]`` — OpenFOAM's ow
 :class:`Foam::IOMRFZoneList`, which reads the dictionary, holds the zones and
 implements the frame terms. The incompressibleFluid algorithms consume it through
 the ``momentum_extension`` / ``pressure_extension`` / ``mesh_update_extension``
-extensions their operations define (this spec contributes to their sites
-there); incompressibleVoF still takes it as an
+extensions their operations define — this spec's contributions to those sites
+live at the bottom of this module; incompressibleVoF still takes it as an
 *optional* injected model and branches on ``None``.
 
 Shared by ``incompressibleFluid`` and ``incompressibleVoF``: each solver's model
@@ -30,9 +30,10 @@ Example::
 """
 
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any
 
 import pybFoam as pyf
+from pybFoam import surfaceScalarField, volScalarField, volVectorField
 from pydantic import ConfigDict
 
 from neofoam.framework.initialization import model
@@ -94,3 +95,55 @@ def build(_config: MRFPropertiesConfig) -> list[Any]:
         return pyf.IOMRFZoneList(context["mesh"])
 
     return [model("mrf_zones", create_mrf_zones, depends_on=["mesh"])]
+
+
+# ---------------------------------------------------------------------------
+# Contributions — the rotating-frame hooks of UEqn.H / pEqn.H
+# ---------------------------------------------------------------------------
+# The import sits below the spec on purpose: the solver package imports this
+# module back to register the spec, so by the time that import re-enters here
+# mid-initialization, ``mrf`` above must already exist.
+from neofoam.solver.incompressibleFluid.models.pressure_velocity.extension import (  # noqa: E402
+    mesh_update_extension,
+    momentum_extension,
+    pressure_extension,
+)
+
+
+@mrf.contributes(momentum_extension.correct_boundary_velocity)
+def mrf_correct_boundary_velocity(U: volVectorField, mrf_zones: Annotated[Any, "models"]) -> None:
+    mrf_zones.correctBoundaryVelocity(U)
+
+
+@mrf.contributes(momentum_extension.terms)
+def mrf_frame_acceleration(U: volVectorField, mrf_zones: Annotated[Any, "models"]) -> Any:
+    return mrf_zones.DDt(U)
+
+
+@mrf.contributes(pressure_extension.filter_ddt_corr)
+def mrf_filter_ddt_corr(corr: Any, mrf_zones: Annotated[Any, "models"]) -> Any:
+    # The ddt correction belongs to the absolute frame, so it is zeroed
+    # inside the MRF cells before the flux is taken relative to the rotation.
+    return mrf_zones.zeroFilter(corr)
+
+
+@mrf.contributes(pressure_extension.make_relative)
+def mrf_make_relative(phiHbyA: surfaceScalarField, mrf_zones: Annotated[Any, "models"]) -> None:
+    mrf_zones.makeRelative(phiHbyA)
+
+
+@mrf.contributes(pressure_extension.constrain_pressure)
+def mrf_constrain_pressure(
+    p: volScalarField,
+    U: volVectorField,
+    phiHbyA: surfaceScalarField,
+    rAU: volScalarField,
+    mrf_zones: Annotated[Any, "models"],
+) -> bool:
+    pyf.constrainPressure(p, U, phiHbyA, rAU, mrf_zones)
+    return True
+
+
+@mrf.contributes(mesh_update_extension.on_mesh_change)
+def mrf_on_mesh_change(mrf_zones: Annotated[Any, "models"]) -> None:
+    mrf_zones.update()

@@ -15,9 +15,10 @@ and implements the three hooks native's ``UEqn.H``/``pEqn.H`` use: the source
 matrix ``fvOptions(U)`` (``fvOptions(rho, U)`` for VoF), ``constrain(UEqn)``
 *after* the equation is relaxed, and ``correct(U)`` *after* each solve of U. The
 incompressibleFluid algorithms consume it through the ``momentum_extension`` /
-``pressure_extension`` extensions their operations define (this spec contributes
-to their sites there); incompressibleVoF still takes it as an
-*optional* injected model and branches on ``None``.
+``pressure_extension`` extensions their operations define — this spec's
+contributions to those sites live at the bottom of this module;
+incompressibleVoF still takes it as an *optional* injected model and branches
+on ``None``.
 
 Shared by ``incompressibleFluid`` and ``incompressibleVoF``: each solver's model
 package registers this one spec with its own plugin family (the source call
@@ -31,13 +32,14 @@ Example::
 """
 
 from pathlib import Path
-from typing import Any, Optional
+from typing import Annotated, Any, Optional
 
 import pybFoam as pyf
+from pybFoam import fvVectorMatrix, volVectorField
 from pydantic import ConfigDict
 
 from neofoam.framework.initialization import model
-from neofoam.framework.model import Model
+from neofoam.framework.model import Model, negated
 from neofoam.io import OF, BaseConfig, IOStrategy
 
 __all__ = ["FvOptionsConfig", "fvOptions"]
@@ -121,3 +123,36 @@ def build(_config: FvOptionsConfig) -> list[Any]:
         return pyf.fvOptions.New(context["mesh"])
 
     return [model("fv_options", create_fv_options, depends_on=["mesh"])]
+
+
+# ---------------------------------------------------------------------------
+# Contributions — the fv::options hooks of UEqn.H / pEqn.H
+# ---------------------------------------------------------------------------
+# The import sits below the spec on purpose: the solver package imports this
+# module back to register the spec, so by the time that import re-enters here
+# mid-initialization, ``fvOptions`` above must already exist.
+from neofoam.solver.incompressibleFluid.models.pressure_velocity.extension import (  # noqa: E402
+    momentum_extension,
+    pressure_extension,
+)
+
+
+@fvOptions.contributes(momentum_extension.terms)
+def fv_options_momentum_source(U: volVectorField, fv_options: Annotated[Any, "models"]) -> Any:
+    # Native's ``== fvOptions(U)``: the source joins the sum subtracted.
+    return negated(fv_options(U))
+
+
+@fvOptions.contributes(momentum_extension.constrain)
+def fv_options_constrain(UEqn: fvVectorMatrix, fv_options: Annotated[Any, "models"]) -> None:
+    fv_options.constrain(UEqn)
+
+
+@fvOptions.contributes(momentum_extension.correct)
+def fv_options_momentum_correct(U: volVectorField, fv_options: Annotated[Any, "models"]) -> None:
+    fv_options.correct(U)
+
+
+@fvOptions.contributes(pressure_extension.correct)
+def fv_options_pressure_correct(U: volVectorField, fv_options: Annotated[Any, "models"]) -> None:
+    fv_options.correct(U)
