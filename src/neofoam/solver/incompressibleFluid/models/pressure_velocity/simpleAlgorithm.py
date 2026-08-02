@@ -246,7 +246,7 @@ def continuity(
             phiHbyA.assign(phiHbyA + fvc.interpolate(rAtU - rAU) * fvc.snGrad(p) * U.mesh().magSf())
             HbyA.assign(HbyA - (rAU - rAtU) * fvc.grad(p))
 
-        if not any(ext.constrain_pressure(p, U, phiHbyA, rAtU)):
+        if not ext.constrain_pressure(p, U, phiHbyA, rAtU):
             pyf.constrainPressure(p, U, phiHbyA, rAtU)
 
     while simple_control.correctNonOrthogonal():

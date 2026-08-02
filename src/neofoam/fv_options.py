@@ -13,7 +13,7 @@ It owns one runtime object, ``ctx.models["fv_options"]`` — OpenFOAM's own
 :class:`Foam::fv::options` — whose hooks (the source matrix, ``constrain``,
 ``correct``) the algorithms apply where native's ``UEqn.H``/``pEqn.H`` apply them.
 The incompressibleFluid algorithms reach them through the extensions their
-operations define — this spec's contributions to those sites live at the bottom of
+operations define — this spec's contributions to those hooks live at the bottom of
 this module; incompressibleVoF still injects the model optionally and branches on
 ``None``.
 Shared by ``incompressibleFluid`` and ``incompressibleVoF``, which each register

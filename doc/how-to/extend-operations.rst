@@ -7,7 +7,7 @@ model is active: take the flux relative to a rotating frame, subtract an
 as ``if "mrf_zones" in ctx.models`` inside the algorithm couples the
 algorithm to every optional model that will ever exist. An **extension**
 inverts that: the operation module defines *where* it can be extended,
-models contribute per site, and the operation calls whatever the case
+models contribute per hook, and the operation calls whatever the case
 activated — without naming a single model.
 
 Extension or model interface?
@@ -16,11 +16,11 @@ Extension or model interface?
 Two seams exist, and picking the wrong one is the usual mistake:
 
 :class:`~neofoam.framework.model.extension.Extension`
-    Several **heterogeneous sites** — a term to add here, a constraint to
+    Several **heterogeneous hooks** — a term to add here, a constraint to
     apply there, a boundary to correct after the solve. Defined by the
     *operation module*, one extension per operation with one
-    ``@defines`` function per site. The operation receives one bound
-    handle and calls each site once.
+    ``@defines`` function per hook. The operation receives one bound
+    handle and calls each hook once.
 
 :class:`~neofoam.framework.model.interface.ModelInterface`
     One **single value** combined by one rule (``sum``, ``min``, ``any``).
@@ -40,24 +40,27 @@ contribution side is the same decorator either way —
 
 The worked example on this page is the pressure-velocity seam of the
 ``incompressibleFluid`` solver: MRF and ``fvOptions`` hook into
-``UEqn.H`` / ``pEqn.H`` at a dozen different sites, spread over the
+``UEqn.H`` / ``pEqn.H`` at a dozen different points, spread over the
 ``momentum``, ``continuity`` and ``mesh_update`` operations — one
-extension each, which is exactly the multi-site case.
+extension each, which is exactly the multi-hook case.
 
 Define the extension next to the operations
 -------------------------------------------
 
 The defining module owns one ``Extension`` per extensible operation, and
-one ``@defines`` function per site. The function's parameters are what
-the operation passes at the call site; its body produces the **site
-default** — ``None`` for a broadcast site, or the seed value every
-contribution folds onto for a term site. Both live next to the
-operations they serve — in
+one ``@defines`` function per hook. The function's leading parameters are
+what the operation passes at the call site; a **trailing parameter the
+call does not supply** receives the list of active contributions'
+results, and the body combines them — it owns the rule (``fold``,
+``any``, ``min``, …), exactly like a model interface's body. A
+declaration whose every parameter is a call argument is a **broadcast
+hook**: the call returns the raw results and the body is never invoked.
+Both live next to the operations they serve — in
 ``solver/incompressibleFluid/models/pressure_velocity/extension.py``:
 
 .. code-block:: python
 
-    from neofoam.framework.model import Extension
+    from neofoam.framework.model import Extension, fold
 
     momentum_extension = Extension("momentum")
     pressure_extension = Extension("pressure")
@@ -69,10 +72,10 @@ operations they serve — in
 
 
     @momentum_extension.defines
-    def terms(U: volVectorField) -> Any:
+    def terms(U: volVectorField, contributions: list) -> Any:
         """Terms folded into the momentum sum at ``+ ext.terms(U)``."""
         zero_rate = pyf.dimensionedScalar("0", pyf.dimensionSet(0, 0, -1, 0, 0, 0, 0), 0.0)
-        return fvm.Sp(zero_rate, U)
+        return fold(fvm.Sp(zero_rate, U), contributions)
 
 
     @pressure_extension.defines
@@ -81,40 +84,42 @@ operations they serve — in
 
 
     @pressure_extension.defines
-    def constrain_pressure(p, U, phiHbyA, rAU) -> None:
+    def constrain_pressure(p, U, phiHbyA, rAU, handled: list) -> bool:
         """Constrain the pressure boundaries; a contribution returns ``True``
-        if it handled them."""
+        if it handled them (the operation falls back when none did)."""
+        return any(handled)
 
 Three conventions matter here:
 
 * **One extension per operation, not one per module.** ``momentum``,
   ``continuity`` and ``mesh_update`` each define their own, so a
-  contribution only ever sees the sites of the operation it extends — a
+  contribution only ever sees the hooks of the operation it extends — a
   model that acts in one operation (``fvOptions`` has nothing to say
   about a mesh move) simply contributes nowhere else.
-* **The declaration body is the site default.** A term site returns its
-  seed — here the empty momentum source native's ``fvOptions(U)`` starts
-  from — so ``+ ext.terms(U)`` is well-formed with any number of active
-  contributions, including none. A broadcast site's body is empty
-  (``None``): the call returns the raw per-contribution results.
-* **A site that reports back returns a value the operation can act
-  on.** ``constrain_pressure`` contributions return ``True`` when they
-  handled the constraint, which lets the operation fall back to the
-  plain call when nothing did (see below).
+* **The declaration body owns the combine rule.** ``terms`` folds every
+  contribution onto its seed — the empty momentum source native's
+  ``fvOptions(U)`` starts from — with
+  :func:`~neofoam.framework.model.extension.fold`, so ``+ ext.terms(U)``
+  is well-formed with any number of active contributions, including
+  none. ``constrain_pressure`` applies ``any``. The rule is written
+  once, in the declaration, not in every consumer.
+* **Side-effect hooks stay broadcast.** ``correct_boundary_velocity`` /
+  ``make_relative`` list only call arguments: there is nothing to
+  combine, the operation ignores the returned results.
 
-The ``Extension`` instance holds only the site declarations and their
+The ``Extension`` instance holds only the hook declarations and their
 contributions — no ``Context``, no live case objects — so one
 module-level instance is safe across runs.
 
 Contribute from a model
 -----------------------
 
-A model contributes one plain function per site it acts at, with
+A model contributes one plain function per hook it acts at, with
 ``@<model>.contributes`` (:meth:`ModelSpec.contributes
 <neofoam.framework.model.spec.ModelSpec.contributes>`) — the same
-decorator used for interfaces. Sites are reached as attributes of the
+decorator used for interfaces. Hooks are reached as attributes of the
 extension (``momentum_extension.terms``), so two extensions can share a
-site name. The contributions live next to the model spec they belong to —
+hook name. The contributions live next to the model spec they belong to —
 in ``neofoam/mrf.py`` / ``neofoam/fv_options.py``:
 
 .. code-block:: python
@@ -144,7 +149,7 @@ A contribution's parameters resolve exactly like an
 ``@model.operation`` body's, against the **contributing model's** own
 runtime plus the live ``Context`` — with one addition:
 
-A parameter named in the site declaration (``U``, ``phiHbyA``, …)
+A parameter named in the hook declaration (``U``, ``phiHbyA``, …)
     Taken from the operation's call — ``ext.terms(U)`` hands ``U``
     to every contribution that names it.
 
@@ -159,7 +164,7 @@ A ``BaseConfig`` subclass
 A bare name
     ``ctx.fields[<param name>]``; ``Depends(...)`` markers work too.
 
-A parameter nothing supplies raises a ``ValueError`` naming the site,
+A parameter nothing supplies raises a ``ValueError`` naming the hook,
 the contribution, and the parameter — a misconfigured model can never
 silently drop out.
 
@@ -168,7 +173,7 @@ Consume it in an operation
 
 The consuming operation adds one parameter annotated
 ``Annotated[BoundExtension, <extension>]`` — its **own** operation's
-extension — and calls each site **once** on the handle (as
+extension — and calls each hook **once** on the handle (as
 ``fvModels()`` / ``fvConstraints()`` are called in OpenFOAM). From
 ``pimpleAlgorithm.momentum``:
 
@@ -192,23 +197,21 @@ extension — and calls each site **once** on the handle (as
         UEqn.relax()
         ext.constrain(UEqn)
 
-Each ``ext.<site>(...)`` call runs every active contribution in
-registration order. ``+ ext.terms(U)`` is the **fold site**: the site
-returns its seed with every contribution's term folded on in that order
-— ``+`` by default, ``-`` for terms wrapped in
-:func:`~neofoam.framework.model.extension.negated` (how the ``fvOptions``
-source keeps native's ``== fvOptions(U)`` arithmetic). The *order* stays
-visible at the call sites: in ``UEqn.H`` the source joins the sum before
-relaxation, the constraints are applied after it, and the correction
-runs after the solve.
+Each ``ext.<hook>(...)`` call runs every active contribution in
+registration order and hands the results to the declaration body.
+``+ ext.terms(U)`` joins the body's fold — ``+`` by default, ``-`` for
+terms wrapped in :func:`~neofoam.framework.model.extension.negated` (how
+the ``fvOptions`` source keeps native's ``== fvOptions(U)`` arithmetic).
+The *order* stays visible at the call sites: in ``UEqn.H`` the source
+joins the sum before relaxation, the constraints are applied after it,
+and the correction runs after the solve.
 
-A broadcast site returns the raw per-contribution results, so a
-"did anyone handle it?" site is one ``any``  — from the continuity
-operation:
+Because the declaration owns the combine rule, the consumer just acts on
+the combined value — from the continuity operation:
 
 .. code-block:: python
 
-    if not any(ext.constrain_pressure(p, U, phiHbyA, rAU)):
+    if not ext.constrain_pressure(p, U, phiHbyA, rAU):   # declaration: any(handled)
         pyf.constrainPressure(p, U, phiHbyA, rAU)
 
 Activation: there is no wiring step
@@ -222,7 +225,7 @@ else to switch on:
   ``mrf_frame_acceleration`` folds into the ``ext.terms(U)`` of
   ``momentum``.
 * No ``MRFProperties`` → no MRF runtime → the contribution is skipped,
-  the sites dispatch to one fewer contribution, and the operation code
+  the hooks dispatch to one fewer contribution, and the operation code
   is identical either way.
 
 Matching is by ``ModelSpec`` **identity**, not by name, so a model

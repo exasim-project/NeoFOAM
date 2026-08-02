@@ -83,16 +83,15 @@ class DependencyResolver:
                 if get_origin(param.annotation) is Annotated:
                     args = get_args(param.annotation)
 
-                    # Operation-declared extension point / extension: the active
-                    # implementations are rebuilt for this Context on every injection.
+                    # Operation-declared extension: the active contributions are
+                    # rebuilt for this Context on every injection.
                     from .model.extension import Extension as _Extension  # noqa: PLC0415
-                    from .model.extension import ExtensionPoint as _ExtensionPoint  # noqa: PLC0415
 
-                    if len(args) > 1 and isinstance(args[1], (_ExtensionPoint, _Extension)):
+                    if len(args) > 1 and isinstance(args[1], _Extension):
                         if ctx is None:
                             raise ValueError(
                                 f"Parameter '{param_name}' is annotated with the "
-                                f"extension point '{args[1].name}' but no Context "
+                                f"extension '{args[1].name}' but no Context "
                                 "was provided to the resolver."
                             )
                         kwargs[param_name] = args[1].resolve(ctx)

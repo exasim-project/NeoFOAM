@@ -13,8 +13,8 @@ Public API:
 from .extension import (
     BoundExtension,
     Extension,
-    ExtensionPoint,
-    Extensions,
+    Hook,
+    fold,
     negated,
 )
 from .interface import (
@@ -35,10 +35,10 @@ __all__ = [
     "BoundModelInterface",
     "BoundExtension",
     "Extension",
-    "ExtensionPoint",
-    "Extensions",
+    "Hook",
     "active_contributors",
     "bind_model_interface",
     "bind_owned_interfaces",
+    "fold",
     "negated",
 ]
