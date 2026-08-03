@@ -24,9 +24,11 @@ maths in Python** — no C++ turbulence model, no nanobind rebuild per closure:
 
 This matches ``Foam::RASModels::kEpsilon::correct`` term for term for the
 incompressible, divergence-free case (``alpha = rho = 1``, ``div U = 0`` so the
-dilatation ``SuSp(divU, …)`` terms vanish). Coefficients default to OpenFOAM's and
-are overridden per case by the ``RAS`` sub-dictionary's ``kEpsilonCoeffs`` entry
-(:func:`~neofoam.turbulence.config.model_coefficients`).
+dilatation ``SuSp(divU, …)`` terms vanish). Coefficients live in the typed
+:class:`KEpsilonCoeffs`: its field defaults are OpenFOAM's, the ``RAS``
+sub-dictionary's ``kEpsilonCoeffs`` entry overrides them per case
+(:func:`~neofoam.turbulence.config.model_coefficients`), and each ``@operation``
+receives the resolved object by type — no magic parameter name, no string keys.
 
 Each transport ``@operation`` mirrors the NeoN solver's PDE lifecycle exactly:
 ``rotate_old_times`` seeds the field's previous-time value for ``imp.ddt``; every
@@ -35,7 +37,9 @@ intermediate coefficient is bound to a local because the implicit operators hold
 freed before ``solve()`` and read as garbage.
 """
 
-from typing import Annotated, Any
+from pathlib import Path
+from types import SimpleNamespace
+from typing import Annotated, Any, Optional
 
 import neon._neon as nn
 import pybFoam as pyf
@@ -45,14 +49,24 @@ from neofoam.framework.context import FieldUpdates
 from neofoam.framework.initialization import InitStep
 from neofoam.framework.initialization import field as init_field
 from neofoam.framework.initialization import model as init_model
+from neofoam.io import BaseConfig
 
-from ..config import TurbulencePropertiesConfig, model_coefficients
+from ..config import TurbulencePropertiesConfig, load_with_coefficients
 from ..momentumTransport import Model, register_momentum_transport
 
-__all__ = ["kEpsilon"]
+__all__ = ["kEpsilon", "KEpsilonCoeffs"]
 
-#: OpenFOAM kEpsilon coefficient defaults; a case's ``kEpsilonCoeffs`` overrides them.
-DEFAULT_COEFFS = {"Cmu": 0.09, "C1": 1.44, "C2": 1.92, "sigmak": 1.0, "sigmaEps": 1.3}
+
+class KEpsilonCoeffs(BaseConfig):
+    """OpenFOAM ``kEpsilon`` coefficients; a case's ``kEpsilonCoeffs`` overrides them."""
+
+    Cmu: float = 0.09
+    C1: float = 1.44
+    C2: float = 1.92
+    sigmak: float = 1.0
+    sigmaEps: float = 1.3
+
+
 # Lower bounds for k and epsilon (OpenFOAM bound() floors), kept tiny/positive.
 kMin = 1e-15
 epsilonMin = 1e-15
@@ -61,15 +75,21 @@ kEpsilon = register_momentum_transport(Model("kEpsilon"), family="RAS")
 kEpsilon.config(TurbulencePropertiesConfig)
 
 
+@kEpsilon.load
+def load(case_dir: Path, _instance_id: Optional[str]) -> SimpleNamespace:
+    """The dictionary + the resolved :class:`KEpsilonCoeffs` the operations inject."""
+    return load_with_coefficients(case_dir, "kEpsilon", KEpsilonCoeffs)
+
+
 @kEpsilon.build
-def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
+def build(config: SimpleNamespace) -> list[InitStep]:
     """Read + seed ``k`` / ``epsilon`` / ``nut`` / ``nuEff`` and the helper operators.
 
     ``nut`` is seeded from the initial ``k`` / ``epsilon`` (OpenFOAM ``correctNut``);
-    the operators and the resolved coefficients are owned as models so the per-step
-    ``correct`` operation reuses them.
+    the operators are owned as models so the per-step ``correct`` operation reuses
+    them. The coefficients are not: they reach each operation by type injection.
     """
-    coeffs = model_coefficients(config, "kEpsilon", DEFAULT_COEFFS)
+    coeffs = config.coeffs
 
     def read_k(ctx: dict[str, Any]) -> Any:
         # Bound as read (kEpsilon.C's constructor), before seed_nut divides by them.
@@ -104,7 +124,7 @@ def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
         nut = nfb.read_scalar_volume_field(ctx["models.neon_runtime"], "nut")
         k = ctx["fields.k"]
         epsilon = ctx["fields.epsilon"]
-        nut.assign(coeffs["Cmu"] * (k * k) / epsilon)
+        nut.assign(coeffs.Cmu * (k * k) / epsilon)
         # nutkWallFunction sets nut's wall faces from (k, nu, nearWallDist).
         nfb.correct_scalar_bc_ctx(nut, k, ctx["models.nu_vol"], ctx["models.kEpsilon_nearWallDist"])
         return nut
@@ -115,7 +135,6 @@ def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
     return [
         init_field("k", read_k, depends_on=["models.neon_runtime"]),
         init_field("epsilon", read_epsilon, depends_on=["models.neon_runtime"]),
-        init_model("kEpsilon_coeffs", lambda _ctx: coeffs),
         init_model("kEpsilon_surf", create_surf, depends_on=["models.neon_runtime"]),
         init_model("kEpsilon_grad", create_grad, depends_on=["models.neon_runtime"]),
         init_model(
@@ -188,7 +207,7 @@ def correct_epsilon(
     nu_vol: Annotated[Any, "models"],
     kEpsilon_surf: Annotated[Any, "models"],
     kEpsilon_nearWallDist: Annotated[Any, "models"],
-    kEpsilon_coeffs: Annotated[Any, "models"],
+    coeffs: KEpsilonCoeffs,
     GbyNu: Annotated[Any, "fields"],
     phi: Annotated[Any, "fields"],
     k: Annotated[Any, "fields"],
@@ -202,12 +221,12 @@ def correct_epsilon(
     # Bind every intermediate to a local: the NeoN implicit operators hold
     # references (not ownership) to their operand fields, so a temporary consumed
     # inline would be GC'd before solve() and read freed memory.
-    diffusivity = nut / kEpsilon_coeffs["sigmaEps"] + nu_vol
+    diffusivity = nut / coeffs.sigmaEps + nu_vol
     d_eps = kEpsilon_surf.interpolate(diffusivity)
     # C1 GbyNu Cmu k, not C1 G eps/k: same while nut == Cmu k^2/eps (v2406), but
     # with no division by a bounded k.
-    production = kEpsilon_coeffs["C1"] * GbyNu * kEpsilon_coeffs["Cmu"] * k
-    sink_coeff = kEpsilon_coeffs["C2"] * (epsilon / k)
+    production = coeffs.C1 * GbyNu * coeffs.Cmu * k
+    sink_coeff = coeffs.C2 * (epsilon / k)
     eps_eqn = nfb.PDESolverScalar(
         nn.imp.ddt(epsilon)
         + nn.imp.div(phi, epsilon)
@@ -237,7 +256,7 @@ def correct_k(
     nu_vol: Annotated[Any, "models"],
     kEpsilon_surf: Annotated[Any, "models"],
     kEpsilon_nearWallDist: Annotated[Any, "models"],
-    kEpsilon_coeffs: Annotated[Any, "models"],
+    coeffs: KEpsilonCoeffs,
     Gk: Annotated[Any, "fields"],
     phi: Annotated[Any, "fields"],
     k: Annotated[Any, "fields"],
@@ -252,7 +271,7 @@ def correct_k(
     nn.rotate_old_times(k)  # old := current k (still initial — k solved after epsilon)
     # Bind operands to locals (operator-operand lifetime — see correct_epsilon).
     eps_over_k = epsilon / k
-    diffusivity = nut / kEpsilon_coeffs["sigmak"] + nu_vol
+    diffusivity = nut / coeffs.sigmak + nu_vol
     d_k = kEpsilon_surf.interpolate(diffusivity)
     k_eqn = nfb.PDESolverScalar(
         nn.imp.ddt(k)
@@ -279,13 +298,13 @@ def correct_nut(
     nu_vol: Annotated[Any, "models"],
     kEpsilon_surf: Annotated[Any, "models"],
     kEpsilon_nearWallDist: Annotated[Any, "models"],
-    kEpsilon_coeffs: Annotated[Any, "models"],
+    coeffs: KEpsilonCoeffs,
     k: Annotated[Any, "fields"],
     epsilon: Annotated[Any, "fields"],
     nut: Annotated[Any, "fields"],
 ) -> FieldUpdates:
     """correctNut: ``nut = Cmu k^2 / epsilon``, then refresh the effective viscosity ``nuEff``."""
-    nut.assign(kEpsilon_coeffs["Cmu"] * (k * k) / epsilon)
+    nut.assign(coeffs.Cmu * (k * k) / epsilon)
     # nutkWallFunction sets nut's wall faces from (k, nu, nearWallDist).
     nfb.correct_scalar_bc_ctx(nut, k, nu_vol, kEpsilon_nearWallDist)
     return FieldUpdates({"nut": nut, "nuEff": kEpsilon_surf.interpolate(nut + nu_vol)})

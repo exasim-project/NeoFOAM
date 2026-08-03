@@ -30,12 +30,16 @@ and publishes them; the **omega** and **k** stages solve their transport PDEs
 (omega first, so k reads the updated omega); the **nut** stage recomputes
 ``nut = a1 k / max(a1 omega, b1 F23 sqrt(S2))``.
 
-Coefficients default to OpenFOAM's ``kOmegaSST`` values and are overridden per case
-by the ``RAS`` sub-dictionary's ``kOmegaSSTCoeffs`` entry
-(:func:`~neofoam.turbulence.config.model_coefficients`).
+Coefficients live in the typed :class:`KOmegaSSTCoeffs`: its field defaults are
+OpenFOAM's ``kOmegaSST`` values, the ``RAS`` sub-dictionary's ``kOmegaSSTCoeffs``
+entry overrides them per case
+(:func:`~neofoam.turbulence.config.model_coefficients`), and each ``@operation``
+receives the resolved object by type — no magic parameter name, no string keys.
 """
 
-from typing import Annotated, Any
+from pathlib import Path
+from types import SimpleNamespace
+from typing import Annotated, Any, Optional
 
 import neon._neon as nn
 import pybFoam as pyf
@@ -45,27 +49,31 @@ from neofoam.framework.context import FieldUpdates
 from neofoam.framework.initialization import InitStep
 from neofoam.framework.initialization import field as init_field
 from neofoam.framework.initialization import model as init_model
+from neofoam.io import BaseConfig
 
-from ..config import TurbulencePropertiesConfig, model_coefficients
+from ..config import TurbulencePropertiesConfig, load_with_coefficients
 from ..momentumTransport import Model, register_momentum_transport
 
-__all__ = ["kOmegaSST"]
+__all__ = ["kOmegaSST", "KOmegaSSTCoeffs"]
 
-#: OpenFOAM kOmegaSST coefficient defaults; a case's ``kOmegaSSTCoeffs`` overrides them.
-DEFAULT_COEFFS = {
-    "alphaK1": 0.85,
-    "alphaK2": 1.0,
-    "alphaOmega1": 0.5,
-    "alphaOmega2": 0.856,
-    "gamma1": 5.0 / 9.0,
-    "gamma2": 0.44,
-    "beta1": 0.075,
-    "beta2": 0.0828,
-    "betaStar": 0.09,
-    "a1": 0.31,
-    "b1": 1.0,
-    "c1": 10.0,
-}
+
+class KOmegaSSTCoeffs(BaseConfig):
+    """OpenFOAM ``kOmegaSST`` coefficients; a case's ``kOmegaSSTCoeffs`` overrides them."""
+
+    alphaK1: float = 0.85
+    alphaK2: float = 1.0
+    alphaOmega1: float = 0.5
+    alphaOmega2: float = 0.856
+    gamma1: float = 5.0 / 9.0
+    gamma2: float = 0.44
+    beta1: float = 0.075
+    beta2: float = 0.0828
+    betaStar: float = 0.09
+    a1: float = 0.31
+    b1: float = 1.0
+    c1: float = 10.0
+
+
 kMin = 1e-15
 omegaMin = 1e-15
 
@@ -75,11 +83,11 @@ def _blend(f1: Any, psi1: float, psi2: float) -> Any:
     return f1 * (psi1 - psi2) + psi2
 
 
-def _f2(c: dict[str, float], k: Any, omega: Any, y: Any, nu: float) -> Any:
+def _f2(c: KOmegaSSTCoeffs, k: Any, omega: Any, y: Any, nu: float) -> Any:
     """SST ``F2 = tanh(arg2^2)`` (= ``F23`` with the default ``F3 = false``)."""
     arg2 = nn.field_min(
         nn.field_max(
-            (2.0 / c["betaStar"]) * nn.sqrt(k) / (omega * y),
+            (2.0 / c.betaStar) * nn.sqrt(k) / (omega * y),
             500.0 * nu / ((y * y) * omega),
         ),
         100.0,
@@ -87,35 +95,41 @@ def _f2(c: dict[str, float], k: Any, omega: Any, y: Any, nu: float) -> Any:
     return nn.tanh(arg2 * arg2)
 
 
-def _f1(c: dict[str, float], k: Any, omega: Any, y: Any, nu: float, cd_komega: Any) -> Any:
+def _f1(c: KOmegaSSTCoeffs, k: Any, omega: Any, y: Any, nu: float, cd_komega: Any) -> Any:
     """SST ``F1 = tanh(arg1^4)`` with the cross-diffusion-limited inner argument."""
     cd_plus = nn.field_max(cd_komega, 1.0e-10)
     arg1 = nn.field_min(
         nn.field_min(
             nn.field_max(
-                (1.0 / c["betaStar"]) * nn.sqrt(k) / (omega * y),
+                (1.0 / c.betaStar) * nn.sqrt(k) / (omega * y),
                 500.0 * nu / ((y * y) * omega),
             ),
-            (4.0 * c["alphaOmega2"]) * k / (cd_plus * (y * y)),
+            (4.0 * c.alphaOmega2) * k / (cd_plus * (y * y)),
         ),
         10.0,
     )
     return nn.tanh(arg1**4.0)
 
 
-def _correct_nut(c: dict[str, float], k: Any, omega: Any, f23: Any, s2: Any) -> Any:
+def _correct_nut(c: KOmegaSSTCoeffs, k: Any, omega: Any, f23: Any, s2: Any) -> Any:
     """correctNut: ``nut = a1 k / max(a1 omega, b1 F23 sqrt(S2))``."""
-    return c["a1"] * k / nn.field_max(c["a1"] * omega, (c["b1"] * f23) * nn.sqrt(s2))
+    return c.a1 * k / nn.field_max(c.a1 * omega, (c.b1 * f23) * nn.sqrt(s2))
 
 
 kOmegaSST = register_momentum_transport(Model("kOmegaSST"), family="RAS")
 kOmegaSST.config(TurbulencePropertiesConfig)
 
 
+@kOmegaSST.load
+def load(case_dir: Path, _instance_id: Optional[str]) -> SimpleNamespace:
+    """The dictionary + the resolved :class:`KOmegaSSTCoeffs` the operations inject."""
+    return load_with_coefficients(case_dir, "kOmegaSST", KOmegaSSTCoeffs)
+
+
 @kOmegaSST.build
-def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
+def build(config: SimpleNamespace) -> list[InitStep]:
     """Read ``k`` / ``omega``, seed ``nut`` (correctNut), own the helper operators."""
-    coeffs = model_coefficients(config, "kOmegaSST", DEFAULT_COEFFS)
+    coeffs = config.coeffs
 
     def read_k(ctx: dict[str, Any]) -> Any:
         # Bound as read (kOmegaSSTBase.C's constructor), before seed_nut divides by
@@ -170,7 +184,6 @@ def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
     return [
         init_field("k", read_k, depends_on=["models.neon_runtime"]),
         init_field("omega", read_omega, depends_on=["models.neon_runtime"]),
-        init_model("komega_coeffs", lambda _ctx: coeffs),
         init_model("komega_surf", create_surf, depends_on=["models.neon_runtime"]),
         init_model("komega_grad", create_grad, depends_on=["models.neon_runtime"]),
         init_model("komega_wall_dist", read_wall_dist, depends_on=["models.neon_runtime"]),
@@ -209,14 +222,14 @@ def blend(
     komega_grad: Annotated[Any, "models"],
     komega_wall_dist: Annotated[Any, "models"],
     komega_nearWallDist: Annotated[Any, "models"],
-    komega_coeffs: Annotated[Any, "models"],
+    coeffs: KOmegaSSTCoeffs,
     U: Annotated[Any, "fields"],
     k: Annotated[Any, "fields"],
     omega: Annotated[Any, "fields"],
     nut: Annotated[Any, "fields"],
 ) -> FieldUpdates:
     """Compute ``F1`` and the frozen production / Sp / SuSp coefficients, and publish them."""
-    c = komega_coeffs
+    c = coeffs
     nu = nfb.read_transport_viscosity(neon_runtime)
     # omegaWallFunction::updateCoeffs writes the near-wall omega CELL from the current
     # k *before* CDkOmega/F1 (kOmegaSSTBase.C:541, "omegaWallFunctions change the cell
@@ -229,11 +242,11 @@ def blend(
     s2 = nfb.strain_magnitude_sqr(grad_u)
     gbynu0 = nfb.strain_production(grad_u)  # gradU && devTwoSymm(gradU)
 
-    cd_komega = (2.0 * c["alphaOmega2"]) * nfb.grad_dot_grad(neon_runtime, k, omega) / omega
+    cd_komega = (2.0 * c.alphaOmega2) * nfb.grad_dot_grad(neon_runtime, k, omega) / omega
     f1 = _f1(c, k, omega, y, nu, cd_komega)
     f23 = _f2(c, k, omega, y, nu)
-    gamma = _blend(f1, c["gamma1"], c["gamma2"])
-    beta = _blend(f1, c["beta1"], c["beta2"])
+    gamma = _blend(f1, c.gamma1, c.gamma2)
+    beta = _blend(f1, c.beta1, c.beta2)
 
     # Production: omega uses the strain-limited GbyNu0; k uses the raw G = nut*GbyNu0
     # with the near-wall cells overridden by the log-law form. The k-equation cap
@@ -243,10 +256,7 @@ def blend(
     # omega. (kEpsilon has no such cap, so its wall production is never limited.)
     gbynu0_lim = nn.field_min(
         gbynu0,
-        (c["c1"] / c["a1"])
-        * c["betaStar"]
-        * omega
-        * nn.field_max(c["a1"] * omega, (c["b1"] * f23) * nn.sqrt(s2)),
+        (c.c1 / c.a1) * c.betaStar * omega * nn.field_max(c.a1 * omega, (c.b1 * f23) * nn.sqrt(s2)),
     )
     g = nut * gbynu0
     # omegaWallFunction overrides the near-wall G with the log-law form — identical
@@ -262,7 +272,7 @@ def blend(
         nut,
         komega_nearWallDist,
         neon_runtime,
-        c["betaStar"],
+        c.betaStar,
         0.41,
         "omegaWallFunction",
     )
@@ -286,7 +296,7 @@ def correct_omega(
     nu_vol: Annotated[Any, "models"],
     komega_surf: Annotated[Any, "models"],
     komega_nearWallDist: Annotated[Any, "models"],
-    komega_coeffs: Annotated[Any, "models"],
+    coeffs: KOmegaSSTCoeffs,
     komega_F1: Annotated[Any, "fields"],
     komega_omega_prod: Annotated[Any, "fields"],
     komega_omega_sp: Annotated[Any, "fields"],
@@ -300,7 +310,7 @@ def correct_omega(
     nn.rotate_old_times(omega)
     nu = nfb.read_transport_viscosity(neon_runtime)
     d_omega = komega_surf.interpolate(
-        _blend(komega_F1, komega_coeffs["alphaOmega1"], komega_coeffs["alphaOmega2"]) * nut + nu
+        _blend(komega_F1, coeffs.alphaOmega1, coeffs.alphaOmega2) * nut + nu
     )
     eqn = nfb.PDESolverScalar(
         nn.imp.ddt(omega)
@@ -332,7 +342,7 @@ def correct_k(
     nu_vol: Annotated[Any, "models"],
     komega_surf: Annotated[Any, "models"],
     komega_nearWallDist: Annotated[Any, "models"],
-    komega_coeffs: Annotated[Any, "models"],
+    coeffs: KOmegaSSTCoeffs,
     komega_F1: Annotated[Any, "fields"],
     komega_G: Annotated[Any, "fields"],
     phi: Annotated[Any, "fields"],
@@ -343,16 +353,14 @@ def correct_k(
     """k transport: ddt + div - laplacian == Pk - Sp(betaStar*omega, k) (uses the new omega)."""
     nn.rotate_old_times(k)
     nu = nfb.read_transport_viscosity(neon_runtime)
-    d_k = komega_surf.interpolate(
-        _blend(komega_F1, komega_coeffs["alphaK1"], komega_coeffs["alphaK2"]) * nut + nu
-    )
-    eps_by_k = komega_coeffs["betaStar"] * omega  # epsilonByk, uses the updated omega
+    d_k = komega_surf.interpolate(_blend(komega_F1, coeffs.alphaK1, coeffs.alphaK2) * nut + nu)
+    eps_by_k = coeffs.betaStar * omega  # epsilonByk, uses the updated omega
     # Pk = min(G, c1*betaStar*k*omega) — kOmegaSSTBase::Pk(G), evaluated here (after
     # the omega solve) so the near-wall log-law G is capped against the *pinned*
     # omega. omega is huge at the wall, so the cap normally only binds at high-shear
     # wall cells (e.g. the inlet/wall corner), which is exactly where the raw
     # log-law G overshoots.
-    pk = nn.field_min(komega_G, (komega_coeffs["c1"] * komega_coeffs["betaStar"]) * k * omega)
+    pk = nn.field_min(komega_G, (coeffs.c1 * coeffs.betaStar) * k * omega)
     eqn = nfb.PDESolverScalar(
         nn.imp.ddt(k)
         + nn.imp.div(phi, k)
@@ -381,7 +389,7 @@ def correct_nut(
     komega_grad: Annotated[Any, "models"],
     komega_wall_dist: Annotated[Any, "models"],
     komega_nearWallDist: Annotated[Any, "models"],
-    komega_coeffs: Annotated[Any, "models"],
+    coeffs: KOmegaSSTCoeffs,
     U: Annotated[Any, "fields"],
     k: Annotated[Any, "fields"],
     omega: Annotated[Any, "fields"],
@@ -391,7 +399,7 @@ def correct_nut(
     nu = nfb.read_transport_viscosity(neon_runtime)
     y = komega_wall_dist
     s2 = nfb.strain_magnitude_sqr(komega_grad.grad_tensor(U))
-    nut.assign(_correct_nut(komega_coeffs, k, omega, _f2(komega_coeffs, k, omega, y, nu), s2))
+    nut.assign(_correct_nut(coeffs, k, omega, _f2(coeffs, k, omega, y, nu), s2))
     # nutkWallFunction sets nut's wall faces from (k, nu, nearWallDist).
     nfb.correct_scalar_bc_ctx(nut, k, nu_vol, komega_nearWallDist)
     return FieldUpdates({"nut": nut, "nuEff": komega_surf.interpolate(nut + nu_vol)})
