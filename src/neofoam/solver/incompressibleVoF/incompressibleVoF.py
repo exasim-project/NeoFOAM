@@ -244,17 +244,21 @@ def set_time_step(
     """Adjust the time step from flow-CFL and alpha-CFL (setInitialDeltaT/setDeltaT)."""
     # Re-read system/controlDict every step — faithful to OpenFOAM's
     # runTimeModifiable handling of adjustTimeStep/maxCo/maxAlphaCo/maxDeltaT
-    # (Time.controlDict() is not bound, so the file is read directly). Missing
-    # keys fall back to the interFoam defaults; a malformed value is a fatal
-    # OpenFOAM IO error (not catchable from Python), exactly as in interFoam.
-    ctrl_dict = pyf.dictionary.read("system/controlDict")
+    # (Time.controlDict() is not bound, so the file is read directly). The read
+    # goes through ``ControlDictConfig`` — the class that already declares these
+    # four keys and their interFoam defaults — so the schema and the value the
+    # step actually uses cannot drift apart. A fresh instance per step (not one
+    # frozen into the runtime config) is what keeps the runTimeModifiable
+    # behaviour; ``validate=False`` mirrors the framework's own auto-load, so a
+    # key the case omits still falls back to the schema default.
+    ctrl_dict = ControlDictConfig.load(validate=False)
 
-    if not ctrl_dict.getOrDefault[bool]("adjustTimeStep", False):
+    if not ctrl_dict.adjustTimeStep:
         return
 
-    max_co = float(ctrl_dict.getOrDefault[float]("maxCo", 1.0))
-    max_alpha_co = float(ctrl_dict.getOrDefault[float]("maxAlphaCo", 1.0))
-    max_delta_t = float(ctrl_dict.getOrDefault[float]("maxDeltaT", 1.0))
+    max_co = float(ctrl_dict.maxCo)
+    max_alpha_co = float(ctrl_dict.maxAlphaCo)
+    max_delta_t = float(ctrl_dict.maxDeltaT)
 
     # setInitialDeltaT.H runs once before the loop, so it precedes the setDeltaT.H
     # below on the first pass: its undamped setDeltaT snaps onto the write time,

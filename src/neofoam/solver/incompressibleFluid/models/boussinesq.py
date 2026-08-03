@@ -139,26 +139,6 @@ class BoussinesqConfig(BaseConfig):
     hRef: float = 0.0
 
 
-def _read_boussinesq_config() -> BoussinesqConfig:
-    """Read transportProperties and construct a validated BoussinesqConfig.
-
-    ``beta`` and ``TRef`` are required and read directly; ``Pr``, ``Prt``,
-    ``hRef`` keep their schema defaults if not present in the dict.
-    """
-    props = pyf.dictionary.read("constant/transportProperties")
-    values: dict[str, float] = {
-        "beta": props.get[float]("beta"),
-        "TRef": props.get[float]("TRef"),
-    }
-    if props.found("Pr"):
-        values["Pr"] = props.get[float]("Pr")
-    if props.found("Prt"):
-        values["Prt"] = props.get[float]("Prt")
-    if props.found("hRef"):
-        values["hRef"] = props.get[float]("hRef")
-    return BoussinesqConfig(**values)
-
-
 boussinesq = (
     Model("boussinesq").register_with(incompressibleFluidModel).labeled("Buoyancy (Boussinesq)")
 )
@@ -251,8 +231,18 @@ boussinesq.field(
 
 
 @boussinesq.load
-def load(_case_dir: Path, _instance_id: str) -> BoussinesqConfig:
-    return _read_boussinesq_config()
+def load(case_dir: Path, _instance_id: str) -> BoussinesqConfig:
+    """The typed ``constant/transportProperties`` view this model owns.
+
+    ``BoussinesqConfig`` already binds the file, so the read goes through its
+    ``@IOStrategy`` rather than a hand-rolled ``pyf.dictionary`` walk. The schema
+    decides what is required exactly as before — ``beta`` / ``TRef`` / ``Pr`` /
+    ``Prt`` must be present (``@detect`` only activates the model when ``beta``
+    and ``TRef`` are), ``hRef`` defaults to 0. The one thing the strategy adds is
+    OpenFOAM's *dimensioned* entry form (``beta [0 0 0 -1 0 0 0] 3e-03;``), which
+    ``dictionary.get[float]`` rejected outright.
+    """
+    return BoussinesqConfig.load(case_dir=case_dir)
 
 
 @boussinesq.detect

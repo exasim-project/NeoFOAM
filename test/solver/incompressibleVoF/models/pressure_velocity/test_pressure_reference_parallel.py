@@ -137,7 +137,7 @@ def test_the_reference_cell_is_owned_by_the_non_master_rank(
 ) -> None:
     """setRefCell finds ``pRefPoint`` on rank 1 only; rank 0 gets the same -1 it
     would get on an open domain. Everything below is about that asymmetry."""
-    assert [rank["pressure_reference"]["pRefCell"] for rank in ranks] == (_EXPECTED_REF_CELLS)
+    assert [rank["pressure_reference"]["cell"] for rank in ranks] == (_EXPECTED_REF_CELLS)
 
 
 # --------------------------------------------------------------------------- #
@@ -159,8 +159,8 @@ def test_the_cached_pressure_reference_flag_agrees_on_every_rank(
 ) -> None:
     """The flag the init step stores in ``ctx.models["pressure_reference"]`` is
     what the solver actually branches on every pressure corrector."""
-    assert [rank["pressure_reference"]["needsRef"] for rank in ranks] == [True, True]
-    assert [rank["pressure_reference"]["pRefValue"] for rank in ranks] == [50.0, 50.0]
+    assert [rank["pressure_reference"]["needs_ref"] for rank in ranks] == [True, True]
+    assert [rank["pressure_reference"]["value"] for rank in ranks] == [50.0, 50.0]
 
 
 # --------------------------------------------------------------------------- #

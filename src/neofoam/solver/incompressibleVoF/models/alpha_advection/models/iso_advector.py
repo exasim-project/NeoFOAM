@@ -45,29 +45,53 @@ from neofoam.framework.operations import (
     SequentialOp,
 )
 from neofoam.framework.types import OperationMetadata
+from neofoam.io import OF, BaseConfig, IOStrategy
 
 from ..advectionModel import Model, advectionModel
 from ..shared import MixtureProtocol, alpha_sub_cycle, shared_field_build_steps
 
-__all__ = ["iso_advector"]
+__all__ = ["PorosityPropertiesConfig", "iso_advector"]
 
 iso_advector = Model("isoAdvector").register_with(advectionModel).labeled("isoAdvector")
+
+
+@IOStrategy(OF("constant/porosityProperties"))
+class PorosityPropertiesConfig(BaseConfig):
+    """``constant/porosityProperties`` — isoAdvector's porosity switch.
+
+    interIsoFoam's ``createPorosity.H`` reads ``porosityEnabled`` from this
+    dictionary; when it is on, ``isoAdvection``'s constructor looks a
+    ``porosity`` field up in the object registry (so the field read has to be
+    ordered ahead of the advector). Most cases ship no such file, hence the
+    guarded load in :func:`_porosity_enabled` — the file being absent is the
+    same as ``porosityEnabled no``.
+    """
+
+    porosityEnabled: bool = False
+
+
+# Declared on the spec so the switch is part of this model's schema set
+# (``configurations(solver)`` / the MCP's ``list_configs``); the guarded
+# ``@build`` read below drives the actual instantiation, as this spec is used
+# as its own runtime and never auto-loads its configs.
+iso_advector.config(PorosityPropertiesConfig)
+
+
+def _porosity_enabled() -> bool:
+    """Whether ``constant/porosityProperties`` switches porosity on.
+
+    Guarded like the fvOptions dictionary (:mod:`neofoam.fv_options`): the file
+    is optional, so its absence short-circuits to the schema default instead of
+    raising ``FileNotFoundError``.
+    """
+    if not Path("constant/porosityProperties").is_file():
+        return False
+    return PorosityPropertiesConfig.load(validate=False).porosityEnabled
 
 
 # ---------------------------------------------------------------------------
 # Build: the shared VoF fields + the isoAdvection advector (constructed once)
 # ---------------------------------------------------------------------------
-
-
-def _porosity_enabled() -> bool:
-    """Whether ``constant/porosityProperties`` switches porosity on."""
-    path = Path("constant/porosityProperties")
-    if not path.is_file():
-        return False
-    # Bound to a name on purpose: ``getOrDefault`` is a view into the dictionary,
-    # so reading it off a temporary silently yields the default.
-    properties = pyf.dictionary.read(str(path))
-    return bool(properties.getOrDefault[bool]("porosityEnabled", False))
 
 
 @iso_advector.build

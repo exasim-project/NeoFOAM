@@ -16,7 +16,8 @@ the linked reference pages for the full API.
     synthesised ``0/<name>`` field schemas.
 
 ``foam/``
-    ``fvSchemes``/``fvSolution`` config builders and FoamFile helpers.
+    ``fvSchemes``/``fvSolution`` config builders, the typed ``fvSolution``
+    algorithm blocks (``PIMPLE``/``PISO``/``SIMPLE``), and FoamFile helpers.
 
 ``framework/``
     The Spec/Runtime core — see :mod:`neofoam.framework`.

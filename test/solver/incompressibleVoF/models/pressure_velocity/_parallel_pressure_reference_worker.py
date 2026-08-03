@@ -23,6 +23,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
@@ -60,11 +61,11 @@ def run(case_dir: Path) -> dict[str, Any]:
         # Cell centres, so the test can put the per-rank slices back in global
         # order without assuming how decomposePar numbered them.
         "cell_centres_x": np.asarray(ctx.mesh.C().internalField())[:, 0].tolist(),
-        "pressure_reference": reference,
+        "pressure_reference": asdict(reference),
         # ``need_reference`` called straight on setRefCell's own cell index, so
         # the test pins the helper and not the flag the init step cached.
-        "need_reference": need_reference(reference["pRefCell"]),
-        "ref_cell_value_of_p_rgh": get_ref_cell_value(p_rgh, reference["pRefCell"]),
+        "need_reference": need_reference(reference.cell),
+        "ref_cell_value_of_p_rgh": get_ref_cell_value(p_rgh, reference.cell),
         "ref_cell_value_without_reference_cell": get_ref_cell_value(p_rgh, -1),
         "rho": _internal(rho),
         "gh": _internal(gh),
@@ -76,14 +77,14 @@ def run(case_dir: Path) -> dict[str, Any]:
         p_rgh,
         rho,
         gh,
-        ref_cell=reference["pRefCell"],
-        ref_value=reference["pRefValue"],
-        needs_reference=reference["needsRef"],
+        ref_cell=reference.cell,
+        ref_value=reference.value,
+        needs_reference=reference.needs_ref,
     )
 
     result["p_after"] = _internal(p)
     result["p_rgh_after"] = _internal(p_rgh)
-    result["ref_cell_value_of_p_after"] = get_ref_cell_value(p, reference["pRefCell"])
+    result["ref_cell_value_of_p_after"] = get_ref_cell_value(p, reference.cell)
     return result
 
 

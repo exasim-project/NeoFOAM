@@ -24,6 +24,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
@@ -62,7 +63,7 @@ def run(case_dir: Path) -> dict[str, Any]:
         # None on a static mesh (createUfIfPresent.H builds Uf only when the
         # mesh can move); its name otherwise.
         "Uf": None if ctx.models["Uf"] is None else str(ctx.models["Uf"].name()),
-        "dynamic_mesh_controls": ctx.models["dynamic_mesh_controls"],
+        "dynamic_mesh_controls": ctx.models["dynamic_mesh_controls"].model_dump(),
         # ``uniformDimensionedScalarField.name()`` (hRef) returns a ``Word``,
         # not a plain ``str`` like ``GeometricField.name()`` does — ``str()``
         # normalises both for JSON.
@@ -74,7 +75,7 @@ def run(case_dir: Path) -> dict[str, Any]:
             "alpha1_name": mixture.alpha1().name(),
             "alpha2_name": mixture.alpha2().name(),
         },
-        "pressure_reference": ctx.models["pressure_reference"],
+        "pressure_reference": asdict(ctx.models["pressure_reference"]),
         "pimple_control": {
             "nOuterCorrectors": ctx.models["pimple_control"].nOuterCorrectors,
             "nCorrectors": ctx.models["pimple_control"].nCorrectors,

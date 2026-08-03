@@ -153,7 +153,9 @@ def test_load_result_carries_the_config_classes_the_core_models_declare(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     # The with-a-case config surface: MULES declares its fvSchemes/fvSolution
-    # slices and the 0/alpha.water field, PIMPLE its slices and U/p_rgh.
+    # slices and the 0/alpha.water field, PIMPLE its slices, the typed
+    # ``PIMPLE`` block (loop controls + createDyMControls switches) the slices
+    # pass through untyped, and U/p_rgh.
     case = _ADVECTION_CASES / "damBreak_mules"
     monkeypatch.chdir(case)
     load_result = create_init(case_dir=case).run_load()
@@ -163,6 +165,8 @@ def test_load_result_carries_the_config_classes_the_core_models_declare(
         "alpha.waterFieldConfig",
         "Pimple_fvSchemes",
         "Pimple_fvSolution",
+        "VofPimpleAlgorithmConfig",
+        "DynamicMeshControls",
         "UFieldConfig",
         "p_rghFieldConfig",
     ]
@@ -462,9 +466,9 @@ def test_pressure_reference_is_read_from_the_pimple_dict(
     # pRefValue 0. The open/closed distinction itself is pinned in
     # ``models/pressure_velocity/test_pressure_reference.py``.
     assert vof_row4.result["pressure_reference"] == {
-        "pRefCell": 0,
-        "pRefValue": 0.0,
-        "needsRef": True,
+        "cell": 0,
+        "value": 0.0,
+        "needs_ref": True,
     }
 
 

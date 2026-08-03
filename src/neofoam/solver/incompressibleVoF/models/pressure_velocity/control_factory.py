@@ -3,9 +3,9 @@
 
 """Factory helpers that build the Python-native PIMPLE control (VoF solver).
 
-Reads the PIMPLE subdict of ``system/fvSolution`` via pybFoam and returns a
-:class:`~neofoam.algorithms.solution_loop.control.PimpleControl` so the loop
-logic stays in Python (mirrors the incompressibleFluid control factory).
+Reads the PIMPLE subdict of ``system/fvSolution`` through its typed config and
+returns a :class:`~neofoam.algorithms.solution_loop.control.PimpleControl` so the
+loop logic stays in Python (mirrors the incompressibleFluid control factory).
 
 When the case sets ``frozenFlow yes`` the pressure-velocity solve is switched
 off entirely and the factory returns a :class:`FrozenFlowControl` instead.
@@ -13,9 +13,33 @@ off entirely and the factory returns a :class:`FrozenFlowControl` instead.
 
 from typing import Any, Union
 
-import pybFoam as pyf
-
 from neofoam.algorithms.solution_loop.control import PimpleControl
+from neofoam.foam.algorithm_configs import DynamicMeshControls, PimpleAlgorithmConfig
+from neofoam.io import OF, IOStrategy
+
+__all__ = [
+    "FrozenFlowControl",
+    "VofPimpleAlgorithmConfig",
+    "create_dynamic_mesh_controls",
+    "create_pimple_control",
+]
+
+
+@IOStrategy(OF("system/fvSolution", subdict="PIMPLE"))
+class VofPimpleAlgorithmConfig(PimpleAlgorithmConfig):
+    """The ``PIMPLE`` block as interFoam reads it: the shared keys plus ``frozenFlow``.
+
+    ``frozenFlow yes`` is interFoam's switch for advecting alpha on a prescribed
+    velocity field — the pressure-velocity solve is skipped entirely, so the
+    corrector counts are free to carry the ``-1`` sentinels the interIsoFoam
+    tutorials pair with it (see :class:`FrozenFlowControl`).
+
+    ``finalOnLastPimpleIterOnly`` is inherited from the shared PIMPLE block model
+    but is not consumed by this solver's loop; interFoam's port selects the
+    ``<field>Final`` settings from ``pimple_control.finalIter()`` directly.
+    """
+
+    frozenFlow: bool = False
 
 
 class FrozenFlowControl:
@@ -60,24 +84,16 @@ class FrozenFlowControl:
         return False
 
 
-def _read_algorithm_dict(algorithm_name: str) -> Any:
-    fv_solution = pyf.dictionary.read("system/fvSolution")
-    return fv_solution.subDict(algorithm_name)
-
-
-def create_dynamic_mesh_controls(context: dict[str, Any]) -> dict[str, bool]:
+def create_dynamic_mesh_controls(context: dict[str, Any]) -> DynamicMeshControls:
     """The PIMPLE dict's mesh-motion switches (transcription of ``createDyMControls.H``).
 
     Native re-reads them every time step (``readDyMControls.H``); read once here
-    because no tutorial rewrites them mid-run.
+    because no tutorial rewrites them mid-run. ``correctPhi``'s OpenFOAM default
+    is ``mesh.dynamic()``, resolved here where the mesh is in hand, so the
+    operations that consume the switches see a plain bool.
     """
-    mesh = context["mesh"]
-    d = _read_algorithm_dict("PIMPLE")
-    return {
-        "correctPhi": bool(d.getOrDefault[bool]("correctPhi", mesh.dynamic())),
-        "checkMeshCourantNo": bool(d.getOrDefault[bool]("checkMeshCourantNo", False)),
-        "moveMeshOuterCorrectors": bool(d.getOrDefault[bool]("moveMeshOuterCorrectors", False)),
-    }
+    controls = DynamicMeshControls.load(validate=False)
+    return controls.resolved(mesh_dynamic=bool(context["mesh"].dynamic()))
 
 
 def create_pimple_control(
@@ -88,18 +104,16 @@ def create_pimple_control(
     ``frozenFlow yes`` (default ``no``) switches the pressure-velocity solve off
     entirely and yields a :class:`FrozenFlowControl` instead.
     """
-    d = _read_algorithm_dict("PIMPLE")
-    if d.getOrDefault[bool]("frozenFlow", False):
-        return FrozenFlowControl(
-            nNonOrthogonalCorrectors=d.getOrDefault[int]("nNonOrthogonalCorrectors", 0)
-        )
+    config = VofPimpleAlgorithmConfig.load(validate=False)
+    if config.frozenFlow:
+        return FrozenFlowControl(nNonOrthogonalCorrectors=config.nNonOrthogonalCorrectors)
     return PimpleControl(
-        nOuterCorrectors=d.getOrDefault[int]("nOuterCorrectors", 1),
-        nCorrectors=d.getOrDefault[int]("nCorrectors", 2),
-        nNonOrthogonalCorrectors=d.getOrDefault[int]("nNonOrthogonalCorrectors", 0),
-        momentumPredictor=d.getOrDefault[bool]("momentumPredictor", True),
-        turbCorr=d.getOrDefault[bool]("turbCorr", True),
+        nOuterCorrectors=config.nOuterCorrectors,
+        nCorrectors=config.nCorrectors,
+        nNonOrthogonalCorrectors=config.nNonOrthogonalCorrectors,
+        momentumPredictor=config.momentumPredictor,
+        turbCorr=config.turbCorr,
         # pimpleControl::read() default; drives turbCorr(), which interFoam uses
         # to correct the turbulence on the final outer corrector only.
-        turbOnFinalIterOnly=d.getOrDefault[bool]("turbOnFinalIterOnly", True),
+        turbOnFinalIterOnly=config.turbOnFinalIterOnly,
     )

@@ -167,6 +167,26 @@ SCENARIOS: dict[str, dict[str, Any]] = {
         "dt0": 1.0,
         "control_dict": {"adjustTimeStep": True},
     },
+    # 5c. Same inputs as 2a with only ``maxCo`` loosened, evaluated *after* it in
+    # the same worker process (the worker rewrites system/controlDict between
+    # scenarios and never re-initialises): pins that the dictionary is re-read on
+    # every call rather than frozen at init — OpenFOAM's runTimeModifiable
+    # handling of the adaptive-stepping keys.
+    # CoNum = alphaCoNum = 4*1.0*0.25 = 1.0.
+    # setInitialDeltaT: min(0.2*0.25/1.0, min(0.25, 1.0)) = 0.05, so the damped
+    # pass then sees CoNum = 0.2 and grows nothing: newDeltaT = 0.05
+    # (2a's 0.025 is what a cached maxCo=0.1 would still produce).
+    "flow_limits_reread": {
+        "u_x": 1.0,
+        "alpha": 0.5,
+        "dt0": 0.25,
+        "control_dict": {
+            "adjustTimeStep": True,
+            "maxCo": 0.2,
+            "maxAlphaCo": 10.0,
+            "maxDeltaT": 1.0,
+        },
+    },
     # 6. Mid-run step ("advance": the worker increments the Foam::Time first, so
     # timeIndex() != 0). Same controlDict as 2a, so the deltaT is the same 0.025 —
     # what differs is that setInitialDeltaT.H is gated off and setDeltaT is called
@@ -316,6 +336,28 @@ def test_default_max_delta_t_is_one_when_absent(results: dict[str, Any]) -> None
         1.0,
         rtol=1e-9,
         err_msg="maxDeltaT must default to 1.0 when absent from controlDict",
+    )
+
+
+# --- 5d. the controlDict is re-read per call (runTimeModifiable) --------------
+
+
+def test_the_control_dict_is_re_read_on_every_step(results: dict[str, Any]) -> None:
+    # Both scenarios run in ONE process, on the same fields and the same dt0;
+    # only system/fvSolution's sibling file changed on disk in between. Reading
+    # the four adaptive keys once (at init, into the runtime config) would answer
+    # 0.025 twice — the second value is what proves the per-call read.
+    assert_allclose(
+        results["flow_limits"]["final_dt"],
+        0.025,
+        rtol=1e-9,
+        err_msg="maxCo 0.1 must bind on the first evaluation",
+    )
+    assert_allclose(
+        results["flow_limits_reread"]["final_dt"],
+        0.05,
+        rtol=1e-9,
+        err_msg="the rewritten maxCo 0.2 must bind on the next evaluation",
     )
 
 

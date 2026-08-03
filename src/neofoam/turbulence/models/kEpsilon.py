@@ -73,6 +73,13 @@ epsilonMin = 1e-15
 
 kEpsilon = register_momentum_transport(Model("kEpsilon"), family="RAS")
 kEpsilon.config(TurbulencePropertiesConfig)
+# ``KEpsilonCoeffs`` is resolved out of the ``RAS`` block by ``@kEpsilon.load``
+# below; registering it here only adds it to the spec's declared schema set
+# (``collect_config_classes`` → ``configurations(solver)`` → the MCP's
+# ``list_configs`` / ``config_schema``) so a case author sees the coefficients
+# they may override. ``@load`` still drives instantiation, so this does not
+# change loading behaviour — the same split the boussinesq model uses.
+kEpsilon.config(KEpsilonCoeffs)
 
 
 @kEpsilon.load

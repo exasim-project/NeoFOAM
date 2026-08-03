@@ -25,6 +25,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
@@ -55,11 +56,11 @@ def run(case_dir: Path) -> dict[str, Any]:
     reference = ctx.models["pressure_reference"]
 
     result: dict[str, Any] = {
-        "pressure_reference": reference,
+        "pressure_reference": asdict(reference),
         # need_reference() called straight on setRefCell's cell index,
         # independently of the flag the init step stored, so the test can pin
         # the helper itself.
-        "need_reference": need_reference(reference["pRefCell"]),
+        "need_reference": need_reference(reference.cell),
         "rho": _internal(rho),
         "gh": _internal(gh),
         "p_rgh_before": _internal(p_rgh),
@@ -78,14 +79,14 @@ def run(case_dir: Path) -> dict[str, Any]:
         p_rgh,
         rho,
         gh,
-        ref_cell=reference["pRefCell"],
-        ref_value=reference["pRefValue"],
-        needs_reference=reference["needsRef"],
+        ref_cell=reference.cell,
+        ref_value=reference.value,
+        needs_reference=reference.needs_ref,
     )
 
     result["p_after"] = _internal(p)
     result["p_rgh_after"] = _internal(p_rgh)
-    result["ref_cell_value_of_p_after"] = get_ref_cell_value(p, reference["pRefCell"])
+    result["ref_cell_value_of_p_after"] = get_ref_cell_value(p, reference.cell)
     return result
 
 

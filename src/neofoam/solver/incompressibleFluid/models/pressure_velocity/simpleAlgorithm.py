@@ -30,6 +30,7 @@ from pybFoam import (
 )
 
 from neofoam import telemetry
+from neofoam.algorithms import PressureReference
 from neofoam.fields import (
     CalculatedBC,
     CyclicBC,
@@ -47,6 +48,7 @@ from neofoam.fields import (
     ZeroGradientBC,
 )
 from neofoam.foam import fvSchemes, fvSolution
+from neofoam.foam.algorithm_configs import SimpleAlgorithmConfig
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.dependency_resolver import wrap_with_dependency_resolution
 from neofoam.framework.initialization import field, model
@@ -72,6 +74,14 @@ SimpleFvSolution = simple.config(fvSolution)
 # Optional SIMPLE control keys read straight from ``system/fvSolution`` by
 # ``setRefCell`` — a closed domain needs a pressure reference.
 SimpleFvSolution.add_controls("SIMPLE", pRefCell=int, pRefValue=float)
+
+# The SIMPLE block's loop controls, which the slice above passes through
+# untyped. ``control_factory.create_simple_control`` loads it to build the
+# stateful ``SimpleControl``; declaring it here is what exports the key set to
+# ``configurations(solver)`` and the MCP. This spec is used as its own runtime
+# (see ``PressureVelocityAlgorithm.detect_and_create``) and never auto-loads its
+# configs, so the declaration changes no loading behaviour.
+simple.config(SimpleAlgorithmConfig)
 
 # 0/<name> field declarations SIMPLE owns (same arm sets as PIMPLE).
 simple.field(
@@ -133,7 +143,7 @@ def build(self: Any) -> list[Any]:
     def create_cumulative_cont_err(_context: dict[str, Any]) -> list[float]:
         return [0.0]
 
-    def create_pressure_reference(context: dict[str, Any]) -> dict[str, Any]:
+    def create_pressure_reference(context: dict[str, Any]) -> PressureReference:
         p = context["fields.p"]
         mesh = context["mesh"]
 
@@ -142,7 +152,14 @@ def build(self: Any) -> list[Any]:
         pRefCell, pRefValue = pyf.setRefCell(p, algo_dict)
 
         mesh.setFluxRequired(pyf.Word("p"))
-        return {"pRefCell": pRefCell, "pRefValue": pRefValue}
+        # ``needs_ref`` completes the triple ``setRefCell`` answers — the same
+        # boolean pEqn.H queries off the field, carried for consumers that have
+        # none in hand.
+        return PressureReference(
+            cell=pRefCell,
+            value=pRefValue,
+            needs_ref=bool(p.needReference()),
+        )
 
     return [
         field("phi", create_phi, depends_on=["fields.U"], write=True),
@@ -221,11 +238,11 @@ def continuity(
     UEqn: fvVectorMatrix,
     simple_control: Annotated[Any, "models"],
     cumulativeContErr: Annotated[list[float], "models"],
-    pressure_reference: Annotated[dict[str, Any], "models"],
+    pressure_reference: Annotated[PressureReference, "models"],
     ext: Annotated[BoundExtension, pressure_extension],
 ) -> FieldUpdates:
-    pRefCell = pressure_reference["pRefCell"]
-    pRefValue = pressure_reference["pRefValue"]
+    pRefCell = pressure_reference.cell
+    pRefValue = pressure_reference.value
 
     with telemetry.span("pressure.flux"):
         rAU = volScalarField(pyf.Word("rAU"), 1.0 / UEqn.A())

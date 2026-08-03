@@ -62,6 +62,8 @@ import pytest
 
 from neofoam.solver.incompressibleVoF.create_fields import create_init
 from neofoam.solver.incompressibleVoF.models.alpha_advection.models.iso_advector import (
+    PorosityPropertiesConfig,
+    _porosity_enabled,
     read_n_alpha_sub_cycles,
 )
 
@@ -93,6 +95,25 @@ def _build_steps(case: Path, monkeypatch: pytest.MonkeyPatch) -> list[str]:
     runner = create_init(case_dir=case)
     runner.run_load()
     return [step.name for step in runner.run_build()]
+
+
+def test_porosity_properties_config_reads_the_switch_from_the_case(
+    porous_case: Path,
+) -> None:
+    # ``constant/porosityProperties`` is the file createPorosity.H reads; the
+    # porous overlay sets the switch on.
+    assert PorosityPropertiesConfig.load(case_dir=porous_case, validate=False).porosityEnabled
+
+
+def test_porosity_defaults_to_off_when_the_case_has_no_porosity_properties(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # The dictionary is optional, so the read is guarded: an absent file is the
+    # same answer as ``porosityEnabled no``, not a FileNotFoundError.
+    case = _ADVECTION_CASES / "damBreak_isoAdvector"
+    assert not (case / "constant" / "porosityProperties").exists()
+    monkeypatch.chdir(case)
+    assert _porosity_enabled() is False
 
 
 def test_build_reads_porosity_when_the_case_enables_it(

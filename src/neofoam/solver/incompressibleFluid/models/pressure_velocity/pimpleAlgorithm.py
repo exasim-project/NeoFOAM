@@ -31,6 +31,7 @@ from pybFoam import (
 )
 
 from neofoam import telemetry
+from neofoam.algorithms import PressureReference
 from neofoam.fields import (
     CalculatedBC,
     CyclicBC,
@@ -48,6 +49,12 @@ from neofoam.fields import (
     ZeroGradientBC,
 )
 from neofoam.foam import fvSchemes, fvSolution
+from neofoam.foam.algorithm_configs import (
+    DynamicMeshControls,
+    PimpleAlgorithmConfig,
+    PisoAlgorithmConfig,
+    PisoDynamicMeshControls,
+)
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.dependency_resolver import wrap_with_dependency_resolution
 from neofoam.framework.initialization import field, model
@@ -80,6 +87,18 @@ PimpleFvSolution = pimple.config(fvSolution)
 # fixed-pressure BC) needs a pressure reference; an open domain doesn't, so
 # these stay optional and only serialise when the case author sets them.
 PimpleFvSolution.add_controls("PIMPLE", pRefCell=int, pRefValue=float)
+
+# The loop controls and the mesh-motion switches of the algorithm block, which
+# the slice above passes through untyped. ``control_factory`` loads whichever of
+# the two spellings the case ships (``PIMPLE``, or ``PISO`` for a pisoFoam
+# case); both pairs are declared here so ``configurations(solver)`` and the MCP
+# export the full key set. Declaring them changes no loading: this spec is used
+# as its own runtime (see ``PressureVelocityAlgorithm.detect_and_create``) and
+# never auto-loads its configs — ``@pimple.build`` drives instantiation.
+pimple.config(PimpleAlgorithmConfig)
+pimple.config(DynamicMeshControls)
+pimple.config(PisoAlgorithmConfig)
+pimple.config(PisoDynamicMeshControls)
 
 # 0/<name> field declarations PIMPLE owns. The framework auto-synthesises
 # the matching read_field InitStep (see
@@ -181,7 +200,7 @@ def build(self: Any) -> list[Any]:
         pyf.Info("Constructing face velocity Uf")
         return surfaceVectorField(pyf.Word("Uf"), fvc.interpolate(context["fields.U"]))
 
-    def create_pressure_reference(context: dict[str, Any]) -> dict[str, Any]:
+    def create_pressure_reference(context: dict[str, Any]) -> PressureReference:
         p = context["fields.p"]
         mesh = context["mesh"]
         use_boussinesq: bool = getattr(pimple, "use_boussinesq", False)
@@ -206,7 +225,15 @@ def build(self: Any) -> list[Any]:
         if p_rgh is not None:
             mesh.setFluxRequired(pyf.Word("p_rgh"))
 
-        return {"pRefCell": pRefCell, "pRefValue": pRefValue}
+        # ``needs_ref`` completes the triple ``setRefCell`` answers; the
+        # corrector below keeps native's own ``p.needReference()`` query where
+        # pEqn.H makes it, so this is the same boolean, carried for consumers
+        # (and reporting) that have no field in hand.
+        return PressureReference(
+            cell=pRefCell,
+            value=pRefValue,
+            needs_ref=bool(pressure_field.needReference()),
+        )
 
     init_steps = [
         # ``phi`` is a surfaceScalarField (no per-cell internalField /
@@ -258,7 +285,7 @@ def mesh_update(
     phi: surfaceScalarField,
     p: volScalarField,
     pimple_control: Annotated[Any, "models"],
-    dynamic_mesh_controls: Annotated[dict[str, bool], "models"],
+    dynamic_mesh_controls: Annotated[DynamicMeshControls, "models"],
     cumulativeContErr: Annotated[list[float], "models"],
     ext: Annotated[BoundExtension, mesh_update_extension],
     Uf: Annotated[Optional[surfaceVectorField], "models"] = None,
@@ -271,7 +298,7 @@ def mesh_update(
     if not mesh.dynamic():
         return FieldUpdates({})
 
-    if not (pimple_control.firstIter() or dynamic_mesh_controls["moveMeshOuterCorrectors"]):
+    if not (pimple_control.firstIter() or dynamic_mesh_controls.moveMeshOuterCorrectors):
         return FieldUpdates({})
 
     # controlledUpdate(), not update(): dynamicMeshDict may set updateControl/updateInterval.
@@ -280,7 +307,7 @@ def mesh_update(
         return FieldUpdates({})
 
     ext.on_mesh_change()
-    if not dynamic_mesh_controls["correctPhi"]:
+    if not dynamic_mesh_controls.correctPhi:
         return FieldUpdates({})
 
     assert Uf is not None  # createUfIfPresent.H gives every dynamic mesh a Uf
@@ -370,7 +397,7 @@ def continuity(
     UEqn: fvVectorMatrix,
     pimple_control: Annotated[Any, "models"],
     cumulativeContErr: Annotated[list[float], "models"],
-    pressure_reference: Annotated[dict[str, Any], "models"],
+    pressure_reference: Annotated[PressureReference, "models"],
     ext: Annotated[BoundExtension, pressure_extension],
     Uf: Annotated[Optional[surfaceVectorField], "models"] = None,
 ) -> FieldUpdates:
@@ -379,8 +406,8 @@ def continuity(
     ``Uf`` is the moving-mesh face velocity — ``None`` on a static mesh, where
     every mesh-motion term below reduces to the static form it always had.
     """
-    pRefCell = pressure_reference["pRefCell"]
-    pRefValue = pressure_reference["pRefValue"]
+    pRefCell = pressure_reference.cell
+    pRefValue = pressure_reference.value
 
     while pimple_control.correct():
         with telemetry.span("pressure.flux"):
@@ -496,14 +523,14 @@ def continuity_boussinesq(
     UEqn: fvVectorMatrix,
     pimple_control: Annotated[Any, "models"],
     cumulativeContErr: Annotated[list[float], "models"],
-    pressure_reference: Annotated[dict[str, Any], "models"],
+    pressure_reference: Annotated[PressureReference, "models"],
     p_rgh: volScalarField,
     rhok: volScalarField,
     gh: volScalarField,
     ghf: surfaceScalarField,
 ) -> FieldUpdates:
-    pRefCell = pressure_reference["pRefCell"]
-    pRefValue = pressure_reference["pRefValue"]
+    pRefCell = pressure_reference.cell
+    pRefValue = pressure_reference.value
     mesh = U.mesh()
 
     while pimple_control.correct():

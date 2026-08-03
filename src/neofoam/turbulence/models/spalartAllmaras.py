@@ -85,6 +85,10 @@ def _fv1(c: SpalartAllmarasCoeffs, chi: Any) -> Any:
 
 spalartAllmaras = register_momentum_transport(Model("SpalartAllmaras"), family="RAS")
 spalartAllmaras.config(TurbulencePropertiesConfig)
+# Schema-only registration (see ``kEpsilon``): ``@spalartAllmaras.load`` still
+# resolves the instance out of the ``RAS`` block, but declaring the class here is
+# what exports its schema through ``configurations(solver)`` / the MCP.
+spalartAllmaras.config(SpalartAllmarasCoeffs)
 
 
 @spalartAllmaras.load

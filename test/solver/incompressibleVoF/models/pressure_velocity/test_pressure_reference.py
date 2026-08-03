@@ -156,12 +156,10 @@ def test_need_reference_follows_the_p_rgh_boundary_conditions(
 @pytest.mark.parametrize(
     "case_fixture, expected",
     [
-        pytest.param("closed", {"pRefCell": 2, "pRefValue": 50.0, "needsRef": True}, id="closed"),
+        pytest.param("closed", {"cell": 2, "value": 50.0, "needs_ref": True}, id="closed"),
         # setRefCell leaves the cell at -1 and the value at 0 when the domain is
         # open, so the case need not carry pRefCell/pRefValue at all.
-        pytest.param(
-            "open_domain", {"pRefCell": -1, "pRefValue": 0.0, "needsRef": False}, id="open"
-        ),
+        pytest.param("open_domain", {"cell": -1, "value": 0.0, "needs_ref": False}, id="open"),
     ],
 )
 def test_pressure_reference_carries_the_flag_the_cell_and_the_value(

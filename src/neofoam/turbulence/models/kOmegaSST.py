@@ -118,6 +118,10 @@ def _correct_nut(c: KOmegaSSTCoeffs, k: Any, omega: Any, f23: Any, s2: Any) -> A
 
 kOmegaSST = register_momentum_transport(Model("kOmegaSST"), family="RAS")
 kOmegaSST.config(TurbulencePropertiesConfig)
+# Schema-only registration (see ``kEpsilon``): ``@kOmegaSST.load`` still resolves
+# the instance out of the ``RAS`` block, but declaring the class here is what
+# exports its schema through ``configurations(solver)`` / the MCP.
+kOmegaSST.config(KOmegaSSTCoeffs)
 
 
 @kOmegaSST.load

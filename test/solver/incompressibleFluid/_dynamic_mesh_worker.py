@@ -42,7 +42,7 @@ if __name__ == "__main__":
                 "dynamic": mesh.dynamic(),
                 "moving": mesh.moving(),
                 "end_time": float(mesh.time().value()),
-                "dynamic_mesh_controls": ctx.models["dynamic_mesh_controls"],
+                "dynamic_mesh_controls": ctx.models["dynamic_mesh_controls"].model_dump(),
                 "cell_centres": _internal(mesh.C()),
                 "phi": _internal(ctx.fields["phi"]),
                 "Uf": _internal(ctx.models["Uf"]),

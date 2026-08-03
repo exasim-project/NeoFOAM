@@ -28,6 +28,7 @@ from pybFoam import (
     volVectorField,
 )
 
+from neofoam.algorithms import PressureReference
 from neofoam.algorithms.solution_loop.control import PimpleControl
 from neofoam.fields import (
     CalculatedBC,
@@ -47,6 +48,7 @@ from neofoam.fields import (
     ZeroGradientBC,
 )
 from neofoam.foam import fvSchemes, fvSolution
+from neofoam.foam.algorithm_configs import DynamicMeshControls
 from neofoam.foam.initialization import read_vol_field
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.initialization import field, model
@@ -63,6 +65,7 @@ from ..alpha_advection.shared import MixtureProtocol
 from ..incompressibleVoFModel import Model
 from .control_factory import (
     FrozenFlowControl,
+    VofPimpleAlgorithmConfig,
     create_dynamic_mesh_controls,
     create_pimple_control,
 )
@@ -89,6 +92,16 @@ PimpleFvSolution = pimple.config(fvSolution)
 # ``setRefCell`` (see ``create_pressure_reference``): a closed domain (no
 # fixed-pressure BC) needs a pressure reference, an open one does not.
 PimpleFvSolution.add_controls("PIMPLE", pRefCell=int, pRefValue=float)
+
+# The PIMPLE block's loop controls (interFoam's ``frozenFlow`` included) and its
+# mesh-motion switches, which the slice above passes through untyped.
+# ``control_factory`` loads them to build the stateful control and the switches
+# the ``mesh_update`` operation reads; declaring them here is what exports the
+# key set to ``configurations(solver)`` and the MCP. This spec is used as its own
+# runtime (see ``PressureVelocityAlgorithm.detect_and_create``) and never
+# auto-loads its configs, so the declaration changes no loading behaviour.
+pimple.config(VofPimpleAlgorithmConfig)
+pimple.config(DynamicMeshControls)
 
 # ``pcorr`` is solved by the start-up flux projection (``initCorrectPhi.H``), which
 # runs for every case. Declared on the model rather than on an operation because the
@@ -309,7 +322,7 @@ def build(self: object) -> list[object]:  # noqa: C901
         pyf.Info("Constructing face velocity Uf")
         return surfaceVectorField(pyf.Word("Uf"), fvc.interpolate(context["fields.U"]))
 
-    def create_pressure_reference(context: dict[str, Any]) -> dict[str, Any]:
+    def create_pressure_reference(context: dict[str, Any]) -> PressureReference:
         """Set reference cell/value for p_rgh and level p/p_rgh against it."""
         p = context["fields.p"]
         p_rgh = context["fields.p_rgh"]
@@ -332,11 +345,7 @@ def build(self: object) -> list[object]:  # noqa: C901
                 ref_value=pRefValue,
                 needs_reference=True,
             )
-        return {
-            "pRefCell": pRefCell,
-            "pRefValue": pRefValue,
-            "needsRef": needsRef,
-        }
+        return PressureReference(cell=pRefCell, value=pRefValue, needs_ref=needsRef)
 
     def create_initial_flux_correction(context: dict[str, Any]) -> None:
         """Project the start-up flux — ``initCorrectPhi.H``, run unconditionally.
@@ -456,7 +465,7 @@ def mesh_update(
     phi: surfaceScalarField,
     p_rgh: volScalarField,
     pimple_control: Annotated[Any, "models"],
-    dynamic_mesh_controls: Annotated[dict[str, bool], "models"],
+    dynamic_mesh_controls: Annotated[DynamicMeshControls, "models"],
     cumulativeContErr: Annotated[list[float], "models"],
     last_rAU: Annotated[list[Optional[volScalarField]], "models"],
     mixture: Annotated[MixtureProtocol, "models"],
@@ -471,7 +480,7 @@ def mesh_update(
     if not mesh.dynamic():
         return FieldUpdates({})
 
-    if not (pimple_control.firstIter() or dynamic_mesh_controls["moveMeshOuterCorrectors"]):
+    if not (pimple_control.firstIter() or dynamic_mesh_controls.moveMeshOuterCorrectors):
         return FieldUpdates({})
 
     mesh.updateMesh()
@@ -480,7 +489,7 @@ def mesh_update(
 
     update_gravity_head(gh, ghf, mesh, hRef)
     ext.on_mesh_change()
-    if not dynamic_mesh_controls["correctPhi"]:
+    if not dynamic_mesh_controls.correctPhi:
         return FieldUpdates({"gh": gh, "ghf": ghf})
 
     assert Uf is not None  # createUfIfPresent.H gives every dynamic mesh a Uf
@@ -572,7 +581,7 @@ def continuity(
     ghf: surfaceScalarField,
     pimple_control: Annotated[PimpleControl, "models"],
     cumulativeContErr: Annotated[list[float], "models"],
-    pressure_reference: Annotated[dict[str, Any], "models"],
+    pressure_reference: Annotated[PressureReference, "models"],
     mixture: Annotated[MixtureProtocol, "models"],
     last_rAU: Annotated[list[Optional[volScalarField]], "models"],
     ext: Annotated[BoundExtension, pressure_extension],
@@ -590,9 +599,9 @@ def continuity(
         # prescribed values and only alpha advects.
         return FieldUpdates({})
     assert UEqn is not None  # non-frozen path always carries the momentum matrix
-    pRefCell = pressure_reference["pRefCell"]
-    pRefValue = pressure_reference["pRefValue"]
-    needsRef = pressure_reference["needsRef"]
+    pRefCell = pressure_reference.cell
+    pRefValue = pressure_reference.value
+    needsRef = pressure_reference.needs_ref
     mesh = U.mesh()
 
     while pimple_control.correct():

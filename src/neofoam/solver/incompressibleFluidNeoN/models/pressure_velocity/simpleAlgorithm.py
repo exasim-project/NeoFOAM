@@ -33,6 +33,7 @@ from typing import Annotated, Any, Callable
 import neon._neon as nn  # NeoN Python bindings
 
 from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
+from neofoam.algorithms import PressureReference
 from neofoam.fields import (
     CalculatedBC,
     CyclicBC,
@@ -183,10 +184,10 @@ def build(self: Any) -> list[Any]:
         )
         return SimpleNeoNState(piso)
 
-    def create_pressure_reference(context: dict[str, Any]) -> dict[str, Any]:
+    def create_pressure_reference(context: dict[str, Any]) -> PressureReference:
         rt = context["_neon_runtime"]
         cell, value, needs_ref = nfb.set_ref_cell(rt, "p", "SIMPLE")
-        return {"pRefCell": cell, "pRefValue": value, "needsRef": needs_ref}
+        return PressureReference(cell=cell, value=value, needs_ref=needs_ref)
 
     def create_surf_interp(context: dict[str, Any]) -> Any:
         rt = context["_neon_runtime"]
@@ -297,7 +298,7 @@ def continuity(
     prev_p: Any,
     simple_state: Annotated[Any, "models"],
     surf_interp: Annotated[Any, "models"],
-    pressure_reference: Annotated[dict[str, Any], "models"],
+    pressure_reference: Annotated[PressureReference, "models"],
     neon_runtime: Annotated[Any, "models"],
 ) -> FieldUpdates:
     """The SIMPLE pressure correction: solve, flux + velocity update, p relax.
@@ -309,9 +310,9 @@ def continuity(
     """
     state = simple_state
     rt = neon_runtime
-    p_ref_cell = pressure_reference["pRefCell"]
-    p_ref_value = pressure_reference["pRefValue"]
-    needs_ref = pressure_reference["needsRef"]
+    p_ref_cell = pressure_reference.cell
+    p_ref_value = pressure_reference.value
+    needs_ref = pressure_reference.needs_ref
 
     rAU, hByA = nfb.compute_rau_and_hbya(UEqn)
     nfb.constrain_hbya(U, p, hByA)
