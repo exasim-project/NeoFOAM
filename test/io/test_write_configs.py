@@ -15,7 +15,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pybFoam as pyf
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from neofoam.framework.solver.configurations import configurations
 from neofoam.framework.tools.graph import PreprocessConfig
@@ -75,6 +75,48 @@ def test_write_configs_co_owners_accumulate(tmp_path: Path) -> None:
     assert root.found("alpha") and root.found("beta")
     assert str(root.get[str]("alpha")) == "11"
     assert str(root.get[str]("beta")) == "22"
+
+
+def test_write_configs_nests_a_subdict_owner_inside_its_block(tmp_path: Path) -> None:
+    """A config bound to a *block* of a file is written into that block.
+
+    ``fvSolution{PIMPLE}`` / ``controlDict{telemetry}`` configs own one sub-dict,
+    not the file. The merged write emits one whole-file payload, so their
+    contribution has to be lifted under the block name — landing at the top level
+    would put the keys somewhere the reader never looks.
+    """
+
+    @IOStrategy(OF("system/blocks", subdict="PIMPLE"))
+    class _Block(BaseConfig):
+        nCorrectors: int = 2
+
+    write_configs([_Block(nCorrectors=3)], case_dir=tmp_path)
+
+    root = pyf.dictionary.read(str(tmp_path / "system" / "blocks"))
+    assert root.isDict("PIMPLE")
+    assert str(root.subDict("PIMPLE").get[str]("nCorrectors")) == "3"
+    assert not root.found("nCorrectors")
+
+
+def test_write_configs_merges_a_subdict_owner_with_the_files_owner(tmp_path: Path) -> None:
+    """The whole-file co-owner's own copy of the block survives the merge."""
+
+    @IOStrategy(OF("system/blocks"))
+    class _WholeFile(BaseConfig):
+        model_config = ConfigDict(extra="allow")
+
+    @IOStrategy(OF("system/blocks", subdict="PIMPLE"))
+    class _Block(BaseConfig):
+        nCorrectors: int = 2
+
+    whole = _WholeFile.model_validate({"PIMPLE": {"pRefCell": 0}, "solvers": {"p": {}}})
+    write_configs([whole, _Block(nCorrectors=3)], case_dir=tmp_path)
+
+    root = pyf.dictionary.read(str(tmp_path / "system" / "blocks"))
+    pimple = root.subDict("PIMPLE")
+    assert str(pimple.get[str]("pRefCell")) == "0"
+    assert str(pimple.get[str]("nCorrectors")) == "3"
+    assert root.isDict("solvers")
 
 
 def test_write_configs_merges_multi_owner_file(tmp_path: Path) -> None:
