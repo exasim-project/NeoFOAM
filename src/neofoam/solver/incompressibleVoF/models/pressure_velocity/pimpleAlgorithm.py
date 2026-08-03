@@ -28,7 +28,7 @@ from pybFoam import (
     volVectorField,
 )
 
-from neofoam.algorithms import PressureReference
+from neofoam.algorithms import PressureReference, correct_phi
 from neofoam.algorithms.solution_loop.control import PimpleControl
 from neofoam.fields import (
     CalculatedBC,
@@ -243,7 +243,7 @@ def project_flux(
     else:
         rAUf = surfaceScalarField(pyf.Word("rAUf"), fvc.interpolate(rAU))
 
-    pyf.CorrectPhi(U, phi, p_rgh, rAUf, pimple_control.nNonOrthogonalCorrectors)
+    correct_phi(U, phi, p_rgh, rAUf, pimple_control.nNonOrthogonalCorrectors)
     _report_continuity_errors(phi, cumulativeContErr)
 
 

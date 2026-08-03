@@ -31,7 +31,7 @@ from pybFoam import (
 )
 
 from neofoam import telemetry
-from neofoam.algorithms import PressureReference
+from neofoam.algorithms import PressureReference, correct_phi
 from neofoam.fields import (
     CalculatedBC,
     CyclicBC,
@@ -309,7 +309,7 @@ def mesh_update(
     # as in correctPhi.H: rebuild phi from the mapped Uf, project, then make it
     # relative. pimpleFoam projects with a uniform rAUf of 1 (interFoam re-uses rAU).
     phi.assign(mesh.Sf() & Uf)
-    pyf.CorrectPhi(
+    correct_phi(
         U,
         phi,
         p,

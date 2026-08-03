@@ -3,6 +3,7 @@
 
 """Algorithm control primitives (Pydantic-validated)."""
 
+from .correct_phi import correct_phi
 from .pressure_reference import PressureReference
 from .solution_loop.control import (
     BooleanFlagCondition,
@@ -19,6 +20,7 @@ __all__ = [
     "IterationCountCondition",
     "PimpleControl",
     "PressureReference",
+    "correct_phi",
     "ResidualConvergenceCondition",
     "SimpleControl",
     "SingleIterationCondition",
