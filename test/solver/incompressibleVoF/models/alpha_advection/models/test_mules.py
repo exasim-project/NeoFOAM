@@ -17,12 +17,12 @@ OpenFOAM's own regex dict-key matching (``found``/``subDict`` default to
   vary content through the format's reader/writer, never text-patch a copy),
   mirroring ``test_selection.py``'s technique.
 
-The ``alphaPhiUn`` tests exercise ``../../../cases/vofRow4``'s executed
+The ``alphaPhiUn`` tests exercise ``../../../cases/vofRow4/common``'s executed
 pipeline plus one live ``alpha_advection`` call, through
 ``_alpha_phi_un_worker.py`` (its own ``Foam::Time`` — see TEST_STYLE's "one
 Foam::Time per process").
 
-The sub-cycle tests do the same on ``../../../cases/vofRow4SubCycle``
+The sub-cycle tests do the same under the ``subCycle`` overlay
 (``nAlphaSubCycles 3``) through ``_sub_cycle_worker.py``, and assert on the
 ``Foam::Time`` state each sub-step is solved at — the thing
 ``alphaEqnSubCycle.H`` actually manipulates, and what every time-dependent
@@ -34,8 +34,8 @@ call: inside the sub-cycle that is ``deltaT/nAlphaSubCycles``, after it the real
 time step, so the log shows both how many corrections happen and on which side
 of ``alphaEqnSubCycle.H`` each one falls.
 
-The ``alphaApplyPrevCorr`` tests run ``../../../cases/vofRow4PrevCorr`` (which
-is ``vofRow4`` plus that one entry) over three time steps through
+The ``alphaApplyPrevCorr`` tests run the ``prevCorr`` overlay (which is
+``common`` plus that one entry) over three time steps through
 ``_prev_corr_worker.py``, with and without the flag, and assert on the
 ``talphaPhi1Corr0`` slot itself — whether it carries anything, and whether what
 it carries is ``alphaPhi10 - talphaPhi1UD`` as ``alphaEqn.H:230`` defines it.
@@ -46,7 +46,7 @@ What the seeded correction then *does* to the solution is the
 The off-centring is covered twice: ``alpha_ddt_off_centring``'s decision table
 directly (it takes only the values a case would supply, so it needs no mesh),
 and then ``read_alpha_ddt_off_centring`` on the real
-``../../../cases/vofRow4CrankNicolson`` pair through
+``crankNicolson`` overlay pair through
 ``_crank_nicolson_worker.py``, which is what pins the ``system/fvSchemes`` read
 and the rejection to the code the solver actually calls. What the off-centring
 then *does* to the solution is a different question, answered against native
@@ -67,13 +67,15 @@ from neofoam.solver.incompressibleVoF.models.alpha_advection.models.mules import
     read_alpha_controls,
 )
 
-_VOF_ROW4 = Path(__file__).parents[3] / "cases" / "vofRow4"
-_VOF_ROW4_SUB_CYCLE = Path(__file__).parents[3] / "cases" / "vofRow4SubCycle"
-_VOF_ROW4_CRANK_NICOLSON = Path(__file__).parents[3] / "cases" / "vofRow4CrankNicolson"
-_VOF_ROW4_CRANK_NICOLSON_SUB_CYCLE = (
-    Path(__file__).parents[3] / "cases" / "vofRow4CrankNicolsonSubCycle"
-)
-_VOF_ROW4_PREV_CORR = Path(__file__).parents[3] / "cases" / "vofRow4PrevCorr"
+from ....conftest import VOF_ROW4, stage_case
+
+#: The layer chains this module runs, base first (see the package conftest).
+_BASE = [VOF_ROW4 / "common"]
+_SUB_CYCLE = _BASE + [VOF_ROW4 / "subCycle"]
+_CRANK_NICOLSON = _BASE + [VOF_ROW4 / "crankNicolson"]
+_CRANK_NICOLSON_SUB_CYCLE = _CRANK_NICOLSON + [VOF_ROW4 / "crankNicolsonSubCycle"]
+_PREV_CORR = _BASE + [VOF_ROW4 / "prevCorr"]
+
 _ALPHA_PHI_UN_WORKER = Path(__file__).parent / "_alpha_phi_un_worker.py"
 _SUB_CYCLE_WORKER = Path(__file__).parent / "_sub_cycle_worker.py"
 _MIXTURE_CORRECT_WORKER = Path(__file__).parent / "_mixture_correct_worker.py"
@@ -150,9 +152,8 @@ def test_read_alpha_controls_falls_back_to_defaults_for_missing_keys(
 
 @pytest.fixture(scope="module")
 def alpha_phi_un_run(tmp_path_factory: pytest.TempPathFactory) -> dict[str, object]:
-    """Run the VoF pipeline on ``cases/vofRow4`` and one ``alpha_advection`` call."""
-    case = tmp_path_factory.mktemp("vofRow4_alphaPhiUn") / "case"
-    shutil.copytree(_VOF_ROW4, case)
+    """Run the VoF pipeline on the base case and one ``alpha_advection`` call."""
+    case = stage_case(tmp_path_factory.mktemp("vofRow4_alphaPhiUn") / "case", *_BASE)
     subprocess.run(
         ["blockMesh", "-case", str(case)],
         check=True,
@@ -205,7 +206,7 @@ def test_alpha_phi_un_stays_the_same_registered_object_after_the_solve(
 
 # --- alphaEqnSubCycle.H: the sub-cycle runs on a real Foam::Time -----------
 #
-# ``cases/vofRow4SubCycle`` is ``cases/vofRow4`` with ``nAlphaSubCycles 3``
+# The ``subCycle`` overlay is ``common`` with ``nAlphaSubCycles 3``
 # (deltaT 0.25, adjustTimeStep off), so the expected sub-times are exact
 # eighths-free thirds of one step and can be written down.
 
@@ -213,8 +214,7 @@ def test_alpha_phi_un_stays_the_same_registered_object_after_the_solve(
 @pytest.fixture(scope="module")
 def sub_cycle_run(tmp_path_factory: pytest.TempPathFactory) -> dict[str, object]:
     """One ``alpha_advection`` call on a 3-sub-cycle case; the Time state it saw."""
-    case = tmp_path_factory.mktemp("vofRow4SubCycle") / "case"
-    shutil.copytree(_VOF_ROW4_SUB_CYCLE, case)
+    case = stage_case(tmp_path_factory.mktemp("vofRow4SubCycle") / "case", *_SUB_CYCLE)
     subprocess.run(
         ["blockMesh", "-case", str(case)],
         check=True,
@@ -265,19 +265,19 @@ def test_the_sub_cycle_restores_the_time_state(sub_cycle_run: dict[str, object])
 
 
 @pytest.mark.parametrize(
-    "source_case, expected_delta_t_at_each_correct",
+    "source_layers, expected_delta_t_at_each_correct",
     [
         # Both cases run nAlphaCorr 2 with MULESCorr on, so one alpha_eqn pass
         # corrects the mixture three times (the implicit-upwind predictor plus
         # the two correctors); the trailing entry at the *undivided* deltaT is
         # interFoam.C:154, issued once for the whole alpha block.
-        pytest.param(_VOF_ROW4, [0.25] * 3 + [0.25], id="nAlphaSubCycles_1"),
-        pytest.param(_VOF_ROW4_SUB_CYCLE, [0.25 / 3] * 9 + [0.25], id="nAlphaSubCycles_3"),
+        pytest.param(_BASE, [0.25] * 3 + [0.25], id="nAlphaSubCycles_1"),
+        pytest.param(_SUB_CYCLE, [0.25 / 3] * 9 + [0.25], id="nAlphaSubCycles_3"),
     ],
 )
 def test_the_mixture_is_corrected_once_more_after_the_alpha_block(
     tmp_path: Path,
-    source_case: Path,
+    source_layers: list[Path],
     expected_delta_t_at_each_correct: list[float],
 ) -> None:
     """interFoam calls ``mixture.correct()`` once after ``alphaEqnSubCycle.H``.
@@ -288,8 +288,7 @@ def test_the_mixture_is_corrected_once_more_after_the_alpha_block(
     than measured. It is not once *per* sub-cycle: nine inner corrections at
     ``deltaT/3``, then a single one back on the real time step.
     """
-    case = tmp_path / "case"
-    shutil.copytree(source_case, case)
+    case = stage_case(tmp_path / "case", *source_layers)
     subprocess.run(
         ["blockMesh", "-case", str(case)],
         check=True,
@@ -314,7 +313,7 @@ def test_the_mixture_is_corrected_once_more_after_the_alpha_block(
 
 @pytest.fixture(scope="module")
 def prev_corr_runs(tmp_path_factory: pytest.TempPathFactory) -> dict[str, list[dict[str, object]]]:
-    """``cases/vofRow4PrevCorr`` with and without the flag, three time steps each.
+    """The ``prevCorr`` overlay with and without the flag, three time steps each.
 
     The ``off`` run is the same case with ``alphaApplyPrevCorr`` removed through
     pybFoam's own dictionary writer, so the pair provably differs in that one
@@ -322,8 +321,7 @@ def prev_corr_runs(tmp_path_factory: pytest.TempPathFactory) -> dict[str, list[d
     """
     runs: dict[str, list[dict[str, object]]] = {}
     for label in ("off", "on"):
-        case = tmp_path_factory.mktemp(f"vofRow4PrevCorr_{label}") / "case"
-        shutil.copytree(_VOF_ROW4_PREV_CORR, case)
+        case = stage_case(tmp_path_factory.mktemp(f"vofRow4PrevCorr_{label}") / "case", *_PREV_CORR)
         if label == "off":
             fv_solution = dictionary.read(str(case / "system" / "fvSolution"))
             fv_solution.subDict("solvers").subDict("alpha.water").remove("alphaApplyPrevCorr")
@@ -448,9 +446,8 @@ def test_alpha_ddt_off_centring_rejects_an_unsupported_ddt_scheme() -> None:
 
 @pytest.fixture(scope="module")
 def crank_nicolson_run(tmp_path_factory: pytest.TempPathFactory) -> dict[str, object]:
-    """Two time steps of ``cases/vofRow4CrankNicolson``; the ocCoeff each one read."""
-    case = tmp_path_factory.mktemp("vofRow4CrankNicolson") / "case"
-    shutil.copytree(_VOF_ROW4_CRANK_NICOLSON, case)
+    """Two time steps of the ``crankNicolson`` overlay; the ocCoeff each one read."""
+    case = stage_case(tmp_path_factory.mktemp("vofRow4CrankNicolson") / "case", *_CRANK_NICOLSON)
     subprocess.run(
         ["blockMesh", "-case", str(case)],
         check=True,
@@ -488,13 +485,12 @@ def test_alpha_advection_rejects_sub_cycling_a_crank_nicolson_case(
 ) -> None:
     """The rejection reaches the solve, not just the helper it is written in.
 
-    ``cases/vofRow4CrankNicolsonSubCycle`` is the same case with
+    The ``crankNicolsonSubCycle`` overlay is the same case with
     ``nAlphaSubCycles 2``; the very first alpha solve must refuse it rather than
     silently integrate the sub-steps as Euler (which is what makes the
     combination look like it works).
     """
-    case = tmp_path / "case"
-    shutil.copytree(_VOF_ROW4_CRANK_NICOLSON_SUB_CYCLE, case)
+    case = stage_case(tmp_path / "case", *_CRANK_NICOLSON_SUB_CYCLE)
     subprocess.run(
         ["blockMesh", "-case", str(case)],
         check=True,

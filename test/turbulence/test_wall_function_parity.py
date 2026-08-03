@@ -37,15 +37,14 @@ One ``Foam::Time`` per process, so the roles run as subprocesses of
 from __future__ import annotations
 
 import shutil
-import subprocess
-import sys
 from pathlib import Path
 
 import numpy as np
 import pytest
 
+from turbulence._parity_case import run_worker
+
 _HERE = Path(__file__).parent
-_WORKER = _HERE / "_parity_worker.py"
 _CASE = _HERE / "wall_function_base"
 _MODELS = _HERE / "parity_models"
 
@@ -69,15 +68,6 @@ CASES = [
     ("kEpsilon", ("nut", "k", "epsilon"), 1e-12),
     ("kOmegaSST", ("nut", "k", "omega"), 1e-6),
 ]
-
-
-def _run_worker(role: str, case: Path) -> None:
-    """Run one worker role in a fresh process (one ``Foam::Time`` per process)."""
-    subprocess.run(
-        [sys.executable, str(_WORKER), role, str(case)],
-        check=True,
-        cwd=str(case.parent),
-    )
 
 
 #: The wall cells of ``wall_function_base``. blockMesh numbers a single hex block
@@ -108,9 +98,9 @@ def test_wall_cells_match_pybfoam_after_one_correct(
         case / "constant" / "turbulenceProperties",
     )
 
-    _run_worker("mesh", case)  # the case ships its own 0/ fields; do not reseed
-    _run_worker("reference", case)  # pybFoam wall functions
-    _run_worker("subject", case)  # the NeoN closure's wall functions
+    run_worker("mesh", case)  # the case ships its own 0/ fields; do not reseed
+    run_worker("reference", case)  # pybFoam wall functions
+    run_worker("subject", case)  # the NeoN closure's wall functions
 
     for name in fields:
         reference = np.load(case / f"reference_{name}.npy")

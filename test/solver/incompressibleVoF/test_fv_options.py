@@ -14,19 +14,19 @@ makes the source magnitude below sufficient evidence that the right overload is
 wired. ``pEqn.H`` then calls ``fvOptions.correct(U)`` a second time, after the
 velocity reconstruction, and that call is this module's other subject.
 
-**Cases.** Both are ``cases/vofRow4`` geometry re-cut as an open duct — four
-cells across a unit cube, split into two blocks so the ``source`` cellZone holds
-only the two cells at ``x < 0.5``, with an inlet at ``x = 0`` and a
-fixed-pressure outlet at ``x = 1`` so the pressure corrector has an outflow to
+**Cases.** Both stack on ``cases/vofRow4``'s ``duct`` overlay — the 4-cell
+unit cube re-cut as an open duct, split into two blocks so the ``source``
+cellZone holds only the two cells at ``x < 0.5``, with an inlet at ``x = 0`` and
+a fixed-pressure outlet at ``x = 1`` so the pressure corrector has an outflow to
 balance. ``0/alpha.water`` steps ``0, 0.25, 0.75, 1`` across them.
 
-* ``cases/vofRow4Source`` carries a ``system/fvOptions`` with a
+* the ``source`` overlay carries a ``system/fvOptions`` with a
   ``vectorSemiImplicitSource``. With ``volumeMode specific`` the declared value
   is the source per unit volume and ``SemiImplicitSource`` hands it to the
   equation as ``eqn += Su``, i.e. ``source -= V*Su``; the momentum equation then
   *subtracts* that matrix (``==`` is ``-``), so the assembled source must shift
   by exactly ``+V*Su`` on the zone and by nothing outside it.
-* ``cases/vofRow4Limited`` carries a ``constant/fvOptions`` (the other of the two
+* the ``limited`` overlay carries a ``constant/fvOptions`` (the other of the two
   locations ``fv::options`` searches) with a ``limitVelocity`` correction, which
   contributes nothing to the matrix and acts only through ``correct(U)``,
   scaling ``U`` down to ``max`` in magnitude on the zone. It runs with
@@ -46,7 +46,6 @@ while the failure this guards against is the term missing entirely.
 from __future__ import annotations
 
 import json
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -54,14 +53,15 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+from .conftest import VOF_ROW4, stage_case
+
 _HERE = Path(__file__).parent
-_CASES = _HERE / "cases"
 _WORKER = _HERE / "_fv_options_worker.py"
 
 #: ``system/fvOptions``: ``sources { U ((0 5 0) 0); }``, ``volumeMode specific``.
 _SU = np.array([0.0, 5.0, 0.0])
 
-#: ``constant/fvOptions`` of ``vofRow4Limited``: ``max 1``.
+#: ``constant/fvOptions`` of the ``limited`` overlay: ``max 1``.
 _U_MAX = 1.0
 
 #: ``system/blockMeshDict``: the ``source`` block spans ``0 <= x <= 0.5``.
@@ -72,9 +72,13 @@ _ATOL = 1e-14
 
 
 def _run_case(name: str, tmp_path_factory: pytest.TempPathFactory) -> dict[str, dict]:
-    """Mesh the case, then run one momentum+continuity pass per variant."""
-    case = tmp_path_factory.mktemp(name) / "case"
-    shutil.copytree(_CASES / name, case)
+    """Compose and mesh the duct case, then run one momentum+continuity pass per variant."""
+    case = stage_case(
+        tmp_path_factory.mktemp(name) / "case",
+        VOF_ROW4 / "common",
+        VOF_ROW4 / "duct",
+        VOF_ROW4 / name,
+    )
     subprocess.run(["blockMesh", "-case", str(case)], check=True, capture_output=True, timeout=300)
     for variant in ("with", "without"):
         subprocess.run(
@@ -92,13 +96,13 @@ def _run_case(name: str, tmp_path_factory: pytest.TempPathFactory) -> dict[str, 
 @pytest.fixture(scope="module")
 def vof_row4_source(tmp_path_factory: pytest.TempPathFactory) -> dict[str, dict]:
     """Run the semi-implicit-source case both ways."""
-    return _run_case("vofRow4Source", tmp_path_factory)
+    return _run_case("source", tmp_path_factory)
 
 
 @pytest.fixture(scope="module")
 def vof_row4_limited(tmp_path_factory: pytest.TempPathFactory) -> dict[str, dict]:
     """Run the ``limitVelocity`` case, whose only effect is ``correct(U)``."""
-    return _run_case("vofRow4Limited", tmp_path_factory)
+    return _run_case("limited", tmp_path_factory)
 
 
 def _in_zone(run: dict) -> np.ndarray:
@@ -126,7 +130,7 @@ def test_the_momentum_source_gains_the_declared_source_in_the_zone(
         volumes * _SU,
         rtol=0,
         atol=_ATOL,
-        err_msg="vofRow4Source: the momentum source does not carry +V*Su",
+        err_msg="source: the momentum source does not carry +V*Su",
     )
 
 
@@ -141,7 +145,7 @@ def test_the_momentum_source_is_untouched_outside_the_zone(
     np.testing.assert_array_equal(
         np.asarray(vof_row4_source["with"]["source"])[outside],
         np.asarray(vof_row4_source["without"]["source"])[outside],
-        err_msg="vofRow4Source: the momentum source changed outside the source zone",
+        err_msg="source: the momentum source changed outside the source zone",
     )
 
 
@@ -157,7 +161,7 @@ def test_a_correction_leaves_the_momentum_matrix_alone(
     np.testing.assert_array_equal(
         np.asarray(vof_row4_limited["with"]["source"]),
         np.asarray(vof_row4_limited["without"]["source"]),
-        err_msg="vofRow4Limited: a correction changed the momentum matrix",
+        err_msg="limited: a correction changed the momentum matrix",
     )
 
 
@@ -176,7 +180,7 @@ def test_the_momentum_solve_is_followed_by_the_clamp_inside_the_zone(
         unlimited * _U_MAX / np.linalg.norm(unlimited, axis=1)[:, None],
         rtol=0,
         atol=_ATOL,
-        err_msg="vofRow4Limited: the solved velocity was not clamped to max",
+        err_msg="limited: the solved velocity was not clamped to max",
     )
 
 
@@ -188,7 +192,7 @@ def test_the_momentum_solve_leaves_the_velocity_outside_the_zone_alone(
     np.testing.assert_array_equal(
         np.asarray(vof_row4_limited["with"]["U_after_momentum"])[outside],
         np.asarray(vof_row4_limited["without"]["U_after_momentum"])[outside],
-        err_msg="vofRow4Limited: correct(U) reached outside the source zone",
+        err_msg="limited: correct(U) reached outside the source zone",
     )
 
 
@@ -213,5 +217,5 @@ def test_the_pressure_corrector_is_followed_by_the_clamp_inside_the_zone(
         _U_MAX,
         rtol=0,
         atol=_ATOL,
-        err_msg="vofRow4Limited: the corrected velocity was not clamped to max",
+        err_msg="limited: the corrected velocity was not clamped to max",
     )

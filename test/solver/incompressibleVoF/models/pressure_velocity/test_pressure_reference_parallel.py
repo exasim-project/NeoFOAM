@@ -19,8 +19,8 @@ and the run silently develops a per-rank pressure level. The OR-reduction is
 what stops that, and the reduction inside ``get_ref_cell_value`` is what lets a
 non-owning rank apply the *same* shift.
 
-**The case.** ``cases/vofRow4ClosedRefPoint`` — the closed 4-cell row of
-``cases/vofRow4Closed`` with the reference given as a *point* rather than a
+**The case.** ``cases/closedRefPoint`` — the closed 4-cell row of
+``cases/closed`` with the reference given as a *point* rather than a
 cell index (``setRefCell`` reads ``pRefCell`` as a local index on the master
 only, which cannot name global cell 2 once the row is halved), and with a
 checked-in ``system/decomposeParDict`` that puts the reference cell on rank 1 —
@@ -53,7 +53,6 @@ rank.
 from __future__ import annotations
 
 import json
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -62,10 +61,11 @@ from typing import Any
 import pytest
 from numpy.testing import assert_allclose
 
+from ...conftest import VOF_ROW4, stage_case
 from ...parallel_helpers import NPROCS, decompose, run_mpi
 
 _HERE = Path(__file__).parent
-_CASE = _HERE / "cases" / "vofRow4ClosedRefPoint"
+_CASES = _HERE / "cases"
 _WORKER = _HERE / "_parallel_pressure_reference_worker.py"
 
 # Hand-derived from the case files (see module docstring); identical to the
@@ -89,8 +89,12 @@ _EXPECTED_REF_CELLS = [-1, 0]
 @pytest.fixture(scope="module")
 def ranks(tmp_path_factory: pytest.TempPathFactory) -> list[dict[str, Any]]:
     """Mesh + decompose the case, run the worker on two ranks, return both dumps."""
-    case = tmp_path_factory.mktemp("vofRow4ClosedRefPoint") / "case"
-    shutil.copytree(_CASE, case)
+    case = stage_case(
+        tmp_path_factory.mktemp("closedRefPoint") / "case",
+        VOF_ROW4 / "common",
+        _CASES / "closed",
+        _CASES / "closedRefPoint",
+    )
     subprocess.run(
         ["blockMesh", "-case", str(case)],
         check=True,
@@ -197,14 +201,14 @@ def test_the_decomposed_case_builds_the_hand_derived_density_and_gravity_head(
         _RHO,
         rtol=_RTOL,
         atol=0,
-        err_msg="vofRow4ClosedRefPoint on 2 ranks",
+        err_msg="closedRefPoint on 2 ranks",
     )
     assert_allclose(
         _in_global_order(ranks, "gh"),
         _GH,
         rtol=_RTOL,
         atol=0,
-        err_msg="vofRow4ClosedRefPoint on 2 ranks",
+        err_msg="closedRefPoint on 2 ranks",
     )
 
 
@@ -216,7 +220,7 @@ def test_startup_levels_the_pressure_across_ranks(ranks: list[dict[str, Any]]) -
         _P_LEVELLED,
         rtol=_RTOL,
         atol=0,
-        err_msg="vofRow4ClosedRefPoint on 2 ranks: init must level p by pRefValue - p[2]",
+        err_msg="closedRefPoint on 2 ranks: init must level p by pRefValue - p[2]",
     )
 
 
@@ -230,7 +234,7 @@ def test_absolute_pressure_is_level_shifted_across_ranks(
         _P_LEVELLED,
         rtol=_RTOL,
         atol=0,
-        err_msg="vofRow4ClosedRefPoint on 2 ranks: p shifted by pRefValue - p[2]",
+        err_msg="closedRefPoint on 2 ranks: p shifted by pRefValue - p[2]",
     )
 
 
@@ -240,7 +244,7 @@ def test_p_rgh_is_relevelled_across_ranks(ranks: list[dict[str, Any]]) -> None:
         _P_RGH_RELEVELLED,
         rtol=_RTOL,
         atol=0,
-        err_msg="vofRow4ClosedRefPoint on 2 ranks: p_rgh relevelled from shifted p",
+        err_msg="closedRefPoint on 2 ranks: p_rgh relevelled from shifted p",
     )
 
 

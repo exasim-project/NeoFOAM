@@ -14,22 +14,22 @@ patches are walls, so every wall face's owner-cell centre sits exactly half a ce
 — 0.5/4 = 0.125 m — from its wall, and non-wall patches hold 0 (OpenFOAM's
 ``nearWallDist`` zeroes them). Those are the expected values below.
 
-The model is built in a subprocess (see :mod:`_near_wall_dist_worker`): one
-``Foam::Time`` per process. A missing ``wallDist`` entry aborts the process rather
-than raising, so the regression shows up as a failed subprocess.
+The model is built in a subprocess (the ``near_wall_dist`` role of
+:mod:`_parity_worker`): one ``Foam::Time`` per process. A missing ``wallDist``
+entry aborts the process rather than raising, so the regression shows up as a
+failed subprocess.
 """
 
 from __future__ import annotations
 
 import shutil
-import subprocess
-import sys
 from pathlib import Path
 
 import numpy as np
 
+from turbulence._parity_case import run_worker
+
 _HERE = Path(__file__).parent
-_WORKER = _HERE / "_near_wall_dist_worker.py"
 _CASE = _HERE / "walled_base"  # kEpsilon box with walls and no fvSchemes/wallDist
 
 #: Half the 0.25 m cell height — the owner-cell centre distance to its wall patch.
@@ -40,15 +40,6 @@ WALL_PATCHES = ("zMin", "zMax")
 NON_WALL_PATCHES = ("xMin", "xMax", "yMin", "yMax")
 
 
-def _run_worker(role: str, case: Path) -> None:
-    """Run one worker role in a fresh process (one ``Foam::Time`` per process)."""
-    subprocess.run(
-        [sys.executable, str(_WORKER), role, str(case)],
-        check=True,
-        cwd=str(case.parent),
-    )
-
-
 def test_kepsilon_near_wall_dist_without_fvschemes_walldist_entry(tmp_path: Path) -> None:
     """kEpsilon initialises without an ``fvSchemes`` ``wallDist`` block, with sane ``y``."""
     case = tmp_path / "case"
@@ -56,8 +47,8 @@ def test_kepsilon_near_wall_dist_without_fvschemes_walldist_entry(tmp_path: Path
     # Guard the fixture: the point of the case is the absent scheme block.
     assert "wallDist\n{" not in (case / "system" / "fvSchemes").read_text()
 
-    _run_worker("mesh", case)
-    _run_worker("near_wall_dist", case)  # builds the closure: no wallDist entry needed
+    run_worker("mesh", case)
+    run_worker("near_wall_dist", case)  # builds the closure: no wallDist entry needed
 
     near_wall_dist = np.load(case / "near_wall_dist.npz")
     for patch in WALL_PATCHES:

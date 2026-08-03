@@ -1,40 +1,51 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""One executed incompressibleVoF staged-init pipeline, shared by the tests.
+"""The vofRow4 case layers, and one executed incompressibleVoF staged-init pipeline.
 
-``create_init(...).run()` needs a ``Foam::Time`` and a mesh, and a process may
-own exactly one of each — so the pipeline runs once, in
-``_create_fields_worker.py``, against ``cases/vofRow4`` and dumps everything the
-tests assert on to JSON. Both ``test_create_fields.py`` and
-``models/alpha_advection/test_shared.py`` read that single dump.
+**The cases.** ``cases/vofRow4/common`` is the one full case every VoF test
+runs on: a unit cube cut into 4 cells along x (cell volume 0.25, x-face area 1)
+carrying the interFoam damBreak physical properties (``rho1 = 1000``,
+``rho2 = 1``, ``g = (0 -9.81 0)``) — so every field the pipeline builds has an
+exact, hand-derivable value. Its siblings under ``cases/vofRow4/`` are
+*overlays*: each holds only the files that differ from ``common`` (and, where a
+variant is a variant of a variant, from the layer below it), and
+:func:`stage_case` composes a runnable case by copying the layers over one
+another in order. Adding a scenario is therefore one file, not a case tree, and
+"what makes this case different" is the directory listing.
 
-``cases/vofRow4`` is a unit cube cut into 4 cells along x (cell volume 0.25,
-x-face area 1) carrying the interFoam damBreak physical properties
-(``rho1 = 1000``, ``rho2 = 1``, ``g = (0 -9.81 0)``) — so every field the
-pipeline builds has an exact, hand-derivable value. See the two test modules for
-the derivations.
+The layers, and what each one is for:
 
-``cases/vofRow4Href`` is the same mesh/properties plus a non-default
-``constant/hRef`` (0.3), for the one test that needs ``hRef`` actually read
-from disk rather than defaulted; see
-``test_gh_uses_a_non_default_hRef_as_the_reference_head`` in
-``test_create_fields.py``.
+* ``href`` — a non-default ``constant/hRef`` (0.3), for the one test that needs
+  ``hRef`` actually read from disk rather than defaulted
+  (``test_create_fields.py``);
+* ``moving`` — a ``constant/dynamicMeshDict`` (solid-body oscillation along
+  gravity) so the mesh *selection* goes through ``dynamicFvMesh::New``
+  (``test_dynamic_mesh.py``), with ``movingCorrectPhi`` (``correctPhi yes``) and
+  ``isoAdvectorMoving`` (``advectionScheme isoAdvector``) stacked on top of it;
+* ``divergent`` — an inlet that feeds half of what the interior carries, so
+  ``createPhi(U)`` is *not* divergence-free and ``initCorrectPhi.H`` has
+  something to do (``test_flux_correction.py``);
+* ``porous`` — isoAdvector plus ``constant/porosityProperties`` + ``0/porosity``,
+  so ``Foam::isoAdvection`` finds a porosity field in the registry
+  (``models/alpha_advection/models/test_iso_advector.py``);
+* ``duct`` — the row re-cut as an open duct with a ``source`` cellZone, shared by
+  the ``source`` (``system/fvOptions``) and ``limited``
+  (``constant/fvOptions``) layers (``test_fv_options.py``);
+* ``rotor`` — the block named so blockMesh makes a cellZone, plus
+  ``constant/MRFProperties`` (``test_mrf.py``);
+* ``subCycle``, ``prevCorr``, ``crankNicolson`` (+ ``crankNicolsonSubCycle``) —
+  single-entry MULES control variants
+  (``models/alpha_advection/models/test_mules.py``).
 
-``cases/vofRow4Moving`` is the same mesh/properties plus a
-``constant/dynamicMeshDict`` (solid-body oscillation along gravity), for the
-tests that need the mesh *selection* to go through ``dynamicFvMesh::New`` —
-see ``test_dynamic_mesh.py``.
+``models/pressure_velocity/cases/{open,closed,closedRefPoint}`` are further
+overlays of the same ``common`` base, kept next to the tests that own them.
 
-``cases/vofRow4Divergent`` is the same mesh/properties with an inlet that feeds
-half of what the interior carries, so ``createPhi(U)`` is *not* divergence-free —
-the start-up flux projection of ``initCorrectPhi.H`` has something to do; see
-``test_flux_correction.py``.
-
-``cases/vofRow4Porous`` is the same mesh/properties switched to isoAdvector and
-given ``constant/porosityProperties`` + ``0/porosity``, for the tests that need
-``Foam::isoAdvection`` to find a porosity field in the registry — see
-``models/alpha_advection/models/test_iso_advector.py``.
+**The pipeline.** ``create_init(...).run()`` needs a ``Foam::Time`` and a mesh,
+and a process may own exactly one of each — so the pipeline runs once, in
+``_create_fields_worker.py``, and dumps everything the tests assert on to JSON.
+Both ``test_create_fields.py`` and ``models/alpha_advection/test_shared.py``
+read that single dump.
 """
 
 from __future__ import annotations
@@ -52,12 +63,28 @@ import pybFoam as pyf
 import pytest
 
 _HERE = Path(__file__).parent
-_CASE = _HERE / "cases" / "vofRow4"
-_HREF_CASE = _HERE / "cases" / "vofRow4Href"
-_MOVING_CASE = _HERE / "cases" / "vofRow4Moving"
-_POROUS_CASE = _HERE / "cases" / "vofRow4Porous"
-_DIVERGENT_CASE = _HERE / "cases" / "vofRow4Divergent"
 _WORKER = _HERE / "_create_fields_worker.py"
+
+#: The vofRow4 layer directory: ``common`` plus one sub-directory per overlay.
+VOF_ROW4 = _HERE / "cases" / "vofRow4"
+
+
+def stage_case(dest: Path, *layers: Path) -> Path:
+    """Compose a runnable case at *dest* by copying *layers* over one another.
+
+    The first layer is a full case directory, each following one an overlay that
+    replaces or adds the files it carries — so a variant is checked in as its
+    diff. Use it instead of ``shutil.copytree`` of a single case (TEST_STYLE rule
+    4: never mutate the checked-in files)::
+
+        case = stage_case(tmp_path / "case", VOF_ROW4 / "common", VOF_ROW4 / "moving")
+
+    A layer never *removes* a file, so a variant that must drop one gets its own
+    base layer instead (see ``duct`` for ``source``/``limited``).
+    """
+    for layer in layers:
+        shutil.copytree(layer, dest, dirs_exist_ok=True)
+    return dest
 
 
 @dataclass
@@ -94,11 +121,12 @@ class BuiltCase:
 
 
 def _run_pipeline(
-    tmp_path_factory: pytest.TempPathFactory, source_case: Path, tmp_name: str
+    tmp_path_factory: pytest.TempPathFactory, variant: str | None = None
 ) -> BuiltCase:
-    """Mesh *source_case* and run the staged init on the copy, once."""
-    case = tmp_path_factory.mktemp(tmp_name) / "case"
-    shutil.copytree(source_case, case)
+    """Compose ``vofRow4/common`` (+ *variant*), mesh it and run the staged init."""
+    tmp_name = f"vofRow4{variant.capitalize()}" if variant else "vofRow4"
+    layers = [VOF_ROW4 / "common"] + ([VOF_ROW4 / variant] if variant else [])
+    case = stage_case(tmp_path_factory.mktemp(tmp_name) / "case", *layers)
     subprocess.run(
         ["blockMesh", "-case", str(case)],
         check=True,
@@ -118,29 +146,29 @@ def _run_pipeline(
 
 @pytest.fixture(scope="session")
 def vof_row4(tmp_path_factory: pytest.TempPathFactory) -> BuiltCase:
-    """Mesh ``cases/vofRow4`` and run the staged init on it, once per session."""
-    return _run_pipeline(tmp_path_factory, _CASE, "vofRow4")
+    """Mesh the plain ``vofRow4/common`` case and run the staged init, once."""
+    return _run_pipeline(tmp_path_factory)
 
 
 @pytest.fixture(scope="session")
 def vof_row4_href(tmp_path_factory: pytest.TempPathFactory) -> BuiltCase:
-    """Mesh ``cases/vofRow4Href`` (``constant/hRef`` = 0.3) and run the pipeline."""
-    return _run_pipeline(tmp_path_factory, _HREF_CASE, "vofRow4Href")
+    """The ``href`` overlay (``constant/hRef`` = 0.3), through the pipeline."""
+    return _run_pipeline(tmp_path_factory, "href")
 
 
 @pytest.fixture(scope="session")
 def vof_row4_moving(tmp_path_factory: pytest.TempPathFactory) -> BuiltCase:
-    """Mesh ``cases/vofRow4Moving`` (has a ``constant/dynamicMeshDict``) and run it."""
-    return _run_pipeline(tmp_path_factory, _MOVING_CASE, "vofRow4Moving")
+    """The ``moving`` overlay (has a ``constant/dynamicMeshDict``), through the pipeline."""
+    return _run_pipeline(tmp_path_factory, "moving")
 
 
 @pytest.fixture(scope="session")
 def vof_row4_porous(tmp_path_factory: pytest.TempPathFactory) -> BuiltCase:
-    """Mesh ``cases/vofRow4Porous`` (isoAdvector + porosity) and run the pipeline."""
-    return _run_pipeline(tmp_path_factory, _POROUS_CASE, "vofRow4Porous")
+    """The ``porous`` overlay (isoAdvector + porosity), through the pipeline."""
+    return _run_pipeline(tmp_path_factory, "porous")
 
 
 @pytest.fixture(scope="session")
 def vof_row4_divergent(tmp_path_factory: pytest.TempPathFactory) -> BuiltCase:
-    """Mesh ``cases/vofRow4Divergent`` (non-solenoidal ``0/U``) and run the pipeline."""
-    return _run_pipeline(tmp_path_factory, _DIVERGENT_CASE, "vofRow4Divergent")
+    """The ``divergent`` overlay (non-solenoidal ``0/U``), through the pipeline."""
+    return _run_pipeline(tmp_path_factory, "divergent")

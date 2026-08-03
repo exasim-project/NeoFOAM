@@ -8,7 +8,7 @@ Two levels, mirroring ``test/solver/incompressibleVoF/test_create_fields.py``:
 * the **step list** (names, categories, dependency edges) is pure description
   and is asserted in-process;
 * the **values** those steps produce come from the one executed pipeline of
-  ``cases/vofRow4`` (see ``test/solver/incompressibleVoF/conftest.py`` — one
+  ``cases/vofRow4/common`` (see ``test/solver/incompressibleVoF/conftest.py`` — one
   ``Foam::Time`` per process, so it runs in a worker subprocess and dumps JSON).
   These steps are reached exactly as production reaches them: through
   ``create_init(...).run()`` with MULES selected.

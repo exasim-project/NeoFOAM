@@ -42,9 +42,9 @@ case (the start time is itself a ``controlDict`` entry, so it cannot be varied
 within a process).
 
 End-to-end, the consequence of this number — the adaptive-dt sequence it drives
-— is already covered by ``test_damBreak_comparison.py`` and
-``test_damBreak_isoAdvector_comparison.py``, which require field agreement with
-interFoam/interIsoFoam to 1e-10 and would diverge on the first differing step.
+— is already covered by ``test_damBreak_comparison.py``, which requires field
+agreement with interFoam/interIsoFoam to 1e-10 and would diverge on the first
+differing step.
 """
 
 from __future__ import annotations
@@ -59,6 +59,8 @@ from typing import Any
 
 import pytest
 from numpy.testing import assert_allclose
+
+from .conftest import stage_case
 
 _HERE = Path(__file__).parent
 _CASES = _HERE / "cases" / "alphaCourant"
@@ -97,9 +99,8 @@ _INTERFACE_COURANT = re.compile(r"^Interface Courant Number mean: (\S+)\s+max: (
 
 
 def _stage(mesh: str, dest: Path) -> Path:
-    """Copy the checked-in case inputs for ``mesh``; the worker meshes on top."""
-    shutil.copytree(_CASES / "common", dest)
-    shutil.copy(_CASES / mesh / "blockMeshDict", dest / "system")
+    """Compose the checked-in case inputs for ``mesh``; the worker meshes on top."""
+    stage_case(dest, _CASES / "common", _CASES / mesh)
     shutil.copytree(dest / "0.orig", dest / "0")
     return dest
 

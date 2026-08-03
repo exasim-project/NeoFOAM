@@ -36,15 +36,12 @@ def _max_runtime(cap: float = 0.5) -> ModelRuntime:
     return ModelRuntime(spec=maxDeltaT, name="maxDeltaT", config=MaxDeltaTConfig(maxDeltaT=cap))
 
 
-def test_model_is_registered_in_the_family_catalog() -> None:
-    names = {spec.name for spec in incompressibleFluidModel.all_specs()}
-    assert "maxDeltaT" in names
-
-
-def test_registering_the_model_twice_keeps_one_catalog_entry() -> None:
+def test_model_is_registered_in_the_family_catalog_exactly_once() -> None:
+    # Registration is idempotent: importing the model twice (or re-registering it
+    # explicitly) must not put a second entry in the catalog.
+    assert [spec.name for spec in incompressibleFluidModel.all_specs()].count("maxDeltaT") == 1
     maxDeltaT.register_with(incompressibleFluidModel)
-    names = [spec.name for spec in incompressibleFluidModel.all_specs()]
-    assert names.count("maxDeltaT") == 1
+    assert [spec.name for spec in incompressibleFluidModel.all_specs()].count("maxDeltaT") == 1
 
 
 def test_model_owns_the_control_dict_config() -> None:
@@ -91,35 +88,42 @@ def test_fold_raises_when_config_is_absent() -> None:
     assert "cfg" in message
 
 
-def test_config_presence_activates_contribution_through_detection(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+# The base controlDict deliberately omits adjustTimeStep, so each scenario opts in
+# explicitly — the "key absent" row is simply the one that never sets it, and no
+# line-removal (which `patch` can't express) is needed. Every row states what the
+# contribution the loop folds must be, because "detected" and "contributes" are
+# the same guarantee seen from the two ends of detection.
+@pytest.mark.parametrize(
+    ("overrides", "expect_active"),
+    [
+        ({"adjustTimeStep": True, "maxDeltaT": 0.5}, True),
+        ({"adjustTimeStep": True}, False),  # adjustTimeStep yes but no maxDeltaT
+        # maxDeltaT present but adjustTimeStep no: OpenFOAM keeps a fixed step, so
+        # the contribution must stay inactive (the symmetric guard to courant's
+        # no-adjust arm) — and likewise when the key is omitted entirely.
+        ({"adjustTimeStep": False, "maxDeltaT": 0.5}, False),
+        ({"maxDeltaT": 0.5}, False),
+    ],
+    ids=[
+        "cap_present",
+        "cap_absent",
+        "cap_no_adjust",
+        "no_adjust_key",
+    ],
+)
+def test_config_presence_drives_detection_and_the_contribution(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, overrides: dict, expect_active: bool
 ) -> None:
-    case = (
-        from_template(_BASE)
-        | patch("system/controlDict", {"adjustTimeStep": True, "maxDeltaT": 0.5})
-    ).build_at(tmp_path / "case")
-    monkeypatch.chdir(case.path)
-
-    detected = {rt.name: rt for rt in incompressibleFluidModel.detect_models(Path("."))}
-    assert "maxDeltaT" in detected
-    ctx = Context(fields={}, models={})
-    bound = BoundModelInterface(maxTimeStep, [detected["maxDeltaT"]], ctx)
-    assert bound() == pytest.approx(0.5)
-
-
-def test_absent_config_leaves_contribution_unfolded_through_detection(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    case = (from_template(_BASE) | patch("system/controlDict", {"adjustTimeStep": True})).build_at(
+    case = (from_template(_BASE) | patch("system/controlDict", overrides)).build_at(
         tmp_path / "case"
     )
     monkeypatch.chdir(case.path)
 
     detected = {rt.name: rt for rt in incompressibleFluidModel.detect_models(Path("."))}
-    assert "maxDeltaT" not in detected
-    ctx = Context(fields={}, models={})
-    bound = BoundModelInterface(maxTimeStep, list(detected.values()), ctx)
-    assert bound() == VGREAT
+
+    assert ("maxDeltaT" in detected) is expect_active
+    bound = BoundModelInterface(maxTimeStep, list(detected.values()), Context(fields={}, models={}))
+    assert bound() == (pytest.approx(0.5) if expect_active else VGREAT)
 
 
 def test_two_runs_in_one_process_flip_participation(
@@ -150,33 +154,3 @@ def test_model_inactive_when_no_control_dict_is_present(
 ) -> None:
     monkeypatch.chdir(tmp_path)
     assert maxDeltaT.run_detect() is False
-
-
-def test_max_delta_t_inactive_when_adjust_time_step_is_off(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    # maxDeltaT present but adjustTimeStep no: OpenFOAM keeps a fixed step, so the
-    # contribution must stay inactive (the symmetric guard to courant's no-adjust arm).
-    case = (
-        from_template(_BASE)
-        | patch("system/controlDict", {"adjustTimeStep": False, "maxDeltaT": 0.5})
-    ).build_at(tmp_path / "case")
-    monkeypatch.chdir(case.path)
-
-    detected = {rt.name for rt in incompressibleFluidModel.detect_models(Path("."))}
-    assert "maxDeltaT" not in detected
-
-
-def test_max_delta_t_inactive_when_adjust_time_step_key_is_absent(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    # The adjustTimeStep key omitted entirely short-circuits detection -> inactive.
-    # The base controlDict already omits adjustTimeStep, so patching maxDeltaT alone
-    # reproduces the "key absent" case without any line removal.
-    case = (from_template(_BASE) | patch("system/controlDict", {"maxDeltaT": 0.5})).build_at(
-        tmp_path / "case"
-    )
-    monkeypatch.chdir(case.path)
-
-    detected = {rt.name for rt in incompressibleFluidModel.detect_models(Path("."))}
-    assert "maxDeltaT" not in detected

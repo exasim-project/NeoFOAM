@@ -14,26 +14,39 @@ taken from the drop-in verification sweep:
 * ``fanCurveBoundary`` — a ``fanPressure`` boundary condition whose fan curve is a
   case-relative ``tableFile``. Constructing that boundary condition opens the table
   against the working directory, which is not the case, so it can only be read by a
-  reader that never constructs boundary conditions.
+  reader that never constructs boundary conditions. It is the ``cavity`` template
+  plus the two files that differ (its ``0/p`` and the curve), overlaid at build time
+  rather than checked in as a second full case.
 * ``includeFuncControl`` — a ``#includeFunc`` of a case-local ``system/`` file, which
   resolves only when ``$FOAM_CASE`` points at the case being read. Its mesh is
   committed rather than generated, because ``block_mesh`` would read the same
-  controlDict in *this* interpreter, where an OpenFOAM fatal cannot be caught.
+  controlDict in *this* interpreter, where an OpenFOAM fatal cannot be caught. It
+  shares nothing structural with ``cavity``, so it is checked in whole.
 
 Both fields carry a pre-written non-uniform ``internalField`` so the assertions are
 on values the reader had to read, not on a shape it could have invented.
 """
 
+import shutil
 from pathlib import Path
 
 import numpy as np
 
-from neofoam.tooling.casebuild import block_mesh, from_template
+from neofoam.tooling.casebuild import CaseDir, Step, block_mesh, from_template
 
 CASES = Path(__file__).parent / "cases"
 CAVITY = CASES / "cavity"
-FAN_CURVE_BOUNDARY = CASES / "fanCurveBoundary"
+FAN_CURVE_BOUNDARY = CASES / "fanCurveBoundary"  # cavity overlay: only the differing files
 INCLUDE_FUNC_CONTROL = CASES / "includeFuncControl"
+
+
+def overlay(src: Path) -> Step:
+    """A step that lays a variant's differing files over the staged template."""
+
+    def step(case: CaseDir) -> None:
+        shutil.copytree(src, case.path, dirs_exist_ok=True)
+
+    return step
 
 
 def test_read_field_returns_finite_internal_field(tmp_path: Path) -> None:
@@ -54,7 +67,9 @@ def test_read_field_twice_in_one_process_stays_consistent(tmp_path: Path) -> Non
 
 
 def test_read_field_reads_field_with_unconstructable_boundary_condition(tmp_path: Path) -> None:
-    case = (from_template(FAN_CURVE_BOUNDARY) | block_mesh()).build_at(tmp_path / "c")
+    case = (from_template(CAVITY) | overlay(FAN_CURVE_BOUNDARY) | block_mesh()).build_at(
+        tmp_path / "c"
+    )
     p = case.read_field("p")
     # Exact: these are the nine numbers written in 0.orig/p, not a computed result.
     np.testing.assert_array_equal(p, [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0])

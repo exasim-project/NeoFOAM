@@ -32,16 +32,16 @@ call (``*_after``).
 Two real 4-cell cases, identical apart from their ``0/p_rgh`` boundary
 conditions, make the open/closed distinction observable:
 
-* ``cases/vofRow4Closed`` — one ``wall`` patch, ``fixedFluxPressure`` (fixes a
+* ``cases/closed`` — one ``wall`` patch, ``fixedFluxPressure`` (fixes a
   *gradient*): closed, ``PIMPLE { pRefCell 2; pRefValue 50; }``. Neither is the
   default 0, so honouring the cell index and the value are separate claims.
-* ``cases/vofRow4Open`` — the interFoam damBreak ``atmosphere`` arrangement, a
+* ``cases/open`` — the interFoam damBreak ``atmosphere`` arrangement, a
   ``totalPressure`` patch (a ``fixedValue`` descendant): open, and the PIMPLE
   dict deliberately carries no ``pRefCell``/``pRefValue`` at all.
 
-Both are the ``cases/vofRow4`` unit box cut into 4 cells along x (cell centres
-at y = 0.5) with the interFoam damBreak properties, so every expected value is
-hand-derivable:
+Both are overlays of the shared ``cases/vofRow4/common`` base (see the package
+conftest) — the unit box cut into 4 cells along x (cell centres at y = 0.5) with
+the interFoam damBreak properties, so every expected value is hand-derivable:
 
     alpha.water = (0, 0.25, 0.75, 1),  rho = alpha*1000 + (1 - alpha)*1
                                            = (1, 250.75, 750.25, 1000)
@@ -69,7 +69,6 @@ the open-domain block touches nothing) are asserted with ``==``.
 from __future__ import annotations
 
 import json
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -82,6 +81,8 @@ from neofoam.solver.incompressibleVoF.models.pressure_velocity.pimpleAlgorithm i
     PimpleFvSchemes,
     PimpleFvSolution,
 )
+
+from ...conftest import VOF_ROW4, stage_case
 
 _HERE = Path(__file__).parent
 _CASES = _HERE / "cases"
@@ -99,8 +100,9 @@ _RTOL = 1e-13
 
 
 def _run_worker(case_name: str, tmp_path_factory: pytest.TempPathFactory) -> Any:
-    case = tmp_path_factory.mktemp(case_name) / "case"
-    shutil.copytree(_CASES / case_name, case)
+    case = stage_case(
+        tmp_path_factory.mktemp(case_name) / "case", VOF_ROW4 / "common", _CASES / case_name
+    )
     subprocess.run(
         ["blockMesh", "-case", str(case)],
         check=True,
@@ -120,12 +122,12 @@ def _run_worker(case_name: str, tmp_path_factory: pytest.TempPathFactory) -> Any
 
 @pytest.fixture(scope="session")
 def closed(tmp_path_factory: pytest.TempPathFactory) -> Any:
-    return _run_worker("vofRow4Closed", tmp_path_factory)
+    return _run_worker("closed", tmp_path_factory)
 
 
 @pytest.fixture(scope="session")
 def open_domain(tmp_path_factory: pytest.TempPathFactory) -> Any:
-    return _run_worker("vofRow4Open", tmp_path_factory)
+    return _run_worker("open", tmp_path_factory)
 
 
 # --------------------------------------------------------------------------- #
@@ -133,37 +135,39 @@ def open_domain(tmp_path_factory: pytest.TempPathFactory) -> Any:
 # --------------------------------------------------------------------------- #
 
 
-def test_need_reference_is_true_for_a_closed_domain(closed: Any) -> None:
-    """Every p_rgh patch is fixedFluxPressure, so no patch fixes the level and
-    setRefCell hands back the case's cell index."""
-    assert closed["need_reference"] is True
-
-
-def test_need_reference_is_false_for_an_open_domain(open_domain: Any) -> None:
-    """The totalPressure patch fixes the level, exactly as damBreak's
-    ``atmosphere`` does — setRefCell takes the no-reference path and the cell
-    index comes back negative."""
-    assert open_domain["need_reference"] is False
-
-
-def test_pressure_reference_carries_the_flag_and_the_cell_on_a_closed_domain(
-    closed: Any,
+@pytest.mark.parametrize(
+    "case_fixture, expected",
+    [
+        # Every p_rgh patch is fixedFluxPressure, so no patch fixes the level
+        # and setRefCell hands back the case's cell index.
+        pytest.param("closed", True, id="closed"),
+        # The totalPressure patch fixes the level, exactly as damBreak's
+        # ``atmosphere`` does — setRefCell takes the no-reference path and the
+        # cell index comes back negative.
+        pytest.param("open_domain", False, id="open"),
+    ],
+)
+def test_need_reference_follows_the_p_rgh_boundary_conditions(
+    request: pytest.FixtureRequest, case_fixture: str, expected: bool
 ) -> None:
-    assert closed["pressure_reference"] == {
-        "pRefCell": 2,
-        "pRefValue": 50.0,
-        "needsRef": True,
-    }
+    assert request.getfixturevalue(case_fixture)["need_reference"] is expected
 
 
-def test_pressure_reference_has_no_cell_on_an_open_domain(open_domain: Any) -> None:
-    """setRefCell leaves the cell at -1 and the value at 0 when the domain is
-    open, so the case need not carry pRefCell/pRefValue at all."""
-    assert open_domain["pressure_reference"] == {
-        "pRefCell": -1,
-        "pRefValue": 0.0,
-        "needsRef": False,
-    }
+@pytest.mark.parametrize(
+    "case_fixture, expected",
+    [
+        pytest.param("closed", {"pRefCell": 2, "pRefValue": 50.0, "needsRef": True}, id="closed"),
+        # setRefCell leaves the cell at -1 and the value at 0 when the domain is
+        # open, so the case need not carry pRefCell/pRefValue at all.
+        pytest.param(
+            "open_domain", {"pRefCell": -1, "pRefValue": 0.0, "needsRef": False}, id="open"
+        ),
+    ],
+)
+def test_pressure_reference_carries_the_flag_the_cell_and_the_value(
+    request: pytest.FixtureRequest, case_fixture: str, expected: dict[str, Any]
+) -> None:
+    assert request.getfixturevalue(case_fixture)["pressure_reference"] == expected
 
 
 # --------------------------------------------------------------------------- #
@@ -199,7 +203,7 @@ def test_startup_levels_the_absolute_pressure_on_a_closed_domain(closed: Any) ->
         _P_LEVELLED,
         rtol=_RTOL,
         atol=0,
-        err_msg="vofRow4Closed: init must apply createFields.H's level shift to p",
+        err_msg="closed: init must apply createFields.H's level shift to p",
     )
 
 
@@ -211,7 +215,7 @@ def test_startup_relevels_p_rgh_on_a_closed_domain(closed: Any) -> None:
         _P_RGH_RELEVELLED,
         rtol=_RTOL,
         atol=0,
-        err_msg="vofRow4Closed: init must relevel p_rgh from the shifted p",
+        err_msg="closed: init must relevel p_rgh from the shifted p",
     )
 
 
@@ -231,8 +235,8 @@ def test_the_case_builds_the_hand_derived_density_and_gravity_head(
 ) -> None:
     """Anchors every other expectation in this module: rho and gh are what the
     hand derivation in the docstring assumes."""
-    assert_allclose(closed["rho"], _RHO, rtol=_RTOL, atol=0, err_msg="vofRow4Closed")
-    assert_allclose(closed["gh"], _GH, rtol=_RTOL, atol=0, err_msg="vofRow4Closed")
+    assert_allclose(closed["rho"], _RHO, rtol=_RTOL, atol=0, err_msg="closed")
+    assert_allclose(closed["gh"], _GH, rtol=_RTOL, atol=0, err_msg="closed")
 
 
 def test_absolute_pressure_is_reconstructed_from_p_rgh_on_an_open_domain(
@@ -243,7 +247,7 @@ def test_absolute_pressure_is_reconstructed_from_p_rgh_on_an_open_domain(
         _P_RECONSTRUCTED,
         rtol=_RTOL,
         atol=0,
-        err_msg="vofRow4Open: p must be p_rgh + rho*gh",
+        err_msg="open: p must be p_rgh + rho*gh",
     )
 
 
@@ -270,7 +274,7 @@ def test_absolute_pressure_is_level_shifted_on_a_closed_domain(closed: Any) -> N
         _P_LEVELLED,
         rtol=_RTOL,
         atol=0,
-        err_msg="vofRow4Closed: p shifted by pRefValue - p[pRefCell]",
+        err_msg="closed: p shifted by pRefValue - p[pRefCell]",
     )
 
 
@@ -283,7 +287,7 @@ def test_p_rgh_is_relevelled_from_the_shifted_pressure_on_a_closed_domain(
         _P_RGH_RELEVELLED,
         rtol=_RTOL,
         atol=0,
-        err_msg="vofRow4Closed: p_rgh relevelled from the shifted p",
+        err_msg="closed: p_rgh relevelled from the shifted p",
     )
 
 

@@ -15,7 +15,7 @@ the fact that BUILD returns a complete 19-step graph there is itself the proof
 that every step is deferred: an eager step would abort on the missing mesh.
 
 **BUILD's steps are executed once**, in a worker subprocess (one ``Foam::Time``
-per process), on ``cases/vofRow4`` — see ``conftest.py`` for the fixture and the
+per process), on ``cases/vofRow4/common`` — see ``conftest.py`` for the fixture and the
 case. The expected values are hand-derived from that case:
 
 * the row is a unit cube cut into 4 cells along x, so cell volume is 0.25,
@@ -261,7 +261,7 @@ def test_turbulence_step_depends_on_the_fields_it_wraps(
 
 
 # --------------------------------------------------------------------------- #
-# The executed pipeline on cases/vofRow4                                       #
+# The executed pipeline on cases/vofRow4/common                               #
 # --------------------------------------------------------------------------- #
 
 
@@ -398,7 +398,7 @@ def test_href_is_registered_and_defaults_to_zero_when_absent(
 
 
 def test_href_is_read_from_constant_when_present(vof_row4_href: BuiltCase) -> None:
-    # cases/vofRow4Href ships constant/hRef = 0.3.
+    # The `href` overlay ships constant/hRef = 0.3.
     assert vof_row4_href.internal("hRef") == 0.3
 
 
@@ -424,7 +424,7 @@ def test_gh_uses_a_non_default_hRef_as_the_reference_head(
         vof_row4_href.internal("gh"),
         [-1.962] * 4,
         rtol=1e-12,
-        err_msg="vofRow4Href: gh must fold in a non-zero hRef via ghRef",
+        err_msg="href: gh must fold in a non-zero hRef via ghRef",
     )
 
 

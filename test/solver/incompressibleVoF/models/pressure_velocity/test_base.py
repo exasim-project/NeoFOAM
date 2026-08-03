@@ -29,7 +29,7 @@ from neofoam.solver.incompressibleVoF.models.pressure_velocity.pimpleAlgorithm i
     pimple,
 )
 
-_CASES = Path(__file__).parent / "cases"
+_CASES = Path(__file__).parents[2] / "cases"
 
 
 def test_all_specs_returns_only_the_pimple_spec() -> None:

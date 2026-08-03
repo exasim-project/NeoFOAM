@@ -43,6 +43,8 @@ from typing import Any
 import pytest
 from numpy.testing import assert_allclose
 
+from .conftest import stage_case
+
 _HERE = Path(__file__).parent
 _CASES = _HERE / "cases" / "alphaCourant"
 _WORKER = _HERE / "_set_time_step_worker.py"
@@ -185,9 +187,8 @@ SCENARIOS: dict[str, dict[str, Any]] = {
 
 
 def _stage(dest: Path) -> Path:
-    """Copy the checked-in row4 case inputs; the worker meshes on top."""
-    shutil.copytree(_CASES / "common", dest)
-    shutil.copy(_CASES / "row4" / "blockMeshDict", dest / "system")
+    """Compose the checked-in row4 case inputs; the worker meshes on top."""
+    stage_case(dest, _CASES / "common", _CASES / "row4")
     shutil.copytree(dest / "0.orig", dest / "0")
     # Pristine copy of the base controlDict: the worker rewrites
     # system/controlDict from this template every scenario, so no scenario's

@@ -25,6 +25,8 @@ under test is which model selection picks, not what OpenFOAM then does with it â
 so no mesh is needed.
 """
 
+import shutil
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
@@ -38,12 +40,27 @@ from neofoam.turbulence.selection import (
     select_from_case,
     select_turbulence_model,
 )
-from turbulence.conftest import CASES, Case, case_for
+from turbulence.conftest import CASES, Case
 
 #: One case per resolution kind, taken from the discovered manifests.
-REGISTERED = case_for("kEpsilon")
 UNREGISTERED = next(c for c in CASES if c.selection["resolves_to"] == "unregistered")
 WRONG_FAMILY = next(c for c in CASES if c.selection["resolves_to"] == "wrong_family")
+
+#: The real ``turbulenceProperties`` dictionaries the parity tests run, keyed by the
+#: fallback ``correct`` op the model they select declares. The ``*Coeffs`` dicts
+#: select the same closure through a full coefficient override, so they must resolve
+#: to the same op.
+_PARITY_MODELS = Path(__file__).parent / "parity_models"
+FALLBACK_OP_PER_DICT = {
+    "laminar": "laminarCorrect",
+    "kEpsilon": "kEpsilonCorrect",
+    "kEpsilonCoeffs": "kEpsilonCorrect",
+    "SpalartAllmaras": "spalartAllmarasCorrect",
+    "SpalartAllmarasCoeffs": "spalartAllmarasCorrect",
+    "kOmegaSST": "kOmegaSSTCorrect",
+    "kOmegaSSTCoeffs": "kOmegaSSTCorrect",
+    "realizableKE": "realizableKECorrect",
+}
 
 
 @pytest.mark.parametrize("case", CASES, ids=lambda c: c.name)
@@ -80,14 +97,29 @@ def test_select_from_case_fallback(case: Case) -> None:
         assert isinstance(selected, FallbackHandle)
 
 
-def test_registered_model_keeps_its_own_fallback_correct_op() -> None:
-    cfg = TurbulencePropertiesConfig.load(case_dir=REGISTERED.path)
+@pytest.mark.parametrize(("dict_name", "op_name"), sorted(FALLBACK_OP_PER_DICT.items()))
+def test_registered_model_schedules_its_own_fallback_correct_op(
+    dict_name: str, op_name: str, tmp_path: Path
+) -> None:
+    """Each registered model wires its own co-located ``fallback=True`` correct op.
+
+    That the scheduled op then actually advances ``nut`` through real pybFoam is
+    proven, once per wiring shape, by
+    ``test_neon_turbulence_parity.test_fallback_nut_matches_pybfoam``; here the same
+    claim is made for *every* shipped dictionary without a solver run.
+    """
+    (tmp_path / "constant").mkdir()
+    shutil.copyfile(
+        _PARITY_MODELS / dict_name / "turbulenceProperties",
+        tmp_path / "constant" / "turbulenceProperties",
+    )
+    cfg = TurbulencePropertiesConfig.load(case_dir=str(tmp_path))
 
     handle = select_turbulence_model(
-        cfg, fallback=True, case_dir=REGISTERED.path, of_factory=MagicMock()
+        cfg, fallback=True, case_dir=str(tmp_path), of_factory=MagicMock()
     )
 
-    assert [op.metadata.op_name for op in handle.operations] == ["kEpsilonCorrect"]
+    assert [op.metadata.op_name for op in handle.operations] == [op_name]
 
 
 def test_unregistered_model_gets_the_openfoam_correct_op() -> None:

@@ -13,7 +13,7 @@ using real ``system/fvSolution`` files:
   MULES default path).
 - ``cases/damBreak_isoAdvector`` is this repo's own
   ``tutorials/damBreak_isoAdvector/system/fvSolution`` (the same tutorial
-  ``test_damBreak_isoAdvector_comparison.py`` runs), which carries an explicit
+  ``test_damBreak_comparison.py``'s isoAdvector entry runs), which carries an explicit
   ``advectionScheme isoAdvector;`` plus isoAdvector controls
   (``reconstructionScheme`` etc.) in its ``solvers."alpha.water.*"`` sub-dict.
 

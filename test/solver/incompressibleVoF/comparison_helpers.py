@@ -3,11 +3,11 @@
 
 """Shared damBreak comparison harness: incompressibleVoF vs a native solver.
 
-Both damBreak comparison tests (MULES vs interFoam, isoAdvector vs
-interIsoFoam) run the identical sequence — set up two copies of a damBreak
-tutorial, run the Python solver in one and the native OpenFOAM solver in the
-other, then compare the written fields — so the whole body lives here and each
-test is a one-line parameterization.
+Both damBreak comparisons (MULES vs interFoam, isoAdvector vs interIsoFoam) run
+the identical sequence — set up two copies of a damBreak tutorial, run the
+Python solver in one and the native OpenFOAM solver in the other, then compare
+the written fields — so the whole body lives here and
+``test_damBreak_comparison.py`` is one parametrized test over the two.
 
 ``run_dambreak_regime`` is the same set-up/run pair for ``test_mules_regimes``
 and ``test_cranknicolson_alpha_ddt``, which need (a) the case dictionaries

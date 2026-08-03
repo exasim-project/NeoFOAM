@@ -82,11 +82,6 @@ def test_contribution_excluded_when_model_inactive() -> None:
     assert bound() == VGREAT
 
 
-def test_model_is_registered_in_the_family_catalog() -> None:
-    names = {spec.name for spec in incompressibleFluidModel.all_specs()}
-    assert "courant" in names
-
-
 def test_model_and_config_discoverable_without_a_case() -> None:
     # Registration != activation: no case dir needed to list the model + its config.
     names = {spec.name for spec in incompressibleFluidModel.all_specs()}

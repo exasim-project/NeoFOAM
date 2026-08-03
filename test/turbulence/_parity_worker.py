@@ -1,15 +1,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""One-role-per-process worker for the NeoN turbulence parity test.
+"""One-role-per-process worker for the NeoN turbulence tests that need OpenFOAM.
 
 pybFoam and NeoN both hang state off the global OpenFOAM ``objectRegistry``, so a
 single process that constructs several ``Foam::Time`` objects (mesh generation,
 the pybFoam reference read, the NeoN subject read) corrupts that registry and
 segfaults intermittently. Each role here therefore runs in its own fresh process
 — exactly **one** ``Foam::Time`` per process — and hands its result to the parent
-through a ``.npy`` file. The parent (:mod:`test_neon_turbulence_parity`) only
-orchestrates subprocesses and compares arrays; it never touches OpenFOAM.
+through a ``.npy`` file. The parents only orchestrate subprocesses (see
+:mod:`_parity_case`) and compare arrays; they never touch OpenFOAM.
 
 Roles (``python _parity_worker.py <role> <case_dir>``):
 
@@ -21,6 +21,10 @@ Roles (``python _parity_worker.py <role> <case_dir>``):
   ``correct`` step, write ``reference_<field>.npy`` for each of :data:`COMPARE_FIELDS`.
 * ``subject``   — build the pure-Python NeoN ModelSpec model, advance one
   ``correct`` step, write ``subject_<field>.npy`` for each field it owns.
+* ``subject_fb`` — build the pybFoam-fallback handle and run its op, writing
+  ``subject_fb_nut.npy``.
+* ``near_wall_dist`` — build the native NeoN closure and write its near-wall
+  distance, split per boundary patch, to ``near_wall_dist.npz``.
 """
 
 from __future__ import annotations
@@ -279,12 +283,54 @@ def role_subject_fb(case: Path) -> None:
         )
 
 
+def role_near_wall_dist(case: Path) -> None:
+    """Build the NeoN closure → ``near_wall_dist.npz`` (one array per patch).
+
+    Reaching the closure's build at all is the regression this role serves: the
+    case's ``fvSchemes`` carries no ``wallDist`` block.
+    """
+    nn.initialize(["neon"])
+
+    cfg = TurbulencePropertiesConfig.load(case_dir=str(case))
+    # Foam::Time keeps a raw reference to the argList and the NeoN runtime a raw
+    # reference to the Time, so all three stay bound (see role_subject).
+    arg_list = pyf.argList(["near_wall_dist", "-case", str(case)])
+    neon_time = pyf.Time(arg_list)
+    rt = nfb.create_adapter_run_time(neon_time)
+    rt.fv_schemes_dict = nfb.map_fv_schemes(rt.fv_schemes_dict)
+
+    U_neon = nfb.read_vector_volume_field(rt, "U")
+    nu = nfb.create_uniform_volume_field(rt, "nu", nfb.read_transport_viscosity(rt))
+    turbulence = select_turbulence_model(cfg, fallback=False, runtime=rt, nu=nu, case_dir=case)
+    turbulence.validate(U_neon)
+
+    # The closure's own near-wall distance model — the exact object its epsilon /
+    # nutk wall functions read through the BoundaryContext. Reached through the
+    # handle's Context because the handle exposes fields, not models.
+    near_wall_dist = turbulence._ctx.models["kEpsilon_nearWallDist"]
+    values = np.asarray(near_wall_dist.boundary_data_value().copy_to_host())
+
+    # Boundary values are stored flat in patch order (what constructFrom writes), so
+    # the OpenFOAM patch sizes split them back into named patches. The boundary mesh
+    # is indexed, not iterated: pybFoam's fvBoundaryMesh.__iter__ aborts the process.
+    boundary = rt.mesh.boundary()
+    per_patch = {}
+    start = 0
+    for patch_id in range(len(boundary)):
+        patch = boundary[patch_id]
+        end = start + patch.size()
+        per_patch[str(patch.name())] = values[start:end]
+        start = end
+    np.savez(case / "near_wall_dist.npz", **per_patch)
+
+
 _ROLES = {
     "mesh": role_mesh,
     "setup": role_setup,
     "reference": role_reference,
     "subject": role_subject,
     "subject_fb": role_subject_fb,
+    "near_wall_dist": role_near_wall_dist,
 }
 
 
