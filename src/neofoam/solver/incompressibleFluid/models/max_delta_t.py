@@ -58,9 +58,7 @@ def detect_model() -> bool:
 def max_delta_t_limit(cfg: MaxDeltaTConfig) -> float:
     """The constant deltaT ceiling this model imposes (config only).
 
-    ``setDeltaT.H`` clips it onto the already-damped step
-    (``min(deltaTFact*deltaT, maxDeltaT)``), so it is a ``maxTimeStep`` ceiling
-    rather than a ``timeStepConstraint`` limit: pushing it through the growth
-    damping would give a different (smaller) step whenever it binds.
+    A ``maxTimeStep`` ceiling rather than a ``timeStepConstraint`` limit because
+    ``setDeltaT.H`` clips it onto the *already-damped* step.
     """
     return cfg.maxDeltaT

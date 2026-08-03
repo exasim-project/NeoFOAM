@@ -47,27 +47,12 @@ def alpha_sub_cycle(alpha1: volScalarField, n_alpha_sub_cycles: int) -> Iterator
 
     Wrap the ``nAlphaSubCycles > 1`` loop of ``alphaEqnSubCycle.H`` in this —
     MULES and isoAdvector sub-cycle identically, only the pass inside differs.
-    Call ``increment()`` on the yielded ``Foam::Time`` once per sub-step and run
-    one alpha pass after each; on exit the real time state and ``alpha1``'s real
-    old-time value are back, so the momentum/pressure steps that follow see an
-    untouched time step. Read anything that must refer to the *whole* step (the
-    total ``deltaT``) before entering.
-
-    Reproduces both halves of ``Foam::subCycle``:
-
-    * ``subCycleTime``: ``Time.subCycle(n)`` rewinds one ``deltaT``, scales the
-      time index by ``n`` and divides ``deltaT`` by ``n``; ``endSubCycle()``
-      restores the step's real time state.
-    * ``subCycleField``: ``alpha1``'s old-time value belongs to the *real* time
-      step, so it is copied out first and put back at the end, and both fields'
-      time indices are moved onto the sub-cycle clock so ``oldTime()`` rolls
-      exactly once per sub-step (and, on the way out, once at the next real step).
-
-    Advancing ``Time`` — rather than the equivalent trick of scaling ``phi`` by
-    ``1/n``, which the arithmetic of one alpha pass alone cannot tell apart — is
-    what makes time-dependent boundary conditions correct: a ``waveAlpha`` /
-    ``waveVelocity`` inlet re-evaluates once per sub-step, at the sub-step's own
-    time, because its ``updateCoeffs`` is keyed on the time index.
+    Call ``increment()`` on the yielded ``Foam::Time`` once per sub-step; on exit
+    the real time state and ``alpha1``'s real old-time value are back, so read
+    anything that refers to the *whole* step (the total ``deltaT``) before
+    entering. ``Time`` is advanced rather than ``phi`` scaled by ``1/n`` so that
+    time-dependent BCs (``waveAlpha``/``waveVelocity``) re-evaluate once per
+    sub-step at the sub-step's own time.
 
     Example::
 
@@ -143,10 +128,8 @@ def shared_field_build_steps() -> list[Any]:
     def create_alpha_phi_un(context: dict[str, Any]) -> surfaceScalarField:
         """Zero-init the MULES compressed flux (``createAlphaFluxes.H``).
 
-        Registered under its final name up front — not just computed later —
-        so it stays in the objectRegistry (and lookup-able by e.g. the
-        ``scalarTransport`` functionObject's ``phase`` option) for the whole
-        run; ``alpha_eqn`` (MULES) assigns into it in place every alpha solve.
+        Registered under its final name up front so it stays lookup-able for the
+        whole run; the alpha solve assigns into it in place.
         """
         phi = context["fields.phi"]
         return surfaceScalarField(pyf.Word("alphaPhiUn"), 0.0 * phi)
@@ -154,12 +137,9 @@ def shared_field_build_steps() -> list[Any]:
     def create_alpha_phi10(context: dict[str, Any]) -> surfaceScalarField:
         """Seed the MULES phase flux (``createAlphaFluxes.H``).
 
-        Created once for the whole run rather than per alpha solve, because the
-        Crank-Nicolson tail of ``alphaEqn.H`` converts the off-centred flux back
-        to an end-of-time-step one using ``alphaPhi10.oldTime()`` — a per-call
-        field would have no old time to roll. Native additionally reads and
-        writes it as ``alphaPhi0.<phase>`` so a restart can pick the previous
-        step's flux back up; that restart path is not implemented here.
+        Created once for the whole run because the Crank-Nicolson tail of
+        ``alphaEqn.H`` needs ``alphaPhi10.oldTime()``, which a per-solve field
+        would not have. Native's ``alphaPhi0.<phase>`` restart path is not ported.
         """
         phi = context["fields.phi"]
         alpha1 = context["fields.alpha1"]

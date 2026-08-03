@@ -41,10 +41,8 @@ def _pimple_dict() -> tuple[Any, bool]:
 def create_dynamic_mesh_controls(context: dict[str, Any]) -> dict[str, bool]:
     """The PIMPLE dict's mesh-motion switches (transcription of ``createDyMControls.H``).
 
-    ``correctPhi`` defaults to ``mesh.dynamic()``, the other two to ``False`` —
-    exactly the native defaults, so a static case reads all three as ``False``.
-    Native re-reads them every time step (``readDyMControls.H``); they are read
-    once here because no tutorial rewrites them mid-run.
+    Native re-reads them every time step (``readDyMControls.H``); read once here
+    because no tutorial rewrites them mid-run.
     """
     mesh = context["mesh"]
     d, _ = _pimple_dict()
@@ -58,10 +56,8 @@ def create_dynamic_mesh_controls(context: dict[str, Any]) -> dict[str, bool]:
 def create_pimple_control(_context: dict[str, Any]) -> PimpleControl:
     """Create a :class:`PimpleControl` from the PIMPLE (or PISO) subdict.
 
-    pisoFoam tutorials ship a ``PISO`` block instead of ``PIMPLE``. When
-    ``PIMPLE`` is absent we fall back to ``PISO``, which is a single-outer-loop
-    PIMPLE: ``nOuterCorrectors`` is fixed to 1 and the remaining correction
-    counts / momentum predictor are read from the PISO dict.
+    A PISO block is a single-outer-loop PIMPLE, so ``nOuterCorrectors`` is fixed
+    to 1 rather than read.
     """
     d, from_piso = _pimple_dict()
     n_outer_correctors = 1 if from_piso else d.getOrDefault[int]("nOuterCorrectors", 1)

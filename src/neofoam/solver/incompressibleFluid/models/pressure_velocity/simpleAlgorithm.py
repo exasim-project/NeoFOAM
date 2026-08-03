@@ -189,17 +189,14 @@ def momentum(
         if mrf_zones is None:
             UEqn = fvVectorMatrix(fvm.div(phi, U) + viscousStress.divDevReff(U))
         else:
-            # UEqn.H under a rotating frame: the wall velocities on the MRF
-            # patches are set first (they feed the boundary coefficients of
-            # ``div(phi,U)``), then the frame acceleration joins the sum.
+            # as in UEqn.H: correctBoundaryVelocity before assembly — it feeds
+            # the boundary coefficients of ``div(phi,U)``.
             mrf_zones.correctBoundaryVelocity(U)
             UEqn = fvVectorMatrix(fvm.div(phi, U) + mrf_zones.DDt(U) + viscousStress.divDevReff(U))
         if fv_options is not None:
-            # ``== fvOptions(U)`` moves the source to the right-hand side, i.e.
-            # subtracts it from the assembled matrix. UEqn.H's three fvOptions
-            # calls sit at three exact points, and the order is the physics: the
-            # source joins the sum BEFORE relaxation, the constraints are applied
-            # AFTER it, and the correction runs after the solve.
+            # as in UEqn.H, the call order is the physics: source before relax(),
+            # constrain() after, correct() after the solve. ``== fvOptions(U)``
+            # subtracts the source from the assembled matrix.
             UEqn = fvVectorMatrix(UEqn - fv_options(U))
         UEqn.relax()
         if fv_options is not None:
@@ -284,8 +281,8 @@ def continuity(
     U.assign(HbyA - rAtU * fvc.grad(p))
     U.correctBoundaryConditions()
     if fv_options is not None:
-        # pEqn.H closes on a second ``fvOptions.correct(U)``: the corrector has
-        # just overwritten U, so any correction the predictor applied is gone.
+        # as in pEqn.H: a second fvOptions.correct(U) closes the corrector, which
+        # has just overwritten the predictor's correction.
         fv_options.correct(U)
 
     return FieldUpdates({"U": U, "p": p, "phi": phi})

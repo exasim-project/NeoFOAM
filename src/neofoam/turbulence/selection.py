@@ -23,10 +23,8 @@ raises on ``fallback=True``; a fallback-only model (no ``@build``, only a
 
 A name with **no** registered spec is not an error on the fallback path: OpenFOAM's
 own run-time selection table can build any of its incompressible models, so the
-selector hands the name to :class:`OpenFOAMTurbulenceModel` and says so on stdout
-(the run is then honestly attributed to pybFoam, not to a NeoFOAM closure). A
-*registered* name is still checked against the case's family — a RAS closure is
-never built for an ``LES { LESModel … }`` entry.
+selector hands the name to :class:`OpenFOAMTurbulenceModel` and says so on stdout.
+A *registered* name is still checked against the case's family.
 
 :func:`select_turbulence_model` operates on a *duck-typed* config (any object
 exposing ``simulationType`` and optional ``RAS`` / ``LES`` sub-objects).
@@ -166,9 +164,7 @@ def select_turbulence_model(
                 "needs a registered closure — run it on incompressibleFluid (the "
                 "pybFoam fallback) or port it"
             )
-        # OpenFOAM's own run-time selection table builds it; say so, so a matching
-        # run is attributed to pybFoam rather than to a NeoFOAM closure. Master-only,
-        # like the OpenFOAM ``Info`` lines it sits between in the solver log.
+        # Master-only, like the OpenFOAM ``Info`` lines it sits between in the log.
         if Pstream.master():
             print(
                 f"Turbulence model {name!r} has no NeoFOAM closure — "

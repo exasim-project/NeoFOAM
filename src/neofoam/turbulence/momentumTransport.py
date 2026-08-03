@@ -19,11 +19,9 @@ per-model class**: a model is a :class:`ModelSpec` + config + operations, all in
 one file (a native ``@build`` / native ``@operation``s and/or a co-located
 ``fallback=True`` ``correct`` op).
 
-Registration also records the *turbulence family* the closure belongs to
-(``laminar`` / ``RAS`` / ``LES``), so the selector can refuse to build a RAS
-closure for an ``LES { LESModel … }`` entry (and vice versa) — a name alone does
-not identify a model, OpenFOAM keeps a separate run-time selection table per
-family.
+Registration also records the closure's *turbulence family* (``laminar`` / ``RAS`` /
+``LES``): OpenFOAM keeps a separate run-time selection table per family, so a name
+alone does not identify a model.
 """
 
 from typing import Literal, Optional
@@ -42,8 +40,7 @@ __all__ = [
     "ModelSpec",
 ]
 
-#: The turbulence families OpenFOAM selects a momentum-transport closure from —
-#: the same closed set as ``turbulenceProperties/simulationType``.
+#: The same closed set as ``turbulenceProperties/simulationType``.
 TurbulenceFamily = Literal["laminar", "RAS", "LES"]
 
 #: Family of each registered model, by spec name. Kept beside the registry rather
@@ -83,18 +80,14 @@ class momentumTransportModel(BaseModel):
 
     @classmethod
     def family_of(cls, name: str) -> Optional[TurbulenceFamily]:
-        """Return the family (``laminar``/``RAS``/``LES``) *name* was registered as.
-
-        ``None`` for a name that is not registered.
-        """
+        """The family *name* was registered as, or ``None`` if it is not registered."""
         return _MODEL_FAMILIES.get(name)
 
 
 def register_momentum_transport(spec: ModelSpec, *, family: TurbulenceFamily) -> ModelSpec:
     """Register *spec* as a momentum-transport model of *family*.
 
-    Use in place of ``spec.register_with(momentumTransportModel)`` so the model
-    declares which OpenFOAM selection table it is a closure for; the selector
+    Use in place of ``spec.register_with(momentumTransportModel)``; the selector
     rejects a spec whose family differs from the case's ``simulationType``.
 
     Example:

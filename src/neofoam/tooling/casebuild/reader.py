@@ -53,8 +53,8 @@ def read_field(case: CaseDir, name: str, *, time: str = "latest") -> "np.ndarray
                 text=True,
             )
         except subprocess.CalledProcessError as failure:
-            # An OpenFOAM fatal error only ever reaches the caller as an exit code; its
-            # explanation is on the subprocess's stderr, so re-raise carrying that text.
+            # An OpenFOAM fatal error reaches the caller as a bare exit code; its
+            # explanation is only on the subprocess's stderr.
             raise RuntimeError(
                 f"reading field {name!r} at time {time!r} from {case.path} failed "
                 f"(exit {failure.returncode}): {failure.stderr}"

@@ -214,9 +214,8 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             # First, so an AMR case is refused before the argList and the Foam::Time
             # it would be built on are resolved from the context.
             refuse_mesh_refinement()
-            # pimpleFoam is a moving-mesh solver (``createDynamicFvMesh.H``): a case
-            # with ``constant/dynamicMeshDict`` gets that dictionary's motion solver,
-            # every other case the plain static fvMesh it always had.
+            # createDynamicFvMesh.H: a case with ``constant/dynamicMeshDict`` gets
+            # that dictionary's motion solver, every other case a static fvMesh.
             return new_mesh(ctx["_foam_arglist"], ctx["_foam_time"])
 
         def create_laminar_transport(ctx: dict[str, Any]) -> Any:

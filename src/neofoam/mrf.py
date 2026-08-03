@@ -4,22 +4,15 @@
 """MRF (multiple reference frame) rotating zones, as an optional model.
 
 Use it when a case drives its flow through a rotating cell zone declared in
-``constant/MRFProperties`` (``simpleFoam/mixerVessel2D``,
-``interFoam/laminar/mixerVessel2D``, …). The model is *detected*: without that
-file it is never instantiated, nothing lands on the Context, and every
-pressure-velocity algorithm assembles exactly the equations it assembled before
-this model existed.
+``constant/MRFProperties`` (``simpleFoam/mixerVessel2D``, …). The model is
+*detected*: without that file it is never instantiated and the pressure-velocity
+algorithms, which inject it optionally and branch on ``None``, assemble exactly the
+equations they did before this model existed.
 
-The model owns one runtime object, ``ctx.models["mrf_zones"]`` — OpenFOAM's own
-:class:`Foam::IOMRFZoneList`, which reads the dictionary, holds the zones and
-implements the frame terms. The algorithms that consume it (SIMPLE and both
-PIMPLEs) take it as an *optional* injected model and branch on ``None``, so this
-module never has to supply a no-op stand-in.
-
-Shared by ``incompressibleFluid`` and ``incompressibleVoF``: each solver's model
-package registers this one spec with its own plugin family (the momentum term
-differs — ``DDt(U)`` for the single-phase solvers, ``DDt(rho, U)`` for VoF — but
-that lives at the call site, not here).
+It owns one runtime object, ``ctx.models["mrf_zones"]`` — OpenFOAM's own
+:class:`Foam::IOMRFZoneList` — whose frame terms the algorithms apply where native
+applies them. Shared by ``incompressibleFluid`` and ``incompressibleVoF``, which
+each register this one spec with their own plugin family.
 
 Example::
 
@@ -39,9 +32,7 @@ from neofoam.io import OF, BaseConfig, IOStrategy
 
 __all__ = ["MRFPropertiesConfig", "mrf"]
 
-# The dictionary is read by OpenFOAM (``IOMRFZoneList``), never by Python, so
-# detection is a file-existence question and the path is case-relative — the
-# solver runs with the case directory as its working directory.
+# Case-relative: the solver runs with the case directory as its working directory.
 _MRF_PROPERTIES = "constant/MRFProperties"
 
 
@@ -49,13 +40,9 @@ _MRF_PROPERTIES = "constant/MRFProperties"
 class MRFPropertiesConfig(BaseConfig):
     """``constant/MRFProperties`` — one sub-dict per rotating zone.
 
-    Declared so the file is part of the solver's config schema (collectible,
-    savable, printable like any other case file). The zone entries stay
-    free-form: a zone name maps to a sub-dict of ``cellZone`` /
-    ``nonRotatingPatches`` / ``origin`` / ``axis`` / ``omega``, where ``omega``
-    is a Function1 and can be a bare number or ``constant 6.28`` / ``table
-    (...)``. Modelling those arms in pydantic would buy nothing: the values are
-    consumed by ``IOMRFZoneList`` straight off disk.
+    Declared so the file is part of the solver's config schema. The zone entries
+    stay free-form: their values are consumed by ``IOMRFZoneList`` straight off
+    disk, and ``omega`` alone is a Function1 with several spellings.
 
     Example::
 
@@ -79,13 +66,9 @@ def detect_model() -> bool:
 def build(_config: MRFPropertiesConfig) -> list[Any]:
     """Publish the zone list on the Context as ``models.mrf_zones``.
 
-    One step, depending only on the mesh — the zone list is built from cell
-    zones and patch names, and every field-level hook (``correctBoundaryVelocity``,
-    ``DDt``, ``makeRelative``, ``zeroFilter``) is applied by the pressure-velocity
-    algorithm at the point native applies it, not here. Native constructs the
-    list *after* ``createPhi.H``, so the initial flux is deliberately left as the
-    absolute flux of ``0/U``. The name is ``mrf_zones`` rather than ``mrf``
-    because the model runtime itself already occupies ``models.mrf``.
+    Native constructs the list *after* ``createPhi.H``, so the initial flux is
+    deliberately left as the absolute flux of ``0/U``. Named ``mrf_zones`` because
+    the model runtime itself already occupies ``models.mrf``.
     """
 
     def create_mrf_zones(context: dict[str, Any]) -> pyf.IOMRFZoneList:

@@ -56,8 +56,7 @@ from .models.pressure_velocity.base import PressureVelocityAlgorithm
 
 # Interface band for the alpha Courant number: only cells whose phase fraction
 # straddles the interface (0.01 <= alpha1 <= 0.99) contribute. Mirrors
-# interfaceProperties::nearInterface(), used by interFoam/interIsoFoam
-# alphaCourantNo.H.
+# interfaceProperties::nearInterface(), used by alphaCourantNo.H.
 _ALPHA_CO_LO = dimensionedScalar(pyf.Word("alphaCoLo"), dimless, 0.01)
 _ALPHA_CO_HI = dimensionedScalar(pyf.Word("alphaCoHi"), dimless, 0.99)
 
@@ -68,12 +67,9 @@ def compute_alpha_courant_number(
     """Interface (alpha) Courant number, composed from generic pybFoam primitives.
 
     A pure-Python transcription of OpenFOAM's ``alphaCourantNo.H``: like the flow
-    CFL number but the per-cell face-flux sum is masked to *near-interface cells*
-    — ``interfaceProperties::nearInterface()``, i.e. the ``pos0`` band
-    ``0.01 <= alpha1 <= 0.99`` on the **cell** values — before the ``gMax``/
-    ``gSum`` reduction. The ``pos0`` mask is exactly 0/1, so the result is
-    bitwise-identical to the native routine (which drives the alpha-CFL branch
-    of the adaptive dt).
+    CFL number but the per-cell face-flux sum is masked to near-interface *cells*
+    (``interfaceProperties::nearInterface()``) before the reduction. The ``pos0``
+    mask is exactly 0/1, so the result is bitwise-identical to the native routine.
 
     Returns ``(alphaCoNum, meanAlphaCo)``.
     """
@@ -245,8 +241,7 @@ def set_time_step(
     alpha1: volScalarField,
     runtime: Annotated[Any, "models"],
 ) -> None:
-    """Adjust the time step from both flow-CFL and alpha-CFL (interFoam
-    setInitialDeltaT.H + setDeltaT.H)."""
+    """Adjust the time step from flow-CFL and alpha-CFL (setInitialDeltaT/setDeltaT)."""
     # Re-read system/controlDict every step — faithful to OpenFOAM's
     # runTimeModifiable handling of adjustTimeStep/maxCo/maxAlphaCo/maxDeltaT
     # (Time.controlDict() is not bound, so the file is read directly). Missing
@@ -261,10 +256,9 @@ def set_time_step(
     max_alpha_co = float(ctrl_dict.getOrDefault[float]("maxAlphaCo", 1.0))
     max_delta_t = float(ctrl_dict.getOrDefault[float]("maxDeltaT", 1.0))
 
-    # setInitialDeltaT.H: interFoam runs it once (with CourantNo.H) before the
-    # loop, so on the first pass it precedes the setDeltaT.H below. The reduction
-    # is undamped and can only lower the step, but the setDeltaT call it makes
-    # snaps onto the write time, which is what the damped pass then grows from.
+    # setInitialDeltaT.H runs once before the loop, so it precedes the setDeltaT.H
+    # below on the first pass: its undamped setDeltaT snaps onto the write time,
+    # which is what the damped pass then grows from.
     if runtime.timeIndex() == 0:
         initial_co_num = pyf.computeCFLNumber(phi)[0]
         if initial_co_num > 1e-15:
@@ -305,12 +299,10 @@ def turbulence_correction(
 ) -> FieldUpdates:
     """Correct the two-phase turbulence model after pressure-velocity coupling.
 
-    interFoam/interIsoFoam guard the call with ``if (pimple.turbCorr())``, which
-    is ``!turbOnFinalIterOnly || finalIter()``: with the native default the
-    turbulence is corrected **once per time step**, on the last outer corrector,
-    not once per outer corrector. Under ``nOuterCorrectors > 1`` an ungated call
-    feeds a ``nut`` native has not yet updated into the next outer iteration's
-    momentum assembly, which moves ``p_rgh`` and from there ``phi`` and alpha.
+    Gated with ``turbCorr()`` as native is: with the default
+    ``turbOnFinalIterOnly`` the correction runs on the last outer corrector only,
+    so ``nOuterCorrectors > 1`` does not feed a prematurely updated ``nut`` into
+    the next momentum assembly.
     """
     if turbulence and pimple_control.turbCorr():
         turbulence.correct()

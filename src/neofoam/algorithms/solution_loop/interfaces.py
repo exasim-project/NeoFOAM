@@ -3,18 +3,11 @@
 
 """The solution loop's model-owned gather points.
 
-``solutionLoop`` (the core loop Model) **owns** all four interfaces. Three of them
-fold float deltaT limits with ``min`` (empty -> VGREAT = no opinion), one per
-OpenFOAM source they mirror, because each limit is approached differently:
-
-* ``timeStepConstraint`` — the Courant-style limit of ``setDeltaT.H``: reached
-  immediately when shrinking, damped when growing.
-* ``maxTimeStep`` — the hard ``maxDeltaT`` ceiling of ``setDeltaT.H``, clipped
-  *after* the damping (``min(deltaTFact*deltaT, maxDeltaT)``), never through it.
-* ``initialTimeStepConstraint`` — the undamped first-step limit of
-  ``setInitialDeltaT.H``, which is gated on a non-quiescent flow and can only lower
-  the step.
-
+``solutionLoop`` (the core loop Model) **owns** all four interfaces. Three fold float
+deltaT limits with ``min`` (empty -> VGREAT = no opinion) — kept apart because the
+loop approaches each differently: ``timeStepConstraint`` is the damped Courant-style
+limit, ``maxTimeStep`` the hard ceiling clipped *after* the damping, and
+``initialTimeStepConstraint`` the undamped first-step limit of ``setInitialDeltaT.H``.
 ``loopCondition`` folds bool continue-flags with ``all`` (empty -> True = keep
 running). Models extend them with ``@<model>.contributes(<iface>)``; the loop
 consumes them by typing an ``@solutionLoop.operation`` parameter with the interface

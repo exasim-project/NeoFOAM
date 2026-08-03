@@ -20,10 +20,8 @@ from .incompressibleFluidModel import incompressibleFluidModel
 from .max_delta_t import maxDeltaT
 from .pressure_velocity import PressureVelocityAlgorithm
 
-# MRF and fvOptions are shared with incompressibleVoF, so their specs live in
-# ``neofoam.mrf`` / ``neofoam.fv_options`` and are joined to this solver's plugin
-# family here (the models above register themselves at definition time, which a
-# shared spec cannot do).
+# MRF and fvOptions are shared with incompressibleVoF, so their specs cannot
+# register themselves at definition time the way the models above do.
 mrf.register_with(incompressibleFluidModel)
 fvOptions.register_with(incompressibleFluidModel)
 

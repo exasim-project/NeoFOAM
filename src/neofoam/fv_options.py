@@ -4,24 +4,16 @@
 """Finite-volume options (``fvOptions``) momentum sources, as an optional model.
 
 Use it when a case's physics *is* a source term declared in an ``fvOptions``
-dictionary — a rotor disk, a porosity block, an actuation disk, a mean-velocity
-force, mangrove drag. The model is *detected*: without that file it is never
-instantiated, nothing lands on the Context, and every pressure-velocity algorithm
-assembles exactly the equations it assembled before this model existed.
+dictionary — a rotor disk, a porosity block, a mean-velocity force. The model is
+*detected*: without that file it is never instantiated and the pressure-velocity
+algorithms, which inject it optionally and branch on ``None``, assemble exactly the
+equations they did before this model existed.
 
-The model owns one runtime object, ``ctx.models["fv_options"]`` — OpenFOAM's own
-:class:`Foam::fv::options`, which reads the dictionary, selects the source types
-and implements the three hooks native's ``UEqn.H``/``pEqn.H`` use: the source
-matrix ``fvOptions(U)`` (``fvOptions(rho, U)`` for VoF), ``constrain(UEqn)``
-*after* the equation is relaxed, and ``correct(U)`` *after* each solve of U. The
-algorithms that consume it (SIMPLE and both PIMPLEs) take it as an *optional*
-injected model and branch on ``None``, so this module never has to supply a no-op
-stand-in.
-
-Shared by ``incompressibleFluid`` and ``incompressibleVoF``: each solver's model
-package registers this one spec with its own plugin family (the source call
-differs — ``fvOptions(U)`` for the single-phase solvers, ``fvOptions(rho, U)``
-for VoF — but that lives at the call site, not here).
+It owns one runtime object, ``ctx.models["fv_options"]`` — OpenFOAM's own
+:class:`Foam::fv::options` — whose hooks (the source matrix, ``constrain``,
+``correct``) the algorithms apply where native's ``UEqn.H``/``pEqn.H`` apply them.
+Shared by ``incompressibleFluid`` and ``incompressibleVoF``, which each register
+this one spec with their own plugin family.
 
 Example::
 
@@ -41,11 +33,8 @@ from neofoam.io import OF, BaseConfig, IOStrategy
 
 __all__ = ["FvOptionsConfig", "fvOptions"]
 
-# OpenFOAM's own search order (``fv::options::createIOobject``): ``constant/``
-# first, ``system/`` as the fallback. The dictionary is read by OpenFOAM, never
-# by Python, so detection is a file-existence question and the paths are
-# case-relative — the solver runs with the case directory as its working
-# directory.
+# OpenFOAM's own search order (``fv::options::createIOobject``). Case-relative:
+# the solver runs with the case directory as its working directory.
 _FV_OPTIONS_PATHS = ("constant/fvOptions", "system/fvOptions")
 
 
@@ -62,16 +51,10 @@ def _dictionary_path() -> Optional[Path]:
 class FvOptionsConfig(BaseConfig):
     """``constant/fvOptions`` (or ``system/fvOptions``) — one sub-dict per source.
 
-    Declared so the file is part of the solver's config schema (collectible,
-    savable, printable like any other case file). The entries stay free-form: a
-    source name maps to a sub-dict whose ``type`` selects one of the dozens of
-    entries in OpenFOAM's ``fv::option`` runtime-selection table, each with its
-    own coefficients. Modelling those arms in pydantic would buy nothing — the
-    values are consumed by ``fv::options`` straight off disk.
-
-    The registered path is the ``constant/`` one because that is where
-    ``fv::options`` looks first; a case that keeps the file in ``system/``
-    instead is still loaded, by the spec's ``@load`` below.
+    Declared so the file is part of the solver's config schema. The entries stay
+    free-form: their values are consumed by ``fv::options`` straight off disk, so
+    modelling the dozens of ``fv::option`` arms in pydantic would buy nothing. The
+    ``system/`` location is handled by the spec's ``@load`` below.
 
     Example::
 
@@ -106,13 +89,9 @@ def load_config(case_dir: Path, _instance_id: Optional[str]) -> FvOptionsConfig:
 def build(_config: FvOptionsConfig) -> list[Any]:
     """Publish the option list on the Context as ``models.fv_options``.
 
-    One step, depending only on the mesh. ``fv::options::New`` looks the list up
-    on the mesh registry and constructs it there on first call, so this is the
-    same object the native turbulence closures source their own ``k``/``epsilon``
-    equations from — constructing a second one would double-apply every source.
-    Every equation-level hook (the source matrix, ``constrain``, ``correct``) is
-    applied by the pressure-velocity algorithm at the point native applies it,
-    not here. The name is ``fv_options`` rather than ``fvOptions`` because the
+    Via ``fv::options::New``, which caches on the mesh registry — the native
+    turbulence closures source their own equations from that same object, and a
+    second list would double-apply every source. Named ``fv_options`` because the
     model runtime itself already occupies ``models.fvOptions``.
     """
 

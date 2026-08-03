@@ -117,8 +117,7 @@ def build(self: object) -> list[object]:
     """Register the field/model initialisation steps for MULES advection.
 
     On top of the shared VoF fields, the ``talphaPhi1Corr0`` slot of
-    ``createAlphaFluxes.H`` — one mutable holder for the whole run, empty
-    (``[None]``) until the first ``alphaApplyPrevCorr`` pass fills it.
+    ``createAlphaFluxes.H``: one mutable holder for the whole run.
     """
     return [*shared_field_build_steps(), model("alphaPhi1Corr0", lambda _: [None])]
 
@@ -172,10 +171,7 @@ def alpha_ddt_off_centring(
 
     The decision table on its own, so it can be exercised without a mesh; use
     ``read_alpha_ddt_off_centring`` to get the inputs from a live case. 0 means
-    "solve the alpha equation exactly as Euler", which is what every scheme but
-    ``CrankNicolson`` — and ``CrankNicolson`` on the first time step of a run —
-    asks for. Raises for the two configurations native rejects: sub-cycling
-    together with ``CrankNicolson``, and any other ``ddt`` scheme.
+    "integrate exactly as Euler". Raises for the configurations native rejects.
 
     >>> alpha_ddt_off_centring("CrankNicolson", 0.5, 1, True)
     0.5
@@ -200,11 +196,9 @@ def alpha_ddt_off_centring(
 def read_alpha_ddt_off_centring(mesh: pyf.fvMesh, n_alpha_sub_cycles: int) -> float:
     """``ocCoeff`` for the alpha equation, read from the case's ``system/fvSchemes``.
 
-    Re-read on every alpha solve — faithful to alphaEqn.H, which rebuilds the
-    ``ddt(alpha)`` scheme each pass, and necessary because the ``CrankNicolson``
+    Re-read on every alpha solve, as alphaEqn.H does: the ``CrankNicolson``
     coefficient may be a ``Function1`` of time. A restart is treated as a fresh
-    start (native would carry the off-centring straight over from the written
-    ``alphaPhi0.<phase>``, which this solver neither writes nor reads).
+    start — ``alphaPhi0.<phase>`` is neither written nor read here.
     """
     scheme_name, scheme_coefficient = mesh.ddtSchemeInfo(pyf.Word(_ALPHA_DDT))
     runtime = mesh.time()
@@ -219,10 +213,8 @@ def read_alpha_ddt_off_centring(mesh: pyf.fvMesh, n_alpha_sub_cycles: int) -> fl
 def crank_nicolson_flux(phi: surfaceScalarField, oc_coeff: float) -> surfaceScalarField:
     """The off-centred volumetric flux ``phiCN`` the alpha equation advects with.
 
-    ``phiCN = cnCoeff*phi + (1 - cnCoeff)*phi.oldTime()`` with
-    ``cnCoeff = 1/(1 + ocCoeff)``; at ``ocCoeff == 0`` it *is* ``phi`` and is
-    returned unchanged, so the Euler path never touches ``phi``'s old-time slot
-    (reading it would roll the slot at a point native does not).
+    At ``ocCoeff == 0`` ``phi`` is returned unchanged, so the Euler path never
+    reads ``phi``'s old-time slot — doing so would roll it where native does not.
     """
     if oc_coeff <= 0:
         return phi
@@ -272,12 +264,9 @@ def alpha_phase_flux(
     (bitwise-identical) so they satisfy the ``fvc.flux`` surface-field
     first-argument overload.
 
-    Writes the result into the *persistent*, already-registered ``alphaPhiUn``
-    field via ``.assign`` rather than constructing a fresh same-named
-    ``surfaceScalarField`` (createAlphaFluxes.H registers it once for the whole
-    run; a same-named local here would self-deregister the moment this
-    function returns, which is exactly the ``failed lookup of alphaPhiUn`` bug
-    this transcription fixes).
+    Writes into the persistent ``alphaPhiUn`` (registered once by
+    createAlphaFluxes.H) via ``.assign``: a same-named local would deregister it
+    on return.
     """
     phir = surfaceScalarField(pyf.Word("phir"), phic * mixture.nHatf())
     neg_phir = surfaceScalarField(pyf.Word("negPhir"), -phir)
@@ -297,12 +286,10 @@ def mules_implicit_predictor(
 ) -> surfaceScalarField:
     """Implicit upwind predictor for the MULESCorr branch.
 
-    Builds and solves ``fvm.ddt(alpha1) + fvm.div(phiCN, alpha1, "Gauss upwind") = 0``,
-    modifies ``alpha1`` in-place, and returns the resulting upwind face flux
+    Modifies ``alpha1`` in-place and returns the upwind face flux
     (``talphaPhi1UD``). Both schemes are inline specs rather than fvSchemes
-    lookups because alphaEqn.H hardcodes them: the predictor is Euler even when
-    the case's ``ddt(alpha)`` is CrankNicolson (the off-centring is carried by
-    ``phiCN``), and the convection is always upwind.
+    lookups because alphaEqn.H hardcodes them: the predictor stays Euler even
+    under a CrankNicolson ``ddt(alpha)`` (``phiCN`` carries the off-centring).
     """
     alpha1_eqn = pyf.fvScalarMatrix(
         fvm.ddt(alpha1, scheme="Euler") + fvm.div(phi_cn, alpha1, scheme="Gauss upwind")
@@ -321,12 +308,9 @@ def update_rho_phi(
 ) -> None:
     """``rhoPhi`` from the phase flux — the tail of ``alphaEqn.H``.
 
-    Runs once per alpha pass, including once per sub-cycle. Which of native's
-    two expressions applies is decided by the *momentum* ddt scheme: an Euler
-    ``ddt(rho,U)`` wants the mass flux the alpha equation just used
-    (``alphaPhi10*(rho1 - rho2) + phiCN*rho2``), anything else wants the
-    end-of-time-step one, for which the off-centred ``alphaPhi10`` is first
-    converted back with ``alphaPhi10.oldTime()``.
+    Runs once per alpha pass, including once per sub-cycle. The *momentum* ddt
+    scheme picks the expression: Euler ``ddt(rho,U)`` wants the flux the alpha
+    equation just used, anything else the end-of-time-step one.
     """
     rho1 = mixture.rho1()
     rho2 = mixture.rho2()
@@ -374,28 +358,19 @@ def alpha_eqn(
 ) -> surfaceScalarField:
     """One pass of ``alphaEqn.H``: advance ``alpha1``/``alpha2``, return alphaPhi10.
 
-    ``phi`` is the volumetric flux the pass advects with — always the mesh flux;
-    a sub-cycle shortens ``Foam::Time``'s ``deltaT`` instead (see
-    ``sub_cycled_alpha_eqn``). ``phi_cn`` is its Crank-Nicolson off-centred
-    counterpart (``crank_nicolson_flux``, the same object as ``phi`` under an
-    Euler ``ddt(alpha)``): native transports with it and compresses with the raw
-    ``phi``, and the two must not be swapped. ``alphaPhiUn`` and ``alphaPhi10``
-    are the persistent flux fields; every corrector iteration overwrites them in
-    place (matching native, which likewise just re-assigns the single registered
-    field each ``aCorr``/sub-cycle — no accumulation).
-
-    ``alphaPhi1Corr0`` is the one-slot ``talphaPhi1Corr0`` holder that survives
-    between passes; ``alpha_apply_prev_corr`` is the case's
-    ``alphaApplyPrevCorr``, which decides whether it carries anything.
+    Native transports with the off-centred ``phi_cn`` and compresses with the raw
+    ``phi``; the two must not be swapped. ``alphaPhiUn``/``alphaPhi10`` are the
+    persistent flux fields, overwritten in place each corrector — never
+    accumulated. ``alphaPhi1Corr0`` is the ``talphaPhi1Corr0`` holder that
+    survives between passes.
     """
     # (a) Interface compression velocity.
     phic = interface_compression_velocity(mixture, phi)
 
     # (b) MULESCorr implicit-upwind predictor.
     if mules_corr:
-        # The pure upwind flux stays alive alongside alphaPhi10: the cache below
-        # is measured against it, and alphaPhi10 is about to grow by the previous
-        # pass's correction.
+        # The pure upwind flux stays alive alongside alphaPhi10, which is about to
+        # grow by the previous pass's correction; the cache below measures against it.
         alpha_phi1_ud = mules_implicit_predictor(alpha1, phi_cn)
         alphaPhi10.assign(alpha_phi1_ud)
 
@@ -436,10 +411,9 @@ def alpha_eqn(
         alpha2.assign(-alpha1 + 1.0)
         mixture.correct()
 
-    # (d) Turn the cached upwind flux into the compression correction this pass
-    # applied on top of it — what the *next* pass seeds alphaPhi10 with. Any
-    # other configuration empties the slot, so a case that switches
-    # alphaApplyPrevCorr off mid-run cannot go on using a stale correction.
+    # (d) Turn the cached upwind flux into this pass's compression correction, which
+    # seeds the next pass. Any other configuration empties the slot, so switching
+    # alphaApplyPrevCorr off mid-run cannot leave a stale correction in use.
     cached_upwind = alphaPhi1Corr0[0]
     if mules_corr and alpha_apply_prev_corr and cached_upwind is not None:
         cached_upwind.assign(alphaPhi10 - cached_upwind)
@@ -467,19 +441,11 @@ def sub_cycled_alpha_eqn(
     """Transcription of ``alphaEqnSubCycle.H``: n alpha passes per time step.
 
     Each pass advances ``alpha1`` by ``deltaT/n`` with the *full* flux ``phi``,
-    driven by a real ``Foam::Time`` sub-cycle — ``shared.alpha_sub_cycle``, the
-    Python equivalent of ``subCycle<volScalarField>``.
-
-    ``alphaPhiUn``/``alphaPhi10`` are *not* accumulated across sub-steps (unlike
-    ``rhoPhi``): native ``alphaEqn.H`` just re-assigns the one registered field
-    every ``#include``, so after the loop each holds only the last sub-step's
-    flux — reproduced here by passing the same persistent fields into every
-    ``alpha_eqn`` call. The same goes for the ``alphaPhi1Corr0`` cache: native
-    ``#include``s ``alphaEqn.H`` *inside* the sub-cycle loop, so every sub-step
-    seeds itself with the correction the sub-step before it applied.
-
-    Sub-cycling only ever runs with an Euler ``ddt(alpha)`` (native rejects the
-    ``CrankNicolson`` combination), so the off-centred flux is ``phi`` itself.
+    driven by a real ``Foam::Time`` sub-cycle. Only ``rhoPhi`` accumulates across
+    sub-steps; the flux fields and the ``alphaPhi1Corr0`` cache are re-assigned
+    every pass, as native's per-sub-step ``#include`` of alphaEqn.H does.
+    Sub-cycling only runs under an Euler ``ddt(alpha)``, so ``phi`` is its own
+    off-centred flux.
     """
     total_delta_t = alpha1.mesh().time().deltaTValue()
     rho_phi_sum = surfaceScalarField(pyf.Word("rhoPhiSum"), 0.0 * rhoPhi)
@@ -518,19 +484,7 @@ def _solve_alpha_python(
     alphaPhi10: surfaceScalarField,
     alphaPhi1Corr0: list[Optional[surfaceScalarField]],
 ) -> None:
-    """Pure-Python MULES phase-fraction advection (transcription of alphaEqn.H).
-
-    1. Read solver settings (nAlphaCorr, nAlphaSubCycles, MULESCorr,
-       alphaApplyPrevCorr) and the ``ddt(alpha)`` off-centring, which also
-       rejects the scheme combinations native rejects.
-    2. ``nAlphaSubCycles == 1``: one ``alpha_eqn`` pass, then rho/rhoPhi.
-    3. ``nAlphaSubCycles > 1``: hand over to ``sub_cycled_alpha_eqn``.
-    4. One final ``mixture.correct()`` — ``interFoam.C:154``, the call that
-       follows the whole ``alphaEqnSubCycle.H`` block on top of the per-corrector
-       ones inside ``alpha_eqn``. A no-op unless the case has an
-       ``alphaContactAngle``-family patch, whose ``correctContactAngle`` rewrites
-       alpha1's patch gradient on every call and so shifts the curvature ``K``.
-    """
+    """Pure-Python MULES phase-fraction advection (transcription of alphaEqn.H)."""
     n_alpha_corr, n_alpha_sub_cycles, mules_corr, alpha_apply_prev_corr = read_alpha_controls(
         alpha1.name()
     )
@@ -570,6 +524,8 @@ def _solve_alpha_python(
         update_rho_phi(rhoPhi, phi, phi_cn, alpha_phi10, mixture, oc_coeff)
         update_rho(rho, alpha1, alpha2, mixture)
 
+    # interFoam.C:154 — one more correct() after the whole alphaEqnSubCycle.H
+    # block; an alphaContactAngle patch rewrites alpha1's gradient on every call.
     mixture.correct()
 
     Info(f"Phase-1 volume fraction: nAlphaCorr={n_alpha_corr}  MULESCorr={mules_corr}")

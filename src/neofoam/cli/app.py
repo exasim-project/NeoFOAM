@@ -19,21 +19,13 @@ from neofoam.telemetry.report import write_chrome_trace, write_summary_plot
 
 app = typer.Typer()
 
-#: Message printed when a solver command is invoked with ``-postProcess``. Kept in
-#: sync by hand with ``verification.dropin.execute.POSTPROCESS_NOT_IMPLEMENTED``
-#: (not imported — ``cli`` and ``tooling.workflow`` are deliberately not coupled),
-#: which the drop-in study harness matches to classify a run that hit this as
-#: UNSUPPORTED_CASE rather than a solver crash.
+#: Kept in sync by hand with ``verification.dropin.execute.POSTPROCESS_NOT_IMPLEMENTED``
+#: (not imported — ``cli`` and ``tooling.workflow`` are deliberately not coupled).
 _POSTPROCESS_NOT_IMPLEMENTED = "solver -postProcess mode not implemented"
 
 
 def _reject_postprocess(argv: list[str]) -> None:
-    """Fail fast and clearly on ``-postProcess`` instead of falling through to
-    pybFoam's ``argList``, which does not know the flag and prints a confusing
-    raw usage dump. No neofoam solver implements OpenFOAM's post-processing mode
-    (running the case's registered function objects without solving) — pybFoam
-    exposes no functionObject-execution binding to build it on.
-    """
+    """Exit on ``-postProcess``, which no neofoam solver implements."""
     if "-postProcess" in argv:
         typer.echo(f"neofoam: {_POSTPROCESS_NOT_IMPLEMENTED}", err=True)
         raise typer.Exit(code=1)

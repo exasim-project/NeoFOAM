@@ -257,8 +257,7 @@ class PimpleControl(BaseModel):
         # Link non-ortho loop to corrector (reset non-ortho on each corrector iteration)
         self._corrector.link_condition(self._non_ortho)
 
-        # Link corrector loop to the outer loop (reset the pressure correctors on
-        # each outer iteration, like pimpleControl::loop()'s `corrPISO_ = 0`)
+        # Link corrector loop to the outer loop (pimpleControl::loop()'s corrPISO_ = 0)
         self._loop.link_condition(self._corrector)
 
         # Flags
@@ -311,13 +310,10 @@ class PimpleControl(BaseModel):
         return self._loop.is_final()
 
     def finalInnerIter(self) -> bool:
-        """Check if this is the final inner (pressure) iteration.
+        """Check if this is the last non-orthogonal pass of the last pressure corrector.
 
-        ``pimpleControl::finalInnerIter()`` is
-        ``corrPISO_ == nCorrPISO_ && corrNonOrtho_ == nNonOrthCorr_ + 1`` — the
-        *last* non-orthogonal pass of the *last* pressure corrector, so the
-        earlier passes solve on the loose ``<field>`` settings. The outer
-        iteration only enters the predicate under ``finalOnLastPimpleIterOnly``.
+        Mirrors ``pimpleControl::finalInnerIter()``; the outer iteration only enters
+        the predicate under ``finalOnLastPimpleIterOnly``.
         """
         assert self._corrector is not None
         assert self._non_ortho is not None
@@ -337,12 +333,11 @@ class PimpleControl(BaseModel):
         return self._momentum_predictor(None)
 
     def turbCorr(self) -> bool:
-        """Check whether the turbulence/transport correction runs in this outer iteration.
+        """Check whether the turbulence correction runs in this outer iteration.
 
-        ``pimpleControl::turbCorr()`` returns
-        ``!turbOnFinalIterOnly_ || finalIter()``: with the default
-        ``turbOnFinalIterOnly true`` the correction runs once per time step, on
-        the final outer iteration; with ``no`` it runs in every one.
+        Mirrors ``pimpleControl::turbCorr()``: with the default
+        ``turbOnFinalIterOnly true`` it runs once per time step, on the final outer
+        iteration.
         """
         assert self._turb_corr is not None
         if not self._turb_corr(None):

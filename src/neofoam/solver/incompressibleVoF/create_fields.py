@@ -37,12 +37,9 @@ from .models.alpha_advection import advectionModel  # noqa: F401  (registers sch
 from .models.incompressibleVoFModel import incompressibleVoFModel
 from .models.pressure_velocity.base import PressureVelocityAlgorithm
 
-# OpenFOAM libraries native interFoam links but pybFoam does not: their
-# runtime-selection-table entries (e.g. the waveVelocity/waveAlpha patch
-# fields from libwaveModels.so) are otherwise unreachable, and no tutorial
-# declares them via a `libs (...)` entry (the interFoam binary is the
-# declaration). Loaded before case construction so field reads can resolve
-# these patch types.
+# OpenFOAM libraries native interFoam links but pybFoam does not, so their
+# runtime-selection entries (waveVelocity/waveAlpha) are otherwise unreachable —
+# no tutorial declares them via `libs (...)`, the interFoam binary is the declaration.
 EXTRA_LIBRARIES = ["libwaveModels.so"]
 
 

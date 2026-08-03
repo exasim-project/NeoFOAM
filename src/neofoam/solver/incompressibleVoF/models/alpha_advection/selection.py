@@ -15,9 +15,7 @@ string is needed to pick the scheme.
 
 No upstream interIsoFoam tutorial declares ``advectionScheme`` (it is a
 NeoFOAM-only key), so when it is absent ``select_from_case`` falls back to
-inspecting the ``solvers`` "alpha.*" sub-dict for isoAdvector-only controls
-(``reconstructionScheme``/``isoFaceTol``/``surfCellTol``/``nAlphaBounds``) —
-an exact MULES/isoAdvector discriminator over the upstream tutorial corpus.
+inspecting the ``solvers`` "alpha.*" sub-dict for isoAdvector-only controls.
 """
 
 from typing import Any
@@ -82,11 +80,10 @@ def _isoadvector_controls_present(fv_solution: Any) -> bool:
 def select_from_case(case_dir: str = ".") -> ModelSpec:
     """Read ``advectionScheme`` from ``system/fvSolution`` and select the scheme.
 
-    An explicit ``advectionScheme`` key always wins. Otherwise isoAdvector is
-    selected when the ``solvers`` "alpha.*" sub-dict carries isoAdvector
-    controls (see :data:`_ISO_ADVECTOR_DISCRIMINATOR_KEYS`); MULES otherwise.
-    A missing/unreadable fvSolution also falls back to MULES, logged so it
-    never silently changes the scheme.
+    An explicit ``advectionScheme`` key always wins; otherwise isoAdvector is
+    selected when the ``solvers`` "alpha.*" sub-dict carries isoAdvector controls
+    (see :data:`_ISO_ADVECTOR_DISCRIMINATOR_KEYS`), and MULES is the fallback.
+    A missing/unreadable fvSolution is logged so the scheme never changes silently.
     """
     name = _DEFAULT_SCHEME
     try:

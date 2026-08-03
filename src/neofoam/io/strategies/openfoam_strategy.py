@@ -52,13 +52,7 @@ def _read_bool(raw: str) -> bool:
 
 
 def _read_scalar(raw: str) -> float:
-    """Parse an OpenFOAM scalar entry into a ``float``.
-
-    Accepts a plain number (``1e-05``) or a dimensioned entry carrying an
-    OpenFOAM dimensionSet and an optional leading keyword
-    (``nu [ 0 2 -1 0 0 0 0 ] 1e-05``): the value is the trailing token after the
-    last ``]``. Plain numbers have no ``]`` and pass straight through.
-    """
+    """Parse a plain (``1e-05``) or dimensioned (``[ 0 2 -1 0 0 0 0 ] 1e-05``) entry."""
     return float(raw.rsplit("]", 1)[-1].split()[-1])
 
 

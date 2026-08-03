@@ -88,11 +88,8 @@ def _core_model(state: Any, spec_name: str) -> Any:
 def _under_turb_corr(op: Operation) -> Operation:
     """Gate a transport/turbulence correction with pimpleFoam's ``turbCorr()``.
 
-    ``pimpleFoam.C`` runs ``laminarTransport.correct(); turbulence->correct();``
-    inside the outer corrector under ``if (pimple.turbCorr())`` — on the final
-    outer iteration only, unless the case sets ``turbOnFinalIterOnly no``.
-    ``simpleFoam`` has no such gate (its loop body runs once per iteration), so
-    a case that built a :class:`SimpleControl` runs the op unconditionally.
+    ``simpleFoam`` has no such gate, so a case that built a
+    :class:`SimpleControl` runs the op unconditionally.
     """
 
     def gated(ctx: Context) -> None:
@@ -177,9 +174,8 @@ def execution_graph(
 
         with time_builder.loop(algo_ops["inner_loop"]) as inner_builder:
             # pimpleFoam moves the mesh at the head of the outer corrector, before
-            # UEqn.H. simpleFoam is steady and has no mesh-motion step, and neither
-            # has the boussinesq arm, so the algorithm only carries the operation
-            # when it applies.
+            # UEqn.H. Absent for the steady and boussinesq arms, which have no
+            # mesh-motion step.
             mesh_update = next((op for op in algo_ops if op.operation_name == "mesh_update"), None)
             if mesh_update is not None:
                 inner_builder.step(mesh_update)

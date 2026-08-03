@@ -71,11 +71,9 @@ def courant_limit(phi: surfaceScalarField, deltaT: float, cfg: CourantConfig) ->
     that limit (OpenFOAM's ``setDeltaT.H`` growth damping and the 1.2 cap) is the
     solution loop's responsibility (``SolutionLoop.constrain_delta_t``).
 
-    ``Co`` is the maximum Courant number on ``phi``. ``SMALL`` is a denominator
-    epsilon, never a cut-off: ``setDeltaT.H`` lets a quiescent start (``Co == 0``)
-    produce a huge factor, which the loop's growth cap turns into the usual 20 %
-    increase. Treating it as "no opinion" instead would freeze the first step and
-    shift the whole trajectory.
+    ``SMALL`` is a denominator epsilon, never a cut-off: ``setDeltaT.H`` lets a
+    quiescent start (``Co == 0``) produce a huge factor, which the loop's growth
+    cap turns into the usual 20 % increase.
     """
     co = computeCFLNumber(phi)[0]
     return cfg.maxCo / (co + SMALL) * float(deltaT)

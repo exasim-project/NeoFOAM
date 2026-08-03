@@ -167,15 +167,9 @@ def build(self: Any) -> list[Any]:
         return [0.0]
 
     def create_Uf(context: dict[str, Any]) -> Optional[surfaceVectorField]:
-        """Face velocity ``Uf`` — transcription of ``createUfIfPresent.H``.
-
-        Only a dynamic mesh has one: it is what the moving-mesh
-        ``fvc::ddtCorr(U, phi, Uf)`` and ``fvc::correctUf`` work on, and its
-        absence is what tells the pressure corrector to keep the two-argument
-        ``ddtCorr``. Native reads ``<time>/Uf`` when present (a restart); pybFoam
-        has no READ_IF_PRESENT overload, so this always starts from
-        ``fvc::interpolate(U)`` — identical for a run started from time 0.
-        """
+        """Face velocity ``Uf`` (createUfIfPresent.H); ``None`` selects the static ``ddtCorr``."""
+        # pybFoam has no READ_IF_PRESENT overload, so a restart cannot read
+        # ``<time>/Uf`` and always starts from ``fvc::interpolate(U)``.
         if not context["mesh"].dynamic():
             return None
         pyf.Info("Constructing face velocity Uf")
@@ -245,10 +239,8 @@ def inner_loop(ctx: Context) -> bool:
         # below), so the mesh flag is only needed for solves buried inside
         # OpenFOAM library code — the turbulence model's k/epsilon/nuTilda
         # solves in ``turbulence.correct()``, which take no argument, and
-        # ``p.relax()``'s pFinal lookup. The flag deliberately stays raised on
-        # exit (native lowers it there): with the correction now inside the
-        # loop, only the write phase's function objects still see it, and they
-        # match native today. The next step's first call lowers it.
+        # ``p.relax()``'s pFinal lookup. Unlike native it stays raised on exit;
+        # only the write phase's function objects see it, and they match native.
         ctx.mesh.setFinalIteration(pimple.finalIter())
     return looping
 
@@ -267,15 +259,7 @@ def mesh_update(
 ) -> FieldUpdates:
     """Move the mesh at the head of the outer corrector (pimpleFoam's ``mesh.update()``).
 
-    Runs on the first outer iteration only, unless the case sets
-    ``moveMeshOuterCorrectors`` — the guard native uses. A mesh that actually
-    changed invalidates the MRF zone faces (re-found on the new topology) and the
-    face flux, which — when the case asks for ``correctPhi`` — is rebuilt from the
-    mapped face velocity, projected divergence-free and handed on relative to the
-    mesh motion.
-
-    A static mesh returns immediately, so this operation cannot perturb a static
-    case.
+    A static mesh returns immediately, so this operation cannot perturb a static case.
     """
     mesh = ctx.mesh
     if not mesh.dynamic():
@@ -284,8 +268,7 @@ def mesh_update(
     if not (pimple_control.firstIter() or dynamic_mesh_controls["moveMeshOuterCorrectors"]):
         return FieldUpdates({})
 
-    # controlledUpdate(), not update(): the dynamicMeshDict may carry
-    # updateControl/updateInterval, which move the mesh only every so many steps.
+    # controlledUpdate(), not update(): dynamicMeshDict may set updateControl/updateInterval.
     mesh.controlledUpdateMesh()
     if not mesh.changing():
         return FieldUpdates({})
@@ -296,11 +279,8 @@ def mesh_update(
         return FieldUpdates({})
 
     assert Uf is not None  # createUfIfPresent.H gives every dynamic mesh a Uf
-    # The mesh moved under the old flux, so phi no longer belongs to this geometry:
-    # rebuild it as the absolute flux of the mapped face velocity, project that
-    # divergence-free, and hand it on relative to the mesh motion. Unlike interFoam,
-    # pimpleFoam's correctPhi.H always projects with a uniform rAUf of 1 rather than
-    # the last corrector's 1/UEqn.A(), so no rAU has to survive the time step.
+    # as in correctPhi.H: rebuild phi from the mapped Uf, project, then make it
+    # relative. pimpleFoam projects with a uniform rAUf of 1 (interFoam re-uses rAU).
     phi.assign(mesh.Sf() & Uf)
     pyf.CorrectPhi(
         U,
@@ -334,10 +314,8 @@ def momentum(
     mrf_zones: Annotated[Optional[pyf.IOMRFZoneList], "models"] = None,
     fv_options: Annotated[Optional[pyf.fvOptions], "models"] = None,
 ) -> FieldUpdates:
-    # Start-of-outer-iteration prevIter snapshot: ``pimpleControl::loop()`` calls
-    # ``storePrevIterFields()`` so the pressure corrector's ``p.relax()`` has a
-    # previous state to blend against; p is untouched until the pressure solve,
-    # so storing here is equivalent (same placement as simpleAlgorithm).
+    # ``pimpleControl::loop()`` stores prev-iter fields so the corrector's
+    # ``p.relax()`` has a state to blend against; p is untouched until then.
     p.storePrevIter()
 
     # Refresh the effective viscosity right where it is consumed: the momentum
@@ -350,19 +328,16 @@ def momentum(
         if mrf_zones is None:
             UEqn = fvVectorMatrix(fvm.ddt(U) + fvm.div(phi, U) + viscousStress.divDevReff(U))
         else:
-            # UEqn.H under a rotating frame: the wall velocities on the MRF
-            # patches are set first (they feed the boundary coefficients of
-            # ``div(phi,U)``), then the frame acceleration joins the sum.
+            # as in UEqn.H: correctBoundaryVelocity before assembly — it feeds
+            # the boundary coefficients of ``div(phi,U)``.
             mrf_zones.correctBoundaryVelocity(U)
             UEqn = fvVectorMatrix(
                 fvm.ddt(U) + fvm.div(phi, U) + mrf_zones.DDt(U) + viscousStress.divDevReff(U)
             )
         if fv_options is not None:
-            # ``== fvOptions(U)`` moves the source to the right-hand side, i.e.
-            # subtracts it from the assembled matrix. UEqn.H's three fvOptions
-            # calls sit at three exact points, and the order is the physics: the
-            # source joins the sum BEFORE relaxation, the constraints are applied
-            # AFTER it, and the correction runs after the solve.
+            # as in UEqn.H, the call order is the physics: source before relax(),
+            # constrain() after, correct() after the solve. ``== fvOptions(U)``
+            # subtracts the source from the assembled matrix.
             UEqn = fvVectorMatrix(UEqn - fv_options(U))
         UEqn.relax()
         if fv_options is not None:
@@ -415,9 +390,8 @@ def continuity(
             rAU = volScalarField(pyf.Word("rAU"), 1.0 / UEqn.A())
             HbyA = volVectorField(pyf.constrainHbyA(rAU * UEqn.H(), U, p))
 
-            # ddtCorr: on a moving mesh the correction is built from the face
-            # velocity instead of the flux — what native's fvc::ddtCorr(U, phi, Uf)
-            # dispatches to when mesh.dynamic().
+            # on a moving mesh the correction is built from Uf, not phi — what
+            # native's fvc::ddtCorr(U, phi, Uf) dispatches to when mesh.dynamic().
             ddt_corr = fvc.ddtCorr(U, phi) if Uf is None else fvc.ddtCorr(U, Uf)
             if mrf_zones is None:
                 phiHbyA = surfaceScalarField(
@@ -425,21 +399,17 @@ def continuity(
                     fvc.flux(HbyA) + fvc.interpolate(rAU) * ddt_corr,
                 )
             else:
-                # pEqn.H under a rotating frame: the ddt correction is zeroed
-                # inside the MRF cells (it belongs to the absolute frame), then
-                # the whole flux is taken relative to the rotation.
+                # as in pEqn.H: the ddt correction is zeroed inside the MRF cells
+                # (it belongs to the absolute frame) before the flux is made relative.
                 phiHbyA = surfaceScalarField(
                     pyf.Word("phiHbyA"),
                     fvc.flux(HbyA) + mrf_zones.zeroFilter(fvc.interpolate(rAU) * ddt_corr),
                 )
                 mrf_zones.makeRelative(phiHbyA)
 
-            # adjustPhi balances the global flux, which only means anything
-            # relative to the moving mesh — hence native's
-            # makeRelative/makeAbsolute bracket. Both are no-ops on a static mesh,
-            # but the pair is not bit-exact in floating point, so it stays behind
-            # the same needReference() guard native uses (the guard adjustPhi
-            # itself applies internally).
+            # adjustPhi balances the global flux, which only means anything relative
+            # to the mesh motion — hence the bracket. It stays behind the same
+            # needReference() guard native uses: the pair is not bit-exact.
             needs_reference = p.needReference()
             if needs_reference:
                 fvc.makeRelative(phiHbyA, U)
@@ -461,26 +431,20 @@ def continuity(
             if pimple_control.finalNonOrthogonalIter():
                 phi.assign(phiHbyA - pEqn.flux())
 
-        # Explicit pressure under-relaxation before the momentum corrector
-        # (pEqn.H). A no-op unless the case declares a ``p`` field relaxation
-        # factor; on the final outer iteration the name becomes ``pFinal``.
+        # as in pEqn.H: under-relax p before the momentum corrector, not after.
         p.relax()
         U.assign(HbyA - rAU * fvc.grad(p))
         U.correctBoundaryConditions()
         if fv_options is not None:
-            # pEqn.H closes on a second ``fvOptions.correct(U)``: the corrector
-            # has just overwritten U, so any correction the predictor applied is
-            # gone.
+            # as in pEqn.H: a second fvOptions.correct(U) closes the corrector,
+            # which has just overwritten the predictor's correction.
             fv_options.correct(U)
 
         _report_continuity_errors(phi, cumulativeContErr)
 
         if Uf is not None:
-            # Moving mesh: refresh the face velocity from the corrected U/phi and
-            # hand phi on relative to the mesh motion (pEqn.H's last two lines).
-            # They must stay after the continuity report: native reports on the
-            # *absolute* flux the pressure solve produced, and this pair is what
-            # turns it relative.
+            # as in pEqn.H, after the continuity report: native reports on the
+            # *absolute* flux, and this pair is what turns it relative.
             fvc.correctUf(Uf, U, phi)
             fvc.makeRelative(phi, U)
 
@@ -631,10 +595,8 @@ def collected_operations(self: Any) -> Operations:
     else:
         momentum_op = momentum
         continuity_op = continuity
-        # Mesh motion is wired into the plain PIMPLE arm only. The boussinesq arm
-        # carries a buoyancy head gh/ghf tied to the cell centres, which a mesh
-        # move would invalidate; no buoyant tutorial has a dynamicMeshDict, so it
-        # keeps the static path rather than gaining a silently stale one.
+        # Plain PIMPLE arm only: the boussinesq arm's gh/ghf are tied to the cell
+        # centres, which a mesh move would silently invalidate.
         model_ops.add(
             _alias_operation(
                 wrap_with_dependency_resolution(mesh_update, self, pimple._dependency_resolver),

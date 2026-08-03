@@ -105,12 +105,8 @@ def build(self: object) -> list[object]:
 def read_n_alpha_sub_cycles(alpha_name: str) -> int:
     """``nAlphaSubCycles`` for *alpha_name*, read from ``system/fvSolution``.
 
-    interIsoFoam's ``alphaControls.H``, which reads the one control it has out
-    of ``mesh.solverDict(alpha1.name())`` on every alpha solve — so this is
-    re-read every pass too, and a ``runTimeModifiable`` case can change it
-    mid-run. The advector's own controls live in the same sub-dict, so the dict
-    is always there by the time this runs; only the key itself falls back (to
-    the no-sub-cycling 1).
+    Re-read on every alpha solve, as ``alphaControls.H`` does, so a
+    ``runTimeModifiable`` case can change it mid-run.
     """
     solvers = pyf.dictionary.read("system/fvSolution").subDict("solvers")
     return int(solvers.subDict(alpha_name).getOrDefault[int]("nAlphaSubCycles", 1))
@@ -126,20 +122,15 @@ def advect_alpha(
 ) -> None:
     """One pass of interIsoFoam's ``alphaEqn.H``: advect ``alpha1``, update ``rhoPhi``.
 
-    ``advect`` mutates ``alpha1`` in place and ``rhoPhi`` comes from the
-    advector's density-weighted flux. On a **moving** mesh the pass is bracketed
-    by native's ``U -= fvc::reconstruct(mesh.phi())`` / ``U += …``: isoAdvection
-    interpolates ``U`` onto the iso-face centres to get the interface normal
-    velocity ``Un0``, so — unlike the flux ``phi``, which is already relative —
-    it has to be handed the velocity *relative to the mesh motion*. The
-    subtraction and its undo are not an exact floating-point round trip, in this
-    transcription no more than in native.
+    On a moving mesh the pass is bracketed by native's
+    ``U -= fvc::reconstruct(mesh.phi())`` / ``U += …``: isoAdvection interpolates
+    ``U`` onto the iso-face centres, so — unlike the already-relative ``phi`` — it
+    must be handed the velocity relative to the mesh motion.
     """
     mesh = alpha1.mesh()
-    # Held across the advect call rather than rebuilt after it, as native does:
-    # advect() changes neither the mesh geometry nor its motion flux, so native's
-    # second fvc::reconstruct recomputes exactly this field. Materialised into a
-    # field because fvc.reconstruct hands back a single-use ``tmp``.
+    # Held across the advect call rather than rebuilt after it (advect() changes
+    # neither the geometry nor the motion flux); materialised because
+    # fvc.reconstruct hands back a single-use ``tmp``.
     mesh_velocity = (
         volVectorField(pyf.Word("meshU"), fvc.reconstruct(mesh.phi())) if mesh.moving() else None
     )
@@ -170,18 +161,11 @@ def alpha_advection(
 ) -> FieldUpdates:
     """Advect alpha geometrically (isoAdvector) and update rho / rhoPhi.
 
-    Transcribes interIsoFoam's ``alphaEqnSubCycle.H``: ``nAlphaSubCycles``
-    passes of :func:`advect_alpha` over a sub-cycled ``Foam::Time``, each
-    advancing ``alpha1`` by ``deltaT/n`` with the *full* flux, with ``rhoPhi``
-    accumulated as the sub-step-length-weighted mean. ``rho`` is rebuilt once,
+    Transcribes interIsoFoam's ``alphaEqnSubCycle.H``: ``nAlphaSubCycles`` passes
+    of :func:`advect_alpha` over a sub-cycled ``Foam::Time``, with ``rhoPhi``
+    accumulated as the sub-step-length-weighted mean. ``rho`` is rebuilt once
     after the sub-cycle: writing it rolls its old-time value, which the momentum
     ``fvm::ddt(rho, U)`` needs from the start of the real time step.
-
-    The trailing ``mixture.correct()`` is ``interIsoFoam.C:166``, the call that
-    follows the whole alpha block on top of the one inside ``alphaEqn.H`` — a
-    no-op unless the case has an ``alphaContactAngle``-family patch, whose
-    ``correctContactAngle`` rewrites alpha1's patch gradient on every call and so
-    shifts the curvature ``K``.
     """
     n_alpha_sub_cycles = read_n_alpha_sub_cycles(alpha1.name())
 
@@ -198,6 +182,8 @@ def alpha_advection(
         advect_alpha(alpha1, alpha2, rhoPhi, U, mixture, advector)
 
     rho.assign(alpha1 * mixture.rho1() + alpha2 * mixture.rho2())
+    # interIsoFoam.C:166 — one more correct() after the whole alpha block; an
+    # alphaContactAngle patch rewrites alpha1's gradient on every call.
     mixture.correct()
     return FieldUpdates({"alpha1": alpha1, "alpha2": alpha2, "rho": rho, "rhoPhi": rhoPhi, "U": U})
 

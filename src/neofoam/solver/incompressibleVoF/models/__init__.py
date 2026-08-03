@@ -8,9 +8,8 @@ from neofoam.mrf import mrf
 
 from .incompressibleVoFModel import incompressibleVoFModel
 
-# MRF and fvOptions are shared with incompressibleFluid, so their specs live in
-# ``neofoam.mrf`` / ``neofoam.fv_options`` and are joined to this solver's plugin
-# family here.
+# MRF and fvOptions are shared with incompressibleFluid, so their specs cannot
+# register themselves at definition time.
 mrf.register_with(incompressibleVoFModel)
 fvOptions.register_with(incompressibleVoFModel)
 

@@ -8,9 +8,7 @@ Reads the PIMPLE subdict of ``system/fvSolution`` via pybFoam and returns a
 logic stays in Python (mirrors the incompressibleFluid control factory).
 
 When the case sets ``frozenFlow yes`` the pressure-velocity solve is switched
-off entirely (interIsoFoam's ``if (pimple.frozenFlow()) continue;``); the
-factory then returns a :class:`FrozenFlowControl` instead of a
-:class:`PimpleControl` — see its docstring.
+off entirely and the factory returns a :class:`FrozenFlowControl` instead.
 """
 
 from typing import Any, Union
@@ -24,24 +22,17 @@ class FrozenFlowControl:
     """Frozen-flow drop-in for :class:`PimpleControl` — no pressure-velocity solve.
 
     interIsoFoam runs ``if (pimple.frozenFlow()) continue;`` inside the outer
-    corrector loop: alpha still advects and ``mixture.correct()`` still runs, but
-    the momentum predictor, the whole pressure-corrector loop and the turbulence
-    correction are skipped. The frozen-flow tutorials advertise this by pairing
-    ``frozenFlow yes`` with ``nCorrectors -1`` / ``nNonOrthogonalCorrectors -1``.
+    corrector loop: alpha still advects, but the momentum predictor, the pressure
+    corrector and the turbulence correction are skipped. It drives a single outer
+    pass per step; ``pimpleAlgorithm``'s ``momentum``/``continuity`` recognise the
+    type and return early.
 
-    We therefore build **no** :class:`PimpleControl` (whose ``ge=1`` / ``ge=0``
-    bounds would reject the ``-1`` sentinels with a ``ValidationError``). This
-    control only drives the PIMPLE outer loop for a single pass so alpha
-    advection runs once per step; ``pimpleAlgorithm``'s ``momentum`` /
-    ``continuity`` recognise it (``isinstance``) and return early, so no
-    ``UEqn`` is ever assembled and the frozen tutorials' omission of the
-    momentum divSchemes (e.g. ``div(rhoPhi,U)``) is honoured rather than fatal.
-
-    ``nNonOrthogonalCorrectors`` is carried verbatim, ``-1`` included: the
-    start-up flux projection (``initCorrectPhi.H``) runs for a frozen case too,
-    and native's ``correctNonOrthogonal()`` executes ``nNonOrthCorr + 1`` passes
-    — i.e. none at all for ``-1``. Clamping it to 0 would solve a ``pcorr``
-    equation these cases do not even declare a solver for.
+    A :class:`PimpleControl` cannot stand in: the frozen tutorials pair
+    ``frozenFlow yes`` with ``nCorrectors -1`` / ``nNonOrthogonalCorrectors -1``,
+    which its ``ge=1``/``ge=0`` bounds reject. ``nNonOrthogonalCorrectors`` is
+    carried verbatim, ``-1`` included, so the start-up flux projection runs
+    ``nNonOrthCorr + 1`` — i.e. zero — passes and never solves a ``pcorr`` these
+    cases declare no solver for.
     """
 
     def __init__(self, nNonOrthogonalCorrectors: int = 0) -> None:
@@ -77,10 +68,8 @@ def _read_algorithm_dict(algorithm_name: str) -> Any:
 def create_dynamic_mesh_controls(context: dict[str, Any]) -> dict[str, bool]:
     """The PIMPLE dict's mesh-motion switches (transcription of ``createDyMControls.H``).
 
-    ``correctPhi`` defaults to ``mesh.dynamic()``, the other two to ``False`` —
-    exactly the native defaults, so a static case reads all three as ``False``.
-    Native re-reads them every time step (``readDyMControls.H``); they are read
-    once here because no tutorial rewrites them mid-run.
+    Native re-reads them every time step (``readDyMControls.H``); read once here
+    because no tutorial rewrites them mid-run.
     """
     mesh = context["mesh"]
     d = _read_algorithm_dict("PIMPLE")
@@ -96,16 +85,8 @@ def create_pimple_control(
 ) -> Union[PimpleControl, FrozenFlowControl]:
     """Create the PIMPLE control from the PIMPLE subdict.
 
-    ``nCorrectors`` is read straight from the case's PIMPLE/PISO dict and
-    defaults to 2 when omitted (mirrors the incompressibleFluid control
-    factory). Real interFoam / interIsoFoam cases that drive the pressure
-    correction with a single corrector (``nCorrectors 1``) are honoured rather
-    than rejected.
-
     ``frozenFlow yes`` (default ``no``) switches the pressure-velocity solve off
-    entirely: a :class:`FrozenFlowControl` is returned so the tutorials'
-    deliberate ``nCorrectors -1`` never reaches ``PimpleControl``'s ``ge=1``
-    bound (mirrors interIsoFoam's ``if (pimple.frozenFlow()) continue;``).
+    entirely and yields a :class:`FrozenFlowControl` instead.
     """
     d = _read_algorithm_dict("PIMPLE")
     if d.getOrDefault[bool]("frozenFlow", False):

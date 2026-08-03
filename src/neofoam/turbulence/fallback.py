@@ -125,10 +125,9 @@ class OpenFOAMTurbulenceModel:
         refcount when the run ends.
 
         .. note::
-            For a *registered* model the scheduled correct comes from the model
-            file's ``fallback=True`` op (via :class:`FallbackHandle`). This
-            property is the correct op for a model with no registered spec,
-            which the selector builds straight from OpenFOAM's own table.
+            A *registered* model's scheduled correct comes from its own
+            ``fallback=True`` op instead; this property serves the models with no
+            registered spec, built straight from OpenFOAM's table.
         """
 
         def correct(ctx: Context) -> FieldUpdates:

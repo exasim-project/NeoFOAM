@@ -190,13 +190,9 @@ class SolutionLoop:
     def set_initial_delta_t(self, limit: float, ceiling: float = VGREAT) -> None:
         """``setInitialDeltaT.H`` — the undamped first-step reduction.
 
-        Runs once, before the first ``constrain_delta_t``, and only on a
-        non-quiescent flow (the contributors express that gate by offering no
-        ``initialTimeStepConstraint`` opinion when ``Co <= SMALL``, exactly as
-        ``setInitialDeltaT.H`` skips its body). It can only *lower* the step —
-        ``min(limit, deltaT, maxDeltaT)`` — but it does go through
-        :meth:`set_delta_t`, so the write-time snapping runs before the damped
-        pass sees the step.
+        Runs once, before the first :meth:`constrain_delta_t`. Contributors gate it
+        on a non-quiescent flow by offering no opinion (``VGREAT``) when
+        ``Co <= SMALL``, as ``setInitialDeltaT.H`` skips its body.
         """
         if limit >= VGREAT:
             return
@@ -205,15 +201,12 @@ class SolutionLoop:
     def constrain_delta_t(self, limit: float, ceiling: float = VGREAT) -> None:
         """Set the next ``deltaT`` from the folded loop-limit interfaces.
 
-        A faithful ``setDeltaT.H``: both limits ``VGREAT`` = no active opinion
-        (``adjustTimeStep no``), and the step is left alone — OpenFOAM never
-        reaches ``Time::setDeltaT`` then, so the write-time snapping must not run
-        either. Otherwise the Courant-style *limit* is approached the way
-        ``setDeltaT.H`` approaches it — shrinking takes it at once, growing is
-        damped through ``min(fact, 1 + 0.1*fact, growth_cap)`` with
-        ``fact = limit / current`` — and the ``maxTimeStep`` *ceiling* is clipped
-        onto the damped result afterwards, never pushed through the damping (the
-        two do not commute). The result is snapped onto the next write time.
+        Mirrors ``setDeltaT.H``: both limits ``VGREAT`` (``adjustTimeStep no``)
+        leaves the step *and* the write-time snapping alone, since OpenFOAM never
+        reaches ``Time::setDeltaT`` then; otherwise growth towards ``limit`` is
+        damped and the ``maxTimeStep`` ceiling clipped onto the damped result — the
+        two do not commute. Constraints report only their raw maximum; *how* it is
+        approached is this loop's responsibility.
         """
         current = self._state.delta_t
         if limit >= VGREAT and ceiling >= VGREAT:
@@ -372,10 +365,8 @@ def set_time_step(
     their fields/config at this step. No active constraint -> ``min`` default
     ``VGREAT`` -> the step is unchanged (fixed step).
 
-    The first step runs the ``setInitialDeltaT.H`` pass before the ``setDeltaT.H``
-    one, and re-publishes ``deltaT`` in between, mirroring the ``CourantNo.H`` that
-    pimpleFoam/interFoam re-run at the head of the loop: the Courant number the
-    damped pass sees is the one belonging to the step the initial pass left behind.
+    ``deltaT`` is re-published between the first step's two passes, mirroring the
+    ``CourantNo.H`` pimpleFoam/interFoam re-run at the head of the loop.
     """
     loop = _engine(ctx)
     ctx.fields["deltaT"] = loop.current_delta_t()

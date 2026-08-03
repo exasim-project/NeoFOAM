@@ -12,10 +12,9 @@ The requested time directory is staged as ``0/`` in a temporary case so the fiel
 read where a freshly-constructed ``Time`` (which starts at ``startTime``) can see it —
 the same trick the standalone comparison readers use.
 
-Only the field file's ``internalField`` entry is read. Constructing the whole
-``vol*Field`` would construct every boundary condition with it, and a condition that
-needs more than the file it is written in (``fanPressure`` opens a fan-curve table,
-coupled types need their partner patch) aborts a read that only wants cell values.
+Only the ``internalField`` entry is read: constructing the whole ``vol*Field`` would
+construct every boundary condition with it, and a condition needing more than its own
+file (``fanPressure``, coupled types) aborts a read that only wants cell values.
 """
 
 from __future__ import annotations
@@ -43,13 +42,9 @@ def _resolve_time_dir(case: Path, time: str) -> Path:
 
 
 def _set_case_environment(case: Path) -> None:
-    """Export what ``argList`` exports about the case, so dictionary reads resolve.
+    """Export what ``argList`` would, so ``<case>``/``<system>`` includes resolve.
 
-    A directly-constructed ``Time`` skips ``argList``, which is what sets these. Without
-    them ``<case>`` / ``<system>`` / ``<constant>`` expand against an empty path, so a
-    case-local ``#includeFunc`` or ``#include "<system>/..."`` in a staged dictionary is
-    never found and the read dies — on the include itself, or on what the skipped
-    include left unbalanced.
+    A directly-constructed ``Time`` skips ``argList``, which is what sets these.
     """
     os.environ["FOAM_CASE"] = str(case)
     os.environ["FOAM_CASENAME"] = case.name
@@ -72,8 +67,8 @@ def read_field(case: Path, time: str, name: str, out: Path) -> None:
         _set_case_environment(staged)
         runtime = pyf.Time(str(staged.parent), staged.name)
         mesh = pyf.fvMesh(runtime)
-        # Decode leniently: a binary-format field's FoamFile header is still
-        # ASCII, but its internalField payload is not, so read_text() would choke.
+        # Decode leniently: a binary-format field has an ASCII header but a
+        # non-UTF-8 internalField payload, which read_text() would choke on.
         header = (staged / "0" / name).read_bytes().decode("utf-8", "replace")
         internal: Union[scalarField, vectorField]
         if "volScalarField" in header:

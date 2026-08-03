@@ -30,9 +30,8 @@ __all__ = [
 class RASProperties(BaseModel):
     """The ``RAS`` sub-dictionary of ``turbulenceProperties``.
 
-    ``extra="allow"`` keeps the per-model ``<RASModel>Coeffs`` sub-dictionary
-    OpenFOAM selects as ``RASModel::coeffDict_``; read it with
-    :func:`model_coefficients`.
+    ``extra="allow"`` keeps the per-model ``<RASModel>Coeffs`` sub-dictionary; read
+    it with :func:`model_coefficients`.
     """
 
     model_config = ConfigDict(extra="allow")
@@ -87,13 +86,9 @@ class TurbulencePropertiesConfig(BaseConfig):
 def model_coefficients(config: Any, model: str, defaults: Mapping[str, float]) -> dict[str, float]:
     """A closure's coefficients, with the case's ``<model>Coeffs`` overrides applied.
 
-    Mirrors OpenFOAM's ``RASModel::coeffDict_`` (``subOrEmptyDict(type + "Coeffs")``)
-    read through ``dimensioned::getOrAddToDict``: a coefficient the sub-dictionary
-    sets wins, one it omits keeps the closure default, and an entry the closure does
-    not declare is ignored — OpenFOAM never rejects an unknown coefficient either.
-
     Use it from a closure's ``@build`` so the per-step operations read one resolved
-    mapping rather than module constants. The ``RAS`` block arrives as a
+    mapping rather than module constants. Undeclared entries are ignored, as
+    OpenFOAM's ``RASModel::coeffDict_`` ignores them. The ``RAS`` block arrives as a
     :class:`RASProperties` from :meth:`~neofoam.io.BaseConfig.load` but as a plain
     ``dict`` from ``ModelSpec.instantiate``, so both shapes are accepted.
 

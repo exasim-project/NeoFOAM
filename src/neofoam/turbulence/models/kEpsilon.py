@@ -66,16 +66,13 @@ def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
     """Read + seed ``k`` / ``epsilon`` / ``nut`` / ``nuEff`` and the helper operators.
 
     ``nut`` is seeded from the initial ``k`` / ``epsilon`` (OpenFOAM ``correctNut``);
-    the surface-interpolation and ``gradSchemes``-selected gradient operators are owned as models
-    so the per-step ``correct`` operation reuses them. The resolved coefficients are
-    owned as a model too, so the operations read the case's overrides.
+    the operators and the resolved coefficients are owned as models so the per-step
+    ``correct`` operation reuses them.
     """
     coeffs = model_coefficients(config, "kEpsilon", DEFAULT_COEFFS)
 
     def read_k(ctx: dict[str, Any]) -> Any:
-        # OpenFOAM's kEpsilon constructor bounds both transport fields as read
-        # (kEpsilon.C: bound(k_, kMin_); bound(epsilon_, epsilonMin_)), before the
-        # nut seeding below divides by them.
+        # Bound as read (kEpsilon.C's constructor), before seed_nut divides by them.
         k = nfb.read_scalar_volume_field(ctx["models.neon_runtime"], "k")
         nfb.bound(k, kMin)
         return k
@@ -90,16 +87,14 @@ def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
         return nn.SurfaceInterpolationScalar(rt.executor, rt.nf_mesh, nn.TokenList(["linear"]))
 
     def create_grad(ctx: dict[str, Any]) -> Any:
-        # OpenFOAM's kEpsilon takes its production gradient from fvc::grad(U), i.e.
-        # the case's ``gradSchemes`` ``grad(U)`` entry (a cellLimited scheme there
-        # must limit here too); GradScheme falls back to Gauss linear when absent.
+        # fvc::grad(U): the case's ``gradSchemes`` entry must limit the production
+        # gradient too. GradScheme falls back to Gauss linear when absent.
         return nfb.GradScheme(ctx["models.neon_runtime"], "U")
 
     def create_near_wall_dist(ctx: dict[str, Any]) -> Any:
         # nearWallDist: boundary faces hold the owner-cell wall distance — the input
-        # the epsilon/nutk wall functions read via the BoundaryContext. pybFoam's
-        # nearWallDist is purely geometric, so (unlike Foam::wallDist) it needs no
-        # `wallDist { method … }` entry in fvSchemes — which kEpsilon cases do not ship.
+        # the epsilon/nutk wall functions read via the BoundaryContext. Purely
+        # geometric, so (unlike Foam::wallDist) it needs no fvSchemes entry.
         rt = ctx["models.neon_runtime"]
         return nfb.build_near_wall_dist(rt, pyf.nearWallDist(rt.mesh))
 
@@ -170,11 +165,10 @@ def production(
     """Turbulent production ``G = nut GbyNu``, ``GbyNu = dev(twoSymm(gradU)) && gradU``.
 
     Publishes two fields: ``GbyNu`` — production per unit eddy viscosity, which the
-    epsilon equation consumes as OpenFOAM v2406 does (``C1 GbyNu Cmu k``, a form
-    that never divides by ``k``) — and ``Gk``, the eddy-viscosity production with
-    the near-wall cells overwritten by the epsilonWallFunction log-law form
+    epsilon equation consumes — and ``Gk``, the eddy-viscosity production with the
+    near-wall cells overwritten by the epsilonWallFunction log-law form
     ``(nut+nu)|dU/dn| Cmu^0.25 sqrt(k)/(kappa y)``, which the k equation consumes.
-    The override is the model-side half of the wall function (the BC only sets the
+    That override is the model-side half of the wall function (the BC only sets the
     wall *face* value); without it the k equation lacks the source that balances the
     wall-function epsilon.
     """
@@ -210,8 +204,8 @@ def correct_epsilon(
     # inline would be GC'd before solve() and read freed memory.
     diffusivity = nut / kEpsilon_coeffs["sigmaEps"] + nu_vol
     d_eps = kEpsilon_surf.interpolate(diffusivity)
-    # v2406 writes the production as C1 GbyNu Cmu k, not C1 G eps/k: algebraically
-    # the same while nut == Cmu k^2/eps, but with no division by a bounded k.
+    # C1 GbyNu Cmu k, not C1 G eps/k: same while nut == Cmu k^2/eps (v2406), but
+    # with no division by a bounded k.
     production = kEpsilon_coeffs["C1"] * GbyNu * kEpsilon_coeffs["Cmu"] * k
     sink_coeff = kEpsilon_coeffs["C2"] * (epsilon / k)
     eps_eqn = nfb.PDESolverScalar(

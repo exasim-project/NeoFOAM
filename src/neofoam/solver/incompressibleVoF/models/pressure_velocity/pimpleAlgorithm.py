@@ -84,10 +84,9 @@ PimpleFvSolution = pimple.config(fvSolution)
 # fixed-pressure BC) needs a pressure reference, an open one does not.
 PimpleFvSolution.add_controls("PIMPLE", pRefCell=int, pRefValue=float)
 
-# ``pcorr`` is solved by the start-up flux projection (``initCorrectPhi.H``, see
-# ``project_flux``), which runs for every case — so a case scaffold without a
-# ``pcorr`` solver entry aborts on the first solve. Declared here rather than on an
-# operation because the projection is an initialisation step, not a time-loop one.
+# ``pcorr`` is solved by the start-up flux projection (``initCorrectPhi.H``), which
+# runs for every case. Declared on the model rather than on an operation because the
+# projection is an initialisation step, not a time-loop one.
 PimpleFvSolution.add("pcorr")
 
 # Section ``default`` schemes — interFoam's ``interfaceProperties`` resolves the
@@ -167,20 +166,13 @@ class TwoPhaseTransportProtocol(Protocol):
 
 
 def _gravity_ref(mesh: Any, hRef: Any) -> tuple[Any, Any]:
-    """Return ``(g, ghRef)`` — gravity field and its reference head.
-
-    Transcription of ``gh.H``: ``ghRef = g & (cmptMag(g)/mag(g))*hRef``
-    when ``|g| > SMALL``, else 0 — the reference head along the gravity
-    direction, zero only when ``hRef`` is itself zero (the default).
-    ``pyf.vector`` has no ``cmptMag``/``__truediv__`` binding, so the unit
-    vector is built component-wise and by a ``1/mag(g)`` multiply instead.
-    SMALL is OpenFOAM's ``doubleScalar`` constant (not exposed by
-    pybFoam): 1e-15.
-    """
+    """Return ``(g, ghRef)`` — gravity field and its reference head (``gh.H``)."""
     g = pyf.uniformDimensionedVectorField(mesh, "g")
     gh_ref_dims = g.dimensions() * pyf.dimLength
     g_val = g.value()
     mag_g = pyf.mag(g_val)
+    # 1e-15 is OpenFOAM's SMALL, which pybFoam does not expose. ``pyf.vector`` has
+    # no ``cmptMag``/``__truediv__``, hence the component-wise unit vector below.
     if mag_g > 1e-15:
         cmpt_mag_g = pyf.vector(abs(g_val[0]), abs(g_val[1]), abs(g_val[2]))
         unit_g = cmpt_mag_g * (1.0 / mag_g)
@@ -193,9 +185,8 @@ def _gravity_ref(mesh: Any, hRef: Any) -> tuple[Any, Any]:
 def update_gravity_head(gh: volScalarField, ghf: surfaceScalarField, mesh: Any, hRef: Any) -> None:
     """Re-evaluate ``gh``/``ghf`` on the current cell and face centres.
 
-    The buoyancy head is tied to the mesh geometry, so interFoam rebuilds both
-    fields inside its ``mesh.changing()`` block. Call it after every mesh move;
-    on a static mesh the values never change and it is never needed.
+    The buoyancy head is tied to the mesh geometry, so call this after every mesh
+    move (interFoam's ``mesh.changing()`` block); a static mesh never needs it.
     """
     g, gh_ref = _gravity_ref(mesh, hRef)
     gh.assign((g & mesh.C()) - gh_ref)
@@ -227,22 +218,10 @@ def project_flux(
 ) -> None:
     """Project ``phi`` divergence-free (``CorrectPhi``) and report continuity.
 
-    The shared body of ``initCorrectPhi.H`` and of interFoam's in-loop
-    ``correctPhi.H``; both end in ``continuityErrs.H``, and they differ only in the
-    ``rAUf`` they hand to ``CorrectPhi``.
-
-    ``rAU is None`` selects the uniform ``dimensionedScalar`` 1 of
-    ``initCorrectPhi.H``'s ``else`` branch. Its ``correctPhi`` branch instead
-    interpolates a *uniform-1* ``rAU`` field, and ``fvm::laplacian`` expands a
-    dimensioned scalar into exactly that uniform surface field under the same
-    ``rAUf`` name — so the two start-up branches assemble the same matrix and one
-    code path covers both. Once the pressure corrector has run, ``rAU`` is its
-    ``1/UEqn.A()``, re-interpolated here on the *current* (moved) mesh, which is
-    what ``correctPhi.H`` does after ``mesh.update()``.
-
-    The non-orthogonal corrector count comes from the control rather than a
-    ``pimpleControl``: it is the only thing native's ``CorrectPhi`` asks the
-    control for.
+    The shared body of ``initCorrectPhi.H`` and interFoam's in-loop
+    ``correctPhi.H``, which differ only in the ``rAUf`` handed to ``CorrectPhi``:
+    ``rAU is None`` is the start-up uniform 1, otherwise it is the last
+    corrector's ``1/UEqn.A()`` re-interpolated on the current (moved) mesh.
     """
     if rAU is None:
         rAUf: Any = pyf.dimensionedScalar(pyf.Word("rAUf"), pyf.dimTime / pyf.dimDensity, 1.0)
@@ -267,26 +246,10 @@ def build(self: object) -> list[object]:  # noqa: C901
     # ------------------------------------------------------------------ #
 
     def create_hRef(context: dict[str, Any]) -> Any:
-        """Read ``hRef`` from ``constant/`` (transcription of ``readhRef.H``).
-
-        Native: ``uniformDimensionedScalarField hRef(IOobject("hRef", ...,
-        READ_IF_PRESENT, NO_WRITE), dimensionedScalar(dimLength, Zero))`` — a
-        case with no ``constant/hRef`` silently gets ``hRef = 0``, and either
-        way the object is registered so
-        ``prghPermeableAlphaTotalPressure``-style BCs can
-        ``lookupObject<uniformDimensionedScalarField>("hRef")`` on every
-        evaluation, for the whole run.
-
-        pybFoam's ``uniformDimensionedScalarField`` binding is hard-coded
-        ``MUST_READ`` (no ``READ_IF_PRESENT``/default-value overload), and a
-        missing file raises an OpenFOAM ``FatalError`` that calls
-        ``std::exit`` directly rather than a Python-catchable exception, so a
-        plain ``try/except`` around it cannot reproduce the fallback. When
-        ``constant/hRef`` is absent, this writes the same default OpenFOAM
-        would use in memory (``dimensions [0 1 0 0 0 0 0]; value 0;``) so the
-        ``MUST_READ`` read then succeeds and returns a properly registered
-        field — the only way pybFoam can construct one with a value.
-        """
+        """Read ``hRef`` from ``constant/`` (``readhRef.H``), defaulting it to 0."""
+        # pybFoam's binding is hard-coded MUST_READ (no READ_IF_PRESENT overload)
+        # and a missing file exits the process rather than raising, so native's
+        # default is reproduced by writing the file OpenFOAM would have defaulted to.
         mesh = context["mesh"]
         href_path = Path("constant/hRef")
         if not href_path.exists():
@@ -331,15 +294,9 @@ def build(self: object) -> list[object]:  # noqa: C901
         return volScalarField.read_field(mesh, "p_rgh")
 
     def create_Uf(context: dict[str, Any]) -> Optional[surfaceVectorField]:
-        """Face velocity ``Uf`` — transcription of ``createUfIfPresent.H``.
-
-        Only a dynamic mesh has one: it is what the moving-mesh
-        ``fvc::ddtCorr(U, phi, Uf)`` and ``fvc::correctUf`` work on. ``None`` on a
-        static mesh, which is what tells the pressure corrector to keep the
-        two-argument ``ddtCorr``. Native reads ``<time>/Uf`` when present (a
-        restart); pybFoam has no READ_IF_PRESENT overload, so this always starts
-        from ``fvc::interpolate(U)`` — identical for a run started from time 0.
-        """
+        """Face velocity ``Uf`` (createUfIfPresent.H); ``None`` selects the static ``ddtCorr``."""
+        # pybFoam has no READ_IF_PRESENT overload, so a restart cannot read
+        # ``<time>/Uf`` and always starts from ``fvc::interpolate(U)``.
         mesh = context["mesh"]
         if not mesh.dynamic():
             return None
@@ -352,18 +309,14 @@ def build(self: object) -> list[object]:  # noqa: C901
         p_rgh = context["fields.p_rgh"]
         fv_solution = pyf.dictionary.read("system/fvSolution")
         algo_dict = fv_solution.subDict("PIMPLE")
-        # Two-field setRefCell(p, p_rgh, dict) overload. OpenFOAM's setRefCell
-        # returns whether a reference is needed at all, but the pybFoam binding
-        # drops that bool — ``need_reference`` recovers it from the cell index,
-        # which setRefCell sets negative on the no-reference path. Must stay
-        # ``forceReference=False`` for that sentinel to hold; see its docstring.
+        # Two-field setRefCell(p, p_rgh, dict) overload. The pybFoam binding drops
+        # native's "reference needed" return value, so ``need_reference`` recovers it
+        # from the negative cell index — which holds only for ``forceReference=False``.
         pRefCell, pRefValue = pyf.setRefCell(p, p_rgh, algo_dict, False)
         needsRef = need_reference(pRefCell)
         if needsRef:
-            # createFields.H levels both fields against the reference cell right
-            # after setRefCell, not only inside the corrector. A frozen-flow case
-            # never runs the corrector, so without this its p_rgh is written back
-            # at the level ``0/p_rgh`` happened to carry.
+            # as in createFields.H: level both fields right after setRefCell, not
+            # only inside the corrector, which a frozen-flow case never runs.
             update_absolute_pressure(
                 p,
                 p_rgh,
@@ -382,14 +335,8 @@ def build(self: object) -> list[object]:  # noqa: C901
     def create_initial_flux_correction(context: dict[str, Any]) -> None:
         """Project the start-up flux — ``initCorrectPhi.H``, run unconditionally.
 
-        interFoam includes this before the time loop with no enclosing ``if``: the
-        ``correctPhi`` key only picks which of two equivalent ``rAUf`` forms is
-        passed (and whether ``rAU`` survives into ``pEqn.H``), never *whether* the
-        projection happens. Cases that leave the key unset need it just as much —
-        ``createPhi(U)`` is only divergence-free if ``0/U`` already was, and the
-        first Courant number, time step and alpha solve all read the projected flux.
-        On a case whose initial flux does close, ``pcorr`` converges at iteration 0
-        and ``phi`` comes back unchanged.
+        interFoam includes this with no enclosing ``if``: the ``correctPhi`` key
+        picks which ``rAUf`` form is used, never whether the projection happens.
         """
         project_flux(
             context["fields.U"],
@@ -423,11 +370,8 @@ def build(self: object) -> list[object]:  # noqa: C901
         ),
         model("Uf", create_Uf, depends_on=["mesh", "fields.U"]),
         model("cumulativeContErr", lambda _: [0.0]),
-        # interFoam keeps `rAU` alive across time steps when `correctPhi` is set,
-        # because the post-move projection re-uses the last corrector's
-        # `1/UEqn.A()` (pEqn.H:2-9). One-element box, written by `continuity`;
-        # `None` until the first pressure solve, which is the uniform-1 `rAU`
-        # initCorrectPhi.H starts from.
+        # interFoam keeps `rAU` alive across time steps when `correctPhi` is set: the
+        # post-move projection re-uses the last corrector's `1/UEqn.A()` (pEqn.H:2-9).
         model("last_rAU", lambda _: [None]),
         model(
             "pressure_reference",
@@ -460,15 +404,10 @@ def build(self: object) -> list[object]:  # noqa: C901
 def inner_loop(ctx: Context) -> bool:
     pimple_control = ctx.models["pimple_control"]
     looping = bool(pimple_control.loop(ctx))
-    # Mirror pimpleControl::loop() (pimpleControl.C): on the final outer iteration
-    # flag the mesh so fvMatrix::solve picks the <field>Final settings for the
-    # library solves buried in turbulence.correct() (k/epsilon/nuTilda), and lower
-    # the flag again when the loop ends (native calls setFinalIteration(false)
-    # before returning false). ``pimple_control.loop`` resets its counters on exit,
-    # so ``finalIter()`` is then False. Here turbulence_correction runs *inside*
-    # the inner loop, so lowering on exit means write_output's equation-solving
-    # function objects (e.g. electricPotential) see the base solver dict, not the
-    # non-existent <field>Final variant.
+    # Mirror pimpleControl::loop(): on the final outer iteration flag the mesh so
+    # fvMatrix::solve picks the <field>Final settings for the library solves buried
+    # in turbulence.correct(). Set unconditionally, so the flag is also lowered on
+    # exit (as native does) and write_output's function objects see the base dict.
     ctx.mesh.setFinalIteration(pimple_control.finalIter())
     return looping
 
@@ -520,15 +459,7 @@ def mesh_update(
 ) -> FieldUpdates:
     """Move the mesh at the head of the outer corrector (interFoam's ``mesh.update()``).
 
-    Runs on the first outer iteration only, unless the case sets
-    ``moveMeshOuterCorrectors`` — the guard native uses. A mesh that actually
-    changed invalidates the buoyancy head, so ``gh``/``ghf`` are rebuilt on the
-    new cell/face centres, the MRF zone faces are re-found on the new topology,
-    and — when the case asks for ``correctPhi`` — the flux is rebuilt from the
-    mapped face velocity and re-projected onto the moved geometry.
-
-    A static mesh returns immediately, so this operation cannot perturb a static
-    case.
+    A static mesh returns immediately, so this operation cannot perturb a static case.
     """
     mesh = ctx.mesh
     if not mesh.dynamic():
@@ -548,10 +479,8 @@ def mesh_update(
         return FieldUpdates({"gh": gh, "ghf": ghf})
 
     assert Uf is not None  # createUfIfPresent.H gives every dynamic mesh a Uf
-    # The mesh moved under the old flux, so phi no longer belongs to this geometry:
-    # rebuild it as the absolute flux of the mapped face velocity, project that
-    # divergence-free, and hand it on relative to the mesh motion. mixture.correct()
-    # then re-evaluates the interface properties on the corrected flux.
+    # as in correctPhi.H: rebuild phi from the mapped Uf, project, make it relative,
+    # then re-evaluate the interface properties on the corrected flux.
     phi.assign(mesh.Sf() & Uf)
     project_flux(U, phi, p_rgh, last_rAU[0], pimple_control, cumulativeContErr)
     fvc.makeRelative(phi, U)
@@ -585,10 +514,8 @@ def momentum(
 ) -> FieldUpdates:
     """Density-weighted momentum predictor with surface tension."""
     if isinstance(pimple_control, FrozenFlowControl):
-        # frozenFlow yes ⇒ interIsoFoam runs `continue` before UEqn.H: the
-        # momentum equation is never assembled. Skip it entirely so the frozen
-        # tutorials' deliberate omission of the momentum divSchemes
-        # (e.g. div(rhoPhi,U)) is honoured rather than a fatal lookup.
+        # frozenFlow yes ⇒ interIsoFoam runs `continue` before UEqn.H, so the
+        # equation is never assembled and its divSchemes need not be declared.
         return FieldUpdates({})
 
     mesh = U.mesh()
@@ -598,9 +525,8 @@ def momentum(
             fvm.ddt(rho, U) + fvm.div(rhoPhi, U) + turbulence.divDevRhoReff(rho, U)
         )
     else:
-        # UEqn.H under a rotating frame: the wall velocities on the MRF patches
-        # are set first (they feed the boundary coefficients of ``div(rhoPhi,U)``),
-        # then the mass-weighted frame acceleration joins the sum.
+        # as in UEqn.H: correctBoundaryVelocity before assembly — it feeds the
+        # boundary coefficients of ``div(rhoPhi,U)``.
         mrf_zones.correctBoundaryVelocity(U)
         UEqn = fvVectorMatrix(
             fvm.ddt(rho, U)
@@ -609,11 +535,9 @@ def momentum(
             + turbulence.divDevRhoReff(rho, U)
         )
     if fv_options is not None:
-        # ``== fvOptions(rho, U)`` moves the mass-weighted source to the
-        # right-hand side, i.e. subtracts it from the assembled matrix. UEqn.H's
-        # three fvOptions calls sit at three exact points, and the order is the
-        # physics: the source joins the sum BEFORE relaxation, the constraints
-        # are applied AFTER it, and the correction runs after the solve.
+        # as in UEqn.H, the call order is the physics: source before relax(),
+        # constrain() after, correct() after the solve. ``== fvOptions(rho, U)``
+        # subtracts the mass-weighted source from the assembled matrix.
         UEqn = fvVectorMatrix(UEqn - fv_options(rho, U))
     UEqn.relax()
     if fv_options is not None:
@@ -660,8 +584,7 @@ def continuity(
     Uf: Annotated[Optional[surfaceVectorField], "models"] = None,
     mrf_zones: Annotated[Optional[pyf.IOMRFZoneList], "models"] = None,
     fv_options: Annotated[Optional[pyf.fvOptions], "models"] = None,
-    # Default None so a frozen-flow step (where ``momentum`` produced no UEqn)
-    # still binds; the non-frozen path always supplies it.
+    # Default None so a frozen-flow step, where ``momentum`` produced no UEqn, binds.
     UEqn: Optional[fvVectorMatrix] = None,
 ) -> FieldUpdates:
     """Pressure-velocity coupling for VoF with surface tension and gravity.
@@ -670,9 +593,8 @@ def continuity(
     every mesh-motion term below reduces to the static form it always had.
     """
     if isinstance(pimple_control, FrozenFlowControl):
-        # frozenFlow yes ⇒ the pressure-corrector loop never runs (mirrors
-        # interIsoFoam's `continue`): U/p/p_rgh/phi keep their prescribed values
-        # and only alpha advects. Emit no field updates.
+        # frozenFlow yes ⇒ interIsoFoam's `continue`: U/p/p_rgh/phi keep their
+        # prescribed values and only alpha advects.
         return FieldUpdates({})
     assert UEqn is not None  # non-frozen path always carries the momentum matrix
     pRefCell = pressure_reference["pRefCell"]
@@ -682,16 +604,14 @@ def continuity(
 
     while pimple_control.correct():
         rAU = volScalarField(pyf.Word("rAU"), 1.0 / UEqn.A())
-        # Hand it to the post-move projection, which re-interpolates it on the
-        # moved mesh next time step (interFoam keeps `rAU` alive for exactly this).
+        # Handed to the post-move projection, which re-interpolates it next step.
         last_rAU[0] = rAU
         rAUf = surfaceScalarField(pyf.Word("rAUf"), fvc.interpolate(rAU))
 
         HbyA = volVectorField(pyf.constrainHbyA(rAU * UEqn.H(), U, p_rgh))
 
-        # ddtCorr: on a moving mesh the correction is built from the face velocity
-        # instead of the flux — what native's fvc::ddtCorr(U, phi, Uf) dispatches
-        # to when mesh.dynamic().
+        # on a moving mesh the correction is built from Uf, not phi — what native's
+        # fvc::ddtCorr(U, phi, Uf) dispatches to when mesh.dynamic().
         ddt_corr = fvc.ddtCorr(U, phi) if Uf is None else fvc.ddtCorr(U, Uf)
         if mrf_zones is None:
             phiHbyA = surfaceScalarField(
@@ -699,9 +619,8 @@ def continuity(
                 fvc.flux(HbyA) + fvc.interpolate(rho * rAU) * ddt_corr,
             )
         else:
-            # pEqn.H under a rotating frame: the ddt correction is zeroed inside
-            # the MRF cells (it belongs to the absolute frame), then the whole
-            # flux is taken relative to the rotation.
+            # as in pEqn.H: the ddt correction is zeroed inside the MRF cells (it
+            # belongs to the absolute frame) before the flux is made relative.
             phiHbyA = surfaceScalarField(
                 pyf.Word("phiHbyA"),
                 fvc.flux(HbyA) + mrf_zones.zeroFilter(fvc.interpolate(rho * rAU) * ddt_corr),
@@ -716,9 +635,8 @@ def continuity(
         phiHbyA.assign(phiHbyA + phig)
 
         # adjustPhi balances the global flux, which only means anything relative to
-        # the moving mesh — hence native's makeRelative/makeAbsolute bracket. Both
-        # are no-ops on a static mesh, but the pair is not bit-exact in floating
-        # point, so it stays behind the same needReference() guard native uses.
+        # the mesh motion — hence the bracket. It stays behind the same
+        # needReference() guard native uses: the pair is not bit-exact.
         if needsRef:
             fvc.makeRelative(phiHbyA, U)
         pyf.adjustPhi(phiHbyA, U, p_rgh)
@@ -732,10 +650,8 @@ def continuity(
 
         while pimple_control.correctNonOrthogonal():
             pEqn = fvScalarMatrix(fvm.laplacian(rAUf, p_rgh) - fvc.div(phiHbyA))
-            # pEqn.H pins the matrix at p_rgh's *current* level, not at pRefValue
-            # (which is a level for the absolute pressure p). Using pRefValue here
-            # would shift the whole p_rgh solution between the solve and the
-            # re-levelling below, changing the solver's residual normalisation.
+            # as in pEqn.H: pin the matrix at p_rgh's *current* level. pRefValue is a
+            # level for the absolute pressure p and would shift the whole solution.
             pEqn.setReference(pRefCell, get_ref_cell_value(p_rgh, pRefCell), False)
             pEqn.solve(p_rgh.select(pimple_control.finalInnerIter()))
 
@@ -749,13 +665,12 @@ def continuity(
         U.assign(HbyA + rAU * fvc.reconstruct((phig - pEqn.flux()) / rAUf))
         U.correctBoundaryConditions()
         if fv_options is not None:
-            # pEqn.H closes the corrector on a second ``fvOptions.correct(U)``:
-            # the reconstruction has just overwritten U, so any correction the
-            # predictor applied is gone.
+            # as in pEqn.H: a second fvOptions.correct(U) closes the corrector,
+            # whose reconstruction has just overwritten the predictor's correction.
             fv_options.correct(U)
 
-        # Update absolute pressure from dynamic pressure; on a closed domain
-        # also pin its level to pRefValue and re-level p_rgh (interFoam pEqn.H).
+        # On a closed domain this also pins p's level to pRefValue and re-levels
+        # p_rgh, as interFoam's pEqn.H does.
         update_absolute_pressure(
             p,
             p_rgh,
@@ -769,10 +684,8 @@ def continuity(
         _report_continuity_errors(phi, cumulativeContErr)
 
         if Uf is not None:
-            # Moving mesh: refresh the face velocity from the corrected U/phi and
-            # hand phi on relative to the mesh motion (interFoam pEqn.H). Native
-            # does both right after the continuity errors, which is where they are
-            # here; the pressure update in between reads neither phi nor Uf.
+            # as in pEqn.H, after the continuity report: the pressure update in
+            # between reads neither phi nor Uf, so the order is preserved.
             fvc.correctUf(Uf, U, phi)
             fvc.makeRelative(phi, U)
 

@@ -118,9 +118,8 @@ def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
     coeffs = model_coefficients(config, "kOmegaSST", DEFAULT_COEFFS)
 
     def read_k(ctx: dict[str, Any]) -> Any:
-        # OpenFOAM's kOmegaSST constructor bounds both transport fields as read
-        # (kOmegaSSTBase.C: bound(k_, kMin_); bound(omega_, omegaMin_)), before the
-        # nut seeding below divides by omega.
+        # Bound as read (kOmegaSSTBase.C's constructor), before seed_nut divides by
+        # omega.
         k = nfb.read_scalar_volume_field(ctx["models.neon_runtime"], "k")
         nfb.bound(k, kMin)
         return k
@@ -135,9 +134,8 @@ def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
         return nn.SurfaceInterpolationScalar(rt.executor, rt.nf_mesh, nn.TokenList(["linear"]))
 
     def create_grad(ctx: dict[str, Any]) -> Any:
-        # OpenFOAM's kOmegaSST takes S2 / GbyNu0 from fvc::grad(U), i.e. the case's
-        # ``gradSchemes`` ``grad(U)`` entry; GradScheme falls back to Gauss linear
-        # when the case does not name it.
+        # fvc::grad(U): the case's ``gradSchemes`` entry must limit S2 / GbyNu0 too.
+        # GradScheme falls back to Gauss linear when absent.
         return nfb.GradScheme(ctx["models.neon_runtime"], "U")
 
     def read_wall_dist(ctx: dict[str, Any]) -> Any:
@@ -145,9 +143,9 @@ def build(config: TurbulencePropertiesConfig) -> list[InitStep]:
 
     def create_near_wall_dist(ctx: dict[str, Any]) -> Any:
         # nearWallDist: boundary faces hold the owner-cell wall distance — the input
-        # the omega/nutk wall functions read via the BoundaryContext. pybFoam's
-        # nearWallDist is purely geometric and needs no fvSchemes entry; the global
-        # wall distance the F1/F2 blending needs comes from read_wall_distance above.
+        # the omega/nutk wall functions read via the BoundaryContext. Purely
+        # geometric, unlike the global wall distance read_wall_distance provides
+        # for the F1/F2 blending.
         rt = ctx["models.neon_runtime"]
         return nfb.build_near_wall_dist(rt, pyf.nearWallDist(rt.mesh))
 

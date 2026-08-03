@@ -5,9 +5,8 @@
 __version__ = "0.0.1"
 
 try:
-    # pybFoam registers the OpenFOAM types (Foam::fvMesh, …) in the nanobind type
-    # registry both packages share; the bindings' MeshAdapter declares fvMesh as its
-    # base, so pybFoam has to be imported first.
+    # First: the bindings' MeshAdapter declares Foam::fvMesh as its base, and pybFoam
+    # is what registers that type in the shared nanobind registry.
     import pybFoam as pybFoam  # noqa: F401
 
     from . import neofoam_bindings as neofoam_bindings  # type: ignore[attr-defined,unused-ignore]
