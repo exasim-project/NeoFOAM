@@ -25,6 +25,7 @@ from typing import Mapping, Optional, Union
 
 from pybFoam import dictionary
 
+from neofoam.io import DictFile
 from neofoam.solver.incompressibleVoF import run
 
 # Re-use the comparison helpers from the sibling incompressibleFluid test
@@ -171,13 +172,27 @@ def write_alpha_controls(
     fv_solution.write(str(fv_solution_path))
 
 
+def write_ddt_schemes(fv_schemes_path: Path, entries: Mapping[str, str]) -> None:
+    """Overwrite entries of ``system/fvSchemes``' ``ddtSchemes`` dict in place.
+
+    Through :class:`neofoam.io.DictFile` — the OpenFOAM format's own
+    reader/writer — so the test never patches dictionary text (TEST_STYLE
+    rule 3). A scheme spec is two tokens (``CrankNicolson 0.5``); the writer
+    emits the value verbatim, so it needs no checked-in fvSchemes variant.
+    """
+    dict_file = DictFile(fv_schemes_path)
+    for key, value in entries.items():
+        dict_file.set(("ddtSchemes", key), value)
+    dict_file.write()
+
+
 def run_dambreak_regime(
     alpha_controls: Mapping[str, Union[bool, float]],
     python_case: Path,
     native_case: Path,
     end_time: float = 0.05,
     write_interval: float = 0.05,
-    fv_schemes: Optional[Path] = None,
+    ddt_schemes: Optional[Mapping[str, str]] = None,
     pimple_controls: Optional[Mapping[str, Union[bool, float]]] = None,
 ) -> None:
     """Set up ``tutorials/damBreak`` twice with ``alpha_controls`` applied, run both.
@@ -187,10 +202,8 @@ def run_dambreak_regime(
     ``native_case`` with the native ``interFoam`` binary. Both directories are
     left on disk for the caller to compare.
 
-    ``fv_schemes`` replaces the tutorial's ``system/fvSchemes`` wholesale with a
-    checked-in variant — a scheme spec such as ``CrankNicolson 0.5`` is two
-    tokens, which the dictionary writer has no way to set as one entry —
-    and ``pimple_controls`` overwrites entries of the ``PIMPLE`` dict.
+    ``ddt_schemes`` overwrites entries of the tutorial's ``ddtSchemes`` dict and
+    ``pimple_controls`` entries of its ``PIMPLE`` dict.
     """
     for case in (python_case, native_case):
         setup_case(
@@ -200,8 +213,8 @@ def run_dambreak_regime(
             write_interval,
             run_setfields=True,
         )
-        if fv_schemes is not None:
-            shutil.copyfile(fv_schemes, case / "system" / "fvSchemes")
+        if ddt_schemes:
+            write_ddt_schemes(case / "system" / "fvSchemes", ddt_schemes)
         write_alpha_controls(case / "system" / "fvSolution", alpha_controls)
         if pimple_controls:
             write_dict_entries(case / "system" / "fvSolution", "PIMPLE", pimple_controls)

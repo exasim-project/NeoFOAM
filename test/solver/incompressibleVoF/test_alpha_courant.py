@@ -60,7 +60,9 @@ from typing import Any
 import pytest
 from numpy.testing import assert_allclose
 
-from .conftest import stage_case
+from neofoam.tooling.casebuild import from_template
+
+from .conftest import overlay
 
 _HERE = Path(__file__).parent
 _CASES = _HERE / "cases" / "alphaCourant"
@@ -100,9 +102,7 @@ _INTERFACE_COURANT = re.compile(r"^Interface Courant Number mean: (\S+)\s+max: (
 
 def _stage(mesh: str, dest: Path) -> Path:
     """Compose the checked-in case inputs for ``mesh``; the worker meshes on top."""
-    stage_case(dest, _CASES / "common", _CASES / mesh)
-    shutil.copytree(dest / "0.orig", dest / "0")
-    return dest
+    return (from_template(_CASES / "common") | overlay(_CASES / mesh)).build_at(dest).path
 
 
 def _evaluate(mesh: str, scenarios: dict[str, Any], tmp_path: Path) -> dict[str, Any]:
@@ -191,55 +191,41 @@ def interfoam(
     return {t: (printed[t], _evaluate_native(case, t)) for t in NATIVE_TIMES}
 
 
-@pytest.mark.parametrize("scenario", ["uniform_dry", "uniform_wet"])
-def test_uniform_alpha_yields_exactly_zero(row4: dict[str, Any], scenario: str) -> None:
-    # No cell is inside [0.01, 0.99], so no face contributes at all — the two
-    # numbers are structurally zero, not merely small.
-    assert row4[scenario] == [0.0, 0.0]
-
-
-def test_sharp_step_between_saturated_cells_yields_zero(row4: dict[str, Any]) -> None:
-    # alpha = [0, 1, 1, 1]: the interface sits on a face, but no *cell* value is
-    # inside the band, so alphaCourantNo.H reports nothing.
-    assert row4["sharp_step"] == [0.0, 0.0]
-
-
-def test_band_edges_are_inclusive(row4: dict[str, Any]) -> None:
-    # alpha = [0.01, 0.99, 0.009, 0.991]: pos0 is ">= 0", so the two cells
-    # exactly on the edges count and the two just outside do not.
-    # max: 0.5*(2/0.25)*0.25 = 1.0; mean: 0.5*((2+2)/1.0)*0.25 = 0.5.
+@pytest.mark.parametrize(
+    "scenario, expected",
+    [
+        # No cell is inside [0.01, 0.99], so no face contributes at all — the two
+        # numbers are structurally zero, not merely small.
+        pytest.param("uniform_dry", [0.0, 0.0], id="uniform_dry"),
+        pytest.param("uniform_wet", [0.0, 0.0], id="uniform_wet"),
+        # alpha = [0, 1, 1, 1]: the interface sits on a face, but no *cell* value
+        # is inside the band, so alphaCourantNo.H reports nothing.
+        pytest.param("sharp_step", [0.0, 0.0], id="sharp_step"),
+        # alpha = [0.01, 0.99, 0.009, 0.991]: pos0 is ">= 0", so the two cells
+        # exactly on the edges count and the two just outside do not.
+        # max: 0.5*(2/0.25)*0.25 = 1.0; mean: 0.5*((2+2)/1.0)*0.25 = 0.5.
+        pytest.param("band_edges", [1.0, 0.5], id="band_edges"),
+        # alpha = [0, 0.5, 0.5, 1]: cells 1 and 2 are near-interface, each
+        # summing |phi| = 1 over two x-faces. max: 0.5*(2/0.25)*0.25 = 1.0;
+        # mean: 0.5*((0+2+2+0)/1.0)*0.25 = 0.5.
+        pytest.param("graded_interface", [1.0, 0.5], id="graded_interface"),
+        # alpha = [0, 0.5, 1, 1]: cell 1 alone is inside the band and contributes
+        # its full sumPhi = 2. max: 0.5*(2/0.25)*0.25 = 1.0;
+        # mean: 0.5*((0+2+0+0)/1.0)*0.25 = 0.25. A band on interpolate(alpha1)
+        # instead would light up the faces 0|1 (alphaf = 0.25) and 1|2
+        # (alphaf = 0.75), handing cells 0 and 2 a share each and doubling the
+        # mean to 0.5 — so this is what pins nearInterface() to *cells*.
+        pytest.param("lone_interface_cell", [1.0, 0.25], id="lone_interface_cell"),
+    ],
+)
+def test_the_hand_derived_alpha_courant_number_on_the_four_cell_row(
+    row4: dict[str, Any], scenario: str, expected: list[float]
+) -> None:
     assert_allclose(
-        row4["band_edges"],
-        [1.0, 0.5],
+        row4[scenario],
+        expected,
         rtol=1e-12,
-        err_msg="row4/band_edges: pos0 band must include 0.01 and 0.99 exactly",
-    )
-
-
-def test_known_alpha_courant_number_on_the_four_cell_row(row4: dict[str, Any]) -> None:
-    # alpha = [0, 0.5, 0.5, 1]: cells 1 and 2 are near-interface, each summing
-    # |phi| = 1 over two x-faces. max: 0.5*(2/0.25)*0.25 = 1.0;
-    # mean: 0.5*((0+2+2+0)/1.0)*0.25 = 0.5.
-    assert_allclose(
-        row4["graded_interface"],
-        [1.0, 0.5],
-        rtol=1e-12,
-        err_msg="row4/graded_interface: hand-computed 0.5*max(sumPhi/V)*deltaT",
-    )
-
-
-def test_interface_mask_is_cell_based_not_face_based(row4: dict[str, Any]) -> None:
-    # alpha = [0, 0.5, 1, 1]: cell 1 alone is inside the band and contributes
-    # its full sumPhi = 2. max: 0.5*(2/0.25)*0.25 = 1.0;
-    # mean: 0.5*((0+2+0+0)/1.0)*0.25 = 0.25.
-    # A band on interpolate(alpha1) instead would light up the faces 0|1
-    # (alphaf = 0.25) and 1|2 (alphaf = 0.75), handing cells 0 and 2 a share
-    # each and doubling the mean to 0.5.
-    assert_allclose(
-        row4["lone_interface_cell"],
-        [1.0, 0.25],
-        rtol=1e-12,
-        err_msg="row4/lone_interface_cell: nearInterface() masks cells, not faces",
+        err_msg=f"row4/{scenario}: hand-computed [0.5*max(sumPhi/V)*deltaT, mean]",
     )
 
 

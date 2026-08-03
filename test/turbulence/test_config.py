@@ -6,24 +6,26 @@
 Parametrized over every discovered case: the real OpenFOAM dictionary (including
 its nested ``RAS`` / ``LES`` sub-dictionaries) is read and compared against the
 case's ``expected.yaml`` manifest, so the manifests can never silently disagree
-with the shipped dicts. No dict content or expected value is encoded here.
+with the shipped dicts, and the config is then re-saved and re-read so the
+round-trip is pinned too. No dict content or expected value is encoded here.
 
 The second half covers ``model_coefficients`` / ``load_with_coefficients`` — how a
-closure's typed ``<Model>Coeffs`` is resolved out of that dictionary. Its inputs
-are the ``parity_models/`` dictionaries the NeoN-vs-pybFoam parity run already
-uses (a bare ``<model>`` one that declares no coefficients block, and a
-``<model>Coeffs`` one that sets every coefficient off its default plus one entry
-no closure declares), so the numbers pinned here are the numbers both backends
-run. The expected values are literals: they are the defaults the closure classes
+closure's typed ``<Model>Coeffs`` is resolved out of that dictionary. Its inputs are
+the very dictionaries the NeoN-vs-pybFoam parity run writes
+(:func:`_parity_case.turbulence_config`): a bare ``<model>`` one that declares no
+coefficients block, and a ``<model>Coeffs`` one that sets every coefficient off its
+default plus one entry no closure declares. So the numbers pinned here are the numbers
+both backends run. The *defaults* are literals: they are the values the closure classes
 carry, and a test that recomputed them from those classes would prove nothing.
 """
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import pytest
 
 from neofoam.io import BaseConfig
+from neofoam.tooling.casebuild import empty
 from neofoam.turbulence.config import (
     TurbulencePropertiesConfig,
     load_with_coefficients,
@@ -33,109 +35,59 @@ from neofoam.turbulence.models.kEpsilon import KEpsilonCoeffs
 from neofoam.turbulence.models.kOmegaSST import KOmegaSSTCoeffs
 from neofoam.turbulence.models.spalartAllmaras import SpalartAllmarasCoeffs
 from neofoam.turbulence.selection import model_name
+from turbulence._parity_case import COEFFS, turbulence_properties
 from turbulence.conftest import CASES, Case
 
-_PARITY_MODELS = Path(__file__).parent / "parity_models"
+#: The typed coefficients config each closure declares.
+COEFFS_TYPES: dict[str, type[BaseConfig]] = {
+    "kEpsilon": KEpsilonCoeffs,
+    "SpalartAllmaras": SpalartAllmarasCoeffs,
+    "kOmegaSST": KOmegaSSTCoeffs,
+}
 
-#: ``(dictionary directory, model name, coeffs class, the coefficients it resolves to)``.
-#: These dictionaries declare no ``<model>Coeffs`` block, so every field keeps the
-#: OpenFOAM default the closure class carries.
-DEFAULT_CASES = [
-    (
-        "kEpsilon",
-        "kEpsilon",
-        KEpsilonCoeffs,
-        {"Cmu": 0.09, "C1": 1.44, "C2": 1.92, "sigmak": 1.0, "sigmaEps": 1.3},
-    ),
-    (
-        "SpalartAllmaras",
-        "SpalartAllmaras",
-        SpalartAllmarasCoeffs,
-        {
-            "sigmaNut": 0.66666,
-            "kappa": 0.41,
-            "Cb1": 0.1355,
-            "Cb2": 0.622,
-            "Cw2": 0.3,
-            "Cw3": 2.0,
-            "Cv1": 7.1,
-            "Cs": 0.3,
-        },
-    ),
-    (
-        "kOmegaSST",
-        "kOmegaSST",
-        KOmegaSSTCoeffs,
-        {
-            "alphaK1": 0.85,
-            "alphaK2": 1.0,
-            "alphaOmega1": 0.5,
-            "alphaOmega2": 0.856,
-            "gamma1": 5.0 / 9.0,
-            "gamma2": 0.44,
-            "beta1": 0.075,
-            "beta2": 0.0828,
-            "betaStar": 0.09,
-            "a1": 0.31,
-            "b1": 1.0,
-            "c1": 10.0,
-        },
-    ),
-]
-
-#: Same shape, for the dictionaries whose ``<model>Coeffs`` block sets every
-#: coefficient off its default (and adds ``notACoefficient``, which is ignored).
-OVERRIDE_CASES = [
-    (
-        "kEpsilonCoeffs",
-        "kEpsilon",
-        KEpsilonCoeffs,
-        {"Cmu": 0.085, "C1": 1.42, "C2": 1.68, "sigmak": 1.2, "sigmaEps": 1.11},
-    ),
-    (
-        "SpalartAllmarasCoeffs",
-        "SpalartAllmaras",
-        SpalartAllmarasCoeffs,
-        {
-            "sigmaNut": 0.7,
-            "kappa": 0.42,
-            "Cb1": 0.14,
-            "Cb2": 0.6,
-            "Cw2": 0.32,
-            "Cw3": 2.1,
-            "Cv1": 7.0,
-            "Cs": 0.35,
-        },
-    ),
-    (
-        "kOmegaSSTCoeffs",
-        "kOmegaSST",
-        KOmegaSSTCoeffs,
-        {
-            "alphaK1": 0.8,
-            "alphaK2": 1.1,
-            "alphaOmega1": 0.55,
-            "alphaOmega2": 0.9,
-            "gamma1": 0.52,
-            "gamma2": 0.46,
-            "beta1": 0.08,
-            "beta2": 0.09,
-            "betaStar": 0.085,
-            "a1": 0.32,
-            "b1": 1.1,
-            "c1": 9.0,
-        },
-    ),
-]
+#: The OpenFOAM defaults each closure class carries — what a dictionary with no
+#: ``<model>Coeffs`` block must resolve to. Literals on purpose (see the module doc).
+DEFAULTS: dict[str, dict[str, float]] = {
+    "kEpsilon": {"Cmu": 0.09, "C1": 1.44, "C2": 1.92, "sigmak": 1.0, "sigmaEps": 1.3},
+    "SpalartAllmaras": {
+        "sigmaNut": 0.66666,
+        "kappa": 0.41,
+        "Cb1": 0.1355,
+        "Cb2": 0.622,
+        "Cw2": 0.3,
+        "Cw3": 2.0,
+        "Cv1": 7.1,
+        "Cs": 0.3,
+    },
+    "kOmegaSST": {
+        "alphaK1": 0.85,
+        "alphaK2": 1.0,
+        "alphaOmega1": 0.5,
+        "alphaOmega2": 0.856,
+        "gamma1": 5.0 / 9.0,
+        "gamma2": 0.44,
+        "beta1": 0.075,
+        "beta2": 0.0828,
+        "betaStar": 0.09,
+        "a1": 0.31,
+        "b1": 1.0,
+        "c1": 10.0,
+    },
+}
 
 
-def _dict_path(dict_name: str) -> Path:
-    """The shipped ``turbulenceProperties`` of a parity model, as an explicit file."""
-    return _PARITY_MODELS / dict_name / "turbulenceProperties"
+@pytest.fixture
+def model_case(tmp_path: Path) -> Callable[[str], Path]:
+    """Materialize the case whose ``turbulenceProperties`` is the named dictionary."""
+
+    def build(name: str) -> Path:
+        return (empty() | turbulence_properties(name)).build_at(tmp_path / name).path
+
+    return build
 
 
 @pytest.mark.parametrize("case", CASES, ids=lambda c: c.name)
-def test_turbulence_properties_match_manifest(case: Case) -> None:
+def test_turbulence_properties_match_manifest_and_round_trip(case: Case, tmp_path: Path) -> None:
     cfg = TurbulencePropertiesConfig.load(case_dir=case.path)
     dumped = cfg.model_dump()
     # Compare only the keys the manifest declares; nested sub-dictionaries (RAS /
@@ -144,65 +96,43 @@ def test_turbulence_properties_match_manifest(case: Case) -> None:
         assert dumped[key] == expected
     assert model_name(cfg) == case.selection["model_name"]
 
+    cfg.save(case_dir=tmp_path)
+    assert TurbulencePropertiesConfig.load(case_dir=tmp_path).model_dump() == dumped
 
-@pytest.mark.parametrize(
-    ("dict_name", "model", "coeffs_type", "expected"),
-    DEFAULT_CASES,
-    ids=[c[0] for c in DEFAULT_CASES],
-)
+
+@pytest.mark.parametrize("model", sorted(DEFAULTS))
 def test_coefficients_default_to_openfoam_values(
-    dict_name: str, model: str, coeffs_type: type[BaseConfig], expected: dict[str, float]
+    model: str, model_case: Callable[[str], Path]
 ) -> None:
     """A dictionary with no ``<model>Coeffs`` block leaves every default in place."""
-    coeffs = load_with_coefficients(_dict_path(dict_name), model, coeffs_type).coeffs
-    assert coeffs.model_dump() == expected
+    coeffs = load_with_coefficients(model_case(model), model, COEFFS_TYPES[model]).coeffs
+    assert coeffs.model_dump() == DEFAULTS[model]
 
 
-@pytest.mark.parametrize(
-    ("dict_name", "model", "coeffs_type", "expected"),
-    OVERRIDE_CASES,
-    ids=[c[0] for c in OVERRIDE_CASES],
-)
+@pytest.mark.parametrize("model", sorted(COEFFS))
 def test_case_coefficients_override_the_defaults(
-    dict_name: str, model: str, coeffs_type: type[BaseConfig], expected: dict[str, float]
+    model: str, model_case: Callable[[str], Path]
 ) -> None:
-    """Every entry of the case's ``<model>Coeffs`` block replaces the class default."""
-    coeffs = load_with_coefficients(_dict_path(dict_name), model, coeffs_type).coeffs
-    assert coeffs.model_dump() == expected
+    """Every entry of the case's ``<model>Coeffs`` block replaces the class default.
 
+    ``notACoefficient`` is dropped, not rejected — OpenFOAM ignores it too, and
+    tolerating it is load-bearing: ``RASProperties`` is ``extra="allow"``, so an
+    unrecognised key reaches the resolution rather than failing validation, and a case
+    that carries one must still run. The equality against the override table therefore
+    also pins the resolved key *set*.
 
-@pytest.mark.parametrize(
-    ("dict_name", "model", "coeffs_type", "expected"),
-    OVERRIDE_CASES,
-    ids=[c[0] for c in OVERRIDE_CASES],
-)
-def test_undeclared_coefficient_entry_is_ignored(
-    dict_name: str, model: str, coeffs_type: type[BaseConfig], expected: dict[str, float]
-) -> None:
-    """``notACoefficient`` is dropped, not rejected — OpenFOAM ignores it too.
-
-    Tolerating it is load-bearing: ``RASProperties`` is ``extra="allow"``, so an
-    unrecognised key reaches here rather than failing validation, and a case that
-    carries one must still run.
+    The block resolves identically whether the ``RAS`` sub-dictionary arrives typed or
+    raw: ``BaseConfig.load(validate=True)`` yields a ``RASProperties``, whereas the
+    ``validate=False`` load ``ModelSpec.instantiate`` performs (and with it
+    ``load_with_coefficients``) leaves it a mapping. Both reach ``model_coefficients``,
+    so both must give the same coefficients.
     """
-    coeffs = load_with_coefficients(_dict_path(dict_name), model, coeffs_type).coeffs
+    case = model_case(f"{model}Coeffs")
+    coeffs_type = COEFFS_TYPES[model]
+
+    coeffs = load_with_coefficients(case, model, coeffs_type).coeffs
+    assert coeffs.model_dump() == COEFFS[model]
     assert not hasattr(coeffs, "notACoefficient")
-    assert set(coeffs.model_dump()) == set(expected)
 
-
-@pytest.mark.parametrize(
-    ("dict_name", "model", "coeffs_type", "expected"),
-    OVERRIDE_CASES,
-    ids=[c[0] for c in OVERRIDE_CASES],
-)
-def test_coefficients_resolve_from_a_validated_config(
-    dict_name: str, model: str, coeffs_type: type[BaseConfig], expected: dict[str, float]
-) -> None:
-    """The ``RAS`` block resolves identically as a ``RASProperties`` or a plain dict.
-
-    ``BaseConfig.load(validate=True)`` yields the typed sub-config, whereas the
-    ``validate=False`` load ``ModelSpec.instantiate`` performs leaves it a mapping;
-    both reach ``model_coefficients``, so both must give the same coefficients.
-    """
-    validated: Any = TurbulencePropertiesConfig.load(case_dir=_dict_path(dict_name))
-    assert model_coefficients(validated, model, coeffs_type).model_dump() == expected
+    validated: Any = TurbulencePropertiesConfig.load(case_dir=case)
+    assert model_coefficients(validated, model, coeffs_type).model_dump() == COEFFS[model]

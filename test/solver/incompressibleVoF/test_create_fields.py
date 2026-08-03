@@ -59,6 +59,7 @@ from neofoam.solver.incompressibleVoF.create_fields import create_init
 from .conftest import BuiltCase
 
 _ADVECTION_CASES = Path(__file__).parent / "models" / "alpha_advection" / "cases"
+_MULES_CASE = _ADVECTION_CASES / "damBreak_mules"
 
 # The graph ``create_init`` emits for a MULES case: the argList/runtime/mesh
 # triple, the two core models, the alpha-advection family's fields, PIMPLE's
@@ -100,65 +101,56 @@ MULES_STEPS = [
 # --------------------------------------------------------------------------- #
 
 
-def test_create_init_returns_a_runner_named_for_the_solver() -> None:
-    assert create_init(case_dir=Path(".")).name == "incompressibleVoF"
-
-
-def test_create_init_registers_all_three_stages() -> None:
+def test_create_init_is_the_solver_runner_with_all_three_stages() -> None:
     # LOAD and BUILD are mandatory (the runner raises without them); RESOLVE is
     # optional in the framework, and incompressibleVoF does register one.
-    spec = create_init(case_dir=Path(".")).spec
+    runner = create_init(case_dir=Path("."))
+    assert runner.name == "incompressibleVoF"
     assert [
-        spec.load_fn is not None,
-        spec.resolve_fn is not None,
-        spec.build_fn is not None,
+        runner.spec.load_fn is not None,
+        runner.spec.resolve_fn is not None,
+        runner.spec.build_fn is not None,
     ] == [True, True, True]
 
 
-def test_load_selects_mules_and_pimple_for_the_interfoam_dambreak_case(
+@pytest.mark.parametrize(
+    "case_name, pass_case_dir, expected",
+    [
+        # The damBreak fvSolution has no advectionScheme key -> the MULES
+        # default; VoF always couples with PIMPLE. Advection first: it runs
+        # before PIMPLE in every outer corrector.
+        pytest.param("damBreak_mules", True, ["MULES", "Pimple"], id="mules"),
+        # ``advectionScheme isoAdvector;`` swaps the advection member, nothing else.
+        pytest.param("damBreak_isoAdvector", True, ["isoAdvector", "Pimple"], id="isoAdvector"),
+        # ``case_dir=None`` -> Path("."). Only optional-model detection is handed
+        # that path, and no optional model is registered today, so this pins the
+        # default resolving at all (not a case-dir-specific outcome).
+        pytest.param("damBreak_mules", False, ["MULES", "Pimple"], id="cwd_default"),
+    ],
+)
+def test_load_selects_the_advection_scheme_the_case_asks_for(
     monkeypatch: pytest.MonkeyPatch,
+    case_name: str,
+    pass_case_dir: bool,
+    expected: list[str],
 ) -> None:
-    # The damBreak fvSolution has no advectionScheme key -> the MULES default;
-    # VoF always couples with PIMPLE. Advection first: it runs before PIMPLE in
-    # every outer corrector.
-    monkeypatch.chdir(_ADVECTION_CASES / "damBreak_mules")
-    load_result = create_init(case_dir=_ADVECTION_CASES / "damBreak_mules").run_load()
-    assert [model.name for model in load_result.core_models] == ["MULES", "Pimple"]
-
-
-def test_load_selects_isoadvector_from_the_cases_fvsolution(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    # ``advectionScheme isoAdvector;`` swaps the advection member, nothing else.
-    case = _ADVECTION_CASES / "damBreak_isoAdvector"
+    case = _ADVECTION_CASES / case_name
     monkeypatch.chdir(case)
-    load_result = create_init(case_dir=case).run_load()
-    assert [model.name for model in load_result.core_models] == [
-        "isoAdvector",
-        "Pimple",
-    ]
+    runner = create_init(case_dir=case) if pass_case_dir else create_init()
+    assert [model.name for model in runner.run_load().core_models] == expected
 
 
-def test_load_finds_no_optional_models_for_a_dambreak_case(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    # Nothing in the tree registers with incompressibleVoFModel yet, so the
-    # optional-model half of the LoadResult is empty (not absent).
-    case = _ADVECTION_CASES / "damBreak_mules"
-    monkeypatch.chdir(case)
-    assert create_init(case_dir=case).run_load().optional_models == []
-
-
-def test_load_result_carries_the_config_classes_the_core_models_declare(
+def test_load_result_carries_the_config_classes_and_no_optional_models(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     # The with-a-case config surface: MULES declares its fvSchemes/fvSolution
     # slices and the 0/alpha.water field, PIMPLE its slices, the typed
     # ``PIMPLE`` block (loop controls + createDyMControls switches) the slices
-    # pass through untyped, and U/p_rgh.
-    case = _ADVECTION_CASES / "damBreak_mules"
-    monkeypatch.chdir(case)
-    load_result = create_init(case_dir=case).run_load()
+    # pass through untyped, and U/p_rgh. Nothing in the tree registers with
+    # incompressibleVoFModel yet, so the optional-model half of the LoadResult
+    # is empty (not absent).
+    monkeypatch.chdir(_MULES_CASE)
+    load_result = create_init(case_dir=_MULES_CASE).run_load()
     assert [cls.__name__ for cls in load_result.config_classes] == [
         "MULES_fvSchemes",
         "MULES_fvSolution",
@@ -170,50 +162,30 @@ def test_load_result_carries_the_config_classes_the_core_models_declare(
         "UFieldConfig",
         "p_rghFieldConfig",
     ]
-
-
-def test_load_uses_the_cwd_when_no_case_dir_is_given(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    # ``case_dir=None`` -> Path("."). Only optional-model detection is handed
-    # that path, and no optional model is registered today, so this pins the
-    # default resolving at all (not a case-dir-specific outcome).
-    monkeypatch.chdir(_ADVECTION_CASES / "damBreak_mules")
-    load_result = create_init().run_load()
-    assert [model.name for model in load_result.core_models] == ["MULES", "Pimple"]
+    assert load_result.optional_models == []
 
 
 # --------------------------------------------------------------------------- #
-# RESOLVE                                                                      #
+# RESOLVE / BUILD (description only — nothing is constructed)                  #
 # --------------------------------------------------------------------------- #
 
 
-def test_resolve_wires_the_optional_models_and_nothing_else(
+def test_build_describes_the_whole_graph_without_constructing_anything(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    # ``cases/damBreak_mules`` is *only* a system/fvSolution — no polyMesh, no
+    # 0/ directory. A BUILD that constructed anything eagerly (Foam::Time, mesh,
+    # a field read) could not survive here; a fully lazy one returns the graph.
+    #
     # RESOLVE forwards the ConfigContext to every *optional* model; the two core
     # models are wired by their own specs. With no optional model registered it
-    # is a no-op, and BUILD still yields the whole graph afterwards.
-    case = _ADVECTION_CASES / "damBreak_mules"
-    monkeypatch.chdir(case)
-    runner = create_init(case_dir=case)
+    # is a no-op, so BUILD still yields the whole graph afterwards.
+    assert not (_MULES_CASE / "constant").exists()
+    monkeypatch.chdir(_MULES_CASE)
+    runner = create_init(case_dir=_MULES_CASE)
     runner.run_load()
-    runner.run_resolve(ConfigContext())
     assert [step.name for step in runner.run_build()] == MULES_STEPS
-
-
-# --------------------------------------------------------------------------- #
-# BUILD (description only — nothing is constructed)                            #
-# --------------------------------------------------------------------------- #
-
-
-def test_build_emits_the_whole_init_graph_for_a_mules_case(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    case = _ADVECTION_CASES / "damBreak_mules"
-    monkeypatch.chdir(case)
-    runner = create_init(case_dir=case)
-    runner.run_load()
+    runner.run_resolve(ConfigContext())
     assert [step.name for step in runner.run_build()] == MULES_STEPS
 
 
@@ -231,28 +203,13 @@ def test_build_of_an_isoadvector_case_adds_the_advector_model(
     assert names == MULES_STEPS[:13] + ["models.advector"] + MULES_STEPS[14:]
 
 
-def test_build_constructs_nothing_it_only_describes_the_graph(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    # ``cases/damBreak_mules`` is *only* a system/fvSolution — no polyMesh, no
-    # 0/ directory. A BUILD that constructed anything eagerly (Foam::Time, mesh,
-    # a field read) could not survive here; a fully lazy one returns the graph.
-    case = _ADVECTION_CASES / "damBreak_mules"
-    assert not (case / "constant").exists()
-    monkeypatch.chdir(case)
-    runner = create_init(case_dir=case)
-    runner.run_load()
-    assert len(runner.run_build()) == len(MULES_STEPS)
-
-
 def test_turbulence_step_depends_on_the_fields_it_wraps(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     # TwoPhaseTransportModel(rho, U, phi, rhoPhi, mixture) — the declared
     # dependencies are what orders it behind both core models' fields.
-    case = _ADVECTION_CASES / "damBreak_mules"
-    monkeypatch.chdir(case)
-    runner = create_init(case_dir=case)
+    monkeypatch.chdir(_MULES_CASE)
+    runner = create_init(case_dir=_MULES_CASE)
     runner.run_load()
     step = next(s for s in runner.run_build() if s.name == "models.turbulence")
     assert step.depends_on == [
@@ -269,7 +226,18 @@ def test_turbulence_step_depends_on_the_fields_it_wraps(
 # --------------------------------------------------------------------------- #
 
 
-def test_pipeline_builds_every_field_of_the_vof_solver(vof_row4: BuiltCase) -> None:
+def test_the_pipeline_builds_every_field_and_model_of_the_vof_solver(
+    vof_row4: BuiltCase,
+) -> None:
+    # The models are both core models under their solver-facing names, the
+    # mixture and turbulence models, the PIMPLE controls (including the
+    # mesh-motion switches and the face velocity ``Uf``, which is None on this
+    # static case), the Foam::Time (which has no Context slot of its own and
+    # lands in models["runtime"]) and the argList it was built from (held so the
+    # MPI session outlives the run — see ``foam.initialization.create_arglist``).
+    #
+    # ctx.fields is keyed by the solver's names; the phase fractions carry the
+    # case's phase names (transportProperties: ``phases (water air)``).
     assert vof_row4.result["field_keys"] == [
         "U",
         "alpha1",
@@ -285,17 +253,6 @@ def test_pipeline_builds_every_field_of_the_vof_solver(vof_row4: BuiltCase) -> N
         "rho",
         "rhoPhi",
     ]
-
-
-def test_pipeline_registers_every_model_of_the_vof_solver(
-    vof_row4: BuiltCase,
-) -> None:
-    # Both core models under their solver-facing names, the mixture and
-    # turbulence models, the PIMPLE controls (including the mesh-motion switches
-    # and the face velocity ``Uf``, which is None on this static case), the
-    # Foam::Time (which has no Context slot of its own and lands in
-    # models["runtime"]) and the argList it was built from (held so the MPI
-    # session outlives the run — see ``foam.initialization.create_arglist``).
     assert vof_row4.result["model_keys"] == [
         "Uf",
         "alphaPhi1Corr0",
@@ -312,13 +269,6 @@ def test_pipeline_registers_every_model_of_the_vof_solver(
         "runtime",
         "turbulence",
     ]
-
-
-def test_context_field_keys_map_onto_the_openfoam_field_names(
-    vof_row4: BuiltCase,
-) -> None:
-    # ctx.fields is keyed by the solver's names; the phase fractions carry the
-    # case's phase names (transportProperties: ``phases (water air)``).
     assert vof_row4.result["registered_names"] == {
         "U": "U",
         "alpha1": "alpha.water",
@@ -336,27 +286,19 @@ def test_context_field_keys_map_onto_the_openfoam_field_names(
     }
 
 
-def test_alpha_water_is_read_from_the_cases_zero_directory(
+def test_alpha_water_is_read_from_the_case_with_its_boundary_conditions(
     vof_row4: BuiltCase,
 ) -> None:
-    # 0/alpha.water is the literal (0 0.25 0.75 1) — the mixture reads it.
+    # 0/alpha.water is the literal (0 0.25 0.75 1) — the mixture reads it — and
+    # gives the inlet an inletOutlet BC and the walls zeroGradient; the
+    # constructed field carries both, dimensionless.
     assert vof_row4.internal("alpha1") == [0.0, 0.25, 0.75, 1.0]
-
-
-def test_alpha_water_keeps_the_boundary_conditions_authored_in_the_case(
-    vof_row4: BuiltCase,
-) -> None:
-    # 0/alpha.water gives the inlet an inletOutlet BC and the walls
-    # zeroGradient; the constructed field carries both.
     inlet = vof_row4.written_boundary("alpha.water", "inlet")
     walls = vof_row4.written_boundary("alpha.water", "walls")
     assert (
         str(inlet.getOrDefault[str]("type", "")),
         str(walls.getOrDefault[str]("type", "")),
     ) == ("inletOutlet", "zeroGradient")
-
-
-def test_phase_fractions_are_dimensionless(vof_row4: BuiltCase) -> None:
     assert vof_row4.written_dimensions("alpha.water") == [0, 0, 0, 0, 0, 0, 0]
 
 
@@ -391,44 +333,35 @@ def test_phi_is_the_face_flux_of_the_velocity_field(vof_row4: BuiltCase) -> None
     assert str(inlet.getOrDefault[str]("value", "")) == "uniform -2"
 
 
-def test_href_is_registered_and_defaults_to_zero_when_absent(
-    vof_row4: BuiltCase,
+@pytest.mark.parametrize(
+    "case_fixture, expected_href, expected_gh",
+    [
+        # vofRow4 ships no constant/hRef -> readhRef.H's READ_IF_PRESENT default
+        # (dimensions dimLength, value 0), so ghRef is 0 and gh = g&C is
+        # -9.81*0.5 at every cell centre.
+        pytest.param("vof_row4", 0.0, -4.905, id="hRef_absent"),
+        # The `href` overlay ships constant/hRef = 0.3, and gh.H folds it in as
+        # ghRef = g & (cmptMag(g)/mag(g))*hRef = (0,-9.81,0) & (0,0.3,0)
+        # = -2.943, so gh = g&C - ghRef = -4.905 - (-2.943) = -1.962 everywhere.
+        pytest.param("vof_row4_href", 0.3, -1.962, id="hRef_from_constant"),
+    ],
+)
+def test_href_and_the_gravitational_head_follow_constant_hRef(
+    request: pytest.FixtureRequest,
+    case_fixture: str,
+    expected_href: float,
+    expected_gh: float,
 ) -> None:
-    # vofRow4 ships no constant/hRef -> readhRef.H's READ_IF_PRESENT default
-    # (dimensions dimLength, value 0), and it must still be registered under
-    # its own name for BC lookups (prghPermeableAlphaTotalPressure etc.).
-    assert vof_row4.result["registered_names"]["hRef"] == "hRef"
-    assert vof_row4.internal("hRef") == 0.0
-
-
-def test_href_is_read_from_constant_when_present(vof_row4_href: BuiltCase) -> None:
-    # The `href` overlay ships constant/hRef = 0.3.
-    assert vof_row4_href.internal("hRef") == 0.3
-
-
-def test_gh_is_the_gravitational_head_at_the_cell_centres(
-    vof_row4: BuiltCase,
-) -> None:
-    # gh = (g & C) - ghRef, ghRef = 0: every cell centre is at y = 0.5, so
-    # gh = -9.81 * 0.5 = -4.905 everywhere.
+    built: BuiltCase = request.getfixturevalue(case_fixture)
+    # hRef must be registered under its own name for BC lookups
+    # (prghPermeableAlphaTotalPressure etc.).
+    assert built.result["registered_names"]["hRef"] == "hRef"
+    assert built.internal("hRef") == expected_href
     assert_allclose(
-        vof_row4.internal("gh"),
-        [-4.905] * 4,
+        built.internal("gh"),
+        [expected_gh] * 4,
         rtol=1e-12,
-        err_msg="vofRow4: gh must be g&C at y=0.5 with a zero reference head",
-    )
-
-
-def test_gh_uses_a_non_default_hRef_as_the_reference_head(
-    vof_row4_href: BuiltCase,
-) -> None:
-    # gh.H: ghRef = g & (cmptMag(g)/mag(g))*hRef = (0,-9.81,0) & (0,0.3,0)
-    # = -2.943, so gh = g&C - ghRef = -4.905 - (-2.943) = -1.962 everywhere.
-    assert_allclose(
-        vof_row4_href.internal("gh"),
-        [-1.962] * 4,
-        rtol=1e-12,
-        err_msg="href: gh must fold in a non-zero hRef via ghRef",
+        err_msg=f"{case_fixture}: gh must be g&C folded against ghRef",
     )
 
 
@@ -458,24 +391,19 @@ def test_absolute_pressure_is_p_rgh_plus_the_hydrostatic_head(
     )
 
 
-def test_pressure_reference_is_read_from_the_pimple_dict(
+def test_the_pimple_dict_is_read_into_the_controls_and_the_pressure_reference(
     vof_row4: BuiltCase,
 ) -> None:
     # Every p_rgh patch is zeroGradient, so the closed domain needs a reference
     # cell (``needsRef``); system/fvSolution's PIMPLE dict carries pRefCell 0 /
-    # pRefValue 0. The open/closed distinction itself is pinned in
+    # pRefValue 0, plus nOuterCorrectors 1, nCorrectors 3, momentumPredictor no.
+    # The open/closed distinction itself is pinned in
     # ``models/pressure_velocity/test_pressure_reference.py``.
     assert vof_row4.result["pressure_reference"] == {
         "cell": 0,
         "value": 0.0,
         "needs_ref": True,
     }
-
-
-def test_pimple_control_is_built_from_the_cases_pimple_dict(
-    vof_row4: BuiltCase,
-) -> None:
-    # system/fvSolution: nOuterCorrectors 1, nCorrectors 3, momentumPredictor no.
     assert vof_row4.result["pimple_control"] == {
         "nOuterCorrectors": 1,
         "nCorrectors": 3,
@@ -483,20 +411,12 @@ def test_pimple_control_is_built_from_the_cases_pimple_dict(
     }
 
 
-def test_turbulence_model_is_the_two_phase_transport_model(
+def test_the_pipeline_seeds_the_turbulence_model_and_the_continuity_error(
     vof_row4: BuiltCase,
 ) -> None:
     assert vof_row4.result["turbulence_type"] == "TwoPhaseTransportModel"
-
-
-def test_cumulative_continuity_error_starts_at_zero(vof_row4: BuiltCase) -> None:
     # A one-element list so the continuity operation can accumulate in place.
     assert vof_row4.result["cumulativeContErr"] == [0.0]
-
-
-def test_no_field_is_flagged_for_the_python_field_writer(
-    vof_row4: BuiltCase,
-) -> None:
     # incompressibleVoF writes through OpenFOAM (``runtime.write(True)`` in
     # write_output), not through the Python per-field writer, so no init step
     # sets write=True and ctx.write_fields stays empty. (The write=True flags on

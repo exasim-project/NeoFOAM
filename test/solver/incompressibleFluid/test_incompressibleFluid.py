@@ -15,6 +15,8 @@ These are unit tests on the gate wrapper the execution graph applies; the
 end-to-end ordering is covered by the drop-in verification study.
 """
 
+import pytest
+
 from neofoam.algorithms.solution_loop.control import PimpleControl, SimpleControl
 from neofoam.framework.context import Context
 from neofoam.framework.operations import Operation, SequentialOp
@@ -29,49 +31,35 @@ def _counting_op(calls: list[str]) -> Operation:
     )
 
 
-def test_correction_runs_only_on_the_outer_iterations_turb_corr_opens() -> None:
-    control = PimpleControl(
-        nOuterCorrectors=3, nCorrectors=1, momentumPredictor=True, turbCorr=True
-    )
+# Each row is the control a case would build, and how many of its loop passes the
+# gate must open on. The control is *described* here and constructed in the body:
+# looping it consumes it, so an instance must not be shared across runs.
+_PIMPLE = {"nOuterCorrectors": 3, "nCorrectors": 1, "momentumPredictor": True, "turbCorr": True}
+
+
+@pytest.mark.parametrize(
+    ("control_cls", "model_name", "control_kwargs", "expected_calls"),
+    [
+        # turbOnFinalIterOnly defaults to true: the final outer iteration only
+        (PimpleControl, "pimple_control", _PIMPLE, 1),
+        (PimpleControl, "pimple_control", {**_PIMPLE, "turbOnFinalIterOnly": False}, 3),
+        # simpleFoam has no gate: its loop body already runs once per iteration
+        (SimpleControl, "simple_control", {"momentumPredictor": True}, 1),
+    ],
+    ids=["pimple_final_iteration_only", "pimple_every_outer_iteration", "simple_ungated"],
+)
+def test_the_gate_opens_on_the_outer_iterations_turb_corr_opens(
+    control_cls: type, model_name: str, control_kwargs: dict, expected_calls: int
+) -> None:
+    control = control_cls(**control_kwargs)
     calls: list[str] = []
-    ctx = Context(fields={}, models={"pimple_control": control})
+    ctx = Context(fields={}, models={model_name: control})
 
     gated = _under_turb_corr(_counting_op(calls))
     while control.loop():
         gated.run(ctx)
 
-    # turbOnFinalIterOnly defaults to true: the final outer iteration only
-    assert calls == ["correct"]
-
-
-def test_correction_runs_every_outer_iteration_when_turb_on_final_iter_only_is_off() -> None:
-    control = PimpleControl(
-        nOuterCorrectors=3,
-        nCorrectors=1,
-        momentumPredictor=True,
-        turbCorr=True,
-        turbOnFinalIterOnly=False,
-    )
-    calls: list[str] = []
-    ctx = Context(fields={}, models={"pimple_control": control})
-
-    gated = _under_turb_corr(_counting_op(calls))
-    while control.loop():
-        gated.run(ctx)
-
-    assert calls == ["correct"] * 3
-
-
-def test_correction_is_ungated_for_a_simple_case() -> None:
-    control = SimpleControl(momentumPredictor=True)
-    calls: list[str] = []
-    ctx = Context(fields={}, models={"simple_control": control})
-
-    gated = _under_turb_corr(_counting_op(calls))
-    while control.loop():
-        gated.run(ctx)
-
-    assert calls == ["correct"]
+    assert calls == ["correct"] * expected_calls
 
 
 def test_gate_keeps_the_wrapped_operation_name() -> None:

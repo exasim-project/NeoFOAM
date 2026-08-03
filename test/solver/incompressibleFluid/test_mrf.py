@@ -14,9 +14,9 @@ source gains the frame acceleration *inside the rotating cell zone only*.
 
 **Cases.** The ``cases/row4`` base — four unit cells in a row along x, the first
 two in a ``modelZone`` cellZone, with ``0/U`` a uniform ``(1 0 0)`` (see
-``row4_cases.py``) — under the ``mrf`` overlay, whose
+``row4_cases.py``) — under the ``mrf`` variant, whose
 ``constant/MRFProperties`` spins that zone at ``omega 2`` about ``(0 0 1)``
-through the origin; and the same overlay on top of ``transient``, i.e. driven by
+through the origin; and the same variant on top of ``transient``, i.e. driven by
 PIMPLE instead of SIMPLE, because the two algorithms carry their own copy of the
 hook. Every expectation below is then hand-derivable from
 ``MRFZone::addCoriolis`` / ``MRFZone::correctBoundaryVelocity``:
@@ -47,7 +47,7 @@ import pytest
 
 from neofoam.mrf import mrf
 
-from .row4_cases import stage_row4
+from .row4_cases import row4
 
 _HERE = Path(__file__).parent
 _WORKER = _HERE / "_mrf_worker.py"
@@ -71,12 +71,12 @@ def rotor_row4(request: pytest.FixtureRequest, tmp_path_factory: pytest.TempPath
     """Mesh the case and assemble its momentum equation both ways.
 
     Parametrized over the two algorithms that own a momentum hook: the ``mrf``
-    overlay on the steady SIMPLE base, and the same overlay on top of
+    variant on the steady SIMPLE base, and the same variant on top of
     ``transient`` (``Euler`` ddt, a ``PIMPLE`` dict). Both expectations below are
     the same numbers — the frame terms do not depend on the time derivative — so
     the extra coverage is a parametrize entry, not a test body.
     """
-    case = stage_row4(tmp_path_factory.mktemp("mrfRow4") / "case", *request.param)
+    case = row4(*request.param).build_at(tmp_path_factory.mktemp("mrfRow4") / "case").path
     subprocess.run(["blockMesh", "-case", str(case)], check=True, capture_output=True, timeout=300)
     subprocess.run(
         [sys.executable, str(_WORKER), str(case)], check=True, capture_output=True, timeout=600
@@ -87,50 +87,42 @@ def rotor_row4(request: pytest.FixtureRequest, tmp_path_factory: pytest.TempPath
 # --- detection -------------------------------------------------------------
 
 
-def test_the_model_activates_on_a_case_with_mrf_properties(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.chdir(stage_row4(tmp_path / "case", "mrf"))
-
-    assert mrf.run_detect() is True
-
-
-def test_the_model_stays_inactive_without_mrf_properties(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+@pytest.mark.parametrize(
+    ("variants", "active"),
     # The bare base is the same case with only the dictionary missing: nothing
     # else about a case may switch MRF on, because an active model is what
     # changes the assembly.
-    monkeypatch.chdir(stage_row4(tmp_path / "case"))
+    [(("mrf",), True), ((), False)],
+    ids=["with_MRFProperties", "without_MRFProperties"],
+)
+def test_only_constant_mrf_properties_activates_the_model(
+    variants: tuple[str, ...], active: bool, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(row4(*variants).build_at(tmp_path / "case").path)
 
-    assert mrf.run_detect() is False
+    assert mrf.run_detect() is active
 
 
 # --- MRF.correctBoundaryVelocity(U) ---------------------------------------
 
 
-def test_the_rotating_wall_faces_get_the_frame_velocity(rotor_row4: dict) -> None:
+def test_only_the_rotating_wall_faces_get_the_frame_velocity(rotor_row4: dict) -> None:
     centres = np.asarray(rotor_row4["walls_face_centres"])
     in_zone = centres[:, 0] < _ROTOR_X_MAX
+    outside = centres[:, 0] > _ROTOR_X_MAX
+    after = np.asarray(rotor_row4["walls_U_after"])
 
     np.testing.assert_allclose(
-        np.asarray(rotor_row4["walls_U_after"])[in_zone],
+        after[in_zone],
         np.cross(_OMEGA, centres[in_zone]),
         rtol=0,
         atol=_ATOL,
         err_msg="row4+mrf: rotating wall faces do not carry Omega x Cf",
     )
-
-
-def test_the_wall_faces_outside_the_zone_keep_their_no_slip_value(rotor_row4: dict) -> None:
-    centres = np.asarray(rotor_row4["walls_face_centres"])
-    outside = centres[:, 0] > _ROTOR_X_MAX
-
-    before = np.asarray(rotor_row4["walls_U_before"])[outside]
-    after = np.asarray(rotor_row4["walls_U_after"])[outside]
+    # Outside the zone the faces keep the no-slip value they came in with.
     np.testing.assert_array_equal(
-        after,
-        before,
+        after[outside],
+        np.asarray(rotor_row4["walls_U_before"])[outside],
         err_msg="row4+mrf: correctBoundaryVelocity reached outside the modelZone",
     )
 
@@ -138,37 +130,29 @@ def test_the_wall_faces_outside_the_zone_keep_their_no_slip_value(rotor_row4: di
 # --- MRF.DDt(U) in the momentum equation ----------------------------------
 
 
-def test_the_momentum_source_gains_the_coriolis_term_in_the_zone(rotor_row4: dict) -> None:
+def test_the_momentum_source_gains_the_coriolis_term_in_the_zone_only(rotor_row4: dict) -> None:
     centres = np.asarray(rotor_row4["cell_centres"])
     in_zone = centres[:, 0] < _ROTOR_X_MAX
+    outside = centres[:, 0] > _ROTOR_X_MAX
     volumes = np.asarray(rotor_row4["cell_volumes"])[in_zone, None]
 
     # Against the assembly on the *same* corrected boundary state, so the shift
     # is the frame acceleration and nothing else.
-    shift = np.asarray(rotor_row4["source_with_mrf"]) - np.asarray(
-        rotor_row4["source_without_mrf_corrected_walls"]
-    )
+    with_mrf = np.asarray(rotor_row4["source_with_mrf"])
+    without_mrf = np.asarray(rotor_row4["source_without_mrf_corrected_walls"])
     # U is the uniform (1 0 0) of 0/U in every cell, so Omega x U is one vector.
     np.testing.assert_allclose(
-        shift[in_zone],
+        (with_mrf - without_mrf)[in_zone],
         -volumes * np.cross(_OMEGA, [1.0, 0.0, 0.0]),
         rtol=0,
         atol=_ATOL,
         err_msg="row4+mrf: the momentum source does not carry -V*(Omega x U)",
     )
-
-
-def test_the_momentum_source_is_untouched_outside_the_zone(rotor_row4: dict) -> None:
-    centres = np.asarray(rotor_row4["cell_centres"])
-    outside = centres[:, 0] > _ROTOR_X_MAX
-
-    with_mrf = np.asarray(rotor_row4["source_with_mrf"])[outside]
-    without_mrf = np.asarray(rotor_row4["source_without_mrf_corrected_walls"])[outside]
-    # Bit-identical, not merely close: outside the zone ``addCoriolis`` writes
-    # nothing, which is the same guarantee that keeps a case with no
+    # Outside the zone bit-identical, not merely close: there ``addCoriolis``
+    # writes nothing, which is the same guarantee that keeps a case with no
     # ``MRFProperties`` assembling exactly the matrix it always did.
     np.testing.assert_array_equal(
-        with_mrf,
-        without_mrf,
+        with_mrf[outside],
+        without_mrf[outside],
         err_msg="row4+mrf: the momentum source changed outside the modelZone",
     )

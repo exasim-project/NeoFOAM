@@ -27,23 +27,18 @@ Adding a model is one entry in :data:`CASES`; the body is generic.
 
 from __future__ import annotations
 
-import shutil
 from pathlib import Path
 
 import numpy as np
 import pytest
 
-from turbulence._parity_case import run_worker
+from turbulence._parity_case import parity_case, run_worker
 
-_HERE = Path(__file__).parent
-_BASE_CASE = _HERE / "parity_base"  # shared no-wall box case (mesh + fields + system)
-_MODELS = _HERE / "parity_models"  # per-model constant/turbulenceProperties overlay
-
-#: Add a NeoN model by dropping its ``turbulenceProperties`` under
-#: ``parity_models/<name>/`` and listing it here. The ``*Coeffs`` entries select the
-#: same closures through a dictionary that sets every ``<model>Coeffs`` coefficient
-#: off its default (plus an unknown key OpenFOAM ignores): both backends read that
-#: one dictionary, so agreement can only mean the NeoN closure honours the overrides.
+#: Add a NeoN model by listing it here — :func:`_parity_case.turbulence_config` writes
+#: the dictionary. The ``*Coeffs`` entries select the same closures through a
+#: dictionary that sets every ``<model>Coeffs`` coefficient off its default (plus an
+#: unknown key OpenFOAM ignores): both backends read that one dictionary, so agreement
+#: can only mean the NeoN closure honours the overrides.
 CASES = [
     "laminar",
     "kEpsilon",
@@ -69,12 +64,7 @@ FALLBACK_CASES = ["laminar", "kEpsilon", "realizableKE"]
 @pytest.mark.parametrize("name", CASES)
 def test_neon_nut_matches_pybfoam(name: str, tmp_path: Path) -> None:
     """After one ``correct`` step, the NeoN model's ``nut`` equals pybFoam's, cell-by-cell."""
-    case = tmp_path / "case"
-    shutil.copytree(_BASE_CASE, case)
-    shutil.copyfile(
-        _MODELS / name / "turbulenceProperties",
-        case / "constant" / "turbulenceProperties",
-    )
+    case = parity_case(name).build_at(tmp_path / "case").path
 
     run_worker("setup", case)  # mesh + identical random U / k / epsilon on disk
     run_worker("reference", case)  # pybFoam fields → reference_<field>.npy
@@ -121,12 +111,7 @@ def test_fallback_nut_matches_pybfoam(name: str, tmp_path: Path) -> None:
     ``incompressibleFluid`` uses), including for the fallback-only ``realizableKE``,
     which has no native NeoN closure.
     """
-    case = tmp_path / "case"
-    shutil.copytree(_BASE_CASE, case)
-    shutil.copyfile(
-        _MODELS / name / "turbulenceProperties",
-        case / "constant" / "turbulenceProperties",
-    )
+    case = parity_case(name).build_at(tmp_path / "case").path
 
     run_worker("setup", case)  # mesh + identical random U / k / epsilon on disk
     run_worker("reference", case)  # pybFoam fields → reference_nut.npy

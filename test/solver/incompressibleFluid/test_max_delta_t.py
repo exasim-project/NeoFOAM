@@ -62,16 +62,10 @@ def test_config_rejects_non_positive_cap(bad: float) -> None:
         MaxDeltaTConfig(maxDeltaT=bad)
 
 
-def test_contribution_caps_delta_t_when_model_active() -> None:
+def test_the_contribution_is_the_cap_only_while_the_model_is_active() -> None:
     ctx = Context(fields={}, models={})
-    bound = _bound(maxTimeStep, [_max_runtime(0.5)], ctx)
-    assert bound() == pytest.approx(0.5)
-
-
-def test_contribution_excluded_when_model_inactive() -> None:
-    ctx = Context(fields={}, models={})
-    bound = _bound(maxTimeStep, [], ctx)
-    assert bound() == VGREAT
+    assert _bound(maxTimeStep, [_max_runtime(0.5)], ctx)() == pytest.approx(0.5)
+    assert _bound(maxTimeStep, [], ctx)() == VGREAT
 
 
 def test_cap_never_reaches_the_damped_courant_fold() -> None:

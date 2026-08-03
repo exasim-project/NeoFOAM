@@ -16,10 +16,11 @@ changed. This module pins the four observable consequences:
 * after a run the mesh has actually moved, and ``gh`` matches ``g & C`` on the
   *moved* cell centres rather than the ones it was built on.
 
-**Cases.** ``cases/vofRow4/common`` (static) and its ``moving`` overlay — the
-same 4-cell row plus a ``constant/dynamicMeshDict`` oscillating the whole mesh
-along gravity, a quarter period over the 1 s ``endTime`` so the mesh sits at its
-full 0.05 m offset when the run ends. The moving case sets ``correctPhi no``: the
+**Cases.** ``cases/vofRow4/common`` (static) and the package conftest's
+``moving()`` step — the same 4-cell row plus a ``constant/dynamicMeshDict``
+oscillating the whole mesh along gravity, a quarter period over the 1 s
+``endTime`` so the mesh sits at its full 0.05 m offset when the run ends. The
+moving case sets ``correctPhi no``: the
 start-up/post-move flux projection (``CorrectPhi``) is a separate, unported part
 of interFoam, and 9 of the 17 moving tutorials switch it off too.
 
@@ -38,7 +39,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from .conftest import VOF_ROW4, BuiltCase, stage_case
+from .conftest import BuiltCase, build_case, moving
 
 _HERE = Path(__file__).parent
 _WORKER = _HERE / "_dynamic_mesh_worker.py"
@@ -57,56 +58,39 @@ _CENTRE_Y0 = 0.5
 
 
 @pytest.mark.parametrize(
-    "case_fixture, expected_type, expected_dynamic",
+    "case_fixture, expected_type, expected_dynamic, expected_Uf",
     [
-        pytest.param("vof_row4", "fvMesh", False, id="no_dynamicMeshDict"),
-        pytest.param("vof_row4_moving", "dynamicFvMesh", True, id="with_dynamicMeshDict"),
+        pytest.param("vof_row4", "fvMesh", False, None, id="no_dynamicMeshDict"),
+        pytest.param("vof_row4_moving", "dynamicFvMesh", True, "Uf", id="with_dynamicMeshDict"),
     ],
 )
-def test_the_dynamicMeshDict_decides_which_mesh_class_is_built(
+def test_the_dynamicMeshDict_decides_the_mesh_class_and_the_face_velocity(
     request: pytest.FixtureRequest,
     case_fixture: str,
     expected_type: str,
     expected_dynamic: bool,
+    expected_Uf: str | None,
 ) -> None:
+    # createUfIfPresent.H builds ``Uf`` on the dynamic mesh and nowhere else.
     built: BuiltCase = request.getfixturevalue(case_fixture)
     assert built.result["mesh_type"] == expected_type
     assert built.result["mesh_dynamic"] is expected_dynamic
-
-
-# --- Uf (createUfIfPresent.H) ---------------------------------------------
-
-
-@pytest.mark.parametrize(
-    "case_fixture, expected_Uf",
-    [
-        pytest.param("vof_row4", None, id="static_mesh"),
-        pytest.param("vof_row4_moving", "Uf", id="dynamic_mesh"),
-    ],
-)
-def test_the_face_velocity_is_built_on_a_dynamic_mesh_and_nowhere_else(
-    request: pytest.FixtureRequest, case_fixture: str, expected_Uf: str | None
-) -> None:
-    built: BuiltCase = request.getfixturevalue(case_fixture)
     assert built.result["Uf"] == expected_Uf
 
 
 # --- createDyMControls.H defaults -----------------------------------------
 
 
-def test_correct_phi_defaults_to_off_on_a_static_mesh(vof_row4: BuiltCase) -> None:
-    # `correctPhi` defaults to mesh.dynamic(), and the other two to False.
+def test_correct_phi_defaults_to_mesh_dynamic_and_the_case_dict_overrides_it(
+    vof_row4: BuiltCase, vof_row4_moving: BuiltCase
+) -> None:
+    # `correctPhi` defaults to mesh.dynamic(), and the other two to False; the
+    # moving case then asks for `correctPhi no` even though the mesh is dynamic.
     assert vof_row4.result["dynamic_mesh_controls"] == {
         "correctPhi": False,
         "checkMeshCourantNo": False,
         "moveMeshOuterCorrectors": False,
     }
-
-
-def test_the_case_dictionary_overrides_the_correct_phi_default(
-    vof_row4_moving: BuiltCase,
-) -> None:
-    # The moving case asks for `correctPhi no` even though the mesh is dynamic.
     assert vof_row4_moving.result["dynamic_mesh_controls"]["correctPhi"] is False
 
 
@@ -116,9 +100,7 @@ def test_the_case_dictionary_overrides_the_correct_phi_default(
 @pytest.fixture(scope="module")
 def moved_mesh(tmp_path_factory: pytest.TempPathFactory) -> dict:
     """Run the whole time loop on the moving case; return the final mesh state."""
-    case = stage_case(
-        tmp_path_factory.mktemp("vofRow4Moved") / "case", VOF_ROW4 / "common", VOF_ROW4 / "moving"
-    )
+    case = build_case(tmp_path_factory.mktemp("vofRow4Moved") / "case", moving())
     subprocess.run(["blockMesh", "-case", str(case)], check=True, capture_output=True, timeout=300)
     subprocess.run(
         [sys.executable, str(_WORKER), str(case)], check=True, capture_output=True, timeout=600
@@ -126,28 +108,26 @@ def moved_mesh(tmp_path_factory: pytest.TempPathFactory) -> dict:
     return json.loads((case / "dynamic_mesh.json").read_text())
 
 
-def test_the_time_loop_moves_the_mesh(moved_mesh: dict) -> None:
+def test_the_time_loop_moves_the_mesh_and_rebuilds_the_buoyancy_head(
+    moved_mesh: dict,
+) -> None:
     # Without mesh.update() the points never change and polyMesh::moving() stays
     # False; with it the whole row sits one amplitude above where it started.
     assert moved_mesh["moving"] is True
-    centres_y = np.asarray(moved_mesh["cell_centres"])[:, 1]
+    centres = np.asarray(moved_mesh["cell_centres"])
     np.testing.assert_allclose(
-        centres_y,
+        centres[:, 1],
         _CENTRE_Y0 + _END_OFFSET_Y,
         rtol=0,
         atol=1e-9,
         err_msg="moving: cell centres are not at the end-of-run mesh offset",
     )
 
-
-def test_the_buoyancy_head_follows_the_moved_cell_centres(moved_mesh: dict) -> None:
     # gh = (g & C) - ghRef, with ghRef = 0 (no constant/hRef). Rebuilt on every
     # mesh change, so at the end of the run it must be the *moved* centres' head
     # — a gh left at its t=0 value would read -9.81*0.5.
-    gh = np.asarray(moved_mesh["gh"])
-    centres = np.asarray(moved_mesh["cell_centres"])
     np.testing.assert_allclose(
-        gh,
+        np.asarray(moved_mesh["gh"]),
         _GRAVITY_Y * centres[:, 1],
         rtol=1e-12,
         atol=0,

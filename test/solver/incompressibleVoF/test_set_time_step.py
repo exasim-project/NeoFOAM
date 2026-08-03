@@ -43,7 +43,9 @@ from typing import Any
 import pytest
 from numpy.testing import assert_allclose
 
-from .conftest import stage_case
+from neofoam.tooling.casebuild import from_template
+
+from .conftest import overlay
 
 _HERE = Path(__file__).parent
 _CASES = _HERE / "cases" / "alphaCourant"
@@ -208,8 +210,7 @@ SCENARIOS: dict[str, dict[str, Any]] = {
 
 def _stage(dest: Path) -> Path:
     """Compose the checked-in row4 case inputs; the worker meshes on top."""
-    stage_case(dest, _CASES / "common", _CASES / "row4")
-    shutil.copytree(dest / "0.orig", dest / "0")
+    (from_template(_CASES / "common") | overlay(_CASES / "row4")).build_at(dest)
     # Pristine copy of the base controlDict: the worker rewrites
     # system/controlDict from this template every scenario, so no scenario's
     # keys leak into the next one.
@@ -235,108 +236,92 @@ def results(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Any]:
 # --- 1. adjustTimeStep no / absent: early return -----------------------------
 
 
-def test_adjust_time_step_no_leaves_delta_t_unchanged(results: dict[str, Any]) -> None:
-    scenario = results["adjust_no"]
-    assert_allclose(
-        scenario["final_dt"],
-        0.25,
-        rtol=1e-12,
-        err_msg="adjustTimeStep=no must leave deltaT untouched",
-    )
+@pytest.mark.parametrize(
+    "scenario_name, err_msg",
+    [
+        pytest.param("adjust_no", "adjustTimeStep=no must leave deltaT untouched", id="no"),
+        pytest.param(
+            "adjust_absent",
+            "adjustTimeStep absent (default False) must leave deltaT untouched",
+            id="absent",
+        ),
+    ],
+)
+def test_adjust_time_step_off_leaves_delta_t_unchanged(
+    results: dict[str, Any], scenario_name: str, err_msg: str
+) -> None:
+    scenario = results[scenario_name]
+    assert_allclose(scenario["final_dt"], 0.25, rtol=1e-12, err_msg=err_msg)
     assert scenario["set_delta_t_calls"] == [], "setDeltaT must never be called"
 
 
-def test_adjust_time_step_absent_key_leaves_delta_t_unchanged(
+# --- 2-5. the limiter: each branch binds in turn -----------------------------
+
+
+@pytest.mark.parametrize(
+    "scenario_name, expected_dt, rtol, err_msg",
+    [
+        # maxCo=0.1 (tight) vs maxAlphaCo=10.0 (loose): the flow-CFL ratio is the
+        # smaller of the two, so it alone sets deltaTFact.
+        pytest.param(
+            "flow_limits",
+            0.025,
+            1e-9,
+            "flow Courant number must be the binding constraint",
+            id="flow_courant",
+        ),
+        # maxAlphaCo=0.2 (tight) vs maxCo=10.0 (loose): the interface-CFL ratio
+        # is the smaller of the two, so it alone sets deltaTFact.
+        pytest.param(
+            "alpha_limits",
+            0.05,
+            1e-9,
+            "interface (alpha) Courant number must be the binding constraint",
+            id="alpha_courant",
+        ),
+        # dt0 = 1e-6; a vanishingly small Courant number would otherwise let
+        # maxDeltaTFact run into the tens of thousands, but the ramp still caps
+        # growth at exactly 1.2x the previous dt: 1.2 * 1e-6 = 1.2e-6.
+        pytest.param(
+            "ramp_cap",
+            1.2e-6,
+            1e-6,
+            "a vanishingly small Courant number must still cap growth at 1.2x",
+            id="ramp_cap",
+        ),
+        # Without the maxDeltaT=0.05 clamp, the ramp-capped factor (1.2) would
+        # give 1.2*1.0 = 1.2 -> the clamp is what pins it at 0.05.
+        pytest.param(
+            "max_delta_t_clamp",
+            0.05,
+            1e-9,
+            "maxDeltaT must clamp deltaT even though the Courant limit allows more",
+            id="max_delta_t_clamp",
+        ),
+        pytest.param(
+            "defaults_co",
+            0.125,
+            1e-9,
+            "maxCo/maxAlphaCo must default to 1.0 when absent from controlDict",
+            id="default_max_co",
+        ),
+        pytest.param(
+            "default_max_delta_t",
+            1.0,
+            1e-9,
+            "maxDeltaT must default to 1.0 when absent from controlDict",
+            id="default_max_delta_t",
+        ),
+    ],
+)
+def test_the_adaptive_step_reaches_the_hand_derived_delta_t(
     results: dict[str, Any],
+    scenario_name: str,
+    expected_dt: float,
+    rtol: float,
+    err_msg: str,
 ) -> None:
-    scenario = results["adjust_absent"]
-    assert_allclose(
-        scenario["final_dt"],
-        0.25,
-        rtol=1e-12,
-        err_msg="adjustTimeStep absent (default False) must leave deltaT untouched",
-    )
-    assert scenario["set_delta_t_calls"] == [], "setDeltaT must never be called"
-
-
-# --- 2. dual limiter: each branch binds in turn ------------------------------
-
-
-def test_flow_courant_number_is_the_limiter(results: dict[str, Any]) -> None:
-    # maxCo=0.1 (tight) vs maxAlphaCo=10.0 (loose): the flow-CFL ratio is the
-    # smaller of the two, so it alone sets deltaTFact.
-    assert_allclose(
-        results["flow_limits"]["final_dt"],
-        0.025,
-        rtol=1e-9,
-        err_msg="flow Courant number must be the binding constraint",
-    )
-
-
-def test_alpha_courant_number_is_the_limiter(results: dict[str, Any]) -> None:
-    # maxAlphaCo=0.2 (tight) vs maxCo=10.0 (loose): the interface-CFL ratio is
-    # the smaller of the two, so it alone sets deltaTFact.
-    assert_allclose(
-        results["alpha_limits"]["final_dt"],
-        0.05,
-        rtol=1e-9,
-        err_msg="interface (alpha) Courant number must be the binding constraint",
-    )
-
-
-# --- 3. ramp cap: at most 1.2x growth per step -------------------------------
-
-
-def test_ramp_caps_growth_at_1_2x_per_step(results: dict[str, Any]) -> None:
-    # dt0 = 1e-6; a vanishingly small Courant number would otherwise let
-    # maxDeltaTFact run into the tens of thousands, but the ramp still caps
-    # growth at exactly 1.2x the previous dt: 1.2 * 1e-6 = 1.2e-6.
-    assert_allclose(
-        results["ramp_cap"]["final_dt"],
-        1.2e-6,
-        rtol=1e-6,
-        err_msg="a vanishingly small Courant number must still cap growth at 1.2x",
-    )
-
-
-# --- 4. maxDeltaT clamp -------------------------------------------------------
-
-
-def test_max_delta_t_clamps_even_when_courant_would_allow_more(
-    results: dict[str, Any],
-) -> None:
-    scenario = results["max_delta_t_clamp"]
-    # Without the maxDeltaT=0.05 clamp, the ramp-capped factor (1.2) would
-    # give 1.2*1.0 = 1.2 -> the clamp is what pins it at 0.05.
-    assert_allclose(
-        scenario["final_dt"],
-        0.05,
-        rtol=1e-9,
-        err_msg="maxDeltaT must clamp deltaT even though the Courant limit allows more",
-    )
-
-
-# --- 5. defaults when keys are absent from controlDict -----------------------
-
-
-def test_default_max_co_and_max_alpha_co_are_one_when_absent(
-    results: dict[str, Any],
-) -> None:
-    assert_allclose(
-        results["defaults_co"]["final_dt"],
-        0.125,
-        rtol=1e-9,
-        err_msg="maxCo/maxAlphaCo must default to 1.0 when absent from controlDict",
-    )
-
-
-def test_default_max_delta_t_is_one_when_absent(results: dict[str, Any]) -> None:
-    assert_allclose(
-        results["default_max_delta_t"]["final_dt"],
-        1.0,
-        rtol=1e-9,
-        err_msg="maxDeltaT must default to 1.0 when absent from controlDict",
-    )
+    assert_allclose(results[scenario_name]["final_dt"], expected_dt, rtol=rtol, err_msg=err_msg)
 
 
 # --- 5d. the controlDict is re-read per call (runTimeModifiable) --------------

@@ -37,7 +37,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from .conftest import VOF_ROW4, stage_case
+from .conftest import VOF_ROW4, build_case, overlay
 
 _HERE = Path(__file__).parent
 _WORKER = _HERE / "_mrf_worker.py"
@@ -61,9 +61,7 @@ _ATOL = 1e-9
 @pytest.fixture(scope="module")
 def vof_row4_rotor(tmp_path_factory: pytest.TempPathFactory) -> dict:
     """Mesh the ``rotor`` case and assemble its momentum equation both ways."""
-    case = stage_case(
-        tmp_path_factory.mktemp("vofRow4Rotor") / "case", VOF_ROW4 / "common", VOF_ROW4 / "rotor"
-    )
+    case = build_case(tmp_path_factory.mktemp("vofRow4Rotor") / "case", overlay(VOF_ROW4 / "rotor"))
     subprocess.run(["blockMesh", "-case", str(case)], check=True, capture_output=True, timeout=300)
     subprocess.run(
         [sys.executable, str(_WORKER), str(case)], check=True, capture_output=True, timeout=600
@@ -71,13 +69,10 @@ def vof_row4_rotor(tmp_path_factory: pytest.TempPathFactory) -> dict:
     return json.loads((case / "mrf.json").read_text())
 
 
-def test_the_case_builds_one_rotating_zone(vof_row4_rotor: dict) -> None:
-    assert vof_row4_rotor["zones"] == 1
-
-
 def test_the_momentum_source_gains_the_mass_weighted_frame_acceleration(
     vof_row4_rotor: dict,
 ) -> None:
+    assert vof_row4_rotor["zones"] == 1
     volumes = np.asarray(vof_row4_rotor["cell_volumes"])[:, None]
     rho = (_ALPHA * _RHO_WATER + (1.0 - _ALPHA) * _RHO_AIR)[:, None]
 

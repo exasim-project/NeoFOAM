@@ -62,6 +62,7 @@ from __future__ import annotations
 import re
 import subprocess
 import sys
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping, Sequence, Tuple, Union
@@ -367,63 +368,49 @@ def _max_relative_drift(first: Sequence[Any], second: Sequence[Any]) -> float:
     return float(np.max(np.where(scale > 0, difference / np.where(scale > 0, scale, 1), 0.0)))
 
 
-def test_decomposing_the_case_moves_the_interface_courant_numbers_no_more_than_interFoam(
+@pytest.mark.parametrize(
+    "extract, quantity",
+    [
+        # Serial and 2-rank do not print *identical* Courant numbers, and cannot:
+        # the p_rgh solve is preconditioner-dependent, so phi differs in the last
+        # digits and — once dt is alpha-CFL-limited — the difference compounds
+        # step by step (measured 3.4e-3 over the 171 steps of the
+        # ``maxAlphaCo 0.02`` regime, 1.5e-4 over the 13 steps of the others).
+        pytest.param(_interface_courant_numbers, "interface Courant numbers", id="courant_numbers"),
+        # Every rank must pick the same dt, or the ranks desynchronise — and the
+        # dt a decomposed run picks must track the serial one. Note this compares
+        # *this solver's* two logs only: the printed value is the dt before
+        # ``Time::adjustDeltaT`` snaps it to the write interval, where interFoam
+        # prints the value after, so the two solvers' lines are not the same
+        # quantity even though the dt they run with is (which the
+        # machine-precision field comparison above is what proves).
+        pytest.param(_time_steps, "adaptive deltaT sequence", id="time_steps"),
+    ],
+)
+def test_decomposing_the_case_moves_the_printed_sequence_no_more_than_interFoam(
     dam_break_runs: DamBreakRuns,
+    extract: Callable[[str], Sequence[Any]],
+    quantity: str,
 ) -> None:
-    """Serial and 2-rank do not print *identical* Courant numbers, and cannot:
-    the p_rgh solve is preconditioner-dependent, so phi differs in the last
-    digits and — once dt is alpha-CFL-limited — the difference compounds step by
-    step (measured 3.4e-3 over the 171 steps of the ``maxAlphaCo 0.02`` regime,
-    1.5e-4 over the 13 steps of the others). The meaningful bar is again what
-    native interFoam does to itself between the same two runs; the floor is this
-    solver's own ``%.4g`` print granularity, which alone puts ~1e-3 between two
-    runs holding the same number.
+    """The meaningful bar is what native interFoam does to itself between the
+    same two runs; the floor is this solver's own ``%.4g`` print granularity,
+    which alone puts ~1e-3 between two runs holding the same number.
     """
     python_drift = _max_relative_drift(
-        _interface_courant_numbers(dam_break_runs.parallel_log),
-        _interface_courant_numbers(dam_break_runs.serial_log),
+        extract(dam_break_runs.parallel_log),
+        extract(dam_break_runs.serial_log),
     )
     native_drift = _max_relative_drift(
-        _interface_courant_numbers(dam_break_runs.parallel_native_log),
-        _interface_courant_numbers(dam_break_runs.serial_native_log),
+        extract(dam_break_runs.parallel_native_log),
+        extract(dam_break_runs.serial_native_log),
     )
     limit = max(_SPREAD_SLACK * native_drift, _PRINTED_RTOL)
 
     assert python_drift <= limit, (
-        f"regime {_describe(dam_break_runs.regime)}: the interface Courant "
-        f"numbers move by {python_drift:.3e} between the serial and the 2-rank "
-        f"incompressibleVoF run, past the {limit:.3e} allowed by native "
-        f"interFoam's own {native_drift:.3e}"
-    )
-
-
-def test_decomposing_the_case_moves_the_time_step_sequence_no_more_than_interFoam(
-    dam_break_runs: DamBreakRuns,
-) -> None:
-    """Every rank must pick the same dt, or the ranks desynchronise — and the dt
-    a decomposed run picks must track the serial one.
-
-    Held to interFoam's own serial-to-parallel drift for the same reason as the
-    Courant numbers. Note this compares *this solver's* two logs only: the
-    printed value is the dt before ``Time::adjustDeltaT`` snaps it to the write
-    interval, where interFoam prints the value after, so the two solvers' lines
-    are not the same quantity even though the dt they run with is (which the
-    machine-precision field comparison above is what proves).
-    """
-    python_drift = _max_relative_drift(
-        _time_steps(dam_break_runs.parallel_log),
-        _time_steps(dam_break_runs.serial_log),
-    )
-    native_drift = _max_relative_drift(
-        _time_steps(dam_break_runs.parallel_native_log),
-        _time_steps(dam_break_runs.serial_native_log),
-    )
-    limit = max(_SPREAD_SLACK * native_drift, _PRINTED_RTOL)
-
-    assert python_drift <= limit, (
-        f"regime {_describe(dam_break_runs.regime)}: the adaptive deltaT sequence "
-        f"moves by {python_drift:.3e} between the serial and the 2-rank run, past "
-        f"the {limit:.3e} allowed by native interFoam's own {native_drift:.3e}"
+        f"regime {_describe(dam_break_runs.regime)}: the {quantity} move by "
+        f"{python_drift:.3e} between the serial and the 2-rank incompressibleVoF "
+        f"run, past the {limit:.3e} allowed by native interFoam's own "
+        f"{native_drift:.3e}"
     )
 
 
@@ -432,23 +419,18 @@ def test_decomposing_the_case_moves_the_time_step_sequence_no_more_than_interFoa
 # --------------------------------------------------------------------------- #
 
 
-def test_parallel_run_writes_one_time_directory_per_rank(
-    dam_break_runs: DamBreakRuns,
+def test_every_rank_wrote_its_own_share_of_a_shared_interface(
+    dam_break_runs: DamBreakRuns, tmp_path: Path
 ) -> None:
-    """Each rank wrote its own share of the fields — the comparisons above are
-    not two serial runs in disguise."""
+    """Each rank wrote its own fields — the comparisons above are not two serial
+    runs in disguise — and each holds near-interface cells, which anchors every
+    reduction claim: if one rank never saw the interface, a rank-local ``gMax``
+    on the other one would satisfy them all."""
     for rank in range(NPROCS):
         written = dam_break_runs.parallel_python / f"processor{rank}" / "0.05"
         assert written.is_dir(), f"rank {rank} wrote no 0.05 directory"
         assert (written / "alpha.water").is_file()
 
-
-def test_the_decomposition_puts_interface_cells_on_both_ranks(
-    dam_break_runs: DamBreakRuns, tmp_path: Path
-) -> None:
-    """Anchors every reduction claim above: if one rank never saw the interface,
-    a rank-local ``gMax`` on the other one would satisfy them all."""
-    for rank in range(NPROCS):
         case = rank_case(dam_break_runs.parallel_python, rank, tmp_path / f"r{rank}")
         alpha = read_internal_fields(case, case / "0.05", ["alpha.water"])["alpha.water"]
         band = int(np.count_nonzero((alpha >= 0.01) & (alpha <= 0.99)))

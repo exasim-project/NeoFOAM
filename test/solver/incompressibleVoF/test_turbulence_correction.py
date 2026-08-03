@@ -11,8 +11,8 @@ has not produced yet, which moves ``p_rgh``, then ``phi``, then alpha.
 
 The step is driven here exactly as the solver's inner loop drives it: a real
 :class:`PimpleControl` built by the production factory from a real case dict
-(``cases/pimple_outer3`` / ``cases/pimple_turb_every_outer``, which differ in
-the single ``turbOnFinalIterOnly`` key), stepped through one full outer loop.
+(the ``outer3`` / ``turb_every_outer`` forks of ``cases/pimple``, which differ
+in the single ``turbOnFinalIterOnly`` key), stepped through one full outer loop.
 The turbulence model itself is a counter — what is under test is the schedule,
 not what ``correct()`` computes, and a live two-phase turbulence model would
 need a whole solver run to build.
@@ -20,6 +20,7 @@ need a whole solver run to build.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
@@ -28,8 +29,6 @@ from neofoam.solver.incompressibleVoF.incompressibleVoF import turbulence_correc
 from neofoam.solver.incompressibleVoF.models.pressure_velocity.control_factory import (
     create_pimple_control,
 )
-
-_CASES = Path(__file__).parent / "cases"
 
 
 class _CountingTurbulence:
@@ -60,26 +59,27 @@ def _corrections_per_outer_iteration() -> list[int]:
     "case_name, expected_cumulative_corrections",
     [
         # nOuterCorrectors 3, turbOnFinalIterOnly at its native default.
-        pytest.param("pimple_outer3", [0, 0, 1], id="turbOnFinalIterOnly_default"),
+        pytest.param("outer3", [0, 0, 1], id="turbOnFinalIterOnly_default"),
         # The same case with turbOnFinalIterOnly no.
-        pytest.param("pimple_turb_every_outer", [1, 2, 3], id="turbOnFinalIterOnly_no"),
+        pytest.param("turb_every_outer", [1, 2, 3], id="turbOnFinalIterOnly_no"),
     ],
 )
 def test_the_turbulence_is_corrected_on_the_outer_iterations_the_case_asks_for(
     monkeypatch: pytest.MonkeyPatch,
+    pimple_case: Callable[[str], Path],
     case_name: str,
     expected_cumulative_corrections: list[int],
 ) -> None:
-    monkeypatch.chdir(_CASES / case_name)
+    monkeypatch.chdir(pimple_case(case_name))
     assert _corrections_per_outer_iteration() == expected_cumulative_corrections
 
 
 def test_a_case_without_a_turbulence_model_is_left_alone(
-    monkeypatch: pytest.MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch, pimple_case: Callable[[str], Path]
 ) -> None:
     # Laminar cases carry no turbulence model at all; the gate must not be the
     # thing that decides whether the step is safe to run.
-    monkeypatch.chdir(_CASES / "pimple_outer3")
+    monkeypatch.chdir(pimple_case("outer3"))
     control = create_pimple_control({})
     while control.loop():
         assert turbulence_correction(None, control) == {}

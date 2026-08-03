@@ -9,10 +9,10 @@ things about the same three fields: the step stays finite, the solved fields
 respect the closure's floor, and they still equal what OpenFOAM's own ``kEpsilon``
 produces from the identical files. Hence one parametrized body.
 
-The shared case is ``walled_base`` — a 4 x 4 x 4 box whose two z patches are walls,
-with ``kqRWallFunction`` / ``epsilonWallFunction`` / ``nutk`` boundaries and a linear
-solver at ``tolerance 1e-14, relTol 0``. Each scenario overlays only its differing
-fields from ``walled_variants/<name>/``:
+The shared case is :func:`_parity_case.walled_case` — a 4 x 4 x 4 box whose two z
+patches are walls, with ``kqRWallFunction`` / ``epsilonWallFunction`` / ``nutk``
+boundaries and a linear solver at ``tolerance 1e-14, relTol 0``. Each scenario is that
+case with its ``0/`` internal fields rewritten by :func:`seeded`:
 
 * **near_zero_k** — ``k`` seeded at ``1e-8`` against the stock ``epsilon = 14.855``,
   i.e. ``epsilon/k ~ 1.5e9``. ``kEpsilon`` divides by ``k`` (the ``C2 epsilon/k``
@@ -22,10 +22,10 @@ fields from ``walled_variants/<name>/``:
   point exception" the verification sweep hit) once a run starts to diverge. A
   solved field may sit *on* the floor here.
 
-* **sub_floor_k** — the near-zero background with four cells seeded negative: two in
-  ``k`` (both interior) and two in ``epsilon`` (one a ``zMin`` wall cell, one
-  interior), so the repair is exercised both with and without a boundary face in
-  its stencil. ``Foam::bound``
+* **sub_floor_k** — the near-zero background with four cells seeded negative
+  (:data:`SUB_FLOOR_SEEDS`): two in ``k`` (both interior) and two in ``epsilon`` (one a
+  ``zMin`` wall cell, one interior), so the repair is exercised both with and without
+  a boundary face in its stencil. ``Foam::bound``
   (``src/finiteVolume/cfdTools/general/bound/bound.C``) does **not** clip a
   non-positive cell to the floor: it gives it ``fvc::average(max(vsf, lower))`` —
   the face-area-weighted average of the floored neighbourhood — and only then takes
@@ -56,11 +56,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from turbulence._parity_case import run_worker, stage
-
-_HERE = Path(__file__).parent
-_BASE = _HERE / "walled_base"  # the full walled kEpsilon box
-_VARIANTS = _HERE / "walled_variants"  # per-scenario 0/ field overlays
+from neofoam.tooling.casebuild import Step, patch
+from turbulence._parity_case import run_worker, walled_case
 
 #: The closure's floors (``models.kEpsilon.kMin`` / ``epsilonMin``).
 FLOOR = 1e-15
@@ -68,7 +65,7 @@ FLOOR = 1e-15
 #: ``scenario -> (rtol, a repaired cell must sit strictly above the floor)``.
 #:
 #: ``near_zero_k``: both solves stop at an absolute residual of 1e-14
-#: (``walled_base/system/fvSolution``), which for a ``k`` of order 1e-9 is a
+#: (the shared ``parity_base/system/fvSolution``), which for a ``k`` of order 1e-9 is a
 #: relative slack of ~1e-5; 1e-4 keeps that headroom without hiding a coefficient-
 #: or term-level disagreement, which would be O(1) here.
 #:
@@ -84,13 +81,51 @@ SCENARIOS = {
 #: The fields the closure solves plus the eddy viscosity they feed.
 FIELDS = ["k", "epsilon", "nut"]
 
+#: The 4 x 4 x 4 cells of the walled case, and the degenerate background each field is
+#: seeded at (the stock ``epsilon``, against a ``k`` nine orders below it).
+N_CELLS = 64
+BACKGROUND = {"k": 1.0e-8, "epsilon": 14.855}
+
+#: ``sub_floor_k``'s negative cells, ``field -> {cell: value}``. blockMesh numbers the
+#: single hex block x-fastest, so cell ``i + 4j + 16k`` sits at column ``i`` / row ``j``
+#: / layer ``k``: ``epsilon``'s cell 5 is in the ``zMin`` wall layer and its cell 37 is
+#: interior, while both of ``k``'s are interior.
+SUB_FLOOR_SEEDS = {
+    "k": {21: -1.0e-8, 42: -5.0e-9},
+    "epsilon": {5: -14.855, 37: -1.0},
+}
+
+
+def seeded(field: str, negatives: dict[int, float]) -> Step:
+    """Rewrite ``0/<field>``'s internal field: the background, with *negatives* punched in.
+
+    The boundary conditions the case ships (the wall functions) are left untouched —
+    only the internal field is replaced, so the scenarios differ from the base case in
+    exactly the cell values named here.
+    """
+    values = np.full(N_CELLS, BACKGROUND[field])
+    for cell, value in negatives.items():
+        values[cell] = value
+    body = " ".join(f"{v:.16e}" for v in values)
+    return patch(f"0/{field}", internalField=f"nonuniform List<scalar> {N_CELLS} ( {body} )")
+
+
+#: ``scenario -> the 0/ rewrites that turn the walled case into it``.
+SEEDING: dict[str, tuple[Step, ...]] = {
+    "near_zero_k": (patch("0/k", internalField=f"uniform {BACKGROUND['k']:g}"),),
+    "sub_floor_k": tuple(seeded(field, cells) for field, cells in SUB_FLOOR_SEEDS.items()),
+}
+
 
 @pytest.fixture(scope="module")
 def stepped_cases(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Path]:
     """Take the one ``correct`` step per scenario, once, on both backends."""
     cases = {}
     for scenario in SCENARIOS:
-        case = stage(_BASE, tmp_path_factory.mktemp(scenario) / "case", _VARIANTS / scenario)
+        pipeline = walled_case()
+        for step in SEEDING[scenario]:
+            pipeline = pipeline | step
+        case = pipeline.build_at(tmp_path_factory.mktemp(scenario) / "case").path
         run_worker("mesh", case)
         run_worker("reference", case)  # OpenFOAM's kEpsilon, same files
         run_worker("subject", case)  # the NeoN closure

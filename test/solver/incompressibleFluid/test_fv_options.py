@@ -17,16 +17,16 @@ it, and it is applied *again* after the pressure corrector overwrites ``U``.
 
 **Cases.** All three are the ``cases/row4`` base — four unit cells in a row along
 x, the first two in a ``modelZone`` cellZone (see ``row4_cases.py``, and
-``test_mrf.py`` for the other model that uses it) — plus an overlay:
+``test_mrf.py`` for the other model that uses it) — plus a variant:
 
-* the ``fvOptions`` overlay, alone and on top of the ``transient`` one, carries a
+* the ``fvOptions`` variant, alone and on top of the ``transient`` one, carries a
   ``system/fvOptions`` with a ``vectorSemiImplicitSource``. Both algorithms own
   their own copy of the hook, hence the second composition. With
   ``volumeMode specific`` the declared value is the source per unit volume, and
   ``SemiImplicitSource`` hands it to the equation as ``eqn += Su``, i.e.
   ``source -= V*Su``; the momentum equation then *subtracts* that matrix
   (``==`` is ``-``), so the assembled source must shift by exactly ``+V*Su``.
-* the ``fvOptionsLimit`` overlay carries a ``constant/fvOptions`` (the other of
+* the ``fvOptionsLimit`` variant carries a ``constant/fvOptions`` (the other of
   the two locations ``fv::options`` searches) with a ``limitVelocity``
   correction, which contributes nothing to the matrix and acts only through
   ``correct(U)``, scaling ``U`` down to ``max`` in magnitude on the zone. Its
@@ -58,7 +58,7 @@ import pytest
 
 from neofoam.fv_options import fvOptions
 
-from .row4_cases import stage_row4
+from .row4_cases import row4
 
 _HERE = Path(__file__).parent
 _WORKER = _HERE / "_fv_options_worker.py"
@@ -66,7 +66,7 @@ _WORKER = _HERE / "_fv_options_worker.py"
 #: ``system/fvOptions``: ``sources { U ((0 5 0) 0); }``, ``volumeMode specific``.
 _SU = np.array([0.0, 5.0, 0.0])
 
-#: ``constant/fvOptions`` of the ``fvOptionsLimit`` overlay: ``max 1``.
+#: ``constant/fvOptions`` of the ``fvOptionsLimit`` variant: ``max 1``.
 _U_MAX = 1.0
 
 #: ``system/blockMeshDict``: the ``modelZone`` block spans ``0 <= x <= 2``.
@@ -77,10 +77,10 @@ _ATOL = 1e-14
 
 
 def _run_case(
-    name: str, overlays: tuple[str, ...], tmp_path_factory: pytest.TempPathFactory
+    name: str, variants: tuple[str, ...], tmp_path_factory: pytest.TempPathFactory
 ) -> dict[str, dict]:
     """Compose and mesh the case, then run one momentum+continuity pass per variant."""
-    case = stage_row4(tmp_path_factory.mktemp(name) / "case", *overlays)
+    case = row4(*variants).build_at(tmp_path_factory.mktemp(name) / "case").path
     subprocess.run(["blockMesh", "-case", str(case)], check=True, capture_output=True, timeout=300)
     for variant in ("with", "without"):
         subprocess.run(
@@ -105,8 +105,8 @@ def sourced_row4(
 ) -> dict[str, dict]:
     """Run the semi-implicit-source case on both algorithms.
 
-    Parametrized over the two that own a momentum hook: the ``fvOptions`` overlay
-    on the steady SIMPLE base, and the same overlay on top of ``transient``
+    Parametrized over the two that own a momentum hook: the ``fvOptions`` variant
+    on the steady SIMPLE base, and the same variant on top of ``transient``
     (``Euler`` ddt, a ``PIMPLE`` dict). Both expectations below are the same
     numbers — an explicit source does not depend on the time derivative — so the
     extra coverage is a parametrize entry, not a test body.
@@ -127,26 +127,26 @@ def _in_zone(run: dict) -> np.ndarray:
 # --- detection -------------------------------------------------------------
 
 
-@pytest.mark.parametrize("overlay", ["fvOptions", "fvOptionsLimit"])
-def test_the_model_activates_on_a_case_with_an_fvoptions_dictionary(
-    overlay: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+@pytest.mark.parametrize(
+    ("variants", "active"),
+    [
+        # One variant keeps the dictionary in system/, the other in constant/ — the
+        # two locations fv::options searches, and both must switch the model on.
+        (("fvOptions",), True),
+        (("fvOptionsLimit",), True),
+        # The bare base is the same case with only the dictionary missing (from
+        # either location): nothing else about a case may switch fvOptions on,
+        # because an active model is what changes the assembly.
+        ((), False),
+    ],
+    ids=["system_fvOptions", "constant_fvOptions", "no_fvOptions"],
+)
+def test_only_an_fvoptions_dictionary_activates_the_model(
+    variants: tuple[str, ...], active: bool, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    # One overlay keeps the dictionary in system/, the other in constant/ — the
-    # two locations fv::options searches, and both must switch the model on.
-    monkeypatch.chdir(stage_row4(tmp_path / "case", overlay))
+    monkeypatch.chdir(row4(*variants).build_at(tmp_path / "case").path)
 
-    assert fvOptions.run_detect() is True
-
-
-def test_the_model_stays_inactive_without_an_fvoptions_dictionary(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    # The bare base is the same case with only the dictionary missing (from
-    # either location): nothing else about a case may switch fvOptions on,
-    # because an active model is what changes the assembly.
-    monkeypatch.chdir(stage_row4(tmp_path / "case"))
-
-    assert fvOptions.run_detect() is False
+    assert fvOptions.run_detect() is active
 
 
 # --- fvOptions(U) in the momentum equation ---------------------------------
@@ -156,35 +156,27 @@ def test_the_case_builds_one_option(sourced_row4: dict[str, dict]) -> None:
     assert sourced_row4["with"]["options"] == 1
 
 
-def test_the_momentum_source_gains_the_declared_source_in_the_zone(
+def test_the_momentum_source_gains_the_declared_source_in_the_zone_only(
     sourced_row4: dict[str, dict],
 ) -> None:
     in_zone = _in_zone(sourced_row4["with"])
     volumes = np.asarray(sourced_row4["with"]["cell_volumes"])[in_zone, None]
+    with_source = np.asarray(sourced_row4["with"]["source"])
+    without_source = np.asarray(sourced_row4["without"]["source"])
 
-    shift = np.asarray(sourced_row4["with"]["source"]) - np.asarray(
-        sourced_row4["without"]["source"]
-    )
     np.testing.assert_allclose(
-        shift[in_zone],
+        (with_source - without_source)[in_zone],
         volumes * _SU,
         rtol=0,
         atol=_ATOL,
         err_msg="row4+fvOptions: the momentum source does not carry +V*Su",
     )
-
-
-def test_the_momentum_source_is_untouched_outside_the_zone(
-    sourced_row4: dict[str, dict],
-) -> None:
-    outside = ~_in_zone(sourced_row4["with"])
-
-    # Bit-identical, not merely close: outside its cell zone the source writes
+    # Outside the zone bit-identical, not merely close: there the source writes
     # nothing, which is the same guarantee that keeps a case with no fvOptions
     # dictionary assembling exactly the matrix it always did.
     np.testing.assert_array_equal(
-        np.asarray(sourced_row4["with"]["source"])[outside],
-        np.asarray(sourced_row4["without"]["source"])[outside],
+        with_source[~in_zone],
+        without_source[~in_zone],
         err_msg="row4+fvOptions: the momentum source changed outside the source zone",
     )
 
@@ -203,35 +195,28 @@ def test_a_correction_leaves_the_momentum_matrix_alone(limited_row4: dict[str, d
     )
 
 
-def test_the_momentum_solve_is_followed_by_the_clamp_inside_the_zone(
+def test_the_momentum_solve_is_followed_by_the_clamp_inside_the_zone_only(
     limited_row4: dict[str, dict],
 ) -> None:
     in_zone = _in_zone(limited_row4["with"])
-    unlimited = np.asarray(limited_row4["without"]["U_after_momentum"])[in_zone]
-    limited = np.asarray(limited_row4["with"]["U_after_momentum"])[in_zone]
+    unlimited = np.asarray(limited_row4["without"]["U_after_momentum"])
+    limited = np.asarray(limited_row4["with"]["U_after_momentum"])
 
     # Every zone cell leaves the solve above the limit, so limitVelocity scales
     # each one onto the limiting sphere: U*max/|U|. Both runs solved the same
     # matrix from the same initial guess, so ``unlimited`` is exactly what the
     # clamp saw.
-    assert np.all(np.linalg.norm(unlimited, axis=1) > _U_MAX)
+    assert np.all(np.linalg.norm(unlimited[in_zone], axis=1) > _U_MAX)
     np.testing.assert_allclose(
-        limited,
-        unlimited * _U_MAX / np.linalg.norm(unlimited, axis=1)[:, None],
+        limited[in_zone],
+        unlimited[in_zone] * _U_MAX / np.linalg.norm(unlimited[in_zone], axis=1)[:, None],
         rtol=0,
         atol=_ATOL,
         err_msg="row4+fvOptionsLimit: the solved velocity was not clamped to max",
     )
-
-
-def test_the_momentum_solve_leaves_the_velocity_outside_the_zone_alone(
-    limited_row4: dict[str, dict],
-) -> None:
-    outside = ~_in_zone(limited_row4["with"])
-
     np.testing.assert_array_equal(
-        np.asarray(limited_row4["with"]["U_after_momentum"])[outside],
-        np.asarray(limited_row4["without"]["U_after_momentum"])[outside],
+        limited[~in_zone],
+        unlimited[~in_zone],
         err_msg="row4+fvOptionsLimit: correct(U) reached outside the source zone",
     )
 

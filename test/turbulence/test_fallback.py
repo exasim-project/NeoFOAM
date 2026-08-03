@@ -1,10 +1,16 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Tests for the OpenFOAM turbulence fallback adapter.
+"""Tests for the pybFoam-fallback path: the adapter and the handle that pairs it.
 
-These run without pybFoam: the factory is injected, and the lazy pybFoam import
-only fires when ``build()`` is called without a factory.
+:class:`OpenFOAMTurbulenceModel` is the adapter that wraps a pybFoam turbulence
+model; :class:`FallbackHandle` pairs one with the model file's ``fallback=True``
+operations and is what ``incompressibleFluid`` holds.
+
+Neither half needs pybFoam here: the adapter's factory is injected (the lazy pybFoam
+import only fires when ``build()`` is called without one) and the handle is given a
+stub adapter. What is pinned is the forwarding surface — the values themselves are
+proven against real OpenFOAM by ``test_neon_turbulence_parity``.
 """
 
 import builtins
@@ -13,27 +19,25 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from neofoam.turbulence.fallback import OpenFOAMTurbulenceModel
+from neofoam.turbulence.fallback import FallbackHandle, OpenFOAMTurbulenceModel
+from neofoam.turbulence.protocol import MomentumTransport
 from neofoam.turbulence.stress import OpenFOAMStress
 
+# --------------------------------------------------------------------------- #
+# The adapter                                                                  #
+# --------------------------------------------------------------------------- #
 
-def test_fallback_calls_injected_factory_with_fields() -> None:
-    factory = MagicMock(return_value=MagicMock())
+
+def test_fallback_builds_through_the_factory_and_delegates() -> None:
+    impl = MagicMock()
+    impl.nut.return_value = "nut"
+    impl.nu.return_value = "nu"
+    factory = MagicMock(return_value=impl)
     model = OpenFOAMTurbulenceModel("U", "phi", "transport", factory=factory)
 
     model.build()
 
     factory.assert_called_once_with("U", "phi", "transport")
-
-
-def test_fallback_delegates_to_impl() -> None:
-    impl = MagicMock()
-    impl.nut.return_value = "nut"
-    impl.nu.return_value = "nu"
-    model = OpenFOAMTurbulenceModel("U", "phi", "transport", factory=lambda *a: impl)
-
-    model.build()
-
     # nut/nu/correct delegate to the wrapped pybFoam model; divDevReff is the
     # shared linear viscous stress (covered end-to-end by the comparison test).
     assert model.nut() == "nut"
@@ -90,3 +94,65 @@ def test_construction_does_not_import_pybfoam(monkeypatch: pytest.MonkeyPatch) -
     # A factory-less build() reaches the lazy import and fails cleanly.
     with pytest.raises(ImportError):
         model.build()
+
+
+# --------------------------------------------------------------------------- #
+# The handle                                                                   #
+# --------------------------------------------------------------------------- #
+
+
+class _StubOF:
+    """Minimal stand-in for OpenFOAMTurbulenceModel (no pybFoam)."""
+
+    def __init__(self) -> None:
+        self.corrected = 0
+        self.built = 0
+
+    def build(self) -> "_StubOF":
+        self.built += 1
+        return self
+
+    def has_nut(self) -> bool:
+        return True
+
+    def nut(self) -> str:
+        return "nut-field"
+
+    def nu(self) -> str:
+        return "nu-field"
+
+    def viscous_stress(self) -> str:
+        return "of-stress"
+
+    def divDevReff(self, U: Any, nu: Any = None, nut: Any = None) -> str:
+        return f"divDevReff({U})"
+
+    def correct(self) -> None:
+        self.corrected += 1
+
+
+def test_handle_forwards_everything_to_the_of_model() -> None:
+    of = _StubOF()
+    handle = FallbackHandle(of, operations=[])
+
+    assert handle.has_nut() is True
+    assert handle.nut() == "nut-field"
+    assert handle.nu() == "nu-field"
+    assert handle.viscous_stress() == "of-stress"
+    assert handle.divDevReff("U") == "divDevReff(U)"
+
+    handle.build()
+    handle.correct()
+    assert of.built == 1
+    assert of.corrected == 1
+
+
+def test_handle_operations_returns_the_fallback_ops() -> None:
+    sentinel = object()
+    handle = FallbackHandle(_StubOF(), operations=[sentinel])
+    assert handle.operations == [sentinel]
+
+
+def test_handle_satisfies_momentum_transport_protocol() -> None:
+    handle = FallbackHandle(_StubOF(), operations=[])
+    assert isinstance(handle, MomentumTransport)

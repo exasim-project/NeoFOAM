@@ -22,16 +22,12 @@ class _FakeRuntime:
         self.name = name
 
 
-def test_optional_models_are_keyed_by_their_model_name() -> None:
+@pytest.mark.parametrize("names", [["maxDeltaT", "courant"], []], ids=["two_models", "none"])
+def test_optional_models_are_keyed_by_their_model_name(names: list[str]) -> None:
     # The projection keys each detected runtime under its model name, which is
     # exactly what the interface owner-gate (owner.name in ctx.models) reads.
-    cap = _FakeRuntime("maxDeltaT")
-    cfl = _FakeRuntime("courant")
-    assert _optional_models_by_name([cap, cfl]) == {"maxDeltaT": cap, "courant": cfl}
-
-
-def test_no_optional_models_yields_an_empty_mapping() -> None:
-    assert _optional_models_by_name([]) == {}
+    runtimes = [_FakeRuntime(name) for name in names]
+    assert _optional_models_by_name(runtimes) == dict(zip(names, runtimes))
 
 
 def test_solution_loop_step_registers_the_owner_runtime(

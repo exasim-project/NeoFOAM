@@ -18,29 +18,29 @@ Two levels, mirroring ``test/solver/incompressibleVoF/test_create_fields.py``:
   fvSolutions under ``../cases/`` — the porosity-free ``damBreak_isoAdvector``
   pins that a case without ``constant/porosityProperties`` gets no extra step;
 * the **field it produces** comes from one executed pipeline of
-  the ``porous`` case (see ``test/solver/incompressibleVoF/conftest.py``:
+  the porous case (see ``test/solver/incompressibleVoF/conftest.py``:
   one ``Foam::Time`` per process, so it runs in a worker subprocess). That the
   worker returns at all is the proof that ``isoAdvection`` constructed.
 
-The ``porous`` overlay is the 4-cell row of ``cases/vofRow4/common`` switched to
-``advectionScheme isoAdvector`` plus ``constant/porosityProperties``
-(``porosityEnabled true``) and a per-cell ``0/porosity`` of ``(1 0.75 0.5
-0.25)`` — read back exactly, so no tolerance is needed.
+The porous case is the 4-cell row of ``cases/vofRow4/common`` switched to
+``advectionScheme isoAdvector`` (the conftest's ``iso_advector`` step) plus the
+``porous`` overlay's ``constant/porosityProperties`` (``porosityEnabled true``)
+and per-cell ``0/porosity`` of ``(1 0.75 0.5 0.25)`` — read back exactly, so no
+tolerance is needed.
 
 Part two — **the alpha pass** (``alphaEqn.H`` + ``alphaEqnSubCycle.H``), through
 ``_iso_advector_worker.py``, which swaps the advector for a recorder and dumps
 the ``Foam::Time`` state and the velocity field each ``advect()`` is entered
 with. Two cases, one per behaviour, run as data through the same worker:
 
-* ``moving`` + ``isoAdvectorMoving`` — the oscillating 4-cell row switched to
-  ``advectionScheme isoAdvector`` with
-  ``nAlphaSubCycles 3``. It is the only combination that exercises both gaps:
+* the moving case under isoAdvector with ``nAlphaSubCycles 3`` — the oscillating
+  4-cell row. It is the only combination that exercises both gaps:
   isoAdvection interpolates ``U`` onto the iso-face centres for the interface
   normal velocity, so on a moving mesh ``alphaEqn.H`` has to hand it
   ``U - fvc::reconstruct(mesh.phi())``; and the pass has to run three times over
   a sub-cycled ``Foam::Time``. ``deltaT 0.25`` with ``adjustTimeStep`` off makes
   the expected sub-step times exact thirds.
-* ``porous`` — static mesh, ``nAlphaSubCycles 1``: the
+* the porous case — static mesh, ``nAlphaSubCycles 1``: the
   no-sub-cycle, no-mesh-motion direction, so neither behaviour can be a
   constant.
 
@@ -66,27 +66,28 @@ from neofoam.solver.incompressibleVoF.models.alpha_advection.models.iso_advector
     _porosity_enabled,
     read_n_alpha_sub_cycles,
 )
+from neofoam.tooling.casebuild import Step
 
-from ....conftest import VOF_ROW4, BuiltCase, stage_case
+from ....conftest import VOF_ROW4, BuiltCase, build_case, iso_advector, moving, overlay
 
 _ADVECTION_CASES = Path(__file__).parents[1] / "cases"
 _ISO_ADVECTOR_WORKER = Path(__file__).parent / "_iso_advector_worker.py"
 
-#: The layer chains this module runs, base first (see the package conftest).
-_POROUS = [VOF_ROW4 / "common", VOF_ROW4 / "porous"]
-_MOVING = [VOF_ROW4 / "common", VOF_ROW4 / "moving", VOF_ROW4 / "isoAdvectorMoving"]
+#: The case variants this module runs, as casebuild steps on ``vofRow4/common``.
+_POROUS: tuple[Step, ...] = (overlay(VOF_ROW4 / "porous"), iso_advector())
+_MOVING: tuple[Step, ...] = (moving(), iso_advector(n_alpha_sub_cycles=3))
 
 
 @pytest.fixture(scope="module")
 def porous_case(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    """The composed ``porous`` case, for the tests that read its dictionaries."""
-    return stage_case(tmp_path_factory.mktemp("porous") / "case", *_POROUS)
+    """The composed porous case, for the tests that read its dictionaries."""
+    return build_case(tmp_path_factory.mktemp("porous") / "case", *_POROUS)
 
 
 @pytest.fixture(scope="module")
 def moving_case(tmp_path_factory: pytest.TempPathFactory) -> Path:
     """The composed sub-cycled moving isoAdvector case."""
-    return stage_case(tmp_path_factory.mktemp("isoAdvectorMoving") / "case", *_MOVING)
+    return build_case(tmp_path_factory.mktemp("isoAdvectorMoving") / "case", *_MOVING)
 
 
 def _build_steps(case: Path, monkeypatch: pytest.MonkeyPatch) -> list[str]:
@@ -97,36 +98,25 @@ def _build_steps(case: Path, monkeypatch: pytest.MonkeyPatch) -> list[str]:
     return [step.name for step in runner.run_build()]
 
 
-def test_porosity_properties_config_reads_the_switch_from_the_case(
-    porous_case: Path,
+def test_build_reads_porosity_when_the_case_enables_it(
+    porous_case: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     # ``constant/porosityProperties`` is the file createPorosity.H reads; the
-    # porous overlay sets the switch on.
+    # porous overlay sets the switch on, and BUILD then carries the read.
     assert PorosityPropertiesConfig.load(case_dir=porous_case, validate=False).porosityEnabled
+    assert "fields.porosity" in _build_steps(porous_case, monkeypatch)
 
 
-def test_porosity_defaults_to_off_when_the_case_has_no_porosity_properties(
+def test_porosity_is_off_and_unread_when_the_case_has_no_porosity_properties(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     # The dictionary is optional, so the read is guarded: an absent file is the
-    # same answer as ``porosityEnabled no``, not a FileNotFoundError.
+    # same answer as ``porosityEnabled no``, not a FileNotFoundError — and BUILD
+    # then emits no read step at all.
     case = _ADVECTION_CASES / "damBreak_isoAdvector"
     assert not (case / "constant" / "porosityProperties").exists()
     monkeypatch.chdir(case)
     assert _porosity_enabled() is False
-
-
-def test_build_reads_porosity_when_the_case_enables_it(
-    porous_case: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    assert "fields.porosity" in _build_steps(porous_case, monkeypatch)
-
-
-def test_build_omits_porosity_when_the_case_has_no_porosity_properties(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    case = _ADVECTION_CASES / "damBreak_isoAdvector"
-    assert not (case / "constant" / "porosityProperties").exists()
     assert "fields.porosity" not in _build_steps(case, monkeypatch)
 
 
@@ -151,15 +141,10 @@ def test_isoadvection_is_constructed_on_a_porous_case(
     vof_row4_porous: BuiltCase,
 ) -> None:
     # isoAdvection aborts the process when porosity is enabled and the field is
-    # not in the registry, so a live advector model is the whole point.
-    assert "advector" in vof_row4_porous.result["model_keys"]
-
-
-def test_porosity_is_read_from_the_cases_zero_directory(
-    vof_row4_porous: BuiltCase,
-) -> None:
+    # not in the registry, so a live advector model is the whole point; and
     # 0/porosity is the literal (1 0.75 0.5 0.25), registered under its own name
     # (isoAdvection looks it up as "porosity", not by the Context key).
+    assert "advector" in vof_row4_porous.result["model_keys"]
     assert vof_row4_porous.internal("porosity") == [1.0, 0.75, 0.5, 0.25]
     assert vof_row4_porous.result["registered_names"]["porosity"] == "porosity"
 
@@ -193,8 +178,8 @@ def test_n_alpha_sub_cycles_is_read_from_the_cases_alpha_solver_dict(
 def iso_advector_runs(tmp_path_factory: pytest.TempPathFactory) -> dict[str, dict[str, Any]]:
     """One ``alpha_advection`` call per case; what the advector and Time saw."""
     runs: dict[str, dict[str, Any]] = {}
-    for name, layers in (("isoAdvectorMoving", _MOVING), ("porous", _POROUS)):
-        case = stage_case(tmp_path_factory.mktemp(name) / "case", *layers)
+    for name, steps in (("isoAdvectorMoving", _MOVING), ("porous", _POROUS)):
+        case = build_case(tmp_path_factory.mktemp(name) / "case", *steps)
         subprocess.run(
             ["blockMesh", "-case", str(case)],
             check=True,
@@ -231,21 +216,16 @@ def test_the_advector_runs_once_per_alpha_sub_cycle(
     assert times == pytest.approx(expected_sub_step_times)
 
 
-def test_each_sub_step_advects_over_a_fraction_of_the_time_step(
+def test_each_sub_step_advects_over_a_fraction_of_the_restored_time_step(
     iso_advector_runs: dict[str, dict[str, Any]],
 ) -> None:
     # isoAdvection reads mesh.time().deltaT() itself, so the sub-step length is
-    # what actually shortens the advection — not a scaled flux.
-    deltas = [step["deltaT"] for step in iso_advector_runs["isoAdvectorMoving"]["sub_steps"]]
-    assert deltas == pytest.approx([0.25 / 3] * 3)
-
-
-def test_the_sub_cycle_restores_the_time_state(
-    iso_advector_runs: dict[str, dict[str, Any]],
-) -> None:
-    # endSubCycle() puts back time, deltaT and index, so the momentum/pressure
-    # stage after the alpha solve runs on the real time step.
+    # what actually shortens the advection — not a scaled flux. endSubCycle()
+    # then puts back time, deltaT and index, so the momentum/pressure stage
+    # after the alpha solve runs on the real time step.
     run = iso_advector_runs["isoAdvectorMoving"]
+    deltas = [step["deltaT"] for step in run["sub_steps"]]
+    assert deltas == pytest.approx([0.25 / 3] * 3)
     assert run["after"] == run["before"]
 
 
@@ -257,7 +237,8 @@ def test_the_advector_sees_the_velocity_relative_to_the_mesh_motion(
     isoAdvection interpolates ``U`` onto the iso-face centres to get the
     interface normal velocity ``Un0``; on a moving mesh that has to be the
     velocity relative to the mesh, or the interface is transported with the
-    mesh's own motion on top of the flow.
+    mesh's own motion on top of the flow. The subtraction is then undone before
+    UEqn.H assembles the momentum equation, which needs the absolute velocity.
     """
     run = iso_advector_runs["isoAdvectorMoving"]
     expected = np.asarray(run["U_before"]) - np.asarray(run["mesh_velocity"])
@@ -268,18 +249,9 @@ def test_the_advector_sees_the_velocity_relative_to_the_mesh_motion(
         atol=1e-15,
         err_msg="isoAdvectorMoving: advect() saw the absolute velocity",
     )
-    # Non-vacuous: the mesh really is moving, so relative != absolute.
+    # Non-vacuous: the mesh really is moving, so relative != absolute, and
+    # "restored" below is a round trip and not a field that never moved.
     assert np.abs(np.asarray(run["mesh_velocity"])).max() > 0.07
-
-
-def test_the_velocity_is_absolute_again_after_the_alpha_pass(
-    iso_advector_runs: dict[str, dict[str, Any]],
-) -> None:
-    # alphaEqn.H undoes the subtraction before UEqn.H assembles the momentum
-    # equation, which needs the absolute velocity.
-    run = iso_advector_runs["isoAdvectorMoving"]
-    # Non-vacuous: U really was relative while the advector held it, so
-    # "restored" is a round trip and not a field that never moved.
     assert not np.allclose(np.asarray(run["U_after"]), np.asarray(run["sub_steps"][-1]["U"]))
     np.testing.assert_allclose(
         np.asarray(run["U_after"]),

@@ -1,7 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Tests for the viscous-stress objects (``LinearViscousStress`` / ``OpenFOAMStress``).
+"""Tests for the viscous-stress objects and the ``ViscousStress`` Protocol they satisfy.
+
+The momentum equation calls ``viscousStress.divDevReff(U)``; the native linear
+assembly (``LinearViscousStress``) and the OpenFOAM-fallback delegate
+(``OpenFOAMStress``) both satisfy that Protocol.
 
 Pure-Python: which stress a model *uses* is the model's own decision, and the
 *operation* that drives the stress is owned by the model (tested in
@@ -13,6 +17,7 @@ and is covered end-to-end by ``test_laminar_comparison`` / ``test_pitzDaily_comp
 
 from typing import Any
 
+from neofoam.turbulence.base import ViscousStress
 from neofoam.turbulence.stress import LinearViscousStress, OpenFOAMStress
 
 
@@ -21,6 +26,18 @@ class _Model:
 
     def divDevReff(self, U: Any) -> Any:
         return ("delegated", U)
+
+
+def test_viscous_stress_protocol_requires_divdevreff() -> None:
+    class Incomplete:
+        def update(self, ctx: Any) -> None:
+            return None
+
+        # missing divDevReff
+
+    stress: Any = LinearViscousStress()
+    assert isinstance(stress, ViscousStress)
+    assert not isinstance(Incomplete(), ViscousStress)
 
 
 def test_openfoam_stress_delegates_to_the_model() -> None:

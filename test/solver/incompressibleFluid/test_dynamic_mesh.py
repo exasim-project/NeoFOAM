@@ -31,6 +31,11 @@ Tolerances are ``atol`` only: the quantities are exact in binary arithmetic and
 the pressure solves converge to a zero solution, so a few ulp is the whole error
 budget.
 
+Each test below states the moving expectation *and* the static control, because
+the static twin is what makes the moving number attributable to mesh motion:
+the two cases differ in the ``dynamicMeshDict`` alone, so a claim like "the flux
+is relative" is only meaningful next to "and absolute without it".
+
 The run needs a whole time loop and goes through ``_dynamic_mesh_worker.py``
 (one ``Foam::Time`` per process).
 """
@@ -94,20 +99,19 @@ def static_row4(tmp_path_factory: pytest.TempPathFactory) -> dict:
 # --- mesh selection --------------------------------------------------------
 
 
-def test_a_case_with_a_dynamicMeshDict_gets_its_motion_solver(moving_row4: dict) -> None:
-    assert moving_row4["mesh_type"] == "dynamicFvMesh"
-    assert moving_row4["dynamic"] is True
-
-
-def test_a_case_without_a_dynamicMeshDict_keeps_the_static_mesh(static_row4: dict) -> None:
-    assert static_row4["mesh_type"] == "fvMesh"
-    assert static_row4["dynamic"] is False
+def test_only_a_case_with_a_dynamicMeshDict_gets_a_motion_solver(
+    moving_row4: dict, static_row4: dict
+) -> None:
+    assert (moving_row4["mesh_type"], moving_row4["dynamic"]) == ("dynamicFvMesh", True)
+    assert (static_row4["mesh_type"], static_row4["dynamic"]) == ("fvMesh", False)
 
 
 # --- Uf (createUfIfPresent.H) ---------------------------------------------
 
 
-def test_the_face_velocity_is_built_on_a_dynamic_mesh(moving_row4: dict) -> None:
+def test_the_face_velocity_is_built_only_on_a_dynamic_mesh(
+    moving_row4: dict, static_row4: dict
+) -> None:
     faces = np.asarray(moving_row4["Uf"])
     np.testing.assert_allclose(
         faces,
@@ -116,25 +120,21 @@ def test_the_face_velocity_is_built_on_a_dynamic_mesh(moving_row4: dict) -> None
         atol=_ATOL,
         err_msg="movingRow4: Uf is not the face velocity fvc::correctUf should leave",
     )
-
-
-def test_no_face_velocity_is_built_on_a_static_mesh(static_row4: dict) -> None:
     assert static_row4["Uf"] is None
 
 
 # --- createDyMControls.H defaults -----------------------------------------
 
 
-def test_correct_phi_defaults_to_on_for_a_moving_mesh(moving_row4: dict) -> None:
+def test_correct_phi_defaults_to_the_meshs_dynamic_flag(
+    moving_row4: dict, static_row4: dict
+) -> None:
     # `correctPhi` defaults to mesh.dynamic(), the other two to False.
     assert moving_row4["dynamic_mesh_controls"] == {
         "correctPhi": True,
         "checkMeshCourantNo": False,
         "moveMeshOuterCorrectors": False,
     }
-
-
-def test_correct_phi_defaults_to_off_for_a_static_mesh(static_row4: dict) -> None:
     assert static_row4["dynamic_mesh_controls"] == {
         "correctPhi": False,
         "checkMeshCourantNo": False,
@@ -145,21 +145,18 @@ def test_correct_phi_defaults_to_off_for_a_static_mesh(static_row4: dict) -> Non
 # --- mesh.update() in the time loop ---------------------------------------
 
 
-def test_the_time_loop_moves_the_mesh(moving_row4: dict) -> None:
+def test_the_time_loop_moves_only_the_dynamic_mesh(moving_row4: dict, static_row4: dict) -> None:
     # Without the mesh-motion step the points never change and polyMesh::moving()
     # stays False; with it the duct has slid velocity*endTime downstream.
     assert moving_row4["moving"] is True
-    centres_x = np.asarray(moving_row4["cell_centres"])[:, 0]
     np.testing.assert_allclose(
-        centres_x,
+        np.asarray(moving_row4["cell_centres"])[:, 0],
         _CENTRES_X0 + _MESH_VELOCITY_X * _END_TIME,
         rtol=0,
         atol=_ATOL,
         err_msg="movingRow4: cell centres are not at the end-of-run mesh offset",
     )
 
-
-def test_the_static_mesh_never_moves(static_row4: dict) -> None:
     assert static_row4["moving"] is False
     np.testing.assert_array_equal(
         np.asarray(static_row4["cell_centres"])[:, 0],
@@ -171,10 +168,11 @@ def test_the_static_mesh_never_moves(static_row4: dict) -> None:
 # --- the flux the solver carries (fvc::makeRelative) -----------------------
 
 
-def test_the_flux_is_relative_to_the_mesh_motion(moving_row4: dict) -> None:
+def test_the_flux_is_relative_to_the_mesh_motion(moving_row4: dict, static_row4: dict) -> None:
     # Unit faces: the absolute flux is the flow velocity and the mesh flux is the
     # mesh velocity, so what pEqn.H hands on is their difference. A run that moved
-    # the mesh but skipped makeRelative would read 1.0 here.
+    # the mesh but skipped makeRelative would read 1.0 here — which is exactly the
+    # static twin's value.
     np.testing.assert_allclose(
         np.asarray(moving_row4["phi"]),
         _FLOW_VELOCITY_X - _MESH_VELOCITY_X,
@@ -182,9 +180,6 @@ def test_the_flux_is_relative_to_the_mesh_motion(moving_row4: dict) -> None:
         atol=_ATOL,
         err_msg="movingRow4: phi is not the flux relative to the mesh motion",
     )
-
-
-def test_the_static_flux_is_the_absolute_one(static_row4: dict) -> None:
     np.testing.assert_allclose(
         np.asarray(static_row4["phi"]),
         _FLOW_VELOCITY_X,

@@ -19,12 +19,11 @@ and the run silently develops a per-rank pressure level. The OR-reduction is
 what stops that, and the reduction inside ``get_ref_cell_value`` is what lets a
 non-owning rank apply the *same* shift.
 
-**The case.** ``cases/closedRefPoint`` — the closed 4-cell row of
-``cases/closed`` with the reference given as a *point* rather than a
-cell index (``setRefCell`` reads ``pRefCell`` as a local index on the master
-only, which cannot name global cell 2 once the row is halved), and with a
-checked-in ``system/decomposeParDict`` that puts the reference cell on rank 1 —
-the non-master, the harder half of both reductions. The physical set-up is
+**The case.** The closed 4-cell row of ``cases/closed`` with the reference given
+as a *point* rather than a cell index (:data:`PARALLEL_SAFE_REFERENCE`), and
+with ``cases/closedRefPoint``'s checked-in ``system/decomposeParDict`` putting
+the reference cell on rank 1 — the non-master, the harder half of both
+reductions. The physical set-up is
 otherwise unchanged, so the hand-derived expectations of the serial module carry
 over verbatim (see its docstring for the derivation):
 
@@ -61,7 +60,9 @@ from typing import Any
 import pytest
 from numpy.testing import assert_allclose
 
-from ...conftest import VOF_ROW4, stage_case
+from neofoam.tooling.casebuild import patch
+
+from ...conftest import build_case, overlay
 from ...parallel_helpers import NPROCS, decompose, run_mpi
 
 _HERE = Path(__file__).parent
@@ -85,15 +86,27 @@ _RTOL = 1e-13
 # 2-3, so the reference point (centre of global cell 2) is rank 1's local cell 0.
 _EXPECTED_REF_CELLS = [-1, 0]
 
+#: ``pRefPoint``, not ``pRefCell``: ``setRefCell`` reads ``pRefCell`` as a
+#: *local* index on the master only, which with two subdomains of two cells each
+#: cannot even name the cell the serial module uses (index 2 of 4). The point
+#: form is the parallel-safe one — OpenFOAM searches for it and exactly one rank
+#: finds it. (0.625 0.5 0.5) is the centre of global cell 2 of the 4-cell row, so
+#: this case pins the same reference cell and value as its serial sibling and the
+#: hand-derived expectations carry over unchanged.
+PARALLEL_SAFE_REFERENCE = patch(
+    "system/fvSolution",
+    **{"PIMPLE.pRefPoint": "(0.625 0.5 0.5)", "PIMPLE.pRefValue": 50},
+    remove=["PIMPLE.pRefCell"],
+)
+
 
 @pytest.fixture(scope="module")
 def ranks(tmp_path_factory: pytest.TempPathFactory) -> list[dict[str, Any]]:
     """Mesh + decompose the case, run the worker on two ranks, return both dumps."""
-    case = stage_case(
+    case = build_case(
         tmp_path_factory.mktemp("closedRefPoint") / "case",
-        VOF_ROW4 / "common",
-        _CASES / "closed",
-        _CASES / "closedRefPoint",
+        overlay(_CASES / "closed", _CASES / "closedRefPoint"),
+        PARALLEL_SAFE_REFERENCE,
     )
     subprocess.run(
         ["blockMesh", "-case", str(case)],
@@ -150,15 +163,10 @@ def test_need_reference_is_true_on_every_rank_of_a_closed_domain(
 ) -> None:
     """Rank 0 holds ``pRefCell = -1`` and must still answer True — without the
     OR-reduction it would read its own sentinel as "open domain" and skip the
-    level shift the other rank applies."""
+    level shift the other rank applies. The cached flag the init step stores in
+    ``ctx.models["pressure_reference"]`` — what the solver actually branches on
+    every pressure corrector — has to agree with it, value included."""
     assert [rank["need_reference"] for rank in ranks] == [True, True]
-
-
-def test_the_cached_pressure_reference_flag_agrees_on_every_rank(
-    ranks: list[dict[str, Any]],
-) -> None:
-    """The flag the init step stores in ``ctx.models["pressure_reference"]`` is
-    what the solver actually branches on every pressure corrector."""
     assert [rank["pressure_reference"]["needs_ref"] for rank in ranks] == [True, True]
     assert [rank["pressure_reference"]["value"] for rank in ranks] == [50.0, 50.0]
 
@@ -168,21 +176,16 @@ def test_the_cached_pressure_reference_flag_agrees_on_every_rank(
 # --------------------------------------------------------------------------- #
 
 
-def test_get_ref_cell_value_carries_the_owning_ranks_value_to_every_rank(
+def test_get_ref_cell_value_carries_the_owning_ranks_value_or_zero_to_every_rank(
     ranks: list[dict[str, Any]],
 ) -> None:
     """Rank 0 does not hold the cell at all, so the number it reports can only
-    have come over MPI — and it must be bit-for-bit rank 1's."""
+    have come over MPI — and it must be bit-for-bit rank 1's. Every rank passing
+    -1 is OpenFOAM's ``returnReduce(0, sumOp)`` case; the max-over-empty-fields
+    composition must answer 0 and not ``-VGREAT``."""
     assert [rank["ref_cell_value_of_p_rgh"] for rank in ranks] == (
         [_P_RGH_AT_REFERENCE_CELL] * NPROCS
     )
-
-
-def test_get_ref_cell_value_is_zero_when_no_rank_owns_a_reference_cell(
-    ranks: list[dict[str, Any]],
-) -> None:
-    """Every rank passing -1 is OpenFOAM's ``returnReduce(0, sumOp)`` case; the
-    max-over-empty-fields composition must answer 0 and not ``-VGREAT``."""
     assert [rank["ref_cell_value_without_reference_cell"] for rank in ranks] == ([0.0] * NPROCS)
 
 
@@ -212,33 +215,24 @@ def test_the_decomposed_case_builds_the_hand_derived_density_and_gravity_head(
     )
 
 
-def test_startup_levels_the_pressure_across_ranks(ranks: list[dict[str, Any]]) -> None:
-    """``p_before`` is what *init* leaves behind: createFields.H's shift, already
-    applied on both ranks — including the one that owns no reference cell."""
-    assert_allclose(
-        _in_global_order(ranks, "p_before"),
-        _P_LEVELLED,
-        rtol=_RTOL,
-        atol=0,
-        err_msg="closedRefPoint on 2 ranks: init must level p by pRefValue - p[2]",
-    )
-
-
-def test_absolute_pressure_is_level_shifted_across_ranks(
+def test_the_same_level_shift_is_applied_on_every_rank(
     ranks: list[dict[str, Any]],
 ) -> None:
-    """One shift, applied on both ranks, giving the serial answer: the level is
-    a property of the domain and not of the subdomain."""
-    assert_allclose(
-        _in_global_order(ranks, "p_after"),
-        _P_LEVELLED,
-        rtol=_RTOL,
-        atol=0,
-        err_msg="closedRefPoint on 2 ranks: p shifted by pRefValue - p[2]",
-    )
-
-
-def test_p_rgh_is_relevelled_across_ranks(ranks: list[dict[str, Any]]) -> None:
+    """One shift, applied on both ranks — including the one that owns no
+    reference cell — giving the serial answer: the level is a property of the
+    domain and not of the subdomain. ``p_before`` is what *init* leaves behind
+    (createFields.H's shift, already applied), ``p_after`` what a further
+    corrector-tail call leaves, and after either the reference cell reads
+    exactly ``pRefValue``.
+    """
+    for key in ("p_before", "p_after"):
+        assert_allclose(
+            _in_global_order(ranks, key),
+            _P_LEVELLED,
+            rtol=_RTOL,
+            atol=0,
+            err_msg=f"closedRefPoint on 2 ranks: {key} must be shifted by pRefValue - p[2]",
+        )
     assert_allclose(
         _in_global_order(ranks, "p_rgh_after"),
         _P_RGH_RELEVELLED,
@@ -246,11 +240,4 @@ def test_p_rgh_is_relevelled_across_ranks(ranks: list[dict[str, Any]]) -> None:
         atol=0,
         err_msg="closedRefPoint on 2 ranks: p_rgh relevelled from shifted p",
     )
-
-
-def test_the_reference_cell_lands_on_the_reference_value_for_every_rank(
-    ranks: list[dict[str, Any]],
-) -> None:
-    """The shift is built from the reference cell's own value, so after it the
-    cell reads exactly ``pRefValue`` — and every rank can say so."""
     assert [rank["ref_cell_value_of_p_after"] for rank in ranks] == [50.0] * NPROCS

@@ -20,6 +20,10 @@ cellZone holds only the two cells at ``x < 0.5``, with an inlet at ``x = 0`` and
 a fixed-pressure outlet at ``x = 1`` so the pressure corrector has an outflow to
 balance. ``0/alpha.water`` steps ``0, 0.25, 0.75, 1`` across them.
 
+Neither duct variant needs the base case's closed-box pressure reference (the
+duct has a fixed-pressure outlet), so both drop it with the package conftest's
+``no_pressure_reference`` step.
+
 * the ``source`` overlay carries a ``system/fvOptions`` with a
   ``vectorSemiImplicitSource``. With ``volumeMode specific`` the declared value
   is the source per unit volume and ``SemiImplicitSource`` hands it to the
@@ -29,7 +33,7 @@ balance. ``0/alpha.water`` steps ``0, 0.25, 0.75, 1`` across them.
 * the ``limited`` overlay carries a ``constant/fvOptions`` (the other of the two
   locations ``fv::options`` searches) with a ``limitVelocity`` correction, which
   contributes nothing to the matrix and acts only through ``correct(U)``,
-  scaling ``U`` down to ``max`` in magnitude on the zone. It runs with
+  scaling ``U`` down to ``max`` in magnitude on the zone. It is built with
   ``momentumPredictor yes``, so both correction points are exercised: the one
   after the momentum solve and the one after the pressure corrector overwrites
   ``U``.
@@ -53,7 +57,9 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from .conftest import VOF_ROW4, stage_case
+from neofoam.tooling.casebuild import patch
+
+from .conftest import VOF_ROW4, build_case, no_pressure_reference, overlay
 
 _HERE = Path(__file__).parent
 _WORKER = _HERE / "_fv_options_worker.py"
@@ -73,12 +79,12 @@ _ATOL = 1e-14
 
 def _run_case(name: str, tmp_path_factory: pytest.TempPathFactory) -> dict[str, dict]:
     """Compose and mesh the duct case, then run one momentum+continuity pass per variant."""
-    case = stage_case(
-        tmp_path_factory.mktemp(name) / "case",
-        VOF_ROW4 / "common",
-        VOF_ROW4 / "duct",
-        VOF_ROW4 / name,
-    )
+    steps = [overlay(VOF_ROW4 / "duct", VOF_ROW4 / name), no_pressure_reference]
+    if name == "limited":
+        # The clamp is applied by fvOptions.correct(U), which native calls right
+        # after the momentum solve -- so this case has to run that solve.
+        steps.append(patch("system/fvSolution", **{"PIMPLE.momentumPredictor": True}))
+    case = build_case(tmp_path_factory.mktemp(name) / "case", *steps)
     subprocess.run(["blockMesh", "-case", str(case)], check=True, capture_output=True, timeout=300)
     for variant in ("with", "without"):
         subprocess.run(
@@ -112,13 +118,10 @@ def _in_zone(run: dict) -> np.ndarray:
 # --- fvOptions(rho, U) in the momentum equation ----------------------------
 
 
-def test_the_case_builds_one_option(vof_row4_source: dict[str, dict]) -> None:
-    assert vof_row4_source["with"]["options"] == 1
-
-
-def test_the_momentum_source_gains_the_declared_source_in_the_zone(
+def test_the_momentum_source_carries_the_declared_source_inside_the_zone_only(
     vof_row4_source: dict[str, dict],
 ) -> None:
+    assert vof_row4_source["with"]["options"] == 1
     in_zone = _in_zone(vof_row4_source["with"])
     volumes = np.asarray(vof_row4_source["with"]["cell_volumes"])[in_zone, None]
 
@@ -133,18 +136,12 @@ def test_the_momentum_source_gains_the_declared_source_in_the_zone(
         err_msg="source: the momentum source does not carry +V*Su",
     )
 
-
-def test_the_momentum_source_is_untouched_outside_the_zone(
-    vof_row4_source: dict[str, dict],
-) -> None:
-    outside = ~_in_zone(vof_row4_source["with"])
-
     # Bit-identical, not merely close: outside its cell zone the source writes
     # nothing, which is the same guarantee that keeps a case with no fvOptions
     # dictionary assembling exactly the matrix it always did.
     np.testing.assert_array_equal(
-        np.asarray(vof_row4_source["with"]["source"])[outside],
-        np.asarray(vof_row4_source["without"]["source"])[outside],
+        np.asarray(vof_row4_source["with"]["source"])[~in_zone],
+        np.asarray(vof_row4_source["without"]["source"])[~in_zone],
         err_msg="source: the momentum source changed outside the source zone",
     )
 
@@ -165,7 +162,7 @@ def test_a_correction_leaves_the_momentum_matrix_alone(
     )
 
 
-def test_the_momentum_solve_is_followed_by_the_clamp_inside_the_zone(
+def test_the_momentum_solve_is_followed_by_the_clamp_inside_the_zone_only(
     vof_row4_limited: dict[str, dict],
 ) -> None:
     in_zone = _in_zone(vof_row4_limited["with"])
@@ -183,15 +180,9 @@ def test_the_momentum_solve_is_followed_by_the_clamp_inside_the_zone(
         err_msg="limited: the solved velocity was not clamped to max",
     )
 
-
-def test_the_momentum_solve_leaves_the_velocity_outside_the_zone_alone(
-    vof_row4_limited: dict[str, dict],
-) -> None:
-    outside = ~_in_zone(vof_row4_limited["with"])
-
     np.testing.assert_array_equal(
-        np.asarray(vof_row4_limited["with"]["U_after_momentum"])[outside],
-        np.asarray(vof_row4_limited["without"]["U_after_momentum"])[outside],
+        np.asarray(vof_row4_limited["with"]["U_after_momentum"])[~in_zone],
+        np.asarray(vof_row4_limited["without"]["U_after_momentum"])[~in_zone],
         err_msg="limited: correct(U) reached outside the source zone",
     )
 

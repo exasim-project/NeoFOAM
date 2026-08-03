@@ -40,12 +40,9 @@ from neofoam.solver.incompressibleVoF.models.alpha_advection.selection import (
 _CASES = Path(__file__).parent / "cases"
 
 
-def test_model_name_defaults_to_mules_when_attribute_absent() -> None:
+def test_model_name_reads_the_configured_scheme_and_defaults_to_mules() -> None:
     """No ``advectionScheme`` attribute on the config -> the MULES default."""
     assert model_name(SimpleNamespace()) == "MULES"
-
-
-def test_model_name_returns_the_configured_advection_scheme() -> None:
     assert model_name(SimpleNamespace(advectionScheme="isoAdvector")) == "isoAdvector"
 
 
@@ -63,22 +60,20 @@ def test_select_advection_scheme_raises_for_an_unknown_name() -> None:
         select_advection_scheme("bogusScheme")
 
 
-def test_select_from_case_defaults_to_mules_from_the_real_damBreak_case(
-    monkeypatch: pytest.MonkeyPatch,
+@pytest.mark.parametrize(
+    "case_name, expected",
+    [
+        # The interFoam damBreak fvSolution has no ``advectionScheme`` key.
+        pytest.param("damBreak_mules", "MULES", id="MULES"),
+        # The damBreak_isoAdvector one has ``advectionScheme isoAdvector;``.
+        pytest.param("damBreak_isoAdvector", "isoAdvector", id="isoAdvector"),
+    ],
+)
+def test_select_from_case_reads_the_scheme_out_of_the_real_case(
+    monkeypatch: pytest.MonkeyPatch, case_name: str, expected: str
 ) -> None:
-    """The interFoam damBreak fvSolution has no ``advectionScheme`` key."""
-    monkeypatch.chdir(_CASES / "damBreak_mules")
-    spec = select_from_case()
-    assert spec.name == "MULES"
-
-
-def test_select_from_case_selects_isoadvector_from_the_real_case(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """The damBreak_isoAdvector fvSolution has ``advectionScheme isoAdvector;``."""
-    monkeypatch.chdir(_CASES / "damBreak_isoAdvector")
-    spec = select_from_case()
-    assert spec.name == "isoAdvector"
+    monkeypatch.chdir(_CASES / case_name)
+    assert select_from_case().name == expected
 
 
 def test_select_from_case_defaults_to_mules_when_fvSolution_is_missing(

@@ -4,11 +4,12 @@
 """Tests for the incompressibleVoF PIMPLE control factory.
 
 The factory reads the ``PIMPLE`` subdict of ``system/fvSolution`` from the cwd,
-so each test chdirs into a real case directory under
-``test/solver/incompressibleVoF/cases/`` (dict-reading tests load real OpenFOAM
-case files, never a dict-as-string). Those cases live one package up because
-``test_turbulence_correction.py`` drives the same controls through the solver's
-turbulence step.
+so each test chdirs into a real case directory (dict-reading tests load real
+OpenFOAM case files, never a dict-as-string). The synthetic PIMPLE dicts are
+forks of ``cases/pimple`` built by the package conftest's ``pimple_case``
+fixture from :data:`~conftest.PIMPLE_VARIANTS`; that case lives one package up
+because ``test_turbulence_correction.py`` drives the same controls through the
+solver's turbulence step.
 
 Two of them are unmodified upstream tutorial files, and they are what the
 regression in this module is about — the five interFoam / interIsoFoam
@@ -27,6 +28,7 @@ PISO pressure correction requires nCorrectors >= 2"*:
   :class:`PimpleControl`) rather than reject the negative counts.
 """
 
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
@@ -41,16 +43,20 @@ from neofoam.solver.incompressibleVoF.models.pressure_velocity.control_factory i
 _CASES = Path(__file__).parents[2] / "cases"
 
 
-def test_missing_ncorrectors_defaults_to_two(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_missing_ncorrectors_defaults_to_two(
+    monkeypatch: pytest.MonkeyPatch, pimple_case: Callable[[str], Path]
+) -> None:
     """Absent nCorrectors falls back to 2 — the smallest valid PISO count."""
-    monkeypatch.chdir(_CASES / "pimple_defaults")
+    monkeypatch.chdir(pimple_case("defaults"))
     control = create_pimple_control({})
     assert control.nCorrectors == 2
     assert control.momentumPredictor() is False
 
 
-def test_all_pimple_keys_are_read(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.chdir(_CASES / "pimple_full")
+def test_all_pimple_keys_are_read(
+    monkeypatch: pytest.MonkeyPatch, pimple_case: Callable[[str], Path]
+) -> None:
+    monkeypatch.chdir(pimple_case("full"))
     control = create_pimple_control({})
     assert control.nOuterCorrectors == 2
     assert control.nCorrectors == 3
@@ -76,26 +82,27 @@ def test_real_interfoam_case_with_single_corrector_builds(
     "case_name, turb_on_final_iter_only, expected_turb_corr",
     [
         # pimpleControl::read()'s default is ``turbOnFinalIterOnly true``, and
-        # cases/pimple_outer3 leaves the key out as every interFoam tutorial
+        # the ``outer3`` base leaves the key out as every interFoam tutorial
         # does — so the correction has to land on the third outer corrector alone.
-        pytest.param("pimple_outer3", True, [False, False, True], id="default"),
+        pytest.param("outer3", True, [False, False, True], id="default"),
         # The same case with ``turbOnFinalIterOnly no``.
-        pytest.param("pimple_turb_every_outer", False, [True, True, True], id="no"),
+        pytest.param("turb_every_outer", False, [True, True, True], id="no"),
     ],
 )
 def test_turb_on_final_iter_only_places_the_correction_where_the_case_asks(
     monkeypatch: pytest.MonkeyPatch,
+    pimple_case: Callable[[str], Path],
     case_name: str,
     turb_on_final_iter_only: bool,
     expected_turb_corr: list[bool],
 ) -> None:
-    monkeypatch.chdir(_CASES / case_name)
+    monkeypatch.chdir(pimple_case(case_name))
     control = create_pimple_control({})
     assert control.turbOnFinalIterOnly is turb_on_final_iter_only
     assert [control.loop() and control.turbCorr() for _ in range(3)] == expected_turb_corr
 
 
-def test_frozen_flow_skips_pressure_velocity(
+def test_frozen_flow_skips_pressure_velocity_and_the_turbulence(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """frozenFlow yes with the -1 sentinel counts builds a FrozenFlowControl
@@ -110,19 +117,16 @@ def test_frozen_flow_skips_pressure_velocity(
     assert control.finalIter() is True
     assert control.loop() is False
     assert control.loop() is True
-
-
-def test_a_frozen_flow_case_never_corrects_the_turbulence() -> None:
     # interIsoFoam ``continue``s out of the outer corrector before the
     # turbulence correction, so the frozen-flow control answers no.
-    assert FrozenFlowControl().turbCorr() is False
+    assert control.turbCorr() is False
 
 
 def test_frozen_flow_no_with_negative_correctors_still_raises(
-    monkeypatch: pytest.MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch, pimple_case: Callable[[str], Path]
 ) -> None:
     """Negative corrector counts WITHOUT frozenFlow are a real misconfiguration:
     the ge=1/ge=0 bounds must still reject them (the fix must not mask typos)."""
-    monkeypatch.chdir(_CASES / "pimple_frozenflow_no_negative_correctors")
+    monkeypatch.chdir(pimple_case("negative_correctors"))
     with pytest.raises(ValidationError):
         create_pimple_control({})

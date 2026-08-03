@@ -29,9 +29,9 @@ different subset (TEST_STYLE rule 10):
   native takes its *second* ``rhoPhi`` expression with the conversion switched
   off; the two expressions must agree exactly there.
 
-The ``fvSchemes`` variants are checked-in files under ``cases/ddtSchemes/`` that
-replace the tutorial's, because a scheme spec (``CrankNicolson 0.5``) is two
-tokens and the dictionary writer can only set an entry from a single value.
+The ``ddtSchemes`` entries are written into the tutorial's own ``fvSchemes``
+through the OpenFOAM format's reader/writer, one ``parametrize`` entry per
+configuration.
 
 **Oracle and horizon** are ``test_mules_regimes``': the same ``tutorials/damBreak``
 run to 0.05 s (~7 adaptive steps) by both solvers reading the same dictionaries,
@@ -44,7 +44,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Mapping, Optional, Union
+from typing import Mapping, Union
 
 import pytest
 
@@ -52,18 +52,19 @@ from ..incompressibleFluid.comparison_helpers import compare_solver_fields
 from .comparison_helpers import FIELDS_TO_COMPARE, run_dambreak_regime
 
 PimpleControls = Mapping[str, Union[bool, float]]
+DdtSchemes = Mapping[str, str]
 
-_DDT_SCHEMES = Path(__file__).parent / "cases" / "ddtSchemes"
+_CRANK_NICOLSON: DdtSchemes = {"default": "CrankNicolson 0.5"}
 
 SCHEMES = [
-    pytest.param((None, {"nOuterCorrectors": 3.0}), id="Euler_3_outer_correctors"),
-    pytest.param((_DDT_SCHEMES / "crankNicolson" / "fvSchemes", {}), id="CrankNicolson"),
+    pytest.param(({}, {"nOuterCorrectors": 3.0}), id="Euler_3_outer_correctors"),
+    pytest.param((_CRANK_NICOLSON, {}), id="CrankNicolson"),
     pytest.param(
-        (_DDT_SCHEMES / "crankNicolson" / "fvSchemes", {"nOuterCorrectors": 3.0}),
+        (_CRANK_NICOLSON, {"nOuterCorrectors": 3.0}),
         id="CrankNicolson_3_outer_correctors",
     ),
     pytest.param(
-        (_DDT_SCHEMES / "alphaEulerMomentumCrankNicolson" / "fvSchemes", {}),
+        ({**_CRANK_NICOLSON, "ddt(alpha)": "Euler"}, {}),
         id="alpha_Euler_momentum_CrankNicolson",
     ),
 ]
@@ -73,7 +74,7 @@ SCHEMES = [
 class SchemeRun:
     """One ddt configuration, run to ``endTime`` by both solvers."""
 
-    fv_schemes: Optional[Path]
+    ddt_schemes: DdtSchemes
     pimple_controls: PimpleControls
     python_case: Path
     native_case: Path
@@ -84,7 +85,7 @@ def scheme_run(
     request: pytest.FixtureRequest, tmp_path_factory: pytest.TempPathFactory
 ) -> SchemeRun:
     """Run one ddt configuration with both solvers, once."""
-    fv_schemes, pimple_controls = request.param
+    ddt_schemes, pimple_controls = request.param
     root = tmp_path_factory.mktemp("crankNicolsonDdt")
     python_case = root / "incompressibleVoF"
     native_case = root / "interFoam"
@@ -92,10 +93,10 @@ def scheme_run(
         {},
         python_case,
         native_case,
-        fv_schemes=fv_schemes,
+        ddt_schemes=ddt_schemes,
         pimple_controls=pimple_controls,
     )
-    return SchemeRun(fv_schemes, pimple_controls, python_case, native_case)
+    return SchemeRun(ddt_schemes, pimple_controls, python_case, native_case)
 
 
 def test_alpha_ddt_scheme_matches_native_interFoam(scheme_run: SchemeRun) -> None:
@@ -109,7 +110,8 @@ def test_alpha_ddt_scheme_matches_native_interFoam(scheme_run: SchemeRun) -> Non
     )
 
     assert all_match, (
-        f"fvSchemes {scheme_run.fv_schemes}, PIMPLE {dict(scheme_run.pimple_controls)}: "
+        f"ddtSchemes {dict(scheme_run.ddt_schemes)}, "
+        f"PIMPLE {dict(scheme_run.pimple_controls)}: "
         + ", ".join(
             f"{name}(abs={failed_details[name][0]:.3e}, rel={failed_details[name][1]:.3e})"
             for name in failed_fields

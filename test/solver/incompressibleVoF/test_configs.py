@@ -40,25 +40,19 @@ def damBreak(tmp_path: Path) -> Path:
     return tmp_path
 
 
-def test_transport_properties_loads_two_phase_defaults_from_real_case(
+def test_transport_properties_loads_and_round_trips_the_real_case(
     damBreak: Path,
 ) -> None:
-    """The interFoam damBreak ``transportProperties`` is water/air, as modelled."""
+    """The interFoam damBreak ``transportProperties`` is water/air, as modelled —
+    and saved back and reloaded it reproduces the same values."""
     cfg = TransportPropertiesConfig.load(case_dir=damBreak)
     assert cfg.phases == ["water", "air"]
     assert cfg.water == PhaseTransport(nu=1e-6, rho=1000.0)
     assert cfg.air == PhaseTransport(nu=1.48e-5, rho=1.0)
     assert cfg.sigma == 0.07
 
-
-def test_transport_properties_save_round_trips_through_the_real_file(
-    damBreak: Path,
-) -> None:
-    """Loaded config, saved back and reloaded, reproduces the same values."""
-    cfg = TransportPropertiesConfig.load(case_dir=damBreak)
     cfg.save(case_dir=damBreak)
-    reloaded = TransportPropertiesConfig.load(case_dir=damBreak)
-    assert reloaded == cfg
+    assert TransportPropertiesConfig.load(case_dir=damBreak) == cfg
 
 
 @pytest.mark.parametrize(
@@ -78,25 +72,15 @@ def test_phases_parses_both_openfoam_string_and_list_forms(
     assert cfg.phases == expected
 
 
-def test_phases_serializes_list_back_to_the_openfoam_paren_string() -> None:
-    """``_serialize_phases`` is the inverse of ``_parse_phases``."""
-    cfg = TransportPropertiesConfig(phases=["oil", "water"])
-    assert cfg.model_dump()["phases"] == "(oil water)"
-
-
-def test_gravity_config_loads_earth_gravity_from_real_case(damBreak: Path) -> None:
-    """The damBreak ``constant/g`` is Earth gravity acting in -y."""
+def test_gravity_config_loads_and_round_trips_the_real_case(damBreak: Path) -> None:
+    """The damBreak ``constant/g`` is Earth gravity acting in -y — and saved back
+    and reloaded it reproduces the same values."""
     cfg = GravityConfig.load(case_dir=damBreak)
     assert cfg.dimensions == [0, 1, -2, 0, 0, 0, 0]
     assert cfg.value == [0.0, -9.81, 0.0]
 
-
-def test_gravity_config_save_round_trips_through_the_real_file(damBreak: Path) -> None:
-    """Loaded config, saved back and reloaded, reproduces the same values."""
-    cfg = GravityConfig.load(case_dir=damBreak)
     cfg.save(case_dir=damBreak)
-    reloaded = GravityConfig.load(case_dir=damBreak)
-    assert reloaded == cfg
+    assert GravityConfig.load(case_dir=damBreak) == cfg
 
 
 @pytest.mark.parametrize(
@@ -145,10 +129,13 @@ def test_fmt_component_drops_gratuitous_trailing_zero(component: float, expected
     assert _fmt_component(component) == expected
 
 
-def test_value_serializes_list_back_to_the_openfoam_paren_string() -> None:
-    """``_serialize_value`` is the inverse of ``_parse_value``, using ``_fmt_component``."""
-    cfg = GravityConfig(value=[0.0, -9.81, 2.5])
-    assert cfg.model_dump()["value"] == "(0 -9.81 2.5)"
+def test_the_paren_strings_are_serialized_back_from_their_lists() -> None:
+    """``_serialize_phases`` and ``_serialize_value`` (the latter through
+    ``_fmt_component``) are the inverses of their parsers."""
+    assert TransportPropertiesConfig(phases=["oil", "water"]).model_dump()["phases"] == (
+        "(oil water)"
+    )
+    assert GravityConfig(value=[0.0, -9.81, 2.5]).model_dump()["value"] == "(0 -9.81 2.5)"
 
 
 def test_control_dict_config_loads_interfoam_adaptive_stepping_from_real_case(

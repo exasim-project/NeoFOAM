@@ -16,19 +16,12 @@ FoamFile
 
 // CrossPowerLaw: nu = (nu0 - nuInf)/(1 + (m*strainRate)^n) + nuInf.
 // No native NeoFOAM viscosity model is registered for it, so the solver's
-// selection resolves to the OpenFOAM fallback adapter. The coefficients are
-// chosen to keep the expected nu short exact decimals — see
-// test_non_newtonian_fallback_nu.py.
+// selection resolves to the OpenFOAM fallback adapter. The ``CrossPowerLawCoeffs``
+// block is patched in by the test (CROSS_POWER_LAW in
+// test_non_newtonian_fallback_nu.py), so the coefficients live next to the expected
+// nu they were chosen to keep short exact decimals.
 
 transportModel  CrossPowerLaw;
-
-CrossPowerLawCoeffs
-{
-    nu0         1e-03;
-    nuInf       1e-05;
-    m           1;
-    n           2;
-}
 
 
 // ************************************************************************* //

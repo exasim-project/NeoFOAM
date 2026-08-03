@@ -29,14 +29,10 @@ from neofoam.solver.incompressibleVoF.models.alpha_advection.advectionModel impo
 _CASES = Path(__file__).parent / "cases"
 
 
-def test_registered_names_includes_both_bundled_schemes() -> None:
+def test_both_bundled_schemes_joined_the_family_as_model_specs() -> None:
     assert {"MULES", "isoAdvector"} <= set(advectionModel.registered_names())
-
-
-def test_all_specs_returns_model_spec_objects_for_both_schemes() -> None:
     specs = advectionModel.all_specs()
-    names = {spec.name for spec in specs}
-    assert {"MULES", "isoAdvector"} <= names
+    assert {"MULES", "isoAdvector"} <= {spec.name for spec in specs}
     assert all(isinstance(spec, ModelSpec) for spec in specs)
 
 
@@ -51,19 +47,17 @@ def test_find_spec_returns_none_for_an_unknown_name() -> None:
     assert advectionModel.find_spec("bogusScheme") is None
 
 
-def test_detect_and_create_selects_mules_from_the_real_damBreak_mules_case(
-    monkeypatch: pytest.MonkeyPatch,
+@pytest.mark.parametrize(
+    "case_name, expected",
+    [
+        # The interFoam damBreak fvSolution has no ``advectionScheme`` key.
+        pytest.param("damBreak_mules", "MULES", id="MULES"),
+        # The damBreak_isoAdvector one carries ``advectionScheme isoAdvector;``.
+        pytest.param("damBreak_isoAdvector", "isoAdvector", id="isoAdvector"),
+    ],
+)
+def test_detect_and_create_selects_the_scheme_the_real_case_asks_for(
+    monkeypatch: pytest.MonkeyPatch, case_name: str, expected: str
 ) -> None:
-    """The interFoam damBreak fvSolution has no ``advectionScheme`` key."""
-    monkeypatch.chdir(_CASES / "damBreak_mules")
-    spec = advectionModel.detect_and_create()
-    assert spec.name == "MULES"
-
-
-def test_detect_and_create_selects_isoadvector_from_the_real_case(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """The damBreak_isoAdvector fvSolution carries ``advectionScheme isoAdvector;``."""
-    monkeypatch.chdir(_CASES / "damBreak_isoAdvector")
-    spec = advectionModel.detect_and_create()
-    assert spec.name == "isoAdvector"
+    monkeypatch.chdir(_CASES / case_name)
+    assert advectionModel.detect_and_create().name == expected

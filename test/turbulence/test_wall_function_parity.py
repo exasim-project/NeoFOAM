@@ -7,9 +7,10 @@
 epsilon / omega / kqR / nutk wall functions and their model-side halves (the
 near-wall production override and the near-wall matrix-cell pin) are never
 exercised there. This module is that missing half: one ``correct`` step on
-``wall_function_base`` — a cube whose **four** x/z faces are ``wall`` — asserted
-first over the wall cells alone, so a wall-treatment regression names itself
-rather than surfacing as a whole-field mismatch, and then over the whole field.
+:func:`_parity_case.wall_function_case` — a cube whose **four** x/z faces are
+``wall`` — asserted first over the wall cells alone, so a wall-treatment regression
+names itself rather than surfacing as a whole-field mismatch, and then over the whole
+field.
 
 Three properties of the case make it discriminating where a stock walled box is not:
 
@@ -36,17 +37,12 @@ One ``Foam::Time`` per process, so the roles run as subprocesses of
 
 from __future__ import annotations
 
-import shutil
 from pathlib import Path
 
 import numpy as np
 import pytest
 
-from turbulence._parity_case import run_worker
-
-_HERE = Path(__file__).parent
-_CASE = _HERE / "wall_function_base"
-_MODELS = _HERE / "parity_models"
+from turbulence._parity_case import run_worker, wall_function_case
 
 #: ``(model, fields it owns, agreement bound as a fraction of the field's peak)``.
 #: Both models use ``kqRWallFunction`` for ``k`` and ``nutkWallFunction`` for
@@ -54,10 +50,10 @@ _MODELS = _HERE / "parity_models"
 #: function (``epsilonWallFunction`` vs ``omegaWallFunction``) and the matrix pin
 #: under test. ``SpalartAllmaras`` is absent: it needs
 #: ``nutUSpaldingWallFunction``, i.e. a different ``0/nut``, so it belongs in its
-#: own case rather than this overlay.
+#: own case rather than this one.
 #:
 #: Both backends solve the same matrix to an absolute residual of 1e-14
-#: (``wall_function_base``'s ``fvSolution``), so the bound is round-off, not
+#: (the shared ``parity_base/system/fvSolution``), so the bound is round-off, not
 #: solver tolerance — ``kEpsilon`` measures 4e-14 of peak. ``kOmegaSST`` measures
 #: 4e-8: its ``F1``/``F2`` blending chain (``tanh``/``pow4``/``sqrt`` over
 #: ``CDkOmega``) is evaluated in a different association order on the two
@@ -70,7 +66,7 @@ CASES = [
 ]
 
 
-#: The wall cells of ``wall_function_base``. blockMesh numbers a single hex block
+#: The wall cells of the case. blockMesh numbers a single hex block
 #: x-fastest, so cell ``i + 4j + 16k`` sits at column ``i`` / row ``j`` / layer
 #: ``k``; a cell touches a wall exactly when it is in the first or last x column
 #: or z layer. 48 of the 64 cells, of which the 16 with both are the edge cells
@@ -91,12 +87,7 @@ def test_wall_cells_match_pybfoam_after_one_correct(
     model: str, fields: tuple[str, ...], bound: float, tmp_path: Path
 ) -> None:
     """One ``correct`` step leaves the NeoN wall cells equal to pybFoam's."""
-    case = tmp_path / "case"
-    shutil.copytree(_CASE, case)
-    shutil.copyfile(
-        _MODELS / model / "turbulenceProperties",
-        case / "constant" / "turbulenceProperties",
-    )
+    case = wall_function_case(model).build_at(tmp_path / "case").path
 
     run_worker("mesh", case)  # the case ships its own 0/ fields; do not reseed
     run_worker("reference", case)  # pybFoam wall functions

@@ -32,16 +32,14 @@ def test_all_specs_lists_every_registered_optional_model() -> None:
     assert [spec.name for spec in incompressibleVoFModel.all_specs()] == ["mrf", "fvOptions"]
 
 
-def test_detect_models_returns_empty_list_for_the_real_damBreak_case() -> None:
-    # damBreak carries neither constant/MRFProperties nor an fvOptions
-    # dictionary, so both registered members detect themselves out and the
-    # case's model set stays empty.
-    runtimes: list[ModelRuntime] = incompressibleVoFModel.detect_models(_CASES / "damBreak")
-    assert runtimes == []
-
-
-def test_detect_models_defaults_case_dir_to_the_cwd(
+def test_detect_models_returns_empty_list_for_the_real_damBreak_case(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    # damBreak carries neither constant/MRFProperties nor an fvOptions
+    # dictionary, so both registered members detect themselves out and the
+    # case's model set stays empty — whether the case is named or defaulted
+    # from the cwd.
+    runtimes: list[ModelRuntime] = incompressibleVoFModel.detect_models(_CASES / "damBreak")
+    assert runtimes == []
     monkeypatch.chdir(_CASES / "damBreak")
     assert incompressibleVoFModel.detect_models() == []

@@ -18,8 +18,8 @@ this module pins both:
 unit-cube row an inlet that supplies 1 m/s into an interior carrying 2 m/s, so
 ``createPhi(U) = fvc::flux(U)`` is *not* solenoidal (see the derivation on the
 test). Its PIMPLE dict never mentions ``correctPhi`` — that is the point. The
-``moving`` overlay (``correctPhi no``) and ``moving`` + ``movingCorrectPhi``
-(``correctPhi yes``) are the moving twins; they differ in that one key alone.
+moving twins are the package conftest's ``moving(correct_phi=False)`` and
+``moving(correct_phi=True)``; they differ in that one key alone.
 
 The start-up assertion reads the session-scoped staged-init dump from
 ``conftest.py``. The two moving assertions need whole time loops, so they go
@@ -38,7 +38,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from .conftest import VOF_ROW4, BuiltCase, stage_case
+from .conftest import BuiltCase, build_case, moving
 
 _HERE = Path(__file__).parent
 _WORKER = _HERE / "_dynamic_mesh_worker.py"
@@ -47,12 +47,10 @@ _WORKER = _HERE / "_dynamic_mesh_worker.py"
 _TIME_STEPS = 4
 
 
-def _pcorr_solves(variant: str, tmp_path_factory: pytest.TempPathFactory) -> int:
-    """Run the moving case under *variant* through the solver; count ``pcorr`` solves."""
-    layers = [VOF_ROW4 / "common", VOF_ROW4 / "moving"]
-    if variant != "moving":
-        layers.append(VOF_ROW4 / variant)
-    run_dir = stage_case(tmp_path_factory.mktemp(variant) / "case", *layers)
+def _pcorr_solves(correct_phi: bool, tmp_path_factory: pytest.TempPathFactory) -> int:
+    """Run the moving case with/without ``correctPhi`` through the solver; count solves."""
+    name = "movingCorrectPhi" if correct_phi else "moving"
+    run_dir = build_case(tmp_path_factory.mktemp(name) / "case", moving(correct_phi=correct_phi))
     subprocess.run(
         ["blockMesh", "-case", str(run_dir)], check=True, capture_output=True, timeout=300
     )
@@ -99,19 +97,19 @@ def test_the_startup_projection_runs_on_a_case_that_never_sets_correct_phi(
 
 
 @pytest.mark.parametrize(
-    "variant, expected_projections",
+    "correct_phi, expected_projections",
     [
         # One projection before the time loop plus one per time step: the mesh
         # moves on every step (solidBody oscillation) and
         # `moveMeshOuterCorrectors` is off, so `mesh.update()` runs once per step.
-        pytest.param("movingCorrectPhi", 1 + _TIME_STEPS, id="correctPhi_yes"),
+        pytest.param(True, 1 + _TIME_STEPS, id="correctPhi_yes"),
         # The same case with `correctPhi no`: the mesh still moves every step, but
         # native skips the re-projection, so only initCorrectPhi.H's single solve
         # is left.
-        pytest.param("moving", 1, id="correctPhi_no"),
+        pytest.param(False, 1, id="correctPhi_no"),
     ],
 )
 def test_a_moving_mesh_reprojects_the_flux_only_when_correct_phi_is_set(
-    tmp_path_factory: pytest.TempPathFactory, variant: str, expected_projections: int
+    tmp_path_factory: pytest.TempPathFactory, correct_phi: bool, expected_projections: int
 ) -> None:
-    assert _pcorr_solves(variant, tmp_path_factory) == expected_projections
+    assert _pcorr_solves(correct_phi, tmp_path_factory) == expected_projections

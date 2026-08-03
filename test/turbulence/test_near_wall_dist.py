@@ -9,10 +9,11 @@ one. The NeoN closure used to construct a ``Foam::wallDist`` instead, which read
 that entry and killed a stock case with an uncatchable ``FOAM FATAL IO ERROR``
 during initialisation; it now goes through pybFoam's ``nearWallDist``.
 
-The case (``walled_base``) is a unit cube of 4 x 4 x 4 uniform cells whose two z
-patches are walls, so every wall face's owner-cell centre sits exactly half a cell
-— 0.5/4 = 0.125 m — from its wall, and non-wall patches hold 0 (OpenFOAM's
-``nearWallDist`` zeroes them). Those are the expected values below.
+The case (:func:`_parity_case.walled_case`, which drops the shared base's ``wallDist``
+block) is a unit cube of 4 x 4 x 4 uniform cells whose two z patches are walls, so
+every wall face's owner-cell centre sits exactly half a cell — 0.5/4 = 0.125 m — from
+its wall, and non-wall patches hold 0 (OpenFOAM's ``nearWallDist`` zeroes them). Those
+are the expected values below.
 
 The model is built in a subprocess (the ``near_wall_dist`` role of
 :mod:`_parity_worker`): one ``Foam::Time`` per process. A missing ``wallDist``
@@ -22,29 +23,24 @@ failed subprocess.
 
 from __future__ import annotations
 
-import shutil
 from pathlib import Path
 
 import numpy as np
 
-from turbulence._parity_case import run_worker
-
-_HERE = Path(__file__).parent
-_CASE = _HERE / "walled_base"  # kEpsilon box with walls and no fvSchemes/wallDist
+from turbulence._parity_case import run_worker, walled_case
 
 #: Half the 0.25 m cell height — the owner-cell centre distance to its wall patch.
 NEAR_WALL_DISTANCE = 0.125
 
-#: Wall patches of ``walled_base`` (the two z faces) and the generic patches.
+#: Wall patches of the walled case (the two z faces) and the generic patches.
 WALL_PATCHES = ("zMin", "zMax")
 NON_WALL_PATCHES = ("xMin", "xMax", "yMin", "yMax")
 
 
 def test_kepsilon_near_wall_dist_without_fvschemes_walldist_entry(tmp_path: Path) -> None:
     """kEpsilon initialises without an ``fvSchemes`` ``wallDist`` block, with sane ``y``."""
-    case = tmp_path / "case"
-    shutil.copytree(_CASE, case)
-    # Guard the fixture: the point of the case is the absent scheme block.
+    case = walled_case().build_at(tmp_path / "case").path
+    # Guard the case: the point of it is the absent scheme block.
     assert "wallDist\n{" not in (case / "system" / "fvSchemes").read_text()
 
     run_worker("mesh", case)

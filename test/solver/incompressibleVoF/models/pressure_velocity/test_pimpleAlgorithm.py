@@ -16,6 +16,8 @@ must LOWER the flag on loop exit — otherwise a function object solve picks the
 non-existent ``<field>Final`` sub-dict and dies.
 """
 
+import pytest
+
 from neofoam.algorithms.solution_loop.control import PimpleControl  # noqa: E402
 from neofoam.framework.context import Context  # noqa: E402
 from neofoam.solver.incompressibleVoF.models.pressure_velocity.pimpleAlgorithm import (  # noqa: E402
@@ -39,8 +41,20 @@ def _ctx(pimple: PimpleControl, mesh: MeshSpy) -> Context:
     return Context(fields={}, models={"pimple_control": pimple}, mesh=mesh)
 
 
-def test_piso_mode_marks_every_iteration_final() -> None:
-    pimple = PimpleControl(nCorrectors=2, momentumPredictor=True)  # nOuter = 1
+@pytest.mark.parametrize(
+    "n_outer_correctors, expected_flags",
+    [
+        # PISO mode (nOuter = 1): the single iteration is already the final one.
+        pytest.param(1, [True], id="piso"),
+        pytest.param(3, [False, False, True], id="pimple"),
+    ],
+)
+def test_only_the_last_outer_iteration_is_marked_final(
+    n_outer_correctors: int, expected_flags: list[bool]
+) -> None:
+    pimple = PimpleControl(
+        nCorrectors=2, nOuterCorrectors=n_outer_correctors, momentumPredictor=True
+    )
     mesh = MeshSpy()
     ctx = _ctx(pimple, mesh)
 
@@ -48,19 +62,7 @@ def test_piso_mode_marks_every_iteration_final() -> None:
     while inner_loop(ctx):
         flags.append(mesh.final)
 
-    assert flags == [True]
-
-
-def test_pimple_mode_marks_only_last_outer_iteration_final() -> None:
-    pimple = PimpleControl(nCorrectors=2, nOuterCorrectors=3, momentumPredictor=True)
-    mesh = MeshSpy()
-    ctx = _ctx(pimple, mesh)
-
-    flags = []
-    while inner_loop(ctx):
-        flags.append(mesh.final)
-
-    assert flags == [False, False, True]
+    assert flags == expected_flags
 
 
 def test_flag_lowered_when_outer_loop_exits() -> None:
