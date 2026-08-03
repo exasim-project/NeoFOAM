@@ -1,0 +1,96 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+solvers
+{
+    "alpha.water.*"
+    {
+        nAlphaCorr      2;
+        nAlphaSubCycles 1;
+        cAlpha          1;
+        MULESCorr       yes;
+        nLimiterIter    5;
+
+        solver          smoothSolver;
+        smoother        symGaussSeidel;
+        tolerance       1e-8;
+        relTol          0;
+    }
+
+    "pcorr.*"
+    {
+        solver          PCG;
+        preconditioner  DIC;
+        tolerance       1e-5;
+        relTol          0;
+    }
+
+    p_rgh
+    {
+        solver          PCG;
+        preconditioner  DIC;
+        tolerance       1e-07;
+        relTol          0.05;
+    }
+
+    p_rghFinal
+    {
+        $p_rgh;
+        relTol          0;
+    }
+
+    U
+    {
+        solver          smoothSolver;
+        smoother        symGaussSeidel;
+        tolerance       1e-06;
+        relTol          0;
+    }
+}
+
+PIMPLE
+{
+    momentumPredictor   no;
+    nOuterCorrectors    1;
+    nCorrectors         3;
+    nNonOrthogonalCorrectors 0;
+
+    // Closed box: the single ``walls`` patch is fixedFluxPressure, which fixes
+    // a gradient and not a value, so the pressure level is undetermined and
+    // needs a reference cell (read by setRefCell under the *p* key names).
+    //
+    // ``pRefPoint``, not ``pRefCell``, because this case is meant to be run
+    // decomposed: ``setRefCell`` reads ``pRefCell`` as a *local* index on the
+    // master only, which with two subdomains of two cells each cannot even name
+    // the cell ``cases/vofRow4Closed`` uses (index 2 of 4). The point form is
+    // the parallel-safe one — OpenFOAM searches for it and exactly one rank
+    // finds it. (0.625 0.5 0.5) is the centre of global cell 2 of the 4-cell
+    // row, so this case pins the same reference cell and the same value as its
+    // serial sibling and the hand-derived expectations carry over unchanged.
+    pRefPoint           (0.625 0.5 0.5);
+    pRefValue           50;
+}
+
+relaxationFactors
+{
+    equations
+    {
+        ".*" 1;
+    }
+}
+
+
+// ************************************************************************* //

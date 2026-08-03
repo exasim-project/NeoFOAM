@@ -1,0 +1,29 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Deliberate misconfiguration: the negative corrector counts are the frozenFlow
+// idiom, but frozenFlow is NOT set (defaults to no). The factory must therefore
+// still build a PimpleControl and let its ge=1/ge=0 bounds reject the -1s, so a
+// genuine typo is surfaced rather than silently swallowed.
+PIMPLE
+{
+    momentumPredictor no;
+    nCorrectors     -1;
+    nNonOrthogonalCorrectors -1;
+}
+
+
+// ************************************************************************* //
