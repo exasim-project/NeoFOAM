@@ -266,9 +266,9 @@ consequences of that placement:
   ``mrf.py`` before ``mrf`` exists — a circular import.
 * The MRF and ``fvOptions`` specs are shared with ``incompressibleVoF``,
   whose frame and source terms differ (``DDt(rho, U)``,
-  ``fvOptions(rho, U)``). When VoF's operations define their own
-  extensions, those contributions join the same modules — one set per
-  solver's extension, side by side under the one spec.
+  ``fvOptions(rho, U)``). VoF's operations define their own extensions, so
+  its contributions live in the same two modules — one set per solver's
+  extension, side by side under the one spec.
 
 See also
 --------

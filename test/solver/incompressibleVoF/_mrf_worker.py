@@ -5,9 +5,11 @@
 
 The incompressibleVoF twin of ``test/solver/incompressibleFluid/_mrf_worker.py``:
 one ``Foam::Time`` per process, three assemblies through the *production*
-``momentum`` operation that differ only in the injected ``mrf_zones``, and the
-third one repeated without the zones so the source shift isolates the frame
-acceleration from the wall-velocity correction the second one applied.
+``momentum`` operation that differ only in the injected momentum extensions —
+the ones the case's own models resolve to, against the empty seam a case without
+``MRFProperties`` would get — and the third one repeated without the zones so the
+source shift isolates the frame acceleration from the wall-velocity correction
+the second one applied.
 
 Here the term is the mass-weighted ``MRF.DDt(rho, U)`` of ``interFoam``'s
 ``UEqn.H``, so the shift must carry the mixture density. The case sets
@@ -26,11 +28,15 @@ from typing import Any
 
 import numpy as np
 
+from neofoam.framework.model import BoundExtension
 from neofoam.solver.incompressibleVoF.create_fields import create_init
+from neofoam.solver.incompressibleVoF.models.pressure_velocity.extension import (
+    momentum_extension,
+)
 from neofoam.solver.incompressibleVoF.models.pressure_velocity.pimpleAlgorithm import momentum
 
 
-def _assemble(ctx: Any, mrf_zones: Any) -> list[list[float]]:
+def _assemble(ctx: Any, ext: Any) -> list[list[float]]:
     """Run the production momentum operation; return its matrix source."""
     updates = momentum(
         U=ctx.fields["U"],
@@ -42,7 +48,7 @@ def _assemble(ctx: Any, mrf_zones: Any) -> list[list[float]]:
         pimple_control=ctx.models["pimple_control"],
         mixture=ctx.models["mixture"],
         turbulence=ctx.models["turbulence"],
-        mrf_zones=mrf_zones,
+        ext=ext,
     )
     return np.asarray(updates["UEqn"].source()).tolist()
 
@@ -56,9 +62,15 @@ if __name__ == "__main__":
     ctx = runner.run()
     mrf_zones = ctx.models["mrf_zones"]
 
-    source_plain = _assemble(ctx, None)
-    source_mrf = _assemble(ctx, mrf_zones)
-    source_plain_corrected_walls = _assemble(ctx, None)
+    mrf_ext = momentum_extension.resolve(ctx)
+    # Resolve against no Context: the seam of a case without the model — every
+    # hook falls back to its declared body (``+ ext.terms(rho, U)`` adds the zero
+    # seed only).
+    no_ext: BoundExtension = momentum_extension.resolve(None)
+
+    source_plain = _assemble(ctx, no_ext)
+    source_mrf = _assemble(ctx, mrf_ext)
+    source_plain_corrected_walls = _assemble(ctx, no_ext)
 
     (case_dir / "mrf.json").write_text(
         json.dumps(

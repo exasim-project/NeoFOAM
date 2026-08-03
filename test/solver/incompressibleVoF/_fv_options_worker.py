@@ -6,8 +6,10 @@
 The incompressibleVoF twin of
 ``test/solver/incompressibleFluid/_fv_options_worker.py``: one ``Foam::Time`` per
 process, both operations the production ones, the only difference being the
-injected ``fv_options``. Here the source call is the mass-weighted
-``fvOptions(rho, U)`` of ``interFoam``'s ``UEqn.H``.
+injected momentum / pressure extensions — the ones the case's own models resolve
+to, against the empty seams a case without an ``fvOptions`` dictionary would get.
+Here the source call is the mass-weighted ``fvOptions(rho, U)`` of
+``interFoam``'s ``UEqn.H``.
 
 Usage: ``python _fv_options_worker.py <case-dir> {with,without}``; writes
 ``<case-dir>/fv_options-<variant>.json``.
@@ -22,7 +24,12 @@ from pathlib import Path
 
 import numpy as np
 
+from neofoam.framework.model import BoundExtension
 from neofoam.solver.incompressibleVoF.create_fields import create_init
+from neofoam.solver.incompressibleVoF.models.pressure_velocity.extension import (
+    momentum_extension,
+    pressure_extension,
+)
 from neofoam.solver.incompressibleVoF.models.pressure_velocity.pimpleAlgorithm import (
     continuity,
     momentum,
@@ -37,7 +44,14 @@ if __name__ == "__main__":
     runner.argv = ["incompressibleVoF"]
     ctx = runner.run()
     U = ctx.fields["U"]
-    fv_options = ctx.models["fv_options"] if variant == "with" else None
+    # ``resolve(None)``: the seam of a case without the models — every hook
+    # falls back to its declared body (``+ ext.terms(rho, U)`` adds the zero seed).
+    momentum_ext: BoundExtension = (
+        momentum_extension.resolve(ctx) if variant == "with" else momentum_extension.resolve(None)
+    )
+    pressure_ext: BoundExtension = (
+        pressure_extension.resolve(ctx) if variant == "with" else pressure_extension.resolve(None)
+    )
 
     updates = momentum(
         U=U,
@@ -49,7 +63,7 @@ if __name__ == "__main__":
         pimple_control=ctx.models["pimple_control"],
         mixture=ctx.models["mixture"],
         turbulence=ctx.models["turbulence"],
-        fv_options=fv_options,
+        ext=momentum_ext,
     )
     source = np.asarray(updates["UEqn"].source()).tolist()
     U_after_momentum = np.asarray(U.internalField()).copy().tolist()
@@ -68,7 +82,7 @@ if __name__ == "__main__":
         mixture=ctx.models["mixture"],
         last_rAU=ctx.models["last_rAU"],
         Uf=ctx.models.get("Uf"),
-        fv_options=fv_options,
+        ext=pressure_ext,
         UEqn=updates["UEqn"],
     )
     U_after_continuity = np.asarray(U.internalField()).copy().tolist()

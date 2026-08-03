@@ -11,10 +11,10 @@ equations they did before this model existed.
 
 It owns one runtime object, ``ctx.models["mrf_zones"]`` — OpenFOAM's own
 :class:`Foam::IOMRFZoneList` — whose frame terms the algorithms apply where native
-applies them. The incompressibleFluid algorithms reach them through the extensions
+applies them. The pressure-velocity algorithms reach them through the extensions
 their operations define — this spec's contributions to those hooks live at the
-bottom of this module; incompressibleVoF still injects the model optionally and
-branches on ``None``.
+bottom of this module, one set per solver (the momentum term differs — ``DDt(U)``
+for the single-phase solvers, ``DDt(rho, U)`` for VoF).
 Shared by ``incompressibleFluid`` and ``incompressibleVoF``, which
 each register this one spec with their own plugin family.
 
@@ -131,4 +131,61 @@ def mrf_constrain_pressure(
 
 @mrf.contributes(mesh_update_extension.on_mesh_change)
 def mrf_on_mesh_change(mrf_zones: Annotated[Any, "models"]) -> None:
+    mrf_zones.update()
+
+
+# The VoF twins of the hooks above: same zone list, mass-weighted frame
+# acceleration, and the buoyant pressure ``p_rgh`` constrained on the face
+# mobility ``rAUf``. Same reason for the import placement as the fluid one.
+from neofoam.solver.incompressibleVoF.models.pressure_velocity.extension import (  # noqa: E402
+    mesh_update_extension as vof_mesh_update_extension,
+)
+from neofoam.solver.incompressibleVoF.models.pressure_velocity.extension import (  # noqa: E402
+    momentum_extension as vof_momentum_extension,
+)
+from neofoam.solver.incompressibleVoF.models.pressure_velocity.extension import (  # noqa: E402
+    pressure_extension as vof_pressure_extension,
+)
+
+
+@mrf.contributes(vof_momentum_extension.correct_boundary_velocity)
+def mrf_vof_correct_boundary_velocity(
+    U: volVectorField, mrf_zones: Annotated[Any, "models"]
+) -> None:
+    mrf_zones.correctBoundaryVelocity(U)
+
+
+@mrf.contributes(vof_momentum_extension.terms)
+def mrf_vof_frame_acceleration(
+    rho: volScalarField, U: volVectorField, mrf_zones: Annotated[Any, "models"]
+) -> Any:
+    return mrf_zones.DDt(rho, U)
+
+
+@mrf.contributes(vof_pressure_extension.filter_ddt_corr)
+def mrf_vof_filter_ddt_corr(corr: Any, mrf_zones: Annotated[Any, "models"]) -> Any:
+    # The ddt correction belongs to the absolute frame, so it is zeroed
+    # inside the MRF cells before the flux is taken relative to the rotation.
+    return mrf_zones.zeroFilter(corr)
+
+
+@mrf.contributes(vof_pressure_extension.make_relative)
+def mrf_vof_make_relative(phiHbyA: surfaceScalarField, mrf_zones: Annotated[Any, "models"]) -> None:
+    mrf_zones.makeRelative(phiHbyA)
+
+
+@mrf.contributes(vof_pressure_extension.constrain_pressure)
+def mrf_vof_constrain_pressure(
+    p_rgh: volScalarField,
+    U: volVectorField,
+    phiHbyA: surfaceScalarField,
+    rAUf: surfaceScalarField,
+    mrf_zones: Annotated[Any, "models"],
+) -> bool:
+    pyf.constrainPressure(p_rgh, U, phiHbyA, rAUf, mrf_zones)
+    return True
+
+
+@mrf.contributes(vof_mesh_update_extension.on_mesh_change)
+def mrf_vof_on_mesh_change(mrf_zones: Annotated[Any, "models"]) -> None:
     mrf_zones.update()

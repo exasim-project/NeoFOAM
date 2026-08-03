@@ -50,6 +50,7 @@ from neofoam.foam import fvSchemes, fvSolution
 from neofoam.foam.initialization import read_vol_field
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.initialization import field, model
+from neofoam.framework.model import BoundExtension
 from neofoam.framework.operations import (
     IterativeOp,
     Operation,
@@ -64,6 +65,11 @@ from .control_factory import (
     FrozenFlowControl,
     create_dynamic_mesh_controls,
     create_pimple_control,
+)
+from .extension import (
+    mesh_update_extension,
+    momentum_extension,
+    pressure_extension,
 )
 from .pressure_reference import get_ref_cell_value, need_reference, update_absolute_pressure
 
@@ -454,8 +460,8 @@ def mesh_update(
     cumulativeContErr: Annotated[list[float], "models"],
     last_rAU: Annotated[list[Optional[volScalarField]], "models"],
     mixture: Annotated[MixtureProtocol, "models"],
+    ext: Annotated[BoundExtension, mesh_update_extension],
     Uf: Annotated[Optional[surfaceVectorField], "models"] = None,
-    mrf_zones: Annotated[Optional[pyf.IOMRFZoneList], "models"] = None,
 ) -> FieldUpdates:
     """Move the mesh at the head of the outer corrector (interFoam's ``mesh.update()``).
 
@@ -473,8 +479,7 @@ def mesh_update(
         return FieldUpdates({})
 
     update_gravity_head(gh, ghf, mesh, hRef)
-    if mrf_zones is not None:
-        mrf_zones.update()
+    ext.on_mesh_change()
     if not dynamic_mesh_controls["correctPhi"]:
         return FieldUpdates({"gh": gh, "ghf": ghf})
 
@@ -509,8 +514,7 @@ def momentum(
     pimple_control: Annotated[PimpleControl, "models"],
     mixture: Annotated[MixtureProtocol, "models"],
     turbulence: Annotated[TwoPhaseTransportProtocol, "models"],
-    mrf_zones: Annotated[Optional[pyf.IOMRFZoneList], "models"] = None,
-    fv_options: Annotated[Optional[pyf.fvOptions], "models"] = None,
+    ext: Annotated[BoundExtension, momentum_extension],
 ) -> FieldUpdates:
     """Density-weighted momentum predictor with surface tension."""
     if isinstance(pimple_control, FrozenFlowControl):
@@ -520,28 +524,19 @@ def momentum(
 
     mesh = U.mesh()
 
-    if mrf_zones is None:
-        UEqn = fvVectorMatrix(
-            fvm.ddt(rho, U) + fvm.div(rhoPhi, U) + turbulence.divDevRhoReff(rho, U)
-        )
-    else:
-        # as in UEqn.H: correctBoundaryVelocity before assembly — it feeds the
-        # boundary coefficients of ``div(rhoPhi,U)``.
-        mrf_zones.correctBoundaryVelocity(U)
-        UEqn = fvVectorMatrix(
-            fvm.ddt(rho, U)
-            + fvm.div(rhoPhi, U)
-            + mrf_zones.DDt(rho, U)
-            + turbulence.divDevRhoReff(rho, U)
-        )
-    if fv_options is not None:
-        # as in UEqn.H, the call order is the physics: source before relax(),
-        # constrain() after, correct() after the solve. ``== fvOptions(rho, U)``
-        # subtracts the mass-weighted source from the assembled matrix.
-        UEqn = fvVectorMatrix(UEqn - fv_options(rho, U))
+    # as in UEqn.H: correctBoundaryVelocity before assembly — it feeds the
+    # boundary coefficients of ``div(rhoPhi,U)``. Every active model's terms then
+    # fold into the sum in registration order — MRF's mass-weighted frame
+    # acceleration with ``+``, the fvOptions source with ``-`` (native's
+    # ``== fvOptions(rho, U)``).
+    ext.correct_boundary_velocity(U)
+    UEqn = fvVectorMatrix(
+        fvm.ddt(rho, U) + fvm.div(rhoPhi, U) + turbulence.divDevRhoReff(rho, U) + ext.terms(rho, U)
+    )
+    # as in UEqn.H, the call order is the physics: source before relax(),
+    # constrain() after, correct() after the solve.
     UEqn.relax()
-    if fv_options is not None:
-        fv_options.constrain(UEqn)
+    ext.constrain(UEqn)
 
     if pimple_control.momentumPredictor():
         pyf.solve(
@@ -551,8 +546,7 @@ def momentum(
                 * mesh.magSf()
             )
         )
-        if fv_options is not None:
-            fv_options.correct(U)
+        ext.correct(U)
 
     return FieldUpdates({"UEqn": UEqn, "U": U})
 
@@ -581,9 +575,8 @@ def continuity(
     pressure_reference: Annotated[dict[str, Any], "models"],
     mixture: Annotated[MixtureProtocol, "models"],
     last_rAU: Annotated[list[Optional[volScalarField]], "models"],
+    ext: Annotated[BoundExtension, pressure_extension],
     Uf: Annotated[Optional[surfaceVectorField], "models"] = None,
-    mrf_zones: Annotated[Optional[pyf.IOMRFZoneList], "models"] = None,
-    fv_options: Annotated[Optional[pyf.fvOptions], "models"] = None,
     # Default None so a frozen-flow step, where ``momentum`` produced no UEqn, binds.
     UEqn: Optional[fvVectorMatrix] = None,
 ) -> FieldUpdates:
@@ -613,19 +606,14 @@ def continuity(
         # on a moving mesh the correction is built from Uf, not phi — what native's
         # fvc::ddtCorr(U, phi, Uf) dispatches to when mesh.dynamic().
         ddt_corr = fvc.ddtCorr(U, phi) if Uf is None else fvc.ddtCorr(U, Uf)
-        if mrf_zones is None:
-            phiHbyA = surfaceScalarField(
-                pyf.Word("phiHbyA"),
-                fvc.flux(HbyA) + fvc.interpolate(rho * rAU) * ddt_corr,
-            )
-        else:
-            # as in pEqn.H: the ddt correction is zeroed inside the MRF cells (it
-            # belongs to the absolute frame) before the flux is made relative.
-            phiHbyA = surfaceScalarField(
-                pyf.Word("phiHbyA"),
-                fvc.flux(HbyA) + mrf_zones.zeroFilter(fvc.interpolate(rho * rAU) * ddt_corr),
-            )
-            mrf_zones.makeRelative(phiHbyA)
+        # as in pEqn.H: the ddt correction is zeroed inside the MRF cells (it
+        # belongs to the absolute frame) before the flux is made relative.
+        corr = ext.filter_ddt_corr(fvc.interpolate(rho * rAU) * ddt_corr)
+        phiHbyA = surfaceScalarField(
+            pyf.Word("phiHbyA"),
+            fvc.flux(HbyA) + corr,
+        )
+        ext.make_relative(phiHbyA)
 
         # Surface tension + gravity contribution on faces
         phig = surfaceScalarField(
@@ -643,10 +631,8 @@ def continuity(
         if needsRef:
             fvc.makeAbsolute(phiHbyA, U)
 
-        if mrf_zones is None:
+        if not ext.constrain_pressure(p_rgh, U, phiHbyA, rAUf):
             pyf.constrainPressure(p_rgh, U, phiHbyA, rAUf)
-        else:
-            pyf.constrainPressure(p_rgh, U, phiHbyA, rAUf, mrf_zones)
 
         while pimple_control.correctNonOrthogonal():
             pEqn = fvScalarMatrix(fvm.laplacian(rAUf, p_rgh) - fvc.div(phiHbyA))
@@ -664,10 +650,9 @@ def continuity(
         # final-iteration matrix here (mirrors pEqn.H's scoping).
         U.assign(HbyA + rAU * fvc.reconstruct((phig - pEqn.flux()) / rAUf))
         U.correctBoundaryConditions()
-        if fv_options is not None:
-            # as in pEqn.H: a second fvOptions.correct(U) closes the corrector,
-            # whose reconstruction has just overwritten the predictor's correction.
-            fv_options.correct(U)
+        # as in pEqn.H: a second fvOptions.correct(U) closes the corrector,
+        # whose reconstruction has just overwritten the predictor's correction.
+        ext.correct(U)
 
         # On a closed domain this also pins p's level to pRefValue and re-levels
         # p_rgh, as interFoam's pEqn.H does.

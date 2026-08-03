@@ -12,10 +12,10 @@ equations they did before this model existed.
 It owns one runtime object, ``ctx.models["fv_options"]`` — OpenFOAM's own
 :class:`Foam::fv::options` — whose hooks (the source matrix, ``constrain``,
 ``correct``) the algorithms apply where native's ``UEqn.H``/``pEqn.H`` apply them.
-The incompressibleFluid algorithms reach them through the extensions their
+The pressure-velocity algorithms reach them through the extensions their
 operations define — this spec's contributions to those hooks live at the bottom of
-this module; incompressibleVoF still injects the model optionally and branches on
-``None``.
+this module, one set per solver (the source call differs — ``fvOptions(U)`` for the
+single-phase solvers, ``fvOptions(rho, U)`` for VoF).
 Shared by ``incompressibleFluid`` and ``incompressibleVoF``, which each register
 this one spec with their own plugin family.
 
@@ -29,7 +29,7 @@ from pathlib import Path
 from typing import Annotated, Any, Optional
 
 import pybFoam as pyf
-from pybFoam import fvVectorMatrix, volVectorField
+from pybFoam import fvVectorMatrix, volScalarField, volVectorField
 from pydantic import ConfigDict
 
 from neofoam.framework.initialization import model
@@ -136,4 +136,41 @@ def fv_options_momentum_correct(U: volVectorField, fv_options: Annotated[Any, "m
 
 @fvOptions.contributes(pressure_extension.correct)
 def fv_options_pressure_correct(U: volVectorField, fv_options: Annotated[Any, "models"]) -> None:
+    fv_options.correct(U)
+
+
+# The VoF twins of the hooks above: same option list, mass-weighted source.
+# Same reason for the import placement as the fluid one.
+from neofoam.solver.incompressibleVoF.models.pressure_velocity.extension import (  # noqa: E402
+    momentum_extension as vof_momentum_extension,
+)
+from neofoam.solver.incompressibleVoF.models.pressure_velocity.extension import (  # noqa: E402
+    pressure_extension as vof_pressure_extension,
+)
+
+
+@fvOptions.contributes(vof_momentum_extension.terms)
+def fv_options_vof_momentum_source(
+    rho: volScalarField, U: volVectorField, fv_options: Annotated[Any, "models"]
+) -> Any:
+    # Native's ``== fvOptions(rho, U)``: the source joins the sum subtracted.
+    return negated(fv_options(rho, U))
+
+
+@fvOptions.contributes(vof_momentum_extension.constrain)
+def fv_options_vof_constrain(UEqn: fvVectorMatrix, fv_options: Annotated[Any, "models"]) -> None:
+    fv_options.constrain(UEqn)
+
+
+@fvOptions.contributes(vof_momentum_extension.correct)
+def fv_options_vof_momentum_correct(
+    U: volVectorField, fv_options: Annotated[Any, "models"]
+) -> None:
+    fv_options.correct(U)
+
+
+@fvOptions.contributes(vof_pressure_extension.correct)
+def fv_options_vof_pressure_correct(
+    U: volVectorField, fv_options: Annotated[Any, "models"]
+) -> None:
     fv_options.correct(U)
