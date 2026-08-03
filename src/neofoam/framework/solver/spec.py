@@ -322,7 +322,9 @@ class SolverSpec:
         for func, metadata in self._operations:
             discovered = _discover_configs_from_signature(func)
             if discovered:
-                wrapped = _create_runtime_config_wrapper(func, discovered, runtime)
+                wrapped = _create_runtime_config_wrapper(
+                    func, discovered, runtime, self._dependency_resolver
+                )
             else:
                 wrapped = wrap_with_dependency_resolution(func, runtime, self._dependency_resolver)
 
