@@ -135,7 +135,9 @@ def _write_merged_payload(strategy: Any, path: Path, data: dict[str, Any]) -> No
     if isinstance(strategy, OpenFOAMStrategy):
         if "FoamFile" in data:
             data = {"FoamFile": data["FoamFile"], **data}
-        _write_payload(path, data, (), "openfoam")
+        # merge: a pre-existing file (e.g. fill_case's mirrored fvSolution) keeps
+        # the entries no config models; only the payload's sections are rewritten.
+        _write_payload(path, data, (), "openfoam", merge=True)
         return
     if isinstance(strategy, YAMLStrategy):
         # Whole-file YAML (e.g. ``system/preprocess.yaml``): no ``FoamFile`` header,

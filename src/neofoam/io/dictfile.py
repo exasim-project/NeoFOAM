@@ -234,7 +234,9 @@ def _open(path: Path) -> _Backend:
     return _MapBackend(data, data, path, fmt)
 
 
-def _write_payload(path: Path, data: dict[str, Any], key: tuple[str, ...], fmt: str) -> None:
+def _write_payload(
+    path: Path, data: dict[str, Any], key: tuple[str, ...], fmt: str, *, merge: bool = False
+) -> None:
     """Persist a pre-dumped model payload to *path* under *key*, creating as needed.
 
     The shared engine behind :meth:`DictFile.save`, ``BaseConfig.save`` and
@@ -243,6 +245,12 @@ def _write_payload(path: Path, data: dict[str, Any], key: tuple[str, ...], fmt: 
     own); an OpenFOAM sub-dict write requires the file to already exist (its
     header cannot be synthesised). JSON/YAML sub-dict writes merge into the file,
     preserving sibling sections.
+
+    ``merge=True`` (whole-file OpenFOAM only) patches an existing file in place
+    instead of replacing it: top-level keys the payload carries are rewritten,
+    everything else is preserved. ``fill_case`` mirrors files like ``fvSolution``
+    precisely so entries the config classes don't model (``pFinal``,
+    ``"(U|nuTilda)"`` solver blocks) survive the config write.
     """
     path.parent.mkdir(parents=True, exist_ok=True)
     if fmt == "openfoam":
@@ -261,8 +269,9 @@ def _write_payload(path: Path, data: dict[str, Any], key: tuple[str, ...], fmt: 
             _OF_STRATEGY._write(node, data)
         else:
             root = pyf.dictionary.read(str(path)) if path.is_file() else pyf.dictionary()
-            root.clear()
-            if "FoamFile" not in data:
+            if not merge:
+                root.clear()
+            if "FoamFile" not in data and not root.isDict("FoamFile"):
                 _OF_STRATEGY._write(root, {"FoamFile": foam_header(path)})
             _OF_STRATEGY._write(root, data)
         root.write(str(path))
