@@ -23,9 +23,11 @@ maths in Python** — no C++ turbulence model, no nanobind rebuild per closure:
   with :func:`neofoam_bindings.bound`, and recompute ``nut`` / ``nuEff``.
 
 This matches ``Foam::RASModels::kEpsilon::correct`` term for term for the
-incompressible, divergence-free case (``alpha = rho = 1``, ``div U = 0`` so the
-dilatation ``SuSp(divU, …)`` terms vanish). Coefficients live in the typed
-:class:`KEpsilonCoeffs`: its field defaults are OpenFOAM's, the ``RAS``
+incompressible case (``alpha = rho = 1``), *including* the dilatation
+``SuSp(divU, …)`` terms: ``divU = div(phi)`` only vanishes at convergence, and
+during SIMPLE/PIMPLE iterations the continuity defect is O(1) exactly where
+production peaks, so dropping them measurably shifts ``k``. Coefficients live in
+the typed :class:`KEpsilonCoeffs`: its field defaults are OpenFOAM's, the ``RAS``
 sub-dictionary's ``kEpsilonCoeffs`` entry overrides them per case
 (:func:`~neofoam.turbulence.config.model_coefficients`).
 
@@ -62,6 +64,7 @@ class KEpsilonCoeffs(BaseConfig):
     Cmu: float = 0.09
     C1: float = 1.44
     C2: float = 1.92
+    C3: float = 0.0
     sigmak: float = 1.0
     sigmaEps: float = 1.3
 
@@ -165,7 +168,7 @@ def build(config: SimpleNamespace) -> list[InitStep]:
 
 
 # ``correct`` is split into the stages of OpenFOAM ``kEpsilon::correct`` for the
-# incompressible case (``alpha = rho = 1``, ``div(U) ~ 0``), one ``@operation`` each
+# incompressible case (``alpha = rho = 1``), one ``@operation`` each
 # — the closure "exposes several" operations the wrapper steps in order (production
 # → epsilon → k → nut). Each stage returns the fields it updated as a
 # :class:`FieldUpdates`, so the Context (not in-place mutation) carries state
@@ -179,17 +182,22 @@ def production(
     neon_runtime: Annotated[Any, "models"],
     nu_vol: Annotated[Any, "models"],
     kEpsilon_nearWallDist: Annotated[Any, "models"],
+    coeffs: KEpsilonCoeffs,
     U: Annotated[Any, "fields"],
+    phi: Annotated[Any, "fields"],
     nut: Annotated[Any, "fields"],
     k: Annotated[Any, "fields"],
     epsilon: Annotated[Any, "fields"],
 ) -> FieldUpdates:
     """Turbulent production ``G = nut GbyNu``, ``GbyNu = dev(twoSymm(gradU)) && gradU``.
 
-    Publishes two fields: ``GbyNu`` — production per unit eddy viscosity, which the
-    epsilon equation consumes — and ``Gk``, the eddy-viscosity production with the
+    Publishes four fields: ``GbyNu`` — production per unit eddy viscosity, which the
+    epsilon equation consumes — ``Gk``, the eddy-viscosity production with the
     near-wall cells overwritten by the epsilonWallFunction log-law form
-    ``(nut+nu)|dU/dn| Cmu^0.25 sqrt(k)/(kappa y)``, which the k equation consumes.
+    ``(nut+nu)|dU/dn| Cmu^0.25 sqrt(k)/(kappa y)``, which the k equation consumes,
+    and the two dilatation ``SuSp`` coefficients built from ``divU = div(phi)``
+    (kEpsilon.C computes ``divU`` once at the top of ``correct``; it is nonzero
+    until the pressure solve has converged).
     That override is the model-side half of the wall function (the BC only sets the
     wall *face* value); without it the k equation lacks the source that balances the
     wall-function epsilon.
@@ -200,7 +208,18 @@ def production(
     Gk = nfb.epsilon_wall_production(
         G, epsilon, U, k, nu_vol, nut, kEpsilon_nearWallDist, neon_runtime
     )
-    return FieldUpdates({"GbyNu": GbyNu, "Gk": Gk})
+    # fvc::div of a flux is the plain surface integral — no scheme is involved,
+    # but evaluate_explicit's reader wants tokens, so pass the Gauss default.
+    divU = nfb.create_uniform_volume_field(neon_runtime, "divU", 0.0)
+    flux_divergence = nn.exp.div(phi)
+    nfb.evaluate_explicit(
+        flux_divergence, nn.TokenList(["Gauss", "linear"]), divU.internal_vector()
+    )
+    eps_dilatation = (2.0 / 3.0 * coeffs.C1 - coeffs.C3) * divU
+    k_dilatation = (2.0 / 3.0) * divU
+    return FieldUpdates(
+        {"GbyNu": GbyNu, "Gk": Gk, "eps_dilatation": eps_dilatation, "k_dilatation": k_dilatation}
+    )
 
 
 @kEpsilon.operation(name="kEpsilonCorrectEpsilon")
@@ -212,12 +231,13 @@ def correct_epsilon(
     kEpsilon_nearWallDist: Annotated[Any, "models"],
     coeffs: KEpsilonCoeffs,
     GbyNu: Annotated[Any, "fields"],
+    eps_dilatation: Annotated[Any, "fields"],
     phi: Annotated[Any, "fields"],
     k: Annotated[Any, "fields"],
     epsilon: Annotated[Any, "fields"],
     nut: Annotated[Any, "fields"],
 ) -> FieldUpdates:
-    """epsilon transport: ddt + div - laplacian == C1 GbyNu Cmu k - Sp(C2 eps/k, eps); bound."""
+    """epsilon transport: ddt + div - laplacian == C1 GbyNu Cmu k - SuSp - Sp; bound."""
     # ``ddt`` reads epsilon's previous-time value; seed it (old := current) so the
     # first step's ddt is (epsilon - epsilon_0)/dt, matching OpenFOAM's oldTime.
     nn.rotate_old_times(epsilon)
@@ -235,6 +255,7 @@ def correct_epsilon(
         + nn.imp.div(phi, epsilon)
         - nn.imp.laplacian(d_eps, epsilon)
         - nn.exp.source(production)
+        + nn.imp.susp(eps_dilatation, epsilon)
         + nn.imp.source(sink_coeff, epsilon),
         epsilon,
         neon_runtime,
@@ -261,12 +282,13 @@ def correct_k(
     kEpsilon_nearWallDist: Annotated[Any, "models"],
     coeffs: KEpsilonCoeffs,
     Gk: Annotated[Any, "fields"],
+    k_dilatation: Annotated[Any, "fields"],
     phi: Annotated[Any, "fields"],
     k: Annotated[Any, "fields"],
     epsilon: Annotated[Any, "fields"],
     nut: Annotated[Any, "fields"],
 ) -> FieldUpdates:
-    """k transport: ddt + div - laplacian == Gk - Sp(eps/k, k); bound (uses the new epsilon).
+    """k transport: ddt + div - laplacian == Gk - SuSp - Sp(eps/k, k); bound (new epsilon).
 
     Uses ``Gk`` — the production with the near-wall cells overwritten by the
     epsilonWallFunction G form — not the bulk production the epsilon equation uses.
@@ -281,6 +303,7 @@ def correct_k(
         + nn.imp.div(phi, k)
         - nn.imp.laplacian(d_k, k)
         - nn.exp.source(Gk)
+        + nn.imp.susp(k_dilatation, k)
         + nn.imp.source(eps_over_k, k),
         k,
         neon_runtime,

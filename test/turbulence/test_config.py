@@ -48,7 +48,7 @@ COEFFS_TYPES: dict[str, type[BaseConfig]] = {
 #: The OpenFOAM defaults each closure class carries — what a dictionary with no
 #: ``<model>Coeffs`` block must resolve to. Literals on purpose (see the module doc).
 DEFAULTS: dict[str, dict[str, float]] = {
-    "kEpsilon": {"Cmu": 0.09, "C1": 1.44, "C2": 1.92, "sigmak": 1.0, "sigmaEps": 1.3},
+    "kEpsilon": {"Cmu": 0.09, "C1": 1.44, "C2": 1.92, "C3": 0.0, "sigmak": 1.0, "sigmaEps": 1.3},
     "SpalartAllmaras": {
         "sigmaNut": 0.66666,
         "kappa": 0.41,

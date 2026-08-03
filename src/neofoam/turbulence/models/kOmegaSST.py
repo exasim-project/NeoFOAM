@@ -9,14 +9,16 @@ maths** (CPU or GPU). Registered with the runtime-selectable
 ``turbulenceProperties`` name ``kOmegaSST``.
 
 It matches ``Foam::RASModels::kOmegaSSTBase::correct`` term for term for the
-incompressible, divergence-free case (``alpha = rho = 1``, ``div U = 0`` so the
-dilatation ``SuSp(divU, ...)`` terms vanish; ``omegaInf = kInf = 0``, no SAS/F3).
+incompressible case (``alpha = rho = 1``; ``omegaInf = kInf = 0``, no SAS/F3),
+*including* the dilatation ``SuSp(divU, ...)`` terms: ``divU = div(phi)`` only
+vanishes at convergence, and during SIMPLE/PIMPLE iterations the continuity
+defect is O(1) exactly where production peaks.
 The blending functions ``F1``/``F2`` and all coefficients are chained NeoN
 ``ScalarVolumeField`` operators — ``pow``/``tanh``/``sqrt``, elementwise
 ``field_max``/``field_min`` — so nothing round-trips to the host. The one genuinely
 implicit new primitive is :func:`neon._neon.imp.susp` (OpenFOAM ``fvm::SuSp``), which
-carries the **cross-diffusion** term ``SuSp((F1-1)·CDkOmega/omega, omega)`` — nonzero
-even for divergence-free flow, so unlike ``kEpsilon`` it cannot be dropped.
+carries the **cross-diffusion** term ``SuSp((F1-1)·CDkOmega/omega, omega)`` and the
+dilatation terms.
 
 Mesh-aware quantities come from the small kernels
 :func:`~neofoam_bindings.read_wall_distance` (``y``),
@@ -227,6 +229,7 @@ def blend(
     komega_nearWallDist: Annotated[Any, "models"],
     coeffs: KOmegaSSTCoeffs,
     U: Annotated[Any, "fields"],
+    phi: Annotated[Any, "fields"],
     k: Annotated[Any, "fields"],
     omega: Annotated[Any, "fields"],
     nut: Annotated[Any, "fields"],
@@ -280,6 +283,16 @@ def blend(
         "omegaWallFunction",
     )
 
+    # fvc::div of a flux is the plain surface integral — no scheme is involved,
+    # but evaluate_explicit's reader wants tokens, so pass the Gauss default.
+    # divU only vanishes at convergence (kOmegaSSTBase.C computes it once at the
+    # top of correct); its SuSp terms need the blended gamma, so freeze them here.
+    divU = nfb.create_uniform_volume_field(neon_runtime, "divU", 0.0)
+    flux_divergence = nn.exp.div(phi)
+    nfb.evaluate_explicit(
+        flux_divergence, nn.TokenList(["Gauss", "linear"]), divU.internal_vector()
+    )
+
     return FieldUpdates(
         {
             "omega": omega,  # near-wall cells refreshed in-place (updateCoeffs, D2)
@@ -287,6 +300,8 @@ def blend(
             "komega_omega_prod": gamma * gbynu0_lim,
             "komega_omega_sp": beta * omega,  # Sp(beta*omega, omega), coeff frozen
             "komega_omega_susp": (f1 - 1.0) * cd_komega / omega,  # SuSp, coeff frozen
+            "komega_omega_dilatation": (2.0 / 3.0) * gamma * divU,  # SuSp, coeff frozen
+            "komega_k_dilatation": (2.0 / 3.0) * divU,  # SuSp, coeff frozen
             "komega_G": g_wall,  # wall-overridden, uncapped G (Pk cap applied in k)
         }
     )
@@ -304,12 +319,13 @@ def correct_omega(
     komega_omega_prod: Annotated[Any, "fields"],
     komega_omega_sp: Annotated[Any, "fields"],
     komega_omega_susp: Annotated[Any, "fields"],
+    komega_omega_dilatation: Annotated[Any, "fields"],
     phi: Annotated[Any, "fields"],
     k: Annotated[Any, "fields"],
     omega: Annotated[Any, "fields"],
     nut: Annotated[Any, "fields"],
 ) -> FieldUpdates:
-    """omega transport: ddt + div - laplacian == gamma*GbyNu0 - Sp(beta*omega) - SuSp(cross)."""
+    """omega transport: ddt + div - laplacian == gamma*GbyNu0 - SuSp - Sp - SuSp(cross)."""
     nn.rotate_old_times(omega)
     nu = nfb.read_transport_viscosity(neon_runtime)
     d_omega = komega_surf.interpolate(
@@ -320,6 +336,7 @@ def correct_omega(
         + nn.imp.div(phi, omega)
         - nn.imp.laplacian(d_omega, omega)
         - nn.exp.source(komega_omega_prod)
+        + nn.imp.susp(komega_omega_dilatation, omega)
         + nn.imp.source(komega_omega_sp, omega)
         + nn.imp.susp(komega_omega_susp, omega),
         omega,
@@ -348,12 +365,13 @@ def correct_k(
     coeffs: KOmegaSSTCoeffs,
     komega_F1: Annotated[Any, "fields"],
     komega_G: Annotated[Any, "fields"],
+    komega_k_dilatation: Annotated[Any, "fields"],
     phi: Annotated[Any, "fields"],
     k: Annotated[Any, "fields"],
     omega: Annotated[Any, "fields"],
     nut: Annotated[Any, "fields"],
 ) -> FieldUpdates:
-    """k transport: ddt + div - laplacian == Pk - Sp(betaStar*omega, k) (uses the new omega)."""
+    """k transport: ddt + div - laplacian == Pk - SuSp - Sp(betaStar*omega, k) (new omega)."""
     nn.rotate_old_times(k)
     nu = nfb.read_transport_viscosity(neon_runtime)
     d_k = komega_surf.interpolate(_blend(komega_F1, coeffs.alphaK1, coeffs.alphaK2) * nut + nu)
@@ -369,6 +387,7 @@ def correct_k(
         + nn.imp.div(phi, k)
         - nn.imp.laplacian(d_k, k)
         - nn.exp.source(pk)
+        + nn.imp.susp(komega_k_dilatation, k)
         + nn.imp.source(eps_by_k, k),
         k,
         neon_runtime,

@@ -145,8 +145,9 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             rt.fv_schemes_dict = nfb.map_fv_schemes(rt.fv_schemes_dict)
             solvers = rt.fv_solution_dict.subDict("solvers")
             for name in _MAPPED_SOLVER_DICTS:
-                if solvers.contains(name):
-                    solvers.insert_dict(name, nfb.map_fv_solution(solvers.subDict(name)))
+                # Resolves OpenFOAM regex keys ("(U|k|epsilon)"), skips absent
+                # fields and never maps one entry twice.
+                nfb.map_solver_settings(solvers, name)
             return rt
 
         def alias_neon_runtime(ctx: dict[str, Any]) -> Any:

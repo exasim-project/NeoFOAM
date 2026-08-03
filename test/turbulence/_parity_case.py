@@ -66,6 +66,7 @@ COEFFS: dict[str, dict[str, float]] = {
         "Cmu": 0.085,
         "C1": 1.42,
         "C2": 1.68,
+        "C3": 0.05,
         "sigmak": 1.2,
         "sigmaEps": 1.11,
     },

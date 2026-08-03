@@ -6,12 +6,13 @@
 
 """courant — the CFL deltaT limit as a timeStepConstraint contribution (NeoN).
 
-NeoN flavor of the pybFoam solver's ``courant`` model: the contribution
-injects the live NeoN ``phi`` surface field and computes the classic CFL
-limit ``deltaT * maxCo / Co`` from ``nn.compute_co_num``. Together with the
-``NeoNTimeSync`` loop backend this replaces the legacy ``nfb.sync_run_times``
-CFL-adjust half (the ``SolutionLoop`` growth cap of 1.2 matches OpenFOAM's
-``setDeltaT.H``).
+NeoN flavor of the pybFoam solver's ``courant`` model: the contributions
+inject the live NeoN ``phi`` surface field and compute the classic CFL
+limit ``deltaT * maxCo / Co`` from ``nn.compute_co_num`` — one for
+``setDeltaT.H``'s per-step limit, one for ``setInitialDeltaT.H``'s undamped
+first-step limit. Together with the ``NeoNTimeSync`` loop backend this
+replaces the legacy ``nfb.sync_run_times`` CFL-adjust half (the
+``SolutionLoop`` growth cap of 1.2 matches OpenFOAM's ``setDeltaT.H``).
 
 The model registers with the NeoN family (so it is discoverable case-free) and
 the contribution is bound to the model via
@@ -26,7 +27,11 @@ import neon._neon as nn  # NeoN Python bindings
 from pybFoam import dictionary
 from pydantic import Field
 
-from neofoam.algorithms.solution_loop.interfaces import VGREAT, timeStepConstraint
+from neofoam.algorithms.solution_loop.interfaces import (
+    VGREAT,
+    initialTimeStepConstraint,
+    timeStepConstraint,
+)
 from neofoam.io import OF, BaseConfig, IOStrategy
 
 from .incompressibleFluidNeoNModel import Model, incompressibleFluidNeoNModel
@@ -63,11 +68,24 @@ def detect_model() -> bool:
 def courant_limit(phi: Any, deltaT: float, cfg: CourantConfig) -> float:
     """Largest deltaT the CFL condition permits on the live NeoN ``phi``.
 
-    ``Co`` is the maximum Courant number on ``phi``; below ``SMALL`` the flow is
-    quiescent and the rule offers no opinion (``VGREAT``).
+    ``SMALL`` is ``setDeltaT.H``'s denominator epsilon, never a cut-off: a
+    quiescent start (``Co == 0``) grows by the loop's 1.2 cap instead of
+    freezing.
+    """
+    max_co, _mean_co = nn.compute_co_num(phi, float(deltaT))
+    co = float(max_co)
+    return cfg.maxCo / (co + SMALL) * float(deltaT)
+
+
+@courant.contributes(initialTimeStepConstraint)
+def courant_initial_limit(phi: Any, deltaT: float, cfg: CourantConfig) -> float:
+    """The undamped first-step CFL limit of ``setInitialDeltaT.H`` (NeoN ``phi``).
+
+    Gated on ``Co > SMALL`` like that file, so a quiescent flow yields no opinion
+    and the initial pass is skipped entirely.
     """
     max_co, _mean_co = nn.compute_co_num(phi, float(deltaT))
     co = float(max_co)
     if co <= SMALL:
         return VGREAT
-    return float(deltaT) * cfg.maxCo / co
+    return cfg.maxCo * float(deltaT) / co
