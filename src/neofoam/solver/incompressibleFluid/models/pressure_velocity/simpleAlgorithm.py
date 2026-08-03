@@ -75,12 +75,9 @@ SimpleFvSolution = simple.config(fvSolution)
 # ``setRefCell`` — a closed domain needs a pressure reference.
 SimpleFvSolution.add_controls("SIMPLE", pRefCell=int, pRefValue=float)
 
-# The SIMPLE block's loop controls, which the slice above passes through
-# untyped. ``control_factory.create_simple_control`` loads it to build the
-# stateful ``SimpleControl``; declaring it here is what exports the key set to
-# ``configurations(solver)`` and the MCP. This spec is used as its own runtime
-# (see ``PressureVelocityAlgorithm.detect_and_create``) and never auto-loads its
-# configs, so the declaration changes no loading behaviour.
+# Declared so ``configurations(solver)`` and the MCP export the key set.
+# Loading is unaffected: this spec is used as its own runtime and never
+# auto-loads its configs — ``control_factory`` drives instantiation.
 simple.config(SimpleAlgorithmConfig)
 
 # 0/<name> field declarations SIMPLE owns (same arm sets as PIMPLE).
@@ -152,9 +149,8 @@ def build(self: Any) -> list[Any]:
         pRefCell, pRefValue = pyf.setRefCell(p, algo_dict)
 
         mesh.setFluxRequired(pyf.Word("p"))
-        # ``needs_ref`` completes the triple ``setRefCell`` answers — the same
-        # boolean pEqn.H queries off the field, carried for consumers that have
-        # none in hand.
+        # ``needs_ref`` is the same boolean pEqn.H queries off the field,
+        # carried for consumers that have none in hand.
         return PressureReference(
             cell=pRefCell,
             value=pRefValue,
@@ -205,9 +201,7 @@ def momentum(
     with telemetry.span("momentum.assemble"):
         viscousStress.update(ctx)
         # as in UEqn.H: correctBoundaryVelocity before assembly — it feeds
-        # the boundary coefficients of ``div(phi,U)``. Every active model's terms
-        # then fold into the sum in registration order — MRF's frame acceleration
-        # with ``+``, the fvOptions source with ``-`` (native's ``== fvOptions(U)``).
+        # the boundary coefficients of ``div(phi,U)``.
         ext.correct_boundary_velocity(U)
         UEqn = fvVectorMatrix(fvm.div(phi, U) + viscousStress.divDevReff(U) + ext.terms(U))
         # as in UEqn.H, the call order is the physics: source before relax(),

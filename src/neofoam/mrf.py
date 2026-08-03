@@ -11,11 +11,9 @@ equations they did before this model existed.
 
 It owns one runtime object, ``ctx.models["mrf_zones"]`` — OpenFOAM's own
 :class:`Foam::IOMRFZoneList` — whose frame terms the algorithms apply where native
-applies them. The pressure-velocity algorithms reach them through the extensions
-their operations define — this spec's contributions to those hooks live at the
-bottom of this module, one set per solver (the momentum term differs — ``DDt(U)``
-for the single-phase solvers, ``DDt(rho, U)`` for VoF).
-Shared by ``incompressibleFluid`` and ``incompressibleVoF``, which
+applies them. The contributions at the bottom of this module are one set per
+solver, because the momentum term differs (``DDt(U)`` vs ``DDt(rho, U)`` for
+VoF). Shared by ``incompressibleFluid`` and ``incompressibleVoF``, which
 each register this one spec with their own plugin family.
 
 Example::
@@ -85,9 +83,8 @@ def build(_config: MRFPropertiesConfig) -> list[Any]:
 # ---------------------------------------------------------------------------
 # Contributions — the rotating-frame hooks of UEqn.H / pEqn.H
 # ---------------------------------------------------------------------------
-# The import sits below the spec on purpose: the solver package imports this
-# module back to register the spec, so by the time that import re-enters here
-# mid-initialization, ``mrf`` above must already exist.
+# Imported below the spec: the solver package imports this module back, so
+# ``mrf`` must already exist when that re-enters here mid-initialization.
 from neofoam.solver.incompressibleFluid.models.pressure_velocity.extension import (  # noqa: E402
     mesh_update_extension,
     momentum_extension,
@@ -107,8 +104,7 @@ def mrf_frame_acceleration(U: volVectorField, mrf_zones: Annotated[Any, "models"
 
 @mrf.contributes(pressure_extension.filter_ddt_corr)
 def mrf_filter_ddt_corr(corr: Any, mrf_zones: Annotated[Any, "models"]) -> Any:
-    # The ddt correction belongs to the absolute frame, so it is zeroed
-    # inside the MRF cells before the flux is taken relative to the rotation.
+    # The ddt correction is absolute-frame, so zero it inside the MRF cells.
     return mrf_zones.zeroFilter(corr)
 
 
@@ -134,9 +130,8 @@ def mrf_on_mesh_change(mrf_zones: Annotated[Any, "models"]) -> None:
     mrf_zones.update()
 
 
-# The VoF twins of the hooks above: same zone list, mass-weighted frame
-# acceleration, and the buoyant pressure ``p_rgh`` constrained on the face
-# mobility ``rAUf``. Same reason for the import placement as the fluid one.
+# The VoF twins: same zone list, mass-weighted frame acceleration, ``p_rgh``
+# constrained on the face mobility ``rAUf``; import placed as above.
 from neofoam.solver.incompressibleVoF.models.pressure_velocity.extension import (  # noqa: E402
     mesh_update_extension as vof_mesh_update_extension,
 )
@@ -164,8 +159,7 @@ def mrf_vof_frame_acceleration(
 
 @mrf.contributes(vof_pressure_extension.filter_ddt_corr)
 def mrf_vof_filter_ddt_corr(corr: Any, mrf_zones: Annotated[Any, "models"]) -> Any:
-    # The ddt correction belongs to the absolute frame, so it is zeroed
-    # inside the MRF cells before the flux is taken relative to the rotation.
+    # The ddt correction is absolute-frame, so zero it inside the MRF cells.
     return mrf_zones.zeroFilter(corr)
 
 

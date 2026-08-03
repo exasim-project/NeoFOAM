@@ -284,21 +284,14 @@ class ModelSpec:
         """Declare a gather hook owned by this model.
 
         Sugar over :class:`~neofoam.framework.model.extension.Extension`: the
-        hook is declared on a model-private extension named after this model,
-        so an interface *is* an extension :class:`Hook` — same contribution
-        decorator, same dispatch, same parameter resolution. The decorated
-        function's ``__name__`` is the interface name and its body receives the
-        active contributions' results and combines them (defining the empty
-        case)::
+        hook is declared on a model-private extension named after this model, so
+        an interface *is* an extension :class:`Hook`. The decorated body receives
+        the active contributions' results and combines them, defining the empty
+        case::
 
             @solutionLoop.interface
             def maxTimeStep(ceilings: Iterable[float]) -> float:
                 return min(ceilings, default=VGREAT)
-
-        Returns the :class:`Hook` handle: the ``@<model>.contributes`` target,
-        and — used directly as a parameter annotation — the consumer's
-        injection marker (the resolver injects the hook bound to the live
-        Context; calling it folds the active contributions).
         """
         if self._own_extension is None:
             self._own_extension = Extension(self.name)
@@ -311,11 +304,8 @@ class ModelSpec:
     def contributes(self, target: Hook) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         """Register an operation-style contribution to *target*, owned by self.
 
-        *target* is a :class:`Hook` — declared via ``@<model>.interface`` or
-        ``@<extension>.defines``. The function is recorded against *target*
-        and tagged with this contributing model, then returned unchanged. It
-        participates in *target*'s dispatch iff this model is active for the
-        case.
+        The function participates in *target*'s dispatch iff this model is
+        active for the case.
         """
         if not isinstance(target, Hook):
             raise TypeError(

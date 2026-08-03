@@ -88,13 +88,10 @@ PimpleFvSolution = pimple.config(fvSolution)
 # these stay optional and only serialise when the case author sets them.
 PimpleFvSolution.add_controls("PIMPLE", pRefCell=int, pRefValue=float)
 
-# The loop controls and the mesh-motion switches of the algorithm block, which
-# the slice above passes through untyped. ``control_factory`` loads whichever of
-# the two spellings the case ships (``PIMPLE``, or ``PISO`` for a pisoFoam
-# case); both pairs are declared here so ``configurations(solver)`` and the MCP
-# export the full key set. Declaring them changes no loading: this spec is used
-# as its own runtime (see ``PressureVelocityAlgorithm.detect_and_create``) and
-# never auto-loads its configs — ``@pimple.build`` drives instantiation.
+# Both block spellings (``PIMPLE``, and ``PISO`` for a pisoFoam case) are
+# declared so ``configurations(solver)`` and the MCP export the full key set.
+# Loading is unaffected: this spec is used as its own runtime and never
+# auto-loads its configs — ``control_factory`` drives instantiation.
 pimple.config(PimpleAlgorithmConfig)
 pimple.config(DynamicMeshControls)
 pimple.config(PisoAlgorithmConfig)
@@ -225,10 +222,8 @@ def build(self: Any) -> list[Any]:
         if p_rgh is not None:
             mesh.setFluxRequired(pyf.Word("p_rgh"))
 
-        # ``needs_ref`` completes the triple ``setRefCell`` answers; the
-        # corrector below keeps native's own ``p.needReference()`` query where
-        # pEqn.H makes it, so this is the same boolean, carried for consumers
-        # (and reporting) that have no field in hand.
+        # ``needs_ref`` is the same boolean pEqn.H queries off the field below,
+        # carried for consumers that have no field in hand.
         return PressureReference(
             cell=pRefCell,
             value=pRefValue,
@@ -357,9 +352,7 @@ def momentum(
     with telemetry.span("momentum.assemble"):
         viscousStress.update(ctx)
         # as in UEqn.H: correctBoundaryVelocity before assembly — it feeds
-        # the boundary coefficients of ``div(phi,U)``. Every active model's terms
-        # then fold into the sum in registration order — MRF's frame acceleration
-        # with ``+``, the fvOptions source with ``-`` (native's ``== fvOptions(U)``).
+        # the boundary coefficients of ``div(phi,U)``.
         ext.correct_boundary_velocity(U)
         UEqn = fvVectorMatrix(
             fvm.ddt(U) + fvm.div(phi, U) + viscousStress.divDevReff(U) + ext.terms(U)

@@ -59,31 +59,24 @@ iso_advector = Model("isoAdvector").register_with(advectionModel).labeled("isoAd
 class PorosityPropertiesConfig(BaseConfig):
     """``constant/porosityProperties`` — isoAdvector's porosity switch.
 
-    interIsoFoam's ``createPorosity.H`` reads ``porosityEnabled`` from this
-    dictionary; when it is on, ``isoAdvection``'s constructor looks a
-    ``porosity`` field up in the object registry (so the field read has to be
-    ordered ahead of the advector). Most cases ship no such file, hence the
-    guarded load in :func:`_porosity_enabled` — the file being absent is the
-    same as ``porosityEnabled no``.
+    When it is on, ``isoAdvection``'s constructor looks a ``porosity`` field up
+    in the object registry, so the field read has to be ordered ahead of the
+    advector. Most cases ship no such file, hence the guarded load in
+    :func:`_porosity_enabled`.
     """
 
     porosityEnabled: bool = False
 
 
-# Declared on the spec so the switch is part of this model's schema set
-# (``configurations(solver)`` / the MCP's ``list_configs``); the guarded
-# ``@build`` read below drives the actual instantiation, as this spec is used
-# as its own runtime and never auto-loads its configs.
+# Declared so the switch is part of this model's exported schema set; loading is
+# unaffected — this spec is used as its own runtime and never auto-loads its
+# configs, the guarded read below drives instantiation.
 iso_advector.config(PorosityPropertiesConfig)
 
 
 def _porosity_enabled() -> bool:
-    """Whether ``constant/porosityProperties`` switches porosity on.
-
-    Guarded like the fvOptions dictionary (:mod:`neofoam.fv_options`): the file
-    is optional, so its absence short-circuits to the schema default instead of
-    raising ``FileNotFoundError``.
-    """
+    """Whether ``constant/porosityProperties`` switches porosity on; the file is
+    optional, so its absence short-circuits instead of raising."""
     if not Path("constant/porosityProperties").is_file():
         return False
     return PorosityPropertiesConfig.load(validate=False).porosityEnabled

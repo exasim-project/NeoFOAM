@@ -12,10 +12,8 @@ equations they did before this model existed.
 It owns one runtime object, ``ctx.models["fv_options"]`` — OpenFOAM's own
 :class:`Foam::fv::options` — whose hooks (the source matrix, ``constrain``,
 ``correct``) the algorithms apply where native's ``UEqn.H``/``pEqn.H`` apply them.
-The pressure-velocity algorithms reach them through the extensions their
-operations define — this spec's contributions to those hooks live at the bottom of
-this module, one set per solver (the source call differs — ``fvOptions(U)`` for the
-single-phase solvers, ``fvOptions(rho, U)`` for VoF).
+The contributions at the bottom of this module are one set per solver, because
+the source call differs (``fvOptions(U)`` vs ``fvOptions(rho, U)`` for VoF).
 Shared by ``incompressibleFluid`` and ``incompressibleVoF``, which each register
 this one spec with their own plugin family.
 
@@ -109,9 +107,8 @@ def build(_config: FvOptionsConfig) -> list[Any]:
 # ---------------------------------------------------------------------------
 # Contributions — the fv::options hooks of UEqn.H / pEqn.H
 # ---------------------------------------------------------------------------
-# The import sits below the spec on purpose: the solver package imports this
-# module back to register the spec, so by the time that import re-enters here
-# mid-initialization, ``fvOptions`` above must already exist.
+# Imported below the spec: the solver package imports this module back, so
+# ``fvOptions`` must already exist when that re-enters here mid-initialization.
 from neofoam.solver.incompressibleFluid.models.pressure_velocity.extension import (  # noqa: E402
     momentum_extension,
     pressure_extension,
@@ -139,8 +136,7 @@ def fv_options_pressure_correct(U: volVectorField, fv_options: Annotated[Any, "m
     fv_options.correct(U)
 
 
-# The VoF twins of the hooks above: same option list, mass-weighted source.
-# Same reason for the import placement as the fluid one.
+# The VoF twins: same option list, mass-weighted source; import placed as above.
 from neofoam.solver.incompressibleVoF.models.pressure_velocity.extension import (  # noqa: E402
     momentum_extension as vof_momentum_extension,
 )

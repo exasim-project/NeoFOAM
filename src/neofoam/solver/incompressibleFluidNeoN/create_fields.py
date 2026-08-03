@@ -228,11 +228,9 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         for name, opt in _optional_models_by_name(optional_models).items():
             builder.add_model(name, opt)
 
-        # Register the solutionLoop owner runtime under its spec name so it
-        # stays discoverable as ctx.models["solutionLoop"]. Its gather hooks
-        # (timeStepConstraint / loopCondition) need no wiring step: the hooks
-        # a consumer injects are bound to the live Context on every operation
-        # call, so nothing case-bound is ever captured across runs.
+        # Register the owner runtime under its spec name so it stays discoverable
+        # as ``ctx.models["solutionLoop"]``; its gather hooks need no wiring step,
+        # they bind to the live Context per call rather than capturing case state.
         def register_loop_runtime(_work: dict[str, Any]) -> Any:
             return solution_loop_model
 

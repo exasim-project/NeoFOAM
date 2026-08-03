@@ -54,9 +54,8 @@ class DependencyResolver:
                     kwargs[param_name] = ctx
                     continue
 
-                # Model-owned interface: a param annotated with the Hook handle
-                # itself is injected as that hook bound to the live Context —
-                # calling it folds the active contributions.
+                # A param annotated with a Hook handle is injected as that hook
+                # bound to the live Context; calling it folds the contributions.
                 from .model.extension import Hook as _Hook  # noqa: PLC0415
 
                 if isinstance(param.annotation, _Hook):
@@ -71,8 +70,7 @@ class DependencyResolver:
                 if get_origin(param.annotation) is Annotated:
                     args = get_args(param.annotation)
 
-                    # Operation-declared extension: the active contributions are
-                    # rebuilt for this Context on every injection.
+                    # Rebound per injection so it never outlives this Context.
                     from .model.extension import Extension as _Extension  # noqa: PLC0415
 
                     if len(args) > 1 and isinstance(args[1], _Extension):

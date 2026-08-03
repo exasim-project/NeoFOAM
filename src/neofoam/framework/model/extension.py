@@ -1,19 +1,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Extension — a bundle of hooks an operation module declares for models to extend.
+"""Extension — the bundle of hooks an operation module declares for models to extend.
 
 An operation module declares one :class:`Extension` per extensible operation and
-one ``@<extension>.defines`` function per :class:`Hook`: the point the operation
-calls, the arguments it passes, and — via a trailing parameter the call does not
-supply — what to do with the contributions' results. Models register plain
-functions on a hook with ``@<model>.contributes(<hook>)``; an operation receives
-the whole bundle as one injected :class:`BoundExtension` handle and calls each
-hook once, exactly where native calls it.
+one ``@<extension>.defines`` function per :class:`Hook`; models register plain
+functions with ``@<model>.contributes(<hook>)``.
 
-A contribution is active iff its model is active for the case (a live
-``ModelRuntime`` in ``ctx.models``), so the operations never name a model and a
-case activates contributions by its files alone.
+A contribution runs iff its model is active for the case (a live ``ModelRuntime``
+in ``ctx.models``), so the operations never name a model and a case activates
+contributions by its files alone.
 """
 
 from __future__ import annotations
@@ -37,10 +33,8 @@ class _Negated:
 def negated(term: Any) -> Any:
     """Mark *term* to join a :func:`fold` with ``-`` instead of ``+``.
 
-    Native's ``== source`` moves a source to the right-hand side, i.e. subtracts
-    it from the assembled matrix; a contribution returns ``negated(source)``
-    to fold it in with exactly that arithmetic (``sum - source``, not
-    ``sum + (-source)`` — the bound matrices have no unary minus).
+    Mirrors native's ``== source``. The bound matrices have no unary minus, so
+    ``sum - term`` is the only available spelling.
     """
     return _Negated(term)
 
@@ -49,10 +43,8 @@ def fold(seed: Any, results: Iterable[Any]) -> Any:
     """Combine contribution *results* onto *seed*, in order: ``+`` by default,
     ``-`` for :func:`negated` results, skipping ``None`` (no opinion).
 
-    The combine rule for equation-term hooks — a hook declaration's body calls
-    it on the results it receives (``return fold(zero_source(U), contributions)``)
-    so ``+ ext.terms(U)`` is well-formed with any number of active
-    contributions, including none.
+    Seeding plus the ``None`` skip is what keeps ``+ ext.terms(U)`` well-formed
+    for any number of active contributions, including none.
     """
     out = seed
     for result in results:
@@ -66,12 +58,11 @@ def fold(seed: Any, results: Iterable[Any]) -> Any:
 
 
 class Hook:
-    """One hook of an :class:`Extension`, as declared by ``@<extension>.defines``.
+    """One hook of an :class:`Extension` and its registered contributions.
 
-    Holds the declaration function (its ``__name__`` is the hook name, its
-    leading parameters are the call-time arguments, a trailing parameter takes
-    the contribution results — see :class:`Extension`) and the registered
-    contributions. The handle is the ``@<model>.contributes(<hook>)`` target.
+    The handle ``@<extension>.defines`` returns: the
+    ``@<model>.contributes(<hook>)`` target, and — used as a parameter
+    annotation — the consumer's injection marker.
     """
 
     def __init__(self, extension: Extension, declaration: Callable[..., Any]) -> None:
@@ -87,11 +78,7 @@ class Hook:
         return tuple(self._contributions)
 
     def owner_of(self, contribution: Callable[..., Any]) -> ModelSpec:
-        """Return the contributing model that registered *contribution*.
-
-        Raises:
-            KeyError: if *contribution* was never registered on this hook.
-        """
+        """Return the contributing model that registered *contribution*."""
         if contribution not in self._contributions:
             raise KeyError(
                 f"hook '{self.extension.name}.{self.name}': {contribution!r} "
@@ -110,10 +97,8 @@ class Hook:
         """Bind this hook to *ctx* for one injection.
 
         The returned callable dispatches exactly like ``ext.<hook>(...)`` on a
-        :class:`BoundExtension` — it runs the active contributions and returns
-        the declaration body's combined value. This is how a model-owned
-        interface (``@<model>.interface``) is injected: the resolver binds the
-        annotating hook to the live Context, and the consumer just calls it.
+        :class:`BoundExtension`. This is how a hook used as a parameter
+        annotation (``@<model>.interface``) reaches its consumer.
         """
         runtime_by_spec = _runtime_by_spec(ctx)
 
@@ -126,12 +111,12 @@ class Hook:
 class Extension:
     """A named bundle of hooks an operation module defines.
 
-    Declared once at module import next to the operations it serves; each
-    ``@defines`` function declares one :class:`Hook`. Its leading parameters are
-    the call-time arguments the operation passes; a **trailing parameter the
-    call does not supply** receives the list of active contributions' results,
-    and the body combines them — it owns the rule (``min``, ``any``,
-    :func:`fold`, …)::
+    A ``@defines`` declaration's leading parameters are the call-time arguments
+    the operation passes; a **trailing parameter the call does not supply**
+    receives the active contributions' results, and the body owns the combine
+    rule (``min``, ``any``, :func:`fold`, …). A declaration whose every parameter
+    is a call argument is a **broadcast hook**: the call returns the raw
+    per-contribution results and the body is never invoked::
 
         momExt = Extension("momentum")
 
@@ -142,15 +127,8 @@ class Extension:
         @momExt.defines
         def constrain(UEqn: fvVectorMatrix) -> None: ...  # broadcast hook
 
-    A declaration whose every parameter is a call argument is a **broadcast
-    hook**: the call returns the raw per-contribution results (the body is
-    never invoked) so the operation can inspect or ignore them.
-
-    Models contribute per hook with ``@<model>.contributes(<hook>)``: a
-    contribution's parameters matching the hook's call-time arguments are taken
-    from the call, and the rest resolve from the contributing model's own config
-    plus the Context. An operation consumes the whole bundle as one injected
-    handle by annotating a parameter ``Annotated[BoundExtension, <extension>]``.
+    An operation consumes the whole bundle as one injected handle by annotating
+    a parameter ``Annotated[BoundExtension, <extension>]``.
     """
 
     def __init__(self, name: str) -> None:
@@ -158,11 +136,7 @@ class Extension:
         self._hooks: dict[str, Hook] = {}
 
     def defines(self, declaration: Callable[..., Any]) -> Hook:
-        """Declare one hook of this extension (see the class docstring).
-
-        Returns the :class:`Hook` handle under the declaration's name, the
-        target models pass to ``@<model>.contributes(<hook>)``.
-        """
+        """Declare one hook of this extension; returns its :class:`Hook` handle."""
         hook = Hook(self, declaration)
         if hook.name in self._hooks:
             raise RuntimeError(f"Extension '{self.name}': hook '{hook.name}' is already defined.")
@@ -175,8 +149,7 @@ class Extension:
         return dict(self._hooks)
 
     def __getattr__(self, name: str) -> Hook:
-        # Hook handles are reachable as attributes (``momExt.terms``) so two
-        # extensions can share a hook name without colliding at module level.
+        # Attribute lookup, so two extensions can share a hook name.
         if name.startswith("_"):
             raise AttributeError(name)
         hook = self._hooks.get(name)
@@ -194,15 +167,9 @@ class BoundExtension:
 
     Built fresh by :meth:`Extension.resolve` on every injection, so it never
     outlives the Context it was resolved against. A hook call runs every
-    contribution whose model is active for the Context, in registration order
-    (activation by ``ModelSpec`` identity, as everywhere else), then:
-
-    * the declaration has a trailing parameter the call did not supply — the
-      results list is passed there, and the **body's combined value** is the
-      hook's result (no active contribution -> the body sees ``[]``);
-    * every declaration parameter is a call argument (a broadcast hook) — the
-      raw per-contribution results are returned as a list, so the operation
-      can inspect them or ignore them (``ext.correct(U)``).
+    contribution whose model is active for the Context (by ``ModelSpec``
+    identity), in registration order, then returns the declaration body's
+    combined value — or, for a broadcast hook, the raw results list.
     """
 
     def __init__(self, extension: Extension, ctx: Any) -> None:
@@ -211,8 +178,7 @@ class BoundExtension:
         self._runtime_by_spec = _runtime_by_spec(ctx)
 
     def __getattr__(self, name: str) -> Callable[..., Any]:
-        # Underscore names never dispatch: internal state must miss naturally
-        # (also keeps this re-entrant while __init__ has not run yet).
+        # Underscore names must miss so internal state still resolves during __init__.
         if name.startswith("_"):
             raise AttributeError(name)
         hook = self._extension._hooks.get(name)
@@ -244,11 +210,8 @@ def call_hook(
 ) -> Any:
     """Dispatch one hook call: run the active contributions, then combine.
 
-    The shared engine behind :class:`BoundExtension` (and the model-owned
-    interface sugar): binds the call arguments against the hook declaration,
-    resolves and runs each active contribution in registration order, and either
-    hands the results to the declaration's trailing parameter (its body
-    combines) or returns them raw (a broadcast hook — every parameter bound).
+    Shared by :class:`BoundExtension` and by a hook bound on its own
+    (:meth:`Hook.resolve`).
     """
     # Lazy import breaks the cycle model.extension -> model.interface -> ... .
     from .interface import _resolve_contribution_kwargs  # noqa: PLC0415
@@ -257,8 +220,8 @@ def call_hook(
     bound = signature.bind_partial(*args, **kwargs)
     call_kwargs = dict(bound.arguments)
     parameters = list(signature.parameters)
-    # By convention the results sink is the *last* declaration parameter; any
-    # other unsupplied parameter is a caller mistake, not a sink.
+    # The results sink is the *last* parameter by convention; any other
+    # unsupplied parameter is a caller mistake, not a sink.
     results_param = parameters[-1] if parameters and parameters[-1] not in bound.arguments else None
     missing = [name for name in parameters if name not in bound.arguments and name != results_param]
     if missing:

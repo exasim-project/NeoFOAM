@@ -33,8 +33,7 @@ and publishes them; the **omega** and **k** stages solve their transport PDEs
 Coefficients live in the typed :class:`KOmegaSSTCoeffs`: its field defaults are
 OpenFOAM's ``kOmegaSST`` values, the ``RAS`` sub-dictionary's ``kOmegaSSTCoeffs``
 entry overrides them per case
-(:func:`~neofoam.turbulence.config.model_coefficients`), and each ``@operation``
-receives the resolved object by type — no magic parameter name, no string keys.
+(:func:`~neofoam.turbulence.config.model_coefficients`).
 """
 
 from pathlib import Path

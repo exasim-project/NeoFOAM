@@ -8,11 +8,6 @@ typed config (:mod:`neofoam.foam.algorithm_configs`) and return
 :class:`PimpleControl` / :class:`SimpleControl` instances from
 :mod:`neofoam.algorithms.solution_loop.control`. They replace direct use of
 ``pybFoam.pimpleControl`` so loop logic stays in Python.
-
-The configs carry the OpenFOAM defaults of every key that used to be a
-``getOrDefault`` call site here, and are registered on the owning spec (see
-``pimpleAlgorithm`` / ``simpleAlgorithm``) so the whole key set is exported to
-``configurations(solver)`` and the MCP instead of only being read at run time.
 """
 
 from typing import Any
@@ -28,9 +23,8 @@ from neofoam.foam.algorithm_configs import (
     SimpleAlgorithmConfig,
 )
 
-#: The two classes describing one algorithm block: its loop controls and its
-#: mesh-motion switches. ``IOMetadata.subdict`` is one fixed string per class,
-#: so the ``PISO`` spelling of the block needs its own pair.
+#: ``IOMetadata.subdict`` is one fixed string per class, so the ``PISO``
+#: spelling of the block needs its own (controls, mesh switches) pair.
 _PIMPLE_CLASSES = (PimpleAlgorithmConfig, DynamicMeshControls)
 _PISO_CLASSES = (PisoAlgorithmConfig, PisoDynamicMeshControls)
 
@@ -53,13 +47,9 @@ def _algorithm_classes() -> tuple[type[PimpleAlgorithmConfig], type[DynamicMeshC
 
 
 def load_pimple_config() -> PimpleAlgorithmConfig:
-    """The active algorithm block as a typed config.
-
-    A ``PISO`` block pins ``nOuterCorrectors`` to 1 instead of reading it — PISO
-    has no outer loop. ``validate=False`` mirrors the framework's own auto-load:
-    absent keys fall back to the schema defaults, present ones are coerced to
-    the declared types.
-    """
+    """The active algorithm block as a typed config; a ``PISO`` block pins
+    ``nOuterCorrectors`` to 1 (no outer loop) and ``validate=False`` mirrors the
+    framework's own auto-load, falling back to schema defaults for absent keys."""
     config_cls, _ = _algorithm_classes()
     config = config_cls.load(validate=False)
     if issubclass(config_cls, PisoAlgorithmConfig):
@@ -71,9 +61,8 @@ def create_dynamic_mesh_controls(context: dict[str, Any]) -> DynamicMeshControls
     """The algorithm block's mesh-motion switches (``createDyMControls.H``).
 
     Native re-reads them every time step (``readDyMControls.H``); read once here
-    because no tutorial rewrites them mid-run. ``correctPhi``'s OpenFOAM default
-    is ``mesh.dynamic()``, resolved here where the mesh is in hand, so the
-    operations that consume the switches see a plain bool.
+    because no tutorial rewrites them mid-run. ``correctPhi`` defaults to
+    ``mesh.dynamic()``, resolved here where the mesh is in hand.
     """
     _, controls_cls = _algorithm_classes()
     controls = controls_cls.load(validate=False)

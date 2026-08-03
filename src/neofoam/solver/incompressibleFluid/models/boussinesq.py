@@ -232,16 +232,9 @@ boussinesq.field(
 
 @boussinesq.load
 def load(case_dir: Path, _instance_id: str) -> BoussinesqConfig:
-    """The typed ``constant/transportProperties`` view this model owns.
-
-    ``BoussinesqConfig`` already binds the file, so the read goes through its
-    ``@IOStrategy`` rather than a hand-rolled ``pyf.dictionary`` walk. The schema
-    decides what is required exactly as before — ``beta`` / ``TRef`` / ``Pr`` /
-    ``Prt`` must be present (``@detect`` only activates the model when ``beta``
-    and ``TRef`` are), ``hRef`` defaults to 0. The one thing the strategy adds is
-    OpenFOAM's *dimensioned* entry form (``beta [0 0 0 -1 0 0 0] 3e-03;``), which
-    ``dictionary.get[float]`` rejected outright.
-    """
+    """Read through the config's ``@IOStrategy``, which unlike
+    ``dictionary.get[float]`` accepts OpenFOAM's dimensioned entry form
+    (``beta [0 0 0 -1 0 0 0] 3e-03;``)."""
     return BoussinesqConfig.load(case_dir=case_dir)
 
 

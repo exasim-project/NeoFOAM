@@ -244,13 +244,9 @@ def set_time_step(
     """Adjust the time step from flow-CFL and alpha-CFL (setInitialDeltaT/setDeltaT)."""
     # Re-read system/controlDict every step — faithful to OpenFOAM's
     # runTimeModifiable handling of adjustTimeStep/maxCo/maxAlphaCo/maxDeltaT
-    # (Time.controlDict() is not bound, so the file is read directly). The read
-    # goes through ``ControlDictConfig`` — the class that already declares these
-    # four keys and their interFoam defaults — so the schema and the value the
-    # step actually uses cannot drift apart. A fresh instance per step (not one
-    # frozen into the runtime config) is what keeps the runTimeModifiable
-    # behaviour; ``validate=False`` mirrors the framework's own auto-load, so a
-    # key the case omits still falls back to the schema default.
+    # (Time.controlDict() is not bound, so the file is read directly), hence a
+    # fresh config per step rather than one frozen into the runtime config;
+    # ``validate=False`` falls back to the interFoam default for absent keys.
     ctrl_dict = ControlDictConfig.load(validate=False)
 
     if not ctrl_dict.adjustTimeStep:

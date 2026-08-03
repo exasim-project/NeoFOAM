@@ -14,9 +14,7 @@ instances by their target file and deep-merges each group's
 ``model_dump(by_alias=True, exclude_none=True)`` into one payload, then writes
 that payload once. Within a file, keys are last-wins in iteration order, so
 callers control precedence by ordering the instances they pass in. A co-owner
-that declares a ``subdict`` (``fvSolution{PIMPLE}``, ``controlDict{telemetry}``)
-contributes its payload nested under that block, so it merges *into* the block
-the reader takes it from instead of beside it.
+that declares a ``subdict`` contributes its payload nested under that block.
 """
 
 from __future__ import annotations
@@ -47,12 +45,10 @@ def _deep_merge(dst: dict[str, Any], src: dict[str, Any]) -> dict[str, Any]:
 def _under_subdict(payload: dict[str, Any], subdict: Optional[str]) -> dict[str, Any]:
     """Nest ``payload`` under its declared sub-dict path, if it has one.
 
-    A config may own only a *block* of a file (``@IOStrategy(OF("system/
-    fvSolution", subdict="PIMPLE"))``, ``controlDict{telemetry}``). The merged
-    write below emits one whole-file payload, so such a contribution has to be
-    lifted into place first — otherwise its keys land at the top level of the
-    file, next to (instead of inside) the block the reader takes them from.
-    Dotted paths nest one level per component, as ``BaseConfig.load`` reads them.
+    The merged write below emits one whole-file payload, so a config owning only
+    a block has to be lifted into place first or its keys land beside the block
+    the reader takes them from. Dotted paths nest one level per component, as
+    ``BaseConfig.load`` reads them.
     """
     if not subdict:
         return payload

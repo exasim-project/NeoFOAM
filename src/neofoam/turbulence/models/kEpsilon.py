@@ -27,8 +27,7 @@ incompressible, divergence-free case (``alpha = rho = 1``, ``div U = 0`` so the
 dilatation ``SuSp(divU, …)`` terms vanish). Coefficients live in the typed
 :class:`KEpsilonCoeffs`: its field defaults are OpenFOAM's, the ``RAS``
 sub-dictionary's ``kEpsilonCoeffs`` entry overrides them per case
-(:func:`~neofoam.turbulence.config.model_coefficients`), and each ``@operation``
-receives the resolved object by type — no magic parameter name, no string keys.
+(:func:`~neofoam.turbulence.config.model_coefficients`).
 
 Each transport ``@operation`` mirrors the NeoN solver's PDE lifecycle exactly:
 ``rotate_old_times`` seeds the field's previous-time value for ``imp.ddt``; every
@@ -73,12 +72,9 @@ epsilonMin = 1e-15
 
 kEpsilon = register_momentum_transport(Model("kEpsilon"), family="RAS")
 kEpsilon.config(TurbulencePropertiesConfig)
-# ``KEpsilonCoeffs`` is resolved out of the ``RAS`` block by ``@kEpsilon.load``
-# below; registering it here only adds it to the spec's declared schema set
-# (``collect_config_classes`` → ``configurations(solver)`` → the MCP's
-# ``list_configs`` / ``config_schema``) so a case author sees the coefficients
-# they may override. ``@load`` still drives instantiation, so this does not
-# change loading behaviour — the same split the boussinesq model uses.
+# Schema-only registration: ``@kEpsilon.load`` below still resolves the instance
+# out of the ``RAS`` block, but declaring the class here is what exports its
+# schema through ``configurations(solver)`` / the MCP.
 kEpsilon.config(KEpsilonCoeffs)
 
 

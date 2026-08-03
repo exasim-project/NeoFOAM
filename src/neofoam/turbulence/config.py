@@ -9,10 +9,9 @@ OpenFOAM IO strategy. ``simulationType`` selects RAS / LES / laminar; the
 :class:`~neofoam.io.strategies.openfoam_strategy.OpenFOAMStrategy` recurses into
 sub-dictionaries automatically when a field's type is a ``BaseModel`` subclass.
 
-This module owns the dictionary itself; a closure additionally declares its own
-``<Model>Coeffs`` :class:`~neofoam.io.BaseConfig` next to the closure and resolves
-it here with :func:`model_coefficients`. Loading either runs the OpenFOAM IO path
-(hence pybFoam) directly.
+A closure declares its own ``<Model>Coeffs`` :class:`~neofoam.io.BaseConfig` next
+to itself and resolves it here. Loading either runs the OpenFOAM IO path (hence
+pybFoam) directly.
 """
 
 from pathlib import Path
@@ -94,9 +93,8 @@ class TurbulencePropertiesConfig(BaseConfig):
 def model_coefficients(config: Any, model: str, coeffs_type: type[CoeffsT]) -> CoeffsT:
     """A closure's typed coefficients, with the case's ``<model>Coeffs`` overrides applied.
 
-    Every field of *coeffs_type* carries the closure's OpenFOAM default, so an entry
-    the case omits keeps it. An entry *coeffs_type* does not declare is ignored, as
-    OpenFOAM's ``RASModel::coeffDict_`` ignores it. The ``RAS`` block arrives as a
+    An entry *coeffs_type* does not declare is ignored, as OpenFOAM's
+    ``RASModel::coeffDict_`` ignores it. The ``RAS`` block arrives as a
     :class:`RASProperties` from :meth:`~neofoam.io.BaseConfig.load` but as a plain
     ``dict`` from ``ModelSpec.instantiate``, so both shapes are accepted.
 
@@ -119,11 +117,9 @@ def load_with_coefficients(
 ) -> SimpleNamespace:
     """A closure's runtime config: the dictionary plus its resolved coefficients.
 
-    The ``@<model>.load`` body of every parameterised closure. Returning both as a
-    ``SimpleNamespace`` is what ``ModelSpec.instantiate`` produces for a multi-config
-    spec, so ``config_injection`` finds either **by type**: an ``@operation``
-    parameter annotated ``coeffs: KEpsilonCoeffs`` is bound without a magic name.
-    ``validate=False`` mirrors the auto-load ``ModelSpec.instantiate`` performs.
+    The ``SimpleNamespace`` shape is what ``ModelSpec.instantiate`` produces for a
+    multi-config spec, so ``config_injection`` finds either **by type**.
+    ``validate=False`` mirrors that auto-load.
     """
     properties = TurbulencePropertiesConfig.load(case_dir=case_dir, validate=False)
     return SimpleNamespace(

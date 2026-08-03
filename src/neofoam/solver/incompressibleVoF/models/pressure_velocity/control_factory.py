@@ -29,13 +29,10 @@ __all__ = [
 class VofPimpleAlgorithmConfig(PimpleAlgorithmConfig):
     """The ``PIMPLE`` block as interFoam reads it: the shared keys plus ``frozenFlow``.
 
-    ``frozenFlow yes`` is interFoam's switch for advecting alpha on a prescribed
-    velocity field — the pressure-velocity solve is skipped entirely, so the
+    ``frozenFlow yes`` skips the pressure-velocity solve entirely, so the
     corrector counts are free to carry the ``-1`` sentinels the interIsoFoam
-    tutorials pair with it (see :class:`FrozenFlowControl`).
-
-    ``finalOnLastPimpleIterOnly`` is inherited from the shared PIMPLE block model
-    but is not consumed by this solver's loop; interFoam's port selects the
+    tutorials pair with it (see :class:`FrozenFlowControl`). The inherited
+    ``finalOnLastPimpleIterOnly`` is unused here — this port selects the
     ``<field>Final`` settings from ``pimple_control.finalIter()`` directly.
     """
 
@@ -88,9 +85,8 @@ def create_dynamic_mesh_controls(context: dict[str, Any]) -> DynamicMeshControls
     """The PIMPLE dict's mesh-motion switches (transcription of ``createDyMControls.H``).
 
     Native re-reads them every time step (``readDyMControls.H``); read once here
-    because no tutorial rewrites them mid-run. ``correctPhi``'s OpenFOAM default
-    is ``mesh.dynamic()``, resolved here where the mesh is in hand, so the
-    operations that consume the switches see a plain bool.
+    because no tutorial rewrites them mid-run. ``correctPhi`` defaults to
+    ``mesh.dynamic()``, resolved here where the mesh is in hand.
     """
     controls = DynamicMeshControls.load(validate=False)
     return controls.resolved(mesh_dynamic=bool(context["mesh"].dynamic()))

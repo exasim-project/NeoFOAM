@@ -1,15 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Contribution parameter resolution, shared by every hook dispatch.
-
-A model-owned interface (``@<model>.interface``) *is* an extension
-:class:`~neofoam.framework.model.extension.Hook` on a model-private extension —
-see :meth:`ModelSpec.interface <neofoam.framework.model.spec.ModelSpec.interface>`.
-This module holds the one piece both spellings share beyond the ``Hook`` itself:
-resolving a contribution's parameters against its own model runtime plus the
-live ``Context``.
-"""
+"""Contribution parameter resolution, shared by every hook dispatch."""
 
 from __future__ import annotations
 
@@ -31,13 +23,8 @@ def _resolve_contribution_kwargs(
 ) -> dict[str, Any]:
     """Resolve *func*'s parameters the same way ``@model.operation`` does.
 
-    *call_kwargs* (a hook's call-time arguments, named against the hook
-    declaration) pre-resolve any parameter of the same name. Config-typed
-    params (``BaseConfig`` subclasses) are pulled from the *contributing*
-    runtime's own ``config`` by type via ``config_injection``; the remainder is
-    resolved by the shared ``DependencyResolver`` (``ctx.fields`` by name,
-    ``Depends`` markers). A parameter that resolves to neither raises a
-    ``ValueError`` naming the hook, the contribution, and the parameter.
+    Config-typed params come from the *contributing* runtime's own config, never
+    from the calling operation's.
     """
     # Lazy imports break the cycle interface -> config_injection/dependency_resolver
     # -> (resolver) -> model.interface.

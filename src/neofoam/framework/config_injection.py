@@ -71,20 +71,11 @@ def _create_runtime_config_wrapper(
     runtime: Any,
     dependency_resolver: Any = None,
 ) -> Callable[["Context"], Any]:
-    """
-    Wrap an operation function to inject config from ``runtime.config``.
+    """Wrap an operation function to inject config from ``runtime.config``.
 
-    Binding:
-        self  -> runtime
-        ctx   -> the live Context
-        config params -> resolved from runtime.config by type
-        every other param -> the shared ``DependencyResolver``, exactly as for an
-        operation with no config parameter (``Annotated[..., "models"]`` /
-        ``"fields"`` markers, ``Depends(...)``, then ``ctx.fields`` by name)
-
-    Delegating the remainder is what lets a config-typed parameter sit in the same
-    signature as the marker annotations — the two resolution paths compose, as they
-    already do for extension contributions (``model.interface``).
+    Everything that is not a config parameter is delegated to the shared
+    ``DependencyResolver``, so a config-typed parameter may sit in the same
+    signature as the marker annotations.
     """
     # Lazy import: the resolver reaches back into ``model.extension`` at call time.
     from neofoam.framework.dependency_resolver import DependencyResolver  # noqa: PLC0415

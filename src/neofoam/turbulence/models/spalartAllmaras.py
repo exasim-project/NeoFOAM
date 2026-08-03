@@ -27,8 +27,7 @@ implicit transport operators (``imp.ddt/div/laplacian/source``) drive the solve.
 Coefficients live in the typed :class:`SpalartAllmarasCoeffs`: its field defaults
 are OpenFOAM's ``SpalartAllmaras`` values, the ``RAS`` sub-dictionary's
 ``SpalartAllmarasCoeffs`` entry overrides them per case
-(:func:`~neofoam.turbulence.config.model_coefficients`), and each ``@operation``
-receives the resolved object by type — no magic parameter name, no string keys.
+(:func:`~neofoam.turbulence.config.model_coefficients`).
 """
 
 from pathlib import Path

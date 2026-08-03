@@ -93,13 +93,9 @@ PimpleFvSolution = pimple.config(fvSolution)
 # fixed-pressure BC) needs a pressure reference, an open one does not.
 PimpleFvSolution.add_controls("PIMPLE", pRefCell=int, pRefValue=float)
 
-# The PIMPLE block's loop controls (interFoam's ``frozenFlow`` included) and its
-# mesh-motion switches, which the slice above passes through untyped.
-# ``control_factory`` loads them to build the stateful control and the switches
-# the ``mesh_update`` operation reads; declaring them here is what exports the
-# key set to ``configurations(solver)`` and the MCP. This spec is used as its own
-# runtime (see ``PressureVelocityAlgorithm.detect_and_create``) and never
-# auto-loads its configs, so the declaration changes no loading behaviour.
+# Declared so ``configurations(solver)`` and the MCP export the key set.
+# Loading is unaffected: this spec is used as its own runtime and never
+# auto-loads its configs — ``control_factory`` drives instantiation.
 pimple.config(VofPimpleAlgorithmConfig)
 pimple.config(DynamicMeshControls)
 
@@ -534,10 +530,7 @@ def momentum(
     mesh = U.mesh()
 
     # as in UEqn.H: correctBoundaryVelocity before assembly — it feeds the
-    # boundary coefficients of ``div(rhoPhi,U)``. Every active model's terms then
-    # fold into the sum in registration order — MRF's mass-weighted frame
-    # acceleration with ``+``, the fvOptions source with ``-`` (native's
-    # ``== fvOptions(rho, U)``).
+    # boundary coefficients of ``div(rhoPhi,U)``.
     ext.correct_boundary_velocity(U)
     UEqn = fvVectorMatrix(
         fvm.ddt(rho, U) + fvm.div(rhoPhi, U) + turbulence.divDevRhoReff(rho, U) + ext.terms(rho, U)
