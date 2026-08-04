@@ -8,6 +8,8 @@
 
 // NeoN headers
 #include "NeoN/NeoN.hpp"
+#include "NeoN/finiteVolume/cellCentred/boundary/volume/processor.hpp"
+#include "NeoN/finiteVolume/cellCentred/boundary/surface/processor.hpp"
 
 // NeoFOAM headers
 #include "NeoFOAM/datastructures/runTime.hpp"
@@ -47,6 +49,20 @@ using ScalarVolBCFactory = NeoN::finiteVolume::cellCentred::VolumeBoundaryFactor
     &ScalarVolBCFactory::Register<vb::NutkWallFunction>::REGISTERED,
     &ScalarVolBCFactory::Register<vb::OmegaWallFunction>::REGISTERED,
     &ScalarVolBCFactory::Register<vb::NutUSpaldingWallFunction>::REGISTERED,
+};
+
+// Same workaround for NeoN's own processor (halo-exchange) BCs: their libNeoN
+// instantiation registers them only in libNeoN's table copy, so a decomposed
+// case read through this TU aborts with "Could not find constructor for
+// processor" without these.
+namespace sb = NeoN::finiteVolume::cellCentred::surfaceBoundary;
+using VectorVolBCFactory = NeoN::finiteVolume::cellCentred::VolumeBoundaryFactory<NeoN::Vec3>;
+using ScalarSurfBCFactory = NeoN::finiteVolume::cellCentred::SurfaceBoundaryFactory<NeoN::scalar>;
+
+[[maybe_unused]] const bool* const registerProcessorBCs[] = {
+    &ScalarVolBCFactory::Register<vb::Processor<NeoN::scalar>>::REGISTERED,
+    &VectorVolBCFactory::Register<vb::Processor<NeoN::Vec3>>::REGISTERED,
+    &ScalarSurfBCFactory::Register<sb::Processor<NeoN::scalar>>::REGISTERED,
 };
 } // namespace
 
@@ -249,6 +265,19 @@ void registerFieldFactories(nb::module_& m)
         "field"_a,
         "values"_a,
         "Overwrite a scalar field's internal values from a host array; corrects BCs"
+    );
+
+    // NeoN binds `boundary_data_value` on its scalar VolumeField only, so the boundary
+    // values a vector field's boundary conditions produced — what the patch-type
+    // translation in readers.hpp is observed through — are unreachable from Python.
+    m.def(
+        "vector_boundary_values",
+        [](fvcc::VolumeField<NeoN::Vec3>& field) -> NeoN::Vector<NeoN::Vec3>&
+        { return field.boundaryData().value(); },
+        "field"_a,
+        nb::rv_policy::reference,
+        nb::keep_alive<0, 1>(), // the returned view borrows from the field
+        "Boundary values of a NeoN vector VolumeField, flat in patch order"
     );
 }
 

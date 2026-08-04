@@ -93,6 +93,9 @@ int main(int argc, char* argv[])
                 rt
             );
 
+            // simpleFoam/UEqn.H: UEqn.relax()
+            UEqn.relax();
+
             if (simple.momentumPredictor())
             {
                 UEqn.solve(-1.0 * dsl::exp::grad(p));

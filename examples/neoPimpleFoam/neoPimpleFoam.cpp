@@ -162,6 +162,7 @@ int main(int argc, char* argv[])
                 );
 
                 UEqn.setFinalIter(finalIter);
+                UEqn.relax(); // pimpleFoam/UEqn.H: UEqn.relax()
 
                 if (piso.momentumPredictor())
                 {
