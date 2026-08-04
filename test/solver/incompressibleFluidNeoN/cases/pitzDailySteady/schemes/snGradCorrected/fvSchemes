@@ -1,0 +1,59 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSchemes;
+}
+
+ddtSchemes
+{
+    default         steadyState;
+}
+
+gradSchemes
+{
+    default         Gauss linear;
+    // Explicit literal key: NeoN's explicit gradient looks the scheme up by
+    // the literal name (no fall-through to ``default``).
+    grad(p)         Gauss linear;
+}
+
+divSchemes
+{
+    default         none;
+    div(phi,U)      Gauss upwind;
+    turbulence      Gauss upwind;
+    div(phi,k)      $turbulence;
+    div(phi,epsilon) $turbulence;
+    div(phi,omega)  $turbulence;
+    div(phi,nuTilda) $turbulence;
+    div((nuEff*dev2(T(grad(U))))) Gauss linear;
+}
+
+laplacianSchemes
+{
+    default         Gauss linear uncorrected;
+}
+
+interpolationSchemes
+{
+    default         linear;
+}
+
+// ``corrected`` rather than the case's ``uncorrected``: NeoFOAM's SIMPLEC flux
+// correction (addConsistentFluxCorrection) evaluates snGrad(p) with a hardcoded
+// corrected face-normal gradient, so only a corrected case discretises that term
+// the same way OpenFOAM does. The laplacians stay uncorrected (the pressure
+// equation's non-orthogonal correction is a separate, unported concern).
+snGradSchemes
+{
+    default         corrected;
+}
+
+wallDist
+{
+    method          meshWave;
+}
+
+// ************************************************************************* //
