@@ -1,0 +1,56 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSchemes;
+}
+
+ddtSchemes
+{
+    default         steadyState;
+}
+
+gradSchemes
+{
+    default         Gauss linear;
+    // Explicit literal keys: NeoN's explicit gradient looks the scheme up by
+    // the literal name (no fall-through to ``default``). ``grad(U)`` carries
+    // the slope limiter this overlay exists for.
+    grad(p)         Gauss linear;
+    grad(U)         cellLimited Gauss linear 1;
+}
+
+divSchemes
+{
+    default         none;
+    div(phi,U)      Gauss upwind;
+    turbulence      Gauss upwind;
+    div(phi,k)      $turbulence;
+    div(phi,epsilon) $turbulence;
+    div(phi,omega)  $turbulence;
+    div(phi,nuTilda) $turbulence;
+    div((nuEff*dev2(T(grad(U))))) Gauss linear;
+}
+
+laplacianSchemes
+{
+    default         Gauss linear uncorrected;
+}
+
+interpolationSchemes
+{
+    default         linear;
+}
+
+snGradSchemes
+{
+    default         uncorrected;
+}
+
+wallDist
+{
+    method          meshWave;
+}
+
+// ************************************************************************* //

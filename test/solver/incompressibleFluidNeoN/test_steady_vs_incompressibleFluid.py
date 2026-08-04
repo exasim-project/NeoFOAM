@@ -34,8 +34,23 @@ Two comparisons with different discriminating power:
    the *same* fixed point far more slowly, so their bounds are peak-relative.
    See ``MODELS`` and report/steady-turbulence-wall-functions.md.
 
-A third test pins the reference itself: ``incompressibleFluid`` (SIMPLE) against
+A third comparison covers the *gradient scheme*: the same case with a
+``cellLimited`` ``grad(U)`` overlaid on both solvers (``GRAD_U_SCHEMES``).
+OpenFOAM limits ``grad(U)`` natively, so the NeoN momentum assembly matches only
+if it builds its gradient operator from ``gradSchemes`` instead of a hardcoded
+Gauss-Green one. It runs a *single* SIMPLE iteration and compares U/p only: at
+iteration 1 the turbulence closure has not fed back into the momentum equation
+yet, so the comparison isolates the one grad(U) the momentum equation owns (the
+closures compute their own gradients, a separate call site).
+
+A fourth test pins the reference itself: ``incompressibleFluid`` (SIMPLE) against
 the native ``simpleFoam`` binary, which is bitwise on this case.
+
+A fifth covers the *SIMPLEC* branch (``consistent yes``): the same case with
+``solution/simplec/fvSolution`` (plus ``schemes/snGradCorrected``) overlaid on
+both solvers, again at two iterations. Both backends then take the consistent
+path (rAtU, the phiHbyA and HbyA corrections, the rAtU velocity corrector)
+instead of plain SIMPLE.
 
 Process hygiene follows the established comparison tests: each solver runs in
 its own subprocess (NeoN/Kokkos + OpenFOAM per-process global state), and each
@@ -56,6 +71,8 @@ import pytest
 
 _HERE = Path(__file__).parent
 _CASE = _HERE / "cases" / "pitzDailySteady"
+_SCHEMES = _CASE / "schemes"
+_SOLUTION = _CASE / "solution"
 _FIELD_READER = _HERE.parent / "pyfoam_field_reader.py"
 
 # Per-model comparison spec:
@@ -85,13 +102,43 @@ MODELS = {
 }
 
 
-def _prepare_case(model: str, dest: Path, end_time: int) -> None:
+# grad(U) variants of the case's fvSchemes (``schemes/<dir>/fvSchemes``, overlaid
+# on both solvers), each with the bound it is held to:
+#
+# * ``cellLimited`` (k=1) — the real limited scheme, and the discriminating entry:
+#   the hardcoded Gauss-Green gradient this replaced lands at 2.6e-2 of peak U,
+#   26x outside the bound below. NeoN's limiter is not bit-identical to OpenFOAM's
+#   ``cellLimitedGrad`` (measured 3.1e-4 of peak U, 7.4e-6 of peak p), so the bound
+#   is peak-relative rather than the machine precision the unlimited case reaches.
+#   The difference is in the limiter itself, not in the scheme selection — see the
+#   entry below.
+# * ``cellLimitedOff`` (k=0) — the same scheme with limiting switched off by its
+#   coefficient, which must reproduce the unlimited Gauss gradient to machine
+#   precision. This is what pins that the *coefficient* is read: NeoN defaults an
+#   absent k to 1 (strongest limiting), so dropping it would limit here.
+GRAD_U_SCHEMES = {
+    "cellLimited": ("cellLimitedGradU", 1e-8, 1e-3),
+    "cellLimitedOff": ("cellLimitedGradUOff", 1e-8, 1e-10),
+}
+
+
+def _prepare_case(
+    model: str,
+    dest: Path,
+    end_time: int,
+    fv_schemes: Path | None = None,
+    fv_solution: Path | None = None,
+) -> None:
     """Copy the committed case, overlay the model, set the iteration count, mesh it."""
-    shutil.copytree(_CASE, dest, ignore=shutil.ignore_patterns("models"))
+    shutil.copytree(_CASE, dest, ignore=shutil.ignore_patterns("models", "schemes", "solution"))
     overlay = _CASE / "models" / model
     shutil.copyfile(overlay / "turbulenceProperties", dest / "constant" / "turbulenceProperties")
     for field in (overlay / "0").iterdir():
         shutil.copyfile(field, dest / "0" / field.name)
+    if fv_schemes is not None:
+        shutil.copyfile(fv_schemes, dest / "system" / "fvSchemes")
+    if fv_solution is not None:
+        shutil.copyfile(fv_solution, dest / "system" / "fvSolution")
     control_dict = dest / "system" / "controlDict"
     text = control_dict.read_text()
     text = re.sub(r"^endTime\s+\S+;", f"endTime         {end_time};", text, count=1, flags=re.M)
@@ -260,6 +307,29 @@ def test_neon_steady_converged_matches_incompressibleFluid(model: str, tmp_path:
     )
 
 
+@pytest.mark.parametrize(
+    ("scheme_dir", "rtol", "atol_scale"),
+    list(GRAD_U_SCHEMES.values()),
+    ids=list(GRAD_U_SCHEMES),
+)
+def test_neon_steady_honours_the_grad_u_scheme(
+    scheme_dir: str, rtol: float, atol_scale: float, tmp_path: Path
+) -> None:
+    """The grad(U) entry of fvSchemes drives the NeoN momentum gradient."""
+    fv_schemes = _SCHEMES / scheme_dir / "fvSchemes"
+    neon_case = tmp_path / "neon"
+    reference_case = tmp_path / "reference"
+    _prepare_case("kEpsilon", neon_case, end_time=1, fv_schemes=fv_schemes)
+    _prepare_case("kEpsilon", reference_case, end_time=1, fv_schemes=fv_schemes)
+
+    _run_neon(neon_case)
+    _run_reference(reference_case)
+
+    _assert_fields_match(
+        neon_case, reference_case, tmp_path, scheme_dir, ("U", "p"), rtol, atol_scale
+    )
+
+
 @pytest.mark.skipif(shutil.which("simpleFoam") is None, reason="native simpleFoam not on PATH")
 @pytest.mark.parametrize("model", list(MODELS), ids=list(MODELS))
 def test_reference_steady_matches_native_simpleFoam(model: str, tmp_path: Path) -> None:
@@ -282,4 +352,82 @@ def test_reference_steady_matches_native_simpleFoam(model: str, tmp_path: Path) 
 
     _assert_fields_match(
         reference_case, native_case, tmp_path, f"{model}_native", fields, 1e-10, 1e-15
+    )
+
+
+def test_neon_regex_equation_relaxation_leaves_the_pressure_equation_alone(
+    tmp_path: Path,
+) -> None:
+    """A catch-all ``equations { ".*" }`` must not matrix-relax the pressure equation.
+
+    ``solution/regexEquations/fvSolution`` is the stock pitzDaily relaxation set:
+    ``equations { U 0.7; ".*" 0.9; }``. The regex resolves for *every* field name,
+    ``p`` included — but ``simpleFoam`` calls ``fvMatrix::relax()`` only on the
+    momentum and turbulence matrices, so the pressure Poisson equation is solved
+    unrelaxed. Relaxing it divides the pressure diagonal by 0.9, i.e. adds a
+    ``-0.111 rAUf`` reaction term: the CG solve then converges in a handful of
+    iterations to the wrong field, the outlet flux collapses and most of the domain
+    stalls at ``U = 0``. Parity against ``incompressibleFluid`` (OpenFOAM's own
+    ``relax()`` placement) is therefore the assertion: it fails by O(peak) if the
+    NeoN backend relaxes ``p``, and it also covers the other half of the claim —
+    ``U`` at 0.7 and ``k``/``epsilon`` at the regex's 0.9 *are* relaxed.
+
+    Ten iterations rather than two: matrix relaxation of ``p`` changes the *rate*
+    the flow develops at, which needs a few iterations to grow past the tolerance.
+    """
+    fv_solution = _SOLUTION / "regexEquations" / "fvSolution"
+    neon_case = tmp_path / "neon"
+    reference_case = tmp_path / "reference"
+    _prepare_case("kEpsilon", neon_case, end_time=10, fv_solution=fv_solution)
+    _prepare_case("kEpsilon", reference_case, end_time=10, fv_solution=fv_solution)
+
+    _run_neon(neon_case)
+    _run_reference(reference_case)
+
+    _assert_fields_match(
+        neon_case,
+        reference_case,
+        tmp_path,
+        "kEpsilon_regexEquations",
+        ("U", "p", "k", "epsilon", "nut"),
+        1e-8,
+        1e-10,
+    )
+
+
+def test_neon_simplec_two_iterations_roundoff(tmp_path: Path) -> None:
+    """Per-iteration SIMPLEC (``consistent yes``) parity is machine precision.
+
+    The overlaid ``solution/simplec/fvSolution`` is what a real SIMPLEC case
+    ships: ``consistent yes`` and no ``relaxationFactors.fields.p``. It drives
+    the consistent branch of both backends (rAtU, the phiHbyA correction, the
+    HbyA correction and the rAtU velocity corrector), which plain SIMPLE would
+    skip entirely — so this fails if the NeoN path silently runs plain SIMPLE:
+    without the implicit pressure relaxation SIMPLEC brings, and with no
+    ``fields.p`` factor to stand in for it, plain SIMPLE diverges here (U off by
+    ~1x its peak by the second iteration).
+
+    ``schemes/snGradCorrected`` comes with it because NeoFOAM's flux correction
+    hardcodes a corrected snGrad(p) — see that file's header.
+    """
+    fv_solution = _SOLUTION / "simplec" / "fvSolution"
+    fv_schemes = _SCHEMES / "snGradCorrected" / "fvSchemes"
+    neon_case = tmp_path / "neon"
+    reference_case = tmp_path / "reference"
+    _prepare_case("kEpsilon", neon_case, end_time=2, fv_schemes=fv_schemes, fv_solution=fv_solution)
+    _prepare_case(
+        "kEpsilon", reference_case, end_time=2, fv_schemes=fv_schemes, fv_solution=fv_solution
+    )
+
+    _run_neon(neon_case)
+    _run_reference(reference_case)
+
+    _assert_fields_match(
+        neon_case,
+        reference_case,
+        tmp_path,
+        "kEpsilon_simplec2",
+        ("U", "p", "k", "epsilon", "nut"),
+        1e-8,
+        1e-10,
     )
