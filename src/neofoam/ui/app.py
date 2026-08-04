@@ -23,7 +23,7 @@ from typing import Any
 from neofoam.mcp import tools
 from neofoam.mcp.registry import resolve_solver
 from neofoam.ui import case_spec as cs
-from neofoam.ui import jsonforms_module, review
+from neofoam.ui import jsonforms_module
 from neofoam.ui.agent_panel import build_agent_panel
 from neofoam.ui.forms import (
     FormEntry,
@@ -40,7 +40,7 @@ from neofoam.ui.geometry import (
     write_mesh_configs,
 )
 from neofoam.ui.plugins import StepContext, StepPlugin, discover_step_plugins
-from neofoam.ui.review import findings_to_rows
+from neofoam.ui.review import findings_to_rows, save_error_rows
 from neofoam.ui.scaffold import scaffold_runnable_case
 from neofoam.ui.steps import Step, build_model_choices, build_steps
 from neofoam.ui.sweep_panel import SweepPanel
@@ -149,6 +149,7 @@ def _parse_pair(text: str) -> tuple[int, int] | None:
 
 
 def _parse_vec(text: str) -> tuple[float, float, float] | None:
+    """Parse an ``"x y z"`` vector; ``None`` when unparsable."""
     parts = text.split()
     if len(parts) != 3:
         return None
@@ -242,7 +243,6 @@ def build_app(
     # Geometry & mesh stage (STL → blockMesh/snappy dicts).
     state.role_names = _ROLE_NAMES
     state.stl_dir = _DEFAULT_STL_DIR
-    state.geometry_patches = []
     state.geometry_status = ""
     state.geo_bbox = None
     state.geo_location = ""
@@ -277,7 +277,7 @@ def build_app(
             state.save_report = {"error": str(exc)}
             state.scaffolded = []
             state.validation_ok = False
-            state.findings = [asdict(r) for r in review.save_error_rows(exc)]
+            state.findings = [asdict(r) for r in save_error_rows(exc)]
             return
         state.save_report = result.model_dump()
         # Make the saved case runnable, then validate it.
