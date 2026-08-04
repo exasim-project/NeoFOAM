@@ -1,0 +1,698 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html"><link rel="next" title="neofoam.framework.conditions" href="neofoam.framework.conditions.html"><link rel="prev" title="neofoam.foam.schemes.sn_grad" href="neofoam.foam.schemes.sn_grad.html">
+        <link rel="canonical" href="https://exasim-project.com/NeoFOAM/reference/api/neofoam.framework.html">
+
+    <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
+        <title>neofoam.framework - NeoFOAM documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery.css?v=fd6457a4" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=6a4ff913" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../index.html"><div class="brand">NeoFOAM  documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
+  
+  <span class="sidebar-brand-text">NeoFOAM  documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../auto_tutorials/example_01_run_incompressible_fluid.html">Run your first NeoFOAM case</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../auto_tutorials/example_02_passive_scalar_plugin.html">Add a passive scalar transport model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../auto_tutorials/example_03_build_a_solver.html">Build a scalar-transport solver from scratch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../auto_tutorials/example_04_configure_with_io.html">Typed configs: YAML, JSON, and OpenFOAM dictionaries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorials/scaffold-a-case-wizard.html">Scaffold a case wizard notebook</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">How-to guides</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../how-to/install.html">Install NeoFOAM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../how-to/declare-fields.html">Declare on-disk fields with typed BCs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../how-to/extend-operations.html">Extend operations from another model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_register_a_model.html">Register a new model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_add_an_init_step_category.html">Add a custom InitStep category</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_work_with_config_files.html">Work with configuration files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_custom_solver_with_configs.html">Add config files to a solver and model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_per_model_fvschemes.html">Declare per-model fvSchemes / fvSolution slices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_collect_and_save_configs.html">Collect and save all of a solver’s configs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_visualize_the_operation_dag.html">Visualize the operation DAG</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_use_depends_for_injection.html">Inject dependencies into operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_use_an_interface.html">Gather contributions from many models with a model-owned interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../auto_how-to/example_trace_solver_performance.html">Trace solver performance with OpenTelemetry</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../project-layout.html">Project layout</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../build-and-test.html">Building and testing NeoFOAM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cli.html">The <code class="docutils literal notranslate"><span class="pre">neofoam</span></code> command line</a></li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="../index.html">neofoam</a><input aria-label="Toggle navigation of neofoam" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2 current has-children"><a class="reference internal" href="neofoam.html">neofoam</a><input aria-label="Toggle navigation of neofoam" checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l3 has-children"><a class="reference internal" href="neofoam.agent.html">neofoam.agent</a><input aria-label="Toggle navigation of neofoam.agent" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.agent.agent.html">neofoam.agent.agent</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.agent.case_fill.html">neofoam.agent.case_fill</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.agent.case_forms.html">neofoam.agent.case_forms</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.agent.wizard_template.html">neofoam.agent.wizard_template</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="neofoam.algorithms.html">neofoam.algorithms</a><input aria-label="Toggle navigation of neofoam.algorithms" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.algorithms.constraints.html">neofoam.algorithms.constraints</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.algorithms.correct_phi.html">neofoam.algorithms.correct_phi</a></li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="neofoam.algorithms.field_writer.html">neofoam.algorithms.field_writer</a><input aria-label="Toggle navigation of neofoam.algorithms.field_writer" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.algorithms.field_writer.field_writer.html">neofoam.algorithms.field_writer.field_writer</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.algorithms.field_writer.write_control.html">neofoam.algorithms.field_writer.write_control</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.algorithms.field_writer.writer.html">neofoam.algorithms.field_writer.writer</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.algorithms.pressure_reference.html">neofoam.algorithms.pressure_reference</a></li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="neofoam.algorithms.solution_loop.html">neofoam.algorithms.solution_loop</a><input aria-label="Toggle navigation of neofoam.algorithms.solution_loop" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.algorithms.solution_loop.config.html">neofoam.algorithms.solution_loop.config</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.algorithms.solution_loop.control.html">neofoam.algorithms.solution_loop.control</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.algorithms.solution_loop.foam_time.html">neofoam.algorithms.solution_loop.foam_time</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.algorithms.solution_loop.interfaces.html">neofoam.algorithms.solution_loop.interfaces</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.algorithms.solution_loop.loop_state.html">neofoam.algorithms.solution_loop.loop_state</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.algorithms.solution_loop.solution_loop.html">neofoam.algorithms.solution_loop.solution_loop</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.algorithms.solution_loop.time_integration.html">neofoam.algorithms.solution_loop.time_integration</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="neofoam.core.html">neofoam.core</a><input aria-label="Toggle navigation of neofoam.core" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.core.plugin_system.html">neofoam.core.plugin_system</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="neofoam.fields.html">neofoam.fields</a><input aria-label="Toggle navigation of neofoam.fields" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.fields.bc.html">neofoam.fields.bc</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.fields.decl.html">neofoam.fields.decl</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.fields.loader.html">neofoam.fields.loader</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.fields.schema.html">neofoam.fields.schema</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.fields.synthesis.html">neofoam.fields.synthesis</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.fields.value_types.html">neofoam.fields.value_types</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="neofoam.foam.html">neofoam.foam</a><input aria-label="Toggle navigation of neofoam.foam" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.foam.algorithm_configs.html">neofoam.foam.algorithm_configs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.foam.fv_configs.html">neofoam.foam.fv_configs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.foam.initialization.html">neofoam.foam.initialization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.foam.libraries.html">neofoam.foam.libraries</a></li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="neofoam.foam.schemes.html">neofoam.foam.schemes</a><input aria-label="Toggle navigation of neofoam.foam.schemes" class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.foam.schemes.ddt.html">neofoam.foam.schemes.ddt</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.foam.schemes.div.html">neofoam.foam.schemes.div</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.foam.schemes.grad.html">neofoam.foam.schemes.grad</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.foam.schemes.interpolation.html">neofoam.foam.schemes.interpolation</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.foam.schemes.laplacian.html">neofoam.foam.schemes.laplacian</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.foam.schemes.sn_grad.html">neofoam.foam.schemes.sn_grad</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3 current has-children current-page"><a class="current reference internal" href="#">neofoam.framework</a><input aria-label="Toggle navigation of neofoam.framework" checked="" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.framework.conditions.html">neofoam.framework.conditions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.framework.config_injection.html">neofoam.framework.config_injection</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.framework.context.html">neofoam.framework.context</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.framework.decorator.html">neofoam.framework.decorator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.framework.dependency_resolver.html">neofoam.framework.dependency_resolver</a></li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="neofoam.framework.graph.html">neofoam.framework.graph</a><input aria-label="Toggle navigation of neofoam.framework.graph" class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.graph.ordering.html">neofoam.framework.graph.ordering</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.graph.resolver.html">neofoam.framework.graph.resolver</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.graph.sorter.html">neofoam.framework.graph.sorter</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.graph.validation.html">neofoam.framework.graph.validation</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.graph.visualization.html">neofoam.framework.graph.visualization</a></li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="neofoam.framework.initialization.html">neofoam.framework.initialization</a><input aria-label="Toggle navigation of neofoam.framework.initialization" class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" role="switch" type="checkbox"/><label for="toctree-checkbox-13"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.initialization.config_context.html">neofoam.framework.initialization.config_context</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.initialization.depends.html">neofoam.framework.initialization.depends</a></li>
+<li class="toctree-l5 has-children"><a class="reference internal" href="neofoam.framework.initialization.execution.html">neofoam.framework.initialization.execution</a><input aria-label="Toggle navigation of neofoam.framework.initialization.execution" class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" role="switch" type="checkbox"/><label for="toctree-checkbox-14"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l6"><a class="reference internal" href="neofoam.framework.initialization.execution.context_builder.html">neofoam.framework.initialization.execution.context_builder</a></li>
+<li class="toctree-l6"><a class="reference internal" href="neofoam.framework.initialization.execution.executor.html">neofoam.framework.initialization.execution.executor</a></li>
+<li class="toctree-l6"><a class="reference internal" href="neofoam.framework.initialization.execution.init_result.html">neofoam.framework.initialization.execution.init_result</a></li>
+<li class="toctree-l6"><a class="reference internal" href="neofoam.framework.initialization.execution.ordering.html">neofoam.framework.initialization.execution.ordering</a></li>
+<li class="toctree-l6"><a class="reference internal" href="neofoam.framework.initialization.execution.validation.html">neofoam.framework.initialization.execution.validation</a></li>
+</ul>
+</li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.initialization.helpers.html">neofoam.framework.initialization.helpers</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.initialization.init_step.html">neofoam.framework.initialization.init_step</a></li>
+<li class="toctree-l5 has-children"><a class="reference internal" href="neofoam.framework.initialization.staged.html">neofoam.framework.initialization.staged</a><input aria-label="Toggle navigation of neofoam.framework.initialization.staged" class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" role="switch" type="checkbox"/><label for="toctree-checkbox-15"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l6"><a class="reference internal" href="neofoam.framework.initialization.staged.runner.html">neofoam.framework.initialization.staged.runner</a></li>
+<li class="toctree-l6"><a class="reference internal" href="neofoam.framework.initialization.staged.spec.html">neofoam.framework.initialization.staged.spec</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="neofoam.framework.model.html">neofoam.framework.model</a><input aria-label="Toggle navigation of neofoam.framework.model" class="toctree-checkbox" id="toctree-checkbox-16" name="toctree-checkbox-16" role="switch" type="checkbox"/><label for="toctree-checkbox-16"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.model.extension.html">neofoam.framework.model.extension</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.model.interface.html">neofoam.framework.model.interface</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.model.runtime.html">neofoam.framework.model.runtime</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.model.spec.html">neofoam.framework.model.spec</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.framework.operations.html">neofoam.framework.operations</a></li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="neofoam.framework.solver.html">neofoam.framework.solver</a><input aria-label="Toggle navigation of neofoam.framework.solver" class="toctree-checkbox" id="toctree-checkbox-17" name="toctree-checkbox-17" role="switch" type="checkbox"/><label for="toctree-checkbox-17"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.solver.configurations.html">neofoam.framework.solver.configurations</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.solver.registry.html">neofoam.framework.solver.registry</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.solver.runtime.html">neofoam.framework.solver.runtime</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.solver.spec.html">neofoam.framework.solver.spec</a></li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="neofoam.framework.tools.html">neofoam.framework.tools</a><input aria-label="Toggle navigation of neofoam.framework.tools" class="toctree-checkbox" id="toctree-checkbox-18" name="toctree-checkbox-18" role="switch" type="checkbox"/><label for="toctree-checkbox-18"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.tools.graph.html">neofoam.framework.tools.graph</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.tools.spec.html">neofoam.framework.tools.spec</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.framework.types.html">neofoam.framework.types</a></li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="neofoam.framework.validation.html">neofoam.framework.validation</a><input aria-label="Toggle navigation of neofoam.framework.validation" class="toctree-checkbox" id="toctree-checkbox-19" name="toctree-checkbox-19" role="switch" type="checkbox"/><label for="toctree-checkbox-19"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.validation.checks.html">neofoam.framework.validation.checks</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.framework.validation.registry.html">neofoam.framework.validation.registry</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="neofoam.fv_options.html">neofoam.fv_options</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="neofoam.io.html">neofoam.io</a><input aria-label="Toggle navigation of neofoam.io" class="toctree-checkbox" id="toctree-checkbox-20" name="toctree-checkbox-20" role="switch" type="checkbox"/><label for="toctree-checkbox-20"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.io.base.html">neofoam.io.base</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.io.decorator.html">neofoam.io.decorator</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.io.dictfile.html">neofoam.io.dictfile</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.io.dictread.html">neofoam.io.dictread</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.io.input_validation.html">neofoam.io.input_validation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.io.pydantic_schema.html">neofoam.io.pydantic_schema</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.io.scaffold.html">neofoam.io.scaffold</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.io.schema.html">neofoam.io.schema</a></li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="neofoam.io.strategies.html">neofoam.io.strategies</a><input aria-label="Toggle navigation of neofoam.io.strategies" class="toctree-checkbox" id="toctree-checkbox-21" name="toctree-checkbox-21" role="switch" type="checkbox"/><label for="toctree-checkbox-21"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.io.strategies.json_strategy.html">neofoam.io.strategies.json_strategy</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.io.strategies.openfoam_strategy.html">neofoam.io.strategies.openfoam_strategy</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.io.strategies.yaml_strategy.html">neofoam.io.strategies.yaml_strategy</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.io.validation_types.html">neofoam.io.validation_types</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.io.write_configs.html">neofoam.io.write_configs</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="neofoam.mcp.html">neofoam.mcp</a><input aria-label="Toggle navigation of neofoam.mcp" class="toctree-checkbox" id="toctree-checkbox-22" name="toctree-checkbox-22" role="switch" type="checkbox"/><label for="toctree-checkbox-22"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.mcp.dto.html">neofoam.mcp.dto</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.mcp.registry.html">neofoam.mcp.registry</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.mcp.tools.html">neofoam.mcp.tools</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="neofoam.mrf.html">neofoam.mrf</a></li>
+<li class="toctree-l3"><a class="reference internal" href="neofoam.neofoam_bindings.html">neofoam.neofoam_bindings</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="neofoam.solver.html">neofoam.solver</a><input aria-label="Toggle navigation of neofoam.solver" class="toctree-checkbox" id="toctree-checkbox-23" name="toctree-checkbox-23" role="switch" type="checkbox"/><label for="toctree-checkbox-23"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.solver.icofoam.html">neofoam.solver.icofoam</a></li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="neofoam.solver.incompressibleFluid.html">neofoam.solver.incompressibleFluid</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleFluid" class="toctree-checkbox" id="toctree-checkbox-24" name="toctree-checkbox-24" role="switch" type="checkbox"/><label for="toctree-checkbox-24"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.solver.incompressibleFluid.config_schema.html">neofoam.solver.incompressibleFluid.config_schema</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.solver.incompressibleFluid.configs.html">neofoam.solver.incompressibleFluid.configs</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.solver.incompressibleFluid.create_fields.html">neofoam.solver.incompressibleFluid.create_fields</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.solver.incompressibleFluid.incompressibleFluid.html">neofoam.solver.incompressibleFluid.incompressibleFluid</a></li>
+<li class="toctree-l5 has-children"><a class="reference internal" href="neofoam.solver.incompressibleFluid.models.html">neofoam.solver.incompressibleFluid.models</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleFluid.models" class="toctree-checkbox" id="toctree-checkbox-25" name="toctree-checkbox-25" role="switch" type="checkbox"/><label for="toctree-checkbox-25"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l6"><a class="reference internal" href="neofoam.solver.incompressibleFluid.models.boussinesq.html">neofoam.solver.incompressibleFluid.models.boussinesq</a></li>
+<li class="toctree-l6"><a class="reference internal" href="neofoam.solver.incompressibleFluid.models.courant.html">neofoam.solver.incompressibleFluid.models.courant</a></li>
+<li class="toctree-l6"><a class="reference internal" href="neofoam.solver.incompressibleFluid.models.field_writer.html">neofoam.solver.incompressibleFluid.models.field_writer</a></li>
+<li class="toctree-l6"><a class="reference internal" href="neofoam.solver.incompressibleFluid.models.incompressibleFluidModel.html">neofoam.solver.incompressibleFluid.models.incompressibleFluidModel</a></li>
+<li class="toctree-l6"><a class="reference internal" href="neofoam.solver.incompressibleFluid.models.max_delta_t.html">neofoam.solver.incompressibleFluid.models.max_delta_t</a></li>
+<li class="toctree-l6 has-children"><a class="reference internal" href="neofoam.solver.incompressibleFluid.models.pressure_velocity.html">neofoam.solver.incompressibleFluid.models.pressure_velocity</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleFluid.models.pressure_velocity" class="toctree-checkbox" id="toctree-checkbox-26" name="toctree-checkbox-26" role="switch" type="checkbox"/><label for="toctree-checkbox-26"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l7"><a class="reference internal" href="neofoam.solver.incompressibleFluid.models.pressure_velocity.base.html">neofoam.solver.incompressibleFluid.models.pressure_velocity.base</a></li>
+<li class="toctree-l7"><a class="reference internal" href="neofoam.solver.incompressibleFluid.models.pressure_velocity.control_factory.html">neofoam.solver.incompressibleFluid.models.pressure_velocity.control_factory</a></li>
+<li class="toctree-l7"><a class="reference internal" href="neofoam.solver.incompressibleFluid.models.pressure_velocity.extension.html">neofoam.solver.incompressibleFluid.models.pressure_velocity.extension</a></li>
+<li class="toctree-l7"><a class="reference internal" href="neofoam.solver.incompressibleFluid.models.pressure_velocity.pimpleAlgorithm.html">neofoam.solver.incompressibleFluid.models.pressure_velocity.pimpleAlgorithm</a></li>
+<li class="toctree-l7"><a class="reference internal" href="neofoam.solver.incompressibleFluid.models.pressure_velocity.simpleAlgorithm.html">neofoam.solver.incompressibleFluid.models.pressure_velocity.simpleAlgorithm</a></li>
+</ul>
+</li>
+<li class="toctree-l6"><a class="reference internal" href="neofoam.solver.incompressibleFluid.models.solution_loop.html">neofoam.solver.incompressibleFluid.models.solution_loop</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="neofoam.solver.incompressibleFluidNeoN.html">neofoam.solver.incompressibleFluidNeoN</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleFluidNeoN" class="toctree-checkbox" id="toctree-checkbox-27" name="toctree-checkbox-27" role="switch" type="checkbox"/><label for="toctree-checkbox-27"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.solver.incompressibleFluidNeoN.config_schema.html">neofoam.solver.incompressibleFluidNeoN.config_schema</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.solver.incompressibleFluidNeoN.configs.html">neofoam.solver.incompressibleFluidNeoN.configs</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.solver.incompressibleFluidNeoN.create_fields.html">neofoam.solver.incompressibleFluidNeoN.create_fields</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.solver.incompressibleFluidNeoN.incompressibleFluidNeoN.html">neofoam.solver.incompressibleFluidNeoN.incompressibleFluidNeoN</a></li>
+<li class="toctree-l5 has-children"><a class="reference internal" href="neofoam.solver.incompressibleFluidNeoN.models.html">neofoam.solver.incompressibleFluidNeoN.models</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleFluidNeoN.models" class="toctree-checkbox" id="toctree-checkbox-28" name="toctree-checkbox-28" role="switch" type="checkbox"/><label for="toctree-checkbox-28"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l6"><a class="reference internal" href="neofoam.solver.incompressibleFluidNeoN.models.courant.html">neofoam.solver.incompressibleFluidNeoN.models.courant</a></li>
+<li class="toctree-l6"><a class="reference internal" href="neofoam.solver.incompressibleFluidNeoN.models.field_writer.html">neofoam.solver.incompressibleFluidNeoN.models.field_writer</a></li>
+<li class="toctree-l6"><a class="reference internal" href="neofoam.solver.incompressibleFluidNeoN.models.incompressibleFluidNeoNModel.html">neofoam.solver.incompressibleFluidNeoN.models.incompressibleFluidNeoNModel</a></li>
+<li class="toctree-l6"><a class="reference internal" href="neofoam.solver.incompressibleFluidNeoN.models.max_delta_t.html">neofoam.solver.incompressibleFluidNeoN.models.max_delta_t</a></li>
+<li class="toctree-l6 has-children"><a class="reference internal" href="neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.html">neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity" class="toctree-checkbox" id="toctree-checkbox-29" name="toctree-checkbox-29" role="switch" type="checkbox"/><label for="toctree-checkbox-29"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l7"><a class="reference internal" href="neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base.html">neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base</a></li>
+<li class="toctree-l7"><a class="reference internal" href="neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.pimpleAlgorithm.html">neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.pimpleAlgorithm</a></li>
+<li class="toctree-l7"><a class="reference internal" href="neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.simpleAlgorithm.html">neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.simpleAlgorithm</a></li>
+</ul>
+</li>
+<li class="toctree-l6"><a class="reference internal" href="neofoam.solver.incompressibleFluidNeoN.models.solution_loop.html">neofoam.solver.incompressibleFluidNeoN.models.solution_loop</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="neofoam.solver.incompressibleVoF.html">neofoam.solver.incompressibleVoF</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleVoF" class="toctree-checkbox" id="toctree-checkbox-30" name="toctree-checkbox-30" role="switch" type="checkbox"/><label for="toctree-checkbox-30"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.solver.incompressibleVoF.configs.html">neofoam.solver.incompressibleVoF.configs</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.solver.incompressibleVoF.create_fields.html">neofoam.solver.incompressibleVoF.create_fields</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.solver.incompressibleVoF.incompressibleVoF.html">neofoam.solver.incompressibleVoF.incompressibleVoF</a></li>
+<li class="toctree-l5 has-children"><a class="reference internal" href="neofoam.solver.incompressibleVoF.models.html">neofoam.solver.incompressibleVoF.models</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleVoF.models" class="toctree-checkbox" id="toctree-checkbox-31" name="toctree-checkbox-31" role="switch" type="checkbox"/><label for="toctree-checkbox-31"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l6 has-children"><a class="reference internal" href="neofoam.solver.incompressibleVoF.models.alpha_advection.html">neofoam.solver.incompressibleVoF.models.alpha_advection</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleVoF.models.alpha_advection" class="toctree-checkbox" id="toctree-checkbox-32" name="toctree-checkbox-32" role="switch" type="checkbox"/><label for="toctree-checkbox-32"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l7"><a class="reference internal" href="neofoam.solver.incompressibleVoF.models.alpha_advection.advectionModel.html">neofoam.solver.incompressibleVoF.models.alpha_advection.advectionModel</a></li>
+<li class="toctree-l7 has-children"><a class="reference internal" href="neofoam.solver.incompressibleVoF.models.alpha_advection.models.html">neofoam.solver.incompressibleVoF.models.alpha_advection.models</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleVoF.models.alpha_advection.models" class="toctree-checkbox" id="toctree-checkbox-33" name="toctree-checkbox-33" role="switch" type="checkbox"/><label for="toctree-checkbox-33"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l8"><a class="reference internal" href="neofoam.solver.incompressibleVoF.models.alpha_advection.models.iso_advector.html">neofoam.solver.incompressibleVoF.models.alpha_advection.models.iso_advector</a></li>
+<li class="toctree-l8"><a class="reference internal" href="neofoam.solver.incompressibleVoF.models.alpha_advection.models.mules.html">neofoam.solver.incompressibleVoF.models.alpha_advection.models.mules</a></li>
+</ul>
+</li>
+<li class="toctree-l7"><a class="reference internal" href="neofoam.solver.incompressibleVoF.models.alpha_advection.selection.html">neofoam.solver.incompressibleVoF.models.alpha_advection.selection</a></li>
+<li class="toctree-l7"><a class="reference internal" href="neofoam.solver.incompressibleVoF.models.alpha_advection.shared.html">neofoam.solver.incompressibleVoF.models.alpha_advection.shared</a></li>
+</ul>
+</li>
+<li class="toctree-l6"><a class="reference internal" href="neofoam.solver.incompressibleVoF.models.incompressibleVoFModel.html">neofoam.solver.incompressibleVoF.models.incompressibleVoFModel</a></li>
+<li class="toctree-l6 has-children"><a class="reference internal" href="neofoam.solver.incompressibleVoF.models.pressure_velocity.html">neofoam.solver.incompressibleVoF.models.pressure_velocity</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleVoF.models.pressure_velocity" class="toctree-checkbox" id="toctree-checkbox-34" name="toctree-checkbox-34" role="switch" type="checkbox"/><label for="toctree-checkbox-34"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l7"><a class="reference internal" href="neofoam.solver.incompressibleVoF.models.pressure_velocity.base.html">neofoam.solver.incompressibleVoF.models.pressure_velocity.base</a></li>
+<li class="toctree-l7"><a class="reference internal" href="neofoam.solver.incompressibleVoF.models.pressure_velocity.control_factory.html">neofoam.solver.incompressibleVoF.models.pressure_velocity.control_factory</a></li>
+<li class="toctree-l7"><a class="reference internal" href="neofoam.solver.incompressibleVoF.models.pressure_velocity.extension.html">neofoam.solver.incompressibleVoF.models.pressure_velocity.extension</a></li>
+<li class="toctree-l7"><a class="reference internal" href="neofoam.solver.incompressibleVoF.models.pressure_velocity.pimpleAlgorithm.html">neofoam.solver.incompressibleVoF.models.pressure_velocity.pimpleAlgorithm</a></li>
+<li class="toctree-l7"><a class="reference internal" href="neofoam.solver.incompressibleVoF.models.pressure_velocity.pressure_reference.html">neofoam.solver.incompressibleVoF.models.pressure_velocity.pressure_reference</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.solver.neoIcoFoam.html">neofoam.solver.neoIcoFoam</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.solver.neoPimpleFoam.html">neofoam.solver.neoPimpleFoam</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.solver.neon_runtime.html">neofoam.solver.neon_runtime</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.solver.pimplefoam.html">neofoam.solver.pimplefoam</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.solver.pisoControl.html">neofoam.solver.pisoControl</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="neofoam.telemetry.html">neofoam.telemetry</a><input aria-label="Toggle navigation of neofoam.telemetry" class="toctree-checkbox" id="toctree-checkbox-35" name="toctree-checkbox-35" role="switch" type="checkbox"/><label for="toctree-checkbox-35"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.telemetry.api.html">neofoam.telemetry.api</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.telemetry.mpi.html">neofoam.telemetry.mpi</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.telemetry.report.html">neofoam.telemetry.report</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.telemetry.settings.html">neofoam.telemetry.settings</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="neofoam.tooling.html">neofoam.tooling</a><input aria-label="Toggle navigation of neofoam.tooling" class="toctree-checkbox" id="toctree-checkbox-36" name="toctree-checkbox-36" role="switch" type="checkbox"/><label for="toctree-checkbox-36"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4 has-children"><a class="reference internal" href="neofoam.tooling.casebuild.html">neofoam.tooling.casebuild</a><input aria-label="Toggle navigation of neofoam.tooling.casebuild" class="toctree-checkbox" id="toctree-checkbox-37" name="toctree-checkbox-37" role="switch" type="checkbox"/><label for="toctree-checkbox-37"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.tooling.casebuild.meshing.html">neofoam.tooling.casebuild.meshing</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.tooling.casebuild.pipeline.html">neofoam.tooling.casebuild.pipeline</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.tooling.casebuild.reader.html">neofoam.tooling.casebuild.reader</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.tooling.casebuild.steps.html">neofoam.tooling.casebuild.steps</a></li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="neofoam.tooling.workflow.html">neofoam.tooling.workflow</a><input aria-label="Toggle navigation of neofoam.tooling.workflow" class="toctree-checkbox" id="toctree-checkbox-38" name="toctree-checkbox-38" role="switch" type="checkbox"/><label for="toctree-checkbox-38"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.tooling.workflow.dag.html">neofoam.tooling.workflow.dag</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.tooling.workflow.geometry.html">neofoam.tooling.workflow.geometry</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.tooling.workflow.mesh_inputs.html">neofoam.tooling.workflow.mesh_inputs</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.tooling.workflow.paramspace.html">neofoam.tooling.workflow.paramspace</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.tooling.workflow.patch_set.html">neofoam.tooling.workflow.patch_set</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.tooling.workflow.rules.html">neofoam.tooling.workflow.rules</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.tooling.workflow.sweep.html">neofoam.tooling.workflow.sweep</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.tooling.workflow.sweep_runner.html">neofoam.tooling.workflow.sweep_runner</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.tooling.workspace.html">neofoam.tooling.workspace</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="neofoam.tools.html">neofoam.tools</a><input aria-label="Toggle navigation of neofoam.tools" class="toctree-checkbox" id="toctree-checkbox-39" name="toctree-checkbox-39" role="switch" type="checkbox"/><label for="toctree-checkbox-39"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.tools.block_mesh.html">neofoam.tools.block_mesh</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.tools.check_mesh.html">neofoam.tools.check_mesh</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.tools.registry.html">neofoam.tools.registry</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.tools.run.html">neofoam.tools.run</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.tools.snappy_hex_mesh.html">neofoam.tools.snappy_hex_mesh</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="neofoam.turbulence.html">neofoam.turbulence</a><input aria-label="Toggle navigation of neofoam.turbulence" class="toctree-checkbox" id="toctree-checkbox-40" name="toctree-checkbox-40" role="switch" type="checkbox"/><label for="toctree-checkbox-40"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.turbulence.base.html">neofoam.turbulence.base</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.turbulence.config.html">neofoam.turbulence.config</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.turbulence.fallback.html">neofoam.turbulence.fallback</a></li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="neofoam.turbulence.models.html">neofoam.turbulence.models</a><input aria-label="Toggle navigation of neofoam.turbulence.models" class="toctree-checkbox" id="toctree-checkbox-41" name="toctree-checkbox-41" role="switch" type="checkbox"/><label for="toctree-checkbox-41"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.turbulence.models.kEpsilon.html">neofoam.turbulence.models.kEpsilon</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.turbulence.models.kOmegaSST.html">neofoam.turbulence.models.kOmegaSST</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.turbulence.models.laminar.html">neofoam.turbulence.models.laminar</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.turbulence.models.realizableKE.html">neofoam.turbulence.models.realizableKE</a></li>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.turbulence.models.spalartAllmaras.html">neofoam.turbulence.models.spalartAllmaras</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.turbulence.momentumTransport.html">neofoam.turbulence.momentumTransport</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.turbulence.native.html">neofoam.turbulence.native</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.turbulence.protocol.html">neofoam.turbulence.protocol</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.turbulence.selection.html">neofoam.turbulence.selection</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.turbulence.stress.html">neofoam.turbulence.stress</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="neofoam.tutorial.html">neofoam.tutorial</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="neofoam.viscosity.html">neofoam.viscosity</a><input aria-label="Toggle navigation of neofoam.viscosity" class="toctree-checkbox" id="toctree-checkbox-42" name="toctree-checkbox-42" role="switch" type="checkbox"/><label for="toctree-checkbox-42"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.viscosity.config.html">neofoam.viscosity.config</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.viscosity.fallback.html">neofoam.viscosity.fallback</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.viscosity.io.html">neofoam.viscosity.io</a></li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="neofoam.viscosity.models.html">neofoam.viscosity.models</a><input aria-label="Toggle navigation of neofoam.viscosity.models" class="toctree-checkbox" id="toctree-checkbox-43" name="toctree-checkbox-43" role="switch" type="checkbox"/><label for="toctree-checkbox-43"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="neofoam.viscosity.models.newtonian.html">neofoam.viscosity.models.newtonian</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.viscosity.selection.html">neofoam.viscosity.selection</a></li>
+<li class="toctree-l4"><a class="reference internal" href="neofoam.viscosity.viscosityModel.html">neofoam.viscosity.viscosityModel</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Explanation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../explanation/goals-and-core-concepts.html">Goals &amp; core concepts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../explanation/solver-structure.html">Solver structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../explanation/model-structure.html">Model structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../explanation/spec-runtime.html">Spec and Runtime</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../explanation/three-stage-init.html">Three-stage initialization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../explanation/operations-and-the-dag.html">Operations and the DAG</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../explanation/parameter-injection.html">Parameter injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../explanation/discriminated-unions.html">The discriminated-union plugin registry</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../explanation/discovery-mechanisms.html">Model discovery: plugin vs core spec</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../explanation/schema-introspection.html">Schema introspection</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Project</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../ci.html">Continuous Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../debugProfileTools.html">Using Kokkos Tools</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../../_sources/reference/api/neofoam.framework.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="module-neofoam.framework">
+<span id="neofoam-framework"></span><h1>neofoam.framework<a class="headerlink" href="#module-neofoam.framework" title="Link to this heading">¶</a></h1>
+<p class="rubric">Modules</p>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="neofoam.framework.conditions.html#module-neofoam.framework.conditions" title="neofoam.framework.conditions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">conditions</span></code></a></p></td>
+<td><p>Unified Condition class with logical operators.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="neofoam.framework.config_injection.html#module-neofoam.framework.config_injection" title="neofoam.framework.config_injection"><code class="xref py py-obj docutils literal notranslate"><span class="pre">config_injection</span></code></a></p></td>
+<td><p>Config injection helpers shared by ModelSpec and SolverSpec operations.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="neofoam.framework.context.html#module-neofoam.framework.context" title="neofoam.framework.context"><code class="xref py py-obj docutils literal notranslate"><span class="pre">context</span></code></a></p></td>
+<td><p>Simulation context: shared field/model state passed through operations.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="neofoam.framework.decorator.html#module-neofoam.framework.decorator" title="neofoam.framework.decorator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">decorator</span></code></a></p></td>
+<td><p>Decorators for marking functions as operations or conditions.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="neofoam.framework.dependency_resolver.html#module-neofoam.framework.dependency_resolver" title="neofoam.framework.dependency_resolver"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dependency_resolver</span></code></a></p></td>
+<td><p>Runtime dependency resolution for Depends() markers.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="neofoam.framework.graph.html#module-neofoam.framework.graph" title="neofoam.framework.graph"><code class="xref py py-obj docutils literal notranslate"><span class="pre">graph</span></code></a></p></td>
+<td><p>Shared graph utilities for DAG validation, ordering, and visualization.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="neofoam.framework.initialization.html#module-neofoam.framework.initialization" title="neofoam.framework.initialization"><code class="xref py py-obj docutils literal notranslate"><span class="pre">initialization</span></code></a></p></td>
+<td><p>Populate a <a class="reference internal" href="neofoam.framework.context.html#neofoam.framework.context.Context" title="neofoam.framework.context.Context"><code class="xref py py-class docutils literal notranslate"><span class="pre">Context</span></code></a> before any operation runs.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="neofoam.framework.model.html#module-neofoam.framework.model" title="neofoam.framework.model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">model</span></code></a></p></td>
+<td><p>neofoam.framework.model — ModelSpec / ModelRuntime package.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="neofoam.framework.operations.html#module-neofoam.framework.operations" title="neofoam.framework.operations"><code class="xref py py-obj docutils literal notranslate"><span class="pre">operations</span></code></a></p></td>
+<td><p>Operation primitives, adapters, and the Operations container.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="neofoam.framework.solver.html#module-neofoam.framework.solver" title="neofoam.framework.solver"><code class="xref py py-obj docutils literal notranslate"><span class="pre">solver</span></code></a></p></td>
+<td><p>neofoam.framework.solver — SolverSpec / SolverRuntime package.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="neofoam.framework.tools.html#module-neofoam.framework.tools" title="neofoam.framework.tools"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tools</span></code></a></p></td>
+<td><p>neofoam.framework.tools — shared preprocessing Tool abstraction.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="neofoam.framework.types.html#module-neofoam.framework.types" title="neofoam.framework.types"><code class="xref py py-obj docutils literal notranslate"><span class="pre">types</span></code></a></p></td>
+<td><p>Core types: OperationMetadata, OpType, OperationNumber.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="neofoam.framework.validation.html#module-neofoam.framework.validation" title="neofoam.framework.validation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validation</span></code></a></p></td>
+<td><p>Honest case validation — CheckRegistry + isolated checks (§5).</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="neofoam.framework.conditions.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">neofoam.framework.conditions</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="neofoam.foam.schemes.sn_grad.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">neofoam.foam.schemes.sn_grad</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2025, NeoFOAM authors
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
+    <script src="../../_static/sg-tags.js?v=d80f6fa4"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    </body>
+</html>
