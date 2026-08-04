@@ -11,15 +11,25 @@ replies with a summary (**Filled / Selected models / Wrote to**). ``await agent.
 (never ``run_sync``) since trame owns the loop; a missing ``ANTHROPIC_API_KEY`` degrades
 to a chat message. The chat *widgets* are rendered by ``app.py``; this module owns the
 logic so it stays unit-testable without trame or a browser.
+
+The agent also carries a ``load_case`` tool, so "open the case at <path>" reads an
+existing OpenFOAM case straight off disk into the forms — deterministically, via
+:func:`neofoam.agent.case_fill.load_case_from_disk`, never through the model's own
+transcription of the dictionaries.
 """
 
 from __future__ import annotations
 
 import os
+from pathlib import Path
 from typing import Any, Callable
 
-from neofoam.agent.case_fill import build_case_agent, case_spec_to_configs
-from neofoam.agent.case_fill import save_case as save_case_spec
+from neofoam.agent.case_fill import (
+    build_case_agent,
+    case_spec_to_configs,
+    load_case_from_disk,
+)
+from neofoam.io import write_configs
 from neofoam.ui.case_spec import configs_to_form_state, models_filled_by
 from neofoam.ui.forms import FormEntry
 from neofoam.ui.geometry_agent import (
@@ -46,6 +56,7 @@ SUGGESTED_PROMPTS = [
     "Lid-driven cavity, laminar; top patch movingWall, other patches fixedWalls.",
     "Buoyant hot room with Boussinesq and kEpsilon; patches top bottom left right front back.",
     "Turbulent pipe flow, kOmegaSST, inlet fixedValue velocity, outlet zeroGradient.",
+    "Load the case at /path/to/case, then raise endTime to 10.",
 ]
 
 
@@ -77,6 +88,9 @@ def build_agent_panel(
     agent_cache: dict[str, Any] = {}
     geo_cache: dict[str, Any] = {}
     history: list[Any] = []  # pydantic-ai message history → multi-turn refinement
+    # Handoff from the load_case tool back to send_message: the tool runs inside
+    # agent.run, so it parks what it read here and the turn applies it afterwards.
+    loaded: dict[str, Any] = {}
     # Per-step chat handlers (a plugin can own the prompt while its step is active).
     chat_handlers: dict[str, Callable[[str], Any]] = {}
 
@@ -93,6 +107,35 @@ def build_agent_panel(
 
     def _say(role: str, content: str) -> None:
         state.chat_log = [*state.chat_log, {"role": role, "content": content}]
+
+    def load_case(case_dir: str) -> str:
+        """Load an existing OpenFOAM case from disk into the wizard.
+
+        Call this whenever the user names a case directory to open, continue from or
+        start out from. Every config file present in the case is read and applied to
+        the wizard forms directly, so do NOT transcribe the values into your own
+        output — leave those fields null unless the user asked you to change them.
+
+        Args:
+            case_dir: Path to the case directory (the one holding ``system/``).
+        """
+        path = Path(case_dir).expanduser()
+        if not path.is_dir():
+            return f"No case directory at {path}."
+        warnings: list[dict[str, str]] = []
+        try:
+            spec = load_case_from_disk(path, solver=solver, warnings=warnings)
+        except Exception as exc:  # noqa: BLE001 - report to the model, don't kill the run
+            return f"Could not read {path}: {exc}"
+        configs = case_spec_to_configs(spec)
+        loaded["dir"] = str(path)
+        loaded["configs"] = configs
+
+        names = sorted(type(c).__name__ for c in configs)
+        reply = f"Loaded {len(names)} configs from {path}: {', '.join(names) or 'none'}."
+        if warnings:
+            reply += " Present but invalid: " + ", ".join(w["config"] for w in warnings) + "."
+        return reply
 
     async def _fill_geometry(prompt: str) -> None:
         """Assign patch roles / refinement from ``prompt`` when patches are loaded."""
@@ -137,7 +180,11 @@ def build_agent_panel(
             try:
                 agent = agent_cache.get("agent")
                 if agent is None:
-                    agent = agent_factory(solver=solver, model_name=_case_model_name())
+                    agent = agent_factory(
+                        solver=solver,
+                        model_name=_case_model_name(),
+                        tools=[load_case],
+                    )
                     agent_cache["agent"] = agent
             except Exception as exc:  # noqa: BLE001
                 _say(
@@ -146,10 +193,13 @@ def build_agent_panel(
                 )
                 return
 
+            loaded.clear()  # only this turn's load_case call may push into the forms
             try:
                 result = await agent.run(prompt, message_history=history)
                 history[:] = result.all_messages()
-                configs = case_spec_to_configs(result.output)
+                # A tool-loaded case is the baseline; the agent's own output refines
+                # it, so the agent's configs are applied last and win per entry.
+                configs = [*loaded.get("configs", []), *case_spec_to_configs(result.output)]
 
                 for key, data in configs_to_form_state(entries, configs).items():
                     state[by_key[key].state_key] = data
@@ -159,7 +209,7 @@ def build_agent_panel(
 
                 _say(
                     "assistant",
-                    _summary(configs, filled_models, result, state.target_dir),
+                    _summary(configs, filled_models, state.target_dir, loaded.get("dir")),
                 )
             except Exception as exc:  # noqa: BLE001
                 _say("assistant", f"**Fill failed:** {exc}")
@@ -169,15 +219,20 @@ def build_agent_panel(
         finally:
             state.ai_busy = False
 
-    def _summary(configs: list[Any], filled_models: set[str], result: Any, target: str) -> str:
+    def _summary(
+        configs: list[Any], filled_models: set[str], target: str, source: str | None
+    ) -> str:
         names = sorted(type(c).__name__ for c in configs)
-        lines = ["**Filled:** " + (", ".join(names) if names else "_nothing_")]
+        lines = [f"**Loaded** `{source}`"] if source else []
+        lines.append("**Filled:** " + (", ".join(names) if names else "_nothing_"))
         if filled_models:
             lines.append("**Selected models:** " + ", ".join(sorted(filled_models)))
         if target and configs:
             try:
-                written = save_case_spec(result.output, target)
-                lines += [f"**Wrote to** `{target}`:"] + [f"- {p.name}" for p in written]
+                # Not save_case(result.output): a loaded case lives in `configs`, not
+                # in the agent's own output, and must be written out too.
+                written = write_configs(configs, target)
+                lines += [f"**Wrote to** `{target}`:"] + [f"- {Path(f).name}" for f in written]
             except Exception as exc:  # noqa: BLE001 - report, don't crash the chat
                 lines.append(f"_(auto-save skipped: {exc})_")
         lines.append("Review the forms; click **Save case** when ready.")

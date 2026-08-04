@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import asyncio
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
@@ -23,6 +24,11 @@ from neofoam.ui.agent_panel import build_agent_panel  # noqa: E402
 from neofoam.ui.forms import build_forms  # noqa: E402
 
 _COUNTER = {"n": 0}
+
+#: A real on-disk case for the ``load_case`` tool (the fixture test/agent uses).
+SOURCE_CASE = (
+    Path(__file__).resolve().parents[1] / "solver" / "incompressibleFluid" / "val_pitzDaily"
+)
 
 
 def _server() -> Any:
@@ -72,7 +78,7 @@ def test_send_message_fills_forms_autoselects_and_logs():
         server,
         entries,
         solver,
-        agent_factory=lambda *, solver, model_name: _StubAgent(prebuilt),
+        agent_factory=lambda **_kw: _StubAgent(prebuilt),
     )
     asyncio.run(send("buoyant hot-room, laminar"))
 
@@ -95,9 +101,7 @@ def test_multi_turn_threads_message_history():
     entries = build_forms(solver)
     stub = _StubAgent(_prebuilt_case_spec(solver))
 
-    send = build_agent_panel(
-        server, entries, solver, agent_factory=lambda *, solver, model_name: stub
-    )
+    send = build_agent_panel(server, entries, solver, agent_factory=lambda **_kw: stub)
     asyncio.run(send("first"))
     asyncio.run(send("second"))
 
@@ -119,7 +123,7 @@ def test_empty_message_is_ignored():
         server,
         build_forms(solver),
         solver,
-        agent_factory=lambda *, solver, model_name: _StubAgent(_prebuilt_case_spec(solver)),
+        agent_factory=lambda **_kw: _StubAgent(_prebuilt_case_spec(solver)),
     )
     asyncio.run(send("   "))
     assert server.state.chat_log == []
@@ -167,7 +171,7 @@ def test_send_message_also_fills_geometry_roles():
         server,
         entries,
         solver,
-        agent_factory=lambda *, solver, model_name: _StubAgent(_prebuilt_case_spec(solver)),
+        agent_factory=lambda **_kw: _StubAgent(_prebuilt_case_spec(solver)),
         geometry_agent_factory=lambda: _StubGeoAgent(assignments),
     )
     # The scan populates patches after the panel is built; then a message fills them.
@@ -197,7 +201,7 @@ def test_geometry_fill_skipped_when_no_patches():
         server,
         build_forms(solver),
         solver,
-        agent_factory=lambda *, solver, model_name: _StubAgent(_prebuilt_case_spec(solver)),
+        agent_factory=lambda **_kw: _StubAgent(_prebuilt_case_spec(solver)),
         geometry_agent_factory=lambda: stub_geo,
     )
     asyncio.run(send("laminar cavity"))
@@ -217,7 +221,7 @@ def test_chat_handler_owns_prompt_for_its_step():
         server,
         build_forms(solver),
         solver,
-        agent_factory=lambda *, solver, model_name: _StubAgent(_prebuilt_case_spec(solver)),
+        agent_factory=lambda **_kw: _StubAgent(_prebuilt_case_spec(solver)),
     )
     server.controller.register_chat_handler("cad", handler)
 
@@ -247,8 +251,114 @@ def test_busy_true_during_run():
         server,
         build_forms(solver),
         solver,
-        agent_factory=lambda *, solver, model_name: stub,
+        agent_factory=lambda **_kw: stub,
     )
     asyncio.run(send("go"))
     assert seen["busy"] is True
     assert server.state.ai_busy is False
+
+
+def _empty_case_spec(solver: Any) -> Any:
+    """A CaseSpec with every field null — an agent that only called a tool."""
+    return build_case_output_model(solver=solver)()
+
+
+def _tp_key(entries: list[Any]) -> str:
+    return next(e.state_key for e in entries if e.config_name == "transport_properties_config")
+
+
+def _loading_factory(output: Any, case_dir: Any) -> tuple[Any, list[str]]:
+    """Stub factory whose agent calls the injected ``load_case`` tool during ``run``."""
+    replies: list[str] = []
+
+    def factory(**kw: Any) -> Any:
+        (load_case,) = kw["tools"]
+        return _StubAgent(output, on_run=lambda: replies.append(load_case(str(case_dir))))
+
+    return factory, replies
+
+
+def test_load_case_tool_reads_the_case_into_the_forms():
+    solver = _solver()
+    server = _server()
+    entries = build_forms(solver)
+    factory, replies = _loading_factory(_empty_case_spec(solver), SOURCE_CASE)
+
+    send = build_agent_panel(server, entries, solver, agent_factory=factory)
+    asyncio.run(send(f"open the case at {SOURCE_CASE}"))
+
+    # The disk values landed in the forms — the stub agent itself produced nothing.
+    assert server.state[_tp_key(entries)] == {"transportModel": "Newtonian", "nu": 1e-05}
+    assert "TransportPropertiesConfig" in replies[0]
+    assert "**Loaded**" in server.state.chat_log[-1]["content"]
+
+
+def test_loaded_case_is_auto_saved_to_the_target_dir(tmp_path):
+    solver = _solver()
+    server = _server()
+    server.state.target_dir = str(tmp_path)
+    entries = build_forms(solver)
+    factory, _ = _loading_factory(_empty_case_spec(solver), SOURCE_CASE)
+
+    send = build_agent_panel(server, entries, solver, agent_factory=factory)
+    asyncio.run(send(f"open the case at {SOURCE_CASE}"))
+
+    # The auto-save covers what the tool loaded, not just the agent's own output.
+    assert (tmp_path / "constant" / "transportProperties").is_file()
+    assert "transportProperties" in server.state.chat_log[-1]["content"]
+
+
+def test_agent_output_overrides_the_loaded_case():
+    solver = _solver()
+    server = _server()
+    entries = build_forms(solver)
+    case_spec_cls = build_case_output_model(solver=solver)
+    refined = case_spec_cls.model_construct(
+        transport_properties_config=configurations(solver)[
+            "TransportPropertiesConfig"
+        ].model_construct(transportModel="CrossPowerLaw")
+    )
+    factory, _ = _loading_factory(refined, SOURCE_CASE)
+
+    send = build_agent_panel(server, entries, solver, agent_factory=factory)
+    asyncio.run(send(f"open {SOURCE_CASE} and switch to CrossPowerLaw"))
+
+    # Same entry filled twice → the agent's refinement is applied last and wins.
+    assert server.state[_tp_key(entries)] == {"transportModel": "CrossPowerLaw"}
+
+
+def test_load_case_tool_reports_a_missing_directory(tmp_path):
+    solver = _solver()
+    server = _server()
+    entries = build_forms(solver)
+    missing = tmp_path / "nope"
+    factory, replies = _loading_factory(_empty_case_spec(solver), missing)
+
+    send = build_agent_panel(server, entries, solver, agent_factory=factory)
+    asyncio.run(send(f"open {missing}"))
+
+    assert replies == [f"No case directory at {missing}."]
+    assert server.state[_tp_key(entries)] is None  # forms untouched (never seeded here)
+    assert server.state.ai_busy is False
+
+
+def test_loaded_case_is_not_reapplied_on_the_next_turn():
+    solver = _solver()
+    server = _server()
+    entries = build_forms(solver)
+    tools: list[Any] = []
+
+    def factory(**kw: Any) -> Any:
+        tools[:] = kw["tools"]
+        # Only the first turn loads; the second is a plain no-op reply.
+        return _StubAgent(
+            _empty_case_spec(solver),
+            on_run=lambda: tools[0](str(SOURCE_CASE)) if not server.state.chat_log[2:] else None,
+        )
+
+    send = build_agent_panel(server, entries, solver, agent_factory=factory)
+    asyncio.run(send("open the case"))
+    server.state[_tp_key(entries)] = {"transportModel": "edited by hand"}
+
+    asyncio.run(send("thanks"))
+    assert server.state[_tp_key(entries)] == {"transportModel": "edited by hand"}
