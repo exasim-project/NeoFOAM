@@ -10,12 +10,12 @@ Public API:
     Model        — factory alias: Model("Name") -> ModelSpec
 """
 
-from .interface import (
-    BoundModelInterface,
-    ModelInterface,
-    active_contributors,
-    bind_model_interface,
-    bind_owned_interfaces,
+from .extension import (
+    BoundExtension,
+    Extension,
+    Hook,
+    fold,
+    negated,
 )
 from .runtime import ModelRuntime
 from .spec import Model, ModelSpec
@@ -24,9 +24,9 @@ __all__ = [
     "ModelSpec",
     "ModelRuntime",
     "Model",
-    "ModelInterface",
-    "BoundModelInterface",
-    "active_contributors",
-    "bind_model_interface",
-    "bind_owned_interfaces",
+    "BoundExtension",
+    "Extension",
+    "Hook",
+    "fold",
+    "negated",
 ]

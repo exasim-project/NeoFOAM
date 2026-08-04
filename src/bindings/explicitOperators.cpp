@@ -12,9 +12,15 @@
 //     return the matrix-vector residual A·x − b, the volume-integrated
 //     equivalent of the explicit operation (cf. applyOperator/operator& in
 //     include/NeoFOAM/datastructures/pde.hpp).
+//   - GradScheme: the gradient operator the case's gradSchemes selects for one
+//     field (e.g. "grad(U) cellLimited Gauss linear 1"), as a reusable handle
+//     over the explicit tensor gradient the viscous stress consumes.
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+
+#include <memory>
+#include <string>
 
 // NeoN headers
 #include "NeoN/NeoN.hpp"
@@ -22,10 +28,17 @@
 #include "NeoN/linearAlgebra/linearSystem.hpp"
 #include "NeoN/linearAlgebra/utilities.hpp"
 
+#include "NeoN/finiteVolume/cellCentred/operators/boundedDiv.hpp"
 #include "NeoN/finiteVolume/cellCentred/operators/gaussGreenDiv.hpp"
 #include "NeoN/finiteVolume/cellCentred/operators/gaussGreenLaplacian.hpp"
 #include "NeoN/finiteVolume/cellCentred/operators/gaussGreenGrad.hpp"
+#include "NeoN/finiteVolume/cellCentred/operators/cellLimitedGrad.hpp"
 #include "NeoN/finiteVolume/cellCentred/faceNormalGradient/uncorrected.hpp"
+#include "NeoN/finiteVolume/cellCentred/faceNormalGradient/corrected.hpp"
+#include "NeoN/finiteVolume/cellCentred/faceNormalGradient/limitedCorrected.hpp"
+
+// NeoFOAM headers
+#include "NeoFOAM/datastructures/runTime.hpp"
 
 #include "bindings.hpp"
 
@@ -40,18 +53,88 @@ namespace NeoN::finiteVolume::cellCentred
 template class GaussGreenDiv<scalar>;
 template class GaussGreenDiv<Vec3>;
 template class GaussGreenDiv<Vec3, scalar>;
+// OpenFOAM's "bounded <scheme>" convection wrapper; without it a case whose divSchemes
+// carry the prefix aborts here with "Could not find constructor for bounded".
+template class BoundedDiv<scalar>;
+template class BoundedDiv<Vec3>;
+template class BoundedDiv<Vec3, scalar>;
 template class GaussGreenLaplacian<scalar>;
 template class GaussGreenLaplacian<Vec3>;
 template class GaussGreenLaplacian<Vec3, scalar>;
+// Carries the halo exchange of the tensor gradient field GradScheme allocates in
+// this TU; NeoN's boundary.hpp instantiates the calculated boundary for Tensor
+// but not the processor one.
+template class volumeBoundary::Processor<Tensor>;
 } // namespace NeoN::finiteVolume::cellCentred
 
 namespace nb = nanobind;
 using namespace nb::literals;
 
 namespace fvcc = NeoN::finiteVolume::cellCentred;
+namespace nf = NeoFOAM;
 
 namespace
 {
+
+// Gradient schemes are plain classes, so the workaround above has no template to
+// instantiate: odr-use their registration flags instead to run the same
+// self-registration against this module's factory table.
+[[maybe_unused]] const bool* gaussGreenGradRegistration = &fvcc::GaussGreenGrad::REGISTERED;
+[[maybe_unused]] const bool* cellLimitedGradRegistration = &fvcc::CellLimitedGrad::REGISTERED;
+
+/* @brief The gradient operator a case selects for one field in gradSchemes.
+ *
+ * NeoN looks a gradient scheme up under its literal key ("grad(U)") with no
+ * fall-through to "default", so a case that does not name the field keeps the
+ * plain Gauss-Green gradient this replaced.
+ */
+class GradScheme
+{
+public:
+
+    GradScheme(nf::RunTime& rt, const std::string& fieldName)
+        : grad_(fvcc::GradOperatorFactory<NeoN::Vec3>::create(
+            rt.exec,
+            rt.nfMesh,
+            readScheme(rt.fvSchemesDict, fieldName)
+        ))
+    {}
+
+    /* @brief The tensor gradient grad(u) of a vector field, e.g. grad(U). */
+    fvcc::VolumeField<NeoN::Tensor> gradTensor(const fvcc::VolumeField<NeoN::Vec3>& u) const
+    {
+        // Proc-aware calculated BCs as in GaussGreenGrad::gradTensor: processor
+        // patches need the halo-exchange BC to hold the neighbour value.
+        auto bcs = fvcc::createCalculatedProcBCs<fvcc::VolumeBoundary<NeoN::Tensor>>(u.mesh());
+        fvcc::VolumeField<NeoN::Tensor> gradU(u.exec(), "gradU", u.mesh(), bcs);
+        grad_->gradTensor(u, gradU, NeoN::dsl::Coeff {});
+        return gradU;
+    }
+
+private:
+
+    static NeoN::Input readScheme(const NeoN::Dictionary& schemes, const std::string& fieldName)
+    {
+        const std::string key = "grad(" + fieldName + ")";
+        if (schemes.contains("gradSchemes"))
+        {
+            const NeoN::Dictionary& gradSchemes = schemes.subDict("gradSchemes");
+            // A multi-word scheme ("Gauss linear") converts to a TokenList, a
+            // single-word one ("pointCellsLeastSquares") to a plain string.
+            if (gradSchemes.isType<NeoN::TokenList>(key))
+            {
+                return gradSchemes.get<NeoN::TokenList>(key);
+            }
+            if (gradSchemes.isType<std::string>(key))
+            {
+                return NeoN::TokenList({gradSchemes.get<std::string>(key)});
+            }
+        }
+        return NeoN::TokenList({std::string("Gauss"), std::string("linear")});
+    }
+
+    std::unique_ptr<fvcc::GradOperatorFactory<NeoN::Vec3>> grad_;
+};
 
 template<typename ValueType, typename SchemeType>
 void evaluateExplicit(
@@ -188,6 +271,25 @@ void registerExplicitOperators(nb::module_& m)
         "result"_a,
         "Apply an implicit vector operator (A·psi − b) with raw scheme tokens"
     );
+
+    // -------------------------------------------------------------------
+    // Runtime-selected gradient operator: reads gradSchemes/grad(<field>) —
+    // Gauss, cellLimited, ... — and computes the explicit tensor gradient.
+    // -------------------------------------------------------------------
+    nb::class_<GradScheme>(m, "GradScheme")
+        .def(
+            nb::init<nf::RunTime&, const std::string&>(),
+            "runtime"_a,
+            "field"_a,
+            nb::keep_alive<1, 2>(), // the mesh reference must outlive the operator
+            "Construct the gradient operator the case's gradSchemes selects for grad(<field>)"
+        )
+        .def(
+            "grad_tensor",
+            &GradScheme::gradTensor,
+            "u"_a,
+            "Compute the velocity gradient tensor field grad(U)"
+        );
 }
 
 } // namespace NeoFOAM::bindings

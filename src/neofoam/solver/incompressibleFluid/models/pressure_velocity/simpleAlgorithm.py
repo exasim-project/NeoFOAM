@@ -30,6 +30,7 @@ from pybFoam import (
 )
 
 from neofoam import telemetry
+from neofoam.algorithms import PressureReference
 from neofoam.fields import (
     CalculatedBC,
     CyclicBC,
@@ -47,9 +48,11 @@ from neofoam.fields import (
     ZeroGradientBC,
 )
 from neofoam.foam import fvSchemes, fvSolution
+from neofoam.foam.algorithm_configs import SimpleAlgorithmConfig
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.dependency_resolver import wrap_with_dependency_resolution
 from neofoam.framework.initialization import field, model
+from neofoam.framework.model import BoundExtension
 from neofoam.framework.operations import (
     IterativeOp,
     Operation,
@@ -60,6 +63,7 @@ from neofoam.framework.types import OperationMetadata
 
 from ..incompressibleFluidModel import Model
 from .control_factory import create_simple_control
+from .extension import momentum_extension, pressure_extension
 
 simple = Model("Simple")
 
@@ -70,6 +74,11 @@ SimpleFvSolution = simple.config(fvSolution)
 # Optional SIMPLE control keys read straight from ``system/fvSolution`` by
 # ``setRefCell`` — a closed domain needs a pressure reference.
 SimpleFvSolution.add_controls("SIMPLE", pRefCell=int, pRefValue=float)
+
+# Declared so ``configurations(solver)`` and the MCP export the key set.
+# Loading is unaffected: this spec is used as its own runtime and never
+# auto-loads its configs — ``control_factory`` drives instantiation.
+simple.config(SimpleAlgorithmConfig)
 
 # 0/<name> field declarations SIMPLE owns (same arm sets as PIMPLE).
 simple.field(
@@ -131,7 +140,7 @@ def build(self: Any) -> list[Any]:
     def create_cumulative_cont_err(_context: dict[str, Any]) -> list[float]:
         return [0.0]
 
-    def create_pressure_reference(context: dict[str, Any]) -> dict[str, Any]:
+    def create_pressure_reference(context: dict[str, Any]) -> PressureReference:
         p = context["fields.p"]
         mesh = context["mesh"]
 
@@ -140,7 +149,13 @@ def build(self: Any) -> list[Any]:
         pRefCell, pRefValue = pyf.setRefCell(p, algo_dict)
 
         mesh.setFluxRequired(pyf.Word("p"))
-        return {"pRefCell": pRefCell, "pRefValue": pRefValue}
+        # ``needs_ref`` is the same boolean pEqn.H queries off the field,
+        # carried for consumers that have none in hand.
+        return PressureReference(
+            cell=pRefCell,
+            value=pRefValue,
+            needs_ref=bool(p.needReference()),
+        )
 
     return [
         field("phi", create_phi, depends_on=["fields.U"], write=True),
@@ -174,6 +189,7 @@ def momentum(
     viscousStress: Annotated[ViscousStress, "models"],
     simple_control: Annotated[Any, "models"],
     ctx: Context,
+    ext: Annotated[BoundExtension, momentum_extension],
 ) -> FieldUpdates:
     # Start-of-iteration prevIter snapshot: ``simpleControl.loop()`` calls
     # ``storePrevIterFields()`` natively so that ``p.relax()`` (explicit field
@@ -184,12 +200,19 @@ def momentum(
     # Refresh nuEff where it is consumed (see pimpleAlgorithm.momentum).
     with telemetry.span("momentum.assemble"):
         viscousStress.update(ctx)
-        UEqn = fvVectorMatrix(fvm.div(phi, U) + viscousStress.divDevReff(U))
+        # as in UEqn.H: correctBoundaryVelocity before assembly — it feeds
+        # the boundary coefficients of ``div(phi,U)``.
+        ext.correct_boundary_velocity(U)
+        UEqn = fvVectorMatrix(fvm.div(phi, U) + viscousStress.divDevReff(U) + ext.terms(U))
+        # as in UEqn.H, the call order is the physics: source before relax(),
+        # constrain() after, correct() after the solve.
         UEqn.relax()
+        ext.constrain(UEqn)
 
     if simple_control.momentumPredictor():
         with telemetry.span("momentum.solve"):
             fvVectorMatrix(UEqn + fvc.grad(p)).solve()
+        ext.correct(U)
 
     return FieldUpdates({"UEqn": UEqn, "U": U})
 
@@ -209,15 +232,20 @@ def continuity(
     UEqn: fvVectorMatrix,
     simple_control: Annotated[Any, "models"],
     cumulativeContErr: Annotated[list[float], "models"],
-    pressure_reference: Annotated[dict[str, Any], "models"],
+    pressure_reference: Annotated[PressureReference, "models"],
+    ext: Annotated[BoundExtension, pressure_extension],
 ) -> FieldUpdates:
-    pRefCell = pressure_reference["pRefCell"]
-    pRefValue = pressure_reference["pRefValue"]
+    pRefCell = pressure_reference.cell
+    pRefValue = pressure_reference.value
 
     with telemetry.span("pressure.flux"):
         rAU = volScalarField(pyf.Word("rAU"), 1.0 / UEqn.A())
         HbyA = volVectorField(pyf.constrainHbyA(rAU * UEqn.H(), U, p))
         phiHbyA = surfaceScalarField(pyf.Word("phiHbyA"), fvc.flux(HbyA))
+
+        # pEqn.H hands the pressure equation the flux seen from the rotating
+        # frame; ``adjustPhi`` then balances that relative flux.
+        ext.make_relative(phiHbyA)
 
         pyf.adjustPhi(phiHbyA, U, p)
 
@@ -229,7 +257,8 @@ def continuity(
             phiHbyA.assign(phiHbyA + fvc.interpolate(rAtU - rAU) * fvc.snGrad(p) * U.mesh().magSf())
             HbyA.assign(HbyA - (rAU - rAtU) * fvc.grad(p))
 
-        pyf.constrainPressure(p, U, phiHbyA, rAtU)
+        if not ext.constrain_pressure(p, U, phiHbyA, rAtU):
+            pyf.constrainPressure(p, U, phiHbyA, rAtU)
 
     while simple_control.correctNonOrthogonal():
         with telemetry.span("pressure.assemble"):
@@ -253,6 +282,9 @@ def continuity(
     p.relax()
     U.assign(HbyA - rAtU * fvc.grad(p))
     U.correctBoundaryConditions()
+    # as in pEqn.H: a second fvOptions.correct(U) closes the corrector, which
+    # has just overwritten the predictor's correction.
+    ext.correct(U)
 
     return FieldUpdates({"U": U, "p": p, "phi": phi})
 

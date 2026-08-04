@@ -16,8 +16,8 @@ Three collaborating pieces of one concern:
   write-time decision all live here) and delegates the outer-loop predicate to a
   ``control`` (:class:`~neofoam.algorithms.solution_loop.control.SolutionControl`).
   Stability limits are folded per step from the model-owned ``timeStepConstraint``
-  interface (the active ``courant``/``maxDeltaT`` contributors) — there is no
-  ``set_courant`` drive.
+  / ``maxTimeStep`` / ``initialTimeStepConstraint`` interfaces (the active
+  ``courant``/``maxDeltaT`` contributors) — there is no ``set_courant`` drive.
 * :class:`LoopBackend` — an optional backend (default :class:`NullLoopBackend`,
   a no-op) that mirrors the advanced ``LoopState`` onto a real backend clock. The
   solver's pybFoam ``FoamTime`` implements it to keep ``Foam::Time`` in step so
@@ -46,7 +46,9 @@ from neofoam.algorithms.solution_loop.config import (
 from neofoam.algorithms.solution_loop.control import SolutionControl
 from neofoam.algorithms.solution_loop.interfaces import (
     VGREAT,
+    initialTimeStepConstraint,
     loopCondition,
+    maxTimeStep,
     timeStepConstraint,
 )
 
@@ -185,25 +187,33 @@ class SolutionLoop:
             else:
                 s.delta_t = max(new_delta_t, 0.2 * s.delta_t)
 
-    def constrain_delta_t(self, limit: float) -> None:
-        """Set the next ``deltaT`` from a folded ``timeStepConstraint`` limit.
+    def set_initial_delta_t(self, limit: float, ceiling: float = VGREAT) -> None:
+        """``setInitialDeltaT.H`` — the undamped first-step reduction.
 
-        ``VGREAT`` = no active opinion -> the step is unchanged (fixed step).
-        Otherwise the step approaches the limit the way OpenFOAM's
-        ``setDeltaT.H`` does: shrinking takes the limit at once, growing is
-        damped through ``min(fact, 1 + 0.1*fact, growth_cap)`` (with
-        ``fact = limit / current``) so recovery from a constraint spike ramps
-        up gently instead of jumping straight to the ceiling. The result is
-        snapped onto the next write time. Constraints report only their raw
-        maximum — *how* it is approached is this loop's responsibility.
+        Runs once, before the first :meth:`constrain_delta_t`. Contributors gate it
+        on a non-quiescent flow by offering no opinion (``VGREAT``) when
+        ``Co <= SMALL``, as ``setInitialDeltaT.H`` skips its body.
+        """
+        if limit >= VGREAT:
+            return
+        self.set_delta_t(min(limit, min(self._state.delta_t, ceiling)))
+
+    def constrain_delta_t(self, limit: float, ceiling: float = VGREAT) -> None:
+        """Set the next ``deltaT`` from the folded loop-limit interfaces.
+
+        Mirrors ``setDeltaT.H``: both limits ``VGREAT`` (``adjustTimeStep no``)
+        leaves the step *and* the write-time snapping alone, since OpenFOAM never
+        reaches ``Time::setDeltaT`` then; otherwise growth towards ``limit`` is
+        damped and the ``maxTimeStep`` ceiling clipped onto the damped result — the
+        two do not commute. Constraints report only their raw maximum; *how* it is
+        approached is this loop's responsibility.
         """
         current = self._state.delta_t
-        if limit >= VGREAT:
-            dt = current
-        else:
-            fact = limit / current
-            dt = min(fact, 1.0 + 0.1 * fact, self._growth_cap) * current
-        self.set_delta_t(dt)
+        if limit >= VGREAT and ceiling >= VGREAT:
+            return
+        fact = limit / current
+        damped = min(fact, 1.0 + 0.1 * fact, self._growth_cap) * current
+        self.set_delta_t(min(damped, ceiling))
 
     def advance(self) -> None:
         """``Foam::Time::operator++`` — advance, roll the old time, set writeTime,
@@ -342,23 +352,32 @@ def set_time_step(
     self: Any,
     ctx: Context,
     constraints: timeStepConstraint,  # type: ignore[valid-type]
+    ceilings: maxTimeStep,  # type: ignore[valid-type]
+    initial_constraints: initialTimeStepConstraint,  # type: ignore[valid-type]
     conditions: loopCondition,  # type: ignore[valid-type]
 ) -> None:
-    """Set the next ``deltaT`` from the folded ``timeStepConstraint`` and record the
+    """Set the next ``deltaT`` from the folded limit interfaces and record the
     loop continue-flag from ``loopCondition``.
 
     Publishes the loop's current step as ``ctx.fields["deltaT"]`` so a contribution
     can inject ``deltaT`` without reading the Context, then **calls** each injected
-    interface with the **live** Context so the active contributing models resolve
-    their fields/config at this step. No active constraint -> ``min`` default
-    ``VGREAT`` -> the step is unchanged (fixed step).
+    interface hook — bound to the **live** Context by the injection, so the active
+    contributing models resolve their fields/config at this step. No active
+    constraint -> ``min`` default ``VGREAT`` -> the step is unchanged (fixed step).
+
+    ``deltaT`` is re-published between the first step's two passes, mirroring the
+    ``CourantNo.H`` pimpleFoam/interFoam re-run at the head of the loop.
     """
     loop = _engine(ctx)
     ctx.fields["deltaT"] = loop.current_delta_t()
-    loop.keep_running = conditions(ctx)  # type: ignore[misc]
-    limit = constraints(ctx)  # type: ignore[misc]
+    loop.keep_running = conditions()  # type: ignore[misc]
+    ceiling = ceilings()  # type: ignore[misc]
+    if loop.state.index == 0:
+        loop.set_initial_delta_t(initial_constraints(), ceiling)  # type: ignore[misc]
+        ctx.fields["deltaT"] = loop.current_delta_t()
+    limit = constraints()  # type: ignore[misc]
     loop.next_dt = limit
-    loop.constrain_delta_t(limit)
+    loop.constrain_delta_t(limit, ceiling)
 
 
 @solutionLoop.operation()

@@ -13,6 +13,7 @@ from typing import cast
 
 import pytest
 
+from neofoam.algorithms.solution_loop.interfaces import VGREAT
 from neofoam.algorithms.solution_loop.loop_state import LoopState
 from neofoam.algorithms.solution_loop.solution_loop import SolutionLoop
 from neofoam.framework.context import Context
@@ -20,7 +21,7 @@ from neofoam.framework.dependency_resolver import (
     DependencyResolver,
     wrap_with_dependency_resolution,
 )
-from neofoam.framework.model import ModelRuntime, bind_owned_interfaces
+from neofoam.framework.model import ModelRuntime
 from neofoam.solver.incompressibleFluid.configs import ControlDictConfig
 from neofoam.solver.incompressibleFluid.models.max_delta_t import (
     MaxDeltaTConfig,
@@ -52,7 +53,7 @@ class FakeRuntime:
         self.delta_t: float = 0.0
         self.steps = 0
 
-    def setDeltaT(self, dt: float) -> None:
+    def setDeltaT(self, dt: float, adjust: bool = True) -> None:
         self.delta_t = dt
 
     def increment(self) -> None:
@@ -150,10 +151,9 @@ def test_increment_time_advances_state() -> None:
 
 
 def test_active_maxdeltat_contributor_caps_the_step() -> None:
-    # Mirrors the live wiring create_fields installs: the solutionLoop owner runtime
-    # has the case's active maxDeltaT contributor bound onto it, so set_time_step
-    # folds that contribution and the engine's deltaT is capped from the controlDict
-    # step.
+    # Mirrors the live wiring: the case's active maxDeltaT contributor is in
+    # ctx.models, so the injected maxTimeStep hook folds its contribution and the
+    # engine's deltaT is capped from the controlDict step.
     loop = make_solution_loop(_config(deltaT=2.0), make_loop_state(_config(deltaT=2.0)))
     loop_rt = ModelRuntime(spec=solutionLoop, name="solutionLoop", config=None)
     max_rt = ModelRuntime(spec=maxDeltaT, name="maxDeltaT", config=MaxDeltaTConfig(maxDeltaT=0.5))
@@ -161,9 +161,10 @@ def test_active_maxdeltat_contributor_caps_the_step() -> None:
         fields={},
         models={"solution_loop": loop, "solutionLoop": loop_rt, "maxDeltaT": max_rt},
     )
-    bind_owned_interfaces(loop_rt, [max_rt], ctx)
     wrap_with_dependency_resolution(
         set_time_step, instance=None, dependency_resolver=DependencyResolver()
     )(ctx)
     assert loop.state.delta_t == pytest.approx(0.5)
-    assert loop.next_dt == pytest.approx(0.5)  # the folded limit the driver recorded
+    # maxDeltaT is a hard ceiling (setDeltaT.H clips it onto the damped step), not a
+    # timeStepConstraint limit, so next_dt — the Courant-style fold — stays unopinionated.
+    assert loop.next_dt == VGREAT

@@ -9,21 +9,39 @@ OpenFOAM IO strategy. ``simulationType`` selects RAS / LES / laminar; the
 :class:`~neofoam.io.strategies.openfoam_strategy.OpenFOAMStrategy` recurses into
 sub-dictionaries automatically when a field's type is a ``BaseModel`` subclass.
 
-This is the only turbulence module that imports ``neofoam.io`` (hence pybFoam);
-tests that load it run the OpenFOAM IO path directly.
+A closure declares its own ``<Model>Coeffs`` :class:`~neofoam.io.BaseConfig` next
+to itself and resolves it here. Loading either runs the OpenFOAM IO path (hence
+pybFoam) directly.
 """
 
-from typing import Literal, Optional
+from pathlib import Path
+from types import SimpleNamespace
+from typing import Any, Literal, Mapping, Optional, TypeVar, Union
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, ConfigDict, model_validator
 
 from neofoam.io import OF, BaseConfig, IOStrategy
 
-__all__ = ["RASProperties", "LESProperties", "TurbulencePropertiesConfig"]
+__all__ = [
+    "RASProperties",
+    "LESProperties",
+    "TurbulencePropertiesConfig",
+    "model_coefficients",
+    "load_with_coefficients",
+]
+
+#: A closure's coefficients config — declared next to the closure it parameterises.
+CoeffsT = TypeVar("CoeffsT", bound=BaseConfig)
 
 
 class RASProperties(BaseModel):
-    """The ``RAS`` sub-dictionary of ``turbulenceProperties``."""
+    """The ``RAS`` sub-dictionary of ``turbulenceProperties``.
+
+    ``extra="allow"`` keeps the per-model ``<RASModel>Coeffs`` sub-dictionary; read
+    it with :func:`model_coefficients`.
+    """
+
+    model_config = ConfigDict(extra="allow")
 
     RASModel: str
     turbulence: bool = True
@@ -70,3 +88,41 @@ class TurbulencePropertiesConfig(BaseConfig):
             if self.RAS is not None:
                 raise ValueError("simulationType=LES must not set RAS sub-dictionary")
         return self
+
+
+def model_coefficients(config: Any, model: str, coeffs_type: type[CoeffsT]) -> CoeffsT:
+    """A closure's typed coefficients, with the case's ``<model>Coeffs`` overrides applied.
+
+    An entry *coeffs_type* does not declare is ignored, as OpenFOAM's
+    ``RASModel::coeffDict_`` ignores it. The ``RAS`` block arrives as a
+    :class:`RASProperties` from :meth:`~neofoam.io.BaseConfig.load` but as a plain
+    ``dict`` from ``ModelSpec.instantiate``, so both shapes are accepted.
+
+    Example:
+        ``model_coefficients(config, "kEpsilon", KEpsilonCoeffs)``
+    """
+    ras = getattr(config, "RAS", None)
+    key = f"{model}Coeffs"
+    overrides = ras.get(key) if isinstance(ras, Mapping) else getattr(ras, key, None)
+    if not isinstance(overrides, Mapping):
+        return coeffs_type()
+    declared = coeffs_type.model_fields
+    return coeffs_type(**{name: float(v) for name, v in overrides.items() if name in declared})
+
+
+def load_with_coefficients(
+    case_dir: Union[str, Path],
+    model: str,
+    coeffs_type: type[CoeffsT],
+) -> SimpleNamespace:
+    """A closure's runtime config: the dictionary plus its resolved coefficients.
+
+    The ``SimpleNamespace`` shape is what ``ModelSpec.instantiate`` produces for a
+    multi-config spec, so ``config_injection`` finds either **by type**.
+    ``validate=False`` mirrors that auto-load.
+    """
+    properties = TurbulencePropertiesConfig.load(case_dir=case_dir, validate=False)
+    return SimpleNamespace(
+        properties=properties,
+        coeffs=model_coefficients(properties, model, coeffs_type),
+    )

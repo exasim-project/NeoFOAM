@@ -165,14 +165,18 @@ def test_save_case_writes_files_via_registered_io_strategies(tmp_path: Path) -> 
       'RAS' via pybFoam bindings").
     - The generated file carries a ``FoamFile`` block (previously
       stripped by the writer).
-    - All three populated configs end up in the ``written`` list — no
-      warnings are emitted.
+    - Every populated config ends up written — no warnings are emitted.
+      Configs that co-own a file (``fvSolution`` + its ``PIMPLE`` block,
+      ``transportProperties`` + ``Boussinesq``) are merged into a single
+      write, so the invariant is per *target file*, not per config.
     """
     spec = load_case_from_disk(SOURCE_CASE)
 
     written = save_case(spec, tmp_path)
     populated = case_spec_to_configs(spec)
-    assert len(written) == len(populated)
+    assert {path.relative_to(tmp_path).as_posix() for path in written} == {
+        config.file_name for config in populated
+    }
 
     for path in written:
         assert "FoamFile" in path.read_text(), f"{path} missing FoamFile header"

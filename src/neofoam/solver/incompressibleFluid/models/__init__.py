@@ -11,16 +11,26 @@ entrypoint (``incompressibleFluid.maybe_configure_telemetry`` and the
 ``TelemetryDictConfig`` solver config).
 """
 
+from neofoam.fv_options import fvOptions
+from neofoam.mrf import mrf
+
 from .boussinesq import boussinesq
 from .courant import courant
 from .incompressibleFluidModel import incompressibleFluidModel
 from .max_delta_t import maxDeltaT
 from .pressure_velocity import PressureVelocityAlgorithm
 
+# MRF and fvOptions are shared with incompressibleVoF, so their specs cannot
+# register themselves at definition time the way the models above do.
+mrf.register_with(incompressibleFluidModel)
+fvOptions.register_with(incompressibleFluidModel)
+
 __all__ = [
     "incompressibleFluidModel",
     "PressureVelocityAlgorithm",
     "boussinesq",
     "courant",
+    "fvOptions",
     "maxDeltaT",
+    "mrf",
 ]

@@ -1,4 +1,8 @@
 # Version 0.3.0 (unreleased)
+- Fix the bundled `pitzDaily_steady` tutorial: plain SIMPLE (`consistent no`) needs pressure-field relaxation (`fields { p 0.3; }`), without which the case diverges in native simpleFoam as well; the steady simpleFoam-parity test now passes [#385](https://github.com/exasim-project/NeoFOAM/pull/385)
+- Make incompressibleFluid and incompressibleVoF OpenFOAM-faithful: loop control and time stepping, turbulence selection, MRF/fvOptions support, pressure reference handling and prev-iteration relaxation (requires pybFoam >= 0.5.3) [#385](https://github.com/exasim-project/NeoFOAM/pull/385)
+- Add extension points to the pressure-velocity algorithms so models (MRF, fvOptions) contribute momentum terms and pressure constraints declaratively; migrate incompressibleVoF to the same mechanism [#385](https://github.com/exasim-project/NeoFOAM/pull/385)
+- Add framework-discoverable typed configs: PIMPLE/PISO/SIMPLE algorithm controls, dynamic-mesh controls and turbulence model coefficients, all visible to `list_configs`/`config_schema` on the MCP server [#385](https://github.com/exasim-project/NeoFOAM/pull/385)
 - Add neoSimpleFoam steady-state incompressible SIMPLE/SIMPLEC solver with motorBike tutorial, SIMPLEC rAtU/flux corrections, inletOutlet BC parsing, bounded-scheme prefix stripping, and CI smoke test [#362](https://github.com/exasim-project/NeoFOAM/pull/362)
 - Add kEpsilon and kOmegaSST turbulence models [#337](https://github.com/exasim-project/NeoFOAM/pull/337)
 - Add neoPimpleFoam solver with PIMPLE outer-loop control and SA-DDES turbulence support [#337](https://github.com/exasim-project/NeoFOAM/pull/337)

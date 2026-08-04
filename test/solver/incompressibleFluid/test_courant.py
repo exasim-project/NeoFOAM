@@ -10,9 +10,13 @@ from pathlib import Path
 
 import pytest
 
-from neofoam.algorithms.solution_loop.interfaces import VGREAT, timeStepConstraint
+from neofoam.algorithms.solution_loop.interfaces import (
+    VGREAT,
+    initialTimeStepConstraint,
+    timeStepConstraint,
+)
 from neofoam.framework.context import Context
-from neofoam.framework.model import BoundModelInterface, ModelRuntime
+from neofoam.framework.model import ModelRuntime
 from neofoam.solver.incompressibleFluid.models.courant import (
     CourantConfig,
     courant,
@@ -33,42 +37,59 @@ def _courant_runtime(max_co: float = 1.0) -> ModelRuntime:
     return ModelRuntime(spec=courant, name="courant", config=CourantConfig(maxCo=max_co))
 
 
-def test_contribution_lives_under_the_solver_not_the_framework() -> None:
+def _bound(interface, runtimes, ctx):  # type: ignore[no-untyped-def]
+    """*interface* resolved against *ctx* with exactly *runtimes* active — the
+    injected form ``set_time_step`` receives and calls."""
+    live = Context(fields=ctx.fields, models={**ctx.models, **{rt.name: rt for rt in runtimes}})
+    return interface.resolve(live)
+
+
+def test_model_and_contribution_are_solver_owned_and_discoverable_without_a_case() -> None:
+    # Registration != activation: no case dir needed to list the model + its config.
     assert courant_limit.__module__.startswith("neofoam.solver.incompressibleFluid")
+    names = {spec.name for spec in incompressibleFluidModel.all_specs()}
+    assert "courant" in names
+    assert courant._config_class is CourantConfig
 
 
-def test_courant_contribution_limits_delta_t_like_the_cfl_rule(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr(courant_mod, "computeCFLNumber", lambda phi: [2.0])
+@pytest.mark.parametrize(
+    ("interface", "co_num", "expected"),
+    [
+        (timeStepConstraint, 2.0, 0.05),  # 0.1 * 1.0 / 2.0
+        # setDeltaT.H's SMALL is a denominator epsilon, not a cut-off: Co = 0 yields a
+        # huge factor (which the loop's 1.2 growth cap then binds), NOT "no opinion" —
+        # reporting VGREAT here would freeze the first step of every quiescent start.
+        (timeStepConstraint, 0.0, 0.1 * 1.0 / 1e-15),
+        (initialTimeStepConstraint, 2.0, 0.05),  # 1.0 * 0.1 / 2.0, undamped
+    ],
+    ids=[
+        "per_step_cfl_rule",
+        "per_step_quiescent_still_reports_a_limit",
+        "initial_undamped_cfl_limit",
+    ],
+)
+def test_the_cfl_contribution_matches_the_openfoam_sources(
+    monkeypatch: pytest.MonkeyPatch, interface, co_num: float, expected: float
+) -> None:  # type: ignore[no-untyped-def]
+    monkeypatch.setattr(courant_mod, "computeCFLNumber", lambda phi: [co_num])
     ctx = Context(fields={"phi": object(), "deltaT": 0.1}, models={})
-    bound = BoundModelInterface(timeStepConstraint, [_courant_runtime()], ctx)
-    assert bound() == pytest.approx(0.05)  # 0.1 * 1.0 / 2.0
+    bound = _bound(interface, [_courant_runtime()], ctx)
+    assert bound() == pytest.approx(expected)
 
 
-def test_quiescent_flow_yields_no_opinion(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_quiescent_flow_yields_no_initial_opinion(monkeypatch: pytest.MonkeyPatch) -> None:
+    # setInitialDeltaT.H IS gated on CoNum > SMALL: a quiescent start skips the whole
+    # pass, including the write-time snapping its setDeltaT call would trigger.
     monkeypatch.setattr(courant_mod, "computeCFLNumber", lambda phi: [0.0])
     ctx = Context(fields={"phi": object(), "deltaT": 0.1}, models={})
-    bound = BoundModelInterface(timeStepConstraint, [_courant_runtime()], ctx)
+    bound = _bound(initialTimeStepConstraint, [_courant_runtime()], ctx)
     assert bound() == VGREAT
 
 
 def test_contribution_excluded_when_model_inactive() -> None:
     ctx = Context(fields={"phi": object(), "deltaT": 0.1}, models={})
-    bound = BoundModelInterface(timeStepConstraint, [], ctx)  # courant not active
+    bound = _bound(timeStepConstraint, [], ctx)  # courant not active
     assert bound() == VGREAT
-
-
-def test_model_is_registered_in_the_family_catalog() -> None:
-    names = {spec.name for spec in incompressibleFluidModel.all_specs()}
-    assert "courant" in names
-
-
-def test_model_and_config_discoverable_without_a_case() -> None:
-    # Registration != activation: no case dir needed to list the model + its config.
-    names = {spec.name for spec in incompressibleFluidModel.all_specs()}
-    assert "courant" in names
-    assert courant._config_class is CourantConfig
 
 
 # The base controlDict deliberately omits adjustTimeStep, so each scenario opts in
@@ -118,18 +139,15 @@ def test_config_presence_drives_detection(
 def test_contribution_resolves_live_phi_and_config_at_call_time(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    # Bound against an EMPTY ctx (no live capture); the live ctx is passed at call
-    # time and is where phi + deltaT resolve, while cfg comes from the runtime.
+    # The hook resolves against the live ctx of the injection: phi + deltaT come
+    # from its fields at call time, while cfg comes from the contributing runtime.
     monkeypatch.setattr(courant_mod, "computeCFLNumber", lambda phi: [2.0])
-    bound = BoundModelInterface(
-        timeStepConstraint,
-        [_courant_runtime(max_co=1.0)],
-        Context(fields={}, models={}),
-    )
-    live = Context(fields={"phi": object(), "deltaT": 0.1}, models={})
-    assert bound(live) == pytest.approx(0.05)  # 0.1 * 1.0 / 2.0
+    rt = _courant_runtime(max_co=1.0)
+    live = Context(fields={"phi": object(), "deltaT": 0.1}, models={"courant": rt})
+    assert timeStepConstraint.resolve(live)() == pytest.approx(0.05)  # 0.1 * 1.0 / 2.0
     with pytest.raises(ValueError, match="no provider supplies it"):
-        bound()  # empty bound ctx -> phi/deltaT absent
+        # a ctx without the fields cannot resolve the contribution
+        timeStepConstraint.resolve(Context(fields={}, models={"courant": rt}))()
 
 
 def test_model_inactive_when_no_control_dict_is_present(

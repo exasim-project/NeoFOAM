@@ -36,7 +36,9 @@ class FoamTime:
         self._foam_arglist: Any = None
 
     def update(self, state: LoopState) -> None:
-        self._t.setDeltaT(state.delta_t)
+        # adjust=False: the SolutionLoop owns the write-time snapping, and a second
+        # snap here would let the C++ deltaT_ drift from LoopState.delta_t.
+        self._t.setDeltaT(state.delta_t, adjust=False)
         while self._index < state.index:
             self._t.increment()
             self._index += 1

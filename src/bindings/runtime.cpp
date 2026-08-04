@@ -22,9 +22,13 @@ namespace NeoFOAM::bindings
 void registerRuntime(nb::module_& m)
 {
     // -------------------------------------------------------------------
-    // MeshAdapter — opaque wrapper so Python can hold a reference
+    // MeshAdapter — wrapper so Python can hold a reference. Declared with its
+    // Foam::fvMesh base (registered by pybFoam, which shares this process's single
+    // nanobind type registry) so `runtime.mesh` is accepted by the pybFoam API —
+    // e.g. pybFoam.nearWallDist(runtime.mesh) in the turbulence closures. Hence
+    // pybFoam must be imported before these bindings (see neofoam/__init__.py).
     // -------------------------------------------------------------------
-    nb::class_<nf::MeshAdapter>(m, "MeshAdapter");
+    nb::class_<nf::MeshAdapter, Foam::fvMesh>(m, "MeshAdapter");
 
     // -------------------------------------------------------------------
     // RunTime Struct (Adapter)

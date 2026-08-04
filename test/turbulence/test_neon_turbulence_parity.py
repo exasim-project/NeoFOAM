@@ -27,51 +27,48 @@ Adding a model is one entry in :data:`CASES`; the body is generic.
 
 from __future__ import annotations
 
-import shutil
-import subprocess
-import sys
 from pathlib import Path
 
 import numpy as np
 import pytest
 
-_HERE = Path(__file__).parent
-_WORKER = _HERE / "_parity_worker.py"
-_BASE_CASE = _HERE / "parity_base"  # shared no-wall box case (mesh + fields + system)
-_MODELS = _HERE / "parity_models"  # per-model constant/turbulenceProperties overlay
+from turbulence._parity_case import parity_case, run_worker
 
-#: Add a NeoN model by dropping its ``turbulenceProperties`` under
-#: ``parity_models/<name>/`` and listing it here.
-CASES = ["laminar", "kEpsilon", "SpalartAllmaras", "kOmegaSST"]
+#: Add a NeoN model by listing it here — :func:`_parity_case.turbulence_config` writes
+#: the dictionary. The ``*Coeffs`` entries select the same closures through a
+#: dictionary that sets every ``<model>Coeffs`` coefficient off its default (plus an
+#: unknown key OpenFOAM ignores): both backends read that one dictionary, so agreement
+#: can only mean the NeoN closure honours the overrides.
+CASES = [
+    "laminar",
+    "kEpsilon",
+    "SpalartAllmaras",
+    "kOmegaSST",
+    "kEpsilonCoeffs",
+    "SpalartAllmarasCoeffs",
+    "kOmegaSSTCoeffs",
+]
 
 #: Models exercised on the pybFoam **fallback** path (``select(fallback=True)``).
-#: Every dual model plus the fallback-only ``realizableKE`` (which has no native
-#: subject — only the fallback op).
-FALLBACK_CASES = CASES + ["realizableKE"]
-
-
-def _run_worker(role: str, case: Path) -> None:
-    """Run one worker role in a fresh process (one ``Foam::Time`` per process)."""
-    subprocess.run(
-        [sys.executable, str(_WORKER), role, str(case)],
-        check=True,
-        cwd=str(case.parent),
-    )
+#: On this path the subject *is* pybFoam, so the model's closure arithmetic — and
+#: therefore its ``*Coeffs`` variant — cannot make the two sides differ; what varies
+#: between models is only the **shape** of the wiring, and there are three shapes:
+#: a model that registers no ``nut`` (``laminar``), a dual model whose co-located
+#: ``fallback=True`` op is scheduled (``kEpsilon``), and a fallback-only model built
+#: straight from OpenFOAM's selection table (``realizableKE``). That *every*
+#: registered model schedules its own correct op is pinned without a solver run by
+#: ``test_selection.test_registered_model_schedules_its_own_fallback_correct_op``.
+FALLBACK_CASES = ["laminar", "kEpsilon", "realizableKE"]
 
 
 @pytest.mark.parametrize("name", CASES)
 def test_neon_nut_matches_pybfoam(name: str, tmp_path: Path) -> None:
     """After one ``correct`` step, the NeoN model's ``nut`` equals pybFoam's, cell-by-cell."""
-    case = tmp_path / "case"
-    shutil.copytree(_BASE_CASE, case)
-    shutil.copyfile(
-        _MODELS / name / "turbulenceProperties",
-        case / "constant" / "turbulenceProperties",
-    )
+    case = parity_case(name).build_at(tmp_path / "case").path
 
-    _run_worker("setup", case)  # mesh + identical random U / k / epsilon on disk
-    _run_worker("reference", case)  # pybFoam fields → reference_<field>.npy
-    _run_worker("subject", case)  # NeoN fields → subject_<field>.npy
+    run_worker("setup", case)  # mesh + identical random U / k / epsilon on disk
+    run_worker("reference", case)  # pybFoam fields → reference_<field>.npy
+    run_worker("subject", case)  # NeoN fields → subject_<field>.npy
 
     # Every field the closure owns is checked, not just the derived viscosity:
     # ``nut`` universally, plus the transport unknowns ``k`` / ``epsilon`` when the
@@ -114,16 +111,11 @@ def test_fallback_nut_matches_pybfoam(name: str, tmp_path: Path) -> None:
     ``incompressibleFluid`` uses), including for the fallback-only ``realizableKE``,
     which has no native NeoN closure.
     """
-    case = tmp_path / "case"
-    shutil.copytree(_BASE_CASE, case)
-    shutil.copyfile(
-        _MODELS / name / "turbulenceProperties",
-        case / "constant" / "turbulenceProperties",
-    )
+    case = parity_case(name).build_at(tmp_path / "case").path
 
-    _run_worker("setup", case)  # mesh + identical random U / k / epsilon on disk
-    _run_worker("reference", case)  # pybFoam fields → reference_nut.npy
-    _run_worker("subject_fb", case)  # fallback handle + op → subject_fb_nut.npy
+    run_worker("setup", case)  # mesh + identical random U / k / epsilon on disk
+    run_worker("reference", case)  # pybFoam fields → reference_nut.npy
+    run_worker("subject_fb", case)  # fallback handle + op → subject_fb_nut.npy
 
     reference = np.load(case / "reference_nut.npy")
     result = np.load(case / "subject_fb_nut.npy")

@@ -12,6 +12,8 @@ leave the flag raised after the loop exits: the turbulence correction runs
 iteration natively.
 """
 
+import pytest  # noqa: E402
+
 from neofoam.algorithms.solution_loop.control import PimpleControl  # noqa: E402
 from neofoam.framework.context import Context  # noqa: E402
 from neofoam.solver.incompressibleFluid.models.pressure_velocity.pimpleAlgorithm import (  # noqa: E402
@@ -35,8 +37,21 @@ def _ctx(pimple: PimpleControl, mesh: MeshSpy) -> Context:
     return Context(fields={}, models={"pimple_control": pimple}, mesh=mesh)
 
 
-def test_piso_mode_marks_every_iteration_final() -> None:
-    pimple = PimpleControl(nCorrectors=2, momentumPredictor=True)  # nOuter = 1
+@pytest.mark.parametrize(
+    ("n_outer_correctors", "expected_flags"),
+    [
+        # PISO mode (one outer corrector): every iteration is the final one.
+        (1, [True]),
+        (3, [False, False, True]),
+    ],
+    ids=["piso_mode", "pimple_mode"],
+)
+def test_only_the_last_outer_iteration_is_marked_final(
+    n_outer_correctors: int, expected_flags: list[bool]
+) -> None:
+    pimple = PimpleControl(
+        nCorrectors=2, nOuterCorrectors=n_outer_correctors, momentumPredictor=True
+    )
     mesh = MeshSpy()
     ctx = _ctx(pimple, mesh)
 
@@ -44,21 +59,8 @@ def test_piso_mode_marks_every_iteration_final() -> None:
     while inner_loop(ctx):
         flags.append(mesh.final)
 
-    assert flags == [True]
+    assert flags == expected_flags
     assert mesh.final is True  # stays raised for the trailing turbulence solves
-
-
-def test_pimple_mode_marks_only_last_outer_iteration_final() -> None:
-    pimple = PimpleControl(nCorrectors=2, nOuterCorrectors=3, momentumPredictor=True)
-    mesh = MeshSpy()
-    ctx = _ctx(pimple, mesh)
-
-    flags = []
-    while inner_loop(ctx):
-        flags.append(mesh.final)
-
-    assert flags == [False, False, True]
-    assert mesh.final is True
 
 
 def test_flag_drops_again_on_the_next_time_step() -> None:

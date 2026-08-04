@@ -1,15 +1,22 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Spec for the solver-owned telemetry opt-in: controlDict sub-dict + activation."""
+"""Spec for the solver-owned telemetry opt-in: controlDict sub-dict + activation.
+
+Every case here is ``cases/controldict_base`` — a bare ``system/controlDict``
+with no ``telemetry`` entry — plus the sub-dict the scenario opts in with,
+written through the dictionary writer by :func:`_case`. The opt-in *is* that
+sub-dict, so a scenario is a mapping, not a committed copy of the whole file;
+building into ``tmp_path`` also keeps the span files a run emits out of the
+checked-in case.
+"""
 
 # NOTE: no `from __future__ import annotations` — keep annotations live.
 
 import importlib.util
-import shutil
 import sys
 from pathlib import Path
-from typing import Any, Iterator, cast
+from typing import Any, Iterator, Optional, cast
 
 import pytest
 
@@ -21,10 +28,19 @@ from neofoam.solver.incompressibleFluid.incompressibleFluid import (
     maybe_configure_telemetry,
 )
 from neofoam.telemetry import TelemetryNotInstalledError
+from neofoam.tooling.casebuild import from_template, patch
 
-_CASES = Path(__file__).parent / "cases"
+_BASE = Path(__file__).parent / "cases" / "controldict_base"
 
 HAS_OTEL = importlib.util.find_spec("opentelemetry") is not None
+
+
+def _case(tmp_path: Path, telemetry: Optional[dict] = None) -> Path:
+    """``controldict_base`` in *tmp_path*, with a ``telemetry`` sub-dict if given."""
+    pipeline = from_template(_BASE)
+    if telemetry is not None:
+        pipeline = pipeline | patch("system/controlDict", telemetry=telemetry)
+    return pipeline.build_at(tmp_path / "case").path
 
 
 @pytest.fixture(autouse=True)
@@ -52,8 +68,9 @@ def test_config_defaults() -> None:
     assert config.summary is True
 
 
-def test_config_loads_from_case_file() -> None:
-    config = TelemetryDictConfig.load(case_dir=_CASES / "telemetry_enabled")
+def test_config_loads_from_case_file(tmp_path: Path) -> None:
+    case = _case(tmp_path, {"enabled": True, "directory": "perf", "summary": True})
+    config = TelemetryDictConfig.load(case_dir=case)
     assert config.enabled is True
     assert config.directory == "perf"
 
@@ -61,42 +78,42 @@ def test_config_loads_from_case_file() -> None:
 # --- activation helper ----------------------------------------------------------
 
 
-def _case_copy(source: str, tmp_path: Path) -> Path:
-    """Copy a fixture case so span files never pollute the checked-in cases."""
-    target = tmp_path / source
-    shutil.copytree(_CASES / source, target)
-    return target
-
-
-def test_maybe_configure_is_false_when_dict_absent(
+@pytest.mark.parametrize(
+    ("telemetry", "with_control_dict"),
+    [
+        (None, True),  # the dict is absent: telemetry is opt-in
+        ({"enabled": False}, True),  # present but switched off
+        (None, False),  # no controlDict at all
+    ],
+    ids=["dict_absent", "disabled", "no_control_dict"],
+)
+def test_maybe_configure_is_false_unless_the_dict_opts_in(
     monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    telemetry: Optional[dict],
+    with_control_dict: bool,
 ) -> None:
-    monkeypatch.chdir(_CASES / "controldict_base")
-    assert maybe_configure_telemetry() is False
-    assert telemetry_shim.is_active() is False
-
-
-def test_maybe_configure_is_false_when_disabled(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.chdir(_CASES / "telemetry_disabled")
-    assert maybe_configure_telemetry() is False
-    assert telemetry_shim.is_active() is False
-
-
-def test_maybe_configure_is_false_without_control_dict(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    monkeypatch.chdir(tmp_path)
+    monkeypatch.chdir(_case(tmp_path, telemetry) if with_control_dict else tmp_path)
     assert maybe_configure_telemetry() is False
     assert telemetry_shim.is_active() is False
 
 
 @pytest.mark.skipif(not HAS_OTEL, reason="requires the neofoam[telemetry] extra")
-def test_maybe_configure_activates_with_configured_directory(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+@pytest.mark.parametrize(
+    ("telemetry", "span_dir"),
+    [
+        # `directory perf;` from the controlDict is honoured …
+        ({"enabled": True, "directory": "perf", "summary": True}, "perf"),
+        # … and the dict alone opts in: `enabled` may be absent (defaults to
+        # true), as may `directory` (defaults to `telemetry`).
+        ({}, "telemetry"),
+    ],
+    ids=["configured_directory", "empty_dict_defaults"],
+)
+def test_maybe_configure_activates_and_writes_to_the_configured_directory(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, telemetry: dict, span_dir: str
 ) -> None:
-    case = _case_copy("telemetry_enabled", tmp_path)
+    case = _case(tmp_path, telemetry)
     monkeypatch.chdir(case)
 
     assert maybe_configure_telemetry() is True
@@ -106,31 +123,13 @@ def test_maybe_configure_activates_with_configured_directory(
         pass
     telemetry_shim.shutdown()
 
-    # `directory perf;` from the controlDict is honoured
-    assert (case / "perf" / "rank0.spans.jsonl").is_file()
-
-
-@pytest.mark.skipif(not HAS_OTEL, reason="requires the neofoam[telemetry] extra")
-def test_maybe_configure_with_empty_dict_uses_defaults(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    """The dict alone opts in — ``enabled`` may be absent (defaults to true)."""
-    case = _case_copy("telemetry_defaults", tmp_path)
-    monkeypatch.chdir(case)
-
-    assert maybe_configure_telemetry() is True
-    with telemetry_shim.span("probe"):
-        pass
-    telemetry_shim.shutdown()
-
-    assert (case / "telemetry" / "rank0.spans.jsonl").is_file()
+    assert (case / span_dir / "rank0.spans.jsonl").is_file()
 
 
 def test_maybe_configure_without_extra_raises_informative_error(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    case = _case_copy("telemetry_enabled", tmp_path)
-    monkeypatch.chdir(case)
+    monkeypatch.chdir(_case(tmp_path, {"enabled": True}))
 
     for name in list(sys.modules):
         if name == "opentelemetry" or name.startswith("opentelemetry."):

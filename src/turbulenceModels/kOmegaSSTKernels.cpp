@@ -262,46 +262,46 @@ void kernelComputeF1AndSources(
         exec,
         {0, static_cast<localIdx>(kVec.size())},
         NEON_LAMBDA(const localIdx i) {
-            const scalar k_i = kV[i];
-            const scalar omega_i = omegaV[i];
-            const scalar nu_i = nuV[i];
-            const scalar y_i = Kokkos::max(wallDistV[i], rootVSmall);
-            const scalar y2_i = y_i * y_i;
+            const scalar kI = kV[i];
+            const scalar omegaI = omegaV[i];
+            const scalar nuI = nuV[i];
+            const scalar yI = Kokkos::max(wallDistV[i], rootVSmall);
+            const scalar y2I = yI * yI;
 
-            const scalar omegaSafe = Kokkos::max(omega_i, omegaMin);
-            const scalar kSafe = Kokkos::max(k_i, scalar(0));
+            const scalar omegaSafe = Kokkos::max(omegaI, omegaMin);
+            const scalar kSafe = Kokkos::max(kI, scalar(0));
 
             const scalar dotGradKOmega = gradKV[i][0] * gradOmegaV[i][0]
                                        + gradKV[i][1] * gradOmegaV[i][1]
                                        + gradKV[i][2] * gradOmegaV[i][2];
 
-            const scalar CDkOmegaPlus =
+            const scalar cDkOmegaPlus =
                 Kokkos::max(scalar(2) * alphaOmega2 * dotGradKOmega / omegaSafe, scalar(1e-10));
 
-            const scalar sqrtK = Kokkos::sqrt(Kokkos::max(k_i, scalar(0)));
+            const scalar sqrtK = Kokkos::sqrt(Kokkos::max(kI, scalar(0)));
 
             const scalar arg1 = Kokkos::min(
                 Kokkos::min(
                     Kokkos::max(
-                        sqrtK / (betaStar * omegaSafe * y_i),
-                        scalar(500) * nu_i / (y2_i * omegaSafe)
+                        sqrtK / (betaStar * omegaSafe * yI),
+                        scalar(500) * nuI / (y2I * omegaSafe)
                     ),
-                    scalar(4) * alphaOmega2 * k_i / (CDkOmegaPlus * y2_i)
+                    scalar(4) * alphaOmega2 * kI / (cDkOmegaPlus * y2I)
                 ),
                 scalar(10)
             );
             const scalar arg14 = arg1 * arg1 * arg1 * arg1;
             f1V[i] = Kokkos::tanh(arg14);
-            const scalar F1_i = f1V[i];
+            const scalar f1I = f1V[i];
 
             const scalar arg2 = Kokkos::min(
                 Kokkos::max(
-                    scalar(2) * sqrtK / (betaStar * omegaSafe * y_i),
-                    scalar(500) * nu_i / (y2_i * omegaSafe)
+                    scalar(2) * sqrtK / (betaStar * omegaSafe * yI),
+                    scalar(500) * nuI / (y2I * omegaSafe)
                 ),
                 scalar(100)
             );
-            const scalar F2_i = Kokkos::tanh(arg2 * arg2);
+            const scalar f2I = Kokkos::tanh(arg2 * arg2);
 
             const Tensor& g = gradUV[i];
 
@@ -317,30 +317,30 @@ void kernelComputeF1AndSources(
             }
             const scalar divU = g(0, 0) + g(1, 1) + g(2, 2);
 
-            const scalar S2_i = normSq + dotTrans;
-            const scalar GbyNu0_i = S2_i - (scalar(2) / scalar(3)) * divU * divU;
+            const scalar s2I = normSq + dotTrans;
+            const scalar gbyNu0I = s2I - (scalar(2) / scalar(3)) * divU * divU;
 
-            const scalar sqrtS2 = Kokkos::sqrt(Kokkos::max(S2_i, scalar(0)));
-            const scalar nut_i = Kokkos::min(Kokkos::max(nutV[i], scalar(0)), nutMax);
+            const scalar sqrtS2 = Kokkos::sqrt(Kokkos::max(s2I, scalar(0)));
+            const scalar nutI = Kokkos::min(Kokkos::max(nutV[i], scalar(0)), nutMax);
 
-            const scalar gamma_i = F1_i * (gamma1 - gamma2) + gamma2;
-            const scalar beta_i = F1_i * (beta1 - beta2) + beta2;
+            const scalar gammaI = f1I * (gamma1 - gamma2) + gamma2;
+            const scalar betaI = f1I * (beta1 - beta2) + beta2;
 
-            const scalar G_i = nut_i * GbyNu0_i;
-            pkV[i] = Kokkos::min(G_i, c1 * betaStar * kSafe * omegaSafe);
+            const scalar gI = nutI * gbyNu0I;
+            pkV[i] = Kokkos::min(gI, c1 * betaStar * kSafe * omegaSafe);
 
             spKV[i] = betaStar * omegaSafe;
 
-            const scalar GbyNuBound_i = Kokkos::min(
-                GbyNu0_i,
-                (c1 / a1) * betaStar * omegaSafe * Kokkos::max(a1 * omegaSafe, b1 * F2_i * sqrtS2)
+            const scalar gbyNuBoundI = Kokkos::min(
+                gbyNu0I,
+                (c1 / a1) * betaStar * omegaSafe * Kokkos::max(a1 * omegaSafe, b1 * f2I * sqrtS2)
             );
-            omegaSourceV[i] = gamma_i * GbyNuBound_i;
+            omegaSourceV[i] = gammaI * gbyNuBoundI;
 
-            spOmegaV[i] = beta_i * omegaSafe;
+            spOmegaV[i] = betaI * omegaSafe;
 
             const scalar CDkOmegaActual = scalar(2) * alphaOmega2 * dotGradKOmega / omegaSafe;
-            const scalar crossSource = (scalar(1) - F1_i) * CDkOmegaActual;
+            const scalar crossSource = (scalar(1) - f1I) * CDkOmegaActual;
 
             omegaSourceV[i] += Kokkos::max(crossSource, scalar(0));
             spOmegaV[i] += Kokkos::max(-crossSource / omegaSafe, scalar(0));
@@ -373,24 +373,24 @@ void kernelCorrectNutInternal(
         exec,
         {0, static_cast<localIdx>(kVec.size())},
         NEON_LAMBDA(const localIdx i) {
-            const scalar k_i = kV[i];
-            const scalar omega_i = omegaV[i];
-            const scalar nu_i = nuV[i];
-            const scalar y_i = Kokkos::max(wallDistV[i], rootVSmall);
-            const scalar y2_i = y_i * y_i;
+            const scalar kI = kV[i];
+            const scalar omegaI = omegaV[i];
+            const scalar nuI = nuV[i];
+            const scalar yI = Kokkos::max(wallDistV[i], rootVSmall);
+            const scalar y2I = yI * yI;
 
-            const scalar omegaSafe = Kokkos::max(omega_i, omegaMin);
-            const scalar kSafe = Kokkos::max(k_i, scalar(0));
+            const scalar omegaSafe = Kokkos::max(omegaI, omegaMin);
+            const scalar kSafe = Kokkos::max(kI, scalar(0));
 
             const scalar sqrtK = Kokkos::sqrt(kSafe);
             const scalar arg2 = Kokkos::min(
                 Kokkos::max(
-                    scalar(2) * sqrtK / (betaStar * omegaSafe * y_i),
-                    scalar(500) * nu_i / (y2_i * omegaSafe)
+                    scalar(2) * sqrtK / (betaStar * omegaSafe * yI),
+                    scalar(500) * nuI / (y2I * omegaSafe)
                 ),
                 scalar(100)
             );
-            const scalar F2_i = Kokkos::tanh(arg2 * arg2);
+            const scalar f2I = Kokkos::tanh(arg2 * arg2);
 
             const Tensor& g = gradUV[i];
             scalar normSq = scalar(0);
@@ -403,10 +403,10 @@ void kernelCorrectNutInternal(
                     dotTrans += g(r, c) * g(c, r);
                 }
             }
-            const scalar S2_i = normSq + dotTrans;
-            const scalar sqrtS2 = Kokkos::sqrt(Kokkos::max(S2_i, scalar(0)));
+            const scalar s2I = normSq + dotTrans;
+            const scalar sqrtS2 = Kokkos::sqrt(Kokkos::max(s2I, scalar(0)));
 
-            const scalar nutRaw = a1 * kSafe / Kokkos::max(a1 * omegaSafe, b1 * F2_i * sqrtS2);
+            const scalar nutRaw = a1 * kSafe / Kokkos::max(a1 * omegaSafe, b1 * f2I * sqrtS2);
             nutV_[i] = Kokkos::min(nutRaw, nutMax);
         },
         "kOmegaSST::correctNutInternal"

@@ -13,28 +13,36 @@ import pytest
 import neofoam.algorithms.solution_loop as loop_pkg
 from neofoam.algorithms.solution_loop.interfaces import (
     VGREAT,
+    initialTimeStepConstraint,
     loopCondition,
+    maxTimeStep,
     solutionLoop,
     timeStepConstraint,
 )
-from neofoam.framework.model import ModelInterface
+from neofoam.framework.model import Hook
+
+_LIMIT_INTERFACES = [timeStepConstraint, maxTimeStep, initialTimeStepConstraint]
 
 
-def test_loop_interfaces_are_owned_by_the_loop_model() -> None:
-    assert isinstance(timeStepConstraint, ModelInterface)
-    assert isinstance(loopCondition, ModelInterface)
-    assert timeStepConstraint.owner is solutionLoop
-    assert loopCondition.owner is solutionLoop
-    assert solutionLoop.declared_interfaces["timeStepConstraint"] is timeStepConstraint
-    assert solutionLoop.declared_interfaces["loopCondition"] is loopCondition
+@pytest.mark.parametrize(
+    "interface",
+    _LIMIT_INTERFACES + [loopCondition],
+    ids=lambda iface: iface.name,
+)
+def test_loop_interfaces_are_owned_by_the_loop_model(interface: Hook) -> None:
+    assert isinstance(interface, Hook)
+    assert solutionLoop.declared_interfaces[interface.name] is interface
 
 
+@pytest.mark.parametrize("interface", _LIMIT_INTERFACES, ids=lambda iface: iface.name)
 @pytest.mark.parametrize(
     "limits, expected",
     [([], VGREAT), ([2.0, 1.0, 3.0], 1.0), ([5.0], 5.0)],
 )
-def test_time_step_constraint_folds_with_min(limits: list[float], expected: float) -> None:
-    assert timeStepConstraint.fold(limits) == expected
+def test_delta_t_limit_interfaces_fold_with_min(
+    interface: Hook, limits: list[float], expected: float
+) -> None:
+    assert interface.declaration(limits) == expected
 
 
 @pytest.mark.parametrize(
@@ -42,7 +50,7 @@ def test_time_step_constraint_folds_with_min(limits: list[float], expected: floa
     [([], True), ([True, True], True), ([True, False], False)],
 )
 def test_loop_condition_folds_with_all(flags: list[bool], expected: bool) -> None:
-    assert loopCondition.fold(flags) is expected
+    assert loopCondition.declaration(flags) is expected
 
 
 def _imported_names(source: str) -> set[str]:

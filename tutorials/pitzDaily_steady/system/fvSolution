@@ -46,12 +46,20 @@ SIMPLE
     }
 }
 
+// Plain-SIMPLE (consistent no) relaxation: the pressure FIELD must be
+// relaxed via fields/p — SIMPLE diverges without it. The upstream tutorial
+// this case derives from is SIMPLEC (consistent yes), which needs no p
+// relaxation and tolerates 0.9 on the equations.
 relaxationFactors
 {
+    fields
+    {
+        p               0.3;
+    }
     equations
     {
-        U               0.9; // 0.9 is more stable but 0.95 more convergent
-        ".*"            0.3; // 0.9 is more stable but 0.95 more convergent
+        U               0.7;
+        ".*"            0.7;
     }
 }
 

@@ -13,6 +13,7 @@ from __future__ import annotations
 from typing import Any, Mapping, cast
 
 import pybFoam
+import pytest
 from pydantic import Field
 
 from neofoam.algorithms.field_writer.write_control import StepperWriteControl
@@ -108,14 +109,13 @@ def test_build_emits_field_writer_with_null_hook() -> None:
 # --- backend selection from config ----------------------------------------
 
 
-def test_default_backend_is_runtime_registry() -> None:
-    hook = make_field_hook(_config(), FakeRuntime())
-    assert isinstance(hook, RuntimeWriteHook)
-
-
-def test_per_field_backend_selected_by_config() -> None:
-    hook = make_field_hook(_config(writeBackend="perField"), FakeRuntime())
-    assert isinstance(hook, PerFieldWriteHook)
+@pytest.mark.parametrize(
+    ("overrides", "hook_type"),
+    [({}, RuntimeWriteHook), ({"writeBackend": "perField"}, PerFieldWriteHook)],
+    ids=["default_runtime_registry", "per_field_from_config"],
+)
+def test_the_backend_is_selected_by_config(overrides: dict, hook_type: type) -> None:
+    assert isinstance(make_field_hook(_config(**overrides), FakeRuntime()), hook_type)
 
 
 # --- backend wiring into the framework model ------------------------------
@@ -175,15 +175,18 @@ def _ctx(*, write: bool) -> tuple[FakeFieldHook, FakeRuntime, Context]:
     return hook, rt, ctx
 
 
-def test_write_output_writes_only_flagged_fields() -> None:
-    hook, rt, ctx = _ctx(write=True)
+@pytest.mark.parametrize(
+    ("write", "expected_calls"),
+    [
+        (True, [["U", "p", "phi"]]),  # UEqn not flagged -> not handed over
+        (False, []),  # not a write step -> nothing handed over
+    ],
+    ids=["write_step", "non_write_step"],
+)
+def test_write_output_hands_over_only_the_flagged_fields_on_a_write_step(
+    write: bool, expected_calls: list
+) -> None:
+    hook, rt, ctx = _ctx(write=write)
     write_output(None, ctx)
-    assert hook.calls == [["U", "p", "phi"]]  # UEqn not flagged -> not handed over
-    assert rt.printed == 1  # execution time reported every step
-
-
-def test_write_output_skips_non_write_step() -> None:
-    hook, rt, ctx = _ctx(write=False)
-    write_output(None, ctx)
-    assert hook.calls == []  # not a write step
-    assert rt.printed == 1  # still reports timing
+    assert hook.calls == expected_calls
+    assert rt.printed == 1  # execution time reported every step, write or not

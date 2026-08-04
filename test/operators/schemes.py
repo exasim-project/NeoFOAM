@@ -18,6 +18,10 @@ DIV_SCHEMES: dict[str, str] = {
     "linear": "Gauss linear",
     "upwind": "Gauss upwind",
     "linearUpwind": "Gauss linearUpwind grad({field})",
+    # The steady-state tutorials use the "bounded" convection wrapper, which subtracts
+    # Sp(surfaceIntegrate(faceFlux), psi) from the inner scheme; the test flux is not
+    # divergence free, so that term is what the parity check sees.
+    "boundedUpwind": "bounded Gauss upwind",
 }
 
 

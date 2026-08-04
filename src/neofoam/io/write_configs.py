@@ -13,14 +13,15 @@ per-config writes clobber each other, so :func:`write_configs` first groups
 instances by their target file and deep-merges each group's
 ``model_dump(by_alias=True, exclude_none=True)`` into one payload, then writes
 that payload once. Within a file, keys are last-wins in iteration order, so
-callers control precedence by ordering the instances they pass in.
+callers control precedence by ordering the instances they pass in. A co-owner
+that declares a ``subdict`` contributes its payload nested under that block.
 """
 
 from __future__ import annotations
 
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Iterable, Union
+from typing import Any, Iterable, Optional, Union
 
 from pydantic import BaseModel
 
@@ -39,6 +40,21 @@ def _deep_merge(dst: dict[str, Any], src: dict[str, Any]) -> dict[str, Any]:
         else:
             dst[key] = value
     return dst
+
+
+def _under_subdict(payload: dict[str, Any], subdict: Optional[str]) -> dict[str, Any]:
+    """Nest ``payload`` under its declared sub-dict path, if it has one.
+
+    The merged write below emits one whole-file payload, so a config owning only
+    a block has to be lifted into place first or its keys land beside the block
+    the reader takes them from. Dotted paths nest one level per component, as
+    ``BaseConfig.load`` reads them.
+    """
+    if not subdict:
+        return payload
+    for part in reversed(subdict.split(".")):
+        payload = {part: payload}
+    return payload
 
 
 def write_configs(
@@ -79,13 +95,16 @@ def write_configs(
         for inst in contribs:
             _deep_merge(
                 merged,
-                inst.model_dump(
-                    mode="python",
-                    exclude_none=True,
-                    by_alias=True,
-                    # OpenFOAM literal mapping for FieldValue types (write_configs
-                    # only writes OpenFOAM strategies — see _write_merged_payload).
-                    context={"format": "openfoam"},
+                _under_subdict(
+                    inst.model_dump(
+                        mode="python",
+                        exclude_none=True,
+                        by_alias=True,
+                        # OpenFOAM literal mapping for FieldValue types (write_configs
+                        # only writes OpenFOAM strategies — see _write_merged_payload).
+                        context={"format": "openfoam"},
+                    ),
+                    type(inst).io_config.subdict,  # type: ignore[attr-defined]
                 ),
             )
 
@@ -116,7 +135,9 @@ def _write_merged_payload(strategy: Any, path: Path, data: dict[str, Any]) -> No
     if isinstance(strategy, OpenFOAMStrategy):
         if "FoamFile" in data:
             data = {"FoamFile": data["FoamFile"], **data}
-        _write_payload(path, data, (), "openfoam")
+        # merge: a pre-existing file (e.g. fill_case's mirrored fvSolution) keeps
+        # the entries no config models; only the payload's sections are rewritten.
+        _write_payload(path, data, (), "openfoam", merge=True)
         return
     if isinstance(strategy, YAMLStrategy):
         # Whole-file YAML (e.g. ``system/preprocess.yaml``): no ``FoamFile`` header,

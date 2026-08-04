@@ -30,7 +30,6 @@ from typing import Any, Optional
 import pybFoam as pyf
 
 from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
-from neofoam.framework.context import Context
 from neofoam.framework.initialization import (
     ConfigContext,
     InitializerBuilder,
@@ -43,7 +42,7 @@ from neofoam.framework.initialization import (
 from neofoam.framework.initialization import (
     model as init_model,
 )
-from neofoam.framework.model import ModelRuntime, bind_owned_interfaces
+from neofoam.framework.model import ModelRuntime
 from neofoam.turbulence.config import TurbulencePropertiesConfig
 from neofoam.turbulence.selection import select_turbulence_model
 
@@ -146,8 +145,9 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
             rt.fv_schemes_dict = nfb.map_fv_schemes(rt.fv_schemes_dict)
             solvers = rt.fv_solution_dict.subDict("solvers")
             for name in _MAPPED_SOLVER_DICTS:
-                if solvers.contains(name):
-                    solvers.insert_dict(name, nfb.map_fv_solution(solvers.subDict(name)))
+                # Resolves OpenFOAM regex keys ("(U|k|epsilon)"), skips absent
+                # fields and never maps one entry twice.
+                nfb.map_solver_settings(solvers, name)
             return rt
 
         def alias_neon_runtime(ctx: dict[str, Any]) -> Any:
@@ -229,21 +229,16 @@ def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
         for name, opt in _optional_models_by_name(optional_models).items():
             builder.add_model(name, opt)
 
-        # MI7 auto-wiring: bind the solutionLoop runtime's owned interfaces
-        # (timeStepConstraint / loopCondition) to the case's active contributing
-        # optional-model runtimes. Bound against an EMPTY Context — capturing
-        # live backend objects here would create a reference cycle that
-        # segfaults at GC across in-process solver runs; the live fold re-binds
-        # against the live Context at call time.
-        def wire_loop_interfaces(_work: dict[str, Any]) -> Any:
-            return bind_owned_interfaces(
-                solution_loop_model, optional_models, Context(fields={}, models={})
-            )
+        # Register the owner runtime under its spec name so it stays discoverable
+        # as ``ctx.models["solutionLoop"]``; its gather hooks need no wiring step,
+        # they bind to the live Context per call rather than capturing case state.
+        def register_loop_runtime(_work: dict[str, Any]) -> Any:
+            return solution_loop_model
 
         builder.add(
             init_model(
                 "solutionLoop",
-                wire_loop_interfaces,
+                register_loop_runtime,
                 depends_on=["models.solution_loop"],
             )
         )

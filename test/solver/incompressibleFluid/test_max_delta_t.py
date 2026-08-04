@@ -1,7 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Spec for the maxDeltaT optional model and its timeStepConstraint contribution."""
+"""Spec for the maxDeltaT optional model and its maxTimeStep contribution.
+
+The cap contributes to ``maxTimeStep``, not ``timeStepConstraint``: ``setDeltaT.H``
+clips ``maxDeltaT`` onto the already-damped step, and the growth damping does not
+distribute over that outer ``min``.
+"""
 
 # NOTE: no `from __future__ import annotations` — keep annotations live.
 
@@ -11,9 +16,9 @@ from typing import Any, cast
 import pytest
 from pydantic import ValidationError
 
-from neofoam.algorithms.solution_loop.interfaces import VGREAT, timeStepConstraint
+from neofoam.algorithms.solution_loop.interfaces import VGREAT, maxTimeStep, timeStepConstraint
 from neofoam.framework.context import Context
-from neofoam.framework.model import BoundModelInterface, ModelRuntime
+from neofoam.framework.model import ModelRuntime
 from neofoam.solver.incompressibleFluid.models.incompressibleFluidModel import (
     incompressibleFluidModel,
 )
@@ -31,15 +36,19 @@ def _max_runtime(cap: float = 0.5) -> ModelRuntime:
     return ModelRuntime(spec=maxDeltaT, name="maxDeltaT", config=MaxDeltaTConfig(maxDeltaT=cap))
 
 
-def test_model_is_registered_in_the_family_catalog() -> None:
-    names = {spec.name for spec in incompressibleFluidModel.all_specs()}
-    assert "maxDeltaT" in names
+def _bound(interface, runtimes, ctx):  # type: ignore[no-untyped-def]
+    """*interface* resolved against *ctx* with exactly *runtimes* active — the
+    injected form ``set_time_step`` receives and calls."""
+    live = Context(fields=ctx.fields, models={**ctx.models, **{rt.name: rt for rt in runtimes}})
+    return interface.resolve(live)
 
 
-def test_registering_the_model_twice_keeps_one_catalog_entry() -> None:
+def test_model_is_registered_in_the_family_catalog_exactly_once() -> None:
+    # Registration is idempotent: importing the model twice (or re-registering it
+    # explicitly) must not put a second entry in the catalog.
+    assert [spec.name for spec in incompressibleFluidModel.all_specs()].count("maxDeltaT") == 1
     maxDeltaT.register_with(incompressibleFluidModel)
-    names = [spec.name for spec in incompressibleFluidModel.all_specs()]
-    assert names.count("maxDeltaT") == 1
+    assert [spec.name for spec in incompressibleFluidModel.all_specs()].count("maxDeltaT") == 1
 
 
 def test_model_owns_the_control_dict_config() -> None:
@@ -53,16 +62,17 @@ def test_config_rejects_non_positive_cap(bad: float) -> None:
         MaxDeltaTConfig(maxDeltaT=bad)
 
 
-def test_contribution_caps_delta_t_when_model_active() -> None:
+def test_the_contribution_is_the_cap_only_while_the_model_is_active() -> None:
     ctx = Context(fields={}, models={})
-    bound = BoundModelInterface(timeStepConstraint, [_max_runtime(0.5)], ctx)
-    assert bound() == pytest.approx(0.5)
+    assert _bound(maxTimeStep, [_max_runtime(0.5)], ctx)() == pytest.approx(0.5)
+    assert _bound(maxTimeStep, [], ctx)() == VGREAT
 
 
-def test_contribution_excluded_when_model_inactive() -> None:
+def test_cap_never_reaches_the_damped_courant_fold() -> None:
+    # setDeltaT.H computes deltaTFact from the Courant factor ALONE; folding the cap
+    # into that limit would damp it (min(f, 1+0.1f, 1.2)) instead of clipping with it.
     ctx = Context(fields={}, models={})
-    bound = BoundModelInterface(timeStepConstraint, [], ctx)
-    assert bound() == VGREAT
+    assert _bound(timeStepConstraint, [_max_runtime(0.5)], ctx)() == VGREAT
 
 
 def test_fold_raises_when_config_is_absent() -> None:
@@ -70,44 +80,51 @@ def test_fold_raises_when_config_is_absent() -> None:
     # interface, the contribution, and the unresolved parameter.
     rt = ModelRuntime(spec=maxDeltaT, name="maxDeltaT", config=None)
     ctx = Context(fields={}, models={})
-    bound = BoundModelInterface(timeStepConstraint, [rt], ctx)
+    bound = _bound(maxTimeStep, [rt], ctx)
     with pytest.raises(ValueError) as exc:
         bound()
     message = str(exc.value)
-    assert "timeStepConstraint" in message
+    assert "maxTimeStep" in message
     assert "max_delta_t_limit" in message
     assert "cfg" in message
 
 
-def test_config_presence_activates_contribution_through_detection(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+# The base controlDict deliberately omits adjustTimeStep, so each scenario opts in
+# explicitly — the "key absent" row is simply the one that never sets it, and no
+# line-removal (which `patch` can't express) is needed. Every row states what the
+# contribution the loop folds must be, because "detected" and "contributes" are
+# the same guarantee seen from the two ends of detection.
+@pytest.mark.parametrize(
+    ("overrides", "expect_active"),
+    [
+        ({"adjustTimeStep": True, "maxDeltaT": 0.5}, True),
+        ({"adjustTimeStep": True}, False),  # adjustTimeStep yes but no maxDeltaT
+        # maxDeltaT present but adjustTimeStep no: OpenFOAM keeps a fixed step, so
+        # the contribution must stay inactive (the symmetric guard to courant's
+        # no-adjust arm) — and likewise when the key is omitted entirely.
+        ({"adjustTimeStep": False, "maxDeltaT": 0.5}, False),
+        ({"maxDeltaT": 0.5}, False),
+    ],
+    ids=[
+        "cap_present",
+        "cap_absent",
+        "cap_no_adjust",
+        "no_adjust_key",
+    ],
+)
+def test_config_presence_drives_detection_and_the_contribution(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, overrides: dict, expect_active: bool
 ) -> None:
-    case = (
-        from_template(_BASE)
-        | patch("system/controlDict", {"adjustTimeStep": True, "maxDeltaT": 0.5})
-    ).build_at(tmp_path / "case")
-    monkeypatch.chdir(case.path)
-
-    detected = {rt.name: rt for rt in incompressibleFluidModel.detect_models(Path("."))}
-    assert "maxDeltaT" in detected
-    ctx = Context(fields={}, models={})
-    bound = BoundModelInterface(timeStepConstraint, [detected["maxDeltaT"]], ctx)
-    assert bound() == pytest.approx(0.5)
-
-
-def test_absent_config_leaves_contribution_unfolded_through_detection(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    case = (from_template(_BASE) | patch("system/controlDict", {"adjustTimeStep": True})).build_at(
+    case = (from_template(_BASE) | patch("system/controlDict", overrides)).build_at(
         tmp_path / "case"
     )
     monkeypatch.chdir(case.path)
 
     detected = {rt.name: rt for rt in incompressibleFluidModel.detect_models(Path("."))}
-    assert "maxDeltaT" not in detected
-    ctx = Context(fields={}, models={})
-    bound = BoundModelInterface(timeStepConstraint, list(detected.values()), ctx)
-    assert bound() == VGREAT
+
+    assert ("maxDeltaT" in detected) is expect_active
+    bound = _bound(maxTimeStep, list(detected.values()), Context(fields={}, models={}))
+    assert bound() == (pytest.approx(0.5) if expect_active else VGREAT)
 
 
 def test_two_runs_in_one_process_flip_participation(
@@ -120,7 +137,7 @@ def test_two_runs_in_one_process_flip_participation(
     monkeypatch.chdir(case1.path)
 
     m1 = {rt.name: rt for rt in incompressibleFluidModel.detect_models(Path("."))}
-    b1 = BoundModelInterface(timeStepConstraint, [m1["maxDeltaT"]], Context(fields={}, models={}))
+    b1 = _bound(maxTimeStep, [m1["maxDeltaT"]], Context(fields={}, models={}))
     assert b1() == pytest.approx(0.5)
 
     case2 = (from_template(_BASE) | patch("system/controlDict", {"adjustTimeStep": True})).build_at(
@@ -129,7 +146,7 @@ def test_two_runs_in_one_process_flip_participation(
     monkeypatch.chdir(case2.path)
 
     m2 = {rt.name: rt for rt in incompressibleFluidModel.detect_models(Path("."))}
-    b2 = BoundModelInterface(timeStepConstraint, list(m2.values()), Context(fields={}, models={}))
+    b2 = _bound(maxTimeStep, list(m2.values()), Context(fields={}, models={}))
     assert b2() == VGREAT
 
 
@@ -138,33 +155,3 @@ def test_model_inactive_when_no_control_dict_is_present(
 ) -> None:
     monkeypatch.chdir(tmp_path)
     assert maxDeltaT.run_detect() is False
-
-
-def test_max_delta_t_inactive_when_adjust_time_step_is_off(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    # maxDeltaT present but adjustTimeStep no: OpenFOAM keeps a fixed step, so the
-    # contribution must stay inactive (the symmetric guard to courant's no-adjust arm).
-    case = (
-        from_template(_BASE)
-        | patch("system/controlDict", {"adjustTimeStep": False, "maxDeltaT": 0.5})
-    ).build_at(tmp_path / "case")
-    monkeypatch.chdir(case.path)
-
-    detected = {rt.name for rt in incompressibleFluidModel.detect_models(Path("."))}
-    assert "maxDeltaT" not in detected
-
-
-def test_max_delta_t_inactive_when_adjust_time_step_key_is_absent(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    # The adjustTimeStep key omitted entirely short-circuits detection -> inactive.
-    # The base controlDict already omits adjustTimeStep, so patching maxDeltaT alone
-    # reproduces the "key absent" case without any line removal.
-    case = (from_template(_BASE) | patch("system/controlDict", {"maxDeltaT": 0.5})).build_at(
-        tmp_path / "case"
-    )
-    monkeypatch.chdir(case.path)
-
-    detected = {rt.name for rt in incompressibleFluidModel.detect_models(Path("."))}
-    assert "maxDeltaT" not in detected

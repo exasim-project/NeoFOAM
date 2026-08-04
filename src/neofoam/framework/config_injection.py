@@ -69,42 +69,36 @@ def _create_runtime_config_wrapper(
     func: Callable[..., Any],
     discovered: list[dict[str, Any]],
     runtime: Any,
+    dependency_resolver: Any = None,
 ) -> Callable[["Context"], Any]:
-    """
-    Wrap an operation function to inject config from ``runtime.config``.
+    """Wrap an operation function to inject config from ``runtime.config``.
 
-    Binding:
-        self  -> runtime
-        config params -> resolved from runtime.config by type
-        field params  -> ctx.fields[param_name]
+    Everything that is not a config parameter is delegated to the shared
+    ``DependencyResolver``, so a config-typed parameter may sit in the same
+    signature as the marker annotations.
     """
+    # Lazy import: the resolver reaches back into ``model.extension`` at call time.
+    from neofoam.framework.dependency_resolver import DependencyResolver  # noqa: PLC0415
+
+    resolver = dependency_resolver if dependency_resolver is not None else DependencyResolver()
     sig = inspect.signature(func)
     expects_self = "self" in sig.parameters
     expects_ctx = "ctx" in sig.parameters
 
     @wraps(func)
     def wrapper(ctx: "Context") -> Any:
-        call_kwargs: dict[str, Any] = {}
-
-        if expects_ctx:
-            call_kwargs["ctx"] = ctx
-        if expects_self:
-            call_kwargs["self"] = runtime
+        preresolved: dict[str, Any] = {}
 
         for cfg_meta in discovered:
             param_name = cfg_meta["param_name"]
             config_type = cfg_meta["config_type"]
-            call_kwargs[param_name] = _find_config_by_type(runtime.config, config_type)
+            preresolved[param_name] = _find_config_by_type(runtime.config, config_type)
 
-        for pname, param in sig.parameters.items():
-            if pname in ("self", "ctx") or pname in call_kwargs:
-                continue
-            if (
-                param.annotation in (float, int, str, bool)
-                or param.annotation is inspect.Parameter.empty
-            ):
-                if hasattr(ctx, "fields") and pname in ctx.fields:
-                    call_kwargs[pname] = ctx.fields[pname]
+        call_kwargs = resolver.resolve_arguments(func, ctx, **preresolved)
+        if expects_ctx:
+            call_kwargs["ctx"] = ctx
+        if expects_self:
+            call_kwargs["self"] = runtime
 
         result = func(**call_kwargs)
 

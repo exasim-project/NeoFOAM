@@ -11,8 +11,26 @@ Currently exports:
   operations extend via ``@<Subclass>.add(...)``.
 - ``schemes`` — typed scheme unions (DdtScheme, DivScheme, …) used as
   the value types when ``.add(...)`` injects fields into a subclass.
+- ``algorithm_configs`` — typed views of ``fvSolution``'s algorithm-control
+  blocks (``PIMPLE`` / ``PISO`` / ``SIMPLE``), which the per-spec slices above
+  pass through untyped.
 """
 
+from neofoam.foam.algorithm_configs import (
+    DynamicMeshControls,
+    PimpleAlgorithmConfig,
+    PisoAlgorithmConfig,
+    PisoDynamicMeshControls,
+    SimpleAlgorithmConfig,
+)
 from neofoam.foam.fv_configs import fvSchemes, fvSolution
 
-__all__ = ["fvSchemes", "fvSolution"]
+__all__ = [
+    "DynamicMeshControls",
+    "PimpleAlgorithmConfig",
+    "PisoAlgorithmConfig",
+    "PisoDynamicMeshControls",
+    "SimpleAlgorithmConfig",
+    "fvSchemes",
+    "fvSolution",
+]

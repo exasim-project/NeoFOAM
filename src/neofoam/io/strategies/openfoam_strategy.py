@@ -51,10 +51,15 @@ def _read_bool(raw: str) -> bool:
     raise ValueError(f"Cannot parse '{raw}' as bool")
 
 
+def _read_scalar(raw: str) -> float:
+    """Parse a plain (``1e-05``) or dimensioned (``[ 0 2 -1 0 0 0 0 ] 1e-05``) entry."""
+    return float(raw.rsplit("]", 1)[-1].split()[-1])
+
+
 READ_DISPATCH: dict[type, Callable[[str], Any]] = {
     str: lambda v: v,
     int: int,
-    float: float,
+    float: _read_scalar,
     bool: _read_bool,
 }
 

@@ -39,24 +39,22 @@ def test_all_specs_returns_model_spec_objects() -> None:
     assert all(isinstance(spec, ModelSpec) for spec in specs)
 
 
-def test_find_spec_round_trips_registered_names() -> None:
+def test_every_registered_name_resolves_to_a_detecting_spec_with_a_family() -> None:
     for name in momentumTransportModel.registered_names():
         spec = momentumTransportModel.find_spec(name)
         assert isinstance(spec, ModelSpec)
         assert spec.name == name
+        assert spec.run_detect() is True
+        # The family is what lets selection refuse a RAS closure for an LESModel
+        # entry, so a model registered without one would silently reopen that hole.
+        assert momentumTransportModel.family_of(name) in ("laminar", "RAS", "LES")
 
 
-def test_find_spec_unknown_returns_none() -> None:
-    # An unregistered case's model name (e.g. Smagorinsky) has no spec.
+def test_unregistered_names_have_no_spec_and_no_family() -> None:
+    # An unregistered case's model name (e.g. Smagorinsky) is unknown to the family.
     for name in UNREGISTERED_NAMES:
         assert momentumTransportModel.find_spec(name) is None
-
-
-def test_registered_specs_detect_true() -> None:
-    for name in momentumTransportModel.registered_names():
-        spec = momentumTransportModel.find_spec(name)
-        assert spec is not None
-        assert spec.run_detect() is True
+        assert momentumTransportModel.family_of(name) is None
 
 
 def _union_members(annotation: Any) -> tuple[Any, ...]:

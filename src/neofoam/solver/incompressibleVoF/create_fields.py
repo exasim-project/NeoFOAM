@@ -20,6 +20,7 @@ from typing import Any, Optional
 import pybFoam.multiphase as multiphase
 
 from neofoam.foam.initialization import create_time_mesh
+from neofoam.foam.libraries import load_libraries
 from neofoam.framework.initialization import (
     ConfigContext,
     InitializerBuilder,
@@ -36,9 +37,15 @@ from .models.alpha_advection import advectionModel  # noqa: F401  (registers sch
 from .models.incompressibleVoFModel import incompressibleVoFModel
 from .models.pressure_velocity.base import PressureVelocityAlgorithm
 
+# OpenFOAM libraries native interFoam links but pybFoam does not, so their
+# runtime-selection entries (waveVelocity/waveAlpha) are otherwise unreachable —
+# no tutorial declares them via `libs (...)`, the interFoam binary is the declaration.
+EXTRA_LIBRARIES = ["libwaveModels.so"]
+
 
 def create_init(case_dir: Optional[Path] = None) -> StagedInitRunner:
     """Build a fresh :class:`StagedInitRunner` for incompressibleVoF."""
+    load_libraries(EXTRA_LIBRARIES)
     spec_builder = StagedInitSpec.build("incompressibleVoF")
     resolved_case_dir = case_dir or Path(".")
 

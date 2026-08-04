@@ -162,6 +162,9 @@ class NeoPimpleFoam:
                     )
 
                 UEqn.set_final_iter(final_iter)
+                # pimpleFoam/UEqn.H: UEqn.relax(). The pressure equation below is
+                # never equation-relaxed (only the p *field* is, after the solve).
+                UEqn.relax()
 
                 if piso.momentum_predictor():
                     stats_u = UEqn.solve_with_source(-1.0 * nn.exp.grad(p))

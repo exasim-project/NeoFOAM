@@ -20,7 +20,7 @@ from conftest import EXECUTORS, MESH_NAMES
 
 @pytest.mark.parametrize("executor", EXECUTORS)
 @pytest.mark.parametrize("mesh", MESH_NAMES)
-@pytest.mark.parametrize("scheme", ["linear", "upwind", "linearUpwind"])
+@pytest.mark.parametrize("scheme", ["linear", "upwind", "linearUpwind", "boundedUpwind"])
 def test_imp_div_phi_T(mesh: str, scheme: str, executor: str) -> None:
     sim = simulation(mesh, executor)
     x, y, z = sim.mesh.cell_centres.T
@@ -45,7 +45,7 @@ def test_imp_div_phi_T(mesh: str, scheme: str, executor: str) -> None:
 
 @pytest.mark.parametrize("executor", EXECUTORS)
 @pytest.mark.parametrize("mesh", MESH_NAMES)
-@pytest.mark.parametrize("scheme", ["linear", "upwind", "linearUpwind"])
+@pytest.mark.parametrize("scheme", ["linear", "upwind", "linearUpwind", "boundedUpwind"])
 def test_imp_div_phi_U(mesh: str, scheme: str, executor: str) -> None:
     sim = simulation(mesh, executor)
     x, y, z = sim.mesh.cell_centres.T

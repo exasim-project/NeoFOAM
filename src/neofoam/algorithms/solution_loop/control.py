@@ -53,6 +53,10 @@ class IterationCountCondition(BaseModel):
             return True
         return False
 
+    def is_first(self) -> bool:
+        """Check if this is the first iteration."""
+        return self._iteration_count == 1
+
     def is_final(self) -> bool:
         """Check if this is the final iteration."""
         return self._iteration_count >= self.nIterations
@@ -204,11 +208,15 @@ class PimpleControl(BaseModel):
         nNonOrthogonalCorrectors: Number of non-orthogonal corrections (>= 0)
         momentumPredictor_enabled: Whether to run momentum predictor
         turbCorr_enabled: Whether to apply turbulence correction
+        turbOnFinalIterOnly: Whether to correct turbulence on the final outer
+            iteration only
+        finalOnLastPimpleIterOnly: Whether the ``<field>Final`` settings are
+            restricted to the final outer iteration
     """
 
     model_config = {"arbitrary_types_allowed": True}
 
-    nCorrectors: int = Field(ge=2, description="Number of PIMPLE corrector iterations")
+    nCorrectors: int = Field(ge=1, description="Number of PIMPLE corrector iterations")
     nOuterCorrectors: int = Field(
         default=1, ge=1, description="Number of PIMPLE outer corrector iterations"
     )
@@ -220,6 +228,13 @@ class PimpleControl(BaseModel):
     )
     turbCorr_enabled: bool = Field(
         default=False, description="Enable turbulence correction", alias="turbCorr"
+    )
+    turbOnFinalIterOnly: bool = Field(
+        default=True, description="Correct turbulence on the final outer iteration only"
+    )
+    finalOnLastPimpleIterOnly: bool = Field(
+        default=False,
+        description="Restrict the <field>Final settings to the final outer iteration",
     )
 
     _loop: Optional[IterationCountCondition] = None
@@ -241,6 +256,9 @@ class PimpleControl(BaseModel):
 
         # Link non-ortho loop to corrector (reset non-ortho on each corrector iteration)
         self._corrector.link_condition(self._non_ortho)
+
+        # Link corrector loop to the outer loop (pimpleControl::loop()'s corrPISO_ = 0)
+        self._loop.link_condition(self._corrector)
 
         # Flags
         self._momentum_predictor = BooleanFlagCondition(enabled=self.momentumPredictor_enabled)
@@ -281,15 +299,28 @@ class PimpleControl(BaseModel):
         assert self._non_ortho is not None
         return self._non_ortho(ctx)
 
+    def firstIter(self) -> bool:
+        """Check if this is the first outer (PIMPLE) iteration."""
+        assert self._loop is not None
+        return self._loop.is_first()
+
     def finalIter(self) -> bool:
         """Check if this is the final outer (PIMPLE) iteration."""
         assert self._loop is not None
         return self._loop.is_final()
 
     def finalInnerIter(self) -> bool:
-        """Check if this is the final corrector iteration."""
+        """Check if this is the last non-orthogonal pass of the last pressure corrector.
+
+        Mirrors ``pimpleControl::finalInnerIter()``; the outer iteration only enters
+        the predicate under ``finalOnLastPimpleIterOnly``.
+        """
         assert self._corrector is not None
-        return self._corrector.is_final()
+        assert self._non_ortho is not None
+        final_inner = self._corrector.is_final() and self._non_ortho.is_final()
+        if self.finalOnLastPimpleIterOnly:
+            return final_inner and self.finalIter()
+        return final_inner
 
     def finalNonOrthogonalIter(self) -> bool:
         """Check if this is the final non-orthogonal iteration."""
@@ -302,9 +333,16 @@ class PimpleControl(BaseModel):
         return self._momentum_predictor(None)
 
     def turbCorr(self) -> bool:
-        """Check if turbulence correction is enabled."""
+        """Check whether the turbulence correction runs in this outer iteration.
+
+        Mirrors ``pimpleControl::turbCorr()``: with the default
+        ``turbOnFinalIterOnly true`` it runs once per time step, on the final outer
+        iteration.
+        """
         assert self._turb_corr is not None
-        return self._turb_corr(None)
+        if not self._turb_corr(None):
+            return False
+        return not self.turbOnFinalIterOnly or self.finalIter()
 
     def reset(self) -> None:
         """Reset all conditions for next time step."""

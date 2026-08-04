@@ -28,7 +28,7 @@ void registerPDESolver(nb::module_& m)
     // -------------------------------------------------------------------
     nb::enum_<fvcc::DdtScheme>(m, "DdtScheme")
         .value("None", fvcc::DdtScheme::None)
-        .value("Steady", fvcc::DdtScheme::Steady)
+        .value("SteadyState", fvcc::DdtScheme::SteadyState)
         .value("BDF1", fvcc::DdtScheme::BDF1)
         .value("BDF2", fvcc::DdtScheme::BDF2);
 
@@ -70,6 +70,12 @@ void registerPDESolver(nb::module_& m)
             &nf::PDE<NeoN::scalar>::setFinalIter,
             "final_iter"_a,
             "Select the <field>Final solver subdict / relaxation on the final outer pass"
+        )
+        .def(
+            "relax",
+            &nf::PDE<NeoN::scalar>::relax,
+            "on"_a = true,
+            "Request relaxationFactors.equations relaxation (fvMatrix::relax(); off by default)"
         );
 
     // -------------------------------------------------------------------
@@ -115,6 +121,12 @@ void registerPDESolver(nb::module_& m)
             &nf::PDE<NeoN::Vec3>::setFinalIter,
             "final_iter"_a,
             "Select the <field>Final solver subdict / relaxation on the final outer pass"
+        )
+        .def(
+            "relax",
+            &nf::PDE<NeoN::Vec3>::relax,
+            "on"_a = true,
+            "Request relaxationFactors.equations relaxation (fvMatrix::relax(); off by default)"
         )
         .def(
             "ddt_scheme",

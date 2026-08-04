@@ -1,12 +1,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 NeoFOAM authors
 
-"""Tests for model-owned interfaces: declaring an interface on a Model, its
-empty-fold default, owner reachability, and contribution registration."""
+"""Tests for model-owned interfaces: ``@<model>.interface`` declares a gather
+:class:`Hook` on a model-private extension — the declaration body receives the
+active contributions' results and combines them. Covers declaration, empty-fold
+default, contribution registration, live-Context dispatch, and resolver
+injection of a hook-annotated parameter."""
 
-# NOTE: no `from __future__ import annotations` — a ModelInterface handle is meant
-# to be used as a live operation-parameter annotation in a later iteration; keep
-# these modules PEP 563-free so annotations stay non-string objects.
+# NOTE: no `from __future__ import annotations` — a Hook handle is used as a live
+# operation-parameter annotation; keep these modules PEP 563-free so annotations
+# stay non-string objects.
 
 from typing import Annotated, Any, Callable, Iterable
 
@@ -15,14 +18,7 @@ import pytest
 from neofoam.framework.context import Context
 from neofoam.framework.dependency_resolver import DependencyResolver
 from neofoam.framework.initialization.depends import Depends
-from neofoam.framework.model import (
-    BoundModelInterface,
-    Model,
-    ModelInterface,
-    active_contributors,
-    bind_model_interface,
-    bind_owned_interfaces,
-)
+from neofoam.framework.model import Hook, Model
 from neofoam.framework.model.runtime import ModelRuntime
 from neofoam.io import BaseConfig
 
@@ -45,10 +41,7 @@ def _loop_with_constraint() -> Any:
 
 @pytest.fixture
 def constraint() -> Any:
-    """A model-owned ``timeStepConstraint`` interface (min-fold, VGREAT default).
-
-    The owning ``Model`` is reachable via ``constraint.owner``.
-    """
+    """A model-owned ``timeStepConstraint`` interface (min-fold, VGREAT default)."""
     return _loop_with_constraint()
 
 
@@ -56,10 +49,17 @@ def contributor(
     interface: Any, fn: Callable[..., Any], name: str, config: Any = None
 ) -> ModelRuntime:
     """A fresh ``Model`` named *name* contributing *fn* to *interface*, returned
-    as the live ``ModelRuntime`` the bound interface folds over."""
+    as the live ``ModelRuntime`` that makes the contribution active for a case."""
     model = Model(name)
     model.contributes(interface)(fn)
     return ModelRuntime(spec=model, name=name, config=config)
+
+
+def bound(interface: Any, runtimes: Iterable[ModelRuntime], fields: Any = None) -> Any:
+    """*interface* resolved against a Context in which exactly *runtimes* are
+    active — the injected form a consumer receives and calls."""
+    ctx = Context(fields=dict(fields or {}), models={rt.name: rt for rt in runtimes})
+    return interface.resolve(ctx)
 
 
 # Named, annotated contributions reused by the config / error-message families:
@@ -78,25 +78,35 @@ def _cap_from_config(cfg: _CapConfig) -> float:
 # ---------------------------------------------------------------------------
 
 
-def test_interface_decorator_returns_handle_named_after_the_fold(
+def test_interface_decorator_returns_a_hook_named_after_the_declaration(
     constraint: Any,
 ) -> None:
-    assert isinstance(constraint, ModelInterface)
+    # An interface IS an extension hook — one mechanism, two spellings.
+    assert isinstance(constraint, Hook)
     assert constraint.name == "timeStepConstraint"
 
 
-def test_handle_round_trips_through_its_owning_model(constraint: Any) -> None:
-    owner = constraint.owner
-    assert owner.name == "solutionLoop"
-    assert owner.declared_interfaces["timeStepConstraint"] is constraint
+def test_handle_round_trips_through_its_owning_model() -> None:
+    loop = Model("solutionLoop")
+
+    @loop.interface
+    def timeStepConstraint(limits: Iterable[float]) -> float:
+        return min(limits, default=VGREAT)
+
+    assert loop.declared_interfaces["timeStepConstraint"] is timeStepConstraint
 
 
-def test_redeclaring_the_same_interface_name_is_rejected(constraint: Any) -> None:
-    with pytest.raises(RuntimeError, match="already declared"):
+def test_redeclaring_the_same_interface_name_is_rejected() -> None:
+    loop = Model("solutionLoop")
 
-        @constraint.owner.interface
-        def timeStepConstraint(limits: Iterable[float]) -> float:  # noqa: F811
+    def declare() -> None:
+        @loop.interface
+        def timeStepConstraint(limits: Iterable[float]) -> float:
             return min(limits, default=VGREAT)
+
+    declare()
+    with pytest.raises(RuntimeError, match="already declared"):
+        declare()
 
 
 def test_same_interface_name_on_two_models_is_allowed() -> None:
@@ -111,8 +121,9 @@ def test_same_interface_name_on_two_models_is_allowed() -> None:
     def timeStepConstraint(limits: Iterable[float]) -> float:  # noqa: F811
         return min(limits, default=VGREAT)
 
-    assert loop_a.declared_interfaces["timeStepConstraint"].owner is loop_a
-    assert loop_b.declared_interfaces["timeStepConstraint"].owner is loop_b
+    hook_a = loop_a.declared_interfaces["timeStepConstraint"]
+    hook_b = loop_b.declared_interfaces["timeStepConstraint"]
+    assert hook_a is not hook_b
 
 
 @pytest.mark.parametrize(
@@ -125,10 +136,10 @@ def test_same_interface_name_on_two_models_is_allowed() -> None:
         ((x for x in (3.0, 2.0, 4.0)), 2.0),  # a generator
     ],
 )
-def test_fold_reduces_inputs_via_the_declared_combine(
+def test_the_declaration_body_reduces_inputs_via_the_declared_combine(
     constraint: Any, limits: Iterable[float], expected: float
 ) -> None:
-    assert constraint.fold(limits) == expected
+    assert constraint.declaration(limits) == expected
 
 
 # ---------------------------------------------------------------------------
@@ -201,20 +212,21 @@ def test_contributions_are_returned_in_registration_order(constraint: Any) -> No
 
 
 def test_registration_does_not_yet_participate_in_the_fold(constraint: Any) -> None:
-    # Registration is recorded for later gathering but is inert here: the empty
-    # fold still returns the default even after a contribution is registered.
+    # Registration is recorded for later gathering but is inert here: with no
+    # active runtime the fold still returns the default even after a
+    # contribution is registered.
     courant = Model("courant")
 
     @courant.contributes(constraint)
     def courant_limit(deltaT: float) -> float:
         return 0.001
 
-    assert constraint.fold([]) == VGREAT
+    assert bound(constraint, [])() == VGREAT
 
 
-def test_contributes_against_a_non_interface_target_raises() -> None:
+def test_contributes_against_a_non_hook_target_raises() -> None:
     courant = Model("courant")
-    with pytest.raises(TypeError, match="must be a ModelInterface"):
+    with pytest.raises(TypeError, match="must be a hook"):
 
         @courant.contributes(lambda limits: min(limits))  # type: ignore[arg-type]
         def bad(deltaT: float) -> float:
@@ -230,7 +242,7 @@ def test_owner_of_unregistered_function_raises(constraint: Any) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Folding active contributions through a BoundModelInterface
+# Folding active contributions through the resolved hook
 # ---------------------------------------------------------------------------
 
 
@@ -246,20 +258,24 @@ def test_owner_of_unregistered_function_raises(constraint: Any) -> None:
         ),  # method form: self skipped
     ],
 )
-def test_bound_interface_folds_a_single_active_contribution(
+def test_resolved_interface_folds_a_single_active_contribution(
     constraint: Any, fn: Callable[..., float], fields: dict[str, float], expected: float
 ) -> None:
     rt = contributor(constraint, fn, "courant")
-    bound = BoundModelInterface(constraint, [rt], Context(fields=fields, models={}))
-    assert bound() == pytest.approx(expected)
+    assert bound(constraint, [rt], fields)() == pytest.approx(expected)
 
 
 def test_inactive_contributing_model_is_excluded_from_the_fold(constraint: Any) -> None:
-    # Registered, but its runtime is NOT among the active contributors for this
-    # case; its 0.001 would win the min if it wrongly folded.
+    # Registered, but its runtime is NOT in the Context; its 0.001 would win the
+    # min if it wrongly folded.
     contributor(constraint, lambda deltaT: deltaT * 0.001, "courant")
-    bound = BoundModelInterface(constraint, [], Context(fields={"deltaT": 0.2}, models={}))
-    assert bound() == VGREAT
+    assert bound(constraint, [], {"deltaT": 0.2})() == VGREAT
+
+
+def test_an_unrelated_runtime_does_not_activate_a_contribution(constraint: Any) -> None:
+    contributor(constraint, lambda deltaT: deltaT * 0.001, "courant")  # not in the ctx
+    unrelated_rt = ModelRuntime(spec=Model("unrelated"), name="unrelated", config=None)
+    assert bound(constraint, [unrelated_rt], {"deltaT": 0.2})() == VGREAT
 
 
 def test_second_contributing_model_changes_the_fold_without_owner_edit(
@@ -267,21 +283,16 @@ def test_second_contributing_model_changes_the_fold_without_owner_edit(
 ) -> None:
     courant_rt = contributor(constraint, lambda deltaT: deltaT, "courant")  # 0.2
     max_rt = contributor(constraint, lambda: 0.01, "maxDeltaT")  # smaller -> wins once active
-    ctx = Context(fields={"deltaT": 0.2}, models={})
 
-    only_courant = BoundModelInterface(constraint, [courant_rt], ctx)
-    assert only_courant() == pytest.approx(0.2)
-
-    both = BoundModelInterface(constraint, [courant_rt, max_rt], ctx)
-    assert both() == pytest.approx(0.01)
+    assert bound(constraint, [courant_rt], {"deltaT": 0.2})() == pytest.approx(0.2)
+    assert bound(constraint, [courant_rt, max_rt], {"deltaT": 0.2})() == pytest.approx(0.01)
 
 
 def test_contribution_resolves_config_param_from_its_own_runtime(
     constraint: Any,
 ) -> None:
     capped_rt = contributor(constraint, _cap_from_config, "capped", config=_CapConfig(value=0.05))
-    bound = BoundModelInterface(constraint, [capped_rt], Context(fields={}, models={}))
-    assert bound() == pytest.approx(0.05)
+    assert bound(constraint, [capped_rt])() == pytest.approx(0.05)
 
 
 @pytest.mark.parametrize(
@@ -295,36 +306,22 @@ def test_missing_contribution_parameter_error_names_interface_contribution_param
     constraint: Any, fn: Callable[..., float], config: Any, missing_param: str
 ) -> None:
     rt = contributor(constraint, fn, "courant", config=config)
-    bound = BoundModelInterface(constraint, [rt], Context(fields={}, models={}))
     with pytest.raises(ValueError) as excinfo:
-        bound()
+        bound(constraint, [rt])()
     message = str(excinfo.value)
     assert constraint.name in message
     assert fn.__name__ in message
     assert missing_param in message
 
 
-def _direct_bind(interface: Any, active: Any, ctx: Any) -> Any:
-    return BoundModelInterface(interface, active, ctx)
-
-
-def _autowired_bind(interface: Any, active: Any, ctx: Any) -> Any:
-    owner_rt = ModelRuntime(spec=interface.owner, name="solutionLoop", config=None)
-    bind_owned_interfaces(owner_rt, active, ctx)
-    return owner_rt.bound_interfaces["timeStepConstraint"]
-
-
-@pytest.mark.parametrize("make_bound", [_direct_bind, _autowired_bind])
-def test_two_cases_fold_independently_without_leak(
-    constraint: Any, make_bound: Callable[..., Any]
-) -> None:
+def test_two_cases_fold_independently_without_leak(constraint: Any) -> None:
     courant_rt = contributor(constraint, lambda deltaT: deltaT, "courant")
     max_rt = contributor(constraint, lambda: 0.01, "maxDeltaT")
 
     # Case A: only courant active (0.2); maxDeltaT would give 0.01 < 0.2 if it leaked.
-    bound_a = make_bound(constraint, [courant_rt], Context(fields={"deltaT": 0.2}, models={}))
+    bound_a = bound(constraint, [courant_rt], {"deltaT": 0.2})
     # Case B: only maxDeltaT active (0.01); courant would give 0.005 < 0.01 if it leaked.
-    bound_b = make_bound(constraint, [max_rt], Context(fields={"deltaT": 0.005}, models={}))
+    bound_b = bound(constraint, [max_rt], {"deltaT": 0.005})
 
     assert bound_a() == pytest.approx(0.2)
     assert bound_b() == pytest.approx(0.01)
@@ -351,8 +348,7 @@ def test_interface_fold_is_agnostic_to_the_combine_function() -> None:
 
     a_rt = ModelRuntime(spec=rate_a, name="rateA", config=None)
     b_rt = ModelRuntime(spec=rate_b, name="rateB", config=None)
-    bound = BoundModelInterface(sourceTerms, [a_rt, b_rt], Context(fields={}, models={}))
-    assert bound() == pytest.approx(5.0)
+    assert bound(sourceTerms, [a_rt, b_rt])() == pytest.approx(5.0)
 
 
 def test_two_same_named_contributions_both_fold() -> None:
@@ -376,8 +372,7 @@ def test_two_same_named_contributions_both_fold() -> None:
     assert len(sourceTerms.contributions) == 2
     a_rt = ModelRuntime(spec=model_a, name="modelA", config=None)
     b_rt = ModelRuntime(spec=model_b, name="modelB", config=None)
-    bound = BoundModelInterface(sourceTerms, [a_rt, b_rt], Context(fields={}, models={}))
-    assert bound() == pytest.approx(5.0)
+    assert bound(sourceTerms, [a_rt, b_rt])() == pytest.approx(5.0)
 
 
 def test_contribution_resolves_a_depends_marked_parameter(constraint: Any) -> None:
@@ -388,30 +383,29 @@ def test_contribution_resolves_a_depends_marked_parameter(constraint: Any) -> No
         return limit
 
     rt = contributor(constraint, courant_limit, "courant")
-    bound = BoundModelInterface(constraint, [rt], Context(fields={}, models={}))
-    assert bound() == pytest.approx(0.25)
+    assert bound(constraint, [rt])() == pytest.approx(0.25)
 
 
 def test_defaulted_contribution_parameter_still_requires_a_provider(
     constraint: Any,
 ) -> None:
     rt = contributor(constraint, lambda deltaT=1.0: deltaT, "courant")
-    bound = BoundModelInterface(constraint, [rt], Context(fields={}, models={}))
     with pytest.raises(ValueError, match="no provider supplies it"):
-        bound()
+        bound(constraint, [rt])()
 
 
-def test_bound_interface_folds_against_the_call_time_context(constraint: Any) -> None:
-    # The handle is bound with an EMPTY Context (no live capture — the GC-safe
-    # contract); the live Context is supplied at CALL time and is what the
-    # contributions resolve against.
+def test_a_resolved_interface_reads_fields_at_call_time(constraint: Any) -> None:
+    # The injection binds the hook to the live Context object; fields published
+    # AFTER the injection (set_time_step writes ctx.fields["deltaT"] mid-body)
+    # are what the contributions resolve against at call time.
     rt = contributor(constraint, lambda deltaT: deltaT, "capper")
-    bound = BoundModelInterface(constraint, [rt], Context(fields={}, models={}))
+    ctx = Context(fields={}, models={"capper": rt})
+    resolved = constraint.resolve(ctx)
 
-    live = Context(fields={"deltaT": 0.25}, models={})
-    assert bound(live) == pytest.approx(0.25)  # folds against the passed ctx
     with pytest.raises(ValueError, match="no provider supplies it"):
-        bound()  # empty bound ctx -> unresolved
+        resolved()  # deltaT not yet published
+    ctx.fields["deltaT"] = 0.25
+    assert resolved() == pytest.approx(0.25)
 
 
 def test_contribution_from_a_foreign_model_family_still_folds(constraint: Any) -> None:
@@ -424,31 +418,12 @@ def test_contribution_from_a_foreign_model_family_still_folds(constraint: Any) -
 
     assert constraint.owner_of(rule) is solver_side
     solver_rt = ModelRuntime(spec=solver_side, name="solverSideRule", config=None)
-    bound = BoundModelInterface(constraint, [solver_rt], Context(fields={"deltaT": 4.0}, models={}))
-    assert bound() == pytest.approx(2.0)
+    assert bound(constraint, [solver_rt], {"deltaT": 4.0})() == pytest.approx(2.0)
 
 
 # ---------------------------------------------------------------------------
-# Binding an interface onto its owning runtime + resolver injection
+# Resolver injection of a hook-annotated parameter
 # ---------------------------------------------------------------------------
-
-
-def test_bound_interface_lives_on_the_owning_runtime(constraint: Any) -> None:
-    courant_rt = contributor(constraint, lambda deltaT: deltaT, "courant")
-    loop_rt = ModelRuntime(spec=constraint.owner, name="solutionLoop", config=None)
-    ctx = Context(fields={"deltaT": 0.2}, models={})
-
-    bound = bind_model_interface(loop_rt, constraint, [courant_rt], ctx)
-    assert loop_rt.bound_interfaces["timeStepConstraint"] is bound
-    assert bound() == pytest.approx(0.2)
-
-
-def test_active_contributors_filters_by_spec_identity(constraint: Any) -> None:
-    courant_rt = contributor(constraint, lambda deltaT: deltaT, "courant")
-    unrelated_rt = ModelRuntime(spec=Model("unrelated"), name="unrelated", config=None)
-
-    active = active_contributors(constraint, [courant_rt, unrelated_rt])
-    assert active == [courant_rt]
 
 
 @pytest.mark.parametrize(
@@ -458,77 +433,40 @@ def test_active_contributors_filters_by_spec_identity(constraint: Any) -> None:
         (lambda deltaT: deltaT * 0.001, False, VGREAT),  # none active -> default
     ],
 )
-def test_resolver_injects_bound_interface_for_interface_typed_param(
+def test_resolver_injects_the_live_bound_hook_for_an_interface_typed_param(
     constraint: Any, fn: Callable[..., float], active: bool, expected: float
 ) -> None:
-    loop_rt = ModelRuntime(spec=constraint.owner, name="solutionLoop", config=None)
     courant_rt = contributor(constraint, fn, "courant")
     ctx = Context(
         fields={"deltaT": 0.2},
-        models={"solutionLoop": loop_rt, "courant": courant_rt},
+        models={"courant": courant_rt} if active else {},
     )
-    bind_model_interface(loop_rt, constraint, [courant_rt] if active else [], ctx)
 
     def set_time_step(self: Any, constraints: constraint) -> float:  # type: ignore[valid-type]
         return constraints()
 
     resolver = DependencyResolver()
     kwargs = resolver.resolve_arguments(set_time_step, ctx=ctx)
-    assert isinstance(kwargs["constraints"], BoundModelInterface)
+    assert callable(kwargs["constraints"])
     assert kwargs["constraints"]() == pytest.approx(expected)
 
 
-@pytest.mark.parametrize(
-    "make_ctx, match",
-    [
-        # owner runtime present, but its interface was never bound for this case
-        (
-            lambda c: Context(
-                fields={},
-                models={
-                    "solutionLoop": ModelRuntime(spec=c.owner, name="solutionLoop", config=None)
-                },
-            ),
-            "is not bound for this case",
-        ),
-        # no Context supplied at all
-        (lambda c: None, "no Context"),
-        # owner runtime absent from ctx.models entirely
-        (lambda c: Context(fields={}, models={}), "is not bound for this case"),
-    ],
-)
-def test_resolver_raises_for_unbound_interface_param(
-    constraint: Any, make_ctx: Callable[[Any], Any], match: str
-) -> None:
+def test_injection_needs_no_owner_runtime_in_the_context(constraint: Any) -> None:
+    # Activation is decided by the CONTRIBUTING runtimes alone — nothing about
+    # the owning model has to be registered for the interface to resolve.
+    rt = contributor(constraint, lambda deltaT: deltaT, "courant")
+    ctx = Context(fields={"deltaT": 0.2}, models={"courant": rt})
+
     def set_time_step(self: Any, constraints: constraint) -> float:  # type: ignore[valid-type]
         return constraints()
 
-    resolver = DependencyResolver()
-    with pytest.raises(ValueError, match=match):
-        resolver.resolve_arguments(set_time_step, ctx=make_ctx(constraint))
+    kwargs = DependencyResolver().resolve_arguments(set_time_step, ctx=ctx)
+    assert kwargs["constraints"]() == pytest.approx(0.2)
 
 
-@pytest.mark.parametrize(
-    "candidate_contributes, expected",
-    [
-        (True, 0.2),  # the candidate contributes -> its limit folds in
-        (False, VGREAT),  # candidate contributes nothing -> excluded -> default
-    ],
-)
-def test_auto_wiring_binds_only_active_contributors(
-    constraint: Any, candidate_contributes: bool, expected: float
-) -> None:
-    loop_rt = ModelRuntime(spec=constraint.owner, name="solutionLoop", config=None)
-    if candidate_contributes:
-        candidate = contributor(constraint, lambda deltaT: deltaT, "courant")
-    else:
-        # courant's 0.001 would win the min if it leaked, but it is NOT a candidate.
-        contributor(constraint, lambda deltaT: deltaT * 0.001, "courant")
-        candidate = ModelRuntime(spec=Model("unrelated"), name="unrelated", config=None)
+def test_resolver_raises_for_an_interface_param_without_a_context(constraint: Any) -> None:
+    def set_time_step(self: Any, constraints: constraint) -> float:  # type: ignore[valid-type]
+        return constraints()
 
-    ctx = Context(fields={"deltaT": 0.2}, models={})
-    bind_owned_interfaces(loop_rt, [candidate], ctx)
-
-    bound = loop_rt.bound_interfaces["timeStepConstraint"]
-    assert isinstance(bound, BoundModelInterface)
-    assert bound() == pytest.approx(expected)
+    with pytest.raises(ValueError, match="no Context"):
+        DependencyResolver().resolve_arguments(set_time_step, ctx=None)

@@ -13,7 +13,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, Callable, Iterable, Literal, Optional, Sequence, TypeVar, cast
+from typing import Any, Callable, Literal, Optional, Sequence, TypeVar, cast
 
 from pydantic import BaseModel
 
@@ -30,7 +30,7 @@ from neofoam.framework.dependency_resolver import (
 from neofoam.framework.operations import Operation, Operations, SequentialOp
 from neofoam.framework.types import OperationMetadata, OperationNumber
 
-from .interface import ModelInterface
+from .extension import Extension, Hook
 from .runtime import ModelRuntime
 
 _ConfigT = TypeVar("_ConfigT", bound=type)
@@ -69,7 +69,7 @@ class ModelSpec:
         self._operations: list[tuple[Any, dict[str, Any]]] = []
         self._operation_collection_func: Optional[Callable[..., Any]] = None
 
-        self._interfaces: dict[str, ModelInterface[Any]] = {}
+        self._own_extension: Optional[Extension] = None
 
         self._dependency_resolver = DependencyResolver()
 
@@ -280,35 +280,38 @@ class ModelSpec:
     # Interface ownership (model-owned extension points)
     # ------------------------------------------------------------------
 
-    def interface(self, fold: Callable[[Iterable[_T]], _T]) -> ModelInterface[_T]:
-        """Declare an interface owned by this model.
+    def interface(self, declaration: Callable[..., Any]) -> Hook:
+        """Declare a gather hook owned by this model.
 
-        The decorated function's ``__name__`` is the interface name and its body
-        is the single fold (defining the empty case). Returns a ``ModelInterface``
-        handle, also registered on this model so it is reachable from its owner.
+        Sugar over :class:`~neofoam.framework.model.extension.Extension`: the
+        hook is declared on a model-private extension named after this model, so
+        an interface *is* an extension :class:`Hook`. The decorated body receives
+        the active contributions' results and combines them, defining the empty
+        case::
+
+            @solutionLoop.interface
+            def maxTimeStep(ceilings: Iterable[float]) -> float:
+                return min(ceilings, default=VGREAT)
         """
-        handle: ModelInterface[_T] = ModelInterface(name=fold.__name__, owner=self, fold=fold)
-        if handle.name in self._interfaces:
+        if self._own_extension is None:
+            self._own_extension = Extension(self.name)
+        if declaration.__name__ in self._own_extension.hooks:
             raise RuntimeError(
-                f"Model '{self.name}': interface '{handle.name}' is already declared."
+                f"Model '{self.name}': interface '{declaration.__name__}' is already declared."
             )
-        self._interfaces[handle.name] = handle
-        return handle
+        return self._own_extension.defines(declaration)
 
-    def contributes(
-        self, target: ModelInterface[_T]
-    ) -> Callable[[Callable[..., _T]], Callable[..., _T]]:
+    def contributes(self, target: Hook) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
         """Register an operation-style contribution to *target*, owned by self.
 
-        The function is recorded against *target* and tagged with this contributing
-        model, then returned unchanged. It participates in *target*'s live fold
-        (``BoundModelInterface.__call__``) iff this model is active for the case.
+        The function participates in *target*'s dispatch iff this model is
+        active for the case.
         """
-        if not isinstance(target, ModelInterface):
+        if not isinstance(target, Hook):
             raise TypeError(
                 f"Model '{self.name}': contributes(...) target must be a "
-                "ModelInterface declared via @<model>.interface, got "
-                f"{type(target).__name__}."
+                "hook declared via @<model>.interface or "
+                f"@<extension>.defines, got {type(target).__name__}."
             )
 
         def decorator(func: Callable[..., _T]) -> Callable[..., _T]:
@@ -317,9 +320,9 @@ class ModelSpec:
         return decorator
 
     @property
-    def declared_interfaces(self) -> dict[str, ModelInterface[Any]]:
-        """The interfaces this model owns, by name (reachable from the owner)."""
-        return dict(self._interfaces)
+    def declared_interfaces(self) -> dict[str, Hook]:
+        """The gather hooks this model owns, by name (reachable from the owner)."""
+        return dict(self._own_extension.hooks) if self._own_extension is not None else {}
 
     # ------------------------------------------------------------------
     # Instantiation
@@ -382,7 +385,9 @@ class ModelSpec:
         for func, metadata in self._operations:
             discovered = _discover_configs_from_signature(func)
             if discovered:
-                wrapped = _create_runtime_config_wrapper(func, discovered, runtime)
+                wrapped = _create_runtime_config_wrapper(
+                    func, discovered, runtime, self._dependency_resolver
+                )
             else:
                 wrapped = wrap_with_dependency_resolution(func, runtime, self._dependency_resolver)
 

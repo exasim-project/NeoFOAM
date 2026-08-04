@@ -54,34 +54,35 @@ class DependencyResolver:
                     kwargs[param_name] = ctx
                     continue
 
-                # Model-owned interface: a param annotated with a ModelInterface
-                # handle is injected as the owning runtime's per-case bound handle.
-                from .model.interface import ModelInterface as _ModelInterface  # noqa: PLC0415
-                from .model.runtime import ModelRuntime as _ModelRuntime  # noqa: PLC0415
+                # A param annotated with a Hook handle is injected as that hook
+                # bound to the live Context; calling it folds the contributions.
+                from .model.extension import Hook as _Hook  # noqa: PLC0415
 
-                if isinstance(param.annotation, _ModelInterface):
-                    iface = param.annotation
+                if isinstance(param.annotation, _Hook):
                     if ctx is None:
                         raise ValueError(
-                            f"Parameter '{param_name}' is typed as a ModelInterface "
-                            "but no Context was provided to the resolver."
+                            f"Parameter '{param_name}' is typed as an interface "
+                            "hook but no Context was provided to the resolver."
                         )
-                    owner_runtime = ctx.models.get(iface.owner.name)
-                    if (
-                        not isinstance(owner_runtime, _ModelRuntime)
-                        or iface.name not in owner_runtime.bound_interfaces
-                    ):
-                        raise ValueError(
-                            f"Interface '{iface.name}' (owned by model "
-                            f"'{iface.owner.name}') is not bound for this case; "
-                            "expected a BoundModelInterface on the owning "
-                            "ModelRuntime."
-                        )
-                    kwargs[param_name] = owner_runtime.bound_interfaces[iface.name]
+                    kwargs[param_name] = param.annotation.resolve(ctx)
                     continue
 
                 if get_origin(param.annotation) is Annotated:
                     args = get_args(param.annotation)
+
+                    # Rebound per injection so it never outlives this Context.
+                    from .model.extension import Extension as _Extension  # noqa: PLC0415
+
+                    if len(args) > 1 and isinstance(args[1], _Extension):
+                        if ctx is None:
+                            raise ValueError(
+                                f"Parameter '{param_name}' is annotated with the "
+                                f"extension '{args[1].name}' but no Context "
+                                "was provided to the resolver."
+                            )
+                        kwargs[param_name] = args[1].resolve(ctx)
+                        continue
+
                     if len(args) > 1 and isinstance(args[1], str):
                         marker = args[1]
                         if marker == "models" and ctx:

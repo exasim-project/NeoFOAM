@@ -262,6 +262,136 @@ fvcc::VolumeField<NeoN::scalar> gradDotGrad(
     );
     return out;
 }
+
+// Foam::bound(volScalarField&, const dimensionedScalar&), src/finiteVolume/cfdTools/
+// general/bound/bound.C. A cell at or below the floor is NOT clipped to the floor: it
+// takes fvc::average(max(field, lower)) — the face-area-weighted average of the floored
+// neighbourhood — so a bounded epsilon/omega keeps the scale of its neighbours. Clipping
+// to the floor instead would leave nut = Cmu k^2/epsilon dividing by ~1e-15.
+//
+// OpenFOAM guards the whole update on a *global* min < lower. Above the floor the update
+// is the identity, so the guard only skips redundant work: taking the local min here is
+// equivalent cell-for-cell and needs no MPI reduction.
+void boundLower(fvcc::VolumeField<NeoN::scalar>& field, NeoN::scalar lowerBound)
+{
+    using NeoN::localIdx;
+    using NeoN::scalar;
+
+    const auto& mesh = field.mesh();
+    const auto exec = field.exec();
+    const auto nCells = mesh.nCells();
+
+    scalar minValue = 0;
+    {
+        const auto fieldV = field.internalVector().view();
+        Kokkos::Min<scalar> reduceMin(minValue);
+        NeoN::parallelReduce(
+            exec,
+            {0, nCells},
+            NEON_LAMBDA(const localIdx i, scalar& s) {
+                if (fieldV[i] < s) s = fieldV[i];
+            },
+            reduceMin
+        );
+    }
+    if (minValue >= lowerBound) return;
+
+    NeoN::Logging::info("bounding {}, min: {}", field.name, minValue);
+
+    // floored = max(field, lower), internal and boundary — the field fvc::average sees.
+    fvcc::VolumeField<scalar> floored(
+        exec,
+        "bound(" + field.name + ")",
+        mesh,
+        fvcc::createCalculatedBCs<fvcc::VolumeBoundary<scalar>>(mesh)
+    );
+    {
+        const auto fieldV = field.internalVector().view();
+        auto flooredV = floored.internalVector().view();
+        NeoN::parallelFor(
+            exec,
+            {0, nCells},
+            NEON_LAMBDA(const localIdx i) { flooredV[i] = Kokkos::max(fieldV[i], lowerBound); },
+            "bound::floorInternal"
+        );
+        const auto fieldB = field.boundaryData().value().view();
+        auto flooredB = floored.boundaryData().value().view();
+        NeoN::parallelFor(
+            exec,
+            {0, flooredB.size()},
+            NEON_LAMBDA(const localIdx i) { flooredB[i] = Kokkos::max(fieldB[i], lowerBound); },
+            "bound::floorBoundary"
+        );
+    }
+
+    const fvcc::SurfaceInterpolation<scalar> surfInterp(
+        exec,
+        mesh,
+        NeoN::TokenList({std::string("linear")})
+    );
+    const auto surfFloored = surfInterp.interpolate(floored);
+
+    // fvc::average(ssf) = sum_f |Sf| ssf_f / sum_f |Sf| over each cell's faces.
+    NeoN::Vector<scalar> numerator(exec, nCells, scalar(0));
+    NeoN::Vector<scalar> denominator(exec, nCells, scalar(0));
+    {
+        const auto magSf = mesh.faceAreas().view();
+        const auto owners = mesh.faceOwners().view();
+        const auto neighbours = mesh.faceNeighbors().view();
+        const auto boundaryOwners = mesh.boundaryMesh().faceOwners().view();
+        const auto boundaryMagSf = mesh.boundaryMesh().faceAreas().view();
+        const auto faceV = surfFloored.internalVector().view();
+        const auto faceB = surfFloored.boundaryData().value().view();
+        auto num = numerator.view();
+        auto den = denominator.view();
+        NeoN::parallelFor(
+            exec,
+            {0, mesh.nInternalFaces()},
+            NEON_LAMBDA(const localIdx f) {
+                const scalar area = magSf[f];
+                const scalar contribution = area * faceV[f];
+                Kokkos::atomic_add(&num[owners[f]], contribution);
+                Kokkos::atomic_add(&num[neighbours[f]], contribution);
+                Kokkos::atomic_add(&den[owners[f]], area);
+                Kokkos::atomic_add(&den[neighbours[f]], area);
+            },
+            "bound::averageInternalFaces"
+        );
+        NeoN::parallelFor(
+            exec,
+            {0, static_cast<localIdx>(boundaryOwners.size())},
+            NEON_LAMBDA(const localIdx bf) {
+                const scalar area = boundaryMagSf[bf];
+                Kokkos::atomic_add(&num[boundaryOwners[bf]], area * faceB[bf]);
+                Kokkos::atomic_add(&den[boundaryOwners[bf]], area);
+            },
+            "bound::averageBoundaryFaces"
+        );
+    }
+
+    {
+        auto fieldV = field.internalVector().view();
+        const auto num = numerator.view();
+        const auto den = denominator.view();
+        NeoN::parallelFor(
+            exec,
+            {0, nCells},
+            NEON_LAMBDA(const localIdx i) {
+                // max(max(field, average*pos0(-field)), lower): pos0(-x) is 1 for x <= 0.
+                const scalar repaired = (fieldV[i] <= scalar(0)) ? (num[i] / den[i]) : fieldV[i];
+                fieldV[i] = Kokkos::max(repaired, lowerBound);
+            },
+            "bound::repair"
+        );
+        auto fieldB = field.boundaryData().value().view();
+        NeoN::parallelFor(
+            exec,
+            {0, fieldB.size()},
+            NEON_LAMBDA(const localIdx i) { fieldB[i] = Kokkos::max(fieldB[i], lowerBound); },
+            "bound::boundary"
+        );
+    }
+}
 } // namespace
 
 namespace NeoFOAM::bindings
@@ -335,6 +465,14 @@ void registerTurbulenceModel(nb::module_& m)
         "a"_a,
         "b"_a,
         "grad(a) . grad(b) for two scalar fields (kOmegaSST cross-diffusion)"
+    );
+
+    m.def(
+        "bound",
+        &boundLower,
+        "field"_a,
+        "lower"_a,
+        "Foam::bound: sub-floor cells take fvc::average(max(field, lower)), not the floor"
     );
 
     m.def(

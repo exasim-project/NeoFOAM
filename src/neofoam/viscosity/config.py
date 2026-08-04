@@ -22,7 +22,11 @@ __all__ = ["TransportPropertiesConfig"]
 
 @IOStrategy(OF("constant/transportProperties"))
 class TransportPropertiesConfig(BaseConfig):
-    """Top-level ``constant/transportProperties`` dictionary."""
+    """Top-level ``constant/transportProperties`` dictionary.
+
+    A dimensioned ``nu`` entry (``nu [ 0 2 -1 0 0 0 0 ] 1e-05``) is reduced to a
+    ``float`` by the IO read path before pydantic sees it.
+    """
 
     transportModel: str = "Newtonian"
     nu: Optional[float] = None
