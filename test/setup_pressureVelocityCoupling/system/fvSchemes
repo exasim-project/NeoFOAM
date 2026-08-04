@@ -38,6 +38,8 @@ divSchemes
 {
     default         none;
     div(phi,U)      $DIVSCHEME;
+    // read only by boundedDivScheme.cpp, via a flux field named boundedPhi
+    div(boundedPhi,U)             bounded Gauss upwind;
     div(phi,nuTilda)              Gauss linear;
     div((nuEff*dev2(T(grad(U))))) Gauss linear;
 }
