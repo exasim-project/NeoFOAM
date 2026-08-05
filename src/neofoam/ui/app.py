@@ -85,6 +85,11 @@ _VUETIFY_CONFIG = {
                     "background": "#F4F6FB",
                     "surface": "#FFFFFF",
                     "surface-variant": "#E9EDF5",
+                    # Vuetify's stock surface-variant is dark, so its stock
+                    # on-surface-variant is near-white. Overriding only the
+                    # background left every `bg-surface-variant` element (the
+                    # assistant's chat replies) white-on-light, i.e. invisible.
+                    "on-surface-variant": "#1F2A3C",
                     "error": "#C62828",
                     "warning": "#E65100",
                     "success": "#2E7D32",
