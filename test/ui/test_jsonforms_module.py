@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+import re
+from collections import Counter
 from pathlib import Path
 
 from neofoam.ui import jsonforms_module
@@ -36,3 +38,20 @@ def test_umd_bundle_externalizes_trame_globals():
     assert "neofoam_jsonforms" in umd
     assert 'require("vue")' in umd
     assert 'require("vuetify")' in umd
+
+
+def test_umd_bundle_has_no_colliding_module_names():
+    """No two CJS module factories may share a minified name.
+
+    A previously committed bundle bound ``On`` to both lodash ``includes`` and an
+    Ajv module; the later ``var`` won, so ``@jsonforms/core``'s ``hasType`` called
+    a non-function and every schema form panel rendered empty. Nothing in the
+    headless suite mounts the bundle, so only this guard catches it.
+    """
+    umd = (jsonforms_module.STATIC_DIR / "neofoam_jsonforms.umd.js").read_text()
+    # `<name>=f((` is the minified CJS module-factory form emitted by the lib build.
+    names = re.findall(r"(?<![A-Za-z0-9_$.])([A-Za-z_$][A-Za-z0-9_$]*)=f\(\(", umd)
+    # Guard the guard: a future minifier renaming `f` would silently match nothing.
+    assert len(names) > 100, f"module-factory pattern no longer matches ({len(names)} hits)"
+    duplicates = {name for name, count in Counter(names).items() if count > 1}
+    assert not duplicates, f"colliding minified module names: {sorted(duplicates)}"
