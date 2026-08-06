@@ -18,20 +18,18 @@ is present:
   ``create_pimple_state`` — so a pisoFoam case initializing proves BOTH
   branches).
 
+Which block is *selected* is decided by a pure dictionary read, pinned
+in-process by ``test_pimpleAlgorithm``; what only a real case can show is that
+the selected name is one ``set_ref_cell`` accepts, which is what this test adds.
 The PIMPLE (no-regression) path is already covered end-to-end by
 ``test/solver/incompressibleFluidNeoN/test_cavity_run.py`` (a laminar PIMPLE
 cavity whose solve necessarily runs both init steps), so it is not duplicated
 here.
 
-A sibling behavior is pinned here too: ``simpleAlgorithm.create_simple_state``
-accepts a SIMPLEC case (``consistent yes``) — it used to refuse it with a
-``NotImplementedError``, so the test asserts that refusal is gone. That the
-consistent branch is numerically right (not merely accepted) is a separate,
-heavier check: ``test_steady_vs_incompressibleFluid`` compares a SIMPLEC run
-against the pybFoam backend field-by-field.
-
-Each case is a laminar lid-driven cavity (no turbulence/wallDist confound), so
-the init failure/success is attributable to the control-block selection alone.
+The case is ``test/setup_pimple`` — the same laminar lid-driven cavity the PIMPLE
+path runs (no turbulence/wallDist confound), with its ``PIMPLE`` block swapped
+for a ``PISO`` one by ``patch``, so the init failure/success is attributable to
+the control-block selection alone and nothing else about the two cases differs.
 Initialization runs in an isolated subprocess: NeoN/Kokkos + OpenFOAM keep
 per-process global state that a second in-process ``Foam::Time`` would corrupt,
 and a FOAM fatal error calls ``::exit()`` — a subprocess turns that into a
@@ -47,13 +45,26 @@ import subprocess
 import sys
 from pathlib import Path
 
-from neofoam.tooling.casebuild import block_mesh, from_template
+import pytest
 
-_CASES = Path(__file__).parent / "cases"
+from neofoam.tooling.casebuild import block_mesh, from_template, patch
+
+#: The laminar lid-driven cavity every case here starts from — it ships ``PIMPLE``.
+_SETUP_PIMPLE = Path(__file__).parents[4] / "setup_pimple"
+
+#: What a pisoFoam case ships in place of that ``PIMPLE`` block: the same inner
+#: correctors and pressure reference, with the outer-loop entries (``nOuterCorrectors``,
+#: ``residualControl``) that only PIMPLE has left out.
+_PISO_BLOCK = {
+    "nCorrectors": 2,
+    "nNonOrthogonalCorrectors": 0,
+    "pRefCell": 0,
+    "pRefValue": 0,
+}
 
 # Drive initialization only (not a full solve): the StagedInitRunner executes
 # all lazy init steps eagerly, so this reaches create_pimple_state /
-# create_pressure_reference (or create_simple_state) and then stops.
+# create_pressure_reference and then stops.
 _INIT_DRIVER = (
     "from neofoam.solver.incompressibleFluidNeoN import incompressibleFluidNeoN;"
     " from neofoam.solver.neon_runtime import ensure_neon_initialized;"
@@ -64,20 +75,19 @@ _INIT_DRIVER = (
 )
 
 
-def _run_init(case_dir: Path, tmp_path: Path) -> subprocess.CompletedProcess[str]:
-    """Stage the committed case (blockMesh) and run the init driver in a subprocess."""
-    case = (from_template(case_dir) | block_mesh()).build_at(tmp_path / "case")
-    env = {**os.environ, "FOAM_SIGFPE": "false"}
+def _run_init(case_path: Path) -> subprocess.CompletedProcess[str]:
+    """Run the init driver in *case_path* in a subprocess."""
     return subprocess.run(
         [sys.executable, "-c", _INIT_DRIVER],
-        cwd=str(case.path),
-        env=env,
+        cwd=str(case_path),
+        env={**os.environ, "FOAM_SIGFPE": "false"},
         capture_output=True,
         text=True,
         timeout=600,
     )
 
 
+@pytest.mark.slow
 def test_piso_case_initializes(tmp_path: Path) -> None:
     """A pisoFoam-style case (PISO block, no PIMPLE) initializes cleanly.
 
@@ -86,7 +96,13 @@ def test_piso_case_initializes(tmp_path: Path) -> None:
     passes ``"PISO"`` to set_ref_cell (old code aborted with a FOAM fatal
     ``Entry 'PIMPLE' not found``).
     """
-    result = _run_init(_CASES / "piso_cavity", tmp_path)
+    case = (
+        from_template(_SETUP_PIMPLE)
+        | patch("system/fvSolution", PISO=_PISO_BLOCK, remove=["PIMPLE"])
+        | block_mesh()
+    ).build_at(tmp_path / "pisoCavity")
+
+    result = _run_init(case.path)
 
     combined = result.stdout + result.stderr
     assert result.returncode == 0, (
@@ -97,19 +113,3 @@ def test_piso_case_initializes(tmp_path: Path) -> None:
     # The exact failure signatures the fix removes — must not appear.
     assert "Key 'PIMPLE' not found" not in combined
     assert "Entry 'PIMPLE' not found" not in combined
-
-
-def test_simplec_case_initializes(tmp_path: Path) -> None:
-    """A SIMPLEC case (``consistent yes``) initializes instead of being refused.
-
-    ``create_simple_state`` used to raise ``NotImplementedError``; it now reads
-    ``consistent`` as a control flag, so the case must reach initialization.
-    """
-    result = _run_init(_CASES / "simplec_cavity", tmp_path)
-
-    assert result.returncode == 0, (
-        "incompressibleFluidNeoN init failed on a SIMPLEC case "
-        f"(rc={result.returncode}):\n{result.stdout[-2000:]}\n{result.stderr[-3000:]}"
-    )
-    assert "NEON_INIT_OK" in result.stdout, "init did not run to completion"
-    assert "NotImplementedError" not in result.stderr, result.stderr[-3000:]
