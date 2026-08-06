@@ -3,8 +3,11 @@
 
 """Process-wide NeoN/Kokkos initialization: executor selection and teardown.
 
-``requested_executor`` is a plain environment read and is tested in-process. The
-other two behaviors are only observable across a whole process life, hence
+``requested_executor``, ``_launcher_rank`` and the wording of the failed-GPU-init
+report are plain environment reads and string formatting, so they are tested
+in-process — the report's wording then holds on a host-only build too, where the
+subprocess test below has no failure to provoke and skips. The other two
+behaviors are only observable across a whole process life, hence
 subprocess-driven:
 
 **A failed GPU init must say what to do about it.** Kokkos brings up every
@@ -41,7 +44,16 @@ import pytest
 
 pytest.importorskip("neon._neon")  # skip when the NeoN bindings are not built
 
-from neofoam.solver.neon_runtime import requested_executor  # noqa: E402
+import neon._neon as nn  # noqa: E402
+
+from neofoam.solver import neon_runtime  # noqa: E402
+from neofoam.solver.neon_runtime import (  # noqa: E402
+    _RANK_ENVS,
+    _gpu_init_report,
+    _launcher_rank,
+    ensure_neon_initialized,
+    requested_executor,
+)
 
 # An ordinal no machine exposes: Kokkos selects it, the CUDA runtime rejects it,
 # and the healthy device is never touched.
@@ -105,6 +117,87 @@ def test_requested_executor_reads_the_environment(monkeypatch: pytest.MonkeyPatc
     monkeypatch.setenv("NEOFOAM_EXECUTOR", "GPU")
 
     assert requested_executor() == "GPU"
+
+
+@pytest.mark.parametrize("rank_env", _RANK_ENVS)
+def test_launcher_rank_names_the_variable_it_read(
+    monkeypatch: pytest.MonkeyPatch, rank_env: str
+) -> None:
+    """Every launcher's rank variable is recognised, and the report says which."""
+    for name in _RANK_ENVS:
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv(rank_env, "3")
+
+    assert _launcher_rank() == f"3 (${rank_env})"
+
+
+def test_launcher_rank_prefers_the_most_specific_variable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """srun inside an OpenMPI job sets both; the OpenMPI rank is the process's own."""
+    for name in _RANK_ENVS:
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv("SLURM_PROCID", "0")
+    monkeypatch.setenv("OMPI_COMM_WORLD_RANK", "7")
+
+    assert _launcher_rank() == "7 ($OMPI_COMM_WORLD_RANK)"
+
+
+def test_launcher_rank_without_a_launcher_says_so(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A plain (non-MPI) run reports no rank rather than a misleading 0."""
+    for name in _RANK_ENVS:
+        monkeypatch.delenv(name, raising=False)
+
+    assert _launcher_rank() == "unknown — not launched by mpirun/srun"
+
+
+def test_gpu_init_report_names_the_devices_and_the_ways_out(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The report restates the Kokkos error with the state that explains it.
+
+    The device probe shells out to ``nvidia-smi``, so it is stubbed: what is
+    under test is that its output reaches the report, next to the executor, the
+    rank, the visibility variables and the remedies.
+    """
+    monkeypatch.setenv("NEOFOAM_EXECUTOR", "Serial")
+    monkeypatch.setenv("KOKKOS_VISIBLE_DEVICES", "4095")
+    monkeypatch.delenv("CUDA_VISIBLE_DEVICES", raising=False)
+    for name in _RANK_ENVS:
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setattr(neon_runtime, "_device_inventory", lambda: "  0, NVIDIA A100, 1 MiB, 2 MiB")
+
+    report = _gpu_init_report(RuntimeError("cudaErrorInvalidDevice"))
+
+    assert "NeoN (Kokkos) initialization failed on the GPU backend" in report
+    assert "cudaErrorInvalidDevice" in report
+    assert "requested executor: Serial ($NEOFOAM_EXECUTOR)" in report
+    assert "MPI rank: unknown — not launched by mpirun/srun" in report
+    assert "CUDA_VISIBLE_DEVICES=<unset>" in report
+    assert "KOKKOS_VISIBLE_DEVICES=4095" in report
+    assert "devices:\n  0, NVIDIA A100, 1 MiB, 2 MiB" in report
+    assert "KOKKOS_VISIBLE_DEVICES=<index above>" in report
+    assert "-DKokkos_ENABLE_CUDA=OFF" in report
+
+
+def test_non_cuda_init_failure_is_reraised_unwrapped(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Only a CUDA failure gets the GPU report; anything else is passed through.
+
+    Wrapping every init failure would bury an unrelated cause (a bad argv, a
+    missing MPI init) under a page about GPU contexts.
+    """
+    monkeypatch.setattr(neon_runtime, "_neon_initialized", False)
+    original = RuntimeError("Kokkos::initialize: unrecognised command line argument")
+
+    def failing_initialize(argv: list[str]) -> None:
+        raise original
+
+    monkeypatch.setattr(nn, "initialize", failing_initialize)
+
+    with pytest.raises(RuntimeError) as raised:
+        ensure_neon_initialized(["unit-test"])
+
+    assert raised.value is original
 
 
 def test_failed_gpu_init_reports_the_devices_and_the_ways_out() -> None:
