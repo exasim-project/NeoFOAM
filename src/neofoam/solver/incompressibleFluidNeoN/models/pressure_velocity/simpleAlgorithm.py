@@ -163,6 +163,17 @@ class SimpleNeoNState:
         self.outer_open: bool = True
 
 
+def _build_simple_state(fv_solution: Any) -> SimpleNeoNState:
+    """SIMPLE loop state read from the case's ``SIMPLE`` control block."""
+    simple_dict = fv_solution.subDict("SIMPLE")
+    piso = PisoControl(
+        n_correctors=1,
+        n_non_orthogonal_correctors=_read_int(simple_dict, "nNonOrthogonalCorrectors", 0),
+        momentum_predictor=_read_switch(simple_dict, "momentumPredictor", True),
+    )
+    return SimpleNeoNState(piso, _read_switch(simple_dict, "consistent", False))
+
+
 @simpleNeoN.build
 def build(self: Any) -> list[Any]:
     """Lazy initializers for the NeoN SIMPLE state (see pimpleAlgorithm)."""
@@ -177,14 +188,7 @@ def build(self: Any) -> list[Any]:
         return nfb.create_phi(context["_neon_runtime"], "U")
 
     def create_simple_state(context: dict[str, Any]) -> SimpleNeoNState:
-        rt = context["_neon_runtime"]
-        simple_dict = rt.fv_solution_dict.subDict("SIMPLE")
-        piso = PisoControl(
-            n_correctors=1,
-            n_non_orthogonal_correctors=_read_int(simple_dict, "nNonOrthogonalCorrectors", 0),
-            momentum_predictor=_read_switch(simple_dict, "momentumPredictor", True),
-        )
-        return SimpleNeoNState(piso, _read_switch(simple_dict, "consistent", False))
+        return _build_simple_state(context["_neon_runtime"].fv_solution_dict)
 
     def create_pressure_reference(context: dict[str, Any]) -> PressureReference:
         rt = context["_neon_runtime"]

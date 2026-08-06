@@ -134,6 +134,24 @@ def _read_switch(d: Any, key: str, default: bool) -> bool:
     return d.get_string(key).strip().lower() in ("yes", "true", "on", "1")
 
 
+def _control_block_name(fv_solution: Any) -> str:
+    """Name of the fvSolution subdict the pressure-velocity control is read from.
+
+    A stock pimpleFoam case ships a ``PIMPLE`` block; a pisoFoam case ships a
+    ``PISO`` block instead (a single-outer-loop PIMPLE), so mirror the pybFoam
+    control factory: prefer PIMPLE, fall back to PISO. Both the corrector counts
+    and ``pRefCell``/``pRefValue`` are read from this one block, so the readers
+    share this selection instead of repeating it.
+    """
+    for name in ("PIMPLE", "PISO"):
+        if fv_solution.contains(name):
+            return name
+    raise ValueError(
+        "incompressibleFluidNeoN: system/fvSolution has neither a PIMPLE "
+        "nor a PISO block to build the pressure-velocity control from."
+    )
+
+
 def _reduce_u(stats: Any) -> tuple[float, float]:
     """Max-component reduction: Ux/Uy/Uz entries -> one {init, final} pair."""
     mi = 0.0
@@ -182,22 +200,11 @@ def build(self: Any) -> list[Any]:
 
     def create_pimple_state(context: dict[str, Any]) -> PimpleNeoNState:
         rt = context["_neon_runtime"]
-        # Inner-corrector counts live in the "PIMPLE" subdict for a stock
-        # pimpleFoam case; a pisoFoam case ships a "PISO" block instead (a
-        # single-outer-loop PIMPLE), so mirror the pybFoam control factory:
-        # prefer PIMPLE, fall back to PISO. OpenFOAM's solutionControl defaults
-        # momentumPredictor to true; the outer-loop count comes from
-        # nfb.PimpleControl, which defaults to 1 without a PIMPLE block.
+        # OpenFOAM's solutionControl defaults momentumPredictor to true; the
+        # outer-loop count comes from nfb.PimpleControl, which defaults to 1
+        # without a PIMPLE block.
         fv_solution = rt.fv_solution_dict
-        if fv_solution.contains("PIMPLE"):
-            control_dict = fv_solution.subDict("PIMPLE")
-        elif fv_solution.contains("PISO"):
-            control_dict = fv_solution.subDict("PISO")
-        else:
-            raise ValueError(
-                "incompressibleFluidNeoN: system/fvSolution has neither a PIMPLE "
-                "nor a PISO block to build the pressure-velocity control from."
-            )
+        control_dict = fv_solution.subDict(_control_block_name(fv_solution))
         piso = PisoControl(
             n_correctors=_read_int(control_dict, "nCorrectors", 1),
             n_non_orthogonal_correctors=_read_int(control_dict, "nNonOrthogonalCorrectors", 0),
@@ -210,7 +217,7 @@ def build(self: Any) -> list[Any]:
         # pRefCell/pRefValue live in the same control block as the corrector
         # counts, so pass the block the case ships — a pisoFoam case would
         # otherwise abort with *Entry 'PIMPLE' not found in fvSolution*.
-        algorithm = "PIMPLE" if rt.fv_solution_dict.contains("PIMPLE") else "PISO"
+        algorithm = _control_block_name(rt.fv_solution_dict)
         cell, value, needs_ref = nfb.set_ref_cell(rt, "p", algorithm)
         return PressureReference(cell=cell, value=value, needs_ref=needs_ref)
 
