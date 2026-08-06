@@ -258,6 +258,46 @@ def test_busy_true_during_run():
     assert server.state.ai_busy is False
 
 
+class _BlockingAgent:
+    """Stub agent whose first run parks until released (no network)."""
+
+    def __init__(self, output: Any) -> None:
+        self._output = output
+        self.calls: list[Any] = []
+        self.started = asyncio.Event()
+        self.release = asyncio.Event()
+
+    async def run(self, prompt: str, message_history: Any = None) -> SimpleNamespace:
+        snap = list(message_history) if message_history is not None else None
+        self.calls.append((prompt, snap))
+        if len(self.calls) == 1:
+            self.started.set()
+            await self.release.wait()
+        return SimpleNamespace(output=self._output, all_messages=lambda: ["MSG"])
+
+
+def test_message_sent_while_busy_is_dropped():
+    # Two overlapping turns both start from an empty message_history and both
+    # rewrite it in place, so the second silently discards the first turn.
+    solver = _solver()
+    server = _server()
+    stub = _BlockingAgent(_prebuilt_case_spec(solver))
+    send = build_agent_panel(server, build_forms(solver), solver, agent_factory=lambda **_kw: stub)
+
+    async def drive() -> None:
+        first = asyncio.create_task(send("first"))
+        await stub.started.wait()
+        await send("second")  # overlaps the running turn
+        stub.release.set()
+        await first
+
+    asyncio.run(drive())
+
+    assert [prompt for prompt, _ in stub.calls] == ["first"]
+    assert [m["role"] for m in server.state.chat_log] == ["user", "assistant"]
+    assert server.state.ai_busy is False
+
+
 def _empty_case_spec(solver: Any) -> Any:
     """A CaseSpec with every field null — an agent that only called a tool."""
     return build_case_output_model(solver=solver)()

@@ -162,6 +162,11 @@ def build_agent_panel(
         prompt = (text if text is not None else state.chat_input).strip()
         if not prompt:
             return
+        # The widgets are disabled while busy, but a queued click still lands here:
+        # a second concurrent turn would start from an empty `history` and then
+        # overwrite the first turn's transcript.
+        if state.ai_busy:
+            return
         _say("user", prompt)
         state.chat_input = ""
         state.ai_busy = True

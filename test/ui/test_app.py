@@ -147,6 +147,98 @@ def test_incomplete_save_is_reported_not_raised(tmp_path):
     assert any(f["level"] == "error" for f in server.state.findings)
 
 
+def _seed_transport_defaults(server) -> None:
+    """The minimal valid form state (only transportProperties filled)."""
+    solver = resolve_solver("incompressibleFluid")
+    defaults = tools.config_schema(solver, "transport_properties_config").defaults
+    for entry in server.controller.get_entries():
+        server.state[entry.state_key] = (
+            dict(defaults) if entry.config_name == "transport_properties_config" else {}
+        )
+
+
+def test_save_case_with_a_blank_target_writes_nothing(tmp_path, monkeypatch):
+    # A blank target field used to resolve to the server's launch directory, so a
+    # filled wizard wrote a whole case into the user's checkout.
+    server = build_app(server=get_server("neofoam_ui_test_blank_target"), plugins=[])
+    _seed_transport_defaults(server)
+    monkeypatch.chdir(tmp_path)
+
+    server.state.target_dir = ""
+    server.controller.save_case()
+
+    assert list(tmp_path.iterdir()) == []
+    assert "error" in server.state.save_report
+    assert server.state.validation_ok is False
+    assert any("target directory" in f["message"] for f in server.state.findings)
+
+
+def test_revalidate_with_a_blank_target_reports_instead_of_validating_the_launch_dir(
+    tmp_path, monkeypatch
+):
+    # Path("").is_dir() is True, so an unguarded revalidate reported findings about
+    # whatever directory the server was started from.
+    server = build_app(server=get_server("neofoam_ui_test_blank_reval"), plugins=[])
+    monkeypatch.chdir(tmp_path)
+
+    server.state.target_dir = ""
+    server.controller.revalidate()
+
+    assert server.state.validation_ok is False
+    assert [f["message"] for f in server.state.findings] == [
+        "No target directory — type an absolute path first."
+    ]
+
+
+def test_save_case_reports_a_scaffold_failure(tmp_path):
+    # A case root the scaffold cannot write into (here: an `Allrun` directory in the
+    # way, standing in for a read-only root). The configs are written, but the wizard
+    # must not land on Review still telling the user to click Save.
+    (tmp_path / "Allrun").mkdir()
+    server = build_app(server=get_server("neofoam_ui_test_scaffold_fail"), plugins=[])
+    _seed_transport_defaults(server)
+    server.state.target_dir = str(tmp_path)
+
+    server.controller.save_case()  # must not raise
+
+    assert server.state.current_step == "review"
+    assert server.state.validation_ok is False  # not None → Review shows the failure
+    assert server.state.scaffolded == []
+    assert "error" in server.state.save_report
+    assert server.state.findings
+
+
+def test_failed_scan_clears_the_mesh_written_alert(tmp_path):
+    import shutil  # noqa: PLC0415
+
+    src_tri = (
+        Path(__file__).resolve().parents[1]
+        / "tooling"
+        / "workflow"
+        / "cases"
+        / "tube_bank"
+        / "constant"
+        / "triSurface"
+    )
+    shutil.copytree(src_tri, tmp_path / "constant" / "triSurface")
+
+    server = build_app(server=get_server("neofoam_ui_test_scan_fail"), plugins=[])
+    server.state.stl_dir = str(tmp_path / "constant" / "triSurface")
+    server.state.target_dir = str(tmp_path)
+    server.controller.load_geometry()
+    server.controller.write_mesh()
+    assert server.state.mesh_written  # the green "Wrote: …" alert is up
+
+    server.state.stl_dir = str(tmp_path / "does_not_exist")
+    server.controller.load_geometry()
+
+    # The failure must not sit above a stale success alert, and must not read as info.
+    assert server.state.geometry_patches == []
+    assert server.state.mesh_written == []
+    assert server.state.geometry_severity == "error"
+    assert "Could not read geometry" in server.state.geometry_status
+
+
 def test_revalidate_reruns_without_resaving(tmp_path):
     solver = resolve_solver("incompressibleFluid")
     server = build_app(server=get_server("neofoam_ui_test_reval"), plugins=[])

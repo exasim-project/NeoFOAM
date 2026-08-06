@@ -24,6 +24,7 @@ from neofoam.mcp import tools
 from neofoam.mcp.registry import resolve_solver
 from neofoam.ui import case_spec as cs
 from neofoam.ui import jsonforms_module
+from neofoam.ui._paths import _resolve_target
 from neofoam.ui.agent_panel import build_agent_panel
 from neofoam.ui.forms import (
     FormEntry,
@@ -40,7 +41,7 @@ from neofoam.ui.geometry import (
     write_mesh_configs,
 )
 from neofoam.ui.plugins import StepContext, StepPlugin, discover_step_plugins
-from neofoam.ui.review import findings_to_rows, save_error_rows
+from neofoam.ui.review import FindingRow, findings_to_rows, save_error_rows
 from neofoam.ui.scaffold import scaffold_runnable_case
 from neofoam.ui.steps import Step, build_model_choices, build_steps
 from neofoam.ui.sweep_panel import SweepPanel
@@ -249,6 +250,7 @@ def build_app(
     state.role_names = _ROLE_NAMES
     state.stl_dir = _DEFAULT_STL_DIR
     state.geometry_status = ""
+    state.geometry_severity = "info"  # VAlert type: info | success | warning | error
     state.geo_bbox = None
     state.geo_location = ""
     state.geo_length_scale = 0.0
@@ -264,46 +266,83 @@ def build_app(
     # Controller                                                         #
     # ------------------------------------------------------------------ #
 
-    def _validate_and_store() -> None:
-        report = tools.validate_case(solver, state.target_dir)
+    def _validate_and_store(case_dir: Path) -> None:
+        report = tools.validate_case(solver, str(case_dir))
         state.validation_ok = report.ok
         state.findings = [asdict(r) for r in findings_to_rows(report)]
+
+    def _report_path_error(exc: ValueError) -> None:
+        """A blank/relative path field is a UI problem, not a config problem."""
+        state.validation_ok = False
+        state.findings = [
+            asdict(
+                FindingRow(
+                    level="error",
+                    color="error",
+                    file="Target directory",
+                    message=str(exc),
+                    fix="Type an absolute case directory in the toolbar field.",
+                )
+            )
+        ]
 
     def save_case() -> None:
         selected = {c.name for c in optional if state[f"sel_{c.name}"]}
         form_state = {e.key: dict(state[e.state_key]) for e in entries}
         state.current_step = "review"
         try:
+            target = _resolve_target(state.target_dir, "target directory")
+        except ValueError as exc:
+            state.save_report = {"error": str(exc)}
+            state.scaffolded = []
+            _report_path_error(exc)
+            return
+        try:
             # state_to_case_spec merges/validates field halves and may itself raise.
             spec = cs.state_to_case_spec(entries, form_state, selected)
-            result = tools.save_case(solver, spec, state.target_dir)
+            result = tools.save_case(solver, spec, str(target))
+            state.save_report = result.model_dump()
+            # Make the saved case runnable, then validate it — inside the try, so a
+            # scaffold/validate failure is reported instead of leaving Review saying
+            # the case still has to be saved.
+            state.scaffolded = [str(p) for p in scaffold_runnable_case(target)]
+            _validate_and_store(target)
         except Exception as exc:  # noqa: BLE001 - a save failure must not crash the UI
             # Incomplete/invalid configs — surface each field instead of crashing.
             state.save_report = {"error": str(exc)}
             state.scaffolded = []
             state.validation_ok = False
             state.findings = [asdict(r) for r in save_error_rows(exc)]
-            return
-        state.save_report = result.model_dump()
-        # Make the saved case runnable, then validate it.
-        state.scaffolded = [str(p) for p in scaffold_runnable_case(state.target_dir)]
-        _validate_and_store()
 
     def revalidate() -> None:
-        _validate_and_store()
+        try:
+            target = _resolve_target(state.target_dir, "target directory")
+        except ValueError as exc:
+            _report_path_error(exc)
+            return
+        try:
+            _validate_and_store(target)
+        except Exception as exc:  # noqa: BLE001 - surface, don't crash the UI
+            state.validation_ok = False
+            state.findings = [asdict(r) for r in save_error_rows(exc)]
 
     def load_geometry() -> None:
         """Read the STLs in ``state.stl_dir`` (an STL folder or case dir) into state."""
         try:
-            spec = discover_geometry(state.stl_dir)
+            stl_dir = _resolve_target(state.stl_dir, "STL folder")
+            spec = discover_geometry(stl_dir)
         except Exception as exc:  # noqa: BLE001 - surface, don't crash the UI
             state.geometry_patches = []
             state.geo_bbox = None
+            # The mesh dicts describe the geometry that just failed to load — leaving
+            # the "Wrote: …" alert up would contradict the failure right below it.
+            state.mesh_written = []
+            state.geometry_severity = "error"
             state.geometry_status = f"Could not read geometry: {exc}"
             return
         # Pre-fill the case target from the STL folder if not already set.
         if not state.target_dir:
-            state.target_dir = _case_dir_for(state.stl_dir)
+            state.target_dir = _case_dir_for(str(stl_dir))
         patch_rows = [_patch_row(p) for p in spec.patches]
         state.geometry_patches = patch_rows
         state.geo_bbox = [list(spec.bbox_min), list(spec.bbox_max)]
@@ -323,22 +362,27 @@ def build_app(
             names = list(seeded.get("boundaryField", {}).keys())
             state[_schema_key(entry)] = patch_bc_schema(entry, names)
         n = len(spec.patches)
-        state.geometry_status = f"Found {n} patch(es) in {state.stl_dir}."
+        state.geometry_severity = "info"
+        state.geometry_status = f"Found {n} patch(es) in {stl_dir}."
 
     def write_mesh() -> None:
         """Author blockMeshDict / snappyHexMeshDict / preprocess.yaml from the state."""
         if not state.geometry_patches:
+            state.geometry_severity = "warning"
             state.geometry_status = "Scan a case first — no patches loaded."
             return
         try:
+            target = _resolve_target(state.target_dir, "target directory")
             spec = _spec_from_state(state)
             settings = MeshSettings(cell_size=state.geo_cell_size or None)
-            written = write_mesh_configs(state.target_dir, spec, settings)
+            written = write_mesh_configs(target, spec, settings)
         except Exception as exc:  # noqa: BLE001 - surface, don't crash the UI
             state.mesh_written = []
+            state.geometry_severity = "error"
             state.geometry_status = f"Failed to write mesh dicts: {exc}"
             return
         state.mesh_written = [str(p) for p in written]
+        state.geometry_severity = "success"
         state.geometry_status = f"Wrote {len(written)} mesh file(s)."
 
     ctrl.save_case = save_case
@@ -514,7 +558,7 @@ def build_app(
                 )
         v3.VAlert(
             text=("geometry_status",),
-            type="info",
+            type=("geometry_severity",),
             variant="tonal",
             v_show="geometry_status",
             classes="mb-2",
@@ -603,6 +647,7 @@ def build_app(
                             v_for="(p, i) in suggested_prompts",
                             key="i",
                             click=(ctrl.send_message, "[p]"),
+                            disabled=("ai_busy",),
                             size="small",
                             variant="tonal",
                             color="secondary",
@@ -630,12 +675,13 @@ def build_app(
                         placeholder="Message the assistant…",
                         hide_details=True,
                         keydown_enter=(ctrl.send_message, "[]"),
+                        disabled=("ai_busy",),
                     )
                     v3.VBtn(
                         "Send",
                         click=(ctrl.send_message, "[]"),
                         loading=("ai_busy",),
-                        disabled=("!chat_input",),
+                        disabled=("!chat_input || ai_busy",),
                         color="secondary",
                         prepend_icon="mdi-send",
                         block=True,
@@ -679,6 +725,8 @@ def build_app(
                 variant="flat",
                 prepend_icon="mdi-content-save-outline",
                 classes="mx-3",
+                # Without a target the case would land in the server's launch dir.
+                disabled=("!target_dir.trim()",),
             )
             # Fold / unfold the AI assistant drawer.
             v3.VBtn(

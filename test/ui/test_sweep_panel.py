@@ -643,6 +643,25 @@ def test_export_requires_saved_case(tmp_path):
     assert not (tmp_path / "base-sweep").exists()
 
 
+def test_export_with_a_blank_target_writes_nothing(tmp_path, monkeypatch):
+    # The default output dir is f"{target_dir}-sweep": blank target → a relative
+    # "-sweep" directory in whatever directory the server was launched from.
+    server = build_app(server=get_server("neofoam_ui_test_sweep_blank_target"))
+    state, ctrl = server.state, server.controller
+    _seed_defaults(server)
+    state.target_dir = str(tmp_path / "base")
+    ctrl.save_case()
+    ctrl.sweep_toggle_dimension("transport_properties_config")
+
+    monkeypatch.chdir(tmp_path)
+    state.target_dir = ""
+    ctrl.sweep_export()
+
+    assert state.sweep_exported == []
+    assert "target directory" in state.sweep_error
+    assert not (tmp_path / "-sweep").exists()
+
+
 def test_export_writes_sweep_dir(tmp_path):
     server = build_app(server=get_server("neofoam_ui_test_sweep_export"))
     state, ctrl = server.state, server.controller

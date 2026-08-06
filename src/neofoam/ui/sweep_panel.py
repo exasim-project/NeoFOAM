@@ -46,6 +46,7 @@ from neofoam.tooling.workflow.sweep import (
     rule_nodes,
 )
 from neofoam.tooling.workflow.sweep_runner import config_classes_by_name
+from neofoam.ui._paths import _resolve_target
 from neofoam.ui.forms import FormEntry, build_field_forms, build_mesh_forms
 from neofoam.ui.sweep_model import DimensionState, SweepModel, series_values
 
@@ -752,8 +753,8 @@ class SweepPanel:
         skipped.
         """
         state = self._server.state
-        out_dir = state.sweep_out_dir or f"{state.target_dir}-sweep"
         try:
+            out_dir = self._out_dir()
             loaded = load_sweep(out_dir)
         except (ValueError, OSError) as exc:
             self._notify(error=f"Could not load sweep: {exc}")
@@ -830,6 +831,19 @@ class SweepPanel:
             note += f" — skipped unsupported dimension(s): {', '.join(skipped)}"
         self._notify(message=note, error="")
 
+    def _out_dir(self) -> Path:
+        """The sweep directory field, else ``<target>-sweep`` — always absolute.
+
+        Raises ``ValueError`` when the field it is derived from is blank or
+        relative; otherwise the default ``<target>-sweep`` becomes a directory
+        literally named ``-sweep`` under the server's launch directory.
+        """
+        state = self._server.state
+        if state.sweep_out_dir:
+            return _resolve_target(state.sweep_out_dir, "sweep directory")
+        base = _resolve_target(state.target_dir, "target directory")
+        return base.with_name(base.name + "-sweep")
+
     def confirm_export(self) -> None:
         """The confirm dialog's "Export anyway" action (V2, over threshold)."""
         self._server.state.sweep_confirm_show = False
@@ -853,7 +867,12 @@ class SweepPanel:
         if not force and state.sweep_count_warn:
             state.sweep_confirm_show = True
             return
-        out_dir = state.sweep_out_dir or f"{state.target_dir}-sweep"
+        try:
+            base_case = _resolve_target(state.target_dir, "target directory")
+            out_dir = self._out_dir()
+        except ValueError as exc:
+            self._notify(error=str(exc))
+            return
         # A CAD axis is a plugin concern: neofoam.tooling.workflow.sweep exports the
         # solver's own dimensions only. Refuse loudly rather than dropping the axis.
         if self._model.cad_dimensions():
@@ -867,7 +886,7 @@ class SweepPanel:
             result = export_sweep(
                 out_dir,
                 solver_name=self._solver_name,
-                base_case=Path(state.target_dir).resolve(),
+                base_case=base_case,
                 dimensions=self._model.to_dimensions(),
                 classes=self._classes,
                 enabled=self._model.enabled,
@@ -1128,7 +1147,9 @@ class SweepPanel:
                                 click=self.export,
                                 color="primary",
                                 prepend_icon="mdi-export-variant",
-                                disabled=("!sweep_valid",),
+                                # No target → the default out dir would be a
+                                # relative "-sweep" in the launch directory.
+                                disabled=("!sweep_valid || !target_dir.trim()",),
                             )
                     with v3.VCol(cols="auto"):
                         # V4: reopen a previously exported sweep from the dir.
