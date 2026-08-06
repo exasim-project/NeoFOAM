@@ -751,6 +751,17 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_simple_state</span><span class="p">(</span><span class="n">fv_solution</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SimpleNeoNState</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;SIMPLE loop state read from the case&#39;s ``SIMPLE`` control block.&quot;&quot;&quot;</span>
+    <span class="n">simple_dict</span> <span class="o">=</span> <span class="n">fv_solution</span><span class="o">.</span><span class="n">subDict</span><span class="p">(</span><span class="s2">&quot;SIMPLE&quot;</span><span class="p">)</span>
+    <span class="n">piso</span> <span class="o">=</span> <span class="n">PisoControl</span><span class="p">(</span>
+        <span class="n">n_correctors</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">n_non_orthogonal_correctors</span><span class="o">=</span><span class="n">_read_int</span><span class="p">(</span><span class="n">simple_dict</span><span class="p">,</span> <span class="s2">&quot;nNonOrthogonalCorrectors&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+        <span class="n">momentum_predictor</span><span class="o">=</span><span class="n">_read_switch</span><span class="p">(</span><span class="n">simple_dict</span><span class="p">,</span> <span class="s2">&quot;momentumPredictor&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">SimpleNeoNState</span><span class="p">(</span><span class="n">piso</span><span class="p">,</span> <span class="n">_read_switch</span><span class="p">(</span><span class="n">simple_dict</span><span class="p">,</span> <span class="s2">&quot;consistent&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
+
+
 <div class="viewcode-block" id="build">
 <a class="viewcode-back" href="../../../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.simpleAlgorithm.html#neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.simpleAlgorithm.build">[docs]</a>
 <span class="nd">@simpleNeoN</span><span class="o">.</span><span class="n">build</span>
@@ -767,14 +778,7 @@
         <span class="k">return</span> <span class="n">nfb</span><span class="o">.</span><span class="n">create_phi</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">&quot;_neon_runtime&quot;</span><span class="p">],</span> <span class="s2">&quot;U&quot;</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_simple_state</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">SimpleNeoNState</span><span class="p">:</span>
-        <span class="n">rt</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;_neon_runtime&quot;</span><span class="p">]</span>
-        <span class="n">simple_dict</span> <span class="o">=</span> <span class="n">rt</span><span class="o">.</span><span class="n">fv_solution_dict</span><span class="o">.</span><span class="n">subDict</span><span class="p">(</span><span class="s2">&quot;SIMPLE&quot;</span><span class="p">)</span>
-        <span class="n">piso</span> <span class="o">=</span> <span class="n">PisoControl</span><span class="p">(</span>
-            <span class="n">n_correctors</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-            <span class="n">n_non_orthogonal_correctors</span><span class="o">=</span><span class="n">_read_int</span><span class="p">(</span><span class="n">simple_dict</span><span class="p">,</span> <span class="s2">&quot;nNonOrthogonalCorrectors&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
-            <span class="n">momentum_predictor</span><span class="o">=</span><span class="n">_read_switch</span><span class="p">(</span><span class="n">simple_dict</span><span class="p">,</span> <span class="s2">&quot;momentumPredictor&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="n">SimpleNeoNState</span><span class="p">(</span><span class="n">piso</span><span class="p">,</span> <span class="n">_read_switch</span><span class="p">(</span><span class="n">simple_dict</span><span class="p">,</span> <span class="s2">&quot;consistent&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">_build_simple_state</span><span class="p">(</span><span class="n">context</span><span class="p">[</span><span class="s2">&quot;_neon_runtime&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fv_solution_dict</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_pressure_reference</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">PressureReference</span><span class="p">:</span>
         <span class="n">rt</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;_neon_runtime&quot;</span><span class="p">]</span>
