@@ -3,12 +3,11 @@
 
 """Process-wide NeoN/Kokkos initialization: executor selection and teardown.
 
-``requested_executor``, ``_launcher_rank`` and the wording of the failed-GPU-init
-report are plain environment reads and string formatting, so they are tested
-in-process — the report's wording then holds on a host-only build too, where the
-subprocess test below has no failure to provoke and skips. The other two
-behaviors are only observable across a whole process life, hence
-subprocess-driven:
+``requested_executor``, ``_launcher_rank`` and the report wording are environment
+reads and string formatting, tested in-process — so the wording holds on a
+host-only build too, where the subprocess test below has nothing to provoke and
+skips. The other two behaviors are only observable across a whole process life,
+hence subprocess-driven:
 
 **A failed GPU init must say what to do about it.** Kokkos brings up every
 backend it was compiled with, so a CUDA-enabled build takes a CUDA context per
@@ -156,9 +155,7 @@ def test_gpu_init_report_names_the_devices_and_the_ways_out(
 ) -> None:
     """The report restates the Kokkos error with the state that explains it.
 
-    The device probe shells out to ``nvidia-smi``, so it is stubbed: what is
-    under test is that its output reaches the report, next to the executor, the
-    rank, the visibility variables and the remedies.
+    ``_device_inventory`` shells out to ``nvidia-smi``, hence the stub.
     """
     monkeypatch.setenv("NEOFOAM_EXECUTOR", "Serial")
     monkeypatch.setenv("KOKKOS_VISIBLE_DEVICES", "4095")
@@ -181,11 +178,7 @@ def test_gpu_init_report_names_the_devices_and_the_ways_out(
 
 
 def test_non_cuda_init_failure_is_reraised_unwrapped(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Only a CUDA failure gets the GPU report; anything else is passed through.
-
-    Wrapping every init failure would bury an unrelated cause (a bad argv, a
-    missing MPI init) under a page about GPU contexts.
-    """
+    """Only a CUDA failure gets the GPU report; wrapping all would bury other causes."""
     monkeypatch.setattr(neon_runtime, "_neon_initialized", False)
     original = RuntimeError("Kokkos::initialize: unrecognised command line argument")
 

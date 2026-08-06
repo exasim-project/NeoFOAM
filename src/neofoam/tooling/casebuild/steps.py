@@ -23,7 +23,7 @@ _SEGMENT = re.compile(r'"[^"]*"|[^.]+')
 
 
 def _addr(key: str) -> Union[str, tuple[str, ...]]:
-    """A dotted key becomes a tuple address; dots inside a quoted regex key stay literal."""
+    """Split a dotted key into a tuple address; a quoted key stays one segment."""
     parts = _SEGMENT.findall(key)
     return tuple(parts) if len(parts) > 1 else key
 
@@ -45,12 +45,10 @@ def patch(
     ``patch("system/controlDict", remove=["adjustTimeStep"])``). Both accept
     dotted keys addressing sub-dicts, e.g.
     ``patch("system/fvSolution", **{"PIMPLE.nCorrectors": 2})``; a double-quoted
-    OpenFOAM regex key is one literal key, dots included, e.g.
-    ``patch("system/fvSolution", **{'solvers.".*Final"': {...}})`` -- its value
-    has to be a sub-dict, since pybFoam cannot write a regex-keyed scalar (it
-    strips the quotes that make it a pattern). Removing an absent key is a no-op.
-    The file's format (OpenFOAM / JSON / YAML) is chosen by suffix -- see
-    :class:`neofoam.io.DictFile`.
+    regex key is one literal segment, dots included, and its value must be a
+    sub-dict (pybFoam cannot write a regex-keyed scalar). Removing an absent key
+    is a no-op. The file's format (OpenFOAM / JSON / YAML) is chosen by suffix --
+    see :class:`neofoam.io.DictFile`.
     """
     merged: dict[str, object] = {**(overrides or {}), **kwargs}
     removals = list(remove)

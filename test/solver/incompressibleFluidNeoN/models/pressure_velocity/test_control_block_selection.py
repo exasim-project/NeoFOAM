@@ -18,18 +18,16 @@ is present:
   ``create_pimple_state`` — so a pisoFoam case initializing proves BOTH
   branches).
 
-Which block is *selected* is decided by a pure dictionary read, pinned
-in-process by ``test_pimpleAlgorithm``; what only a real case can show is that
-the selected name is one ``set_ref_cell`` accepts, which is what this test adds.
+Which block is *selected* is pinned in-process by ``test_pimpleAlgorithm``; only
+a real case shows that the selected name is one ``set_ref_cell`` accepts.
 The PIMPLE (no-regression) path is already covered end-to-end by
 ``test/solver/incompressibleFluidNeoN/test_cavity_run.py`` (a laminar PIMPLE
 cavity whose solve necessarily runs both init steps), so it is not duplicated
 here.
 
 The case is ``test/setup_pimple`` — the same laminar lid-driven cavity the PIMPLE
-path runs (no turbulence/wallDist confound), with its ``PIMPLE`` block swapped
-for a ``PISO`` one by ``patch``, so the init failure/success is attributable to
-the control-block selection alone and nothing else about the two cases differs.
+path runs (no turbulence/wallDist confound), with its ``PIMPLE`` block swapped for
+a ``PISO`` one, so nothing but the control-block selection differs.
 Initialization runs in an isolated subprocess: NeoN/Kokkos + OpenFOAM keep
 per-process global state that a second in-process ``Foam::Time`` would corrupt,
 and a FOAM fatal error calls ``::exit()`` — a subprocess turns that into a
@@ -52,9 +50,8 @@ from neofoam.tooling.casebuild import block_mesh, from_template, patch
 #: The laminar lid-driven cavity every case here starts from — it ships ``PIMPLE``.
 _SETUP_PIMPLE = Path(__file__).parents[4] / "setup_pimple"
 
-#: What a pisoFoam case ships in place of that ``PIMPLE`` block: the same inner
-#: correctors and pressure reference, with the outer-loop entries (``nOuterCorrectors``,
-#: ``residualControl``) that only PIMPLE has left out.
+#: What a pisoFoam case ships instead: the same inner correctors and pressure
+#: reference, without the outer-loop entries only PIMPLE has.
 _PISO_BLOCK = {
     "nCorrectors": 2,
     "nNonOrthogonalCorrectors": 0,

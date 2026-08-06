@@ -6,18 +6,13 @@
 ``pimpleAlgorithm`` decides three things by reading the *converted* (NeoN)
 ``system/fvSolution``: which control block the case ships (``PIMPLE`` or
 ``PISO``), the corrector counts in it, and the momentumPredictor switch. Those
-reads are pure functions of a ``NeoN::Dictionary`` — no mesh, no ``Foam::Time``,
-no Kokkos initialization — so they are exercised here in-process instead of
-through a solver run.
+reads are pure functions of a ``NeoN::Dictionary``, so they run in-process here
+instead of through a solver run.
 
-The dictionaries are built with the NeoN API rather than read from a case:
-NeoFOAM exposes no Python-level OpenFOAM->NeoN dictionary conversion, so the
-converted form is only reachable through a full runtime. The entries mirror the
-blocks the cases here run key for key — ``test/setup_pimple``'s ``PIMPLE``, the
-``PISO`` block ``test_control_block_selection`` patches in its place, and
-``cases/regexSolverKeys``' regex-keyed one — and the on-disk counterpart stays
-covered by ``test_control_block_selection``, which initializes a real pisoFoam
-case in a subprocess.
+The dictionaries are built with the NeoN API because NeoFOAM exposes no
+Python-level OpenFOAM->NeoN conversion; they mirror the blocks the cases here
+ship, and the on-disk counterpart stays covered by
+``test_control_block_selection``, which initializes a real pisoFoam case.
 """
 
 from __future__ import annotations
@@ -67,8 +62,7 @@ def test_control_block_name_without_either_block_raises() -> None:
     """A case with no control block is named as such, not left to fail in NeoN.
 
     The unguarded ``subDict("PIMPLE")`` this replaced raised NeoN's
-    ``Key 'PIMPLE' not found in Dictionary``, which names neither the file nor
-    the alternative.
+    ``Key 'PIMPLE' not found in Dictionary``, naming neither file nor alternative.
     """
     with pytest.raises(ValueError, match="neither a PIMPLE nor a PISO block"):
         _control_block_name(_fv_solution())
@@ -79,11 +73,10 @@ def test_pressure_reference_uses_the_selected_control_block(
 ) -> None:
     """The pressure reference is read from the same block as the corrector counts.
 
-    ``set_ref_cell`` looks ``pRefCell``/``pRefValue`` up in the block it is
-    handed, so a hardcoded ``"PIMPLE"`` aborted a pisoFoam case with a FOAM
-    fatal *Entry 'PIMPLE' not found*. The step is driven through the spec's real
-    build steps; only ``set_ref_cell`` (which needs a runtime and a mesh) is
-    stubbed, so the block name it receives is the observation.
+    ``set_ref_cell`` looks ``pRefCell``/``pRefValue`` up in the block it is handed,
+    so a hardcoded ``"PIMPLE"`` aborted a pisoFoam case with a FOAM fatal *Entry
+    'PIMPLE' not found*. Only ``set_ref_cell`` (which needs a runtime and a mesh)
+    is stubbed, so the block name it receives is the observation.
     """
     passed: list[str] = []
 
@@ -131,8 +124,7 @@ def test_read_switch_reads_an_openfoam_switch_word(written: str, expected: bool)
     control = nn.Dictionary()
     control.insert_string("momentumPredictor", written)
 
-    # The default is the opposite of the expectation, so a value that was not
-    # read would show up as the wrong answer rather than the right one.
+    # The default is the opposite of the expectation, so an unread value shows up.
     assert _read_switch(control, "momentumPredictor", not expected) is expected
 
 
@@ -142,11 +134,7 @@ def test_read_switch_falls_back_to_the_default() -> None:
 
 
 def test_read_switch_reads_a_switch_a_typed_getter_rejects() -> None:
-    """Switch words arrive as strings, so the read must not go through get_bool.
-
-    The OpenFOAM->NeoN conversion stores ``momentumPredictor no;`` as the word
-    ``"no"``; asking the dictionary for a bool instead fails the ``any_cast``.
-    """
+    """The conversion stores switches as words, so the read must not use get_bool."""
     control = nn.Dictionary()
     control.insert_string("momentumPredictor", "no")
     with pytest.raises(RuntimeError, match="bad any_cast"):
