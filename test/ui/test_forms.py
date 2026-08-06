@@ -8,12 +8,25 @@ from __future__ import annotations
 from neofoam.agent.case_fill import build_case_output_model
 from neofoam.agent.case_forms import INPUT_KEYS
 from neofoam.mcp import tools
-from neofoam.mcp.registry import resolve_solver
+from neofoam.mcp.registry import list_solver_names, resolve_solver
 from neofoam.ui.forms import build_field_forms, build_forms, build_mesh_forms
 
 
 def _solver():
     return resolve_solver("incompressibleFluid")
+
+
+def _titles(node, path=""):
+    """Every ``(json-pointer, title)`` in a schema, however deeply nested."""
+    if isinstance(node, dict):
+        title = node.get("title")
+        if isinstance(title, str):
+            yield path, title
+        for key, value in node.items():
+            yield from _titles(value, f"{path}/{key}")
+    elif isinstance(node, list):
+        for index, value in enumerate(node):
+            yield from _titles(value, f"{path}/{index}")
 
 
 _MESH_FILES = {"blockMeshDict", "snappyHexMeshDict", "preprocess.yaml"}
@@ -81,6 +94,54 @@ def test_jsonforms_transform_unwraps_optional_and_titles_unions():
     arms = bc["properties"]["boundaryField"]["additionalProperties"]["oneOf"]
     titles = {a.get("title") for a in arms}
     assert {"fixedValue", "noSlip", "zeroGradient"} <= titles
+
+
+def test_openfoam_dict_keys_are_titled_verbatim():
+    # Keys of a synthesized fvSchemes/fvSolution section are OpenFOAM entries the
+    # case author wrote, not an API surface: humanizing them destroys information a
+    # user cannot recover (p_rghFinal read as "P Rghfinal") and no longer names
+    # anything in the written case file.
+    entries = {e.key: e for e in build_forms(_solver())}
+    solvers = entries["dict:Pimple_fvSolution"].schema["properties"]["solvers"]["properties"]
+    assert [solvers[k]["title"] for k in ("p", "pFinal", "p_rgh", "p_rghFinal")] == [
+        "p",
+        "pFinal",
+        "p_rgh",
+        "p_rghFinal",
+    ]
+    div = entries["dict:Pimple_fvSchemes"].schema["properties"]["divSchemes"]["properties"]
+    assert div["div(phi,U)"]["title"] == "div(phi,U)"
+    # A dotted phase field survives too ("Alpha.water" before).
+    vof = {e.key: e for e in build_forms(resolve_solver("incompressibleVoF"))}
+    alpha = vof["dict:MULES_fvSolution"].schema["properties"]["solvers"]["properties"]
+    assert alpha["alpha.water"]["title"] == "alpha.water"
+
+
+def test_section_headings_drop_the_synthesized_class_name():
+    # fv_configs._rebuild_sections names each section model "_<section>"; that
+    # leading underscore must not reach the panel ("_ddtSchemes", "_PIMPLE").
+    entries = {e.key: e for e in build_forms(_solver())}
+    schemes = entries["dict:Pimple_fvSchemes"].schema["properties"]
+    assert schemes["ddtSchemes"]["title"] == "ddtSchemes"
+    solution = entries["dict:Pimple_fvSolution"].schema["properties"]
+    assert solution["PIMPLE"]["title"] == "PIMPLE"
+    assert solution["solvers"]["title"] == "solvers"
+    # No private class name leaks anywhere, in any solver.
+    for name in list_solver_names():
+        for entry in build_forms(resolve_solver(name)):
+            for path, title in _titles(entry.schema):
+                assert not title.startswith("_"), f"{name}/{entry.key}{path}: {title}"
+
+
+def test_prose_property_keys_are_still_humanized():
+    # Hand-written config models keep their human labels — only OpenFOAM blocks
+    # are shown verbatim.
+    entries = {e.key: e for e in build_forms(_solver())}
+    control = entries["dict:ControlDictConfig"].schema["properties"]
+    assert control["writeControl"]["title"] == "Write Control"
+    assert control["deltaT"]["title"] == "Delta T"
+    pimple = entries["dict:PimpleAlgorithmConfig"].schema["properties"]
+    assert pimple["momentumPredictor"]["title"] == "Momentum Predictor"
 
 
 def test_inline_refs_makes_every_schema_self_contained():

@@ -111,13 +111,37 @@ def humanize(key: str) -> str:
     return words[:1].upper() + words[1:]
 
 
-def _label_title(key: str, node: Any) -> Any:
-    """Replace a pydantic auto-title (``"Writecontrol"``) with :func:`humanize`.
+def _is_openfoam_block(node: Any) -> bool:
+    """True when ``node`` models a raw OpenFOAM sub-dictionary rather than an API model.
 
-    A hand-written title (anything that isn't just the key re-capitalised) is kept.
+    ``fv_configs._rebuild_sections`` synthesises one pydantic model per
+    ``fvSchemes``/``fvSolution`` section (``create_model("_" + section, …)``), and
+    ``_GravityHeader`` mirrors a ``FoamFile`` header the same way. The leading
+    underscore in the class name — which pydantic copies into ``title`` — is the only
+    trace of that distinction left in the JSON schema, and it is what tells the two
+    kinds of key apart: a *block*'s property keys are the OpenFOAM entries themselves,
+    written by the case author (``p_rghFinal``, ``div(phi,U)``, ``alpha.water``), while
+    every other model is hand-written and its field names are an API surface
+    (``writeControl``, ``momentumPredictor``) that reads naturally as prose.
+    """
+    return isinstance(node, dict) and str(node.get("title", "")).startswith("_")
+
+
+def _label_title(key: str, node: Any, *, in_block: bool) -> Any:
+    """Title one property: verbatim for OpenFOAM keys, :func:`humanize`d for prose.
+
+    ``in_block`` says the *owning* object is an OpenFOAM block, so ``key`` is a case
+    entry; a node that is itself a block gets its key too (otherwise the synthesised
+    ``_ddtSchemes`` class name leaks into the heading). An OpenFOAM key has no prose
+    form — humanising it destroys information a user cannot recover (``p_rghFinal`` →
+    "P Rghfinal"), and the key is what the written case file contains, so it is shown
+    exactly as typed. Otherwise a pydantic auto-title (``"Writecontrol"``) is replaced
+    by :func:`humanize`, and a hand-written title is kept.
     """
     if not isinstance(node, dict):
         return node
+    if in_block or _is_openfoam_block(node):
+        return {**node, "title": key}
     title = node.get("title")
     auto = title is None or (
         isinstance(title, str) and title.replace(" ", "").lower() == key.lower()
@@ -261,6 +285,8 @@ def jsonforms_schema(schema: dict[str, Any]) -> dict[str, Any]:
       ``ANYOF-0``/``ANYOF-1``/``NONUNIFORM`` combinator tabs.
     * **Bracket the dimension vector** — a ``dimensions`` integer array becomes one
       bracketed ``string`` field, not a growable spinner list.
+    * **Title properties** — a pydantic auto-title becomes a human label, except inside
+      an OpenFOAM block (:func:`_is_openfoam_block`), whose keys are shown verbatim.
     * **Titled discriminated ``oneOf``** — a union whose arms carry a ``const`` ``type``
       discriminator (BC / scheme types) becomes a ``oneOf`` whose arms are titled by
       their ``const`` value, so JSONForms shows a clean "pick a type" dropdown
@@ -298,11 +324,12 @@ def jsonforms_schema(schema: dict[str, Any]) -> dict[str, Any]:
                 break
 
         if isinstance(node.get("properties"), dict):
+            in_block = _is_openfoam_block(node)
             node["properties"] = {
                 k: (
                     _dimensions_field(v)
                     if k == "dimensions" and isinstance(v, dict) and v.get("type") == "array"
-                    else _label_title(k, transform(v))
+                    else _label_title(k, transform(v), in_block=in_block)
                 )
                 for k, v in node["properties"].items()
             }
