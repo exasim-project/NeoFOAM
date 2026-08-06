@@ -14,7 +14,7 @@ logic so it stays unit-testable without trame or a browser.
 
 The agent also carries a ``load_case`` tool, so "open the case at <path>" reads an
 existing OpenFOAM case straight off disk into the forms — deterministically, via
-:func:`neofoam.agent.case_fill.load_case_from_disk`, never through the model's own
+:func:`neofoam.ui.case_load.read_case_configs`, never through the model's own
 transcription of the dictionaries.
 """
 
@@ -24,20 +24,16 @@ import os
 from pathlib import Path
 from typing import Any, Callable
 
-from neofoam.agent.case_fill import (
-    build_case_agent,
-    case_spec_to_configs,
-    load_case_from_disk,
-)
+from neofoam.agent.case_fill import build_case_agent, case_spec_to_configs
 from neofoam.io import write_configs
-from neofoam.ui.case_spec import configs_to_form_state, models_filled_by
+from neofoam.ui.case_load import apply_configs_to_forms, read_case_configs
 from neofoam.ui.forms import FormEntry
 from neofoam.ui.geometry_agent import (
     apply_assignments,
     build_geometry_agent,
     geometry_prompt,
 )
-from neofoam.ui.steps import build_model_families, select_model_state
+from neofoam.ui.steps import build_model_families
 
 __all__ = ["build_agent_panel", "SUGGESTED_PROMPTS"]
 
@@ -85,7 +81,6 @@ def build_agent_panel(
     # after app.py's state block anyway. The geometry step's scan overwrites it.
     state.geometry_patches = []
 
-    by_key = {e.key: e for e in entries}
     families = build_model_families(solver)
     agent_cache: dict[str, Any] = {}
     geo_cache: dict[str, Any] = {}
@@ -126,10 +121,9 @@ def build_agent_panel(
             return f"No case directory at {path}."
         warnings: list[dict[str, str]] = []
         try:
-            spec = load_case_from_disk(path, solver=solver, warnings=warnings)
+            configs = read_case_configs(path, solver, warnings)
         except Exception as exc:  # noqa: BLE001 - report to the model, don't kill the run
             return f"Could not read {path}: {exc}"
-        configs = case_spec_to_configs(spec)
         loaded["dir"] = str(path)
         loaded["configs"] = configs
 
@@ -208,14 +202,7 @@ def build_agent_panel(
                 # it, so the agent's configs are applied last and win per entry.
                 configs = [*loaded.get("configs", []), *case_spec_to_configs(result.output)]
 
-                for key, data in configs_to_form_state(entries, configs).items():
-                    state[by_key[key].state_key] = data
-                filled_models = models_filled_by(entries, configs)
-                for model in filled_models:
-                    # A filled member of a pick-one family (a loaded SIMPLE case)
-                    # deselects its siblings rather than joining them.
-                    state.update(select_model_state(families, model))
-
+                filled_models = apply_configs_to_forms(state, entries, families, configs)
                 _say(
                     "assistant",
                     _summary(configs, filled_models, state.target_dir, loaded.get("dir")),

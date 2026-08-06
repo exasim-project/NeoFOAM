@@ -730,6 +730,7 @@ def test_load_exported_rebuilds_canvas(tmp_path):
     assert _dim_nodes(server2) == []
     s2.sweep_out_dir = out_dir
     c2.sweep_load()
+    c2.sweep_confirm_load()  # the base-case restore is confirmed
 
     (node,) = _dim_nodes(server2)
     assert node["id"] == "dim:transport_properties_config"
@@ -771,6 +772,7 @@ def test_load_exported_restores_cad_axis(tmp_path):
     s2, c2 = server2.state, server2.controller
     s2.sweep_out_dir = out_dir
     c2.sweep_load()
+    c2.sweep_confirm_load()  # the base-case restore is confirmed
 
     assert "cad" in s2.sweep_dims_on_canvas
     cad_node = next(n for n in _dim_nodes(server2) if n["id"] == "dim:cad")
@@ -846,6 +848,7 @@ def test_mesh_dimension_exports_config_name_keyed(tmp_path):
     server2 = build_app(server=get_server("neofoam_ui_test_sweep_mesh_reload"))
     server2.state.sweep_out_dir = state.sweep_out_dir
     server2.controller.sweep_load()
+    server2.controller.sweep_confirm_load()  # the base-case restore is confirmed
     assert server2.state.sweep_mesh_on_canvas == ["block_mesh_dict_config"]
 
 
@@ -929,6 +932,7 @@ def test_load_exported_skips_unsupported_dimension(tmp_path):
     s2, c2 = server2.state, server2.controller
     s2.sweep_out_dir = out_dir
     c2.sweep_load()
+    c2.sweep_confirm_load()  # the base-case restore is confirmed
 
     assert s2.sweep_dims_on_canvas == ["transport_properties_config"]
     assert "skipped unsupported dimension" in s2.sweep_status
@@ -951,10 +955,101 @@ def test_load_exported_all_unsupported_clears_tab(tmp_path):
     s2, c2 = server2.state, server2.controller
     s2.sweep_out_dir = out_dir
     c2.sweep_load()
+    c2.sweep_confirm_load()  # the base-case restore is confirmed
 
     assert s2.sweep_cfg_dim == ""
     assert s2.sweep_dims_on_canvas == []
     assert s2.sweep_cfg_data == {}
+
+
+def _transport_entry(server):
+    """The dict form entry behind ``constant/transportProperties``."""
+    return next(
+        e
+        for e in server.controller.get_entries()
+        if e.config_name == "transport_properties_config" and e.kind == "dict"
+    )
+
+
+def test_load_exported_restores_the_base_case(tmp_path):
+    # Loading reopens the whole study: without the base case the loaded axes would
+    # sit on top of whatever the wizard happens to hold, and Export would clone that.
+    server = build_app(server=get_server("neofoam_ui_test_sweep_base_rt"))
+    state, ctrl = server.state, server.controller
+    _seed_defaults(server)
+    entry = _transport_entry(server)
+    state[entry.state_key] = {"transportModel": "Newtonian", "nu": 7e-6}
+    state.target_dir = str(tmp_path / "base")
+    ctrl.save_case()
+    ctrl.sweep_toggle_dimension("transport_properties_config")
+    ctrl.sweep_export()
+    out_dir = str(state.sweep_out_dir)
+    exported_variants = dict(_dim_nodes(server)[0]["data"]["entries"])
+    # Clear the panel: no dimension, no target case, an empty transport form.
+    ctrl.sweep_toggle_dimension("transport_properties_config")
+    state.target_dir = ""
+    state[entry.state_key] = {}
+
+    state.sweep_out_dir = out_dir
+    ctrl.sweep_load()
+    ctrl.sweep_confirm_load()  # the base-case restore is confirmed
+
+    assert state.sweep_dims_on_canvas == ["transport_properties_config"]
+    assert _dim_nodes(server)[0]["data"]["entries"] == exported_variants
+    assert state.target_dir == str((tmp_path / "base").resolve())
+    assert state[entry.state_key] == {"transportModel": "Newtonian", "nu": 7e-6}
+
+
+def test_load_exported_refuses_a_sweep_from_another_solver(tmp_path):
+    # The wizard is built around one solver's configs (solver_name is a
+    # construction-time argument), so a foreign sweep cannot be reopened here — and
+    # its dimensions must not be reported as merely unsupported ones.
+    from neofoam.tooling.workflow.sweep._io import SWEEP_META_FILE  # noqa: PLC0415
+
+    server = build_app(server=get_server("neofoam_ui_test_sweep_other_solver"))
+    state, ctrl = server.state, server.controller
+    out_dir = _export_transport_sweep(server, tmp_path)
+    meta_path = Path(out_dir) / SWEEP_META_FILE
+    meta = json.loads(meta_path.read_text())
+    meta["solver_name"] = "incompressibleVoF"
+    meta_path.write_text(json.dumps(meta))
+    ctrl.sweep_toggle_dimension("transport_properties_config")  # clear the canvas
+    state.target_dir = ""
+
+    state.sweep_out_dir = out_dir
+    ctrl.sweep_load()
+
+    assert "incompressibleVoF" in state.sweep_error
+    assert "incompressibleFluid" in state.sweep_error
+    assert state.sweep_status == ""  # not reported as a skipped dimension
+    assert state.sweep_dims_on_canvas == []
+    assert state.target_dir == ""
+    assert not state.sweep_load_confirm_show
+
+
+def test_load_exported_asks_before_it_replaces_the_forms(tmp_path):
+    # The base-case restore overwrites every form, so a stray Load click must not
+    # silently discard the edits the user is looking at.
+    server = build_app(server=get_server("neofoam_ui_test_sweep_load_confirm"))
+    state, ctrl = server.state, server.controller
+    out_dir = _export_transport_sweep(server, tmp_path)
+    ctrl.sweep_toggle_dimension("transport_properties_config")  # clear the canvas
+    entry = _transport_entry(server)
+    state[entry.state_key] = {"transportModel": "Newtonian", "nu": 4e-4}  # unsaved edit
+
+    state.sweep_out_dir = out_dir
+    ctrl.sweep_load()
+
+    assert state.sweep_load_confirm_show
+    assert state.sweep_load_base == str((tmp_path / "base").resolve())
+    assert state[entry.state_key] == {"transportModel": "Newtonian", "nu": 4e-4}
+    assert state.sweep_dims_on_canvas == []
+
+    ctrl.sweep_confirm_load()
+
+    assert not state.sweep_load_confirm_show
+    assert state[entry.state_key] == {"transportModel": "Newtonian"}
+    assert state.sweep_dims_on_canvas == ["transport_properties_config"]
 
 
 @pytest.mark.skipif(shutil.which("snakemake") is None, reason="snakemake not installed")

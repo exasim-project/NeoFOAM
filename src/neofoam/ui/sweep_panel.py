@@ -47,7 +47,9 @@ from neofoam.tooling.workflow.sweep import (
 )
 from neofoam.tooling.workflow.sweep_runner import config_classes_by_name
 from neofoam.ui._paths import _resolve_target
+from neofoam.ui.case_load import apply_configs_to_forms, read_case_configs
 from neofoam.ui.forms import FormEntry, build_field_forms, build_mesh_forms
+from neofoam.ui.steps import build_model_families
 from neofoam.ui.sweep_model import DimensionState, SweepModel, series_values
 
 #: Above this many cases the count chip turns warning-colored and Export asks
@@ -119,6 +121,11 @@ class SweepPanel:
     def __init__(self, server: Any, entries: list[FormEntry], solver: Any, solver_name: str):
         self._server = server
         self._solver_name = solver_name
+        # Kept whole for the base-case restore (Load reopens the study): reading a
+        # case back in fills every form entry, not just the sweepable ones.
+        self._solver = solver
+        self._entries = entries
+        self._families = build_model_families(solver)
         # Sweepable dimensions: dict-kind configs only (field halves are merged
         # at save time and their schemas mutate with the geometry scan).
         self._dims: dict[str, FormEntry] = {e.config_name: e for e in entries if e.kind == "dict"}
@@ -177,6 +184,10 @@ class SweepPanel:
         state.sweep_count_label = "0 case(s)"
         state.sweep_count_warn = False
         state.sweep_confirm_show = False
+        # V4 load: the base case a load would restore over the current forms, and
+        # the dialog asking whether it may.
+        state.sweep_load_confirm_show = False
+        state.sweep_load_base = ""
         # V3 staleness: the canvas differs from the last export.
         state.sweep_dirty = False
         state.sweep_headers = []
@@ -236,6 +247,7 @@ class SweepPanel:
         ctrl.sweep_export = self.export
         ctrl.sweep_confirm_export = self.confirm_export
         ctrl.sweep_load = self.load_exported
+        ctrl.sweep_confirm_load = self.confirm_load
         ctrl.sweep_refresh_dag = self.refresh_dag
         ctrl.sweep_rewire = self.rewire
         ctrl.sweep_get_nodes = lambda: list(self._editor.nodes) if self._editor else []
@@ -748,15 +760,19 @@ class SweepPanel:
         self._sync_setup_ports()
         self._notify(message="Rewired the canvas.")
 
-    def load_exported(self) -> None:
-        """V4: read an exported sweep back onto the canvas (from the dir field).
+    def load_exported(self, force: bool = False) -> None:
+        """V4: reopen an exported sweep — its canvas *and* its base case.
 
         Rebuilds the dimension nodes (full variant payloads), restores the
-        enabled rules and re-derives the pipeline — so a prior study can be
-        reopened, re-validated (V1 badges anything that no longer validates) and
-        extended. Dimensions with no matching config on this solver (e.g. a mesh
-        dimension while the mesh canvas node is still API-only) are reported and
-        skipped.
+        enabled rules and re-derives the pipeline, and reads the sidecar's base
+        case back into the wizard forms — so a prior study can be reopened,
+        re-validated (V1 badges anything that no longer validates) and extended.
+        A sweep exported from a different solver is refused whole (this wizard is
+        built around one solver's configs); dimensions with no matching config on
+        this solver are reported and skipped.
+
+        Restoring the base case overwrites the current forms, so the first call
+        stops to ask; ``force=True`` (the confirm dialog's action) goes ahead.
         """
         state = self._server.state
         try:
@@ -765,10 +781,57 @@ class SweepPanel:
         except (ValueError, OSError) as exc:
             self._notify(error=f"Could not load sweep: {exc}")
             return
+        if loaded.solver_name != self._solver_name:
+            self._notify(
+                error=f"That sweep was exported from solver '{loaded.solver_name}',"
+                f" but this wizard is running '{self._solver_name}' — nothing was"
+                f" loaded. Restart the wizard on '{loaded.solver_name}' to reopen it."
+            )
+            return
+        if loaded.base_case and not force:
+            state.sweep_load_base = loaded.base_case
+            state.sweep_load_confirm_show = True
+            return
+        if loaded.base_case:
+            self._restore_base_case(loaded.base_case)
 
+        states, skipped = self._loaded_dimensions(loaded.dimensions)
+
+        # Restore the enabled rules (fall back to the defaults if the sidecar's
+        # selection no longer resolves against this registry).
+        try:
+            self._registry.plan(loaded.enabled)
+            enabled = list(loaded.enabled)
+        except ValueError:
+            enabled = list(DEFAULT_ENABLED)
+
+        self._model.load(states, enabled)  # replaces the canvas; starts clean
+        self._rebuild_graph()
+
+        state.sweep_out_dir = str(out_dir)
+        state.sweep_rule_palette = self._rule_palette()
+        state.sweep_cfg_dim = states[0].name if states else ""
+        self._refresh_overview()
+        self._sync_cfg_mirror()
+        self._fit_soon(self._editor)
+
+        note = f"Loaded {len(states)} dimension(s) from {out_dir}"
+        if loaded.base_case:
+            note += f", base case {loaded.base_case} back in the forms"
+        if skipped:
+            note += (
+                " — skipped unsupported dimension(s), backed by no"
+                f" '{self._solver_name}' config: {', '.join(skipped)}"
+            )
+        self._notify(message=note, error="")
+
+    def _loaded_dimensions(
+        self, dimensions: dict[str, dict[str, dict[str, Any]]]
+    ) -> tuple[list[DimensionState], list[str]]:
+        """The canvas dimensions an exported sweep restores to, plus the skipped ones."""
         states: list[DimensionState] = []
         skipped: list[str] = []
-        for dim, variants in sorted(loaded.dimensions.items()):
+        for dim, variants in sorted(dimensions.items()):
             if dim in (_CAD_DIM, MESH_DIM):
                 continue  # the cad/mesh axes are restored below (not solver-config)
             entry = self._dims.get(dim)
@@ -788,7 +851,7 @@ class SweepPanel:
         # Restore the keyed mesh axis: its variants are config-name-keyed
         # (``{config_name: payload}``), so rebuild the combined schema from the
         # source configs present across all variants (mirror of add_mesh_source).
-        mesh_variants = loaded.dimensions.get(MESH_DIM)
+        mesh_variants = dimensions.get(MESH_DIM)
         if mesh_variants:
             sources = sorted({name for payload in mesh_variants.values() for name in payload})
             mesh_props = {
@@ -813,29 +876,23 @@ class SweepPanel:
         # A CAD axis is not restored here: neofoam.tooling.workflow's LoadedSweep
         # carries no cad model path, so the axis cannot be rebuilt. It comes back
         # with the CAD plugin, which owns both halves of that round-trip.
+        return states, skipped
 
-        # Restore the enabled rules (fall back to the defaults if the header's
-        # selection no longer resolves against this registry).
-        try:
-            self._registry.plan(loaded.enabled)
-            enabled = list(loaded.enabled)
-        except ValueError:
-            enabled = list(DEFAULT_ENABLED)
+    def _restore_base_case(self, base_case: str) -> None:
+        """Reopen the sweep's base case: the target field and every wizard form.
 
-        self._model.load(states, enabled)  # replaces the canvas; starts clean
-        self._rebuild_graph()
+        Without this the loaded axes would sit on top of whatever the wizard
+        happened to hold, and Export would clone the wrong case.
+        """
+        state = self._server.state
+        state.target_dir = base_case
+        configs = read_case_configs(Path(base_case), self._solver)
+        apply_configs_to_forms(state, self._entries, self._families, configs)
 
-        state.sweep_out_dir = str(out_dir)
-        state.sweep_rule_palette = self._rule_palette()
-        state.sweep_cfg_dim = states[0].name if states else ""
-        self._refresh_overview()
-        self._sync_cfg_mirror()
-        self._fit_soon(self._editor)
-
-        note = f"Loaded {len(states)} dimension(s) from {out_dir}"
-        if skipped:
-            note += f" — skipped unsupported dimension(s): {', '.join(skipped)}"
-        self._notify(message=note, error="")
+    def confirm_load(self) -> None:
+        """The load dialog's "Load anyway" action — the base case replaces the forms."""
+        self._server.state.sweep_load_confirm_show = False
+        self.load_exported(force=True)
 
     def _out_dir(self) -> Path:
         """The sweep directory field, else ``<target>-sweep`` — always absolute.
@@ -1281,6 +1338,7 @@ class SweepPanel:
         self._dim_picker_dialog(html, v3)
         self._generator_dialog(html, v3)
         self._confirm_dialog(v3)
+        self._load_confirm_dialog(v3)
         # The full rule pipeline is wider than VueFlow's default minZoom of 0.5
         # allows fitting; without this, fit_view clips the canvas edges (the
         # first nodes end up under the nav drawer). min_zoom is not an exposed
@@ -1485,6 +1543,25 @@ class SweepPanel:
                     v3.VBtn(
                         "Export anyway",
                         click=self.confirm_export,
+                        color="warning",
+                        variant="tonal",
+                    )
+
+    def _load_confirm_dialog(self, v3: Any) -> None:
+        """V4: confirm that a load replaces the forms with the sweep's base case."""
+        with v3.VDialog(v_model=("sweep_load_confirm_show",), max_width=460):
+            with v3.VCard():
+                v3.VCardTitle("Reopen sweep", classes="text-subtitle-1")
+                v3.VCardText(
+                    "Loading replaces the wizard forms with this sweep's base case"
+                    " ({{ sweep_load_base }}) — unsaved edits are lost. Continue?"
+                )
+                with v3.VCardActions():
+                    v3.VSpacer()
+                    v3.VBtn("Cancel", click="sweep_load_confirm_show = false")
+                    v3.VBtn(
+                        "Load anyway",
+                        click=self.confirm_load,
                         color="warning",
                         variant="tonal",
                     )
