@@ -23,6 +23,7 @@ import pytest
 from pydantic import ValidationError
 
 from neofoam.foam import fvSchemes, fvSolution
+from neofoam.foam.schemes._variant import OPENFOAM_CONTEXT
 from neofoam.framework.model import Model
 from neofoam.framework.solver import Solver
 
@@ -259,13 +260,27 @@ def test_fvschemes_form_defaults_is_a_valid_runnable_scaffold() -> None:
 
     scaffold = Sub.form_defaults()
     assert scaffold is not None
-    # a convection div (a flux) gets bounded upwind; the stress divergence stays linear
-    assert scaffold["divSchemes"]["div(phi,U)"] == "Gauss upwind"
-    assert scaffold["divSchemes"]["div((nuEff*dev2(T(grad(U)))))"] == "Gauss linear"
-    assert scaffold["ddtSchemes"]["ddt(U)"] == "Euler"
-    assert scaffold["laplacianSchemes"]["laplacian(nuEff,U)"] == "Gauss linear corrected"
+    # Structured, not OpenFOAM text: this scaffold is the *form* prefill, and the case
+    # wizard hands it to JSONForms alongside the JSON Schema. The two must agree — a
+    # bare "Gauss upwind" matches no arm of the schema's object union, so the form fell
+    # back to the first arm and displayed `none`. The OpenFOAM text is now opt-in, via
+    # context={"format": "openfoam"} (see neofoam.foam.schemes._variant).
+    # A convection div (a flux) gets bounded upwind; the stress divergence stays linear.
+    assert scaffold["divSchemes"]["div(phi,U)"] == {
+        "type": "Gauss",
+        "interpolation": {"type": "upwind"},
+    }
+    assert scaffold["ddtSchemes"]["ddt(U)"] == {"type": "Euler"}
+
     # and it actually validates as an instance of the config
-    Sub.model_validate(scaffold)
+    inst = Sub.model_validate(scaffold)
+
+    # ...which still writes the same OpenFOAM text a case file needs.
+    text = inst.model_dump(by_alias=True, context=OPENFOAM_CONTEXT)
+    assert text["divSchemes"]["div(phi,U)"] == "Gauss upwind"
+    assert text["divSchemes"]["div((nuEff*dev2(T(grad(U)))))"] == "Gauss linear"
+    assert text["ddtSchemes"]["ddt(U)"] == "Euler"
+    assert text["laplacianSchemes"]["laplacian(nuEff,U)"] == "Gauss linear corrected"
 
 
 def test_fvsolution_form_defaults_blocks_by_field_kind() -> None:
@@ -345,7 +360,10 @@ def test_default_shorthand_does_not_override_explicit_entries() -> None:
     )
     # explicit override kept verbatim
     assert inst.divSchemes.div_phi_U.type == "Gauss"
-    dumped = inst.model_dump(by_alias=True)["divSchemes"]
+    # Asserted on the OpenFOAM text form, which is what makes the merge readable; it is
+    # opt-in via context= since the plain dump is now the structured shape the JSON
+    # Schema describes (see neofoam.foam.schemes._variant).
+    dumped = inst.model_dump(by_alias=True, context=OPENFOAM_CONTEXT)["divSchemes"]
     assert dumped["div(phi,U)"] == "Gauss linearUpwind grad(U)"
     # the omitted operator is filled from the (real) default
     assert dumped["div(phi,T)"] == "Gauss upwind"

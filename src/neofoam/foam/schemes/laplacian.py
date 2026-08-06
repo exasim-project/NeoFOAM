@@ -5,33 +5,32 @@
 
 from typing import Annotated, Any, Literal, Union
 
-from pydantic import BaseModel, BeforeValidator, Discriminator, model_serializer
+from pydantic import BeforeValidator, Discriminator
 
+from ._variant import OPENFOAM_CONTEXT, SchemeVariant
 from .interpolation import InterpolationScheme
 from .sn_grad import SnGradScheme
 
 # -- Variants ----------------------------------------------------------------
 
 
-class NoneLaplacian(BaseModel):
+class NoneLaplacian(SchemeVariant):
     """``laplacianSchemes { default none; }`` — OpenFOAM's *no-default* sentinel."""
 
     type: Literal["none"] = "none"
 
-    @model_serializer
-    def serialize(self) -> str:
+    def openfoam_str(self) -> str:
         return self.type
 
 
-class GaussLaplacian(BaseModel):
+class GaussLaplacian(SchemeVariant):
     type: Literal["Gauss"] = "Gauss"
     interpolation: InterpolationScheme
     sn_grad: SnGradScheme
 
-    @model_serializer
-    def serialize(self) -> str:
-        interp = self.interpolation.model_dump(mode="python")
-        sn = self.sn_grad.model_dump(mode="python")
+    def openfoam_str(self) -> str:
+        interp = self.interpolation.model_dump(mode="python", context=OPENFOAM_CONTEXT)
+        sn = self.sn_grad.model_dump(mode="python", context=OPENFOAM_CONTEXT)
         return f"Gauss {interp} {sn}"
 
 

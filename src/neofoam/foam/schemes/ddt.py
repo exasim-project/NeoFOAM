@@ -5,49 +5,46 @@
 
 from typing import Annotated, Any, Literal, Union
 
-from pydantic import BaseModel, BeforeValidator, Discriminator, Field, model_serializer
+from pydantic import BeforeValidator, Discriminator, Field
+
+from ._variant import SchemeVariant
 
 # -- Variants ----------------------------------------------------------------
 
 
-class Euler(BaseModel):
+class Euler(SchemeVariant):
     type: Literal["Euler"] = "Euler"
 
-    @model_serializer
-    def serialize(self) -> str:
+    def openfoam_str(self) -> str:
         return self.type
 
 
-class Backward(BaseModel):
+class Backward(SchemeVariant):
     type: Literal["backward"] = "backward"
 
-    @model_serializer
-    def serialize(self) -> str:
+    def openfoam_str(self) -> str:
         return self.type
 
 
-class SteadyState(BaseModel):
+class SteadyState(SchemeVariant):
     type: Literal["steadyState"] = "steadyState"
 
-    @model_serializer
-    def serialize(self) -> str:
+    def openfoam_str(self) -> str:
         return self.type
 
 
-class LocalEuler(BaseModel):
+class LocalEuler(SchemeVariant):
     type: Literal["localEuler"] = "localEuler"
 
-    @model_serializer
-    def serialize(self) -> str:
+    def openfoam_str(self) -> str:
         return self.type
 
 
-class CrankNicolson(BaseModel):
+class CrankNicolson(SchemeVariant):
     type: Literal["CrankNicolson"] = "CrankNicolson"
     coefficient: float = Field(ge=0, le=1)
 
-    @model_serializer
-    def serialize(self) -> str:
+    def openfoam_str(self) -> str:
         return f"CrankNicolson {self.coefficient:g}"
 
 

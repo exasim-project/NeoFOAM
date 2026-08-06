@@ -5,38 +5,36 @@
 
 from typing import Annotated, Any, Literal, Union
 
-from pydantic import BaseModel, BeforeValidator, Discriminator, model_serializer
+from pydantic import BeforeValidator, Discriminator
 
+from ._variant import OPENFOAM_CONTEXT, SchemeVariant
 from .interpolation import InterpolationScheme
 
 # -- Variants ----------------------------------------------------------------
 
 
-class NoneDiv(BaseModel):
+class NoneDiv(SchemeVariant):
     type: Literal["none"] = "none"
 
-    @model_serializer
-    def serialize(self) -> str:
+    def openfoam_str(self) -> str:
         return self.type
 
 
-class GaussDiv(BaseModel):
+class GaussDiv(SchemeVariant):
     type: Literal["Gauss"] = "Gauss"
     interpolation: InterpolationScheme
 
-    @model_serializer
-    def serialize(self) -> str:
-        interp = self.interpolation.model_dump(mode="python")
+    def openfoam_str(self) -> str:
+        interp = self.interpolation.model_dump(mode="python", context=OPENFOAM_CONTEXT)
         return f"Gauss {interp}"
 
 
-class BoundedGaussDiv(BaseModel):
+class BoundedGaussDiv(SchemeVariant):
     type: Literal["bounded"] = "bounded"
     interpolation: InterpolationScheme
 
-    @model_serializer
-    def serialize(self) -> str:
-        interp = self.interpolation.model_dump(mode="python")
+    def openfoam_str(self) -> str:
+        interp = self.interpolation.model_dump(mode="python", context=OPENFOAM_CONTEXT)
         return f"bounded Gauss {interp}"
 
 
