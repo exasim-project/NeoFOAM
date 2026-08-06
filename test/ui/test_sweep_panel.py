@@ -5,8 +5,10 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import shutil
+import time
 from pathlib import Path
 
 import pytest
@@ -20,6 +22,9 @@ from trame.app import get_server  # noqa: E402
 from neofoam.mcp import tools  # noqa: E402
 from neofoam.mcp.registry import resolve_solver  # noqa: E402
 from neofoam.ui import build_app  # noqa: E402
+
+#: How long the stubbed snakemake run blocks — the real one takes ~1 s upwards.
+_DAG_SECONDS = 0.3
 
 
 def _dim_nodes(server):
@@ -962,10 +967,92 @@ def test_refresh_dag_renders_snakemake_graph(tmp_path):
     assert state.scaffolded
 
     ctrl.sweep_toggle_dimension("transport_properties_config")
-    ctrl.sweep_refresh_dag()
+    asyncio.run(ctrl.sweep_refresh_dag())
 
     assert state.sweep_dag_error == ""
     dag_nodes = ctrl.sweep_get_dag_nodes()
     labels = {n["data"]["label"].split("\n")[0] for n in dag_nodes}
     # One job per pipeline rule (single case, single implicit mesh variant).
     assert {"all", "setup", "solve", "setup_mesh", "blockMesh"} <= labels
+
+
+def _dag_ready(server, tmp_path) -> None:
+    """A saved case with one sweep dimension — everything refresh_dag needs."""
+    state, ctrl = server.state, server.controller
+    _seed_defaults(server)
+    state.target_dir = str(tmp_path / "base")
+    ctrl.save_case()
+    ctrl.sweep_toggle_dimension("transport_properties_config")
+
+
+def _slow_dag(runs: list[str], seconds: float = _DAG_SECONDS):
+    """Stand-in for ``snakemake --dag``: blocks for ``seconds``, then yields a graph."""
+
+    def dag_graph(out_dir, mode="dag"):
+        runs.append(mode)
+        time.sleep(seconds)
+        return [], []
+
+    return dag_graph
+
+
+def test_refresh_dag_keeps_the_event_loop_running(tmp_path, monkeypatch, heartbeat_ticks):
+    # snakemake --dag takes ~1 s (more at a few hundred cases) and ran straight on
+    # trame's single event loop, freezing every other callback for its duration.
+    server = build_app(server=get_server("neofoam_ui_test_dag_loop"))
+    _dag_ready(server, tmp_path)
+    monkeypatch.setattr("neofoam.ui.sweep_panel.dag_graph", _slow_dag([]))
+
+    ticks = heartbeat_ticks(server.controller.sweep_refresh_dag)
+
+    assert ticks >= 5  # ~15 over a 0.3 s run; 0 while the loop is blocked
+    assert server.state.sweep_dag_error == ""
+
+
+def test_refresh_dag_is_busy_while_it_runs(tmp_path, monkeypatch):
+    # Without a busy flag the Generate button looks idle through the whole freeze.
+    server = build_app(server=get_server("neofoam_ui_test_dag_busy"))
+    _dag_ready(server, tmp_path)
+    busy_while_running: list[bool] = []
+    monkeypatch.setattr(
+        "neofoam.ui.sweep_panel.dag_graph",
+        lambda *_a, **_kw: (busy_while_running.append(server.state.sweep_dag_busy), ([], []))[1],
+    )
+
+    asyncio.run(server.controller.sweep_refresh_dag())
+
+    assert busy_while_running == [True]
+    assert server.state.sweep_dag_busy is False
+
+
+def test_refresh_dag_started_while_one_runs_is_dropped(tmp_path, monkeypatch):
+    # Clicks queued during the freeze all land once it ends, and each one re-exports
+    # the sweep and shells out to snakemake again.
+    server = build_app(server=get_server("neofoam_ui_test_dag_reentry"))
+    _dag_ready(server, tmp_path)
+    runs: list[str] = []
+    monkeypatch.setattr("neofoam.ui.sweep_panel.dag_graph", _slow_dag(runs))
+
+    async def drive() -> None:
+        first = asyncio.create_task(server.controller.sweep_refresh_dag())
+        await asyncio.sleep(_DAG_SECONDS / 3)  # the first run is in flight
+        await server.controller.sweep_refresh_dag()  # a click queued during it
+        await first
+
+    asyncio.run(drive())
+
+    assert runs == ["dag"]
+    assert server.state.sweep_dag_busy is False
+
+
+def test_refresh_dag_reports_a_snakemake_that_never_finishes(tmp_path, monkeypatch):
+    # The snakemake call was unbounded, so a hung run left the graph pending forever.
+    server = build_app(server=get_server("neofoam_ui_test_dag_timeout"))
+    _dag_ready(server, tmp_path)
+    monkeypatch.setattr("neofoam.ui.sweep_panel._DAG_TIMEOUT_S", 0.05)
+    monkeypatch.setattr("neofoam.ui.sweep_panel.dag_graph", _slow_dag([]))
+
+    asyncio.run(server.controller.sweep_refresh_dag())
+
+    assert "did not finish within" in server.state.sweep_dag_error
+    assert server.state.sweep_dag_busy is False

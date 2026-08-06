@@ -17,6 +17,7 @@ through :func:`neofoam.ui.case_spec.state_to_case_spec` and writes via
 
 from __future__ import annotations
 
+import asyncio
 import os
 from dataclasses import asdict
 from pathlib import Path
@@ -269,6 +270,7 @@ def build_app(
     state.stl_dir = _DEFAULT_STL_DIR
     state.geometry_status = ""
     state.geometry_severity = "info"  # VAlert type: info | success | warning | error
+    state.geometry_busy = False
     state.geo_bbox = None
     state.geo_location = ""
     state.geo_length_scale = 0.0
@@ -356,11 +358,28 @@ def build_app(
             state.validation_ok = False
             state.findings = [asdict(r) for r in save_error_rows(exc)]
 
-    def load_geometry() -> None:
+    async def load_geometry() -> None:
+        """Scan the STL folder, keeping the loop free and the Scan button busy."""
+        # The button is disabled while busy, but a queued click still lands here:
+        # a second scan would re-seed the BC forms from a half-applied first one.
+        if state.geometry_busy:
+            return
+        with state:  # flush now — the spinner has to show before we await
+            state.geometry_busy = True
+        try:
+            await _scan_geometry()
+        finally:
+            # Also flushes what _scan_geometry wrote (one repaint, not two).
+            with state:
+                state.geometry_busy = False
+
+    async def _scan_geometry() -> None:
         """Read the STLs in ``state.stl_dir`` (an STL folder or case dir) into state."""
         try:
             stl_dir = _resolve_target(state.stl_dir, "STL folder")
-            spec = discover_geometry(stl_dir)
+            # Parsing a production-size STL blocks for hundreds of ms — off the
+            # loop with it; every state write below stays on the loop.
+            spec = await asyncio.to_thread(discover_geometry, stl_dir)
         except Exception as exc:  # noqa: BLE001 - surface, don't crash the UI
             state.geometry_patches = []
             state.geo_bbox = None
@@ -543,6 +562,8 @@ def build_app(
                             color="primary",
                             variant="tonal",
                             prepend_icon="mdi-magnify",
+                            loading=("geometry_busy",),
+                            disabled=("geometry_busy",),
                         )
                 html.Div(
                     "Point at a folder of STLs (or a case dir with"

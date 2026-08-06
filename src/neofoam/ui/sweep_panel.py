@@ -59,6 +59,11 @@ _CASE_WARN_THRESHOLD = 64
 #: and restored separately from the config dimensions (``MESH_DIM`` is upstream).
 _CAD_DIM = "cad"
 
+#: Hard bound on one ``snakemake --dag`` run (it grows with the case count:
+#: ~1 s for a single case, ~2 s at 200). Past this the graph is reported as
+#: failed rather than leaving the button spinning forever.
+_DAG_TIMEOUT_S = 120.0
+
 __all__ = ["SweepPanel"]
 
 #: Rules every pipeline needs (mirrors ``RuleRegistry.plan``) — locked in the
@@ -178,6 +183,7 @@ class SweepPanel:
         state.sweep_rows = []
         state.sweep_dag_mode = "dag"
         state.sweep_dag_error = ""
+        state.sweep_dag_busy = False
         state.sweep_tab = "configure"
         # Configure tab (Phase L): the forms live here, not inside the nodes.
         # ``sweep_cfg_dim`` is the dimension being configured; the rest mirror
@@ -912,27 +918,55 @@ class SweepPanel:
             f" run them with: cd '{result.out_dir}' && snakemake -j4"
         )
 
-    def refresh_dag(self) -> None:
+    async def refresh_dag(self) -> None:
         """Export the sweep, run ``snakemake --dag|--rulegraph`` and render it."""
         state = self._server.state
+        # The button is disabled while busy, but a queued click still lands here:
+        # a second run would export and shell out to snakemake all over again.
+        if state.sweep_dag_busy:
+            return
         self.export()
         # Nothing was written if export errored or is awaiting confirmation.
         if state.sweep_error or state.sweep_confirm_show:
             return
+        with state:  # flush now — the spinner has to show before we await
+            state.sweep_dag_busy = True
         try:
-            nodes, edges = dag_graph(state.sweep_out_dir, state.sweep_dag_mode)
+            await self._render_dag(state.sweep_out_dir, state.sweep_dag_mode)
+        finally:
+            # Also flushes whatever _render_dag wrote: this may run as a detached
+            # task (the mode listener), outside any state context of its own.
+            with state:
+                state.sweep_dag_busy = False
+
+    async def _render_dag(self, out_dir: str, mode: str) -> None:
+        """Run snakemake off the loop and put the resulting graph on the canvas."""
+        state = self._server.state
+        try:
+            # snakemake blocks for a second or more; a worker thread keeps the
+            # loop ticking, and every state write below stays on the loop.
+            nodes, edges = await asyncio.wait_for(
+                asyncio.to_thread(dag_graph, out_dir, mode), _DAG_TIMEOUT_S
+            )
+        except asyncio.TimeoutError:  # not the builtin before 3.11
+            self._fail_dag(f"snakemake --{mode} did not finish within {_DAG_TIMEOUT_S:.0f}s.")
+            return
         except (RuntimeError, ValueError) as exc:
-            state.sweep_dag_error = str(exc)
-            self._dag_view.clear_graph()
+            self._fail_dag(str(exc))
             return
         state.sweep_dag_error = ""
         self._dag_generated = True
         self._dag_view.graph = {"nodes": nodes, "edges": edges}
         self._fit_soon(self._dag_view)
 
-    def _on_dag_mode(self, sweep_dag_mode: str, **_: Any) -> None:
+    def _fail_dag(self, message: str) -> None:
+        """Report a graph failure and leave no stale graph behind it."""
+        self._server.state.sweep_dag_error = message
+        self._dag_view.clear_graph()
+
+    async def _on_dag_mode(self, sweep_dag_mode: str, **_: Any) -> None:
         if self._dag_generated:
-            self.refresh_dag()
+            await self.refresh_dag()
 
     def _on_tab_change(self, sweep_tab: str, **_: Any) -> None:
         # The DAG editor is hidden (v-show) while the table tab is active, so
@@ -1297,6 +1331,9 @@ class SweepPanel:
                         density="compact",
                         mandatory=True,
                         classes="mx-2",
+                        # Switching mode regenerates the graph, so it is a second
+                        # snakemake run in disguise.
+                        disabled=("sweep_dag_busy",),
                     ):
                         v3.VBtn("DAG", value="dag", size="small")
                         v3.VBtn("Rule graph", value="rulegraph", size="small")
@@ -1307,6 +1344,8 @@ class SweepPanel:
                         variant="tonal",
                         size="small",
                         prepend_icon="mdi-graph-outline",
+                        loading=("sweep_dag_busy",),
+                        disabled=("sweep_dag_busy",),
                     )
                 v3.VAlert(
                     text=("sweep_dag_error",),

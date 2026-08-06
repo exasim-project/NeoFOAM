@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+import asyncio
+import time
 from pathlib import Path
 
 import pytest
@@ -19,6 +21,21 @@ from neofoam.mcp import tools  # noqa: E402
 from neofoam.mcp.registry import resolve_solver  # noqa: E402
 from neofoam.ui import build_app  # noqa: E402
 from neofoam.ui.app import _schema_key  # noqa: E402
+from neofoam.ui.geometry import discover_geometry  # noqa: E402
+
+#: How long the stubbed STL read blocks — a 21 MB STL takes ~0.5 s in practice.
+_SCAN_SECONDS = 0.3
+
+#: The checked-in STL folder the geometry-handler tests scan (read-only).
+_TRI_SURFACE = (
+    Path(__file__).resolve().parents[1]
+    / "tooling"
+    / "workflow"
+    / "cases"
+    / "tube_bank"
+    / "constant"
+    / "triSurface"
+)
 
 
 def test_build_app_constructs():
@@ -122,7 +139,7 @@ def test_geometry_scan_and_write_mesh(tmp_path):
     server.state.stl_dir = str(dst_tri)
     server.state.target_dir = str(tmp_path)
 
-    server.controller.load_geometry()
+    asyncio.run(server.controller.load_geometry())
     names = {p["name"] for p in server.state.geometry_patches}
     assert names == {"inlet", "outlet", "walls", "frontBack", "tubes"}
     assert server.state.geo_bbox is not None
@@ -225,18 +242,83 @@ def test_failed_scan_clears_the_mesh_written_alert(tmp_path):
     server = build_app(server=get_server("neofoam_ui_test_scan_fail"), plugins=[])
     server.state.stl_dir = str(tmp_path / "constant" / "triSurface")
     server.state.target_dir = str(tmp_path)
-    server.controller.load_geometry()
+    asyncio.run(server.controller.load_geometry())
     server.controller.write_mesh()
     assert server.state.mesh_written  # the green "Wrote: …" alert is up
 
     server.state.stl_dir = str(tmp_path / "does_not_exist")
-    server.controller.load_geometry()
+    asyncio.run(server.controller.load_geometry())
 
     # The failure must not sit above a stale success alert, and must not read as info.
     assert server.state.geometry_patches == []
     assert server.state.mesh_written == []
     assert server.state.geometry_severity == "error"
     assert "Could not read geometry" in server.state.geometry_status
+
+
+def _slow_scan(spec, scanned: list[str], seconds: float = _SCAN_SECONDS):
+    """Stand-in for reading a large STL: blocks for ``seconds``, then yields ``spec``."""
+
+    def scan(path, **_kwargs):
+        scanned.append(str(path))
+        time.sleep(seconds)
+        return spec
+
+    return scan
+
+
+def test_scan_keeps_the_event_loop_running(monkeypatch, heartbeat_ticks):
+    # trame is single-threaded, so an STL read on the loop freezes the whole UI —
+    # every other client callback, including the heartbeat, stops for its duration.
+    server = build_app(server=get_server("neofoam_ui_test_scan_loop"), plugins=[])
+    server.state.stl_dir = str(_TRI_SURFACE)
+    monkeypatch.setattr(
+        "neofoam.ui.app.discover_geometry", _slow_scan(discover_geometry(_TRI_SURFACE), [])
+    )
+
+    ticks = heartbeat_ticks(server.controller.load_geometry)
+
+    assert ticks >= 5  # ~15 over a 0.3 s scan; 0 while the loop is blocked
+    assert server.state.geometry_patches  # and the scan still landed
+
+
+def test_scan_is_busy_while_it_runs(monkeypatch):
+    # Without a busy flag the Scan button looks idle through the whole freeze.
+    server = build_app(server=get_server("neofoam_ui_test_scan_busy"), plugins=[])
+    server.state.stl_dir = str(_TRI_SURFACE)
+    spec = discover_geometry(_TRI_SURFACE)
+    busy_while_scanning: list[bool] = []
+    monkeypatch.setattr(
+        "neofoam.ui.app.discover_geometry",
+        lambda *_a, **_kw: (busy_while_scanning.append(server.state.geometry_busy), spec)[1],
+    )
+
+    asyncio.run(server.controller.load_geometry())
+
+    assert busy_while_scanning == [True]
+    assert server.state.geometry_busy is False
+
+
+def test_scan_started_while_one_runs_is_dropped(monkeypatch):
+    # Clicks queued during the freeze all land once it ends; a second scan would
+    # re-seed the boundary-condition forms underneath the first one's results.
+    server = build_app(server=get_server("neofoam_ui_test_scan_reentry"), plugins=[])
+    server.state.stl_dir = str(_TRI_SURFACE)
+    scanned: list[str] = []
+    monkeypatch.setattr(
+        "neofoam.ui.app.discover_geometry", _slow_scan(discover_geometry(_TRI_SURFACE), scanned)
+    )
+
+    async def drive() -> None:
+        first = asyncio.create_task(server.controller.load_geometry())
+        await asyncio.sleep(_SCAN_SECONDS / 3)  # the first scan is in flight
+        await server.controller.load_geometry()  # a click queued during it
+        await first
+
+    asyncio.run(drive())
+
+    assert scanned == [str(_TRI_SURFACE)]
+    assert server.state.geometry_busy is False
 
 
 def test_revalidate_reruns_without_resaving(tmp_path):
