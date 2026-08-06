@@ -9,10 +9,18 @@ from dataclasses import dataclass
 from typing import Any, Sequence
 
 from neofoam.mcp import tools
-from neofoam.ui.forms import FormEntry
+from neofoam.ui.forms import FormEntry, exclusive_model_families, humanize
 from neofoam.ui.plugins import AT_START, StepPlugin
 
-__all__ = ["Step", "ModelChoice", "build_steps", "build_model_choices"]
+__all__ = [
+    "Step",
+    "ModelChoice",
+    "ModelFamily",
+    "build_steps",
+    "build_model_choices",
+    "build_model_families",
+    "select_model_state",
+]
 
 # Fixed order. `models` opens with the model-selection panel (rendered by app.py)
 # above its config forms; `geometry` (STL → mesh dicts), `sweep` (the parameter
@@ -45,6 +53,15 @@ class ModelChoice:
     name: str
     label: str
     required: bool
+
+
+@dataclass(frozen=True)
+class ModelFamily:
+    """A required family of alternatives — exactly one member runs per case."""
+
+    name: str
+    label: str
+    members: list[ModelChoice]
 
 
 def build_steps(
@@ -118,3 +135,34 @@ def build_model_choices(solver: Any) -> list[ModelChoice]:
         ModelChoice(name=e.name, label=e.label, required=e.required)
         for e in tools.model_catalog(solver)
     ]
+
+
+def build_model_families(solver: Any) -> list[ModelFamily]:
+    """The pick-one model families (:func:`neofoam.ui.forms.exclusive_model_families`).
+
+    Their members are *alternatives*, not a set: the wizard renders one choice per
+    family instead of listing every member as included. A required family with a single
+    member offers no choice and is not here — it stays a locked "included" model.
+    """
+    by_name = {c.name: c for c in build_model_choices(solver)}
+    return [
+        ModelFamily(name=name, label=humanize(name), members=[by_name[m] for m in members])
+        for name, members in exclusive_model_families(solver).items()
+    ]
+
+
+def select_model_state(families: list[ModelFamily], name: str) -> dict[str, Any]:
+    """The wizard-state updates that select model ``name``.
+
+    ``sel_<name>`` on, plus — when ``name`` is one alternative of a family — its
+    siblings off and the family's ``choice_<family>`` moved to it, so a pick-one family
+    can never end up with two members selected. Pure, so every route that selects a
+    model (the Models step's radio group, the AI/``load_case`` fill auto-selecting the
+    models it filled configs for) applies exactly the same rule.
+    """
+    updates: dict[str, Any] = {f"sel_{name}": True}
+    for family in families:
+        if any(c.name == name for c in family.members):
+            updates[f"choice_{family.name}"] = name
+            updates.update({f"sel_{c.name}": c.name == name for c in family.members})
+    return updates

@@ -93,12 +93,18 @@ def test_add_dimension_seeds_from_live_form_state():
 def test_add_dimension_requires_selected_owner_model():
     server = build_app(server=get_server("neofoam_ui_test_sweep_owner"))
     state, ctrl = server.state, server.controller
+    # An owned config whose model is NOT selected — the members of a pick-one family
+    # start selected, so "owned" alone no longer implies "hidden".
     owned = next(
-        (e for e in ctrl.get_entries() if e.kind == "dict" and e.owner_model is not None),
+        (
+            e
+            for e in ctrl.get_entries()
+            if e.kind == "dict" and e.owner_model and not state[f"sel_{e.owner_model}"]
+        ),
         None,
     )
     if owned is None:
-        pytest.skip("solver has no optional-model-owned dict configs")
+        pytest.skip("solver has no unselected-model-owned dict configs")
     state.sweep_dim_pick = owned.config_name
     ctrl.sweep_add_dimension()
     assert _dim_nodes(server) == []
@@ -414,11 +420,15 @@ def test_dim_picker_respects_owner_model_gate():
     server = build_app(server=get_server("neofoam_ui_test_sweep_picker_owner"))
     state, ctrl = server.state, server.controller
     owned = next(
-        (e for e in ctrl.get_entries() if e.kind == "dict" and e.owner_model),
+        (
+            e
+            for e in ctrl.get_entries()
+            if e.kind == "dict" and e.owner_model and not state[f"sel_{e.owner_model}"]
+        ),
         None,
     )
     if owned is None:
-        pytest.skip("solver has no optional-model-owned dict configs")
+        pytest.skip("solver has no unselected-model-owned dict configs")
     ctrl.sweep_open_dim_picker(owned.config_name)
     assert not state.sweep_pick_show
     assert owned.owner_model in state.sweep_error

@@ -7,8 +7,10 @@ The left drawer lists the wizard steps (``current_step``); the main area mounts 
 step once, shown via ``v_show`` so navigation never unmounts a form and wipes its
 state. Every form is rendered generically from its :class:`~neofoam.ui.forms.FormEntry`
 JSON Schema — there is no per-case or per-config markup. The Models step opens with
-the model-selection panel (``sel_<model>``); a config panel owned by an unselected
-optional model is hidden and skipped on save. Save aggregates the live form state
+the model-selection panel (``sel_<model>``): a toggle per optional model and a radio
+group per pick-one family (``choice_<family>``, exactly one member selected). A config
+panel owned by an unselected model is hidden and skipped on save. Save aggregates the
+live form state
 through :func:`neofoam.ui.case_spec.state_to_case_spec` and writes via
 :func:`neofoam.mcp.tools.save_case`.
 """
@@ -43,7 +45,13 @@ from neofoam.ui.geometry import (
 from neofoam.ui.plugins import StepContext, StepPlugin, discover_step_plugins
 from neofoam.ui.review import FindingRow, findings_to_rows, save_error_rows
 from neofoam.ui.scaffold import scaffold_runnable_case
-from neofoam.ui.steps import Step, build_model_choices, build_steps
+from neofoam.ui.steps import (
+    Step,
+    build_model_choices,
+    build_model_families,
+    build_steps,
+    select_model_state,
+)
 from neofoam.ui.sweep_panel import SweepPanel
 
 _ROLE_NAMES = [r.value for r in PatchRole]
@@ -200,6 +208,11 @@ def _schema_key(entry: FormEntry) -> str:
     return "schema_" + entry.key.replace(":", "_")
 
 
+def _uischema_key(entry: FormEntry) -> str:
+    """A JS-identifier-safe state var name holding this entry's static UISchema."""
+    return "uischema_" + entry.key.replace(":", "_")
+
+
 def build_app(
     server: Any = None,
     *,
@@ -232,8 +245,13 @@ def build_app(
     steps = build_steps(solver, entries, step_plugins)
     plugin_by_id = {p.id: p for p in step_plugins}
     choices = build_model_choices(solver)
-    required = [c for c in choices if c.required]
+    # A required family of alternatives is a choice (one member at a time); every other
+    # required model is always on. `gated` is every model with a `sel_<name>` switch.
+    families = build_model_families(solver)
+    family_of = {c.name: f for f in families for c in f.members}
+    required = [c for c in choices if c.required and c.name not in family_of]
     optional = [c for c in choices if not c.required]
+    gated = [*optional, *(c for f in families for c in f.members)]
     by_key = {e.key: e for e in entries}
 
     server = get_server() if server is None else server
@@ -258,9 +276,17 @@ def build_app(
     state.mesh_written = []
     for c in optional:
         state[f"sel_{c.name}"] = False
+    # Each family starts on its first registered member — exactly one runs per case, so
+    # "none selected" is not a valid state to save from.
+    for family in families:
+        state[f"choice_{family.name}"] = family.members[0].name
+        for c in family.members:
+            state[f"sel_{c.name}"] = c is family.members[0]
     for entry in entries:
         state[_schema_key(entry)] = entry.schema
         state[entry.state_key] = dict(entry.defaults)
+        if entry.uischema is not None:
+            state[_uischema_key(entry)] = entry.uischema
 
     # ------------------------------------------------------------------ #
     # Controller                                                         #
@@ -286,8 +312,12 @@ def build_app(
             )
         ]
 
+    def select_model(name: str) -> None:
+        """Select model ``name`` (deselecting its siblings when it is one alternative)."""
+        state.update(select_model_state(families, name))
+
     def save_case() -> None:
-        selected = {c.name for c in optional if state[f"sel_{c.name}"]}
+        selected = {c.name for c in gated if state[f"sel_{c.name}"]}
         form_state = {e.key: dict(state[e.state_key]) for e in entries}
         state.current_step = "review"
         try:
@@ -385,6 +415,7 @@ def build_app(
         state.geometry_severity = "success"
         state.geometry_status = f"Wrote {len(written)} mesh file(s)."
 
+    ctrl.select_model = select_model
     ctrl.save_case = save_case
     ctrl.revalidate = revalidate
     ctrl.load_geometry = load_geometry
@@ -426,11 +457,14 @@ def build_app(
         )
 
     def _form_panel(entry: FormEntry) -> None:
-        # Owned by an optional model → hide unless selected; else always visible
+        # Owned by a selectable model → hide unless selected; else always visible
         # (omit v-show entirely — a bare `v-show` with no expression won't compile).
         panel_kwargs = {}
         if entry.owner_model is not None:
             panel_kwargs["v_show"] = f"sel_{entry.owner_model}"
+        form_kwargs = {}
+        if entry.uischema is not None:
+            form_kwargs["uischema"] = (_uischema_key(entry),)
         with v3.VExpansionPanel(elevation=0, **panel_kwargs):
             with v3.VExpansionPanelTitle():
                 html.Span(entry.title)
@@ -447,10 +481,11 @@ def build_app(
                     schema=(_schema_key(entry),),
                     data=(entry.state_key,),
                     change=f"{entry.state_key} = $event.data",
+                    **form_kwargs,
                 )
 
     def _model_selector() -> None:
-        """Required models (locked on) + optional model toggles."""
+        """Always-on models (locked) + one pick-one control per family + toggles."""
         with v3.VCard(variant="outlined", classes="mb-6"):
             with v3.VCardText():
                 html.Div(
@@ -466,6 +501,22 @@ def build_app(
                             color="primary",
                             size="small",
                         )
+                # One member at a time: the radio group is the only way to select one,
+                # so picking a member deselects its siblings server-side.
+                for family in families:
+                    html.Div(
+                        family.label,
+                        classes="text-overline text-medium-emphasis",
+                    )
+                    with v3.VRadioGroup(
+                        model_value=(f"choice_{family.name}",),
+                        update_modelValue=(ctrl.select_model, "[$event]"),
+                        inline=True,
+                        hide_details=True,
+                        classes="mb-4",
+                    ):
+                        for c in family.members:
+                            v3.VRadio(label=c.label, value=c.name)
                 html.Div(
                     "Optional models",
                     classes="text-overline text-medium-emphasis",

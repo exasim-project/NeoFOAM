@@ -5,7 +5,7 @@
 
 Each :class:`FormEntry` carries the JSON Schema + defaults that drive a client-side
 ``<json-forms>`` component, plus the trame ``state_key`` under which that form's live
-data lives, the owning optional model (for hide/skip) and the wizard step it belongs
+data lives, the owning selectable model (for hide/skip) and the wizard step it belongs
 to. A ``0/<field>`` config is split into two entries — an *input* half
 (``dimensions``/``internalField``) and a *boundary-conditions* half
 (``boundaryField``) — mirroring the marimo wizard, so each renders in its own step.
@@ -27,9 +27,11 @@ __all__ = [
     "build_forms",
     "build_field_forms",
     "build_mesh_forms",
+    "exclusive_model_families",
     "humanize",
     "inline_refs",
     "jsonforms_schema",
+    "alternatives_uischema",
     "allowed_bc_types",
     "seed_boundary_field",
     "patch_bc_schema",
@@ -73,26 +75,62 @@ class FormEntry:
     step: str
     """Wizard step id: ``models`` | ``schemes`` | ``bcs`` | ``initial``."""
     owner_model: str | None
-    """Optional model that owns this config (hide/skip); ``None`` ⇒ always shown."""
+    """Selectable model that owns this config (hide/skip); ``None`` ⇒ always shown."""
     cls: Any = field(default=None, compare=False)
     """The config class (used by field-half merge in ``case_spec``)."""
     uischema: dict[str, Any] | None = None
     """Optional JSONForms UISchema (``None`` ⇒ auto-layout from the schema)."""
 
 
-def _owner_by_cls_name(solver: Any) -> dict[str, str]:
-    """Map each *optional*-model-owned config class name → its model name.
+def exclusive_model_families(solver: Any) -> dict[str, list[str]]:
+    """Required model families with more than one member → their member names.
 
-    Configs owned only by required models (or by no model) are absent → ``None``
-    owner ⇒ never hidden.
+    ``SolverSpec.models(family, required=True)`` means *exactly one* member runs per
+    case (the family resolves it with ``detect_and_create()``), so such a family's
+    members are alternatives — Pimple **or** Simple, one turbulence model — whereas an
+    optional family's members are independent toggles (``detect_models()`` returns zero
+    or more). That required flag plus the family's ``all_specs()`` is the whole signal;
+    the UI needs no list of its own. A required family with a single member has nothing
+    to choose and is omitted (its configs are always on). Keyed by the family class
+    name; members keep registration order, so the first is the default choice.
     """
-    owner: dict[str, str] = {}
+    families: dict[str, list[str]] = {}
+    for family in solver.required_model_specs:
+        members = [spec.name for spec in family.all_specs()]
+        if len(members) > 1:
+            families[family.__name__] = members
+    return families
+
+
+def _owner_by_cls_name(solver: Any) -> dict[str, str]:
+    """Map each *gated*-model-owned config class name → its model name.
+
+    A gated model is one the user selects: an optional model (a toggle) or a member of
+    a mutually exclusive required family (:func:`exclusive_model_families`, a choice).
+    Both are hidden — and skipped on save — while unselected. Configs owned only by an
+    always-on required model (or by no model) are absent → ``None`` owner ⇒ never
+    hidden.
+
+    Two kinds of config stay ungated even though a gated model owns them, because they
+    are common to the *whole* family rather than evidence for one member:
+
+    * one owned by more than one gated model (``0/U`` and ``0/p`` are declared by both
+      Pimple and Simple, ``turbulenceProperties`` by every turbulence model) — hiding
+      it with either member would hide it from the case;
+    * a ``0/<field>`` file of an exclusive family: the fields are the case's state,
+      solved by whichever member is active, so only its *dictionaries* (the per-member
+      ``fvSchemes``/``fvSolution`` slices) discriminate. Optional-model fields stay
+      gated — those models *add* fields (Boussinesq's ``0/T``) rather than share them.
+    """
+    exclusive = {name for members in exclusive_model_families(solver).values() for name in members}
+    owners: dict[str, list[str]] = {}
     for entry in tools.model_catalog(solver):
-        if entry.required:
+        if entry.required and entry.name not in exclusive:
             continue
-        for cls_name in (*entry.dicts, *entry.fields):
-            owner[cls_name] = entry.name
-    return owner
+        gated = entry.dicts if entry.name in exclusive else (*entry.dicts, *entry.fields)
+        for cls_name in gated:
+            owners.setdefault(cls_name, []).append(entry.name)
+    return {cls_name: names[0] for cls_name, names in owners.items() if len(names) == 1}
 
 
 def _slice_defaults(defaults: dict[str, Any], keep: tuple[str, ...]) -> dict[str, Any]:
@@ -353,6 +391,50 @@ def jsonforms_schema(schema: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
+def alternatives_uischema(schema: dict[str, Any]) -> dict[str, Any] | None:
+    """A UISchema hiding each alternative sub-block until its selector names it.
+
+    ``turbulenceProperties`` is a choice, not a set: ``simulationType`` is an enum whose
+    values name the sibling sub-dictionaries (``RAS``/``LES``), and the config's
+    validator rejects any block the type does not name. JSONForms' generated layout has
+    no notion of that, so it stacks *every* block — a ``laminar`` case renders a full
+    RAS **and** LES block, each red for its required-but-empty model field.
+
+    When a schema shows that shape — an enum property whose values name two or more
+    sibling object properties — this returns the layout JSONForms would have generated
+    (a ``VerticalLayout`` of one ``Control`` per property), with a SHOW ``rule`` on each
+    named block so only the selected one renders. Any other schema returns ``None``,
+    i.e. keep the auto-layout.
+    """
+    props = schema.get("properties")
+    if not isinstance(props, dict):
+        return None
+    for selector, node in props.items():
+        if not isinstance(node, dict) or not isinstance(node.get("enum"), list):
+            continue
+        blocks = [
+            v
+            for v in node["enum"]
+            if isinstance(props.get(v), dict) and props[v].get("type") == "object"
+        ]
+        if len(blocks) < 2:
+            continue
+        elements: list[dict[str, Any]] = []
+        for name in props:
+            element: dict[str, Any] = {"type": "Control", "scope": f"#/properties/{name}"}
+            if name in blocks:
+                element["rule"] = {
+                    "effect": "SHOW",
+                    "condition": {
+                        "scope": f"#/properties/{selector}",
+                        "schema": {"const": name},
+                    },
+                }
+            elements.append(element)
+        return {"type": "VerticalLayout", "elements": elements}
+    return None
+
+
 def _dict_title(cls_name: str, file: str | None) -> str:
     """Panel title for a dict config: the OpenFOAM file it writes, qualified.
 
@@ -434,19 +516,21 @@ def build_forms(solver: Any) -> list[FormEntry]:
             )
         else:
             step = "schemes" if is_scheme_config(cls) else "models"
+            schema = jsonforms_schema(dto.json_schema)
             entries.append(
                 FormEntry(
                     key=f"dict:{info.cls_name}",
                     config_name=info.name,
                     cls_name=info.cls_name,
                     title=_dict_title(info.cls_name, info.file),
-                    schema=jsonforms_schema(dto.json_schema),
+                    schema=schema,
                     defaults=dto.defaults,
                     state_key=f"form_{info.name}",
                     kind="dict",
                     step=step,
                     owner_model=owner_model,
                     cls=cls,
+                    uischema=alternatives_uischema(schema),
                 )
             )
     return entries

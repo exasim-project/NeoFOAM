@@ -35,7 +35,9 @@ def test_aggregate_validates_and_round_trips(tmp_path):
     entries = build_forms(solver)
     state = _state_from_defaults(entries, only={"transport_properties_config"})
 
-    spec = state_to_case_spec(entries, state, selected_models=set())
+    # "Pimple" is the wizard's default pick of the pressure-velocity family — one
+    # member of a pick-one family is always selected (see build_app).
+    spec = state_to_case_spec(entries, state, selected_models={"Pimple"})
     # The filled config plus every default-complete required dict config (their
     # files — fvSchemes/fvSolution — are needed even with untouched forms).
     assert "transport_properties_config" in spec
@@ -66,7 +68,7 @@ def test_unselected_optional_model_is_skipped():
 def test_empty_forms_keep_only_default_complete_dicts():
     solver = _solver()
     entries = build_forms(solver)
-    spec = state_to_case_spec(entries, _state_from_defaults(entries, only=set()), set())
+    spec = state_to_case_spec(entries, _state_from_defaults(entries, only=set()), {"Pimple"})
     # Empty forms whose config REQUIRES input (controlDict: endTime/deltaT) are
     # omitted; default-complete dict configs stay so their files get written.
     assert "control_dict_config" not in spec

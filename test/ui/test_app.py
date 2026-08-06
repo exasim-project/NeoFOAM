@@ -255,3 +255,37 @@ def test_revalidate_reruns_without_resaving(tmp_path):
     server.controller.revalidate()  # must not raise, must not re-scaffold
     assert (tmp_path / "Allrun").stat().st_mtime == allrun_mtime
     assert server.state.validation_ok is not None
+
+
+def test_pick_one_family_starts_on_one_member_and_switching_deselects_the_other():
+    server = build_app(server=get_server("neofoam_ui_test_family"), plugins=[])
+    state, ctrl = server.state, server.controller
+
+    # Pimple and Simple want contradictory ddtSchemes — exactly one is ever selected.
+    assert state.choice_PressureVelocityAlgorithm == "Pimple"
+    assert state.sel_Pimple is True
+    assert state.sel_Simple is False
+
+    ctrl.select_model("Simple")
+
+    assert state.choice_PressureVelocityAlgorithm == "Simple"
+    assert state.sel_Pimple is False
+    assert state.sel_Simple is True
+
+
+def test_save_case_writes_only_the_chosen_algorithm(tmp_path):
+    server = build_app(server=get_server("neofoam_ui_test_family_save"), plugins=[])
+    _seed_transport_defaults(server)
+
+    server.state.target_dir = str(tmp_path / "pimple")
+    server.controller.save_case()
+    pimple = (tmp_path / "pimple" / "system" / "fvSolution").read_text()
+    assert "PIMPLE" in pimple
+    assert "SIMPLE" not in pimple  # the unselected algorithm's block is not written
+
+    server.controller.select_model("Simple")
+    server.state.target_dir = str(tmp_path / "simple")
+    server.controller.save_case()
+    simple = (tmp_path / "simple" / "system" / "fvSolution").read_text()
+    assert "SIMPLE" in simple
+    assert "PIMPLE" not in simple

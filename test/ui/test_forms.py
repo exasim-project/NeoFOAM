@@ -9,7 +9,12 @@ from neofoam.agent.case_fill import build_case_output_model
 from neofoam.agent.case_forms import INPUT_KEYS
 from neofoam.mcp import tools
 from neofoam.mcp.registry import list_solver_names, resolve_solver
-from neofoam.ui.forms import build_field_forms, build_forms, build_mesh_forms
+from neofoam.ui.forms import (
+    build_field_forms,
+    build_forms,
+    build_mesh_forms,
+    exclusive_model_families,
+)
 
 
 def _solver():
@@ -294,6 +299,57 @@ def test_owner_model_only_for_optional_configs():
     assert owners["t_field_config"] == "boussinesq"
     assert owners["control_dict_config"] is None
     assert owners["transport_properties_config"] is None  # Newtonian is required
+
+
+def test_exclusive_model_families_are_the_multi_member_required_ones():
+    families = exclusive_model_families(_solver())
+    # Pick ONE: the pressure-velocity algorithm and the turbulence model.
+    assert families["PressureVelocityAlgorithm"] == ["Pimple", "Simple"]
+    assert families["momentumTransportModel"][:2] == ["kEpsilon", "kOmegaSST"]
+    # viscosityModel is required with a single member (nothing to choose), and
+    # incompressibleFluidModel is optional (independent toggles) — neither is a choice.
+    assert set(families) == {"PressureVelocityAlgorithm", "momentumTransportModel"}
+
+
+def test_family_members_own_their_own_dicts_but_not_the_shared_configs():
+    owners = {(e.config_name, e.kind): e.owner_model for e in build_forms(_solver())}
+    # Each alternative gates its own dictionaries — Pimple and Simple must never show
+    # (or write) their contradictory fvSchemes/fvSolution slices at the same time.
+    assert owners[("pimple_fv_schemes", "dict")] == "Pimple"
+    assert owners[("simple_fv_schemes", "dict")] == "Simple"
+    assert owners[("k_epsilon_coeffs", "dict")] == "kEpsilon"
+    # Configs the whole family shares stay ungated: turbulenceProperties is declared by
+    # every turbulence model, and 0/U by both algorithms.
+    assert owners[("turbulence_properties_config", "dict")] is None
+    assert owners[("u_field_config", "field_in")] is None
+    assert owners[("u_field_config", "field_bc")] is None
+    # Newtonian is required with no alternatives — always on.
+    assert owners[("transport_properties_config", "dict")] is None
+
+
+def test_turbulence_properties_uischema_gates_ras_and_les_on_simulation_type():
+    entries = {e.config_name: e for e in build_forms(_solver())}
+    uischema = entries["turbulence_properties_config"].uischema
+    assert uischema is not None
+    rules = {
+        e["scope"].rsplit("/", 1)[-1]: e.get("rule")
+        for e in uischema["elements"]
+        if isinstance(e, dict)
+    }
+    # simulationType picks; RAS/LES render only when it names them.
+    assert rules["simulationType"] is None
+    for block in ("RAS", "LES"):
+        assert rules[block] == {
+            "effect": "SHOW",
+            "condition": {
+                "scope": "#/properties/simulationType",
+                "schema": {"const": block},
+            },
+        }
+    # No other form needs a hand-written layout (JSONForms auto-generates it).
+    assert [e.config_name for e in build_forms(_solver()) if e.uischema is not None] == [
+        "turbulence_properties_config"
+    ]
 
 
 def test_config_names_are_valid_save_case_fields():

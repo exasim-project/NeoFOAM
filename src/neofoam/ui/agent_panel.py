@@ -6,7 +6,7 @@
 Mirrors the marimo wizard's ``mo.ui.chat`` behaviour: each user message runs the
 pydantic-ai case agent with the running ``message_history`` (so follow-ups refine the
 same case), pushes the produced values into the form state objects, auto-selects the
-optional models it filled, auto-saves the AI-produced configs to the target dir, and
+models it filled, auto-saves the AI-produced configs to the target dir, and
 replies with a summary (**Filled / Selected models / Wrote to**). ``await agent.run``
 (never ``run_sync``) since trame owns the loop; a missing ``ANTHROPIC_API_KEY`` degrades
 to a chat message. The chat *widgets* are rendered by ``app.py``; this module owns the
@@ -37,6 +37,7 @@ from neofoam.ui.geometry_agent import (
     build_geometry_agent,
     geometry_prompt,
 )
+from neofoam.ui.steps import build_model_families, select_model_state
 
 __all__ = ["build_agent_panel", "SUGGESTED_PROMPTS"]
 
@@ -85,6 +86,7 @@ def build_agent_panel(
     state.geometry_patches = []
 
     by_key = {e.key: e for e in entries}
+    families = build_model_families(solver)
     agent_cache: dict[str, Any] = {}
     geo_cache: dict[str, Any] = {}
     history: list[Any] = []  # pydantic-ai message history → multi-turn refinement
@@ -210,7 +212,9 @@ def build_agent_panel(
                     state[by_key[key].state_key] = data
                 filled_models = models_filled_by(entries, configs)
                 for model in filled_models:
-                    state[f"sel_{model}"] = True
+                    # A filled member of a pick-one family (a loaded SIMPLE case)
+                    # deselects its siblings rather than joining them.
+                    state.update(select_model_state(families, model))
 
                 _say(
                     "assistant",

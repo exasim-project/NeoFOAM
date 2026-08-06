@@ -7,7 +7,12 @@ from __future__ import annotations
 
 from neofoam.mcp.registry import resolve_solver
 from neofoam.ui.forms import build_forms
-from neofoam.ui.steps import build_model_choices, build_steps
+from neofoam.ui.steps import (
+    build_model_choices,
+    build_model_families,
+    build_steps,
+    select_model_state,
+)
 
 
 def _solver():
@@ -54,3 +59,30 @@ def test_model_choices_required_flags():
     assert by_name["Newtonian"].required is True
     assert by_name["boussinesq"].required is False
     assert by_name["courant"].required is False
+
+
+def test_model_families_are_the_pick_one_choices():
+    families = {f.name: f for f in build_model_families(_solver())}
+    assert set(families) == {"PressureVelocityAlgorithm", "momentumTransportModel"}
+    algorithm = families["PressureVelocityAlgorithm"]
+    assert algorithm.label == "Pressure Velocity Algorithm"
+    assert [c.name for c in algorithm.members] == ["Pimple", "Simple"]
+    assert all(c.required for c in algorithm.members)
+
+
+def test_select_model_state_turns_the_siblings_off():
+    families = build_model_families(_solver())
+
+    updates = select_model_state(families, "Simple")
+
+    assert updates == {
+        "sel_Simple": True,
+        "sel_Pimple": False,
+        "choice_PressureVelocityAlgorithm": "Simple",
+    }
+
+
+def test_select_model_state_leaves_a_toggle_alone():
+    families = build_model_families(_solver())
+    # An optional model belongs to no pick-one family — nothing else moves.
+    assert select_model_state(families, "boussinesq") == {"sel_boussinesq": True}
