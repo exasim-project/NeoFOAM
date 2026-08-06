@@ -24,7 +24,9 @@ Operator notes:
   ``nfb.evaluate_implicit``, whose matrix-apply ``A·psi - b`` is
   volume-integrated and divided by the cell volumes here.
 - div schemes are per-request: the tokens (e.g. ``Gauss upwind``) are handed
-  straight to the operator's ``read`` as a TokenList. Everything else reads
+  straight to the operator's ``read`` as a TokenList; a request without a
+  scheme hands over the mapped ``fvSchemes`` dictionary instead, so the
+  operator resolves ``div(phi,<field>)`` itself. Everything else reads
   the staged ``system/fvSchemes`` dictionary.
 - all results are copied to host; every NeoN object stays local to
   ``serve`` so teardown happens before ``nn.finalize()``.
@@ -79,8 +81,11 @@ def serve(case_dir: Path, executor: str) -> None:
     def reload_field(name: str, reader: Callable[[], Any]) -> None:
         fields[name] = reader()
 
-    def div_tokens(scheme: str, field: str) -> Any:
-        return nn.TokenList(div_scheme(scheme, field).split())
+    def div_tokens(scheme: str | None, field: str) -> Any:
+        expanded = div_scheme(scheme, field)
+        if expanded is None:
+            return fv_schemes
+        return nn.TokenList(expanded.split())
 
     def explicit_scalar(op: Any, schemes: Any) -> np.ndarray:
         result = nn.ScalarVector(rt.executor, n_cells, 0.0)

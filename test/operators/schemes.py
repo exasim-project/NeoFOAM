@@ -25,6 +25,13 @@ DIV_SCHEMES: dict[str, str] = {
 }
 
 
-def div_scheme(scheme: str, field: str) -> str:
-    """Expand a scheme id to its full OpenFOAM scheme string for ``field``."""
+def div_scheme(scheme: str | None, field: str) -> str | None:
+    """Expand a scheme id to its full OpenFOAM scheme string for ``field``.
+
+    ``None`` means "no scheme string": both backends then look the scheme up
+    under ``div(phi,<field>)`` in the case's own ``system/fvSchemes`` — for
+    neon that is the dictionary ``map_fv_schemes`` returned.
+    """
+    if scheme is None:
+        return None
     return DIV_SCHEMES[scheme].format(field=field)

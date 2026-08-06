@@ -30,7 +30,10 @@ divSchemes
 {
     default         none;
     div(phi,T)      Gauss linear;
-    div(phi,U)      Gauss linear;
+    // read only by the scheme="from fvSchemes" parity test: every other div test
+    // passes its scheme explicitly. Carries the "bounded" convection prefix so
+    // that test sees whether map_fv_schemes hands the prefix through untouched.
+    div(phi,U)      bounded Gauss upwind;
     // named entries for the scalar-convection flux: fvc.flux(phi, T, key=...)
     // only takes a lookup key, so each div-scheme variant is staged here
     divT_linear         Gauss linear;
