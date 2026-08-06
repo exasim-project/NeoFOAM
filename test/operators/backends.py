@@ -163,7 +163,7 @@ class PybFvm:
     """``pybFoam.fvm`` — implicit operators, returned as the matrix applied to
     the current field (``M & psi``)."""
 
-    def div(self, *fields: "Field", scheme: str = "linear") -> np.ndarray:
+    def div(self, *fields: "Field", scheme: str | None = "linear") -> np.ndarray:
         return _of_worker(fields[0]).evaluate("fvm.div", _names(fields), scheme)
 
     def laplacian(self, gamma: "Field", field: "Field") -> np.ndarray:
@@ -193,9 +193,12 @@ class NeonExp:
 
 class NeonImp:
     """``neon.imp`` — implicit DSL operators, assembled via
-    ``nfb.evaluate_implicit`` and returned as ``(A·psi - b) / V``."""
+    ``nfb.evaluate_implicit`` and returned as ``(A·psi - b) / V``.
 
-    def div(self, *fields: "Field", scheme: str = "linear") -> np.ndarray:
+    ``scheme=None`` skips the per-request tokens so the operator resolves its
+    scheme from the mapped ``fvSchemes`` dictionary instead."""
+
+    def div(self, *fields: "Field", scheme: str | None = "linear") -> np.ndarray:
         return _neon_worker(fields[0]).evaluate("imp.div", _names(fields), scheme)
 
     def laplacian(self, gamma: "Field", field: "Field") -> np.ndarray:
