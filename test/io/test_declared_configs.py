@@ -94,6 +94,7 @@ _EXPECTED: dict[str, set[str]] = {
     },
     "incompressibleFluidNeoN": {
         "ControlDictConfig",
+        "NeoNControlConfig",
         "TransportPropertiesConfig",
         "TurbulencePropertiesConfig",
         "KEpsilonCoeffs",
