@@ -3,21 +3,25 @@
 
 """Process-wide NeoN/Kokkos initialization: executor selection and teardown.
 
-``requested_executor``, ``_launcher_rank`` and the report wording are environment
-reads and string formatting, tested in-process — so the wording holds on a
-host-only build too, where the subprocess test below has nothing to provoke and
-skips. The other two behaviors are only observable across a whole process life,
-hence subprocess-driven:
+``requested_executor`` and the report wording are a config read
+(:class:`~neofoam.solver.neon_runtime.NeoNControlConfig`) and string formatting,
+tested in-process — so the wording holds on a host-only build too, where the
+subprocess test below has nothing to provoke and skips. Both report tests run
+from ``test/setup_pimple``, because the report names the executor and
+``requested_executor`` reads it from the case's ``system/controlDict``. The
+other two behaviors are only observable across a whole process life, hence
+subprocess-driven:
 
 **A failed GPU init must say what to do about it.** Kokkos brings up every
 backend it was compiled with, so a CUDA-enabled build takes a CUDA context per
 rank even for a Serial executor; when that fails Kokkos reports a bare CUDA
-error code and a Kokkos source line, which names neither the device, the rank,
-nor a remedy. ``KOKKOS_VISIBLE_DEVICES`` pointing at a device ordinal that
-cannot exist forces exactly that failure without disturbing the real device, so
-the diagnostic can be asserted on a machine whose GPU is healthy. A build
-without a GPU backend initializes fine and has no diagnostic to show — that run
-is reported by the worker and skipped.
+error code and a Kokkos source line, which explains neither why a Serial run
+needs a device at all nor where to read up on it.
+``KOKKOS_VISIBLE_DEVICES`` pointing at a device ordinal that cannot exist forces
+exactly that failure without disturbing the real device, so the diagnostic can be
+asserted on a machine whose GPU is healthy. A build without a GPU backend
+initializes fine and has no diagnostic to show — that run is reported by the
+worker and skipped.
 
 **The finalize handler must not abort at interpreter teardown.**
 ``ensure_neon_initialized`` registers a finalize handler via ``atexit``. Because
@@ -38,6 +42,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -47,12 +52,14 @@ import neon._neon as nn  # noqa: E402
 
 from neofoam.solver import neon_runtime  # noqa: E402
 from neofoam.solver.neon_runtime import (  # noqa: E402
-    _RANK_ENVS,
     _gpu_init_report,
-    _launcher_rank,
     ensure_neon_initialized,
     requested_executor,
 )
+from neofoam.tooling.casebuild import from_template, patch  # noqa: E402
+
+#: The lid-driven cavity case; its controlDict carries ``executor Serial``.
+SETUP_PIMPLE = Path(__file__).parents[1] / "setup_pimple"
 
 # An ordinal no machine exposes: Kokkos selects it, the CUDA runtime rejects it,
 # and the healthy device is never touched.
@@ -104,77 +111,47 @@ print("solve failed and recorded")
 """
 
 
-def test_requested_executor_defaults_to_serial(monkeypatch: pytest.MonkeyPatch) -> None:
-    """With NEOFOAM_EXECUTOR unset the host executor Serial is selected."""
-    monkeypatch.delenv("NEOFOAM_EXECUTOR", raising=False)
-
-    assert requested_executor() == "Serial"
-
-
-def test_requested_executor_reads_the_environment(monkeypatch: pytest.MonkeyPatch) -> None:
-    """NEOFOAM_EXECUTOR names the executor."""
-    monkeypatch.setenv("NEOFOAM_EXECUTOR", "GPU")
+def test_requested_executor_reads_the_controlDict_entry(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The ``executor`` entry of system/controlDict names the executor."""
+    case = (from_template(SETUP_PIMPLE) | patch("system/controlDict", executor="GPU")).build_at(
+        tmp_path / "gpuExecutor"
+    )
+    monkeypatch.chdir(case.path)
 
     assert requested_executor() == "GPU"
 
 
-@pytest.mark.parametrize("rank_env", _RANK_ENVS)
-def test_launcher_rank_names_the_variable_it_read(
-    monkeypatch: pytest.MonkeyPatch, rank_env: str
+def test_requested_executor_without_the_entry_defaults_to_serial(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Every launcher's rank variable is recognised, and the report says which."""
-    for name in _RANK_ENVS:
-        monkeypatch.delenv(name, raising=False)
-    monkeypatch.setenv(rank_env, "3")
+    """A stock case carrying no NeoN keys still runs, on the host executor."""
+    case = (
+        from_template(SETUP_PIMPLE) | patch("system/controlDict", remove=["executor"])
+    ).build_at(tmp_path / "noExecutorEntry")
+    monkeypatch.chdir(case.path)
 
-    assert _launcher_rank() == f"3 (${rank_env})"
+    assert requested_executor() == "Serial"
 
 
-def test_launcher_rank_prefers_the_most_specific_variable(
+def test_gpu_init_report_names_the_error_the_executor_and_the_visibility(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """srun inside an OpenMPI job sets both; the OpenMPI rank is the process's own."""
-    for name in _RANK_ENVS:
-        monkeypatch.delenv(name, raising=False)
-    monkeypatch.setenv("SLURM_PROCID", "0")
-    monkeypatch.setenv("OMPI_COMM_WORLD_RANK", "7")
-
-    assert _launcher_rank() == "7 ($OMPI_COMM_WORLD_RANK)"
-
-
-def test_launcher_rank_without_a_launcher_says_so(monkeypatch: pytest.MonkeyPatch) -> None:
-    """A plain (non-MPI) run reports no rank rather than a misleading 0."""
-    for name in _RANK_ENVS:
-        monkeypatch.delenv(name, raising=False)
-
-    assert _launcher_rank() == "unknown — not launched by mpirun/srun"
-
-
-def test_gpu_init_report_names_the_devices_and_the_ways_out(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """The report restates the Kokkos error with the state that explains it.
-
-    ``_device_inventory`` shells out to ``nvidia-smi``, hence the stub.
-    """
-    monkeypatch.setenv("NEOFOAM_EXECUTOR", "Serial")
+    """The report restates the Kokkos error with the state that explains it."""
+    monkeypatch.chdir(SETUP_PIMPLE)
     monkeypatch.setenv("KOKKOS_VISIBLE_DEVICES", "4095")
     monkeypatch.delenv("CUDA_VISIBLE_DEVICES", raising=False)
-    for name in _RANK_ENVS:
-        monkeypatch.delenv(name, raising=False)
-    monkeypatch.setattr(neon_runtime, "_device_inventory", lambda: "  0, NVIDIA A100, 1 MiB, 2 MiB")
 
     report = _gpu_init_report(RuntimeError("cudaErrorInvalidDevice"))
 
     assert "NeoN (Kokkos) initialization failed on the GPU backend" in report
     assert "cudaErrorInvalidDevice" in report
-    assert "requested executor: Serial ($NEOFOAM_EXECUTOR)" in report
-    assert "MPI rank: unknown — not launched by mpirun/srun" in report
+    assert "requested executor: Serial (system/controlDict)" in report
     assert "CUDA_VISIBLE_DEVICES=<unset>" in report
     assert "KOKKOS_VISIBLE_DEVICES=4095" in report
-    assert "devices:\n  0, NVIDIA A100, 1 MiB, 2 MiB" in report
-    assert "KOKKOS_VISIBLE_DEVICES=<index above>" in report
-    assert "-DKokkos_ENABLE_CUDA=OFF" in report
+    assert "Kokkos::initialize brings up every compiled backend" in report
+    assert "doc/reference/cli.rst" in report
 
 
 def test_non_cuda_init_failure_is_reraised_unwrapped(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -193,15 +170,12 @@ def test_non_cuda_init_failure_is_reraised_unwrapped(monkeypatch: pytest.MonkeyP
     assert raised.value is original
 
 
-def test_failed_gpu_init_reports_the_devices_and_the_ways_out() -> None:
-    """A GPU init failure names the executor, the rank, the devices and the remedies."""
-    env = {
-        **os.environ,
-        "KOKKOS_VISIBLE_DEVICES": _ABSENT_DEVICE_ORDINAL,
-        "NEOFOAM_EXECUTOR": "Serial",
-    }
+def test_failed_gpu_init_reports_the_executor_and_the_ways_out() -> None:
+    """A real GPU init failure is catchable and carries the diagnostic."""
+    env = {**os.environ, "KOKKOS_VISIBLE_DEVICES": _ABSENT_DEVICE_ORDINAL}
     result = subprocess.run(
         [sys.executable, "-c", _FORCED_GPU_INIT_FAILURE],
+        cwd=str(SETUP_PIMPLE),
         capture_output=True,
         text=True,
         timeout=300,
@@ -218,12 +192,9 @@ def test_failed_gpu_init_reports_the_devices_and_the_ways_out() -> None:
     assert "NeoN (Kokkos) initialization failed on the GPU backend" in report
     # The underlying Kokkos message is kept, not swallowed.
     assert "cuda" in report.lower()
-    assert "requested executor: Serial ($NEOFOAM_EXECUTOR)" in report
-    assert "MPI rank:" in report
+    assert "requested executor: Serial (system/controlDict)" in report
     assert f"KOKKOS_VISIBLE_DEVICES={_ABSENT_DEVICE_ORDINAL}" in report
-    assert "devices:" in report
-    assert "KOKKOS_VISIBLE_DEVICES=<index above>" in report
-    assert "-DKokkos_ENABLE_CUDA=OFF" in report
+    assert "doc/reference/cli.rst" in report
 
 
 def test_finalize_does_not_abort_with_neon_object_pinned_by_traceback() -> None:

@@ -8,89 +8,83 @@ solver calls :func:`ensure_neon_initialized` before touching NeoN so repeated
 solver runs in one process (e.g. the test suite) reuse a single initialization;
 finalization is registered once at interpreter exit.
 
-The executor the NeoN fields live on comes from :func:`requested_executor`.
-It selects where the data is placed, *not* which Kokkos backends come up:
+The executor the NeoN fields live on comes from :func:`requested_executor`,
+which selects where the data is placed, *not* which Kokkos backends come up:
 ``Kokkos::initialize`` brings up every backend the library was compiled with,
 so a CUDA-enabled build takes a CUDA context per rank even for a Serial run.
 When that context cannot be created, :func:`ensure_neon_initialized` re-raises
-with the device inventory and the ways out.
+with the state that explains it; the remedies live in ``doc/reference/cli.rst``.
 """
 
 import atexit
 import gc
 import os
-import subprocess
 import sys
 
 import neon._neon as nn  # NeoN Python bindings
 
+from neofoam.io import OF, BaseConfig, IOStrategy
+
 _neon_initialized = False
 
-_EXECUTOR_ENV = "NEOFOAM_EXECUTOR"
 
-# The launcher-specific rank variables, most specific first; only one is set.
-_RANK_ENVS = ("OMPI_COMM_WORLD_RANK", "PMIX_RANK", "PMI_RANK", "SLURM_PROCID")
+@IOStrategy(OF("system/controlDict"))
+class NeoNControlConfig(BaseConfig):
+    """The NeoN runtime keys of ``system/controlDict`` — today the executor alone.
+
+    A top-level (sub-dict-free) slice of the case's ``controlDict``, co-owning the
+    file with the solver's ``ControlDictConfig`` the way the ``courant`` /
+    ``maxDeltaT`` model configs do. It is deliberately *not* a field on
+    ``ControlDictConfig``: it is read by the shared NeoN runtime (the framework
+    solver and the legacy ``neoPimpleFoam`` alike), and modelling one key keeps
+    that read independent of the time-control entries. ``executor`` stays a plain
+    ``str`` rather than a ``Literal``: the names are resolved by NeoFOAM's C++
+    ``createExecutor``, and an unknown one must fail there — after it logged
+    ``Creating Executor <name>`` — not at config validation.
+
+    Declared on the ``incompressibleFluidNeoN`` spec, so it shows up in the
+    solver's config schema; read through :func:`requested_executor`.
+
+    Example::
+
+        executor        GPU;   // in system/controlDict
+    """
+
+    executor: str = "Serial"
 
 
 def requested_executor() -> str:
     """NeoN executor the solver places its fields on.
 
-    Read once per process from ``NEOFOAM_EXECUTOR`` (``Serial``, ``CPU``,
-    ``GPU`` or ``default``), defaulting to the deterministic host executor
-    ``Serial`` that the test suite and the verification sweep run on. Use the
-    ``-executor`` argument instead when driving the C++ solvers directly.
+    Read from the ``executor`` entry of ``system/controlDict`` (``Serial``,
+    ``CPU``, ``GPU`` or ``default``) via :class:`NeoNControlConfig` — the same
+    entry the C++ solvers read. A case without the entry (a stock pimpleFoam
+    case) falls back to the deterministic host executor ``Serial``. The case is
+    the working directory, as for every other case file the solvers read. Use
+    the ``-executor`` argument instead when driving the C++ solvers directly.
 
     Example::
 
-        NEOFOAM_EXECUTOR=GPU neofoam solver incompressiblefluidneon
+        executor        GPU;   // in system/controlDict
     """
-    return os.environ.get(_EXECUTOR_ENV, "Serial")
-
-
-def _launcher_rank() -> str:
-    """The MPI rank of this process as its launcher reports it."""
-    for name in _RANK_ENVS:
-        if name in os.environ:
-            return f"{os.environ[name]} (${name})"
-    return "unknown — not launched by mpirun/srun"
-
-
-def _device_inventory() -> str:
-    """One indented line per GPU: index, name, free and total memory."""
-    query = "--query-gpu=index,name,memory.free,memory.total"
-    try:
-        listing = subprocess.run(
-            ["nvidia-smi", query, "--format=csv,noheader"],
-            capture_output=True,
-            text=True,
-            timeout=30,
-            check=True,
-        ).stdout
-    except (OSError, subprocess.SubprocessError) as probe_error:
-        return f"  nvidia-smi did not report: {probe_error}"
-    lines = listing.split("\n")
-    return "\n".join(f"  {line}" for line in lines if line.strip()) or "  no device reported"
+    return NeoNControlConfig.load().executor
 
 
 def _gpu_init_report(error: BaseException) -> str:
-    """The failed Kokkos GPU init, restated with the device state and the ways out."""
+    """The failed Kokkos GPU init, restated with the state that explains it."""
     seen_by_kokkos = "\n".join(
         f"{name}={os.environ.get(name, '<unset>')}"
         for name in ("CUDA_VISIBLE_DEVICES", "KOKKOS_VISIBLE_DEVICES")
     )
     return (
         f"NeoN (Kokkos) initialization failed on the GPU backend: {error}\n"
-        f"requested executor: {requested_executor()} (${_EXECUTOR_ENV})\n"
-        f"MPI rank: {_launcher_rank()}\n"
+        f"requested executor: {requested_executor()} (system/controlDict)\n"
         f"{seen_by_kokkos}\n"
-        f"devices:\n{_device_inventory()}\n"
         "This NeoFOAM links a Kokkos compiled with the CUDA backend, and "
         "Kokkos::initialize brings up every compiled backend — so each rank takes a "
         "CUDA context (a few hundred MiB) even when the executor is Serial or CPU. "
-        f"${_EXECUTOR_ENV} cannot switch that off. Ways out:\n"
-        "  * free the device, or select another one: KOKKOS_VISIBLE_DEVICES=<index above>\n"
-        "  * run fewer ranks per device — every rank takes its own context\n"
-        "  * for a host-only run, use a NeoFOAM built with -DKokkos_ENABLE_CUDA=OFF\n"
+        "The controlDict executor entry cannot switch that off. Ways out: see "
+        "doc/reference/cli.rst, 'Executor selection and GPU initialization'.\n"
     )
 
 

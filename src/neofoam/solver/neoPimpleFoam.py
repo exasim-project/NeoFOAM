@@ -33,6 +33,7 @@ from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
 from neofoam.solver.neon_runtime import (  # noqa: F401
     ensure_neon_initialized as _ensure_neon_initialized,
 )
+from neofoam.solver.neon_runtime import requested_executor
 from neofoam.solver.pisoControl import PisoControl
 
 
@@ -63,7 +64,7 @@ class NeoPimpleFoam:
     def _run(self) -> None:
         argList = pyf.argList(self._argv)
         runTime = pyf.Time(argList)
-        rt = nfb.create_adapter_run_time(runTime)
+        rt = nfb.create_adapter_run_time(runTime, requested_executor())
 
         # Inner-corrector counts live in the "PIMPLE" subdict for a stock pimpleFoam
         # case (there is no "PISO" block); mirror neoPimpleFoam.cpp / pimpleParity.cpp.

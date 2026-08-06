@@ -30,7 +30,7 @@ from neofoam.framework.operations import (
 from neofoam.framework.solver import Solver
 from neofoam.framework.tools import PreprocessConfig
 from neofoam.framework.types import OperationMetadata
-from neofoam.solver.neon_runtime import ensure_neon_initialized
+from neofoam.solver.neon_runtime import NeoNControlConfig, ensure_neon_initialized
 from neofoam.tools.block_mesh import BlockMeshDictConfig
 from neofoam.tools.snappy_hex_mesh import SnappyHexMeshDictConfig
 from neofoam.turbulence import momentumTransportModel
@@ -59,6 +59,9 @@ incompressibleFluidNeoN = Solver("incompressibleFluidNeoN")
 # turbulence is runtime-selected in create_fields from
 # constant/turbulenceProperties (pure-Python NeoN family, C++ fallback).
 incompressibleFluidNeoN.config(ControlDictConfig)
+# The NeoN executor, a controlDict key of the shared NeoN runtime rather than of
+# the solver's time controls (see neon_runtime.NeoNControlConfig).
+incompressibleFluidNeoN.config(NeoNControlConfig)
 incompressibleFluidNeoN.config(PreprocessConfig)  # mesh pipeline enable file (configs())
 # The two mesh-input dicts: writer configs so the wizard/MCP fill and persist them
 # like any other case file (blockMesh/snappyHexMesh read them at launch) — without

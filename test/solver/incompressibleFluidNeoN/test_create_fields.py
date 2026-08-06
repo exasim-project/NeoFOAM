@@ -5,8 +5,9 @@
 
 ``create_fields`` used to call ``create_adapter_run_time`` with no executor at
 all, so every run silently took the binding's ``Serial`` default and there was no
-way to ask for another one. The executor now comes from ``NEOFOAM_EXECUTOR``
-(:func:`neofoam.solver.neon_runtime.requested_executor`).
+way to ask for another one. The executor now comes from the ``executor`` entry of
+``system/controlDict`` (:func:`neofoam.solver.neon_runtime.requested_executor`),
+the same entry the C++ solvers read.
 
 The name reaches NeoFOAM's C++ ``createExecutor``, which logs ``Creating Executor
 <name>`` before resolving it. A name no backend answers to is the discriminating
@@ -33,9 +34,9 @@ from solver.incompressibleFluidNeoN._regex_case import regex_solver_keys_case
 END_TIME = 0.005
 
 
-def _run_solver(case_path: Path, executor: str) -> subprocess.CompletedProcess[str]:
-    """Run the framework NeoN solver in ``case_path`` with ``NEOFOAM_EXECUTOR`` set."""
-    env = {**os.environ, "FOAM_SIGFPE": "false", "NEOFOAM_EXECUTOR": executor}
+def _run_solver(case_path: Path) -> subprocess.CompletedProcess[str]:
+    """Run the framework NeoN solver in ``case_path``."""
+    env = {**os.environ, "FOAM_SIGFPE": "false"}
     return subprocess.run(
         [
             sys.executable,
@@ -55,10 +56,12 @@ def _run_solver(case_path: Path, executor: str) -> subprocess.CompletedProcess[s
 def test_neon_runtime_uses_the_requested_executor(tmp_path: Path) -> None:
     """The configured name reaches createExecutor, and an unknown one fails the run."""
     case = (
-        regex_solver_keys_case() | patch("system/controlDict", endTime=END_TIME) | block_mesh()
+        regex_solver_keys_case()
+        | patch("system/controlDict", endTime=END_TIME, executor="NoSuchExecutor")
+        | block_mesh()
     ).build_at(tmp_path / "executorSelection")
 
-    result = _run_solver(case.path, "NoSuchExecutor")
+    result = _run_solver(case.path)
 
     output = result.stdout + result.stderr
     assert "Creating Executor NoSuchExecutor" in output, (
