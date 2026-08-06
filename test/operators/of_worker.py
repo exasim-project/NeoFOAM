@@ -21,6 +21,8 @@ Operator notes:
   Gauss identity ``fvc.div(fvc.flux(phi, T, key="divT_<scheme>"))`` is used;
   the named keys are staged in ``system/fvSchemes`` (``fvc.flux`` only takes
   a lookup key, not a scheme string).
+- ``fvc.gradTensor(U)``: the tensor gradient under the requested grad scheme,
+  returned as the flat 9 components per cell.
 - ``fvm.*`` return the assembled matrix applied to the current field,
   ``M & psi``. ``operator&`` is not bound, but per component
   ``M & psi == A()*psi - H()`` (the component-average boundary-diagonal terms
@@ -51,7 +53,7 @@ from pybFoam import (
     volScalarField,
     volVectorField,
 )
-from schemes import div_scheme
+from schemes import div_scheme, grad_scheme
 
 Op = Callable[[str, "np.ndarray | None"], "np.ndarray | None"]
 
@@ -116,6 +118,7 @@ def run(case_dir: Path) -> None:
         ("fvc.interpolate", ("T",)): lambda s, d: _internal(fvc.interpolate(t)),
         ("fvc.flux", ("U",)): lambda s, d: _internal(fvc.flux(u)),
         ("fvc.grad", ("T",)): lambda s, d: _internal(fvc.grad(t)),
+        ("fvc.gradTensor", ("U",)): lambda s, d: _internal(fvc.grad(u, scheme=grad_scheme(s))),
         ("fvc.div", ("phi",)): lambda s, d: _internal(fvc.div(phi)),
         ("fvc.div", ("phi", "T")): lambda s, d: _internal(
             fvc.div(fvc.flux(phi, t, key=f"divT_{s}"))

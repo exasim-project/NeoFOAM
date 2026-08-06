@@ -34,19 +34,10 @@ Two comparisons with different discriminating power:
    the *same* fixed point far more slowly, so their bounds are peak-relative.
    See ``MODELS`` and report/steady-turbulence-wall-functions.md.
 
-A third comparison covers the *gradient scheme*: the same case with a
-``cellLimited`` ``grad(U)`` overlaid on both solvers (``GRAD_U_SCHEMES``).
-OpenFOAM limits ``grad(U)`` natively, so the NeoN momentum assembly matches only
-if it builds its gradient operator from ``gradSchemes`` instead of a hardcoded
-Gauss-Green one. It runs a *single* SIMPLE iteration and compares U/p only: at
-iteration 1 the turbulence closure has not fed back into the momentum equation
-yet, so the comparison isolates the one grad(U) the momentum equation owns (the
-closures compute their own gradients, a separate call site).
-
-A fourth test pins the reference itself: ``incompressibleFluid`` (SIMPLE) against
+A third test pins the reference itself: ``incompressibleFluid`` (SIMPLE) against
 the native ``simpleFoam`` binary, which is bitwise on this case.
 
-A fifth covers the *SIMPLEC* branch (``consistent yes``): the same case with
+A fourth covers the *SIMPLEC* branch (``consistent yes``): the same case with
 ``solution/simplec/fvSolution`` (plus ``schemes/snGradCorrected``) overlaid on
 both solvers, again at two iterations. Both backends then take the consistent
 path (rAtU, the phiHbyA and HbyA corrections, the rAtU velocity corrector)
@@ -99,26 +90,6 @@ MODELS = {
     "kEpsilon": (("U", "p", "k", "epsilon", "nut"), (1e-8, 1e-10), (1e-8, 1e-10)),
     "SpalartAllmaras": (("U", "p", "nuTilda", "nut"), (1e-8, 1e-10), (3e-4, 3e-4)),
     "kOmegaSST": (("U", "p", "k", "omega", "nut"), (3e-5, 1e-10), (1e-3, 1e-3)),
-}
-
-
-# grad(U) variants of the case's fvSchemes (``schemes/<dir>/fvSchemes``, overlaid
-# on both solvers), each with the bound it is held to:
-#
-# * ``cellLimited`` (k=1) — the real limited scheme, and the discriminating entry:
-#   the hardcoded Gauss-Green gradient this replaced lands at 2.6e-2 of peak U,
-#   26x outside the bound below. NeoN's limiter is not bit-identical to OpenFOAM's
-#   ``cellLimitedGrad`` (measured 3.1e-4 of peak U, 7.4e-6 of peak p), so the bound
-#   is peak-relative rather than the machine precision the unlimited case reaches.
-#   The difference is in the limiter itself, not in the scheme selection — see the
-#   entry below.
-# * ``cellLimitedOff`` (k=0) — the same scheme with limiting switched off by its
-#   coefficient, which must reproduce the unlimited Gauss gradient to machine
-#   precision. This is what pins that the *coefficient* is read: NeoN defaults an
-#   absent k to 1 (strongest limiting), so dropping it would limit here.
-GRAD_U_SCHEMES = {
-    "cellLimited": ("cellLimitedGradU", 1e-8, 1e-3),
-    "cellLimitedOff": ("cellLimitedGradUOff", 1e-8, 1e-10),
 }
 
 
@@ -304,29 +275,6 @@ def test_neon_steady_converged_matches_incompressibleFluid(model: str, tmp_path:
         fields,
         rtol,
         atol_scale,
-    )
-
-
-@pytest.mark.parametrize(
-    ("scheme_dir", "rtol", "atol_scale"),
-    list(GRAD_U_SCHEMES.values()),
-    ids=list(GRAD_U_SCHEMES),
-)
-def test_neon_steady_honours_the_grad_u_scheme(
-    scheme_dir: str, rtol: float, atol_scale: float, tmp_path: Path
-) -> None:
-    """The grad(U) entry of fvSchemes drives the NeoN momentum gradient."""
-    fv_schemes = _SCHEMES / scheme_dir / "fvSchemes"
-    neon_case = tmp_path / "neon"
-    reference_case = tmp_path / "reference"
-    _prepare_case("kEpsilon", neon_case, end_time=1, fv_schemes=fv_schemes)
-    _prepare_case("kEpsilon", reference_case, end_time=1, fv_schemes=fv_schemes)
-
-    _run_neon(neon_case)
-    _run_reference(reference_case)
-
-    _assert_fields_match(
-        neon_case, reference_case, tmp_path, scheme_dir, ("U", "p"), rtol, atol_scale
     )
 
 

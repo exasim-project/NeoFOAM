@@ -152,6 +152,10 @@ class PybFvc:
     def grad(self, field: "Field") -> np.ndarray:
         return _of_worker(field).evaluate("fvc.grad", (field.name,))
 
+    def grad_tensor(self, field: "Field", scheme: str) -> np.ndarray:
+        """grad(field) under ``scheme``, as (n, 9) per-cell tensor components."""
+        return _of_worker(field).evaluate("fvc.gradTensor", (field.name,), scheme)
+
     def div(self, *fields: "Field", scheme: str = "linear") -> np.ndarray:
         return _of_worker(fields[0]).evaluate("fvc.div", _names(fields), scheme)
 
@@ -183,6 +187,11 @@ class NeonExp:
 
     def grad(self, field: "Field") -> np.ndarray:
         return _neon_worker(field).evaluate("exp.grad", (field.name,))
+
+    def grad_tensor(self, field: "Field", scheme: str) -> np.ndarray:
+        """``nfb.GradScheme(...).grad_tensor(field)`` under the staged
+        ``grad(<field>_<scheme>)`` entry, as (n, 9) components."""
+        return _neon_worker(field).evaluate("exp.gradTensor", (field.name,), scheme)
 
     def div(self, *fields: "Field", scheme: str = "linear") -> np.ndarray:
         return _neon_worker(fields[0]).evaluate("exp.div", _names(fields), scheme)

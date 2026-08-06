@@ -28,6 +28,9 @@ Operator notes:
   scheme hands over the mapped ``fvSchemes`` dictionary instead, so the
   operator resolves ``div(phi,<field>)`` itself. Everything else reads
   the staged ``system/fvSchemes`` dictionary.
+- grad schemes are per-request too, but always via that dictionary: the
+  request's scheme id picks the staged ``grad(U_<scheme>)`` key that
+  ``nfb.GradScheme`` resolves (see ``schemes.py``).
 - all results are copied to host; every NeoN object stays local to
   ``serve`` so teardown happens before ``nn.finalize()``.
 """
@@ -44,7 +47,7 @@ from typing import Any, Callable
 import neon._neon as nn
 import numpy as np
 import pybFoam as pyf
-from schemes import div_scheme
+from schemes import div_scheme, grad_key
 
 from neofoam import neofoam_bindings as nfb
 
@@ -107,6 +110,11 @@ def serve(case_dir: Path, executor: str) -> None:
         nfb.evaluate_implicit(op, schemes, psi, result)
         return _to_numpy(result) / volumes[:, None]
 
+    def grad_tensor(scheme: str, field: str) -> np.ndarray:
+        """grad(<field>) under the staged ``grad(<field>_<scheme>)``, 9 per cell."""
+        grad = nfb.GradScheme(rt, grad_key(scheme, field)).grad_tensor(fields[field])
+        return _to_numpy(grad.internal_vector())
+
     def interpolate_t(_s: Any, _d: Any) -> np.ndarray:
         interp = nn.SurfaceInterpolationScalar(rt.executor, rt.nf_mesh, nn.TokenList(["linear"]))
         return _to_numpy(interp.interpolate(fields["T"]).internal_vector())
@@ -122,6 +130,7 @@ def serve(case_dir: Path, executor: str) -> None:
         ("interpolate", ("T",)): interpolate_t,
         ("flux", ("U",)): lambda s, d: _to_numpy(nfb.flux(fields["U"]).internal_vector()),
         ("exp.grad", ("T",)): lambda s, d: explicit_vector(nn.exp.grad(fields["T"]), fv_schemes),
+        ("exp.gradTensor", ("U",)): lambda s, d: grad_tensor(s, "U"),
         ("exp.div", ("phi",)): lambda s, d: explicit_scalar(nn.exp.div(fields["phi"]), fv_schemes),
         ("exp.div", ("phi", "T")): lambda s, d: explicit_scalar(
             nn.exp.div(fields["phi"], fields["T"]), div_tokens(s, "T")

@@ -24,15 +24,23 @@ gradSchemes
     default         none;
     grad(T)         Gauss linear;
     grad(U)         Gauss linear;
+    // nfb.GradScheme resolves a gradient operator by the literal key
+    // grad(<name>) from this dictionary, so each variant is staged under its own
+    // name and selected by constructing GradScheme with that name. The
+    // coefficient has to arrive through the parser: a TokenList built from
+    // Python strings silently reads back as k=1 (see test_exp_grad.py).
+    grad(U_cellLimited)     cellLimited Gauss linear 1;
+    grad(U_cellLimitedOff)  cellLimited Gauss linear 0;
 }
 
 divSchemes
 {
     default         none;
     div(phi,T)      Gauss linear;
-    // read only by the scheme="from fvSchemes" parity test: every other div test
-    // passes its scheme explicitly. Carries the "bounded" convection prefix so
-    // that test sees whether map_fv_schemes hands the prefix through untouched.
+    // read only by the scheme="fromFvSchemes" parity parameter: every other div
+    // test passes its scheme explicitly. Carries the "bounded" convection prefix
+    // so that parameter sees whether map_fv_schemes hands the prefix through
+    // untouched and the operator resolves it.
     div(phi,U)      bounded Gauss upwind;
     // named entries for the scalar-convection flux: fvc.flux(phi, T, key=...)
     // only takes a lookup key, so each div-scheme variant is staged here
