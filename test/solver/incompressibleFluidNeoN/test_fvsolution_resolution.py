@@ -3,23 +3,17 @@
 
 """How a field name is resolved against ``system/fvSolution`` entries.
 
-Two lookups decide what the NeoN solver does with a field, and both accept an
-OpenFOAM regex keyword:
+Both lookups accept an OpenFOAM regex keyword. ``map_solver_settings`` converts
+the ``solvers`` entry a field resolves to into its Ginkgo form in place, and
+``create_fields`` calls it once per mapped field — so one regex entry is reached
+several times and must not be converted twice (the conversion consumes
+``maxIter``). ``lookup_field_relaxation`` reads the pressure under-relaxation
+factor from ``relaxationFactors.fields`` only.
 
-* ``map_solver_settings`` — converts the ``solvers`` entry a field resolves to
-  into its Ginkgo form, in place. ``create_fields`` calls it once per field of
-  ``_MAPPED_SOLVER_DICTS``, so one regex entry is reached several times and must
-  not be converted twice (the conversion consumes ``maxIter``).
-* ``lookup_field_relaxation`` — the explicit pressure under-relaxation factor
-  the PIMPLE/SIMPLE ``continuity`` operation blends with, from
-  ``relaxationFactors.fields`` only.
-
-Both are pure functions of a ``NeoN::Dictionary``: no mesh, no ``Foam::Time``,
-no Kokkos initialization, so they run in-process here. The dictionaries are
-built with the NeoN API because NeoFOAM exposes no Python-level OpenFOAM->NeoN
-conversion; the entries mirror ``cases/regexSolverKeys/system/fvSolution``, and
-the on-disk counterpart is covered by a real run in
-``test_regex_fvsolution_keys``.
+Both are pure functions of a ``NeoN::Dictionary``, so they run in-process. The
+dictionaries are built with the NeoN API — NeoFOAM exposes no Python-level
+OpenFOAM->NeoN conversion — and mirror ``cases/regexSolverKeys``, whose on-disk
+behaviour ``test_regex_fvsolution_keys`` covers with a real run.
 """
 
 from __future__ import annotations
@@ -31,10 +25,8 @@ import pytest
 
 from neofoam import neofoam_bindings as nfb  # NeoFOAM Python bindings
 
-# The committed case writes ``maxIter 1000`` for the regex entry, which is also
-# the iteration count the conversion inserts by default — a re-converted entry
-# would then be indistinguishable from a correctly converted one. 250 keeps the
-# difference observable.
+# The committed case's ``maxIter 1000`` is also the count the conversion inserts by
+# default, so a re-converted entry would be indistinguishable; 250 keeps it visible.
 _REGEX_MAX_ITER = 250
 
 _REGEX_SOLVER_KEY = '"(U|k|epsilon)"'
@@ -80,11 +72,7 @@ def _fv_solution_with_relaxation() -> Any:
 
 @pytest.mark.parametrize("field", ["U", "k", "epsilon"])
 def test_regex_solver_key_resolves_for_every_field_it_covers(field: str) -> None:
-    """Each field the pattern names selects — and converts — that entry.
-
-    ``reportName`` is the label the per-solve residual report prints, so it says
-    *which* entry was converted, not merely that something was.
-    """
+    """Each field the pattern names converts that entry; ``reportName`` says which."""
     solvers = _solvers()
 
     nfb.map_solver_settings(solvers, field)
@@ -105,9 +93,8 @@ def test_literal_solver_entry_is_untouched_by_a_regex_field() -> None:
 def test_one_entry_reached_by_several_fields_is_converted_once() -> None:
     """U, k and epsilon share an entry; the second and third calls must no-op.
 
-    The conversion moves ``maxIter`` into ``criteria.iteration`` and removes it,
-    so a second pass would silently reset the iteration limit to the default
-    1000 — the failure the ``reportName`` stamp guards against.
+    The conversion moves ``maxIter`` into ``criteria.iteration`` and removes it, so
+    a second pass would silently reset the limit to the default 1000.
     """
     solvers = _solvers()
 
@@ -126,11 +113,7 @@ def test_field_relaxation_reads_the_fields_entry() -> None:
 
 
 def test_field_relaxation_prefers_the_int_valued_final_entry() -> None:
-    """On the final iteration ``pFinal`` wins, bare integer and all.
-
-    OpenFOAM cases write ``pFinal 1;`` — an int-typed entry that a plain scalar
-    read would reject; the lookup coerces it.
-    """
+    """On the final iteration ``pFinal`` wins; cases write it as an int the lookup coerces."""
     fv_solution = _fv_solution_with_relaxation()
 
     assert nfb.lookup_field_relaxation(fv_solution, "p", True) == 1.0
@@ -138,11 +121,7 @@ def test_field_relaxation_prefers_the_int_valued_final_entry() -> None:
 
 @pytest.mark.parametrize("final_iter", [False, True])
 def test_field_relaxation_ignores_the_equations_entry(final_iter: bool) -> None:
-    """U is relaxed as an *equation* (the momentum matrix), never as a field.
-
-    Reading the ``equations`` factor here too would relax U twice; the two
-    sub-dicts are independent, and OpenFOAM honours both.
-    """
+    """U is relaxed as an *equation*, never as a field; reading both would relax it twice."""
     fv_solution = _fv_solution_with_relaxation()
 
     assert nfb.lookup_field_relaxation(fv_solution, "U", final_iter) == 1.0
@@ -158,9 +137,8 @@ def test_field_relaxation_without_an_entry_is_a_no_op() -> None:
 def test_field_relaxation_with_a_malformed_relaxationfactors_is_a_no_op() -> None:
     """A ``relaxationFactors`` that is not a dictionary degrades, it does not throw.
 
-    Without the isDict guard the lookup casts a string to a sub-dictionary and
-    raises out of a solver step, so a typo in fvSolution would kill the run
-    where OpenFOAM would only ignore it.
+    Without the isDict guard a typo in fvSolution kills the run mid-solve, where
+    OpenFOAM would only ignore it.
     """
     fv_solution = nn.Dictionary()
     fv_solution.insert_string("relaxationFactors", "0.3")

@@ -7,15 +7,11 @@ Each step is exercised against a materialized :class:`CaseDir` staged from the
 committed ``cavity`` template. Configs are built the way production does, from
 ``configurations(incompressibleFluid)``.
 
-The ``regexKeys`` template carries an ``fvSolution`` whose ``solvers`` and
-``relaxationFactors`` already hold double-quoted OpenFOAM regex keys
-(``".*Final"``, ``"(U|k|epsilon)"``, ``".*"``). OpenFOAM parses such a key into an
-*unquoted* pattern keyword, so patching or removing one only lands on the existing
-entry if the lookup uses that stored form — the cases below pin both directions:
-addressing a regex key that is already there (update, remove) and one that is not
-(create), where the quotes must survive into the written file. Only sub-dict
-values are covered: pybFoam's scalar ``set`` strips a keyword's quotes, so a
-regex-keyed *leaf* (``relaxationFactors/equations``) cannot be written at all.
+The ``regexKeys`` template ships an ``fvSolution`` holding double-quoted regex keys.
+OpenFOAM parses such a key into an *unquoted* pattern keyword, so patching or
+removing one lands on the existing entry only if the lookup uses that stored form.
+Only sub-dict values are covered: pybFoam's scalar ``set`` strips a keyword's quotes,
+so a regex-keyed *leaf* cannot be written at all.
 """
 
 import shutil
@@ -96,8 +92,7 @@ def test_patch_creates_quoted_regex_key_via_nested_mapping(tmp_path: Path) -> No
 
 
 def test_patch_writes_regex_key_with_its_quotes_verbatim(tmp_path: Path) -> None:
-    # The quotes are what makes it a regex to OpenFOAM: without them the written
-    # file is not even re-readable, so assert on the text, not just the re-read.
+    # Without the quotes the written file is not even re-readable, so assert on text.
     case = _staged(tmp_path)
     patch("system/fvSolution", **{'solvers.".*Final"': {"solver": "PBiCGStab"}})(case)
     assert '".*Final"' in (case.path / "system" / "fvSolution").read_text()

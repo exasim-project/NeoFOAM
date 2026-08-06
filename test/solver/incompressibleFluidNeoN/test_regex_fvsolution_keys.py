@@ -10,12 +10,10 @@ into NeoN's hash map, so the patterns have to be resolved by NeoFOAM; stored
 verbatim (as they were) every per-field lookup missed and the run died with a bare
 ``IndexError: unordered_map::at`` naming neither the field nor the dictionary.
 
-The case — ``_regex_case.regex_solver_keys_case``, the lid-driven cavity
-under the ``cases/regexSolverKeys`` ``fvSolution`` — keys everything but the ``p``
-solver by regex, and gives the two solvers different Ginkgo mappings, so the
-per-solve residual report — which prints the preconditioner+solver ``fvSolution``
-mapped to — shows *which* entry each field resolved to, not merely that some entry
-was found.
+The case (``_regex_case.regex_solver_keys_case``) keys everything but the ``p``
+solver by regex and gives the two solvers different Ginkgo mappings, so the
+per-solve residual report — which prints what each ``fvSolution`` entry mapped to
+— shows *which* entry a field resolved to, not merely that one was found.
 
 Runs go through a subprocess: NeoN/Kokkos and OpenFOAM keep per-process global
 state that does not survive a second in-process run, and the resolution happens

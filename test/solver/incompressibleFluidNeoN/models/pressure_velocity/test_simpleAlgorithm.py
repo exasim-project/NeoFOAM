@@ -4,17 +4,14 @@
 """The SIMPLE control block, read into the per-run loop state without a case.
 
 ``_build_simple_state`` is everything ``create_simple_state`` does once the
-runtime has handed it the converted ``system/fvSolution``: the SIMPLEC switch
-(``consistent``) that selects the rAtU pressure correction, the non-orthogonal
-corrector count, and the momentumPredictor switch. It is a pure function of a
-``NeoN::Dictionary``, so it is exercised in-process (see
-``test_pimpleAlgorithm`` for why the dictionaries are built rather than read).
+runtime has handed it the converted ``system/fvSolution`` (mirroring
+``cases/pitzDailySteady/solution/simplec``): the SIMPLEC ``consistent`` switch
+that selects the rAtU pressure correction, the non-orthogonal corrector count,
+and momentumPredictor. It is a pure function of a ``NeoN::Dictionary``, hence
+in-process — see ``test_pimpleAlgorithm`` for why the dictionaries are built.
 
-The entries mirror the SIMPLEC ``fvSolution`` of
-``cases/pitzDailySteady/solution/simplec``. That the consistent branch is
-numerically right — not merely selected — is a separate, heavier check:
-``test_steady_vs_incompressibleFluid`` compares a SIMPLEC run against the
-pybFoam backend field by field.
+That the consistent branch is numerically right, not merely selected, is checked
+by ``test_steady_vs_incompressibleFluid`` against the pybFoam backend.
 """
 
 from __future__ import annotations

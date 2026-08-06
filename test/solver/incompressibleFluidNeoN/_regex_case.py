@@ -4,16 +4,12 @@
 """The regex-keyed case, composed as a one-file delta over ``test/setup_pimple``.
 
 Only ``system/fvSolution`` differs from the laminar lid-driven cavity the other
-runs in this directory use, so that single file is all that is committed
-(``cases/regexSolverKeys/``) and :func:`regex_solver_keys_case` lays it over the
-cavity — the base-plus-delta layout of ``test/turbulence/_parity_case.py``.
-
-The delta is a *tree overlay* rather than a ``patch`` pipeline because ``patch``
-cannot express it: ``relaxationFactors.equations`` keys its entry by regex
-(``"(U|k|epsilon)" 0.7;``) and pybFoam's ``dictionary.set`` strips the quotes off
-a keyword, so a regex-keyed *scalar* cannot be written at all (see
-``test/tooling/casebuild/test_steps.py``). Dropping those entries would take the
-``relaxationFactors`` half of the resolution out of the case.
+runs here use, so only that file is committed (``cases/regexSolverKeys/``) and it
+is laid over the cavity — the layout of ``test/turbulence/_parity_case.py``. It
+has to be a tree overlay, not a ``patch`` pipeline: pybFoam's ``dictionary.set``
+strips the quotes off a keyword, so the regex-keyed *scalar*
+``"(U|k|epsilon)" 0.7;`` under ``relaxationFactors.equations`` cannot be written
+at all (see ``test/tooling/casebuild/test_steps.py``).
 """
 
 from __future__ import annotations

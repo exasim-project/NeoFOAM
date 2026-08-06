@@ -130,12 +130,11 @@ class _OFBackend(_Backend):
         self.path = path
 
     def _stored(self, key: str) -> str:
-        """A parsed regex key is stored unquoted, so match that form when it exists."""
+        """Match a quoted regex key against the unquoted form the parser stored."""
         if not (len(key) > 1 and key.startswith('"') and key.endswith('"')):
             return key
         bare = key[1:-1]
-        # An exact keyword match, not ``found``: ``found`` also applies the dict's
-        # own patterns, so a stored ``".*"`` would answer for any bare key.
+        # Not ``found``: it applies the dict's patterns, so ``".*"`` answers any key.
         if any(str(stored) == bare for stored in self.node.toc()):
             return bare
         return key  # absent: keep the quotes so the write is a regex key again
@@ -155,9 +154,8 @@ class _OFBackend(_Backend):
         return self.node.get[typ](key)
 
     def set(self, key: str, value: object) -> None:
-        # Deliberately un-normalized: a leaf write goes through pybFoam's ``set``,
-        # which strips a keyword's quotes and so cannot write a regex-keyed scalar
-        # at all -- it must keep failing loudly rather than write a bare pattern.
+        # Deliberately not ``_stored``-normalized: pybFoam's ``set`` strips the
+        # quotes, so a regex-keyed scalar must fail loudly, not write ``.*  0.7;``.
         if isinstance(value, Mapping):
             self.child_or_add(key).overwrite(value)
             return

@@ -9,18 +9,11 @@ way to ask for another one. The executor now comes from ``NEOFOAM_EXECUTOR``
 (:func:`neofoam.solver.neon_runtime.requested_executor`).
 
 The name reaches NeoFOAM's C++ ``createExecutor``, which logs ``Creating Executor
-<name>`` before it resolves it — so the log line is the observation, and the
-run's exit status says whether the name resolved. A name no backend answers to
-is the discriminating case: it can only appear in that log if the configured
-string was passed through rather than dropped, and the failed run proves the
-name was really resolved and not merely printed. The resolving names (unset ->
-``Serial``, and ``Serial``) are covered where they are cheap:
-``test/solver/test_neon_runtime.py`` pins the environment read in-process, and
-every other case in this directory runs on the default executor.
-
-The selection happens inside the C++ runtime during a real init, and NeoN/Kokkos
-plus OpenFOAM keep per-process global state that does not survive a second
-in-process run, so the case runs in its own subprocess.
+<name>`` before resolving it. A name no backend answers to is the discriminating
+case: it reaches that log only if the configured string was passed through, and
+the failed run proves it was really resolved. The resolving names are pinned
+cheaply by ``test/solver/test_neon_runtime.py`` and by every other case here. A
+subprocess is needed: NeoN/Kokkos and OpenFOAM globals do not survive a re-run.
 """
 
 from __future__ import annotations

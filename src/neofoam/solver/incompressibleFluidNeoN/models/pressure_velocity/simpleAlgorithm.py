@@ -164,7 +164,7 @@ class SimpleNeoNState:
 
 
 def _build_simple_state(fv_solution: Any) -> SimpleNeoNState:
-    """SIMPLE loop state read from the case's ``SIMPLE`` control block."""
+    """Read the SIMPLE loop state from the case's ``SIMPLE`` control block."""
     simple_dict = fv_solution.subDict("SIMPLE")
     piso = PisoControl(
         n_correctors=1,
