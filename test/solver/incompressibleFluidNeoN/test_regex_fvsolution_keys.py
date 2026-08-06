@@ -10,10 +10,12 @@ into NeoN's hash map, so the patterns have to be resolved by NeoFOAM; stored
 verbatim (as they were) every per-field lookup missed and the run died with a bare
 ``IndexError: unordered_map::at`` naming neither the field nor the dictionary.
 
-The case (``cases/regexSolverKeys``) keys everything but the ``p`` solver by regex,
-and gives the two solvers different Ginkgo mappings, so the per-solve residual
-report — which prints the preconditioner+solver ``fvSolution`` mapped to — shows
-*which* entry each field resolved to, not merely that some entry was found.
+The case — ``_regex_case.regex_solver_keys_case``, the lid-driven cavity
+under the ``cases/regexSolverKeys`` ``fvSolution`` — keys everything but the ``p``
+solver by regex, and gives the two solvers different Ginkgo mappings, so the
+per-solve residual report — which prints the preconditioner+solver ``fvSolution``
+mapped to — shows *which* entry each field resolved to, not merely that some entry
+was found.
 
 Runs go through a subprocess: NeoN/Kokkos and OpenFOAM keep per-process global
 state that does not survive a second in-process run, and the resolution happens
@@ -27,9 +29,10 @@ import subprocess
 import sys
 from pathlib import Path
 
-from neofoam.tooling.casebuild import block_mesh, from_template, patch
+import pytest
 
-CASES = Path(__file__).parent / "cases"
+from neofoam.tooling.casebuild import block_mesh, patch
+from solver.incompressibleFluidNeoN._regex_case import regex_solver_keys_case
 
 # Two time steps (deltaT 0.005) — enough to reach the first and the final outer
 # corrector, i.e. both the base and the *Final solver lookups.
@@ -53,12 +56,11 @@ def _run_solver(case_path: Path) -> subprocess.CompletedProcess[str]:
     )
 
 
+@pytest.mark.slow
 def test_regex_solver_key_selects_its_settings(tmp_path: Path) -> None:
     """U resolves to the regex entry's solver, p to its own literal entry."""
     case = (
-        from_template(CASES / "regexSolverKeys")
-        | patch("system/controlDict", endTime=END_TIME)
-        | block_mesh()
+        regex_solver_keys_case() | patch("system/controlDict", endTime=END_TIME) | block_mesh()
     ).build_at(tmp_path / "regexSolverKeys")
 
     result = _run_solver(case.path)
@@ -72,10 +74,11 @@ def test_regex_solver_key_selects_its_settings(tmp_path: Path) -> None:
     assert "Jacobi+Cg:  Solving for p" in result.stdout
 
 
+@pytest.mark.slow
 def test_field_without_solver_entry_reports_field_and_available_keys(tmp_path: Path) -> None:
     """Dropping the entry that covers U fails naming U, the dictionary and the keys."""
     case = (
-        from_template(CASES / "regexSolverKeys")
+        regex_solver_keys_case()
         | patch("system/controlDict", endTime=END_TIME)
         | patch("system/fvSolution", remove=["solvers.(U|k|epsilon)"])
         | block_mesh()
