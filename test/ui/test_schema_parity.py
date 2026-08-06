@@ -52,15 +52,6 @@ _CASES = {
 #: are *exactly* these, so an unlisted mismatch fails — and so does a listed one that
 #: has been fixed, whose line must then be deleted. Keep it shrinking.
 _OUTSTANDING = {
-    # `GravityConfig.value`/`dimensions` are `list[...]` but serialise to "(0 -9.81 0)".
-    ("defaults", "incompressibleFluid", "g · Gravity", "value", "type"),
-    ("defaults", "incompressibleVoF", "g · Gravity", "value", "type"),
-    ("loaded", "incompressibleVoF", "g · Gravity", "value", "type"),
-    # VoF `phases` is a `list[str]` serialised to "(water air)" by a
-    # `@field_serializer(..., when_used="always")`, so the wizard renders one row per
-    # *character* of the string.
-    ("defaults", "incompressibleVoF", "transportProperties", "phases", "type"),
-    ("loaded", "incompressibleVoF", "transportProperties", "phases", "type"),
     # The boundary-condition schema pairs a catch-all "fallback BC arm" with the
     # specific per-type arms, so a plain `{"type": "noSlip"}` is valid under *both* and
     # violates `oneOf`'s exactly-one rule. Distinct from the cases above: the data and
