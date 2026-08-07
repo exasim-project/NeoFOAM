@@ -23,6 +23,10 @@ Operator notes:
   a lookup key, not a scheme string).
 - ``fvc.gradTensor(U)``: the tensor gradient under the requested grad scheme,
   returned as the flat 9 components per cell.
+- ``fvc.simplecFluxCorrection(rAU, rAtU, T)``: the SIMPLEC flux correction as
+  the ``incompressibleFluid`` solver writes it, with ``T`` standing in for the
+  pressure. ``fvc.snGrad`` takes the requested scheme inline, so ``corrected``
+  / ``uncorrected`` need no fvSchemes staging.
 - ``fvm.*`` return the assembled matrix applied to the current field,
   ``M & psi``. ``operator&`` is not bound, but per component
   ``M & psi == A()*psi - H()`` (the component-average boundary-diagonal terms
@@ -103,6 +107,8 @@ def run(case_dir: Path) -> None:
     t = volScalarField.read_field(mesh, "T")
     u = volVectorField.read_field(mesh, "U")
     gamma = volScalarField.read_field(mesh, "Gamma")
+    rau = volScalarField.read_field(mesh, "rAU")
+    ratu = volScalarField.read_field(mesh, "rAtU")
     phi = pyf.createPhi(u)
     centres = np.array(mesh.C().internalField())
 
@@ -111,9 +117,13 @@ def run(case_dir: Path) -> None:
         ("field.get", ("T",)): lambda s, d: np.array(t.internalField()),
         ("field.get", ("U",)): lambda s, d: np.array(u.internalField()),
         ("field.get", ("Gamma",)): lambda s, d: np.array(gamma.internalField()),
+        ("field.get", ("rAU",)): lambda s, d: np.array(rau.internalField()),
+        ("field.get", ("rAtU",)): lambda s, d: np.array(ratu.internalField()),
         ("field.set", ("T",)): lambda s, d: _set_field(t, d),
         ("field.set", ("U",)): lambda s, d: _set_field(u, d),
         ("field.set", ("Gamma",)): lambda s, d: _set_field(gamma, d),
+        ("field.set", ("rAU",)): lambda s, d: _set_field(rau, d),
+        ("field.set", ("rAtU",)): lambda s, d: _set_field(ratu, d),
         ("flux.update", ("U",)): lambda s, d: phi.assign(fvc.flux(u)),
         ("fvc.interpolate", ("T",)): lambda s, d: _internal(fvc.interpolate(t)),
         ("fvc.flux", ("U",)): lambda s, d: _internal(fvc.flux(u)),
@@ -125,6 +135,9 @@ def run(case_dir: Path) -> None:
         ),
         ("fvc.div", ("phi", "U")): lambda s, d: _internal(
             fvc.div(phi, u, scheme=div_scheme(s, "U"))
+        ),
+        ("fvc.simplecFluxCorrection", ("rAU", "rAtU", "T")): lambda s, d: _internal(
+            fvc.interpolate(ratu - rau) * fvc.snGrad(t, scheme=s) * mesh.magSf()
         ),
         ("fvc.laplacian", ("Gamma", "T")): lambda s, d: _internal(fvc.laplacian(gamma, t)),
         ("fvc.laplacian", ("Gamma", "U")): lambda s, d: _internal(fvc.laplacian(gamma, u)),

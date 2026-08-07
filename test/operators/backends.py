@@ -162,6 +162,15 @@ class PybFvc:
     def laplacian(self, gamma: "Field", field: "Field") -> np.ndarray:
         return _of_worker(field).evaluate("fvc.laplacian", (gamma.name, field.name))
 
+    def simplec_flux_correction(
+        self, rau: "Field", ratu: "Field", p: "Field", scheme: str
+    ) -> np.ndarray:
+        """``interpolate(rAtU - rAU) * snGrad(p) * magSf`` under ``scheme``.
+
+        The SIMPLEC flux correction as the ``incompressibleFluid`` solver
+        writes it; ``scheme`` is handed to ``fvc.snGrad`` inline."""
+        return _of_worker(rau).evaluate("fvc.simplecFluxCorrection", _names((rau, ratu, p)), scheme)
+
 
 class PybFvm:
     """``pybFoam.fvm`` — implicit operators, returned as the matrix applied to
@@ -217,9 +226,9 @@ class NeonImp:
 class NeonBackend:
     """The neon (NeoN) backend.
 
-    Surface results (``interpolate``, ``flux``) keep NeoN's layout — internal
-    faces first, boundary faces appended — the tests slice to the OpenFOAM
-    length.
+    Surface results (``interpolate``, ``flux``, ``simplec_flux_correction``)
+    keep NeoN's layout — internal faces first, boundary faces appended — the
+    tests slice to the OpenFOAM length.
     """
 
     def __init__(self) -> None:
@@ -231,6 +240,16 @@ class NeonBackend:
 
     def flux(self, field: "Field") -> np.ndarray:
         return _neon_worker(field).evaluate("flux", (field.name,))
+
+    def simplec_flux_correction(
+        self, rau: "Field", ratu: "Field", p: "Field", scheme: str
+    ) -> np.ndarray:
+        """``nfb.add_consistent_flux_correction`` on a zeroed ``phiHbyA``.
+
+        The result is the correction term alone; ``scheme`` reaches the
+        operator as the ``snGradSchemes/default`` entry of the fvSchemes
+        dictionary the worker hands over, as ``fvc::snGrad`` reads it."""
+        return _neon_worker(rau).evaluate("simplecFluxCorrection", _names((rau, ratu, p)), scheme)
 
 
 pyb = PybBackend()
