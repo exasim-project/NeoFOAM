@@ -122,7 +122,7 @@ int main(int argc, char* argv[])
 
                 if (consistent)
                 {
-                    nf::addConsistentFluxCorrection(phiHbyA, crAU, crAtU, p);
+                    nf::addConsistentFluxCorrection(phiHbyA, crAU, crAtU, p, rt.fvSchemesDict);
                     nf::subtractConsistentHbyA(hByA, crAU, crAtU, p);
                 }
 
