@@ -44,7 +44,8 @@ void applySetReference(ScalarLinearSystem& ls, NeoN::localIdx refCell, NeoN::sca
 template<
     typename ValueType,
     typename MatrixValueType = NeoN::scalar,
-    typename IndexType = NeoN::localIdx>
+    typename IndexType = NeoN::localIdx,
+    typename SystemMatrixType = NeoN::la::CSRMatrix<MatrixValueType, IndexType>>
 class PDE
 {
     using VolumeField = NeoN::finiteVolume::cellCentred::VolumeField<ValueType>;
@@ -52,7 +53,7 @@ class PDE
     // vector-solve form for Vec3 fields); the rhs/solution use the field's ValueType.
     // TODO: future work selects MatrixValueType == ValueType (the coupled Vec3 matrix)
     // based on the presence of boundary conditions that require the full block-coupled form.
-    using LinearSystem = NeoN::la::LinearSystem<MatrixValueType, ValueType>;
+    using LinearSystem = NeoN::la::LinearSystem<MatrixValueType, ValueType, SystemMatrixType>;
 
 public:
 
@@ -72,15 +73,18 @@ public:
                       == "cell-based")
                   {
                       auto cellIterator = std::make_shared<NeoN::la::CellBasedIterator>();
-                      return NeoN::la::createEmptyLinearSystem<MatrixValueType, ValueType>(
-                          psi.mesh(),
-                          cellIterator
-                      );
+                      return NeoN::la::
+                          createEmptyLinearSystem<MatrixValueType, ValueType, SystemMatrixType>(
+                              psi.mesh(),
+                              cellIterator
+                          );
                   }
                   else
                   {
-                      return NeoN::la::createEmptyLinearSystem<MatrixValueType, ValueType>(psi.mesh(
-                      ));
+                      return NeoN::la::
+                          createEmptyLinearSystem<MatrixValueType, ValueType, SystemMatrixType>(
+                              psi.mesh()
+                          );
                   }
               }
           ))
@@ -465,29 +469,34 @@ private:
         }
         expr_.read(NeoFOAM::expandSchemeDefaults(rt.fvSchemesDict, expr_, psi.name));
 
-        ls_.emplace(readOrCreate<LinearSystem>(
-            rt,
-            "linearSystem" + psi.name,
-            [&psi, &rt]()
-            {
-                if (rt.fvSolutionDict.subDict("solvers")
-                        .subDict(psi.name)
-                        .template get<std::string>("assemblyStrategy", "face-based")
-                    == "cell-based")
+        ls_.emplace(
+            readOrCreate<LinearSystem>(
+                rt,
+                "linearSystem" + psi.name,
+                [&psi, &rt]()
                 {
-                    auto cellIterator = std::make_shared<NeoN::la::CellBasedIterator>();
-                    return NeoN::la::createEmptyLinearSystem<MatrixValueType, ValueType>(
-                        psi.mesh(),
-                        cellIterator
-                    );
+                    if (rt.fvSolutionDict.subDict("solvers")
+                            .subDict(psi.name)
+                            .template get<std::string>("assemblyStrategy", "face-based")
+                        == "cell-based")
+                    {
+                        auto cellIterator = std::make_shared<NeoN::la::CellBasedIterator>();
+                        return NeoN::la::
+                            createEmptyLinearSystem<MatrixValueType, ValueType, SystemMatrixType>(
+                                psi.mesh(),
+                                cellIterator
+                            );
+                    }
+                    else
+                    {
+                        return NeoN::la::
+                            createEmptyLinearSystem<MatrixValueType, ValueType, SystemMatrixType>(
+                                psi.mesh()
+                            );
+                    }
                 }
-                else
-                {
-                    return NeoN::la::createEmptyLinearSystem<MatrixValueType, ValueType>(psi.mesh()
-                    );
-                }
-            }
-        ));
+            )
+        );
     }
 
     // Per-component name (Ux/Uy/Uz) when a vector field is solved as separate
