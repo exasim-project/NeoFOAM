@@ -440,8 +440,14 @@ def turbulence_correct(
 
     Solves the nuTilda transport PDE and refreshes nut/gradU for SA-DDES; a
     no-op recompute for laminar.
+
+    This is pimpleFoam's ``turbOnFinalIterOnly true`` position — the correction
+    runs on the final outer pass, where OpenFOAM has ``isFinalIteration()`` set,
+    so the transport solves take their ``<field>Final`` solver settings and
+    equation relaxation. The control cannot be queried for it here: ``loop()``
+    zeroes its corrector count on the pass that ends the loop.
     """
-    turbulence.correct(U, phi, neon_runtime)
+    turbulence.correct(U, phi, neon_runtime, final_iter=True)
 
 
 def _alias_operation(
