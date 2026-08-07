@@ -31,6 +31,11 @@ Operator notes:
 - grad schemes are per-request too, but always via that dictionary: the
   request's scheme id picks the staged ``grad(U_<scheme>)`` key that
   ``nfb.GradScheme`` resolves (see ``schemes.py``).
+- ``simplecFluxCorrection`` overrides ``snGradSchemes/default`` on a *copy* of
+  the mapped dictionary, so the requested face-normal gradient reaches
+  ``add_consistent_flux_correction`` the same way ``fvc::snGrad`` reads it,
+  without disturbing the schemes every other op shares. Applied to a zeroed
+  ``phiHbyA``, so the result is the correction term alone.
 - all results are copied to host; every NeoN object stays local to
   ``serve`` so teardown happens before ``nn.finalize()``.
 """
@@ -75,6 +80,8 @@ def serve(case_dir: Path, executor: str) -> None:
     fields: dict[str, Any] = {
         "T": nfb.read_scalar_volume_field(rt, "T"),
         "U": nfb.read_vector_volume_field(rt, "U"),
+        "rAU": nfb.read_scalar_volume_field(rt, "rAU"),
+        "rAtU": nfb.read_scalar_volume_field(rt, "rAtU"),
         "Gamma": nfb.create_uniform_surface_field(rt, "Gamma", 1.0),
         "phi": nfb.create_phi(rt, "U"),
     }
@@ -115,6 +122,18 @@ def serve(case_dir: Path, executor: str) -> None:
         grad = nfb.GradScheme(rt, grad_key(scheme, field)).grad_tensor(fields[field])
         return _to_numpy(grad.internal_vector())
 
+    def simplec_flux_correction(scheme: str) -> np.ndarray:
+        """The SIMPLEC correction alone — added onto a zeroed phiHbyA."""
+        schemes = nn.Dictionary(fv_schemes)
+        sn_grad_schemes = nn.Dictionary()
+        sn_grad_schemes.insert_string("default", scheme)
+        schemes.insert_dict("snGradSchemes", sn_grad_schemes)
+        phi_hbya = nfb.create_uniform_surface_field(rt, "phiHbyA", 0.0)
+        nfb.add_consistent_flux_correction(
+            phi_hbya, fields["rAU"], fields["rAtU"], fields["T"], schemes
+        )
+        return _to_numpy(phi_hbya.internal_vector())
+
     def interpolate_t(_s: Any, _d: Any) -> np.ndarray:
         interp = nn.SurfaceInterpolationScalar(rt.executor, rt.nf_mesh, nn.TokenList(["linear"]))
         return _to_numpy(interp.interpolate(fields["T"]).internal_vector())
@@ -126,9 +145,16 @@ def serve(case_dir: Path, executor: str) -> None:
         ("field.reload", ("U",)): lambda s, d: reload_field(
             "U", lambda: nfb.read_vector_volume_field(rt, "U")
         ),
+        ("field.reload", ("rAU",)): lambda s, d: reload_field(
+            "rAU", lambda: nfb.read_scalar_volume_field(rt, "rAU")
+        ),
+        ("field.reload", ("rAtU",)): lambda s, d: reload_field(
+            "rAtU", lambda: nfb.read_scalar_volume_field(rt, "rAtU")
+        ),
         ("flux.update", ("U",)): lambda s, d: reload_field("phi", lambda: nfb.create_phi(rt, "U")),
         ("interpolate", ("T",)): interpolate_t,
         ("flux", ("U",)): lambda s, d: _to_numpy(nfb.flux(fields["U"]).internal_vector()),
+        ("simplecFluxCorrection", ("rAU", "rAtU", "T")): lambda s, d: simplec_flux_correction(s),
         ("exp.grad", ("T",)): lambda s, d: explicit_vector(nn.exp.grad(fields["T"]), fv_schemes),
         ("exp.gradTensor", ("U",)): lambda s, d: grad_tensor(s, "U"),
         ("exp.div", ("phi",)): lambda s, d: explicit_scalar(nn.exp.div(fields["phi"]), fv_schemes),
