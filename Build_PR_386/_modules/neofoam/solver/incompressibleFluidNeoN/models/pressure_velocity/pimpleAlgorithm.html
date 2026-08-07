@@ -720,13 +720,12 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_control_block_name</span><span class="p">(</span><span class="n">fv_solution</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Name of the fvSolution subdict the pressure-velocity control is read from.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pick the fvSolution block the pressure-velocity control is read from.</span>
 
-<span class="sd">    A stock pimpleFoam case ships a ``PIMPLE`` block; a pisoFoam case ships a</span>
-<span class="sd">    ``PISO`` block instead (a single-outer-loop PIMPLE), so mirror the pybFoam</span>
-<span class="sd">    control factory: prefer PIMPLE, fall back to PISO. Both the corrector counts</span>
-<span class="sd">    and ``pRefCell``/``pRefValue`` are read from this one block, so the readers</span>
-<span class="sd">    share this selection instead of repeating it.</span>
+<span class="sd">    Mirrors the pybFoam control factory: a pisoFoam case ships ``PISO`` (a</span>
+<span class="sd">    single-outer-loop PIMPLE) instead of ``PIMPLE``. Corrector counts and</span>
+<span class="sd">    ``pRefCell``/``pRefValue`` come from the same block, so both readers share</span>
+<span class="sd">    this selection.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;PIMPLE&quot;</span><span class="p">,</span> <span class="s2">&quot;PISO&quot;</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">fv_solution</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
@@ -790,9 +789,8 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_pimple_state</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">PimpleNeoNState</span><span class="p">:</span>
         <span class="n">rt</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;_neon_runtime&quot;</span><span class="p">]</span>
-        <span class="c1"># OpenFOAM&#39;s solutionControl defaults momentumPredictor to true; the</span>
-        <span class="c1"># outer-loop count comes from nfb.PimpleControl, which defaults to 1</span>
-        <span class="c1"># without a PIMPLE block.</span>
+        <span class="c1"># momentumPredictor defaults to true (OpenFOAM solutionControl); the outer</span>
+        <span class="c1"># loop count comes from nfb.PimpleControl, 1 without a PIMPLE block.</span>
         <span class="n">fv_solution</span> <span class="o">=</span> <span class="n">rt</span><span class="o">.</span><span class="n">fv_solution_dict</span>
         <span class="n">control_dict</span> <span class="o">=</span> <span class="n">fv_solution</span><span class="o">.</span><span class="n">subDict</span><span class="p">(</span><span class="n">_control_block_name</span><span class="p">(</span><span class="n">fv_solution</span><span class="p">))</span>
         <span class="n">piso</span> <span class="o">=</span> <span class="n">PisoControl</span><span class="p">(</span>
@@ -804,9 +802,8 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_pressure_reference</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">PressureReference</span><span class="p">:</span>
         <span class="n">rt</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;_neon_runtime&quot;</span><span class="p">]</span>
-        <span class="c1"># pRefCell/pRefValue live in the same control block as the corrector</span>
-        <span class="c1"># counts, so pass the block the case ships — a pisoFoam case would</span>
-        <span class="c1"># otherwise abort with *Entry &#39;PIMPLE&#39; not found in fvSolution*.</span>
+        <span class="c1"># Same block as the corrector counts: a pisoFoam case would otherwise</span>
+        <span class="c1"># abort with *Entry &#39;PIMPLE&#39; not found in fvSolution*.</span>
         <span class="n">algorithm</span> <span class="o">=</span> <span class="n">_control_block_name</span><span class="p">(</span><span class="n">rt</span><span class="o">.</span><span class="n">fv_solution_dict</span><span class="p">)</span>
         <span class="n">cell</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">needs_ref</span> <span class="o">=</span> <span class="n">nfb</span><span class="o">.</span><span class="n">set_ref_cell</span><span class="p">(</span><span class="n">rt</span><span class="p">,</span> <span class="s2">&quot;p&quot;</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">PressureReference</span><span class="p">(</span><span class="n">cell</span><span class="o">=</span><span class="n">cell</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">needs_ref</span><span class="o">=</span><span class="n">needs_ref</span><span class="p">)</span>

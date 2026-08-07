@@ -215,55 +215,56 @@
 <codeline lineno="50"><highlight class="normal"></highlight></codeline>
 <codeline lineno="51"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>SIMPLEC<sp/>flux<sp/>correction:<sp/>phiHbyA<sp/>+=<sp/>interpolate(rAtU<sp/>-<sp/>rAU)*snGrad(p)*magSf.</highlight></codeline>
 <codeline lineno="52"><highlight class="comment"><sp/>*</highlight></codeline>
-<codeline lineno="53"><highlight class="comment"><sp/>*<sp/>snGrad(p)<sp/>uses<sp/>the<sp/>corrected<sp/>face-normal<sp/>gradient<sp/>to<sp/>retain<sp/>non-orthogonal<sp/>contributions.</highlight></codeline>
-<codeline lineno="54"><highlight class="comment"><sp/>*<sp/>Applied<sp/>to<sp/>internal<sp/>and<sp/>non-processor<sp/>boundary<sp/>faces.</highlight></codeline>
+<codeline lineno="53"><highlight class="comment"><sp/>*<sp/>The<sp/>face-normal<sp/>gradient<sp/>scheme<sp/>is<sp/>resolved<sp/>from<sp/>the<sp/>snGradSchemes<sp/>subdict<sp/>of<sp/>fvSchemes,</highlight></codeline>
+<codeline lineno="54"><highlight class="comment"><sp/>*<sp/>as<sp/>fvc::snGrad(p)<sp/>does.<sp/>Applied<sp/>to<sp/>internal<sp/>and<sp/>non-processor<sp/>boundary<sp/>faces.</highlight></codeline>
 <codeline lineno="55"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="56" refid="namespaceNeoFOAM_1aded81810e17d738be38ec5fb19f02870" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1aded81810e17d738be38ec5fb19f02870" kindref="member">addConsistentFluxCorrection</ref>(</highlight></codeline>
+<codeline lineno="56" refid="namespaceNeoFOAM_1a8cb1800d5b6a017b3c9003bce3ea6a4b" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1a8cb1800d5b6a017b3c9003bce3ea6a4b" kindref="member">addConsistentFluxCorrection</ref>(</highlight></codeline>
 <codeline lineno="57"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::SurfaceField&lt;scalar&gt;&amp;<sp/>phiHbyA,</highlight></codeline>
 <codeline lineno="58"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;scalar&gt;&amp;<sp/>rAU,</highlight></codeline>
 <codeline lineno="59"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;scalar&gt;&amp;<sp/>rAtU,</highlight></codeline>
-<codeline lineno="60"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;scalar&gt;&amp;<sp/>p</highlight></codeline>
-<codeline lineno="61"><highlight class="normal">);</highlight></codeline>
-<codeline lineno="62"><highlight class="normal"></highlight></codeline>
-<codeline lineno="63"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>SIMPLEC<sp/>HbyA<sp/>correction:<sp/>hByA<sp/>-=<sp/>(rAU<sp/>-<sp/>rAtU)*grad(p).</highlight></codeline>
-<codeline lineno="64"><highlight class="comment"><sp/>*</highlight></codeline>
-<codeline lineno="65"><highlight class="comment"><sp/>*<sp/>At<sp/>convergence,<sp/>combined<sp/>with<sp/>U<sp/>=<sp/>HbyA<sp/>-<sp/>rAtU*grad(p),<sp/>this<sp/>recovers</highlight></codeline>
-<codeline lineno="66"><highlight class="comment"><sp/>*<sp/>U<sp/>=<sp/>HbyA0<sp/>-<sp/>rAU*grad(p),<sp/>matching<sp/>the<sp/>plain-SIMPLE<sp/>velocity<sp/>corrector.</highlight></codeline>
-<codeline lineno="67"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="68" refid="namespaceNeoFOAM_1a222e258d8cf0cd2d7f3134c2df8d6342" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1a222e258d8cf0cd2d7f3134c2df8d6342" kindref="member">subtractConsistentHbyA</ref>(</highlight></codeline>
-<codeline lineno="69"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::VolumeField&lt;Vec3&gt;&amp;<sp/>hByA,</highlight></codeline>
-<codeline lineno="70"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;scalar&gt;&amp;<sp/>rAU,</highlight></codeline>
-<codeline lineno="71"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;scalar&gt;&amp;<sp/>rAtU,</highlight></codeline>
-<codeline lineno="72"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;scalar&gt;&amp;<sp/>p</highlight></codeline>
-<codeline lineno="73"><highlight class="normal">);</highlight></codeline>
-<codeline lineno="74"><highlight class="normal"></highlight></codeline>
-<codeline lineno="75"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>Updates<sp/>the<sp/>face<sp/>flux:<sp/>phi<sp/>=<sp/>phiHbyA<sp/>-<sp/>pEqn.flux().</highlight></codeline>
-<codeline lineno="76"><highlight class="comment"><sp/>*</highlight></codeline>
-<codeline lineno="77"><highlight class="comment"><sp/>*<sp/>pEqn.flux()<sp/>includes<sp/>both<sp/>the<sp/>orthogonal<sp/>matrix-coefficient<sp/>flux<sp/>and<sp/>the<sp/>non-orthogonal</highlight></codeline>
-<codeline lineno="78"><highlight class="comment"><sp/>*<sp/>face<sp/>flux<sp/>correction<sp/>stashed<sp/>in<sp/>the<sp/>linear<sp/>system.<sp/>Without<sp/>the<sp/>correction<sp/>div(phi)<sp/>!=<sp/>0</highlight></codeline>
-<codeline lineno="79"><highlight class="comment"><sp/>*<sp/>on<sp/>non-orthogonal<sp/>meshes.<sp/>Requires<sp/>an<sp/>assembled<sp/>pressure<sp/>system<sp/>with</highlight></codeline>
-<codeline lineno="80"><highlight class="comment"><sp/>*<sp/>keepFaceFluxCorrection(true).</highlight></codeline>
-<codeline lineno="81"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="82" refid="namespaceNeoFOAM_1adf06ff73f2db547389c03e2181600d76" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1adf06ff73f2db547389c03e2181600d76" kindref="member">updateFaceVelocity</ref>(</highlight></codeline>
-<codeline lineno="83"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::SurfaceField&lt;scalar&gt;&amp;<sp/>predictedPhi,</highlight></codeline>
-<codeline lineno="84"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1PDE" kindref="compound">PDE&lt;scalar&gt;</ref>&amp;<sp/>expr,</highlight></codeline>
-<codeline lineno="85"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::SurfaceField&lt;scalar&gt;&amp;<sp/>phi</highlight></codeline>
-<codeline lineno="86"><highlight class="normal">);</highlight></codeline>
-<codeline lineno="87"><highlight class="normal"></highlight></codeline>
-<codeline lineno="88"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>Velocity<sp/>corrector:<sp/>U<sp/>=<sp/>HbyA<sp/>-<sp/>rAU*grad(p).</highlight></codeline>
-<codeline lineno="89"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="90" refid="namespaceNeoFOAM_1af74166d4a917f022e9371fa7a13cbc6a" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1af74166d4a917f022e9371fa7a13cbc6a" kindref="member">updateVelocity</ref>(</highlight></codeline>
-<codeline lineno="91"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;Vec3&gt;&amp;<sp/>hByA,</highlight></codeline>
-<codeline lineno="92"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;scalar&gt;&amp;<sp/>rAU,</highlight></codeline>
-<codeline lineno="93"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;scalar&gt;&amp;<sp/>p,</highlight></codeline>
-<codeline lineno="94"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::VolumeField&lt;Vec3&gt;&amp;<sp/>U</highlight></codeline>
-<codeline lineno="95"><highlight class="normal">);</highlight></codeline>
-<codeline lineno="96"><highlight class="normal"></highlight></codeline>
-<codeline lineno="97"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>Face<sp/>flux<sp/>from<sp/>a<sp/>volume<sp/>vector<sp/>field:<sp/>phi<sp/>=<sp/>U·Sf.</highlight></codeline>
-<codeline lineno="98"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="99" refid="namespaceNeoFOAM_1a0d9937816ddfe9d997066890d86705a3" refkind="member"><highlight class="normal">nnfvcc::SurfaceField&lt;scalar&gt;<sp/><ref refid="namespaceNeoFOAM_1a0d9937816ddfe9d997066890d86705a3" kindref="member">flux</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;Vec3&gt;&amp;<sp/>volField);</highlight></codeline>
-<codeline lineno="100"><highlight class="normal"></highlight></codeline>
-<codeline lineno="101"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="60"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;scalar&gt;&amp;<sp/>p,</highlight></codeline>
+<codeline lineno="61"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>NeoN::Dictionary&amp;<sp/>fvSchemes</highlight></codeline>
+<codeline lineno="62"><highlight class="normal">);</highlight></codeline>
+<codeline lineno="63"><highlight class="normal"></highlight></codeline>
+<codeline lineno="64"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>SIMPLEC<sp/>HbyA<sp/>correction:<sp/>hByA<sp/>-=<sp/>(rAU<sp/>-<sp/>rAtU)*grad(p).</highlight></codeline>
+<codeline lineno="65"><highlight class="comment"><sp/>*</highlight></codeline>
+<codeline lineno="66"><highlight class="comment"><sp/>*<sp/>At<sp/>convergence,<sp/>combined<sp/>with<sp/>U<sp/>=<sp/>HbyA<sp/>-<sp/>rAtU*grad(p),<sp/>this<sp/>recovers</highlight></codeline>
+<codeline lineno="67"><highlight class="comment"><sp/>*<sp/>U<sp/>=<sp/>HbyA0<sp/>-<sp/>rAU*grad(p),<sp/>matching<sp/>the<sp/>plain-SIMPLE<sp/>velocity<sp/>corrector.</highlight></codeline>
+<codeline lineno="68"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="69" refid="namespaceNeoFOAM_1a222e258d8cf0cd2d7f3134c2df8d6342" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1a222e258d8cf0cd2d7f3134c2df8d6342" kindref="member">subtractConsistentHbyA</ref>(</highlight></codeline>
+<codeline lineno="70"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::VolumeField&lt;Vec3&gt;&amp;<sp/>hByA,</highlight></codeline>
+<codeline lineno="71"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;scalar&gt;&amp;<sp/>rAU,</highlight></codeline>
+<codeline lineno="72"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;scalar&gt;&amp;<sp/>rAtU,</highlight></codeline>
+<codeline lineno="73"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;scalar&gt;&amp;<sp/>p</highlight></codeline>
+<codeline lineno="74"><highlight class="normal">);</highlight></codeline>
+<codeline lineno="75"><highlight class="normal"></highlight></codeline>
+<codeline lineno="76"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>Updates<sp/>the<sp/>face<sp/>flux:<sp/>phi<sp/>=<sp/>phiHbyA<sp/>-<sp/>pEqn.flux().</highlight></codeline>
+<codeline lineno="77"><highlight class="comment"><sp/>*</highlight></codeline>
+<codeline lineno="78"><highlight class="comment"><sp/>*<sp/>pEqn.flux()<sp/>includes<sp/>both<sp/>the<sp/>orthogonal<sp/>matrix-coefficient<sp/>flux<sp/>and<sp/>the<sp/>non-orthogonal</highlight></codeline>
+<codeline lineno="79"><highlight class="comment"><sp/>*<sp/>face<sp/>flux<sp/>correction<sp/>stashed<sp/>in<sp/>the<sp/>linear<sp/>system.<sp/>Without<sp/>the<sp/>correction<sp/>div(phi)<sp/>!=<sp/>0</highlight></codeline>
+<codeline lineno="80"><highlight class="comment"><sp/>*<sp/>on<sp/>non-orthogonal<sp/>meshes.<sp/>Requires<sp/>an<sp/>assembled<sp/>pressure<sp/>system<sp/>with</highlight></codeline>
+<codeline lineno="81"><highlight class="comment"><sp/>*<sp/>keepFaceFluxCorrection(true).</highlight></codeline>
+<codeline lineno="82"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="83" refid="namespaceNeoFOAM_1adf06ff73f2db547389c03e2181600d76" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1adf06ff73f2db547389c03e2181600d76" kindref="member">updateFaceVelocity</ref>(</highlight></codeline>
+<codeline lineno="84"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::SurfaceField&lt;scalar&gt;&amp;<sp/>predictedPhi,</highlight></codeline>
+<codeline lineno="85"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1PDE" kindref="compound">PDE&lt;scalar&gt;</ref>&amp;<sp/>expr,</highlight></codeline>
+<codeline lineno="86"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::SurfaceField&lt;scalar&gt;&amp;<sp/>phi</highlight></codeline>
+<codeline lineno="87"><highlight class="normal">);</highlight></codeline>
+<codeline lineno="88"><highlight class="normal"></highlight></codeline>
+<codeline lineno="89"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>Velocity<sp/>corrector:<sp/>U<sp/>=<sp/>HbyA<sp/>-<sp/>rAU*grad(p).</highlight></codeline>
+<codeline lineno="90"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="91" refid="namespaceNeoFOAM_1af74166d4a917f022e9371fa7a13cbc6a" refkind="member"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="namespaceNeoFOAM_1af74166d4a917f022e9371fa7a13cbc6a" kindref="member">updateVelocity</ref>(</highlight></codeline>
+<codeline lineno="92"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;Vec3&gt;&amp;<sp/>hByA,</highlight></codeline>
+<codeline lineno="93"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;scalar&gt;&amp;<sp/>rAU,</highlight></codeline>
+<codeline lineno="94"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;scalar&gt;&amp;<sp/>p,</highlight></codeline>
+<codeline lineno="95"><highlight class="normal"><sp/><sp/><sp/><sp/>nnfvcc::VolumeField&lt;Vec3&gt;&amp;<sp/>U</highlight></codeline>
+<codeline lineno="96"><highlight class="normal">);</highlight></codeline>
+<codeline lineno="97"><highlight class="normal"></highlight></codeline>
+<codeline lineno="98"><highlight class="normal"></highlight><highlight class="comment">/*<sp/>@brief<sp/>Face<sp/>flux<sp/>from<sp/>a<sp/>volume<sp/>vector<sp/>field:<sp/>phi<sp/>=<sp/>U·Sf.</highlight></codeline>
+<codeline lineno="99"><highlight class="comment"><sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="100" refid="namespaceNeoFOAM_1a0d9937816ddfe9d997066890d86705a3" refkind="member"><highlight class="normal">nnfvcc::SurfaceField&lt;scalar&gt;<sp/><ref refid="namespaceNeoFOAM_1a0d9937816ddfe9d997066890d86705a3" kindref="member">flux</ref>(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>nnfvcc::VolumeField&lt;Vec3&gt;&amp;<sp/>volField);</highlight></codeline>
+<codeline lineno="101"><highlight class="normal"></highlight></codeline>
+<codeline lineno="102"><highlight class="normal">}</highlight></codeline>
     </programlisting>
     <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/algorithms/pressureVelocityCoupling.hpp"/>
   </compounddef>

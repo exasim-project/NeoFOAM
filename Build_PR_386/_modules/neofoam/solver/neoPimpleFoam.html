@@ -618,6 +618,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.solver.neon_runtime</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>  <span class="c1"># noqa: F401</span>
     <span class="n">ensure_neon_initialized</span> <span class="k">as</span> <span class="n">_ensure_neon_initialized</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.solver.neon_runtime</span><span class="w"> </span><span class="kn">import</span> <span class="n">requested_executor</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.solver.pisoControl</span><span class="w"> </span><span class="kn">import</span> <span class="n">PisoControl</span>
 
 
@@ -650,7 +651,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_run</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">argList</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">argList</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_argv</span><span class="p">)</span>
         <span class="n">runTime</span> <span class="o">=</span> <span class="n">pyf</span><span class="o">.</span><span class="n">Time</span><span class="p">(</span><span class="n">argList</span><span class="p">)</span>
-        <span class="n">rt</span> <span class="o">=</span> <span class="n">nfb</span><span class="o">.</span><span class="n">create_adapter_run_time</span><span class="p">(</span><span class="n">runTime</span><span class="p">)</span>
+        <span class="n">rt</span> <span class="o">=</span> <span class="n">nfb</span><span class="o">.</span><span class="n">create_adapter_run_time</span><span class="p">(</span><span class="n">runTime</span><span class="p">,</span> <span class="n">requested_executor</span><span class="p">())</span>
 
         <span class="c1"># Inner-corrector counts live in the &quot;PIMPLE&quot; subdict for a stock pimpleFoam</span>
         <span class="c1"># case (there is no &quot;PISO&quot; block); mirror neoPimpleFoam.cpp / pimpleParity.cpp.</span>

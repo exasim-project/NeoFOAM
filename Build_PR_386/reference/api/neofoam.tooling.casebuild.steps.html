@@ -611,12 +611,10 @@ committing a second template, e.g.
 <code class="docutils literal notranslate"><span class="pre">patch(&quot;system/controlDict&quot;,</span> <span class="pre">remove=[&quot;adjustTimeStep&quot;])</span></code>). Both accept
 dotted keys addressing sub-dicts, e.g.
 <code class="docutils literal notranslate"><span class="pre">patch(&quot;system/fvSolution&quot;,</span> <span class="pre">**{&quot;PIMPLE.nCorrectors&quot;:</span> <span class="pre">2})</span></code>; a double-quoted
-OpenFOAM regex key is one literal key, dots included, e.g.
-<code class="docutils literal notranslate"><span class="pre">patch(&quot;system/fvSolution&quot;,</span> <span class="pre">**{'solvers.&quot;.*Final&quot;':</span> <span class="pre">{...}})</span></code> – its value
-has to be a sub-dict, since pybFoam cannot write a regex-keyed scalar (it
-strips the quotes that make it a pattern). Removing an absent key is a no-op.
-The file’s format (OpenFOAM / JSON / YAML) is chosen by suffix – see
-<code class="xref py py-class docutils literal notranslate"><span class="pre">neofoam.io.DictFile</span></code>.</p>
+regex key is one literal segment, dots included, and its value must be a
+sub-dict (pybFoam cannot write a regex-keyed scalar). Removing an absent key
+is a no-op. The file’s format (OpenFOAM / JSON / YAML) is chosen by suffix –
+see <code class="xref py py-class docutils literal notranslate"><span class="pre">neofoam.io.DictFile</span></code>.</p>
 </dd></dl>
 
 </section>

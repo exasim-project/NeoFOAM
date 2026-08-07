@@ -606,6 +606,30 @@ neofoam<span class="w"> </span>solver<span class="w"> </span>incompressiblefluid
 <code class="docutils literal notranslate"><span class="pre">incompressiblevof</span></code> (pybFoam backend); <code class="docutils literal notranslate"><span class="pre">neoicofoam</span></code>, <code class="docutils literal notranslate"><span class="pre">neopimplefoam</span></code>,
 <code class="docutils literal notranslate"><span class="pre">incompressiblefluidneon</span></code> (NeoN backend).</p>
 </section>
+<section id="executor-selection-and-gpu-initialization">
+<h2>Executor selection and GPU initialization<a class="headerlink" href="#executor-selection-and-gpu-initialization" title="Link to this heading">¶</a></h2>
+<p>The NeoN-backed solvers place their fields on the executor named by the
+<code class="docutils literal notranslate"><span class="pre">executor</span></code> entry of <code class="docutils literal notranslate"><span class="pre">system/controlDict</span></code> — the same entry the C++ solvers
+read:</p>
+<div class="highlight-cpp notranslate"><div class="highlight"><pre><span></span><span class="n">executor</span><span class="w">        </span><span class="n">GPU</span><span class="p">;</span><span class="w">   </span><span class="c1">// Serial (default) | CPU | GPU | default</span>
+</pre></div>
+</div>
+<p>A case without the entry runs on <code class="docutils literal notranslate"><span class="pre">Serial</span></code>, so a stock <code class="docutils literal notranslate"><span class="pre">pimpleFoam</span></code> case
+needs no NeoN keys.</p>
+<p>The entry selects where the <em>data</em> is placed, not which Kokkos backends come
+up. <code class="docutils literal notranslate"><span class="pre">Kokkos::initialize</span></code> brings up every backend the library was compiled
+with, so a CUDA-enabled build takes a CUDA context per rank (a few hundred MiB)
+even for a <code class="docutils literal notranslate"><span class="pre">Serial</span></code> or <code class="docutils literal notranslate"><span class="pre">CPU</span></code> run — the <code class="docutils literal notranslate"><span class="pre">executor</span></code> entry cannot switch that
+off. When that context cannot be created, the solver aborts with a
+<code class="docutils literal notranslate"><span class="pre">NeoN</span> <span class="pre">(Kokkos)</span> <span class="pre">initialization</span> <span class="pre">failed</span> <span class="pre">on</span> <span class="pre">the</span> <span class="pre">GPU</span> <span class="pre">backend</span></code> error. Ways out:</p>
+<ul class="simple">
+<li><p>free the device, or select another one:
+<code class="docutils literal notranslate"><span class="pre">KOKKOS_VISIBLE_DEVICES=&lt;index&gt;</span></code> (<code class="docutils literal notranslate"><span class="pre">nvidia-smi</span></code> lists the indices and
+their free memory);</p></li>
+<li><p>run fewer ranks per device — every rank takes its own context;</p></li>
+<li><p>for a host-only run, use a NeoFOAM built with <code class="docutils literal notranslate"><span class="pre">-DKokkos_ENABLE_CUDA=OFF</span></code>.</p></li>
+</ul>
+</section>
 <section id="preprocessing-neofoam-preprocess">
 <h2>Preprocessing — <code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">preprocess</span></code><a class="headerlink" href="#preprocessing-neofoam-preprocess" title="Link to this heading">¶</a></h2>
 <p>Run only the mesh preprocessing pipeline for a case and stop (no time loop):</p>
@@ -688,6 +712,7 @@ neofoam<span class="w"> </span>telemetry<span class="w"> </span>plot<span class=
             <ul>
 <li><a class="reference internal" href="#">The <code class="docutils literal notranslate"><span class="pre">neofoam</span></code> command line</a><ul>
 <li><a class="reference internal" href="#solvers-neofoam-solver">Solvers — <code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">solver</span></code></a></li>
+<li><a class="reference internal" href="#executor-selection-and-gpu-initialization">Executor selection and GPU initialization</a></li>
 <li><a class="reference internal" href="#preprocessing-neofoam-preprocess">Preprocessing — <code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">preprocess</span></code></a></li>
 <li><a class="reference internal" href="#mcp-server-neofoam-mcp">MCP server — <code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">mcp</span></code></a></li>
 <li><a class="reference internal" href="#telemetry-neofoam-telemetry">Telemetry — <code class="docutils literal notranslate"><span class="pre">neofoam</span> <span class="pre">telemetry</span></code></a></li>

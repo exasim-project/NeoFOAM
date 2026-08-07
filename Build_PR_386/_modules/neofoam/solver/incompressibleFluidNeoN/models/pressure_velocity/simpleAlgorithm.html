@@ -752,7 +752,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_build_simple_state</span><span class="p">(</span><span class="n">fv_solution</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SimpleNeoNState</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;SIMPLE loop state read from the case&#39;s ``SIMPLE`` control block.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read the SIMPLE loop state from the case&#39;s ``SIMPLE`` control block.&quot;&quot;&quot;</span>
     <span class="n">simple_dict</span> <span class="o">=</span> <span class="n">fv_solution</span><span class="o">.</span><span class="n">subDict</span><span class="p">(</span><span class="s2">&quot;SIMPLE&quot;</span><span class="p">)</span>
     <span class="n">piso</span> <span class="o">=</span> <span class="n">PisoControl</span><span class="p">(</span>
         <span class="n">n_correctors</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
@@ -940,7 +940,7 @@
 
     <span class="n">phiHbyA</span> <span class="o">=</span> <span class="n">nfb</span><span class="o">.</span><span class="n">flux</span><span class="p">(</span><span class="n">hByA</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">state</span><span class="o">.</span><span class="n">consistent</span><span class="p">:</span>
-        <span class="n">nfb</span><span class="o">.</span><span class="n">add_consistent_flux_correction</span><span class="p">(</span><span class="n">phiHbyA</span><span class="p">,</span> <span class="n">rAU</span><span class="p">,</span> <span class="n">rAtU</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+        <span class="n">nfb</span><span class="o">.</span><span class="n">add_consistent_flux_correction</span><span class="p">(</span><span class="n">phiHbyA</span><span class="p">,</span> <span class="n">rAU</span><span class="p">,</span> <span class="n">rAtU</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">rt</span><span class="o">.</span><span class="n">fv_schemes_dict</span><span class="p">)</span>
         <span class="n">nfb</span><span class="o">.</span><span class="n">subtract_consistent_hbya</span><span class="p">(</span><span class="n">hByA</span><span class="p">,</span> <span class="n">rAU</span><span class="p">,</span> <span class="n">rAtU</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
 
     <span class="n">have_p_res</span> <span class="o">=</span> <span class="kc">False</span>

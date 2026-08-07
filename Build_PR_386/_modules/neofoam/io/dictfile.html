@@ -715,12 +715,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">path</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_stored</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;A parsed regex key is stored unquoted, so match that form when it exists.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Match a quoted regex key against the unquoted form the parser stored.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">key</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">)):</span>
             <span class="k">return</span> <span class="n">key</span>
         <span class="n">bare</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-        <span class="c1"># An exact keyword match, not ``found``: ``found`` also applies the dict&#39;s</span>
-        <span class="c1"># own patterns, so a stored ``&quot;.*&quot;`` would answer for any bare key.</span>
+        <span class="c1"># Not ``found``: it applies the dict&#39;s patterns, so ``&quot;.*&quot;`` answers any key.</span>
         <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">stored</span><span class="p">)</span> <span class="o">==</span> <span class="n">bare</span> <span class="k">for</span> <span class="n">stored</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">toc</span><span class="p">()):</span>
             <span class="k">return</span> <span class="n">bare</span>
         <span class="k">return</span> <span class="n">key</span>  <span class="c1"># absent: keep the quotes so the write is a regex key again</span>
@@ -740,9 +739,8 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">[</span><span class="n">typ</span><span class="p">](</span><span class="n">key</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="c1"># Deliberately un-normalized: a leaf write goes through pybFoam&#39;s ``set``,</span>
-        <span class="c1"># which strips a keyword&#39;s quotes and so cannot write a regex-keyed scalar</span>
-        <span class="c1"># at all -- it must keep failing loudly rather than write a bare pattern.</span>
+        <span class="c1"># Deliberately not ``_stored``-normalized: pybFoam&#39;s ``set`` strips the</span>
+        <span class="c1"># quotes, so a regex-keyed scalar must fail loudly, not write ``.*  0.7;``.</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">child_or_add</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">overwrite</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
             <span class="k">return</span>

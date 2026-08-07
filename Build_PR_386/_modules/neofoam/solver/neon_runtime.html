@@ -593,28 +593,52 @@
 <span class="sd">solver runs in one process (e.g. the test suite) reuse a single initialization;</span>
 <span class="sd">finalization is registered once at interpreter exit.</span>
 
-<span class="sd">The executor the NeoN fields live on comes from :func:`requested_executor`.</span>
-<span class="sd">It selects where the data is placed, *not* which Kokkos backends come up:</span>
+<span class="sd">The executor the NeoN fields live on comes from :func:`requested_executor`,</span>
+<span class="sd">which selects where the data is placed, *not* which Kokkos backends come up:</span>
 <span class="sd">``Kokkos::initialize`` brings up every backend the library was compiled with,</span>
 <span class="sd">so a CUDA-enabled build takes a CUDA context per rank even for a Serial run.</span>
 <span class="sd">When that context cannot be created, :func:`ensure_neon_initialized` re-raises</span>
-<span class="sd">with the device inventory and the ways out.</span>
+<span class="sd">with the state that explains it; the remedies live in ``doc/reference/cli.rst``.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">atexit</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">gc</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">neon._neon</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>  <span class="c1"># NeoN Python bindings</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">OF</span><span class="p">,</span> <span class="n">BaseConfig</span><span class="p">,</span> <span class="n">IOStrategy</span>
+
 <span class="n">_neon_initialized</span> <span class="o">=</span> <span class="kc">False</span>
 
-<span class="n">_EXECUTOR_ENV</span> <span class="o">=</span> <span class="s2">&quot;NEOFOAM_EXECUTOR&quot;</span>
 
-<span class="c1"># The launcher-specific rank variables, most specific first; only one is set.</span>
-<span class="n">_RANK_ENVS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;OMPI_COMM_WORLD_RANK&quot;</span><span class="p">,</span> <span class="s2">&quot;PMIX_RANK&quot;</span><span class="p">,</span> <span class="s2">&quot;PMI_RANK&quot;</span><span class="p">,</span> <span class="s2">&quot;SLURM_PROCID&quot;</span><span class="p">)</span>
+<div class="viewcode-block" id="NeoNControlConfig">
+<a class="viewcode-back" href="../../../reference/api/neofoam.solver.neon_runtime.html#neofoam.solver.neon_runtime.NeoNControlConfig">[docs]</a>
+<span class="nd">@IOStrategy</span><span class="p">(</span><span class="n">OF</span><span class="p">(</span><span class="s2">&quot;system/controlDict&quot;</span><span class="p">))</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">NeoNControlConfig</span><span class="p">(</span><span class="n">BaseConfig</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The NeoN runtime keys of ``system/controlDict`` — today the executor alone.</span>
+
+<span class="sd">    A top-level (sub-dict-free) slice of the case&#39;s ``controlDict``, co-owning the</span>
+<span class="sd">    file with the solver&#39;s ``ControlDictConfig`` the way the ``courant`` /</span>
+<span class="sd">    ``maxDeltaT`` model configs do. It is deliberately *not* a field on</span>
+<span class="sd">    ``ControlDictConfig``: it is read by the shared NeoN runtime (the framework</span>
+<span class="sd">    solver and the legacy ``neoPimpleFoam`` alike), and modelling one key keeps</span>
+<span class="sd">    that read independent of the time-control entries. ``executor`` stays a plain</span>
+<span class="sd">    ``str`` rather than a ``Literal``: the names are resolved by NeoFOAM&#39;s C++</span>
+<span class="sd">    ``createExecutor``, and an unknown one must fail there — after it logged</span>
+<span class="sd">    ``Creating Executor &lt;name&gt;`` — not at config validation.</span>
+
+<span class="sd">    Declared on the ``incompressibleFluidNeoN`` spec, so it shows up in the</span>
+<span class="sd">    solver&#39;s config schema; read through :func:`requested_executor`.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        executor        GPU;   // in system/controlDict</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">executor</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Serial&quot;</span></div>
+
 
 
 <div class="viewcode-block" id="requested_executor">
@@ -622,63 +646,36 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">requested_executor</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;NeoN executor the solver places its fields on.</span>
 
-<span class="sd">    Read once per process from ``NEOFOAM_EXECUTOR`` (``Serial``, ``CPU``,</span>
-<span class="sd">    ``GPU`` or ``default``), defaulting to the deterministic host executor</span>
-<span class="sd">    ``Serial`` that the test suite and the verification sweep run on. Use the</span>
-<span class="sd">    ``-executor`` argument instead when driving the C++ solvers directly.</span>
+<span class="sd">    Read from the ``executor`` entry of ``system/controlDict`` (``Serial``,</span>
+<span class="sd">    ``CPU``, ``GPU`` or ``default``) via :class:`NeoNControlConfig` — the same</span>
+<span class="sd">    entry the C++ solvers read. A case without the entry (a stock pimpleFoam</span>
+<span class="sd">    case) falls back to the deterministic host executor ``Serial``. The case is</span>
+<span class="sd">    the working directory, as for every other case file the solvers read. Use</span>
+<span class="sd">    the ``-executor`` argument instead when driving the C++ solvers directly.</span>
 
 <span class="sd">    Example::</span>
 
-<span class="sd">        NEOFOAM_EXECUTOR=GPU neofoam solver incompressiblefluidneon</span>
+<span class="sd">        executor        GPU;   // in system/controlDict</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">_EXECUTOR_ENV</span><span class="p">,</span> <span class="s2">&quot;Serial&quot;</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">NeoNControlConfig</span><span class="o">.</span><span class="n">load</span><span class="p">()</span><span class="o">.</span><span class="n">executor</span></div>
 
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_launcher_rank</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The MPI rank of this process as its launcher reports it.&quot;&quot;&quot;</span>
-    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_RANK_ENVS</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
-            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="si">}</span><span class="s2"> ($</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">)&quot;</span>
-    <span class="k">return</span> <span class="s2">&quot;unknown — not launched by mpirun/srun&quot;</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_device_inventory</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;One indented line per GPU: index, name, free and total memory.&quot;&quot;&quot;</span>
-    <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;--query-gpu=index,name,memory.free,memory.total&quot;</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">listing</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
-            <span class="p">[</span><span class="s2">&quot;nvidia-smi&quot;</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="s2">&quot;--format=csv,noheader&quot;</span><span class="p">],</span>
-            <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">timeout</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
-            <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">stdout</span>
-    <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">SubprocessError</span><span class="p">)</span> <span class="k">as</span> <span class="n">probe_error</span><span class="p">:</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;  nvidia-smi did not report: </span><span class="si">{</span><span class="n">probe_error</span><span class="si">}</span><span class="s2">&quot;</span>
-    <span class="n">lines</span> <span class="o">=</span> <span class="n">listing</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span> <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="ow">or</span> <span class="s2">&quot;  no device reported&quot;</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_gpu_init_report</span><span class="p">(</span><span class="n">error</span><span class="p">:</span> <span class="ne">BaseException</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The failed Kokkos GPU init, restated with the device state and the ways out.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The failed Kokkos GPU init, restated with the state that explains it.&quot;&quot;&quot;</span>
     <span class="n">seen_by_kokkos</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
         <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;&lt;unset&gt;&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;CUDA_VISIBLE_DEVICES&quot;</span><span class="p">,</span> <span class="s2">&quot;KOKKOS_VISIBLE_DEVICES&quot;</span><span class="p">)</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="p">(</span>
         <span class="sa">f</span><span class="s2">&quot;NeoN (Kokkos) initialization failed on the GPU backend: </span><span class="si">{</span><span class="n">error</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;requested executor: </span><span class="si">{</span><span class="n">requested_executor</span><span class="p">()</span><span class="si">}</span><span class="s2"> ($</span><span class="si">{</span><span class="n">_EXECUTOR_ENV</span><span class="si">}</span><span class="s2">)</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;MPI rank: </span><span class="si">{</span><span class="n">_launcher_rank</span><span class="p">()</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;requested executor: </span><span class="si">{</span><span class="n">requested_executor</span><span class="p">()</span><span class="si">}</span><span class="s2"> (system/controlDict)</span><span class="se">\n</span><span class="s2">&quot;</span>
         <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">seen_by_kokkos</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;devices:</span><span class="se">\n</span><span class="si">{</span><span class="n">_device_inventory</span><span class="p">()</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
         <span class="s2">&quot;This NeoFOAM links a Kokkos compiled with the CUDA backend, and &quot;</span>
         <span class="s2">&quot;Kokkos::initialize brings up every compiled backend — so each rank takes a &quot;</span>
         <span class="s2">&quot;CUDA context (a few hundred MiB) even when the executor is Serial or CPU. &quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;$</span><span class="si">{</span><span class="n">_EXECUTOR_ENV</span><span class="si">}</span><span class="s2"> cannot switch that off. Ways out:</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="s2">&quot;  * free the device, or select another one: KOKKOS_VISIBLE_DEVICES=&lt;index above&gt;</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="s2">&quot;  * run fewer ranks per device — every rank takes its own context</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="s2">&quot;  * for a host-only run, use a NeoFOAM built with -DKokkos_ENABLE_CUDA=OFF</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="s2">&quot;The controlDict executor entry cannot switch that off. Ways out: see &quot;</span>
+        <span class="s2">&quot;doc/reference/cli.rst, &#39;Executor selection and GPU initialization&#39;.</span><span class="se">\n</span><span class="s2">&quot;</span>
     <span class="p">)</span>
 
 

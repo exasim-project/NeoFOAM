@@ -608,7 +608,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_addr</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A dotted key becomes a tuple address; dots inside a quoted regex key stay literal.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Split a dotted key into a tuple address; a quoted key stays one segment.&quot;&quot;&quot;</span>
     <span class="n">parts</span> <span class="o">=</span> <span class="n">_SEGMENT</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
     <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">key</span>
 
@@ -632,12 +632,10 @@
 <span class="sd">    ``patch(&quot;system/controlDict&quot;, remove=[&quot;adjustTimeStep&quot;])``). Both accept</span>
 <span class="sd">    dotted keys addressing sub-dicts, e.g.</span>
 <span class="sd">    ``patch(&quot;system/fvSolution&quot;, **{&quot;PIMPLE.nCorrectors&quot;: 2})``; a double-quoted</span>
-<span class="sd">    OpenFOAM regex key is one literal key, dots included, e.g.</span>
-<span class="sd">    ``patch(&quot;system/fvSolution&quot;, **{&#39;solvers.&quot;.*Final&quot;&#39;: {...}})`` -- its value</span>
-<span class="sd">    has to be a sub-dict, since pybFoam cannot write a regex-keyed scalar (it</span>
-<span class="sd">    strips the quotes that make it a pattern). Removing an absent key is a no-op.</span>
-<span class="sd">    The file&#39;s format (OpenFOAM / JSON / YAML) is chosen by suffix -- see</span>
-<span class="sd">    :class:`neofoam.io.DictFile`.</span>
+<span class="sd">    regex key is one literal segment, dots included, and its value must be a</span>
+<span class="sd">    sub-dict (pybFoam cannot write a regex-keyed scalar). Removing an absent key</span>
+<span class="sd">    is a no-op. The file&#39;s format (OpenFOAM / JSON / YAML) is chosen by suffix --</span>
+<span class="sd">    see :class:`neofoam.io.DictFile`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">merged</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="p">(</span><span class="n">overrides</span> <span class="ow">or</span> <span class="p">{}),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">}</span>
     <span class="n">removals</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">remove</span><span class="p">)</span>

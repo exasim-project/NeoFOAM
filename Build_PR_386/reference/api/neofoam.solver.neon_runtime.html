@@ -596,12 +596,40 @@
 solver calls <a class="reference internal" href="#neofoam.solver.neon_runtime.ensure_neon_initialized" title="neofoam.solver.neon_runtime.ensure_neon_initialized"><code class="xref py py-func docutils literal notranslate"><span class="pre">ensure_neon_initialized()</span></code></a> before touching NeoN so repeated
 solver runs in one process (e.g. the test suite) reuse a single initialization;
 finalization is registered once at interpreter exit.</p>
-<p>The executor the NeoN fields live on comes from <a class="reference internal" href="#neofoam.solver.neon_runtime.requested_executor" title="neofoam.solver.neon_runtime.requested_executor"><code class="xref py py-func docutils literal notranslate"><span class="pre">requested_executor()</span></code></a>.
-It selects where the data is placed, <em>not</em> which Kokkos backends come up:
+<p>The executor the NeoN fields live on comes from <a class="reference internal" href="#neofoam.solver.neon_runtime.requested_executor" title="neofoam.solver.neon_runtime.requested_executor"><code class="xref py py-func docutils literal notranslate"><span class="pre">requested_executor()</span></code></a>,
+which selects where the data is placed, <em>not</em> which Kokkos backends come up:
 <code class="docutils literal notranslate"><span class="pre">Kokkos::initialize</span></code> brings up every backend the library was compiled with,
 so a CUDA-enabled build takes a CUDA context per rank even for a Serial run.
 When that context cannot be created, <a class="reference internal" href="#neofoam.solver.neon_runtime.ensure_neon_initialized" title="neofoam.solver.neon_runtime.ensure_neon_initialized"><code class="xref py py-func docutils literal notranslate"><span class="pre">ensure_neon_initialized()</span></code></a> re-raises
-with the device inventory and the ways out.</p>
+with the state that explains it; the remedies live in <code class="docutils literal notranslate"><span class="pre">doc/reference/cli.rst</span></code>.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="neofoam.solver.neon_runtime.NeoNControlConfig">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">neofoam.solver.neon_runtime.</span></span><span class="sig-name descname"><span class="pre">NeoNControlConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">executor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Serial'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/neofoam/solver/neon_runtime.html#NeoNControlConfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.solver.neon_runtime.NeoNControlConfig" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="neofoam.io.base.html#neofoam.io.base.BaseConfig" title="neofoam.io.base.BaseConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseConfig</span></code></a></p>
+<p>The NeoN runtime keys of <code class="docutils literal notranslate"><span class="pre">system/controlDict</span></code> — today the executor alone.</p>
+<p>A top-level (sub-dict-free) slice of the case’s <code class="docutils literal notranslate"><span class="pre">controlDict</span></code>, co-owning the
+file with the solver’s <code class="docutils literal notranslate"><span class="pre">ControlDictConfig</span></code> the way the <code class="docutils literal notranslate"><span class="pre">courant</span></code> /
+<code class="docutils literal notranslate"><span class="pre">maxDeltaT</span></code> model configs do. It is deliberately <em>not</em> a field on
+<code class="docutils literal notranslate"><span class="pre">ControlDictConfig</span></code>: it is read by the shared NeoN runtime (the framework
+solver and the legacy <code class="docutils literal notranslate"><span class="pre">neoPimpleFoam</span></code> alike), and modelling one key keeps
+that read independent of the time-control entries. <code class="docutils literal notranslate"><span class="pre">executor</span></code> stays a plain
+<code class="docutils literal notranslate"><span class="pre">str</span></code> rather than a <code class="docutils literal notranslate"><span class="pre">Literal</span></code>: the names are resolved by NeoFOAM’s C++
+<code class="docutils literal notranslate"><span class="pre">createExecutor</span></code>, and an unknown one must fail there — after it logged
+<code class="docutils literal notranslate"><span class="pre">Creating</span> <span class="pre">Executor</span> <span class="pre">&lt;name&gt;</span></code> — not at config validation.</p>
+<p>Declared on the <code class="docutils literal notranslate"><span class="pre">incompressibleFluidNeoN</span></code> spec, so it shows up in the
+solver’s config schema; read through <a class="reference internal" href="#neofoam.solver.neon_runtime.requested_executor" title="neofoam.solver.neon_runtime.requested_executor"><code class="xref py py-func docutils literal notranslate"><span class="pre">requested_executor()</span></code></a>.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">executor</span>        <span class="n">GPU</span><span class="p">;</span>   <span class="o">//</span> <span class="ow">in</span> <span class="n">system</span><span class="o">/</span><span class="n">controlDict</span>
+</pre></div>
+</div>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neofoam.solver.neon_runtime.NeoNControlConfig.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></span><a class="headerlink" href="#neofoam.solver.neon_runtime.NeoNControlConfig.model_config" title="Link to this definition">¶</a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="neofoam.solver.neon_runtime.ensure_neon_initialized">
 <span class="sig-prename descclassname"><span class="pre">neofoam.solver.neon_runtime.</span></span><span class="sig-name descname"><span class="pre">ensure_neon_initialized</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">argv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/neofoam/solver/neon_runtime.html#ensure_neon_initialized"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.solver.neon_runtime.ensure_neon_initialized" title="Link to this definition">¶</a></dt>
@@ -612,12 +640,14 @@ with the device inventory and the ways out.</p>
 <dt class="sig sig-object py" id="neofoam.solver.neon_runtime.requested_executor">
 <span class="sig-prename descclassname"><span class="pre">neofoam.solver.neon_runtime.</span></span><span class="sig-name descname"><span class="pre">requested_executor</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../../_modules/neofoam/solver/neon_runtime.html#requested_executor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neofoam.solver.neon_runtime.requested_executor" title="Link to this definition">¶</a></dt>
 <dd><p>NeoN executor the solver places its fields on.</p>
-<p>Read once per process from <code class="docutils literal notranslate"><span class="pre">NEOFOAM_EXECUTOR</span></code> (<code class="docutils literal notranslate"><span class="pre">Serial</span></code>, <code class="docutils literal notranslate"><span class="pre">CPU</span></code>,
-<code class="docutils literal notranslate"><span class="pre">GPU</span></code> or <code class="docutils literal notranslate"><span class="pre">default</span></code>), defaulting to the deterministic host executor
-<code class="docutils literal notranslate"><span class="pre">Serial</span></code> that the test suite and the verification sweep run on. Use the
-<code class="docutils literal notranslate"><span class="pre">-executor</span></code> argument instead when driving the C++ solvers directly.</p>
+<p>Read from the <code class="docutils literal notranslate"><span class="pre">executor</span></code> entry of <code class="docutils literal notranslate"><span class="pre">system/controlDict</span></code> (<code class="docutils literal notranslate"><span class="pre">Serial</span></code>,
+<code class="docutils literal notranslate"><span class="pre">CPU</span></code>, <code class="docutils literal notranslate"><span class="pre">GPU</span></code> or <code class="docutils literal notranslate"><span class="pre">default</span></code>) via <a class="reference internal" href="#neofoam.solver.neon_runtime.NeoNControlConfig" title="neofoam.solver.neon_runtime.NeoNControlConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeoNControlConfig</span></code></a> — the same
+entry the C++ solvers read. A case without the entry (a stock pimpleFoam
+case) falls back to the deterministic host executor <code class="docutils literal notranslate"><span class="pre">Serial</span></code>. The case is
+the working directory, as for every other case file the solvers read. Use
+the <code class="docutils literal notranslate"><span class="pre">-executor</span></code> argument instead when driving the C++ solvers directly.</p>
 <p>Example:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">NEOFOAM_EXECUTOR</span><span class="o">=</span><span class="n">GPU</span> <span class="n">neofoam</span> <span class="n">solver</span> <span class="n">incompressiblefluidneon</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">executor</span>        <span class="n">GPU</span><span class="p">;</span>   <span class="o">//</span> <span class="ow">in</span> <span class="n">system</span><span class="o">/</span><span class="n">controlDict</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -680,6 +710,10 @@ with the device inventory and the ways out.</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">neofoam.solver.neon_runtime</a><ul>
+<li><a class="reference internal" href="#neofoam.solver.neon_runtime.NeoNControlConfig"><code class="docutils literal notranslate"><span class="pre">NeoNControlConfig</span></code></a><ul>
+<li><a class="reference internal" href="#neofoam.solver.neon_runtime.NeoNControlConfig.model_config"><code class="docutils literal notranslate"><span class="pre">NeoNControlConfig.model_config</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#neofoam.solver.neon_runtime.ensure_neon_initialized"><code class="docutils literal notranslate"><span class="pre">ensure_neon_initialized()</span></code></a></li>
 <li><a class="reference internal" href="#neofoam.solver.neon_runtime.requested_executor"><code class="docutils literal notranslate"><span class="pre">requested_executor()</span></code></a></li>
 </ul>
