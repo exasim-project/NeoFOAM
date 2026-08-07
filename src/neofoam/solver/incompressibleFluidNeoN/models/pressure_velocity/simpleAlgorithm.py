@@ -390,7 +390,11 @@ def turbulence_correct(
     turbulence: Annotated[Any, "models"],
     neon_runtime: Annotated[Any, "models"],
 ) -> None:
-    """Update the turbulence model once per SIMPLE iteration."""
+    """Update the turbulence model once per SIMPLE iteration.
+
+    ``final_iter`` stays false: simpleFoam has no final outer iteration, so the
+    transport solves use the plain ``<field>`` settings throughout.
+    """
     turbulence.correct(U, phi, neon_runtime)
 
 

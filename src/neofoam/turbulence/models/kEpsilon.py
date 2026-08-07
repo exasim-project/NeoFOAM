@@ -229,6 +229,7 @@ def correct_epsilon(
     nu_vol: Annotated[Any, "models"],
     kEpsilon_surf: Annotated[Any, "models"],
     kEpsilon_nearWallDist: Annotated[Any, "models"],
+    final_iter: Annotated[bool, "models"],
     coeffs: KEpsilonCoeffs,
     GbyNu: Annotated[Any, "fields"],
     eps_dilatation: Annotated[Any, "fields"],
@@ -260,7 +261,7 @@ def correct_epsilon(
         epsilon,
         neon_runtime,
     )
-    eps_eqn.set_final_iter(False)
+    eps_eqn.set_final_iter(final_iter)
     eps_eqn.relax()  # OpenFOAM kEpsilon.C: epsEqn.ref().relax()
     # epsilonWallFunction pins the near-wall CELL epsilon to the log-law value
     # (OpenFOAM's matrix.setValues); apply it after assembly, before solve.
@@ -280,6 +281,7 @@ def correct_k(
     nu_vol: Annotated[Any, "models"],
     kEpsilon_surf: Annotated[Any, "models"],
     kEpsilon_nearWallDist: Annotated[Any, "models"],
+    final_iter: Annotated[bool, "models"],
     coeffs: KEpsilonCoeffs,
     Gk: Annotated[Any, "fields"],
     k_dilatation: Annotated[Any, "fields"],
@@ -308,7 +310,7 @@ def correct_k(
         k,
         neon_runtime,
     )
-    k_eqn.set_final_iter(False)
+    k_eqn.set_final_iter(final_iter)
     k_eqn.relax()  # OpenFOAM kEpsilon.C: kEqn.ref().relax()
     k_eqn.solve()
     nfb.bound(k, kMin)

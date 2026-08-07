@@ -184,6 +184,7 @@ def correct_nutilda(
     sa_surf: Annotated[Any, "models"],
     sa_grad: Annotated[Any, "models"],
     sa_wall_dist: Annotated[Any, "models"],
+    final_iter: Annotated[bool, "models"],
     coeffs: SpalartAllmarasCoeffs,
     U: Annotated[Any, "fields"],
     phi: Annotated[Any, "fields"],
@@ -229,7 +230,7 @@ def correct_nutilda(
         nuTilda,
         rt,
     )
-    eqn.set_final_iter(False)
+    eqn.set_final_iter(final_iter)
     eqn.relax()  # OpenFOAM SpalartAllmarasBase.C: nuTildaEqn.ref().relax()
     eqn.solve()
     nfb.bound(nuTilda, nuTildaMin)

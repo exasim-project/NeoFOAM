@@ -74,11 +74,12 @@ class NeoNHandle:
         seed = [
             init_model("neon_runtime", lambda _ctx: self._neon_runtime),
             init_model("nu_vol", lambda _ctx: self._nu),
+            init_model("final_iter", lambda _ctx: False),
             init_field("U", lambda _ctx: U),
         ]
         self._ctx = execute_initialization(seed + self._runtime.run_build())
 
-    def correct(self, U: Any, phi: Any, runtime: Any) -> None:
+    def correct(self, U: Any, phi: Any, runtime: Any, final_iter: bool = False) -> None:
         """Advance the model one step by stepping its **native** ``@operation``s.
 
         A closure (kEpsilon, …) solves its transport PDEs and recomputes ``nut`` /
@@ -86,11 +87,19 @@ class NeoNHandle:
         The model's co-located ``fallback=True`` op belongs to the pybFoam path and
         is intentionally excluded here. ``U`` / ``phi`` are refreshed on the Context
         the operations read from.
+
+        ``final_iter`` is OpenFOAM's ``mesh.data().isFinalIteration()`` at the point
+        ``turbulence->correct()`` runs: the transport solves pick up the
+        ``<field>Final`` solver settings and equation relaxation from it, exactly as
+        ``fvMatrix::solve()`` does through ``psi.select(finalIteration)``. PIMPLE
+        corrects turbulence on its final outer pass, so it passes ``True``; SIMPLE
+        has no final iteration and leaves it ``False``.
         """
         if self._ctx is None:
             raise RuntimeError("validate() must be called before correct()")
         self._ctx.fields["U"] = U
         self._ctx.fields["phi"] = phi
+        self._ctx.models["final_iter"] = final_iter
         for op in self._runtime.native_operations():
             op.run(self._ctx)
 
