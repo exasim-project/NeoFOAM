@@ -50,14 +50,15 @@ computeRAtU(const PDESolver<Vec3>& expr, const nnfvcc::VolumeField<scalar>& rAU)
 
 /* @brief SIMPLEC flux correction: phiHbyA += interpolate(rAtU - rAU)*snGrad(p)*magSf.
  *
- * snGrad(p) uses the corrected face-normal gradient to retain non-orthogonal contributions.
- * Applied to internal and non-processor boundary faces.
+ * The face-normal gradient scheme is resolved from the snGradSchemes subdict of fvSchemes,
+ * as fvc::snGrad(p) does. Applied to internal and non-processor boundary faces.
  */
 void addConsistentFluxCorrection(
     nnfvcc::SurfaceField<scalar>& phiHbyA,
     const nnfvcc::VolumeField<scalar>& rAU,
     const nnfvcc::VolumeField<scalar>& rAtU,
-    const nnfvcc::VolumeField<scalar>& p
+    const nnfvcc::VolumeField<scalar>& p,
+    const NeoN::Dictionary& fvSchemes
 );
 
 /* @brief SIMPLEC HbyA correction: hByA -= (rAU - rAtU)*grad(p).

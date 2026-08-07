@@ -38,10 +38,9 @@ A third test pins the reference itself: ``incompressibleFluid`` (SIMPLE) against
 the native ``simpleFoam`` binary, which is bitwise on this case.
 
 A fourth covers the *SIMPLEC* branch (``consistent yes``): the same case with
-``solution/simplec/fvSolution`` (plus ``schemes/snGradCorrected``) overlaid on
-both solvers, again at two iterations. Both backends then take the consistent
-path (rAtU, the phiHbyA and HbyA corrections, the rAtU velocity corrector)
-instead of plain SIMPLE.
+``solution/simplec/fvSolution`` overlaid on both solvers, again at two
+iterations. Both backends then take the consistent path (rAtU, the phiHbyA and
+HbyA corrections, the rAtU velocity corrector) instead of plain SIMPLE.
 
 Process hygiene follows the established comparison tests: each solver runs in
 its own subprocess (NeoN/Kokkos + OpenFOAM per-process global state), and each
@@ -62,7 +61,6 @@ import pytest
 
 _HERE = Path(__file__).parent
 _CASE = _HERE / "cases" / "pitzDailySteady"
-_SCHEMES = _CASE / "schemes"
 _SOLUTION = _CASE / "solution"
 _FIELD_READER = _HERE.parent / "pyfoam_field_reader.py"
 
@@ -97,17 +95,14 @@ def _prepare_case(
     model: str,
     dest: Path,
     end_time: int,
-    fv_schemes: Path | None = None,
     fv_solution: Path | None = None,
 ) -> None:
     """Copy the committed case, overlay the model, set the iteration count, mesh it."""
-    shutil.copytree(_CASE, dest, ignore=shutil.ignore_patterns("models", "schemes", "solution"))
+    shutil.copytree(_CASE, dest, ignore=shutil.ignore_patterns("models", "solution"))
     overlay = _CASE / "models" / model
     shutil.copyfile(overlay / "turbulenceProperties", dest / "constant" / "turbulenceProperties")
     for field in (overlay / "0").iterdir():
         shutil.copyfile(field, dest / "0" / field.name)
-    if fv_schemes is not None:
-        shutil.copyfile(fv_schemes, dest / "system" / "fvSchemes")
     if fv_solution is not None:
         shutil.copyfile(fv_solution, dest / "system" / "fvSolution")
     control_dict = dest / "system" / "controlDict"
@@ -355,17 +350,17 @@ def test_neon_simplec_two_iterations_roundoff(tmp_path: Path) -> None:
     ``fields.p`` factor to stand in for it, plain SIMPLE diverges here (U off by
     ~1x its peak by the second iteration).
 
-    ``schemes/snGradCorrected`` comes with it because NeoFOAM's flux correction
-    hardcodes a corrected snGrad(p) — see that file's header.
+    It runs on the case's own ``snGradSchemes { default uncorrected; }``: the
+    consistent flux correction resolves snGrad(p) from that dictionary on both
+    backends, so this also covers the lookup itself. Anything that reverts the
+    NeoN side to a fixed face-normal gradient fails here on the non-orthogonal
+    pitzDaily mesh.
     """
     fv_solution = _SOLUTION / "simplec" / "fvSolution"
-    fv_schemes = _SCHEMES / "snGradCorrected" / "fvSchemes"
     neon_case = tmp_path / "neon"
     reference_case = tmp_path / "reference"
-    _prepare_case("kEpsilon", neon_case, end_time=2, fv_schemes=fv_schemes, fv_solution=fv_solution)
-    _prepare_case(
-        "kEpsilon", reference_case, end_time=2, fv_schemes=fv_schemes, fv_solution=fv_solution
-    )
+    _prepare_case("kEpsilon", neon_case, end_time=2, fv_solution=fv_solution)
+    _prepare_case("kEpsilon", reference_case, end_time=2, fv_solution=fv_solution)
 
     _run_neon(neon_case)
     _run_reference(reference_case)

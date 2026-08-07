@@ -65,13 +65,17 @@ void registerPressureVelocityCoupling(nb::module_& m)
         [](fvcc::SurfaceField<NeoN::scalar>& phiHbyA,
            const fvcc::VolumeField<NeoN::scalar>& rAU,
            const fvcc::VolumeField<NeoN::scalar>& rAtU,
-           const fvcc::VolumeField<NeoN::scalar>& p)
-        { nf::addConsistentFluxCorrection(phiHbyA, rAU, rAtU, p); },
+           const fvcc::VolumeField<NeoN::scalar>& p,
+           const NeoN::Dictionary& fvSchemes)
+        { nf::addConsistentFluxCorrection(phiHbyA, rAU, rAtU, p, fvSchemes); },
         "phi_hbya"_a,
         "rAU"_a,
         "rAtU"_a,
         "p"_a,
-        "SIMPLEC flux correction: phiHbyA += interpolate(rAtU - rAU)*snGrad(p)*magSf"
+        "fv_schemes"_a,
+        "SIMPLEC flux correction: phiHbyA += interpolate(rAtU - rAU)*snGrad(p)*magSf. The "
+        "snGrad scheme comes from the snGradSchemes subdict of fv_schemes (key snGrad(<p>), "
+        "else default)"
     );
 
     m.def(

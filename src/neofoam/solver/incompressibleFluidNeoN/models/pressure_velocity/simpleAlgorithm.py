@@ -338,7 +338,7 @@ def continuity(
 
     phiHbyA = nfb.flux(hByA)
     if state.consistent:
-        nfb.add_consistent_flux_correction(phiHbyA, rAU, rAtU, p)
+        nfb.add_consistent_flux_correction(phiHbyA, rAU, rAtU, p, rt.fv_schemes_dict)
         nfb.subtract_consistent_hbya(hByA, rAU, rAtU, p)
 
     have_p_res = False
