@@ -90,6 +90,48 @@ def test_literal_solver_entry_is_untouched_by_a_regex_field() -> None:
     assert not solvers.subDict("p").contains("reportName")
 
 
+def _smooth_solver_entry(**extra: object) -> Any:
+    """A tutorial ``smoothSolver`` entry: a smoother, no explicit preconditioner."""
+    entry = nn.Dictionary()
+    entry.insert_string("solver", "smoothSolver")
+    entry.insert_string("smoother", "GaussSeidel")
+    entry.insert_double("tolerance", 1e-8)
+    entry.insert_double("relTol", 0.1)
+    for key, value in extra.items():
+        entry.insert_int(key, int(value))  # type: ignore[call-overload]
+    return entry
+
+
+def test_smoothsolver_sweep_count_is_dropped_with_its_smoother() -> None:
+    """``nSweeps`` rides along with ``smoother``; Ginkgo aborts on any key it does not know."""
+    solvers = nn.Dictionary()
+    solvers.insert_dict("U", _smooth_solver_entry(nSweeps=2))
+
+    nfb.map_solver_settings(solvers, "U")
+
+    assert not solvers.subDict("U").contains("nSweeps")
+    assert not solvers.subDict("U").contains("smoother")
+
+
+def test_gamg_is_rejected_by_name_before_the_ginkgo_rewrite() -> None:
+    """GAMG is unsupported via fvSolution; the error must name the way out.
+
+    The rejection has to read the OpenFOAM name, not the dictionary entry it is about
+    to overwrite with ``Ginkgo`` — otherwise GAMG falls through to Ginkgo's Multigrid
+    and dies much later on an unrelated key.
+    """
+    solvers = nn.Dictionary()
+    gamg = nn.Dictionary()
+    gamg.insert_string("solver", "GAMG")
+    gamg.insert_string("smoother", "GaussSeidel")
+    gamg.insert_double("tolerance", 1e-6)
+    gamg.insert_double("relTol", 0.1)
+    solvers.insert_dict("p", gamg)
+
+    with pytest.raises(RuntimeError, match="configFile"):
+        nfb.map_solver_settings(solvers, "p")
+
+
 def test_one_entry_reached_by_several_fields_is_converted_once() -> None:
     """U, k and epsilon share an entry; the second and third calls must no-op.
 
