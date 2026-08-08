@@ -133,6 +133,48 @@
         </inbodydescription>
         <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="94" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="94" bodyend="111"/>
       </memberdef>
+      <memberdef kind="function" id="namespaceNeoFOAM_1_1detail_1ab6d4fad0fbdff64ba988634993e84733" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename ValueType</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void NeoFOAM::detail::insertUniformValue</definition>
+        <argsstring>(NeoN::Dictionary &amp;dict, const std::string &amp;sourceKey, const std::string &amp;targetKey, const std::string &amp;patchName, const Foam::fvPatch *patch)</argsstring>
+        <name>insertUniformValue</name>
+        <qualifiedname>NeoFOAM::detail::insertUniformValue</qualifiedname>
+        <param>
+          <type>NeoN::Dictionary &amp;</type>
+          <declname>dict</declname>
+        </param>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>sourceKey</declname>
+        </param>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>targetKey</declname>
+        </param>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>patchName</declname>
+        </param>
+        <param>
+          <type>const Foam::fvPatch *</type>
+          <declname>patch</declname>
+        </param>
+        <briefdescription>
+<para>Copy a <computeroutput>uniform</computeroutput> primitive from one dictionary entry into another key. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>The freestream family stores its patch value under <computeroutput>freestreamValue</computeroutput> in the same <computeroutput>uniform &lt;value&gt;</computeroutput> form the <computeroutput>value</computeroutput>/<computeroutput>inletValue</computeroutput> entries use: the components start at token index 1, one for a scalar and three for a vector, each promoted on its own because OpenFOAM types the numeric tokens independently (see tokenAsScalar).</para>
+<para>A short token list has exactly one benign cause: a decomposed run writes <computeroutput>nonuniform List&lt;...&gt; 0</computeroutput> for a patch that owns no faces on this rank, and the parse reduces that to a single token (the same quirk the <computeroutput>fixedValue</computeroutput> entry below records). No face carries the value there, so zero is safe. With faces present it is an error, not a zero — the freestream family is a far-field datum, and silently reading it as zero would remove the only forcing in an external-aerodynamics case. </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" line="129" column="6" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/auxiliary/readers.hpp" bodystart="129" bodyend="164"/>
+      </memberdef>
       <memberdef kind="function" id="namespaceNeoFOAM_1_1detail_1aaf277cdfa64f90d5470e3b9d751249af" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
           <param>

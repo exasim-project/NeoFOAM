@@ -27,6 +27,8 @@ Neo\+N\+::scalar \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a2f0eec60b1c730f1f2
 \item 
 {\footnotesize template$<$typename Value\+Type $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_aee7cc4a29790d7f04bec4428d964a0b2}{insert\+Frozen\+Total\+Pressure}} (Neo\+N\+::\+Dictionary \&dict)
 \begin{DoxyCompactList}\small\item\em Pin a total-\/pressure patch at the value Open\+FOAM evaluated when the field was read. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename Value\+Type $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_ab6d4fad0fbdff64ba988634993e84733}{insert\+Uniform\+Value}} (Neo\+N\+::\+Dictionary \&dict, const std\+::string \&source\+Key, const std\+::string \&target\+Key, const std\+::string \&patch\+Name, const Foam\+::fv\+Patch \texorpdfstring{$\ast$}{*}patch)
+\begin{DoxyCompactList}\small\item\em Copy a {\ttfamily uniform} primitive from one dictionary entry into another key. \end{DoxyCompactList}\item 
 {\footnotesize template$<$class Src\+Field , class Dest\+Field $>$ }\\void \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_aaf277cdfa64f90d5470e3b9d751249af}{copy\+Impl}} (const Src\+Field \&src, Dest\+Field \&dest)
 \item 
 void \mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a599b28f960f5c2fb5023957ebb933d30}{apply\+Fixed\+Value\+Constraints}} (\mbox{\hyperlink{namespaceNeoFOAM_1_1detail_a8affbab6ab257914abb3164c473fc9f6}{Scalar\+Linear\+System}} \&ls, Neo\+N\+::\+View$<$ const Neo\+N\+::scalar $>$ mask, Neo\+N\+::\+View$<$ const Neo\+N\+::scalar $>$ values, Neo\+N\+::local\+Idx n\+Cells)
@@ -93,6 +95,23 @@ Pin a total-\/pressure patch at the value Open\+FOAM evaluated when the field wa
 Shared by {\ttfamily total\+Pressure} and {\ttfamily uniform\+Total\+Pressure}\+: \doxylink{namespaceNeoN}{NeoN} models neither the dynamic-\/head correction nor a time-\/dependent p0, so the patch becomes a fixed\+Value at the start-\/time total pressure. Non-\/scalar (or valueless) falls back to zero\+Gradient. 
 
 Definition at line \mbox{\hyperlink{readers_8hpp_source_l00094}{94}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
+
+\Hypertarget{namespaceNeoFOAM_1_1detail_ab6d4fad0fbdff64ba988634993e84733}\label{namespaceNeoFOAM_1_1detail_ab6d4fad0fbdff64ba988634993e84733} 
+\index{NeoFOAM::detail@{NeoFOAM::detail}!insertUniformValue@{insertUniformValue}}
+\index{insertUniformValue@{insertUniformValue}!NeoFOAM::detail@{NeoFOAM::detail}}
+\doxysubsubsection{\texorpdfstring{insertUniformValue()}{insertUniformValue()}}
+{\footnotesize\ttfamily template$<$typename Value\+Type $>$ \\
+void Neo\+FOAM\+::detail\+::insert\+Uniform\+Value (\begin{DoxyParamCaption}\item[{Neo\+N\+::\+Dictionary \&}]{dict,  }\item[{const std\+::string \&}]{source\+Key,  }\item[{const std\+::string \&}]{target\+Key,  }\item[{const std\+::string \&}]{patch\+Name,  }\item[{const Foam\+::fv\+Patch \texorpdfstring{$\ast$}{*}}]{patch }\end{DoxyParamCaption})}
+
+
+
+Copy a {\ttfamily uniform} primitive from one dictionary entry into another key. 
+
+The freestream family stores its patch value under {\ttfamily freestream\+Value} in the same {\ttfamily uniform \texorpdfstring{$<$}{<}value\texorpdfstring{$>$}{>}} form the {\ttfamily value}/{\ttfamily inlet\+Value} entries use\+: the components start at token index 1, one for a scalar and three for a vector, each promoted on its own because Open\+FOAM types the numeric tokens independently (see token\+As\+Scalar).
+
+A short token list has exactly one benign cause\+: a decomposed run writes {\ttfamily nonuniform List\texorpdfstring{$<$}{<}...\texorpdfstring{$>$}{>} 0} for a patch that owns no faces on this rank, and the parse reduces that to a single token (the same quirk the {\ttfamily fixed\+Value} entry below records). No face carries the value there, so zero is safe. With faces present it is an error, not a zero — the freestream family is a far-\/field datum, and silently reading it as zero would remove the only forcing in an external-\/aerodynamics case. 
+
+Definition at line \mbox{\hyperlink{readers_8hpp_source_l00129}{129}} of file \mbox{\hyperlink{readers_8hpp_source}{readers.\+hpp}}.
 
 \Hypertarget{namespaceNeoFOAM_1_1detail_a53f3814af050089e9e1102903162706b}\label{namespaceNeoFOAM_1_1detail_a53f3814af050089e9e1102903162706b} 
 \index{NeoFOAM::detail@{NeoFOAM::detail}!meanUnitNormal@{meanUnitNormal}}

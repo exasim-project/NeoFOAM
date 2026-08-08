@@ -1045,8 +1045,14 @@
 
 <span class="sd">    Solves the nuTilda transport PDE and refreshes nut/gradU for SA-DDES; a</span>
 <span class="sd">    no-op recompute for laminar.</span>
+
+<span class="sd">    This is pimpleFoam&#39;s ``turbOnFinalIterOnly true`` position — the correction</span>
+<span class="sd">    runs on the final outer pass, where OpenFOAM has ``isFinalIteration()`` set,</span>
+<span class="sd">    so the transport solves take their ``&lt;field&gt;Final`` solver settings and</span>
+<span class="sd">    equation relaxation. The control cannot be queried for it here: ``loop()``</span>
+<span class="sd">    zeroes its corrector count on the pass that ends the loop.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">turbulence</span><span class="o">.</span><span class="n">correct</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">neon_runtime</span><span class="p">)</span></div>
+    <span class="n">turbulence</span><span class="o">.</span><span class="n">correct</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">neon_runtime</span><span class="p">,</span> <span class="n">final_iter</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
 
 

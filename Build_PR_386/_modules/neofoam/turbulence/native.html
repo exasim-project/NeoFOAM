@@ -666,6 +666,7 @@
         <span class="n">seed</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">init_model</span><span class="p">(</span><span class="s2">&quot;neon_runtime&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_ctx</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_neon_runtime</span><span class="p">),</span>
             <span class="n">init_model</span><span class="p">(</span><span class="s2">&quot;nu_vol&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_ctx</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nu</span><span class="p">),</span>
+            <span class="n">init_model</span><span class="p">(</span><span class="s2">&quot;final_iter&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_ctx</span><span class="p">:</span> <span class="kc">False</span><span class="p">),</span>
             <span class="n">init_field</span><span class="p">(</span><span class="s2">&quot;U&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_ctx</span><span class="p">:</span> <span class="n">U</span><span class="p">),</span>
         <span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span> <span class="o">=</span> <span class="n">execute_initialization</span><span class="p">(</span><span class="n">seed</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_runtime</span><span class="o">.</span><span class="n">run_build</span><span class="p">())</span></div>
@@ -673,7 +674,7 @@
 
 <div class="viewcode-block" id="NeoNHandle.correct">
 <a class="viewcode-back" href="../../../reference/api/neofoam.turbulence.native.html#neofoam.turbulence.native.NeoNHandle.correct">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">correct</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">U</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">phi</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">runtime</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">correct</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">U</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">phi</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">runtime</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">final_iter</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Advance the model one step by stepping its **native** ``@operation``s.</span>
 
 <span class="sd">        A closure (kEpsilon, …) solves its transport PDEs and recomputes ``nut`` /</span>
@@ -681,11 +682,19 @@
 <span class="sd">        The model&#39;s co-located ``fallback=True`` op belongs to the pybFoam path and</span>
 <span class="sd">        is intentionally excluded here. ``U`` / ``phi`` are refreshed on the Context</span>
 <span class="sd">        the operations read from.</span>
+
+<span class="sd">        ``final_iter`` is OpenFOAM&#39;s ``mesh.data().isFinalIteration()`` at the point</span>
+<span class="sd">        ``turbulence-&gt;correct()`` runs: the transport solves pick up the</span>
+<span class="sd">        ``&lt;field&gt;Final`` solver settings and equation relaxation from it, exactly as</span>
+<span class="sd">        ``fvMatrix::solve()`` does through ``psi.select(finalIteration)``. PIMPLE</span>
+<span class="sd">        corrects turbulence on its final outer pass, so it passes ``True``; SIMPLE</span>
+<span class="sd">        has no final iteration and leaves it ``False``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;validate() must be called before correct()&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">&quot;U&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">U</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s2">&quot;phi&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">phi</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="s2">&quot;final_iter&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">final_iter</span>
         <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_runtime</span><span class="o">.</span><span class="n">native_operations</span><span class="p">():</span>
             <span class="n">op</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span><span class="p">)</span></div>
 

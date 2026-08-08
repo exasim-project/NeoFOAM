@@ -677,6 +677,11 @@ loop converges on — a fresh dict per time step, as in the legacy port.</p>
 <dd><p>Update the turbulence model once per time step (after the PIMPLE loop).</p>
 <p>Solves the nuTilda transport PDE and refreshes nut/gradU for SA-DDES; a
 no-op recompute for laminar.</p>
+<p>This is pimpleFoam’s <code class="docutils literal notranslate"><span class="pre">turbOnFinalIterOnly</span> <span class="pre">true</span></code> position — the correction
+runs on the final outer pass, where OpenFOAM has <code class="docutils literal notranslate"><span class="pre">isFinalIteration()</span></code> set,
+so the transport solves take their <code class="docutils literal notranslate"><span class="pre">&lt;field&gt;Final</span></code> solver settings and
+equation relaxation. The control cannot be queried for it here: <code class="docutils literal notranslate"><span class="pre">loop()</span></code>
+zeroes its corrector count on the pass that ends the loop.</p>
 </dd></dl>
 
 </section>

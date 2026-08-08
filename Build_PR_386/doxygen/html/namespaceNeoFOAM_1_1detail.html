@@ -113,6 +113,10 @@ Functions</h2></td></tr>
 <tr class="memitem:aee7cc4a29790d7f04bec4428d964a0b2"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM_1_1detail.html#aee7cc4a29790d7f04bec4428d964a0b2">insertFrozenTotalPressure</a> (NeoN::Dictionary &amp;dict)</td></tr>
 <tr class="memdesc:aee7cc4a29790d7f04bec4428d964a0b2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pin a total-pressure patch at the value OpenFOAM evaluated when the field was read.  <br /></td></tr>
 <tr class="separator:aee7cc4a29790d7f04bec4428d964a0b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab6d4fad0fbdff64ba988634993e84733" id="r_ab6d4fad0fbdff64ba988634993e84733"><td class="memTemplParams" colspan="2">template&lt;typename ValueType &gt; </td></tr>
+<tr class="memitem:ab6d4fad0fbdff64ba988634993e84733"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM_1_1detail.html#ab6d4fad0fbdff64ba988634993e84733">insertUniformValue</a> (NeoN::Dictionary &amp;dict, const std::string &amp;sourceKey, const std::string &amp;targetKey, const std::string &amp;patchName, const Foam::fvPatch *patch)</td></tr>
+<tr class="memdesc:ab6d4fad0fbdff64ba988634993e84733"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy a <code>uniform</code> primitive from one dictionary entry into another key.  <br /></td></tr>
+<tr class="separator:ab6d4fad0fbdff64ba988634993e84733"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaf277cdfa64f90d5470e3b9d751249af" id="r_aaf277cdfa64f90d5470e3b9d751249af"><td class="memTemplParams" colspan="2">template&lt;class SrcField , class DestField &gt; </td></tr>
 <tr class="memitem:aaf277cdfa64f90d5470e3b9d751249af"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceNeoFOAM_1_1detail.html#aaf277cdfa64f90d5470e3b9d751249af">copyImpl</a> (const SrcField &amp;src, DestField &amp;dest)</td></tr>
 <tr class="separator:aaf277cdfa64f90d5470e3b9d751249af"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -276,6 +280,60 @@ template&lt;typename ValueType &gt; </div>
 <p>Shared by <code>totalPressure</code> and <code>uniformTotalPressure</code>: <a class="el" href="namespaceNeoN.html">NeoN</a> models neither the dynamic-head correction nor a time-dependent p0, so the patch becomes a fixedValue at the start-time total pressure. Non-scalar (or valueless) falls back to zeroGradient. </p>
 
 <p class="definition">Definition at line <a class="el" href="readers_8hpp_source.html#l00094">94</a> of file <a class="el" href="readers_8hpp_source.html">readers.hpp</a>.</p>
+
+</div>
+</div>
+<a id="ab6d4fad0fbdff64ba988634993e84733" name="ab6d4fad0fbdff64ba988634993e84733"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab6d4fad0fbdff64ba988634993e84733">&#9670;&#160;</a></span>insertUniformValue()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename ValueType &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">void NeoFOAM::detail::insertUniformValue </td>
+          <td>(</td>
+          <td class="paramtype">NeoN::Dictionary &amp;&#160;</td>
+          <td class="paramname"><em>dict</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>sourceKey</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>targetKey</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>patchName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const Foam::fvPatch *&#160;</td>
+          <td class="paramname"><em>patch</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Copy a <code>uniform</code> primitive from one dictionary entry into another key. </p>
+<p>The freestream family stores its patch value under <code>freestreamValue</code> in the same <code>uniform &lt;value&gt;</code> form the <code>value</code>/<code>inletValue</code> entries use: the components start at token index 1, one for a scalar and three for a vector, each promoted on its own because OpenFOAM types the numeric tokens independently (see tokenAsScalar).</p>
+<p>A short token list has exactly one benign cause: a decomposed run writes <code>nonuniform List&lt;...&gt; 0</code> for a patch that owns no faces on this rank, and the parse reduces that to a single token (the same quirk the <code>fixedValue</code> entry below records). No face carries the value there, so zero is safe. With faces present it is an error, not a zero — the freestream family is a far-field datum, and silently reading it as zero would remove the only forcing in an external-aerodynamics case. </p>
+
+<p class="definition">Definition at line <a class="el" href="readers_8hpp_source.html#l00129">129</a> of file <a class="el" href="readers_8hpp_source.html">readers.hpp</a>.</p>
 
 </div>
 </div>
