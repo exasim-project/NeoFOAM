@@ -140,16 +140,19 @@ void updateSolver(NeoN::Dictionary& solverDict)
     };
 
     std::string& solverName = solverDict.get<std::string>("solver");
-    auto mapEntry = solverMap.find(solverName);
+    // Copy before the assignment below overwrites it: solverName is a reference into the
+    // dictionary, so testing it after the rewrite compares "Ginkgo", never the OpenFOAM name.
+    const std::string foamSolverName = solverName;
+    auto mapEntry = solverMap.find(foamSolverName);
     if (mapEntry != solverMap.end())
     {
-        NeoN::Logging::warn("Replacing solver {} by {}", solverName, mapEntry->second.second);
-        solverName = mapEntry->second.first;
-        if (solverName == "GAMG")
+        if (foamSolverName == "GAMG")
         {
             throw std::runtime_error("\nGAMG Solver is not supported in NeoFOAM via dictionary "
                                      "entry, use configFile instead\n");
         }
+        NeoN::Logging::warn("Replacing solver {} by {}", foamSolverName, mapEntry->second.second);
+        solverName = mapEntry->second.first;
         solverDict.insert("type", mapEntry->second.second);
     }
 }
@@ -239,6 +242,15 @@ void updatePreconditioner(NeoN::Dictionary& solverDict)
     if (solverDict.contains("smoother"))
     {
         solverDict.remove("smoother");
+    }
+
+    // nSweeps is how many times OpenFOAM's smoothSolver applies the smoother per outer
+    // iteration. Once the smoother has become a Ginkgo preconditioner above there is no
+    // equivalent knob, and Ginkgo's config parser aborts on any key it does not know -- so
+    // it has to be dropped with its smoother rather than left behind.
+    if (solverDict.contains("nSweeps"))
+    {
+        solverDict.remove("nSweeps");
     }
 
     if (!solverDict.isDict("preconditioner"))
