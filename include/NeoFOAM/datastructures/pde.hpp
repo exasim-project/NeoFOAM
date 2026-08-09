@@ -288,7 +288,32 @@ public:
             if (needReference_)
             {
                 NeoN::dsl::SetReference<ValueType> refFunct(pRefCell_, pRefValue_);
-                refFunct(*ls_);
+                // SetReference's ELL same-type overload is named applyELL rather than
+                // operator() (see dsl/expression.hpp), so the CSR/ELL forms need separate
+                // calls here -- mirrors Expression::assemble's own SystemMatrixType dispatch.
+                if constexpr (std::is_same_v<
+                                  SystemMatrixType,
+                                  NeoN::la::CSRMatrix<MatrixValueType, IndexType>>)
+                {
+                    refFunct(*ls_);
+                }
+                else if constexpr (std::is_same_v<
+                                       SystemMatrixType,
+                                       NeoN::la::ELLMatrix<MatrixValueType, IndexType>>)
+                {
+                    refFunct.applyELL(*ls_);
+                }
+                else
+                {
+                    // Dependent-false: fail to compile rather than silently skip the
+                    // reference pin (which would produce a singular pressure system with
+                    // no indication why) if a third SystemMatrixType is ever introduced.
+                    static_assert(
+                        std::is_same_v<SystemMatrixType, void>,
+                        "PDE::solveWith's SetReference dispatch does not support this "
+                        "SystemMatrixType"
+                    );
+                }
             }
         }
 
