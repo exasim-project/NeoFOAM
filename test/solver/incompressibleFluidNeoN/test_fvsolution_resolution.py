@@ -113,23 +113,81 @@ def test_smoothsolver_sweep_count_is_dropped_with_its_smoother() -> None:
     assert not solvers.subDict("U").contains("smoother")
 
 
-def test_gamg_is_rejected_by_name_before_the_ginkgo_rewrite() -> None:
-    """GAMG is unsupported via fvSolution; the error must name the way out.
+def _gamg_entry() -> Any:
+    """A stock tutorial ``GAMG`` pressure entry, tuning keys and all."""
+    entry = nn.Dictionary()
+    entry.insert_string("solver", "GAMG")
+    entry.insert_string("smoother", "GaussSeidel")
+    entry.insert_double("tolerance", 1e-6)
+    entry.insert_double("relTol", 0.1)
+    return entry
 
-    The rejection has to read the OpenFOAM name, not the dictionary entry it is about
-    to overwrite with ``Ginkgo`` — otherwise GAMG falls through to Ginkgo's Multigrid
-    and dies much later on an unrelated key.
+
+def test_gamg_maps_to_cg_preconditioned_by_pgm_multigrid() -> None:
+    """GAMG becomes Ginkgo algebraic multigrid, CG-accelerated.
+
+    GAMG is picked for the SPD pressure Laplacian, so the multigrid is the *preconditioner*
+    of an outer CG rather than the solver — a bare multigrid solve is far less robust.
     """
     solvers = nn.Dictionary()
-    gamg = nn.Dictionary()
-    gamg.insert_string("solver", "GAMG")
-    gamg.insert_string("smoother", "GaussSeidel")
-    gamg.insert_double("tolerance", 1e-6)
-    gamg.insert_double("relTol", 0.1)
-    solvers.insert_dict("p", gamg)
+    solvers.insert_dict("p", _gamg_entry())
 
-    with pytest.raises(RuntimeError, match="configFile"):
-        nfb.map_solver_settings(solvers, "p")
+    nfb.map_solver_settings(solvers, "p")
+
+    entry = solvers.subDict("p")
+    assert entry.get_string("solver") == "Ginkgo"
+    assert entry.get_string("type") == "solver::Cg"
+    multigrid = entry.subDict("preconditioner")
+    assert multigrid.get_string("type") == "solver::Multigrid"
+    assert multigrid.subDict("mg_level").get_string("type") == "multigrid::Pgm"
+    assert entry.get_string("reportName") == "Multigrid+Cg"
+
+
+def test_gamg_as_a_preconditioner_leaves_the_outer_solver_alone() -> None:
+    """``preconditioner GAMG`` only replaces the preconditioner; PCG stays the solver."""
+    solvers = nn.Dictionary()
+    entry = nn.Dictionary()
+    entry.insert_string("solver", "PCG")
+    entry.insert_string("preconditioner", "GAMG")
+    entry.insert_double("tolerance", 1e-6)
+    entry.insert_double("relTol", 0.1)
+    solvers.insert_dict("p", entry)
+
+    nfb.map_solver_settings(solvers, "p")
+
+    mapped = solvers.subDict("p")
+    assert mapped.get_string("type") == "solver::Cg"
+    assert mapped.subDict("preconditioner").get_string("type") == "solver::Multigrid"
+
+
+def test_ncells_in_coarsest_level_becomes_min_coarse_rows() -> None:
+    """OpenFOAM stops coarsening at nCellsInCoarsestLevel; Ginkgo at min_coarse_rows."""
+    solvers = nn.Dictionary()
+    entry = _gamg_entry()
+    entry.insert_int("nCellsInCoarsestLevel", 500)
+    solvers.insert_dict("p", entry)
+
+    nfb.map_solver_settings(solvers, "p")
+
+    mapped = solvers.subDict("p")
+    assert mapped.subDict("preconditioner").get_int("min_coarse_rows") == 500
+    assert not mapped.contains("nCellsInCoarsestLevel")
+
+
+def test_gamg_only_tuning_keys_are_dropped_from_the_entry() -> None:
+    """Ginkgo's config check aborts on any key it does not know — none may survive."""
+    solvers = nn.Dictionary()
+    entry = _gamg_entry()
+    entry.insert_string("agglomerator", "faceAreaPair")
+    entry.insert_int("mergeLevels", 1)
+    entry.insert_bool("cacheAgglomeration", True)
+    solvers.insert_dict("p", entry)
+
+    nfb.map_solver_settings(solvers, "p")
+
+    mapped = solvers.subDict("p")
+    for key in ("agglomerator", "mergeLevels", "cacheAgglomeration"):
+        assert not mapped.contains(key)
 
 
 def test_one_entry_reached_by_several_fields_is_converted_once() -> None:
