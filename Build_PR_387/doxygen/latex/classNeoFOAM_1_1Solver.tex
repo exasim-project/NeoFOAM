@@ -1,5 +1,5 @@
-\doxysection{Neo\+FOAM\+::Solver\texorpdfstring{$<$}{<} Value\+Type, Matrix\+Value\+Type, Index\+Type \texorpdfstring{$>$}{>} Class Template Reference}
-\hypertarget{classNeoFOAM_1_1Solver}{}\label{classNeoFOAM_1_1Solver}\index{NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType $>$}}
+\doxysection{Neo\+FOAM\+::Solver\texorpdfstring{$<$}{<} Value\+Type, Matrix\+Value\+Type, Index\+Type, System\+Matrix\+Type \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classNeoFOAM_1_1Solver}{}\label{classNeoFOAM_1_1Solver}\index{NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType, SystemMatrixType $>$@{NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType, SystemMatrixType $>$}}
 
 
 Caches a Neo\+N\+::la\+::\+Solver instance for a given field to avoid reconstructing it (and re-\/parsing the solver dictionary) on every time-\/step iteration.  
@@ -12,21 +12,21 @@ Caches a Neo\+N\+::la\+::\+Solver instance for a given field to avoid reconstruc
 \doxysubsubsection*{Public Member Functions}
 \begin{DoxyCompactItemize}
 \item 
-\mbox{\hyperlink{classNeoFOAM_1_1Solver_af4ade45d4be71a39d82d8717b5a439c9}{Solver}} (Volume\+Field \&field, \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&rt)
+\mbox{\hyperlink{classNeoFOAM_1_1Solver_a26a3d218e028031eda98b120dc745830}{Solver}} (Volume\+Field \&field, \mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&rt)
 \begin{DoxyCompactList}\small\item\em Construct and cache the \doxylink{namespaceNeoN}{NeoN} solver for {\ttfamily field} using {\ttfamily rt\textquotesingle{}s} fv\+Solution dict. \end{DoxyCompactList}\item 
-Neo\+N\+::la\+::\+Solver\+Stats \mbox{\hyperlink{classNeoFOAM_1_1Solver_ac9fb3f3e3beac5ea3e1f4f2259681c60}{solve}} (PDEType \&pde)
+Neo\+N\+::la\+::\+Solver\+Stats \mbox{\hyperlink{classNeoFOAM_1_1Solver_ada78d736c79f9320ecfa5a2bff33606f}{solve}} (PDEType \&pde)
 \begin{DoxyCompactList}\small\item\em Assemble and solve {\ttfamily pde} using the cached solver. \end{DoxyCompactList}\item 
-Neo\+N\+::la\+::\+Solver\+Stats \mbox{\hyperlink{classNeoFOAM_1_1Solver_a87eb53fbec90b0a7353071be63386f2d}{solve}} (PDEType \&pde, dsl\+::\+Spatial\+Operator$<$ Value\+Type $>$ \&\&rhs)
+Neo\+N\+::la\+::\+Solver\+Stats \mbox{\hyperlink{classNeoFOAM_1_1Solver_a4490caaf60c97732948b0406ca78aab6}{solve}} (PDEType \&pde, dsl\+::\+Spatial\+Operator$<$ Value\+Type $>$ \&\&rhs)
 \begin{DoxyCompactList}\small\item\em Assemble and solve {\ttfamily pde} with an additional explicit RHS term. \end{DoxyCompactList}\item 
-Linear\+System\+Type \& \mbox{\hyperlink{classNeoFOAM_1_1Solver_a7a7ea1bc3bdbe2616189eaaca665b22f}{assemble}} (PDEType \&pde)
+Linear\+System\+Type \& \mbox{\hyperlink{classNeoFOAM_1_1Solver_acfada76f2f9fd487b18b7af791728474}{assemble}} (PDEType \&pde)
 \begin{DoxyCompactList}\small\item\em Assemble the linear system of {\ttfamily pde} without solving. \end{DoxyCompactList}\item 
-Linear\+System\+Type \& \mbox{\hyperlink{classNeoFOAM_1_1Solver_ac1b779d09de38cf1d2beff2f4ea2436b}{assemble\+And\+Relax}} (PDEType \&pde)
+Linear\+System\+Type \& \mbox{\hyperlink{classNeoFOAM_1_1Solver_ab48eb920fad638682aad9bc82706ae84}{assemble\+And\+Relax}} (PDEType \&pde)
 \begin{DoxyCompactList}\small\item\em Assemble and apply equation relaxation without solving. \end{DoxyCompactList}\end{DoxyCompactItemize}
 
 
 \doxysubsection{Detailed Description}
-\subsubsection*{template$<$typename Value\+Type, typename Matrix\+Value\+Type = Neo\+N\+::scalar, typename Index\+Type = Neo\+N\+::local\+Idx$>$\newline
-class Neo\+FOAM\+::\+Solver$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$}
+\subsubsection*{template$<$typename Value\+Type, typename Matrix\+Value\+Type = Neo\+N\+::scalar, typename Index\+Type = Neo\+N\+::local\+Idx, typename System\+Matrix\+Type = Neo\+N\+::la\+::\+CSRMatrix$<$\+Matrix\+Value\+Type, Index\+Type$>$$>$\newline
+class Neo\+FOAM\+::\+Solver$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type, System\+Matrix\+Type $>$}
 Caches a Neo\+N\+::la\+::\+Solver instance for a given field to avoid reconstructing it (and re-\/parsing the solver dictionary) on every time-\/step iteration. 
 
 Usage\+: 
@@ -40,17 +40,17 @@ Usage\+:
 \end{DoxyCode}
  
 
-Definition at line \mbox{\hyperlink{solver_8hpp_source_l00033}{33}} of file \mbox{\hyperlink{solver_8hpp_source}{solver.\+hpp}}.
+Definition at line \mbox{\hyperlink{solver_8hpp_source_l00034}{34}} of file \mbox{\hyperlink{solver_8hpp_source}{solver.\+hpp}}.
 
 
 
 \doxysubsection{Constructor \& Destructor Documentation}
-\Hypertarget{classNeoFOAM_1_1Solver_af4ade45d4be71a39d82d8717b5a439c9}\label{classNeoFOAM_1_1Solver_af4ade45d4be71a39d82d8717b5a439c9} 
-\index{NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType $>$}!Solver@{Solver}}
-\index{Solver@{Solver}!NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType $>$}}
+\Hypertarget{classNeoFOAM_1_1Solver_a26a3d218e028031eda98b120dc745830}\label{classNeoFOAM_1_1Solver_a26a3d218e028031eda98b120dc745830} 
+\index{NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType, SystemMatrixType $>$@{NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType, SystemMatrixType $>$}!Solver@{Solver}}
+\index{Solver@{Solver}!NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType, SystemMatrixType $>$@{NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType, SystemMatrixType $>$}}
 \doxysubsubsection{\texorpdfstring{Solver()}{Solver()}}
-{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx$>$ \\
-\mbox{\hyperlink{classNeoFOAM_1_1Solver}{Neo\+FOAM\+::\+Solver}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$\+::\+Solver (\begin{DoxyParamCaption}\item[{Volume\+Field \&}]{field,  }\item[{\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&}]{rt }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx, typename System\+Matrix\+Type  = Neo\+N\+::la\+::\+CSRMatrix$<$\+Matrix\+Value\+Type, Index\+Type$>$$>$ \\
+\mbox{\hyperlink{classNeoFOAM_1_1Solver}{Neo\+FOAM\+::\+Solver}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type, System\+Matrix\+Type $>$\+::\+Solver (\begin{DoxyParamCaption}\item[{Volume\+Field \&}]{field,  }\item[{\mbox{\hyperlink{structNeoFOAM_1_1RunTime}{Run\+Time}} \&}]{rt }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
 
 
 
@@ -58,17 +58,17 @@ Construct and cache the \doxylink{namespaceNeoN}{NeoN} solver for {\ttfamily fie
 
 
 
-Definition at line \mbox{\hyperlink{solver_8hpp_source_l00042}{42}} of file \mbox{\hyperlink{solver_8hpp_source}{solver.\+hpp}}.
+Definition at line \mbox{\hyperlink{solver_8hpp_source_l00043}{43}} of file \mbox{\hyperlink{solver_8hpp_source}{solver.\+hpp}}.
 
 
 
 \doxysubsection{Member Function Documentation}
-\Hypertarget{classNeoFOAM_1_1Solver_a7a7ea1bc3bdbe2616189eaaca665b22f}\label{classNeoFOAM_1_1Solver_a7a7ea1bc3bdbe2616189eaaca665b22f} 
-\index{NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType $>$}!assemble@{assemble}}
-\index{assemble@{assemble}!NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType $>$}}
+\Hypertarget{classNeoFOAM_1_1Solver_acfada76f2f9fd487b18b7af791728474}\label{classNeoFOAM_1_1Solver_acfada76f2f9fd487b18b7af791728474} 
+\index{NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType, SystemMatrixType $>$@{NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType, SystemMatrixType $>$}!assemble@{assemble}}
+\index{assemble@{assemble}!NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType, SystemMatrixType $>$@{NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType, SystemMatrixType $>$}}
 \doxysubsubsection{\texorpdfstring{assemble()}{assemble()}}
-{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx$>$ \\
-Linear\+System\+Type \& \mbox{\hyperlink{classNeoFOAM_1_1Solver}{Neo\+FOAM\+::\+Solver}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$\+::assemble (\begin{DoxyParamCaption}\item[{PDEType \&}]{pde }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx, typename System\+Matrix\+Type  = Neo\+N\+::la\+::\+CSRMatrix$<$\+Matrix\+Value\+Type, Index\+Type$>$$>$ \\
+Linear\+System\+Type \& \mbox{\hyperlink{classNeoFOAM_1_1Solver}{Neo\+FOAM\+::\+Solver}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type, System\+Matrix\+Type $>$\+::assemble (\begin{DoxyParamCaption}\item[{PDEType \&}]{pde }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
 
 
 
@@ -76,14 +76,14 @@ Assemble the linear system of {\ttfamily pde} without solving.
 
 
 
-Definition at line \mbox{\hyperlink{solver_8hpp_source_l00058}{58}} of file \mbox{\hyperlink{solver_8hpp_source}{solver.\+hpp}}.
+Definition at line \mbox{\hyperlink{solver_8hpp_source_l00059}{59}} of file \mbox{\hyperlink{solver_8hpp_source}{solver.\+hpp}}.
 
-\Hypertarget{classNeoFOAM_1_1Solver_ac1b779d09de38cf1d2beff2f4ea2436b}\label{classNeoFOAM_1_1Solver_ac1b779d09de38cf1d2beff2f4ea2436b} 
-\index{NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType $>$}!assembleAndRelax@{assembleAndRelax}}
-\index{assembleAndRelax@{assembleAndRelax}!NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType $>$}}
+\Hypertarget{classNeoFOAM_1_1Solver_ab48eb920fad638682aad9bc82706ae84}\label{classNeoFOAM_1_1Solver_ab48eb920fad638682aad9bc82706ae84} 
+\index{NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType, SystemMatrixType $>$@{NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType, SystemMatrixType $>$}!assembleAndRelax@{assembleAndRelax}}
+\index{assembleAndRelax@{assembleAndRelax}!NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType, SystemMatrixType $>$@{NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType, SystemMatrixType $>$}}
 \doxysubsubsection{\texorpdfstring{assembleAndRelax()}{assembleAndRelax()}}
-{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx$>$ \\
-Linear\+System\+Type \& \mbox{\hyperlink{classNeoFOAM_1_1Solver}{Neo\+FOAM\+::\+Solver}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$\+::assemble\+And\+Relax (\begin{DoxyParamCaption}\item[{PDEType \&}]{pde }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx, typename System\+Matrix\+Type  = Neo\+N\+::la\+::\+CSRMatrix$<$\+Matrix\+Value\+Type, Index\+Type$>$$>$ \\
+Linear\+System\+Type \& \mbox{\hyperlink{classNeoFOAM_1_1Solver}{Neo\+FOAM\+::\+Solver}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type, System\+Matrix\+Type $>$\+::assemble\+And\+Relax (\begin{DoxyParamCaption}\item[{PDEType \&}]{pde }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
 
 
 
@@ -91,14 +91,14 @@ Assemble and apply equation relaxation without solving.
 
 
 
-Definition at line \mbox{\hyperlink{solver_8hpp_source_l00061}{61}} of file \mbox{\hyperlink{solver_8hpp_source}{solver.\+hpp}}.
+Definition at line \mbox{\hyperlink{solver_8hpp_source_l00062}{62}} of file \mbox{\hyperlink{solver_8hpp_source}{solver.\+hpp}}.
 
-\Hypertarget{classNeoFOAM_1_1Solver_ac9fb3f3e3beac5ea3e1f4f2259681c60}\label{classNeoFOAM_1_1Solver_ac9fb3f3e3beac5ea3e1f4f2259681c60} 
-\index{NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType $>$}!solve@{solve}}
-\index{solve@{solve}!NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType $>$}}
+\Hypertarget{classNeoFOAM_1_1Solver_ada78d736c79f9320ecfa5a2bff33606f}\label{classNeoFOAM_1_1Solver_ada78d736c79f9320ecfa5a2bff33606f} 
+\index{NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType, SystemMatrixType $>$@{NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType, SystemMatrixType $>$}!solve@{solve}}
+\index{solve@{solve}!NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType, SystemMatrixType $>$@{NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType, SystemMatrixType $>$}}
 \doxysubsubsection{\texorpdfstring{solve()}{solve()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
-{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx$>$ \\
-Neo\+N\+::la\+::\+Solver\+Stats \mbox{\hyperlink{classNeoFOAM_1_1Solver}{Neo\+FOAM\+::\+Solver}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$\+::solve (\begin{DoxyParamCaption}\item[{PDEType \&}]{pde }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx, typename System\+Matrix\+Type  = Neo\+N\+::la\+::\+CSRMatrix$<$\+Matrix\+Value\+Type, Index\+Type$>$$>$ \\
+Neo\+N\+::la\+::\+Solver\+Stats \mbox{\hyperlink{classNeoFOAM_1_1Solver}{Neo\+FOAM\+::\+Solver}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type, System\+Matrix\+Type $>$\+::solve (\begin{DoxyParamCaption}\item[{PDEType \&}]{pde }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
 
 
 
@@ -106,14 +106,14 @@ Assemble and solve {\ttfamily pde} using the cached solver.
 
 
 
-Definition at line \mbox{\hyperlink{solver_8hpp_source_l00049}{49}} of file \mbox{\hyperlink{solver_8hpp_source}{solver.\+hpp}}.
+Definition at line \mbox{\hyperlink{solver_8hpp_source_l00050}{50}} of file \mbox{\hyperlink{solver_8hpp_source}{solver.\+hpp}}.
 
-\Hypertarget{classNeoFOAM_1_1Solver_a87eb53fbec90b0a7353071be63386f2d}\label{classNeoFOAM_1_1Solver_a87eb53fbec90b0a7353071be63386f2d} 
-\index{NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType $>$}!solve@{solve}}
-\index{solve@{solve}!NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType $>$@{NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType $>$}}
+\Hypertarget{classNeoFOAM_1_1Solver_a4490caaf60c97732948b0406ca78aab6}\label{classNeoFOAM_1_1Solver_a4490caaf60c97732948b0406ca78aab6} 
+\index{NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType, SystemMatrixType $>$@{NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType, SystemMatrixType $>$}!solve@{solve}}
+\index{solve@{solve}!NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType, SystemMatrixType $>$@{NeoFOAM::Solver$<$ ValueType, MatrixValueType, IndexType, SystemMatrixType $>$}}
 \doxysubsubsection{\texorpdfstring{solve()}{solve()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
-{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx$>$ \\
-Neo\+N\+::la\+::\+Solver\+Stats \mbox{\hyperlink{classNeoFOAM_1_1Solver}{Neo\+FOAM\+::\+Solver}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type $>$\+::solve (\begin{DoxyParamCaption}\item[{PDEType \&}]{pde,  }\item[{dsl\+::\+Spatial\+Operator$<$ Value\+Type $>$ \&\&}]{rhs }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+{\footnotesize\ttfamily template$<$typename Value\+Type , typename Matrix\+Value\+Type  = Neo\+N\+::scalar, typename Index\+Type  = Neo\+N\+::local\+Idx, typename System\+Matrix\+Type  = Neo\+N\+::la\+::\+CSRMatrix$<$\+Matrix\+Value\+Type, Index\+Type$>$$>$ \\
+Neo\+N\+::la\+::\+Solver\+Stats \mbox{\hyperlink{classNeoFOAM_1_1Solver}{Neo\+FOAM\+::\+Solver}}$<$ Value\+Type, Matrix\+Value\+Type, Index\+Type, System\+Matrix\+Type $>$\+::solve (\begin{DoxyParamCaption}\item[{PDEType \&}]{pde,  }\item[{dsl\+::\+Spatial\+Operator$<$ Value\+Type $>$ \&\&}]{rhs }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
 
 
 
@@ -121,7 +121,7 @@ Assemble and solve {\ttfamily pde} with an additional explicit RHS term.
 
 
 
-Definition at line \mbox{\hyperlink{solver_8hpp_source_l00052}{52}} of file \mbox{\hyperlink{solver_8hpp_source}{solver.\+hpp}}.
+Definition at line \mbox{\hyperlink{solver_8hpp_source_l00053}{53}} of file \mbox{\hyperlink{solver_8hpp_source}{solver.\+hpp}}.
 
 
 
