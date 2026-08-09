@@ -27,16 +27,24 @@ void constrainHbyA(
 );
 
 /* @brief Inverse of the assembled momentum matrix diagonal: rAU = 1/diag.
+ *
+ * Format-generic over SystemMatrixType (CSR or ELL): the body only calls NeoN's own
+ * format-generic scaledInverseDiag, so this just forwards the matrix type through.
  */
-nnfvcc::VolumeField<scalar> computeRAU(const PDE<Vec3>& expr);
+template<typename SystemMatrixType = NeoN::la::CSRMatrix<scalar, NeoN::localIdx>>
+nnfvcc::VolumeField<scalar>
+computeRAU(const PDE<Vec3, scalar, NeoN::localIdx, SystemMatrixType>& expr);
 
 /* @brief Inverse diagonal (rAU) and off-diagonal source (HbyA) of the assembled momentum matrix.
  *
  * rAU  = 1/diag
  * HbyA = offDiag/diag
+ *
+ * Format-generic over SystemMatrixType (CSR or ELL); see computeRAU.
  */
+template<typename SystemMatrixType = NeoN::la::CSRMatrix<scalar, NeoN::localIdx>>
 std::tuple<nnfvcc::VolumeField<scalar>, nnfvcc::VolumeField<Vec3>>
-computeRAUandHByA(const PDE<Vec3>& expr);
+computeRAUandHByA(const PDE<Vec3, scalar, NeoN::localIdx, SystemMatrixType>& expr);
 
 /* @brief SIMPLEC consistent reciprocal diagonal: rAtU = 1/(1/rAU + sumOffDiag/V).
  *
@@ -78,10 +86,13 @@ void subtractConsistentHbyA(
  * face flux correction stashed in the linear system. Without the correction div(phi) != 0
  * on non-orthogonal meshes. Requires an assembled pressure system with
  * keepFaceFluxCorrection(true).
+ *
+ * Format-generic over SystemMatrixType (CSR or ELL) via LinearSystem::matrix().faceToMatrixView().
  */
+template<typename SystemMatrixType = NeoN::la::CSRMatrix<scalar, NeoN::localIdx>>
 void updateFaceVelocity(
     const nnfvcc::SurfaceField<scalar>& predictedPhi,
-    const PDE<scalar>& expr,
+    const PDE<scalar, scalar, NeoN::localIdx, SystemMatrixType>& expr,
     nnfvcc::SurfaceField<scalar>& phi
 );
 

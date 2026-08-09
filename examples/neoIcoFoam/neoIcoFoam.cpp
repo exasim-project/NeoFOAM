@@ -66,8 +66,9 @@ int main(int argc, char* argv[])
         auto& phi = nf::constructAndRegister(vectorCollection, rt, ofPhi, false);
         NeoN::scalar cumulativeContErr = 0.0;
 
-        auto uSolver = nf::Solver(U, rt);
-        auto pSolver = nf::Solver(p, rt);
+        using EllMatrix = NeoN::la::ELLMatrix<NeoN::scalar, NeoN::localIdx>;
+        nf::Solver<NeoN::Vec3, NeoN::scalar, NeoN::localIdx, EllMatrix> uSolver(U, rt);
+        nf::Solver<NeoN::scalar, NeoN::scalar, NeoN::localIdx, EllMatrix> pSolver(p, rt);
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
         NeoN::Logging::info("Starting time loop");
@@ -90,7 +91,7 @@ int main(int argc, char* argv[])
             nf::syncRunTimes(runTime, rt, maxCoNum);
 
             // Momentum predictor
-            nf::PDE<NeoN::Vec3> UEqn(
+            nf::PDE<NeoN::Vec3, NeoN::scalar, NeoN::localIdx, EllMatrix> UEqn(
                 dsl::imp::ddt(U) + dsl::imp::div(phi, U) - dsl::imp::laplacian(nu, U)
             );
 
@@ -136,7 +137,7 @@ int main(int argc, char* argv[])
                 while (piso.correctNonOrthogonal())
                 {
                     // Pressure corrector
-                    nf::PDE<NeoN::scalar> pEqn(
+                    nf::PDE<NeoN::scalar, NeoN::scalar, NeoN::localIdx, EllMatrix> pEqn(
                         NeoN::dsl::imp::laplacian(rAU, p) - NeoN::dsl::exp::div(phiHbyA)
                     );
 
