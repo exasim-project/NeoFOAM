@@ -24,4 +24,5 @@ NB_MODULE(neofoam_bindings, m)
     NeoFOAM::bindings::registerTurbulenceModel(m);
     NeoFOAM::bindings::registerWallFunctions(m);
     NeoFOAM::bindings::registerFieldRelaxation(m);
+    NeoFOAM::bindings::registerMRF(m);
 }

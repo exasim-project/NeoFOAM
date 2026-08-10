@@ -58,6 +58,7 @@ from neofoam.foam import fvSchemes, fvSolution
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.dependency_resolver import wrap_with_dependency_resolution
 from neofoam.framework.initialization import field, model
+from neofoam.framework.model import BoundExtension
 from neofoam.framework.operations import (
     IterativeOp,
     Operation,
@@ -68,6 +69,7 @@ from neofoam.framework.types import OperationMetadata
 from neofoam.solver.pisoControl import PisoControl
 
 from ..incompressibleFluidNeoNModel import Model
+from .extension import momentum_extension, pressure_extension
 
 simpleNeoN = Model("SimpleNeoN")
 
@@ -257,6 +259,7 @@ def momentum(
     grad_op: Annotated[Any, "models"],
     nu_vol: Annotated[Any, "models"],
     neon_runtime: Annotated[Any, "models"],
+    ext: Annotated[BoundExtension, momentum_extension],
 ) -> FieldUpdates:
     """Assemble (and optionally solve) the steady momentum equation.
 
@@ -269,13 +272,18 @@ def momentum(
     # solve (consumed by continuity).
     prev_p = nfb.field_relaxation_snapshot(p)
 
+    # as in UEqn.H: constrain the velocity before assembly — it feeds the
+    # boundary coefficients of ``div(phi,U)``.
+    ext.constrain(U)
+
     # grad(U) for the explicit dev2 viscous stress; kept alive via FieldUpdates.
     grad_u = grad_op.grad_tensor(U)
 
     UEqn = nfb.PDESolverVec3(
         nn.imp.div(phi, U)
         - nn.imp.laplacian(turbulence.nu_eff(), U)
-        + nfb.viscous_stress(nu_vol, turbulence.nut(), grad_u),
+        + nfb.viscous_stress(nu_vol, turbulence.nut(), grad_u)
+        + ext.terms(U),
         U,
         neon_runtime,
     )
@@ -311,6 +319,7 @@ def continuity(
     surf_interp: Annotated[Any, "models"],
     pressure_reference: Annotated[PressureReference, "models"],
     neon_runtime: Annotated[Any, "models"],
+    ext: Annotated[BoundExtension, pressure_extension],
 ) -> FieldUpdates:
     """The SIMPLE pressure correction: solve, flux + velocity update, p relax.
 
@@ -337,6 +346,10 @@ def continuity(
     rAUf.name = "rAUf"
 
     phiHbyA = nfb.flux(hByA)
+
+    # pEqn.H transforms the predicted flux here, before the SIMPLEC correction.
+    phiHbyA = ext.predicted_flux(phiHbyA)
+
     if state.consistent:
         nfb.add_consistent_flux_correction(phiHbyA, rAU, rAtU, p, rt.fv_schemes_dict)
         nfb.subtract_consistent_hbya(hByA, rAU, rAtU, p)
@@ -379,6 +392,7 @@ def continuity(
 
     nfb.update_velocity(hByA, rAtU, p, U)
     U.correct_boundary_conditions()
+    ext.constrain(U)
 
     return FieldUpdates({"U": U, "p": p, "phi": phi})
 

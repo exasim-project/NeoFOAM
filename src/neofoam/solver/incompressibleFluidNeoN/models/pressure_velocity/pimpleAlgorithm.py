@@ -52,6 +52,7 @@ from neofoam.foam import fvSchemes, fvSolution
 from neofoam.framework.context import Context, FieldUpdates
 from neofoam.framework.dependency_resolver import wrap_with_dependency_resolution
 from neofoam.framework.initialization import field, model
+from neofoam.framework.model import BoundExtension
 from neofoam.framework.operations import (
     IterativeOp,
     Operation,
@@ -62,6 +63,7 @@ from neofoam.framework.types import OperationMetadata
 from neofoam.solver.pisoControl import PisoControl
 
 from ..incompressibleFluidNeoNModel import Model
+from .extension import momentum_extension, pressure_extension
 
 pimpleNeoN = Model("PimpleNeoN")
 
@@ -295,6 +297,7 @@ def momentum(
     grad_op: Annotated[Any, "models"],
     nu_vol: Annotated[Any, "models"],
     neon_runtime: Annotated[Any, "models"],
+    ext: Annotated[BoundExtension, momentum_extension],
 ) -> FieldUpdates:
     """Assemble (and optionally solve) the momentum equation — one outer pass.
 
@@ -308,6 +311,8 @@ def momentum(
     # pressure solve (explicit field under-relaxation, consumed by continuity).
     prev_p = nfb.field_relaxation_snapshot(p)
 
+    ext.constrain(U)
+
     # grad(U) for the explicit dev2 viscous stress. Keep ``grad_u`` alive for
     # the whole outer pass (the operator holds a reference) — it rides to
     # ctx.fields via the FieldUpdates below.
@@ -317,7 +322,8 @@ def momentum(
         nn.imp.ddt(U)
         + nn.imp.div(phi, U)
         - nn.imp.laplacian(turbulence.nu_eff(), U)
-        + nfb.viscous_stress(nu_vol, turbulence.nut(), grad_u),
+        + nfb.viscous_stress(nu_vol, turbulence.nut(), grad_u)
+        + ext.terms(U),
         U,
         neon_runtime,
     )
@@ -359,6 +365,7 @@ def continuity(
     surf_interp: Annotated[Any, "models"],
     pressure_reference: Annotated[PressureReference, "models"],
     neon_runtime: Annotated[Any, "models"],
+    ext: Annotated[BoundExtension, pressure_extension],
 ) -> FieldUpdates:
     """The PISO corrector: pressure solve, flux + velocity update.
 
@@ -384,6 +391,7 @@ def continuity(
         rAUf.name = "rAUf"
 
         phiHbyA = nfb.flux(hByA) + rAUf * nfb.ddt_flux_corr(U, phi, rt.dt, ddt_scheme)
+        phiHbyA = ext.predicted_flux(phiHbyA)
 
         while state.piso.correct_non_orthogonal():
             pEqn = nfb.PDESolverScalar(
@@ -422,6 +430,7 @@ def continuity(
 
         nfb.update_velocity(hByA, rAU, p, U)
         U.correct_boundary_conditions()
+        ext.constrain(U)
 
     if have_p_res:
         state.residuals["p"] = p_res

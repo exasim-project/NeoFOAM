@@ -102,6 +102,13 @@ if(DEFINED SKBUILD AND TARGET _neon)
   set_target_properties(_neon PROPERTIES INSTALL_RPATH "${_neon_rpath}")
 endif()
 
+# libNeoN.so is relocated into neofoam/lib by the consolidation step below, but its own rpath is
+# "$ORIGIN/../lib" — which then points at neofoam/lib itself, not at site-packages/lib where the
+# ginkgo/kokkos libs land. Add the two-levels-up path so its NEEDED entries resolve after the move.
+if(DEFINED SKBUILD AND TARGET NeoN)
+  set_target_properties(NeoN PROPERTIES INSTALL_RPATH "$ORIGIN;$ORIGIN/../lib;$ORIGIN/../../lib")
+endif()
+
 # TODO(rpath workaround): remove once umpire/camp ship a relocatable install upstream (BLT bakes an
 # absolute INSTALL_RPATH and hardcodes DESTINATION lib/). Track via the NeoN dependency bump. umpire
 # and its BLT-bundled camp dependency bake an absolute INSTALL_RPATH pointing at the temp

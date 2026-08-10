@@ -15,10 +15,36 @@ contributions by its files alone.
 from __future__ import annotations
 
 import inspect
-from typing import TYPE_CHECKING, Any, Callable, Iterable
+from enum import Enum
+from typing import TYPE_CHECKING, Any, Callable, Iterable, overload
 
 if TYPE_CHECKING:
     from .spec import ModelSpec
+
+
+class Kind(Enum):
+    """How a hook combines what its contributions return.
+
+    Declared once per hook at ``@<extension>.defines(kind=...)``, so a
+    declaration states which of the three shapes it is instead of inventing a
+    combine rule of its own::
+
+        @pressure_extension.defines(kind=Kind.PIPELINE)
+        def predicted_flux(phiHbyA: Any) -> Any: ...   # body is documentation
+
+    ``ADDITIVE`` (the default) runs every contribution on the same arguments and
+    hands the results to the declaration body, which folds them. ``PIPELINE``
+    threads the value instead: each contribution receives the previous one's
+    output in the declaration's *first* parameter, the call returns that
+    threaded value, and a contribution returning ``None`` passes it through.
+    ``BROADCAST`` is what a declaration with no results sink gets — every
+    contribution runs and the call returns the raw results. Only ``ADDITIVE``
+    invokes the declaration body; for the other two it is documentation.
+    """
+
+    ADDITIVE = "additive"
+    PIPELINE = "pipeline"
+    BROADCAST = "broadcast"
 
 
 class _Negated:
@@ -65,10 +91,16 @@ class Hook:
     annotation — the consumer's injection marker.
     """
 
-    def __init__(self, extension: Extension, declaration: Callable[..., Any]) -> None:
+    def __init__(
+        self,
+        extension: Extension,
+        declaration: Callable[..., Any],
+        kind: Kind = Kind.ADDITIVE,
+    ) -> None:
         self.extension = extension
         self.name = declaration.__name__
         self.declaration = declaration
+        self.kind = kind
         # One insertion-ordered relation: contribution function -> owning model.
         self._contributions: dict[Callable[..., Any], ModelSpec] = {}
 
@@ -135,9 +167,31 @@ class Extension:
         self.name = name
         self._hooks: dict[str, Hook] = {}
 
-    def defines(self, declaration: Callable[..., Any]) -> Hook:
-        """Declare one hook of this extension; returns its :class:`Hook` handle."""
-        hook = Hook(self, declaration)
+    @overload
+    def defines(self, declaration: Callable[..., Any]) -> Hook: ...
+
+    @overload
+    def defines(self, *, kind: Kind) -> Callable[[Callable[..., Any]], Hook]: ...
+
+    def defines(
+        self, declaration: Callable[..., Any] | None = None, *, kind: Kind = Kind.ADDITIVE
+    ) -> Hook | Callable[[Callable[..., Any]], Hook]:
+        """Declare one hook of this extension; returns its :class:`Hook` handle.
+
+        Usable bare (``@<extension>.defines``) for the default additive kind, or
+        with the kind named (``@<extension>.defines(kind=Kind.PIPELINE)``).
+        """
+        if declaration is None:
+            return lambda deferred: self._define(deferred, kind)
+        return self._define(declaration, kind)
+
+    def _define(self, declaration: Callable[..., Any], kind: Kind) -> Hook:
+        hook = Hook(self, declaration, kind)
+        if kind is Kind.PIPELINE and not inspect.signature(declaration).parameters:
+            raise RuntimeError(
+                f"Extension '{self.name}': pipeline hook '{hook.name}' declares no "
+                "parameter to thread the value through."
+            )
         if hook.name in self._hooks:
             raise RuntimeError(f"Extension '{self.name}': hook '{hook.name}' is already defined.")
         self._hooks[hook.name] = hook
@@ -221,8 +275,12 @@ def call_hook(
     call_kwargs = dict(bound.arguments)
     parameters = list(signature.parameters)
     # The results sink is the *last* parameter by convention; any other
-    # unsupplied parameter is a caller mistake, not a sink.
-    results_param = parameters[-1] if parameters and parameters[-1] not in bound.arguments else None
+    # unsupplied parameter is a caller mistake, not a sink. A pipeline's first
+    # parameter carries the threaded value, so it can never be the sink — without
+    # this a one-parameter pipeline would exempt its own argument from the guard
+    # below and fail with a bare KeyError instead.
+    sinkable = parameters[1:] if hook.kind is Kind.PIPELINE else parameters
+    results_param = sinkable[-1] if sinkable and sinkable[-1] not in bound.arguments else None
     missing = [name for name in parameters if name not in bound.arguments and name != results_param]
     if missing:
         raise TypeError(
@@ -237,7 +295,18 @@ def call_hook(
         resolved = _resolve_contribution_kwargs(
             f"{hook.extension.name}.{hook.name}", func, runtime, ctx, call_kwargs
         )
-        results.append(func(**resolved))
+        value = func(**resolved)
+        results.append(value)
+        if hook.kind is Kind.PIPELINE and value is not None:
+            # The next contribution transforms this one's output.
+            call_kwargs[parameters[0]] = value
+    if hook.kind is Kind.PIPELINE:
+        # The threaded value *is* the answer, so the declaration body is
+        # documentation only (as for broadcast). Reading it off call_kwargs
+        # rather than results[-1] is what makes a trailing ``None`` — a
+        # contribution with no opinion — pass the value through instead of
+        # erasing it.
+        return call_kwargs[parameters[0]]
     if results_param is None:
         return results  # broadcast: every parameter is a call argument
     return hook.declaration(*args, **kwargs, **{results_param: results})

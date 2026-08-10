@@ -20,6 +20,7 @@ from neofoam.framework.dependency_resolver import DependencyResolver
 from neofoam.framework.model import (
     BoundExtension,
     Extension,
+    Kind,
     Model,
     fold,
     negated,
@@ -231,6 +232,102 @@ def test_a_broadcast_hook_never_invokes_the_declaration_body() -> None:
         raise AssertionError("a broadcast hook body must not run")
 
     assert ext.resolve(Context(fields={}, models={})).constrain("UEqn") == []
+
+
+# ---------------------------------------------------------------------------
+# The pipeline kind: each contribution transforms the previous one's output
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def pressure_ext() -> Any:
+    """An extension with one pipeline hook, as an operation module defines it."""
+    ext = Extension("pressure")
+
+    @ext.defines(kind=Kind.PIPELINE)
+    def predicted_flux(phiHbyA: str) -> Any:
+        """The flux each contribution transforms in turn."""
+
+    return ext
+
+
+def test_a_pipeline_hook_composes_contributions_in_registration_order(
+    pressure_ext: Any,
+) -> None:
+    hook = pressure_ext.hooks["predicted_flux"]
+    mrf_rt = contributor(hook, lambda phiHbyA: f"relative({phiHbyA})", "mrf")
+    mesh_rt = contributor(hook, lambda phiHbyA: f"meshRelative({phiHbyA})", "meshMotion")
+    # Context insertion order deliberately reversed: registration order wins.
+    ext = pressure_ext.resolve(active_ctx(mesh_rt, mrf_rt))
+    assert ext.predicted_flux("phi") == "meshRelative(relative(phi))"
+
+
+def test_a_pipeline_contribution_returning_none_passes_the_value_through(
+    pressure_ext: Any,
+) -> None:
+    hook = pressure_ext.hooks["predicted_flux"]
+    quiet_rt = contributor(hook, lambda phiHbyA: None, "quiet")
+    mrf_rt = contributor(hook, lambda phiHbyA: f"relative({phiHbyA})", "mrf")
+    ext = pressure_ext.resolve(active_ctx(quiet_rt, mrf_rt))
+    assert ext.predicted_flux("phi") == "relative(phi)"
+
+
+def test_a_pipeline_contribution_returning_none_last_does_not_erase_the_value(
+    pressure_ext: Any,
+) -> None:
+    # Registration order matters: reading the answer off ``results[-1]`` would
+    # hand back ``None`` here and lose the flux entirely.
+    hook = pressure_ext.hooks["predicted_flux"]
+    mrf_rt = contributor(hook, lambda phiHbyA: f"relative({phiHbyA})", "mrf")
+    quiet_rt = contributor(hook, lambda phiHbyA: None, "quiet")
+    ext = pressure_ext.resolve(active_ctx(mrf_rt, quiet_rt))
+    assert ext.predicted_flux("phi") == "relative(phi)"
+
+
+def test_a_pipeline_hook_without_active_contributions_returns_its_argument(
+    pressure_ext: Any,
+) -> None:
+    ext = pressure_ext.resolve(Context(fields={}, models={}))
+    assert ext.predicted_flux("phi") == "phi"
+
+
+def test_a_pipeline_hook_called_without_its_argument_names_what_is_missing(
+    pressure_ext: Any,
+) -> None:
+    # A one-parameter pipeline is the live shape (``predicted_flux(phiHbyA)``),
+    # and its sole parameter is both first and last — so it must be read as the
+    # threaded value, never as the results sink the missing-argument guard skips.
+    ext = pressure_ext.resolve(Context(fields={}, models={}))
+    with pytest.raises(TypeError, match="predicted_flux.*phiHbyA"):
+        ext.predicted_flux()
+
+
+def test_a_pipeline_hook_must_declare_a_parameter_to_thread() -> None:
+    ext = Extension("empty")
+    with pytest.raises(RuntimeError, match="no parameter to thread"):
+
+        @ext.defines(kind=Kind.PIPELINE)
+        def tick() -> None:
+            """Nothing to carry, so nothing this hook could return."""
+
+
+def test_defines_is_additive_by_default_and_names_the_kind_it_was_given(
+    momentum_ext: Any, pressure_ext: Any
+) -> None:
+    assert momentum_ext.hooks["terms"].kind is Kind.ADDITIVE
+    assert pressure_ext.hooks["predicted_flux"].kind is Kind.PIPELINE
+
+
+def test_an_additive_hook_gives_every_contribution_the_call_argument(
+    momentum_ext: Any,
+) -> None:
+    # The counterpart of the pipeline threading: an additive hook must *not*
+    # feed one contribution's result to the next.
+    hook = momentum_ext.hooks["terms"]
+    first_rt = contributor(hook, lambda U: _Sum(f"first({U})"), "first")
+    second_rt = contributor(hook, lambda U: _Sum(f"second({U})"), "second")
+    ext = momentum_ext.resolve(active_ctx(first_rt, second_rt))
+    assert ext.terms("U").trace == "((zero(U)+first(U))+second(U))"
 
 
 def test_a_call_missing_a_hook_argument_raises_naming_the_hook(momentum_ext: Any) -> None:
