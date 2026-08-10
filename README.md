@@ -23,7 +23,8 @@ from a modern performance-portable implementation.
 - Execution on serial CPU, multithreaded CPU, MPI-based distributed systems, and GPUs from NVIDIA, AMD, and Intel 
 - Portability across Linux, macOS, and Windows 
 - OpenFOAM-compatible mesh and field conversion utilities 
-- OpenFOAM-equivalent solver implementations (e.g., `neoIcoFoam`) - Validation against OpenFOAM for numerical reproducibility
+- OpenFOAM-equivalent solver implementations (e.g., `neoIcoFoam`) 
+- Validation against OpenFOAM or literature results for numerical reproducibility
 
 ## Requirements
 
