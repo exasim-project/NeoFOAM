@@ -414,6 +414,7 @@
 <li class="toctree-l6"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.max_delta_t.html">neofoam.solver.incompressibleFluidNeoN.models.max_delta_t</a></li>
 <li class="toctree-l6 has-children"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.html">neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity" class="toctree-checkbox" id="toctree-checkbox-29" name="toctree-checkbox-29" role="switch" type="checkbox"/><label for="toctree-checkbox-29"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l7"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base.html">neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base</a></li>
+<li class="toctree-l7"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.extension.html">neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.extension</a></li>
 <li class="toctree-l7"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.pimpleAlgorithm.html">neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.pimpleAlgorithm</a></li>
 <li class="toctree-l7"><a class="reference internal" href="../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.simpleAlgorithm.html">neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.simpleAlgorithm</a></li>
 </ul>
@@ -600,10 +601,39 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">overload</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">.spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelSpec</span>
+
+
+<div class="viewcode-block" id="Kind">
+<a class="viewcode-back" href="../../../../reference/api/neofoam.framework.model.extension.html#neofoam.framework.model.extension.Kind">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Kind</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;How a hook combines what its contributions return.</span>
+
+<span class="sd">    Declared once per hook at ``@&lt;extension&gt;.defines(kind=...)``, so a</span>
+<span class="sd">    declaration states which of the three shapes it is instead of inventing a</span>
+<span class="sd">    combine rule of its own::</span>
+
+<span class="sd">        @pressure_extension.defines(kind=Kind.PIPELINE)</span>
+<span class="sd">        def predicted_flux(phiHbyA: Any) -&gt; Any: ...   # body is documentation</span>
+
+<span class="sd">    ``ADDITIVE`` (the default) runs every contribution on the same arguments and</span>
+<span class="sd">    hands the results to the declaration body, which folds them. ``PIPELINE``</span>
+<span class="sd">    threads the value instead: each contribution receives the previous one&#39;s</span>
+<span class="sd">    output in the declaration&#39;s *first* parameter, the call returns that</span>
+<span class="sd">    threaded value, and a contribution returning ``None`` passes it through.</span>
+<span class="sd">    ``BROADCAST`` is what a declaration with no results sink gets — every</span>
+<span class="sd">    contribution runs and the call returns the raw results. Only ``ADDITIVE``</span>
+<span class="sd">    invokes the declaration body; for the other two it is documentation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">ADDITIVE</span> <span class="o">=</span> <span class="s2">&quot;additive&quot;</span>
+    <span class="n">PIPELINE</span> <span class="o">=</span> <span class="s2">&quot;pipeline&quot;</span>
+    <span class="n">BROADCAST</span> <span class="o">=</span> <span class="s2">&quot;broadcast&quot;</span></div>
+
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_Negated</span><span class="p">:</span>
@@ -658,10 +688,16 @@
 <span class="sd">    annotation — the consumer&#39;s injection marker.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">extension</span><span class="p">:</span> <span class="n">Extension</span><span class="p">,</span> <span class="n">declaration</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">extension</span><span class="p">:</span> <span class="n">Extension</span><span class="p">,</span>
+        <span class="n">declaration</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+        <span class="n">kind</span><span class="p">:</span> <span class="n">Kind</span> <span class="o">=</span> <span class="n">Kind</span><span class="o">.</span><span class="n">ADDITIVE</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">extension</span> <span class="o">=</span> <span class="n">extension</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">declaration</span><span class="o">.</span><span class="vm">__name__</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">declaration</span> <span class="o">=</span> <span class="n">declaration</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">=</span> <span class="n">kind</span>
         <span class="c1"># One insertion-ordered relation: contribution function -&gt; owning model.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_contributions</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">ModelSpec</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
@@ -737,16 +773,38 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_hooks</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Hook</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">defines</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">declaration</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Hook</span><span class="p">:</span> <span class="o">...</span>
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">defines</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">kind</span><span class="p">:</span> <span class="n">Kind</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">Hook</span><span class="p">]:</span> <span class="o">...</span>
+
 <div class="viewcode-block" id="Extension.defines">
 <a class="viewcode-back" href="../../../../reference/api/neofoam.framework.model.extension.html#neofoam.framework.model.extension.Extension.defines">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">defines</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">declaration</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Hook</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Declare one hook of this extension; returns its :class:`Hook` handle.&quot;&quot;&quot;</span>
-        <span class="n">hook</span> <span class="o">=</span> <span class="n">Hook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">declaration</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">defines</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">declaration</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">kind</span><span class="p">:</span> <span class="n">Kind</span> <span class="o">=</span> <span class="n">Kind</span><span class="o">.</span><span class="n">ADDITIVE</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hook</span> <span class="o">|</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">Hook</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Declare one hook of this extension; returns its :class:`Hook` handle.</span>
+
+<span class="sd">        Usable bare (``@&lt;extension&gt;.defines``) for the default additive kind, or</span>
+<span class="sd">        with the kind named (``@&lt;extension&gt;.defines(kind=Kind.PIPELINE)``).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">declaration</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="k">lambda</span> <span class="n">deferred</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_define</span><span class="p">(</span><span class="n">deferred</span><span class="p">,</span> <span class="n">kind</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_define</span><span class="p">(</span><span class="n">declaration</span><span class="p">,</span> <span class="n">kind</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_define</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">declaration</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">kind</span><span class="p">:</span> <span class="n">Kind</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Hook</span><span class="p">:</span>
+        <span class="n">hook</span> <span class="o">=</span> <span class="n">Hook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">declaration</span><span class="p">,</span> <span class="n">kind</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">kind</span> <span class="ow">is</span> <span class="n">Kind</span><span class="o">.</span><span class="n">PIPELINE</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">declaration</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Extension &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;: pipeline hook &#39;</span><span class="si">{</span><span class="n">hook</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; declares no &quot;</span>
+                <span class="s2">&quot;parameter to thread the value through.&quot;</span>
+            <span class="p">)</span>
         <span class="k">if</span> <span class="n">hook</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hooks</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Extension &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;: hook &#39;</span><span class="si">{</span><span class="n">hook</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39; is already defined.&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_hooks</span><span class="p">[</span><span class="n">hook</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">hook</span>
-        <span class="k">return</span> <span class="n">hook</span></div>
-
+        <span class="k">return</span> <span class="n">hook</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">hooks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Hook</span><span class="p">]:</span>
@@ -835,8 +893,12 @@
     <span class="n">call_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">bound</span><span class="o">.</span><span class="n">arguments</span><span class="p">)</span>
     <span class="n">parameters</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">signature</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span>
     <span class="c1"># The results sink is the *last* parameter by convention; any other</span>
-    <span class="c1"># unsupplied parameter is a caller mistake, not a sink.</span>
-    <span class="n">results_param</span> <span class="o">=</span> <span class="n">parameters</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">parameters</span> <span class="ow">and</span> <span class="n">parameters</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">bound</span><span class="o">.</span><span class="n">arguments</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="c1"># unsupplied parameter is a caller mistake, not a sink. A pipeline&#39;s first</span>
+    <span class="c1"># parameter carries the threaded value, so it can never be the sink — without</span>
+    <span class="c1"># this a one-parameter pipeline would exempt its own argument from the guard</span>
+    <span class="c1"># below and fail with a bare KeyError instead.</span>
+    <span class="n">sinkable</span> <span class="o">=</span> <span class="n">parameters</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="k">if</span> <span class="n">hook</span><span class="o">.</span><span class="n">kind</span> <span class="ow">is</span> <span class="n">Kind</span><span class="o">.</span><span class="n">PIPELINE</span> <span class="k">else</span> <span class="n">parameters</span>
+    <span class="n">results_param</span> <span class="o">=</span> <span class="n">sinkable</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">sinkable</span> <span class="ow">and</span> <span class="n">sinkable</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">bound</span><span class="o">.</span><span class="n">arguments</span> <span class="k">else</span> <span class="kc">None</span>
     <span class="n">missing</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">parameters</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">bound</span><span class="o">.</span><span class="n">arguments</span> <span class="ow">and</span> <span class="n">name</span> <span class="o">!=</span> <span class="n">results_param</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
@@ -851,7 +913,18 @@
         <span class="n">resolved</span> <span class="o">=</span> <span class="n">_resolve_contribution_kwargs</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">hook</span><span class="o">.</span><span class="n">extension</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">hook</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">runtime</span><span class="p">,</span> <span class="n">ctx</span><span class="p">,</span> <span class="n">call_kwargs</span>
         <span class="p">)</span>
-        <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">func</span><span class="p">(</span><span class="o">**</span><span class="n">resolved</span><span class="p">))</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">**</span><span class="n">resolved</span><span class="p">)</span>
+        <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">hook</span><span class="o">.</span><span class="n">kind</span> <span class="ow">is</span> <span class="n">Kind</span><span class="o">.</span><span class="n">PIPELINE</span> <span class="ow">and</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># The next contribution transforms this one&#39;s output.</span>
+            <span class="n">call_kwargs</span><span class="p">[</span><span class="n">parameters</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">value</span>
+    <span class="k">if</span> <span class="n">hook</span><span class="o">.</span><span class="n">kind</span> <span class="ow">is</span> <span class="n">Kind</span><span class="o">.</span><span class="n">PIPELINE</span><span class="p">:</span>
+        <span class="c1"># The threaded value *is* the answer, so the declaration body is</span>
+        <span class="c1"># documentation only (as for broadcast). Reading it off call_kwargs</span>
+        <span class="c1"># rather than results[-1] is what makes a trailing ``None`` — a</span>
+        <span class="c1"># contribution with no opinion — pass the value through instead of</span>
+        <span class="c1"># erasing it.</span>
+        <span class="k">return</span> <span class="n">call_kwargs</span><span class="p">[</span><span class="n">parameters</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
     <span class="k">if</span> <span class="n">results_param</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">results</span>  <span class="c1"># broadcast: every parameter is a call argument</span>
     <span class="k">return</span> <span class="n">hook</span><span class="o">.</span><span class="n">declaration</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="n">results_param</span><span class="p">:</span> <span class="n">results</span><span class="p">})</span></div>

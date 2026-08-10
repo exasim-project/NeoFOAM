@@ -414,6 +414,7 @@
 <li class="toctree-l6"><a class="reference internal" href="../../../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.max_delta_t.html">neofoam.solver.incompressibleFluidNeoN.models.max_delta_t</a></li>
 <li class="toctree-l6 has-children"><a class="reference internal" href="../../../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.html">neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity" class="toctree-checkbox" id="toctree-checkbox-29" name="toctree-checkbox-29" role="switch" type="checkbox"/><label for="toctree-checkbox-29"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l7"><a class="reference internal" href="../../../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base.html">neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base</a></li>
+<li class="toctree-l7"><a class="reference internal" href="../../../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.extension.html">neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.extension</a></li>
 <li class="toctree-l7"><a class="reference internal" href="../../../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.pimpleAlgorithm.html">neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.pimpleAlgorithm</a></li>
 <li class="toctree-l7"><a class="reference internal" href="../../../../../../reference/api/neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.simpleAlgorithm.html">neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.simpleAlgorithm</a></li>
 </ul>
@@ -637,6 +638,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span><span class="p">,</span> <span class="n">FieldUpdates</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.dependency_resolver</span><span class="w"> </span><span class="kn">import</span> <span class="n">wrap_with_dependency_resolution</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.initialization</span><span class="w"> </span><span class="kn">import</span> <span class="n">field</span><span class="p">,</span> <span class="n">model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.model</span><span class="w"> </span><span class="kn">import</span> <span class="n">BoundExtension</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.framework.operations</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">IterativeOp</span><span class="p">,</span>
     <span class="n">Operation</span><span class="p">,</span>
@@ -647,6 +649,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neofoam.solver.pisoControl</span><span class="w"> </span><span class="kn">import</span> <span class="n">PisoControl</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">..incompressibleFluidNeoNModel</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.extension</span><span class="w"> </span><span class="kn">import</span> <span class="n">momentum_extension</span><span class="p">,</span> <span class="n">pressure_extension</span>
 
 <span class="n">pimpleNeoN</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="s2">&quot;PimpleNeoN&quot;</span><span class="p">)</span>
 
@@ -894,6 +897,7 @@
     <span class="n">grad_op</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">],</span>
     <span class="n">nu_vol</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">],</span>
     <span class="n">neon_runtime</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">],</span>
+    <span class="n">ext</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">BoundExtension</span><span class="p">,</span> <span class="n">momentum_extension</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FieldUpdates</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Assemble (and optionally solve) the momentum equation — one outer pass.</span>
 
@@ -907,6 +911,8 @@
     <span class="c1"># pressure solve (explicit field under-relaxation, consumed by continuity).</span>
     <span class="n">prev_p</span> <span class="o">=</span> <span class="n">nfb</span><span class="o">.</span><span class="n">field_relaxation_snapshot</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
 
+    <span class="n">ext</span><span class="o">.</span><span class="n">constrain</span><span class="p">(</span><span class="n">U</span><span class="p">)</span>
+
     <span class="c1"># grad(U) for the explicit dev2 viscous stress. Keep ``grad_u`` alive for</span>
     <span class="c1"># the whole outer pass (the operator holds a reference) — it rides to</span>
     <span class="c1"># ctx.fields via the FieldUpdates below.</span>
@@ -916,7 +922,8 @@
         <span class="n">nn</span><span class="o">.</span><span class="n">imp</span><span class="o">.</span><span class="n">ddt</span><span class="p">(</span><span class="n">U</span><span class="p">)</span>
         <span class="o">+</span> <span class="n">nn</span><span class="o">.</span><span class="n">imp</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">U</span><span class="p">)</span>
         <span class="o">-</span> <span class="n">nn</span><span class="o">.</span><span class="n">imp</span><span class="o">.</span><span class="n">laplacian</span><span class="p">(</span><span class="n">turbulence</span><span class="o">.</span><span class="n">nu_eff</span><span class="p">(),</span> <span class="n">U</span><span class="p">)</span>
-        <span class="o">+</span> <span class="n">nfb</span><span class="o">.</span><span class="n">viscous_stress</span><span class="p">(</span><span class="n">nu_vol</span><span class="p">,</span> <span class="n">turbulence</span><span class="o">.</span><span class="n">nut</span><span class="p">(),</span> <span class="n">grad_u</span><span class="p">),</span>
+        <span class="o">+</span> <span class="n">nfb</span><span class="o">.</span><span class="n">viscous_stress</span><span class="p">(</span><span class="n">nu_vol</span><span class="p">,</span> <span class="n">turbulence</span><span class="o">.</span><span class="n">nut</span><span class="p">(),</span> <span class="n">grad_u</span><span class="p">)</span>
+        <span class="o">+</span> <span class="n">ext</span><span class="o">.</span><span class="n">terms</span><span class="p">(</span><span class="n">U</span><span class="p">),</span>
         <span class="n">U</span><span class="p">,</span>
         <span class="n">neon_runtime</span><span class="p">,</span>
     <span class="p">)</span>
@@ -961,6 +968,7 @@
     <span class="n">surf_interp</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">],</span>
     <span class="n">pressure_reference</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">PressureReference</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">],</span>
     <span class="n">neon_runtime</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="s2">&quot;models&quot;</span><span class="p">],</span>
+    <span class="n">ext</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">BoundExtension</span><span class="p">,</span> <span class="n">pressure_extension</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FieldUpdates</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The PISO corrector: pressure solve, flux + velocity update.</span>
 
@@ -986,6 +994,7 @@
         <span class="n">rAUf</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;rAUf&quot;</span>
 
         <span class="n">phiHbyA</span> <span class="o">=</span> <span class="n">nfb</span><span class="o">.</span><span class="n">flux</span><span class="p">(</span><span class="n">hByA</span><span class="p">)</span> <span class="o">+</span> <span class="n">rAUf</span> <span class="o">*</span> <span class="n">nfb</span><span class="o">.</span><span class="n">ddt_flux_corr</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">rt</span><span class="o">.</span><span class="n">dt</span><span class="p">,</span> <span class="n">ddt_scheme</span><span class="p">)</span>
+        <span class="n">phiHbyA</span> <span class="o">=</span> <span class="n">ext</span><span class="o">.</span><span class="n">predicted_flux</span><span class="p">(</span><span class="n">phiHbyA</span><span class="p">)</span>
 
         <span class="k">while</span> <span class="n">state</span><span class="o">.</span><span class="n">piso</span><span class="o">.</span><span class="n">correct_non_orthogonal</span><span class="p">():</span>
             <span class="n">pEqn</span> <span class="o">=</span> <span class="n">nfb</span><span class="o">.</span><span class="n">PDESolverScalar</span><span class="p">(</span>
@@ -1024,6 +1033,7 @@
 
         <span class="n">nfb</span><span class="o">.</span><span class="n">update_velocity</span><span class="p">(</span><span class="n">hByA</span><span class="p">,</span> <span class="n">rAU</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">U</span><span class="p">)</span>
         <span class="n">U</span><span class="o">.</span><span class="n">correct_boundary_conditions</span><span class="p">()</span>
+        <span class="n">ext</span><span class="o">.</span><span class="n">constrain</span><span class="p">(</span><span class="n">U</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">have_p_res</span><span class="p">:</span>
         <span class="n">state</span><span class="o">.</span><span class="n">residuals</span><span class="p">[</span><span class="s2">&quot;p&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">p_res</span>

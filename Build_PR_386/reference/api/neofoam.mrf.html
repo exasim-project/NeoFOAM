@@ -415,6 +415,7 @@
 <li class="toctree-l6"><a class="reference internal" href="neofoam.solver.incompressibleFluidNeoN.models.max_delta_t.html">neofoam.solver.incompressibleFluidNeoN.models.max_delta_t</a></li>
 <li class="toctree-l6 has-children"><a class="reference internal" href="neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.html">neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity</a><input aria-label="Toggle navigation of neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity" class="toctree-checkbox" id="toctree-checkbox-29" name="toctree-checkbox-29" role="switch" type="checkbox"/><label for="toctree-checkbox-29"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l7"><a class="reference internal" href="neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base.html">neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.base</a></li>
+<li class="toctree-l7"><a class="reference internal" href="neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.extension.html">neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.extension</a></li>
 <li class="toctree-l7"><a class="reference internal" href="neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.pimpleAlgorithm.html">neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.pimpleAlgorithm</a></li>
 <li class="toctree-l7"><a class="reference internal" href="neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.simpleAlgorithm.html">neofoam.solver.incompressibleFluidNeoN.models.pressure_velocity.simpleAlgorithm</a></li>
 </ul>
@@ -597,7 +598,8 @@
 <em>detected</em>: without that file it is never instantiated and the pressure-velocity
 algorithms, which inject it optionally and branch on <code class="docutils literal notranslate"><span class="pre">None</span></code>, assemble exactly the
 equations they did before this model existed.</p>
-<p>It owns one runtime object, <code class="docutils literal notranslate"><span class="pre">ctx.models[&quot;mrf_zones&quot;]</span></code> — OpenFOAM’s own
+<p>Each spec owns one runtime object — <code class="docutils literal notranslate"><span class="pre">ctx.models[&quot;mrf_zones&quot;]</span></code> for the pybFoam
+families and <code class="docutils literal notranslate"><span class="pre">ctx.models[&quot;mrf_neon&quot;]</span></code> for the NeoN one, both built on OpenFOAM’s
 <code class="xref py py-class docutils literal notranslate"><span class="pre">Foam::IOMRFZoneList</span></code> — whose frame terms the algorithms apply where native
 applies them. The contributions at the bottom of this module are one set per
 solver, because the momentum term differs (<code class="docutils literal notranslate"><span class="pre">DDt(U)</span></code> vs <code class="docutils literal notranslate"><span class="pre">DDt(rho,</span> <span class="pre">U)</span></code> for
