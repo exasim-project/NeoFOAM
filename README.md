@@ -11,7 +11,11 @@ incompressible laminar flow simulations of Newtonian fluids.
 
 ## Key Features 
 
-- Execution on serial CPU, multithreaded CPU, MPI-based distributed systems, and GPUs from NVIDIA, AMD, and Intel 
+- Execution on 
+  - serial CPU 
+  - multithreaded CPU
+  - MPI-based distributed systems
+  - GPUs from NVIDIA, AMD, and Intel 
 - Portability across Linux, macOS, and Windows 
 - OpenFOAM-compatible mesh and field conversion utilities 
 - OpenFOAM-equivalent solver implementations (e.g., `neoIcoFoam`) 
