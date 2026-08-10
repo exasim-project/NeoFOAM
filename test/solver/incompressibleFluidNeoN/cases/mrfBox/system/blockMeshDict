@@ -1,0 +1,65 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\\\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\\\    /   O peration     | Version:  v2406                                 |
+|   \\\\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\\\/     M anipulation  |                                                 |
+\\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Two uniform hex blocks side by side in x on a 2x1x1 box. The first block is
+// the cellZone ``rotor`` the MRF zone rotates, so the parity checks see all
+// three face classes MRFZone distinguishes: zone-internal faces, *included*
+// patch faces (xMin/zMin/zMax/yMax, which move with the zone) and *excluded*
+// patch faces (yMin, listed under nonRotatingPatches).
+
+scale   1;
+
+vertices
+(
+    (0 0 0)
+    (1 0 0)
+    (2 0 0)
+    (2 1 0)
+    (1 1 0)
+    (0 1 0)
+    (0 0 1)
+    (1 0 1)
+    (2 0 1)
+    (2 1 1)
+    (1 1 1)
+    (0 1 1)
+);
+
+blocks
+(
+    hex (0 1 4 5 6 7 10 11) rotor (4 4 4) simpleGrading (1 1 1)
+    hex (1 2 3 4 7 8 9 10) (4 4 4) simpleGrading (1 1 1)
+);
+
+edges
+(
+);
+
+boundary
+(
+    xMin { type patch; faces ( (0 6 11 5) ); }
+    xMax { type patch; faces ( (2 3 9 8) ); }
+    yMin { type patch; faces ( (0 1 7 6) (1 2 8 7) ); }
+    yMax { type patch; faces ( (5 11 10 4) (4 10 9 3) ); }
+    zMin { type patch; faces ( (0 5 4 1) (1 4 3 2) ); }
+    zMax { type patch; faces ( (6 7 10 11) (7 8 9 10) ); }
+);
+
+mergePatchPairs
+(
+);
+
+// ************************************************************************* //

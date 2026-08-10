@@ -98,8 +98,17 @@ telemetry = [
     # export is dependency-free, the summary bar chart needs matplotlib.
     "matplotlib>=3.5",
 ]
+verification = [
+    # verification/foam_tutorials: the OpenFOAM tutorial drop-in studies. Each
+    # study now carries its own copy of the pipeline under its `rules/` (see
+    # `verification/README.md`) and runs it with snakemake, which is therefore an
+    # execution-time dependency of the studies, not of the neofoam package —
+    # nothing under src/ imports it. PyYAML is a base dependency (the study loader
+    # and the paramspace both read YAML), so it is not repeated here.
+    "snakemake>=8",
+]
 all = [
-    "neofoam[dev,docs,agent,mcp,telemetry]",
+    "neofoam[dev,docs,agent,mcp,telemetry,verification]",
 ]
 
 [project.scripts]
@@ -159,9 +168,10 @@ markers = [
 
 [tool.mypy]
 plugins = ["pydantic.mypy"]
-files = ["src"]          # your two roots
+files = ["src", "verification/dropin"]
 mypy_path = ["src"]              # so imports from src resolve
 strict = true                    # optional but recommended
+explicit_package_bases = true    # verification/ is a namespace package (no __init__.py)
 
 # Exclude src/Neon and everything beneath it
 # (mypy applies this regex to the normalized file path)

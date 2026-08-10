@@ -36,7 +36,8 @@ nanobind_add_module(
   explicitOperators.cpp
   turbulenceModel.cpp
   wallFunctions.cpp
-  fieldRelaxation.cpp)
+  fieldRelaxation.cpp
+  mrf.cpp)
 
 # Workaround for nvcc_wrapper failing on -Os which nanobind might add
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
