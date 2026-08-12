@@ -1,0 +1,148 @@
+\doxysection{NeoN\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::Epsilon\+Wall\+Function Class Reference}
+\hypertarget{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction}{}\label{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction}\index{NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction@{NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction}}
+
+
+Turbulent dissipation rate wall function BC.  
+
+
+
+
+{\ttfamily \#include $<$epsilon\+Wall\+Function.\+hpp$>$}
+
+Inheritance diagram for NeoN\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::Epsilon\+Wall\+Function\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_a66584fed9edc0d4e67a28f786a6b0688}{Epsilon\+Wall\+Function}} (const Unstructured\+Mesh \&mesh, const Dictionary \&dict, local\+Idx patch\+ID)
+\item 
+void \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_a21b56c23d368f4a3946661ebc3c999ec}{correct\+Boundary\+Condition}} (Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&) final
+\item 
+void \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_ac881a0673c9824b0d1d571a410ff3974}{correct\+Boundary\+Condition}} (Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&domain\+Vector, const fvcc\+::\+Boundary\+Context \&ctx) final
+\item 
+std\+::string \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_aaa6fc5a70d6d70cae3216e5175130668}{get\+Name}} () const override
+\item 
+std\+::unique\+\_\+ptr$<$ Volume\+Boundary\+Factory$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ $>$ \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_a39c1d2d68c637fdc71dad61705f893df}{clone}} () const final
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static std\+::string \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_a627e2ba4083335bc6ce5364db8071cc9}{name}} ()
+\item 
+static std\+::string \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_a1fd258b17e01ac9b36e63d3f68b5ad97}{doc}} ()
+\item 
+static std\+::string \mbox{\hyperlink{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_a4307a8fbf0f0201117e37f779fe40897}{schema}} ()
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Turbulent dissipation rate wall function BC. 
+
+Mirrors Foam\+::epsilon\+Wall\+Function\+Fv\+Patch\+Scalar\+Field\+: blends viscous and log-\/layer ε estimates (BINOMIAL n=2) and sets the wall face value.
+
+Required Boundary\+Context fields\+:
+\begin{DoxyItemize}
+\item {\ttfamily "{}k"{}} Volume\+Field$<$scalar$>$ — turbulent kinetic energy
+\item {\ttfamily "{}nu"{}} Volume\+Field$<$scalar$>$ — laminar viscosity, boundary values
+\item {\ttfamily "{}near\+Wall\+Dist"{}} Volume\+Field$<$scalar$>$ — cell-\/to-\/wall distance y, boundary values
+\end{DoxyItemize}
+
+Single-\/patch-\/corner only (corner\+Weights == 1). G feedback is handled by the parent KEpsilon model, not by this BC. 
+
+Definition at line \mbox{\hyperlink{epsilonWallFunction_8hpp_source_l00100}{100}} of file \mbox{\hyperlink{epsilonWallFunction_8hpp_source}{epsilon\+Wall\+Function.\+hpp}}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_a66584fed9edc0d4e67a28f786a6b0688}\label{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_a66584fed9edc0d4e67a28f786a6b0688} 
+\index{NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction@{NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction}!EpsilonWallFunction@{EpsilonWallFunction}}
+\index{EpsilonWallFunction@{EpsilonWallFunction}!NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction@{NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction}}
+\doxysubsubsection{\texorpdfstring{EpsilonWallFunction()}{EpsilonWallFunction()}}
+{\footnotesize\ttfamily Neo\+N\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::\+Epsilon\+Wall\+Function\+::\+Epsilon\+Wall\+Function (\begin{DoxyParamCaption}\item[{const Unstructured\+Mesh \&}]{mesh,  }\item[{const Dictionary \&}]{dict,  }\item[{local\+Idx}]{patch\+ID }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line \mbox{\hyperlink{epsilonWallFunction_8hpp_source_l00107}{107}} of file \mbox{\hyperlink{epsilonWallFunction_8hpp_source}{epsilon\+Wall\+Function.\+hpp}}.
+
+
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_a39c1d2d68c637fdc71dad61705f893df}\label{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_a39c1d2d68c637fdc71dad61705f893df} 
+\index{NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction@{NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction}!clone@{clone}}
+\index{clone@{clone}!NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction@{NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction}}
+\doxysubsubsection{\texorpdfstring{clone()}{clone()}}
+{\footnotesize\ttfamily std\+::unique\+\_\+ptr$<$ Volume\+Boundary\+Factory$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ $>$ Neo\+N\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::\+Epsilon\+Wall\+Function\+::clone (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [final]}}
+
+
+
+Definition at line \mbox{\hyperlink{epsilonWallFunction_8hpp_source_l00148}{148}} of file \mbox{\hyperlink{epsilonWallFunction_8hpp_source}{epsilon\+Wall\+Function.\+hpp}}.
+
+\Hypertarget{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_a21b56c23d368f4a3946661ebc3c999ec}\label{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_a21b56c23d368f4a3946661ebc3c999ec} 
+\index{NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction@{NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction}!correctBoundaryCondition@{correctBoundaryCondition}}
+\index{correctBoundaryCondition@{correctBoundaryCondition}!NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction@{NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction}}
+\doxysubsubsection{\texorpdfstring{correctBoundaryCondition()}{correctBoundaryCondition()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily void Neo\+N\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::\+Epsilon\+Wall\+Function\+::correct\+Boundary\+Condition (\begin{DoxyParamCaption}\item[{Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [final]}}
+
+
+
+Definition at line \mbox{\hyperlink{epsilonWallFunction_8hpp_source_l00116}{116}} of file \mbox{\hyperlink{epsilonWallFunction_8hpp_source}{epsilon\+Wall\+Function.\+hpp}}.
+
+\Hypertarget{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_ac881a0673c9824b0d1d571a410ff3974}\label{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_ac881a0673c9824b0d1d571a410ff3974} 
+\index{NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction@{NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction}!correctBoundaryCondition@{correctBoundaryCondition}}
+\index{correctBoundaryCondition@{correctBoundaryCondition}!NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction@{NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction}}
+\doxysubsubsection{\texorpdfstring{correctBoundaryCondition()}{correctBoundaryCondition()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily void Neo\+N\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::\+Epsilon\+Wall\+Function\+::correct\+Boundary\+Condition (\begin{DoxyParamCaption}\item[{Field$<$ \mbox{\hyperlink{pressureVelocityCoupling_8hpp_acc912e7a5a44b028589fda3fd76ba7ea}{scalar}} $>$ \&}]{domain\+Vector,  }\item[{const fvcc\+::\+Boundary\+Context \&}]{ctx }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [final]}}
+
+
+
+Definition at line \mbox{\hyperlink{epsilonWallFunction_8hpp_source_l00119}{119}} of file \mbox{\hyperlink{epsilonWallFunction_8hpp_source}{epsilon\+Wall\+Function.\+hpp}}.
+
+\Hypertarget{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_a1fd258b17e01ac9b36e63d3f68b5ad97}\label{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_a1fd258b17e01ac9b36e63d3f68b5ad97} 
+\index{NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction@{NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction}!doc@{doc}}
+\index{doc@{doc}!NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction@{NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction}}
+\doxysubsubsection{\texorpdfstring{doc()}{doc()}}
+{\footnotesize\ttfamily static std\+::string Neo\+N\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::\+Epsilon\+Wall\+Function\+::doc (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Definition at line \mbox{\hyperlink{epsilonWallFunction_8hpp_source_l00137}{137}} of file \mbox{\hyperlink{epsilonWallFunction_8hpp_source}{epsilon\+Wall\+Function.\+hpp}}.
+
+\Hypertarget{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_aaa6fc5a70d6d70cae3216e5175130668}\label{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_aaa6fc5a70d6d70cae3216e5175130668} 
+\index{NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction@{NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction}!getName@{getName}}
+\index{getName@{getName}!NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction@{NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction}}
+\doxysubsubsection{\texorpdfstring{getName()}{getName()}}
+{\footnotesize\ttfamily std\+::string Neo\+N\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::\+Epsilon\+Wall\+Function\+::get\+Name (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}}
+
+
+
+Definition at line \mbox{\hyperlink{epsilonWallFunction_8hpp_source_l00135}{135}} of file \mbox{\hyperlink{epsilonWallFunction_8hpp_source}{epsilon\+Wall\+Function.\+hpp}}.
+
+\Hypertarget{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_a627e2ba4083335bc6ce5364db8071cc9}\label{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_a627e2ba4083335bc6ce5364db8071cc9} 
+\index{NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction@{NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction}!name@{name}}
+\index{name@{name}!NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction@{NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction}}
+\doxysubsubsection{\texorpdfstring{name()}{name()}}
+{\footnotesize\ttfamily static std\+::string Neo\+N\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::\+Epsilon\+Wall\+Function\+::name (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Definition at line \mbox{\hyperlink{epsilonWallFunction_8hpp_source_l00133}{133}} of file \mbox{\hyperlink{epsilonWallFunction_8hpp_source}{epsilon\+Wall\+Function.\+hpp}}.
+
+\Hypertarget{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_a4307a8fbf0f0201117e37f779fe40897}\label{classNeoN_1_1finiteVolume_1_1cellCentred_1_1volumeBoundary_1_1EpsilonWallFunction_a4307a8fbf0f0201117e37f779fe40897} 
+\index{NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction@{NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction}!schema@{schema}}
+\index{schema@{schema}!NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction@{NeoN::finiteVolume::cellCentred::volumeBoundary::EpsilonWallFunction}}
+\doxysubsubsection{\texorpdfstring{schema()}{schema()}}
+{\footnotesize\ttfamily static std\+::string Neo\+N\+::finite\+Volume\+::cell\+Centred\+::volume\+Boundary\+::\+Epsilon\+Wall\+Function\+::schema (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [static]}}
+
+
+
+Definition at line \mbox{\hyperlink{epsilonWallFunction_8hpp_source_l00146}{146}} of file \mbox{\hyperlink{epsilonWallFunction_8hpp_source}{epsilon\+Wall\+Function.\+hpp}}.
+
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/runner/work/\+Neo\+FOAM/\+Neo\+FOAM/include/\+Neo\+FOAM/fvcc/boundary/volume/\mbox{\hyperlink{epsilonWallFunction_8hpp}{epsilon\+Wall\+Function.\+hpp}}\end{DoxyCompactItemize}
