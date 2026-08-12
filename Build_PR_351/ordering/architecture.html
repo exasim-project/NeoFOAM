@@ -243,179 +243,116 @@
 <h1>Ordering Framework Developer Guide<a class="headerlink" href="#ordering-framework-developer-guide" title="Link to this heading">¶</a></h1>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h2>
-<p>The NeoFOAM ordering framework provides a common infrastructure for changing the
-ordering of computational entities in a CFD discretization while keeping the
-ordering algorithm itself independent from the mesh implementation and from the
-code that applies the resulting permutation.</p>
-<p>The current design is intentionally layered. An ordering algorithm is treated as
-an independent computational component: it receives the information it needs,
-computes a permutation, and returns that permutation. A separate part of the
-framework is responsible for interpreting the permutation and applying it to the
-mesh and associated data.</p>
-<p>This separation is the central design principle of the framework. It allows new
-ordering strategies to be added without coupling them to NeoFOAM solver logic,
-and it keeps data movement, execution selection, and permutation application
-visible at the framework level.</p>
+<p>The NeoFOAM ordering framework provides a common way to reorder computational
+entities while keeping three concerns separate:</p>
+<ul class="simple">
+<li><p>determining an ordering;</p></li>
+<li><p>representing the resulting permutation;</p></li>
+<li><p>applying that permutation to CFD data.</p></li>
+</ul>
+<p>This separation keeps ordering algorithms independent of <code class="docutils literal notranslate"><span class="pre">NeoN::UnstructuredMesh</span></code>
+and solver-specific code, while making execution and data movement explicit.</p>
 </section>
 <section id="current-scope">
 <h2>Current scope<a class="headerlink" href="#current-scope" title="Link to this heading">¶</a></h2>
-<p>The initial implementation targets local cell ordering for <code class="docutils literal notranslate"><span class="pre">NeoN::UnstructuredMesh</span></code>.
-The framework is designed so that ordering strategies can use different kinds of
-information, including connectivity or geometry, but the first implementation
-focuses on establishing the common infrastructure rather than supporting every
-possible ordering algorithm.</p>
-<p>The current architecture is deliberately not a distributed ordering framework.
-MPI/global ordering, dynamic reordering, matrix-derived ordering, external
-ordering libraries, and GPU-specific ordering algorithms are outside the present
-scope. The interfaces should nevertheless avoid assumptions that would prevent
-these capabilities from being introduced later.</p>
+<p>The initial implementation targets local cell ordering of
+<code class="docutils literal notranslate"><span class="pre">NeoN::UnstructuredMesh</span></code>.</p>
+<p>The framework is designed to accommodate topology- or geometry-based strategies,
+but distributed/global MPI ordering, dynamic or matrix-derived ordering,
+external ordering libraries, and GPU-specific ordering implementations are
+currently outside the scope.</p>
 </section>
-<section id="architectural-model">
-<h2>Architectural model<a class="headerlink" href="#architectural-model" title="Link to this heading">¶</a></h2>
-<p>At a high level, an ordering operation follows this path:</p>
+<section id="architecture">
+<h2>Architecture<a class="headerlink" href="#architecture" title="Link to this heading">¶</a></h2>
+<p>An ordering operation follows this flow:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">CFD</span><span class="w"> </span><span class="n">mesh</span><span class="o">/</span><span class="n">data</span>
-<span class="w">    </span><span class="o">|</span>
-<span class="w">    </span><span class="n">v</span>
-<span class="n">ordering</span><span class="w"> </span><span class="n">input</span>
-<span class="w">    </span><span class="o">|</span>
-<span class="w">    </span><span class="n">v</span>
+<span class="w">      </span><span class="o">|</span>
+<span class="w">      </span><span class="n">v</span>
+<span class="n">ordering</span><span class="o">-</span><span class="n">domain</span><span class="w"> </span><span class="n">input</span>
+<span class="w">      </span><span class="o">|</span>
+<span class="w">      </span><span class="n">v</span>
 <span class="n">ordering</span><span class="w"> </span><span class="n">algorithm</span>
-<span class="w">    </span><span class="o">|</span>
-<span class="w">    </span><span class="n">v</span>
+<span class="w">      </span><span class="o">|</span>
+<span class="w">      </span><span class="n">v</span>
 <span class="n">Permutation</span>
-<span class="w">    </span><span class="o">|</span>
-<span class="w">    </span><span class="n">v</span>
+<span class="w">      </span><span class="o">|</span>
+<span class="w">      </span><span class="n">v</span>
 <span class="n">permutation</span><span class="w"> </span><span class="n">application</span>
-<span class="w">    </span><span class="o">|</span>
-<span class="w">    </span><span class="n">v</span>
+<span class="w">      </span><span class="o">|</span>
+<span class="w">      </span><span class="n">v</span>
 <span class="n">reordered</span><span class="w"> </span><span class="n">CFD</span><span class="w"> </span><span class="n">data</span>
 </pre></div>
 </div>
-<p>The important architectural distinction is that these stages have different
-responsibilities.</p>
-<p><strong>Input preparation</strong> adapts the CFD representation to the information required
-by an ordering method. For example, a graph-based method should consume a cell
-adjacency representation rather than direct knowledge of <code class="docutils literal notranslate"><span class="pre">faceOwners</span></code> or
-<code class="docutils literal notranslate"><span class="pre">faceNeighbors</span></code>.</p>
-<p><strong>Ordering algorithms</strong> operate only on ordering-domain data and produce a
-<code class="docutils literal notranslate"><span class="pre">Permutation</span></code>. They do not own or modify the source mesh, apply the result, or
-hide data transfers.</p>
-<p><strong>Permutation application</strong> translates the abstract permutation into concrete
-changes to mesh-associated data. It is responsible for preserving consistency
-between reordered entity data and references such as connectivity indices.</p>
-<p>This separation keeps algorithm development, mesh adaptation, and data mutation
-independent enough to test and evolve them separately.</p>
+<dl class="simple">
+<dt><strong>Ordering input</strong></dt><dd><p>Adapts NeoN mesh data into the representation required by an algorithm.</p>
+</dd>
+<dt><strong>Ordering algorithm</strong></dt><dd><p>Computes and returns a <code class="docutils literal notranslate"><span class="pre">Permutation</span></code>. It does not modify the mesh,
+apply the result, or perform hidden data transfers.</p>
+</dd>
+<dt><strong>Permutation application</strong></dt><dd><p>Applies the permutation to mesh- and field-associated data and remaps
+entity references so that the discretization remains consistent.</p>
+</dd>
+</dl>
 </section>
 <section id="core-components">
 <h2>Core components<a class="headerlink" href="#core-components" title="Link to this heading">¶</a></h2>
-<p>The framework is organized around four main concepts.</p>
-<section id="permutation">
-<h3>Permutation<a class="headerlink" href="#permutation" title="Link to this heading">¶</a></h3>
-<p><code class="docutils literal notranslate"><span class="pre">Permutation</span></code> is the common representation of an ordering result. It represents
-the bijection between the original and reordered entity indices and provides the
-mapping operations needed by later stages.</p>
-<p>It deliberately contains no mesh knowledge and no ordering policy. In particular,
-it does not decide how a permutation is generated or how it should be applied to
-CFD data.</p>
+<dl class="simple">
+<dt><strong>Permutation</strong></dt><dd><p>Represents the bijection between old and new entity indices. It has no
+mesh knowledge and no ordering policy.</p>
+</dd>
+<dt><strong>Ordering algorithm</strong></dt><dd><p>Consumes ordering-domain information and produces a <code class="docutils literal notranslate"><span class="pre">Permutation</span></code>.
+Different algorithms may require different inputs, for example entity
+count, cell adjacency, or cell coordinates.</p>
+</dd>
+<dt><strong>Ordering context / input provider</strong></dt><dd><p>Forms the boundary between the CFD representation and the ordering domain.
+It exposes or derives only the information required by an algorithm rather
+than acting as a universal copy of the mesh.</p>
+</dd>
+<dt><strong>Permutation application</strong></dt><dd><p>Reorders entity-associated data and remaps references independently of how
+the permutation was generated.</p>
+</dd>
+</dl>
 </section>
-<section id="ordering-algorithm">
-<h3>Ordering algorithm<a class="headerlink" href="#ordering-algorithm" title="Link to this heading">¶</a></h3>
-<p>An ordering algorithm computes a permutation from ordering-domain information.
-The algorithm is therefore independent of the concrete <code class="docutils literal notranslate"><span class="pre">NeoN::UnstructuredMesh</span></code>
-representation.</p>
-<p>Examples of the intended separation are:</p>
-<ul class="simple">
-<li><p>identity ordering needs only the number of cells;</p></li>
-<li><p>a graph-based method such as RCM needs cell adjacency;</p></li>
-<li><p>a geometry-based method such as Morton ordering needs cell coordinates.</p></li>
-</ul>
-<p>The algorithm interface should expose these requirements without forcing every
-algorithm to depend on a large, universal mesh-data object.</p>
-</section>
-<section id="ordering-context-input-provider">
-<h3>Ordering context / input provider<a class="headerlink" href="#ordering-context-input-provider" title="Link to this heading">¶</a></h3>
-<p>The ordering context forms the boundary between the CFD mesh representation and
-the ordering domain. Its purpose is to expose or derive the information required
-by an algorithm while hiding unrelated mesh internals.</p>
-<p>The context should therefore be understood as an adapter/provider rather than a
-complete copy of the mesh. This keeps algorithm dependencies small and makes it
-possible to prepare only the information that a particular ordering strategy
-actually needs.</p>
-</section>
-<section id="permutation-application">
-<h3>Permutation application<a class="headerlink" href="#permutation-application" title="Link to this heading">¶</a></h3>
-<p>Permutation application is a separate operation because computing an ordering and
-mutating a CFD discretization are fundamentally different tasks.</p>
-<p>For cell ordering, application may involve both reordering cell-associated arrays
-and remapping references that point to cells. Connectivity, geometry data, and
-field data must remain mutually consistent after the transformation.</p>
-<p>The application layer must not depend on how the permutation was produced. The
-same application mechanism should therefore be reusable for identity ordering,
-graph ordering, geometry ordering, and future strategies.</p>
-</section>
-</section>
-<section id="execution-model">
-<h2>Execution model<a class="headerlink" href="#execution-model" title="Link to this heading">¶</a></h2>
-<p>A key part of the current design is the separation of three concepts:</p>
-<p><strong>Data residency</strong> describes where the relevant data currently lives, for example
-host or device memory.</p>
-<p><strong>Execution capability</strong> describes where a particular ordering implementation can
-run. A serial implementation may require a <code class="docutils literal notranslate"><span class="pre">SerialExecutor</span></code>, while a parallel
-implementation may require a CPU or GPU executor.</p>
-<p><strong>Selected execution</strong> describes the executor chosen for the current ordering
-operation.</p>
-<p>These concepts are intentionally not collapsed into the ordering algorithm. The
-application or ordering orchestration layer chooses the execution environment,
-and the framework verifies that the selected environment is supported by the
-chosen implementation.</p>
-<p>The design therefore treats an unsupported implementation/executor combination
-as an explicit compatibility failure rather than silently changing the selected
-algorithm or execution mode.</p>
-<p>Ordering execution and simulation execution are also distinct. The executor used
-to compute and apply the ordering does not necessarily have to be the executor
-used by the subsequent CFD simulation.</p>
-<p>A typical flow is:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">import</span><span class="w"> </span><span class="n">mesh</span><span class="w"> </span><span class="n">on</span><span class="w"> </span><span class="n">host</span>
-<span class="w">      </span><span class="o">|</span>
-<span class="w">      </span><span class="n">v</span>
-<span class="n">prepare</span><span class="w"> </span><span class="n">data</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">ordering</span>
-<span class="w">      </span><span class="o">|</span>
-<span class="w">      </span><span class="n">v</span>
+<section id="execution-and-memory">
+<h2>Execution and memory<a class="headerlink" href="#execution-and-memory" title="Link to this heading">¶</a></h2>
+<p>The design separates:</p>
+<dl class="simple">
+<dt><strong>Data residency</strong></dt><dd><p>Where the data currently resides, such as host or device memory.</p>
+</dd>
+<dt><strong>Execution capability</strong></dt><dd><p>Which executors an ordering implementation supports.</p>
+</dd>
+<dt><strong>Selected execution</strong></dt><dd><p>The executor chosen for the current ordering operation.</p>
+</dd>
+</dl>
+<p>The application or orchestration layer selects the execution environment.
+The framework validates compatibility and reports unsupported combinations
+explicitly.</p>
+<p>Ordering and simulation execution are independent:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">import</span><span class="w"> </span><span class="n">mesh</span>
+<span class="w">    </span><span class="o">|</span>
+<span class="w">    </span><span class="n">v</span>
+<span class="n">prepare</span><span class="w"> </span><span class="n">ordering</span><span class="w"> </span><span class="n">data</span>
+<span class="w">    </span><span class="o">|</span>
+<span class="w">    </span><span class="n">v</span>
 <span class="n">compute</span><span class="w"> </span><span class="n">permutation</span>
-<span class="w">      </span><span class="o">|</span>
-<span class="w">      </span><span class="n">v</span>
+<span class="w">    </span><span class="o">|</span>
+<span class="w">    </span><span class="n">v</span>
 <span class="n">apply</span><span class="w"> </span><span class="n">permutation</span>
-<span class="w">      </span><span class="o">|</span>
-<span class="w">      </span><span class="o">+----&gt;</span><span class="w"> </span><span class="n">transfer</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">simulation</span><span class="w"> </span><span class="n">executor</span><span class="w"> </span><span class="n">differs</span>
-<span class="w">      </span><span class="o">|</span>
-<span class="w">      </span><span class="n">v</span>
+<span class="w">    </span><span class="o">|</span>
+<span class="w">    </span><span class="o">+----&gt;</span><span class="w"> </span><span class="n">transfer</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">simulation</span><span class="w"> </span><span class="n">executor</span><span class="w"> </span><span class="n">differs</span>
+<span class="w">    </span><span class="o">|</span>
+<span class="w">    </span><span class="n">v</span>
 <span class="n">run</span><span class="w"> </span><span class="n">simulation</span>
 </pre></div>
 </div>
-<p>This makes data movement explicit and keeps ordering costs measurable.</p>
+<p>Ordering implementations do not perform implicit host/device transfers.
+Inputs are prepared explicitly in a compatible memory space so that data
+movement and ordering cost remain visible.</p>
 </section>
-<section id="memory-and-data-movement">
-<h2>Memory and data movement<a class="headerlink" href="#memory-and-data-movement" title="Link to this heading">¶</a></h2>
-<p>Ordering implementations are not responsible for implicit host/device transfers.
-The framework prepares their inputs in a memory space compatible with the selected
-execution environment before the algorithm is invoked.</p>
-<p>This rule is important for two reasons. First, it prevents hidden transfers from
-appearing inside otherwise simple ordering algorithms. Second, it allows the
-framework to measure input preparation, data movement, ordering computation, and
-permutation application as separate stages.</p>
-<p>The current design already aligns with the executor-aware memory model in NeoN:
-read-only views can be used to access mesh data, and explicit transfer mechanisms
-can prepare data for another execution environment.</p>
-<p>For the current serial ordering scope, this means that a graph or coordinate input
-may be materialized on the host before the algorithm runs. The architecture does
-not require GPU ordering today, but it avoids introducing host-only assumptions
-into the algorithm interface.</p>
-</section>
-<section id="interaction-with-neon">
-<h2>Interaction with NeoN<a class="headerlink" href="#interaction-with-neon" title="Link to this heading">¶</a></h2>
-<p>The framework is integrated with <code class="docutils literal notranslate"><span class="pre">NeoN</span></code> rather than introducing a second mesh or
-executor model.</p>
-<p>The current design relies on NeoN facilities such as:</p>
+<section id="neon-integration">
+<h2>NeoN integration<a class="headerlink" href="#neon-integration" title="Link to this heading">¶</a></h2>
+<p>The framework uses NeoN’s existing mesh, executor, and memory model.</p>
+<p>Relevant mesh information is available through interfaces such as:</p>
 <div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">mesh</span><span class="p">.</span><span class="n">nCells</span><span class="p">()</span>
 <span class="n">mesh</span><span class="p">.</span><span class="n">faceOwners</span><span class="p">().</span><span class="n">view</span><span class="p">()</span>
 <span class="n">mesh</span><span class="p">.</span><span class="n">faceNeighbors</span><span class="p">().</span><span class="n">view</span><span class="p">()</span>
@@ -423,111 +360,53 @@ executor model.</p>
 <span class="n">mesh</span><span class="p">.</span><span class="n">exec</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>These interfaces provide the source information needed to construct ordering-domain
-inputs while preserving the existing ownership and execution model.</p>
-<p>The framework should continue to treat NeoN as the source of truth for mesh storage,
-execution, and memory management. Ordering-specific abstractions should exist only
-where they provide a useful boundary for algorithms or permutation application.</p>
+<p>NeoN remains the source of truth for mesh storage, execution, and memory
+management.</p>
 </section>
-<section id="typical-developer-workflow">
-<h2>Typical developer workflow<a class="headerlink" href="#typical-developer-workflow" title="Link to this heading">¶</a></h2>
-<p>A developer adding a new ordering strategy should think in terms of the following
-workflow rather than modifying the solver directly.</p>
+<section id="adding-an-ordering-strategy">
+<h2>Adding an ordering strategy<a class="headerlink" href="#adding-an-ordering-strategy" title="Link to this heading">¶</a></h2>
 <ol class="arabic simple">
-<li><p>Define the mathematical/data requirements of the ordering algorithm.</p></li>
-<li><p>Identify which of those requirements can be obtained from NeoN directly and
-which need an adapter or derived representation.</p></li>
-<li><p>Expose those requirements through the ordering context/provider.</p></li>
-<li><p>Implement the ordering algorithm against the ordering-domain interface.</p></li>
-<li><p>Return a valid <code class="docutils literal notranslate"><span class="pre">Permutation</span></code> without modifying the source mesh.</p></li>
-<li><p>Reuse the common permutation-application path to update mesh-associated data.</p></li>
-<li><p>Declare the execution environments supported by the implementation.</p></li>
-<li><p>Add unit tests for the algorithm independently of a complete CFD simulation.</p></li>
-<li><p>Add integration coverage for the resulting reordered mesh and associated data.</p></li>
+<li><p>Identify the algorithm’s required information.</p></li>
+<li><p>Determine how that information is obtained from NeoN.</p></li>
+<li><p>Expose or derive it through the ordering context/provider.</p></li>
+<li><p>Implement the algorithm against the ordering-domain interface.</p></li>
+<li><p>Return a valid <code class="docutils literal notranslate"><span class="pre">Permutation</span></code> without modifying the mesh.</p></li>
+<li><p>Reuse the common permutation-application path.</p></li>
+<li><p>Declare supported executors and relevant guarantees such as determinism.</p></li>
+<li><p>Add unit tests independent of a complete CFD simulation and integration
+tests for the reordered mesh and associated data.</p></li>
 </ol>
-<p>This workflow is intended to keep algorithm-specific code small and make the
-framework responsible for orchestration, validation, and data consistency.</p>
+<p>Application code should select strategies through the framework rather than
+depending directly on concrete algorithm types.</p>
 </section>
-<section id="adding-a-new-ordering-algorithm">
-<h2>Adding a new ordering algorithm<a class="headerlink" href="#adding-a-new-ordering-algorithm" title="Link to this heading">¶</a></h2>
-<p>A new implementation should not require changes to existing ordering algorithms.
-In practice, the implementation should answer four questions:</p>
+<section id="correctness-and-performance">
+<h2>Correctness and performance<a class="headerlink" href="#correctness-and-performance" title="Link to this heading">¶</a></h2>
+<p>A valid permutation must preserve the meaning of the discretization. For cell
+ordering, cell-associated data, connectivity references, geometry, and fields
+must remain correctly associated after reordering.</p>
+<p>Tests should therefore cover both:</p>
 <ul class="simple">
-<li><p>What information does the algorithm require?</p></li>
-<li><p>How is that information represented in the ordering domain?</p></li>
-<li><p>Which executors can run the implementation?</p></li>
-<li><p>What guarantees does the implementation provide, such as determinism?</p></li>
+<li><p>the correctness of the generated <code class="docutils literal notranslate"><span class="pre">Permutation</span></code>;</p></li>
+<li><p>the consistency of the resulting reordered CFD representation.</p></li>
 </ul>
-<p>The algorithm should then be registered or selected through the framework’s
-application-level interface rather than being instantiated directly by solver code.
-This keeps application code independent of concrete ordering implementation types.</p>
-</section>
-<section id="correctness-considerations">
-<h2>Correctness considerations<a class="headerlink" href="#correctness-considerations" title="Link to this heading">¶</a></h2>
-<p>The most important correctness property is not merely that a permutation is
-bijective. The reordered CFD representation must preserve the semantics of the
-original discretization.</p>
-<p>For cell ordering, developers should consider at least:</p>
-<ul class="simple">
-<li><p>cell-associated values are moved to their new positions;</p></li>
-<li><p>cell references in connectivity are remapped consistently;</p></li>
-<li><p>geometry remains associated with the correct cells;</p></li>
-<li><p>fields remain associated with the same physical entities;</p></li>
-<li><p>the resulting mesh can still be consumed by the solver without changing the
-numerical meaning of the discretization.</p></li>
-</ul>
-<p>Because permutation application is separated from permutation generation, these
-properties should be tested at both levels: algorithm tests verify the permutation,
-while integration tests verify the reordered CFD representation.</p>
-</section>
-<section id="performance-considerations">
-<h2>Performance considerations<a class="headerlink" href="#performance-considerations" title="Link to this heading">¶</a></h2>
-<p>The framework is designed to keep the main performance costs visible. At minimum,
-developers should be able to distinguish:</p>
-<ul class="simple">
-<li><p>preparation or construction of ordering-domain data;</p></li>
-<li><p>memory transfers required for preparation;</p></li>
-<li><p>ordering computation;</p></li>
-<li><p>permutation application;</p></li>
-<li><p>transfer to the simulation execution environment, when required.</p></li>
-</ul>
-<p>This separation is especially important when comparing ordering strategies. A
-faster ordering kernel is not necessarily a faster overall preprocessing stage if
-its input construction or data movement dominates the runtime.</p>
+<p>Performance should be evaluated as a complete preprocessing stage. Keep input
+preparation, data transfers, ordering computation, permutation application,
+and any transfer to the simulation executor separately measurable.</p>
 </section>
 <section id="current-design-direction">
 <h2>Current design direction<a class="headerlink" href="#current-design-direction" title="Link to this heading">¶</a></h2>
-<p>The current implementation direction can be summarized as follows:</p>
+<p>The framework currently aims to:</p>
 <ul class="simple">
-<li><p>keep <code class="docutils literal notranslate"><span class="pre">Permutation</span></code> as a small, algorithm-independent value abstraction;</p></li>
-<li><p>use an ordering context/provider to bridge NeoN mesh data and algorithm inputs;</p></li>
-<li><p>keep algorithms unaware of concrete mesh ownership and permutation application;</p></li>
-<li><p>let the orchestration layer choose execution and validate compatibility;</p></li>
+<li><p>keep <code class="docutils literal notranslate"><span class="pre">Permutation</span></code> small and algorithm-independent;</p></li>
+<li><p>use the ordering context/provider as the mesh-to-algorithm boundary;</p></li>
+<li><p>keep algorithms independent of mesh ownership and data mutation;</p></li>
+<li><p>let orchestration control execution and compatibility;</p></li>
 <li><p>keep data movement explicit;</p></li>
-<li><p>use a common permutation-application path for mesh and field consistency;</p></li>
-<li><p>design interfaces so additional CPU/GPU or more specialized ordering strategies
-can be added without redesigning the existing solver workflow.</p></li>
+<li><p>use a common permutation-application path for consistency.</p></li>
 </ul>
-<p>This gives the framework a stable separation of concerns while leaving implementation
-choices open where the design is not yet finalized, such as the concrete storage and
-API of graph-based ordering inputs.</p>
-</section>
-<section id="implementation-status-and-open-design-points">
-<h2>Implementation status and open design points<a class="headerlink" href="#implementation-status-and-open-design-points" title="Link to this heading">¶</a></h2>
-<p>The architectural boundaries are established, while some lower-level implementation
-details remain intentionally open. In particular, the exact graph-storage abstraction
-for connectivity-based ordering is not yet fixed, and policies for which geometry
-arrays must be reordered when cell ordering changes require explicit definition.</p>
-<p>These decisions should be made at the framework level rather than embedded in an
-individual ordering implementation, because they affect interoperability between
-algorithms and the common permutation-application stage.</p>
-</section>
-<section id="see-also">
-<h2>See also<a class="headerlink" href="#see-also" title="Link to this heading">¶</a></h2>
-<ul class="simple">
-<li><p><a class="reference internal" href="#"><span class="doc">Ordering Framework Developer Guide</span></a></p></li>
-<li><p><span class="xref std std-doc">../requirements</span></p></li>
-</ul>
+<p>The main remaining lower-level decisions concern the concrete storage/API for
+graph-based ordering inputs and the policy for geometry arrays affected by cell
+reordering.</p>
 </section>
 </section>
 
@@ -581,24 +460,13 @@ algorithms and the common permutation-application stage.</p>
 <li><a class="reference internal" href="#">Ordering Framework Developer Guide</a><ul>
 <li><a class="reference internal" href="#overview">Overview</a></li>
 <li><a class="reference internal" href="#current-scope">Current scope</a></li>
-<li><a class="reference internal" href="#architectural-model">Architectural model</a></li>
-<li><a class="reference internal" href="#core-components">Core components</a><ul>
-<li><a class="reference internal" href="#permutation">Permutation</a></li>
-<li><a class="reference internal" href="#ordering-algorithm">Ordering algorithm</a></li>
-<li><a class="reference internal" href="#ordering-context-input-provider">Ordering context / input provider</a></li>
-<li><a class="reference internal" href="#permutation-application">Permutation application</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#execution-model">Execution model</a></li>
-<li><a class="reference internal" href="#memory-and-data-movement">Memory and data movement</a></li>
-<li><a class="reference internal" href="#interaction-with-neon">Interaction with NeoN</a></li>
-<li><a class="reference internal" href="#typical-developer-workflow">Typical developer workflow</a></li>
-<li><a class="reference internal" href="#adding-a-new-ordering-algorithm">Adding a new ordering algorithm</a></li>
-<li><a class="reference internal" href="#correctness-considerations">Correctness considerations</a></li>
-<li><a class="reference internal" href="#performance-considerations">Performance considerations</a></li>
+<li><a class="reference internal" href="#architecture">Architecture</a></li>
+<li><a class="reference internal" href="#core-components">Core components</a></li>
+<li><a class="reference internal" href="#execution-and-memory">Execution and memory</a></li>
+<li><a class="reference internal" href="#neon-integration">NeoN integration</a></li>
+<li><a class="reference internal" href="#adding-an-ordering-strategy">Adding an ordering strategy</a></li>
+<li><a class="reference internal" href="#correctness-and-performance">Correctness and performance</a></li>
 <li><a class="reference internal" href="#current-design-direction">Current design direction</a></li>
-<li><a class="reference internal" href="#implementation-status-and-open-design-points">Implementation status and open design points</a></li>
-<li><a class="reference internal" href="#see-also">See also</a></li>
 </ul>
 </li>
 </ul>
