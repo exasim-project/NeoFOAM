@@ -7,7 +7,7 @@
         <link rel="canonical" href="https://exasim-project.com/NeoFOAM/ordering/architecture.html">
 
     <!-- Generated with Sphinx 7.2.6 and Furo 2025.12.19 -->
-        <title>Ordering Framework Architecture - NeoFOAM documentation</title>
+        <title>Ordering Framework Developer Guide - NeoFOAM documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=acfd86a5" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=eafc0fe6" />
@@ -200,7 +200,7 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../ci.html">Continuous Integration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../debugProfileTools.html">Using Kokkos Tools</a></li>
-<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Ordering Framework Architecture</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Ordering Framework Developer Guide</a></li>
 </ul>
 
 </div>
@@ -239,342 +239,296 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="ordering-framework-architecture">
-<h1>Ordering Framework Architecture<a class="headerlink" href="#ordering-framework-architecture" title="Link to this heading">¶</a></h1>
+          <section id="ordering-framework-developer-guide">
+<h1>Ordering Framework Developer Guide<a class="headerlink" href="#ordering-framework-developer-guide" title="Link to this heading">¶</a></h1>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h2>
-<p>The Ordering Framework provides reusable infrastructure for computing,
-evaluating, storing, and applying permutations of mesh entities in NeoFOAM.</p>
-<p>Its primary objective is to improve the performance of matrix assembly,
-linear solvers, and other mesh-based computations by improving memory
-locality and reducing graph bandwidth.</p>
-<p>Rather than being built around a single ordering algorithm, the framework is
-designed around stable abstractions. Ordering algorithms are interchangeable
-components that consume mesh-derived information and produce a common output:</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Permutation</span>
+<p>The NeoFOAM ordering framework provides a common infrastructure for changing the
+ordering of computational entities in a CFD discretization while keeping the
+ordering algorithm itself independent from the mesh implementation and from the
+code that applies the resulting permutation.</p>
+<p>The current design is intentionally layered. An ordering algorithm is treated as
+an independent computational component: it receives the information it needs,
+computes a permutation, and returns that permutation. A separate part of the
+framework is responsible for interpreting the permutation and applying it to the
+mesh and associated data.</p>
+<p>This separation is the central design principle of the framework. It allows new
+ordering strategies to be added without coupling them to NeoFOAM solver logic,
+and it keeps data movement, execution selection, and permutation application
+visible at the framework level.</p>
+</section>
+<section id="current-scope">
+<h2>Current scope<a class="headerlink" href="#current-scope" title="Link to this heading">¶</a></h2>
+<p>The initial implementation targets local cell ordering for <code class="docutils literal notranslate"><span class="pre">NeoN::UnstructuredMesh</span></code>.
+The framework is designed so that ordering strategies can use different kinds of
+information, including connectivity or geometry, but the first implementation
+focuses on establishing the common infrastructure rather than supporting every
+possible ordering algorithm.</p>
+<p>The current architecture is deliberately not a distributed ordering framework.
+MPI/global ordering, dynamic reordering, matrix-derived ordering, external
+ordering libraries, and GPU-specific ordering algorithms are outside the present
+scope. The interfaces should nevertheless avoid assumptions that would prevent
+these capabilities from being introduced later.</p>
+</section>
+<section id="architectural-model">
+<h2>Architectural model<a class="headerlink" href="#architectural-model" title="Link to this heading">¶</a></h2>
+<p>At a high level, an ordering operation follows this path:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">CFD</span><span class="w"> </span><span class="n">mesh</span><span class="o">/</span><span class="n">data</span>
+<span class="w">    </span><span class="o">|</span>
+<span class="w">    </span><span class="n">v</span>
+<span class="n">ordering</span><span class="w"> </span><span class="n">input</span>
+<span class="w">    </span><span class="o">|</span>
+<span class="w">    </span><span class="n">v</span>
+<span class="n">ordering</span><span class="w"> </span><span class="n">algorithm</span>
+<span class="w">    </span><span class="o">|</span>
+<span class="w">    </span><span class="n">v</span>
+<span class="n">Permutation</span>
+<span class="w">    </span><span class="o">|</span>
+<span class="w">    </span><span class="n">v</span>
+<span class="n">permutation</span><span class="w"> </span><span class="n">application</span>
+<span class="w">    </span><span class="o">|</span>
+<span class="w">    </span><span class="n">v</span>
+<span class="n">reordered</span><span class="w"> </span><span class="n">CFD</span><span class="w"> </span><span class="n">data</span>
 </pre></div>
 </div>
-<p>The framework supports</p>
-<ul class="simple">
-<li><p>graph-based ordering</p></li>
-<li><p>geometric ordering</p></li>
-<li><p>hybrid ordering</p></li>
-<li><p>future GPU-aware ordering</p></li>
-</ul>
-<p>without requiring changes to the surrounding infrastructure.</p>
+<p>The important architectural distinction is that these stages have different
+responsibilities.</p>
+<p><strong>Input preparation</strong> adapts the CFD representation to the information required
+by an ordering method. For example, a graph-based method should consume a cell
+adjacency representation rather than direct knowledge of <code class="docutils literal notranslate"><span class="pre">faceOwners</span></code> or
+<code class="docutils literal notranslate"><span class="pre">faceNeighbors</span></code>.</p>
+<p><strong>Ordering algorithms</strong> operate only on ordering-domain data and produce a
+<code class="docutils literal notranslate"><span class="pre">Permutation</span></code>. They do not own or modify the source mesh, apply the result, or
+hide data transfers.</p>
+<p><strong>Permutation application</strong> translates the abstract permutation into concrete
+changes to mesh-associated data. It is responsible for preserving consistency
+between reordered entity data and references such as connectivity indices.</p>
+<p>This separation keeps algorithm development, mesh adaptation, and data mutation
+independent enough to test and evolve them separately.</p>
 </section>
-<section id="motivation">
-<h2>Motivation<a class="headerlink" href="#motivation" title="Link to this heading">¶</a></h2>
-<p>NeoFOAM currently converts an OpenFOAM mesh into a NeoN mesh before matrix
-assembly and solution.</p>
-<pre  class="mermaid">
-        flowchart TD
-
-   OF[OpenFOAM Mesh]
-   Adapter[Mesh Adapter]
-   Mesh[NeoN Mesh]
-   Assembly[Matrix Assembly]
-   Solver[Linear Solver]
-
-   OF --&gt; Adapter
-   Adapter --&gt; Mesh
-   Mesh --&gt; Assembly
-   Assembly --&gt; Solver
-    </pre><p>The Ordering Framework is inserted immediately after NeoN mesh construction.</p>
-<pre  class="mermaid">
-        flowchart TD
-
-   OF[OpenFOAM Mesh]
-   Mesh[NeoN Mesh]
-   Ordering[Ordering Framework]
-   RMesh[Reordered NeoN Mesh]
-   Assembly[Matrix Assembly]
-   Solver[Linear Solver]
-
-   OF --&gt; Mesh
-   Mesh --&gt; Ordering
-   Ordering --&gt; RMesh
-   RMesh --&gt; Assembly
-   Assembly --&gt; Solver
-    </pre><p>The reordered mesh is then used throughout the simulation.</p>
-</section>
-<section id="goals">
-<h2>Goals<a class="headerlink" href="#goals" title="Link to this heading">¶</a></h2>
-<section id="functional-goals">
-<h3>Functional goals<a class="headerlink" href="#functional-goals" title="Link to this heading">¶</a></h3>
-<p>The framework shall</p>
-<ul class="simple">
-<li><p>compute permutations</p></li>
-<li><p>apply permutations</p></li>
-<li><p>cache permutations</p></li>
-<li><p>store permutations</p></li>
-<li><p>benchmark ordering algorithms</p></li>
-<li><p>compare ordering strategies</p></li>
-<li><p>support external libraries</p></li>
-</ul>
-</section>
-<section id="non-functional-goals">
-<h3>Non-functional goals<a class="headerlink" href="#non-functional-goals" title="Link to this heading">¶</a></h3>
-<p>The framework shall</p>
-<ul class="simple">
-<li><p>minimise memory allocations</p></li>
-<li><p>avoid unnecessary copies</p></li>
-<li><p>support CPU and GPU implementations</p></li>
-<li><p>be modular</p></li>
-<li><p>be extensible</p></li>
-<li><p>be thread-safe</p></li>
-<li><p>be easy to unit test</p></li>
-</ul>
-</section>
-</section>
-<section id="design-principles">
-<h2>Design Principles<a class="headerlink" href="#design-principles" title="Link to this heading">¶</a></h2>
-<p>The framework follows these principles.</p>
-<ol class="arabic simple">
-<li><p>Design around stable abstractions.</p></li>
-<li><p>Algorithms compute permutations only.</p></li>
-<li><p>The framework owns orchestration.</p></li>
-<li><p>Meshes are accessed through views.</p></li>
-<li><p>Graphs are implementation details.</p></li>
-<li><p>Expensive derived data is computed lazily.</p></li>
-<li><p>Algorithms are stateless.</p></li>
-<li><p>File I/O is separated from algorithms.</p></li>
-<li><p>New algorithms should require minimal framework changes.</p></li>
-<li><p>Performance optimisations must not compromise maintainability.</p></li>
-</ol>
-</section>
-<section id="high-level-architecture">
-<h2>High-Level Architecture<a class="headerlink" href="#high-level-architecture" title="Link to this heading">¶</a></h2>
-<pre  class="mermaid">
-        flowchart TD
-
-   Mesh[&quot;NeoN Mesh&quot;]
-   Benchmark[&quot;Benchmark&quot;]
-
-   subgraph OrderingFramework[&quot;Ordering Framework&quot;]
-
-      MeshView[&quot;MeshView&quot;]
-
-      Context[&quot;OrderingContext&quot;]
-
-      GraphBuilder[&quot;GraphBuilder&quot;]
-      Geometry[&quot;Geometry Provider&quot;]
-      Future[&quot;Future Providers&quot;]
-
-      Graph[&quot;CSRGraph&quot;]
-
-      Algorithm[&quot;OrderingAlgorithm&quot;]
-
-      Permutation[&quot;Permutation&quot;]
-
-      IO[&quot;PermutationIO&quot;]
-      Cache[&quot;PermutationCache&quot;]
-
-      Applicator[&quot;PermutationApplicator&quot;]
-
-   end
-
-   Reordered[&quot;Reordered NeoN Mesh&quot;]
-
-   Mesh --&gt; MeshView
-   MeshView --&gt; Context
-
-   Context --&gt; GraphBuilder
-   Context --&gt; Geometry
-   Context --&gt; Future
-
-   GraphBuilder --&gt; Graph
-
-   Graph --&gt; Algorithm
-   Geometry -.-&gt; Algorithm
-   Future -.-&gt; Algorithm
-
-   Algorithm --&gt; Permutation
-
-   Permutation --&gt; IO
-   IO --&gt; Cache
-
-   Permutation --&gt; Applicator
-   Applicator --&gt; Reordered
-
-   Benchmark -.-&gt; Algorithm
-   Benchmark -.-&gt; Applicator
-    </pre></section>
-<section id="component-responsibilities">
-<h2>Component Responsibilities<a class="headerlink" href="#component-responsibilities" title="Link to this heading">¶</a></h2>
-<section id="meshview">
-<h3>MeshView<a class="headerlink" href="#meshview" title="Link to this heading">¶</a></h3>
-<p>Provides read-only access to mesh information.</p>
-<p>Responsibilities</p>
-<ul class="simple">
-<li><p>cell connectivity</p></li>
-<li><p>owner/neighbour relationships</p></li>
-<li><p>cell centres</p></li>
-<li><p>boundary information</p></li>
-</ul>
-</section>
-<section id="orderingcontext">
-<h3>OrderingContext<a class="headerlink" href="#orderingcontext" title="Link to this heading">¶</a></h3>
-<p>Provides lazily computed mesh-derived information.</p>
-<p>Responsibilities</p>
-<ul class="simple">
-<li><p>graph()</p></li>
-<li><p>cellCenters()</p></li>
-<li><p>boundingBox()</p></li>
-<li><p>partitionInfo()</p></li>
-</ul>
-</section>
-<section id="csrgraph">
-<h3>CSRGraph<a class="headerlink" href="#csrgraph" title="Link to this heading">¶</a></h3>
-<p>Stores graph connectivity in compressed sparse row (CSR) format.</p>
-</section>
-<section id="graphbuilder">
-<h3>GraphBuilder<a class="headerlink" href="#graphbuilder" title="Link to this heading">¶</a></h3>
-<p>Constructs a CSRGraph from a MeshView.</p>
-</section>
+<section id="core-components">
+<h2>Core components<a class="headerlink" href="#core-components" title="Link to this heading">¶</a></h2>
+<p>The framework is organized around four main concepts.</p>
 <section id="permutation">
 <h3>Permutation<a class="headerlink" href="#permutation" title="Link to this heading">¶</a></h3>
-<p>Represents</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">old</span><span class="w"> </span><span class="n">index</span><span class="w"> </span><span class="err">→</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">index</span>
+<p><code class="docutils literal notranslate"><span class="pre">Permutation</span></code> is the common representation of an ordering result. It represents
+the bijection between the original and reordered entity indices and provides the
+mapping operations needed by later stages.</p>
+<p>It deliberately contains no mesh knowledge and no ordering policy. In particular,
+it does not decide how a permutation is generated or how it should be applied to
+CFD data.</p>
+</section>
+<section id="ordering-algorithm">
+<h3>Ordering algorithm<a class="headerlink" href="#ordering-algorithm" title="Link to this heading">¶</a></h3>
+<p>An ordering algorithm computes a permutation from ordering-domain information.
+The algorithm is therefore independent of the concrete <code class="docutils literal notranslate"><span class="pre">NeoN::UnstructuredMesh</span></code>
+representation.</p>
+<p>Examples of the intended separation are:</p>
+<ul class="simple">
+<li><p>identity ordering needs only the number of cells;</p></li>
+<li><p>a graph-based method such as RCM needs cell adjacency;</p></li>
+<li><p>a geometry-based method such as Morton ordering needs cell coordinates.</p></li>
+</ul>
+<p>The algorithm interface should expose these requirements without forcing every
+algorithm to depend on a large, universal mesh-data object.</p>
+</section>
+<section id="ordering-context-input-provider">
+<h3>Ordering context / input provider<a class="headerlink" href="#ordering-context-input-provider" title="Link to this heading">¶</a></h3>
+<p>The ordering context forms the boundary between the CFD mesh representation and
+the ordering domain. Its purpose is to expose or derive the information required
+by an algorithm while hiding unrelated mesh internals.</p>
+<p>The context should therefore be understood as an adapter/provider rather than a
+complete copy of the mesh. This keeps algorithm dependencies small and makes it
+possible to prepare only the information that a particular ordering strategy
+actually needs.</p>
+</section>
+<section id="permutation-application">
+<h3>Permutation application<a class="headerlink" href="#permutation-application" title="Link to this heading">¶</a></h3>
+<p>Permutation application is a separate operation because computing an ordering and
+mutating a CFD discretization are fundamentally different tasks.</p>
+<p>For cell ordering, application may involve both reordering cell-associated arrays
+and remapping references that point to cells. Connectivity, geometry data, and
+field data must remain mutually consistent after the transformation.</p>
+<p>The application layer must not depend on how the permutation was produced. The
+same application mechanism should therefore be reusable for identity ordering,
+graph ordering, geometry ordering, and future strategies.</p>
+</section>
+</section>
+<section id="execution-model">
+<h2>Execution model<a class="headerlink" href="#execution-model" title="Link to this heading">¶</a></h2>
+<p>A key part of the current design is the separation of three concepts:</p>
+<p><strong>Data residency</strong> describes where the relevant data currently lives, for example
+host or device memory.</p>
+<p><strong>Execution capability</strong> describes where a particular ordering implementation can
+run. A serial implementation may require a <code class="docutils literal notranslate"><span class="pre">SerialExecutor</span></code>, while a parallel
+implementation may require a CPU or GPU executor.</p>
+<p><strong>Selected execution</strong> describes the executor chosen for the current ordering
+operation.</p>
+<p>These concepts are intentionally not collapsed into the ordering algorithm. The
+application or ordering orchestration layer chooses the execution environment,
+and the framework verifies that the selected environment is supported by the
+chosen implementation.</p>
+<p>The design therefore treats an unsupported implementation/executor combination
+as an explicit compatibility failure rather than silently changing the selected
+algorithm or execution mode.</p>
+<p>Ordering execution and simulation execution are also distinct. The executor used
+to compute and apply the ordering does not necessarily have to be the executor
+used by the subsequent CFD simulation.</p>
+<p>A typical flow is:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">import</span><span class="w"> </span><span class="n">mesh</span><span class="w"> </span><span class="n">on</span><span class="w"> </span><span class="n">host</span>
+<span class="w">      </span><span class="o">|</span>
+<span class="w">      </span><span class="n">v</span>
+<span class="n">prepare</span><span class="w"> </span><span class="n">data</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">ordering</span>
+<span class="w">      </span><span class="o">|</span>
+<span class="w">      </span><span class="n">v</span>
+<span class="n">compute</span><span class="w"> </span><span class="n">permutation</span>
+<span class="w">      </span><span class="o">|</span>
+<span class="w">      </span><span class="n">v</span>
+<span class="n">apply</span><span class="w"> </span><span class="n">permutation</span>
+<span class="w">      </span><span class="o">|</span>
+<span class="w">      </span><span class="o">+----&gt;</span><span class="w"> </span><span class="n">transfer</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">simulation</span><span class="w"> </span><span class="n">executor</span><span class="w"> </span><span class="n">differs</span>
+<span class="w">      </span><span class="o">|</span>
+<span class="w">      </span><span class="n">v</span>
+<span class="n">run</span><span class="w"> </span><span class="n">simulation</span>
 </pre></div>
 </div>
-<p>Responsibilities</p>
+<p>This makes data movement explicit and keeps ordering costs measurable.</p>
+</section>
+<section id="memory-and-data-movement">
+<h2>Memory and data movement<a class="headerlink" href="#memory-and-data-movement" title="Link to this heading">¶</a></h2>
+<p>Ordering implementations are not responsible for implicit host/device transfers.
+The framework prepares their inputs in a memory space compatible with the selected
+execution environment before the algorithm is invoked.</p>
+<p>This rule is important for two reasons. First, it prevents hidden transfers from
+appearing inside otherwise simple ordering algorithms. Second, it allows the
+framework to measure input preparation, data movement, ordering computation, and
+permutation application as separate stages.</p>
+<p>The current design already aligns with the executor-aware memory model in NeoN:
+read-only views can be used to access mesh data, and explicit transfer mechanisms
+can prepare data for another execution environment.</p>
+<p>For the current serial ordering scope, this means that a graph or coordinate input
+may be materialized on the host before the algorithm runs. The architecture does
+not require GPU ordering today, but it avoids introducing host-only assumptions
+into the algorithm interface.</p>
+</section>
+<section id="interaction-with-neon">
+<h2>Interaction with NeoN<a class="headerlink" href="#interaction-with-neon" title="Link to this heading">¶</a></h2>
+<p>The framework is integrated with <code class="docutils literal notranslate"><span class="pre">NeoN</span></code> rather than introducing a second mesh or
+executor model.</p>
+<p>The current design relies on NeoN facilities such as:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">mesh</span><span class="p">.</span><span class="n">nCells</span><span class="p">()</span>
+<span class="n">mesh</span><span class="p">.</span><span class="n">faceOwners</span><span class="p">().</span><span class="n">view</span><span class="p">()</span>
+<span class="n">mesh</span><span class="p">.</span><span class="n">faceNeighbors</span><span class="p">().</span><span class="n">view</span><span class="p">()</span>
+<span class="n">mesh</span><span class="p">.</span><span class="n">cellCenters</span><span class="p">().</span><span class="n">view</span><span class="p">()</span>
+<span class="n">mesh</span><span class="p">.</span><span class="n">exec</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>These interfaces provide the source information needed to construct ordering-domain
+inputs while preserving the existing ownership and execution model.</p>
+<p>The framework should continue to treat NeoN as the source of truth for mesh storage,
+execution, and memory management. Ordering-specific abstractions should exist only
+where they provide a useful boundary for algorithms or permutation application.</p>
+</section>
+<section id="typical-developer-workflow">
+<h2>Typical developer workflow<a class="headerlink" href="#typical-developer-workflow" title="Link to this heading">¶</a></h2>
+<p>A developer adding a new ordering strategy should think in terms of the following
+workflow rather than modifying the solver directly.</p>
+<ol class="arabic simple">
+<li><p>Define the mathematical/data requirements of the ordering algorithm.</p></li>
+<li><p>Identify which of those requirements can be obtained from NeoN directly and
+which need an adapter or derived representation.</p></li>
+<li><p>Expose those requirements through the ordering context/provider.</p></li>
+<li><p>Implement the ordering algorithm against the ordering-domain interface.</p></li>
+<li><p>Return a valid <code class="docutils literal notranslate"><span class="pre">Permutation</span></code> without modifying the source mesh.</p></li>
+<li><p>Reuse the common permutation-application path to update mesh-associated data.</p></li>
+<li><p>Declare the execution environments supported by the implementation.</p></li>
+<li><p>Add unit tests for the algorithm independently of a complete CFD simulation.</p></li>
+<li><p>Add integration coverage for the resulting reordered mesh and associated data.</p></li>
+</ol>
+<p>This workflow is intended to keep algorithm-specific code small and make the
+framework responsible for orchestration, validation, and data consistency.</p>
+</section>
+<section id="adding-a-new-ordering-algorithm">
+<h2>Adding a new ordering algorithm<a class="headerlink" href="#adding-a-new-ordering-algorithm" title="Link to this heading">¶</a></h2>
+<p>A new implementation should not require changes to existing ordering algorithms.
+In practice, the implementation should answer four questions:</p>
 <ul class="simple">
-<li><p>validate()</p></li>
-<li><p>inverse()</p></li>
-<li><p>compose()</p></li>
+<li><p>What information does the algorithm require?</p></li>
+<li><p>How is that information represented in the ordering domain?</p></li>
+<li><p>Which executors can run the implementation?</p></li>
+<li><p>What guarantees does the implementation provide, such as determinism?</p></li>
+</ul>
+<p>The algorithm should then be registered or selected through the framework’s
+application-level interface rather than being instantiated directly by solver code.
+This keeps application code independent of concrete ordering implementation types.</p>
+</section>
+<section id="correctness-considerations">
+<h2>Correctness considerations<a class="headerlink" href="#correctness-considerations" title="Link to this heading">¶</a></h2>
+<p>The most important correctness property is not merely that a permutation is
+bijective. The reordered CFD representation must preserve the semantics of the
+original discretization.</p>
+<p>For cell ordering, developers should consider at least:</p>
+<ul class="simple">
+<li><p>cell-associated values are moved to their new positions;</p></li>
+<li><p>cell references in connectivity are remapped consistently;</p></li>
+<li><p>geometry remains associated with the correct cells;</p></li>
+<li><p>fields remain associated with the same physical entities;</p></li>
+<li><p>the resulting mesh can still be consumed by the solver without changing the
+numerical meaning of the discretization.</p></li>
+</ul>
+<p>Because permutation application is separated from permutation generation, these
+properties should be tested at both levels: algorithm tests verify the permutation,
+while integration tests verify the reordered CFD representation.</p>
+</section>
+<section id="performance-considerations">
+<h2>Performance considerations<a class="headerlink" href="#performance-considerations" title="Link to this heading">¶</a></h2>
+<p>The framework is designed to keep the main performance costs visible. At minimum,
+developers should be able to distinguish:</p>
+<ul class="simple">
+<li><p>preparation or construction of ordering-domain data;</p></li>
+<li><p>memory transfers required for preparation;</p></li>
+<li><p>ordering computation;</p></li>
+<li><p>permutation application;</p></li>
+<li><p>transfer to the simulation execution environment, when required.</p></li>
+</ul>
+<p>This separation is especially important when comparing ordering strategies. A
+faster ordering kernel is not necessarily a faster overall preprocessing stage if
+its input construction or data movement dominates the runtime.</p>
+</section>
+<section id="current-design-direction">
+<h2>Current design direction<a class="headerlink" href="#current-design-direction" title="Link to this heading">¶</a></h2>
+<p>The current implementation direction can be summarized as follows:</p>
+<ul class="simple">
+<li><p>keep <code class="docutils literal notranslate"><span class="pre">Permutation</span></code> as a small, algorithm-independent value abstraction;</p></li>
+<li><p>use an ordering context/provider to bridge NeoN mesh data and algorithm inputs;</p></li>
+<li><p>keep algorithms unaware of concrete mesh ownership and permutation application;</p></li>
+<li><p>let the orchestration layer choose execution and validate compatibility;</p></li>
+<li><p>keep data movement explicit;</p></li>
+<li><p>use a common permutation-application path for mesh and field consistency;</p></li>
+<li><p>design interfaces so additional CPU/GPU or more specialized ordering strategies
+can be added without redesigning the existing solver workflow.</p></li>
+</ul>
+<p>This gives the framework a stable separation of concerns while leaving implementation
+choices open where the design is not yet finalized, such as the concrete storage and
+API of graph-based ordering inputs.</p>
+</section>
+<section id="implementation-status-and-open-design-points">
+<h2>Implementation status and open design points<a class="headerlink" href="#implementation-status-and-open-design-points" title="Link to this heading">¶</a></h2>
+<p>The architectural boundaries are established, while some lower-level implementation
+details remain intentionally open. In particular, the exact graph-storage abstraction
+for connectivity-based ordering is not yet fixed, and policies for which geometry
+arrays must be reordered when cell ordering changes require explicit definition.</p>
+<p>These decisions should be made at the framework level rather than embedded in an
+individual ordering implementation, because they affect interoperability between
+algorithms and the common permutation-application stage.</p>
+</section>
+<section id="see-also">
+<h2>See also<a class="headerlink" href="#see-also" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="#"><span class="doc">Ordering Framework Developer Guide</span></a></p></li>
+<li><p><span class="xref std std-doc">../requirements</span></p></li>
 </ul>
 </section>
-<section id="permutationapplicator">
-<h3>PermutationApplicator<a class="headerlink" href="#permutationapplicator" title="Link to this heading">¶</a></h3>
-<p>Applies permutations to</p>
-<ul class="simple">
-<li><p>meshes</p></li>
-<li><p>fields</p></li>
-<li><p>matrices</p></li>
-</ul>
-</section>
-<section id="orderingalgorithm">
-<h3>OrderingAlgorithm<a class="headerlink" href="#orderingalgorithm" title="Link to this heading">¶</a></h3>
-<p>Consumes</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">OrderingContext</span>
-</pre></div>
-</div>
-<p>Produces</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Permutation</span>
-</pre></div>
-</div>
-<p>Algorithms never modify mesh data.</p>
-</section>
-<section id="orderingregistry">
-<h3>OrderingRegistry<a class="headerlink" href="#orderingregistry" title="Link to this heading">¶</a></h3>
-<p>Maps algorithm names to implementations.</p>
-</section>
-<section id="permutationio">
-<h3>PermutationIO<a class="headerlink" href="#permutationio" title="Link to this heading">¶</a></h3>
-<p>Reads and writes permutation files.</p>
-</section>
-<section id="permutationcache">
-<h3>PermutationCache<a class="headerlink" href="#permutationcache" title="Link to this heading">¶</a></h3>
-<p>Stores cached permutations for later reuse.</p>
-</section>
-</section>
-<section id="module-dependencies">
-<h2>Module Dependencies<a class="headerlink" href="#module-dependencies" title="Link to this heading">¶</a></h2>
-<p>Dependencies always point downward.</p>
-<pre  class="mermaid">
-        flowchart TD
-
-   Applications[&quot;Applications&quot;]
-   Solvers[&quot;Solvers&quot;]
-   Ordering[&quot;Ordering&quot;]
-   Graph[&quot;Graph&quot;]
-   Mesh[&quot;Mesh&quot;]
-   Core[&quot;Core&quot;]
-
-   Applications --&gt; Solvers
-   Solvers --&gt; Ordering
-   Ordering --&gt; Graph
-   Graph --&gt; Mesh
-   Mesh --&gt; Core
-    </pre><p>Ordering must never depend on solver modules.</p>
-<p>Graph must never depend on ordering modules.</p>
-</section>
-<section id="extension-points">
-<h2>Extension Points<a class="headerlink" href="#extension-points" title="Link to this heading">¶</a></h2>
-<section id="adding-an-ordering-algorithm">
-<h3>Adding an ordering algorithm<a class="headerlink" href="#adding-an-ordering-algorithm" title="Link to this heading">¶</a></h3>
-<p>Implement</p>
-<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">compute</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">OrderingContext</span><span class="o">&amp;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Register the algorithm.</p>
-<p>Add unit tests.</p>
-<p>No framework modifications should be necessary.</p>
-</section>
-<section id="adding-a-graph-representation">
-<h3>Adding a graph representation<a class="headerlink" href="#adding-a-graph-representation" title="Link to this heading">¶</a></h3>
-<p>Implement the Graph concept.</p>
-<p>Extend GraphBuilder to construct the new graph type.</p>
-<p>Existing algorithms should remain unchanged.</p>
-</section>
-<section id="adding-a-benchmark">
-<h3>Adding a benchmark<a class="headerlink" href="#adding-a-benchmark" title="Link to this heading">¶</a></h3>
-<p>Implement a BenchmarkRunner.</p>
-<p>Benchmarks are independent from ordering algorithms.</p>
-</section>
-</section>
-<section id="persistence">
-<h2>Persistence<a class="headerlink" href="#persistence" title="Link to this heading">¶</a></h2>
-<p>Permutations are persistent objects.</p>
-<p>The framework stores</p>
-<ul class="simple">
-<li><p>permutation</p></li>
-<li><p>algorithm</p></li>
-<li><p>parameters</p></li>
-<li><p>mesh fingerprint</p></li>
-<li><p>NeoFOAM version</p></li>
-</ul>
-<p>The framework does <strong>not</strong> store reordered meshes.</p>
-</section>
-<section id="workflow">
-<h2>Workflow<a class="headerlink" href="#workflow" title="Link to this heading">¶</a></h2>
-<p>The framework executes the following workflow.</p>
-<pre  class="mermaid">
-        flowchart TD
-
-   Mesh[&quot;Mesh&quot;]
-
-   Fingerprint[&quot;Mesh Fingerprint&quot;]
-
-   Lookup{&quot;Permutation cached?&quot;}
-
-   Load[&quot;Load Permutation&quot;]
-
-   Compute[&quot;Compute Permutation&quot;]
-
-   Validate[&quot;Validate&quot;]
-
-   Apply[&quot;Apply Ordering&quot;]
-
-   Assembly[&quot;Matrix Assembly&quot;]
-
-   Mesh --&gt; Fingerprint
-
-   Fingerprint --&gt; Lookup
-
-   Lookup --&gt;|Yes| Load
-
-   Lookup --&gt;|No| Compute
-
-   Load --&gt; Validate
-
-   Compute --&gt; Validate
-
-   Validate --&gt; Apply
-
-   Apply --&gt; Assembly
-    </pre></section>
 </section>
 
         </article>
@@ -624,38 +578,27 @@ assembly and solution.</p>
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">Ordering Framework Architecture</a><ul>
+<li><a class="reference internal" href="#">Ordering Framework Developer Guide</a><ul>
 <li><a class="reference internal" href="#overview">Overview</a></li>
-<li><a class="reference internal" href="#motivation">Motivation</a></li>
-<li><a class="reference internal" href="#goals">Goals</a><ul>
-<li><a class="reference internal" href="#functional-goals">Functional goals</a></li>
-<li><a class="reference internal" href="#non-functional-goals">Non-functional goals</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#design-principles">Design Principles</a></li>
-<li><a class="reference internal" href="#high-level-architecture">High-Level Architecture</a></li>
-<li><a class="reference internal" href="#component-responsibilities">Component Responsibilities</a><ul>
-<li><a class="reference internal" href="#meshview">MeshView</a></li>
-<li><a class="reference internal" href="#orderingcontext">OrderingContext</a></li>
-<li><a class="reference internal" href="#csrgraph">CSRGraph</a></li>
-<li><a class="reference internal" href="#graphbuilder">GraphBuilder</a></li>
+<li><a class="reference internal" href="#current-scope">Current scope</a></li>
+<li><a class="reference internal" href="#architectural-model">Architectural model</a></li>
+<li><a class="reference internal" href="#core-components">Core components</a><ul>
 <li><a class="reference internal" href="#permutation">Permutation</a></li>
-<li><a class="reference internal" href="#permutationapplicator">PermutationApplicator</a></li>
-<li><a class="reference internal" href="#orderingalgorithm">OrderingAlgorithm</a></li>
-<li><a class="reference internal" href="#orderingregistry">OrderingRegistry</a></li>
-<li><a class="reference internal" href="#permutationio">PermutationIO</a></li>
-<li><a class="reference internal" href="#permutationcache">PermutationCache</a></li>
+<li><a class="reference internal" href="#ordering-algorithm">Ordering algorithm</a></li>
+<li><a class="reference internal" href="#ordering-context-input-provider">Ordering context / input provider</a></li>
+<li><a class="reference internal" href="#permutation-application">Permutation application</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#module-dependencies">Module Dependencies</a></li>
-<li><a class="reference internal" href="#extension-points">Extension Points</a><ul>
-<li><a class="reference internal" href="#adding-an-ordering-algorithm">Adding an ordering algorithm</a></li>
-<li><a class="reference internal" href="#adding-a-graph-representation">Adding a graph representation</a></li>
-<li><a class="reference internal" href="#adding-a-benchmark">Adding a benchmark</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#persistence">Persistence</a></li>
-<li><a class="reference internal" href="#workflow">Workflow</a></li>
+<li><a class="reference internal" href="#execution-model">Execution model</a></li>
+<li><a class="reference internal" href="#memory-and-data-movement">Memory and data movement</a></li>
+<li><a class="reference internal" href="#interaction-with-neon">Interaction with NeoN</a></li>
+<li><a class="reference internal" href="#typical-developer-workflow">Typical developer workflow</a></li>
+<li><a class="reference internal" href="#adding-a-new-ordering-algorithm">Adding a new ordering algorithm</a></li>
+<li><a class="reference internal" href="#correctness-considerations">Correctness considerations</a></li>
+<li><a class="reference internal" href="#performance-considerations">Performance considerations</a></li>
+<li><a class="reference internal" href="#current-design-direction">Current design direction</a></li>
+<li><a class="reference internal" href="#implementation-status-and-open-design-points">Implementation status and open design points</a></li>
+<li><a class="reference internal" href="#see-also">See also</a></li>
 </ul>
 </li>
 </ul>
@@ -671,361 +614,5 @@ assembly and solution.</p>
     <script src="../_static/doctools.js?v=888ff710"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
-    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
-
-
-
-const initStyles = () => {
-    const defaultStyle = document.createElement('style');
-    defaultStyle.textContent = "pre.mermaid {\n    /* Same as .mermaid-container > pre */\n    display: block;\n    width: 100%;\n}\n\npre.mermaid > svg {\n    /* Same as .mermaid-container > pre > svg */\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}";
-    document.head.appendChild(defaultStyle);
-
-    const fullscreenStyle = document.createElement('style');
-    fullscreenStyle.textContent = ".mermaid-container {\n    position: relative;\n    display: flex;\n    flex-direction: row;\n    width: 100%;\n}\n\n.mermaid-container > pre {\n    display: block;\n    width: 100%;\n}\n\n.mermaid-container > pre > svg {\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}\n\n.mermaid-fullscreen-btn {\n    position: absolute;\n    width: 28px;\n    height: 28px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.3);\n    border-radius: 4px;\n    cursor: pointer;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    transition: all 0.2s;\n    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);\n    font-size: 14px;\n    line-height: 1;\n    padding: 0;\n    color: #333;\n}\n\n.mermaid-fullscreen-btn:hover {\n    opacity: 100% !important;\n    background: rgba(255, 255, 255, 1);\n    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-btn.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.3);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-btn.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal {\n    display: none;\n    position: fixed !important;\n    top: 0 !important;\n    left: 0 !important;\n    width: 95vw;\n    height: 100vh;\n    background: rgba(255, 255, 255, 0.98);\n    z-index: 9999;\n    padding: 20px;\n    overflow: auto;\n}\n\n.mermaid-fullscreen-modal.dark-theme {\n    background: rgba(0, 0, 0, 0.98);\n}\n\n.mermaid-fullscreen-modal.active {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen {\n    position: relative;\n    width: 95vw;\n    height: 90vh;\n    max-width: 95vw;\n    max-height: 90vh;\n    background: white;\n    border-radius: 8px;\n    padding: 20px;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);\n    overflow: auto;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen.dark-theme {\n    background: #1a1a1a;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);\n}\n\n.mermaid-container-fullscreen pre.mermaid {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen .mermaid svg {\n    height: 100% !important;\n    width: 100% !important;\n    cursor: grab;\n}\n\n.mermaid-fullscreen-close {\n    position: fixed !important;\n    top: 20px !important;\n    right: 20px !important;\n    width: 40px;\n    height: 40px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.2);\n    border-radius: 50%;\n    cursor: pointer;\n    z-index: 10000;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);\n    transition: all 0.2s;\n    font-size: 24px;\n    line-height: 1;\n    color: #333;\n}\n\n.mermaid-fullscreen-close:hover {\n    background: white;\n    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-close.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.2);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-close.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal .mermaid-fullscreen-btn {\n    display: none !important;\n}";
-    document.head.appendChild(fullscreenStyle);
-}
-
-// Detect if page has dark background
-const isDarkTheme = () => {
-    // We use a set of heuristics:
-    // 1. Check for common dark mode classes or attributes
-    // 2. Check computed background color brightness
-    if (document.documentElement.classList.contains('dark') ||
-        document.documentElement.getAttribute('data-theme') === 'dark' ||
-        document.body.classList.contains('dark') ||
-        document.body.getAttribute('data-theme') === 'dark') {
-        // console.log("Dark theme detected via class/attribute");
-        return true;
-    }
-    if (document.documentElement.classList.contains('light') ||
-        document.documentElement.getAttribute('data-theme') === 'light' ||
-        document.body.classList.contains('light') ||
-        document.body.getAttribute('data-theme') === 'light') {
-        // console.log("Light theme detected via class/attribute");
-        return false;
-    }
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        // console.log("Dark theme detected via prefers-color-scheme");
-        return true;
-    }
-    const bgColor = window.getComputedStyle(document.body).backgroundColor;
-    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
-    if (match) {
-        const r = parseInt(match[1]);
-        const g = parseInt(match[2]);
-        const b = parseInt(match[3]);
-        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-        // console.log("Background color brightness:", brightness);
-        return brightness < 128;
-    }
-    // console.log("No dark or light theme detected, defaulting to light theme");
-    return false;
-};
-
-let darkTheme = isDarkTheme();
-let modal = null;
-let modalContent = null;
-let previousScrollOffset = [window.scrollX, window.scrollY];
-let _lazyObserver = null;
-let _renderQueue = Promise.resolve();
-let closeModal = () => {};
-
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && modal?.classList.contains('active')) {
-        closeModal();
-    }
-});
-
-// Apply d3 zoom to each SVG. Idempotent: an SVG already wrapped is skipped,
-// so this is safe to call both for the initial batch and for diagrams that
-// render lazily once they become visible.
-const addZoomToSvgs = (svgs) => {
-    svgs.each(function() {
-        if (this.getAttribute('data-zoom-applied') === 'true') return;
-        var svg = d3.select(this);
-        svg.html("<g class='wrapper'>" + svg.html() + "</g>");
-        var inner = svg.select("g");
-        var zoom = d3.zoom().on("zoom", function(event) {
-            inner.attr("transform", event.transform);
-        });
-        svg.call(zoom);
-        this.setAttribute('data-zoom-applied', 'true');
-    });
-};
-
-const runMermaid = async (rerun) => {
-    console.log("Running mermaid diagrams, rerun =", rerun);
-    // clear all existing mermaid charts
-    let all_mermaids = document.querySelectorAll(".mermaid");
-
-    if (rerun) {
-        // Disconnect any previous lazy rendering observer
-        if (_lazyObserver) {
-            _lazyObserver.disconnect();
-            _lazyObserver = null;
-        }
-
-        all_mermaids.forEach((el) => {
-            el.removeAttribute('data-mermaid-deferred');
-            el.removeAttribute('data-mermaid-render-failed');
-            if(!el.hasAttribute("data-original-code")) {
-                // store original code
-                // console.log(`Storing original code for first run: `, el.innerHTML);
-                el.setAttribute('data-original-code', el.innerHTML);
-            }
-            if(el.getAttribute("data-processed") === "true") {
-                // remove and restore original
-                el.removeAttribute("data-processed");
-                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
-                el.innerHTML = el.getAttribute('data-original-code');
-            } else {
-                // store original code
-                // console.log(`Storing original code for re-run: `, el.innerHTML);
-                el.setAttribute('data-original-code', el.innerHTML);
-            }
-        });
-
-        // Separate visible and hidden elements. Mermaid's layout engine measures
-        // text dimensions via the DOM, which fails for elements hidden by a parent
-        // (e.g., Reveal.js non-active slides, sphinx-design unopened tabs),
-        // producing broken SVGs. Render visible elements now, defer hidden ones.
-        const visible = [];
-        const hidden = [];
-        all_mermaids.forEach((el) => {
-            // offsetParent is null for display:none ancestors.
-            // getClientRects().length > 0 catches position:fixed elements
-            // (which also have null offsetParent but are still visible).
-            if (el.offsetParent !== null || el.getClientRects().length > 0) {
-                visible.push(el);
-            } else {
-                hidden.push(el);
-                el.setAttribute('data-mermaid-deferred', 'true');
-            }
-        });
-
-        if (visible.length > 0) {
-            try {
-                await mermaid.run({ nodes: visible });
-            } catch (e) {
-                console.error("Mermaid rendering failed:", e);
-            }
-        }
-
-        // Lazily render hidden elements when they become visible.
-        // Uses a promise chain (_renderQueue) to serialize rendering,
-        // since IntersectionObserver may report multiple entries at once
-        // and mermaid.run() is not safe to call concurrently.
-        if (hidden.length > 0) {
-            if (typeof IntersectionObserver === 'undefined') {
-                console.warn("IntersectionObserver not available; hidden mermaid diagrams will not render.");
-            } else {
-                _renderQueue = Promise.resolve();
-                _lazyObserver = new IntersectionObserver((entries) => {
-                    for (const entry of entries) {
-                        if (entry.isIntersecting && entry.target.getAttribute("data-processed") !== "true") {
-                            _lazyObserver.unobserve(entry.target);
-                            const el = entry.target;
-                            _renderQueue = _renderQueue.then(async () => {
-                                try {
-                                    await mermaid.run({ nodes: [el] });
-                                    el.removeAttribute('data-mermaid-deferred');
-                                    // Apply zoom to the now-rendered diagram, matching
-                                    // the decoration visible diagrams receive.
-                                    if (false) {
-                                        addZoomToSvgs(d3.selectAll("").select(function() {
-                                            return this.querySelector("svg");
-                                        }));
-                                    }
-                                } catch (e) {
-                                    console.error("Mermaid deferred rendering failed:", e);
-                                    el.removeAttribute('data-mermaid-deferred');
-                                    el.setAttribute('data-mermaid-render-failed', 'true');
-                                }
-                            });
-                        }
-                    }
-                });
-                hidden.forEach((el) => _lazyObserver.observe(el));
-            }
-        }
-    }
-
-    all_mermaids = document.querySelectorAll(".mermaid");
-    // Exclude deferred (hidden) and render-failed elements from completion checks
-    const mermaids_active = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])");
-    const mermaids_processed = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])[data-processed='true']");
-
-    if (false) {
-        const mermaids_to_add_zoom = 0 === -1 ? mermaids_active.length : 0;
-        if(mermaids_to_add_zoom > 0) {
-            var svgs = d3.selectAll("").select(function() {
-                return this.querySelector("svg");
-            });
-            // Wait until every active (visible) diagram has rendered. Deferred
-            // diagrams are excluded, so a fixed d3_node_count that counts a
-            // hidden diagram no longer loops forever waiting for its SVG.
-            if(mermaids_active.length !== mermaids_processed.length) {
-                setTimeout(() => runMermaid(false), 200);
-                return;
-            }
-            addZoomToSvgs(svgs);
-        }
-    } else if(mermaids_active.length !== mermaids_processed.length) {
-        // Wait for mermaid to process all diagrams
-        setTimeout(() => runMermaid(false), 200);
-        return;
-    }
-
-    // Stop here if not adding fullscreen capability
-    if (!true) return;
-
-    if (modal !== null ) {
-        // Destroy existing modal
-        modal.remove();
-        modal = null;
-        modalContent = null;
-    }
-
-    modal = document.createElement('div');
-    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
-    modal.setAttribute('role', 'dialog');
-    modal.setAttribute('aria-modal', 'true');
-    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
-    modal.innerHTML = `
-        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
-        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
-    `;
-    document.body.appendChild(modal);
-
-    modalContent = modal.querySelector('.mermaid-container-fullscreen');
-    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
-
-    closeModal = () => {
-        modal.classList.remove('active');
-        modalContent.innerHTML = '';
-        document.body.style.overflow = ''
-        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
-    };
-
-    closeBtn.addEventListener('click', closeModal);
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) closeModal();
-    });
-    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
-        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
-            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
-            // Already processed, adjust button class if needed
-            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
-            if (existingBtn) {
-                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
-            }
-            return;
-        }
-
-        const container = document.createElement('div');
-        container.className = 'mermaid-container';
-        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
-        container.appendChild(mermaidDiv);
-
-        const fullscreenBtn = document.createElement('button');
-        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
-        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
-        fullscreenBtn.textContent = "\u26f6";
-        fullscreenBtn.style.opacity = "50%";
-
-        // Calculate dynamic position based on diagram's margin and padding
-        const diagramStyle = window.getComputedStyle(mermaidDiv);
-        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
-        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
-        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
-        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
-        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
-        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
-
-        fullscreenBtn.addEventListener('click', () => {
-            previousScrollOffset = [window.scrollX, window.scrollY];
-            const clone = mermaidDiv.cloneNode(true);
-            modalContent.innerHTML = '';
-            modalContent.appendChild(clone);
-
-            const svg = clone.querySelector('svg');
-            if (svg) {
-                svg.removeAttribute('width');
-                svg.removeAttribute('height');
-                svg.style.width = '100%';
-                svg.style.height = 'auto';
-                svg.style.maxWidth = '100%';
-                svg.style.display = 'block';
-
-                if (false) {
-                    setTimeout(() => {
-                        const g = svg.querySelector('g');
-                        if (g) {
-                            var svgD3 = d3.select(svg);
-                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
-                            var inner = svgD3.select("g");
-                            var zoom = d3.zoom().on("zoom", function(event) {
-                                inner.attr("transform", event.transform);
-                            });
-                            svgD3.call(zoom);
-                        }
-                    }, 100);
-                }
-            }
-
-            modal.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        });
-        container.appendChild(fullscreenBtn);
-    });
-};
-
-
-
-const load = async () => {
-    initStyles();
-
-
-    await runMermaid(true);
-
-    const reRunIfThemeChanges = async () => {
-        const newDarkTheme = isDarkTheme();
-        if (newDarkTheme !== darkTheme) {
-            darkTheme = newDarkTheme;
-            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
-            await mermaid.initialize(
-                {...{"startOnLoad": false},
-                ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
-                }
-            );
-            await runMermaid(true);
-        }
-    };
-
-    // Update theme classes when theme changes
-    const themeObserver = new MutationObserver(reRunIfThemeChanges);
-    themeObserver.observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: ['class', 'style', 'data-theme']
-    });
-    themeObserver.observe(document.body, {
-        attributes: true,
-        attributeFilter: ['class', 'style', 'data-theme']
-    });
-};
-
-
-
-
-
-console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
-mermaid.initialize(
-    {...{"startOnLoad": false},
-    ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
-    }
-);
-
-window.addEventListener("load", load);
-window.runMermaid = runMermaid;</script>
     </body>
 </html>
