@@ -630,8 +630,7 @@ TEST_CASE("PressureVelocityCoupling")
         //     The tight ~1e-10 result-quality HbyA bar is covered by the end-to-end parity test,
         //     gated on the momentum OF-parity debug. Do NOT mutate the shared ofUEqn.
         Foam::fvVectorMatrix ofUEqnRel(ofUEqn);
-        ofUEqnRel.relax(
-            alpha
+        ofUEqnRel.relax(alpha
         ); // the ONE place this section calls relax(), for the HbyA reference only
         Foam::solve(
             ofUEqnRel == -fvc::grad(ofp)

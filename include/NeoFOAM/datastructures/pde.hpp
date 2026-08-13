@@ -494,34 +494,32 @@ private:
         }
         expr_.read(NeoFOAM::expandSchemeDefaults(rt.fvSchemesDict, expr_, psi.name));
 
-        ls_.emplace(
-            readOrCreate<LinearSystem>(
-                rt,
-                "linearSystem" + psi.name,
-                [&psi, &rt]()
+        ls_.emplace(readOrCreate<LinearSystem>(
+            rt,
+            "linearSystem" + psi.name,
+            [&psi, &rt]()
+            {
+                if (rt.fvSolutionDict.subDict("solvers")
+                        .subDict(psi.name)
+                        .template get<std::string>("assemblyStrategy", "face-based")
+                    == "cell-based")
                 {
-                    if (rt.fvSolutionDict.subDict("solvers")
-                            .subDict(psi.name)
-                            .template get<std::string>("assemblyStrategy", "face-based")
-                        == "cell-based")
-                    {
-                        auto cellIterator = std::make_shared<NeoN::la::CellBasedIterator>();
-                        return NeoN::la::
-                            createEmptyLinearSystem<MatrixValueType, ValueType, SystemMatrixType>(
-                                psi.mesh(),
-                                cellIterator
-                            );
-                    }
-                    else
-                    {
-                        return NeoN::la::
-                            createEmptyLinearSystem<MatrixValueType, ValueType, SystemMatrixType>(
-                                psi.mesh()
-                            );
-                    }
+                    auto cellIterator = std::make_shared<NeoN::la::CellBasedIterator>();
+                    return NeoN::la::
+                        createEmptyLinearSystem<MatrixValueType, ValueType, SystemMatrixType>(
+                            psi.mesh(),
+                            cellIterator
+                        );
                 }
-            )
-        );
+                else
+                {
+                    return NeoN::la::
+                        createEmptyLinearSystem<MatrixValueType, ValueType, SystemMatrixType>(
+                            psi.mesh()
+                        );
+                }
+            }
+        ));
     }
 
     // Per-component name (Ux/Uy/Uz) when a vector field is solved as separate

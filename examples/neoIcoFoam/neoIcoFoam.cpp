@@ -94,13 +94,12 @@ void runCase(
             auto [crAU, hByA] = nf::computeRAUandHByA(UEqn);
             nf::constrainHbyA(U, p, hByA);
 
-            fvcc::SurfaceField<NeoN::scalar> rAU =
-                fvcc::SurfaceInterpolation<NeoN::scalar>(
-                    rt.exec,
-                    rt.nfMesh,
-                    NeoN::TokenList({std::string("linear")})
-                )
-                    .interpolate(crAU);
+            fvcc::SurfaceField<NeoN::scalar> rAU = fvcc::SurfaceInterpolation<NeoN::scalar>(
+                                                       rt.exec,
+                                                       rt.nfMesh,
+                                                       NeoN::TokenList({std::string("linear")})
+            )
+                                                       .interpolate(crAU);
             rAU.name = "rAUf";
 
             auto phiHbyA = nf::flux(hByA) + rAU * fvcc::ddtFluxCorr(U, phi, rt.dt, ddtScheme);
@@ -181,25 +180,69 @@ void dispatchMatrixFormats(
     if (uFormat == NeoFOAM::MatrixFormat::CSR && pFormat == NeoFOAM::MatrixFormat::CSR)
     {
         runCase<CsrMatrix, CsrMatrix>(
-            runTime, rt, piso, U, p, nu, phi, cumulativeContErr, ofP, pRefCell, pRefValue, mesh
+            runTime,
+            rt,
+            piso,
+            U,
+            p,
+            nu,
+            phi,
+            cumulativeContErr,
+            ofP,
+            pRefCell,
+            pRefValue,
+            mesh
         );
     }
     else if (uFormat == NeoFOAM::MatrixFormat::CSR && pFormat == NeoFOAM::MatrixFormat::ELL)
     {
         runCase<CsrMatrix, EllMatrix>(
-            runTime, rt, piso, U, p, nu, phi, cumulativeContErr, ofP, pRefCell, pRefValue, mesh
+            runTime,
+            rt,
+            piso,
+            U,
+            p,
+            nu,
+            phi,
+            cumulativeContErr,
+            ofP,
+            pRefCell,
+            pRefValue,
+            mesh
         );
     }
     else if (uFormat == NeoFOAM::MatrixFormat::ELL && pFormat == NeoFOAM::MatrixFormat::CSR)
     {
         runCase<EllMatrix, CsrMatrix>(
-            runTime, rt, piso, U, p, nu, phi, cumulativeContErr, ofP, pRefCell, pRefValue, mesh
+            runTime,
+            rt,
+            piso,
+            U,
+            p,
+            nu,
+            phi,
+            cumulativeContErr,
+            ofP,
+            pRefCell,
+            pRefValue,
+            mesh
         );
     }
     else
     {
         runCase<EllMatrix, EllMatrix>(
-            runTime, rt, piso, U, p, nu, phi, cumulativeContErr, ofP, pRefCell, pRefValue, mesh
+            runTime,
+            rt,
+            piso,
+            U,
+            p,
+            nu,
+            phi,
+            cumulativeContErr,
+            ofP,
+            pRefCell,
+            pRefValue,
+            mesh
         );
     }
 }
@@ -261,8 +304,20 @@ int main(int argc, char* argv[])
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
         dispatchMatrixFormats(
-            uFormat, pFormat, runTime, rt, piso, U, p, nu, phi, cumulativeContErr, ofP, pRefCell,
-            pRefValue, mesh
+            uFormat,
+            pFormat,
+            runTime,
+            rt,
+            piso,
+            U,
+            p,
+            nu,
+            phi,
+            cumulativeContErr,
+            ofP,
+            pRefCell,
+            pRefValue,
+            mesh
         );
     }
     NeoN::finalize();

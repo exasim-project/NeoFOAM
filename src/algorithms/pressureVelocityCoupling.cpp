@@ -476,31 +476,39 @@ nnfvcc::SurfaceField<scalar> flux(const nnfvcc::VolumeField<Vec3>& volField)
     return faceFlux;
 }
 
-template nnfvcc::VolumeField<scalar> computeRAU<NeoN::la::CSRMatrix<scalar, NeoN::localIdx>>(
-    const PDE<Vec3, scalar, NeoN::localIdx, NeoN::la::CSRMatrix<scalar, NeoN::localIdx>>&
-);
-template nnfvcc::VolumeField<scalar> computeRAU<NeoN::la::ELLMatrix<scalar, NeoN::localIdx>>(
-    const PDE<Vec3, scalar, NeoN::localIdx, NeoN::la::ELLMatrix<scalar, NeoN::localIdx>>&
-);
+template nnfvcc::VolumeField<scalar> computeRAU<
+    NeoN::la::CSRMatrix<scalar, NeoN::localIdx>>(const PDE<
+                                                 Vec3,
+                                                 scalar,
+                                                 NeoN::localIdx,
+                                                 NeoN::la::CSRMatrix<scalar, NeoN::localIdx>>&);
+template nnfvcc::VolumeField<scalar> computeRAU<
+    NeoN::la::ELLMatrix<scalar, NeoN::localIdx>>(const PDE<
+                                                 Vec3,
+                                                 scalar,
+                                                 NeoN::localIdx,
+                                                 NeoN::la::ELLMatrix<scalar, NeoN::localIdx>>&);
 
-template std::tuple<nnfvcc::VolumeField<scalar>, nnfvcc::VolumeField<Vec3>>
-computeRAUandHByA<NeoN::la::CSRMatrix<scalar, NeoN::localIdx>>(
-    const PDE<Vec3, scalar, NeoN::localIdx, NeoN::la::CSRMatrix<scalar, NeoN::localIdx>>&
-);
-template std::tuple<nnfvcc::VolumeField<scalar>, nnfvcc::VolumeField<Vec3>>
-computeRAUandHByA<NeoN::la::ELLMatrix<scalar, NeoN::localIdx>>(
-    const PDE<Vec3, scalar, NeoN::localIdx, NeoN::la::ELLMatrix<scalar, NeoN::localIdx>>&
-);
+template std::tuple<nnfvcc::VolumeField<scalar>, nnfvcc::VolumeField<Vec3>> computeRAUandHByA<
+    NeoN::la::CSRMatrix<scalar, NeoN::localIdx>>(const PDE<
+                                                 Vec3,
+                                                 scalar,
+                                                 NeoN::localIdx,
+                                                 NeoN::la::CSRMatrix<scalar, NeoN::localIdx>>&);
+template std::tuple<nnfvcc::VolumeField<scalar>, nnfvcc::VolumeField<Vec3>> computeRAUandHByA<
+    NeoN::la::ELLMatrix<scalar, NeoN::localIdx>>(const PDE<
+                                                 Vec3,
+                                                 scalar,
+                                                 NeoN::localIdx,
+                                                 NeoN::la::ELLMatrix<scalar, NeoN::localIdx>>&);
 
-template void updateFaceVelocity<NeoN::la::CSRMatrix<scalar, NeoN::localIdx>>(
-    const nnfvcc::SurfaceField<scalar>&,
-    const PDE<scalar, scalar, NeoN::localIdx, NeoN::la::CSRMatrix<scalar, NeoN::localIdx>>&,
-    nnfvcc::SurfaceField<scalar>&
-);
-template void updateFaceVelocity<NeoN::la::ELLMatrix<scalar, NeoN::localIdx>>(
-    const nnfvcc::SurfaceField<scalar>&,
-    const PDE<scalar, scalar, NeoN::localIdx, NeoN::la::ELLMatrix<scalar, NeoN::localIdx>>&,
-    nnfvcc::SurfaceField<scalar>&
-);
+template void updateFaceVelocity<NeoN::la::CSRMatrix<
+    scalar,
+    NeoN::
+        localIdx>>(const nnfvcc::SurfaceField<scalar>&, const PDE<scalar, scalar, NeoN::localIdx, NeoN::la::CSRMatrix<scalar, NeoN::localIdx>>&, nnfvcc::SurfaceField<scalar>&);
+template void updateFaceVelocity<NeoN::la::ELLMatrix<
+    scalar,
+    NeoN::
+        localIdx>>(const nnfvcc::SurfaceField<scalar>&, const PDE<scalar, scalar, NeoN::localIdx, NeoN::la::ELLMatrix<scalar, NeoN::localIdx>>&, nnfvcc::SurfaceField<scalar>&);
 
 }

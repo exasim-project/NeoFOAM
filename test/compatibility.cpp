@@ -157,7 +157,8 @@ TEST_CASE("fvSolution")
         {
             solver1.insert("matrixFormat", std::string("BOGUS"));
             REQUIRE_THROWS_AS(
-                NeoFOAM::matrixFormat(solver1, NeoFOAM::MatrixFormat::CSR), std::runtime_error
+                NeoFOAM::matrixFormat(solver1, NeoFOAM::MatrixFormat::CSR),
+                std::runtime_error
             );
         }
         SECTION("survives mapFvSolution untouched")
