@@ -35,7 +35,9 @@ void constrainHbyA(
     }
 }
 
-nnfvcc::VolumeField<scalar> computeRAU(const PDE<Vec3>& expr)
+template<typename SystemMatrixType>
+nnfvcc::VolumeField<scalar>
+computeRAU(const PDE<Vec3, scalar, NeoN::localIdx, SystemMatrixType>& expr)
 {
     const auto& ls = expr.linearSystem();
     NF_ASSERT(
@@ -57,8 +59,9 @@ nnfvcc::VolumeField<scalar> computeRAU(const PDE<Vec3>& expr)
     return rAU;
 }
 
+template<typename SystemMatrixType>
 std::tuple<nnfvcc::VolumeField<scalar>, nnfvcc::VolumeField<Vec3>>
-computeRAUandHByA(const PDE<Vec3>& expr)
+computeRAUandHByA(const PDE<Vec3, scalar, NeoN::localIdx, SystemMatrixType>& expr)
 {
     const auto& u = expr.getField();
     const auto& mesh = u.mesh();
@@ -296,9 +299,10 @@ void subtractConsistentHbyA(
 }
 
 
+template<typename SystemMatrixType>
 void updateFaceVelocity(
     const nnfvcc::SurfaceField<scalar>& predictedPhi,
-    const PDE<scalar>& expr,
+    const PDE<scalar, scalar, NeoN::localIdx, SystemMatrixType>& expr,
     nnfvcc::SurfaceField<scalar>& phi
 )
 {
@@ -311,9 +315,7 @@ void updateFaceVelocity(
         views(mesh.faceOwners(), mesh.faceNeighbors(), p.internalVector());
 
     const auto& ls = expr.linearSystem();
-    const auto rowPtrs = ls.matrix().sparsity()->rowOffs().view();
-    const auto neiOffs = ls.faceToMatrixAddress()->neighbourOffset().view();
-    const auto ownOffs = ls.faceToMatrixAddress()->ownerOffset().view();
+    const auto ma = ls.matrix().faceToMatrixView();
     auto values = ls.matrix().values().view();
     auto [iPhi, iPredPhi] = views(phi.internalVector(), predictedPhi.internalVector());
 
@@ -334,18 +336,16 @@ void updateFaceVelocity(
         exec,
         {0, nInternalFaces},
         NEON_LAMBDA(const size_t facei) {
-            auto own = static_cast<std::size_t>(owner[facei]);
-            auto nei = static_cast<std::size_t>(neighbour[facei]);
+            auto own = static_cast<NeoN::localIdx>(owner[facei]);
+            auto nei = static_cast<NeoN::localIdx>(neighbour[facei]);
 
-            auto rowNeiStart = rowPtrs[nei];
-            auto rowOwnStart = rowPtrs[own];
-
-            auto upper = values[rowNeiStart + neiOffs[facei]];
-            auto lower = values[rowOwnStart + ownOffs[facei]];
+            // aNeiOwn = A[nei, own] (lower triangular), aOwnNei = A[own, nei] (upper triangular)
+            auto aNeiOwn = values[ma.lowerIdx(nei, static_cast<NeoN::localIdx>(facei))];
+            auto aOwnNei = values[ma.upperIdx(own, static_cast<NeoN::localIdx>(facei))];
 
             scalar corrFlux = hasCorrection ? ffc[facei] : scalar(0);
             iPhi[facei] =
-                iPredPhi[facei] - (upper * internalP[nei] - lower * internalP[own]) - corrFlux;
+                iPredPhi[facei] - (aNeiOwn * internalP[nei] - aOwnNei * internalP[own]) - corrFlux;
         }
     );
 
@@ -475,5 +475,40 @@ nnfvcc::SurfaceField<scalar> flux(const nnfvcc::VolumeField<Vec3>& volField)
 
     return faceFlux;
 }
+
+template nnfvcc::VolumeField<scalar> computeRAU<
+    NeoN::la::CSRMatrix<scalar, NeoN::localIdx>>(const PDE<
+                                                 Vec3,
+                                                 scalar,
+                                                 NeoN::localIdx,
+                                                 NeoN::la::CSRMatrix<scalar, NeoN::localIdx>>&);
+template nnfvcc::VolumeField<scalar> computeRAU<
+    NeoN::la::ELLMatrix<scalar, NeoN::localIdx>>(const PDE<
+                                                 Vec3,
+                                                 scalar,
+                                                 NeoN::localIdx,
+                                                 NeoN::la::ELLMatrix<scalar, NeoN::localIdx>>&);
+
+template std::tuple<nnfvcc::VolumeField<scalar>, nnfvcc::VolumeField<Vec3>> computeRAUandHByA<
+    NeoN::la::CSRMatrix<scalar, NeoN::localIdx>>(const PDE<
+                                                 Vec3,
+                                                 scalar,
+                                                 NeoN::localIdx,
+                                                 NeoN::la::CSRMatrix<scalar, NeoN::localIdx>>&);
+template std::tuple<nnfvcc::VolumeField<scalar>, nnfvcc::VolumeField<Vec3>> computeRAUandHByA<
+    NeoN::la::ELLMatrix<scalar, NeoN::localIdx>>(const PDE<
+                                                 Vec3,
+                                                 scalar,
+                                                 NeoN::localIdx,
+                                                 NeoN::la::ELLMatrix<scalar, NeoN::localIdx>>&);
+
+template void updateFaceVelocity<NeoN::la::CSRMatrix<
+    scalar,
+    NeoN::
+        localIdx>>(const nnfvcc::SurfaceField<scalar>&, const PDE<scalar, scalar, NeoN::localIdx, NeoN::la::CSRMatrix<scalar, NeoN::localIdx>>&, nnfvcc::SurfaceField<scalar>&);
+template void updateFaceVelocity<NeoN::la::ELLMatrix<
+    scalar,
+    NeoN::
+        localIdx>>(const nnfvcc::SurfaceField<scalar>&, const PDE<scalar, scalar, NeoN::localIdx, NeoN::la::ELLMatrix<scalar, NeoN::localIdx>>&, nnfvcc::SurfaceField<scalar>&);
 
 }

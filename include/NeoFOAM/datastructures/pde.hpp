@@ -44,7 +44,8 @@ void applySetReference(ScalarLinearSystem& ls, NeoN::localIdx refCell, NeoN::sca
 template<
     typename ValueType,
     typename MatrixValueType = NeoN::scalar,
-    typename IndexType = NeoN::localIdx>
+    typename IndexType = NeoN::localIdx,
+    typename SystemMatrixType = NeoN::la::CSRMatrix<MatrixValueType, IndexType>>
 class PDE
 {
     using VolumeField = NeoN::finiteVolume::cellCentred::VolumeField<ValueType>;
@@ -52,7 +53,7 @@ class PDE
     // vector-solve form for Vec3 fields); the rhs/solution use the field's ValueType.
     // TODO: future work selects MatrixValueType == ValueType (the coupled Vec3 matrix)
     // based on the presence of boundary conditions that require the full block-coupled form.
-    using LinearSystem = NeoN::la::LinearSystem<MatrixValueType, ValueType>;
+    using LinearSystem = NeoN::la::LinearSystem<MatrixValueType, ValueType, SystemMatrixType>;
 
 public:
 
@@ -72,15 +73,18 @@ public:
                       == "cell-based")
                   {
                       auto cellIterator = std::make_shared<NeoN::la::CellBasedIterator>();
-                      return NeoN::la::createEmptyLinearSystem<MatrixValueType, ValueType>(
-                          psi.mesh(),
-                          cellIterator
-                      );
+                      return NeoN::la::
+                          createEmptyLinearSystem<MatrixValueType, ValueType, SystemMatrixType>(
+                              psi.mesh(),
+                              cellIterator
+                          );
                   }
                   else
                   {
-                      return NeoN::la::createEmptyLinearSystem<MatrixValueType, ValueType>(psi.mesh(
-                      ));
+                      return NeoN::la::
+                          createEmptyLinearSystem<MatrixValueType, ValueType, SystemMatrixType>(
+                              psi.mesh()
+                          );
                   }
               }
           ))
@@ -284,7 +288,32 @@ public:
             if (needReference_)
             {
                 NeoN::dsl::SetReference<ValueType> refFunct(pRefCell_, pRefValue_);
-                refFunct(*ls_);
+                // SetReference's ELL same-type overload is named applyELL rather than
+                // operator() (see dsl/expression.hpp), so the CSR/ELL forms need separate
+                // calls here -- mirrors Expression::assemble's own SystemMatrixType dispatch.
+                if constexpr (std::is_same_v<
+                                  SystemMatrixType,
+                                  NeoN::la::CSRMatrix<MatrixValueType, IndexType>>)
+                {
+                    refFunct(*ls_);
+                }
+                else if constexpr (std::is_same_v<
+                                       SystemMatrixType,
+                                       NeoN::la::ELLMatrix<MatrixValueType, IndexType>>)
+                {
+                    refFunct.applyELL(*ls_);
+                }
+                else
+                {
+                    // Dependent-false: fail to compile rather than silently skip the
+                    // reference pin (which would produce a singular pressure system with
+                    // no indication why) if a third SystemMatrixType is ever introduced.
+                    static_assert(
+                        std::is_same_v<SystemMatrixType, void>,
+                        "PDE::solveWith's SetReference dispatch does not support this "
+                        "SystemMatrixType"
+                    );
+                }
             }
         }
 
@@ -435,7 +464,7 @@ public:
     // unrecognised key, so these must be popped here rather than left in place.
     static void stripNeoFOAMKeys(NeoN::Dictionary& dict)
     {
-        for (const auto& key : {"assemblyStrategy", "optimize"})
+        for (const auto& key : {"assemblyStrategy", "optimize", "matrixFormat"})
         {
             if (dict.contains(key))
             {
@@ -476,15 +505,18 @@ private:
                     == "cell-based")
                 {
                     auto cellIterator = std::make_shared<NeoN::la::CellBasedIterator>();
-                    return NeoN::la::createEmptyLinearSystem<MatrixValueType, ValueType>(
-                        psi.mesh(),
-                        cellIterator
-                    );
+                    return NeoN::la::
+                        createEmptyLinearSystem<MatrixValueType, ValueType, SystemMatrixType>(
+                            psi.mesh(),
+                            cellIterator
+                        );
                 }
                 else
                 {
-                    return NeoN::la::createEmptyLinearSystem<MatrixValueType, ValueType>(psi.mesh()
-                    );
+                    return NeoN::la::
+                        createEmptyLinearSystem<MatrixValueType, ValueType, SystemMatrixType>(
+                            psi.mesh()
+                        );
                 }
             }
         ));

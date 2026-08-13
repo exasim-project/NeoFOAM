@@ -18,6 +18,28 @@ using NeoFOAM::EqualsInternal;
 
 extern Foam::Time* timePtr; // A single time object
 
+// EqualsInternal/EqualsBoundary compare a NeoN field against an OpenFOAM one; CSR-vs-ELL parity
+// checks need NeoN-vs-NeoN instead, hence this small host-side helper.
+template<typename ValueType>
+NeoN::scalar maxAbsDiff(const NeoN::Vector<ValueType>& a, const NeoN::Vector<ValueType>& b)
+{
+    auto ah = a.copyToHost();
+    auto bh = b.copyToHost();
+    auto [av, bv] = views(ah, bh);
+    NeoN::scalar m = 0.0;
+    for (NeoN::localIdx i = 0; i < av.size(); ++i)
+    {
+        if constexpr (std::is_same_v<ValueType, NeoN::scalar>)
+        {
+            m = std::max(m, std::abs(av[i] - bv[i]));
+        }
+        else
+        {
+            m = std::max(m, mag(av[i] - bv[i]));
+        }
+    }
+    return m;
+}
 
 TEST_CASE("PressureVelocityCoupling")
 {
@@ -422,6 +444,63 @@ TEST_CASE("PressureVelocityCoupling")
         );
     }
 
+    // Own field names (not nfU/nfUEqn): PDE keys its readOrCreate linear-system cache and
+    // solverDict lookup off VolumeField::name, so reusing "U" for a second (ELL) PDE would
+    // collide with nfUEqn's own cached CSR system. No ddt term (unlike nfUEqn above) so these
+    // fields don't need VectorCollection/old-time registration -- computeRAUandHByA only reads
+    // the assembled matrix, not the field's time history.
+    SECTION("computeRAUandHByA ELL matches CSR" + execName)
+    {
+        using EllMatrix = NeoN::la::ELLMatrix<NeoN::scalar, NeoN::localIdx>;
+
+        // PDE's constructor looks up solverDict.subDict(psi.name) unconditionally (for
+        // assemblyStrategy/optimize), even when only assemble() is ever called -- these two
+        // names have no entry in the case's fvSolution, so give them one (copied from "U").
+        auto& solverDict = rt.fvSolutionDict.subDict("solvers");
+        solverDict.insert("UCsrTest", solverDict.subDict("U"));
+        solverDict.insert("UEllTest", solverDict.subDict("U"));
+
+        // fvSchemes' divSchemes/laplacianSchemes default is the literal scheme name "none" in
+        // this case (meaning "no generic fallback, require an explicit entry" -- see
+        // expandSchemeDefaults), so the renamed fields also need their own explicit
+        // div(phi,<name>)/laplacian(nu,<name>) scheme entries, copied from "U"'s.
+        auto& divSchemes = rt.fvSchemesDict.subDict("divSchemes");
+        auto& laplacianSchemes = rt.fvSchemesDict.subDict("laplacianSchemes");
+        const auto divPhiU = divSchemes.get<NeoN::TokenList>("div(phi,U)");
+        const auto laplacianNuU = laplacianSchemes.get<NeoN::TokenList>("laplacian(nu,U)");
+        divSchemes.insert("div(phi,UCsrTest)", divPhiU);
+        divSchemes.insert("div(phi,UEllTest)", divPhiU);
+        laplacianSchemes.insert("laplacian(nu,UCsrTest)", laplacianNuU);
+        laplacianSchemes.insert("laplacian(nu,UEllTest)", laplacianNuU);
+
+        auto nfUCsr = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofU);
+        nfUCsr.name = "UCsrTest";
+        nfUCsr.correctBoundaryConditions();
+        auto nfUEll = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofU);
+        nfUEll.name = "UEllTest";
+        nfUEll.correctBoundaryConditions();
+
+        nf::PDE<NeoN::Vec3> uEqnCsr(
+            dsl::imp::div(nfPhi, nfUCsr) - dsl::imp::laplacian(nfNu, nfUCsr),
+            nfUCsr,
+            rt
+        );
+        nf::PDE<NeoN::Vec3, NeoN::scalar, NeoN::localIdx, EllMatrix> uEqnEll(
+            dsl::imp::div(nfPhi, nfUEll) - dsl::imp::laplacian(nfNu, nfUEll),
+            nfUEll,
+            rt
+        );
+
+        uEqnCsr.assemble();
+        uEqnEll.assemble();
+
+        auto [rAUCsr, hByACsr] = nf::computeRAUandHByA(uEqnCsr);
+        auto [rAUEll, hByAEll] = nf::computeRAUandHByA(uEqnEll);
+
+        REQUIRE(maxAbsDiff(rAUCsr.internalVector(), rAUEll.internalVector()) < 1e-10);
+        REQUIRE(maxAbsDiff(hByACsr.internalVector(), hByAEll.internalVector()) < 1e-10);
+    }
+
     SECTION("solver02" + execName)
     {
         // rAU/HbyA integration coverage (extends THIS file's shared random-U/p OF-vs-NeoFOAM
@@ -627,6 +706,66 @@ TEST_CASE("PressureVelocityCoupling")
         nf::updateFaceVelocity(nfPhi, pEqn, nfPhi0);
         REQUIRE_THAT(nfPhi0, EqualsInternal(ofPhi0, ApproxScalar(1e-15)));
         REQUIRE_THAT(nfPhi0.boundaryData(), EqualsBoundary(ofPhi0, ApproxScalar(1e-15)));
+    }
+
+    // Own field names again (see the computeRAUandHByA ELL section above), and both PDEs use
+    // the eager 3-arg constructor so linearSystem() is never called before assembly. Directly
+    // probes the ma.upperIdx()/ma.lowerIdx() face addressing that replaced the old CSR-only
+    // rowOffs() indexing in updateFaceVelocity.
+    SECTION("updateFaceVelocity ELL matches CSR")
+    {
+        using EllMatrix = NeoN::la::ELLMatrix<NeoN::scalar, NeoN::localIdx>;
+
+        auto forAUf =
+            NeoFOAM::randDimField<Foam::surfaceScalarField>(mesh, {0, 0, 1, 0, 0}, "rAUf");
+        auto nfrAUf = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, forAUf);
+
+        Foam::surfaceScalarField ofPhi0("phi0Ell", ofPhi * 0.0);
+        auto nfPhi0Csr = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofPhi0);
+        auto nfPhi0Ell = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofPhi0);
+
+        auto& solverDict = rt.fvSolutionDict.subDict("solvers");
+        solverDict.insert("pCsrTest", solverDict.subDict("p"));
+        solverDict.insert("pEllTest", solverDict.subDict("p"));
+
+        // See the computeRAUandHByA ELL section above: "none" laplacianSchemes default means
+        // the renamed fields need their own explicit laplacian(rAUf,<name>) entries.
+        auto& laplacianSchemes = rt.fvSchemesDict.subDict("laplacianSchemes");
+        const auto laplacianRAUfP = laplacianSchemes.get<NeoN::TokenList>("laplacian(rAUf,p)");
+        laplacianSchemes.insert("laplacian(rAUf,pCsrTest)", laplacianRAUfP);
+        laplacianSchemes.insert("laplacian(rAUf,pEllTest)", laplacianRAUfP);
+
+        auto nfPCsr = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofp);
+        nfPCsr.name = "pCsrTest";
+        nfPCsr.correctBoundaryConditions();
+        auto nfPEll = NeoFOAM::constructFrom(rt.exec, rt.nfMesh, ofp);
+        nfPEll.name = "pEllTest";
+        nfPEll.correctBoundaryConditions();
+
+        nf::PDE<NeoN::scalar> pEqnCsr(
+            dsl::imp::laplacian(nfrAUf, nfPCsr) - dsl::exp::div(nfPhi),
+            nfPCsr,
+            rt
+        );
+        pEqnCsr.linearSystem().keepFaceFluxCorrection(true);
+
+        nf::PDE<NeoN::scalar, NeoN::scalar, NeoN::localIdx, EllMatrix> pEqnEll(
+            dsl::imp::laplacian(nfrAUf, nfPEll) - dsl::exp::div(nfPhi),
+            nfPEll,
+            rt
+        );
+        pEqnEll.linearSystem().keepFaceFluxCorrection(true);
+
+        pEqnCsr.assemble();
+        pEqnEll.assemble();
+
+        nf::updateFaceVelocity(nfPhi, pEqnCsr, nfPhi0Csr);
+        nf::updateFaceVelocity(nfPhi, pEqnEll, nfPhi0Ell);
+
+        REQUIRE(maxAbsDiff(nfPhi0Csr.internalVector(), nfPhi0Ell.internalVector()) < 1e-10);
+        REQUIRE(
+            maxAbsDiff(nfPhi0Csr.boundaryData().value(), nfPhi0Ell.boundaryData().value()) < 1e-10
+        );
     }
 
     SECTION("assemble pEqn")
