@@ -120,4 +120,66 @@ TEST_CASE("fvSolution")
             REQUIRE(mapped.get<std::string>("reportName") == "configFile");
         }
     }
+
+    SECTION("matrixFormat")
+    {
+        SECTION("absent -> caller's default (CSR)")
+        {
+            REQUIRE(
+                NeoFOAM::matrixFormat(solver1, NeoFOAM::MatrixFormat::CSR)
+                == NeoFOAM::MatrixFormat::CSR
+            );
+        }
+        SECTION("absent -> caller's default (ELL)")
+        {
+            REQUIRE(
+                NeoFOAM::matrixFormat(solver1, NeoFOAM::MatrixFormat::ELL)
+                == NeoFOAM::MatrixFormat::ELL
+            );
+        }
+        SECTION("explicit CSR overrides the default")
+        {
+            solver1.insert("matrixFormat", std::string("CSR"));
+            REQUIRE(
+                NeoFOAM::matrixFormat(solver1, NeoFOAM::MatrixFormat::ELL)
+                == NeoFOAM::MatrixFormat::CSR
+            );
+        }
+        SECTION("explicit ELL overrides the default")
+        {
+            solver1.insert("matrixFormat", std::string("ELL"));
+            REQUIRE(
+                NeoFOAM::matrixFormat(solver1, NeoFOAM::MatrixFormat::CSR)
+                == NeoFOAM::MatrixFormat::ELL
+            );
+        }
+        SECTION("invalid value throws")
+        {
+            solver1.insert("matrixFormat", std::string("BOGUS"));
+            REQUIRE_THROWS_AS(
+                NeoFOAM::matrixFormat(solver1, NeoFOAM::MatrixFormat::CSR), std::runtime_error
+            );
+        }
+        SECTION("survives mapFvSolution untouched")
+        {
+            solver1.insert("solver", std::string("PCG"));
+            solver1.insert("preconditioner", std::string("DIC"));
+            solver1.insert("matrixFormat", std::string("ELL"));
+            auto mapped = NeoFOAM::mapFvSolution(solver1);
+            REQUIRE(
+                NeoFOAM::matrixFormat(mapped, NeoFOAM::MatrixFormat::CSR)
+                == NeoFOAM::MatrixFormat::ELL
+            );
+        }
+        SECTION("stripped before the Ginkgo dictionary is parsed")
+        {
+            solver1.insert("solver", std::string("PCG"));
+            solver1.insert("preconditioner", std::string("DIC"));
+            solver1.insert("matrixFormat", std::string("ELL"));
+            auto mapped = NeoFOAM::mapFvSolution(solver1);
+            REQUIRE(mapped.contains("matrixFormat"));
+            NeoFOAM::PDE<NeoN::scalar>::stripNeoFOAMKeys(mapped);
+            REQUIRE_FALSE(mapped.contains("matrixFormat"));
+        }
+    }
 }

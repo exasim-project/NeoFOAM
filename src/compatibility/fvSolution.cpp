@@ -46,6 +46,15 @@ void updateSolver(NeoN::Dictionary& solverDict)
     }
 }
 
+MatrixFormat matrixFormat(const NeoN::Dictionary& solverDict, MatrixFormat defaultFormat)
+{
+    const std::string defaultStr = defaultFormat == MatrixFormat::ELL ? "ELL" : "CSR";
+    const std::string fmt = solverDict.get<std::string>("matrixFormat", defaultStr);
+    if (fmt == "CSR") return MatrixFormat::CSR;
+    if (fmt == "ELL") return MatrixFormat::ELL;
+    throw std::runtime_error("Unknown matrixFormat '" + fmt + "', expected CSR or ELL");
+}
+
 void updatePreconditioner(NeoN::Dictionary& solverDict)
 {
     // Map OpenFOAM preconditioner types to NeoN/Ginkgo preconditioner types (single rank).

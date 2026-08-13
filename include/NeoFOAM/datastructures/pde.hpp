@@ -464,7 +464,7 @@ public:
     // unrecognised key, so these must be popped here rather than left in place.
     static void stripNeoFOAMKeys(NeoN::Dictionary& dict)
     {
-        for (const auto& key : {"assemblyStrategy", "optimize"})
+        for (const auto& key : {"assemblyStrategy", "optimize", "matrixFormat"})
         {
             if (dict.contains(key))
             {
