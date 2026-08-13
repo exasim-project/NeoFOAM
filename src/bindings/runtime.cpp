@@ -28,7 +28,36 @@ void registerRuntime(nb::module_& m)
     // e.g. pybFoam.nearWallDist(runtime.mesh) in the turbulence closures. Hence
     // pybFoam must be imported before these bindings (see neofoam/__init__.py).
     // -------------------------------------------------------------------
-    nb::class_<nf::MeshAdapter, Foam::fvMesh>(m, "MeshAdapter");
+    nb::class_<nf::MeshAdapter, Foam::fvMesh>(m, "MeshAdapter")
+        // Zones are a naming layer over labels, so hand Python the labels rather
+        // than a wrapper it has no other use for. Needed by any zone-aware model
+        // (MRF, porous media) that wants to build its own region masks.
+        .def(
+            "cell_zones",
+            [](const nf::MeshAdapter& self)
+            {
+                nb::dict zones;
+                for (const Foam::cellZone& zone : self.cellZones())
+                {
+                    zones[zone.name().c_str()] = std::vector<Foam::label>(zone.begin(), zone.end());
+                }
+                return zones;
+            },
+            "Cell zones as ``{name: [cell label]}``."
+        )
+        .def(
+            "face_zones",
+            [](const nf::MeshAdapter& self)
+            {
+                nb::dict zones;
+                for (const Foam::faceZone& zone : self.faceZones())
+                {
+                    zones[zone.name().c_str()] = std::vector<Foam::label>(zone.begin(), zone.end());
+                }
+                return zones;
+            },
+            "Face zones as ``{name: [face label]}``."
+        );
 
     // -------------------------------------------------------------------
     // RunTime Struct (Adapter)

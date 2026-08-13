@@ -15,7 +15,7 @@ The fields here are real ``VolumeField``s on a single-cell mesh, not stand-ins:
 ``zero_expression`` reaches through the field to an executor, and which accessor
 it reaches through decides whether the call can return to Python at all.
 
-Contributions *are* registered on these hooks (``neofoam.mrf``); they are skipped
+Contributions *are* registered on these hooks (``models.mrf``); they are skipped
 here because no ``ModelRuntime`` is active on the Context, which is the mechanism
 a case without ``constant/MRFProperties`` relies on.
 """
@@ -77,7 +77,7 @@ def test_predicted_flux_hands_back_the_flux_it_was_given() -> None:
     assert predicted is phiHbyA
 
 
-def test_pressure_constrain_touches_nothing() -> None:
-    ran = bound_without_contributor(pressure_extension).constrain("U")
+def test_pressure_constrain_corrected_velocity_touches_nothing() -> None:
+    ran = bound_without_contributor(pressure_extension).constrain_corrected_velocity("U")
 
     assert ran == []

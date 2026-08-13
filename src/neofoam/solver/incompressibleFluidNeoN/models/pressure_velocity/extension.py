@@ -13,11 +13,11 @@ NeoN types (``neon._neon`` fields, ``NeoN::dsl`` operators) rather than
 ``volVectorField`` / ``fvVectorMatrix``.
 
 Each hook is named for the quantity it exposes and the moment it exposes it,
-never for what a contributor does to it, and each picks one of the three
+never for what a contributor does to it, and each picks one of the
 :class:`~neofoam.framework.model.Kind` s. With no contributor every hook is the
 identity: ``terms`` is an empty expression, ``predicted_flux`` hands back the
-flux it was given and ``constrain`` does nothing — the assembled equations are
-the ones the algorithms wrote before this seam existed.
+flux it was given and the two ``constrain`` hooks do nothing — the assembled
+equations are the ones the algorithms wrote before this seam existed.
 
 Example::
 
@@ -97,8 +97,8 @@ def predicted_flux(phiHbyA: Any) -> Any:
     """
 
 
-@pressure_extension.defines  # type: ignore[no-redef]
-def constrain(U: Any) -> None:  # noqa: F811 — same hook name, another extension
+@pressure_extension.defines
+def constrain_corrected_velocity(U: Any) -> None:
     """The velocity, after the pressure corrector updated and corrected it.
 
     Native needs no such point: a ``fixedValue``/``noSlip`` patch keeps an

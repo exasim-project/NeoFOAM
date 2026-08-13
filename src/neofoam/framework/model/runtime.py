@@ -60,12 +60,18 @@ class ModelRuntime:
         if self.spec._build_func is None:
             user_steps: list["InitStep"] = []
         else:
-            sig = inspect.signature(self.spec._build_func)
-            user_steps = (
-                self.spec._build_func(self.config)
-                if len(sig.parameters) > 0
-                else self.spec._build_func()
-            )
+            # Both parameters are opt-in, by name: ``self`` is this runtime — the
+            # place a ``@build`` stashes the handle its contributions read off
+            # ``self`` — and the other parameter, whatever it is called, is the
+            # loaded config.
+            parameters = list(inspect.signature(self.spec._build_func).parameters)
+            build_kwargs: dict[str, Any] = {}
+            if "self" in parameters:
+                build_kwargs["self"] = self
+            config_params = [name for name in parameters if name != "self"]
+            if config_params:
+                build_kwargs[config_params[0]] = self.config
+            user_steps = self.spec._build_func(**build_kwargs)
 
         field_decls = getattr(self.spec, "_field_decls", None) or []
         if not field_decls:

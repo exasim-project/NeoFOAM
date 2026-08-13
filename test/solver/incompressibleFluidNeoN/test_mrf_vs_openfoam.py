@@ -59,7 +59,7 @@ QUANTITIES = (
     "zero_filter_boundary",
     "relative_flux",
     "relative_flux_boundary",
-    # The Python-composed form of makeRelative that neofoam.mrf contributes:
+    # The Python-composed form of makeRelative that the NeoN MRF model contributes:
     # keep * (phi - frameFlux), compared against native's own makeRelative.
     "composed_relative_flux",
     "composed_relative_flux_boundary",

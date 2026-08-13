@@ -10,11 +10,24 @@ FoamFile
     version     2.0;
     format      ascii;
     class       dictionary;
-    object      transportProperties;
+    object      fvSolution;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-transportModel  Newtonian;
-nu              1e-05;
+solvers
+{
+    p { solver PCG; preconditioner diagonal; tolerance 1e-12; relTol 0; }
+    pFinal { solver PCG; preconditioner diagonal; tolerance 1e-12; relTol 0; }
+    U { solver smoothSolver; smoother GaussSeidel; tolerance 1e-12; relTol 0; }
+}
+
+PIMPLE
+{
+    nOuterCorrectors 1;
+    nCorrectors     2;
+    nNonOrthogonalCorrectors 0;
+    pRefCell        0;
+    pRefValue       0;
+}
 
 // ************************************************************************* //

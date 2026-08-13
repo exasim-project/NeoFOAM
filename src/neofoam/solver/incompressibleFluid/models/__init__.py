@@ -12,12 +12,12 @@ entrypoint (``incompressibleFluid.maybe_configure_telemetry`` and the
 """
 
 from neofoam.fv_options import fvOptions
-from neofoam.mrf import mrf
 
 from .boussinesq import boussinesq
 from .courant import courant
 from .incompressibleFluidModel import incompressibleFluidModel
 from .max_delta_t import maxDeltaT
+from .mrf import mrf
 from .pressure_velocity import PressureVelocityAlgorithm
 
 # MRF and fvOptions are shared with incompressibleVoF, so their specs cannot
