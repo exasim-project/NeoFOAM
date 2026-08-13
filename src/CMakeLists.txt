@@ -18,7 +18,6 @@ target_sources(
           "datastructures/meshAdapter.cpp"
           "datastructures/databaseWrapper.cpp"
           "datastructures/pde.cpp"
-          "datastructures/ordering/permutation.cpp"
           "compatibility/fvSchemes.cpp"
           "compatibility/fvSolution.cpp"
           "solutionControl/pimpleControl.cpp"
