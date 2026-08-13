@@ -119,24 +119,21 @@ A model contributes one plain function per hook it acts at, with
 decorator used for interfaces. Hooks are reached as attributes of the
 extension (``momentum_extension.terms``), so two extensions can share a
 hook name. The contributions live next to the model spec they belong to —
-in ``neofoam/mrf.py`` / ``neofoam/fv_options.py``:
+in ``incompressibleFluid/models/mrf.py`` / ``neofoam/fv_options.py``:
 
 .. code-block:: python
 
-    from neofoam.solver.incompressibleFluid.models.pressure_velocity.extension import (
-        momentum_extension,
-        pressure_extension,
-    )
+    from .pressure_velocity.extension import momentum_extension, pressure_extension
 
 
     @mrf.contributes(momentum_extension.terms)
-    def mrf_frame_acceleration(U: volVectorField, mrf_zones: Annotated[Any, "models"]) -> Any:
-        return mrf_zones.DDt(U)
+    def mrf_frame_acceleration(self: Any, U: volVectorField) -> Any:
+        return self.zones.DDt(U)
 
 
     @mrf.contributes(pressure_extension.make_relative)
-    def mrf_make_relative(phiHbyA: surfaceScalarField, mrf_zones: Annotated[Any, "models"]) -> None:
-        mrf_zones.makeRelative(phiHbyA)
+    def mrf_make_relative(self: Any, phiHbyA: surfaceScalarField) -> None:
+        self.zones.makeRelative(phiHbyA)
 
 
     @fvOptions.contributes(momentum_extension.terms)
@@ -152,9 +149,14 @@ A parameter named in the hook declaration (``U``, ``phiHbyA``, …)
     Taken from the operation's call — ``ext.terms(U)`` hands ``U``
     to every contribution that names it.
 
+``self``
+    The **contributing** model's own ``ModelRuntime`` — where its
+    ``@build`` stashed the handle the contribution works on (here the
+    zone list, as ``self.zones``).
+
 ``Annotated[Any, "models"]``
-    ``ctx.models[<param name>]`` — here the ``mrf_zones`` object the MRF
-    model's ``@build`` step published.
+    ``ctx.models[<param name>]`` — here the ``fv_options`` object the
+    fvOptions model's ``@build`` step published.
 
 A ``BaseConfig`` subclass
     Pulled by type from the *contributing* model's config, not from
@@ -256,19 +258,22 @@ Where to put the contributions
 
 The extension *definitions* live with the operations they extend
 (``pressure_velocity/extension.py``); the *contributions* live with the
-model spec they belong to (``neofoam/mrf.py``, ``neofoam/fv_options.py``)
-— everything the MRF model does to a case reads in one module. Two
-consequences of that placement:
+model spec they belong to — everything the MRF model does to a case reads
+in one module. Two consequences of that placement:
 
-* The extension import in ``mrf.py`` sits **below** the spec definition.
-  The solver package imports ``neofoam.mrf`` back to register the spec,
-  so a top-of-file import of the solver's extension module would re-enter
-  ``mrf.py`` before ``mrf`` exists — a circular import.
+* A spec that lives *inside* the solver package it extends
+  (``incompressibleFluid/models/mrf.py``) imports its extensions normally,
+  at the top of the file. A spec that lives *outside* one, like
+  ``neofoam/fv_options.py``, cannot: the solver package imports it back to
+  register the spec, so a top-of-file import of the solver's extension
+  module would re-enter it before the spec exists — a circular import.
+  Those imports sit **below** the spec definition instead.
 * The MRF and ``fvOptions`` specs are shared with ``incompressibleVoF``,
   whose frame and source terms differ (``DDt(rho, U)``,
   ``fvOptions(rho, U)``). VoF's operations define their own extensions, so
-  its contributions live in the same two modules — one set per solver's
-  extension, side by side under the one spec.
+  it contributes its own set — for ``fvOptions`` in the same module, for
+  MRF in ``incompressibleVoF/models/mrf.py``, which imports the one spec
+  and hangs its mass-weighted contributions off it.
 
 See also
 --------
