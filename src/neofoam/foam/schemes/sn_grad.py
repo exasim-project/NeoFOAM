@@ -52,7 +52,16 @@ def _parse_sn_grad(v: Any) -> Any:
     tokens = v.split()
     result: dict[str, Any] = {"type": tokens[0]}
     if len(tokens) > 1 and tokens[0] == "limited":
-        result["coefficient"] = float(tokens[1])
+        # OpenFOAM's limitedSnGrad takes an optional sub-scheme token before the
+        # coefficient, so "limited 0.33" and "limited corrected 0.33" are the same
+        # scheme (the terse form is what serialize writes back). Only "corrected"
+        # is a valid sub-scheme -- NeoN rejects any other, so we must too.
+        arguments = tokens[1:]
+        if len(arguments) > 1:
+            if arguments[0] != "corrected":
+                raise ValueError(f"unsupported limited snGrad sub-scheme: {arguments[0]!r}")
+            arguments = arguments[1:]
+        result["coefficient"] = float(arguments[0])
     return result
 
 
