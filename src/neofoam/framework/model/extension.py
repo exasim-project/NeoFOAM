@@ -26,25 +26,24 @@ class Kind(Enum):
     """How a hook combines what its contributions return.
 
     Declared once per hook at ``@<extension>.defines(kind=...)``, so a
-    declaration states which of the three shapes it is instead of inventing a
+    declaration states which of the two shapes it is instead of inventing a
     combine rule of its own::
 
         @pressure_extension.defines(kind=Kind.PIPELINE)
         def predicted_flux(phiHbyA: Any) -> Any: ...   # body is documentation
 
     ``ADDITIVE`` (the default) runs every contribution on the same arguments and
-    hands the results to the declaration body, which folds them. ``PIPELINE``
-    threads the value instead: each contribution receives the previous one's
-    output in the declaration's *first* parameter, the call returns that
-    threaded value, and a contribution returning ``None`` passes it through.
-    ``BROADCAST`` is what a declaration with no results sink gets — every
-    contribution runs and the call returns the raw results. Only ``ADDITIVE``
-    invokes the declaration body; for the other two it is documentation.
+    hands the results to the declaration body, which folds them — or returns them
+    raw, without invoking the body, when the declaration has no trailing results
+    parameter to receive them (a broadcast hook, see :class:`Extension`).
+    ``PIPELINE`` threads the value instead: each contribution receives the
+    previous one's output in the declaration's *first* parameter, the call returns
+    that threaded value, and a contribution returning ``None`` passes it through;
+    its body is documentation only.
     """
 
     ADDITIVE = "additive"
     PIPELINE = "pipeline"
-    BROADCAST = "broadcast"
 
 
 class _Negated:

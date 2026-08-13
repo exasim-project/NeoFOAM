@@ -19,11 +19,25 @@
 //   boundaryVelocity_ VolumeField<Vec3>    Omega x r on the rotating wall faces
 //   boundaryKeep_     VolumeField<scalar>  0 on those same faces, 1 elsewhere
 //
-// All six are *probed* out of MRFZoneList rather than recomputed by hand: each
-// operation is applied to a field of known constant value and the result read
-// back. That inherits OpenFOAM's exact treatment of zone-internal, included
-// (rotating) and excluded (nonRotatingPatches) faces, which is the fiddly part,
-// and it needs no access to MRFZone's private face lists.
+// All six are *probed* out of MRFZoneList — each operation applied to a field of
+// known constant value and the result read back — which inherits OpenFOAM's exact
+// treatment of zone-internal, included and excluded faces and needs no access to
+// MRFZone's private face lists.
+//
+// Exact only because each bound operation is affine with a build-time-fixed mask:
+// out = keep * (in - offset), so a zero probe recovers offset and a unit probe
+// recovers keep. Outside that invariant, and not to be reached by extending the
+// pattern: makeRelative(volVectorField&) (its offset varies per cell and no probe
+// carries it there), a time-varying omega (the constructor rejects one), and a
+// topology change (all six describe the construction-time mesh, and this path has
+// no MRFZone::update()).
+//
+// Note also that makeAbsolute is not the inverse of makeRelative: it *adds* on the
+// included patch faces where makeRelative *assigns* 0 (MRFZoneTemplates.C:186-192
+// vs :88-91), so frameFlux_ is 0 exactly where an absolute reconstruction needs it
+// non-zero. Binding makeAbsolute needs its own probe through makeAbsolute.
+
+#include <stdexcept>
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
@@ -33,6 +47,7 @@
 #include "NeoN/dsl/explicit.hpp"
 
 // OpenFOAM headers
+#include "Function1.H"
 #include "IOMRFZoneList.H"
 #include "volFields.H"
 #include "surfaceFields.H"
@@ -177,6 +192,37 @@ Foam::surfaceScalarField uniformSurfaceScalar(const Foam::fvMesh& mesh, Foam::sc
     );
 }
 
+// MRFZone re-evaluates its omega Function1 on every Omega() call, but the frame
+// fields below are probed once, at construction, so a table/ramp/sine omega
+// would silently run at its construction-time value forever. MRFZone exposes
+// neither omega_ nor its coeffs dictionary, so the Function1 is rebuilt from the
+// very entry IOMRFZoneList (an IOdictionary) read it from and asked its type.
+void rejectTimeVaryingOmega(const Foam::fvMesh& mesh, const Foam::IOMRFZoneList& mrf)
+{
+    const Foam::MRFZoneList& zones = mrf;
+    for (const Foam::MRFZone& zone : zones)
+    {
+        // An inactive zone never parses omega, and need not carry one.
+        if (!zone.active())
+        {
+            continue;
+        }
+        const Foam::dictionary& coeffs = mrf.subDict(zone.name());
+        if (!Foam::Function1<Foam::scalar>::New("omega", coeffs, &mesh)->constant())
+        {
+            // invalid_argument, not runtime_error: nanobind maps it to ValueError,
+            // which is what the Python-side guard in mrf.py raises for the same case.
+            throw std::invalid_argument(
+                "MRF zone '" + std::string(zone.name())
+                + "': omega is not constant in time, which the NeoN rotating-frame model "
+                  "does not support — its frame fields are probed out of the zone list "
+                  "once, at construction, so a time-varying omega would be frozen at its "
+                  "construction-time value. Use a constant omega."
+            );
+        }
+    }
+}
+
 // nvcc refuses an extended device lambda inside a private member, so the two
 // face kernels are free functions rather than helpers on the class below.
 void takeRelative(
@@ -238,7 +284,9 @@ public:
               rt.nfMesh,
               fvcc::createCalculatedBCs<fvcc::VolumeBoundary<Vec3>>(rt.nfMesh)
           )
-    {}
+    {
+        rejectTimeVaryingOmega(rt.mesh, mrf_);
+    }
 
     /* @brief MRFZoneList::correctBoundaryVelocity — Omega x r on the rotating
      * wall faces, every other boundary face left as its own BC set it.
@@ -396,10 +444,6 @@ private:
     buildBoundaryVelocity(const nf::RunTime& rt, const Foam::MRFZoneList& mrf)
     {
         Foam::volVectorField probe(uniformVolVector(rt.mesh, Foam::vector::zero));
-        forAll(probe.boundaryFieldRef(), patchi)
-        {
-            probe.boundaryFieldRef()[patchi] == Foam::vector::zero;
-        }
         mrf.correctBoundaryVelocity(probe);
         probe.rename("MRF:boundaryVelocity");
         return toNeoNVolume(rt, probe);
@@ -413,9 +457,8 @@ private:
         const Foam::fvMesh& mesh = rt.mesh;
         Foam::volVectorField zeroProbe(uniformVolVector(mesh, Foam::vector::zero));
         Foam::volVectorField unitProbe(uniformVolVector(mesh, Foam::vector::zero));
-        forAll(zeroProbe.boundaryFieldRef(), patchi)
+        forAll(unitProbe.boundaryFieldRef(), patchi)
         {
-            zeroProbe.boundaryFieldRef()[patchi] == Foam::vector::zero;
             unitProbe.boundaryFieldRef()[patchi] == Foam::vector(1, 1, 1);
         }
         mrf.correctBoundaryVelocity(zeroProbe);
@@ -437,7 +480,7 @@ private:
         );
         forAll(keep.boundaryFieldRef(), patchi)
         {
-            Foam::scalarField kp(keep.boundaryField()[patchi].size(), 1.0);
+            Foam::scalarField kp(keep.boundaryField()[patchi].size());
             const Foam::vectorField& z = zeroProbe.boundaryField()[patchi];
             const Foam::vectorField& u = unitProbe.boundaryField()[patchi];
             forAll(kp, i)

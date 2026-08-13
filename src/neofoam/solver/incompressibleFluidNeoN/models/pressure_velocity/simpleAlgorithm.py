@@ -392,7 +392,7 @@ def continuity(
 
     nfb.update_velocity(hByA, rAtU, p, U)
     U.correct_boundary_conditions()
-    ext.constrain(U)
+    ext.constrain_corrected_velocity(U)
 
     return FieldUpdates({"U": U, "p": p, "phi": phi})
 

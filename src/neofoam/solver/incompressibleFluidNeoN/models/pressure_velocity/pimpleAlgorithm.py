@@ -430,7 +430,7 @@ def continuity(
 
         nfb.update_velocity(hByA, rAU, p, U)
         U.correct_boundary_conditions()
-        ext.constrain(U)
+        ext.constrain_corrected_velocity(U)
 
     if have_p_res:
         state.residuals["p"] = p_res

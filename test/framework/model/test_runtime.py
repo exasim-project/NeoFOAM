@@ -89,6 +89,24 @@ def test_run_build_passes_config_to_build_func() -> None:
     assert captured["config"] == {"x": 7}
 
 
+def test_run_build_passes_the_runtime_to_a_build_func_declaring_self() -> None:
+    # How a model hands its built handle to its own contributions: they take
+    # ``self``, so ``@build`` needs the runtime to stash the handle on.
+    spec = ModelSpec("M")
+    captured: dict[str, Any] = {}
+
+    @spec.build
+    def build(self: Any, config: Any) -> list[Any]:
+        captured["runtime"] = self
+        captured["config"] = config
+        return []
+
+    rt = ModelRuntime(spec=spec, name="M_id", config={"x": 7})
+    rt.run_build()
+    assert captured["runtime"] is rt
+    assert captured["config"] == {"x": 7}
+
+
 def test_run_build_returns_build_func_result() -> None:
     spec = ModelSpec("M")
 

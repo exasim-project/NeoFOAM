@@ -101,9 +101,10 @@ def neon(case: Path, patches: list[str]) -> dict[str, Any]:
     acceleration = host(mrf.acceleration(U).internal_vector())
     phi = nfb.create_phi(rt, "U")
     filtered = mrf.zero_filter(phi)
-    # The contribution's own expression (see neofoam.mrf), on the same flux the
-    # C++ makeRelative below consumes — so the two are compared like for like.
-    composed = mrf.relative_keep * (phi - mrf.frame_flux)
+    # The field-arithmetic equivalent of make_relative, on the same flux the kernel
+    # below consumes: the contribution calls the kernel, and pinning both against
+    # OpenFOAM is what proves composing it by hand would agree.
+    composed = (phi - mrf.frame_flux) * mrf.relative_keep
     mrf.make_relative(phi)
     mrf.correct_boundary_velocity(U)
 
