@@ -21,11 +21,11 @@ namespace NeoFOAM
  * - Cell references stored in mesh connectivity, such as face owner and 
  *   neighbor indices, are remapped according to the permutation.
  * 
- * The aplicator does not:
- * - compute permutations
- * - modify permutation objects
- * - select ordering algorithms
- * - perform implicit host/device data transfers
+ * @note The applicator does not:
+ *       - compute permutations
+ *       - modify permutation objects
+ *       - select ordering algorithms
+ *       - perform implicit host/device data transfers
  */
 class PermutationApplicator
 {
