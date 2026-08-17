@@ -36,6 +36,7 @@ class Permutation
 public:
 
     using IndexType = NeoN::label;
+    using SizeType = NeoN::size_t;
 
     /**
      * @brief Constructs a permutation from an old-to-new mapping.
@@ -71,13 +72,13 @@ public:
      * @return An identity permutation of size @p size.
      */
     [[nodiscard]]
-    static Permutation identity(std::size_t size);
+    static Permutation identity(SizeType size);
 
     /**
      * @brief Returns the number of indices represented by the permutation.
      */
     [[nodiscard]]
-    std::size_t size() const noexcept
+    SizeType size() const noexcept
     {
         return oldToNew_.size();
     }
