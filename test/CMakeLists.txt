@@ -329,3 +329,4 @@ neofoam_unit_test(forceCoeffs setup_pressureVelocityCoupling SOURCE test_forceCo
 
 add_subdirectory(distributed)
 add_subdirectory(turbulence)
+add_subdirectory(ordering)
