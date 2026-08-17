@@ -7,6 +7,7 @@
     <includes local="no">span</includes>
     <includes local="no">vector</includes>
     <includedby refid="identityOrdering_8hpp" local="yes">/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/identityOrdering.hpp</includedby>
+    <includedby refid="permutationApplicator_8hpp" local="yes">/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutationApplicator.hpp</includedby>
     <incdepgraph>
       <node id="1">
         <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp</label>
@@ -43,6 +44,12 @@
         <link refid="permutation_8hpp"/>
         <childnode refid="2" relation="include">
         </childnode>
+        <childnode refid="3" relation="include">
+        </childnode>
+      </node>
+      <node id="3">
+        <label>/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutationApplicator.hpp</label>
+        <link refid="permutationApplicator_8hpp"/>
       </node>
     </invincdepgraph>
     <innerclass refid="classNeoFOAM_1_1Permutation" prot="public">NeoFOAM::Permutation</innerclass>
@@ -55,76 +62,64 @@
 <codeline lineno="1"><highlight class="comment">//<sp/>SPDX-License-Identifier:<sp/>GPL-3.0-or-later</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="2"><highlight class="normal"></highlight><highlight class="comment">//<sp/>SPDX-FileCopyrightText:<sp/>2026<sp/>NeoFOAM<sp/>authors</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="3"><highlight class="normal"></highlight></codeline>
-<codeline lineno="4"><highlight class="normal"></highlight><highlight class="comment">/*</highlight></codeline>
-<codeline lineno="5"><highlight class="comment">A<sp/>Permutation<sp/>is<sp/>an<sp/>immutable<sp/>value<sp/>type<sp/>representing<sp/>a<sp/>bijective<sp/>mapping<sp/>between</highlight></codeline>
-<codeline lineno="6"><highlight class="comment">two<sp/>index<sp/>spaces<sp/>and<sp/>providing<sp/>efficient<sp/>operations<sp/>on<sp/>that<sp/>mapping.</highlight></codeline>
-<codeline lineno="7"><highlight class="comment"></highlight></codeline>
-<codeline lineno="8"><highlight class="comment">Invariant:</highlight></codeline>
-<codeline lineno="9"><highlight class="comment"></highlight></codeline>
-<codeline lineno="10"><highlight class="comment">-<sp/>oldToNew_.size()<sp/>==<sp/>newToOld_.size()</highlight></codeline>
-<codeline lineno="11"><highlight class="comment"></highlight></codeline>
-<codeline lineno="12"><highlight class="comment">-<sp/>oldToNew_<sp/>is<sp/>bijective</highlight></codeline>
-<codeline lineno="13"><highlight class="comment"></highlight></codeline>
-<codeline lineno="14"><highlight class="comment">-<sp/>newToOld_<sp/>is<sp/>the<sp/>inverse<sp/>of<sp/>oldToNew_</highlight></codeline>
-<codeline lineno="15"><highlight class="comment"></highlight></codeline>
-<codeline lineno="16"><highlight class="comment">-<sp/>indices<sp/>lie<sp/>in<sp/>[0,size())</highlight></codeline>
-<codeline lineno="17"><highlight class="comment">*/</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="18"><highlight class="normal"></highlight><highlight class="preprocessor">#pragma<sp/>once</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="19"><highlight class="normal"></highlight></codeline>
-<codeline lineno="20"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;NeoN/NeoN.hpp&quot;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="21"><highlight class="normal"></highlight></codeline>
-<codeline lineno="22"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;cstddef&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="23"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;span&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="24"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;vector&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="25"><highlight class="normal"></highlight></codeline>
-<codeline lineno="26"><highlight class="normal"></highlight><highlight class="keyword">namespace<sp/></highlight><highlight class="normal"><ref refid="namespaceNeoFOAM" kindref="compound">NeoFOAM</ref></highlight></codeline>
-<codeline lineno="27"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="28" refid="classNeoFOAM_1_1Permutation" refkind="compound"><highlight class="normal"></highlight><highlight class="keyword">class<sp/></highlight><highlight class="normal"><ref refid="classNeoFOAM_1_1Permutation" kindref="compound">Permutation</ref></highlight></codeline>
-<codeline lineno="29"><highlight class="normal">{</highlight></codeline>
-<codeline lineno="30"><highlight class="normal"></highlight><highlight class="keyword">public</highlight><highlight class="normal">:</highlight></codeline>
-<codeline lineno="31"><highlight class="normal"></highlight></codeline>
-<codeline lineno="32" refid="classNeoFOAM_1_1Permutation_1a38e79e634c56d4e0fa471d58b70b59fc" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">using<sp/></highlight><highlight class="normal"><ref refid="classNeoFOAM_1_1Permutation_1a38e79e634c56d4e0fa471d58b70b59fc" kindref="member">IndexType</ref><sp/>=<sp/>NeoN::label;</highlight></codeline>
-<codeline lineno="33"><highlight class="normal"></highlight></codeline>
-<codeline lineno="34" refid="classNeoFOAM_1_1Permutation_1a6afd53119b58e5a848ec39ee6ae9a4a1" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">explicit</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1Permutation_1a6afd53119b58e5a848ec39ee6ae9a4a1" kindref="member">Permutation</ref>(std::vector&lt;IndexType&gt;<sp/><ref refid="classNeoFOAM_1_1Permutation_1ad9c305c0fdba5e8faa3eea487d2d8fd9" kindref="member">oldToNew</ref>);</highlight></codeline>
-<codeline lineno="35"><highlight class="normal"></highlight></codeline>
-<codeline lineno="36"><highlight class="normal"><sp/><sp/><sp/><sp/>[[nodiscard]]</highlight></codeline>
-<codeline lineno="37" refid="classNeoFOAM_1_1Permutation_1a303b59072f67ad6a6acf87246013a620" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">static</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1Permutation" kindref="compound">Permutation</ref><sp/><ref refid="classNeoFOAM_1_1Permutation_1a303b59072f67ad6a6acf87246013a620" kindref="member">identity</ref>(std::size_t<sp/><ref refid="classNeoFOAM_1_1Permutation_1a0d41ddb1758438e1fb962ceeac6ae228" kindref="member">size</ref>);</highlight></codeline>
-<codeline lineno="38"><highlight class="normal"></highlight></codeline>
-<codeline lineno="39"><highlight class="normal"><sp/><sp/><sp/><sp/>[[nodiscard]]</highlight></codeline>
-<codeline lineno="40" refid="classNeoFOAM_1_1Permutation_1a0d41ddb1758438e1fb962ceeac6ae228" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>std::size_t<sp/><ref refid="classNeoFOAM_1_1Permutation_1a0d41ddb1758438e1fb962ceeac6ae228" kindref="member">size</ref>()<sp/>const<sp/>noexcept</highlight></codeline>
-<codeline lineno="41"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
-<codeline lineno="42"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>oldToNew_.size();</highlight></codeline>
-<codeline lineno="43"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
-<codeline lineno="44"><highlight class="normal"></highlight></codeline>
-<codeline lineno="45"><highlight class="normal"><sp/><sp/><sp/><sp/>[[nodiscard]]</highlight></codeline>
-<codeline lineno="46" refid="classNeoFOAM_1_1Permutation_1a90060a81d51a92c24ee1f98b28a77000" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1Permutation_1a38e79e634c56d4e0fa471d58b70b59fc" kindref="member">IndexType</ref><sp/><ref refid="classNeoFOAM_1_1Permutation_1a90060a81d51a92c24ee1f98b28a77000" kindref="member">oldToNew</ref>(<ref refid="classNeoFOAM_1_1Permutation_1a38e79e634c56d4e0fa471d58b70b59fc" kindref="member">IndexType</ref><sp/>oldIndex)<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">;</highlight></codeline>
-<codeline lineno="47"><highlight class="normal"></highlight></codeline>
-<codeline lineno="48"><highlight class="normal"><sp/><sp/><sp/><sp/>[[nodiscard]]</highlight></codeline>
-<codeline lineno="49" refid="classNeoFOAM_1_1Permutation_1a51d32bf92c94af0317d0a4471635cc4e" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1Permutation_1a38e79e634c56d4e0fa471d58b70b59fc" kindref="member">IndexType</ref><sp/><ref refid="classNeoFOAM_1_1Permutation_1a51d32bf92c94af0317d0a4471635cc4e" kindref="member">newToOld</ref>(<ref refid="classNeoFOAM_1_1Permutation_1a38e79e634c56d4e0fa471d58b70b59fc" kindref="member">IndexType</ref><sp/>newIndex)<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">;</highlight></codeline>
-<codeline lineno="50"><highlight class="normal"></highlight></codeline>
-<codeline lineno="51"><highlight class="normal"><sp/><sp/><sp/><sp/>[[nodiscard]]</highlight></codeline>
-<codeline lineno="52" refid="classNeoFOAM_1_1Permutation_1ad9c305c0fdba5e8faa3eea487d2d8fd9" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>std::span&lt;const<sp/>IndexType&gt;<sp/><ref refid="classNeoFOAM_1_1Permutation_1ad9c305c0fdba5e8faa3eea487d2d8fd9" kindref="member">oldToNew</ref>()<sp/>const<sp/>noexcept;</highlight></codeline>
-<codeline lineno="53"><highlight class="normal"></highlight></codeline>
-<codeline lineno="54"><highlight class="normal"><sp/><sp/><sp/><sp/>[[nodiscard]]</highlight></codeline>
-<codeline lineno="55" refid="classNeoFOAM_1_1Permutation_1aeddf91adbb46709a73bef3a6636492f3" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>std::span&lt;const<sp/><ref refid="classNeoFOAM_1_1Permutation_1a38e79e634c56d4e0fa471d58b70b59fc" kindref="member">IndexType</ref>&gt;<sp/><ref refid="classNeoFOAM_1_1Permutation_1aeddf91adbb46709a73bef3a6636492f3" kindref="member">newToOld</ref>()<sp/>const<sp/>noexcept;</highlight></codeline>
-<codeline lineno="56"><highlight class="normal"></highlight></codeline>
-<codeline lineno="57"><highlight class="normal"><sp/><sp/><sp/><sp/>[[nodiscard]]</highlight></codeline>
-<codeline lineno="58" refid="classNeoFOAM_1_1Permutation_1a6e8bea34e16952e8eac69fd58083224c" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1Permutation" kindref="compound">Permutation</ref><sp/><ref refid="classNeoFOAM_1_1Permutation_1a6e8bea34e16952e8eac69fd58083224c" kindref="member">inverse</ref>()<sp/>const;</highlight></codeline>
+<codeline lineno="4"><highlight class="normal"></highlight><highlight class="preprocessor">#pragma<sp/>once</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="5"><highlight class="normal"></highlight></codeline>
+<codeline lineno="6"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;NeoN/NeoN.hpp&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="7"><highlight class="normal"></highlight></codeline>
+<codeline lineno="8"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;cstddef&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="9"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;span&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="10"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;vector&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="11"><highlight class="normal"></highlight></codeline>
+<codeline lineno="12"><highlight class="normal"></highlight><highlight class="keyword">namespace<sp/></highlight><highlight class="normal"><ref refid="namespaceNeoFOAM" kindref="compound">NeoFOAM</ref></highlight></codeline>
+<codeline lineno="13"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="34" refid="classNeoFOAM_1_1Permutation" refkind="compound"><highlight class="normal"></highlight><highlight class="keyword">class<sp/></highlight><highlight class="normal"><ref refid="classNeoFOAM_1_1Permutation" kindref="compound">Permutation</ref></highlight></codeline>
+<codeline lineno="35"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="36"><highlight class="normal"></highlight><highlight class="keyword">public</highlight><highlight class="normal">:</highlight></codeline>
+<codeline lineno="37"><highlight class="normal"></highlight></codeline>
+<codeline lineno="38" refid="classNeoFOAM_1_1Permutation_1a38e79e634c56d4e0fa471d58b70b59fc" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">using<sp/></highlight><highlight class="normal"><ref refid="classNeoFOAM_1_1Permutation_1a38e79e634c56d4e0fa471d58b70b59fc" kindref="member">IndexType</ref><sp/>=<sp/>NeoN::label;</highlight></codeline>
+<codeline lineno="39" refid="classNeoFOAM_1_1Permutation_1aecaedf300fcfbb96fcf7c1297e66f28d" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">using<sp/></highlight><highlight class="normal"><ref refid="classNeoFOAM_1_1Permutation_1aecaedf300fcfbb96fcf7c1297e66f28d" kindref="member">SizeType</ref><sp/>=<sp/>NeoN::size_t;</highlight></codeline>
+<codeline lineno="40"><highlight class="normal"></highlight></codeline>
+<codeline lineno="57" refid="classNeoFOAM_1_1Permutation_1a6afd53119b58e5a848ec39ee6ae9a4a1" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">explicit</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1Permutation_1a6afd53119b58e5a848ec39ee6ae9a4a1" kindref="member">Permutation</ref>(std::vector&lt;IndexType&gt;<sp/><ref refid="classNeoFOAM_1_1Permutation_1ad9c305c0fdba5e8faa3eea487d2d8fd9" kindref="member">oldToNew</ref>);</highlight></codeline>
+<codeline lineno="58"><highlight class="normal"></highlight></codeline>
 <codeline lineno="59"><highlight class="normal"></highlight></codeline>
-<codeline lineno="60"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>[[nodiscard]]</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="61"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Permutation<sp/>compose(</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="62"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/><sp/><sp/><sp/><sp/>const<sp/>Permutation&amp;<sp/>other</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="63"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>)<sp/>const;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="64"><highlight class="normal"></highlight></codeline>
-<codeline lineno="65"><highlight class="normal"><sp/><sp/><sp/><sp/>[[nodiscard]]</highlight></codeline>
-<codeline lineno="66" refid="classNeoFOAM_1_1Permutation_1a3e4ba6a76cf415a2a44d202927b717df" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1Permutation_1a3e4ba6a76cf415a2a44d202927b717df" kindref="member">isIdentity</ref>()<sp/>const<sp/>noexcept;</highlight></codeline>
-<codeline lineno="67"><highlight class="normal"></highlight></codeline>
-<codeline lineno="68"><highlight class="normal">private:</highlight></codeline>
-<codeline lineno="69"><highlight class="normal"></highlight></codeline>
-<codeline lineno="70"><highlight class="normal"><sp/><sp/><sp/><sp/>std::vector&lt;<ref refid="classNeoFOAM_1_1Permutation_1a38e79e634c56d4e0fa471d58b70b59fc" kindref="member">IndexType</ref>&gt;<sp/>oldToNew_;</highlight></codeline>
-<codeline lineno="71"><highlight class="normal"><sp/><sp/><sp/><sp/>std::vector&lt;<ref refid="classNeoFOAM_1_1Permutation_1a38e79e634c56d4e0fa471d58b70b59fc" kindref="member">IndexType</ref>&gt;<sp/>newToOld_;</highlight></codeline>
-<codeline lineno="72"><highlight class="normal">};</highlight></codeline>
-<codeline lineno="73"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>NeoFOAM</highlight></codeline>
+<codeline lineno="74"><highlight class="normal"><sp/><sp/><sp/><sp/>[[nodiscard]]</highlight></codeline>
+<codeline lineno="75" refid="classNeoFOAM_1_1Permutation_1ae30e26e67abd1e2f13bfd34607b33f90" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">static</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1Permutation" kindref="compound">Permutation</ref><sp/><ref refid="classNeoFOAM_1_1Permutation_1ae30e26e67abd1e2f13bfd34607b33f90" kindref="member">identity</ref>(<ref refid="classNeoFOAM_1_1Permutation_1aecaedf300fcfbb96fcf7c1297e66f28d" kindref="member">SizeType</ref><sp/><ref refid="classNeoFOAM_1_1Permutation_1a4b3f7e07b8fea90c0cfbf7491b924b07" kindref="member">size</ref>);</highlight></codeline>
+<codeline lineno="76"><highlight class="normal"></highlight></codeline>
+<codeline lineno="80"><highlight class="normal"><sp/><sp/><sp/><sp/>[[nodiscard]]</highlight></codeline>
+<codeline lineno="81" refid="classNeoFOAM_1_1Permutation_1a4b3f7e07b8fea90c0cfbf7491b924b07" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1Permutation_1aecaedf300fcfbb96fcf7c1297e66f28d" kindref="member">SizeType</ref><sp/><ref refid="classNeoFOAM_1_1Permutation_1a4b3f7e07b8fea90c0cfbf7491b924b07" kindref="member">size</ref>()<sp/>const<sp/>noexcept</highlight></codeline>
+<codeline lineno="82"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="83"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>oldToNew_.size();</highlight></codeline>
+<codeline lineno="84"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="85"><highlight class="normal"></highlight></codeline>
+<codeline lineno="95"><highlight class="normal"><sp/><sp/><sp/><sp/>[[nodiscard]]</highlight></codeline>
+<codeline lineno="96" refid="classNeoFOAM_1_1Permutation_1a90060a81d51a92c24ee1f98b28a77000" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1Permutation_1a38e79e634c56d4e0fa471d58b70b59fc" kindref="member">IndexType</ref><sp/><ref refid="classNeoFOAM_1_1Permutation_1a90060a81d51a92c24ee1f98b28a77000" kindref="member">oldToNew</ref>(<ref refid="classNeoFOAM_1_1Permutation_1a38e79e634c56d4e0fa471d58b70b59fc" kindref="member">IndexType</ref><sp/>oldIndex)<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="97"><highlight class="normal"></highlight></codeline>
+<codeline lineno="107"><highlight class="normal"><sp/><sp/><sp/><sp/>[[nodiscard]]</highlight></codeline>
+<codeline lineno="108" refid="classNeoFOAM_1_1Permutation_1a51d32bf92c94af0317d0a4471635cc4e" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1Permutation_1a38e79e634c56d4e0fa471d58b70b59fc" kindref="member">IndexType</ref><sp/><ref refid="classNeoFOAM_1_1Permutation_1a51d32bf92c94af0317d0a4471635cc4e" kindref="member">newToOld</ref>(<ref refid="classNeoFOAM_1_1Permutation_1a38e79e634c56d4e0fa471d58b70b59fc" kindref="member">IndexType</ref><sp/>newIndex)<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="109"><highlight class="normal"></highlight></codeline>
+<codeline lineno="121"><highlight class="normal"><sp/><sp/><sp/><sp/>[[nodiscard]]</highlight></codeline>
+<codeline lineno="122" refid="classNeoFOAM_1_1Permutation_1ad9c305c0fdba5e8faa3eea487d2d8fd9" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>std::span&lt;const<sp/>IndexType&gt;<sp/><ref refid="classNeoFOAM_1_1Permutation_1ad9c305c0fdba5e8faa3eea487d2d8fd9" kindref="member">oldToNew</ref>()<sp/>const<sp/>noexcept;</highlight></codeline>
+<codeline lineno="123"><highlight class="normal"></highlight></codeline>
+<codeline lineno="135"><highlight class="normal"><sp/><sp/><sp/><sp/>[[nodiscard]]</highlight></codeline>
+<codeline lineno="136" refid="classNeoFOAM_1_1Permutation_1aeddf91adbb46709a73bef3a6636492f3" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/>std::span&lt;const<sp/><ref refid="classNeoFOAM_1_1Permutation_1a38e79e634c56d4e0fa471d58b70b59fc" kindref="member">IndexType</ref>&gt;<sp/><ref refid="classNeoFOAM_1_1Permutation_1aeddf91adbb46709a73bef3a6636492f3" kindref="member">newToOld</ref>()<sp/>const<sp/>noexcept;</highlight></codeline>
+<codeline lineno="137"><highlight class="normal"></highlight></codeline>
+<codeline lineno="151"><highlight class="normal"><sp/><sp/><sp/><sp/>[[nodiscard]]</highlight></codeline>
+<codeline lineno="152" refid="classNeoFOAM_1_1Permutation_1a6e8bea34e16952e8eac69fd58083224c" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classNeoFOAM_1_1Permutation" kindref="compound">Permutation</ref><sp/><ref refid="classNeoFOAM_1_1Permutation_1a6e8bea34e16952e8eac69fd58083224c" kindref="member">inverse</ref>()<sp/>const;</highlight></codeline>
+<codeline lineno="153"><highlight class="normal"></highlight></codeline>
+<codeline lineno="154"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>[[nodiscard]]</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="155"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Permutation<sp/>compose(</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="156"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/><sp/><sp/><sp/><sp/>const<sp/>Permutation&amp;<sp/>other</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="157"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>)<sp/>const;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="158"><highlight class="normal"></highlight></codeline>
+<codeline lineno="168"><highlight class="normal"><sp/><sp/><sp/><sp/>[[nodiscard]]</highlight></codeline>
+<codeline lineno="169" refid="classNeoFOAM_1_1Permutation_1a3e4ba6a76cf415a2a44d202927b717df" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/><ref refid="classNeoFOAM_1_1Permutation_1a3e4ba6a76cf415a2a44d202927b717df" kindref="member">isIdentity</ref>()<sp/>const<sp/>noexcept;</highlight></codeline>
+<codeline lineno="170"><highlight class="normal"></highlight></codeline>
+<codeline lineno="171"><highlight class="normal">private:</highlight></codeline>
+<codeline lineno="172"><highlight class="normal"></highlight></codeline>
+<codeline lineno="173"><highlight class="normal"><sp/><sp/><sp/><sp/>std::vector&lt;<ref refid="classNeoFOAM_1_1Permutation_1a38e79e634c56d4e0fa471d58b70b59fc" kindref="member">IndexType</ref>&gt;<sp/>oldToNew_;</highlight></codeline>
+<codeline lineno="174"><highlight class="normal"><sp/><sp/><sp/><sp/>std::vector&lt;<ref refid="classNeoFOAM_1_1Permutation_1a38e79e634c56d4e0fa471d58b70b59fc" kindref="member">IndexType</ref>&gt;<sp/>newToOld_;</highlight></codeline>
+<codeline lineno="175"><highlight class="normal">};</highlight></codeline>
+<codeline lineno="176"><highlight class="normal">}<sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>NeoFOAM</highlight></codeline>
     </programlisting>
     <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp"/>
   </compounddef>

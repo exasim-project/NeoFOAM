@@ -1,0 +1,182 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.8" xml:lang="en-US">
+  <compounddef id="classNeoFOAM_1_1PermutationApplicator" kind="class" language="C++" prot="public">
+    <compoundname>NeoFOAM::PermutationApplicator</compoundname>
+    <includes refid="permutationApplicator_8hpp" local="no">permutationApplicator.hpp</includes>
+    <sectiondef kind="private-attrib">
+      <memberdef kind="variable" id="classNeoFOAM_1_1PermutationApplicator_1ae108e0c36b0aa17df48943d54f2d4ed2" prot="private" static="no" mutable="no">
+        <type>NeoN::Executor</type>
+        <definition>NeoN::Executor NeoFOAM::PermutationApplicator::exec_</definition>
+        <argsstring></argsstring>
+        <name>exec_</name>
+        <qualifiedname>NeoFOAM::PermutationApplicator::exec_</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutationApplicator.hpp" line="89" column="20" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutationApplicator.hpp" bodystart="89" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="public-func">
+      <memberdef kind="function" id="classNeoFOAM_1_1PermutationApplicator_1acd5e8a7f462e07781b010953354485b7" prot="public" static="no" const="no" explicit="yes" inline="no" virt="non-virtual">
+        <type></type>
+        <definition>NeoFOAM::PermutationApplicator::PermutationApplicator</definition>
+        <argsstring>(const NeoN::Executor &amp;exec)</argsstring>
+        <name>PermutationApplicator</name>
+        <qualifiedname>NeoFOAM::PermutationApplicator::PermutationApplicator</qualifiedname>
+        <param>
+          <type>const NeoN::Executor &amp;</type>
+          <declname>exec</declname>
+        </param>
+        <briefdescription>
+<para>Constructs a permutation applicator for the specified executor. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>exec</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Executor used to perform permutation application operations. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutationApplicator.hpp" line="39" column="14"/>
+      </memberdef>
+      <memberdef kind="function" id="classNeoFOAM_1_1PermutationApplicator_1a4e3503b678f11ba087c4fba8309ef676" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void NeoFOAM::PermutationApplicator::apply</definition>
+        <argsstring>(NeoN::UnstructuredMesh &amp;mesh, const Permutation &amp;permutation) const</argsstring>
+        <name>apply</name>
+        <qualifiedname>NeoFOAM::PermutationApplicator::apply</qualifiedname>
+        <param>
+          <type>NeoN::UnstructuredMesh &amp;</type>
+          <declname>mesh</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classNeoFOAM_1_1Permutation" kindref="compound">Permutation</ref> &amp;</type>
+          <declname>permutation</declname>
+        </param>
+        <briefdescription>
+<para>Applies a cell permutation to a mesh. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Cell-associated mesh data is reordered according to <computeroutput>permutation</computeroutput>, while cell indices stored in mesh connectivity are remapped to their corresponding new indices.</para>
+<para>In particular, cell-associated data is reordered by position, whereas face owner and neighbour indices are remapped by value.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>mesh</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Mesh whose cell-related data is to be reordered. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>permutation</parametername>
+</parameternamelist>
+<parameterdescription>
+<para><ref refid="classNeoFOAM_1_1Permutation" kindref="compound">Permutation</ref> defining the mapping from old cell indices to new cell indices.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="pre"><para><computeroutput>permutation</computeroutput> is a valid permutation over the cells of <computeroutput>mesh</computeroutput>.</para>
+</simplesect>
+<simplesect kind="post"><para>Cell-associated mesh data and cell references are consistent with the new cell ordering. </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutationApplicator.hpp" line="60" column="10"/>
+      </memberdef>
+      <memberdef kind="function" id="classNeoFOAM_1_1PermutationApplicator_1a6b5165ee15c8a17f5149dd5ff57d0fa0" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename T</type>
+          </param>
+        </templateparamlist>
+        <type>void</type>
+        <definition>void NeoFOAM::PermutationApplicator::apply</definition>
+        <argsstring>(NeoN::Field&lt; T &gt; &amp;field, const Permutation &amp;permutation) const</argsstring>
+        <name>apply</name>
+        <qualifiedname>NeoFOAM::PermutationApplicator::apply</qualifiedname>
+        <param>
+          <type>NeoN::Field&lt; T &gt; &amp;</type>
+          <declname>field</declname>
+        </param>
+        <param>
+          <type>const <ref refid="classNeoFOAM_1_1Permutation" kindref="compound">Permutation</ref> &amp;</type>
+          <declname>permutation</declname>
+        </param>
+        <briefdescription>
+<para>Applies a cell permutation to a cell-associated field. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>The values of <computeroutput>field</computeroutput> are reordered according to <computeroutput>permutation</computeroutput> so that each value remains associated with the same physical cell after the cell ordering changes.</para>
+<para><parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>T</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Value type of the cell-associated field.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>field</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Cell-associated field to reorder. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>permutation</parametername>
+</parameternamelist>
+<parameterdescription>
+<para><ref refid="classNeoFOAM_1_1Permutation" kindref="compound">Permutation</ref> defining the mapping from old cell indices to new cell indices.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="pre"><para><computeroutput>permutation</computeroutput> is a valid permutation over the cells represented by <computeroutput>field</computeroutput>.</para>
+</simplesect>
+<simplesect kind="post"><para>Each field value remains associated with the same cell as before the permutation was applied. </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutationApplicator.hpp" line="84" column="10"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+<para>Applies cell permutations to mesh and cell-associated data. </para>
+    </briefdescription>
+    <detaileddescription>
+<para><ref refid="classNeoFOAM_1_1PermutationApplicator" kindref="compound">PermutationApplicator</ref> applies a valid cell permutation to <ref refid="namespaceNeoN" kindref="compound">NeoN</ref> mesh data while preserving the consistency of cell-associated data and references.</para>
+<para>A cell permutation has two distinct effects:</para>
+<para><itemizedlist>
+<listitem><para>Cell-associated data, such as cell fields and cell geometry, is reordered according to the permutation.</para>
+</listitem><listitem><para>Cell references stored in mesh connectivity, such as face owner and neighbor indices, are remapped according to the permutation.</para>
+</listitem></itemizedlist>
+</para>
+<para>PermutationAplicator does not compute the permutation,. The permutation must be provided by an ordering algorithm.</para>
+<para>The executor supplied at construction is used to perform the permutation application operations. </para>
+    </detaileddescription>
+    <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutationApplicator.hpp" line="30" column="1" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutationApplicator.hpp" bodystart="31" bodyend="90"/>
+    <listofallmembers>
+      <member refid="classNeoFOAM_1_1PermutationApplicator_1a4e3503b678f11ba087c4fba8309ef676" prot="public" virt="non-virtual"><scope>NeoFOAM::PermutationApplicator</scope><name>apply</name></member>
+      <member refid="classNeoFOAM_1_1PermutationApplicator_1a6b5165ee15c8a17f5149dd5ff57d0fa0" prot="public" virt="non-virtual"><scope>NeoFOAM::PermutationApplicator</scope><name>apply</name></member>
+      <member refid="classNeoFOAM_1_1PermutationApplicator_1ae108e0c36b0aa17df48943d54f2d4ed2" prot="private" virt="non-virtual"><scope>NeoFOAM::PermutationApplicator</scope><name>exec_</name></member>
+      <member refid="classNeoFOAM_1_1PermutationApplicator_1acd5e8a7f462e07781b010953354485b7" prot="public" virt="non-virtual"><scope>NeoFOAM::PermutationApplicator</scope><name>PermutationApplicator</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

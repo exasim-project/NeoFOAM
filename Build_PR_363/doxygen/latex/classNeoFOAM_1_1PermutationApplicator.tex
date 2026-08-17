@@ -1,0 +1,125 @@
+\doxysection{Neo\+FOAM\+::Permutation\+Applicator Class Reference}
+\hypertarget{classNeoFOAM_1_1PermutationApplicator}{}\label{classNeoFOAM_1_1PermutationApplicator}\index{NeoFOAM::PermutationApplicator@{NeoFOAM::PermutationApplicator}}
+
+
+Applies cell permutations to mesh and cell-\/associated data.  
+
+
+
+
+{\ttfamily \#include $<$permutation\+Applicator.\+hpp$>$}
+
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classNeoFOAM_1_1PermutationApplicator_acd5e8a7f462e07781b010953354485b7}{Permutation\+Applicator}} (const Neo\+N\+::\+Executor \&exec)
+\begin{DoxyCompactList}\small\item\em Constructs a permutation applicator for the specified executor. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classNeoFOAM_1_1PermutationApplicator_a4e3503b678f11ba087c4fba8309ef676}{apply}} (Neo\+N\+::\+Unstructured\+Mesh \&mesh, const \mbox{\hyperlink{classNeoFOAM_1_1Permutation}{Permutation}} \&permutation) const
+\begin{DoxyCompactList}\small\item\em Applies a cell permutation to a mesh. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename T $>$ }\\void \mbox{\hyperlink{classNeoFOAM_1_1PermutationApplicator_a6b5165ee15c8a17f5149dd5ff57d0fa0}{apply}} (Neo\+N\+::\+Field$<$ T $>$ \&field, const \mbox{\hyperlink{classNeoFOAM_1_1Permutation}{Permutation}} \&permutation) const
+\begin{DoxyCompactList}\small\item\em Applies a cell permutation to a cell-\/associated field. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Applies cell permutations to mesh and cell-\/associated data. 
+
+\doxylink{classNeoFOAM_1_1PermutationApplicator}{Permutation\+Applicator} applies a valid cell permutation to \doxylink{namespaceNeoN}{NeoN} mesh data while preserving the consistency of cell-\/associated data and references.
+
+A cell permutation has two distinct effects\+:
+
+
+\begin{DoxyItemize}
+\item Cell-\/associated data, such as cell fields and cell geometry, is reordered according to the permutation.
+\item Cell references stored in mesh connectivity, such as face owner and neighbor indices, are remapped according to the permutation.
+\end{DoxyItemize}
+
+Permutation\+Aplicator does not compute the permutation,. The permutation must be provided by an ordering algorithm.
+
+The executor supplied at construction is used to perform the permutation application operations. 
+
+Definition at line \mbox{\hyperlink{permutationApplicator_8hpp_source_l00030}{30}} of file \mbox{\hyperlink{permutationApplicator_8hpp_source}{permutation\+Applicator.\+hpp}}.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\Hypertarget{classNeoFOAM_1_1PermutationApplicator_acd5e8a7f462e07781b010953354485b7}\label{classNeoFOAM_1_1PermutationApplicator_acd5e8a7f462e07781b010953354485b7} 
+\index{NeoFOAM::PermutationApplicator@{NeoFOAM::PermutationApplicator}!PermutationApplicator@{PermutationApplicator}}
+\index{PermutationApplicator@{PermutationApplicator}!NeoFOAM::PermutationApplicator@{NeoFOAM::PermutationApplicator}}
+\doxysubsubsection{\texorpdfstring{PermutationApplicator()}{PermutationApplicator()}}
+{\footnotesize\ttfamily Neo\+FOAM\+::\+Permutation\+Applicator\+::\+Permutation\+Applicator (\begin{DoxyParamCaption}\item[{const Neo\+N\+::\+Executor \&}]{exec }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [explicit]}}
+
+
+
+Constructs a permutation applicator for the specified executor. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em exec} & Executor used to perform permutation application operations. \\
+\hline
+\end{DoxyParams}
+
+
+\doxysubsection{Member Function Documentation}
+\Hypertarget{classNeoFOAM_1_1PermutationApplicator_a6b5165ee15c8a17f5149dd5ff57d0fa0}\label{classNeoFOAM_1_1PermutationApplicator_a6b5165ee15c8a17f5149dd5ff57d0fa0} 
+\index{NeoFOAM::PermutationApplicator@{NeoFOAM::PermutationApplicator}!apply@{apply}}
+\index{apply@{apply}!NeoFOAM::PermutationApplicator@{NeoFOAM::PermutationApplicator}}
+\doxysubsubsection{\texorpdfstring{apply()}{apply()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily template$<$typename T $>$ \\
+void Neo\+FOAM\+::\+Permutation\+Applicator\+::apply (\begin{DoxyParamCaption}\item[{Neo\+N\+::\+Field$<$ T $>$ \&}]{field,  }\item[{const \mbox{\hyperlink{classNeoFOAM_1_1Permutation}{Permutation}} \&}]{permutation }\end{DoxyParamCaption}) const}
+
+
+
+Applies a cell permutation to a cell-\/associated field. 
+
+The values of {\ttfamily field} are reordered according to {\ttfamily permutation} so that each value remains associated with the same physical cell after the cell ordering changes.
+
+
+\begin{DoxyTemplParams}{Template Parameters}
+{\em T} & Value type of the cell-\/associated field.\\
+\hline
+\end{DoxyTemplParams}
+
+\begin{DoxyParams}{Parameters}
+{\em field} & Cell-\/associated field to reorder. \\
+\hline
+{\em permutation} & \doxylink{classNeoFOAM_1_1Permutation}{Permutation} defining the mapping from old cell indices to new cell indices.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyPrecond}{Precondition}
+{\ttfamily permutation} is a valid permutation over the cells represented by {\ttfamily field}.
+\end{DoxyPrecond}
+\begin{DoxyPostcond}{Postcondition}
+Each field value remains associated with the same cell as before the permutation was applied. 
+\end{DoxyPostcond}
+\Hypertarget{classNeoFOAM_1_1PermutationApplicator_a4e3503b678f11ba087c4fba8309ef676}\label{classNeoFOAM_1_1PermutationApplicator_a4e3503b678f11ba087c4fba8309ef676} 
+\index{NeoFOAM::PermutationApplicator@{NeoFOAM::PermutationApplicator}!apply@{apply}}
+\index{apply@{apply}!NeoFOAM::PermutationApplicator@{NeoFOAM::PermutationApplicator}}
+\doxysubsubsection{\texorpdfstring{apply()}{apply()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily void Neo\+FOAM\+::\+Permutation\+Applicator\+::apply (\begin{DoxyParamCaption}\item[{Neo\+N\+::\+Unstructured\+Mesh \&}]{mesh,  }\item[{const \mbox{\hyperlink{classNeoFOAM_1_1Permutation}{Permutation}} \&}]{permutation }\end{DoxyParamCaption}) const}
+
+
+
+Applies a cell permutation to a mesh. 
+
+Cell-\/associated mesh data is reordered according to {\ttfamily permutation}, while cell indices stored in mesh connectivity are remapped to their corresponding new indices.
+
+In particular, cell-\/associated data is reordered by position, whereas face owner and neighbour indices are remapped by value.
+
+
+\begin{DoxyParams}{Parameters}
+{\em mesh} & Mesh whose cell-\/related data is to be reordered. \\
+\hline
+{\em permutation} & \doxylink{classNeoFOAM_1_1Permutation}{Permutation} defining the mapping from old cell indices to new cell indices.\\
+\hline
+\end{DoxyParams}
+\begin{DoxyPrecond}{Precondition}
+{\ttfamily permutation} is a valid permutation over the cells of {\ttfamily mesh}.
+\end{DoxyPrecond}
+\begin{DoxyPostcond}{Postcondition}
+Cell-\/associated mesh data and cell references are consistent with the new cell ordering. 
+\end{DoxyPostcond}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/runner/work/\+Neo\+FOAM/\+Neo\+FOAM/include/\+Neo\+FOAM/ordering/\mbox{\hyperlink{permutationApplicator_8hpp}{permutation\+Applicator.\+hpp}}\end{DoxyCompactItemize}

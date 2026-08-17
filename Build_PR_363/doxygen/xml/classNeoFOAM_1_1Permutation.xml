@@ -16,7 +16,21 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" line="32" column="5" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" bodystart="32" bodyend="-1"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" line="38" column="5" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" bodystart="38" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="typedef" id="classNeoFOAM_1_1Permutation_1aecaedf300fcfbb96fcf7c1297e66f28d" prot="public" static="no">
+        <type>NeoN::size_t</type>
+        <definition>using NeoFOAM::Permutation::SizeType =  NeoN::size_t</definition>
+        <argsstring></argsstring>
+        <name>SizeType</name>
+        <qualifiedname>NeoFOAM::Permutation::SizeType</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" line="39" column="5" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" bodystart="39" bodyend="-1"/>
       </memberdef>
     </sectiondef>
     <sectiondef kind="private-attrib">
@@ -32,7 +46,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" line="70" column="17" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" bodystart="70" bodyend="-1"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" line="173" column="17" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" bodystart="173" bodyend="-1"/>
       </memberdef>
       <memberdef kind="variable" id="classNeoFOAM_1_1Permutation_1a2a30577b77d3a3fcca6b458de1b52e17" prot="private" static="no" mutable="no">
         <type>std::vector&lt; <ref refid="classNeoFOAM_1_1Permutation_1a38e79e634c56d4e0fa471d58b70b59fc" kindref="member">IndexType</ref> &gt;</type>
@@ -46,7 +60,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" line="71" column="17" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" bodystart="71" bodyend="-1"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" line="174" column="17" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" bodystart="174" bodyend="-1"/>
       </memberdef>
     </sectiondef>
     <sectiondef kind="public-func">
@@ -61,26 +75,43 @@
           <declname>oldToNew</declname>
         </param>
         <briefdescription>
+<para>Constructs a permutation from an old-to-new mapping. </para>
         </briefdescription>
         <detaileddescription>
+<para>The supplied mapping defines the new index of every entity in the original index space. The corresponding new-to-old mapping is constructed as its inverse.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>oldToNew</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Mapping from each old index to its corresponding new index.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="pre"><para><computeroutput>oldToNew</computeroutput> represents a bijection over the index range [0, oldToNew.size()).</para>
+</simplesect>
+<simplesect kind="post"><para>The resulting permutation contains both the old-to-new mapping and its inverse. </para>
+</simplesect>
+</para>
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" line="34" column="14"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" line="57" column="14"/>
       </memberdef>
-      <memberdef kind="function" id="classNeoFOAM_1_1Permutation_1a0d41ddb1758438e1fb962ceeac6ae228" prot="public" static="no" const="yes" explicit="no" inline="yes" noexcept="yes" virt="non-virtual">
-        <type>std::size_t</type>
-        <definition>std::size_t NeoFOAM::Permutation::size</definition>
+      <memberdef kind="function" id="classNeoFOAM_1_1Permutation_1a4b3f7e07b8fea90c0cfbf7491b924b07" prot="public" static="no" const="yes" explicit="no" inline="yes" noexcept="yes" virt="non-virtual">
+        <type><ref refid="classNeoFOAM_1_1Permutation_1aecaedf300fcfbb96fcf7c1297e66f28d" kindref="member">SizeType</ref></type>
+        <definition>SizeType NeoFOAM::Permutation::size</definition>
         <argsstring>() const noexcept</argsstring>
         <name>size</name>
         <qualifiedname>NeoFOAM::Permutation::size</qualifiedname>
         <briefdescription>
+<para>Returns the number of indices represented by the permutation. </para>
         </briefdescription>
         <detaileddescription>
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" line="40" column="17" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" bodystart="40" bodyend="43"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" line="81" column="14" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" bodystart="81" bodyend="84"/>
       </memberdef>
       <memberdef kind="function" id="classNeoFOAM_1_1Permutation_1a90060a81d51a92c24ee1f98b28a77000" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="classNeoFOAM_1_1Permutation_1a38e79e634c56d4e0fa471d58b70b59fc" kindref="member">IndexType</ref></type>
@@ -93,12 +124,27 @@
           <declname>oldIndex</declname>
         </param>
         <briefdescription>
+<para>Returns the new index corresponding to an old index. </para>
         </briefdescription>
         <detaileddescription>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>oldIndex</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Index in the original index space.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>The corresponding index in the new index space.</para>
+</simplesect>
+<simplesect kind="pre"><para><computeroutput>oldIndex</computeroutput> is in the range [0, <ref refid="classNeoFOAM_1_1Permutation_1a4b3f7e07b8fea90c0cfbf7491b924b07" kindref="member">size()</ref>). </para>
+</simplesect>
+</para>
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" line="46" column="15"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" line="96" column="15"/>
       </memberdef>
       <memberdef kind="function" id="classNeoFOAM_1_1Permutation_1a51d32bf92c94af0317d0a4471635cc4e" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="classNeoFOAM_1_1Permutation_1a38e79e634c56d4e0fa471d58b70b59fc" kindref="member">IndexType</ref></type>
@@ -111,12 +157,27 @@
           <declname>newIndex</declname>
         </param>
         <briefdescription>
+<para>Returns the old index corresponding to a new index. </para>
         </briefdescription>
         <detaileddescription>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>newIndex</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Index in the new index space.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>The corresponding index in the original index space.</para>
+</simplesect>
+<simplesect kind="pre"><para><computeroutput>newIndex</computeroutput> is in the range [0, <ref refid="classNeoFOAM_1_1Permutation_1a4b3f7e07b8fea90c0cfbf7491b924b07" kindref="member">size()</ref>). </para>
+</simplesect>
+</para>
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" line="49" column="15"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" line="108" column="15"/>
       </memberdef>
       <memberdef kind="function" id="classNeoFOAM_1_1Permutation_1ad9c305c0fdba5e8faa3eea487d2d8fd9" prot="public" static="no" const="yes" explicit="no" inline="no" noexcept="yes" virt="non-virtual">
         <type>std::span&lt; const <ref refid="classNeoFOAM_1_1Permutation_1a38e79e634c56d4e0fa471d58b70b59fc" kindref="member">IndexType</ref> &gt;</type>
@@ -125,12 +186,19 @@
         <name>oldToNew</name>
         <qualifiedname>NeoFOAM::Permutation::oldToNew</qualifiedname>
         <briefdescription>
+<para>Returns a read-only view of the old-to-new mapping. </para>
         </briefdescription>
         <detaileddescription>
+<para>The returned view contains the new index corresponding to each old index.</para>
+<para><simplesect kind="return"><para>A non-owning read-only view of the old-to-new mapping.</para>
+</simplesect>
+<simplesect kind="note"><para>The returned view refers to storage owned by this <ref refid="classNeoFOAM_1_1Permutation" kindref="compound">Permutation</ref> and is valid only while that storage remains valid. </para>
+</simplesect>
+</para>
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" line="52" column="15"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" line="122" column="15"/>
       </memberdef>
       <memberdef kind="function" id="classNeoFOAM_1_1Permutation_1aeddf91adbb46709a73bef3a6636492f3" prot="public" static="no" const="yes" explicit="no" inline="no" noexcept="yes" virt="non-virtual">
         <type>std::span&lt; const <ref refid="classNeoFOAM_1_1Permutation_1a38e79e634c56d4e0fa471d58b70b59fc" kindref="member">IndexType</ref> &gt;</type>
@@ -139,12 +207,19 @@
         <name>newToOld</name>
         <qualifiedname>NeoFOAM::Permutation::newToOld</qualifiedname>
         <briefdescription>
+<para>Returns a read-only view of the new-to-old mapping. </para>
         </briefdescription>
         <detaileddescription>
+<para>The returned view contains the old index corresponding to each new index.</para>
+<para><simplesect kind="return"><para>A non-owning read-only view of the new-to-old mapping.</para>
+</simplesect>
+<simplesect kind="note"><para>The returned view refers to storage owned by this <ref refid="classNeoFOAM_1_1Permutation" kindref="compound">Permutation</ref> and is valid only while that storage remains valid. </para>
+</simplesect>
+</para>
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" line="55" column="15"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" line="136" column="15"/>
       </memberdef>
       <memberdef kind="function" id="classNeoFOAM_1_1Permutation_1a6e8bea34e16952e8eac69fd58083224c" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="classNeoFOAM_1_1Permutation" kindref="compound">Permutation</ref></type>
@@ -153,12 +228,20 @@
         <name>inverse</name>
         <qualifiedname>NeoFOAM::Permutation::inverse</qualifiedname>
         <briefdescription>
+<para>Returns the inverse permutation. </para>
         </briefdescription>
         <detaileddescription>
+<para>The inverse permutation exchanges the roles of the old and new index spaces. For a permutation <computeroutput>p</computeroutput>, the inverse satisfies:</para>
+<para><programlisting><codeline><highlight class="normal">p.inverse().oldToNew(i)<sp/>==<sp/>p.newToOld(i)</highlight></codeline>
+<codeline><highlight class="normal">p.inverse().newToOld(i)<sp/>==<sp/>p.oldToNew(i)</highlight></codeline>
+</programlisting></para>
+<para><simplesect kind="return"><para>The inverse of this permutation. </para>
+</simplesect>
+</para>
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" line="58" column="17"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" line="152" column="17"/>
       </memberdef>
       <memberdef kind="function" id="classNeoFOAM_1_1Permutation_1a3e4ba6a76cf415a2a44d202927b717df" prot="public" static="no" const="yes" explicit="no" inline="no" noexcept="yes" virt="non-virtual">
         <type>bool</type>
@@ -167,41 +250,76 @@
         <name>isIdentity</name>
         <qualifiedname>NeoFOAM::Permutation::isIdentity</qualifiedname>
         <briefdescription>
+<para>Returns whether this permutation is the identity permutation. </para>
         </briefdescription>
         <detaileddescription>
+<para>A permutation is an identity permutation if every index maps to itself.</para>
+<para><simplesect kind="return"><para><computeroutput>true</computeroutput> if the permutation is an identity permutation; otherwise, <computeroutput>false</computeroutput>. </para>
+</simplesect>
+</para>
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" line="66" column="10"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" line="169" column="10"/>
       </memberdef>
     </sectiondef>
     <sectiondef kind="public-static-func">
-      <memberdef kind="function" id="classNeoFOAM_1_1Permutation_1a303b59072f67ad6a6acf87246013a620" prot="public" static="yes" const="no" explicit="no" inline="no" virt="non-virtual">
+      <memberdef kind="function" id="classNeoFOAM_1_1Permutation_1ae30e26e67abd1e2f13bfd34607b33f90" prot="public" static="yes" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="classNeoFOAM_1_1Permutation" kindref="compound">Permutation</ref></type>
         <definition>static Permutation NeoFOAM::Permutation::identity</definition>
-        <argsstring>(std::size_t size)</argsstring>
+        <argsstring>(SizeType size)</argsstring>
         <name>identity</name>
         <qualifiedname>NeoFOAM::Permutation::identity</qualifiedname>
         <param>
-          <type>std::size_t</type>
+          <type><ref refid="classNeoFOAM_1_1Permutation_1aecaedf300fcfbb96fcf7c1297e66f28d" kindref="member">SizeType</ref></type>
           <declname>size</declname>
         </param>
         <briefdescription>
+<para>Creates the identity permutation of the specified size. </para>
         </briefdescription>
         <detaileddescription>
+<para>The identity permutation maps every index to itself:</para>
+<para><programlisting><codeline><highlight class="normal"><ref refid="classNeoFOAM_1_1Permutation_1ad9c305c0fdba5e8faa3eea487d2d8fd9" kindref="member">oldToNew</ref>(i)<sp/>==<sp/>i</highlight></codeline>
+<codeline><highlight class="normal"><ref refid="classNeoFOAM_1_1Permutation_1aeddf91adbb46709a73bef3a6636492f3" kindref="member">newToOld</ref>(i)<sp/>==<sp/>i</highlight></codeline>
+</programlisting></para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>size</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Number of indices represented by the permutation.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>An identity permutation of size <computeroutput>size</computeroutput>. </para>
+</simplesect>
+</para>
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" line="37" column="24"/>
+        <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" line="75" column="24"/>
       </memberdef>
     </sectiondef>
     <briefdescription>
+<para>Represents a bijective mapping between an old and a new index space. </para>
     </briefdescription>
     <detaileddescription>
+<para>A <ref refid="classNeoFOAM_1_1Permutation" kindref="compound">Permutation</ref> is an immutable valule type that describes how a set of entities is renumbered without modifying or reordering the associated data.</para>
+<para>For a permutation of size <computeroutput>N:</computeroutput> </para>
+<para><itemizedlist>
+<listitem><para>Every old index in [0, N) maps to exactly one new index in [0, N).</para>
+</listitem><listitem><para>Every new index in [0, N) maps to exactly one old index in [0, N).</para>
+</listitem><listitem><para><computeroutput>oldToNew</computeroutput> and <computeroutput>newToOld</computeroutput> are inverse mappings.</para>
+</listitem></itemizedlist>
+</para>
+<para>The class provides both mapping directions so that it can be used fo both reordering entitiy-associated data and remapping entity references.</para>
+<para><simplesect kind="note"><para><ref refid="classNeoFOAM_1_1Permutation" kindref="compound">Permutation</ref> only represents a mapping. It does not compute an ordering and does not apply the mapping to mesh, field, or other CFD data. Ordering algorithms produce <ref refid="classNeoFOAM_1_1Permutation" kindref="compound">Permutation</ref> objects, while permutation application is handled separately by the ordering fraemework. </para>
+</simplesect>
+</para>
     </detaileddescription>
-    <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" line="28" column="1" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" bodystart="29" bodyend="72"/>
+    <location file="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" line="34" column="1" bodyfile="/home/runner/work/NeoFOAM/NeoFOAM/include/NeoFOAM/ordering/permutation.hpp" bodystart="35" bodyend="175"/>
     <listofallmembers>
-      <member refid="classNeoFOAM_1_1Permutation_1a303b59072f67ad6a6acf87246013a620" prot="public" virt="non-virtual"><scope>NeoFOAM::Permutation</scope><name>identity</name></member>
+      <member refid="classNeoFOAM_1_1Permutation_1ae30e26e67abd1e2f13bfd34607b33f90" prot="public" virt="non-virtual"><scope>NeoFOAM::Permutation</scope><name>identity</name></member>
       <member refid="classNeoFOAM_1_1Permutation_1a38e79e634c56d4e0fa471d58b70b59fc" prot="public" virt="non-virtual"><scope>NeoFOAM::Permutation</scope><name>IndexType</name></member>
       <member refid="classNeoFOAM_1_1Permutation_1a6e8bea34e16952e8eac69fd58083224c" prot="public" virt="non-virtual"><scope>NeoFOAM::Permutation</scope><name>inverse</name></member>
       <member refid="classNeoFOAM_1_1Permutation_1a3e4ba6a76cf415a2a44d202927b717df" prot="public" virt="non-virtual"><scope>NeoFOAM::Permutation</scope><name>isIdentity</name></member>
@@ -212,7 +330,8 @@
       <member refid="classNeoFOAM_1_1Permutation_1ad9c305c0fdba5e8faa3eea487d2d8fd9" prot="public" virt="non-virtual"><scope>NeoFOAM::Permutation</scope><name>oldToNew</name></member>
       <member refid="classNeoFOAM_1_1Permutation_1a3e01c5af50ab113d03b0289d03ea2073" prot="private" virt="non-virtual"><scope>NeoFOAM::Permutation</scope><name>oldToNew_</name></member>
       <member refid="classNeoFOAM_1_1Permutation_1a6afd53119b58e5a848ec39ee6ae9a4a1" prot="public" virt="non-virtual"><scope>NeoFOAM::Permutation</scope><name>Permutation</name></member>
-      <member refid="classNeoFOAM_1_1Permutation_1a0d41ddb1758438e1fb962ceeac6ae228" prot="public" virt="non-virtual"><scope>NeoFOAM::Permutation</scope><name>size</name></member>
+      <member refid="classNeoFOAM_1_1Permutation_1a4b3f7e07b8fea90c0cfbf7491b924b07" prot="public" virt="non-virtual"><scope>NeoFOAM::Permutation</scope><name>size</name></member>
+      <member refid="classNeoFOAM_1_1Permutation_1aecaedf300fcfbb96fcf7c1297e66f28d" prot="public" virt="non-virtual"><scope>NeoFOAM::Permutation</scope><name>SizeType</name></member>
     </listofallmembers>
   </compounddef>
 </doxygen>

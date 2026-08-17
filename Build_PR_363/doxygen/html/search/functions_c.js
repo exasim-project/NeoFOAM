@@ -2,6 +2,7 @@ var searchData=
 [
   ['pde_0',['pde',['../classNeoFOAM_1_1PDE.html#a41bcce83d26dafe9c61220a63731831b',1,'NeoFOAM::PDE::PDE(dsl::Expression&lt; ValueType &gt; expr, VolumeField &amp;psi, RunTime &amp;runTime)'],['../classNeoFOAM_1_1PDE.html#aa50cadcb517785b86e8ad4f806a38e95',1,'NeoFOAM::PDE::PDE(dsl::Expression&lt; ValueType &gt; expr)'],['../classNeoFOAM_1_1PDE.html#a68afddbbdb4f8a60bcb1acc7ad045587',1,'NeoFOAM::PDE::PDE(const PDE &amp;expr)']]],
   ['permutation_1',['Permutation',['../classNeoFOAM_1_1Permutation.html#a6afd53119b58e5a848ec39ee6ae9a4a1',1,'NeoFOAM::Permutation']]],
-  ['pimplecontrol_2',['PimpleControl',['../classNeoFOAM_1_1PimpleControl.html#a64a14f955ef306f87b131076ea63a3b7',1,'NeoFOAM::PimpleControl']]],
-  ['pkfield_3',['pkfield',['../classNeoFOAM_1_1KEpsilon.html#a1b86813f51f63b0e6767b07075a95921',1,'NeoFOAM::KEpsilon::pkField()'],['../classNeoFOAM_1_1KOmegaSST.html#a4f0456bbf40c0a22c83bd45c09c75ee1',1,'NeoFOAM::KOmegaSST::pkField()']]]
+  ['permutationapplicator_2',['PermutationApplicator',['../classNeoFOAM_1_1PermutationApplicator.html#acd5e8a7f462e07781b010953354485b7',1,'NeoFOAM::PermutationApplicator']]],
+  ['pimplecontrol_3',['PimpleControl',['../classNeoFOAM_1_1PimpleControl.html#a64a14f955ef306f87b131076ea63a3b7',1,'NeoFOAM::PimpleControl']]],
+  ['pkfield_4',['pkfield',['../classNeoFOAM_1_1KEpsilon.html#a1b86813f51f63b0e6767b07075a95921',1,'NeoFOAM::KEpsilon::pkField()'],['../classNeoFOAM_1_1KOmegaSST.html#a4f0456bbf40c0a22c83bd45c09c75ee1',1,'NeoFOAM::KOmegaSST::pkField()']]]
 ];
