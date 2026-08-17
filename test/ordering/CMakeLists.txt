@@ -1,2 +1,3 @@
 neofoam_unit_test(permutation setup_permutation)
 neofoam_unit_test(ordering setup_permutation)
+neofoam_unit_test(permutationApplicator setup_permutation)
